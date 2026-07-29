@@ -1,4 +1,6 @@
-# MantraCoreRedesa
+# Mantra Core Health
+
+Frontend Angular 21 + SSR del sistema médico de Mantra Core Technologies (nombre de producto provisional: **mantra-core-health**; el definitivo está pendiente).
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.11.
 

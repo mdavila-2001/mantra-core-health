@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "mantra-core-redesa": {
+    "mantra-core-health": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -64,10 +64,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "mantra-core-redesa:build:production"
+              "buildTarget": "mantra-core-health:build:production"
             },
             "development": {
-              "buildTarget": "mantra-core-redesa:build:development"
+              "buildTarget": "mantra-core-health:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -1,1 +1,270 @@
-/* You can add global styles to this file, and also import other style files */
+/* ============================================================================
+    Mantra Core Health — Sistema de Diseño REDSAT v1.0
+    Fuente normativa: Mantra Core Health Vault/SALUD/Arquitectura/identidad-visual.md
+    Referencia viva 1:1: REDSAT_Sistema_de_Diseno.html (raíz del repo) — los nombres
+    de token son los del diseñador para que el HTML siga siendo la spec.
+    Marca: Azul Petróleo #0B557E · Aguamarina #4FB3A9 · Menta #9FD8D0
+        Ámbar Arena #E4A96B · Gris Salvia #CDD9D5 · Marfil #F6F3ED
+    Reglas: ámbar ≤10 % y un único punto de acción por pantalla; badges = fondo
+    claro + texto oscuro del mismo tono; radio de firma solo en UN elemento por
+    pantalla. Excepciones WCAG conocidas (E1–E4): identidad-visual.md Parte 8.2.
+    ========================================================================== */
+
+/* ---- tipografías autoalojadas (sin CDN) ----
+    Poppins (display/marca) es ESTÁTICA: se importan los tres pesos del sistema.
+    Inter Variable (UI y datos) ya cubre 100-900 en un solo archivo.
+    Instaladas como reserva, sin importar: Roboto, Open Sans, Lato. */
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
+@import '@fontsource-variable/inter';
+
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    /* ================= rampas REDSAT 50–900 (no cambian por tema) ========= */
+    --c-azul-50: #D9E5EB;  --c-azul-100: #C2D5DF; --c-azul-200: #95B5C7;
+    --c-azul-300: #6795AF; --c-azul-400: #397596; --c-azul-500: #0B557E;
+    --c-azul-600: #0B4768; --c-azul-700: #0B3953; --c-azul-800: #0A2B3D;
+    --c-azul-900: #0A1C27;
+
+    --c-aqua-50: #E4F3F2;  --c-aqua-100: #D3ECEA; --c-aqua-200: #B2DEDA;
+    --c-aqua-300: #91D0C9; --c-aqua-400: #70C1B9; --c-aqua-500: #4FB3A9;
+    --c-aqua-600: #41928A; --c-aqua-700: #33706C; --c-aqua-800: #254F4D;
+    --c-aqua-900: #162D2F;
+
+    --c-menta-50: #F0F9F8;  --c-menta-100: #E7F5F3; --c-menta-200: #D5EEEB;
+    --c-menta-300: #C3E7E2; --c-menta-400: #B1DFD9; --c-menta-500: #9FD8D0;
+    --c-menta-600: #80AFA9; --c-menta-700: #628683; --c-menta-800: #435D5C;
+    --c-menta-900: #253436;
+
+    --c-ambar-50: #FBF2E8;  --c-ambar-100: #F8EADA; --c-ambar-200: #F3DABE;
+    --c-ambar-300: #EEC9A3; --c-ambar-400: #E9B987; --c-ambar-500: #E4A96B;
+    --c-ambar-600: #B78A59; --c-ambar-700: #8B6A47; --c-ambar-800: #5E4B35;
+    --c-ambar-900: #312C24;
+
+    --c-salvia-50: #F7F9F9;  --c-salvia-100: #F3F6F5; --c-salvia-200: #E9EEED;
+    --c-salvia-300: #E0E7E5; --c-salvia-400: #D6E0DD; --c-salvia-500: #CDD9D5;
+    --c-salvia-600: #A5B0AD; --c-salvia-700: #7D8786; --c-salvia-800: #555D5E;
+    --c-salvia-900: #2D3437;
+
+    --c-marfil-50: #FEFDFC;  --c-marfil-100: #FDFCFB; --c-marfil-200: #FBFAF7;
+    --c-marfil-300: #F9F8F4; --c-marfil-400: #F8F5F0; --c-marfil-500: #F6F3ED;
+    --c-marfil-600: #C6C4C1; --c-marfil-700: #959694; --c-marfil-800: #656768;
+    --c-marfil-900: #34393B;
+
+    --c-neutral-50: #E1E2E2;  --c-neutral-100: #CCCDCD; --c-neutral-200: #A2A4A4;
+    --c-neutral-300: #787B7B; --c-neutral-400: #4E5151; --c-neutral-500: #242828;
+    --c-neutral-600: #1E2324; --c-neutral-700: #181D1F; --c-neutral-800: #12181A;
+    --c-neutral-900: #0D1216;
+
+    /* semánticas: warning ≡ ámbar, info ≡ aqua (aliasadas a propósito) */
+    --c-success-50: #DFEDE9;  --c-success-100: #CBE2DB; --c-success-200: #A4CCC0;
+    --c-success-300: #7DB7A5; --c-success-400: #55A189; --c-success-500: #2E8B6E;
+    --c-success-600: #27725C; --c-success-700: #1F5949; --c-success-800: #183F37;
+    --c-success-900: #102624;
+
+    --c-warning-50: var(--c-ambar-50);   --c-warning-100: var(--c-ambar-100);
+    --c-warning-200: var(--c-ambar-200); --c-warning-300: var(--c-ambar-300);
+    --c-warning-400: var(--c-ambar-400); --c-warning-500: var(--c-ambar-500);
+    --c-warning-600: var(--c-ambar-600); --c-warning-700: var(--c-ambar-700);
+    --c-warning-800: var(--c-ambar-800); --c-warning-900: var(--c-ambar-900);
+
+    --c-error-50: #F4E5E1;  --c-error-100: #EDD4CF; --c-error-200: #DFB4AA;
+    --c-error-300: #D19485; --c-error-400: #C37361; --c-error-500: #B5533C;
+    --c-error-600: #924534; --c-error-700: #6F382C; --c-error-800: #4C2A23;
+    --c-error-900: #291C1B;
+
+    --c-info-50: var(--c-aqua-50);   --c-info-100: var(--c-aqua-100);
+    --c-info-200: var(--c-aqua-200); --c-info-300: var(--c-aqua-300);
+    --c-info-400: var(--c-aqua-400); --c-info-500: var(--c-aqua-500);
+    --c-info-600: var(--c-aqua-600); --c-info-700: var(--c-aqua-700);
+    --c-info-800: var(--c-aqua-800); --c-info-900: var(--c-aqua-900);
+
+    /* ================= espaciado (múltiplos de 4) y radios ================ */
+    --sp-1: 4px;  --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;  --sp-5: 20px;
+    --sp-6: 24px; --sp-8: 32px;  --sp-10: 40px; --sp-12: 48px; --sp-16: 64px;
+    --sp-20: 80px;
+
+    --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 18px; --r-xl: 24px;
+    --r-2xl: 32px; --r-full: 999px;
+    /* radio de firma: UN elemento destacado por pantalla; nunca botones/inputs */
+    --r-signature: 28px 4px 28px 4px;
+
+    /* ================= tipografía ========================================= */
+    --font-display: 'Poppins', system-ui, 'Segoe UI', sans-serif;
+    --font-body: 'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
+
+    /* escala REDSAT — tamaño / interlínea */
+    --fs-display: 44px; --lh-display: 50px;   /* Poppins 700 */
+    --fs-h1: 32px;      --lh-h1: 40px;        /* Poppins 600 */
+    --fs-h2: 26px;      --lh-h2: 34px;        /* Poppins 600 */
+    --fs-h3: 21px;      --lh-h3: 28px;        /* Poppins 500 */
+    --fs-body-lg: 17px; --lh-body-lg: 27px;   /* Inter 400 */
+    --fs-body: 15px;    --lh-body: 23px;      /* Inter 400 */
+    --fs-caption: 13px; --lh-caption: 18px;   /* Inter 500 */
+    --fs-overline: 11px;                      /* Inter 700 · +8 % · MAYÚSCULAS */
+    --fs-data: 15px;                          /* Inter 600 · tabular */
+
+    /* ================= tokens semánticos — modo claro ===================== */
+    --bg-base: #FFFFFF;
+    --bg-surface: #FFFFFF;
+    --bg-surface-alt: var(--c-marfil-400);
+    --bg-inset: var(--c-marfil-300);
+
+    --text-primary: var(--c-neutral-500);    /* 13,46 AAA peor caso */
+    --text-secondary: var(--c-neutral-400);  /* 7,24 AAA peor caso */
+    --text-muted: var(--c-neutral-300);      /* 3,86–4,27: excepción E1 — solo terciario */
+    --text-inverse: #FFFFFF;
+
+    --brand-primary: var(--c-azul-500);      /* 7,25 AAA peor caso */
+    --brand-primary-hover: var(--c-azul-600);
+    --brand-primary-active: var(--c-azul-700);
+    --brand-secondary: var(--c-aqua-500);    /* tinta oscura encima, NUNCA blanca (2,51) */
+    --brand-secondary-hover: var(--c-aqua-600);
+    --brand-accent: var(--c-ambar-500);      /* tinta oscura encima, NUNCA blanca (2,06) */
+
+    --border-default: var(--c-salvia-500);   /* divisor decorativo: no delimita controles */
+    --border-strong: var(--c-salvia-700);    /* 3,34 peor caso ≥ 3:1 */
+
+    --focus-ring: rgba(79, 179, 169, 0.45);
+    --shadow-sm: 0 1px 2px rgba(11, 85, 126, 0.08), 0 1px 1px rgba(11, 85, 126, 0.04);
+    --shadow-md: 0 6px 16px rgba(11, 85, 126, 0.10), 0 2px 4px rgba(11, 85, 126, 0.06);
+    --shadow-lg: 0 20px 48px rgba(11, 85, 126, 0.16), 0 6px 12px rgba(11, 85, 126, 0.08);
+
+    /* estados: fondo claro + texto oscuro del mismo tono (50/700/200) */
+    --st-success-bg: var(--c-success-50); --st-success-fg: var(--c-success-700); --st-success-bd: var(--c-success-200);
+    --st-warning-bg: var(--c-warning-50); --st-warning-fg: var(--c-warning-700); --st-warning-bd: var(--c-warning-200);
+    --st-error-bg: var(--c-error-50);     --st-error-fg: var(--c-error-700);     --st-error-bd: var(--c-error-200);
+    --st-info-bg: var(--c-info-50);       --st-info-fg: var(--c-info-700);       --st-info-bd: var(--c-info-200);
+
+    color-scheme: light dark;
+}
+
+/* ================= modo oscuro ============================================
+   El azul estructura (las superficies SON la rampa del petróleo) y la
+   aguamarina acciona. Oscuro por preferencia del sistema… */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        --bg-base: var(--c-azul-900);
+        --bg-surface: var(--c-azul-800);
+        --bg-surface-alt: var(--c-azul-700);
+        --bg-inset: #0F2E42;
+
+        --text-primary: var(--c-marfil-500);    /* el Marfil pasa de papel a tinta */
+        --text-secondary: var(--c-salvia-200);
+        --text-muted: var(--c-salvia-600);      /* excepción E2 (4,45 en la sup. más alta) */
+        --text-inverse: var(--c-azul-900);
+
+        --brand-primary: var(--c-aqua-400);     /* la aguamarina toma la acción primaria */
+        --brand-primary-hover: var(--c-aqua-300);
+        --brand-primary-active: var(--c-aqua-500);
+        --brand-secondary: var(--c-menta-300);
+        --brand-secondary-hover: var(--c-menta-200);
+        --brand-accent: var(--c-ambar-400);
+
+        --border-default: rgba(255, 255, 255, 0.12);
+        --border-strong: rgba(255, 255, 255, 0.24);  /* excepción E3: <3:1 sin foco */
+
+        --focus-ring: rgba(159, 216, 208, 0.45);
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+        --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.40);
+        --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.50);
+
+        /* estados en oscuro: fondo hundido + texto claro (800/200/600) */
+        --st-success-bg: var(--c-success-800); --st-success-fg: var(--c-success-200); --st-success-bd: var(--c-success-600);
+        --st-warning-bg: var(--c-warning-800); --st-warning-fg: var(--c-warning-200); --st-warning-bd: var(--c-warning-600);
+        --st-error-bg: var(--c-error-800);     --st-error-fg: var(--c-error-200);     --st-error-bd: var(--c-error-600);
+        --st-info-bg: var(--c-info-800);       --st-info-fg: var(--c-info-200);       --st-info-bd: var(--c-info-600);
+    }
+}
+
+/* …y el toggle manual manda sobre la preferencia del sistema
+   (bajo SSR se estampa tras afterNextRender, nunca en la ruta de render) */
+:root[data-theme='dark'] {
+    --bg-base: var(--c-azul-900);
+    --bg-surface: var(--c-azul-800);
+    --bg-surface-alt: var(--c-azul-700);
+    --bg-inset: #0F2E42;
+
+    --text-primary: var(--c-marfil-500);
+    --text-secondary: var(--c-salvia-200);
+    --text-muted: var(--c-salvia-600);
+    --text-inverse: var(--c-azul-900);
+
+    --brand-primary: var(--c-aqua-400);
+    --brand-primary-hover: var(--c-aqua-300);
+    --brand-primary-active: var(--c-aqua-500);
+    --brand-secondary: var(--c-menta-300);
+    --brand-secondary-hover: var(--c-menta-200);
+    --brand-accent: var(--c-ambar-400);
+
+    --border-default: rgba(255, 255, 255, 0.12);
+    --border-strong: rgba(255, 255, 255, 0.24);
+
+    --focus-ring: rgba(159, 216, 208, 0.45);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.40);
+    --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.50);
+
+    --st-success-bg: var(--c-success-800); --st-success-fg: var(--c-success-200); --st-success-bd: var(--c-success-600);
+    --st-warning-bg: var(--c-warning-800); --st-warning-fg: var(--c-warning-200); --st-warning-bd: var(--c-warning-600);
+    --st-error-bg: var(--c-error-800);     --st-error-fg: var(--c-error-200);     --st-error-bd: var(--c-error-600);
+    --st-info-bg: var(--c-info-800);       --st-info-fg: var(--c-info-200);       --st-info-bd: var(--c-info-600);
+}
+
+/* ---- base ---- */
+html {
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: 1.55;
+}
+
+body {
+    margin: 0;
+    background: var(--bg-base);
+    color: var(--text-primary);
+}
+
+/* encabezados: Poppins con la escala REDSAT; el color es texto, no marca */
+h1,
+h2,
+h3,
+h4 {
+    font-family: var(--font-display);
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 600; }
+h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; }
+h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
+
+/* datos clínicos: columnas de resultados, dosis y rangos alinean por cifra */
+.cifras-tabulares {
+    font-variant-numeric: tabular-nums;
+}
+
+/* foco: anillo aqua/menta de 4 px; el outline transparente reaparece con
+   color de sistema en modo de contraste forzado */
+:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* breakpoints REDSAT (referencia; se usan al construir pantallas):
+   móvil < 780 px · tablet 780–1024 px · escritorio > 1024 px — mobile-first */
