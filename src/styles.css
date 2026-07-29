@@ -1,8 +1,11 @@
 /* ============================================================================
     Mantra Core Health — Sistema de Diseño REDSAT v1.0
     Fuente normativa: Mantra Core Health Vault/SALUD/Arquitectura/identidad-visual.md
-    Referencia viva 1:1: REDSAT_Sistema_de_Diseno.html (raíz del repo) — los nombres
-    de token son los del diseñador para que el HTML siga siendo la spec.
+    Referencia viva: REDSAT_Sistema_de_Diseno.html (raíz del repo) — los VALORES se
+    copian literales de ahí. Los nombres de familia van en inglés (decisión
+    2026-07-29, identificadores en inglés): azul→petrol · menta→mint · ámbar→amber
+    · salvia→sage · marfil→ivory (aqua y neutral no cambian). El resto de los
+    nombres de token sigue siendo el del diseñador.
     Marca: Azul Petróleo #0B557E · Aguamarina #4FB3A9 · Menta #9FD8D0
         Ámbar Arena #E4A96B · Gris Salvia #CDD9D5 · Marfil #F6F3ED
     Reglas: ámbar ≤10 % y un único punto de acción por pantalla; badges = fondo
@@ -25,35 +28,35 @@
 
 :root {
     /* ================= rampas REDSAT 50–900 (no cambian por tema) ========= */
-    --c-azul-50: #D9E5EB;  --c-azul-100: #C2D5DF; --c-azul-200: #95B5C7;
-    --c-azul-300: #6795AF; --c-azul-400: #397596; --c-azul-500: #0B557E;
-    --c-azul-600: #0B4768; --c-azul-700: #0B3953; --c-azul-800: #0A2B3D;
-    --c-azul-900: #0A1C27;
+    --c-petrol-50: #D9E5EB;  --c-petrol-100: #C2D5DF; --c-petrol-200: #95B5C7;
+    --c-petrol-300: #6795AF; --c-petrol-400: #397596; --c-petrol-500: #0B557E;
+    --c-petrol-600: #0B4768; --c-petrol-700: #0B3953; --c-petrol-800: #0A2B3D;
+    --c-petrol-900: #0A1C27;
 
     --c-aqua-50: #E4F3F2;  --c-aqua-100: #D3ECEA; --c-aqua-200: #B2DEDA;
     --c-aqua-300: #91D0C9; --c-aqua-400: #70C1B9; --c-aqua-500: #4FB3A9;
     --c-aqua-600: #41928A; --c-aqua-700: #33706C; --c-aqua-800: #254F4D;
     --c-aqua-900: #162D2F;
 
-    --c-menta-50: #F0F9F8;  --c-menta-100: #E7F5F3; --c-menta-200: #D5EEEB;
-    --c-menta-300: #C3E7E2; --c-menta-400: #B1DFD9; --c-menta-500: #9FD8D0;
-    --c-menta-600: #80AFA9; --c-menta-700: #628683; --c-menta-800: #435D5C;
-    --c-menta-900: #253436;
+    --c-mint-50: #F0F9F8;  --c-mint-100: #E7F5F3; --c-mint-200: #D5EEEB;
+    --c-mint-300: #C3E7E2; --c-mint-400: #B1DFD9; --c-mint-500: #9FD8D0;
+    --c-mint-600: #80AFA9; --c-mint-700: #628683; --c-mint-800: #435D5C;
+    --c-mint-900: #253436;
 
-    --c-ambar-50: #FBF2E8;  --c-ambar-100: #F8EADA; --c-ambar-200: #F3DABE;
-    --c-ambar-300: #EEC9A3; --c-ambar-400: #E9B987; --c-ambar-500: #E4A96B;
-    --c-ambar-600: #B78A59; --c-ambar-700: #8B6A47; --c-ambar-800: #5E4B35;
-    --c-ambar-900: #312C24;
+    --c-amber-50: #FBF2E8;  --c-amber-100: #F8EADA; --c-amber-200: #F3DABE;
+    --c-amber-300: #EEC9A3; --c-amber-400: #E9B987; --c-amber-500: #E4A96B;
+    --c-amber-600: #B78A59; --c-amber-700: #8B6A47; --c-amber-800: #5E4B35;
+    --c-amber-900: #312C24;
 
-    --c-salvia-50: #F7F9F9;  --c-salvia-100: #F3F6F5; --c-salvia-200: #E9EEED;
-    --c-salvia-300: #E0E7E5; --c-salvia-400: #D6E0DD; --c-salvia-500: #CDD9D5;
-    --c-salvia-600: #A5B0AD; --c-salvia-700: #7D8786; --c-salvia-800: #555D5E;
-    --c-salvia-900: #2D3437;
+    --c-sage-50: #F7F9F9;  --c-sage-100: #F3F6F5; --c-sage-200: #E9EEED;
+    --c-sage-300: #E0E7E5; --c-sage-400: #D6E0DD; --c-sage-500: #CDD9D5;
+    --c-sage-600: #A5B0AD; --c-sage-700: #7D8786; --c-sage-800: #555D5E;
+    --c-sage-900: #2D3437;
 
-    --c-marfil-50: #FEFDFC;  --c-marfil-100: #FDFCFB; --c-marfil-200: #FBFAF7;
-    --c-marfil-300: #F9F8F4; --c-marfil-400: #F8F5F0; --c-marfil-500: #F6F3ED;
-    --c-marfil-600: #C6C4C1; --c-marfil-700: #959694; --c-marfil-800: #656768;
-    --c-marfil-900: #34393B;
+    --c-ivory-50: #FEFDFC;  --c-ivory-100: #FDFCFB; --c-ivory-200: #FBFAF7;
+    --c-ivory-300: #F9F8F4; --c-ivory-400: #F8F5F0; --c-ivory-500: #F6F3ED;
+    --c-ivory-600: #C6C4C1; --c-ivory-700: #959694; --c-ivory-800: #656768;
+    --c-ivory-900: #34393B;
 
     --c-neutral-50: #E1E2E2;  --c-neutral-100: #CCCDCD; --c-neutral-200: #A2A4A4;
     --c-neutral-300: #787B7B; --c-neutral-400: #4E5151; --c-neutral-500: #242828;
@@ -66,11 +69,11 @@
     --c-success-600: #27725C; --c-success-700: #1F5949; --c-success-800: #183F37;
     --c-success-900: #102624;
 
-    --c-warning-50: var(--c-ambar-50);   --c-warning-100: var(--c-ambar-100);
-    --c-warning-200: var(--c-ambar-200); --c-warning-300: var(--c-ambar-300);
-    --c-warning-400: var(--c-ambar-400); --c-warning-500: var(--c-ambar-500);
-    --c-warning-600: var(--c-ambar-600); --c-warning-700: var(--c-ambar-700);
-    --c-warning-800: var(--c-ambar-800); --c-warning-900: var(--c-ambar-900);
+    --c-warning-50: var(--c-amber-50);   --c-warning-100: var(--c-amber-100);
+    --c-warning-200: var(--c-amber-200); --c-warning-300: var(--c-amber-300);
+    --c-warning-400: var(--c-amber-400); --c-warning-500: var(--c-amber-500);
+    --c-warning-600: var(--c-amber-600); --c-warning-700: var(--c-amber-700);
+    --c-warning-800: var(--c-amber-800); --c-warning-900: var(--c-amber-900);
 
     --c-error-50: #F4E5E1;  --c-error-100: #EDD4CF; --c-error-200: #DFB4AA;
     --c-error-300: #D19485; --c-error-400: #C37361; --c-error-500: #B5533C;
@@ -111,23 +114,23 @@
     /* ================= tokens semánticos — modo claro ===================== */
     --bg-base: #FFFFFF;
     --bg-surface: #FFFFFF;
-    --bg-surface-alt: var(--c-marfil-400);
-    --bg-inset: var(--c-marfil-300);
+    --bg-surface-alt: var(--c-ivory-400);
+    --bg-inset: var(--c-ivory-300);
 
     --text-primary: var(--c-neutral-500);    /* 13,46 AAA peor caso */
     --text-secondary: var(--c-neutral-400);  /* 7,24 AAA peor caso */
     --text-muted: var(--c-neutral-300);      /* 3,86–4,27: excepción E1 — solo terciario */
     --text-inverse: #FFFFFF;
 
-    --brand-primary: var(--c-azul-500);      /* 7,25 AAA peor caso */
-    --brand-primary-hover: var(--c-azul-600);
-    --brand-primary-active: var(--c-azul-700);
+    --brand-primary: var(--c-petrol-500);      /* 7,25 AAA peor caso */
+    --brand-primary-hover: var(--c-petrol-600);
+    --brand-primary-active: var(--c-petrol-700);
     --brand-secondary: var(--c-aqua-500);    /* tinta oscura encima, NUNCA blanca (2,51) */
     --brand-secondary-hover: var(--c-aqua-600);
-    --brand-accent: var(--c-ambar-500);      /* tinta oscura encima, NUNCA blanca (2,06) */
+    --brand-accent: var(--c-amber-500);      /* tinta oscura encima, NUNCA blanca (2,06) */
 
-    --border-default: var(--c-salvia-500);   /* divisor decorativo: no delimita controles */
-    --border-strong: var(--c-salvia-700);    /* 3,34 peor caso ≥ 3:1 */
+    --border-default: var(--c-sage-500);   /* divisor decorativo: no delimita controles */
+    --border-strong: var(--c-sage-700);    /* 3,34 peor caso ≥ 3:1 */
 
     --focus-ring: rgba(79, 179, 169, 0.45);
     --shadow-sm: 0 1px 2px rgba(11, 85, 126, 0.08), 0 1px 1px rgba(11, 85, 126, 0.04);
@@ -148,22 +151,22 @@
    aguamarina acciona. Oscuro por preferencia del sistema… */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
-        --bg-base: var(--c-azul-900);
-        --bg-surface: var(--c-azul-800);
-        --bg-surface-alt: var(--c-azul-700);
+        --bg-base: var(--c-petrol-900);
+        --bg-surface: var(--c-petrol-800);
+        --bg-surface-alt: var(--c-petrol-700);
         --bg-inset: #0F2E42;
 
-        --text-primary: var(--c-marfil-500);    /* el Marfil pasa de papel a tinta */
-        --text-secondary: var(--c-salvia-200);
-        --text-muted: var(--c-salvia-600);      /* excepción E2 (4,45 en la sup. más alta) */
-        --text-inverse: var(--c-azul-900);
+        --text-primary: var(--c-ivory-500);    /* el Marfil pasa de papel a tinta */
+        --text-secondary: var(--c-sage-200);
+        --text-muted: var(--c-sage-600);      /* excepción E2 (4,45 en la sup. más alta) */
+        --text-inverse: var(--c-petrol-900);
 
         --brand-primary: var(--c-aqua-400);     /* la aguamarina toma la acción primaria */
         --brand-primary-hover: var(--c-aqua-300);
         --brand-primary-active: var(--c-aqua-500);
-        --brand-secondary: var(--c-menta-300);
-        --brand-secondary-hover: var(--c-menta-200);
-        --brand-accent: var(--c-ambar-400);
+        --brand-secondary: var(--c-mint-300);
+        --brand-secondary-hover: var(--c-mint-200);
+        --brand-accent: var(--c-amber-400);
 
         --border-default: rgba(255, 255, 255, 0.12);
         --border-strong: rgba(255, 255, 255, 0.24);  /* excepción E3: <3:1 sin foco */
@@ -184,22 +187,22 @@
 /* …y el toggle manual manda sobre la preferencia del sistema
    (bajo SSR se estampa tras afterNextRender, nunca en la ruta de render) */
 :root[data-theme='dark'] {
-    --bg-base: var(--c-azul-900);
-    --bg-surface: var(--c-azul-800);
-    --bg-surface-alt: var(--c-azul-700);
+    --bg-base: var(--c-petrol-900);
+    --bg-surface: var(--c-petrol-800);
+    --bg-surface-alt: var(--c-petrol-700);
     --bg-inset: #0F2E42;
 
-    --text-primary: var(--c-marfil-500);
-    --text-secondary: var(--c-salvia-200);
-    --text-muted: var(--c-salvia-600);
-    --text-inverse: var(--c-azul-900);
+    --text-primary: var(--c-ivory-500);
+    --text-secondary: var(--c-sage-200);
+    --text-muted: var(--c-sage-600);
+    --text-inverse: var(--c-petrol-900);
 
     --brand-primary: var(--c-aqua-400);
     --brand-primary-hover: var(--c-aqua-300);
     --brand-primary-active: var(--c-aqua-500);
-    --brand-secondary: var(--c-menta-300);
-    --brand-secondary-hover: var(--c-menta-200);
-    --brand-accent: var(--c-ambar-400);
+    --brand-secondary: var(--c-mint-300);
+    --brand-secondary-hover: var(--c-mint-200);
+    --brand-accent: var(--c-amber-400);
 
     --border-default: rgba(255, 255, 255, 0.12);
     --border-strong: rgba(255, 255, 255, 0.24);
@@ -243,8 +246,11 @@ h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 600; }
 h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; }
 h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 
-/* datos clínicos: columnas de resultados, dosis y rangos alinean por cifra */
-.cifras-tabulares {
+/* datos clínicos: columnas de resultados, dosis y rangos alinean por cifra.
+   `.tabular-nums` es el nombre del spec REDSAT; `.cifras-tabulares` es el
+   nombre del vault — ambos válidos, misma regla. */
+.cifras-tabulares,
+.tabular-nums {
     font-variant-numeric: tabular-nums;
 }
 

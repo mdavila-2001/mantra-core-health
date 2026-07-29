@@ -1,0 +1,218 @@
+/* ============================================================================
+    AppButton — traducción BEM del bloque Buttons de REDSAT_Sistema_de_Diseno.html
+    (el diseñador escribe `btn-primary`; acá `btn--primary` — mismos valores).
+    Cero valores propios: todo alias de tokens de src/styles.css, salvo el
+    blanco literal del danger/spinner que fija el propio spec (ver nota).
+
+    Las clases viven EN el host (`<button app-button class="btn …">`), por eso
+    todo selector de variante/estado va con `:host(...)`. Las variables locales
+    --_btn-* son el contrato interno: cada variante las redefine y los estados
+    (hover/spinner) las consumen sin repetir tokens.
+    ========================================================================== */
+
+:host {
+  --_btn-bg: transparent;
+  --_btn-fg: currentColor;
+  --_btn-bg-hover: var(--_btn-bg);
+  --_btn-fg-hover: var(--_btn-fg);
+
+  font-family: var(--font-body);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border-radius: var(--r-sm);
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
+  white-space: nowrap;
+  position: relative;
+
+  background: var(--_btn-bg);
+  color: var(--_btn-fg);
+}
+
+:host(:hover) {
+  background: var(--_btn-bg-hover);
+  color: var(--_btn-fg-hover);
+}
+
+:host(:active) {
+  transform: translateY(1px);
+}
+
+/* el anillo --focus-ring lo pone la regla global de :focus-visible */
+
+/* ---- variantes ---------------------------------------------------------- */
+
+:host(.btn--primary) {
+  --_btn-bg: var(--brand-primary);
+  --_btn-fg: var(--text-inverse);
+  --_btn-bg-hover: var(--brand-primary-hover);
+}
+
+/* la variante con borde del spec: acción secundaria de marca */
+:host(.btn--secondary) {
+  --_btn-fg: var(--brand-primary);
+  --_btn-bg-hover: var(--st-info-bg);
+  box-shadow: inset 0 0 0 1.5px var(--brand-primary);
+}
+
+/* extensión propia (no está en el spec): outline neutro para acciones sin
+   peso de marca. Solo tokens REDSAT.
+   TODO(diseñador): validar — identidad-visual.md, pendientes. */
+:host(.btn--outline) {
+  --_btn-fg: var(--text-primary);
+  --_btn-bg-hover: var(--bg-inset);
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
+}
+
+:host(.btn--ghost) {
+  --_btn-fg: var(--text-secondary);
+  --_btn-bg-hover: var(--bg-inset);
+  --_btn-fg-hover: var(--text-primary);
+}
+
+/* los colores que el spec le da a `btn-icon`, disponibles también con texto */
+:host(.btn--neutral) {
+  --_btn-bg: var(--bg-inset);
+  --_btn-fg: var(--text-secondary);
+  --_btn-bg-hover: var(--border-default);
+  --_btn-fg-hover: var(--text-primary);
+}
+
+:host(.btn--danger) {
+  --_btn-bg: var(--c-error-500);
+  /* blanco literal del spec (btn-danger): en oscuro --text-inverse es
+     petrol-900 y el diseñador fija #fff en ambos temas */
+  --_btn-fg: #fff;
+  --_btn-bg-hover: var(--c-error-600);
+}
+
+/* ---- tamaños (sm solo escritorio/tablet según el spec) -------------------
+   --_btn-side es la altura del talle; el modo ícono la reusa como ancho para
+   quedar cuadrado sin repetir medidas. */
+
+:host(.btn--sm) {
+  --_btn-side: 32px;
+  font-size: 13px;
+  padding: var(--sp-2) 14px;
+  min-height: var(--_btn-side);
+}
+
+:host(.btn--md) {
+  --_btn-side: 40px;
+  font-size: 14px;
+  padding: 11px var(--sp-5);
+  min-height: var(--_btn-side);
+}
+
+:host(.btn--lg) {
+  --_btn-side: 48px;
+  font-size: 15.5px;
+  padding: 14px 28px;
+  min-height: var(--_btn-side);
+}
+
+/* móvil: área táctil mínima 44 px (breakpoint REDSAT < 780 px) */
+@media (max-width: 780px) {
+  :host(.btn--md),
+  :host(.btn--lg) {
+    --_btn-side: 44px;
+    padding: var(--sp-3) var(--sp-5);
+    font-size: 14.5px;
+  }
+}
+
+/* ---- modo ícono: solo geometría; el color lo sigue poniendo la variante -- */
+
+:host(.btn--icon-only) {
+  width: var(--_btn-side);
+  padding: 0;
+  border-radius: var(--r-full);
+}
+
+/* Los SVG llegan proyectados, así que conservan la encapsulación del padre y
+   los selectores normales no los alcanzan: ::ng-deep es la vía soportada.
+   Se dimensionan en `em` para que acompañen al talle del botón. */
+:host ::ng-deep svg {
+  width: 1.2em;
+  height: 1.2em;
+  flex-shrink: 0;
+}
+
+/* ---- estados ------------------------------------------------------------- */
+
+/* el spec define el deshabilitado para rellenos (neutral-200 / neutral-500);
+   en variantes transparentes se apaga la tinta y el borde.
+   TODO(diseñador): confirmar el tratamiento de las transparentes. */
+:host(.btn--disabled) {
+  cursor: not-allowed;
+}
+
+:host(.btn--disabled:active) {
+  transform: none;
+}
+
+:host(.btn--disabled.btn--primary),
+:host(.btn--disabled.btn--danger) {
+  --_btn-bg: var(--c-neutral-200);
+  --_btn-fg: var(--c-neutral-500);
+  --_btn-bg-hover: var(--c-neutral-200);
+  --_btn-fg-hover: var(--c-neutral-500);
+}
+
+:host(.btn--disabled.btn--secondary),
+:host(.btn--disabled.btn--outline),
+:host(.btn--disabled.btn--ghost) {
+  --_btn-fg: var(--text-muted);
+  --_btn-bg-hover: transparent;
+  --_btn-fg-hover: var(--text-muted);
+}
+
+:host(.btn--disabled.btn--secondary),
+:host(.btn--disabled.btn--outline) {
+  box-shadow: inset 0 0 0 1.5px var(--border-default);
+}
+
+/* texto transparente conserva el ancho; el spinner hereda la tinta de la
+   variante vía --_btn-fg, así también se ve en las transparentes */
+:host(.btn--loading) {
+  color: transparent;
+  pointer-events: none;
+}
+
+:host(.btn--loading:active) {
+  transform: none;
+}
+
+.btn__spinner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--_btn-fg) 40%, transparent);
+  border-top-color: var(--_btn-fg);
+  animation: btn-spin 0.7s linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* La regla global de prefers-reduced-motion congela toda animación — para un
+   spinner eso equivale a una UI colgada. Es feedback esencial (WCAG 2.3.3 lo
+   permite), así que acá se ralentiza en vez de frenarse. Gana por
+   especificidad: la global apunta a `*`. */
+@media (prefers-reduced-motion: reduce) {
+  .btn__spinner {
+    animation-duration: 1.8s !important;
+    animation-iteration-count: infinite !important;
+  }
+}

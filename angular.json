@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "yarn"
+    "packageManager": "yarn",
+    "analytics": "34f6f1b9-ced6-451f-b3ba-a32a9ef73caa"
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -30,7 +31,7 @@
             "server": "src/main.server.ts",
             "outputMode": "server",
             "security": {
-              "allowedHosts": []
+              "allowedHosts": ["localhost"]
             },
             "ssr": {
               "entry": "src/server.ts"
@@ -38,6 +39,14 @@
           },
           "configurations": {
             "production": {
+              "optimization": {
+                "scripts": true,
+                "fonts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                }
+              },
               "budgets": [
                 {
                   "type": "initial",

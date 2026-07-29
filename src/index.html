@@ -6,6 +6,24 @@
     <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script>
+      /* Anti-parpadeo: bajo SSR el HTML llega sin data-theme, así que una
+         preferencia manual guardada se vería con el tema contrario hasta que
+         hidrate. Este script corre en el <head>, antes del primer paint.
+         'system' NO escribe atributo: lo resuelve @media (prefers-color-scheme)
+         en styles.css sin JS. Clave espejo de THEME_STORAGE_KEY
+         (src/app/core/tokens/theme.service.ts). */
+      (function () {
+        try {
+          var preferencia = localStorage.getItem('mantra-core-health.theme');
+          if (preferencia === 'light' || preferencia === 'dark') {
+            document.documentElement.dataset.theme = preferencia;
+          }
+        } catch (e) {
+          /* almacenamiento bloqueado: queda la preferencia del sistema */
+        }
+      })();
+    </script>
   </head>
   <body>
     <app-root></app-root>
