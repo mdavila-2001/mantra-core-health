@@ -91,6 +91,15 @@ export type BorderToken = (typeof BORDER)[keyof typeof BORDER];
 
 export type StatusToken = `--st-${StatusType}-${StatusSlot}`;
 
+/**
+ * Chips de marca: la MISMA receta tonal de los `--st-*` aplicada a las rampas
+ * de marca. Comparten prefijo porque comparten recipe, pero **no son estados de
+ * producto** — por eso viven aparte de `StatusType`.
+ */
+export const BRAND_TONES = ['primary', 'secondary'] as const;
+export type BrandTone = (typeof BRAND_TONES)[number];
+export type BrandToneToken = `--st-${BrandTone}-${StatusSlot}`;
+
 export const EFFECT = {
   shadowSm: '--shadow-sm',
   shadowMd: '--shadow-md',
@@ -158,6 +167,7 @@ export type DesignToken =
   | BrandToken
   | BorderToken
   | StatusToken
+  | BrandToneToken
   | EffectToken
   | SpacingToken
   | RadiusToken
@@ -205,6 +215,9 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...Object.values(BRAND),
   ...Object.values(BORDER),
   ...STATUS_TYPES.flatMap((status) => STATUS_SLOTS.map((slot) => statusToken(status, slot))),
+  ...BRAND_TONES.flatMap((tone) =>
+    STATUS_SLOTS.map((slot): BrandToneToken => `--st-${tone}-${slot}`),
+  ),
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),

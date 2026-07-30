@@ -1,22 +1,143 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { Input } from './input';
+import { InputComponent } from './input';
 
-describe('Input', () => {
-  let component: Input;
-  let fixture: ComponentFixture<Input>;
+describe('InputComponent', () => {
+  let fixture: ComponentFixture<InputComponent>;
+
+  function native(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('input');
+  }
+
+  async function escribir(text: string): Promise<void> {
+    native().value = text;
+    native().dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+  }
+
+  async function desenfocar(): Promise<void> {
+    native().dispatchEvent(new FocusEvent('blur'));
+    await fixture.whenStable();
+  }
+
+  async function setInputs(inputs: Record<string, unknown>): Promise<void> {
+    for (const [name, value] of Object.entries(inputs)) {
+      fixture.componentRef.setInput(name, value);
+    }
+    await fixture.whenStable();
+  }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [Input],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(Input);
-    component = fixture.componentInstance;
+    await TestBed.configureTestingModule({ imports: [InputComponent] }).compileComponents();
+    fixture = TestBed.createComponent(InputComponent);
     await fixture.whenStable();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  describe('tipo number', () => {
+    beforeEach(async () => {
+      await setInputs({ type: 'number' });
+    });
+
+    it('el 0 vuelve como número, no como texto', async () => {
+      await escribir('0');
+
+      expect(fixture.componentInstance.value()).toBe(0);
+      expect(typeof fixture.componentInstance.value()).toBe('number');
+    });
+
+    it('un decimal vuelve como número', async () => {
+      await escribir('36.6');
+
+      expect(fixture.componentInstance.value()).toBe(36.6);
+    });
+
+    it('vaciar el campo da null, no una cadena vacía', async () => {
+      await escribir('12');
+      await escribir('');
+
+      expect(fixture.componentInstance.value()).toBeNull();
+    });
+  });
+
+  describe('normalización al perder el foco', () => {
+    it('el correo NO se pasa a minúsculas: la parte local distingue mayúsculas', async () => {
+      await setInputs({ type: 'email' });
+      await escribir('Juan.Perez@Redsat.BO');
+      await desenfocar();
+
+      expect(fixture.componentInstance.value()).toBe('Juan.Perez@Redsat.BO');
+    });
+
+    it('al correo sí le quita espacios, que nunca son válidos', async () => {
+      await setInputs({ type: 'email' });
+      await escribir(' juan @redsat.bo ');
+      await desenfocar();
+
+      expect(fixture.componentInstance.value()).toBe('juan@redsat.bo');
+    });
+
+    it('a una URL sin esquema le antepone https', async () => {
+      await setInputs({ type: 'url' });
+      await escribir('redsat.salud.bo');
+      await desenfocar();
+
+      expect(fixture.componentInstance.value()).toBe('https://redsat.salud.bo');
+    });
+
+    it('respeta un esquema ya escrito', async () => {
+      await setInputs({ type: 'url' });
+      await escribir('http://redsat.salud.bo');
+      await desenfocar();
+
+      expect(fixture.componentInstance.value()).toBe('http://redsat.salud.bo');
+    });
+  });
+
+  describe('contraseña', () => {
+    beforeEach(async () => {
+      await setInputs({ type: 'password' });
+    });
+
+    it('arranca oculta y alterna a texto', async () => {
+      expect(native().getAttribute('type')).toBe('password');
+
+      const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.input-action-btn');
+      toggle.click();
+      await fixture.whenStable();
+
+      expect(native().getAttribute('type')).toBe('text');
+      expect(toggle.getAttribute('aria-pressed')).toBe('true');
+      expect(toggle.getAttribute('aria-label')).toBe('Ocultar contraseña');
+    });
+  });
+
+  describe('búsqueda', () => {
+    it('el botón de limpiar solo existe con contenido y vacía el valor', async () => {
+      await setInputs({ type: 'search' });
+      expect(fixture.nativeElement.querySelector('.input-action-btn')).toBeNull();
+
+      await escribir('Cardiología');
+      const limpiar: HTMLButtonElement = fixture.nativeElement.querySelector('.input-action-btn');
+      expect(limpiar.getAttribute('aria-label')).toBe('Limpiar búsqueda');
+
+      limpiar.click();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.value()).toBe('');
+    });
+  });
+
+  describe('accesibilidad', () => {
+    it('suelto, el input igual tiene id propio', () => {
+      expect(native().id).not.toBe('');
+    });
+
+    it('hasError marca aria-invalid', async () => {
+      expect(native().getAttribute('aria-invalid')).toBe('false');
+
+      await setInputs({ hasError: true });
+
+      expect(native().getAttribute('aria-invalid')).toBe('true');
+    });
   });
 });

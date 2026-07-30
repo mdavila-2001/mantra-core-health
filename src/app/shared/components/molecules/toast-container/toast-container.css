@@ -1,0 +1,32 @@
+/* ============================================================================
+    ToastContainer — ancla fija de la pila de avisos.
+    El contenedor no captura el puntero (`pointer-events: none`); cada aviso lo
+    reactiva. Sin eso, la columna invisible bloquearía los clics de media
+    pantalla incluso sin avisos en cola.
+    ========================================================================== */
+
+:host {
+    position: fixed;
+    bottom: var(--sp-5);
+    right: var(--sp-5);
+    z-index: 1000;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--sp-2);
+    pointer-events: none;
+    /* no tapa la pantalla en móvil ni se desborda en escritorio */
+    max-width: min(380px, calc(100vw - var(--sp-8)));
+}
+
+/* En móvil el aviso ocupa el ancho: 380 px no entran en 360 de pantalla. */
+@media (max-width: 780px) {
+    :host {
+        left: var(--sp-4);
+        right: var(--sp-4);
+        bottom: var(--sp-4);
+        max-width: none;
+        align-items: stretch;
+    }
+}

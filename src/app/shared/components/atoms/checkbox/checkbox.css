@@ -1,0 +1,104 @@
+/* ============================================================================
+    CheckboxComponent — Vanilla CSS con tokens REDSAT
+    ========================================================================== */
+
+:host {
+  display: inline-block;
+}
+
+.checkbox-container {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 40px;
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  position: relative;
+}
+
+@media (max-width: 780px) {
+  .checkbox-container {
+    min-height: 44px;
+  }
+}
+
+/* Ocultar input nativo visualmente manteniendo soporte de accesibilidad */
+.native-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+/* Cuadro indicador de 18px (22px móvil) con radio de 5px */
+.checkbox-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-strong);
+  background-color: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+}
+
+@media (max-width: 780px) {
+  .checkbox-box {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.checkbox-box svg {
+  width: 12px;
+  height: 12px;
+  /* literal del spec (.checkbox/.radio: `color: #fff`): el tilde es blanco
+     en ambos temas, no sigue a --text-inverse */
+  color: #ffffff;
+}
+
+@media (max-width: 780px) {
+  .checkbox-box svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Estado Marcado */
+.checkbox-container.is-checked .checkbox-box {
+  background-color: var(--brand-primary);
+  border-color: var(--brand-primary);
+}
+
+/* Estado Foco en el input nativo */
+.native-checkbox:focus-visible + .checkbox-box {
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  border-color: var(--brand-primary);
+}
+
+/* Estado Error */
+.checkbox-container.has-error .checkbox-box {
+  border-color: var(--c-error-500);
+}
+
+/* Estado Deshabilitado */
+.checkbox-container.is-disabled {
+  cursor: not-allowed;
+  color: var(--text-muted);
+}
+
+.checkbox-container.is-disabled .checkbox-box {
+  background-color: var(--bg-inset);
+  border-color: var(--border-default);
+}
+
+.checkbox-container.is-disabled.is-checked .checkbox-box {
+  background-color: var(--c-neutral-200);
+  border-color: var(--c-neutral-200);
+}

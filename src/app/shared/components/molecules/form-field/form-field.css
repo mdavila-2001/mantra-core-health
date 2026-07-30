@@ -1,0 +1,62 @@
+/* ============================================================================
+    FormFieldComponent — Vanilla CSS con tokens REDSAT
+    ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.form-field-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  width: 100%;
+}
+
+/* Label */
+.form-field-label {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.required-asterisk {
+  color: var(--c-error-500);
+  font-weight: bold;
+}
+
+.form-field-control {
+  width: 100%;
+}
+
+/* Hint */
+.form-field-hint {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  margin: var(--sp-1) 0 0 0;
+}
+
+/* Error Message */
+.form-field-error {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--c-error-500);
+  margin: var(--sp-1) 0 0 0;
+}
+
+.error-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}

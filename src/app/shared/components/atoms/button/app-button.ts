@@ -1,5 +1,6 @@
 import {
   afterNextRender,
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -38,8 +39,8 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types';
  */
 @Component({
   selector: 'button[app-button]',
-  templateUrl: './app-button.component.html',
-  styleUrl: './app-button.component.scss',
+  templateUrl: './app-button.html',
+  styleUrl: './app-button.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class]': 'buttonClasses()',
@@ -54,12 +55,12 @@ export class AppButtonComponent {
 
   readonly variant = input<ButtonVariant>('primary');
   readonly size = input<ButtonSize>('md');
-  readonly isLoading = input<boolean>(false);
-  readonly disabled = input<boolean>(false);
+  readonly isLoading = input(false, { transform: booleanAttribute });
+  readonly disabled = input(false, { transform: booleanAttribute });
   readonly type = input<ButtonType>('button');
 
   /** Cuadrado y circular, sin texto: solo el ícono proyectado. */
-  readonly iconOnly = input<boolean>(false);
+  readonly iconOnly = input(false, { transform: booleanAttribute });
 
   readonly clicked = output<MouseEvent>();
 

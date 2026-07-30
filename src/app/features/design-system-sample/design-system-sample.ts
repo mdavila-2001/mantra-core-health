@@ -6,23 +6,49 @@ import {
   type WritableSignal,
 } from '@angular/core';
 
-import { ThemeService } from '../../core/tokens/theme.service';
-import { AppButtonComponent } from '../../shared/components/atoms/button/app-button.component';
-import { BUTTON_SIZES, BUTTON_VARIANTS } from '../../shared/components/atoms/button/button.types';
 import type { ThemeMode } from '../../core/tokens/design-tokens.types';
+import { ThemeService } from '../../core/tokens/theme.service';
 
-/** Cuánto dura la carga simulada del sandbox de estados. */
+import { Avatar } from '../../shared/components/atoms/avatar/avatar';
+import { AVATAR_SIZES } from '../../shared/components/atoms/avatar/avatar.types';
+import { AvatarGroupComponent } from '../../shared/components/atoms/avatar-group/avatar-group';
+import { Badge } from '../../shared/components/atoms/badge/badge';
+import { BADGE_SIZES, BADGE_VARIANTS } from '../../shared/components/atoms/badge/badge.types';
+import { AppButtonComponent } from '../../shared/components/atoms/button/app-button';
+import { BUTTON_SIZES, BUTTON_VARIANTS } from '../../shared/components/atoms/button/button.types';
+
+import { CheckboxComponent } from '../../shared/components/atoms/checkbox/checkbox';
+import { FileInputComponent } from '../../shared/components/atoms/file-input/file-input';
+import { InputComponent } from '../../shared/components/atoms/input/input';
+import type { SelectOption } from '../../shared/components/atoms/input/input.types';
+import { RadioComponent } from '../../shared/components/atoms/radio/radio';
+import { RadioGroupComponent } from '../../shared/components/atoms/radio-group/radio-group';
+import { SelectComponent } from '../../shared/components/atoms/select/select';
+import { SwitchComponent } from '../../shared/components/atoms/switch/switch';
+
+import { DatePickerComponent } from '../../shared/components/molecules/date-picker/date-picker';
+import { FormFieldComponent } from '../../shared/components/molecules/form-field/form-field';
+
 const DEMO_LOADING_MS = 1500;
 
-/**
- * Vitrina de Diseño: acá se expone cada pieza de shared/components
- * (atoms → molecules → organisms) a medida que existe, montada sobre los
- * tokens reales — es la superficie de observación del sistema (y la primera
- * UI del ThemeService).
- */
 @Component({
   selector: 'app-design-system-sample',
-  imports: [AppButtonComponent],
+  standalone: true,
+  imports: [
+    Avatar,
+    AvatarGroupComponent,
+    Badge,
+    AppButtonComponent,
+    InputComponent,
+    CheckboxComponent,
+    RadioComponent,
+    RadioGroupComponent,
+    SwitchComponent,
+    SelectComponent,
+    FileInputComponent,
+    FormFieldComponent,
+    DatePickerComponent,
+  ],
   templateUrl: './design-system-sample.html',
   styleUrl: './design-system-sample.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,6 +59,18 @@ export class DesignSystemSample {
   protected readonly variants = BUTTON_VARIANTS;
   protected readonly sizes = BUTTON_SIZES;
 
+  protected readonly avatarSizes = AVATAR_SIZES;
+  /** Nombres de muestra: cada uno cae en su tono por hash, no por elección. */
+  protected readonly equipo = [
+    'Andrea Peña',
+    'Bruno Salas',
+    'Carla Ruiz',
+    'Diego Mamani',
+  ] as const;
+
+  protected readonly badgeVariants = BADGE_VARIANTS;
+  protected readonly badgeSizes = BADGE_SIZES;
+
   protected readonly theme = this.themeService.currentTheme;
   protected readonly themeOptions: readonly { mode: ThemeMode; label: string }[] = [
     { mode: 'light', label: 'Claro' },
@@ -42,6 +80,30 @@ export class DesignSystemSample {
 
   protected readonly savingDemo = signal(false);
   protected readonly searchingDemo = signal(false);
+
+  /* Señales para pruebas de controles de formulario */
+  protected readonly textVal = signal('Juan Pérez');
+  protected readonly emailVal = signal('usuario@redsat.salud.bo');
+  protected readonly numVal = signal<number | null>(120.5);
+  protected readonly passVal = signal('SecretPass123!');
+  protected readonly searchVal = signal('Cardiología');
+  protected readonly urlVal = signal('https://redsat.salud.bo');
+
+  protected readonly checkboxVal = signal(true);
+  protected readonly radioVal = signal('paciente');
+  protected readonly switchVal = signal(true);
+  protected readonly selectVal = signal('consulta');
+
+  protected readonly dateOnlyVal = signal<Date | null>(new Date());
+  protected readonly dateTimeVal = signal<Date | null>(new Date());
+  protected readonly fileList = signal<readonly File[]>([]);
+
+  protected readonly selectOptions: SelectOption<string>[] = [
+    { value: 'consulta', label: 'Consulta General' },
+    { value: 'emergencia', label: 'Emergencias Médicas' },
+    { value: 'laboratorio', label: 'Examen de Laboratorio' },
+    { value: 'pediatria', label: 'Atención Pediátrica' },
+  ];
 
   protected setTheme(mode: ThemeMode): void {
     this.themeService.setTheme(mode);

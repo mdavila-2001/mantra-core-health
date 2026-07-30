@@ -1,0 +1,26 @@
+<label
+  class="switch-container"
+  [class.is-checked]="checked()"
+  [class.is-disabled]="disabled()"
+  [attr.for]="controlId()"
+>
+  <!-- role="switch" SÍ exige aria-checked, a diferencia del checkbox nativo,
+       donde el rol implícito ya lo aporta y repetirlo es ruido. -->
+  <input
+    type="checkbox"
+    role="switch"
+    class="native-switch"
+    [id]="controlId()"
+    [checked]="checked()"
+    [disabled]="disabled()"
+    [attr.aria-checked]="checked()"
+    [attr.aria-describedby]="describedBy()"
+    (change)="handleChange($event)"
+  />
+  <span class="switch-track" aria-hidden="true">
+    <span class="switch-thumb"></span>
+  </span>
+  @if (label()) {
+    <span class="switch-label">{{ label() }}</span>
+  }
+</label>

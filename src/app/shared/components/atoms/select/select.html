@@ -1,0 +1,33 @@
+<div [class]="wrapperClasses()">
+  <select
+    class="native-select"
+    [id]="controlId()"
+    [value]="selectedIndex()"
+    [disabled]="disabled()"
+    [attr.aria-invalid]="invalid()"
+    [attr.aria-required]="required() || null"
+    [attr.aria-describedby]="describedBy()"
+    (change)="handleChange($event)"
+    (focus)="handleFocus($event)"
+    (blur)="handleBlur($event)"
+  >
+    <!-- `hidden` y no `disabled`: el navegador se niega a seleccionar una
+         opción deshabilitada, así que con `disabled` el placeholder nunca
+         llegaba a mostrarse y el select saltaba a la primera opción real. -->
+    @if (placeholder()) {
+      <option value="" hidden>{{ placeholder() }}</option>
+    }
+    @for (option of options(); track $index) {
+      <option [value]="$index" [disabled]="option.disabled ?? false">
+        {{ option.label }}
+      </option>
+    }
+  </select>
+
+  <!-- Flecha del spec: la nativa se apaga con `appearance: none` en el CSS -->
+  <span class="select-arrow" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  </span>
+</div>

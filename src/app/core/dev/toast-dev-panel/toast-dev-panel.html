@@ -1,0 +1,19 @@
+<!-- <details> colapsa sin JS y ya trae el teclado y el anuncio de estado. -->
+<details class="dev-panel">
+  <summary class="dev-panel__handle">Avisos (dev)</summary>
+
+  <div class="dev-panel__body">
+    <div class="dev-panel__row">
+      @for (type of types; track type) {
+        <button app-button variant="secondary" size="sm" (clicked)="lanzar(type)">
+          {{ type }}
+        </button>
+      }
+    </div>
+    <div class="dev-panel__row">
+      <button app-button variant="danger" size="sm" (clicked)="lanzarFijo()">Fijo</button>
+      <button app-button variant="neutral" size="sm" (clicked)="lanzarRafaga()">Ráfaga ×5</button>
+      <button app-button variant="ghost" size="sm" (clicked)="limpiar()">Limpiar</button>
+    </div>
+  </div>
+</details>

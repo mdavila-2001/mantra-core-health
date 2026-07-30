@@ -1,0 +1,3 @@
+@for (toast of toasts(); track toast.id) {
+  <app-toast [toast]="toast" (dismissed)="dismiss($event)" />
+}

@@ -1,0 +1,70 @@
+<div class="file-input-container">
+  <div
+    class="dropzone"
+    [class.is-dragging]="isDragging()"
+    [class.is-disabled]="disabled()"
+    (dragover)="handleDragOver($event)"
+    (dragleave)="handleDragLeave($event)"
+    (drop)="handleDrop($event)"
+  >
+    <!-- El input nativo cubre la zona (invisible pero enfocable): el clic y el
+         teclado son suyos. El <label> le da el nombre accesible que antes no
+         tenía, porque el texto vivía en un <div> hermano. -->
+    <input
+      type="file"
+      class="native-file-input"
+      [id]="controlId()"
+      [multiple]="multiple()"
+      [disabled]="disabled()"
+      [attr.accept]="accept() || null"
+      [attr.aria-describedby]="describedBy()"
+      (change)="handleFileSelect($event)"
+    />
+    <label class="dropzone-content" [attr.for]="controlId()">
+      <span class="dropzone-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+      </span>
+      <span class="dropzone-text">
+        <span class="highlight">Elegí un archivo</span> o arrastralo acá
+      </span>
+      <span class="dropzone-subtext">
+        {{ multiple() ? 'Se pueden adjuntar varios' : 'Un solo archivo' }}
+      </span>
+    </label>
+  </div>
+
+  @if (files().length > 0) {
+    <ul class="file-list">
+      @for (file of files(); track file.name + file.size + file.lastModified) {
+        <li class="file-item">
+          <span class="file-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+          </span>
+          <span class="file-info">
+            <span class="file-name">{{ file.name }}</span>
+            <span class="file-size">{{ formatFileSize(file.size) }}</span>
+          </span>
+          <button
+            type="button"
+            class="remove-file-btn"
+            [disabled]="disabled()"
+            (click)="removeFile($index)"
+            [attr.aria-label]="'Quitar ' + file.name"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

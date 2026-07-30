@@ -1,0 +1,112 @@
+/* ============================================================================
+    Avatar — traducción BEM del bloque `Avatars` del spec REDSAT
+    (líneas 409–415, y 704–705 para el ajuste móvil).
+
+    Divergencia deliberada con el spec: el diseñador fija `color: #fff` para
+    TODO avatar, pero el fondo rota entre petróleo, aqua y ámbar — y el propio
+    sistema mide **blanco sobre aqua en 2,51 y sobre ámbar en 2,06** y lo
+    prohíbe (identidad-visual.md 8.1). Acá cada tono lleva su tinta: blanco
+    solo sobre petróleo; petróleo-900 sobre aqua y ámbar (6,91 y 8,43).
+    ========================================================================== */
+
+:host {
+    /* Lado del avatar; el punto de estado y la tipografía se derivan de acá. */
+    --_avatar-side: 40px;
+    --_avatar-font: 13px;
+    --_avatar-bg: var(--c-petrol-500);
+    --_avatar-fg: #fff;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    width: var(--_avatar-side);
+    height: var(--_avatar-side);
+    border-radius: var(--r-full);
+    background-color: var(--_avatar-bg);
+    color: var(--_avatar-fg);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--_avatar-font);
+    line-height: 1;
+    overflow: visible;
+    user-select: none;
+}
+
+/* ---- tonos: fondo determinista + su tinta legible --------------------- */
+
+:host(.avatar--petrol) {
+    --_avatar-bg: var(--c-petrol-500);
+    --_avatar-fg: #fff; /* 8,03 — el único relleno de marca que admite blanco */
+}
+
+:host(.avatar--aqua) {
+    --_avatar-bg: var(--c-aqua-500);
+    --_avatar-fg: var(--c-petrol-900); /* 6,91 (blanco daría 2,51) */
+}
+
+:host(.avatar--amber) {
+    --_avatar-bg: var(--c-amber-500);
+    --_avatar-fg: var(--c-petrol-900); /* 8,43 (blanco daría 2,06) */
+}
+
+/* ---- tamaños del spec -------------------------------------------------- */
+
+:host(.avatar--xs) { --_avatar-side: 24px; --_avatar-font: 9px; }
+:host(.avatar--sm) { --_avatar-side: 32px; --_avatar-font: 11px; }
+:host(.avatar--md) { --_avatar-side: 40px; --_avatar-font: 13px; }
+:host(.avatar--lg) { --_avatar-side: 56px; --_avatar-font: 17px; }
+:host(.avatar--xl) { --_avatar-side: 80px; --_avatar-font: 24px; }
+
+/* móvil: los dos talles grandes se achican (breakpoint REDSAT < 780 px) */
+@media (max-width: 780px) {
+    :host(.avatar--lg) { --_avatar-side: 44px; --_avatar-font: 15px; }
+    :host(.avatar--xl) { --_avatar-side: 56px; --_avatar-font: 18px; }
+}
+
+/* ---- contenido: foto → iniciales → silueta ----------------------------- */
+
+.avatar__image {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+    display: block;
+}
+
+.avatar__initials {
+    letter-spacing: 0.02em;
+}
+
+/* La silueta ocupa poco más de la mitad del círculo para dejar aire. */
+.avatar__silhouette {
+    width: 60%;
+    height: 60%;
+}
+
+/* ---- punto de estado --------------------------------------------------- */
+
+.avatar__status {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    /* 28 % del diámetro, con piso para que no desaparezca en xs */
+    width: 28%;
+    height: 28%;
+    min-width: 8px;
+    min-height: 8px;
+    border-radius: var(--r-full);
+    /* el borde del color de la superficie separa el punto del avatar */
+    border: 2px solid var(--bg-surface);
+}
+
+.avatar__status--online {
+    background-color: var(--c-success-500);
+}
+
+/* neutral-300 y no el 200: el 200 (#A2A4A4) da 2,5:1 sobre blanco y no llega
+   al 3:1 que WCAG 1.4.11 pide para un gráfico informativo. */
+.avatar__status--offline {
+    background-color: var(--c-neutral-300);
+}

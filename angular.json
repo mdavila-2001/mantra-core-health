@@ -9,7 +9,12 @@
   "projects": {
     "mantra-core-health": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "css",
+          "type": ""
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",

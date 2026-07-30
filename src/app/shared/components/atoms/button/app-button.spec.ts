@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { AppButtonComponent } from './app-button.component';
+import { AppButtonComponent } from './app-button';
 import type { ButtonSize, ButtonType, ButtonVariant } from './button.types';
 import { BUTTON_SIZES, BUTTON_VARIANTS } from './button.types';
 

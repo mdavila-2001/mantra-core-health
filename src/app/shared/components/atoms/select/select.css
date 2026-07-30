@@ -1,0 +1,101 @@
+/* ============================================================================
+    SelectComponent — Vanilla CSS con tokens REDSAT
+    ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.select-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  min-height: 40px;
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  padding: 0 var(--sp-3);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+@media (max-width: 780px) {
+  .select-wrapper {
+    min-height: 44px;
+    padding: 0 var(--sp-4);
+  }
+}
+
+/* Ocultar flecha nativa del sistema operativo */
+.native-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  padding-right: var(--sp-6);
+  cursor: pointer;
+}
+
+.native-select option {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+/* Flecha personalizada SVG */
+.select-arrow {
+  position: absolute;
+  right: var(--sp-3);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.select-arrow svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.15s ease;
+}
+
+/* ESTADOS */
+.select-wrapper.is-focused,
+.select-wrapper.status-focused {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.select-wrapper.status-success {
+  border-color: var(--st-success-bd);
+  background-color: var(--st-success-bg);
+}
+
+.select-wrapper.status-error {
+  border-color: var(--c-error-500);
+}
+
+.select-wrapper.is-disabled {
+  background-color: var(--bg-inset);
+  border-color: var(--border-default);
+  cursor: not-allowed;
+}
+
+.select-wrapper.is-disabled .native-select {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.select-wrapper.is-disabled .select-arrow {
+  color: var(--text-muted);
+}

@@ -1,0 +1,59 @@
+/* ============================================================================
+    Panel de desarrollo — NO es producto. Vive abajo a la izquierda para no
+    pisar la pila de avisos, que está abajo a la derecha.
+    ========================================================================== */
+
+:host {
+    position: fixed;
+    bottom: var(--sp-5);
+    left: var(--sp-5);
+    z-index: 1000;
+}
+
+.dev-panel {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-md);
+    font-family: var(--font-body);
+    max-width: min(320px, calc(100vw - var(--sp-10)));
+}
+
+.dev-panel__handle {
+    padding: var(--sp-2) var(--sp-3);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    border-radius: inherit;
+}
+
+.dev-panel__handle:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.dev-panel__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: 0 var(--sp-3) var(--sp-3);
+    border-top: 1px solid var(--border-default);
+    padding-top: var(--sp-3);
+}
+
+.dev-panel__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+}
+
+/* En móvil la pila de avisos ocupa todo el ancho: el panel se corre arriba. */
+@media (max-width: 780px) {
+    :host {
+        bottom: auto;
+        top: var(--sp-4);
+        left: var(--sp-4);
+    }
+}

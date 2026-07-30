@@ -1,0 +1,102 @@
+/* ============================================================================
+    RadioComponent — Vanilla CSS con tokens REDSAT
+    ========================================================================== */
+
+:host {
+  display: inline-block;
+}
+
+.radio-container {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 40px;
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  position: relative;
+}
+
+@media (max-width: 780px) {
+  .radio-container {
+    min-height: 44px;
+  }
+}
+
+/* Ocultar input nativo visualmente manteniendo accesibilidad */
+.native-radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+/* Círculo indicador de 18px (22px móvil) con radio de 50% */
+.radio-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  background-color: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+}
+
+@media (max-width: 780px) {
+  .radio-circle {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* Indicador central interior */
+.radio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--brand-primary);
+}
+
+@media (max-width: 780px) {
+  .radio-dot {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+/* Estado Seleccionado */
+.radio-container.is-checked .radio-circle {
+  border-color: var(--brand-primary);
+}
+
+/* Estado Foco en el input nativo */
+.native-radio:focus-visible + .radio-circle {
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  border-color: var(--brand-primary);
+}
+
+/* Estado Error */
+.radio-container.has-error .radio-circle {
+  border-color: var(--c-error-500);
+}
+
+/* Estado Deshabilitado */
+.radio-container.is-disabled {
+  cursor: not-allowed;
+  color: var(--text-muted);
+}
+
+.radio-container.is-disabled .radio-circle {
+  background-color: var(--bg-inset);
+  border-color: var(--border-default);
+}
+
+.radio-container.is-disabled.is-checked .radio-dot {
+  background-color: var(--c-neutral-400);
+}

@@ -1,0 +1,5 @@
+@if (displayValue()) {
+  {{ displayValue() }}
+} @else if (!dotOnly()) {
+  <ng-content />
+}

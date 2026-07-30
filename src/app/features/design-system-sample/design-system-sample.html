@@ -23,7 +23,7 @@
 
     <main class="showroom-content">
         <section class="showroom-section">
-            <h2>01 · Átomos</h2>
+            <h2>01 · Botones</h2>
 
             <h3>Botón — variantes</h3>
             <p class="sandbox-note">
@@ -85,10 +85,6 @@
             </div>
 
             <h3>Botón — solo ícono</h3>
-            <p class="sandbox-note">
-                Cuadrado y circular en los tres talles. El nombre accesible es obligatorio:
-                sin <code>aria-label</code> el componente avisa por consola en desarrollo.
-            </p>
             <div class="sandbox-grid">
                 @for (size of sizes; track size) {
                     <button
@@ -125,6 +121,312 @@
                         <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
                     </svg>
                 </button>
+            </div>
+        </section>
+
+        <!-- SECTION 02: FORM ENTRADAS -->
+        <section class="showroom-section">
+            <h2>02 · Átomos y Moléculas de Entrada (Forms)</h2>
+            <p class="sandbox-note">
+                Catálogo completo de controles de entrada standalone con estado OnPush, tokens REDSAT y 12 variantes con sus estados (idle, focused, error, disabled).
+            </p>
+
+            <!-- 1. Text Input -->
+            <h3>1. Input de Texto (`text`)</h3>
+            <div class="inputs-demo-grid">
+                <app-form-field label="Nombre completo" hint="Idle / Normal">
+                    <app-input type="text" [(value)]="textVal" placeholder="Ej. Juan Pérez"></app-input>
+                </app-form-field>
+                <app-form-field label="Nombre completo" hint="Focused / Foco activo">
+                    <app-input type="text" [(value)]="textVal" placeholder="Ej. Juan Pérez"></app-input>
+                </app-form-field>
+                <app-form-field label="Nombre completo" errorMessage="El nombre es obligatorio">
+                    <app-input type="text" [(value)]="textVal"></app-input>
+                </app-form-field>
+                <app-form-field label="Nombre completo" hint="Disabled / Deshabilitado">
+                    <app-input type="text" [(value)]="textVal" [disabled]="true"></app-input>
+                </app-form-field>
+            </div>
+
+            <!-- 2. Email Input -->
+            <h3>2. Input de Correo (`email` con sanitización)</h3>
+            <div class="inputs-demo-grid">
+                <app-form-field label="Correo institucional" hint="Limpia espacios al perder el foco">
+                    <app-input type="email" [(value)]="emailVal" placeholder="correo@redsat.salud.bo"></app-input>
+                </app-form-field>
+                <app-form-field label="Correo institucional" errorMessage="Formato de correo no válido">
+                    <app-input type="email" [(value)]="emailVal"></app-input>
+                </app-form-field>
+                <app-form-field label="Correo institucional" hint="Deshabilitado">
+                    <app-input type="email" [(value)]="emailVal" [disabled]="true"></app-input>
+                </app-form-field>
+            </div>
+
+            <!-- 3. Number Input -->
+            <h3>3. Input Numérico (`number` - Formato Tabular Nums)</h3>
+            <div class="inputs-demo-grid">
+                <app-form-field label="Dosis (mg)" hint="Cifras tabulares clínicas">
+                    <app-input type="number" [(value)]="numVal" placeholder="0.00"></app-input>
+                </app-form-field>
+                <app-form-field label="Dosis (mg)" errorMessage="La dosis excede el rango seguro">
+                    <app-input type="number" [(value)]="numVal"></app-input>
+                </app-form-field>
+                <app-form-field label="Dosis (mg)" hint="Deshabilitado">
+                    <app-input type="number" [(value)]="numVal" [disabled]="true"></app-input>
+                </app-form-field>
+            </div>
+
+            <!-- 4. Password Input -->
+            <h3>4. Input de Contraseña (`password` - Toggle Ojo 1.6px)</h3>
+            <div class="inputs-demo-grid">
+                <app-form-field label="Contraseña" hint="Con toggle de visibilidad">
+                    <app-input type="password" [(value)]="passVal" placeholder="••••••••"></app-input>
+                </app-form-field>
+                <app-form-field label="Contraseña" errorMessage="Mínimo 8 caracteres">
+                    <app-input type="password" [(value)]="passVal"></app-input>
+                </app-form-field>
+                <app-form-field label="Contraseña" hint="Deshabilitado">
+                    <app-input type="password" [(value)]="passVal" [disabled]="true"></app-input>
+                </app-form-field>
+            </div>
+
+            <!-- 5. Search Input -->
+            <h3>5. Input de Búsqueda (`search` - Lupa + Botón Limpiar)</h3>
+            <div class="inputs-demo-grid">
+                <app-form-field label="Buscar especialidad" hint="Con ícono de lupa y limpiar (X)">
+                    <app-input type="search" [(value)]="searchVal" placeholder="Buscar..."></app-input>
+                </app-form-field>
+                <app-form-field label="Buscar especialidad" errorMessage="Sin resultados de búsqueda">
+                    <app-input type="search" [(value)]="searchVal"></app-input>
+                </app-form-field>
+                <app-form-field label="Buscar especialidad" hint="Deshabilitado">
+                    <app-input type="search" [(value)]="searchVal" [disabled]="true"></app-input>
+                </app-form-field>
+            </div>
+
+            <!-- 6. URL Input -->
+            <h3>6. Input URL (`url` con sanitización)</h3>
+            <div class="inputs-demo-grid">
+                <app-form-field label="Sitio web o portal" hint="Autocompleta https:// al salir">
+                    <app-input type="url" [(value)]="urlVal" placeholder="https://ejemplo.com"></app-input>
+                </app-form-field>
+                <app-form-field label="Sitio web o portal" errorMessage="URL no válida">
+                    <app-input type="url" [(value)]="urlVal"></app-input>
+                </app-form-field>
+                <app-form-field label="Sitio web o portal" hint="Deshabilitado">
+                    <app-input type="url" [(value)]="urlVal" [disabled]="true"></app-input>
+                </app-form-field>
+            </div>
+
+            <!-- 7. Checkbox -->
+            <h3>7. Checkbox (`atoms/checkbox`)</h3>
+            <div class="inputs-demo-grid">
+                <app-checkbox [(checked)]="checkboxVal" label="Acepto términos y condiciones (Idle)"></app-checkbox>
+                <app-checkbox [(checked)]="checkboxVal" label="Checkbox con error" [hasError]="true"></app-checkbox>
+                <app-checkbox [checked]="true" [disabled]="true" label="Checkbox deshabilitado marcado"></app-checkbox>
+                <app-checkbox [checked]="false" [disabled]="true" label="Checkbox deshabilitado no marcado"></app-checkbox>
+            </div>
+
+            <!-- 8. Radio -->
+            <h3>8. Radio Button (`atoms/radio` + `atoms/radio-group`)</h3>
+            <p class="sandbox-note">
+                El grupo es el control: tiene el <code>value</code> y de ahí se deriva cuál está
+                marcado, así nunca puede haber dos seleccionados a la vez.
+            </p>
+            <div class="inputs-demo-grid">
+                <app-form-field label="Tipo de usuario" hint="Un solo valor por grupo">
+                    <app-radio-group [(value)]="radioVal">
+                        <app-radio value="paciente" label="Paciente" />
+                        <app-radio value="medico" label="Médico" />
+                        <app-radio value="admin" label="Administrativo" />
+                        <app-radio value="bloqueado" label="Bloqueado (deshabilitado)" [disabled]="true" />
+                    </app-radio-group>
+                </app-form-field>
+                <app-form-field label="Tipo de usuario" errorMessage="Elegí una opción">
+                    <app-radio-group [(value)]="radioVal" [hasError]="true">
+                        <app-radio value="paciente" label="Paciente" />
+                        <app-radio value="medico" label="Médico" />
+                    </app-radio-group>
+                </app-form-field>
+                <app-form-field label="Grupo deshabilitado">
+                    <app-radio-group [value]="radioVal()" [disabled]="true">
+                        <app-radio value="paciente" label="Paciente" />
+                        <app-radio value="medico" label="Médico" />
+                    </app-radio-group>
+                </app-form-field>
+            </div>
+
+            <!-- 9. Switch -->
+            <h3>9. Switch / Interruptor (`atoms/switch`)</h3>
+            <div class="inputs-demo-grid">
+                <app-switch [(checked)]="switchVal" label="Notificaciones activas (Idle)"></app-switch>
+                <app-switch [checked]="true" [disabled]="true" label="Switch deshabilitado (ON)"></app-switch>
+                <app-switch [checked]="false" [disabled]="true" label="Switch deshabilitado (OFF)"></app-switch>
+            </div>
+
+            <!-- 10. Select -->
+            <h3>10. Select Desplegable (`atoms/select`)</h3>
+            <div class="inputs-demo-grid">
+                <app-form-field label="Tipo de atención" hint="Sin estilos por defecto de SO">
+                    <app-select [options]="selectOptions" [(value)]="selectVal" placeholder="Seleccione un servicio"></app-select>
+                </app-form-field>
+                <app-form-field label="Tipo de atención" errorMessage="Selección requerida">
+                    <app-select [options]="selectOptions" [(value)]="selectVal"></app-select>
+                </app-form-field>
+                <app-form-field label="Tipo de atención" hint="Deshabilitado">
+                    <app-select [options]="selectOptions" [(value)]="selectVal" [disabled]="true"></app-select>
+                </app-form-field>
+            </div>
+
+            <!-- 11. File Input -->
+            <h3>11. Carga de Archivos (`atoms/file-input`)</h3>
+            <div class="inputs-demo-grid">
+                <app-form-field label="Adjuntar resultado (Único)" hint="Drag & Drop o explorador">
+                    <app-file-input [(files)]="fileList" [multiple]="false"></app-file-input>
+                </app-form-field>
+                <app-form-field label="Adjuntar imágenes médicas (Múltiple)" hint="Soporta múltiples archivos">
+                    <app-file-input [(files)]="fileList" [multiple]="true"></app-file-input>
+                </app-form-field>
+                <app-form-field label="Adjunto deshabilitado">
+                    <app-file-input [disabled]="true"></app-file-input>
+                </app-form-field>
+            </div>
+
+            <!-- 12. Date Picker Modal -->
+            <h3>12. DatePicker Modal (`molecules/date-picker`)</h3>
+            <div class="inputs-demo-grid">
+                <app-form-field label="Fecha de nacimiento" hint="Variante date-only">
+                    <app-date-picker mode="date-only" [(value)]="dateOnlyVal"></app-date-picker>
+                </app-form-field>
+                <app-form-field label="Fecha y Hora de Cita" hint="Variante date-time">
+                    <app-date-picker mode="date-time" [(value)]="dateTimeVal"></app-date-picker>
+                </app-form-field>
+                <app-form-field label="Fecha de consulta" errorMessage="Fecha no disponible">
+                    <app-date-picker mode="date-only" [(value)]="dateOnlyVal" [hasError]="true"></app-date-picker>
+                </app-form-field>
+                <app-form-field label="Fecha bloqueada" hint="Deshabilitado">
+                    <app-date-picker mode="date-only" [disabled]="true"></app-date-picker>
+                </app-form-field>
+            </div>
+
+        </section>
+
+        <section class="showroom-section">
+            <h2>03 · Badges</h2>
+            <p class="sandbox-note">
+                Receta del spec: <strong>fondo claro + texto oscuro del mismo tono</strong>, nunca
+                color sólido con texto blanco. <code>primary</code> y <code>secondary</code> son
+                extensión propia con rampas de marca — pendientes de validación del diseñador.
+            </p>
+
+            <h3>Variantes</h3>
+            <div class="sandbox-grid">
+                @for (variant of badgeVariants; track variant) {
+                    <app-badge [variant]="variant">{{ variant }}</app-badge>
+                }
+            </div>
+
+            <h3>Tamaños</h3>
+            <div class="sandbox-grid">
+                @for (size of badgeSizes; track size) {
+                    <app-badge variant="success" [size]="size">Vigente ({{ size }})</app-badge>
+                }
+            </div>
+
+            <h3>Conteos y techo</h3>
+            <p class="sandbox-note">
+                Con <code>max</code>, un conteo por encima del techo se muestra como
+                <code>99+</code> pero se <em>lee</em> «más de 99 …»: la abreviatura no se escucha
+                bien.
+            </p>
+            <div class="sandbox-grid">
+                <app-badge variant="info" [value]="3" label="mensajes nuevos" />
+                <app-badge variant="error" [value]="99" label="alertas activas" />
+                <app-badge variant="error" [value]="250" label="alertas activas" />
+                <app-badge variant="warning" [value]="12" [max]="9" label="órdenes pendientes" />
+                <app-badge variant="secondary" [value]="0" label="estudios sin leer" />
+            </div>
+
+            <h3>Punto de estado</h3>
+            <p class="sandbox-note">
+                Sin texto, el punto toma la tinta del tono. El <code>label</code> es obligatorio:
+                sin él el componente avisa por consola en desarrollo.
+            </p>
+            <div class="sandbox-grid">
+                @for (size of badgeSizes; track size) {
+                    <app-badge
+                        variant="success"
+                        [dotOnly]="true"
+                        [size]="size"
+                        label="Paciente estable"
+                    />
+                }
+                <app-badge variant="warning" [dotOnly]="true" label="Requiere revisión" />
+                <app-badge variant="error" [dotOnly]="true" label="Crítico" />
+                <app-badge variant="primary" [dotOnly]="true" label="En seguimiento" />
+            </div>
+        </section>
+
+        <section class="showroom-section">
+            <h2>04 · Avatares</h2>
+            <p class="sandbox-note">
+                Degradación en cascada: <strong>foto → iniciales → silueta</strong>. El color de
+                fondo sale de un hash determinista del nombre, así la misma persona tiene siempre
+                el mismo color sin guardar nada.
+            </p>
+
+            <h3>Tamaños</h3>
+            <div class="sandbox-grid">
+                @for (size of avatarSizes; track size) {
+                    <app-avatar name="Andrea Peña" [size]="size" />
+                }
+            </div>
+
+            <h3>Color determinista por nombre</h3>
+            <p class="sandbox-note">
+                Ninguno lleva color elegido a mano. <strong>La tinta cambia con el tono</strong>:
+                blanco solo sobre petróleo — sobre aqua y ámbar el sistema mide 2,51 y 2,06 y
+                exige tinta oscura.
+            </p>
+            <div class="sandbox-grid">
+                @for (persona of equipo; track persona) {
+                    <app-avatar [name]="persona" size="lg" />
+                }
+            </div>
+
+            <h3>Respaldos</h3>
+            <div class="sandbox-grid">
+                <app-avatar name="Andrea Peña" size="lg" />
+                <app-avatar initials="MC" size="lg" />
+                <app-avatar size="lg" />
+                <app-avatar src="/no-existe.jpg" name="Bruno Salas" size="lg" alt="Foto de Bruno Salas" />
+            </div>
+            <p class="sandbox-note">
+                El último apunta a una URL rota a propósito: cae solo en las iniciales.
+            </p>
+
+            <h3>Presencia</h3>
+            <div class="sandbox-grid">
+                <app-avatar name="Andrea Peña" size="lg" status="online" />
+                <app-avatar name="Bruno Salas" size="lg" status="offline" />
+                <app-avatar name="Carla Ruiz" size="md" status="online" />
+                <app-avatar name="Diego Mamani" size="sm" status="online" />
+                <app-avatar name="Elena Vaca" size="xs" status="online" />
+            </div>
+
+            <h3>Grupo apilado</h3>
+            <div class="sandbox-grid">
+                <app-avatar-group size="md" label="Equipo tratante" [overflow]="4">
+                    @for (persona of equipo; track persona) {
+                        <app-avatar [name]="persona" size="md" />
+                    }
+                </app-avatar-group>
+            </div>
+            <div class="sandbox-grid">
+                <app-avatar-group size="sm" label="Turno de guardia">
+                    <app-avatar name="Andrea Peña" size="sm" />
+                    <app-avatar name="Bruno Salas" size="sm" />
+                </app-avatar-group>
             </div>
         </section>
     </main>

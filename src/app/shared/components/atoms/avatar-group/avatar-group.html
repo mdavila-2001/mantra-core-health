@@ -1,0 +1,7 @@
+<ng-content />
+
+@if (showOverflow()) {
+  <span class="avatar-group__more" role="img" [attr.aria-label]="overflowLabel()">
+    {{ overflowText() }}
+  </span>
+}

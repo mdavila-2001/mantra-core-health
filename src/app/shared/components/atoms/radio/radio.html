@@ -1,0 +1,24 @@
+<label
+  class="radio-container"
+  [class.is-checked]="checked()"
+  [class.is-disabled]="isDisabled()"
+  [attr.for]="inputId"
+>
+  <input
+    type="radio"
+    class="native-radio"
+    [id]="inputId"
+    [name]="name()"
+    [checked]="checked()"
+    [disabled]="isDisabled()"
+    (change)="select()"
+  />
+  <span class="radio-circle" aria-hidden="true">
+    @if (checked()) {
+      <span class="radio-dot"></span>
+    }
+  </span>
+  @if (label()) {
+    <span class="radio-label">{{ label() }}</span>
+  }
+</label>

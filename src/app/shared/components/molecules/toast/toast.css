@@ -1,0 +1,125 @@
+/* ============================================================================
+    Toast — receta tonal `--st-*` del sistema: fondo claro + tinta oscura del
+    mismo tono, que es la misma regla de los badges. Cero color propio, así el
+    modo oscuro lo resuelve el tema y no este archivo.
+    ========================================================================== */
+
+:host {
+    --_toast-bg: var(--st-info-bg);
+    --_toast-fg: var(--st-info-fg);
+    --_toast-bd: var(--st-info-bd);
+
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    width: 100%;
+    max-width: 380px;
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-md);
+    border: 1px solid var(--_toast-bd);
+    background-color: var(--_toast-bg);
+    color: var(--_toast-fg);
+    box-shadow: var(--shadow-lg);
+    font-family: var(--font-body);
+    pointer-events: auto;
+}
+
+:host(.toast--success) {
+    --_toast-bg: var(--st-success-bg);
+    --_toast-fg: var(--st-success-fg);
+    --_toast-bd: var(--st-success-bd);
+}
+
+:host(.toast--warning) {
+    --_toast-bg: var(--st-warning-bg);
+    --_toast-fg: var(--st-warning-fg);
+    --_toast-bd: var(--st-warning-bd);
+}
+
+:host(.toast--error) {
+    --_toast-bg: var(--st-error-bg);
+    --_toast-fg: var(--st-error-fg);
+    --_toast-bd: var(--st-error-bd);
+}
+
+:host(.toast--info) {
+    --_toast-bg: var(--st-info-bg);
+    --_toast-fg: var(--st-info-fg);
+    --_toast-bd: var(--st-info-bd);
+}
+
+/* ---- contenido ---------------------------------------------------------- */
+
+.toast__icon {
+    display: flex;
+    flex-shrink: 0;
+    /* alinea el ícono con la primera línea de texto, no con el bloque entero */
+    margin-top: 1px;
+}
+
+.toast__icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.toast__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast__title {
+    margin: 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-weight: 700;
+}
+
+.toast__message {
+    margin: 0;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    /* un mensaje largo baja de línea en vez de estirar el aviso */
+    overflow-wrap: anywhere;
+}
+
+.toast__title + .toast__message {
+    margin-top: 2px;
+}
+
+/* ---- cierre -------------------------------------------------------------- */
+
+.toast__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    /* área táctil de 24 px visual pero 44 con el padding negativo del margen */
+    width: 24px;
+    height: 24px;
+    margin: -2px -4px 0 0;
+    padding: 0;
+    border: none;
+    border-radius: var(--r-xs);
+    background: transparent;
+    /* hereda la tinta del tono: nunca es un gris ajeno al aviso */
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.toast__close:hover {
+    opacity: 1;
+    background-color: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.toast__close:focus-visible {
+    outline: 2px solid transparent;
+    opacity: 1;
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.toast__close svg {
+    width: 16px;
+    height: 16px;
+}

@@ -1,0 +1,221 @@
+/* ============================================================================
+    FileInputComponent — Vanilla CSS con tokens REDSAT
+    ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.file-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+}
+
+/* Área Drag & Drop */
+.dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  background-color: var(--bg-surface);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  min-height: 120px;
+}
+
+.dropzone:hover:not(.is-disabled) {
+  border-color: var(--brand-primary);
+  background-color: var(--bg-inset);
+}
+
+.dropzone.is-dragging {
+  border-color: var(--brand-primary);
+  background-color: var(--c-mint-50);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.dropzone.is-disabled {
+  background-color: var(--bg-inset);
+  border-color: var(--border-default);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Input nativo transparente encima */
+.native-file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dropzone.is-disabled .native-file-input {
+  cursor: not-allowed;
+}
+
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  pointer-events: none;
+}
+
+.dropzone-icon {
+  color: var(--brand-primary);
+  margin-bottom: var(--sp-1);
+}
+
+.dropzone-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.dropzone-text {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.dropzone-text .highlight {
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.dropzone-subtext {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Lista de archivos seleccionados */
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3);
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  min-height: 40px;
+}
+
+@media (max-width: 780px) {
+  .file-item {
+    min-height: 44px;
+  }
+}
+
+.file-icon {
+  color: var(--brand-primary);
+  display: flex;
+  align-items: center;
+  margin-right: var(--sp-2);
+}
+
+.file-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  margin-right: var(--sp-2);
+}
+
+.file-name {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-size {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.remove-file-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: var(--sp-1);
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.remove-file-btn:hover:not(:disabled) {
+  color: var(--c-error-500);
+  background-color: var(--st-error-bg);
+}
+
+.remove-file-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- ajustes de semántica (2026-07-30) ----------------------------------
+   La lista de adjuntos pasó de <div> a <ul>/<li> y los textos de la zona de
+   soltar de <p> a <span> dentro de un <label>: el input nativo necesitaba una
+   etiqueta real para tener nombre accesible. Estas reglas neutralizan los
+   estilos por defecto de esos elementos. */
+
+.file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dropzone-content {
+  cursor: inherit;
+}
+
+.dropzone-icon,
+.dropzone-text,
+.dropzone-subtext {
+  display: block;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* El input cubre la zona, así que el foco del teclado se ve en el borde. */
+.native-file-input:focus-visible + .dropzone-content {
+  outline: 2px solid transparent;
+  border-radius: var(--r-sm);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}

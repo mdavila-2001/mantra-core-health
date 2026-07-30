@@ -1,0 +1,113 @@
+/* ============================================================================
+    SwitchComponent — Vanilla CSS con tokens REDSAT
+    ========================================================================== */
+
+:host {
+  display: inline-block;
+}
+
+.switch-container {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 40px;
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  position: relative;
+}
+
+@media (max-width: 780px) {
+  .switch-container {
+    min-height: 44px;
+  }
+}
+
+/* Input nativo oculto */
+.native-switch {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+/* Pista/Track de 38x22px (44x26px en móvil) */
+.switch-track {
+  width: 38px;
+  height: 22px;
+  border-radius: var(--r-full);
+  background-color: var(--c-neutral-300);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+  position: relative;
+}
+
+@media (max-width: 780px) {
+  .switch-track {
+    width: 44px;
+    height: 26px;
+    padding: 3px;
+  }
+}
+
+/* Perilla blanca flotante */
+.switch-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  /* literal del spec (.switch-knob: `background: #fff`): la perilla es
+     blanca en ambos temas */
+  background-color: #ffffff;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(0);
+}
+
+@media (max-width: 780px) {
+  .switch-thumb {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Estado Marcado */
+.switch-container.is-checked .switch-track {
+  background-color: var(--brand-primary);
+}
+
+.switch-container.is-checked .switch-thumb {
+  transform: translateX(16px);
+}
+
+@media (max-width: 780px) {
+  .switch-container.is-checked .switch-thumb {
+    transform: translateX(18px);
+  }
+}
+
+/* Estado Foco en el input nativo */
+.native-switch:focus-visible + .switch-track {
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+/* Estado Deshabilitado */
+.switch-container.is-disabled {
+  cursor: not-allowed;
+  color: var(--text-muted);
+}
+
+.switch-container.is-disabled .switch-track {
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-default);
+}
+
+.switch-container.is-disabled .switch-thumb {
+  background-color: var(--c-neutral-200);
+  box-shadow: none;
+}

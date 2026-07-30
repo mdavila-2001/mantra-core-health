@@ -1,0 +1,128 @@
+<div class="date-picker-trigger-wrapper" [class.has-error]="invalid()" [class.is-disabled]="disabled()">
+  <button
+    #trigger
+    type="button"
+    class="date-picker-trigger"
+    [id]="controlId()"
+    [disabled]="disabled()"
+    [attr.aria-invalid]="invalid()"
+    [attr.aria-describedby]="describedBy()"
+    aria-haspopup="dialog"
+    [attr.aria-expanded]="isOpen()"
+    (click)="open()"
+  >
+    <span class="trigger-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    </span>
+
+    <span class="trigger-value" [class.is-placeholder]="!displayValue()">
+      {{ displayValue() || placeholder() }}
+    </span>
+  </button>
+</div>
+
+@if (isOpen()) {
+  <div class="date-picker-overlay" (click)="close()">
+    <!-- tabindex=-1 para poder recibir el foco al abrir sin entrar en el orden
+         de tabulación; el keydown maneja Escape y atrapa el Tab. -->
+    <div
+      #dialog
+      class="date-picker-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha'"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+      (keydown)="handleDialogKeydown($event)"
+    >
+      <div class="dialog-header">
+        <h3 class="dialog-title">
+          {{ mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha' }}
+        </h3>
+        <button app-button iconOnly variant="ghost" size="sm" (clicked)="close()" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="calendar-nav">
+        <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftMonth(-1)" aria-label="Mes anterior">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <span class="current-month-year" aria-live="polite">{{ viewLabel() }}</span>
+        <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftMonth(1)" aria-label="Mes siguiente">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="weekdays-grid" aria-hidden="true">
+        @for (dayName of weekDayNames; track dayName) {
+          <span class="weekday-name">{{ dayName }}</span>
+        }
+      </div>
+
+      <div class="calendar-grid">
+        @for (day of calendarDays(); track day.date.getTime()) {
+          <button
+            type="button"
+            class="calendar-day-btn"
+            [class.other-month]="!day.isCurrentMonth"
+            [class.is-today]="day.isToday"
+            [class.is-selected]="day.isSelected"
+            [attr.aria-pressed]="day.isSelected"
+            [attr.aria-current]="day.isToday ? 'date' : null"
+            [attr.aria-label]="dayLabel(day)"
+            (click)="selectDay(day)"
+          >
+            {{ day.dayNumber }}
+          </button>
+        }
+      </div>
+
+      @if (mode() === 'date-time') {
+        <div class="time-picker-section">
+          <span class="time-label" id="time-label">Hora</span>
+          <div class="time-controls">
+            <select
+              class="time-select"
+              aria-label="Hora"
+              [value]="draftHours()"
+              (change)="updateHours($event)"
+            >
+              @for (hour of hourOptions; track hour) {
+                <option [value]="hour">{{ hour.toString().padStart(2, '0') }} h</option>
+              }
+            </select>
+            <span class="time-separator" aria-hidden="true">:</span>
+            <select
+              class="time-select"
+              aria-label="Minutos"
+              [value]="draftMinutes()"
+              (change)="updateMinutes($event)"
+            >
+              @for (minute of minuteOptions; track minute) {
+                <option [value]="minute">{{ minute.toString().padStart(2, '0') }} min</option>
+              }
+            </select>
+          </div>
+        </div>
+      }
+
+      <div class="dialog-actions">
+        <button app-button variant="ghost" size="sm" (clicked)="close()">Cancelar</button>
+        <button app-button variant="primary" size="sm" (clicked)="confirm()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+}
