@@ -69,3 +69,30 @@
     line-height: var(--lh-caption);
     color: var(--text-muted);
 }
+
+/* El aviso es un bloque de ancho completo: apilarlo en columna y acotarlo al
+   ancho real que tiene flotando (380 px + borde). */
+.toast-gallery {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    margin-top: var(--sp-4);
+    max-width: 420px;
+}
+
+/* Panel de datos: es código, no prosa — de ahí el monoespaciado, la única
+   familia que el sistema no declara porque no aparece en la UI de producto. */
+.data-panel {
+    margin: var(--sp-3) 0 0;
+    padding: var(--sp-3) var(--sp-4);
+    max-height: 260px;
+    overflow: auto;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-sm);
+    color: var(--text-secondary);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}

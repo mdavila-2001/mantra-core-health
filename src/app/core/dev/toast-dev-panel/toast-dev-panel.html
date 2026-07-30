@@ -5,15 +5,15 @@
   <div class="dev-panel__body">
     <div class="dev-panel__row">
       @for (type of types; track type) {
-        <button app-button variant="secondary" size="sm" (clicked)="lanzar(type)">
+        <button app-button variant="secondary" size="sm" (clicked)="launched.emit(type)">
           {{ type }}
         </button>
       }
     </div>
     <div class="dev-panel__row">
-      <button app-button variant="danger" size="sm" (clicked)="lanzarFijo()">Fijo</button>
-      <button app-button variant="neutral" size="sm" (clicked)="lanzarRafaga()">Ráfaga ×5</button>
-      <button app-button variant="ghost" size="sm" (clicked)="limpiar()">Limpiar</button>
+      <button app-button variant="danger" size="sm" (clicked)="persistentLaunched.emit()">Fijo</button>
+      <button app-button variant="neutral" size="sm" (clicked)="burstLaunched.emit()">Ráfaga ×5</button>
+      <button app-button variant="ghost" size="sm" (clicked)="cleared.emit()">Limpiar</button>
     </div>
   </div>
 </details>

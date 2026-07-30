@@ -28,6 +28,13 @@ import { SwitchComponent } from '../../shared/components/atoms/switch/switch';
 
 import { DatePickerComponent } from '../../shared/components/molecules/date-picker/date-picker';
 import { FormFieldComponent } from '../../shared/components/molecules/form-field/form-field';
+import { Toast } from '../../shared/components/molecules/toast/toast';
+import {
+  TOAST_TYPES,
+  type ToastMessage,
+} from '../../shared/components/molecules/toast/toast.types';
+
+import { DEMO_TOASTS, PERSISTENT_DEMO_TOAST } from '../../core/dev/toast-samples';
 
 const DEMO_LOADING_MS = 1500;
 
@@ -48,6 +55,7 @@ const DEMO_LOADING_MS = 1500;
     FileInputComponent,
     FormFieldComponent,
     DatePickerComponent,
+    Toast,
   ],
   templateUrl: './design-system-sample.html',
   styleUrl: './design-system-sample.css',
@@ -104,6 +112,20 @@ export class DesignSystemSample {
     { value: 'laboratorio', label: 'Examen de Laboratorio' },
     { value: 'pediatria', label: 'Atención Pediátrica' },
   ];
+
+  /* ---- Avisos (Toast) ---------------------------------------------------
+     La cola vive acá, no en un servicio: los dos componentes son
+     presentacionales. Quien monta el contenedor es dueño de agregar, vencer
+     por tiempo y quitar. */
+
+  /** Los cuatro tonos más el aviso fijo, quietos: la galería es apariencia. */
+  protected readonly toastSamples: readonly ToastMessage[] = [
+    ...TOAST_TYPES.map((type) => ({ id: `muestra-${type}`, ...DEMO_TOASTS[type] })),
+    { id: 'muestra-fijo', ...PERSISTENT_DEMO_TOAST },
+  ];
+
+  /** La data cruda de cada muestra, no solo el dibujo. */
+  protected readonly toastSamplesJson = JSON.stringify(this.toastSamples, null, 2);
 
   protected setTheme(mode: ThemeMode): void {
     this.themeService.setTheme(mode);

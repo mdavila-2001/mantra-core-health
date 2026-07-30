@@ -429,5 +429,48 @@
                 </app-avatar-group>
             </div>
         </section>
+
+        <section class="showroom-section">
+            <h2>05 · Avisos (Toast)</h2>
+            <p class="sandbox-note">
+                Misma receta tonal que los badges: <strong>fondo claro + tinta oscura del mismo
+                tono</strong>, tomada de los <code>--st-*</code> del sistema. Son piezas
+                <strong>presentacionales</strong>: no hay servicio ni cola global — el aviso
+                recibe su <code>ToastMessage</code> y emite el <code>id</code> al cerrarse.
+            </p>
+
+            <h3>Los cuatro tipos</h3>
+            <div class="toast-gallery">
+                @for (sample of toastSamples; track sample.id) {
+                    <app-toast [toast]="sample" />
+                }
+            </div>
+            <p class="sandbox-note">
+                El tipo no se dice solo con color: cada aviso lleva su ícono de trazo y el
+                sustantivo («Éxito», «Advertencia»…) oculto para lectores de pantalla.
+                <code>info</code> va sin <code>title</code> a propósito: el mensaje carga solo.
+                Acá la <strong>X</strong> no hace nada porque nadie escucha el
+                <code>output</code> — la galería es solo apariencia.
+            </p>
+
+            <h3>Verlos en vivo</h3>
+            <p class="sandbox-note">
+                El panel <strong>«Avisos (dev)»</strong> de abajo a la izquierda dispara la pila
+                real, que entra abajo a la derecha: un botón por tipo, uno <em>fijo</em> (sin
+                <code>duration</code>, se queda hasta que lo cierren), una ráfaga de cinco para
+                ver el apilado, y limpiar. Está en toda la app, no solo acá — y vive dentro de un
+                <code>&#64;defer (when isDev)</code>, así que en producción ese chunk no se
+                descarga. El retiro por <code>duration</code> lo aplica <em>quien monta el
+                contenedor</em> (el componente raíz), no el aviso.
+            </p>
+
+            <h3>La data de cada muestra</h3>
+            <p class="sandbox-note">
+                Esto es lo que viaja por el <code>input</code>. Al cerrar un aviso, el
+                <code>output</code> devuelve únicamente su <code>id</code> y la lista se filtra
+                afuera.
+            </p>
+            <pre class="data-panel" aria-label="Datos de los avisos de muestra">{{ toastSamplesJson }}</pre>
+        </section>
     </main>
 </div>
