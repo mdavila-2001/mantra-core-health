@@ -1,7 +1,7 @@
 # Reporte de errores
 
-**No existe captura remota de errores.** Es la brecha operativa más importante
-del proyecto después de la ausencia de despliegue.
+Los fallos de render ya **dejan rastro y son reportables**. Lo que falta es el
+destino remoto: que el equipo se entere sin que nadie lo cuente.
 
 ---
 
@@ -9,20 +9,37 @@ del proyecto después de la ausencia de despliegue.
 
 | Mecanismo | Estado |
 |---|---|
-| Sentry / Rollbar / Bugsnag / equivalente | **No existe** |
-| `ErrorHandler` propio | **No existe** |
-| Componente frontera alrededor del `router-outlet` | **No existe** |
-| Pantalla de recuperación | **No existe** |
-| Manejo del fallo de carga de un fragmento diferido | **No existe** |
-| Envío de errores de red | No existe |
+| `ErrorHandler` propio | ✅ `core/errors/app-error-handler.ts` |
+| Registro con contexto (versión, commit, ruta) | ✅ `ErrorReporter` |
+| Código de soporte para el usuario | ✅ `E-<commit>-<n>`, copiable |
+| Pantalla de recuperación | ✅ `/error` |
+| Manejo del fragmento diferido fallido | ✅ `catch` en `loadComponent` |
+| Página 404 que no filtra existencia | ✅ |
+| **Destino remoto** | ❌ **Sigue faltando** |
 
-Lo único que hay:
+### Lo que hace el manejador
 
 ```ts
-provideBrowserGlobalErrorListeners()
+handleError(error: unknown): void {
+  const id = this.reporter.report(error, {
+    version: this.build.version,
+    commit: this.build.commit,
+    route: typeof location === 'undefined' ? '(servidor)' : location.pathname,
+  });
+  …
+}
 ```
 
-Que reenvía al `ErrorHandler` por defecto de Angular: **escribe en la consola**.
+Y lo que **no** registra, con prueba que lo fija:
+
+| No viaja | Por qué |
+|---|---|
+| La traza (`stack`) | Puede arrastrar valores interpolados en plantillas |
+| El usuario, el tenant | Datos personales |
+| Contenido de formularios | Ídem |
+
+**La regla está fijada antes de que exista el destino**, que es cuando es
+barata: el día que se elija un servicio, la política ya está escrita y probada.
 
 ## Qué pasa hoy con cada tipo de fallo
 

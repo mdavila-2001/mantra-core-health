@@ -164,3 +164,82 @@ admin@redesa.test / S3cret-passw0rd
 
 Verificada hoy contra la API viva: devuelve 200 con roles `SECURITY_ADMIN`, `SUPERADMIN` y un
 tenant. Es la que usa la pantalla de login para la demo.
+
+---
+
+## Sesión en curso · endurecimiento para producción (código)
+
+Cierro los pendientes de código del portal documental: seguridad, errores,
+accesibilidad, sesión y pruebas. **No toco nada de telemetría** — ver abajo.
+
+### Archivos que estoy creando (nuevos, no chocan)
+
+```text
+src/server/security-headers.ts        + .spec.ts
+src/app/core/build/build-info.ts
+src/app/core/errors/error-reporter.ts + .spec.ts
+src/app/core/errors/app-error-handler.ts
+src/app/shared/a11y/announce-on-appear.ts + .spec.ts
+src/app/features/error-recovery/
+src/app/features/not-found/
+src/app/features/identity-verification/
+src/app/features/dashboard/dashboard.spec.ts
+src/app/features/shell-layout/shell-layout.spec.ts
+src/app/core/http/token-refresh.service.spec.ts
+```
+
+### Archivos existentes que estoy modificando
+
+| Archivo | Qué |
+|---|---|
+| `src/server.ts` | Cabeceras de seguridad + CSP por hash |
+| `src/app/app.config.ts` | `ErrorHandler` propio, cierre de sesión entre pestañas |
+| `src/app/app.routes.ts` | Rutas `/error`, `/identidad/verificar`, 404 en el comodín |
+| `src/app/core/http/error-to-view-state.ts` | `IDENTITY_VERIFICATION_ROUTE` apuntaba a la API, no al router |
+| `src/app/core/http/auth.interceptor.ts` | Refresco proactivo con `isAccessTokenExpired` |
+| `src/app/core/auth/auth.service.ts` · `refresh-token.storage.ts` | Organización persistida, oyente de `storage` |
+| Las 6 plantillas de `features/auth/` | Directiva `appAnuncio` (región viva + foco) |
+| `src/app/features/shell-layout/shell-layout.ts` | Ítem de menú de la pantalla nueva |
+| `src/app/shared/index.ts` | Exporta `AnnounceOnAppear` |
+
+### 🔴 Telemetría: la dejé fuera, está tuya
+
+Tu trabajo de OpenTelemetry (`TelemetryEnvironment`, el manifiesto de las seis
+`PUBLIC_TELEMETRY_*`, `docs/observability/angular/`) estaba **a medio camino**:
+`yarn env:generate` fallaba y `tsc` daba
+`Property 'telemetry' is missing in type`.
+
+**No lo commiteé y no lo perdí.** Está respaldado en:
+
+```text
+/tmp/telemetria-en-curso/{generate-env.mjs,environment.types.ts,
+                          environment.ts,environment.development.ts}
+```
+
+Para retomarlo: esos cuatro archivos son tuyos tal como los dejaste. Lo único
+que necesitás saber es que **yo agregué cosas a dos de ellos** después de tu
+copia, así que conviene reaplicar lo tuyo encima de lo que está en `dev` en vez
+de restaurar el respaldo tal cual:
+
+| Archivo | Lo que agregué yo |
+|---|---|
+| `src/environments/environment.types.ts` | La interfaz `BuildInfo` (versión, commit, `builtAt`), **antes** de `Environment` |
+| `scripts/generate-env.mjs` | `readBuildInfo()` y la emisión de `export const buildInfo` en `render()`. **No toca el MANIFIESTO** |
+
+Tu `EnvironmentOverrides` y mi `BuildInfo` no se pisan: son declaraciones
+distintas en el mismo archivo. Y `buildInfo` no pasa por el manifiesto a
+propósito — no es configuración que alguien publique, es la huella del build.
+
+**Lo que te dejo servido:** `src/server.ts` ya emite `connect-src` a partir de
+`PUBLIC_API_BASE_URL`. Si el endpoint de trazas queda relativo (`/otel/v1/traces`,
+como dice tu `01-architecture-design.md`), **la CSP no necesita ningún cambio**:
+`connect-src 'self'` ya lo cubre. Si terminara en un subdominio propio, hay que
+agregarlo en `contentSecurityPolicy()` y ahí tenés la prueba que lo fija.
+
+### Lo que NO estoy tocando — es todo tuyo
+
+```text
+docs/observability/angular/**
+Todo lo de OpenTelemetry: SDK, spans, sampler, propagación
+El MANIFIESTO de scripts/generate-env.mjs
+```

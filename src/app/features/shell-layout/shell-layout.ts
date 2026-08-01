@@ -70,7 +70,10 @@ export class ShellLayout {
   protected readonly sections = computed<readonly NavSection[]>(() => {
     const general: NavSection = {
       label: 'General',
-      items: [{ label: 'Panel', route: '/panel', icon: 'home' }],
+      items: [
+        { label: 'Panel', route: '/panel', icon: 'home' },
+        { label: 'Verificar identidad', route: '/identidad/verificar', icon: 'patients' },
+      ],
     };
 
     const herramientas: NavSection = {

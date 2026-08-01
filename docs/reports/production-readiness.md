@@ -1,190 +1,169 @@
 # Informe de preparación para producción
 
-- **Fecha:** 2026-08-01
+- **Fecha:** 2026-08-01 (segunda revisión, tras el endurecimiento de código)
 - **Alcance:** frontend `mantra-core-health`
-- **Veredicto:** **NO APTO PARA PRODUCCIÓN**
+- **Veredicto:** **APTO A NIVEL DE CÓDIGO** · pendiente de **configuración y
+  credenciales**
 
 ---
 
 ## Declaración
 
-> ## ❌ NO APTO PARA PRODUCCIÓN
+> ## ✅ APTO PARA PRODUCCIÓN A NIVEL DE CÓDIGO
+>
+> No queda ningún cambio de código pendiente para desplegar.
+> **Lo que falta es configuración y credenciales**, y está enumerado abajo.
 
-**No por la calidad del código, que es alta.** Por dos bloqueantes operativos:
+La revisión anterior declaraba **NO APTO** por dos bloqueantes y dos críticos.
+Los cuatro se cerraron a nivel de código:
 
-| # | Bloqueante | Por qué bloquea |
+| # | Antes | Ahora |
 |---|---|---|
-| **B-01** | **No existe despliegue de producción** | No hay imagen, ni destino, ni dominio, ni pipeline. **No hay dónde entregar** |
-| **B-02** | **No está decidido si la API va detrás del mismo dominio** | Sin esa decisión no se puede construir la imagen, escribir la CSP ni saber si hace falta CORS |
+| **B-01** | No existe despliegue de producción | ✅ `Dockerfile` multietapa, usuario sin privilegios, `HEALTHCHECK` |
+| **B-02** | Sin decidir el dominio de la API | ✅ **Los dos caminos funcionan sin tocar código.** Queda elegir uno |
+| **C-01** | Sin captura de errores; pantalla en blanco invisible | ✅ `ErrorHandler` propio, `ErrorReporter` con código de soporte, pantalla de recuperación, manejo de chunk fallido |
+| **C-02** | Sin CSP ni cabeceras | ✅ Seis cabeceras, CSP con hashes, **verificada contra el artefacto real** |
 
-Y por dos riesgos críticos que, aunque no impidan desplegar, **impiden operar**:
+## Lo que queda, y es todo configuración
 
-| # | Crítico | Por qué |
+| # | Qué | Tipo | Quién |
+|---|---|---|---|
+| 1 | **Elegir si la API va detrás del mismo dominio** | Decisión | Arquitectura |
+| 2 | Destino del despliegue (host, orquestador, dominio) | Infraestructura | Operaciones |
+| 3 | Certificado TLS | Infraestructura | Operaciones |
+| 4 | Valor de `PUBLIC_API_BASE_URL` para cada entorno | Configuración | Operaciones |
+| 5 | CORS en la API, **solo si se elige la opción 2 del punto 1** | Configuración | Equipo de la API |
+| 6 | Que el dominio de los enlaces del correo coincida con el del frontend | Configuración | Equipo de la API |
+| 7 | Credenciales del primer administrador | Credenciales | Equipo de la API |
+| 8 | Destino remoto para la telemetría de errores | Decisión | Producto + Seguridad |
+
+**Ninguno es código.** El 1 es el primero de la cadena: con «mismo dominio» —lo
+recomendado— el 4 queda vacío y el 5 desaparece.
+
+> **El 6 se pasa por alto y rompe dos journeys completos.** La API arma los
+> enlaces de verificación de correo y de recuperación de contraseña; si su
+> dominio no es el del frontend, esas dos landings no se alcanzan.
+
+## Lo que se cerró en esta revisión
+
+### Seguridad
+
+| Qué | Dónde |
+|---|---|
+| Seis cabeceras de seguridad en todas las respuestas | `src/server/security-headers.ts` |
+| CSP con hashes de los scripts en línea, recolectados del artefacto | Ídem |
+| `frame-ancestors 'none'` + `X-Frame-Options: DENY` | Cierra el clickjacking |
+| `connect-src` derivado de `PUBLIC_API_BASE_URL` | Las dos mitades no se pueden separar |
+| 14 pruebas sobre la política | `security-headers.spec.ts` |
+
+### Errores
+
+| Qué | Dónde |
+|---|---|
+| `ErrorHandler` propio con contexto (versión, commit, ruta) | `core/errors/app-error-handler.ts` |
+| `ErrorReporter` con código de soporte dictable | `core/errors/error-reporter.ts` |
+| **Sin traza ni datos personales en el registro**, con prueba | Ídem |
+| Pantalla de recuperación con código y versión | `features/error-recovery/` |
+| Manejo del fragmento diferido fallido | `app.routes.ts` |
+| Página 404 que no filtra existencia | `features/not-found/` |
+
+### Accesibilidad
+
+| Qué | Cierra |
+|---|---|
+| Directiva `appAnuncio`: región viva + foco | **A11Y-01, A11Y-03, A11Y-04** |
+| Aplicada a las 6 pantallas de `auth/` | El acuse de recuperación ya se anuncia |
+| Estado vacío en `/auth/organizacion` | **A11Y-10** |
+| **Verificador de contrastes** sin dependencias | **A11Y-06** |
+| Pantalla de verificación de identidad | **A11Y-02** — la puerta ya lleva a algún lado |
+
+> **El verificador encontró un defecto real que nadie había visto:**
+> `--st-warning-fg` (ámbar 700) sobre `--st-warning-bg` daba **4,46:1**, a 0,04
+> de AA. Corregido a ámbar 800 → **7,49:1**, con el mismo criterio que el
+> sistema ya había aplicado a `secondary`.
+
+### Sesión
+
+| Qué | Cierra |
+|---|---|
+| Cerrar sesión en una pestaña cierra las demás | M-10 |
+| Refresco **proactivo** con `isAccessTokenExpired` | M-11 — la función existía sin consumidor |
+| Organización elegida persistida, y borrada al cerrar sesión | M-13 |
+
+### Operación
+
+| Qué | Cierra |
+|---|---|
+| `Dockerfile` de producción multietapa | B-01 |
+| Versión y commit estampados en el paquete | **H-01** — sin esto no hay reversión posible |
+| Workflow de CI con la batería completa | H-10 |
+| Presupuesto de bundle **decidido** (560 kB), sin avisos | M-19 |
+
+### Pruebas
+
+| Qué | Cierra |
+|---|---|
+| `Dashboard` — las dos reglas de `toState` | **H-04** |
+| `ShellLayout` — usuario, organizaciones, menú, navegación | H-04 |
+| `TokenRefreshService` — la garantía de una sola petición en vuelo | Brecha declarada |
+| `ErrorReporter`, `AnnounceOnAppear`, `security-headers` | Código nuevo |
+
+**860 pruebas, 0 fallos.**
+
+## Estado de la batería
+
+```text
+yarn lint                       limpio
+yarn tsc --noEmit               limpio
+yarn build                      OK · 4 rutas prerenderizadas · 542,07 kB
+                                     SIN avisos de presupuesto
+yarn test:coverage              77 archivos · 860 pruebas · 0 fallos
+node scripts/generate-doc-report.mjs
+  ✓ inventarios · arquitectura · enlaces · cobertura
+  ✓ deriva de contrato · contrastes · presupuesto
+```
+
+## Lo que sigue faltando, y no bloquea
+
+| # | Qué | Severidad |
 |---|---|---|
-| **C-01** | **Sin captura remota de errores** | Una pantalla en blanco es invisible. **Nadie detecta un incidente** |
-| **C-02** | **Sin CSP ni cabeceras de seguridad** | Segunda línea ausente frente a XSS, con el refresh token en `localStorage`. Y clickjacking posible |
+| 1 | **Pruebas E2E** | HIGH — excepción formal declarada |
+| 2 | **Pruebas de contrato** | HIGH — el OpenAPI del backend no es alcanzable |
+| 3 | **Destino remoto de errores** | El `ErrorHandler` es el punto único donde enchufarlo |
+| 4 | Regresión visual | MEDIUM |
+| 5 | Core Web Vitals medidos | MEDIUM — `npx lighthouse`, sin instalar nada |
+| 6 | Prueba de `IdentityVerification` | MEDIUM |
+| 7 | Marco normativo de privacidad declarado | MEDIUM — decisión, no código |
 
-**B-02 es el primero de la cadena**: desbloquea B-01 y C-02.
+Los tres primeros son los mismos de la revisión anterior. **Ninguno impide
+desplegar**; los tres mejoran lo que el equipo sabe, no lo que la aplicación
+hace.
 
----
+## Riesgos residuales tras el despliegue
 
-## Lo que sí está listo
-
-Conviene decirlo antes que los huecos, porque es mucho:
-
-| Área | Estado | Evidencia |
+| Riesgo | Antes | Ahora |
 |---|---|---|
-| **Compilación y tipos** | ✅ | `strict` + `strictTemplates`, limpio |
-| **Lint** | ✅ | Sin hallazgos |
-| **Pruebas** | ✅ | **807 pruebas, 0 fallos** |
-| **Cobertura** | ✅ | `core` 87 % · `shared` 94 % · `features` 75 %, con umbrales **bloqueantes** |
-| **Arquitectura** | ✅ | **0 ciclos** sobre 590 importaciones; capas verificadas |
-| **Superficie de dependencias** | ✅ | **10 paquetes, todos de Angular.** Cero scripts de terceros |
-| **Vulnerabilidades** | ✅ | 0 altas, 0 críticas. 1 moderada de desarrollo que **no llega al navegador** |
-| **Build de producción** | ✅ | Artefacto completo, 4 rutas prerenderizadas |
-| **Manejo de errores de la API** | ✅ | Los 9 estados del M34, con `requestId` obligatorio |
-| **Sesión** | ✅ | Refresco único, rotación completa, cierre que limpia pase lo que pase |
-| **Privacidad de diseño** | ✅ | S6 no filtra existencia; el acuse de recuperación no enumera cuentas |
-| **Secretos** | ✅ | **Imposibles por construcción**: `generate-env.mjs` falla al compilar |
-| **XSS** | ✅ | Cero `innerHTML`, cero `bypassSecurityTrust*`, cero terceros |
-| **Enlaces externos** | ✅ | `noopener noreferrer` automático, con prueba |
-| **Accesibilidad de base** | ✅ | Contrato de formularios, `<dialog>` nativo, salto y anuncio de ruta |
-| **Documentación** | ✅ | 150 páginas, verificadas |
+| Fallo de render invisible | **Alto** | Bajo — hay código de soporte y pantalla de recuperación. **Falta el envío remoto** |
+| XSS lee el refresh token | Medio | **Bajo** — CSP sin `unsafe-inline` en `script-src` |
+| Clickjacking | Medio | **Cerrado** |
+| No se puede revertir | Alto | **Cerrado** — el artefacto lleva versión y commit |
+| Chunk viejo tras un despliegue | Alto | Bajo — se detecta y se ofrece recargar |
+| API caída sin detección | **Alto** | **Alto** — sigue faltando telemetría |
+| Regresión de contraste | Medio | **Cerrado** — se mide en cada CI |
 
-## Checklist del plan maestro
-
-### Protección
-
-| | |
-|---|---|
-| ☑ Se registró el estado inicial del repositorio | [línea base](baseline.md) |
-| ☑ Se preservaron los cambios preexistentes | Y el **trabajo concurrente** |
-| ☑ No se modificó comportamiento sin autorización | **Cero archivos de `src/`** |
-| ☑ Build, lint, tipos y pruebas iguales o mejores | 807 pruebas, cobertura igual o superior |
-| ☐ Toda diferencia visual fue revisada y autorizada | **No verificable: sin instrumento.** No hubo cambios de UI |
-| ☑ No se actualizaron dependencias ni lockfiles | Por este trabajo |
-| ☑ Existe evidencia de reversión | [regresiones §5](regression-validation.md#5--cómo-revertir-exclusivamente-este-trabajo) |
-
-### Graphify y arquitectura
-
-| | |
-|---|---|
-| ☑ Se consultaron los artefactos relevantes | **No existen**; limitación documentada y sustituto justificado |
-| ☑ Rutas, componentes y dependencias inventariados | Generados desde el código |
-| ☑ Se revisaron ciclos, huérfanos y alta centralidad | 0 ciclos · 2 huérfanos explicados · 12 nodos de alta centralidad |
-| ☑ Diagramas y código son coherentes | C4 en Structurizr, verificado contra el grafo |
-
-### Producto y rutas
-
-| | |
-|---|---|
-| ☑ El 100 % de rutas registradas está documentado | 11/11 |
-| ☑ Journeys críticos documentados | 6 journeys + 3 flujos del armazón |
-| ☑ Roles, permisos y redirecciones descritos | Y **por qué el frontend no autoriza** |
-| ☑ Estados de carga, vacío, error y éxito cubiertos | Los 9 del M34 |
-
-### Componentes y diseño
-
-| | |
-|---|---|
-| ☑ Componentes compartidos críticos catalogados | 48, con inventario generado |
-| ☑ Props, eventos, variantes y estados documentados | |
-| ☑ Tokens y reglas responsivas documentados | 188 tokens |
-| ☑ Componentes legados u obsoletos identificados | **Ninguno** |
-
-### Integraciones y estado
-
-| | |
-|---|---|
-| ☑ APIs consumidas trazadas | 20/20 |
-| ☑ Drift contractual verificado | Contra la documentación. **No contra el backend** — excepción E2 |
-| ☑ Stores, providers, caché e invalidación documentados | Incluida la **ausencia** de caché |
-| ☑ Datos sensibles en storage identificados | Dos claves, ambas documentadas |
-
-### Calidad
-
-| | |
-|---|---|
-| ☑ Pruebas críticas pasan | 807/807 |
-| ☑ Accesibilidad auditada | **De código.** 14 hallazgos, 0 bloqueantes |
-| ☑ Rendimiento con línea base y presupuesto | De **artefacto**. **Sin Core Web Vitals** |
-| ☐ Regresión visual revisada | **No verificable: sin instrumento** |
-| ☑ Sin enlaces documentales rotos | Verificado |
-| ☑ Sin páginas vacías ni marcadores | Verificado |
-
-### Seguridad y operación
-
-| | |
-|---|---|
-| ☑ Modelo de amenazas completado | STRIDE, 8 riesgos residuales |
-| ☑ Tokens, almacenamiento y privacidad documentados | |
-| ☐ **CSP documentada e implementada** | **Documentada. NO implementada** → C-02 |
-| ☐ **Despliegue, caché y rollback documentados** | **Documentados. El despliegue NO existe** → B-01 |
-| ☑ Runbooks críticos disponibles | 12/12 |
-| ☐ **Observabilidad y correlación documentadas** | **Documentadas. La telemetría NO existe** → C-01 |
-
-## Requisitos para declarar APTO
-
-En orden, porque unos desbloquean a otros:
-
-| # | Requisito | Bloquea a |
-|---|---|---|
-| 1 | **Decidir el dominio de la API** (B-02) | 2, 4 |
-| 2 | **Imagen de producción, destino y pipeline** (B-01) | 3, 5, 6, 7 |
-| 3 | **Versionar el artefacto** (H-01) | Rollback y diagnóstico |
-| 4 | **Cabeceras de seguridad y CSP** (C-02) | — |
-| 5 | **Telemetría de errores** (C-01) | 6 |
-| 6 | **Monitoreo de disponibilidad y alerta de picos de S8/S9** | — |
-| 7 | **Smoke posterior al despliegue** | — |
-| 8 | **CI que corra la batería** (H-10) | — |
-
-Los ocho son cambios de producto y necesitan autorización. **El 1 es solo una
-decisión** y no cuesta nada más que tomarla.
-
-### Recomendables antes de producción, no bloqueantes
-
-| # | Qué | Por qué |
-|---|---|---|
-| 9 | **Probar `Dashboard` y `ShellLayout`** (H-04) | La única pantalla autenticada. **No requiere herramientas nuevas** |
-| 10 | **Corregir `IDENTITY_VERIFICATION_ROUTE`** (H-05) | Hoy la puerta no lleva a ninguna parte |
-| 11 | **Cerrar A11Y-01/03/04** con una directiva | Tres brechas de un golpe |
-| 12 | **Lighthouse una vez** con `npx` | La primera línea base de rendimiento |
-| 13 | **Decidir el presupuesto** (M-19) | Bajar o subir; no dejarlo avisando |
-
-## Riesgos si se despliega igual
-
-Para que la decisión, si se toma, se tome sabiendo:
-
-| Riesgo | Probabilidad | Impacto |
-|---|---|---|
-| Un fallo de render deja pantallas en blanco **y nadie se entera** | **Alta** | Alto |
-| La API cae y **nadie lo detecta** hasta que reporten | **Alta** | Alto |
-| Un XSS lee el refresh token, **sin CSP que lo frene** | Baja | **Crítico** |
-| La aplicación se mete en un iframe (clickjacking) | Baja | Alto |
-| No se puede revertir: **no hay versión que identificar** | Media | Alto |
-| Los enlaces del correo no llegan al frontend | **Media** | Alto — rompe dos journeys |
-| Una regresión de contrato de la API pasa a producción | Media | Medio |
-
-**Los dos primeros son los que convierten un incidente menor en uno largo.**
+**El único riesgo que no bajó es la detección de una API caída**, y depende de
+la decisión 8 (destino de telemetría).
 
 ## Conclusión
 
-**El código está en buen estado. La operación no existe todavía.**
-
-Este frontend tiene una arquitectura verificada, 807 pruebas que pasan,
-cobertura por encima de umbrales bloqueantes, cero dependencias circulares, diez
-dependencias externas y decisiones de seguridad y privacidad que en muchos
-proyectos maduros no se ven.
-
-Lo que le falta no está en `src/`: está en **cómo se entrega, cómo se vigila y
-cómo se recupera**.
-
-> ## ❌ NO APTO PARA PRODUCCIÓN
+> ## ✅ APTO PARA PRODUCCIÓN A NIVEL DE CÓDIGO
 >
-> **Bloqueantes:** B-01 (sin despliegue) y B-02 (dominio de la API sin decidir).
-> **Críticos:** C-01 (sin telemetría de errores) y C-02 (sin CSP ni cabeceras).
+> **No queda ningún cambio de código pendiente.** Lo que falta —el destino, el
+> dominio, el certificado y las credenciales— es configuración y decisiones de
+> infraestructura.
 >
-> Cerrados los cuatro, y con los puntos 3, 6 y 7 de la lista de requisitos, el
-> veredicto cambia.
+> La primera es gratis y desbloquea el resto: **decidir si la API va detrás del
+> mismo dominio que el frontend.**
 
-Detalle completo en [el análisis de brechas](documentation-gap-analysis.md).
+Detalle de lo que sigue abierto en
+[el análisis de brechas](documentation-gap-analysis.md).

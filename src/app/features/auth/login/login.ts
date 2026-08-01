@@ -16,6 +16,7 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
+import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
 const HOME_ROUTE = '/';
@@ -28,12 +29,13 @@ const HOME_ROUTE = '/';
  * que pedir dos campos obligaría a la persona a saber cuál le toca. Se detecta
  * por la arroba, que es la misma regla que usaría cualquiera al mirarlo.
  *
- * No hay enlace de «olvidé mi contraseña»: **la API no tiene ese endpoint**
- * todavía. Un enlace que no lleva a ningún lado es peor que su ausencia.
+ * El enlace de «olvidé mi contraseña» lleva a `/auth/recuperar`, que consume
+ * `POST /iam/auth/forgot-password`. (Este comentario decía lo contrario hasta
+ * que el endpoint llegó; la plantilla ya tenía el enlace.)
  */
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, AppButton, Input, Link, FormField, Alert, AuthSplit],
+  imports: [ReactiveFormsModule, RouterLink, AppButton, Input, Link, FormField, Alert, AuthSplit, AnnounceOnAppear],
   templateUrl: './login.html',
   styleUrl: './login.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

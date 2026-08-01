@@ -67,11 +67,12 @@ Falta todo lo que va de ahí a un servidor. Ver
 
 Sin él:
 
-- Una CSP no se puede probar sin arriesgar producción.
-- Un cambio de renderizado no se puede verificar.
+- Un cambio de renderizado no se puede verificar antes de producción.
 - No hay dónde correr un smoke.
+- Las cabeceras de seguridad **están implementadas y verificadas contra el
+  artefacto**, pero nadie las ha visto salir de un servidor real todavía.
 
-Ver [CSP](../security/content-security-policy.md#3--no-hay-dónde-probarlo).
+Ver [CSP](../security/content-security-policy.md#qué-verificar-tras-un-despliegue).
 
 ## Diferencias entre desarrollo y lo que sería producción
 

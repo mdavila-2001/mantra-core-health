@@ -12,6 +12,18 @@
             {{ nombre(tenantId) }}
           </button>
         </li>
+      } @empty {
+        <!-- Sin sesión, o con un token que no declara organizaciones. Antes
+             quedaba una lista vacía sin mensaje ni salida: quien llegara acá
+             directamente no tenía forma de saber qué había pasado. -->
+        <li appAnuncio [asertivo]="false" class="tenant__vacio">
+          <p class="tenant__text">
+            No encontramos organizaciones para tu cuenta. Puede que tu sesión haya vencido.
+          </p>
+          <p class="tenant__pie">
+            <a app-link routerLink="/auth">Volver a iniciar sesión</a>
+          </p>
+        </li>
       }
     </ul>
   </div>

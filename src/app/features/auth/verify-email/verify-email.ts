@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Resultado de canjear el token del correo. */
 type Estado = 'verificando' | 'verificado' | 'sin-token' | 'invalido';
@@ -17,7 +18,7 @@ type Estado = 'verificando' | 'verificado' | 'sin-token' | 'invalido';
  */
 @Component({
   selector: 'app-verify-email',
-  imports: [AppButton],
+  imports: [AppButton, AnnounceOnAppear],
   templateUrl: './verify-email.html',
   styleUrl: './verify-email.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

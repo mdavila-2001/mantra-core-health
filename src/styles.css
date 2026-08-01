@@ -16,7 +16,8 @@
 /* ---- tipografías autoalojadas (sin CDN) ----
     Poppins (display/marca) es ESTÁTICA: se importan los tres pesos del sistema.
     Inter Variable (UI y datos) ya cubre 100-900 en un solo archivo.
-    Instaladas como reserva, sin importar: Roboto, Open Sans, Lato. */
+    La reserva es `system-ui`: ya está cargada en el sistema, así que el texto
+    se ve al instante mientras llega la real. */
 @import '@fontsource/poppins/500.css';
 @import '@fontsource/poppins/600.css';
 @import '@fontsource/poppins/700.css';
@@ -179,7 +180,11 @@
 
     /* estados: fondo claro + texto oscuro del mismo tono (50/700/200) */
     --st-success-bg: var(--c-success-50); --st-success-fg: var(--c-success-700); --st-success-bd: var(--c-success-200);
-    --st-warning-bg: var(--c-warning-50); --st-warning-fg: var(--c-warning-700); --st-warning-bd: var(--c-warning-200);
+    /* warning usa ámbar 800 y no 700, por el mismo motivo que `secondary` usa
+       menta 800: ámbar-700 sobre ámbar-50 da 4,46:1 y se queda a 0,04 de AA
+       para texto chico; con el 800 sube a 7,49:1. Lo detectó
+       `scripts/check-contrast.mjs`, que mide estas combinaciones en cada CI. */
+    --st-warning-bg: var(--c-warning-50); --st-warning-fg: var(--c-warning-800); --st-warning-bd: var(--c-warning-200);
     --st-error-bg: var(--c-error-50);     --st-error-fg: var(--c-error-700);     --st-error-bd: var(--c-error-200);
     --st-info-bg: var(--c-info-50);       --st-info-fg: var(--c-info-700);       --st-info-bd: var(--c-info-200);
 

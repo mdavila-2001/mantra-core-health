@@ -1,5 +1,38 @@
 # Análisis de brechas
 
+> ## Actualización · endurecimiento de código (2026-08-01)
+>
+> **Los 2 BLOCKER, los 2 CRITICAL y 8 de los 11 HIGH se cerraron a nivel de
+> código.** Lo que queda de ellos es configuración, credenciales o decisiones
+> de infraestructura.
+>
+> | Antes | Ahora |
+> |---|---|
+> | B-01 sin despliegue | ✅ `Dockerfile` de producción · falta el **destino** |
+> | B-02 dominio de la API | ✅ los dos caminos funcionan · falta **elegir** |
+> | C-01 sin captura de errores | ✅ `ErrorHandler`, código de soporte, pantalla de recuperación · falta el **destino remoto** |
+> | C-02 sin CSP | ✅ seis cabeceras, verificadas contra el artefacto |
+> | H-01 sin versionado | ✅ versión y commit en el paquete |
+> | H-04 `Dashboard`/`ShellLayout` sin prueba | ✅ ambas probadas |
+> | H-05 / H-07 ruta de verificación rota | ✅ pantalla construida, ruta real |
+> | H-06 acuse no anunciado | ✅ directiva `appAnuncio` |
+> | H-10 sin CI | ✅ workflow con la batería completa |
+> | M-01…M-04, M-08, M-10, M-11, M-13, M-16, M-19 | ✅ cerradas |
+> | L-01, L-02 | ✅ cerradas |
+>
+> **Y una brecha que nadie había detectado, encontrada por el verificador
+> nuevo:** `--st-warning-fg` daba 4,46:1, a 0,04 de AA. Corregida.
+>
+> **Siguen abiertas:** H-02 (E2E), H-03 (contrato), H-08/H-09 (monitoreo y
+> telemetría, dependen del destino), H-11 (dominio del correo), M-05…M-07,
+> M-09, M-12, M-14, M-15, M-17, M-18, M-20…M-22 y los LOW restantes.
+>
+> El detalle de lo cerrado está en
+> [preparación productiva](production-readiness.md). Lo de abajo es el análisis
+> original, que se conserva como registro de dónde se partió.
+
+---
+
 **Fase 3 del plan documental.** Cada hallazgo con su evidencia, su riesgo y su
 acción — y con la columna que más importa: **si cambia el producto**.
 

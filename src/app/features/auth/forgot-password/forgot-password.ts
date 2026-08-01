@@ -11,6 +11,7 @@ import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /**
  * Pedido de recuperación de contraseña.
@@ -25,7 +26,7 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
  */
 @Component({
   selector: 'app-forgot-password',
-  imports: [ReactiveFormsModule, RouterLink, AppButton, Input, Link, FormField, Alert],
+  imports: [ReactiveFormsModule, RouterLink, AppButton, Input, Link, FormField, Alert, AnnounceOnAppear],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

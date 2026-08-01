@@ -50,6 +50,12 @@ const CHECKS = [
     why: 'los endpoints del código coinciden con los declarados',
   },
   {
+    name: 'contrastes del sistema de diseño',
+    script: 'check-contrast.mjs',
+    args: [],
+    why: 'los tokens cumplen WCAG AA, salvo las excepciones declaradas',
+  },
+  {
     name: 'presupuesto de bundle',
     script: 'check-bundle-budget.mjs',
     args: [],

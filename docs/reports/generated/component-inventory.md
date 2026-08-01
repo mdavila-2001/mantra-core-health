@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-61 componentes y 15 servicios inyectables, leídos de `src/`.
+64 componentes y 17 servicios inyectables, leídos de `src/`.
 
 ## Átomo (15)
 
@@ -67,7 +67,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (11)
+## Feature (14)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -77,11 +77,14 @@
 | `app-reset-password` | `ResetPassword` | — | — | — | OnPush | sí |
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
-| `app-dashboard` | `Dashboard` | — | — | — | OnPush | **no** |
+| `app-dashboard` | `Dashboard` | — | — | — | OnPush | sí |
 | `app-design-system-sample` | `DesignSystemSample` | — | — | — | OnPush | sí |
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
-| `app-shell-layout` | `ShellLayout` | — | — | — | OnPush | **no** |
+| `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
+| `app-identity-verification` | `IdentityVerification` | — | — | — | OnPush | **no** |
+| `app-not-found` | `NotFound` | — | — | — | OnPush | **no** |
+| `app-shell-layout` | `ShellLayout` | — | — | — | OnPush | sí |
 
 ## Core (1)
 
@@ -95,7 +98,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (15)
+## Servicios (17)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -108,7 +111,9 @@
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |
 | `PublicClient` | `src/app/core/data-access/public/public.client.ts` | root | **no** |
 | `TerminologyClient` | `src/app/core/data-access/terminology/terminology.client.ts` | root | sí |
-| `TokenRefreshService` | `src/app/core/http/token-refresh.service.ts` | root | **no** |
+| `AppErrorHandler` | `src/app/core/errors/app-error-handler.ts` | local | **no** |
+| `ErrorReporter` | `src/app/core/errors/error-reporter.ts` | root | sí |
+| `TokenRefreshService` | `src/app/core/http/token-refresh.service.ts` | root | sí |
 | `Breakpoints` | `src/app/core/layout/breakpoints.ts` | root | sí |
 | `ThemeService` | `src/app/core/tokens/theme.service.ts` | root | sí |
 | `DialogService` | `src/app/shared/components/molecules/dialog/dialog-service.ts` | root | **no** |
@@ -118,9 +123,10 @@
 ## Componentes sin prueba
 
 - `ToastDevPanel` — `src/app/core/dev/toast-dev-panel/toast-dev-panel.ts`
-- `Dashboard` — `src/app/features/dashboard/dashboard.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
-- `ShellLayout` — `src/app/features/shell-layout/shell-layout.ts`
+- `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
+- `IdentityVerification` — `src/app/features/identity-verification/identity-verification.ts`
+- `NotFound` — `src/app/features/not-found/not-found.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`
 - `AccordionPanel` — `src/app/shared/components/molecules/accordion/accordion-panel/accordion-panel.ts`
 - `MenuItem` — `src/app/shared/components/molecules/menu/menu-item/menu-item.ts`

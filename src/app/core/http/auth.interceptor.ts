@@ -7,6 +7,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 
+import { isAccessTokenExpired } from '../auth/access-token';
 import { SessionStore } from '../auth/session.store';
 import { TokenRefreshService } from './token-refresh.service';
 
@@ -48,6 +49,25 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const session = inject(SessionStore);
   const refresher = inject(TokenRefreshService);
   const router = inject(Router);
+
+  /**
+   * Refresco **proactivo**: si el token ya venció, se renueva antes de mandar.
+   *
+   * Antes el refresco era solo reactivo —se esperaba al 401— y cada expiración
+   * costaba una petición condenada de antemano. La comprobación es local y sin
+   * red: `isAccessTokenExpired` mira el claim `exp` con 10 segundos de margen,
+   * para no mandar en vuelo uno que expira durante el viaje.
+   *
+   * El camino reactivo de abajo **no se toca**: sigue cubriendo el token
+   * revocado del lado del servidor, que `exp` no puede anticipar.
+   */
+  const claims = session.claims();
+  if (claims !== null && isAccessTokenExpired(claims) && session.refreshToken() !== null) {
+    return refresher.refresh().pipe(
+      switchMap(() => next(withCredentials(request, session))),
+      catchError((refreshError: unknown) => endSession(session, router, refreshError)),
+    );
+  }
 
   return next(withCredentials(request, session)).pipe(
     catchError((error: unknown) => {

@@ -1,0 +1,51 @@
+.verificar {
+    max-width: 60ch;
+    margin-top: var(--sp-6);
+}
+
+.verificar__titulo {
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    margin-bottom: var(--sp-2);
+}
+
+.verificar__texto {
+    color: var(--text-secondary);
+    margin: 0 0 var(--sp-5);
+}
+
+.verificar__alert {
+    display: block;
+    margin-bottom: var(--sp-4);
+}
+
+.verificar__enviar {
+    margin-top: var(--sp-5);
+}
+
+/* Lista de definiciones y no una tabla: son pares clave–valor de un registro,
+   que es exactamente para lo que existe `<dl>`. */
+.verificar__datos {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--sp-2) var(--sp-4);
+    margin: 0 0 var(--sp-5);
+}
+
+.verificar__datos dt {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.verificar__datos dd {
+    margin: 0;
+}
+
+.verificar__datos code {
+    /* `strong` porque delimita un dato seleccionable, no es un divisor. */
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-xs);
+    padding: 0 var(--sp-1);
+    background: var(--bg-inset);
+    user-select: all;
+}

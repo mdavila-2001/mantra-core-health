@@ -7,7 +7,7 @@
     <p class="login__subtitle">Ingresá con tu correo o tu documento de identidad.</p>
 
     @if (errorMessage(); as mensaje) {
-      <app-alert tone="error" class="login__alert">{{ mensaje }}</app-alert>
+      <app-alert appAnuncio tone="error" class="login__alert">{{ mensaje }}</app-alert>
     }
 
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>

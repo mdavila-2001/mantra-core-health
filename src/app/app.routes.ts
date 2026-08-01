@@ -7,6 +7,9 @@ import { RegisterPatient } from './features/auth/register-patient/register-patie
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
+import { ErrorRecovery } from './features/error-recovery/error-recovery';
+import { IdentityVerification } from './features/identity-verification/identity-verification';
+import { NotFound } from './features/not-found/not-found';
 import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
@@ -24,17 +27,31 @@ export const routes: Routes = [
                 component: Dashboard,
                 title: 'Mantra Core Health - Panel',
             },
+            {
+                // El destino de la puerta del estado S5: a donde lleva
+                // «Verificar identidad» cuando la API responde
+                // IDENTITY_VERIFICATION_REQUIRED. Va bajo el shell porque
+                // exige sesión — nadie verifica la identidad de otro.
+                path: 'identidad/verificar',
+                component: IdentityVerification,
+                title: 'Mantra Core Health - Verificar identidad',
+            },
         ],
     },
     {
         // Diferida a propósito: la vitrina expone el sistema de diseño entero
         // y nadie que entre a la aplicación real necesita descargarla. Con
         // import directo se llevaba el presupuesto inicial por delante.
+        //
+        // El `catch` cubre el fallo más probable en producción: se despliega una
+        // versión nueva, alguien tenía la anterior abierta, y el fragmento que
+        // su `index.html` pide ya no existe (`outputHashing: "all"` renombra
+        // todo). Sin esto la navegación no completa y no avisa nada.
         path: 'design-system',
         loadComponent: () =>
-            import('./features/design-system-sample/design-system-sample').then(
-                (m) => m.DesignSystemSample,
-            ),
+            import('./features/design-system-sample/design-system-sample')
+                .then((m) => m.DesignSystemSample)
+                .catch(() => chunkFallido()),
         title: 'Mantra Core Health - Vitrina de Diseño',
     },
     {
@@ -72,7 +89,30 @@ export const routes: Routes = [
         title: 'Mantra Core Health - Nueva contraseña',
     },
     {
+        // Pantalla de recuperación: a donde llega un fragmento que no bajó.
+        // No lleva `title` propio para no anunciar «error» en la pestaña de
+        // alguien que quizá solo necesita recargar.
+        path: 'error',
+        component: ErrorRecovery,
+        title: 'Mantra Core Health',
+    },
+    {
+        // Antes esto redirigía a `/`, que mandaba al panel —o al login, vía el
+        // guard— a quien escribiera mal una dirección, sin decirle que se había
+        // equivocado. Ahora lo dice.
         path: '**',
-        redirectTo: '',
+        component: NotFound,
+        title: 'Mantra Core Health - Página no encontrada',
     },
 ];
+
+/**
+ * Componente que se muestra cuando un fragmento diferido no se pudo descargar.
+ *
+ * Devolverlo en vez de relanzar es lo que convierte una navegación muerta en un
+ * mensaje accionable: la pantalla de recuperación ofrece recargar, que es
+ * exactamente lo que resuelve el caso.
+ */
+function chunkFallido(): typeof ErrorRecovery {
+    return ErrorRecovery;
+}
