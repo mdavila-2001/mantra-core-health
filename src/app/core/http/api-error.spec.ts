@@ -97,8 +97,8 @@ describe('parseApiError', () => {
 });
 
 describe('isKnownApiErrorCode', () => {
-  it('reconoce los once códigos que la API declara estables', () => {
-    expect(API_ERROR_CODES).toHaveLength(11);
+  it('reconoce los doce códigos que la API declara estables', () => {
+    expect(API_ERROR_CODES).toHaveLength(12);
     for (const code of API_ERROR_CODES) {
       expect(isKnownApiErrorCode(code)).toBe(true);
     }
@@ -161,10 +161,12 @@ describe('viewStateFromHttpError', () => {
 
   it('S5 · el 403 por identidad sin verificar es una puerta: lleva a verificarse', () => {
     const state = viewStateFromHttpError(
-      // Mensaje literal de `VerifiedIdentityGuard` en el repo de la API.
+      // Cuerpo literal de `VerifiedIdentityGuard`, que desde que la API declara
+      // el código propio ya no se distingue por el texto del mensaje.
       httpError(403, {
-        code: 'FORBIDDEN',
+        code: 'IDENTITY_VERIFICATION_REQUIRED',
         message: 'Verifique su identidad para acceder a esta función',
+        details: { reason: 'identity-not-verified' },
       }),
     );
 
@@ -173,6 +175,24 @@ describe('viewStateFromHttpError', () => {
       throw new Error('se esperaba S5');
     }
     expect(state.nextAction?.route).toBe(IDENTITY_VERIFICATION_ROUTE);
+  });
+
+  it('S5 · sin persona vinculada no ofrece el trámite: sería un callejón', () => {
+    const state = viewStateFromHttpError(
+      httpError(403, {
+        code: 'IDENTITY_VERIFICATION_REQUIRED',
+        message: 'La cuenta no tiene una persona vinculada que verificar',
+        details: { reason: 'no-person-linked' },
+      }),
+    );
+
+    expect(state.status).toBe('forbidden');
+    if (state.status !== 'forbidden') {
+      throw new Error('se esperaba S5');
+    }
+    // Verificar la identidad de una persona que todavía no está asociada a la
+    // cuenta no es algo que quien mira pueda hacer por su cuenta.
+    expect(state.nextAction).toBeUndefined();
   });
 
   it('S6 · el no encontrado no transporta ningún dato del recurso', () => {

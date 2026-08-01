@@ -26,6 +26,16 @@ const DOS_TENANTS = makeToken({
   tenants: ['t-1', 't-2'],
 });
 
+/** Con los claims que la API agregó: `name` y `tenantNames`. `t-2` queda sin nombre a propósito. */
+const CON_NOMBRES = makeToken({
+  sub: 'u-1',
+  sid: 's-1',
+  roles: ['USER'],
+  tenants: ['t-1', 't-2'],
+  name: 'Administrador Postman',
+  tenantNames: { 't-1': 'Hospital Central' },
+});
+
 /** Almacenamiento en memoria: `localStorage` real deja estado entre pruebas. */
 class AlmacenamientoFalso {
   refreshToken: string | null = null;
@@ -250,24 +260,99 @@ describe('AuthService', () => {
   });
 
   describe('logout', () => {
-    it('borra la sesión de la memoria y del almacenamiento', () => {
+    function abrirSesion(): void {
       auth.login({ kind: 'email', email: 'a@b.test', password: 'x' }).subscribe();
       backend.expectOne('/iam/auth/login').flush({
         accessToken: UN_TENANT,
         refreshToken: 'r-1',
         expiresAt: '2026-08-31T06:40:40.060Z',
       });
+    }
+
+    it('revoca la sesión en el servidor, no sólo en el navegador', () => {
+      abrirSesion();
 
       auth.logout();
+
+      // Sin esta llamada, borrar el almacenamiento sólo esconde la credencial: el refresh token
+      // robado seguiría sirviendo los 30 días que dura.
+      const peticion = backend.expectOne('/iam/auth/logout');
+      expect(peticion.request.method).toBe('POST');
+      // Sin `sid` en el cuerpo: la sesión que se cierra es la del token.
+      expect(peticion.request.body).toEqual({});
+
+      peticion.flush({ revoked: true });
+    });
+
+    it('borra la sesión de la memoria y del almacenamiento', () => {
+      abrirSesion();
+
+      auth.logout();
+      backend.expectOne('/iam/auth/logout').flush({ revoked: true });
 
       expect(auth.isAuthenticated()).toBe(false);
       expect(almacenamiento.refreshToken).toBeNull();
       expect(almacenamiento.tenantId).toBeNull();
     });
 
-    it('no llama a la API: no hay ruta de cierre de sesión', () => {
+    it('el estado local se limpia aunque la API falle', () => {
+      abrirSesion();
+
       auth.logout();
+      backend
+        .expectOne('/iam/auth/logout')
+        .error(new ProgressEvent('error'), { status: 0 });
+
+      // Que la red se caiga no puede dejar la sesión abierta en una máquina que se quiso abandonar.
+      expect(auth.isAuthenticated()).toBe(false);
+      expect(almacenamiento.refreshToken).toBeNull();
+    });
+
+    it('sin sesión no llama a la API: no hay nada que revocar', () => {
+      auth.logout();
+
+      expect(auth.isAuthenticated()).toBe(false);
       // `backend.verify()` del afterEach falla si se hubiera hecho alguna petición.
+    });
+  });
+
+  describe('nombres que salen del token', () => {
+    it('muestra el nombre del claim `name`', () => {
+      auth.login({ kind: 'email', email: 'a@b.test', password: 'x' }).subscribe();
+      backend.expectOne('/iam/auth/login').flush({
+        accessToken: CON_NOMBRES,
+        refreshToken: 'r-1',
+        expiresAt: '2026-08-31T06:40:40.060Z',
+      });
+
+      expect(auth.displayName()).toBe('Administrador Postman');
+    });
+
+    it('sin el claim cae al identificador acortado, no a un nombre inventado', () => {
+      auth.login({ kind: 'email', email: 'a@b.test', password: 'x' }).subscribe();
+      backend.expectOne('/iam/auth/login').flush({
+        // La API omite `name` cuando está vacío: el token viaja en cada petición.
+        accessToken: DOS_TENANTS,
+        refreshToken: 'r-1',
+        expiresAt: '2026-08-31T06:40:40.060Z',
+      });
+
+      expect(auth.displayName()).toBe('Usuario u-1');
+    });
+
+    it('resuelve las organizaciones a su nombre legible', () => {
+      auth.login({ kind: 'email', email: 'a@b.test', password: 'x' }).subscribe();
+      backend.expectOne('/iam/auth/login').flush({
+        accessToken: CON_NOMBRES,
+        refreshToken: 'r-1',
+        expiresAt: '2026-08-31T06:40:40.060Z',
+      });
+
+      expect(auth.tenantOptions()).toEqual([
+        { id: 't-1', name: 'Hospital Central' },
+        // `t-2` no está en el mapa: una entrada fea es mejor que una en blanco.
+        { id: 't-2', name: 'Organización t-2' },
+      ]);
     });
   });
 

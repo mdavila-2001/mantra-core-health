@@ -58,9 +58,18 @@ export class Dashboard {
   protected readonly roles = this.auth.roles;
   protected readonly activeTenantId = this.auth.activeTenantId;
 
-  protected readonly tenantLabel = computed(() => {
+  /**
+   * La organización activa por su nombre, con el identificador al lado.
+   *
+   * Los dos: el nombre es lo que la persona reconoce, y el identificador es lo que sirve para
+   * reportar un problema. Antes acá sólo estaba el uuid, porque el token no traía nombres.
+   */
+  protected readonly tenantName = computed(() => {
     const id = this.activeTenantId();
-    return id === null ? 'Sin organización activa' : id;
+    if (id === null) {
+      return null;
+    }
+    return this.auth.tenantOptions().find((tenant) => tenant.id === id)?.name ?? id;
   });
 
   protected readonly directory = signal<ViewState<PublicProjection>>(loading());

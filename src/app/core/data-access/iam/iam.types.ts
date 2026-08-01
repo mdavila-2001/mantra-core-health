@@ -109,6 +109,16 @@ export interface PasswordResetResult {
   readonly revokedSessions: number;
 }
 
+/**
+ * Resultado de cerrar sesión.
+ *
+ * `revoked: false` no es un fallo: la sesión ya estaba cerrada —doble clic, o cerrada desde otro
+ * dispositivo— y el resultado deseado ya se cumplía. La ruta es idempotente a propósito.
+ */
+export interface LogoutResult {
+  readonly revoked: boolean;
+}
+
 /** Alta de usuario hecha por un administrador. */
 export interface NewUser {
   readonly displayName: string;

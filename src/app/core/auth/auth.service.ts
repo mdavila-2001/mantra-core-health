@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { computed, inject, Injectable, isDevMode, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { catchError, firstValueFrom, of, tap, type Observable } from 'rxjs';
 
@@ -86,13 +86,36 @@ export class AuthService {
   /**
    * Nombre para mostrar en el encabezado.
    *
-   * El token **no trae nombre** —solo `sub`, `sid`, `roles` y `tenants`—, así que no hay ninguno
-   * que mostrar sin inventarlo. Se muestra el identificador acortado, que es cierto y sirve para
-   * distinguir una cuenta de otra. Ver `PENDIENTES-BACKEND.md`.
+   * Sale del claim `name`, que la API agrega tanto en el login como en el refresco —si sólo lo
+   * pusiera el login, el nombre desaparecería en la primera rotación de token—.
+   *
+   * El claim se omite cuando está vacío, así que el respaldo sigue siendo el identificador
+   * acortado: es cierto y distingue una cuenta de otra, que es todo lo que se le pide a un nombre
+   * en el encabezado.
    */
   readonly displayName = computed(() => {
-    const userId = this.session.userId();
-    return userId === null ? '' : `Usuario ${userId.slice(0, 8)}`;
+    const claims = this.session.claims();
+    if (claims === null) {
+      return '';
+    }
+    return claims.name ?? `Usuario ${claims.sub.slice(0, 8)}`;
+  });
+
+  /**
+   * Las organizaciones de la sesión con su nombre legible.
+   *
+   * El nombre sale del claim `tenantNames`. Cuando falta —un token viejo, o una organización sin
+   * nombre cargado— se cae al identificador acortado en vez de dejar la entrada en blanco: una
+   * lista con un elemento vacío es peor que una con un nombre feo.
+   */
+  readonly tenantOptions = computed<readonly { id: string; name: string }[]>(() => {
+    const claims = this.session.claims();
+    const names = claims?.tenantNames ?? {};
+
+    return this.session.tenants().map((id) => ({
+      id,
+      name: names[id] ?? `Organización ${id.slice(0, 8)}`,
+    }));
   });
 
   /** Si tiene **alguno** de los roles pedidos. Sin roles pedidos, alcanza con estar autenticado. */
@@ -130,14 +153,35 @@ export class AuthService {
   }
 
   /**
-   * Cierra la sesión: memoria y almacenamiento.
+   * Cierra la sesión: en el servidor **y** en el navegador.
    *
-   * **No llama a la API.** El repo de la API no expone una ruta de cierre de sesión —el
-   * controlador de autenticación tiene nueve rutas y ninguna es de logout—, así que la sesión del
-   * servidor caduca sola. Ver `PENDIENTES-BACKEND.md`: mientras no exista, un refresh token robado
-   * sigue sirviendo hasta que expire, aunque la persona haya cerrado sesión.
+   * `POST /iam/auth/logout` revoca la sesión del `sid` del token y su refresh token. Sin esa
+   * llamada, borrar el almacenamiento local sólo esconde la credencial: un refresh token robado
+   * seguiría sirviendo durante los 30 días que dura, aunque la persona hubiera cerrado sesión.
+   *
+   * ## El estado local se limpia primero, y pase lo que pase
+   *
+   * La petición sale **antes** de limpiar —necesita el token para autenticarse— pero el estado se
+   * borra sin esperar la respuesta, y también si la respuesta falla. Que la red se caiga no puede
+   * dejar a alguien con la sesión abierta en una máquina que quiso abandonar; y como la ruta es
+   * idempotente, revocar dos veces no es un error.
    */
   logout(): void {
+    const hadSession = this.session.accessToken() !== null;
+
+    if (hadSession) {
+      // `subscribe` sin esperar: la interfaz ya navegó al login cuando esto vuelva. El error se
+      // traga a propósito —no hay nada que la persona pueda hacer con él— pero se anota en
+      // desarrollo, porque un logout que no revoca del lado del servidor es un dato de seguridad.
+      this.iam.logout().subscribe({
+        error: (error: unknown) => {
+          if (isDevMode()) {
+            console.warn('[AuthService] el cierre de sesión no llegó a la API', error);
+          }
+        },
+      });
+    }
+
     this.session.clear();
     this.storage.clear();
     // Ya no queda nada que restaurar, pero la restauración sí está resuelta: dejar la promesa vieja

@@ -7,6 +7,7 @@ import type {
   AccountActivation,
   ActivationResult,
   LoginCredentials,
+  LogoutResult,
   NewUser,
   PasswordReset,
   PasswordResetRequest,
@@ -56,6 +57,18 @@ export class IamClient {
         ...(credentials.mfaCode === undefined ? {} : { mfaCode: credentials.mfaCode }),
       })
       .pipe(map(toSession));
+  }
+
+  /**
+   * `POST /iam/auth/logout`. Revoca la sesión del `sid` del token **y su refresh token**.
+   *
+   * `revoked: false` **no es un error**: significa que esa sesión ya no estaba activa —doble clic,
+   * o cerrada desde otro dispositivo— y el resultado deseado ya se cumplía.
+   */
+  logout(): Observable<LogoutResult> {
+    // Sin cuerpo: la sesión que se cierra es la del token, que ya viaja en `Authorization`. Mandar
+    // el `sid` sería dejar que el cliente elija qué sesión cerrar.
+    return this.http.post<LogoutResult>(this.url('/iam/auth/logout'), {});
   }
 
   /** `POST /iam/auth/token/refresh`. Rota el par completo: el viejo deja de servir. */

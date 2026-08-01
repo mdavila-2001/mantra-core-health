@@ -18,6 +18,16 @@ export interface AccessTokenClaims {
   readonly roles: readonly string[];
   /** Tenants activos. Con más de uno hay que elegir cuál usar. */
   readonly tenants: readonly string[];
+  /**
+   * Nombre para mostrar. **Opcional**: la API lo omite cuando está vacío, porque el token viaja en
+   * la cabecera de cada petición y un claim en blanco ocupa lugar sin decir nada.
+   */
+  readonly name?: string;
+  /**
+   * Nombres de los tenants, `id -> nombre`. Es sólo para pintarlos: la lista que vale para validar
+   * sigue siendo {@link tenants}, que es sobre la que decide `SessionStore`.
+   */
+  readonly tenantNames?: Readonly<Record<string, string>>;
   /** Expiración en segundos desde epoch, si el token la declara. */
   readonly exp?: number;
 }
@@ -104,14 +114,36 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
   }
 
   const exp = source['exp'];
+  const name = source['name'];
+  const tenantNames = toStringMap(source['tenantNames']);
 
   return {
     sub,
     sid,
     roles: toStringArray(source['roles']),
     tenants: toStringArray(source['tenants']),
+    ...(typeof name === 'string' && name !== '' ? { name } : {}),
+    ...(tenantNames === null ? {} : { tenantNames }),
     ...(typeof exp === 'number' ? { exp } : {}),
   };
+}
+
+/**
+ * `tenantNames` como mapa de texto a texto, o `null` si no vino o no tiene esa forma.
+ *
+ * Se filtran las entradas cuyo valor no sea texto en vez de descartar el mapa entero: un nombre
+ * corrupto no debería hacer que las otras organizaciones se muestren por su uuid.
+ */
+function toStringMap(value: unknown): Readonly<Record<string, string>> | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null;
+  }
+
+  const entries = Object.entries(value).filter(
+    (entry): entry is [string, string] => typeof entry[1] === 'string',
+  );
+
+  return entries.length === 0 ? null : Object.fromEntries(entries);
 }
 
 /** Un claim de lista ausente equivale a lista vacía, no a error. */

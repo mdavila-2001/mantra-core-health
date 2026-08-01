@@ -48,13 +48,8 @@ export class ShellLayout {
       : { displayName: this.auth.displayName(), roles: user.roles };
   });
 
-  /**
-   * Las organizaciones del token. El nombre es el identificador acortado porque el token trae UUID
-   * y nada más — ver `SelectOrganization`.
-   */
-  protected readonly tenants = computed<readonly TenantOption[]>(() =>
-    this.auth.tenants().map((id) => ({ id, name: `Organización ${id.slice(0, 8)}` })),
-  );
+  /** Las organizaciones de la sesión, ya con su nombre legible (claim `tenantNames`). */
+  protected readonly tenants = computed<readonly TenantOption[]>(() => this.auth.tenantOptions());
 
   /**
    * El menú. Hoy tiene lo que existe de verdad: el panel y la vitrina del sistema de diseño. Las 81

@@ -22,7 +22,15 @@
       </dd>
 
       <dt>Organización activa</dt>
-      <dd><code class="panel__id">{{ tenantLabel() }}</code></dd>
+      <dd>
+        @if (tenantName(); as nombre) {
+          {{ nombre }}
+          <br />
+          <code class="panel__id">{{ activeTenantId() }}</code>
+        } @else {
+          <span class="panel__vacio">Sin organización activa.</span>
+        }
+      </dd>
     </dl>
 
     <p class="panel__nota">

@@ -21,12 +21,15 @@ import type { TenantOption } from '../../../shared/components/organisms/tenant-s
  * red de salud eso no es una molestia de navegación: es la historia clínica de otra institución en
  * la pantalla de alguien que buscaba la suya.
  *
- * ## El nombre que se muestra es el identificador
+ * ## Los nombres salen del token
  *
- * El token trae `tenants` como **lista de UUID y nada más**. No hay nombre de organización en
- * ningún lado del contrato: la API no expone `/me` ni una ruta que resuelva un tenant a su nombre
- * legible. Así que se muestra el identificador acortado, que al menos es cierto y distingue una de
- * otra, en vez de un «Organización 1» inventado. Ver `PENDIENTES-BACKEND.md`.
+ * `tenants` sigue siendo la lista de uuid —es la que `SessionStore` usa para validar—, pero el
+ * claim `tenantNames` trae el mapa `id -> nombre` para poder pintarlos. Antes esta pantalla mostraba
+ * identificadores acortados y pedía elegir entre uuid, que era la única pantalla del sistema donde
+ * había que decidir a ciegas.
+ *
+ * Si un id no está en el mapa, `AuthService.tenantOptions` cae al identificador acortado: una
+ * entrada fea es mejor que una entrada en blanco.
  */
 @Component({
   selector: 'app-select-organization',
@@ -43,9 +46,8 @@ export class SelectOrganization {
   protected readonly activeTenantId = this.auth.activeTenantId;
 
   protected readonly options = computed<readonly TenantOption[]>(() =>
-    this.auth.tenants().map((id) => ({
-      id,
-      name: shortId(id),
+    this.auth.tenantOptions().map((tenant) => ({
+      ...tenant,
       // Los roles del token son globales, no por organización: se muestran como contexto de la
       // sesión, no como «tu rol acá». Decir lo segundo sería afirmar algo que el token no dice.
       role: this.auth.roles().join(' · '),
@@ -81,9 +83,4 @@ export class SelectOrganization {
     }
     return requested;
   }
-}
-
-/** Un UUID entero no se lee ni se compara de un vistazo; los primeros ocho caracteres sí. */
-function shortId(id: string): string {
-  return `Organización ${id.slice(0, 8)}`;
 }

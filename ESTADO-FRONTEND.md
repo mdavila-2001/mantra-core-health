@@ -8,9 +8,10 @@ qué falta. Se actualiza cuando cambia el estado, no en cada commit.
 ## En una línea
 
 **La aplicación se usa de punta a punta.** Se entra con una cuenta real, la sesión sobrevive a
-recargar, se sale, y todo lo que se ve viene de la API — nada está simulado. **765 pruebas en verde
-sobre 65 archivos**, `yarn build` con SSR y prerender en verde, y **17 pasos verificados en un
-navegador real** contra la API viva (el recorrido está al final).
+recargar, se sale —y el cierre revoca de verdad del lado del servidor—, y todo lo que se ve viene de
+la API: nada está simulado. **772 pruebas en verde sobre 65 archivos**, `yarn build` con SSR y
+prerender en verde, y **21 pasos verificados en un navegador real** contra la API viva (el recorrido
+está al final).
 
 ---
 
@@ -60,7 +61,7 @@ Ahora las rutas son tres áreas y la diferencia entre ellas es qué guard las cu
 
 Figuraba «bloqueada por el backend, esperando el catálogo de formas reales de error». **El catálogo
 existe desde hace tiempo**: `src/common/errors/error-codes.ts` en el repo de la API declara un enum
-de **once códigos estables**, y `AllExceptionsFilter` garantiza que *toda* respuesta de error salga
+de **doce códigos estables**, y `AllExceptionsFilter` garantiza que *toda* respuesta de error salga
 con la misma envoltura. El comentario del propio enum lo declara contrato:
 
 > «Son parte del contrato de la API: el cliente puede ramificar sobre `error.code` sin parsear
@@ -76,13 +77,16 @@ POST /iam/auth/login  {credenciales malas}  -> 401 UNAUTHENTICATED
 Así que `core/http/api-error.ts` ramifica sobre `code`, nunca sobre `message`. Los ocho de los nueve
 casos que la tarjeta enumeraba están cubiertos y probados.
 
-**El noveno sigue faltando, y es el que la tarjeta marcaba en mayúsculas.** Los dos 403 comparten
-`code: 'FORBIDDEN'`: `RolesGuard` lanza «Rol insuficiente para la operación» y
-`VerifiedIdentityGuard` lanza «Verifique su identidad…», pero ambos son un `ForbiddenException`
-pelado. Lo único que los separa en la respuesta es el **texto del mensaje**, que es justo lo que el
-catálogo declara inestable. Mientras tanto se distingue por texto, en una constante aislada y con
-nombre propio (`FORBIDDEN_IDENTITY_HINTS`) para que el día que llegue un código estable se borre esa
-constante y nada más. Ver `PENDIENTES-BACKEND.md`.
+**Y el noveno se cerró mientras esto se escribía.** Los dos 403 salían con el mismo
+`code: 'FORBIDDEN'` y sólo los separaba el texto del mensaje, así que acá vivía una heurística sobre
+frases, aislada en una constante con nombre propio para poder borrarla el día que llegara un código
+estable. Ese día fue el mismo: `VerifiedIdentityGuard` ahora emite
+`IDENTITY_VERIFICATION_REQUIRED` y un `details.reason` con el subcaso. **La heurística se borró.**
+
+El `reason` se conserva aunque hoy los tres subcasos lleven casi al mismo lugar, porque uno no es
+igual a los otros dos: `no-person-linked` es una cuenta sin persona asociada, y ahí el trámite de
+verificación **no se ofrece** — mandar a alguien a verificar una identidad que todavía no está
+vinculada es un callejón con cartel de salida.
 
 ### J8 · Sesión que sobrevive a la recarga
 
@@ -101,6 +105,19 @@ nuevo. Un guard que leyera el estado en el primer turno vería `null` y echaría
 que sí tenía sesión: un cierre espontáneo en cada F5, y encima intermitente, porque dependería de si
 la petición llegó a tiempo. Por eso los tres guards hacen `await auth.ensureRestored()` antes de
 mirar nada, y esa promesa es una sola compartida.
+
+**El cierre de sesión revoca del lado del servidor.** `POST /iam/auth/logout` existe desde hoy, así
+que `logout()` lo llama: borrar sólo el almacenamiento local escondía la credencial pero dejaba el
+refresh token robado sirviendo los 30 días que dura. La petición sale antes de limpiar —necesita el
+token— pero el estado local se borra sin esperar la respuesta **y también si falla**: que la red se
+caiga no puede dejar la sesión abierta en una máquina que alguien quiso abandonar. Verificado en el
+navegador: tras cerrar sesión, reusar el refresh token contra la API devuelve 401.
+
+**El nombre y las organizaciones ya no son uuid.** El token trae `name` y `tenantNames`, así que el
+encabezado dice «Administrador Postman» en vez de «Usuario dc0c455f», y la elección de organización
+—que era la única pantalla del sistema donde había que decidir entre identificadores— muestra
+nombres. Si un id no está en el mapa se cae al identificador acortado: una entrada fea es mejor que
+una en blanco.
 
 Dos cosas que se arreglaron de paso:
 
@@ -140,9 +157,8 @@ público en un oráculo de qué personas tienen cuenta en una plataforma de salu
 ese mensaje y deja de preguntar; hay una prueba que verifica que el texto renderizado no contenga
 «no existe», «no encontramos» ni «no está registrado».
 
-> **Aviso para quien vaya a mostrar esto:** la API que corre en `:3000` es un contenedor de Docker
-> **anterior** a ese código, y las dos rutas devuelven 404 hasta que se reconstruya la imagen. El
-> resto de la demo no depende de ellas.
+El contenedor de la API ya se reconstruyó, así que las dos rutas están vivas: pedir el enlace
+devuelve 202 y esconde el formulario, verificado en el navegador contra la API real.
 
 ### Tarjeta 10 · El armazón en móvil
 
@@ -188,10 +204,14 @@ porque instancia el sistema de diseño entero, y nunca se descarga si nadie la a
 
 ## Lo que falta
 
-**Bloqueado por el backend, y es una sola cosa:** distinguir los dos 403 por un campo estable. Ver
-`PENDIENTES-BACKEND.md`, que además anota tres huecos nuevos que aparecieron al escribir estas
-pantallas: no hay ruta de cierre de sesión, el token no trae nombre para mostrar, y no hay forma de
-resolver un tenant a su nombre legible.
+**Nada bloqueado por el backend.** Los cuatro huecos que este documento anotaba —los dos 403
+indistinguibles, la falta de ruta de cierre de sesión, el token sin nombre y los tenants sin nombre
+legible— se cerraron esa misma madrugada y están verificados contra la API viva. El detalle, con la
+forma exacta de cada respuesta, en `PENDIENTES-BACKEND.md`.
+
+Con eso llegó también el `$expand` de lectura, así que **`data-access/terminology/` ya tiene
+cliente**: `readExpansion` para una página y `readAllOptions` para la lista entera de un desplegable.
+Paginado por cursor, comprobado de punta a punta a través del proxy.
 
 **Sin dueño** desde que Ender e Itzan no se incorporan: tarjetas 11 (`vitest.config.ts` y umbrales de
 coverage), 14 (escalar al diseñador la divergencia de variantes de botón), 22 (pantalla de
@@ -215,7 +235,9 @@ corepack yarn start          # frontend, acá, puerto 4200
 
 `yarn` puede no estar en el `PATH`; con **`corepack yarn <script>`** funciona igual.
 
-**Cuenta de demostración**, sembrada por `yarn postman:bootstrap` en el repo de la API:
+**Cuenta de demostración.** Desde que la API tiene el seed de arranque, se siembra sola: alcanza con
+levantarla con `BOOTSTRAP_ADMIN_EMAIL` y `BOOTSTRAP_ADMIN_PASSWORD` definidas. `yarn
+postman:bootstrap` sigue existiendo como disparador manual del mismo seed.
 
 ```text
 admin@redesa.test / S3cret-passw0rd
@@ -231,15 +253,19 @@ No con mocks: con esa cuenta, contra la API de verdad, los 17 pasos en verde.
 sin sesión, /panel manda al login (y recuerda a dónde iba)
 credenciales malas muestran el mensaje real de la API
 la credencial real entra al panel
+el encabezado muestra el nombre real del token, no el uuid
 el panel muestra roles, identificador y organización del token
 el directorio público se leyó de la API y se pintó con su estado del M34
 el armazón trae navegación y enlace de salto
 recargar NO cierra la sesión
 con sesión abierta, /auth/login rebota al panel
 la vitrina sigue funcionando (26 secciones)
+cerrar sesión llama a POST /iam/auth/logout
+el refresh token queda revocado en el servidor (reusarlo da 401)
 cerrar sesión vuelve al login y borra el refresh token guardado
 tras cerrar sesión, /panel vuelve a pedir credenciales
 el login lleva a recuperar la contraseña
+pedir el enlace funciona contra la API (202) y esconde el formulario
 restablecer sin token explica y ofrece pedir otro, sin mostrar el formulario
 restablecer con token muestra el formulario y NO expone el token
 ```

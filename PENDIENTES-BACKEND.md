@@ -69,14 +69,8 @@ mensaje siempre, exista o no la cuenta. Eso es lo correcto —un «no encontramo
 convertiría un formulario público en un oráculo de qué personas tienen cuenta en una plataforma de
 salud— y el frontend lo respeta: la pantalla muestra ese mensaje y no deduce nada del resultado.
 
-**Pero la API que corre hoy en `:3000` no lo tiene.** Es un contenedor de Docker anterior a ese
-código:
-
-```text
-POST localhost:3000/iam/auth/forgot-password -> 404 · "Cannot POST /iam/auth/forgot-password"
-```
-
-El controlador está en el fuente (`iam-auth.controller.ts:189`). Hace falta reconstruir la imagen.
+**Ya está vivo.** El contenedor se reconstruyó y las dos rutas responden. Verificado desde el
+navegador, a través del proxy: pedir el enlace devuelve 202 y la pantalla esconde el formulario.
 
 ---
 
@@ -168,22 +162,18 @@ Permanente. Pablo es el único par de ojos activo del frontend, y hay trabajo pu
 
 ---
 
-## Un pedido operativo, no de código
+## Consumido por el frontend
 
-**Resuelto para la demostración, pendiente para el equipo.** Lo que escucha hoy en `:3000` es la
-API construida desde el fuente de esta rama, no el contenedor: por eso se pudo verificar todo de
-punta a punta. **El contenedor del compose sigue siendo anterior**, así que quien levante el stack
-con `docker compose up api` no va a tener nada de esto. Reconstruir la imagen sigue haciendo falta;
-lo que ya no hace falta es esperarla para saber si los contratos funcionan.
+Los cuatro cierres están en uso y verificados contra la API viva, no sólo compilando:
 
-Para levantar el entorno como quedó verificado:
+| Entregado | Dónde se usa |
+| --- | --- |
+| `IDENTITY_VERIFICATION_REQUIRED` + `details.reason` | `core/http/api-error.ts` — la heurística sobre texto **se borró** |
+| `POST /iam/auth/logout` | `AuthService.logout()` — tras cerrar sesión, reusar el refresh token da 401 |
+| Claim `name` | El encabezado dice «Administrador Postman», no el uuid |
+| Claim `tenantNames` | La elección de organización muestra nombres, no identificadores |
 
-```bash
-docker compose up -d postgres mongodb redis opensearch minio   # nunca el servicio `api`
-corepack yarn build && BOOTSTRAP_ADMIN_EMAIL=admin@redesa.test \
-  BOOTSTRAP_ADMIN_PASSWORD='S3cret-passw0rd' node dist/src/main.js   # en el repo de la API
-corepack yarn start                                             # acá
-```
-
-También hay una migración nueva que aplicar sobre bases ya existentes:
-`database/SQL/99_migrations/2026-08-01_password_reset.sql`.
+**Un matiz sobre el `reason`:** los tres subcasos no llevan al mismo lugar. `identity-not-verified`
+y `no-authenticated-user` ofrecen el trámite de verificación; **`no-person-linked` no**, porque
+verificar la identidad de una persona que todavía no está vinculada a la cuenta no es algo que quien
+mira pueda hacer. Ofrecérselo sería un callejón con cartel de salida.
