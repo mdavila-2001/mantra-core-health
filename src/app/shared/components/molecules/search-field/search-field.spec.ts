@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { FormFieldComponent } from '../form-field/form-field';
+import { FormField } from '../form-field/form-field';
 import { SearchField } from './search-field';
 import { SEARCH_DEBOUNCE_MS } from './search-field.types';
 
@@ -26,7 +26,7 @@ class HostComponent {
 
 /** Con campo externo: la molécula debe delegar y no duplicar el nombre. */
 @Component({
-  imports: [SearchField, FormFieldComponent],
+  imports: [SearchField, FormField],
   template: `
     <app-form-field label="Buscar en la agenda">
       <app-search-field [(value)]="valor" />

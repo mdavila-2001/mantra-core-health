@@ -15,8 +15,8 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { AppButtonComponent } from '../../atoms/button/app-button';
-import { InputComponent } from '../../atoms/input/input';
+import { AppButton } from '../../atoms/button/button';
+import { Input } from '../../atoms/input/input';
 import { Spinner } from '../../atoms/spinner/spinner';
 import {
   FORM_CONTROL_CONTEXT,
@@ -49,7 +49,7 @@ import { SEARCH_DEBOUNCE_MS } from './search-field.types';
  */
 @Component({
   selector: 'app-search-field',
-  imports: [InputComponent, Spinner, AppButtonComponent],
+  imports: [Input, Spinner, AppButton],
   templateUrl: './search-field.html',
   styleUrl: './search-field.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

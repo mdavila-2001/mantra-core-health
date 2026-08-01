@@ -1,0 +1,85 @@
+/* ============================================================================
+    Auth layout — pantallas públicas. MOBILE-FIRST (§0.1): la base es el
+    teléfono (tarjeta a todo el ancho, sin sombra ni radio) y los `min-width`
+    van sumando. Breakpoints REDSAT: tablet ≥ 780 px · escritorio ≥ 1024 px.
+    ========================================================================== */
+
+:host {
+    display: block;
+    min-height: 100dvh;
+    background: var(--bg-base);
+}
+
+.auth-layout__theme {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    padding: var(--sp-3) var(--sp-4);
+}
+
+.auth-layout__main {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--sp-4) 0 var(--sp-8);
+}
+
+.auth-layout__brand {
+    margin: 0 0 var(--sp-6);
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    font-weight: 500;
+    color: var(--brand-primary);
+}
+
+.auth-layout__brand strong {
+    font-weight: 700;
+}
+
+/* Base móvil: la tarjeta ES la pantalla — sin flote, sin borde redondeado. */
+.auth-layout__card {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
+}
+
+.auth-layout__title {
+    margin: 0 0 var(--sp-2);
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+}
+
+.auth-layout__subtitle {
+    margin: 0 0 var(--sp-4);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-secondary);
+}
+
+.auth-layout__footer {
+    display: flex;
+    justify-content: center;
+    gap: var(--sp-4);
+    padding: var(--sp-6) var(--sp-4) 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* ≥ tablet: la tarjeta se despega del borde, se centra y flota. */
+@media (min-width: 780px) {
+    .auth-layout__main {
+        align-items: center;
+        padding-top: var(--sp-12);
+    }
+
+    .auth-layout__card {
+        width: 100%;
+        max-inline-size: 440px;
+        border-radius: var(--r-lg);
+        box-shadow: var(--shadow-lg);
+    }
+}

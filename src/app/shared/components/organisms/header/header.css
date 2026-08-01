@@ -1,0 +1,85 @@
+/* ============================================================================
+    App header — MOBILE-FIRST (§0.1). La altura se publica como custom
+    property (`--header-height`) para que el shell la use de offset sin
+    duplicar el número.
+    ========================================================================== */
+
+:host {
+    --header-height: 56px;
+
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    block-size: var(--header-height);
+    padding-inline: var(--sp-3);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+    font-family: var(--font-body);
+    /* pegado arriba: la navegación y la cuenta no se pierden al desplazar */
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 900;
+}
+
+.app-header__brand {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-body-lg);
+    line-height: 1;
+    font-weight: 500;
+    color: var(--brand-primary);
+    white-space: nowrap;
+}
+
+.app-header__brand strong {
+    font-weight: 700;
+}
+
+.app-header__content {
+    flex: 1;
+    min-inline-size: 0;
+}
+
+.app-header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    margin-inline-start: auto;
+}
+
+/* En móvil el nombre cede lugar; el avatar y el `aria-label` del botón
+   siguen identificando la cuenta. */
+.app-header__account-name {
+    display: none;
+}
+
+.app-header__account-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.app-header__roles {
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+}
+
+@media (min-width: 780px) {
+    :host {
+        --header-height: 64px;
+        padding-inline: var(--sp-5);
+        gap: var(--sp-4);
+    }
+
+    .app-header__account-name {
+        display: inline;
+        max-inline-size: 16ch;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .app-header__actions {
+        gap: var(--sp-2);
+    }
+}

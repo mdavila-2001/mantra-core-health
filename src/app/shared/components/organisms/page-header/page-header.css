@@ -1,0 +1,82 @@
+/* ============================================================================
+    Page header — MOBILE-FIRST (§0.1): la base es una columna con las acciones
+    debajo del título; desde tablet (≥ 780 px) pasan a la derecha.
+    ========================================================================== */
+
+:host {
+    display: block;
+    padding-bottom: var(--sp-4);
+    border-bottom: 1px solid var(--border-default);
+    margin-bottom: var(--sp-6);
+    font-family: var(--font-body);
+}
+
+.page-header__row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+    margin-top: var(--sp-3);
+}
+
+.page-header__title {
+    margin: 0;
+}
+
+.page-header__subtitle {
+    margin: var(--sp-1) 0 0;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-secondary);
+}
+
+.page-header__meta {
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-muted);
+}
+
+.page-header__meta:empty {
+    display: none;
+}
+
+.page-header__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+}
+
+.page-header__secondary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+}
+
+/* Base móvil: con más de dos secundarias, los botones ceden su lugar al menú.
+   No es contenido clínico lo que se pliega: las MISMAS acciones siguen a un
+   toque, dentro de «Más acciones». La primaria queda siempre a la vista. */
+.page-header__secondary--collapsible {
+    display: none;
+}
+
+.page-header__overflow {
+    display: block;
+}
+
+/* ≥ tablet: entran los botones y el menú deja de hacer falta. */
+@media (min-width: 780px) {
+    .page-header__row {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .page-header__secondary--collapsible {
+        display: flex;
+    }
+
+    .page-header__overflow {
+        display: none;
+    }
+}

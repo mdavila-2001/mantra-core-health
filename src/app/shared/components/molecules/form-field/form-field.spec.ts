@@ -1,11 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { InputComponent } from '../../atoms/input/input';
-import { FormFieldComponent } from './form-field';
+import { Input } from '../../atoms/input/input';
+import { FormField } from './form-field';
 
 @Component({
-  imports: [FormFieldComponent, InputComponent],
+  imports: [FormField, Input],
   template: `
     <app-form-field
       [label]="label()"
@@ -17,16 +17,16 @@ import { FormFieldComponent } from './form-field';
     </app-form-field>
   `,
 })
-class HostComponent {
+class Host {
   readonly label = signal('Nombre del paciente');
   readonly hint = signal('');
   readonly errorMessage = signal('');
   readonly required = signal(false);
 }
 
-describe('FormFieldComponent', () => {
-  let fixture: ComponentFixture<HostComponent>;
-  let host: HostComponent;
+describe('FormField', () => {
+  let fixture: ComponentFixture<Host>;
+  let host: Host;
 
   function label(): HTMLLabelElement {
     return fixture.nativeElement.querySelector('label');
@@ -36,8 +36,8 @@ describe('FormFieldComponent', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
-    fixture = TestBed.createComponent(HostComponent);
+    await TestBed.configureTestingModule({ imports: [Host] }).compileComponents();
+    fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     await fixture.whenStable();
   });
@@ -51,7 +51,7 @@ describe('FormFieldComponent', () => {
     });
 
     it('dos campos en la misma página no comparten id', async () => {
-      const otro = TestBed.createComponent(HostComponent);
+      const otro = TestBed.createComponent(Host);
       await otro.whenStable();
 
       const idB = (otro.nativeElement.querySelector('input') as HTMLInputElement).id;

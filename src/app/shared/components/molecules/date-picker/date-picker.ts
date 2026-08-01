@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { AppButtonComponent } from '../../atoms/button/app-button';
+import { AppButton } from '../../atoms/button/button';
 import type { DatePickerMode } from '../../atoms/input/input.types';
 import {
   FORM_CONTROL_CONTEXT,
@@ -92,7 +92,8 @@ function startOfMonth(date: Date): Date {
  */
 @Component({
   selector: 'app-date-picker',
-  imports: [AppButtonComponent],
+  standalone: true,
+  imports: [AppButton],
   templateUrl: './date-picker.html',
   styleUrl: './date-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,7 +102,7 @@ function startOfMonth(date: Date): Date {
     '[class.is-disabled]': 'disabled()',
   },
 })
-export class DatePickerComponent {
+export class DatePicker {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
 
   readonly value = model<Date | null>(null);

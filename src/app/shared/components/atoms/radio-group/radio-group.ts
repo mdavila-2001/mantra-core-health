@@ -21,6 +21,7 @@ import {
  */
 @Component({
   selector: 'app-radio-group',
+  standalone: true,
   templateUrl: './radio-group.html',
   styleUrl: './radio-group.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,7 +33,7 @@ import {
     '[attr.aria-disabled]': 'disabled()',
   },
 })
-export class RadioGroupComponent<T = unknown> {
+export class RadioGroup<T = unknown> {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
 
   readonly value = model<T | null>(null);

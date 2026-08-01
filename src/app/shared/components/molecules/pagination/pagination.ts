@@ -7,8 +7,8 @@ import {
   model,
 } from '@angular/core';
 
-import { AppButtonComponent } from '../../atoms/button/app-button';
-import { SelectComponent } from '../../atoms/select/select';
+import { AppButton } from '../../atoms/button/button';
+import { Select } from '../../atoms/select/select';
 import type { SelectOption } from '../../atoms/input/input.types';
 import {
   DEFAULT_PAGE_SIZE,
@@ -34,7 +34,7 @@ import {
  */
 @Component({
   selector: 'app-pagination',
-  imports: [AppButtonComponent, SelectComponent],
+  imports: [AppButton, Select],
   templateUrl: './pagination.html',
   styleUrl: './pagination.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

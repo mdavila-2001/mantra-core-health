@@ -12,6 +12,7 @@ import {
  */
 @Component({
   selector: 'app-switch',
+  standalone: true,
   templateUrl: './switch.html',
   styleUrl: './switch.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,7 +21,7 @@ import {
     '[class.is-disabled]': 'disabled()',
   },
 })
-export class SwitchComponent {
+export class Switch {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
 
   readonly checked = model<boolean>(false);

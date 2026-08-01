@@ -9,7 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { AppButtonComponent } from '../../atoms/button/app-button';
+import { AppButton } from '../../atoms/button/button';
 import { nextControlId } from '../../form-control/form-control.context';
 import {
   DEFAULT_CANCEL_LABEL,
@@ -27,7 +27,7 @@ import {
  */
 @Component({
   selector: 'app-dialog',
-  imports: [AppButtonComponent],
+  imports: [AppButton],
   templateUrl: './dialog.html',
   styleUrl: './dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

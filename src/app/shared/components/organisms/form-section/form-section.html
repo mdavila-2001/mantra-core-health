@@ -1,0 +1,32 @@
+<!-- `<fieldset>` y `<legend>` reales: el rótulo queda asociado a todos los
+     controles de adentro sin repetirlo en cada campo. -->
+<fieldset class="form-section__fieldset" [attr.aria-describedby]="describedBy()">
+  <legend class="form-section__legend">
+    @if (showsToggle()) {
+      <button
+        type="button"
+        class="form-section__toggle"
+        [attr.aria-expanded]="expanded()"
+        [attr.aria-controls]="contentId"
+        (click)="toggle()"
+      >
+        <span>{{ legend() }}</span>
+        <svg class="form-section__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+    } @else {
+      {{ legend() }}
+    }
+  </legend>
+
+  @if (description()) {
+    <p class="form-section__description" [id]="descriptionId">{{ description() }}</p>
+  }
+
+  @if (showsContent()) {
+    <div class="form-section__grid" [id]="contentId">
+      <ng-content />
+    </div>
+  }
+</fieldset>

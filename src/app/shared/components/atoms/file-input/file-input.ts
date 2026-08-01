@@ -30,6 +30,7 @@ export interface RejectedFile {
  */
 @Component({
   selector: 'app-file-input',
+  standalone: true,
   templateUrl: './file-input.html',
   styleUrl: './file-input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,7 +39,7 @@ export interface RejectedFile {
     '[class.is-disabled]': 'disabled()',
   },
 })
-export class FileInputComponent {
+export class FileInput {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
 
   readonly files = model<readonly File[]>([]);

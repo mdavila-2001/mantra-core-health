@@ -1,17 +1,17 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { CheckboxComponent } from './checkbox';
+import { Checkbox } from './checkbox';
 
-describe('CheckboxComponent', () => {
-  let fixture: ComponentFixture<CheckboxComponent>;
+describe('Checkbox', () => {
+  let fixture: ComponentFixture<Checkbox>;
 
   function native(): HTMLInputElement {
     return fixture.nativeElement.querySelector('input');
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [CheckboxComponent] }).compileComponents();
-    fixture = TestBed.createComponent(CheckboxComponent);
+    await TestBed.configureTestingModule({ imports: [Checkbox] }).compileComponents();
+    fixture = TestBed.createComponent(Checkbox);
     fixture.componentRef.setInput('label', 'Acepto los términos');
     await fixture.whenStable();
   });

@@ -1,9 +1,9 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { InputComponent } from './input';
+import { Input } from './input';
 
-describe('InputComponent', () => {
-  let fixture: ComponentFixture<InputComponent>;
+describe('Input', () => {
+  let fixture: ComponentFixture<Input>;
 
   function native(): HTMLInputElement {
     return fixture.nativeElement.querySelector('input');
@@ -28,8 +28,8 @@ describe('InputComponent', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [InputComponent] }).compileComponents();
-    fixture = TestBed.createComponent(InputComponent);
+    await TestBed.configureTestingModule({ imports: [Input] }).compileComponents();
+    fixture = TestBed.createComponent(Input);
     await fixture.whenStable();
   });
 

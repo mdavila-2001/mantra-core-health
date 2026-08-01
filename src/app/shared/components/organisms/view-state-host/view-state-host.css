@@ -1,0 +1,60 @@
+/* ============================================================================
+    View state host — los 9 estados del M34, dibujados una sola vez.
+    Mobile-first: sin media queries acá; los estados son de una columna en
+    cualquier ancho.
+    ========================================================================== */
+
+:host {
+    display: block;
+}
+
+/* S1: spinner con texto, centrado y austero. Nada que insinúe contenido. */
+.view-state-host__auth-pending {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-3);
+    padding: var(--sp-12) var(--sp-4);
+    color: var(--text-secondary);
+}
+
+.view-state-host__auth-text {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+}
+
+.view-state-host__loading {
+    padding: var(--sp-4) 0;
+}
+
+.view-state-host__issues {
+    margin: 0;
+    padding-left: var(--sp-5);
+}
+
+.view-state-host__retry-after {
+    margin: var(--sp-2) 0 0;
+    font-weight: 600;
+}
+
+.view-state-host__request-id {
+    margin: var(--sp-2) 0 0;
+}
+
+.view-state-host__request-id code {
+    /* el código se distingue y se selecciona fácil: es lo que se dicta por teléfono */
+    padding: 2px var(--sp-2);
+    border-radius: var(--r-xs);
+    background: color-mix(in srgb, var(--tone-fg) 12%, transparent);
+    user-select: all;
+}
+
+/* El foco programático de S4 no debe dibujar el anillo de foco de teclado:
+   llega por script, no por Tab. */
+.view-state-host__validation:focus {
+    outline: none;
+    box-shadow: none;
+}

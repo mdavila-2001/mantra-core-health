@@ -1,37 +1,58 @@
-import { ChangeDetectionStrategy, Component, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
-import { AppButtonComponent } from '../../../shared/components/atoms/button/app-button';
-import {
-  TOAST_TYPES,
-  type ToastType,
-} from '../../../shared/components/molecules/toast/toast.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import type { ToastType } from '../../../shared/components/molecules/toast/toast.types';
+
+/** Cuántos avisos lanza la ráfaga: suficientes para ver cómo se apilan. */
+const TAMANO_RAFAGA = 5;
 
 /**
- * Panel flotante para disparar avisos desde cualquier pantalla. **No es
- * producto**: `app.html` lo mete en un `@defer (when isDev)`, así el chunk no
- * se descarga nunca en producción.
+ * Disparador de avisos para probar desde cualquier pantalla.
  *
- * Tampoco administra la cola: emite lo que se pidió y quien lo monta —el
- * componente raíz— decide qué hacer. Sin servicio de por medio.
+ * Vive en `core/dev/` y el `@defer (when isDev)` de `app.html` lo deja en un
+ * fragmento que en producción nunca se descarga.
  */
 @Component({
   selector: 'app-toast-dev-panel',
-  imports: [AppButtonComponent],
+  imports: [AppButton],
   templateUrl: './toast-dev-panel.html',
   styleUrl: './toast-dev-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastDevPanel {
-  protected readonly types = TOAST_TYPES;
+  private readonly toastService = inject(ToastService);
 
-  /** Un aviso del tipo pedido, con la duración de su muestra. */
-  readonly launched = output<ToastType>();
+  readonly types: readonly ToastType[] = ['success', 'info', 'warning', 'error'];
 
-  /** Un aviso sin `duration`: se queda hasta que lo cierren. */
-  readonly persistentLaunched = output<void>();
+  lanzar(type: ToastType): void {
+    this.toastService.show({
+      type,
+      title: `Aviso de prueba (${type})`,
+      message: 'Texto de ejemplo para revisar el aviso en pantalla.',
+    });
+  }
 
-  /** Varios de golpe: sirve para ver cómo se apila y desborda la columna. */
-  readonly burstLaunched = output<void>();
+  /** Aviso que no se cierra solo: sirve para revisar el foco y el cierre manual. */
+  lanzarFijo(): void {
+    this.toastService.show({
+      type: 'error',
+      title: 'Aviso fijo',
+      message: 'Este no se cierra solo: hay que cerrarlo a mano.',
+      durationMs: null,
+    });
+  }
 
-  readonly cleared = output<void>();
+  lanzarRafaga(): void {
+    for (let i = 1; i <= TAMANO_RAFAGA; i += 1) {
+      this.toastService.show({
+        type: this.types[i % this.types.length] ?? 'info',
+        message: `Aviso ${i} de ${TAMANO_RAFAGA} de la ráfaga.`,
+      });
+    }
+  }
+
+  limpiar(): void {
+    this.toastService.clear();
+  }
 }

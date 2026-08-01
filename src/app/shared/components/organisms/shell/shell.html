@@ -1,0 +1,41 @@
+<!-- Primer elemento focusable de la página: invisible hasta que recibe foco.
+     Sin esto, quien navega con teclado tabula por todo el menú en cada vista. -->
+<a class="shell__skip-link" [href]="'#' + mainContentId" (click)="skipToContent($event)">
+  Saltar al contenido
+</a>
+
+<!-- Cambiar de ruta sin recargar no dispara ningún anuncio del navegador: lo
+     hace esta región. `<output>` ya es una región viva por sí misma. -->
+<output class="sr-only" aria-live="polite">{{ announcement() }}</output>
+
+<header
+  app-header
+  [user]="user()"
+  [tenants]="tenants()"
+  [activeTenantId]="activeTenantId()"
+  [showMenuButton]="navIsDrawer()"
+  [menuOpen]="isDrawerOpen()"
+  [navPanelId]="navPanelId"
+  (menuToggled)="toggleDrawer()"
+  (logoutRequested)="requestLogout()"
+  (tenantChanged)="changeTenant($event)"
+>
+  <ng-content select="[shell-header-content]" />
+</header>
+
+<div class="shell__body">
+  <app-side-nav
+    [id]="navPanelId"
+    [sections]="sections()"
+    [collapsed]="isCollapsed()"
+    [drawer]="navIsDrawer()"
+    [open]="isDrawerOpen()"
+    (closeRequested)="closeDrawer()"
+  />
+
+  <!-- El índice negativo lo hace enfocable por script tras navegar sin meterlo
+       en el orden de tabulación. -->
+  <main #main class="shell__main" [id]="mainContentId" tabindex="-1">
+    <router-outlet />
+  </main>
+</div>
