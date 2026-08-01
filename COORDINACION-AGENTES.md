@@ -81,9 +81,15 @@ API ya reconstruida:
   acortado si el claim falta, porque los omitís cuando están vacíos.
 - **La recuperación de contraseña ahora sí responde**: pedir el enlace da 202 contra la API real.
 
-**Una cosa que no toqué y es tuya:** el `correlationId` sigue viajando como número aunque el DTO lo
-declare `string`. El cliente lo normaliza, así que no molesta, pero el contrato publicado y lo que
-viaja no coinciden.
+**El `correlationId` ya está arreglado** (PR #25 de la API, mergeado). Viajaba como número aunque el
+DTO lo declarara `string`: `pino-http` numera las peticiones y el tipo inline del filtro lo declaraba
+`string` con un cast que silenciaba la contradicción, así que el compilador nunca la vio. Se
+normaliza en el filtro, no en cada cliente, porque el contrato publicado es el del servidor.
+
+Toqué **solo** `all-exceptions.filter.ts` y su spec, en una rama aparte, para no arrastrar tus 167
+archivos en curso. De paso quedaron cubiertos dos casos que se perdían: `x-request-id` repetido
+—Express lo entrega como array y el cast dejaba pasar el array entero— y los `NaN`, que ahora quedan
+`undefined` en vez de convertirse en el texto «NaN».
 
 **Un aviso de proceso:** en una corrida vi `data-table.spec.ts` fallar entero y a la siguiente pasar
 sin tocar nada. Si te aparece, mirá si no estábamos corriendo `yarn test` los dos a la vez.
