@@ -19,6 +19,12 @@ yarn-error.log
 # Proxy generado por el contenedor a partir de proxy.conf.docker.json.
 proxy.generated.json
 
+# Entorno del navegador generado por scripts/generate-env.mjs desde el .env.
+# Fuera del repo a propósito: es lo que impide versionar sin querer la
+# configuración de una máquina o de un despliegue. Se regenera en cada
+# `yarn start`, `yarn build`, `yarn watch` y `yarn test`.
+src/environments/env.generated.ts
+
 # Yarn 4 — artefactos generados por la instalación.
 # El repo no fija `nodeLinker`, así que Yarn instala en modo PnP y genera estos
 # archivos: cientos de dependencias desempaquetadas, binarios incluidos. Son
@@ -60,9 +66,12 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-# Hosts and secrets
-.env
-.env.*
-src/environments/environment.ts
-src/environments/environment.development.ts
-src/environments/environment.types.ts
+# Nota sobre `src/environments/`: los tres archivos de ahí SÍ se versionan.
+# Ya no guardan ningún valor —solo la forma del entorno y los respaldos— y lo
+# que sale del `.env` va a `env.generated.ts`, ignorado más arriba. Ignorarlos
+# no funcionaría de todos modos: .gitignore no afecta a archivos ya rastreados,
+# así que seguirían viajando al repositorio con los cambios de cada quien.
+#
+# El `.env` real también está cubierto arriba, junto con la excepción de
+# `.env.example`. No repetir las reglas acá: una segunda regla `.env.*` después
+# de `!.env.example` vuelve a ignorar la plantilla.

@@ -14,6 +14,10 @@ dist
 coverage
 out-tsc
 
+# Entorno del navegador generado en el host: el contenedor lo regenera al
+# arrancar con SU propio entorno, y el del host podría apuntar a otra API.
+src/environments/env.generated.ts
+
 # El entorno real nunca entra a la imagen: las variables se pasan en ejecución
 # (docker-compose las inyecta). La plantilla sí, que es solo documentación.
 .env
