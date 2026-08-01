@@ -36,6 +36,8 @@ implícito en ellas.
 | J5 | 19 | Capa `data-access/`: clientes de `iam`, `profiles`, `identity` y `files` |
 | J6 | 9 | Nomenclatura: las 11 clases sin sufijo `Component` |
 | J7 | 12 | `ControlValueAccessor` en `input`, `checkbox` y `select` |
+| J3 | 16 | Interceptor de autenticación con refresco único |
+| — | 13 | `ControlValueAccessor` en `radio-group` y `switch` |
 
 **J0** (tarjeta 3) también está hecha, pero no toca este repositorio: es `ORM_SCHEMA_SYNC=off` en
 el `.env` local de la API.
@@ -121,19 +123,18 @@ La sección 06 de `/design-system` tiene el `FormGroup` enlazando los tres átom
 
 ## Lo que falta
 
-**Se puede hacer ya:** la cadena **J3 → J8 → J9** (interceptor de autenticación, `AuthService` con
-guard de ruta, y la pantalla de login con selector de organización). Con eso se cierra la Fase 3 y
-el Smoke v2.
+**Se puede hacer ya:** **J8** (`AuthService` + guard de ruta), que tiene todo lo que necesita — J3
+le dejó el store de sesión y el refresco resuelto. Después **J9**, la pantalla de login con el
+selector de organización. Con eso se cierra la Fase 3.
+
+**Destrabada:** **J10** (tarjeta 21) esperaba la tarjeta 13, que ya está hecha.
 
 **Bloqueada por el backend:** **J4** (tarjeta 17) necesita el catálogo de formas reales de error.
-Sin eso habría que inventar los cuerpos de respuesta.
-
-**Bloqueada por otra tarjeta:** **J10** (tarjeta 21) necesita, además de J7, la tarjeta 13 —
-`ControlValueAccessor` parte 2, en `radio-group` y `switch`.
+Sin eso habría que inventar los cuerpos de respuesta. Ver `PENDIENTES-BACKEND.md`.
 
 **Sin dueño** desde que Ender e Itzan no se incorporan: tarjetas 10 (breakpoints mobile-first), 11
-(`vitest.config.ts` y umbrales de coverage), 13, 14 (escalar al diseñador la divergencia de
-variantes de botón), 22 (pantalla de verificación de identidad) y 23 (altas administrativas).
+(`vitest.config.ts` y umbrales de coverage), 14 (escalar al diseñador la divergencia de variantes de
+botón), 22 (pantalla de verificación de identidad) y 23 (altas administrativas). La 13 ya se hizo.
 
 ---
 
