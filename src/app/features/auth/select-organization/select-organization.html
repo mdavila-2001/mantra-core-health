@@ -1,0 +1,19 @@
+<app-auth-layout
+  title="Elegí una organización"
+  subtitle="Tu cuenta pertenece a más de una. Todo lo que veas a continuación corresponde a la que elijas."
+>
+  @if (hasSession()) {
+    <app-tenant-switcher
+      variant="page"
+      [tenants]="options()"
+      [activeTenantId]="activeTenantId()"
+      (tenantChanged)="choose($event)"
+    />
+  } @else {
+    <!-- Sin sesión no hay lista que mostrar: se dice qué pasó y se ofrece la única salida. -->
+    <p class="organizacion__sin-sesion">Tu sesión no está abierta o expiró.</p>
+    <button app-button variant="primary" size="lg" (clicked)="goToLogin()">
+      Volver a ingresar
+    </button>
+  }
+</app-auth-layout>

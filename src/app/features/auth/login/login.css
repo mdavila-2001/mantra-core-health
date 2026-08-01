@@ -1,0 +1,40 @@
+/* Pantalla de ingreso. El layout, la marca y la tarjeta los pone `app-auth-layout`;
+   acá solo va el ritmo vertical del formulario. */
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5, 1.25rem);
+}
+
+/* El botón ocupa el ancho de la tarjeta: es la única acción primaria de la pantalla
+   y no compite con nada. */
+.login__submit {
+  width: 100%;
+  margin-block-start: var(--space-2, 0.5rem);
+}
+
+/* Con un solo problema no se ve viñeta —una lista de uno parece un error de maqueta—,
+   y con varios sí, porque ahí sí son ítems que se cuentan. */
+.login__issues {
+  margin: 0;
+  padding-inline-start: var(--space-5, 1.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+}
+
+.login__issues:has(> li:only-child) {
+  padding-inline-start: 0;
+  list-style: none;
+}
+
+.login__footer {
+  text-align: center;
+}
+
+.login__footer p {
+  margin: 0;
+  color: var(--color-text-secondary, #64748b);
+  font-size: var(--font-size-sm, 0.875rem);
+}

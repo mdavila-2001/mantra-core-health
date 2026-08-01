@@ -1,0 +1,53 @@
+<app-auth-layout title="Ingresá a tu cuenta" subtitle="Red de salud REDESA">
+  <!-- `novalidate`: la validación la hace Angular y la muestra el `app-form-field`. Las burbujas
+       del navegador no se pueden estilar, no las anuncia ningún lector de pantalla y desaparecen
+       solas mientras la persona todavía las está leyendo. -->
+  <form class="login__form" novalidate [formGroup]="form" (ngSubmit)="submit()">
+    @if (failureMessages().length > 0) {
+      <app-alert tone="error" title="No se pudo iniciar sesión">
+        <ul class="login__issues">
+          @for (message of failureMessages(); track message) {
+            <li>{{ message }}</li>
+          }
+        </ul>
+      </app-alert>
+    }
+
+    <app-form-field label="Ingresá con">
+      <app-radio-group formControlName="identifierKind" name="login-identifier-kind">
+        <app-radio value="email" label="Correo electrónico" />
+        <app-radio value="nationalId" label="Documento de identidad" />
+      </app-radio-group>
+    </app-form-field>
+
+    <app-form-field [label]="identifierLabel()" [hint]="identifierHint()" [required]="true">
+      <app-input
+        formControlName="identifier"
+        [type]="identifierType()"
+        [placeholder]="usesEmail() ? 'nombre@organizacion.bo' : '0000000'"
+      />
+    </app-form-field>
+
+    <app-form-field label="Contraseña" [required]="true">
+      <app-input formControlName="password" type="password" placeholder="Tu contraseña" />
+    </app-form-field>
+
+    <button
+      app-button
+      type="submit"
+      variant="primary"
+      size="lg"
+      class="login__submit"
+      [isLoading]="isSubmitting()"
+    >
+      Ingresar
+    </button>
+  </form>
+
+  <nav auth-footer class="login__footer" aria-label="Ayuda para ingresar">
+    <!-- El enlace que los diseños piden. Apunta a algo real desde que la API sumó
+         `POST /iam/auth/forgot-password`; antes de eso no existía y acá había un texto que
+         mandaba a hablar con el administrador. -->
+    <a app-link [routerLink]="forgotPasswordPath">¿Olvidaste tu contraseña?</a>
+  </nav>
+</app-auth-layout>

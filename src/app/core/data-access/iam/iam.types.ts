@@ -74,6 +74,41 @@ export interface ActivationResult {
   readonly activated: boolean;
 }
 
+/**
+ * Solicitud de restablecimiento de contraseña (UC-01-13).
+ *
+ * **No es la unión discriminada del login.** Acá el backend acepta un solo campo `identifier` sin
+ * distinguir si es correo o documento, y tiene sentido que así sea: la respuesta es idéntica en
+ * todos los casos, así que ramificar el contrato no cambiaría nada de lo que pasa después.
+ */
+export interface PasswordResetRequest {
+  /** Correo o documento, el mismo con el que la persona entra. */
+  readonly identifier: string;
+}
+
+/**
+ * Respuesta de la solicitud. **Nunca dice si la cuenta existe**: el mensaje es el mismo exista o
+ * no, porque un «no encontramos ese correo» convertiría el formulario en un oráculo de qué
+ * direcciones están registradas en una plataforma de salud. Se muestra tal cual viene.
+ */
+export interface PasswordResetRequested {
+  readonly message: string;
+}
+
+/** Consumo del token que llegó por correo. */
+export interface PasswordReset {
+  readonly token: string;
+  /** Mínimo 8 caracteres, tal como lo valida el backend. */
+  readonly newPassword: string;
+}
+
+export interface PasswordResetResult {
+  readonly userId: string;
+  /** Cambiar la clave cierra **todas** las sesiones abiertas: quien recupera su cuenta lo hace
+   *  porque perdió el control de la anterior. */
+  readonly revokedSessions: number;
+}
+
 /** Alta de usuario hecha por un administrador. */
 export interface NewUser {
   readonly displayName: string;

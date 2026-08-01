@@ -8,6 +8,10 @@ import type {
   ActivationResult,
   LoginCredentials,
   NewUser,
+  PasswordReset,
+  PasswordResetRequest,
+  PasswordResetRequested,
+  PasswordResetResult,
   PatientRegistration,
   RegisteredPatient,
   Session,
@@ -83,6 +87,28 @@ export class IamClient {
     return this.http.post<ActivationResult>(this.url('/iam/auth/activate'), {
       activationToken: activation.activationToken,
       newPassword: activation.newPassword,
+    });
+  }
+
+  /**
+   * `POST /iam/auth/forgot-password`. Responde **202 y siempre el mismo mensaje**, exista o no la
+   * cuenta. No hay ningún caso en el que esta llamada revele si un correo está registrado, y la
+   * pantalla no debe intentar deducirlo del resultado.
+   *
+   * Tiene un límite de 5 por minuto, más estricto que el del login, porque cada solicitud válida
+   * dispara un correo hacia la bandeja de un tercero.
+   */
+  requestPasswordReset(request: PasswordResetRequest): Observable<PasswordResetRequested> {
+    return this.http.post<PasswordResetRequested>(this.url('/iam/auth/forgot-password'), {
+      identifier: request.identifier,
+    });
+  }
+
+  /** `POST /iam/auth/reset-password`. Fija la contraseña nueva y cierra las sesiones abiertas. */
+  resetPassword(reset: PasswordReset): Observable<PasswordResetResult> {
+    return this.http.post<PasswordResetResult>(this.url('/iam/auth/reset-password'), {
+      token: reset.token,
+      newPassword: reset.newPassword,
     });
   }
 

@@ -1,7 +1,7 @@
 <label
   class="switch-container"
   [class.is-checked]="checked()"
-  [class.is-disabled]="disabled()"
+  [class.is-disabled]="isDisabled()"
   [attr.for]="controlId()"
 >
   <!-- role="switch" SÍ exige aria-checked, a diferencia del checkbox nativo,
@@ -12,7 +12,7 @@
     class="native-switch"
     [id]="controlId()"
     [checked]="checked()"
-    [disabled]="disabled()"
+    [disabled]="isDisabled()"
     [attr.aria-checked]="checked()"
     [attr.aria-describedby]="describedBy()"
     (change)="handleChange($event)"

@@ -1,0 +1,136 @@
+import {
+  HttpErrorResponse,
+  type HttpInterceptorFn,
+  type HttpRequest,
+} from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, switchMap, throwError } from 'rxjs';
+
+import { SessionStore } from '../auth/session.store';
+import { TokenRefreshService } from './token-refresh.service';
+
+/**
+ * Ruta a la que se manda a quien se quedó sin sesión.
+ *
+ * Espeja `LOGIN_PATH` de `core/auth/auth.guard.ts` y no lo importa a propósito: el interceptor no
+ * debe depender de la capa de guards, que sí depende de `AuthService`, que a su vez usa el cliente
+ * que este interceptor envuelve. Son dos constantes iguales y una prueba que las compara.
+ */
+export const LOGIN_ROUTE = '/auth/login';
+
+/**
+ * Rutas que la API declara `@Public()` y que por definición se piden sin
+ * sesión. Mandarles un `Authorization` no rompe nada, pero intentar refrescar
+ * cuando una de ellas responde 401 sí: el 401 de un login son credenciales
+ * inválidas, y reaccionar con un refresco sería un bucle contra el límite de
+ * 10 intentos por minuto.
+ *
+ * Verificadas una por una contra `iam-auth.controller.ts`.
+ */
+const PUBLIC_PATHS: readonly string[] = [
+  '/iam/auth/login',
+  '/iam/auth/token/refresh',
+  '/iam/auth/register-patient',
+  '/iam/auth/register-organization',
+  '/iam/auth/register-practitioner',
+  '/iam/auth/verify-email',
+  '/iam/auth/activate',
+  // Recuperación de contraseña: por definición la pide quien no puede entrar.
+  '/iam/auth/forgot-password',
+  '/iam/auth/reset-password',
+];
+
+/**
+ * Añade la credencial a cada petición y renueva la sesión **una sola vez**
+ * cuando la API responde 401.
+ *
+ * El reintento no recursa a propósito: si la petición reintentada vuelve a dar
+ * 401, el error sube. Un interceptor que reintenta en bucle agota el límite de
+ * peticiones y deja la interfaz colgada sin decir nada.
+ */
+export const authInterceptor: HttpInterceptorFn = (request, next) => {
+  if (isPublic(request.url)) {
+    return next(request);
+  }
+
+  const session = inject(SessionStore);
+  const refresher = inject(TokenRefreshService);
+  const router = inject(Router);
+
+  return next(withCredentials(request, session)).pipe(
+    catchError((error: unknown) => {
+      if (!isUnauthorized(error)) {
+        return throwError(() => error);
+      }
+
+      // Sin refresh token no hay nada que renovar: se corta acá en vez de
+      // gastar una petición que ya sabemos que va a fallar.
+      if (session.refreshToken() === null) {
+        return endSession(session, router, error);
+      }
+
+      return refresher.refresh().pipe(
+        switchMap(() => next(withCredentials(request, session))),
+        catchError((refreshError: unknown) => endSession(session, router, refreshError)),
+      );
+    }),
+  );
+};
+
+/**
+ * Pone `Authorization` y `X-Tenant-Id`.
+ *
+ * El tenant sale del propio token —la API no expone `/me`— y solo viaja cuando
+ * está resuelto: con varias organizaciones y ninguna elegida todavía, no se
+ * manda. Adivinar una podría mostrar datos de la organización equivocada.
+ */
+function withCredentials<T>(request: HttpRequest<T>, session: SessionStore): HttpRequest<T> {
+  const accessToken = session.accessToken();
+  if (accessToken === null) {
+    return request;
+  }
+
+  const tenantId = session.activeTenantId();
+
+  return request.clone({
+    setHeaders: {
+      Authorization: `Bearer ${accessToken}`,
+      ...(tenantId === null ? {} : { 'X-Tenant-Id': tenantId }),
+    },
+  });
+}
+
+function isUnauthorized(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && error.status === 401;
+}
+
+/** Cierra la sesión y manda al login, propagando el error original. */
+function endSession(session: SessionStore, router: Router, error: unknown) {
+  session.clear();
+  void router.navigateByUrl(LOGIN_ROUTE);
+
+  return throwError(() => error);
+}
+
+/**
+ * Compara solo la ruta: `apiBaseUrl` puede estar vacío en desarrollo (rutas
+ * relativas, las resuelve el proxy) o ser una raíz absoluta en producción, y en
+ * ambos casos la ruta es la misma.
+ */
+function isPublic(url: string): boolean {
+  const path = pathOf(url);
+  return PUBLIC_PATHS.includes(path) || path.startsWith('/public/');
+}
+
+function pathOf(url: string): string {
+  if (!url.includes('://')) {
+    return url.split('?')[0] ?? url;
+  }
+
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url;
+  }
+}

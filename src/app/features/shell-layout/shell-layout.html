@@ -1,0 +1,11 @@
+<!-- El `<router-outlet />` de las rutas hijas está adentro de `app-shell`, en su `<main>`: así el
+     enlace de salto, el anuncio de ruta y el foco quedan resueltos para todas las pantallas. -->
+<app-shell
+  [user]="user()"
+  [sections]="sections()"
+  [tenants]="tenants()"
+  [activeTenantId]="activeTenantId()"
+  [drawerMode]="isDrawer()"
+  (logoutRequested)="logout()"
+  (tenantChanged)="changeTenant($event)"
+/>
