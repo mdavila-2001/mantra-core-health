@@ -5,7 +5,7 @@
     <title>Mantra Core Health</title>
     <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="redsat_logo.svg">
     <script>
       /* Anti-parpadeo: bajo SSR el HTML llega sin data-theme, así que una
          preferencia manual guardada se vería con el tema contrario hasta que
@@ -21,6 +21,7 @@
           }
         } catch (e) {
           /* almacenamiento bloqueado: queda la preferencia del sistema */
+          console.error('Error al leer la preferencia del tema:', e);
         }
       })();
     </script>
