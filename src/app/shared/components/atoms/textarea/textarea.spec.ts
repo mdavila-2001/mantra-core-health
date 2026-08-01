@@ -2,12 +2,12 @@ import { Component, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { FormFieldComponent } from '../../molecules/form-field/form-field';
+import { FormField } from '../../molecules/form-field/form-field';
 import { Textarea } from './textarea';
 
 /** Campo real alrededor del control: así se ejerce el contrato por DI. */
 @Component({
-  imports: [FormFieldComponent, Textarea],
+  imports: [FormField, Textarea],
   template: `
     <app-form-field
       [label]="label()"

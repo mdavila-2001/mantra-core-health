@@ -62,12 +62,13 @@ import { SearchField } from '../../shared/components/molecules/search-field/sear
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { Toast } from '../../shared/components/molecules/toast/toast';
-import {
-  TOAST_TYPES,
-  type ToastMessage,
-} from '../../shared/components/molecules/toast/toast.types';
+import type { ToastMessage } from '../../shared/components/molecules/toast/toast.types';
 
-import { DEMO_TOASTS, PERSISTENT_DEMO_TOAST } from '../../core/dev/toast-samples';
+import {
+  DEMO_TOAST_TYPES,
+  DEMO_TOASTS,
+  PERSISTENT_DEMO_TOAST,
+} from '../../core/dev/toast-samples';
 import { ViewStateGallery } from './view-state-gallery/view-state-gallery';
 
 const DEMO_LOADING_MS = 1500;
@@ -268,7 +269,7 @@ export class DesignSystemSample {
 
   /** Los cuatro tonos más el aviso fijo, quietos: la galería es apariencia. */
   protected readonly toastSamples: readonly ToastMessage[] = [
-    ...TOAST_TYPES.map((type) => ({ id: `muestra-${type}`, ...DEMO_TOASTS[type] })),
+    ...DEMO_TOAST_TYPES.map((type) => ({ id: `muestra-${type}`, ...DEMO_TOASTS[type] })),
     { id: 'muestra-fijo', ...PERSISTENT_DEMO_TOAST },
   ];
 
