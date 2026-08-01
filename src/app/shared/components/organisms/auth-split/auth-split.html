@@ -4,11 +4,16 @@
        El diseño original lleva una fotografía; usamos un degradado de marca
        porque el archivo no está aprobado todavía y así no dependemos de él. -->
   <aside class="auth-split__brand" aria-hidden="true">
+    <!-- `@for … track` sobre el propio texto: al cambiar de paciente a
+         profesional el nodo se rehace y la animación de entrada vuelve a
+         correr, en vez de que el titular se reemplace de golpe. -->
     <div class="auth-split__brand-content">
       <p class="auth-split__wordmark">REDSAT</p>
-      <h2 class="auth-split__claim">{{ claim() }}</h2>
-      @if (tagline()) {
-        <p class="auth-split__tagline">{{ tagline() }}</p>
+      @for (texto of claimKeyed(); track texto) {
+        <h2 class="auth-split__claim">{{ texto }}</h2>
+      }
+      @for (texto of taglineKeyed(); track texto) {
+        <p class="auth-split__tagline">{{ texto }}</p>
       }
     </div>
   </aside>

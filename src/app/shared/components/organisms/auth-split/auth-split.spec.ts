@@ -17,15 +17,19 @@ class ThemeServiceFalso {
 @Component({
   imports: [AuthSplit],
   template: `
-    <app-auth-split claim="Tu salud, conectada" tagline="La red más grande">
+    <app-auth-split [claim]="claim()" [tagline]="tagline()">
       <p class="proyectado">formulario</p>
     </app-auth-split>
   `,
 })
-class Host {}
+class Host {
+  readonly claim = signal('Tu salud, conectada');
+  readonly tagline = signal('La red más grande');
+}
 
 describe('AuthSplit', () => {
   let fixture: ComponentFixture<Host>;
+  let host: Host;
   let theme: ThemeServiceFalso;
 
   beforeEach(async () => {
@@ -36,6 +40,7 @@ describe('AuthSplit', () => {
 
     theme = TestBed.inject(ThemeService) as unknown as ThemeServiceFalso;
     fixture = TestBed.createComponent(Host);
+    host = fixture.componentInstance;
     await fixture.whenStable();
   });
 
@@ -51,6 +56,38 @@ describe('AuthSplit', () => {
 
   it('proyecta el contenido del formulario', () => {
     expect(el().querySelector('.proyectado')?.textContent).toBe('formulario');
+  });
+
+  describe('cambio de titular', () => {
+    it('rehace el nodo al cambiar el texto, para que la animación de entrada vuelva a correr', async () => {
+      // Si se reusara el nodo —lo que hace una interpolación a secas— el texto
+      // se reemplazaría de golpe y no habría transición que ver.
+      const antes = el().querySelector('.auth-split__claim');
+
+      host.claim.set('Potenciá tu práctica médica');
+      await fixture.whenStable();
+
+      const despues = el().querySelector('.auth-split__claim');
+      expect(despues?.textContent).toContain('Potenciá tu práctica médica');
+      expect(despues).not.toBe(antes);
+    });
+
+    it('conserva el nodo si el texto no cambió', async () => {
+      const antes = el().querySelector('.auth-split__claim');
+
+      host.tagline.set('Otra bajada');
+      await fixture.whenStable();
+
+      // Cambiar la bajada no debe reiniciar la animación del titular.
+      expect(el().querySelector('.auth-split__claim')).toBe(antes);
+    });
+
+    it('sin bajada no renderiza el párrafo', async () => {
+      host.tagline.set('');
+      await fixture.whenStable();
+
+      expect(el().querySelector('.auth-split__tagline')).toBeNull();
+    });
   });
 
   it('la columna de marca es decorativa: no la anuncia un lector de pantalla', () => {

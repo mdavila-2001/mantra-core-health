@@ -26,9 +26,10 @@
   gap: var(--sp-2);
   border-radius: var(--r-sm);
   transition:
-    background 0.15s ease,
-    transform 0.1s ease,
-    box-shadow 0.15s ease;
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-spring),
+    box-shadow var(--dur-base) var(--ease-standard);
   white-space: nowrap;
   position: relative;
 
@@ -36,13 +37,30 @@
   color: var(--_btn-fg);
 }
 
+/* Se levanta apenas y proyecta sombra: dice «esto responde» antes del clic.
+   1 px es a propósito — más que eso, en una fila de botones, se lee como que
+   algo se desacomodó. */
 :host(:hover) {
   background: var(--_btn-bg-hover);
   color: var(--_btn-fg-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
+/* Y se hunde al presionar. La vuelta usa `--ease-spring`, que sobrepasa un
+   poco: es lo que hace que el botón se sienta físico en vez de conmutado. */
 :host(:active) {
   transform: translateY(1px);
+  box-shadow: none;
+  /* Bajar sin esperar: el eco del dedo tiene que ser inmediato. */
+  transition-duration: var(--dur-fast), var(--dur-fast), 0s, var(--dur-fast);
+}
+
+/* Un botón que no se puede tocar no se levanta ni se hunde. */
+:host(.btn--loading:hover),
+:host(.btn--disabled:hover) {
+  transform: none;
+  box-shadow: none;
 }
 
 /* el anillo --focus-ring lo pone la regla global de :focus-visible */

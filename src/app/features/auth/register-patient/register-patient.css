@@ -1,6 +1,13 @@
 /* La estructura partida y el selector de tema son del organismo `app-auth-split`.
    Acá va solo lo propio del formulario de alta. */
 
+/* Pantalla enrutada: el host es un custom element y sin `display` sería EN
+   LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
+   contenido y hace scrollear la página de más. */
+:host {
+  display: block;
+}
+
 .registro__title {
   margin: 0;
   font-family: var(--font-display);
@@ -20,10 +27,22 @@
   margin-bottom: var(--sp-4);
 }
 
+/* Los dos formularios son ramas distintas de un `@if`, así que cambiar de
+   paciente a profesional destruye uno y crea el otro. Sin animación el juego de
+   campos se reemplaza de golpe y cuesta ver que cambió; con esto el formulario
+   nuevo entra y el cambio se lee. */
 form {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+  animation: registro-entra var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes registro-entra {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-2));
+  }
 }
 
 .registro__submit {

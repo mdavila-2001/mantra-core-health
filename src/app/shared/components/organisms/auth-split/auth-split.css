@@ -1,5 +1,15 @@
-/* Mobile-first: una columna. La de marca aparece recién en pantalla ancha,
-   donde sobra espacio; en el teléfono ocuparía la mitad útil sin aportar. */
+/* Sin esto el host es un elemento EN LÍNEA —lo que son los custom elements por
+   defecto— y el navegador le arma una caja de línea con la interlínea del
+   documento. Eso agregaba una franja del color del fondo arriba y abajo del
+   layout, y empujaba la página a scrollear de más. */
+:host {
+  display: block;
+}
+
+/* Mobile-first: una columna y la página scrollea normal, que es lo que hay que
+   hacer en el teléfono (el teclado en pantalla reduce el alto útil y encerrar
+   el formulario en un alto fijo lo deja inalcanzable).
+   La columna de marca aparece recién en pantalla ancha, donde sobra espacio. */
 .auth-split {
   display: grid;
   min-height: 100dvh;
@@ -25,25 +35,70 @@
   flex-wrap: wrap;
 }
 
+/* El ícono del modo activo crece apenas: con tres botones chicos y sin texto,
+   el cambio de fondo solo no alcanza para ver cuál quedó elegido. */
+.auth-split__theme svg {
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+.auth-split__theme button[aria-pressed='true'] svg {
+  transform: scale(1.15);
+}
+
 .auth-split__content {
   display: flex;
   flex: 1;
-  align-items: center;
   justify-content: center;
   padding: var(--sp-4) 0;
+  /* Un ítem de flex no baja de su contenido salvo que se le permita; sin esto
+     el panel no puede scrollear por dentro. */
+  min-height: 0;
 }
 
 /* El contenido proyectado se limita solo, para que el formulario no se estire
-   en pantallas anchas. */
+   en pantallas anchas.
+   Se centra con `margin-block: auto` y NO con `align-items: center`: cuando el
+   formulario es más alto que la columna, centrarlo deja su parte de arriba
+   fuera de alcance —no hay forma de scrollear hacia ella—. Con márgenes
+   automáticos se centra si sobra lugar y se apoya arriba si falta. */
 .auth-split__content > * {
   width: 100%;
   max-width: 27rem;
+  margin-block: auto;
+  animation: auth-entra var(--dur-slow) var(--ease-out) both;
+}
+
+/* Entrada: sube un poco mientras aparece. El desplazamiento es corto porque
+   arriba de él hay un formulario, y un movimiento largo obliga a esperar para
+   empezar a escribir. */
+@keyframes auth-entra {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-3));
+  }
+}
+
+/* El bloque global de `prefers-reduced-motion` acorta duraciones pero NO toca
+   los retardos. Sin esto, lo escalonado quedaría invisible el tiempo del
+   retardo y después aparecería de golpe: peor que no animar. */
+@media (prefers-reduced-motion: reduce) {
+  .auth-split__content > *,
+  .auth-split__wordmark,
+  .auth-split__claim,
+  .auth-split__tagline {
+    animation-delay: 0ms !important;
+  }
 }
 
 /* --bp-lg. El valor va literal: CSS no admite variables en la condición. */
 @media (min-width: 1024px) {
   .auth-split {
     grid-template-columns: 1fr 1fr;
+    /* Alto EXACTO, no mínimo: en escritorio la pantalla de acceso ocupa la
+       ventana y nada más. La página deja de scrollear como un todo —que era lo
+       que hacía viajar a la marca— y scrollea solo la columna del formulario. */
+    height: 100dvh;
+    overflow: hidden;
   }
 
   .auth-split__brand {
@@ -59,13 +114,9 @@
       var(--c-aqua-500)
     );
     color: #ffffff;
-    /* La columna no crece con el formulario: si el registro es largo, scrollea
-       el panel y la marca queda fija en pantalla. */
-    position: sticky;
-    top: 0;
-    height: 100dvh;
-    /* La altura es fija, así que en una ventana muy baja el titular podría no
-       entrar. Con esto se alcanza scrolleando en vez de quedar recortado. */
+    /* Ya no hace falta `position: sticky`: la columna mide lo que la ventana y
+       la ventana no se mueve. */
+    min-height: 0;
     overflow-y: auto;
   }
 
@@ -73,12 +124,16 @@
     max-width: 26rem;
   }
 
+  /* Escalonado: marca, titular y bajada entran en ese orden, con 70 ms entre
+     medio. Es lo que hace que la columna se lea como una frase y no como un
+     bloque que apareció. */
   .auth-split__wordmark {
     margin: 0 0 var(--sp-6);
     font-family: var(--font-display);
     font-weight: 700;
     letter-spacing: 0.1em;
     font-size: var(--fs-body);
+    animation: auth-entra var(--dur-slow) var(--ease-out) both;
   }
 
   .auth-split__claim {
@@ -86,6 +141,7 @@
     font-family: var(--font-display);
     font-size: var(--fs-display);
     line-height: 1.15;
+    animation: auth-entra var(--dur-slow) var(--ease-out) 70ms both;
   }
 
   .auth-split__tagline {
@@ -93,9 +149,16 @@
     font-size: var(--fs-body);
     line-height: var(--lh-body);
     opacity: 0.9;
+    /* `auth-entra` declara solo `from`, así que el fotograma final lo sintetiza
+       el navegador con el estado real del elemento. Por eso la bajada termina
+       en su 0,9 de reposo y no en 1. */
+    animation: auth-entra var(--dur-slow) var(--ease-out) 140ms both;
   }
 
+  /* La única columna que scrollea. */
   .auth-split__panel {
     padding: var(--sp-6);
+    min-height: 0;
+    overflow-y: auto;
   }
 }
