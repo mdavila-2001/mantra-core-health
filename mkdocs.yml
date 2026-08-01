@@ -115,6 +115,8 @@ nav:
       - /auth/recuperar · Recuperar contraseña: routes/auth-recuperar.md
       - /auth/nueva-clave · Nueva contraseña: routes/auth-nueva-clave.md
       - /panel · Panel: routes/panel.md
+      - /identidad/verificar · Verificar identidad: routes/identidad-verificar.md
+      - /error y 404: routes/error-y-404.md
       - /design-system · Vitrina: routes/design-system.md
 
   - Componentes:
@@ -236,6 +238,7 @@ nav:
       - ADR-0008 · Contrato de formularios: adr/ADR-0008-contrato-de-formularios.md
       - ADR-0009 · Vitrina en vez de Storybook: adr/ADR-0009-vitrina-en-vez-de-storybook.md
       - ADR-0010 · CSS crítico en línea: adr/ADR-0010-css-critico-en-linea.md
+      - ADR-0011 · La API detrás del mismo dominio: adr/ADR-0011-api-mismo-dominio.md
 
   - Gobierno:
       - Política de documentación: governance/documentation-policy.md

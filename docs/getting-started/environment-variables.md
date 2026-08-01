@@ -93,9 +93,12 @@ PUBLIC_API_BASE_URL=https://api.ejemplo.com
 Sin barra final, sin query, sin fragmento, sin credenciales. El generador aborta
 si las lleva.
 
-> **Decisión abierta.** Nadie ha decidido todavía si el despliegue de producción
-> pondrá la API detrás del mismo dominio o en otro. El mecanismo existe; la
-> decisión falta. Ver [configuración](../operations/configuration.md).
+> **Decisión tomada: la API va detrás del mismo dominio.** Así que en producción
+> esta variable también queda **vacía**, y quien enruta los seis prefijos es el
+> reverse proxy ([`deploy/nginx.conf`](../../deploy/nginx.conf)).
+>
+> El mecanismo para la otra opción sigue existiendo y probado; simplemente no se
+> usa. Ver [configuración](../operations/configuration.md).
 
 ## Nada de lo público es secreto
 

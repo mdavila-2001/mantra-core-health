@@ -1,7 +1,39 @@
 # Despliegue
 
-**No existe.** Es el `BLOCKER` del proyecto: no hay imagen de producción, ni
-destino, ni pipeline, ni dominio.
+**El código está listo.** Hay imagen de producción, reverse proxy, pipeline y un
+despliegue de referencia. Lo que falta es **dónde** —el host o el orquestador— y
+el certificado.
+
+> ## ✅ Decisión de arquitectura: la API va detrás del mismo dominio
+>
+> `PUBLIC_API_BASE_URL` vacía en todos los entornos. Sin CORS, con
+> `connect-src 'self'`, y **una sola imagen** para todos.
+
+## Lo que ya existe
+
+| Pieza | Dónde |
+|---|---|
+| Imagen de producción | [`Dockerfile`](../../Dockerfile) — multietapa, usuario `node`, `HEALTHCHECK` |
+| Reverse proxy | [`deploy/nginx.conf`](../../deploy/nginx.conf) + [`api-proxy.conf`](../../deploy/api-proxy.conf) |
+| Despliegue de referencia | [`deploy/docker-compose.prod.yml`](../../deploy/docker-compose.prod.yml) |
+| Pipeline | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) |
+| Versionado del artefacto | Versión y commit estampados por `generate-env.mjs` |
+
+```bash
+docker compose -f deploy/docker-compose.prod.yml up -d --build
+```
+
+## Lo que falta, y no es código
+
+| # | Qué | Quién |
+|---|---|---|
+| 1 | Host, orquestador o PaaS de destino | Operaciones |
+| 2 | Dominio y certificado TLS | Operaciones |
+| 3 | Que la API sea alcanzable como `api:3000` en la red del proxy | Operaciones + API |
+| 4 | **Que el dominio de los enlaces del correo coincida con el del frontend** | API |
+| 5 | Credenciales del primer administrador | API |
+
+**El 4 se pasa por alto y rompe dos journeys completos.**
 
 ---
 

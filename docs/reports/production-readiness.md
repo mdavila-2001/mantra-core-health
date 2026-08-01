@@ -20,27 +20,31 @@ Los cuatro se cerraron a nivel de código:
 | # | Antes | Ahora |
 |---|---|---|
 | **B-01** | No existe despliegue de producción | ✅ `Dockerfile` multietapa, usuario sin privilegios, `HEALTHCHECK` |
-| **B-02** | Sin decidir el dominio de la API | ✅ **Los dos caminos funcionan sin tocar código.** Queda elegir uno |
+| **B-02** | Sin decidir el dominio de la API | ✅ **Decidido: mismo dominio.** `PUBLIC_API_BASE_URL` vacía, proxy en `deploy/nginx.conf` |
 | **C-01** | Sin captura de errores; pantalla en blanco invisible | ✅ `ErrorHandler` propio, `ErrorReporter` con código de soporte, pantalla de recuperación, manejo de chunk fallido |
 | **C-02** | Sin CSP ni cabeceras | ✅ Seis cabeceras, CSP con hashes, **verificada contra el artefacto real** |
 
 ## Lo que queda, y es todo configuración
 
+> ## ✅ La decisión de arquitectura está tomada
+>
+> **La API va detrás del mismo dominio.** `PUBLIC_API_BASE_URL` queda vacía en
+> todos los entornos, el reverse proxy enruta los seis prefijos, y con eso
+> desaparecen tres cosas: el CORS, la variable por entorno y la imagen por
+> entorno.
+
 | # | Qué | Tipo | Quién |
 |---|---|---|---|
-| 1 | **Elegir si la API va detrás del mismo dominio** | Decisión | Arquitectura |
-| 2 | Destino del despliegue (host, orquestador, dominio) | Infraestructura | Operaciones |
-| 3 | Certificado TLS | Infraestructura | Operaciones |
-| 4 | Valor de `PUBLIC_API_BASE_URL` para cada entorno | Configuración | Operaciones |
-| 5 | CORS en la API, **solo si se elige la opción 2 del punto 1** | Configuración | Equipo de la API |
-| 6 | Que el dominio de los enlaces del correo coincida con el del frontend | Configuración | Equipo de la API |
-| 7 | Credenciales del primer administrador | Credenciales | Equipo de la API |
-| 8 | Destino remoto para la telemetría de errores | Decisión | Producto + Seguridad |
+| 1 | Host, orquestador o PaaS de destino | Infraestructura | Operaciones |
+| 2 | Dominio y certificado TLS | Infraestructura | Operaciones |
+| 3 | Que la API sea alcanzable como `api:3000` en la red del proxy | Configuración | Operaciones + API |
+| 4 | Que el dominio de los enlaces del correo coincida con el del frontend | Configuración | Equipo de la API |
+| 5 | Credenciales del primer administrador | Credenciales | Equipo de la API |
+| 6 | Destino remoto para la telemetría de errores | Decisión | Producto + Seguridad |
 
-**Ninguno es código.** El 1 es el primero de la cadena: con «mismo dominio» —lo
-recomendado— el 4 queda vacío y el 5 desaparece.
+**Ninguno es código.**
 
-> **El 6 se pasa por alto y rompe dos journeys completos.** La API arma los
+> **El 4 se pasa por alto y rompe dos journeys completos.** La API arma los
 > enlaces de verificación de correo y de recuperación de contraseña; si su
 > dominio no es el del frontend, esas dos landings no se alcanzan.
 
@@ -162,8 +166,8 @@ la decisión 8 (destino de telemetría).
 > dominio, el certificado y las credenciales— es configuración y decisiones de
 > infraestructura.
 >
-> La primera es gratis y desbloquea el resto: **decidir si la API va detrás del
-> mismo dominio que el frontend.**
+> La decisión de arquitectura ya está tomada —**la API va detrás del mismo
+> dominio**— y el código la refleja entero: imagen, proxy, CSP y variables.
 
 Detalle de lo que sigue abierto en
 [el análisis de brechas](documentation-gap-analysis.md).
