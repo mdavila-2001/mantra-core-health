@@ -1,12 +1,12 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { FormFieldComponent } from '../../molecules/form-field/form-field';
-import { RadioComponent } from '../radio/radio';
-import { RadioGroupComponent } from './radio-group';
+import { FormField } from '../../molecules/form-field/form-field';
+import { Radio } from '../radio/radio';
+import { RadioGroup } from './radio-group';
 
 @Component({
-  imports: [RadioGroupComponent, RadioComponent],
+  imports: [RadioGroup, Radio],
   template: `
     <app-radio-group [(value)]="tipo" [disabled]="groupDisabled()">
       <app-radio value="paciente" label="Paciente" />
@@ -15,15 +15,15 @@ import { RadioGroupComponent } from './radio-group';
     </app-radio-group>
   `,
 })
-class HostComponent {
+class Host {
   readonly tipo = signal<string | null>('paciente');
   readonly groupDisabled = signal(false);
   readonly adminDisabled = signal(false);
 }
 
-describe('RadioGroupComponent', () => {
-  let fixture: ComponentFixture<HostComponent>;
-  let host: HostComponent;
+describe('RadioGroup', () => {
+  let fixture: ComponentFixture<Host>;
+  let host: Host;
 
   function inputs(): HTMLInputElement[] {
     return Array.from(fixture.nativeElement.querySelectorAll('input[type=radio]'));
@@ -37,8 +37,8 @@ describe('RadioGroupComponent', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
-    fixture = TestBed.createComponent(HostComponent);
+    await TestBed.configureTestingModule({ imports: [Host] }).compileComponents();
+    fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     await fixture.whenStable();
   });
@@ -131,7 +131,7 @@ describe('RadioGroupComponent', () => {
 });
 
 @Component({
-  imports: [FormFieldComponent, RadioGroupComponent, RadioComponent],
+  imports: [FormField, RadioGroup, Radio],
   template: `
     <app-form-field label="Tipo de usuario">
       <app-radio-group [(value)]="tipo">

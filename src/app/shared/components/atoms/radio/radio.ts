@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 
 import { nextControlId } from '../../form-control/form-control.context';
-import { RadioGroupComponent } from '../radio-group/radio-group';
+import { RadioGroup } from '../radio-group/radio-group';
 
 /**
  * Opción de un `app-radio-group`. **No guarda estado propio**: su `checked`
@@ -20,8 +20,8 @@ import { RadioGroupComponent } from '../radio-group/radio-group';
     '[class.is-disabled]': 'isDisabled()',
   },
 })
-export class RadioComponent {
-  private readonly group = inject(RadioGroupComponent);
+export class Radio {
+  private readonly group = inject(RadioGroup);
 
   readonly value = input.required<unknown>();
   readonly label = input<string>('');

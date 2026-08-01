@@ -2,10 +2,10 @@ import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { Avatar } from '../avatar/avatar';
-import { AvatarGroupComponent } from './avatar-group';
+import { AvatarGroup } from './avatar-group';
 
 @Component({
-  imports: [AvatarGroupComponent, Avatar],
+  imports: [AvatarGroup, Avatar],
   template: `
     <app-avatar-group [overflow]="overflow()" size="sm" label="Equipo tratante">
       <app-avatar name="Andrea Peña" size="sm" />
@@ -14,13 +14,13 @@ import { AvatarGroupComponent } from './avatar-group';
     </app-avatar-group>
   `,
 })
-class HostComponent {
+class Host {
   readonly overflow = signal(0);
 }
 
-describe('AvatarGroupComponent', () => {
-  let fixture: ComponentFixture<HostComponent>;
-  let host: HostComponent;
+describe('AvatarGroup', () => {
+  let fixture: ComponentFixture<Host>;
+  let host: Host;
 
   function group(): HTMLElement {
     return fixture.nativeElement.querySelector('app-avatar-group');
@@ -30,8 +30,8 @@ describe('AvatarGroupComponent', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
-    fixture = TestBed.createComponent(HostComponent);
+    await TestBed.configureTestingModule({ imports: [Host] }).compileComponents();
+    fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     await fixture.whenStable();
   });

@@ -3,7 +3,7 @@
     class="native-select"
     [id]="controlId()"
     [value]="selectedIndex()"
-    [disabled]="disabled()"
+    [disabled]="isDisabled()"
     [attr.aria-invalid]="invalid()"
     [attr.aria-required]="required() || null"
     [attr.aria-describedby]="describedBy()"

@@ -1069,5 +1069,54 @@
                 </app-accordion-panel>
             </app-accordion>
         </section>
+
+        <section class="showroom-section">
+            <h2>24 · Formulario reactivo (ControlValueAccessor)</h2>
+            <p class="sandbox-note">
+                Los mismos átomos, enchufados a un <code>FormGroup</code>. El formulario los lee
+                y los escribe como si fueran controles nativos: no sabe que hay componentes
+                en el medio.
+            </p>
+            <form [formGroup]="demoForm" class="sandbox-grid">
+                <app-form-field label="Nombre completo" [required]="true"
+                    [errorMessage]="demoForm.controls.nombre.touched && demoForm.controls.nombre.invalid ? 'El nombre es obligatorio' : ''">
+                    <app-input formControlName="nombre" placeholder="Nombre y apellido" />
+                </app-form-field>
+
+                <app-form-field label="Correo electrónico" [required]="true"
+                    [errorMessage]="demoForm.controls.correo.touched && demoForm.controls.correo.invalid ? 'Ingresá un correo válido' : ''">
+                    <app-input formControlName="correo" type="email" placeholder="nombre@dominio.bo" />
+                </app-form-field>
+
+                <app-form-field label="Tipo de atención" [required]="true">
+                    <app-select formControlName="tipo" [options]="selectOptions" />
+                </app-form-field>
+
+                <app-checkbox formControlName="acepta" label="Acepto los términos" />
+            </form>
+
+            <div class="sandbox-grid">
+                <button app-button variant="secondary" size="sm" (clicked)="rellenarDemoForm()">
+                    setValue()
+                </button>
+                <button app-button variant="neutral" size="sm" (clicked)="alternarDemoForm()">
+                    disable() / enable()
+                </button>
+            </div>
+
+            <p class="sandbox-note">
+                Estado: <strong>{{ demoForm.status }}</strong> ·
+                valor: <code>{{ demoForm.value | json }}</code>
+            </p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>25 · Estados de vista (M34)</h2>
+            <p class="sandbox-note">
+                Los 9 estados de UX obligatorios del modelo, más el camino feliz. Son contrato
+                para las 81 secciones del proyecto: toda pantalla debe saber mostrarlos.
+            </p>
+            <app-view-state-gallery />
+        </section>
     </main>
 </div>

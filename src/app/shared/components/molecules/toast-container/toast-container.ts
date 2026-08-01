@@ -1,16 +1,14 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { Toast } from '../toast/toast';
-import type { ToastMessage } from '../toast/toast.types';
+import { ToastService } from '../toast/toast.service';
 
 /**
- * Ancla fija de la pila de avisos. También es presentacional: recibe la lista
- * ya armada y reenvía hacia arriba el `id` del aviso que se cerró. Quien lo
- * monta es dueño de la cola (agregar, ordenar, vencer por tiempo).
+ * Ancla de los avisos. Va una sola vez en la aplicación, fuera del
+ * `router-outlet`, para que sobreviva a los cambios de ruta.
  *
- * ```html
- * <app-toast-container [toasts]="avisos()" (dismissed)="quitar($event)" />
- * ```
+ * Solo lee la cola de {@link ToastService}: quién avisa y por qué es asunto de
+ * quien llama al servicio, no de este componente.
  */
 @Component({
   selector: 'app-toast-container',
@@ -18,18 +16,13 @@ import type { ToastMessage } from '../toast/toast.types';
   templateUrl: './toast-container.html',
   styleUrl: './toast-container.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: {
-    // Región nombrada: quien navega por landmarks encuentra la pila de avisos.
-    role: 'region',
-    'aria-label': 'Avisos del sistema',
-  },
 })
 export class ToastContainer {
-  readonly toasts = input<readonly ToastMessage[]>([]);
+  private readonly toastService = inject(ToastService);
 
-  readonly dismissed = output<string>();
+  readonly toasts = this.toastService.toasts;
 
-  protected dismiss(id: string): void {
-    this.dismissed.emit(id);
+  dismiss(id: string): void {
+    this.toastService.dismiss(id);
   }
 }

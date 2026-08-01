@@ -27,7 +27,7 @@ import type { AvatarSize } from '../avatar/avatar.types';
     '[attr.aria-label]': 'label() || null',
   },
 })
-export class AvatarGroupComponent {
+export class AvatarGroup {
   /** Cuántas personas quedaron fuera de la pila; 0 o menos no muestra nada. */
   readonly overflow = input<number>(0);
   readonly size = input<AvatarSize>('md');

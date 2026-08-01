@@ -1,25 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import type { ToastMessage, ToastType } from './toast.types';
+import { TOAST_TYPE_LABEL, type ToastMessage } from './toast.types';
 
 /**
- * El tipo dicho con palabras. El color y el ícono no comunican solos: quien usa
- * lector de pantalla —o no distingue el verde del ámbar— necesita el sustantivo.
- */
-const TOAST_TYPE_LABELS: Readonly<Record<ToastType, string>> = {
-  success: 'Éxito',
-  warning: 'Advertencia',
-  error: 'Error',
-  info: 'Información',
-};
-
-/**
- * Aviso flotante, puramente presentacional: recibe un {@link ToastMessage} y
- * emite su `id` cuando se lo cierra. No conoce la cola, no mide tiempo y no
- * inyecta nada — quien lo monta decide cuándo aparece y cuándo se va.
+ * Un aviso suelto. No conoce la cola: recibe el mensaje y avisa cuando lo
+ * cierran, para que el contenedor sea el único que decide qué se muestra.
  *
  * ```html
- * <app-toast [toast]="aviso" (dismissed)="quitar($event)" />
+ * <app-toast [toast]="aviso" (dismissed)="cerrar($event)" />
  * ```
  */
 @Component({
@@ -29,26 +17,23 @@ const TOAST_TYPE_LABELS: Readonly<Record<ToastType, string>> = {
   styleUrl: './toast.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    '[class]': 'toastClasses()',
-    // `role="alert"` ya implica live assertive; `aria-live` va explícito porque
-    // el spec lo pide y algunos lectores viejos no derivan uno del otro.
-    // `aria-atomic` evita que se anuncie solo el trozo que cambió.
-    role: 'alert',
-    'aria-live': 'assertive',
-    'aria-atomic': 'true',
+    '[class]': 'hostClasses()',
+    // Un error interrumpe la lectura; una confirmación espera su turno.
+    '[attr.role]': 'toast().type === "error" ? "alert" : "status"',
   },
 })
 export class Toast {
   readonly toast = input.required<ToastMessage>();
 
-  /** Emite el `id`: la cola vive afuera y necesita saber cuál sacar. */
+  /** Emite el id del aviso que se cerró. */
   readonly dismissed = output<string>();
 
-  readonly toastClasses = computed(() => `toast toast--${this.toast().type}`);
+  readonly hostClasses = computed(() => `toast toast--${this.toast().type}`);
 
-  readonly iconLabel = computed(() => TOAST_TYPE_LABELS[this.toast().type]);
+  /** El tono en palabras, para el texto que solo alcanza al lector de pantalla. */
+  readonly iconLabel = computed(() => TOAST_TYPE_LABEL[this.toast().type]);
 
-  protected dismiss(): void {
+  dismiss(): void {
     this.dismissed.emit(this.toast().id);
   }
 }

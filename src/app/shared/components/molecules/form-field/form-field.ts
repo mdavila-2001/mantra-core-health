@@ -25,12 +25,12 @@ import {
   templateUrl: './form-field.html',
   styleUrl: './form-field.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [{ provide: FORM_CONTROL_CONTEXT, useExisting: FormFieldComponent }],
+  providers: [{ provide: FORM_CONTROL_CONTEXT, useExisting: FormField }],
   host: {
     '[class.app-form-field-host]': 'true',
   },
 })
-export class FormFieldComponent implements FormControlContext {
+export class FormField implements FormControlContext {
   readonly label = input<string>('');
   readonly hint = input<string>('');
   readonly errorMessage = input<string>('');

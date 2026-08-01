@@ -2,15 +2,10 @@
 
 <!-- Ancla de los avisos: va una sola vez, fuera del outlet, para que sobreviva
      a los cambios de ruta y exista como región viva desde el primer render. -->
-<app-toast-container [toasts]="toasts()" (dismissed)="removeToast($event)" />
+<app-toast-container />
 
 <!-- Disparador de avisos para probar desde cualquier pantalla. `@defer` lo deja
      en un chunk aparte que en producción NUNCA se descarga. -->
 @defer (when isDev) {
-  <app-toast-dev-panel
-    (launched)="showToast($event)"
-    (persistentLaunched)="showPersistentToast()"
-    (burstLaunched)="showToastBurst()"
-    (cleared)="clearToasts()"
-  />
+  <app-toast-dev-panel />
 }
