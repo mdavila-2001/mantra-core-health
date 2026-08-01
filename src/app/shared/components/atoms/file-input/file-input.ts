@@ -38,7 +38,7 @@ export interface RejectedFile {
     '[class.is-disabled]': 'disabled()',
   },
 })
-export class FileInputComponent {
+export class FileInput {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
 
   readonly files = model<readonly File[]>([]);

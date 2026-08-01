@@ -1,7 +1,7 @@
 <label
   class="checkbox-container"
   [class.is-checked]="checked()"
-  [class.is-disabled]="disabled()"
+  [class.is-disabled]="isDisabled()"
   [class.has-error]="invalid()"
   [attr.for]="controlId()"
 >
@@ -10,7 +10,7 @@
     class="native-checkbox"
     [id]="controlId()"
     [checked]="checked()"
-    [disabled]="disabled()"
+    [disabled]="isDisabled()"
     [attr.aria-invalid]="invalid()"
     [attr.aria-required]="required() || null"
     [attr.aria-describedby]="describedBy()"

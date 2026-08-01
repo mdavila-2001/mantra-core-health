@@ -1,0 +1,107 @@
+<div class="gallery">
+  @for (item of estados; track item.titulo) {
+    <!-- El alias deja que `@switch` estreche el tipo sin repetir la ruta larga. -->
+    @let estado = item.state;
+
+    <article class="gallery__card">
+      <header class="gallery__head">
+        @if (item.code) {
+          <app-badge variant="secondary" size="sm">{{ item.code }}</app-badge>
+        } @else {
+          <app-badge variant="success" size="sm">OK</app-badge>
+        }
+        <h3 class="gallery__title">{{ item.titulo }}</h3>
+      </header>
+
+      <div class="gallery__body">
+        @switch (estado.status) {
+          @case ('route-auth-pending') {
+            <p class="gallery__muted">Verificando permisos de la sección…</p>
+          }
+
+          @case ('loading') {
+            <div class="skeleton" aria-hidden="true">
+              <span class="skeleton__bar skeleton__bar--wide"></span>
+              <span class="skeleton__bar"></span>
+              <span class="skeleton__bar skeleton__bar--short"></span>
+            </div>
+            <p class="sr-only">Cargando la ocupación de camas.</p>
+          }
+
+          @case ('empty') {
+            <p>{{ estado.message }}</p>
+            <button app-button variant="primary" size="sm">
+              {{ estado.nextAction.label }}
+            </button>
+          }
+
+          @case ('ready') {
+            <p class="gallery__dato">{{ estado.data.titulo }}</p>
+            <p class="gallery__muted">{{ estado.data.detalle }}</p>
+          }
+
+          @case ('validation') {
+            <ul class="gallery__issues">
+              @for (issue of estado.issues; track issue.message) {
+                <li>
+                  @if (issue.field) {
+                    <strong>{{ issue.field }}:</strong>
+                  }
+                  {{ issue.message }}
+                </li>
+              }
+            </ul>
+            @if (estado.retryAfterSeconds) {
+              <p class="gallery__muted">
+                Podés reintentar en {{ estado.retryAfterSeconds }} segundos.
+              </p>
+            }
+          }
+
+          @case ('forbidden') {
+            <p>{{ estado.message }}</p>
+            @if (estado.nextAction) {
+              <button app-button variant="secondary" size="sm">
+                {{ estado.nextAction.label }}
+              </button>
+            }
+          }
+
+          @case ('not-found') {
+            <p>No encontramos lo que buscabas.</p>
+            @if (estado.nextAction) {
+              <button app-button variant="ghost" size="sm">
+                {{ estado.nextAction.label }}
+              </button>
+            }
+          }
+
+          @case ('stale') {
+            <p class="gallery__dato">{{ estado.data.titulo }}</p>
+            <p class="gallery__muted">{{ estado.data.detalle }}</p>
+            <p class="gallery__antiguedad">
+              Datos de hace {{ antiguedadEnMinutos(estado) }} minutos.
+              <button app-button variant="ghost" size="sm">Actualizar</button>
+            </p>
+          }
+
+          @case ('offline') {
+            <p>Sin conexión. No pudimos traer los datos.</p>
+            <button app-button variant="secondary" size="sm">Reintentar</button>
+          }
+
+          @case ('error') {
+            <p>{{ estado.message }}</p>
+            <p class="gallery__muted">
+              Identificador de la petición: <code>{{ estado.requestId }}</code>
+            </p>
+          }
+        }
+      </div>
+
+      @if (item.regla) {
+        <footer class="gallery__regla">{{ item.regla }}</footer>
+      }
+    </article>
+  }
+</div>

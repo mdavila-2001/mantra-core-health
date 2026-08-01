@@ -1,6 +1,6 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { FileInputComponent, type RejectedFile } from './file-input';
+import { FileInput, type RejectedFile } from './file-input';
 
 /** jsdom no trae DataTransfer: alcanza con lo que el handler realmente lee. */
 function dropEvent(files: File[]): DragEvent {
@@ -15,8 +15,8 @@ function archivo(name: string, type: string, size = 1024, lastModified = 1): Fil
   return file;
 }
 
-describe('FileInputComponent', () => {
-  let fixture: ComponentFixture<FileInputComponent>;
+describe('FileInput', () => {
+  let fixture: ComponentFixture<FileInput>;
   let rechazados: readonly RejectedFile[];
 
   function dropzone(): HTMLElement {
@@ -36,8 +36,8 @@ describe('FileInputComponent', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [FileInputComponent] }).compileComponents();
-    fixture = TestBed.createComponent(FileInputComponent);
+    await TestBed.configureTestingModule({ imports: [FileInput] }).compileComponents();
+    fixture = TestBed.createComponent(FileInput);
     rechazados = [];
     fixture.componentInstance.rejected.subscribe((lista) => (rechazados = lista));
     await fixture.whenStable();

@@ -32,7 +32,7 @@ import {
     '[attr.aria-disabled]': 'disabled()',
   },
 })
-export class RadioGroupComponent<T = unknown> {
+export class RadioGroup<T = unknown> {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
 
   readonly value = model<T | null>(null);
