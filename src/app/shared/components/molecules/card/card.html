@@ -1,0 +1,14 @@
+<!-- Los tres huecos existen siempre en la plantilla, pero el encabezado y el
+     pie se apagan solos con `:empty` cuando nadie proyecta nada: así no hay
+     que declarar `hasHeader`/`hasFooter` ni duplicar ese estado. -->
+<header class="card__header">
+  <ng-content select="[card-header]" />
+</header>
+
+<div class="card__body">
+  <ng-content />
+</div>
+
+<footer class="card__footer">
+  <ng-content select="[card-footer]" />
+</footer>

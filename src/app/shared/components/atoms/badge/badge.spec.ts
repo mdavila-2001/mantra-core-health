@@ -30,7 +30,13 @@ describe('Badge', () => {
 
   describe('render por defecto', () => {
     it('es primary md y no muestra nada sin value', () => {
-      expect([...host().classList].sort()).toEqual(['badge', 'badge--md', 'badge--primary']);
+      // `tone--primary` es lo que engancha el mapa de tonos compartido con el Chip
+      expect([...host().classList].sort()).toEqual([
+        'badge',
+        'badge--md',
+        'badge--primary',
+        'tone--primary',
+      ]);
       expect(text()).toBe('');
     });
 
@@ -50,6 +56,8 @@ describe('Badge', () => {
           await setInputs({ variant, size });
           expect(host().classList.contains(`badge--${variant}`)).toBe(true);
           expect(host().classList.contains(`badge--${size}`)).toBe(true);
+          // el color no lo pone el badge: lo resuelve `tone.css`
+          expect(host().classList.contains(`tone--${variant}`)).toBe(true);
         }
       }
     });

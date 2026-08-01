@@ -11,6 +11,7 @@ import {
   output,
 } from '@angular/core';
 
+import { Spinner } from '../spinner/spinner';
 import type { ButtonSize, ButtonType, ButtonVariant } from './button.types';
 
 /**
@@ -39,6 +40,7 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types';
  */
 @Component({
   selector: 'button[app-button]',
+  imports: [Spinner],
   templateUrl: './app-button.html',
   styleUrl: './app-button.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

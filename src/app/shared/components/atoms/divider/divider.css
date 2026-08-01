@@ -1,0 +1,48 @@
+/* ============================================================================
+    Divider — la línea es el token de borde DECORATIVO (`--border-default`),
+    que es justo el que el sistema reserva para separar sin delimitar un
+    control. El grosor no se declara en px sueltos: es el borde de 1 px del
+    propio token, y el modo oscuro lo resuelve la variable.
+    ========================================================================== */
+
+:host {
+    display: block;
+    border: 0 solid var(--border-default);
+}
+
+:host(.divider--horizontal) {
+    width: 100%;
+    border-top-width: 1px;
+    margin: var(--sp-4) 0;
+}
+
+/* Se estira al alto del contenedor flex: sin alturas mágicas. */
+:host(.divider--vertical) {
+    align-self: stretch;
+    border-left-width: 1px;
+    margin: 0 var(--sp-4);
+}
+
+/* ---- con rótulo ---------------------------------------------------------- */
+
+/* La línea deja de ser el borde del host y pasa a ser los dos tramos. */
+:host(.divider--labelled) {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    border-top-width: 0;
+}
+
+.divider__line {
+    flex: 1;
+    border-top: 1px solid var(--border-default);
+}
+
+.divider__label {
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}

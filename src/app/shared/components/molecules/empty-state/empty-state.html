@@ -1,0 +1,14 @@
+<!-- La ilustración nunca aporta información que no esté en el texto. -->
+<div class="empty-state__icon" aria-hidden="true">
+  <ng-content select="[empty-icon]" />
+</div>
+
+<p class="empty-state__title">{{ title() }}</p>
+
+@if (description()) {
+  <p class="empty-state__description">{{ description() }}</p>
+}
+
+<div class="empty-state__actions">
+  <ng-content select="[empty-actions]" />
+</div>

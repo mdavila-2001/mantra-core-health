@@ -1,0 +1,75 @@
+/* ============================================================================
+    Globo del tooltip — superficie invertida: el mismo petróleo 900 que el
+    sistema usa de fondo base en modo oscuro, con la tinta marfil de ese modo.
+    Se ve igual en claro y en oscuro a propósito: un globo flotante que cambia
+    de tono con el tema se confunde con una tarjeta.
+
+    Vive colgado del <body>, así que no hereda nada del control que lo abrió:
+    tipografía y tamaño se declaran acá.
+    ========================================================================== */
+
+:host {
+    position: fixed;
+    /* misma capa que el resto de lo flotante del sistema (toasts, calendario) */
+    z-index: 1000;
+    max-width: 280px;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-sm);
+    background: var(--c-petrol-900);
+    color: var(--c-ivory-500);
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    box-shadow: var(--shadow-md);
+    /* el globo describe, no recibe: nunca se interpone al puntero */
+    pointer-events: none;
+    /* el texto se lee entero: sin cortes a mitad de una indicación clínica */
+    overflow-wrap: break-word;
+}
+
+/* La entrada acompaña al lado desde el que aparece. La regla global de
+   prefers-reduced-motion la reduce a nada, que para una aparición —a
+   diferencia de un spinner— es exactamente lo deseado. */
+:host(.tooltip--top) {
+    animation: tooltip-in-top 0.15s ease;
+}
+
+:host(.tooltip--bottom) {
+    animation: tooltip-in-bottom 0.15s ease;
+}
+
+:host(.tooltip--left) {
+    animation: tooltip-in-left 0.15s ease;
+}
+
+:host(.tooltip--right) {
+    animation: tooltip-in-right 0.15s ease;
+}
+
+@keyframes tooltip-in-top {
+    from {
+        opacity: 0;
+        transform: translateY(var(--sp-1));
+    }
+}
+
+@keyframes tooltip-in-bottom {
+    from {
+        opacity: 0;
+        transform: translateY(calc(-1 * var(--sp-1)));
+    }
+}
+
+@keyframes tooltip-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(var(--sp-1));
+    }
+}
+
+@keyframes tooltip-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(calc(-1 * var(--sp-1)));
+    }
+}

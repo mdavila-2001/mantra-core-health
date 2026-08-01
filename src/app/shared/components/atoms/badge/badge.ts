@@ -73,7 +73,13 @@ export class Badge {
   });
 
   readonly badgeClasses = computed(() => {
-    const classes = ['badge', `badge--${this.variant()}`, `badge--${this.size()}`];
+    const classes = [
+      'badge',
+      `badge--${this.variant()}`,
+      `badge--${this.size()}`,
+      // el tono lo resuelve el mapa compartido con el Chip (`tone.css`)
+      `tone--${this.variant()}`,
+    ];
     if (this.dotOnly()) {
       classes.push('badge--dot');
     }

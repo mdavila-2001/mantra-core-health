@@ -1,0 +1,91 @@
+/* ============================================================================
+    Alert — misma receta tonal que Badge, Chip y Toast: fondo claro + tinta
+    oscura del mismo tono. El mapeo tono → trío `--st-*` NO se repite acá: lo
+    importa del mapa compartido, igual que los otros dos.
+    ========================================================================== */
+
+@import '../../tone/tone.css';
+
+:host {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border-radius: var(--r-md);
+    border: 1px solid var(--tone-bd, transparent);
+    background: var(--tone-bg, transparent);
+    color: var(--tone-fg, inherit);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+}
+
+.alert__icon {
+    display: flex;
+    flex-shrink: 0;
+    /* alinea con la primera línea de texto, no con el centro del bloque */
+    margin-top: 2px;
+}
+
+.alert__icon svg {
+    width: var(--sp-5);
+    height: var(--sp-5);
+}
+
+.alert__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.alert__title {
+    margin: 0;
+    font-weight: 700;
+}
+
+.alert__title + .alert__message {
+    margin-top: var(--sp-1);
+}
+
+.alert__message {
+    /* el mensaje hereda la tinta del tono; el título ya la lleva en negrita */
+    color: inherit;
+}
+
+/* Las acciones se apagan solas si nadie proyecta botones. */
+.alert__actions:empty {
+    display: none;
+}
+
+.alert__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-top: var(--sp-3);
+}
+
+.alert__dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    /* dibujo chico, área táctil completa */
+    width: var(--sp-8);
+    height: var(--sp-8);
+    margin: calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) 0 0;
+    padding: 0;
+    border: none;
+    border-radius: var(--r-full);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.alert__dismiss:hover {
+    background: color-mix(in srgb, var(--tone-fg) 15%, transparent);
+}
+
+.alert__dismiss svg {
+    width: var(--sp-4);
+    height: var(--sp-4);
+}

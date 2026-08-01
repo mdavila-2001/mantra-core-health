@@ -1,0 +1,16 @@
+/* ============================================================================
+    Tab — el panel. Todo lo visual de la pestaña (el botón, la línea) vive en
+    `tabs.css`: acá solo está la caja del contenido.
+    ========================================================================== */
+
+:host {
+    display: block;
+    padding: var(--sp-4) 0;
+    font-family: var(--font-body);
+    color: var(--text-primary);
+}
+
+/* `hidden` no alcanza cuando el host declara `display: block`. */
+:host([hidden]) {
+    display: none;
+}
