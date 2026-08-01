@@ -18,8 +18,9 @@
     [type]="effectiveType()"
     [value]="value() ?? ''"
     [placeholder]="placeholder()"
-    [disabled]="disabled()"
+    [disabled]="isDisabled()"
     [readOnly]="readonly()"
+    [attr.autocomplete]="autocomplete()"
     [attr.aria-invalid]="invalid()"
     [attr.aria-required]="required() || null"
     [attr.aria-describedby]="describedBy()"
@@ -33,7 +34,7 @@
       type="button"
       class="input-action-btn"
       (click)="clearSearch()"
-      [disabled]="disabled()"
+      [disabled]="isDisabled()"
       aria-label="Limpiar búsqueda"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -48,7 +49,7 @@
       type="button"
       class="input-action-btn"
       (click)="togglePasswordVisibility()"
-      [disabled]="disabled()"
+      [disabled]="isDisabled()"
       [attr.aria-pressed]="passwordVisible()"
       [attr.aria-label]="passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
     >

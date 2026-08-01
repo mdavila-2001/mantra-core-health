@@ -1,21 +1,20 @@
-import { ChangeDetectionStrategy, Component, isDevMode } from '@angular/core';
+import { Component, isDevMode } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
-import { ToastDevPanel } from '@core/dev/toast-dev-panel/toast-dev-panel';
+import { ToastDevPanel } from './core/dev/toast-dev-panel/toast-dev-panel';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, ToastContainer, ToastDevPanel],
   templateUrl: './app.html',
-  styleUrl: './app.css',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './app.css'
 })
 export class App {
   /**
-   * Condición del `@defer` del panel de pruebas. En producción es `false` para
-   * siempre, así que el chunk del panel NUNCA se descarga — y como el panel se
-   * usa solo dentro del bloque diferido, ni siquiera entra al bundle inicial.
+   * Condición del `@defer` que aísla el panel de pruebas de avisos. Se lee una
+   * sola vez: `isDevMode()` no cambia durante la vida de la aplicación, y el
+   * bloque diferido queda en un chunk que en producción nunca se descarga.
    */
-  protected readonly isDev = isDevMode();
+  readonly isDev = isDevMode();
 }

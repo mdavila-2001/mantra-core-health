@@ -1,0 +1,63 @@
+/* Panel de inicio. Dos tarjetas: la sesión y la lectura contra la API. */
+
+/* `auto-fit` con mínimo: en una sola columna cuando no entran dos, sin media query.
+   El mínimo es el ancho al que el identificador de sesión deja de partirse feo. */
+.panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: var(--space-5, 1.25rem);
+  margin-block-start: var(--space-5, 1.25rem);
+}
+
+.panel__card-title {
+  margin: 0 0 var(--space-3, 0.75rem);
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: 600;
+}
+
+/* Etiqueta arriba, valor abajo: el identificador es largo y en dos columnas
+   obligaría a partirlo o a comerse el ancho de la etiqueta. */
+.panel__datos {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.panel__datos dt {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #64748b);
+}
+
+.panel__datos dd {
+  margin: var(--space-1, 0.25rem) 0 0;
+}
+
+.panel__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+
+/* `anywhere` y no `break-all`: un UUID no tiene puntos de corte naturales y sin
+   esto desborda la tarjeta en pantallas angostas. */
+.panel__id {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--font-size-sm, 0.875rem);
+  overflow-wrap: anywhere;
+}
+
+.panel__nota,
+.panel__vacio {
+  color: var(--color-text-secondary, #64748b);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.panel__nota {
+  margin-block: var(--space-3, 0.75rem) var(--space-4, 1rem);
+}
+
+.panel__conteo {
+  margin: 0;
+  font-weight: 600;
+}

@@ -1,7 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 
 import { ToastService } from './toast.service';
-import { TOAST_DEFAULT_DURATION_MS, TOAST_MAX_VISIBLE } from './toast.types';
+import { TOAST_DEFAULT_DURATION_MS } from './toast.types';
+
+/**
+ * La duración por defecto depende del tono: `info` se cierra solo y `error`
+ * queda fijo. Se lee del mapa en vez de escribir el número a mano para que
+ * cambiarlo allá no obligue a tocar las pruebas.
+ */
+const INFO_MS = TOAST_DEFAULT_DURATION_MS.info as number;
 
 describe('ToastService', () => {
   let service: ToastService;
@@ -44,7 +51,7 @@ describe('ToastService', () => {
 
     it('el título solo aparece si se pide', () => {
       service.info('sin título');
-      service.info('con título', { title: 'Atención' });
+      service.info('con título', 'Atención');
 
       const [sinTitulo, conTitulo] = service.toasts();
       expect(sinTitulo.title).toBeUndefined();
@@ -61,11 +68,11 @@ describe('ToastService', () => {
   });
 
   describe('autocierre', () => {
-    it('usa la duración por defecto cuando no se indica otra', () => {
+    it('usa la duración por defecto de su tono cuando no se indica otra', () => {
       service.info('efímero');
       expect(service.toasts()).toHaveLength(1);
 
-      vi.advanceTimersByTime(TOAST_DEFAULT_DURATION_MS);
+      vi.advanceTimersByTime(INFO_MS);
 
       expect(service.toasts()).toEqual([]);
     });
@@ -73,23 +80,33 @@ describe('ToastService', () => {
     it('no se va antes de tiempo', () => {
       service.info('efímero');
 
-      vi.advanceTimersByTime(TOAST_DEFAULT_DURATION_MS - 1);
+      vi.advanceTimersByTime(INFO_MS - 1);
 
       expect(service.toasts()).toHaveLength(1);
     });
 
     it('respeta una duración propia', () => {
-      service.info('corto', { duration: 100 });
+      service.show({ type: 'info', message: 'corto', durationMs: 100 });
 
       vi.advanceTimersByTime(100);
 
       expect(service.toasts()).toEqual([]);
     });
 
-    it('duration null lo deja fijo: no se va solo nunca', () => {
-      service.error('fijo', { duration: null });
+    it('los errores quedan fijos: no se van solos nunca', () => {
+      // `TOAST_DEFAULT_DURATION_MS.error` es `null` a propósito — un error que
+      // se borra solo mientras la persona lee es un error que nadie leyó.
+      service.error('fijo');
 
-      vi.advanceTimersByTime(TOAST_DEFAULT_DURATION_MS * 10);
+      vi.advanceTimersByTime(INFO_MS * 10);
+
+      expect(service.toasts()).toHaveLength(1);
+    });
+
+    it('durationMs null deja fijo un aviso de cualquier tono', () => {
+      service.show({ type: 'success', message: 'fijo', durationMs: null });
+
+      vi.advanceTimersByTime(INFO_MS * 10);
 
       expect(service.toasts()).toHaveLength(1);
     });
@@ -122,48 +139,16 @@ describe('ToastService', () => {
 
       // Si el temporizador del primero siguiera vivo, al vencer buscaría un id
       // que ya no está — y no debe llevarse por delante al segundo.
-      vi.advanceTimersByTime(TOAST_DEFAULT_DURATION_MS - 1);
+      vi.advanceTimersByTime(INFO_MS - 1);
 
       expect(service.toasts().map((toast) => toast.message)).toEqual(['dos']);
     });
 
     it('clear vacía la cola entera, incluidos los fijos', () => {
       service.info('uno');
-      service.error('fijo', { duration: null });
+      service.error('fijo');
 
       service.clear();
-
-      expect(service.toasts()).toEqual([]);
-    });
-  });
-
-  describe('techo de la pila', () => {
-    it(`nunca muestra más de ${TOAST_MAX_VISIBLE} avisos`, () => {
-      for (let n = 0; n < TOAST_MAX_VISIBLE + 3; n += 1) {
-        service.info(`aviso ${n}`);
-      }
-
-      expect(service.toasts()).toHaveLength(TOAST_MAX_VISIBLE);
-    });
-
-    it('descarta los más viejos y conserva los más recientes', () => {
-      for (let n = 0; n < TOAST_MAX_VISIBLE + 1; n += 1) {
-        service.info(`aviso ${n}`);
-      }
-
-      const mensajes = service.toasts().map((toast) => toast.message);
-      expect(mensajes[0]).toBe('aviso 1');
-      expect(mensajes.at(-1)).toBe(`aviso ${TOAST_MAX_VISIBLE}`);
-    });
-
-    it('el desborde también cancela el temporizador del descartado', () => {
-      // El aviso 0 sale por desborde; su temporizador no debe seguir vivo y
-      // llevarse por delante a un aviso posterior.
-      for (let n = 0; n <= TOAST_MAX_VISIBLE; n += 1) {
-        service.info(`aviso ${n}`);
-      }
-
-      vi.advanceTimersByTime(TOAST_DEFAULT_DURATION_MS);
 
       expect(service.toasts()).toEqual([]);
     });

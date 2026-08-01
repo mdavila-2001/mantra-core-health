@@ -1,110 +1,71 @@
-import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { Toast } from './toast';
+import { ToastService } from './toast.service';
 import type { ToastMessage } from './toast.types';
+import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
+
+const SAMPLE: ToastMessage = {
+  id: 'aviso-1',
+  type: 'error',
+  title: 'No se pudo firmar',
+  message: 'El certificado del profesional expiró.',
+  durationMs: null,
+};
 
 describe('Toast', () => {
-  let fixture: ComponentFixture<Toast>;
+  it('pinta el tono, el ícono y el rótulo del tipo', () => {
+    const fixture = TestBed.createComponent(Toast);
+    fixture.componentRef.setInput('toast', SAMPLE);
+    fixture.detectChanges();
 
-  const BASE: ToastMessage = {
-    id: 1,
-    type: 'info',
-    message: 'Hay cambios sin guardar.',
-    duration: 5000,
-  };
-
-  /** El selector es de elemento: el host ES el aviso. */
-  function host(): HTMLElement {
-    return fixture.nativeElement as HTMLElement;
-  }
-
-  async function setToast(toast: Partial<ToastMessage> = {}): Promise<void> {
-    fixture.componentRef.setInput('toast', { ...BASE, ...toast });
-    await fixture.whenStable();
-  }
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [Toast] }).compileComponents();
-    fixture = TestBed.createComponent(Toast);
-    await setToast();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.className).toBe('toast toast--error');
+    // `role="alert"` ya implica aria-live assertive: no hace falta declararlo.
+    expect(host.getAttribute('role')).toBe('alert');
+    expect(host.querySelector('.toast__icon svg')).toBeTruthy();
+    expect(host.querySelector('.sr-only')?.textContent?.trim()).toBe('Error:');
+    expect(host.querySelector('.toast__title')?.textContent?.trim()).toBe('No se pudo firmar');
   });
 
-  describe('render', () => {
-    it('lleva la clase del tono para que el tema resuelva el color', async () => {
-      await setToast({ type: 'error' });
-      expect([...host().classList].sort()).toEqual(['toast', 'toast--error']);
-    });
+  it('emite el id al pulsar la X', () => {
+    const fixture = TestBed.createComponent(Toast);
+    fixture.componentRef.setInput('toast', SAMPLE);
+    fixture.detectChanges();
 
-    it('muestra el mensaje', () => {
-      expect(host().querySelector('.toast__message')?.textContent?.trim()).toBe(BASE.message);
-    });
+    let emitted: string | undefined;
+    fixture.componentInstance.dismissed.subscribe((id: string) => (emitted = id));
 
-    it('sin título no dibuja el encabezado', () => {
-      expect(host().querySelector('.toast__title')).toBeNull();
-    });
+    const close = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '.toast__close',
+    );
+    close?.click();
 
-    it('con título lo dibuja', async () => {
-      await setToast({ title: 'Atención' });
-      expect(host().querySelector('.toast__title')?.textContent?.trim()).toBe('Atención');
-    });
+    expect(emitted).toBe('aviso-1');
   });
 
-  describe('accesibilidad', () => {
-    it('el tipo se dice con palabras, no solo con color e ícono', async () => {
-      await setToast({ type: 'error' });
-      expect(host().querySelector('.sr-only')?.textContent?.trim()).toBe('Error:');
-    });
+  /**
+   * El contenedor ya no recibe la cola por input: lee la del `ToastService`.
+   * La prueba encola por el servicio y cierra por el DOM, que es el circuito
+   * completo que recorre un aviso real.
+   */
+  it('el contenedor apila desde el servicio y la X saca el aviso de la cola', () => {
+    const fixture = TestBed.createComponent(ToastContainer);
+    const service = TestBed.inject(ToastService);
 
-    it('cada tipo tiene su palabra', async () => {
-      const esperado: Record<string, string> = {
-        success: 'Éxito:',
-        warning: 'Advertencia:',
-        error: 'Error:',
-        info: 'Información:',
-      };
+    service.show({ type: 'error', title: 'No se pudo firmar', message: 'a', durationMs: null });
+    const segundo = service.show({ type: 'success', message: 'b', durationMs: null });
+    fixture.detectChanges();
 
-      for (const [type, palabra] of Object.entries(esperado)) {
-        await setToast({ type: type as ToastMessage['type'] });
-        expect(host().querySelector('.sr-only')?.textContent?.trim()).toBe(palabra);
-      }
-    });
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelectorAll('app-toast').length).toBe(2);
+    // los que no son error se anuncian sin interrumpir
+    expect(host.querySelectorAll('[role="status"]').length).toBe(1);
 
-    it('el ícono queda oculto para el lector: ya está dicho con palabras', () => {
-      expect(host().querySelector('.toast__icon')?.getAttribute('aria-hidden')).toBe('true');
-    });
+    host.querySelectorAll<HTMLButtonElement>('.toast__close')[1].click();
+    fixture.detectChanges();
 
-    it('el botón de cierre tiene nombre accesible', () => {
-      expect(host().querySelector('.toast__close')?.getAttribute('aria-label')).toBe(
-        'Cerrar aviso',
-      );
-    });
-
-    it('no es una región viva propia: la región es el contenedor', () => {
-      // Dos regiones vivas anidadas anuncian el mismo aviso dos veces.
-      expect(host().getAttribute('aria-live')).toBeNull();
-      expect(host().getAttribute('role')).toBeNull();
-    });
-  });
-
-  describe('cierre', () => {
-    it('emite el id del aviso, no un evento sin datos', async () => {
-      await setToast({ id: 42 });
-      const emitidos: number[] = [];
-      fixture.componentInstance.dismissed.subscribe((id) => emitidos.push(id));
-
-      host().querySelector<HTMLButtonElement>('.toast__close')!.click();
-      await fixture.whenStable();
-
-      expect(emitidos).toEqual([42]);
-    });
-
-    it('no se cierra solo: no conoce su duración', async () => {
-      const emitidos: number[] = [];
-      fixture.componentInstance.dismissed.subscribe((id) => emitidos.push(id));
-
-      await fixture.whenStable();
-
-      expect(emitidos).toEqual([]);
-    });
+    expect(service.toasts().some((toast) => toast.id === segundo)).toBe(false);
+    expect(host.querySelectorAll('app-toast').length).toBe(1);
   });
 });

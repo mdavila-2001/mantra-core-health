@@ -1,0 +1,78 @@
+@if (showMenuButton()) {
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    [iconOnly]="true"
+    class="app-header__menu-button"
+    [attr.aria-expanded]="menuOpen()"
+    [attr.aria-controls]="navPanelId()"
+    aria-label="Abrir la navegación"
+    (clicked)="toggleMenu()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  </button>
+}
+
+<p class="app-header__brand">Mantra Core <strong>Health</strong></p>
+
+<div class="app-header__content">
+  <ng-content select="[header-content]" />
+</div>
+
+<div class="app-header__actions">
+  @if (showsTenantSwitcher()) {
+    <app-tenant-switcher
+      [tenants]="tenants()"
+      [activeTenantId]="activeTenantId()"
+      variant="compact"
+      (tenantChanged)="changeTenant($event)"
+    />
+  }
+
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    [iconOnly]="true"
+    [attr.aria-label]="'Cambiar tema. Actual: ' + theme()"
+    (clicked)="cycleTheme()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
+  </button>
+
+  @if (user(); as persona) {
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      class="app-header__account"
+      [appMenuTrigger]="menuCuenta"
+      [attr.aria-label]="'Cuenta de ' + persona.displayName"
+    >
+      <app-avatar [name]="persona.displayName" size="sm" />
+      <span class="app-header__account-name">{{ persona.displayName }}</span>
+    </button>
+
+    <app-menu #menuCuenta>
+      <!-- Nombre y rol legible: quien atiende necesita saber con qué sombrero
+           está entrando antes de firmar algo. -->
+      <app-menu-item [disabled]="true">
+        <span class="app-header__account-summary">
+          <strong>{{ persona.displayName }}</strong>
+          @if (rolesLabel()) {
+            <span class="app-header__roles">{{ rolesLabel() }}</span>
+          }
+        </span>
+      </app-menu-item>
+      <app-menu-item [destructive]="true" (selected)="requestLogout()">Cerrar sesión</app-menu-item>
+    </app-menu>
+  }
+</div>

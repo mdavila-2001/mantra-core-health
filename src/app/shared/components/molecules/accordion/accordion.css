@@ -1,0 +1,15 @@
+/* ============================================================================
+    Accordion — la línea entre secciones la pone cada panel; el contenedor
+    solo cierra la última para que el bloque no termine en un borde suelto.
+    ========================================================================== */
+
+:host {
+    display: block;
+    border-top: 1px solid var(--border-default);
+}
+
+/* Con `:host` adelante: un `::ng-deep` suelto se escapa a toda la aplicación
+   y le sacaría el borde a cualquier panel de cualquier otro acordeón. */
+:host ::ng-deep .accordion-panel:last-of-type {
+    border-bottom: none;
+}

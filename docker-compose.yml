@@ -1,0 +1,35 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: mantra-core-health-dev
+    ports:
+      - '4200:4200'
+    volumes:
+      # Se montan SOLO las fuentes y la configuración, nunca la raíz del
+      # proyecto: montar `.` taparía el .pnp.cjs y el .yarn/unplugged de linux
+      # que vive dentro de la imagen con los de macOS, y el build no arrancaría.
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./angular.json:/app/angular.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./tsconfig.app.json:/app/tsconfig.app.json:ro
+      # tsconfig.spec.json y vitest.config.ts quedan solo en la imagen: los usa
+      # `ng test`, no el dev server, y Docker Desktop falla al bind-montearlos.
+
+      # El backend corre en el host. Dentro del contenedor `localhost` es el
+      # contenedor, así que se pisa proxy.conf.json por la variante que apunta
+      # a host.docker.internal. El archivo del host queda intacto para `yarn start`.
+      - ./proxy.conf.docker.json:/app/proxy.conf.json:ro
+
+      # Caché de Angular en volumen: sobrevive a los reinicios y no ensucia el host.
+      - angular-cache:/app/.angular
+
+    extra_hosts:
+      # Docker Desktop ya lo resuelve solo; explícito para que también funcione
+      # en Docker Engine sobre Linux.
+      - 'host.docker.internal:host-gateway'
+
+volumes:
+  angular-cache:

@@ -27,11 +27,23 @@
 </div>
 
 @if (isOpen()) {
-  <app-dialog
-    [label]="mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha'"
-    [restoreFocusTo]="trigger"
-    (closed)="close()"
-  >
+  <!-- El fondo es el atajo de ratón para cerrar. El camino de teclado está en
+       el diálogo de adentro, que atrapa el foco y cierra con `Escape`; un
+       keydown acá no lo alcanzaría el foco nunca. -->
+  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+  <div class="date-picker-overlay" (click)="close()">
+    <!-- tabindex=-1 para poder recibir el foco al abrir sin entrar en el orden
+         de tabulación; el keydown maneja Escape y atrapa el Tab. -->
+    <div
+      #dialog
+      class="date-picker-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha'"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+      (keydown)="handleDialogKeydown($event)"
+    >
       <div class="dialog-header">
         <h3 class="dialog-title">
           {{ mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha' }}
@@ -115,5 +127,6 @@
         <button app-button variant="ghost" size="sm" (clicked)="close()">Cancelar</button>
         <button app-button variant="primary" size="sm" (clicked)="confirm()">Confirmar</button>
       </div>
-  </app-dialog>
+    </div>
+  </div>
 }

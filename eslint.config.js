@@ -74,6 +74,10 @@ module.exports = tseslint.config(
   },
   {
     files: ['src/app/shared/components/atoms/**/*.ts'],
+    /* Una prueba sí puede montar la molecule que envuelve al atom: es la única
+       forma de ejercer el contrato que pasa por DI, y no crea dependencia real
+       del código de producción. */
+    ignores: ['**/*.spec.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

@@ -1,0 +1,57 @@
+/* ============================================================================
+    Menu item — fila de acción. El destructivo lleva la tinta de error del
+    sistema, que ya resuelve su contraste en los dos temas.
+    ========================================================================== */
+
+:host {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-primary);
+    cursor: pointer;
+    /* el foco lo mueve el menú: no hay salto de scroll dentro del panel */
+    scroll-margin: var(--sp-1);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+:host(:hover),
+:host(:focus-visible) {
+    background: var(--bg-inset);
+}
+
+:host(.menu-item--destructive) {
+    color: var(--st-error-fg);
+}
+
+:host(.menu-item--destructive:hover),
+:host(.menu-item--destructive:focus-visible) {
+    background: var(--st-error-bg);
+}
+
+:host(.menu-item--disabled) {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+:host(.menu-item--disabled:hover) {
+    background: transparent;
+}
+
+.menu-item__label {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Los SVG proyectados conservan la encapsulación del padre: ::ng-deep es la
+   vía soportada. En `em`, como en el resto del sistema. */
+:host ::ng-deep [slot='icon'] svg {
+    width: 1.15em;
+    height: 1.15em;
+    flex-shrink: 0;
+}

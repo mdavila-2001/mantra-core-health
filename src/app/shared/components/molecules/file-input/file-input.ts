@@ -1,13 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
+  inject,
   input,
   model,
   output,
   signal,
 } from '@angular/core';
 
-import { injectFormControl } from '@shared/forms/inject-form-control';
+import {
+  FORM_CONTROL_CONTEXT,
+  nextControlId,
+} from '@shared/forms/form-control.context';
 
 const BYTES_PER_UNIT = 1024;
 const SIZE_UNITS = ['bytes', 'KB', 'MB', 'GB', 'TB'] as const;
@@ -25,6 +30,7 @@ export interface RejectedFile {
  */
 @Component({
   selector: 'app-file-input',
+  standalone: true,
   templateUrl: './file-input.html',
   styleUrl: './file-input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,7 +39,9 @@ export interface RejectedFile {
     '[class.is-disabled]': 'disabled()',
   },
 })
-export class FileInputComponent {
+export class FileInput {
+  private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
+
   readonly files = model<readonly File[]>([]);
   readonly multiple = input<boolean>(false);
   readonly disabled = input<boolean>(false);
@@ -47,10 +55,9 @@ export class FileInputComponent {
 
   protected readonly isDragging = signal(false);
 
-  private readonly form = injectFormControl('file');
-
-  protected readonly controlId = this.form.controlId;
-  protected readonly describedBy = this.form.describedBy;
+  private readonly ownId = nextControlId('file');
+  protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
+  protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
 
   protected handleFileSelect(event: Event): void {
     const target = event.target as HTMLInputElement;

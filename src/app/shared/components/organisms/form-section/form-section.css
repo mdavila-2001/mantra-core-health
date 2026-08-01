@@ -1,0 +1,82 @@
+/* ============================================================================
+    Form section — MOBILE-FIRST (§0.1): una columna en teléfono, dos desde
+    tablet. Solo `min-width`.
+    ========================================================================== */
+
+:host {
+    display: block;
+    margin-block-end: var(--sp-6);
+    font-family: var(--font-body);
+}
+
+/* El `<fieldset>` trae borde y padding del agente de usuario: se apagan y se
+   reconstruyen con tokens. */
+.form-section__fieldset {
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-block-start: 1px solid var(--border-default);
+    padding-block-start: var(--sp-4);
+}
+
+.form-section__legend {
+    padding: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-section__toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-1) var(--sp-2);
+    margin-inline-start: calc(-1 * var(--sp-2));
+    border: none;
+    border-radius: var(--r-sm);
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.form-section__toggle:hover {
+    background: var(--bg-inset);
+}
+
+.form-section__chevron {
+    inline-size: var(--sp-5);
+    block-size: var(--sp-5);
+    color: var(--text-secondary);
+    transition: transform 0.15s ease;
+}
+
+.form-section__toggle[aria-expanded='false'] .form-section__chevron {
+    transform: rotate(-90deg);
+}
+
+.form-section__description {
+    margin: var(--sp-1) 0 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+/* Base móvil: una sola columna. Un formulario clínico a dos columnas en un
+   teléfono obliga a hacer zoom. */
+.form-section__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-4);
+    margin-block-start: var(--sp-4);
+}
+
+@media (min-width: 780px) {
+    .form-section__grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--sp-4) var(--sp-6);
+    }
+}

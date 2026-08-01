@@ -1,0 +1,175 @@
+@switch (status()) {
+  <!-- S1 · Autorización pendiente. NUNCA un esqueleto de contenido: todavía no
+       se sabe si la persona puede ver esta sección, y la forma del contenido
+       ya insinúa que existe. -->
+  @case ('route-auth-pending') {
+    <div class="view-state-host__auth-pending">
+      <ng-content select="[vsh-auth-pending]">
+        <app-spinner size="md" label="Verificando permisos" />
+        <p class="view-state-host__auth-text">Verificando permisos…</p>
+      </ng-content>
+    </div>
+  }
+
+  <!-- S2 · Cargando. Autorización resuelta: recién acá el esqueleto con la
+       forma real del contenido tiene sentido. -->
+  @case ('loading') {
+    <div class="view-state-host__loading">
+      <ng-content select="[vsh-skeleton]">
+        <app-skeleton variant="text" [lines]="3" />
+      </ng-content>
+    </div>
+  }
+
+  <!-- S3 · Vacío con próxima acción. -->
+  @case ('empty') {
+    @if (emptyState(); as vacio) {
+      <ng-content select="[vsh-empty]">
+        <app-empty-state
+          variant="empty"
+          title="Todavía no hay nada acá"
+          [description]="vacio.message ?? ''"
+        >
+          @if (vacio.nextAction.route) {
+            <a app-link empty-actions [routerLink]="vacio.nextAction.route">
+              {{ vacio.nextAction.label }}
+            </a>
+          } @else {
+            <span empty-actions class="view-state-host__next-action">
+              {{ vacio.nextAction.label }}
+            </span>
+          }
+        </app-empty-state>
+      </ng-content>
+    }
+  }
+
+  <!-- S4 · Validación o conflicto. -->
+  @case ('validation') {
+    @if (validationState(); as invalido) {
+      <ng-content select="[vsh-validation]">
+        <app-alert class="view-state-host__validation" tone="error" title="Revisá lo ingresado">
+          @if (invalido.issues.length > 0) {
+            <ul class="view-state-host__issues">
+              @for (issue of invalido.issues; track issue.message) {
+                <li>
+                  @if (issue.field) {
+                    <strong>{{ issue.field }}:</strong>
+                  }
+                  {{ issue.message }}
+                </li>
+              }
+            </ul>
+          }
+          @if (invalido.retryAfterSeconds !== undefined) {
+            <p class="view-state-host__retry-after">
+              Reintentá en {{ invalido.retryAfterSeconds }} segundos.
+            </p>
+          }
+        </app-alert>
+      </ng-content>
+    }
+  }
+
+  <!-- S5 · Prohibido. Si trae próxima acción es una puerta (el 403 de
+       identidad lleva a verificarse), no un muro. -->
+  @case ('forbidden') {
+    @if (forbiddenState(); as prohibido) {
+      <ng-content select="[vsh-forbidden]">
+        <app-alert tone="error" title="No tenés acceso a esta sección">
+          {{ prohibido.message ?? 'Tu rol o el propósito de uso declarado no alcanzan para ver este contenido.' }}
+          @if (prohibido.nextAction; as accion) {
+            <div alert-actions>
+              @if (accion.route) {
+                <a app-link [routerLink]="accion.route">{{ accion.label }}</a>
+              } @else {
+                <span>{{ accion.label }}</span>
+              }
+            </div>
+          }
+        </app-alert>
+      </ng-content>
+    }
+  }
+
+  <!-- S6 · No encontrado, sin filtrar existencia. El copy es FIJO a propósito:
+       cualquier variación entre «no existe» y «existe pero no lo podés ver»
+       confirma la existencia del recurso. No proyecta datos del estado. -->
+  @case ('not-found') {
+    @if (notFoundState(); as ausente) {
+      <ng-content select="[vsh-not-found]">
+        <app-empty-state
+          variant="no-results"
+          title="No encontramos lo que buscás"
+          description="Verificá el identificador o volvé al listado."
+        >
+          @if (ausente.nextAction; as accion) {
+            @if (accion.route) {
+              <a app-link empty-actions [routerLink]="accion.route">{{ accion.label }}</a>
+            }
+          }
+        </app-empty-state>
+      </ng-content>
+    }
+  }
+
+  <!-- S8 · Sin conexión. -->
+  @case ('offline') {
+    <ng-content select="[vsh-offline]">
+      <app-empty-state
+        variant="error"
+        title="Sin conexión"
+        description="No pudimos comunicarnos con el servidor. Revisá tu conexión."
+      >
+        <button app-button empty-actions variant="outline" (clicked)="requestRetry()">
+          Reintentar
+        </button>
+      </app-empty-state>
+    </ng-content>
+  }
+
+  <!-- S9 · Error inesperado. El requestId visible y copiable es el puente
+      entre quien reporta y quien busca en los registros. -->
+  @case ('error') {
+    @if (errorState(); as fallo) {
+      <ng-content select="[vsh-error]">
+        <app-alert tone="error" title="Algo salió mal">
+          {{ fallo.message ?? 'Ocurrió un error inesperado. Si el problema persiste, reportalo con este código.' }}
+          <p class="view-state-host__request-id">
+            Código de soporte:
+            <code class="tabular-nums">{{ fallo.requestId }}</code>
+          </p>
+          <div alert-actions>
+            <button app-button size="sm" variant="outline" (clicked)="copyRequestId()">
+              Copiar código
+            </button>
+            <button app-button size="sm" variant="secondary" (clicked)="requestRetry()">
+              Reintentar
+            </button>
+          </div>
+        </app-alert>
+      </ng-content>
+    }
+  }
+
+  <!-- Camino feliz (ready) y S7 (stale) comparten la rama: los dos muestran el
+       contenido proyectado, y el slot por defecto solo puede existir UNA vez en
+       toda la plantilla — con dos, Angular asigna el contenido a uno solo y el
+       otro queda vacío. Por eso S7 NO tiene su propio @case. -->
+  @default {
+    @if (staleState(); as viejo) {
+      <!-- S7: la antigüedad va SIEMPRE visible, nunca solo en un tooltip. -->
+      <ng-content select="[vsh-stale]">
+        <app-alert tone="info" title="Estás viendo datos que pueden estar atrasados">
+          Información al {{ viejo.asOf | date: 'dd/MM/yyyy HH:mm' }}.
+          <div alert-actions>
+            <button app-button size="sm" variant="secondary" (clicked)="requestRefresh()">
+              Actualizar
+            </button>
+          </div>
+        </app-alert>
+      </ng-content>
+    }
+    <ng-content />
+  }
+}

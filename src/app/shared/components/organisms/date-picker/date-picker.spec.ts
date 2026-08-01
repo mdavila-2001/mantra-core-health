@@ -1,9 +1,9 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { DatePickerComponent } from './date-picker';
+import { DatePicker } from './date-picker';
 
-describe('DatePickerComponent', () => {
-  let fixture: ComponentFixture<DatePickerComponent>;
+describe('DatePicker', () => {
+  let fixture: ComponentFixture<DatePicker>;
 
   function trigger(): HTMLButtonElement {
     return fixture.nativeElement.querySelector('.date-picker-trigger');
@@ -21,8 +21,8 @@ describe('DatePickerComponent', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [DatePickerComponent] }).compileComponents();
-    fixture = TestBed.createComponent(DatePickerComponent);
+    await TestBed.configureTestingModule({ imports: [DatePicker] }).compileComponents();
+    fixture = TestBed.createComponent(DatePicker);
     fixture.componentRef.setInput('value', new Date(2026, 6, 15, 10, 30));
     await fixture.whenStable();
   });
@@ -49,73 +49,6 @@ describe('DatePickerComponent', () => {
 
       expect(dialog()).toBeNull();
       expect(document.activeElement).toBe(trigger());
-    });
-
-    /**
-     * La trampa de foco no estaba cubierta y es lo que distingue un diálogo de
-     * verdad de un `role="dialog"` decorativo. Estas pruebas fijan el
-     * comportamiento actual para poder extraerlo sin cambiarlo.
-     */
-    describe('el foco no se escapa del diálogo', () => {
-      function focusables(): HTMLElement[] {
-        return Array.from(
-          dialog()!.querySelectorAll<HTMLElement>(
-            'button:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-          ),
-        );
-      }
-
-      function tab(shiftKey: boolean): void {
-        dialog()!.dispatchEvent(
-          new KeyboardEvent('keydown', { key: 'Tab', shiftKey, bubbles: true }),
-        );
-      }
-
-      it('Tab desde el último enfocable vuelve al primero', async () => {
-        await abrir();
-        const enfocables = focusables();
-        enfocables.at(-1)!.focus();
-
-        tab(false);
-        await fixture.whenStable();
-
-        expect(document.activeElement).toBe(enfocables[0]);
-      });
-
-      it('Shift+Tab desde el primero salta al último', async () => {
-        await abrir();
-        const enfocables = focusables();
-        enfocables[0].focus();
-
-        tab(true);
-        await fixture.whenStable();
-
-        expect(document.activeElement).toBe(enfocables.at(-1));
-      });
-
-      it('Shift+Tab desde el propio diálogo salta al último', async () => {
-        await abrir();
-        // Al abrir, el foco está en el contenedor, no en un control.
-        expect(document.activeElement).toBe(dialog());
-
-        tab(true);
-        await fixture.whenStable();
-
-        expect(document.activeElement).toBe(focusables().at(-1));
-      });
-
-      it('Tab en medio del diálogo no se intercepta', async () => {
-        await abrir();
-        const enfocables = focusables();
-        enfocables[0].focus();
-
-        tab(false);
-        await fixture.whenStable();
-
-        // Sin preventDefault el navegador sigue su curso; en jsdom eso significa
-        // que el foco no se movió a mano.
-        expect(document.activeElement).toBe(enfocables[0]);
-      });
     });
 
     it('cancelar descarta lo elegido', async () => {

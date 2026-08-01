@@ -1,0 +1,17 @@
+/* ============================================================================
+    Search field — la caja, el borde y el foco los pone `app-input`. Acá solo
+    se acomoda lo que va al final del campo.
+    ========================================================================== */
+
+:host {
+    display: block;
+    width: 100%;
+}
+
+.search-field__trailing {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    /* el spinner hereda la tinta de los íconos del campo */
+    color: var(--text-secondary);
+}

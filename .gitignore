@@ -11,9 +11,14 @@
 npm-debug.log
 yarn-error.log
 
-# Yarn PnP: artefactos generados por `yarn install`, no código fuente
+# Yarn 4 — artefactos generados por la instalación.
+# El repo no fija `nodeLinker`, así que Yarn instala en modo PnP y genera estos
+# archivos: cientos de dependencias desempaquetadas, binarios incluidos. Son
+# producto de `yarn install` y se regeneran solos; no van al repositorio.
 .pnp.*
+.yarn/install-state.gz
 .yarn/unplugged/
+.yarn/cache/
 
 # IDEs and editors
 .idea/

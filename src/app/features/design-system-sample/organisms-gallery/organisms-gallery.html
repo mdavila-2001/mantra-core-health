@@ -1,0 +1,229 @@
+<!-- 1 · View state host ---------------------------------------------------- -->
+<section class="og-block">
+  <h3>1 · View state host — los 9 estados del M34</h3>
+  <p class="og-note">
+    Es el organismo más reutilizado del proyecto: las 81 secciones envuelven su
+    contenido acá. <strong>S1 no muestra esqueleto</strong> (no se insinúa el dato antes de
+    autorizar) y <strong>S6 es idéntico exista o no el recurso</strong>.
+  </p>
+
+  <div class="og-controls">
+    <button app-button size="sm" variant="outline" (clicked)="siguienteEstado()">
+      Siguiente estado
+    </button>
+    <span class="og-note">
+      Estado: <strong>{{ nombreEstado() }}</strong> · último evento:
+      <strong>{{ ultimoEventoEstado() }}</strong>
+    </span>
+  </div>
+
+  <div class="og-surface">
+    <app-view-state-host
+      [state]="estadoActual()"
+      (retry)="registrarEventoEstado('retry')"
+      (refresh)="registrarEventoEstado('refresh')"
+    >
+      <div vsh-skeleton class="og-skeleton-demo">
+        <p>(esqueleto con la forma real del contenido)</p>
+      </div>
+      <p>Listado de pacientes del servicio.</p>
+    </app-view-state-host>
+  </div>
+</section>
+
+<!-- 2 · Auth layout --------------------------------------------------------- -->
+<section class="og-block">
+  <h3>2 · Auth layout — pantallas públicas</h3>
+  <p class="og-note">
+    Marca + tarjeta centrada + pie legal, con el selector de tema disponible
+    <em>antes</em> de entrar. En móvil la tarjeta ocupa el ancho sin sombra; desde tablet flota.
+  </p>
+  <div class="og-surface og-surface--frame">
+    <app-auth-layout title="Ingresá a tu cuenta" subtitle="Red SALUD · Bolivia">
+      <app-form-field label="Correo institucional">
+        <app-input type="email" placeholder="nombre@redsat.salud.bo" />
+      </app-form-field>
+      <nav auth-footer>
+        <span class="og-note">Privacidad · Términos</span>
+      </nav>
+    </app-auth-layout>
+  </div>
+</section>
+
+<!-- 3-6 · Header, nav y tenant switcher -------------------------------------- -->
+<section class="og-block">
+  <h3>3 a 6 · Header, navegación y selector de organización</h3>
+  <p class="og-note">
+    El <strong>shell</strong> los compone y agrega el enlace de salto, el anuncio de ruta y la
+    vuelta del foco al <code>&lt;main&gt;</code>. Acá van sueltos para poder mirarlos: el shell
+    completo se ve en cualquier pantalla autenticada.
+  </p>
+
+  <div class="og-surface og-surface--frame">
+    <header
+      app-header
+      [user]="usuarioDemo"
+      [tenants]="tenantsDemo"
+      [activeTenantId]="tenantActivo()"
+      [showMenuButton]="true"
+      navPanelId="og-nav"
+      (menuToggled)="alternarNav()"
+      (tenantChanged)="cambiarTenant($event)"
+    ></header>
+
+    <div class="og-shell-body">
+      <app-side-nav id="og-nav" [sections]="seccionesNav" [collapsed]="navColapsado()" />
+      <div class="og-shell-main">
+        <p class="og-note">
+          Organización activa: <strong>{{ tenantActivo() }}</strong>. El botón de menú alterna el
+          colapso del nav en esta muestra.
+        </p>
+        <p class="og-note">
+          Colapsado, cada destino conserva su nombre accesible y lo muestra en un tooltip: nunca
+          un ícono mudo.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <h4>Selector de organización — variante de página (pantalla 5)</h4>
+  <app-tenant-switcher
+    [tenants]="tenantsDemo"
+    [activeTenantId]="tenantActivo()"
+    variant="page"
+    (tenantChanged)="cambiarTenant($event)"
+  />
+</section>
+
+<!-- 7 · Page header --------------------------------------------------------- -->
+<section class="og-block">
+  <h3>7 · Page header</h3>
+  <p class="og-note">
+    Renderiza el <strong>único <code>&lt;h1&gt;</code></strong> de la página. En móvil las
+    secundarias colapsan al menú «Más acciones»; la primaria <strong>nunca</strong> se colapsa.
+  </p>
+  <div class="og-surface">
+    <app-page-header
+      title="Peña, Andrea"
+      subtitle="HC 00123 · 54 años · Cardiología"
+      [breadcrumbs]="[
+        { label: 'Red SALUD', routerLink: '/' },
+        { label: 'Hospital Central', routerLink: '/design-system' },
+        { label: 'Peña, Andrea' },
+      ]"
+      [secondaryActions]="accionesPagina"
+      (actionSelected)="registrarAccionPagina($event)"
+    >
+      <button app-button page-actions>Registrar evolución</button>
+      <span page-meta>Última atención: 12/07/2026</span>
+    </app-page-header>
+    <p class="og-note">Última acción secundaria: <strong>{{ ultimaAccionPagina() }}</strong></p>
+  </div>
+</section>
+
+<!-- 8-9 · Form section y form actions ---------------------------------------- -->
+<section class="og-block">
+  <h3>8 y 9 · Secciones y acciones de formulario</h3>
+  <p class="og-note">
+    <code>&lt;fieldset&gt;</code> y <code>&lt;legend&gt;</code> reales. Marcá «simular error» y
+    probá plegar: <strong>una sección con un control inválido no se pliega</strong>, y si estaba
+    plegada se abre sola.
+  </p>
+
+  <div class="og-controls">
+    <button app-button size="sm" variant="outline" (clicked)="campoInvalido.set(!campoInvalido())">
+      {{ campoInvalido() ? 'Quitar el error' : 'Simular error de validación' }}
+    </button>
+  </div>
+
+  <div class="og-surface">
+    <app-form-section
+      legend="Datos de contacto"
+      description="Los usamos para avisar de turnos y resultados."
+      [collapsible]="true"
+      [invalid]="campoInvalido()"
+      [(expanded)]="seccionPlegable"
+    >
+      <app-form-field
+        label="Teléfono"
+        [errorMessage]="campoInvalido() ? 'El teléfono es obligatorio' : ''"
+      >
+        <app-input type="text" [hasError]="campoInvalido()" placeholder="+591 …" />
+      </app-form-field>
+      <app-form-field label="Correo">
+        <app-input type="email" placeholder="nombre@dominio.bo" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Guardar"
+      cancelLabel="Cancelar"
+      [pending]="guardando()"
+      (submitted)="registrarEnvio('Guardar')"
+      (cancelled)="registrarEnvio('Cancelar')"
+    />
+  </div>
+
+  <h4>Entidad append-only: la acción es «Registrar corrección»</h4>
+  <div class="og-surface">
+    <app-form-actions
+      [correctionOnly]="true"
+      submitLabel="Editar"
+      (submitted)="registrarEnvio('Corrección')"
+    />
+    <p class="og-note">
+      Aunque le pasen <code>submitLabel="Editar"</code>, una entidad
+      <code>&lt;&lt;IMMUTABLE&gt;&gt;</code> no se edita. Último envío:
+      <strong>{{ ultimoEnvio() }}</strong>
+    </p>
+  </div>
+
+  <h4>Acción destructiva: confirma antes de emitir</h4>
+  <div class="og-surface">
+    <app-form-actions
+      submitLabel="Anular la orden"
+      [destructive]="true"
+      confirmTitle="¿Anular la orden de laboratorio?"
+      confirmMessage="La orden queda anulada y el laboratorio deja de verla."
+      (submitted)="registrarEnvio('Anulación confirmada')"
+    />
+  </div>
+</section>
+
+<!-- 10-11 · Filter bar y data table ------------------------------------------ -->
+<section class="og-block">
+  <h3>10 y 11 · Barra de filtros y tabla de datos</h3>
+  <p class="og-note">
+    Los filtros viven en la <strong>URL</strong> (mirá la barra de direcciones al elegir uno):
+    recargar o compartir el enlace reproduce el filtrado. El filtro de diagnóstico está
+    <strong>deshabilitado con su motivo</strong> porque su value set no está disponible — nunca
+    se degrada a texto libre.
+  </p>
+
+  <app-filter-bar [filters]="filtrosDemo" (filtersChanged)="registrarFiltros($event)" />
+  <p class="og-note">Filtros emitidos (códigos): <strong>{{ ultimosFiltros() }}</strong></p>
+
+  <app-data-table
+    [state]="listado()"
+    [columns]="columnas"
+    [trackBy]="porId"
+    caption="Pacientes del servicio de cardiología"
+    [selectable]="true"
+    [sort]="orden()"
+    [cursor]="cursor()"
+    (sortChanged)="ordenar($event)"
+    (cursorChanged)="moverCursor($event)"
+    (selectionChanged)="registrarSeleccion($event)"
+  />
+
+  <p class="og-note">
+    Orden: <strong>{{ orden()?.key ?? '—' }} {{ orden()?.direction ?? '' }}</strong> ·
+    último cursor: <strong>{{ ultimoCursor() }}</strong> ·
+    seleccionadas: <strong>{{ seleccionados() }}</strong>
+  </p>
+  <p class="og-note">
+    <strong>Paginación por cursor</strong>: solo Anterior y Siguiente. Un cursor no conoce el
+    total, así que no hay «página 7 de 42». En pantalla angosta, «Servicio» y «Obra social» se
+    pliegan a la fila de detalle — no se ocultan.
+  </p>
+</section>

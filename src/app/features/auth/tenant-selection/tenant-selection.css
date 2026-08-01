@@ -1,0 +1,46 @@
+.tenant {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  background: var(--bg-surface-alt, var(--bg-surface));
+}
+
+.tenant__card {
+  width: 100%;
+  max-width: 30rem;
+  padding: var(--sp-6);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+.tenant__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3, var(--fs-h2));
+  color: var(--brand-primary);
+}
+
+.tenant__subtitle {
+  margin: var(--sp-2) 0 var(--sp-6);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.tenant__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* El botón ocupa la fila entera: la lista se recorre de arriba abajo y un
+   objetivo ancho es más fácil de acertar con el pulgar. */
+.tenant__list button {
+  width: 100%;
+}

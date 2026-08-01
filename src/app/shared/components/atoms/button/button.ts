@@ -11,6 +11,7 @@ import {
   output,
 } from '@angular/core';
 
+import { Spinner } from '../spinner/spinner';
 import type { ButtonSize, ButtonType, ButtonVariant } from './button.types';
 
 /**
@@ -39,6 +40,7 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types';
  */
 @Component({
   selector: 'button[app-button]',
+  imports: [Spinner],
   templateUrl: './button.html',
   styleUrl: './button.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,7 +52,7 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types';
     '(click)': 'handleClick($event)',
   },
 })
-export class AppButtonComponent {
+export class AppButton {
   private readonly hostElement = inject<ElementRef<HTMLButtonElement>>(ElementRef);
 
   readonly variant = input<ButtonVariant>('primary');

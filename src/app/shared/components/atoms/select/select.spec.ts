@@ -1,19 +1,19 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import type { SelectOption } from './select.types';
-import { SelectComponent } from './select';
+import { Select } from './select';
 
 interface Servicio {
   readonly id: number;
   readonly nombre: string;
 }
 
-describe('SelectComponent', () => {
+describe('Select', () => {
   function crear<T>(
     options: SelectOption<T>[],
     value: T | null = null,
-  ): ComponentFixture<SelectComponent<T>> {
-    const fixture = TestBed.createComponent<SelectComponent<T>>(SelectComponent);
+  ): ComponentFixture<Select<T>> {
+    const fixture = TestBed.createComponent<Select<T>>(Select);
     fixture.componentRef.setInput('options', options);
     fixture.componentRef.setInput('value', value);
     return fixture;
@@ -31,7 +31,7 @@ describe('SelectComponent', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [SelectComponent] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [Select] }).compileComponents();
   });
 
   describe('el tipo del valor sobrevive al DOM', () => {

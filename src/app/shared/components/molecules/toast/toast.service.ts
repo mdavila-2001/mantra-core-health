@@ -1,128 +1,103 @@
-/* ============================================================================
-    Cola de avisos. Única fuente de verdad de lo que hay en pantalla.
-
-    Quien lanza un aviso no conoce al contenedor ni al componente: pide
-    `toastService.error('…')` y se olvida. El `ToastContainer` es el único que
-    lee la cola, y solo hay uno, montado fuera del `router-outlet`.
-    ========================================================================== */
-
-import {
-  DestroyRef,
-  inject,
-  Injectable,
-  PLATFORM_ID,
-  signal,
-} from '@angular/core';
+import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
-import type { StatusType } from '@core/tokens/design-tokens.types';
 import {
   TOAST_DEFAULT_DURATION_MS,
-  TOAST_MAX_VISIBLE,
+  type ToastInput,
   type ToastMessage,
-  type ToastOptions,
+  type ToastType,
 } from './toast.types';
 
-@Injectable({ providedIn: 'root' })
+/**
+ * Cola de avisos de la aplicación.
+ *
+ * Es la única fuente: los componentes (`app-toast-container`) solo la leen. El
+ * cierre automático se programa **solo en el navegador** — en el render del
+ * servidor un temporizador pendiente retrasa la respuesta y además nadie está
+ * mirando la pantalla todavía.
+ */
+@Injectable({
+  providedIn: 'root',
+})
 export class ToastService {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly destroyRef = inject(DestroyRef);
 
-  private readonly queue = signal<readonly ToastMessage[]>([]);
+  private readonly items = signal<readonly ToastMessage[]>([]);
 
-  /** Lo que el contenedor pinta. Solo lectura: la cola se toca por métodos. */
-  readonly toasts = this.queue.asReadonly();
+  /** Avisos visibles, del más viejo al más nuevo. */
+  readonly toasts = this.items.asReadonly();
 
-  /** Temporizador de autocierre por aviso; los fijos no aparecen acá. */
-  private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
+  private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
 
+  /**
+   * Contador propio en vez de `crypto.randomUUID()`: el id no es un secreto, no
+   * sale de la aplicación, y así es reproducible en las pruebas.
+   */
   private sequence = 0;
 
-  constructor() {
-    // Sin esto, un temporizador vivo mantiene una referencia al servicio (y en
-    // pruebas, el runner queda colgado esperando el handle).
-    this.destroyRef.onDestroy(() => this.clear());
-  }
-
-  /** Forma general. Devuelve el `id`, que permite cerrarlo antes de tiempo. */
-  show(type: StatusType, message: string, options: ToastOptions = {}): number {
-    this.sequence += 1;
-    const id = this.sequence;
-
-    const duration =
-      options.duration === undefined ? TOAST_DEFAULT_DURATION_MS : options.duration;
+  /** Encola un aviso y devuelve su id, por si hay que cerrarlo antes de tiempo. */
+  show(input: ToastInput): string {
+    const type: ToastType = input.type ?? 'info';
+    const id = `toast-${++this.sequence}`;
+    const durationMs =
+      input.durationMs === undefined ? TOAST_DEFAULT_DURATION_MS[type] : input.durationMs;
 
     const toast: ToastMessage = {
       id,
       type,
-      message,
-      duration,
-      ...(options.title ? { title: options.title } : {}),
+      message: input.message,
+      durationMs,
+      ...(input.title === undefined ? {} : { title: input.title }),
     };
 
-    this.queue.update((current) => {
-      const next = [...current, toast];
-      // Se descarta por la cabeza —lo más viejo— hasta entrar en el techo.
-      const overflow = next.length - TOAST_MAX_VISIBLE;
-      if (overflow <= 0) {
-        return next;
-      }
-      for (const dropped of next.slice(0, overflow)) {
-        this.clearTimer(dropped.id);
-      }
-      return next.slice(overflow);
-    });
+    this.items.update((current) => [...current, toast]);
+    this.scheduleDismissal(toast);
 
-    this.scheduleDismissal(id, duration);
     return id;
   }
 
-  success(message: string, options?: ToastOptions): number {
-    return this.show('success', message, options);
+  success(message: string, title?: string): string {
+    return this.show({ type: 'success', message, ...(title === undefined ? {} : { title }) });
   }
 
-  warning(message: string, options?: ToastOptions): number {
-    return this.show('warning', message, options);
+  info(message: string, title?: string): string {
+    return this.show({ type: 'info', message, ...(title === undefined ? {} : { title }) });
   }
 
-  error(message: string, options?: ToastOptions): number {
-    return this.show('error', message, options);
+  warning(message: string, title?: string): string {
+    return this.show({ type: 'warning', message, ...(title === undefined ? {} : { title }) });
   }
 
-  info(message: string, options?: ToastOptions): number {
-    return this.show('info', message, options);
+  error(message: string, title?: string): string {
+    return this.show({ type: 'error', message, ...(title === undefined ? {} : { title }) });
   }
 
-  /** Cierra un aviso concreto. Descartar dos veces el mismo id no es un error. */
-  dismiss(id: number): void {
+  /** Cierra un aviso. Es idempotente: cerrar dos veces el mismo id no rompe. */
+  dismiss(id: string): void {
     this.clearTimer(id);
-    this.queue.update((current) => current.filter((toast) => toast.id !== id));
+    this.items.update((current) => current.filter((toast) => toast.id !== id));
   }
 
-  /** Vacía la cola — p. ej. al cerrar sesión, donde los avisos ya no aplican. */
+  /** Vacía la cola, por ejemplo al cerrar sesión. */
   clear(): void {
-    for (const timer of this.timers.values()) {
-      clearTimeout(timer);
+    for (const id of [...this.timers.keys()]) {
+      this.clearTimer(id);
     }
-    this.timers.clear();
-    this.queue.set([]);
+    this.items.set([]);
   }
 
-  /**
-   * En el servidor no se programa nada: un `setTimeout` pendiente retrasa el
-   * render de SSR, y de todos modos nadie va a ver desaparecer el aviso.
-   */
-  private scheduleDismissal(id: number, duration: number | null): void {
-    if (!this.isBrowser || duration === null || duration <= 0) {
+  private scheduleDismissal(toast: ToastMessage): void {
+    if (!this.isBrowser || toast.durationMs === null) {
       return;
     }
+
     this.timers.set(
-      id,
-      setTimeout(() => this.dismiss(id), duration),
+      toast.id,
+      setTimeout(() => this.dismiss(toast.id), toast.durationMs),
     );
   }
 
-  private clearTimer(id: number): void {
+  private clearTimer(id: string): void {
     const timer = this.timers.get(id);
     if (timer !== undefined) {
       clearTimeout(timer);

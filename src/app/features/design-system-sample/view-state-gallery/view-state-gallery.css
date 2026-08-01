@@ -1,0 +1,114 @@
+.gallery {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+}
+
+.gallery__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+.gallery__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.gallery__title {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.gallery__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.gallery__body p {
+  margin: 0;
+}
+
+.gallery__dato {
+  font-weight: 600;
+}
+
+.gallery__muted {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.gallery__issues {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+  color: var(--st-error-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.gallery__antiguedad {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  color: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.gallery__regla {
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Esqueleto de S2: la forma del contenido que va a llegar, sin insinuar datos. */
+.skeleton {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.skeleton__bar {
+  height: var(--sp-3);
+  width: 70%;
+  border-radius: var(--r-xs);
+  background: var(--bg-inset);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.skeleton__bar--wide {
+  width: 100%;
+}
+
+.skeleton__bar--short {
+  width: 45%;
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* El latido es decorativo: sin él el esqueleto sigue comunicando lo mismo. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton__bar {
+    animation: none;
+  }
+}

@@ -1,13 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { AppButtonComponent } from './button';
+import { AppButton } from './button';
 import type { ButtonSize, ButtonType, ButtonVariant } from './button.types';
 import { BUTTON_SIZES, BUTTON_VARIANTS } from './button.types';
 
 /** Host real: el selector es de atributo, el componente vive EN un <button>. */
 @Component({
-  imports: [AppButtonComponent],
+  imports: [AppButton],
   template: `
     <button
       app-button
@@ -30,7 +30,7 @@ import { BUTTON_SIZES, BUTTON_VARIANTS } from './button.types';
     </button>
   `,
 })
-class HostComponent {
+class Host {
   readonly variant = signal<ButtonVariant>('primary');
   readonly size = signal<ButtonSize>('md');
   readonly isLoading = signal(false);
@@ -41,9 +41,9 @@ class HostComponent {
   readonly clicks: MouseEvent[] = [];
 }
 
-describe('AppButtonComponent', () => {
-  let fixture: ComponentFixture<HostComponent>;
-  let host: HostComponent;
+describe('AppButton', () => {
+  let fixture: ComponentFixture<Host>;
+  let host: Host;
 
   function button(): HTMLButtonElement {
     const element = fixture.nativeElement.querySelector('button');
@@ -54,8 +54,8 @@ describe('AppButtonComponent', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
-    fixture = TestBed.createComponent(HostComponent);
+    await TestBed.configureTestingModule({ imports: [Host] }).compileComponents();
+    fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     await fixture.whenStable();
   });
@@ -213,7 +213,7 @@ describe('AppButtonComponent', () => {
       host.iconOnly.set(true);
       host.withIcon.set(true);
 
-      const nuevo = TestBed.createComponent(HostComponent);
+      const nuevo = TestBed.createComponent(Host);
       nuevo.componentInstance.iconOnly.set(true);
       await nuevo.whenStable();
 

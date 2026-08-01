@@ -1,55 +1,63 @@
-/* ============================================================================
-    Contratos del sistema de avisos — sistema REDSAT v1.0.
-
-    El tipo de aviso NO declara colores propios: reusa `StatusType`, la misma
-    semántica de producto de los `--st-*` que ya pintan badges y toasts. Un
-    catálogo de tipos propio sería una quinta frontera de deriva.
-    ========================================================================== */
-
-import type { StatusType } from '@core/tokens/design-tokens.types';
-
-/** Milisegundos que un aviso permanece en pantalla si no se dice otra cosa. */
-export const TOAST_DEFAULT_DURATION_MS = 5000;
-
 /**
- * Cuántos avisos se muestran a la vez. Por encima, el más viejo sale para dejar
- * entrar al nuevo: una pila que crece sin techo tapa la pantalla y deja el
- * aviso más reciente —el que importa— fuera de la vista.
+ * Tono del aviso. Son los cuatro que la hoja de estilos ya define como
+ * `:host(.toast--success|warning|error|info)`; no hay más.
  */
-export const TOAST_MAX_VISIBLE = 4;
+export type ToastType = 'success' | 'warning' | 'error' | 'info';
 
 /**
- * Un aviso ya encolado. El `id` lo asigna el servicio: es la única forma de
- * descartar el aviso correcto cuando hay varios con el mismo texto en cola.
+ * Un aviso ya encolado.
+ *
+ * Se llama `ToastMessage` y no `Toast` porque `Toast` es el componente que lo
+ * pinta (`toast.ts`), y el contenedor necesita importar los dos a la vez.
  */
 export interface ToastMessage {
-  readonly id: number;
-  readonly type: StatusType;
-  /** Encabezado opcional; sin él, el aviso es solo el mensaje. */
-  readonly title?: string;
+  readonly id: string;
+  readonly type: ToastType;
   readonly message: string;
-  /**
-   * `null` = **fijo**: no se va solo, únicamente con el botón de cierre. Se
-   * reserva para lo que el usuario no puede permitirse no leer.
-   */
-  readonly duration: number | null;
-}
-
-/** Lo que el llamador puede ajustar al lanzar un aviso. */
-export interface ToastOptions {
+  /** Encabezado opcional; sin él el aviso es una sola línea. */
   readonly title?: string;
-  /** `null` lo vuelve fijo. Omitido, usa `TOAST_DEFAULT_DURATION_MS`. */
-  readonly duration?: number | null;
+  /**
+   * Milisegundos hasta el cierre automático, o `null` para que quede fijo hasta
+   * que la persona lo cierre.
+   */
+  readonly durationMs: number | null;
 }
 
 /**
- * Nombre hablado del tipo. El color y el ícono no comunican solos: quien usa
- * lector de pantalla necesita la palabra — y quien no distingue estos tonos,
- * también.
+ * Lo que aporta quien lanza un aviso. El identificador y la duración por
+ * defecto los pone {@link ToastService}: quien avisa no debería tener que
+ * inventar un id ni recordar cuánto dura cada tono.
  */
-export const TOAST_TYPE_LABELS: Readonly<Record<StatusType, string>> = Object.freeze({
-  success: 'Éxito',
+export interface ToastInput {
+  readonly type?: ToastType;
+  readonly message: string;
+  readonly title?: string;
+  readonly durationMs?: number | null;
+}
+
+/**
+ * Cuánto queda en pantalla cada tono.
+ *
+ * Los errores son **fijos** a propósito: un error que se borra solo mientras la
+ * persona lee es un error que nadie leyó. El resto se cierra solo porque son
+ * confirmaciones, y una confirmación que hay que cerrar a mano estorba.
+ *
+ * > Decisión de esta implementación, pendiente de validación con el diseñador.
+ */
+export const TOAST_DEFAULT_DURATION_MS: Readonly<Record<ToastType, number | null>> = {
+  success: 5000,
+  info: 5000,
+  warning: 7000,
+  error: null,
+} as const;
+
+/**
+ * El tono dicho con palabras. El color y el ícono no comunican solos: quien usa
+ * un lector de pantalla necesita oír de qué tipo de aviso se trata.
+ */
+export const TOAST_TYPE_LABEL: Readonly<Record<ToastType, string>> = {
+  success: 'Listo',
+  info: 'Información',
   warning: 'Advertencia',
   error: 'Error',
-  info: 'Información',
-});
+} as const;

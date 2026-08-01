@@ -1,0 +1,33 @@
+<!-- El selector de tema vive fuera del <main>: es chrome, no contenido. -->
+<div class="auth-layout__theme" role="group" aria-label="Tema de la interfaz">
+  @for (option of themeOptions; track option.mode) {
+    <button
+      app-button
+      size="sm"
+      [variant]="theme() === option.mode ? 'secondary' : 'ghost'"
+      (clicked)="setTheme(option.mode)"
+    >
+      {{ option.label }}
+    </button>
+  }
+</div>
+
+<main class="auth-layout__main">
+  @if (showBrand()) {
+    <p class="auth-layout__brand" aria-hidden="true">Mantra Core <strong>Health</strong></p>
+  }
+
+  <app-card class="auth-layout__card" variant="elevated" padding="lg">
+    <!-- El único h1 de la página: las pantallas públicas no tienen otro. -->
+    <h1 class="auth-layout__title">{{ title() }}</h1>
+    @if (subtitle()) {
+      <p class="auth-layout__subtitle">{{ subtitle() }}</p>
+    }
+
+    <ng-content />
+  </app-card>
+
+  <footer class="auth-layout__footer">
+    <ng-content select="[auth-footer]" />
+  </footer>
+</main>

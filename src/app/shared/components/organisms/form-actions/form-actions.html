@@ -1,0 +1,20 @@
+<div class="form-actions__extra">
+  <ng-content select="[form-actions-extra]" />
+</div>
+
+@if (cancelLabel()) {
+  <button app-button variant="ghost" type="button" (clicked)="handleCancel()">
+    {{ cancelLabel() }}
+  </button>
+}
+
+<button
+  app-button
+  type="submit"
+  [variant]="primaryVariant()"
+  [disabled]="isBlocked()"
+  [isLoading]="isBusy()"
+  (clicked)="handleSubmit()"
+>
+  {{ primaryLabel() }}
+</button>

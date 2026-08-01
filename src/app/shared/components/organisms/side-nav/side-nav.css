@@ -1,0 +1,188 @@
+/* ============================================================================
+    Side nav — MOBILE-FIRST (§0.1): la base es el cajón superpuesto (que es
+    como se comporta en teléfono) y desde tablet el panel se vuelve fijo.
+    Solo `min-width`.
+    ========================================================================== */
+
+:host {
+    display: block;
+    font-family: var(--font-body);
+}
+
+.side-nav__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-5);
+    padding: var(--sp-4) var(--sp-3);
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border-default);
+    overflow-y: auto;
+    /* el ancho expandido es el contrato con el shell, que reserva ese espacio */
+    inline-size: var(--nav-width, 260px);
+    block-size: 100%;
+}
+
+.side-nav__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+}
+
+.side-nav__section-label {
+    margin: 0 0 var(--sp-1) var(--sp-3);
+    font-size: var(--fs-overline);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.side-nav__list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.side-nav__link {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    /* área táctil de 44 px en cualquier ancho */
+    min-block-size: var(--sp-11, 44px);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.side-nav__link:hover {
+    background: var(--bg-inset);
+    color: var(--text-primary);
+}
+
+/* El destino actual se marca con fondo Y con peso: nunca solo con color. */
+.side-nav__link.is-active {
+    background: var(--st-primary-bg);
+    color: var(--st-primary-fg);
+    font-weight: 600;
+}
+
+.side-nav__link.is-disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.side-nav__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.side-nav__icon svg {
+    inline-size: var(--sp-5);
+    block-size: var(--sp-5);
+}
+
+.side-nav__label {
+    flex: 1;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.side-nav__badge {
+    flex-shrink: 0;
+}
+
+/* ---- cajón (base móvil) --------------------------------------------------- */
+
+:host(.side-nav--drawer) {
+    position: fixed;
+    inset: 0;
+    /* cerrado no ocupa ni intercepta nada */
+    pointer-events: none;
+    z-index: 1000;
+}
+
+:host(.side-nav--drawer) .side-nav__panel {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    max-inline-size: 88vw;
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-100%);
+    transition: transform 0.15s ease;
+}
+
+:host(.side-nav--drawer:not(.side-nav--open)) .side-nav__panel {
+    /* cerrado: fuera de la pantalla y fuera del orden de tabulación */
+    visibility: hidden;
+}
+
+:host(.side-nav--open) {
+    pointer-events: auto;
+}
+
+:host(.side-nav--open) .side-nav__panel {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+.side-nav__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgb(10 28 39 / 45%);
+}
+
+/* ---- colapsado a íconos (solo nav fijo) ---------------------------------- */
+
+:host(.side-nav--collapsed) .side-nav__panel {
+    inline-size: var(--nav-width-collapsed, 72px);
+    align-items: center;
+}
+
+/* El texto se oculta a la vista; el nombre accesible viaja en `aria-label` y
+   el tooltip lo muestra al enfocar. Nunca un ícono mudo. */
+:host(.side-nav--collapsed) .side-nav__label,
+:host(.side-nav--collapsed) .side-nav__badge {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+:host(.side-nav--collapsed) .side-nav__link {
+    justify-content: center;
+}
+
+/* ≥ tablet: el nav deja de ser cajón y pasa a ser columna fija. */
+@media (min-width: 780px) {
+    :host(.side-nav--drawer) {
+        position: static;
+        pointer-events: auto;
+    }
+
+    :host(.side-nav--drawer) .side-nav__panel {
+        position: static;
+        transform: none;
+        visibility: visible;
+        max-inline-size: none;
+        box-shadow: none;
+    }
+
+    .side-nav__overlay {
+        display: none;
+    }
+}

@@ -1,0 +1,36 @@
+.verificacion {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  background: var(--bg-surface-alt, var(--bg-surface));
+}
+
+.verificacion__card {
+  width: 100%;
+  max-width: 28rem;
+  padding: var(--sp-6);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  text-align: center;
+}
+
+.verificacion__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3, var(--fs-h2));
+  color: var(--brand-primary);
+}
+
+.verificacion__text {
+  margin: var(--sp-3) 0 var(--sp-6);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.verificacion__accion {
+  width: 100%;
+}

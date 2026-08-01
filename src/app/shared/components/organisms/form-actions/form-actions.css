@@ -1,0 +1,56 @@
+/* ============================================================================
+    Form actions — MOBILE-FIRST (§0.1). En teléfono la barra queda pegada al
+    fondo (con el respeto al área segura del sistema operativo); desde tablet
+    vuelve al flujo, alineada a la derecha.
+    ========================================================================== */
+
+:host {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    /* pegada al fondo: en un formulario largo el envío no debe quedar a diez
+       pantallas de distancia */
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 10;
+    padding: var(--sp-3) var(--sp-4);
+    /* el área segura del teléfono (barra de gestos) no puede tapar el botón */
+    padding-block-end: calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+    margin-inline: calc(-1 * var(--sp-4));
+    background: var(--bg-surface);
+    border-block-start: 1px solid var(--border-default);
+}
+
+/* El botón primario ocupa el ancho disponible en teléfono: es el destino
+   obvio del pulgar. */
+:host ::ng-deep button[type='submit'] {
+    flex: 1;
+}
+
+.form-actions__extra {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.form-actions__extra:empty {
+    display: none;
+}
+
+@media (min-width: 780px) {
+    :host {
+        position: static;
+        justify-content: flex-end;
+        padding: var(--sp-4) 0 0;
+        margin-inline: 0;
+        background: transparent;
+    }
+
+    :host ::ng-deep button[type='submit'] {
+        flex: 0 0 auto;
+    }
+
+    .form-actions__extra {
+        margin-inline-end: auto;
+    }
+}

@@ -1,0 +1,35 @@
+<div [class]="wrapperClasses()">
+  <textarea
+    #control
+    class="native-textarea"
+    [id]="controlId()"
+    [rows]="rows()"
+    [value]="value()"
+    [placeholder]="placeholder()"
+    [disabled]="isDisabled()"
+    [readOnly]="readonly()"
+    [attr.maxlength]="maxLength()"
+    [attr.aria-invalid]="invalid()"
+    [attr.aria-required]="required() || null"
+    [attr.aria-describedby]="describedBy()"
+    [style.--_textarea-max-rows]="maxRows()"
+    [class.is-auto-resize]="autoResize()"
+    (input)="handleInput($event)"
+    (focus)="handleFocus($event)"
+    (blur)="handleBlur($event)"
+  ></textarea>
+</div>
+
+@if (maxLength() !== null) {
+  <!-- La cifra cambia con cada tecla: se muestra, no se anuncia. -->
+  <p class="textarea-counter" [class.is-at-limit]="limitBand() === 'reached'" aria-hidden="true">
+    {{ counterText() }}
+  </p>
+
+  <!-- Lo que sí describe al control: el techo, que no cambia nunca. -->
+  <span [id]="limitHintId" class="sr-only">Máximo {{ maxLength() }} caracteres.</span>
+
+  <!-- Solo habla al cruzar el 90 % y al tocar el límite: el texto es el mismo
+       dentro de una banda, así que el lector no repite en cada tecla. -->
+  <span class="sr-only" role="status" aria-live="polite">{{ limitAnnouncement() }}</span>
+}

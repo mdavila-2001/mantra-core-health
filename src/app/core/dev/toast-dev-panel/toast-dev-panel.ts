@@ -1,18 +1,21 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
-import { STATUS_TYPES, type StatusType } from '@core/tokens/design-tokens.types';
-import { AppButtonComponent, ToastService } from '@shared';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import type { ToastType } from '../../../shared/components/molecules/toast/toast.types';
 
-/** Cuántos avisos lanza la ráfaga: uno más que el techo, para verlo actuar. */
-const BURST_SIZE = 5;
+/** Cuántos avisos lanza la ráfaga: suficientes para ver cómo se apilan. */
+const TAMANO_RAFAGA = 5;
 
 /**
- * Disparador de avisos para probar desde cualquier pantalla. **No es producto**:
- * `app.html` lo envuelve en un `@defer` que en producción nunca se descarga.
+ * Disparador de avisos para probar desde cualquier pantalla.
+ *
+ * Vive en `core/dev/` y el `@defer (when isDev)` de `app.html` lo deja en un
+ * fragmento que en producción nunca se descarga.
  */
 @Component({
   selector: 'app-toast-dev-panel',
-  imports: [AppButtonComponent],
+  imports: [AppButton],
   templateUrl: './toast-dev-panel.html',
   styleUrl: './toast-dev-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,42 +23,36 @@ const BURST_SIZE = 5;
 export class ToastDevPanel {
   private readonly toastService = inject(ToastService);
 
-  protected readonly types = STATUS_TYPES;
+  readonly types: readonly ToastType[] = ['success', 'info', 'warning', 'error'];
 
-  protected lanzar(type: StatusType): void {
-    this.toastService.show(type, MENSAJES[type], { title: TITULOS[type] });
-  }
-
-  /** Fijo: sin duración, solo se va con el botón de cierre. */
-  protected lanzarFijo(): void {
-    this.toastService.error('Este aviso no se cierra solo.', {
-      title: 'Requiere confirmación',
-      duration: null,
+  lanzar(type: ToastType): void {
+    this.toastService.show({
+      type,
+      title: `Aviso de prueba (${type})`,
+      message: 'Texto de ejemplo para revisar el aviso en pantalla.',
     });
   }
 
-  /** Ráfaga: supera `TOAST_MAX_VISIBLE` a propósito, para ver el descarte. */
-  protected lanzarRafaga(): void {
-    for (let n = 1; n <= BURST_SIZE; n += 1) {
-      this.toastService.info(`Aviso ${n} de ${BURST_SIZE} de la ráfaga.`);
+  /** Aviso que no se cierra solo: sirve para revisar el foco y el cierre manual. */
+  lanzarFijo(): void {
+    this.toastService.show({
+      type: 'error',
+      title: 'Aviso fijo',
+      message: 'Este no se cierra solo: hay que cerrarlo a mano.',
+      durationMs: null,
+    });
+  }
+
+  lanzarRafaga(): void {
+    for (let i = 1; i <= TAMANO_RAFAGA; i += 1) {
+      this.toastService.show({
+        type: this.types[i % this.types.length] ?? 'info',
+        message: `Aviso ${i} de ${TAMANO_RAFAGA} de la ráfaga.`,
+      });
     }
   }
 
-  protected limpiar(): void {
+  limpiar(): void {
     this.toastService.clear();
   }
 }
-
-const TITULOS: Readonly<Record<StatusType, string>> = {
-  success: 'Guardado',
-  warning: 'Revisá los datos',
-  error: 'No se pudo guardar',
-  info: 'Cambios pendientes',
-};
-
-const MENSAJES: Readonly<Record<StatusType, string>> = {
-  success: 'La ficha del paciente se guardó correctamente.',
-  warning: 'Faltan datos de contacto en la ficha.',
-  error: 'Se perdió la conexión con el servidor. Intentá de nuevo.',
-  info: 'Hay cambios sin guardar en este formulario.',
-};
