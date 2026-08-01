@@ -8,9 +8,14 @@ RUN corepack enable
 
 WORKDIR /app
 
-# Solo manifiesto y lockfile primero: la capa de instalación se reutiliza
-# mientras esos dos archivos no cambien.
-COPY package.json yarn.lock ./
+# Solo manifiesto, lockfile y configuración de Yarn primero: la capa de
+# instalación se reutiliza mientras esos archivos no cambien.
+#
+# `.yarnrc.yml` va acá y no en el `COPY . .` de abajo porque lo necesita el
+# `yarn install` de la línea siguiente: lleva `npmMinimalAgeGate: 0`, y sin él
+# Yarn 4.18 aplica su espera mínima antes de instalar paquetes recién
+# publicados y la instalación puede fallar.
+COPY package.json yarn.lock .yarnrc.yml ./
 
 # El repo no fija `nodeLinker`, así que Yarn 4 instala en modo PnP y genera
 # .pnp.cjs y .yarn/unplugged con binarios nativos de ESTA plataforma (linux).
@@ -26,6 +31,11 @@ EXPOSE 4200
 # al host. Se sobreescribe por entorno (ver .env.example).
 ENV BACKEND_ORIGIN=http://host.docker.internal:3000
 
+# Raíz de la API que usa el navegador. Vacía = rutas relativas, que es lo que
+# corresponde acá: las resuelve el proxy de arriba. Solo se define si el
+# navegador tuviera que hablar con otro dominio. Ver .env.example.
+ENV PUBLIC_API_BASE_URL=""
+
 # El proxy de Angular es un JSON estático y no interpola variables, así que el
 # origen se sustituye al arrancar sobre la plantilla y se sirve el resultado.
 # Se genera en un archivo aparte para no chocar con el proxy.conf.json del repo,
@@ -34,4 +44,10 @@ ENV BACKEND_ORIGIN=http://host.docker.internal:3000
 # --host 0.0.0.0 para que el puerto sea alcanzable fuera del contenedor.
 # --poll porque los bind mounts de Docker Desktop en macOS no propagan eventos
 # fsevents, y sin polling el hot reload no se entera de los cambios.
-CMD ["sh", "-c", "sed \"s|__BACKEND_ORIGIN__|$BACKEND_ORIGIN|\" proxy.conf.docker.json > proxy.generated.json && exec yarn ng serve --proxy-config proxy.generated.json --host 0.0.0.0 --port 4200 --poll 2000"]
+#
+# El `ng serve` se invoca directo y no por `yarn start`, así que el entorno del
+# navegador se genera acá explícitamente: `src/environments/env.generated.ts`
+# no viaja en la imagen (no se versiona) y sin él la compilación no resuelve el
+# import. Se genera con el entorno del contenedor, que docker-compose alinea
+# con el mismo `.env` que usa el host.
+CMD ["sh", "-c", "sed \"s|__BACKEND_ORIGIN__|$BACKEND_ORIGIN|\" proxy.conf.docker.json > proxy.generated.json && node scripts/generate-env.mjs && exec yarn ng serve --proxy-config proxy.generated.json --host 0.0.0.0 --port 4200 --poll 2000"]
