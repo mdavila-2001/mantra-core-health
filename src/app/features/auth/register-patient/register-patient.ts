@@ -1,48 +1,74 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import type { PatientRegistration } from '../../../core/data-access/iam/iam.types';
-import { loading, offline, ready, unexpectedError, validation } from '../../../core/view-state/view-state';
+import { IamClient } from '../../../core/data-access/iam/iam.client';
+import type {
+  PatientRegistration,
+  PractitionerRegistration,
+} from '../../../core/data-access/iam/iam.types';
+import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { Link } from '../../../shared/components/atoms/link/link';
+import { Radio } from '../../../shared/components/atoms/radio/radio';
+import { RadioGroup } from '../../../shared/components/atoms/radio-group/radio-group';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 
-/** Mínimo que exige el backend (`RegisterPatientDto`). */
+/** Mínimos que exigen los DTO del backend. */
 const MIN_PASSWORD = 8;
 const MIN_DOCUMENTO = 4;
 
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.\-]+$/;
 
+/** Quién se está registrando. Define qué endpoint y qué campos. */
+type TipoCuenta = 'paciente' | 'profesional';
+
 /**
- * Auto-registro de paciente.
+ * Registro público, para los dos perfiles que la API permite dar de alta sin
+ * intervención de un administrador.
  *
- * El identificador de la cuenta es el **documento**, no el correo: así lo define
- * `register-patient`. El correo es opcional y **no condiciona el acceso** — si
- * se aporta, el backend encola una verificación que puede quedar pendiente para
- * siempre sin que eso impida entrar.
+ * Son **dos altas distintas**, no una con campos extra:
  *
- * No hay ningún selector de terminología: los `*_concept_id` del contrato son
- * opcionales, así que esta pantalla **no depende** del endpoint de value sets
- * que todavía falta.
+ * - El **paciente** entra con su documento; el correo es opcional y no
+ *   condiciona el acceso.
+ * - El **profesional** entra con su correo, y necesita matrícula y número de
+ *   colegio: sin habilitación comprobable no hay alta.
+ *
+ * Por eso hay dos formularios en vez de uno condicional: los campos
+ * obligatorios no se solapan y mezclarlos obligaría a validar «obligatorio si
+ * el tipo es…», que es de donde salen los formularios que mienten.
  */
 @Component({
   selector: 'app-register-patient',
-  imports: [ReactiveFormsModule, AppButton, Input, FormField, Alert],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    AppButton,
+    Input,
+    Link,
+    Radio,
+    RadioGroup,
+    FormField,
+    Alert,
+  ],
   templateUrl: './register-patient.html',
   styleUrl: './register-patient.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPatient {
   private readonly auth = inject(AuthService);
+  private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
 
-  readonly form = new FormGroup({
+  readonly tipo = signal<TipoCuenta>('paciente');
+
+  readonly formPaciente = new FormGroup({
     nationalId: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -59,12 +85,32 @@ export class RegisterPatient {
     email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
   });
 
+  readonly formProfesional = new FormGroup({
+    displayName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
+    }),
+    licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    credentialNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    professionalTitle: new FormControl('', { nonNullable: true }),
+    phone: new FormControl('', { nonNullable: true }),
+  });
+
   readonly state = signal<ViewState<null>>(ready(null));
   readonly isSubmitting = computed(() => this.state().status === 'loading');
 
-  /** Se muestra tras registrar, antes de mandar al login. */
   readonly registered = signal(false);
   readonly verificationSent = signal(false);
+
+  /** Con qué va a iniciar sesión, para decírselo en la confirmación. */
+  readonly accessHint = computed(() =>
+    this.tipo() === 'paciente' ? 'tu documento' : 'tu correo',
+  );
 
   readonly errorMessage = computed<string | null>(() => {
     const state = this.state();
@@ -75,82 +121,105 @@ export class RegisterPatient {
       return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
     }
     if (state.status === 'error') {
-      return `${state.message ?? 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
     }
     return null;
   });
 
+  /**
+   * Cambiar de tipo limpia el error anterior: era de otro formulario.
+   *
+   * Acepta `null` porque el grupo de radios modela «sin elección»; se cae a
+   * paciente, que es el caso mayoritario.
+   */
+  cambiarTipo(tipo: string | null): void {
+    this.tipo.set(tipo === 'profesional' ? 'profesional' : 'paciente');
+    this.state.set(ready(null));
+  }
+
   submit(): void {
-    if (this.form.invalid || this.isSubmitting()) {
-      this.form.markAllAsTouched();
+    if (this.isSubmitting()) {
       return;
     }
 
-    this.state.set(loading());
-
-    this.auth.registerPatient(this.registration()).subscribe({
-      next: (resultado) => {
-        this.state.set(ready(null));
-        this.verificationSent.set(resultado.emailVerificationSent);
-        this.registered.set(true);
-      },
-      error: (error: unknown) => this.state.set(this.toState(error)),
-    });
+    return this.tipo() === 'paciente' ? this.submitPaciente() : this.submitProfesional();
   }
 
   /**
    * Lleva al login en vez de iniciar sesión sola.
    *
-   * El backend devuelve los identificadores del perfil, **no tokens**, así que
-   * entrar automáticamente exigiría un segundo viaje con las credenciales que
-   * la persona acaba de escribir. Mandarla al login es más honesto y además le
-   * confirma que su documento y su contraseña funcionan.
+   * Ninguno de los dos endpoints devuelve tokens —devuelven los identificadores
+   * del perfil—, así que entrar automáticamente exigiría un segundo viaje con
+   * las credenciales recién escritas.
    */
   goToLogin(): void {
     void this.router.navigateByUrl('/auth');
   }
 
-  private registration(): PatientRegistration {
-    const { nationalId, displayName, password, email } = this.form.getRawValue();
+  private submitPaciente(): void {
+    if (this.formPaciente.invalid) {
+      this.formPaciente.markAllAsTouched();
+      return;
+    }
+
+    this.state.set(loading());
+
+    this.auth.registerPatient(this.datosPaciente()).subscribe({
+      next: (resultado) => {
+        this.state.set(ready(null));
+        this.verificationSent.set(resultado.emailVerificationSent);
+        this.registered.set(true);
+      },
+      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+    });
+  }
+
+  private submitProfesional(): void {
+    if (this.formProfesional.invalid) {
+      this.formProfesional.markAllAsTouched();
+      return;
+    }
+
+    this.state.set(loading());
+
+    this.iam.registerPractitioner(this.datosProfesional()).subscribe({
+      next: () => {
+        this.state.set(ready(null));
+        // El alta de profesional no encola verificación de correo.
+        this.verificationSent.set(false);
+        this.registered.set(true);
+      },
+      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+    });
+  }
+
+  private datosPaciente(): PatientRegistration {
+    const { nationalId, displayName, password, email } = this.formPaciente.getRawValue();
     const correo = email.trim();
 
     return {
       nationalId: nationalId.trim(),
       displayName: displayName.trim(),
       password,
-      // Ausente si no se completó: el backend valida con `forbidNonWhitelisted`
-      // y un correo vacío no es lo mismo que no mandar el campo.
+      // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
+      // y una cadena vacía no es lo mismo que la ausencia del campo.
       ...(correo === '' ? {} : { email: correo }),
     };
   }
 
-  private toState(error: unknown): ViewState<null> {
-    if (!(error instanceof HttpErrorResponse)) {
-      return unexpectedError('sin-id', 'Ocurrió un error inesperado.');
-    }
+  private datosProfesional(): PractitionerRegistration {
+    const raw = this.formProfesional.getRawValue();
+    const titulo = raw.professionalTitle.trim();
+    const telefono = raw.phone.trim();
 
-    if (error.status === 0) {
-      return offline();
-    }
-
-    // 409 es el documento ya registrado; 400 son las validaciones del DTO.
-    if (error.status === 409) {
-      return validation([
-        { field: 'nationalId', message: 'Ya existe una cuenta con ese documento.' },
-      ]);
-    }
-
-    if (error.status === 400) {
-      return validation([{ message: 'Revisá los datos: alguno no cumple el formato esperado.' }]);
-    }
-
-    if (error.status === 429) {
-      return validation([{ message: 'Demasiados intentos. Esperá un momento y reintentá.' }], 60);
-    }
-
-    return unexpectedError(
-      error.headers.get('x-request-id') ?? 'sin-id',
-      'No pudimos completar el registro.',
-    );
+    return {
+      email: raw.email.trim(),
+      password: raw.password,
+      displayName: raw.displayName.trim(),
+      licenseNumber: raw.licenseNumber.trim(),
+      credentialNumber: raw.credentialNumber.trim(),
+      ...(titulo === '' ? {} : { professionalTitle: titulo }),
+      ...(telefono === '' ? {} : { phone: telefono }),
+    };
   }
 }

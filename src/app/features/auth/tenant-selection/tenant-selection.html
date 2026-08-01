@@ -9,7 +9,7 @@
       @for (tenantId of tenants(); track tenantId) {
         <li>
           <button app-button variant="secondary" size="lg" (clicked)="choose(tenantId)">
-            {{ tenantId }}
+            {{ nombre(tenantId) }}
           </button>
         </li>
       }

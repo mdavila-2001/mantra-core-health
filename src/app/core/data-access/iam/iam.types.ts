@@ -74,6 +74,54 @@ export interface ActivationResult {
   readonly activated: boolean;
 }
 
+/**
+ * Alta de un profesional por sí mismo.
+ *
+ * A diferencia del paciente, acá el **correo es obligatorio** —es su
+ * identificador de acceso— y hacen falta las dos credenciales que lo habilitan:
+ * la matrícula y el número del colegio. Un profesional sin habilitación
+ * comprobable no es un profesional.
+ */
+export interface PractitionerRegistration {
+  readonly email: string;
+  readonly password: string;
+  readonly displayName: string;
+  readonly licenseNumber: string;
+  readonly credentialNumber: string;
+  readonly professionalTitle?: string;
+  readonly phone?: string;
+}
+
+export interface RegisteredPractitioner {
+  readonly userId: string;
+  readonly personId: string;
+  readonly practitionerProfileId: string;
+  readonly practitionerCode: string;
+}
+
+/**
+ * Resultado de pedir la recuperación.
+ *
+ * El backend devuelve **siempre lo mismo**, exista o no la cuenta: decir «ese
+ * correo no está registrado» permitiría averiguar quién tiene cuenta probando
+ * direcciones.
+ */
+export interface PasswordResetRequested {
+  readonly message: string;
+}
+
+/** Fijar la contraseña nueva con el token que llegó por correo. */
+export interface PasswordReset {
+  readonly token: string;
+  readonly newPassword: string;
+}
+
+export interface PasswordResetResult {
+  readonly userId: string;
+  /** Sesiones que se cerraron al cambiar la contraseña. */
+  readonly revokedSessions: number;
+}
+
 /** Alta de usuario hecha por un administrador. */
 export interface NewUser {
   readonly displayName: string;

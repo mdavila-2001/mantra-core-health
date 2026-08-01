@@ -1,9 +1,9 @@
-<main class="registro">
+﻿<main class="registro">
   <div class="registro__card">
     @if (registered()) {
       <h1 class="registro__title">Tu cuenta está lista</h1>
       <p class="registro__subtitle">
-        Ya podés entrar con tu documento y la contraseña que elegiste.
+        Ya podés entrar con {{ accessHint() }} y la contraseña que elegiste.
         @if (verificationSent()) {
           Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no hace
           falta para usar tu cuenta.
@@ -14,76 +14,234 @@
       </button>
     } @else {
       <h1 class="registro__title">Crear cuenta</h1>
-      <p class="registro__subtitle">
-        Con tu documento de identidad. El correo es opcional.
-      </p>
+      <p class="registro__subtitle">Elegí qué tipo de cuenta necesitás.</p>
+
+      <app-form-field label="Me registro como">
+        <app-radio-group [value]="tipo()" (valueChange)="cambiarTipo($event)">
+          <app-radio value="paciente" label="Paciente" />
+          <app-radio value="profesional" label="Profesional de salud" />
+        </app-radio-group>
+      </app-form-field>
 
       @if (errorMessage(); as mensaje) {
         <app-alert tone="error" class="registro__alert">{{ mensaje }}</app-alert>
       }
 
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <app-form-field
-          label="Documento de identidad"
-          hint="Con este número vas a iniciar sesión."
-          [required]="true"
-          [errorMessage]="
-            form.controls.nationalId.touched && form.controls.nationalId.invalid
-              ? 'Ingresá tu documento: letras, números, punto y guion.'
-              : ''
-          "
-        >
-          <app-input formControlName="nationalId" type="text" placeholder="1234567" />
-        </app-form-field>
+      @if (tipo() === 'paciente') {
+        <form [formGroup]="formPaciente" (ngSubmit)="submit()" novalidate>
+          <app-form-field
+            label="Documento de identidad"
+            hint="Con este número vas a iniciar sesión."
+            [required]="true"
+            [errorMessage]="
+              formPaciente.controls.nationalId.touched && formPaciente.controls.nationalId.invalid
+                ? 'Ingresá tu documento: letras, números, punto y guion.'
+                : ''
+            "
+          >
+            <!-- Es el identificador con el que va a entrar: `username`. -->
+            <app-input
+              formControlName="nationalId"
+              type="text"
+              autocomplete="username"
+              placeholder="1234567"
+            />
+          </app-form-field>
 
-        <app-form-field
-          label="Nombre completo"
-          [required]="true"
-          [errorMessage]="
-            form.controls.displayName.touched && form.controls.displayName.invalid
-              ? 'Ingresá tu nombre.'
-              : ''
-          "
-        >
-          <app-input formControlName="displayName" type="text" placeholder="Ana Paz" />
-        </app-form-field>
+          <app-form-field
+            label="Nombre completo"
+            [required]="true"
+            [errorMessage]="
+              formPaciente.controls.displayName.touched && formPaciente.controls.displayName.invalid
+                ? 'Ingresá tu nombre.'
+                : ''
+            "
+          >
+            <app-input
+              formControlName="displayName"
+              type="text"
+              autocomplete="name"
+              placeholder="Ana Paz"
+            />
+          </app-form-field>
 
-        <app-form-field
-          label="Contraseña"
-          hint="Al menos 8 caracteres."
-          [required]="true"
-          [errorMessage]="
-            form.controls.password.touched && form.controls.password.invalid
-              ? 'La contraseña necesita al menos 8 caracteres.'
-              : ''
-          "
-        >
-          <app-input formControlName="password" type="password" placeholder="Tu contraseña" />
-        </app-form-field>
+          <app-form-field
+            label="Contraseña"
+            hint="Al menos 8 caracteres."
+            [required]="true"
+            [errorMessage]="
+              formPaciente.controls.password.touched && formPaciente.controls.password.invalid
+                ? 'La contraseña necesita al menos 8 caracteres.'
+                : ''
+            "
+          >
+            <app-input
+              formControlName="password"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Tu contraseña"
+            />
+          </app-form-field>
 
-        <app-form-field
-          label="Correo (opcional)"
-          hint="Sirve para contactarte. No hace falta para entrar."
-          [errorMessage]="
-            form.controls.email.touched && form.controls.email.invalid
-              ? 'Ese correo no tiene un formato válido.'
-              : ''
-          "
-        >
-          <app-input formControlName="email" type="email" placeholder="correo@ejemplo.com" />
-        </app-form-field>
+          <app-form-field
+            label="Correo (opcional)"
+            hint="Sirve para contactarte. No hace falta para entrar."
+            [errorMessage]="
+              formPaciente.controls.email.touched && formPaciente.controls.email.invalid
+                ? 'Ese correo no tiene un formato válido.'
+                : ''
+            "
+          >
+            <!-- `email` y no `username`: acá el correo NO es con lo que entra. -->
+            <app-input
+              formControlName="email"
+              type="email"
+              autocomplete="email"
+              placeholder="correo@ejemplo.com"
+            />
+          </app-form-field>
 
-        <button
-          app-button
-          type="submit"
-          variant="primary"
-          size="lg"
-          class="registro__submit"
-          [isLoading]="isSubmitting()"
-        >
-          Crear cuenta
-        </button>
-      </form>
+          <button
+            app-button
+            type="submit"
+            variant="primary"
+            size="lg"
+            class="registro__submit"
+            [isLoading]="isSubmitting()"
+          >
+            Crear cuenta
+          </button>
+        </form>
+      } @else {
+        <form [formGroup]="formProfesional" (ngSubmit)="submit()" novalidate>
+          <app-form-field
+            label="Nombre completo"
+            [required]="true"
+            [errorMessage]="
+              formProfesional.controls.displayName.touched &&
+              formProfesional.controls.displayName.invalid
+                ? 'Ingresá tu nombre.'
+                : ''
+            "
+          >
+            <app-input
+              formControlName="displayName"
+              type="text"
+              autocomplete="name"
+              placeholder="Dra. Ana Paz"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Correo profesional"
+            hint="Con este correo vas a iniciar sesión."
+            [required]="true"
+            [errorMessage]="
+              formProfesional.controls.email.touched && formProfesional.controls.email.invalid
+                ? 'Ingresá un correo válido.'
+                : ''
+            "
+          >
+            <!-- `username`: acá el correo SÍ es el identificador de acceso. Sin
+                 esto el navegador guardaba el número de credencial como usuario. -->
+            <app-input
+              formControlName="email"
+              type="email"
+              autocomplete="username"
+              placeholder="matricula@hospital.bo"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Número de matrícula"
+            [required]="true"
+            [errorMessage]="
+              formProfesional.controls.licenseNumber.touched &&
+              formProfesional.controls.licenseNumber.invalid
+                ? 'Ingresá tu matrícula profesional.'
+                : ''
+            "
+          >
+            <app-input
+              formControlName="licenseNumber"
+              type="text"
+              autocomplete="off"
+              placeholder="MP-12345"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Número de credencial"
+            hint="El de tu colegio profesional."
+            [required]="true"
+            [errorMessage]="
+              formProfesional.controls.credentialNumber.touched &&
+              formProfesional.controls.credentialNumber.invalid
+                ? 'Ingresá el número de tu colegio.'
+                : ''
+            "
+          >
+            <app-input
+              formControlName="credentialNumber"
+              type="text"
+              autocomplete="off"
+              placeholder="TIT-6789"
+            />
+          </app-form-field>
+
+          <app-form-field label="Título profesional (opcional)">
+            <app-input
+              formControlName="professionalTitle"
+              type="text"
+              autocomplete="off"
+              placeholder="Cardiología"
+            />
+          </app-form-field>
+
+          <app-form-field label="Teléfono (opcional)">
+            <app-input
+              formControlName="phone"
+              type="text"
+              autocomplete="tel"
+              placeholder="+591 70012345"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Contraseña"
+            hint="Al menos 8 caracteres."
+            [required]="true"
+            [errorMessage]="
+              formProfesional.controls.password.touched &&
+              formProfesional.controls.password.invalid
+                ? 'La contraseña necesita al menos 8 caracteres.'
+                : ''
+            "
+          >
+            <app-input
+              formControlName="password"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Tu contraseña"
+            />
+          </app-form-field>
+
+          <button
+            app-button
+            type="submit"
+            variant="primary"
+            size="lg"
+            class="registro__submit"
+            [isLoading]="isSubmitting()"
+          >
+            Crear cuenta profesional
+          </button>
+        </form>
+      }
+
+      <p class="registro__pie">
+        ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+      </p>
     }
   </div>
 </main>

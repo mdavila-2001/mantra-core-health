@@ -9,15 +9,27 @@
  * Por eso no hay `/me`: el propio token trae `sub`, `roles[]` y `tenants[]`.
  */
 
-/** Claims que emite `TokenService.signAccessToken` de la API. */
+/**
+ * Claims que emite `TokenService.signAccessToken` de la API.
+ *
+ * Solo `sub` es obligatorio. `sid` y `tenants` están declarados opcionales en
+ * `jwt-payload.interface.ts` del backend y, aunque hoy la firma siempre los
+ * emite, **exigirlos acá sería ser más estricto que el contrato**: un token sin
+ * `sid` se leería como ilegible y sacaría al login a alguien con sesión válida,
+ * sin explicación.
+ */
 export interface AccessTokenClaims {
   /** Identificador del usuario. */
   readonly sub: string;
   /** Identificador de la sesión, para poder cerrarla del lado del servidor. */
-  readonly sid: string;
+  readonly sid?: string;
   readonly roles: readonly string[];
   /** Tenants activos. Con más de uno hay que elegir cuál usar. */
   readonly tenants: readonly string[];
+  /** Nombre para mostrar, si el token lo trae. */
+  readonly name?: string;
+  /** Nombre de cada tenant por su identificador, para no mostrar uuid crudos. */
+  readonly tenantNames?: Readonly<Record<string, string>>;
   /** Expiración en segundos desde epoch, si el token la declara. */
   readonly exp?: number;
 }
@@ -97,21 +109,38 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
 
   const source = payload as Record<string, unknown>;
   const sub = source['sub'];
-  const sid = source['sid'];
 
-  if (typeof sub !== 'string' || typeof sid !== 'string') {
+  // `sub` es lo único sin lo cual el token no identifica a nadie.
+  if (typeof sub !== 'string' || sub === '') {
     return null;
   }
 
+  const sid = source['sid'];
+  const name = source['name'];
   const exp = source['exp'];
 
   return {
     sub,
-    sid,
     roles: toStringArray(source['roles']),
     tenants: toStringArray(source['tenants']),
+    ...(typeof sid === 'string' ? { sid } : {}),
+    ...(typeof name === 'string' ? { name } : {}),
     ...(typeof exp === 'number' ? { exp } : {}),
+    ...(toNameMap(source['tenantNames']) ?? {}),
   };
+}
+
+/** `tenantNames` solo se acepta si es un mapa de texto a texto. */
+function toNameMap(value: unknown): { tenantNames: Record<string, string> } | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null;
+  }
+
+  const entries = Object.entries(value as Record<string, unknown>).filter(
+    (entry): entry is [string, string] => typeof entry[1] === 'string',
+  );
+
+  return entries.length === 0 ? null : { tenantNames: Object.fromEntries(entries) };
 }
 
 /** Un claim de lista ausente equivale a lista vacía, no a error. */

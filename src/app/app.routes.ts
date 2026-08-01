@@ -4,6 +4,8 @@ import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterPatient } from './features/auth/register-patient/register-patient';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
+import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
+import { ResetPassword } from './features/auth/reset-password/reset-password';
 import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
@@ -49,6 +51,17 @@ export const routes: Routes = [
         path: 'auth/verificar',
         component: VerifyEmail,
         title: 'Mantra Core Health - Verificar correo',
+    },
+    {
+        path: 'auth/recuperar',
+        component: ForgotPassword,
+        title: 'Mantra Core Health - Recuperar contraseña',
+    },
+    {
+        // También por query string: /auth/nueva-clave?token=…
+        path: 'auth/nueva-clave',
+        component: ResetPassword,
+        title: 'Mantra Core Health - Nueva contraseña',
     },
     {
         path: '**',

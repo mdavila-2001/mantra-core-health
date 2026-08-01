@@ -8,8 +8,13 @@ import type {
   ActivationResult,
   LoginCredentials,
   NewUser,
+  PasswordReset,
+  PasswordResetRequested,
+  PasswordResetResult,
   PatientRegistration,
+  PractitionerRegistration,
   RegisteredPatient,
+  RegisteredPractitioner,
   Session,
   VerifiedEmail,
 } from './iam.types';
@@ -73,6 +78,28 @@ export class IamClient {
     });
   }
 
+  /**
+   * `POST /iam/auth/register-practitioner`. Auto-registro de profesional.
+   *
+   * Su identificador de acceso es el **correo**, no el documento: es la
+   * diferencia con el alta de paciente.
+   */
+  registerPractitioner(
+    registration: PractitionerRegistration,
+  ): Observable<RegisteredPractitioner> {
+    return this.http.post<RegisteredPractitioner>(this.url('/iam/auth/register-practitioner'), {
+      email: registration.email,
+      password: registration.password,
+      displayName: registration.displayName,
+      licenseNumber: registration.licenseNumber,
+      credentialNumber: registration.credentialNumber,
+      ...(registration.professionalTitle === undefined
+        ? {}
+        : { professionalTitle: registration.professionalTitle }),
+      ...(registration.phone === undefined ? {} : { phone: registration.phone }),
+    });
+  }
+
   /** `POST /iam/auth/verify-email`. No desbloquea nada: deja constancia. */
   verifyEmail(token: string): Observable<VerifiedEmail> {
     return this.http.post<VerifiedEmail>(this.url('/iam/auth/verify-email'), { token });
@@ -83,6 +110,34 @@ export class IamClient {
     return this.http.post<ActivationResult>(this.url('/iam/auth/activate'), {
       activationToken: activation.activationToken,
       newPassword: activation.newPassword,
+    });
+  }
+
+  /**
+   * `POST /iam/auth/logout`. Cierra **esta** sesión del lado del servidor.
+   *
+   * No lleva cuerpo: el servidor identifica la sesión por el token. Distinto de
+   * `logout-all`, que cierra las de todos los dispositivos.
+   */
+  logout(): Observable<unknown> {
+    return this.http.post(this.url('/iam/auth/logout'), {});
+  }
+
+  /**
+   * `POST /iam/auth/forgot-password`. El identificador es correo **o**
+   * documento, igual que en el login.
+   */
+  forgotPassword(identifier: string): Observable<PasswordResetRequested> {
+    return this.http.post<PasswordResetRequested>(this.url('/iam/auth/forgot-password'), {
+      identifier,
+    });
+  }
+
+  /** `POST /iam/auth/reset-password`. Consume el token que llegó por correo. */
+  resetPassword(reset: PasswordReset): Observable<PasswordResetResult> {
+    return this.http.post<PasswordResetResult>(this.url('/iam/auth/reset-password'), {
+      token: reset.token,
+      newPassword: reset.newPassword,
     });
   }
 

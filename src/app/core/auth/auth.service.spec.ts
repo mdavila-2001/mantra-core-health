@@ -109,14 +109,45 @@ describe('AuthService', () => {
     });
   });
 
-  it('logout limpia la sesión y el almacenamiento', () => {
-    auth.login({ kind: 'email', email: 'a@b.test', password: 'p' }).subscribe();
-    http.expectOne('/iam/auth/login').flush(RESPUESTA_TOKENS);
+  describe('logout', () => {
+    function abrirSesion(): void {
+      auth.login({ kind: 'email', email: 'a@b.test', password: 'p' }).subscribe();
+      http.expectOne('/iam/auth/login').flush(RESPUESTA_TOKENS);
+    }
 
-    auth.logout();
+    it('avisa al servidor y limpia la sesión y el almacenamiento', () => {
+      abrirSesion();
 
-    expect(auth.isAuthenticated()).toBe(false);
-    expect(almacen.value).toBeNull();
+      auth.logout();
+
+      const req = http.expectOne('/iam/auth/logout');
+      expect(req.request.method).toBe('POST');
+      req.flush({});
+
+      expect(auth.isAuthenticated()).toBe(false);
+      expect(almacen.value).toBeNull();
+    });
+
+    it('si el servidor falla, igual cierra localmente', () => {
+      abrirSesion();
+
+      auth.logout();
+      http.expectOne('/iam/auth/logout').error(new ProgressEvent('error'), { status: 0 });
+
+      // Dejarla adentro por un error de red sería lo peor de los dos mundos: la
+      // persona quiso salir, y el token local se descarta igual.
+      expect(auth.isAuthenticated()).toBe(false);
+      expect(almacen.value).toBeNull();
+    });
+
+    it('usa `logout` y no `logout-all`: cierra esta sesión, no las de todos los dispositivos', () => {
+      abrirSesion();
+
+      auth.logout();
+
+      http.expectNone('/iam/auth/logout-all');
+      http.expectOne('/iam/auth/logout').flush({});
+    });
   });
 
   it('registerPatient NO abre sesión: el backend devuelve el perfil, no tokens', () => {

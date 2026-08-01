@@ -39,6 +39,13 @@ export class AuthService {
   readonly activeTenantId = this.session.activeTenantId;
   readonly needsTenantSelection = this.session.needsTenantSelection;
 
+  /** Nombre para mostrar y nombre de la organización, ambos del token. */
+  readonly displayName = this.session.displayName;
+
+  tenantName(tenantId: string): string {
+    return this.session.tenantName(tenantId);
+  }
+
   /** Inicia sesión con correo o documento — nunca ambos, lo impide el tipo. */
   login(credentials: LoginCredentials): Observable<Session> {
     return this.iam.login(credentials).pipe(tap((session) => this.open(session)));
@@ -54,13 +61,24 @@ export class AuthService {
   }
 
   /**
-   * Cierra la sesión localmente.
+   * Cierra la sesión.
    *
-   * No llama a `logout-all` a propósito: esa ruta cierra **todas** las sesiones
-   * del usuario en todos sus dispositivos, que es otra intención. Cerrar acá es
-   * soltar la credencial de esta pestaña.
+   * Avisa al servidor —para que el refresh token deje de servir— y limpia
+   * localmente **pase lo que pase**: si la petición falla, la persona igual
+   * quiso salir, y dejarla adentro por un error de red sería lo peor de los dos
+   * mundos. El token local se descarta y el del servidor caduca solo.
+   *
+   * Usa `logout` y no `logout-all` a propósito: esa otra ruta cierra las
+   * sesiones de **todos** sus dispositivos, que es otra intención.
    */
   logout(): void {
+    this.iam.logout().subscribe({
+      next: () => this.clearLocal(),
+      error: () => this.clearLocal(),
+    });
+  }
+
+  private clearLocal(): void {
     this.session.clear();
     this.storage.clear();
   }

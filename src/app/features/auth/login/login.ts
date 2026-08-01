@@ -1,21 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
 import type { LoginCredentials } from '../../../core/data-access/iam/iam.types';
-import {
-  loading,
-  offline,
-  ready,
-  unexpectedError,
-  validation,
-} from '../../../core/view-state/view-state';
+import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { readApiError } from '../../../core/http/api-error';
+import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 
@@ -35,7 +32,7 @@ const HOME_ROUTE = '/';
  */
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, AppButton, Input, FormField, Alert],
+  imports: [ReactiveFormsModule, RouterLink, AppButton, Input, Link, FormField, Alert],
   templateUrl: './login.html',
   styleUrl: './login.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,11 +56,16 @@ export class Login {
   readonly isSubmitting = computed(() => this.state().status === 'loading');
 
   /**
-   * El campo de MFA aparece sólo cuando el backend lo pide. No se muestra de
-   * entrada porque la mayoría de las cuentas no lo tienen y un campo vacío
-   * obligatorio en apariencia confunde.
+   * El campo de MFA está siempre visible y rotulado como opcional.
+   *
+   * `LoginDto` acepta `mfaCode`, pero **el backend no emite ninguna señal** de
+   * cuándo hace falta: no hay código de error propio en el catálogo ni mención
+   * de MFA en el servicio de login. Antes esto se resolvía olfateando el texto
+   * de la respuesta, que era adivinar. Mostrarlo siempre como opcional no
+   * inventa nada y quien tenga segundo factor puede completarlo.
+   *
+   * TODO: cuando el backend declare el caso, ocultarlo hasta que lo pida.
    */
-  readonly needsMfa = signal(false);
 
   readonly errorMessage = computed<string | null>(() => {
     const state = this.state();
@@ -116,55 +118,22 @@ export class Login {
   }
 
   /**
-   * Traduce el fallo a un estado del M34.
+   * Traduce el fallo con el mapeo compartido del catálogo, con **una sola
+   * excepción propia del login**.
    *
-   * Es un mapeo mínimo y deliberado: cubre lo que un login puede devolver y
-   * nada más. El mapeo completo de errores es la tarjeta 17, que espera el
-   * catálogo de formas reales de la API — inventarlas acá sería adivinar.
+   * En cualquier otra pantalla un `UNAUTHENTICATED` significa que la sesión se
+   * venció, y el interceptor ya se encargó de cerrarla. Acá significa que las
+   * credenciales que la persona acaba de escribir no sirven, que es un mensaje
+   * distinto y accionable.
    */
   private toState(error: unknown): ViewState<null> {
-    if (!(error instanceof HttpErrorResponse)) {
-      return unexpectedError('sin-id', 'Ocurrió un error inesperado.');
+    if (error instanceof HttpErrorResponse) {
+      const body = readApiError(error);
+      if (body?.code === 'UNAUTHENTICATED') {
+        return validation([{ message: 'Las credenciales no son válidas.', code: body.code }]);
+      }
     }
 
-    // Status 0 es «la petición no llegó»: sin conexión o servidor caído.
-    if (error.status === 0) {
-      return offline();
-    }
-
-    if (error.status === 401) {
-      this.needsMfa.set(this.mentionsMfa(error));
-      return validation([
-        {
-          message: this.needsMfa()
-            ? 'Ingresá el código de verificación de tu aplicación.'
-            : 'Las credenciales no son válidas.',
-        },
-      ]);
-    }
-
-    if (error.status === 423 || error.status === 403) {
-      return validation([{ message: 'La cuenta está bloqueada. Contactá a tu administrador.' }]);
-    }
-
-    if (error.status === 429) {
-      return validation([{ message: 'Demasiados intentos. Esperá un momento y reintentá.' }], 60);
-    }
-
-    return unexpectedError(
-      error.headers.get('x-request-id') ?? 'sin-id',
-      'No pudimos completar el inicio de sesión.',
-    );
-  }
-
-  /**
-   * Heurística provisional hasta que llegue el catálogo de errores: si la
-   * respuesta menciona MFA, se ofrece el campo. Queda anotado como TODO para
-   * reemplazarlo por el campo exacto que declare el catálogo.
-   */
-  private mentionsMfa(error: HttpErrorResponse): boolean {
-    const body: unknown = error.error;
-    const text = typeof body === 'string' ? body : JSON.stringify(body ?? '');
-    return /mfa|factor|otp/i.test(text);
+    return errorToViewState<null>(error);
   }
 }

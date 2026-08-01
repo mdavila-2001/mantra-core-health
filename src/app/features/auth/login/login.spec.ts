@@ -1,7 +1,7 @@
-import { provideHttpClient } from '@angular/common/http';
+﻿import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { Login } from './login';
 import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
@@ -41,33 +41,32 @@ class AlmacenFalso {
   }
 }
 
-class RouterEspia {
-  readonly navegaciones: string[] = [];
-
-  navigateByUrl(url: string): Promise<boolean> {
-    this.navegaciones.push(url);
-    return Promise.resolve(true);
-  }
-}
-
 describe('Login', () => {
   let fixture: ComponentFixture<Login>;
   let component: Login;
   let http: HttpTestingController;
-  let router: RouterEspia;
+  let navegaciones: string[];
 
   beforeEach(async () => {
-    router = new RouterEspia();
+    navegaciones = [];
 
     await TestBed.configureTestingModule({
       imports: [Login],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        // Router real: la plantilla tiene `routerLink` y necesita su contexto.
+        // Se espía `navigateByUrl` en vez de reemplazar el servicio entero.
+        provideRouter([]),
         { provide: RefreshTokenStorage, useClass: AlmacenFalso },
-        { provide: Router, useValue: router },
       ],
     }).compileComponents();
+
+    const router = TestBed.inject(Router);
+    router.navigateByUrl = ((url: string) => {
+      navegaciones.push(String(url));
+      return Promise.resolve(true);
+    }) as Router['navigateByUrl'];
 
     fixture = TestBed.createComponent(Login);
     component = fixture.componentInstance;
@@ -118,7 +117,7 @@ describe('Login', () => {
       component.submit();
       http.expectOne('/iam/auth/login').flush(tokens(UN_TENANT));
 
-      expect(router.navegaciones).toEqual(['/']);
+      expect(navegaciones).toEqual(['/']);
     });
 
     it('con varias organizaciones va al selector', () => {
@@ -126,37 +125,34 @@ describe('Login', () => {
       component.submit();
       http.expectOne('/iam/auth/login').flush(tokens(DOS_TENANTS));
 
-      expect(router.navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
+      expect(navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
     });
   });
 
   describe('errores', () => {
-    it('401 muestra credenciales inválidas y no navega', () => {
+    it('UNAUTHENTICATED dice credenciales inválidas, no «sesión vencida»', () => {
       completar('admin@mantra.test');
       component.submit();
-      http.expectOne('/iam/auth/login').flush(null, { status: 401, statusText: 'Unauthorized' });
+      http.expectOne('/iam/auth/login').flush(
+        { code: 'UNAUTHENTICATED', message: 'Credenciales inválidas', timestamp: 't', path: '/iam/auth/login' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
 
+      // Es la única excepción propia del login sobre el mapeo compartido: en
+      // cualquier otra pantalla un 401 significa que la sesión se venció.
       expect(component.errorMessage()).toBe('Las credenciales no son válidas.');
-      expect(router.navegaciones).toEqual([]);
+      expect(navegaciones).toEqual([]);
     });
 
-    it('401 que menciona MFA revela el campo del código', () => {
+    it('RATE_LIMITED usa el mensaje del catálogo', () => {
       completar('admin@mantra.test');
       component.submit();
-      http
-        .expectOne('/iam/auth/login')
-        .flush({ message: 'MFA code required' }, { status: 401, statusText: 'Unauthorized' });
+      http.expectOne('/iam/auth/login').flush(
+        { code: 'RATE_LIMITED', message: 'Demasiadas solicitudes', timestamp: 't', path: '/iam/auth/login' },
+        { status: 429, statusText: 'Too Many' },
+      );
 
-      expect(component.needsMfa()).toBe(true);
-      expect(component.errorMessage()).toContain('código de verificación');
-    });
-
-    it('429 avisa que hay que esperar', () => {
-      completar('admin@mantra.test');
-      component.submit();
-      http.expectOne('/iam/auth/login').flush(null, { status: 429, statusText: 'Too Many' });
-
-      expect(component.errorMessage()).toContain('Demasiados intentos');
+      expect(component.errorMessage()).toBe('Demasiadas solicitudes');
     });
 
     it('sin conexión lo dice como tal, no como error del servidor', () => {
@@ -169,14 +165,19 @@ describe('Login', () => {
       expect(component.errorMessage()).toContain('conexión');
     });
 
-    it('5xx muestra el identificador de la petición', () => {
+    it('5xx muestra el correlationId que trae el cuerpo', () => {
       completar('admin@mantra.test');
       component.submit();
-      http.expectOne('/iam/auth/login').flush(null, {
-        status: 500,
-        statusText: 'Server Error',
-        headers: { 'x-request-id': 'req-9' },
-      });
+      http.expectOne('/iam/auth/login').flush(
+        {
+          code: 'INTERNAL',
+          message: 'Error interno',
+          correlationId: 'req-9',
+          timestamp: 't',
+          path: '/iam/auth/login',
+        },
+        { status: 500, statusText: 'Server Error' },
+      );
 
       expect(component.errorMessage()).toContain('req-9');
     });

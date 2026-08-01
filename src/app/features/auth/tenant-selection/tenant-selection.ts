@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { SessionStore } from '../../../core/auth/session.store';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 
 /**
@@ -12,9 +13,9 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
  * elección **cambia qué datos se ven**: mezclarla con las credenciales invita a
  * pasarla por alto.
  *
- * El token sólo trae los identificadores, no los nombres — la API no expone un
- * `/me`. Mostrarlos con nombre exige leer el directorio, que es trabajo de otra
- * tarjeta; por ahora se listan por identificador.
+ * Los nombres salen del claim `tenantNames` del propio token, así que no hace
+ * falta consultar el directorio. Si el token no lo trae, se cae al
+ * identificador: feo, pero preferible a una fila vacía.
  */
 @Component({
   selector: 'app-tenant-selection',
@@ -25,9 +26,15 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 })
 export class TenantSelection {
   private readonly auth = inject(AuthService);
+  private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
 
   readonly tenants = this.auth.tenants;
+
+  /** Nombre legible de la organización, o su identificador si no hay nombre. */
+  nombre(tenantId: string): string {
+    return this.session.tenantName(tenantId);
+  }
 
   choose(tenantId: string): void {
     this.auth.selectTenant(tenantId);

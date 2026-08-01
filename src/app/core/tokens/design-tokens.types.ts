@@ -120,6 +120,15 @@ export const RADIUS_NAMES = ['xs', 'sm', 'md', 'lg', 'xl', '2xl', 'full', 'signa
 export type RadiusName = (typeof RADIUS_NAMES)[number];
 export type RadiusToken = `--r-${RadiusName}`;
 
+/**
+ * Puntos de quiebre. Los **valores** viven en `breakpoints.ts` porque CSS no
+ * admite variables en la condición de un `@media` y hacen falta como números;
+ * acá van solo los nombres, como el resto del catálogo.
+ */
+export const BREAKPOINT_NAMES = ['sm', 'md', 'lg'] as const;
+export type BreakpointTokenName = (typeof BREAKPOINT_NAMES)[number];
+export type BreakpointToken = `--bp-${BreakpointTokenName}`;
+
 /* ---- tipografía ----------------------------------------------------------- */
 
 export const FONT_FAMILY = {
@@ -171,6 +180,7 @@ export type DesignToken =
   | EffectToken
   | SpacingToken
   | RadiusToken
+  | BreakpointToken
   | FontFamilyToken
   | FontSizeToken
   | LineHeightToken;
@@ -221,6 +231,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),
+  ...BREAKPOINT_NAMES.map((name): BreakpointToken => `--bp-${name}`),
   ...Object.values(FONT_FAMILY),
   ...TYPE_ROLES.map((role): FontSizeToken => `--fs-${role}`),
   ...LINE_HEIGHT_ROLES.map((role): LineHeightToken => `--lh-${role}`),
