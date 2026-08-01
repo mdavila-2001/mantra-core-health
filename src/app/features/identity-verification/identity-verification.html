@@ -1,0 +1,85 @@
+<app-page-header
+  title="Verificar identidad"
+  subtitle="Subí tu documento y lo revisamos. Solo vos podés verificar tu identidad."
+/>
+
+<div class="verificar">
+  @if (caso(); as abierto) {
+    <!-- Enviado. La respuesta es toda la pantalla, así que se anuncia. -->
+    <app-card appAnuncio [asertivo]="false" variant="outlined" padding="lg">
+      <h2 class="verificar__titulo">Tu solicitud quedó registrada</h2>
+      <p class="verificar__texto">
+        La revisa la autoridad correspondiente. No hace falta que hagas nada más;
+        podés volver a esta pantalla para ver cómo va.
+      </p>
+
+      <dl class="verificar__datos">
+        <dt>Estado</dt>
+        <dd>{{ abierto.status }}</dd>
+
+        <dt>Código del caso</dt>
+        <dd><code class="tabular-nums">{{ abierto.id }}</code></dd>
+
+        @if (abierto.openedAt) {
+          <dt>Abierto el</dt>
+          <dd>{{ abierto.openedAt.toLocaleString() }}</dd>
+        }
+        @if (abierto.completedAt) {
+          <dt>Resuelto el</dt>
+          <dd>{{ abierto.completedAt.toLocaleString() }}</dd>
+        }
+      </dl>
+
+      @if (errorMessage(); as mensaje) {
+        <app-alert appAnuncio tone="error" class="verificar__alert">{{ mensaje }}</app-alert>
+      }
+
+      <button app-button variant="outline" [isLoading]="enviando()" (clicked)="actualizarCaso()">
+        Actualizar estado
+      </button>
+    </app-card>
+  } @else {
+    <app-card variant="outlined" padding="lg">
+      <h2 class="verificar__titulo">Tu documento de identidad</h2>
+      <p class="verificar__texto">
+        Una foto o un PDF del documento, de hasta 10 MB. Se guarda como información
+        de salud protegida: solo lo ve quien tiene que revisarlo.
+      </p>
+
+      @if (errorMessage(); as mensaje) {
+        <app-alert appAnuncio tone="error" class="verificar__alert">{{ mensaje }}</app-alert>
+      }
+
+      @if (rechazo(); as motivo) {
+        <app-alert appAnuncio tone="warning" class="verificar__alert">{{ motivo }}</app-alert>
+      }
+
+      <app-form-field
+        label="Documento"
+        [required]="true"
+        hint="Imagen o PDF, hasta 10 MB."
+      >
+        <app-file-input
+          [(files)]="evidencia"
+          accept="image/*,application/pdf"
+          [maxSizeBytes]="maxBytes"
+          [maxFiles]="1"
+          [disabled]="enviando()"
+          (rejected)="alRechazar($event)"
+        />
+      </app-form-field>
+
+      <button
+        app-button
+        variant="primary"
+        size="lg"
+        class="verificar__enviar"
+        [disabled]="!puedeEnviar()"
+        [isLoading]="enviando()"
+        (clicked)="enviar()"
+      >
+        Enviar para revisión
+      </button>
+    </app-card>
+  }
+</div>

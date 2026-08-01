@@ -19,4 +19,24 @@ import { envFromProcess } from './env.generated';
  */
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
+
+  /**
+   * También apagada por defecto en desarrollo, y por un motivo práctico: sin un
+   * Collector escuchando, cada lote de spans sería una petición fallida cada
+   * cinco segundos en la consola de quien esté trabajando en otra cosa.
+   *
+   * Para encenderla: levantar el Collector
+   * (`docker compose -f infra/otel-collector/docker-compose.observability.yml up`)
+   * y poner `PUBLIC_TELEMETRY_ENABLED=true` en el `.env`. Con eso el muestreo es
+   * del 100 %, que es lo que hace falta cuando se está mirando lo que uno acaba
+   * de hacer.
+   */
+  telemetry: {
+    enabled: envFromProcess.telemetry?.enabled ?? false,
+    serviceName: envFromProcess.telemetry?.serviceName ?? 'mantra-angular-web',
+    namespace: envFromProcess.telemetry?.namespace ?? 'mantra',
+    environment: envFromProcess.telemetry?.environment ?? 'development',
+    tracesEndpoint: envFromProcess.telemetry?.tracesEndpoint ?? '/otel/v1/traces',
+    sampleRatio: envFromProcess.telemetry?.sampleRatio ?? 1,
+  },
 };

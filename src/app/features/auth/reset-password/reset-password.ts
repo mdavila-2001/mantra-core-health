@@ -11,6 +11,7 @@ import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Mínimo que exige `ResetPasswordDto`. */
 const MIN_PASSWORD = 8;
@@ -23,7 +24,7 @@ const MIN_PASSWORD = 8;
  */
 @Component({
   selector: 'app-reset-password',
-  imports: [ReactiveFormsModule, RouterLink, AppButton, Input, Link, FormField, Alert],
+  imports: [ReactiveFormsModule, RouterLink, AppButton, Input, Link, FormField, Alert, AnnounceOnAppear],
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

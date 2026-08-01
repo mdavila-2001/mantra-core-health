@@ -24,4 +24,27 @@ import { envFromProcess } from './env.generated';
  */
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
+
+  /**
+   * Telemetría **apagada** salvo que el despliegue la encienda.
+   *
+   * No es timidez: apagada significa que el fragmento del SDK ni se descarga,
+   * que no hay un solo span y que no sale ninguna petición. Un despliegue que
+   * no configuró el Collector no empieza a mandar trazas a un endpoint que no
+   * existe solo por actualizar.
+   *
+   * Se enciende con `PUBLIC_TELEMETRY_ENABLED=true`, que es una decisión
+   * consciente por entorno, tomada donde se sabe si hay Collector detrás.
+   */
+  telemetry: {
+    enabled: envFromProcess.telemetry?.enabled ?? false,
+    serviceName: envFromProcess.telemetry?.serviceName ?? 'mantra-angular-web',
+    namespace: envFromProcess.telemetry?.namespace ?? 'mantra',
+    environment: envFromProcess.telemetry?.environment ?? 'production',
+    // Mismo origen: lo reenvía `src/server.ts`. Ver 01-architecture-design.md.
+    tracesEndpoint: envFromProcess.telemetry?.tracesEndpoint ?? '/otel/v1/traces',
+    // El 10 % es un punto de partida, no una medición: se ajusta con volumen
+    // real. El criterio está en 01-architecture-design.md.
+    sampleRatio: envFromProcess.telemetry?.sampleRatio ?? 0.1,
+  },
 };

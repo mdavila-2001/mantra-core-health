@@ -20,6 +20,7 @@ página es su lectura.
 |---|---|---|---|---|---|
 | `/` | `ShellLayout` (layout) | `authGuard` | Cliente | — | [ficha](panel.md#el-armazón) |
 | `/panel` | `Dashboard` | `authGuard` | Cliente | `GET /public/directory` | [ficha](panel.md) |
+| `/identidad/verificar` | `IdentityVerification` | `authGuard` | Cliente | subida + verificación | [ficha](identidad-verificar.md) |
 | `/auth` | `Login` | Pública | **Prerender** | `POST /iam/auth/login` | [ficha](auth-login.md) |
 | `/auth/registro` | `RegisterPatient` | Pública | **Prerender** | `POST …/register-patient` · `…/register-practitioner` | [ficha](auth-registro.md) |
 | `/auth/organizacion` | `TenantSelection` | Pública* | Cliente | — (lee el token) | [ficha](auth-organizacion.md) |
@@ -27,8 +28,9 @@ página es su lectura.
 | `/auth/recuperar` | `ForgotPassword` | Pública | **Prerender** | `POST /iam/auth/forgot-password` | [ficha](auth-recuperar.md) |
 | `/auth/nueva-clave` | `ResetPassword` | Pública | Cliente | `POST /iam/auth/reset-password` | [ficha](auth-nueva-clave.md) |
 | `/design-system` | `DesignSystemSample` | Pública | **Prerender** | — | [ficha](design-system.md) |
+| `/error` | `ErrorRecovery` | Pública | Cliente | — | [ficha](error-y-404.md) |
+| `**` | `NotFound` | Pública | Cliente | — | [ficha](error-y-404.md) |
 | `''` (hija) | redirige a `/panel` | `authGuard` | — | — | — |
-| `**` | redirige a `/` | Pública | Cliente | — | — |
 
 \* `/auth/organizacion` **no tiene guard**: es alcanzable sin sesión y en ese caso
 muestra una lista vacía. Ver su ficha.
@@ -37,10 +39,10 @@ muestra una lista vacía. Ver su ficha.
 
 | Métrica | Valor |
 |---|---|
-| Rutas declaradas | 11 |
-| Rutas documentadas | **11 / 11 (100 %)** |
-| Pantallas navegables | 8 |
-| Con prueba de componente | 7 / 8 — falta `Dashboard` |
+| Rutas declaradas | 13 |
+| Rutas documentadas | **13 / 13 (100 %)** |
+| Pantallas navegables | 11 |
+| Con prueba de componente | 9 / 11 — faltan `IdentityVerification` y `NotFound` |
 | Con carga diferida | 1 (`/design-system`) |
 | Prerenderizadas | 4 |
 
@@ -82,7 +84,7 @@ graph TD
 | Resolvers | Ninguno |
 | `canDeactivate` | Ninguno. Se puede salir de un formulario a medio llenar sin aviso |
 | Guard por rol | Ninguno. El único guard mira sesión y organización |
-| Pantalla 404 | Ninguna. El comodín redirige a `/` |
+| Pantalla 404 | **Existe**: el comodín monta `NotFound` |
 | Metadatos de SEO (`description`, Open Graph) | Solo `title`. Ninguna ruta declara descripción |
 | Analítica de navegación | No existe |
 

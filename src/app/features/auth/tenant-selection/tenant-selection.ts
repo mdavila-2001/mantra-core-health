@@ -3,7 +3,11 @@ import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session.store';
+import { RouterLink } from '@angular/router';
+
+import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Link } from '../../../shared/components/atoms/link/link';
 
 /**
  * Selector de organización.
@@ -19,7 +23,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
  */
 @Component({
   selector: 'app-tenant-selection',
-  imports: [AppButton],
+  imports: [AppButton, Link, RouterLink, AnnounceOnAppear],
   templateUrl: './tenant-selection.html',
   styleUrl: './tenant-selection.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -2,13 +2,14 @@
 
 # Inventario de rutas
 
-Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 11 entradas declaradas.
+Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 13 entradas declaradas.
 
 | URL | Destino | Acceso | Render en servidor | Título |
 |---|---|---|---|---|
 | `/` | `ShellLayout` | Protegida (`authGuard`) | Client | — |
 | `/` | redirige a `panel` | Protegida (`authGuard`) | Client | — |
 | `/panel` | `Dashboard` | Protegida (`authGuard`) | Client | Mantra Core Health - Panel |
+| `/identidad/verificar` | `IdentityVerification` | Protegida (`authGuard`) | Client | Mantra Core Health - Verificar identidad |
 | `/design-system` | `DesignSystemSample` (diferida) | Pública | Prerender | Mantra Core Health - Vitrina de Diseño |
 | `/auth` | `Login` | Pública | Prerender | Mantra Core Health - Iniciar sesión |
 | `/auth/organizacion` | `TenantSelection` | Pública | Client | Mantra Core Health - Elegí tu organización |
@@ -16,7 +17,8 @@ Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 11 entradas 
 | `/auth/verificar` | `VerifyEmail` | Pública | Client | Mantra Core Health - Verificar correo |
 | `/auth/recuperar` | `ForgotPassword` | Pública | Prerender | Mantra Core Health - Recuperar contraseña |
 | `/auth/nueva-clave` | `ResetPassword` | Pública | Client | Mantra Core Health - Nueva contraseña |
-| `/**` | redirige a `/` | Pública | Client | — |
+| `/error` | `ErrorRecovery` | Pública | Client | Mantra Core Health |
+| `/**` | `NotFound` | Pública | Client | Mantra Core Health - Página no encontrada |
 
 ## Modo de render
 

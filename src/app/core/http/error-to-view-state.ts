@@ -10,8 +10,18 @@ import {
 import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
 import { readApiError, type ApiErrorBody } from './api-error';
 
-/** A dónde lleva la puerta cuando falta verificar la identidad. */
-export const IDENTITY_VERIFICATION_ROUTE = '/identity/me';
+/**
+ * A dónde lleva la puerta cuando falta verificar la identidad.
+ *
+ * Es una ruta **del router**, y esa precisión es la corrección de un defecto
+ * real: antes valía `'/identity/me'`, que es la ruta de la **API**. Ninguna
+ * ruta de Angular coincidía, así que la acción de S5 mandaba al comodín — un
+ * muro con cartel de puerta, que es peor que un muro.
+ *
+ * La pantalla que la atiende es `features/identity-verification/`, que encadena
+ * `FilesClient.upload` con `IdentityClient.requestPatientIdentityVerification`.
+ */
+export const IDENTITY_VERIFICATION_ROUTE = '/identidad/verificar';
 
 /**
  * Traduce un fallo de la API a uno de los 9 estados de UX del M34.

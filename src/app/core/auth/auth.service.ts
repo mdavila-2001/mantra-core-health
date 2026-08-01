@@ -83,9 +83,37 @@ export class AuthService {
     this.storage.clear();
   }
 
-  /** Elige la organización activa cuando el token trae más de una. */
+  /**
+   * Elige la organización activa cuando el token trae más de una.
+   *
+   * Se persiste para no volver a preguntarla en cada recarga. Antes no se
+   * guardaba, y quien perteneciera a varias organizaciones pasaba por el
+   * selector **cada vez que recargaba** — fricción repetida que no aportaba
+   * nada: la elección no es un secreto, es la misma cadena que ya viaja en cada
+   * petición como `X-Tenant-Id`.
+   */
   selectTenant(tenantId: string): void {
     this.session.selectTenant(tenantId);
+
+    // Solo se guarda si el store la aceptó: `selectTenant` ignora un
+    // identificador que no esté en el token, y persistir uno rechazado dejaría
+    // basura que la próxima sesión tendría que volver a descartar.
+    if (this.session.activeTenantId() === tenantId) {
+      this.storage.writeSelectedTenant(tenantId);
+    }
+  }
+
+  /**
+   * Da de baja la sesión local cuando **otra pestaña** la cerró.
+   *
+   * Sin esto, cerrar sesión en una pestaña dejaba la otra funcionando hasta que
+   * su access token venciera y el refresco fallara. En un dispositivo
+   * compartido eso es una sesión abierta que alguien creyó haber cerrado.
+   *
+   * No llama a la API: la otra pestaña ya lo hizo. Solo limpia lo local.
+   */
+  watchSessionClosedElsewhere(): () => void {
+    return this.storage.onClearedInAnotherTab(() => this.session.clear());
   }
 
   /**
@@ -104,7 +132,7 @@ export class AuthService {
     }
 
     return this.iam.refresh(stored).pipe(
-      tap((session) => this.open(session)),
+      tap((session) => this.reopen(session)),
       map(() => true),
       catchError(() => {
         // El token guardado ya no sirve: se descarta para no reintentar en cada
@@ -118,5 +146,25 @@ export class AuthService {
   private open(session: Session): void {
     this.session.start(session);
     this.storage.write(session.refreshToken);
+  }
+
+  /**
+   * Abre la sesión recuperada y le devuelve su organización.
+   *
+   * Se separa de {@link open} a propósito: al **iniciar sesión** la elección
+   * anterior no vale —puede ser de otra persona en el mismo dispositivo— y por
+   * eso `SessionStore.start` la descarta. Al **recuperar** la sesión sí vale:
+   * es la misma persona volviendo.
+   *
+   * `selectTenant` valida contra el token, así que una organización que ya no
+   * le corresponda se descarta sola y se vuelve a preguntar.
+   */
+  private reopen(session: Session): void {
+    this.open(session);
+
+    const guardada = this.storage.readSelectedTenant();
+    if (guardada !== null) {
+      this.session.selectTenant(guardada);
+    }
   }
 }

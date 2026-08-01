@@ -1,27 +1,57 @@
 # Política de seguridad de contenido (CSP)
 
-**No existe ninguna.** Es la brecha de seguridad más clara del proyecto, y
-también la más fácil de cerrar.
+**Implementada.** `src/server.ts` emite las seis cabeceras en todas las
+respuestas, y la política se arma en `src/server/security-headers.ts`.
 
 ---
 
 ## Estado
 
-```bash
-grep -rn "Content-Security-Policy\|setHeader\|helmet" src/server.ts src/index.html
-```
-
-Sin resultados. `src/server.ts` sirve estáticos y delega en Angular; **no fija
-ninguna cabecera**.
-
 | Cabecera | Estado |
 |---|---|
-| `Content-Security-Policy` | **No existe** |
-| `X-Content-Type-Options` | **No existe** |
-| `Referrer-Policy` | **No existe** |
-| `X-Frame-Options` | **No existe** |
-| `Permissions-Policy` | **No existe** |
-| `Strict-Transport-Security` | **No existe** |
+| `Content-Security-Policy` | ✅ con hashes de los scripts en línea |
+| `X-Content-Type-Options` | ✅ `nosniff` |
+| `Referrer-Policy` | ✅ `strict-origin-when-cross-origin` |
+| `X-Frame-Options` | ✅ `DENY`, más `frame-ancestors 'none'` en la CSP |
+| `Permissions-Policy` | ✅ `camera=(), microphone=(), geolocation=()` |
+| `Strict-Transport-Security` | ✅ `max-age=63072000; includeSubDomains` |
+
+```bash
+curl -I https://<dominio>/auth | grep -i "content-security-policy"
+```
+
+## Cómo se resolvió el problema de los scripts en línea
+
+El obstáculo real no era escribir la política: era que **cuatro rutas se
+prerenderizan**, y su HTML se genera cuando todavía no existe ninguna petición
+que numerar. Un nonce por petición las dejaría con un valor muerto.
+
+Y no basta con el script del tema: una página prerenderizada trae **cuatro**
+scripts en línea —el del tema más los tres que Angular emite para la
+hidratación, incluido el `__nghData__` con el estado del render—, y los tres
+últimos son distintos en cada ruta.
+
+**La solución es recolectar los hashes del artefacto ya construido, al
+arrancar**, recorriendo todo el HTML de `dist/…/browser`:
+
+```ts
+const headers = securityHeaders({
+  apiBaseUrl: process.env['PUBLIC_API_BASE_URL'] ?? '',
+  inlineScriptHashes: collectInlineScriptHashes(browserDistFolder),
+});
+```
+
+Se hace **una vez por proceso**: hacerlo por petición costaría leer y parsear
+HTML en cada respuesta para un valor que no cambia mientras el proceso viva.
+
+### Verificado empíricamente
+
+Sobre el artefacto real, ruta por ruta: las 4 prerenderizadas (4 scripts en
+línea cada una), las de cliente (1) y una inexistente (0). **Todos los scripts
+servidos están autorizados por la política que los acompaña.**
+
+Si alguno no lo estuviera, el navegador lo bloquearía sin avisar y el síntoma
+—tema que parpadea, o aplicación que no arranca— aparecería solo en producción.
 
 ## Por qué importa acá
 
@@ -52,121 +82,64 @@ Inventariado del código, no supuesto:
 **Que las tipografías estén autoalojadas simplifica mucho la política**: no hay
 que abrir `fonts.googleapis.com` ni `fonts.gstatic.com`.
 
-## Propuesta
-
-Para un despliegue de **mismo origen**:
+## La política, tal como se emite
 
 ```
 default-src 'self';
-script-src 'self' 'nonce-{RANDOM}';
+script-src 'self' 'sha256-…' (uno por script en línea del artefacto);
 style-src 'self' 'unsafe-inline';
 font-src 'self';
 img-src 'self' data:;
-connect-src 'self';
+connect-src 'self' (+ el origen de la API si vive en otro dominio);
 frame-ancestors 'none';
 object-src 'none';
 base-uri 'self';
 form-action 'self';
-upgrade-insecure-requests;
+upgrade-insecure-requests
 ```
 
-Con la API en **otro dominio**, cambia una línea:
+### Las dos concesiones, y por qué
 
-```
-connect-src 'self' https://api.ejemplo.com;
-```
+**`'unsafe-inline'` en `style-src`.** Angular emite los estilos de componente en
+línea; sin esto la aplicación se ve sin estilos. Es un riesgo mucho menor que en
+`script-src` —que la política **no** concede— y es lo habitual en Angular.
 
-Y con el resto de las cabeceras:
+**Nada más.** No se abre ningún CDN: las tipografías están autoalojadas, así que
+`font-src 'self'` alcanza.
+
+### `connect-src` sigue a la configuración
 
 ```ts
-// src/server.ts — PROPUESTA, no implementada
-app.use((_req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
-  next();
-});
+connect-src 'self'                              // PUBLIC_API_BASE_URL vacío
+connect-src 'self' https://api.ejemplo.com      // API en otro dominio
 ```
 
-## Las tres dificultades reales
+Sale de la **misma variable** que compila el paquete, así que las dos mitades no
+se pueden separar. Es otro argumento para la opción de mismo dominio: con ella,
+la política no cambia nunca.
 
-Esto **no es pegar una cabecera**, y conviene saberlo antes de empezar.
-
-### 1 · El script en línea del `<head>`
-
-```html
-<script>
-  var preferencia = localStorage.getItem('mantra-core-health.theme');
-  …
-</script>
-```
-
-Es **imprescindible**: evita el parpadeo del tema bajo SSR. Y una CSP estricta lo
-bloquea.
-
-Tres salidas:
-
-| Opción | Consecuencia |
-|---|---|
-| `nonce` por petición | La correcta. Exige que el servidor genere el nonce y lo inyecte — Angular soporta `ngCspNonce` |
-| Hash del contenido | Funciona, pero **hay que regenerarlo cada vez que el script cambie** |
-| `'unsafe-inline'` en `script-src` | Anula la mitad del beneficio de la CSP |
-
-**Y las cuatro rutas prerenderizadas complican la primera opción**: su HTML se
-genera en el build, cuando todavía no hay petición que numerar. Es exactamente el
-tipo de detalle que hace fallar un despliegue.
-
-### 2 · Los estilos en línea de Angular
-
-Angular emite estilos en línea para los componentes. `style-src 'self'` a secas
-los bloquea, así que hace falta `'unsafe-inline'` o un nonce para estilos.
-
-`'unsafe-inline'` en `style-src` es un riesgo mucho menor que en `script-src`, y
-es lo habitual.
-
-### 3 · No hay dónde probarlo
-
-**No existe un despliegue.** Una CSP mal puesta rompe la aplicación entera de
-forma silenciosa —el navegador bloquea recursos sin avisar al usuario—, así que
-hace falta un entorno donde probarla antes.
-
-**Mitigación para el primer intento:** empezar con
-`Content-Security-Policy-Report-Only`, que informa sin bloquear.
-
-## Plan sugerido
-
-1. **Añadir las cuatro cabeceras que no necesitan negociación**
-   (`nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS). Riesgo casi nulo.
-2. **Añadir `frame-ancestors 'none'`** vía CSP, o `X-Frame-Options: DENY`.
-   Cierra el clickjacking sin tocar nada más.
-3. **Añadir la CSP completa en `Report-Only`** y observar qué reporta.
-4. **Resolver el script en línea** con `ngCspNonce`, comprobando las cuatro
-   rutas prerenderizadas.
-5. **Pasar a modo bloqueante.**
-
-Los pasos 1 y 2 se pueden hacer hoy y cierran dos riesgos residuales del
-[modelo de amenazas](threat-model.md) (I8 e I9).
-
-## Qué verificar después
+## Qué verificar tras un despliegue
 
 ```bash
-curl -I https://…/auth | grep -i "content-security\|x-frame\|referrer\|strict-transport"
+curl -I https://<dominio>/auth | grep -iE "content-security-policy|x-frame|referrer|strict-transport"
 ```
 
 Y en el navegador, con la consola abierta:
 
-- Las cuatro rutas prerenderizadas cargan **sin errores de CSP**.
-- El tema **no parpadea**: el script en línea sigue ejecutándose.
-- Las tipografías cargan.
-- El login funciona: `connect-src` permite la API.
-- La aplicación **no** se puede meter en un iframe.
+- [ ] Las cuatro rutas prerenderizadas cargan **sin errores de CSP**
+- [ ] El tema **no parpadea**: el script en línea sigue ejecutándose
+- [ ] Las tipografías cargan
+- [ ] El login funciona: `connect-src` permite la API
+- [ ] La aplicación **no** se puede meter en un iframe
 
-## Estado
+## Lo que queda
 
-**`HIGH`**, no bloqueante para el desarrollo, **sí para producción**. Registrado
-en [el análisis de brechas](../reports/documentation-gap-analysis.md) y en
-[el informe de preparación productiva](../reports/production-readiness.md).
+| Qué | Estado |
+|---|---|
+| Cabeceras y CSP | ✅ implementadas y con prueba |
+| Verificación empírica sobre el artefacto | ✅ hecha |
+| **Probarla en un entorno desplegado** | ⏳ **depende de que exista el despliegue** |
+| Modo `Report-Only` como paso previo | No hace falta: la política se verificó contra el artefacto real |
 
-Depende del `BLOCKER` de [despliegue](../operations/deployment.md): sin un
-entorno donde probar, ponerla es arriesgado.
+La única tarea pendiente es de **configuración**, no de código: comprobar las
+cabeceras en el entorno real la primera vez que se despliegue.

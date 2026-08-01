@@ -1,7 +1,7 @@
 ﻿<app-auth-split [claim]="claim()" [tagline]="tagline()">
   <div>
     @if (registered()) {
-      <h1 class="registro__title">Tu cuenta está lista</h1>
+      <h1 appAnuncio [asertivo]="false" class="registro__title">Tu cuenta está lista</h1>
       <p class="registro__subtitle">
         Ya podés entrar con {{ accessHint() }} y la contraseña que elegiste.
         @if (verificationSent()) {
@@ -24,7 +24,7 @@
       </app-form-field>
 
       @if (errorMessage(); as mensaje) {
-        <app-alert tone="error" class="registro__alert">{{ mensaje }}</app-alert>
+        <app-alert appAnuncio tone="error" class="registro__alert">{{ mensaje }}</app-alert>
       }
 
       @if (tipo() === 'paciente') {

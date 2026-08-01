@@ -19,6 +19,7 @@ import { RadioGroup } from '@shared/components/molecules/radio-group/radio-group
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
+import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Mínimos que exigen los DTO del backend. */
 const MIN_PASSWORD = 8;
@@ -57,8 +58,7 @@ type TipoCuenta = 'paciente' | 'profesional';
     RadioGroup,
     FormField,
     Alert,
-    AuthSplit,
-  ],
+    AuthSplit, AnnounceOnAppear],
   templateUrl: './register-patient.html',
   styleUrl: './register-patient.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -32,6 +32,10 @@ const RESPUESTA_TOKENS = {
 /** Almacenamiento en memoria: aísla al servicio de las rarezas de jsdom. */
 class AlmacenFalso {
   value: string | null = null;
+  tenant: string | null = null;
+
+  /** Bajas registradas por `onClearedInAnotherTab`, para comprobar la limpieza. */
+  bajas = 0;
 
   read(): string | null {
     return this.value;
@@ -43,6 +47,24 @@ class AlmacenFalso {
 
   clear(): void {
     this.value = null;
+    // Espeja al real: la organización elegida se va con la sesión, para que la
+    // siguiente persona en este dispositivo no arranque con el contexto de la
+    // anterior.
+    this.tenant = null;
+  }
+
+  readSelectedTenant(): string | null {
+    return this.tenant;
+  }
+
+  writeSelectedTenant(tenantId: string): void {
+    this.tenant = tenantId;
+  }
+
+  onClearedInAnotherTab(): () => void {
+    return () => {
+      this.bajas += 1;
+    };
   }
 }
 

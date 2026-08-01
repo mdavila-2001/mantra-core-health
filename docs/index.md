@@ -4,8 +4,8 @@ Aplicación web del **ecosistema REDESA**. Angular 21 con renderizado en servido
 sistema de diseño propio y nueve estados de interfaz contractuales.
 
 - **Versión documentada:** commit `ba2efd9` + trabajo concurrente del 2026-08-01
-- **Estado productivo:** **NO APTO** — ver
-  [el informe de preparación](reports/production-readiness.md)
+- **Estado productivo:** **APTO A NIVEL DE CÓDIGO** — solo queda configuración
+  y credenciales. Ver [el informe de preparación](reports/production-readiness.md)
 
 ---
 
@@ -19,7 +19,7 @@ sistema de diseño propio y nueve estados de interfaz contractuales.
 | Estilos | CSS plano con 188 custom properties |
 | Estado | Señales en servicios `providedIn: 'root'`. **Sin store externo** |
 | Formularios | Reactive Forms |
-| Pruebas | **Vitest 4** — 807 pruebas en 71 archivos |
+| Pruebas | **Vitest 4** — 860 pruebas en 77 archivos |
 | Paquetes | **Yarn 4.18.0** en modo PnP |
 | **Dependencias externas en ejecución** | **10, todas de Angular** |
 

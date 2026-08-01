@@ -1,0 +1,101 @@
+# Batería completa en cada push y cada pull request.
+#
+# El orden es de coste creciente: falla primero lo barato. Un lint roto no
+# debería costar una compilación entera para enterarse.
+#
+# Ninguna etapa añade dependencias al proyecto: las seis verificaciones
+# documentales son scripts propios de Node, sin paquetes.
+
+name: CI
+
+on:
+  push:
+    branches: [dev, master]
+  pull_request:
+
+# Un push nuevo sobre la misma rama cancela el anterior: la respuesta que
+# importa es la del último commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # El generador de entorno estampa el commit en el paquete leyéndolo de
+          # Git. Con el clon superficial por defecto alcanza para `rev-parse`.
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Corepack instala la versión de Yarn que fija `packageManager`.
+      - run: corepack enable
+
+      # El repositorio instala en modo PnP: se cachea `.yarn/cache`, no
+      # `node_modules`, que no existe.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            .yarn/unplugged
+          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: yarn-${{ runner.os }}-
+
+      # `--immutable` falla si el lockfile no cuadra con el manifiesto.
+      - name: Instalación reproducible
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Tipos
+        run: yarn tsc -p tsconfig.app.json --noEmit
+
+      # Los umbrales de cobertura son por área y bloquean: si un cambio los baja,
+      # esta etapa falla en vez de avisar.
+      - name: Pruebas y cobertura
+        run: yarn test:coverage
+
+      - name: Build de producción
+        run: yarn build
+
+      # Falla solo por encima del umbral de ERROR. El aviso de presupuesto no
+      # bloquea: es deuda conocida y gobernada, no una regresión nueva.
+      - name: Presupuesto de bundle
+        run: node scripts/check-bundle-budget.mjs
+
+      # Ciclos, dirección de las capas y superficie de red confinada a
+      # `core/data-access/`.
+      - name: Arquitectura
+        run: node scripts/check-architecture.mjs
+
+      # Inventarios al día, enlaces, cobertura documental y deriva de contrato.
+      - name: Documentación
+        run: node scripts/generate-doc-report.mjs
+
+  dependencias:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: yarn install --immutable
+
+      # No bloquea a propósito. La única vulnerabilidad conocida es moderada,
+      # transitiva de `@angular/cli` y NO llega al navegador; hacer fallar el
+      # pipeline por deuda preexistente entrena a ignorar el pipeline.
+      # Lo que sí interesa es enterarse de una alta o crítica nueva.
+      - name: Auditoría de dependencias
+        run: yarn npm audit --recursive --severity high
+        continue-on-error: true

@@ -12,6 +12,9 @@ export * from './components/atoms';
 export * from './components/molecules';
 export * from './components/organisms';
 
+/* Anuncia y enfoca un mensaje que aparece como respuesta a una acción. */
+export { AnnounceOnAppear } from './a11y/announce-on-appear';
+
 /* Contrato de accesibilidad entre un campo y el control que envuelve. */
 export { FORM_CONTROL_CONTEXT, nextControlId } from './forms/form-control.context';
 export type { FormControlContext } from './forms/form-control.context';
