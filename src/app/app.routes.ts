@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { Home } from './features/home/home';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
+import { RegisterPatient } from './features/auth/register-patient/register-patient';
+import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
@@ -36,6 +38,17 @@ export const routes: Routes = [
         path: 'auth/organizacion',
         component: TenantSelection,
         title: 'Mantra Core Health - Elegí tu organización',
+    },
+    {
+        path: 'auth/registro',
+        component: RegisterPatient,
+        title: 'Mantra Core Health - Crear cuenta',
+    },
+    {
+        // El enlace del correo trae el token por query string: /auth/verificar?token=…
+        path: 'auth/verificar',
+        component: VerifyEmail,
+        title: 'Mantra Core Health - Verificar correo',
     },
     {
         path: '**',

@@ -1,0 +1,89 @@
+<main class="registro">
+  <div class="registro__card">
+    @if (registered()) {
+      <h1 class="registro__title">Tu cuenta está lista</h1>
+      <p class="registro__subtitle">
+        Ya podés entrar con tu documento y la contraseña que elegiste.
+        @if (verificationSent()) {
+          Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no hace
+          falta para usar tu cuenta.
+        }
+      </p>
+      <button app-button variant="primary" size="lg" class="registro__submit" (clicked)="goToLogin()">
+        Ir a iniciar sesión
+      </button>
+    } @else {
+      <h1 class="registro__title">Crear cuenta</h1>
+      <p class="registro__subtitle">
+        Con tu documento de identidad. El correo es opcional.
+      </p>
+
+      @if (errorMessage(); as mensaje) {
+        <app-alert tone="error" class="registro__alert">{{ mensaje }}</app-alert>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <app-form-field
+          label="Documento de identidad"
+          hint="Con este número vas a iniciar sesión."
+          [required]="true"
+          [errorMessage]="
+            form.controls.nationalId.touched && form.controls.nationalId.invalid
+              ? 'Ingresá tu documento: letras, números, punto y guion.'
+              : ''
+          "
+        >
+          <app-input formControlName="nationalId" type="text" placeholder="1234567" />
+        </app-form-field>
+
+        <app-form-field
+          label="Nombre completo"
+          [required]="true"
+          [errorMessage]="
+            form.controls.displayName.touched && form.controls.displayName.invalid
+              ? 'Ingresá tu nombre.'
+              : ''
+          "
+        >
+          <app-input formControlName="displayName" type="text" placeholder="Ana Paz" />
+        </app-form-field>
+
+        <app-form-field
+          label="Contraseña"
+          hint="Al menos 8 caracteres."
+          [required]="true"
+          [errorMessage]="
+            form.controls.password.touched && form.controls.password.invalid
+              ? 'La contraseña necesita al menos 8 caracteres.'
+              : ''
+          "
+        >
+          <app-input formControlName="password" type="password" placeholder="Tu contraseña" />
+        </app-form-field>
+
+        <app-form-field
+          label="Correo (opcional)"
+          hint="Sirve para contactarte. No hace falta para entrar."
+          [errorMessage]="
+            form.controls.email.touched && form.controls.email.invalid
+              ? 'Ese correo no tiene un formato válido.'
+              : ''
+          "
+        >
+          <app-input formControlName="email" type="email" placeholder="correo@ejemplo.com" />
+        </app-form-field>
+
+        <button
+          app-button
+          type="submit"
+          variant="primary"
+          size="lg"
+          class="registro__submit"
+          [isLoading]="isSubmitting()"
+        >
+          Crear cuenta
+        </button>
+      </form>
+    }
+  </div>
+</main>
