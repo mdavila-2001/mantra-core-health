@@ -313,8 +313,10 @@ function readCorrelationId(body: Record<string, unknown> | null): string | null 
   if (typeof value === 'string' && value !== '') {
     return value;
   }
-  // Verificado contra la API viva: en varias rutas `pino-http` numera las peticiones y el campo
-  // llega como número.
+  // El contrato lo declara `string` y desde el arreglo del filtro de la API sale así de verdad
+  // —antes `pino-http` numeraba las peticiones y salía como número—. Se sigue aceptando el número
+  // igual: es una respuesta ajena, y un despliegue viejo detrás de un proxy no debería costarnos
+  // el identificador con el que soporte encuentra el log.
   return typeof value === 'number' ? String(value) : null;
 }
 

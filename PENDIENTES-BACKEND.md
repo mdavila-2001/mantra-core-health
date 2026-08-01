@@ -54,10 +54,14 @@ POST /iam/auth/login  {credenciales malas}  -> 401 UNAUTHENTICATED
 La tarjeta 17 está hecha (`core/http/api-error.ts`), con ocho de sus nueve casos cubiertos y
 probados contra esos cuerpos reales.
 
-**Una nota de forma, chica pero real:** `correlationId` está declarado `string` en
-`ErrorResponseBody`, y en las respuestas reales llega **como número** (`"correlationId": 9451`),
-porque `pino-http` numera las peticiones. El cliente lo normaliza a texto. Vale corregir el DTO o
-`req.id`, porque hoy el contrato publicado y lo que viaja no coinciden.
+**Una nota de forma que ya se cerró:** `correlationId` estaba declarado `string` en
+`ErrorResponseBody` y salía **como número** (`"correlationId": 9451`), porque `pino-http` numera las
+peticiones y un cast silenciaba la contradicción. Arreglado en el filtro (PR #25 de la API): ahora
+se normaliza a texto ahí, que es donde vive el contrato publicado. De paso quedaron cubiertos el
+`x-request-id` repetido —que Express entrega como array— y los `NaN`.
+
+El cliente sigue aceptando el número igual: es una respuesta ajena, y un despliegue viejo detrás de
+un proxy no debería costarnos el identificador con el que soporte encuentra el log.
 
 ### La recuperación de contraseña llegó
 
