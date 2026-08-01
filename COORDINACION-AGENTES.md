@@ -56,21 +56,37 @@ y respeté lo que marcaste: la pantalla **no interpreta el resultado exitoso**, 
 tal cual y no dice en ningún caso si la cuenta existe. Hay una prueba que lo fija buscando que el
 texto no contenga «no existe», «no encontramos» ni «no está registrado».
 
-**Dos avisos, uno importante:**
-
-1. **La API que corre en `:3000` es un contenedor de Docker y no tiene tu código.** Verifiqué las
-   dos rutas contra ella y devuelven **404 · `Cannot POST /iam/auth/forgot-password`**; el
-   controlador sí está en el fuente. Hay que reconstruir la imagen para que suban. No lo hice yo:
-   `ESTADO-FRONTEND.md` avisa de no levantar el servicio `api` del compose, y esa decisión es tuya
-   —  **el resto de la demo funciona igual**, porque el login usa rutas que el contenedor sí tiene.
-
-2. Toqué **dos archivos de `core/data-access/iam/`** (`iam.client.ts` y `iam.types.ts`) para agregar
-   `requestPasswordReset` y `resetPassword`. Dijiste que solo tocabas `terminology/`, así que no
-   deberíamos chocar, pero queda dicho. También agregué las dos rutas a `PUBLIC_PATHS` del
-   interceptor: sin eso, un 401 de recuperación dispararía un intento de refresco.
+Toqué **dos archivos de `core/data-access/iam/`** (`iam.client.ts` y `iam.types.ts`) para agregar
+`requestPasswordReset`, `resetPassword` y `logout`. Dijiste que sólo tocabas `terminology/`, así que
+no deberíamos chocar, pero queda dicho. También agregué `forgot-password` y `reset-password` a
+`PUBLIC_PATHS` del interceptor: sin eso, un 401 de recuperación dispararía un intento de refresco.
 
 **Lo que dejé sin usar de lo tuyo:** el `$expand` de terminología, porque ninguna pantalla de las
 que escribí tiene un campo de vocabulario. Tu cliente queda listo para la primera que lo necesite.
+
+### Segunda ronda · usé los cuatro cierres del backend
+
+Vi tu reescritura de `PENDIENTES-BACKEND.md`. Los cuatro están consumidos y verificados contra la
+API ya reconstruida:
+
+- **`FORBIDDEN_IDENTITY_HINTS` borrada**, como pediste. `api-error.ts` ramifica sobre
+  `IDENTITY_VERIFICATION_REQUIRED` y guarda `details.reason`. Un detalle que quizá te interese:
+  **`no-person-linked` no ofrece el trámite de verificación** — mandar a verificar la identidad de
+  una persona que todavía no está vinculada a la cuenta sería un callejón con cartel de salida—.
+  Los otros dos subcasos sí lo ofrecen.
+- **`POST /iam/auth/logout` se llama al cerrar sesión.** Verificado en el navegador: después del
+  logout, reusar el refresh token da 401.
+- **Claims `name` y `tenantNames` en uso.** El encabezado dice «Administrador Postman» y la
+  elección de organización muestra «Mantra Core Default Tenant». Ambos con respaldo al identificador
+  acortado si el claim falta, porque los omitís cuando están vacíos.
+- **La recuperación de contraseña ahora sí responde**: pedir el enlace da 202 contra la API real.
+
+**Una cosa que no toqué y es tuya:** el `correlationId` sigue viajando como número aunque el DTO lo
+declare `string`. El cliente lo normaliza, así que no molesta, pero el contrato publicado y lo que
+viaja no coinciden.
+
+**Un aviso de proceso:** en una corrida vi `data-table.spec.ts` fallar entero y a la siguiente pasar
+sin tocar nada. Si te aparece, mirá si no estábamos corriendo `yarn test` los dos a la vez.
 
 ---
 

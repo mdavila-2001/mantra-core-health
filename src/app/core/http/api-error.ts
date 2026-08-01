@@ -16,7 +16,7 @@ import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
  *
  * La tarjeta 17 figuraba bloqueada esperando «el catálogo de formas reales de error». El catálogo
  * existe y es explícito: `src/common/errors/error-codes.ts` en el repo de la API declara un enum
- * de **once códigos estables**, y `AllExceptionsFilter` garantiza que *toda* respuesta de error
+ * de **doce códigos estables**, y `AllExceptionsFilter` garantiza que *toda* respuesta de error
  * —de dominio, de Nest o no controlada— sale con la misma envoltura. Su propio comentario lo
  * declara contrato:
  *
@@ -32,24 +32,25 @@ import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
  *
  * Así que acá no se inventa ningún contrato: se ramifica sobre `code`, nunca sobre `message`.
  *
- * ## La única pieza que sigue faltando
+ * ## Los dos 403 ya se distinguen por código
  *
- * **Los dos 403 comparten `code: 'FORBIDDEN'`.** `RolesGuard` lanza «Rol insuficiente para la
- * operación» y `VerifiedIdentityGuard` lanza «Verifique su identidad…», pero ambos son un
- * `ForbiddenException` pelado, así que lo único que los separa en la respuesta es el texto del
- * mensaje — justo lo que el propio catálogo declara inestable.
+ * Durante un tiempo ambos salían con `code: 'FORBIDDEN'` y lo único que los separaba era el texto
+ * del mensaje — justo lo que el catálogo declara inestable—, así que acá vivía una heurística sobre
+ * frases. **Ya no.** `VerifiedIdentityGuard` emite su propio código,
+ * `IDENTITY_VERIFICATION_REQUIRED`, más un `details.reason` con el subcaso.
  *
- * Y la distinción no es cosmética: el M34 la marca como la diferencia entre **un muro y una
- * puerta**. Rol insuficiente no tiene salida; identidad sin verificar sí la tiene, y hay que
- * ofrecerla. Ver {@link FORBIDDEN_IDENTITY_HINTS} para cómo se resuelve mientras tanto y
- * `PENDIENTES-BACKEND.md` para lo que hace falta pedirle al backend.
+ * La distinción no es cosmética: el M34 la marca como la diferencia entre **un muro y una puerta**.
+ * Rol insuficiente no tiene salida; identidad sin verificar sí la tiene, y hay que ofrecerla.
  */
 
-/** Los once códigos que la API declara estables (`ErrorCode` en el repo de la API). */
+/** Los doce códigos que la API declara estables (`ErrorCode` en el repo de la API). */
 export const API_ERROR_CODES = [
   'VALIDATION_FAILED',
   'UNAUTHENTICATED',
   'FORBIDDEN',
+  // 403 de identidad sin verificar. Es un código aparte de `FORBIDDEN` justamente porque para la
+  // persona es un estado distinto: hay algo que puede hacer al respecto.
+  'IDENTITY_VERIFICATION_REQUIRED',
   'NOT_FOUND',
   'CONFLICT',
   'PRECONDITION_FAILED',
@@ -80,6 +81,11 @@ export interface ApiError {
   readonly correlationId: string | null;
   /** Violaciones de validación campo por campo, ya desanidadas de `details`. */
   readonly violations: readonly string[];
+  /**
+   * `details` crudo, para lo que no cabe en un campo propio — hoy, el `reason` que distingue los
+   * tres subcasos del 403 de identidad. Ver {@link identityReasonOf}.
+   */
+  readonly details: Record<string, unknown> | null;
   /** Segundos que la API pidió esperar (429), si los declaró. */
   readonly retryAfterSeconds: number | null;
   /**
@@ -94,20 +100,17 @@ export function isKnownApiErrorCode(code: string): code is ApiErrorCode {
 }
 
 /**
- * Frases del `VerifiedIdentityGuard` de la API, usadas **solo** para separar los dos 403.
+ * Subcaso del 403 de identidad, tal como lo declara `details.reason` en la API.
  *
- * Es una heurística sobre texto y se sabe: son los tres mensajes literales que ese guard lanza,
- * copiados de `verified-identity.guard.ts`. Está aislada acá, con nombre propio, para que el día
- * que el backend entregue un código estable se borre esta constante y nada más.
- *
- * Fallar hacia el lado seguro significa tratarlo como muro: ofrecer «verificá tu identidad» a
- * quien en realidad no tiene el rol lo mandaría a un trámite que no le sirve de nada.
+ * Los tres significan «no podés pasar hasta verificarte», pero no son la misma situación:
+ * `no-person-linked` es una cuenta a la que todavía no se le asoció una persona, y ahí el trámite
+ * de verificación no es lo que corresponde. Se conserva el dato aunque hoy las tres lleven al mismo
+ * lugar, porque perderlo en la traducción impediría distinguirlas más adelante.
  */
-const FORBIDDEN_IDENTITY_HINTS: readonly string[] = [
-  'identidad verificada',
-  'verifique su identidad',
-  'persona vinculada',
-];
+export type IdentityVerificationReason =
+  | 'identity-not-verified'
+  | 'no-person-linked'
+  | 'no-authenticated-user';
 
 /** Ruta del flujo de verificación de identidad, que es la salida del 403 «puerta». */
 export const IDENTITY_VERIFICATION_ROUTE = '/verificacion-de-identidad';
@@ -127,6 +130,7 @@ export function parseApiError(error: unknown): ApiError {
       message: messageOf(error),
       correlationId: null,
       violations: [],
+      details: null,
       retryAfterSeconds: null,
       isNetworkFailure: false,
     };
@@ -140,6 +144,7 @@ export function parseApiError(error: unknown): ApiError {
       message: 'No se pudo contactar al servidor.',
       correlationId: null,
       violations: [],
+      details: null,
       retryAfterSeconds: null,
       isNetworkFailure: true,
     };
@@ -153,6 +158,7 @@ export function parseApiError(error: unknown): ApiError {
     message: readString(body, 'message') ?? error.message,
     correlationId: readCorrelationId(body),
     violations: readViolations(body),
+    details: asRecord(body?.['details']),
     retryAfterSeconds: readRetryAfter(error),
     isNetworkFailure: false,
   };
@@ -195,8 +201,13 @@ export function viewStateFromApiError<T>(error: ApiError): ViewState<T> {
         error.retryAfterSeconds === null ? undefined : error.retryAfterSeconds,
       );
 
+    // S5 «muro»: no hay nada que la persona pueda hacer.
     case 'FORBIDDEN':
-      return forbiddenState(error);
+      return forbidden({ message: error.message });
+
+    // S5 «puerta»: hay un trámite, y hay que ofrecerlo.
+    case 'IDENTITY_VERIFICATION_REQUIRED':
+      return identityRequiredState(error);
 
     // S6 — sin ningún dato del recurso: ver `NotFoundViewState`.
     case 'NOT_FOUND':
@@ -219,31 +230,39 @@ export function viewStateFromHttpError<T>(error: unknown): ViewState<T> {
 }
 
 /**
- * El 403 «puerta» de {@link FORBIDDEN_IDENTITY_HINTS} lleva al flujo de verificación; el 403 muro
- * se queda sin próxima acción, que es la forma de decir «no hay nada que puedas hacer acá».
+ * El 403 de identidad, con su salida.
+ *
+ * `no-person-linked` **no ofrece el trámite**: verificar la identidad de una persona que todavía no
+ * está asociada a la cuenta no es algo que quien mira pueda hacer por su cuenta. Mandarla igual a
+ * ese flujo sería un callejón con cartel de salida.
  */
-function forbiddenState(error: ApiError) {
-  const needsIdentity = FORBIDDEN_IDENTITY_HINTS.some((hint) =>
-    error.message.toLowerCase().includes(hint),
-  );
+function identityRequiredState(error: ApiError) {
+  if (identityReasonOf(error) === 'no-person-linked') {
+    return forbidden({ message: error.message });
+  }
 
   return forbidden({
     message: error.message,
-    ...(needsIdentity
-      ? {
-          nextAction: {
-            label: 'Verificar mi identidad',
-            route: IDENTITY_VERIFICATION_ROUTE,
-          },
-        }
-      : {}),
+    nextAction: { label: 'Verificar mi identidad', route: IDENTITY_VERIFICATION_ROUTE },
   });
+}
+
+/** El subcaso que la API declara en `details.reason`, o `null` si no vino. */
+export function identityReasonOf(error: ApiError): IdentityVerificationReason | null {
+  const reason = error.details?.['reason'];
+  return reason === 'identity-not-verified' ||
+    reason === 'no-person-linked' ||
+    reason === 'no-authenticated-user'
+    ? reason
+    : null;
 }
 
 /** Red de seguridad para un código que la API todavía no declaraba cuando se escribió esto. */
 function byStatus<T>(error: ApiError): ViewState<T> {
   if (error.status === 403) {
-    return forbiddenState(error);
+    // Sin código conocido se trata como muro. Es el lado seguro: ofrecer «verificá tu identidad» a
+    // quien en realidad no tiene el rol lo manda a un trámite que no le sirve de nada.
+    return forbidden({ message: error.message });
   }
   if (error.status === 404) {
     return notFound();
