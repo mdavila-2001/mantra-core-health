@@ -1,0 +1,7 @@
+/* La lista de organizaciones la dibuja `app-tenant-switcher` en su variante `page`.
+   Acá solo queda el caso sin sesión. */
+
+.organizacion__sin-sesion {
+  margin-block: 0 var(--space-4, 1rem);
+  color: var(--color-text-secondary, #64748b);
+}

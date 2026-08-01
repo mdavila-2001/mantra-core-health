@@ -10,8 +10,14 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { SessionStore } from '../auth/session.store';
 import { TokenRefreshService } from './token-refresh.service';
 
-/** Ruta a la que se manda a quien se quedó sin sesión. */
-export const LOGIN_ROUTE = '/auth';
+/**
+ * Ruta a la que se manda a quien se quedó sin sesión.
+ *
+ * Espeja `LOGIN_PATH` de `core/auth/auth.guard.ts` y no lo importa a propósito: el interceptor no
+ * debe depender de la capa de guards, que sí depende de `AuthService`, que a su vez usa el cliente
+ * que este interceptor envuelve. Son dos constantes iguales y una prueba que las compara.
+ */
+export const LOGIN_ROUTE = '/auth/login';
 
 /**
  * Rutas que la API declara `@Public()` y que por definición se piden sin
@@ -30,6 +36,9 @@ const PUBLIC_PATHS: readonly string[] = [
   '/iam/auth/register-practitioner',
   '/iam/auth/verify-email',
   '/iam/auth/activate',
+  // Recuperación de contraseña: por definición la pide quien no puede entrar.
+  '/iam/auth/forgot-password',
+  '/iam/auth/reset-password',
 ];
 
 /**

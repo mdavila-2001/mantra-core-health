@@ -10,6 +10,7 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { ThemeService } from './core/tokens/theme.service';
+import { AuthService } from './core/auth/auth.service';
 import { authInterceptor } from './core/http/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -22,6 +23,16 @@ export const appConfig: ApplicationConfig = {
     // El tema no depende de que exista un componente: se instancia al arrancar.
     provideAppInitializer(() => {
       inject(ThemeService);
+    }),
+    // Arranca la restauración de la sesión apenas la aplicación existe, en vez de esperar a que
+    // el primer guard la pida. Gana el tiempo que tarda en resolverse la primera ruta.
+    //
+    // **No se devuelve la promesa a propósito.** Si el arranque esperara a la petición de
+    // refresco, la aplicación entera quedaría en blanco hasta que la API contestara —y con la API
+    // caída, para siempre. Quien necesita el resultado lo espera donde corresponde:
+    // `authGuard` con `ensureRestored()`, que comparte esta misma promesa.
+    provideAppInitializer(() => {
+      void inject(AuthService).ensureRestored();
     })
   ]
 };
