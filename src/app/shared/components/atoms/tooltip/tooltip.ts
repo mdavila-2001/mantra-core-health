@@ -15,7 +15,7 @@ import {
   type OnDestroy,
 } from '@angular/core';
 
-import { nextControlId } from '../../form-control/form-control.context';
+import { nextControlId } from '@shared/forms/form-control.context';
 import { TooltipPanel } from './tooltip-panel';
 import {
   TOOLTIP_GAP_PX,

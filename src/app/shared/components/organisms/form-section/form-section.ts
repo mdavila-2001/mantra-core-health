@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
-import { nextControlId } from '../../form-control/form-control.context';
+import { nextControlId } from '@shared/forms/form-control.context';
 
 /** Un control marcado inválido por Angular o por el atributo nativo. */
 const INVALID_CONTROL_SELECTOR = '.ng-invalid, [aria-invalid="true"]';

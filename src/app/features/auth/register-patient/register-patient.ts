@@ -14,8 +14,8 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
-import { Radio } from '../../../shared/components/atoms/radio/radio';
-import { RadioGroup } from '../../../shared/components/atoms/radio-group/radio-group';
+import { Radio } from '@shared/components/molecules/radio/radio';
+import { RadioGroup } from '@shared/components/molecules/radio-group/radio-group';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
@@ -25,7 +25,7 @@ const MIN_PASSWORD = 8;
 const MIN_DOCUMENTO = 4;
 
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
-const DOCUMENTO_VALIDO = /^[A-Za-z0-9.\-]+$/;
+const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
 
 /** Quién se está registrando. Define qué endpoint y qué campos. */
 type TipoCuenta = 'paciente' | 'profesional';

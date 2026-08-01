@@ -27,6 +27,10 @@
 </div>
 
 @if (isOpen()) {
+  <!-- El fondo es el atajo de ratón para cerrar. El camino de teclado está en
+       el diálogo de adentro, que atrapa el foco y cierra con `Escape`; un
+       keydown acá no lo alcanzaría el foco nunca. -->
+  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
   <div class="date-picker-overlay" (click)="close()">
     <!-- tabindex=-1 para poder recibir el foco al abrir sin entrar en el orden
          de tabulación; el keydown maneja Escape y atrapa el Tab. -->

@@ -20,7 +20,7 @@ import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 import {
   FORM_CONTROL_CONTEXT,
   nextControlId,
-} from '../../form-control/form-control.context';
+} from '@shared/forms/form-control.context';
 import { TEXTAREA_NEAR_LIMIT_RATIO, type TextareaLimitBand } from './textarea.types';
 
 /**

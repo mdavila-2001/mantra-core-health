@@ -14,7 +14,7 @@ import { AppButton } from '../../atoms/button/button';
 import { Chip } from '../../atoms/chip/chip';
 import { SearchField } from '../../molecules/search-field/search-field';
 import { Select } from '../../atoms/select/select';
-import type { SelectOption } from '../../atoms/input/input.types';
+import type { SelectOption } from '../../atoms/select/select.types';
 
 /** Clave del término de búsqueda en la URL. */
 export const SEARCH_PARAM = 'q';

@@ -12,7 +12,7 @@ import {
 import {
   FORM_CONTROL_CONTEXT,
   nextControlId,
-} from '../../form-control/form-control.context';
+} from '@shared/forms/form-control.context';
 
 const BYTES_PER_UNIT = 1024;
 const SIZE_UNITS = ['bytes', 'KB', 'MB', 'GB', 'TB'] as const;

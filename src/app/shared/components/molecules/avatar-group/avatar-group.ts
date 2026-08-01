@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import type { AvatarSize } from '../avatar/avatar.types';
+import type { AvatarSize } from '../../atoms/avatar/avatar.types';
 
 /**
  * Apila avatares con superposición. Los avatares se proyectan; el grupo solo

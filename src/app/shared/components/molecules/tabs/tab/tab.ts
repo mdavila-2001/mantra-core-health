@@ -7,7 +7,7 @@ import {
   input,
 } from '@angular/core';
 
-import { nextControlId } from '../../../form-control/form-control.context';
+import { nextControlId } from '@shared/forms/form-control.context';
 import { TABS_PARENT } from '../tabs.types';
 
 /**
