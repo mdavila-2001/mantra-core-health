@@ -1,9 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '../../form-control/form-control.context';
+import { injectFormControl } from '@shared/forms/inject-form-control';
 
 /**
  * Interruptor binario. Es un `<input type="checkbox">` con `role="switch"`:
@@ -21,15 +18,14 @@ import {
   },
 })
 export class SwitchComponent {
-  private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
-
   readonly checked = model<boolean>(false);
   readonly disabled = input<boolean>(false);
   readonly label = input<string>('');
 
-  private readonly ownId = nextControlId('switch');
-  protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
-  protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
+  private readonly form = injectFormControl('switch');
+
+  protected readonly controlId = this.form.controlId;
+  protected readonly describedBy = this.form.describedBy;
 
   protected handleChange(event: Event): void {
     this.checked.set((event.target as HTMLInputElement).checked);

@@ -1,9 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '../../form-control/form-control.context';
+import { injectFormControl } from '@shared/forms/inject-form-control';
 
 /**
  * Casilla sobre `<input type="checkbox">` nativo: teclado, foco y anuncio del
@@ -24,20 +21,17 @@ import {
   },
 })
 export class CheckboxComponent {
-  private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
-
   readonly checked = model<boolean>(false);
   readonly disabled = input<boolean>(false);
   readonly label = input<string>('');
   readonly hasError = input<boolean>(false);
 
-  private readonly ownId = nextControlId('checkbox');
-  protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
-  protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
-  protected readonly required = computed(() => this.field?.required() === true);
-  protected readonly invalid = computed(
-    () => this.hasError() || this.field?.invalid() === true,
-  );
+  private readonly form = injectFormControl('checkbox', this.hasError);
+
+  protected readonly controlId = this.form.controlId;
+  protected readonly describedBy = this.form.describedBy;
+  protected readonly required = this.form.required;
+  protected readonly invalid = this.form.invalid;
 
   /** El `change` nativo ya trae el estado nuevo: se toma de ahí, sin invertir. */
   protected handleChange(event: Event): void {

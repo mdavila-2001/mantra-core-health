@@ -2,29 +2,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
-  ElementRef,
-  inject,
   input,
   model,
   signal,
-  viewChild,
 } from '@angular/core';
 
-import { AppButtonComponent } from '../../atoms/button/app-button';
-import type { DatePickerMode } from '../../atoms/input/input.types';
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '../../form-control/form-control.context';
+import { AppButtonComponent } from '../../atoms/button/button';
+import { DialogComponent } from '../dialog/dialog';
+import { injectFormControl } from '@shared/forms/inject-form-control';
+import type { CalendarDay, DatePickerMode } from './date-picker.types';
 
-export interface CalendarDay {
-  readonly date: Date;
-  readonly dayNumber: number;
-  readonly isCurrentMonth: boolean;
-  readonly isToday: boolean;
-  readonly isSelected: boolean;
-}
+export type { CalendarDay, DatePickerMode } from './date-picker.types';
 
 /** Locale del producto: Bolivia. Un solo lugar, no repetido por llamada. */
 const LOCALE = 'es-BO';
@@ -92,7 +80,7 @@ function startOfMonth(date: Date): Date {
  */
 @Component({
   selector: 'app-date-picker',
-  imports: [AppButtonComponent],
+  imports: [AppButtonComponent, DialogComponent],
   templateUrl: './date-picker.html',
   styleUrl: './date-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,16 +90,11 @@ function startOfMonth(date: Date): Date {
   },
 })
 export class DatePickerComponent {
-  private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
-
   readonly value = model<Date | null>(null);
   readonly mode = input<DatePickerMode>('date-only');
   readonly disabled = input<boolean>(false);
   readonly placeholder = input<string>('Seleccionar fecha');
   readonly hasError = input<boolean>(false);
-
-  private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
-  private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');
 
   protected readonly isOpen = signal(false);
 
@@ -127,12 +110,11 @@ export class DatePickerComponent {
     (_, index) => index * MINUTE_STEP,
   );
 
-  private readonly ownId = nextControlId('date');
-  protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
-  protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
-  protected readonly invalid = computed(
-    () => this.hasError() || this.field?.invalid() === true,
-  );
+  private readonly form = injectFormControl('date', this.hasError);
+
+  protected readonly controlId = this.form.controlId;
+  protected readonly describedBy = this.form.describedBy;
+  protected readonly invalid = this.form.invalid;
 
   protected readonly displayValue = computed(() => {
     const current = this.value();
@@ -180,12 +162,6 @@ export class DatePickerComponent {
     });
   });
 
-  constructor() {
-    // El foco entra al diálogo recién cuando el @if lo pintó: `viewChild` avisa
-    // en ese momento, cosa que un microtask tras `isOpen.set(true)` no hace.
-    effect(() => this.dialog()?.nativeElement.focus());
-  }
-
   protected dayLabel(day: CalendarDay): string {
     return new Intl.DateTimeFormat(LOCALE, FULL_DATE_FORMAT).format(day.date);
   }
@@ -204,8 +180,8 @@ export class DatePickerComponent {
     if (!this.isOpen()) {
       return;
     }
+    // El foco vuelve al disparador por `restoreFocusTo` del `app-dialog`.
     this.isOpen.set(false);
-    this.trigger().nativeElement.focus();
   }
 
   protected confirm(): void {
@@ -236,18 +212,6 @@ export class DatePickerComponent {
     this.patchDraftTime(null, Number((event.target as HTMLSelectElement).value));
   }
 
-  /** Escape cierra; Tab no debe poder salirse del diálogo. */
-  protected handleDialogKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      this.close();
-      return;
-    }
-    if (event.key === 'Tab') {
-      this.keepFocusInside(event);
-    }
-  }
-
   private patchDraftTime(hours: number | null, minutes: number | null): void {
     const base = this.draft() ?? this.withSafeHour(new Date());
     const next = new Date(base);
@@ -261,27 +225,4 @@ export class DatePickerComponent {
     return copy;
   }
 
-  private keepFocusInside(event: KeyboardEvent): void {
-    const host = this.dialog()?.nativeElement;
-    if (!host) {
-      return;
-    }
-    const focusables = host.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    );
-    if (focusables.length === 0) {
-      return;
-    }
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    const active = host.ownerDocument.activeElement;
-
-    if (event.shiftKey && (active === first || active === host)) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
 }

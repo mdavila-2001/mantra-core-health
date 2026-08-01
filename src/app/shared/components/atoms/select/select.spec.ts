@@ -1,6 +1,6 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import type { SelectOption } from '../input/input.types';
+import type { SelectOption } from './select.types';
 import { SelectComponent } from './select';
 
 interface Servicio {

@@ -27,19 +27,11 @@
 </div>
 
 @if (isOpen()) {
-  <div class="date-picker-overlay" (click)="close()">
-    <!-- tabindex=-1 para poder recibir el foco al abrir sin entrar en el orden
-         de tabulación; el keydown maneja Escape y atrapa el Tab. -->
-    <div
-      #dialog
-      class="date-picker-dialog"
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-label]="mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha'"
-      tabindex="-1"
-      (click)="$event.stopPropagation()"
-      (keydown)="handleDialogKeydown($event)"
-    >
+  <app-dialog
+    [label]="mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha'"
+    [restoreFocusTo]="trigger"
+    (closed)="close()"
+  >
       <div class="dialog-header">
         <h3 class="dialog-title">
           {{ mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha' }}
@@ -123,6 +115,5 @@
         <button app-button variant="ghost" size="sm" (clicked)="close()">Cancelar</button>
         <button app-button variant="primary" size="sm" (clicked)="confirm()">Confirmar</button>
       </div>
-    </div>
-  </div>
+  </app-dialog>
 }

@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { FormFieldComponent } from '../../molecules/form-field/form-field';
+import { FormFieldComponent } from '../form-field/form-field';
 import { RadioComponent } from '../radio/radio';
 import { RadioGroupComponent } from './radio-group';
 

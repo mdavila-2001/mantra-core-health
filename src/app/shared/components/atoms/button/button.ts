@@ -39,8 +39,8 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types';
  */
 @Component({
   selector: 'button[app-button]',
-  templateUrl: './app-button.html',
-  styleUrl: './app-button.css',
+  templateUrl: './button.html',
+  styleUrl: './button.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class]': 'buttonClasses()',

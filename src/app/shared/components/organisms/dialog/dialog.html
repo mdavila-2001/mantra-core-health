@@ -1,0 +1,22 @@
+<!-- El fondo cierra al hacer clic. NO lleva manejador de teclado ni tabindex a
+     propósito: el equivalente por teclado es Escape, que `handleKeydown` ya
+     atiende. Hacer focusable un fondo decorativo lo metería en el orden de
+     tabulación DENTRO de la propia trampa de foco — peor para quien navega con
+     teclado, no mejor. La regla de lint no puede ver el Escape del hermano. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<div class="dialog-overlay" (click)="requestClose()">
+  <!-- tabindex=-1 para poder recibir el foco al abrir sin entrar en el orden de
+       tabulación; el keydown maneja Escape y atrapa el Tab. -->
+  <div
+    #surface
+    class="dialog-surface"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="label()"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+    (keydown)="handleKeydown($event)"
+  >
+    <ng-content />
+  </div>
+</div>

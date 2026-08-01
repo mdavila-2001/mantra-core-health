@@ -2,17 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject,
   input,
   model,
   output,
   signal,
 } from '@angular/core';
 
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '../../form-control/form-control.context';
+import { injectFormControl } from '@shared/forms/inject-form-control';
 import type { InputType } from './input.types';
 
 @Component({
@@ -26,8 +22,6 @@ import type { InputType } from './input.types';
   },
 })
 export class InputComponent {
-  private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
-
   readonly type = input<InputType>('text');
   readonly placeholder = input<string>('');
   readonly value = model<string | number | null>('');
@@ -42,16 +36,12 @@ export class InputComponent {
   protected readonly isFocused = signal(false);
   protected readonly passwordVisible = signal(false);
 
-  /** Id propio si el input vive suelto; el del campo si está envuelto. */
-  private readonly ownId = nextControlId('input');
-  protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
-  protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
-  protected readonly required = computed(() => this.field?.required() === true);
+  private readonly form = injectFormControl('input', this.hasError);
 
-  /** El error puede venir del propio control o del campo que lo envuelve. */
-  protected readonly invalid = computed(
-    () => this.hasError() || this.field?.invalid() === true,
-  );
+  protected readonly controlId = this.form.controlId;
+  protected readonly describedBy = this.form.describedBy;
+  protected readonly required = this.form.required;
+  protected readonly invalid = this.form.invalid;
 
   /** El tipo real del `<input>`: `password` alterna a `text` al revelarse. */
   protected readonly effectiveType = computed(() => {

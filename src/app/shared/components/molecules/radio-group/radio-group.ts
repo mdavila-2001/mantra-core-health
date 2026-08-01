@@ -1,9 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '../../form-control/form-control.context';
+import { nextControlId } from '@shared/forms/form-control.context';
+import { injectFormControl } from '@shared/forms/inject-form-control';
 
 /**
  * Grupo de radios. **El grupo es el control**, no cada radio: acá vive el
@@ -33,8 +31,6 @@ import {
   },
 })
 export class RadioGroupComponent<T = unknown> {
-  private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
-
   readonly value = model<T | null>(null);
   readonly disabled = input<boolean>(false);
   readonly hasError = input<boolean>(false);
@@ -42,19 +38,17 @@ export class RadioGroupComponent<T = unknown> {
   /** Agrupa los `<input type="radio">` nativos; se autogenera si no se pasa. */
   readonly name = input<string>(nextControlId('radio-group'));
 
+  private readonly form = injectFormControl('radio-group', this.hasError);
+
   /** Un grupo no se etiqueta con `for`: apunta al label del campo. */
-  protected readonly labelledBy = computed(() => this.field?.labelId() ?? null);
-
-  protected readonly invalid = computed(
-    () => this.hasError() || this.field?.invalid() === true,
-  );
-
-  protected readonly required = computed(() => this.field?.required() === true);
+  protected readonly labelledBy = this.form.labelledBy;
+  protected readonly invalid = this.form.invalid;
+  protected readonly required = this.form.required;
 
   constructor() {
     // Un grupo no es «etiquetable»: el `for` del label no puede apuntarle, así
     // que se lo avisa al campo — el nombre ya viaja por `aria-labelledby`.
-    this.field?.controlLabelable.set(false);
+    this.form.field?.controlLabelable.set(false);
   }
 
   /** Lo llama cada radio hijo al ser elegido. */

@@ -6,28 +6,30 @@ import {
   type WritableSignal,
 } from '@angular/core';
 
-import type { ThemeMode } from '../../core/tokens/design-tokens.types';
-import { ThemeService } from '../../core/tokens/theme.service';
+import type { ThemeMode } from '@core/tokens/design-tokens.types';
+import { ThemeService } from '@core/tokens/theme.service';
 
-import { Avatar } from '../../shared/components/atoms/avatar/avatar';
-import { AVATAR_SIZES } from '../../shared/components/atoms/avatar/avatar.types';
-import { AvatarGroupComponent } from '../../shared/components/atoms/avatar-group/avatar-group';
-import { Badge } from '../../shared/components/atoms/badge/badge';
-import { BADGE_SIZES, BADGE_VARIANTS } from '../../shared/components/atoms/badge/badge.types';
-import { AppButtonComponent } from '../../shared/components/atoms/button/app-button';
-import { BUTTON_SIZES, BUTTON_VARIANTS } from '../../shared/components/atoms/button/button.types';
-
-import { CheckboxComponent } from '../../shared/components/atoms/checkbox/checkbox';
-import { FileInputComponent } from '../../shared/components/atoms/file-input/file-input';
-import { InputComponent } from '../../shared/components/atoms/input/input';
-import type { SelectOption } from '../../shared/components/atoms/input/input.types';
-import { RadioComponent } from '../../shared/components/atoms/radio/radio';
-import { RadioGroupComponent } from '../../shared/components/atoms/radio-group/radio-group';
-import { SelectComponent } from '../../shared/components/atoms/select/select';
-import { SwitchComponent } from '../../shared/components/atoms/switch/switch';
-
-import { DatePickerComponent } from '../../shared/components/molecules/date-picker/date-picker';
-import { FormFieldComponent } from '../../shared/components/molecules/form-field/form-field';
+import {
+  Avatar,
+  AVATAR_SIZES,
+  AvatarGroupComponent,
+  Badge,
+  BADGE_SIZES,
+  BADGE_VARIANTS,
+  AppButtonComponent,
+  BUTTON_SIZES,
+  BUTTON_VARIANTS,
+  CheckboxComponent,
+  DatePickerComponent,
+  FileInputComponent,
+  FormFieldComponent,
+  InputComponent,
+  RadioComponent,
+  RadioGroupComponent,
+  SelectComponent,
+  SwitchComponent,
+  type SelectOption,
+} from '@shared';
 
 const DEMO_LOADING_MS = 1500;
 

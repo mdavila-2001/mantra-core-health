@@ -2,18 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject,
   input,
   model,
   output,
   signal,
 } from '@angular/core';
 
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '../../form-control/form-control.context';
-import type { SelectOption } from '../input/input.types';
+import { injectFormControl } from '@shared/forms/inject-form-control';
+import type { SelectOption } from './select.types';
 
 /** Valor del `<option>` que representa «nada elegido». */
 const NO_SELECTION = '';
@@ -37,8 +33,6 @@ const NO_SELECTION = '';
   },
 })
 export class SelectComponent<T> {
-  private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
-
   readonly value = model<T | null>(null);
   readonly options = input<readonly SelectOption<T>[]>([]);
   readonly disabled = input<boolean>(false);
@@ -50,13 +44,12 @@ export class SelectComponent<T> {
 
   protected readonly isFocused = signal(false);
 
-  private readonly ownId = nextControlId('select');
-  protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
-  protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
-  protected readonly required = computed(() => this.field?.required() === true);
-  protected readonly invalid = computed(
-    () => this.hasError() || this.field?.invalid() === true,
-  );
+  private readonly form = injectFormControl('select', this.hasError);
+
+  protected readonly controlId = this.form.controlId;
+  protected readonly describedBy = this.form.describedBy;
+  protected readonly required = this.form.required;
+  protected readonly invalid = this.form.invalid;
 
   /** El `<select>` se posiciona por índice; `''` cuando no hay selección. */
   protected readonly selectedIndex = computed(() => {

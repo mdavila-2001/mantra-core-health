@@ -1,0 +1,52 @@
+/* ============================================================================
+    Diálogo modal — velo y superficie. Extraído de `date-picker`, que era la
+    única implementación del repositorio.
+    ========================================================================== */
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  /* el velo se deriva del token, no reescribe su RGB a mano */
+  background-color: color-mix(in srgb, var(--c-petrol-900) 45%, transparent);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--sp-4);
+}
+
+.dialog-surface {
+  background-color: var(--bg-surface);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 360px;
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  animation: dialog-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dialog-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Quien pide menos movimiento no debería recibir una entrada animada. */
+@media (prefers-reduced-motion: reduce) {
+  .dialog-surface {
+    animation: none;
+  }
+}
