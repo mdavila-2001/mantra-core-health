@@ -34,7 +34,9 @@ export class Radio {
   protected readonly checked = computed(() => this.group.isSelected(this.value()));
 
   /** El grupo entero puede estar deshabilitado, o solo esta opción. */
-  protected readonly isDisabled = computed(() => this.disabled() || this.group.disabled());
+  // `isDisabled` del grupo y no su `input()`: así un `FormControl.disable()`
+  // sobre el grupo también apaga a cada radio.
+  protected readonly isDisabled = computed(() => this.disabled() || this.group.isDisabled());
 
   protected readonly name = computed(() => this.group.name());
 
