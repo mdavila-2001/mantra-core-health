@@ -14,6 +14,12 @@ dist
 coverage
 out-tsc
 
+# El entorno real nunca entra a la imagen: las variables se pasan en ejecución
+# (docker-compose las inyecta). La plantilla sí, que es solo documentación.
+.env
+.env.*
+!.env.example
+
 .git
 .gitignore
 .vscode
