@@ -21,7 +21,17 @@ COPY . .
 
 EXPOSE 4200
 
+# Origen del backend al que el proxy reenvía /iam, /public, /terminology…
+# Dentro del contenedor `localhost` es el contenedor, así que el default apunta
+# al host. Se sobreescribe por entorno (ver .env.example).
+ENV BACKEND_ORIGIN=http://host.docker.internal:3000
+
+# El proxy de Angular es un JSON estático y no interpola variables, así que el
+# origen se sustituye al arrancar sobre la plantilla y se sirve el resultado.
+# Se genera en un archivo aparte para no chocar con el proxy.conf.json del repo,
+# que es el del host y no debe cambiar.
+#
 # --host 0.0.0.0 para que el puerto sea alcanzable fuera del contenedor.
-# --poll porque los bind mounts de Docker Desktop en macOS no propagan
-# eventos fsevents, y sin polling el hot reload no se entera de los cambios.
-CMD ["yarn", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "2000"]
+# --poll porque los bind mounts de Docker Desktop en macOS no propagan eventos
+# fsevents, y sin polling el hot reload no se entera de los cambios.
+CMD ["sh", "-c", "sed \"s|__BACKEND_ORIGIN__|$BACKEND_ORIGIN|\" proxy.conf.docker.json > proxy.generated.json && exec yarn ng serve --proxy-config proxy.generated.json --host 0.0.0.0 --port 4200 --poll 2000"]

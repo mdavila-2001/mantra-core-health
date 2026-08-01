@@ -11,6 +11,14 @@
 npm-debug.log
 yarn-error.log
 
+# Entorno local. La plantilla `.env.example` SÍ va al repo; el `.env` real no.
+.env
+.env.*
+!.env.example
+
+# Proxy generado por el contenedor a partir de proxy.conf.docker.json.
+proxy.generated.json
+
 # Yarn 4 — artefactos generados por la instalación.
 # El repo no fija `nodeLinker`, así que Yarn instala en modo PnP y genera estos
 # archivos: cientos de dependencias desempaquetadas, binarios incluidos. Son
