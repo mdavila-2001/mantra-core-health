@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   inject,
+  isDevMode,
   signal,
   type WritableSignal,
 } from '@angular/core';
@@ -62,6 +63,7 @@ import { SearchField } from '../../shared/components/molecules/search-field/sear
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { Toast } from '../../shared/components/molecules/toast/toast';
+import { ToastDevPanel } from '../../core/dev/toast-dev-panel/toast-dev-panel';
 import type { ToastMessage } from '../../shared/components/molecules/toast/toast.types';
 
 import {
@@ -119,6 +121,7 @@ const DEMO_UPLOAD_STEP = 12;
     OrganismsGallery,
     ReactiveFormsModule,
     JsonPipe,
+    ToastDevPanel,
   ],
   templateUrl: './design-system-sample.html',
   styleUrl: './design-system-sample.css',
@@ -127,6 +130,12 @@ const DEMO_UPLOAD_STEP = 12;
 export class DesignSystemSample {
   private readonly themeService = inject(ThemeService);
   private readonly dialogs = inject(DialogService);
+
+  /**
+   * Condición del `@defer` que aísla el panel de pruebas de avisos. El bloque
+   * queda en un chunk que en producción nunca se descarga.
+   */
+  protected readonly isDev = isDevMode();
 
   protected readonly variants = BUTTON_VARIANTS;
   protected readonly sizes = BUTTON_SIZES;

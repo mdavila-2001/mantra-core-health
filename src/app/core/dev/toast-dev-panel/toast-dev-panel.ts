@@ -8,10 +8,12 @@ import type { ToastType } from '../../../shared/components/molecules/toast/toast
 const TAMANO_RAFAGA = 5;
 
 /**
- * Disparador de avisos para probar desde cualquier pantalla.
+ * Disparador de avisos para probar la pila real.
  *
- * Vive en `core/dev/` y el `@defer (when isDev)` de `app.html` lo deja en un
- * fragmento que en producción nunca se descarga.
+ * Vive en `core/dev/` y lo monta **la vitrina** (`/design-system`), dentro de un
+ * `@defer (when isDev)` que en producción nunca descarga el fragmento. Antes se
+ * montaba en el componente raíz: flotaba encima de todas las pantallas, así que
+ * aparecía también al mostrarle el producto a alguien.
  */
 @Component({
   selector: 'app-toast-dev-panel',

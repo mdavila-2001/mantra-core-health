@@ -1,25 +1,10 @@
-.registro {
-  display: flex;
-  min-height: 100dvh;
-  align-items: center;
-  justify-content: center;
-  padding: var(--sp-6) var(--sp-4);
-  background: var(--bg-surface-alt, var(--bg-surface));
-}
-
-.registro__card {
-  width: 100%;
-  max-width: 28rem;
-  padding: var(--sp-6);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-lg);
-  background: var(--bg-surface);
-}
+/* La estructura partida y el selector de tema son del organismo `app-auth-split`.
+   Acá va solo lo propio del formulario de alta. */
 
 .registro__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--fs-h3, var(--fs-h2));
+  font-size: var(--fs-h2);
   color: var(--brand-primary);
 }
 
@@ -35,7 +20,7 @@
   margin-bottom: var(--sp-4);
 }
 
-.registro__card form {
+form {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);

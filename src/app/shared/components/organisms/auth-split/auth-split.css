@@ -1,0 +1,101 @@
+/* Mobile-first: una columna. La de marca aparece recién en pantalla ancha,
+   donde sobra espacio; en el teléfono ocuparía la mitad útil sin aportar. */
+.auth-split {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: 1fr;
+}
+
+.auth-split__brand {
+  display: none;
+}
+
+.auth-split__panel {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-4);
+  background: var(--bg-surface);
+}
+
+/* El selector de tema arriba a la derecha, sin empujar el formulario. */
+.auth-split__theme {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+}
+
+.auth-split__content {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4) 0;
+}
+
+/* El contenido proyectado se limita solo, para que el formulario no se estire
+   en pantallas anchas. */
+.auth-split__content > * {
+  width: 100%;
+  max-width: 27rem;
+}
+
+/* --bp-lg. El valor va literal: CSS no admite variables en la condición. */
+@media (min-width: 1024px) {
+  .auth-split {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .auth-split__brand {
+    display: flex;
+    align-items: flex-end;
+    padding: var(--sp-8);
+    /* Degradado de marca en vez de fotografía: no dependemos de un archivo que
+       todavía no está aprobado, y pesa cero. */
+    background: linear-gradient(
+      150deg,
+      var(--c-petrol-700),
+      var(--c-petrol-500) 55%,
+      var(--c-aqua-500)
+    );
+    color: #ffffff;
+    /* La columna no crece con el formulario: si el registro es largo, scrollea
+       el panel y la marca queda fija en pantalla. */
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    /* La altura es fija, así que en una ventana muy baja el titular podría no
+       entrar. Con esto se alcanza scrolleando en vez de quedar recortado. */
+    overflow-y: auto;
+  }
+
+  .auth-split__brand-content {
+    max-width: 26rem;
+  }
+
+  .auth-split__wordmark {
+    margin: 0 0 var(--sp-6);
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-size: var(--fs-body);
+  }
+
+  .auth-split__claim {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-display);
+    line-height: 1.15;
+  }
+
+  .auth-split__tagline {
+    margin: var(--sp-4) 0 0;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    opacity: 0.9;
+  }
+
+  .auth-split__panel {
+    padding: var(--sp-6);
+  }
+}

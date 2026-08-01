@@ -1,5 +1,5 @@
-﻿<main class="registro">
-  <div class="registro__card">
+﻿<app-auth-split [claim]="claim()" [tagline]="tagline()">
+  <div>
     @if (registered()) {
       <h1 class="registro__title">Tu cuenta está lista</h1>
       <p class="registro__subtitle">
@@ -244,4 +244,4 @@
       </p>
     }
   </div>
-</main>
+</app-auth-split>

@@ -458,11 +458,16 @@
                 El panel <strong>«Avisos (dev)»</strong> de abajo a la izquierda dispara la pila
                 real, que entra abajo a la derecha: un botón por tipo, uno <em>fijo</em> (sin
                 <code>duration</code>, se queda hasta que lo cierren), una ráfaga de cinco para
-                ver el apilado, y limpiar. Está en toda la app, no solo acá — y vive dentro de un
-                <code>&#64;defer (when isDev)</code>, así que en producción ese chunk no se
-                descarga. El retiro por <code>duration</code> lo aplica <em>quien monta el
-                contenedor</em> (el componente raíz), no el aviso.
+                ver el apilado, y limpiar. Vive <strong>solo en esta pantalla</strong>: antes se
+                montaba en la raíz y aparecía flotando encima de todas, incluida una demostración
+                al cliente. Acá está dentro de un <code>&#64;defer (when isDev)</code>, así que en
+                producción ese chunk no se descarga. El retiro por <code>duration</code> lo aplica
+                <em>quien monta el contenedor</em> (el componente raíz), no el aviso.
             </p>
+
+            @defer (when isDev) {
+                <app-toast-dev-panel />
+            }
 
             <h3>La data de cada muestra</h3>
             <p class="sandbox-note">

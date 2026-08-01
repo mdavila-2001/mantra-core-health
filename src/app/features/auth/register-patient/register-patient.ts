@@ -18,6 +18,7 @@ import { Radio } from '../../../shared/components/atoms/radio/radio';
 import { RadioGroup } from '../../../shared/components/atoms/radio-group/radio-group';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 
 /** Mínimos que exigen los DTO del backend. */
 const MIN_PASSWORD = 8;
@@ -56,6 +57,7 @@ type TipoCuenta = 'paciente' | 'profesional';
     RadioGroup,
     FormField,
     Alert,
+    AuthSplit,
   ],
   templateUrl: './register-patient.html',
   styleUrl: './register-patient.css',
@@ -110,6 +112,23 @@ export class RegisterPatient {
   /** Con qué va a iniciar sesión, para decírselo en la confirmación. */
   readonly accessHint = computed(() =>
     this.tipo() === 'paciente' ? 'tu documento' : 'tu correo',
+  );
+
+  /**
+   * El titular de la columna de marca cambia con el tipo elegido.
+   *
+   * El diseño original es solo de profesional —«Potencia tu práctica médica»—,
+   * pero esta pantalla sirve a los dos perfiles: prometerle eso a alguien que
+   * se registra como paciente sería hablarle de otra cosa.
+   */
+  readonly claim = computed(() =>
+    this.tipo() === 'paciente' ? 'Tu salud, en un solo lugar' : 'Potenciá tu práctica médica',
+  );
+
+  readonly tagline = computed(() =>
+    this.tipo() === 'paciente'
+      ? 'Llevá tu historia clínica, tus turnos y tus estudios siempre con vos.'
+      : 'Sumate a la red de salud más grande de Bolivia y conectá con miles de pacientes.',
   );
 
   readonly errorMessage = computed<string | null>(() => {
