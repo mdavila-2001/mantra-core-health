@@ -60,6 +60,15 @@ if (cycles.length > 0) {
   );
 }
 
+// --- 1b · imports internos que no resuelven ---------------------------------
+
+if (graph.dangling.length > 0) {
+  problems.push(
+    `${graph.dangling.length} import(s) interno(s) que no resuelven:`,
+    ...graph.dangling.map(({ from, specifier }) => `    ${from}\n      → ${specifier}`),
+  );
+}
+
 // --- 2 · dirección de las capas --------------------------------------------
 
 /** La capa de un archivo, deducida de su ruta. */
