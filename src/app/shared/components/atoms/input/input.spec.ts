@@ -96,6 +96,7 @@ describe('Input', () => {
   describe('contraseña', () => {
     beforeEach(async () => {
       await setInputs({ type: 'password' });
+
     });
 
     it('arranca oculta y alterna a texto', async () => {
@@ -124,6 +125,30 @@ describe('Input', () => {
       await fixture.whenStable();
 
       expect(fixture.componentInstance.value()).toBe('');
+    });
+  });
+
+  /**
+   * Sin `autocomplete` el navegador adivina cuál es el campo de usuario, y
+   * adivina mal: en el alta de profesional guardaba el número de credencial
+   * como nombre de usuario, así que al volver ofrecía una credencial donde iba
+   * el correo y el acceso fallaba.
+   */
+  describe('autocompletado', () => {
+    it('sin declararlo no pone el atributo, y el navegador decide', () => {
+      expect(native().hasAttribute('autocomplete')).toBe(false);
+    });
+
+    it('lo propaga al input nativo, que es donde el navegador lo lee', async () => {
+      await setInputs({ autocomplete: 'username' });
+
+      expect(native().getAttribute('autocomplete')).toBe('username');
+    });
+
+    it('admite apagarlo donde ninguna pista corresponde', async () => {
+      await setInputs({ autocomplete: 'off' });
+
+      expect(native().getAttribute('autocomplete')).toBe('off');
     });
   });
 

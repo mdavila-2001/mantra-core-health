@@ -18,13 +18,33 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
  *
  * ## Lo público sí se prerenderiza, y conviene
  *
- * El login y la vitrina se ven igual para todo el mundo, así que salen del servidor ya pintados: la
- * primera pantalla aparece sin esperar a que arranque JavaScript. Es justo donde el SSR paga.
+ * El login, el registro y la vitrina se ven igual para todo el mundo, así que salen del servidor ya
+ * pintados: la primera pantalla aparece sin esperar a que arranque JavaScript. Es justo donde el
+ * SSR paga.
+ *
+ * Las landings que leen un token del query string (`verificar`, `nueva-clave`) van en `Client`:
+ * prerenderizadas mostrarían el estado «falta el código», porque en el build no hay query string.
  */
 export const serverRoutes: ServerRoute[] = [
   {
-    path: 'auth/login',
+    path: 'auth',
     renderMode: RenderMode.Prerender,
+  },
+  {
+    path: 'auth/registro',
+    renderMode: RenderMode.Prerender,
+  },
+  {
+    path: 'auth/recuperar',
+    renderMode: RenderMode.Prerender,
+  },
+  {
+    path: 'auth/verificar',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'auth/nueva-clave',
+    renderMode: RenderMode.Client,
   },
   {
     // La elección de organización depende de los tenants del token: sin sesión no hay lista que

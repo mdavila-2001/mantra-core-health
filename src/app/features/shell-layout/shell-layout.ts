@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { LOGIN_PATH } from '../../core/auth/auth.guard';
 import { AuthService } from '../../core/auth/auth.service';
+import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
 import { Shell } from '../../shared/components/organisms/shell/shell';
 import type { HeaderUser } from '../../shared/components/organisms/header/header.types';
@@ -20,7 +20,11 @@ import type { TenantOption } from '../../shared/components/organisms/tenant-swit
  *
  * `sections` se recalcula a partir de los roles del token. **Esconder un ítem no protege nada** —la
  * autoridad es la API, que valida en cada petición—; es no ofrecer una puerta que va a estar
- * cerrada. Quien escriba la URL a mano se topa con `roleGuard` primero y con un 403 después.
+ * cerrada. Quien escriba la URL a mano se topa con el guard primero y con un 403 después.
+ *
+ * > Nota de la reconciliación (2026-08-01): este componente vino del carril de Pablo y se adaptó a
+ * > las superficies que quedaron en el merge — `LOGIN_ROUTE` del interceptor y el `AuthService`
+ * > nuestro, del que deriva `user` y `tenants` en vez de pedirle métodos que no tiene.
  */
 @Component({
   selector: 'app-shell-layout',
@@ -42,14 +46,21 @@ export class ShellLayout {
   protected readonly isDrawer = this.breakpoints.isNavDrawer;
 
   protected readonly user = computed<HeaderUser | null>(() => {
-    const user = this.auth.user();
-    return user === null
-      ? null
-      : { displayName: this.auth.displayName(), roles: user.roles };
+    if (!this.auth.isAuthenticated()) {
+      return null;
+    }
+    return {
+      // El guard no deja llegar acá sin sesión; el userId es el último recurso
+      // para que el header nunca quede sin nombre.
+      displayName: this.auth.displayName() ?? this.auth.userId() ?? '',
+      roles: this.auth.roles(),
+    };
   });
 
   /** Las organizaciones de la sesión, ya con su nombre legible (claim `tenantNames`). */
-  protected readonly tenants = computed<readonly TenantOption[]>(() => this.auth.tenantOptions());
+  protected readonly tenants = computed<readonly TenantOption[]>(() =>
+    this.auth.tenants().map((id) => ({ id, name: this.auth.tenantName(id) })),
+  );
 
   /**
    * El menú. Hoy tiene lo que existe de verdad: el panel y la vitrina del sistema de diseño. Las 81
@@ -72,7 +83,7 @@ export class ShellLayout {
 
   protected logout(): void {
     this.auth.logout();
-    void this.router.navigateByUrl(LOGIN_PATH);
+    void this.router.navigateByUrl(LOGIN_ROUTE);
   }
 
   /**

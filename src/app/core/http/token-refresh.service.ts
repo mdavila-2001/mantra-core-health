@@ -4,7 +4,6 @@ import { finalize, shareReplay, tap, throwError, type Observable } from 'rxjs';
 import { IamClient } from '../data-access/iam/iam.client';
 import type { Session } from '../data-access/iam/iam.types';
 import { SessionStore } from '../auth/session.store';
-import { SessionStorage } from '../auth/session.storage';
 
 /**
  * Refresco de la sesión, **con una sola petición en vuelo**.
@@ -23,7 +22,6 @@ import { SessionStorage } from '../auth/session.storage';
 export class TokenRefreshService {
   private readonly iam = inject(IamClient);
   private readonly session = inject(SessionStore);
-  private readonly storage = inject(SessionStorage);
 
   /** Refresco en curso, compartido por todos los que lleguen mientras dure. */
   private inFlight: Observable<Session> | null = null;
@@ -44,13 +42,7 @@ export class TokenRefreshService {
     }
 
     const request = this.iam.refresh(refreshToken).pipe(
-      tap((session) => {
-        this.session.renew(session);
-        // La rotación invalida el token que estaba guardado. No reescribirlo dejaría en
-        // `localStorage` una credencial muerta, y la próxima recarga terminaría en el login
-        // aunque la sesión en memoria estuviera perfecta.
-        this.storage.writeRefreshToken(session.refreshToken);
-      }),
+      tap((session) => this.session.renew(session)),
       // Se libera pase lo que pase: si quedara ocupado tras un fallo, ningún
       // intento posterior podría volver a refrescar en toda la sesión.
       finalize(() => {

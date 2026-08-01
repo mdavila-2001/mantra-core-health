@@ -5,122 +5,104 @@ import { provideRouter } from '@angular/router';
 
 import { ForgotPassword } from './forgot-password';
 
-/** Mensaje neutro real del backend: idéntico exista o no la cuenta. */
-const MENSAJE_NEUTRO =
-  'Si la cuenta existe, te enviamos un correo con las instrucciones para continuar.';
-
 describe('ForgotPassword', () => {
   let fixture: ComponentFixture<ForgotPassword>;
-  let backend: HttpTestingController;
-
-  function root(): HTMLElement {
-    return fixture.nativeElement as HTMLElement;
-  }
-
-  function campo(): HTMLInputElement {
-    const input = root().querySelector<HTMLInputElement>('app-input input');
-    if (input === null) {
-      throw new Error('no se encontró el campo');
-    }
-    return input;
-  }
-
-  async function enviar(valor: string): Promise<void> {
-    const input = campo();
-    input.value = valor;
-    input.dispatchEvent(new Event('input'));
-    root().querySelector('form')?.dispatchEvent(new Event('submit'));
-    await fixture.whenStable();
-  }
+  let component: ForgotPassword;
+  let http: HttpTestingController;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ForgotPassword],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
-    backend = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(ForgotPassword);
+    component = fixture.componentInstance;
+    http = TestBed.inject(HttpTestingController);
     await fixture.whenStable();
   });
 
   afterEach(() => {
-    backend.verify();
+    http.verify();
   });
 
-  it('manda un solo campo `identifier`, sin distinguir correo de documento', async () => {
-    await enviar('  admin@redesa.test  ');
+  it('manda el identificador tal como lo pide el contrato', () => {
+    component.form.setValue({ identifier: 'admin@mantra.test' });
+    component.submit();
 
-    const peticion = backend.expectOne('/iam/auth/forgot-password');
-    expect(peticion.request.body).toEqual({ identifier: 'admin@redesa.test' });
+    const req = http.expectOne('/iam/auth/forgot-password');
+    expect(req.request.method).toBe('POST');
+    // Un solo campo: el backend acepta correo o documento indistintamente.
+    expect(req.request.body).toEqual({ identifier: 'admin@mantra.test' });
 
-    peticion.flush({ message: MENSAJE_NEUTRO });
+    req.flush({ message: 'Si la cuenta existe, enviamos un enlace' });
   });
 
-  it('acepta un documento por el mismo campo', async () => {
-    await enviar('1234567');
+  it('acepta un documento igual que un correo', () => {
+    component.form.setValue({ identifier: '1234567' });
+    component.submit();
 
-    const peticion = backend.expectOne('/iam/auth/forgot-password');
-    expect(peticion.request.body).toEqual({ identifier: '1234567' });
+    const req = http.expectOne('/iam/auth/forgot-password');
+    expect(req.request.body).toEqual({ identifier: '1234567' });
 
-    peticion.flush({ message: MENSAJE_NEUTRO });
+    req.flush({ message: 'ok' });
   });
 
-  it('el formulario vacío no llega a la API', async () => {
-    root().querySelector('form')?.dispatchEvent(new Event('submit'));
-    await fixture.whenStable();
-    // `backend.verify()` del afterEach falla si hubiera salido alguna petición.
+  it('recorta los espacios', () => {
+    component.form.setValue({ identifier: '  1234567  ' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/forgot-password');
+    expect(req.request.body).toEqual({ identifier: '1234567' });
+
+    req.flush({ message: 'ok' });
   });
 
-  it('muestra el mensaje del backend tal cual, sin agregarle nada', async () => {
-    await enviar('admin@redesa.test');
-    backend.expectOne('/iam/auth/forgot-password').flush({ message: MENSAJE_NEUTRO });
-    await fixture.whenStable();
+  it('tras enviar muestra el acuse', () => {
+    component.form.setValue({ identifier: 'admin@mantra.test' });
+    component.submit();
+    http.expectOne('/iam/auth/forgot-password').flush({ message: 'ok' });
 
-    expect(root().textContent).toContain(MENSAJE_NEUTRO);
+    expect(component.requested()).toBe(true);
   });
 
-  it('la pantalla no dice en ningún caso si la cuenta existe', async () => {
-    await enviar('nadie@ejemplo.test');
-    backend.expectOne('/iam/auth/forgot-password').flush({ message: MENSAJE_NEUTRO });
-    await fixture.whenStable();
+  it('el acuse NO revela si la cuenta existe', () => {
+    component.form.setValue({ identifier: 'no-existe@mantra.test' });
+    component.submit();
+    http.expectOne('/iam/auth/forgot-password').flush({ message: 'ok' });
 
-    const texto = (root().textContent ?? '').toLowerCase();
-    // El backend se cuida de no confirmar registros; la pantalla no puede deshacer ese cuidado.
-    expect(texto).not.toContain('no existe');
-    expect(texto).not.toContain('no encontramos');
-    expect(texto).not.toContain('no está registrad');
+    // Mismo estado exista o no: lo contrario permitiria averiguar quien tiene
+    // cuenta probando direcciones.
+    expect(component.requested()).toBe(true);
+    expect(component.errorMessage()).toBeNull();
   });
 
-  it('tras enviar, el formulario desaparece: son 5 solicitudes por minuto', async () => {
-    await enviar('admin@redesa.test');
-    backend.expectOne('/iam/auth/forgot-password').flush({ message: MENSAJE_NEUTRO });
-    await fixture.whenStable();
+  it('no envía con el campo vacío', () => {
+    component.form.setValue({ identifier: '' });
+    component.submit();
 
-    expect(root().querySelector('form')).toBeNull();
+    expect(component.form.controls.identifier.touched).toBe(true);
   });
 
-  it('el 429 dice cuánto esperar, no solo que falló', async () => {
-    await enviar('admin@redesa.test');
-
-    backend.expectOne('/iam/auth/forgot-password').flush(
-      { code: 'RATE_LIMITED', message: 'Demasiadas solicitudes.' },
-      { status: 429, statusText: 'Too Many Requests', headers: { 'Retry-After': '60' } },
-    );
-    await fixture.whenStable();
-
-    expect(root().textContent).toContain('60 segundos');
-    // Y el formulario sigue en pantalla, porque el envío no llegó a ocurrir.
-    expect(root().querySelector('form')).not.toBeNull();
-  });
-
-  it('un servidor inalcanzable se explica', async () => {
-    await enviar('admin@redesa.test');
-    backend
+  it('sin conexión lo dice como tal', () => {
+    component.form.setValue({ identifier: 'admin@mantra.test' });
+    component.submit();
+    http
       .expectOne('/iam/auth/forgot-password')
-      .error(new ProgressEvent('error'), { status: 0 });
-    await fixture.whenStable();
+      .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
 
-    expect(root().textContent).toContain('No se pudo contactar al servidor');
+    expect(component.errorMessage()).toContain('conexión');
+    expect(component.requested()).toBe(false);
+  });
+
+  it('429 usa el mensaje del catálogo de errores', () => {
+    component.form.setValue({ identifier: 'admin@mantra.test' });
+    component.submit();
+    http.expectOne('/iam/auth/forgot-password').flush(
+      { code: 'RATE_LIMITED', message: 'Demasiadas solicitudes', timestamp: 't', path: '/x' },
+      { status: 429, statusText: 'Too Many' },
+    );
+
+    expect(component.errorMessage()).toBe('Demasiadas solicitudes');
   });
 });

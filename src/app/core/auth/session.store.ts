@@ -48,6 +48,19 @@ export class SessionStore {
   readonly roles = computed<readonly string[]>(() => this.claims()?.roles ?? []);
   readonly tenants = computed<readonly string[]>(() => this.claims()?.tenants ?? []);
 
+  /** Nombre para mostrar, si el token lo trae. */
+  readonly displayName = computed<string | null>(() => this.claims()?.name ?? null);
+
+  /**
+   * Nombre de una organización por su identificador.
+   *
+   * Cae al identificador cuando el token no trae el nombre: es feo, pero es
+   * preferible a una pantalla en blanco donde debería ir una organización.
+   */
+  tenantName(tenantId: string): string {
+    return this.claims()?.tenantNames?.[tenantId] ?? tenantId;
+  }
+
   /**
    * Tenant que viaja en `X-Tenant-Id`.
    *

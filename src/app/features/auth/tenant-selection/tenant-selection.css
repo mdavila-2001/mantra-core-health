@@ -1,4 +1,4 @@
-.nueva-clave {
+.tenant {
   display: flex;
   min-height: 100dvh;
   align-items: center;
@@ -7,48 +7,40 @@
   background: var(--bg-surface-alt, var(--bg-surface));
 }
 
-.nueva-clave__card {
+.tenant__card {
   width: 100%;
-  max-width: 27rem;
+  max-width: 30rem;
   padding: var(--sp-6);
   border: 1px solid var(--border-default);
   border-radius: var(--r-lg);
   background: var(--bg-surface);
 }
 
-.nueva-clave__title {
+.tenant__title {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-h3, var(--fs-h2));
   color: var(--brand-primary);
 }
 
-.nueva-clave__text {
+.tenant__subtitle {
   margin: var(--sp-2) 0 var(--sp-6);
   color: var(--text-secondary);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
 }
 
-.nueva-clave__alert {
-  display: block;
-  margin-bottom: var(--sp-4);
-}
-
-.nueva-clave__card form {
+.tenant__list {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.nueva-clave__submit {
-  margin-top: var(--sp-2);
+/* El botón ocupa la fila entera: la lista se recorre de arriba abajo y un
+   objetivo ancho es más fácil de acertar con el pulgar. */
+.tenant__list button {
   width: 100%;
-}
-
-.nueva-clave__pie {
-  margin: var(--sp-6) 0 0;
-  text-align: center;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
 }

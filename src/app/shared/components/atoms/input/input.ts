@@ -43,6 +43,19 @@ export class Input implements ControlValueAccessor {
   private readonly formBridge = createValueAccessorBridge<string | number | null>();
 
   readonly type = input<InputType>('text');
+
+  /**
+   * Pista de autocompletado para el navegador.
+   *
+   * **No es opcional en la práctica.** Sin ella el navegador adivina cuál es el
+   * campo de usuario, y adivina mal: en el alta de profesional guardaba el
+   * número de credencial como nombre de usuario, así que al volver ofrecía una
+   * credencial donde iba el correo y el acceso fallaba.
+   *
+   * Valores del estándar HTML: `username`, `current-password`, `new-password`,
+   * `email`, `tel`, `name`… y `off` donde no corresponda ninguno.
+   */
+  readonly autocomplete = input<string | null>(null);
   readonly placeholder = input<string>('');
   readonly value = model<string | number | null>('');
   readonly disabled = input<boolean>(false);

@@ -96,6 +96,24 @@
     /* radio de firma: UN elemento destacado por pantalla; nunca botones/inputs */
     --r-signature: 28px 4px 28px 4px;
 
+    /* ================= puntos de quiebre =================================
+       Escala EXTRAÍDA de lo que el código ya usaba, no inventada: 780 px era
+       el corte de facto (30 usos) y 1024 px el secundario (2 usos).
+
+       ⚠️  NO se pueden usar en `@media`. CSS no admite custom properties en la
+       condición de una consulta de medios: `@media (min-width: var(--bp-md))`
+       no funciona en ningún navegador. Las consultas llevan el número literal;
+       estas variables son la fuente que hay que copiar, y sirven además para
+       anchos de contenedor y cálculos donde sí valen.
+
+       Para JavaScript, la misma escala está en `core/tokens/breakpoints.ts`.
+
+       Mobile-first: escribir `min-width` y dejar el teléfono como caso base.
+       ==================================================================== */
+    --bp-sm: 650px;
+    --bp-md: 780px;
+    --bp-lg: 1024px;
+
     /* ================= tipografía ========================================= */
     --font-display: 'Poppins', system-ui, 'Segoe UI', sans-serif;
     --font-body: 'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif;

@@ -1,102 +1,78 @@
 import { Routes } from '@angular/router';
+import { Dashboard } from './features/dashboard/dashboard';
+import { ShellLayout } from './features/shell-layout/shell-layout';
+import { Login } from './features/auth/login/login';
+import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
+import { RegisterPatient } from './features/auth/register-patient/register-patient';
+import { VerifyEmail } from './features/auth/verify-email/verify-email';
+import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
+import { ResetPassword } from './features/auth/reset-password/reset-password';
+import { authGuard } from './core/auth/auth.guard';
 
-import { authGuard, guestGuard, tenantSelectedGuard } from './core/auth/auth.guard';
-
-/**
- * Rutas de la aplicación.
- *
- * Tres áreas, y la diferencia entre ellas es qué guard las cubre:
- *
- * - **`/auth/**`** — públicas, con `guestGuard`: quien ya tiene sesión no vuelve al login.
- * - **Área con sesión** — bajo `ShellLayout`, con `authGuard` + `tenantSelectedGuard`.
- * - **`/design-system`** — abierta a propósito. Es la vitrina del sistema de diseño, no transporta
- *   ningún dato, y tiene que poder mostrarse sin credenciales.
- *
- * ## Todo lo pesado va diferido
- *
- * Ninguna pantalla se importa directamente. El paquete inicial solo carga lo que hace falta para
- * pintar la primera ruta, y la vitrina —que sola pesa unos 900 kB porque instancia el sistema de
- * diseño entero— nunca se descarga si nadie la abre.
- *
- * ## `/panel` y no `/`
- *
- * Para que la portada pueda decidir a dónde mandar en vez de ser ella misma un destino: sin sesión
- * al login, con sesión al panel. Lo resuelve `authGuard` sobre la ruta vacía.
- */
 export const routes: Routes = [
-  {
-    path: 'auth',
-    canActivate: [guestGuard],
-    children: [
-      {
-        path: 'login',
-        loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
-        title: 'Ingresar · Mantra Core Health',
-      },
-      {
-        // En castellano, como el resto de lo que se ve en la barra de direcciones.
-        path: 'organizacion',
-        loadComponent: () =>
-          import('./features/auth/select-organization/select-organization').then(
-            (m) => m.SelectOrganization,
-          ),
-        title: 'Elegí una organización · Mantra Core Health',
-      },
-      {
-        path: 'recuperar',
-        loadComponent: () =>
-          import('./features/auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
-        title: 'Recuperar el acceso · Mantra Core Health',
-      },
-      {
-        // Destino del enlace del correo: llega con `?token=`.
-        path: 'restablecer',
-        loadComponent: () =>
-          import('./features/auth/reset-password/reset-password').then((m) => m.ResetPassword),
-        title: 'Elegí una contraseña nueva · Mantra Core Health',
-      },
-      {
+    {
+        // El armazón: header con el usuario, navegación y selector de organización.
+        // El guard corre en el padre — S1 del M34: autorizar ANTES de pedir datos —
+        // y cubre a todas las hijas.
         path: '',
+        component: ShellLayout,
+        canActivate: [authGuard],
+        children: [
+            { path: '', pathMatch: 'full', redirectTo: 'panel' },
+            {
+                path: 'panel',
+                component: Dashboard,
+                title: 'Mantra Core Health - Panel',
+            },
+        ],
+    },
+    {
+        // Diferida a propósito: la vitrina expone el sistema de diseño entero
+        // y nadie que entre a la aplicación real necesita descargarla. Con
+        // import directo se llevaba el presupuesto inicial por delante.
+        path: 'design-system',
+        loadComponent: () =>
+            import('./features/design-system-sample/design-system-sample').then(
+                (m) => m.DesignSystemSample,
+            ),
+        title: 'Mantra Core Health - Vitrina de Diseño',
+    },
+    {
+        path: 'auth',
+        component: Login,
         pathMatch: 'full',
-        redirectTo: 'login',
-      },
-    ],
-  },
-
-  {
-    // La vitrina expone el sistema de diseño entero y no hay nada que proteger en ella. Diferida
-    // aparte: con import directo se llevaba el presupuesto del paquete inicial por delante.
-    path: 'design-system',
-    loadComponent: () =>
-      import('./features/design-system-sample/design-system-sample').then(
-        (m) => m.DesignSystemSample,
-      ),
-    title: 'Vitrina de diseño · Mantra Core Health',
-  },
-
-  {
-    path: '',
-    loadComponent: () => import('./features/shell-layout/shell-layout').then((m) => m.ShellLayout),
-    // El orden importa: primero hay sesión, después hay organización. Al revés, quien no tiene
-    // sesión terminaría en la pantalla de elegir organización sin ninguna que elegir.
-    canActivate: [authGuard, tenantSelectedGuard],
-    children: [
-      {
-        path: 'panel',
-        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
-        title: 'Panel · Mantra Core Health',
-      },
-      {
-        path: '',
-        pathMatch: 'full',
-        redirectTo: 'panel',
-      },
-    ],
-  },
-
-  {
-    // Cualquier otra cosa cae en el área con sesión, que decide: al panel si la hay, al login si no.
-    path: '**',
-    redirectTo: '',
-  },
+        title: 'Mantra Core Health - Iniciar sesión',
+    },
+    {
+        // La ruta la fija `TENANT_SELECTION_ROUTE`, que es a donde manda el guard.
+        path: 'auth/organizacion',
+        component: TenantSelection,
+        title: 'Mantra Core Health - Elegí tu organización',
+    },
+    {
+        path: 'auth/registro',
+        component: RegisterPatient,
+        title: 'Mantra Core Health - Crear cuenta',
+    },
+    {
+        // El enlace del correo trae el token por query string: /auth/verificar?token=…
+        path: 'auth/verificar',
+        component: VerifyEmail,
+        title: 'Mantra Core Health - Verificar correo',
+    },
+    {
+        path: 'auth/recuperar',
+        component: ForgotPassword,
+        title: 'Mantra Core Health - Recuperar contraseña',
+    },
+    {
+        // También por query string: /auth/nueva-clave?token=…
+        path: 'auth/nueva-clave',
+        component: ResetPassword,
+        title: 'Mantra Core Health - Nueva contraseña',
+    },
+    {
+        path: '**',
+        redirectTo: '',
+    },
 ];

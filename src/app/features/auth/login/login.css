@@ -1,40 +1,105 @@
-/* Pantalla de ingreso. El layout, la marca y la tarjeta los pone `app-auth-layout`;
-   acá solo va el ritmo vertical del formulario. */
-
-.login__form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5, 1.25rem);
+/* Mobile-first: una columna. La de marca aparece recién en pantalla ancha,
+   donde sobra espacio; en el teléfono ocuparía la mitad útil sin aportar. */
+.login {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: 1fr;
 }
 
-/* El botón ocupa el ancho de la tarjeta: es la única acción primaria de la pantalla
-   y no compite con nada. */
-.login__submit {
+.login__brand {
+  display: none;
+}
+
+.login__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  background: var(--bg-surface);
+}
+
+.login__form-wrap {
   width: 100%;
-  margin-block-start: var(--space-2, 0.5rem);
+  max-width: 26rem;
 }
 
-/* Con un solo problema no se ve viñeta —una lista de uno parece un error de maqueta—,
-   y con varios sí, porque ahí sí son ítems que se cuentan. */
-.login__issues {
+.login__title {
   margin: 0;
-  padding-inline-start: var(--space-5, 1.25rem);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  color: var(--brand-primary);
+}
+
+.login__subtitle {
+  margin: var(--sp-2) 0 var(--sp-6);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.login__alert {
+  display: block;
+  margin-bottom: var(--sp-4);
+}
+
+.login__form-wrap form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1, 0.25rem);
+  gap: var(--sp-4);
 }
 
-.login__issues:has(> li:only-child) {
-  padding-inline-start: 0;
-  list-style: none;
+.login__submit {
+  margin-top: var(--sp-2);
+  width: 100%;
 }
 
-.login__footer {
+.login__pie {
+  margin: var(--sp-4) 0 0;
   text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }
 
-.login__footer p {
-  margin: 0;
-  color: var(--color-text-secondary, #64748b);
-  font-size: var(--font-size-sm, 0.875rem);
+/* --bp-lg. El valor va literal: CSS no admite variables en la condición. */
+@media (min-width: 1024px) {
+  .login {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .login__brand {
+    display: flex;
+    align-items: flex-end;
+    padding: var(--sp-8);
+    /* Degradado de marca en vez de fotografía: no dependemos de un archivo que
+       todavía no está aprobado, y pesa cero. */
+    background: linear-gradient(150deg, var(--c-petrol-700), var(--c-petrol-500) 55%, var(--c-aqua-500));
+    color: #ffffff;
+  }
+
+  .login__brand-content {
+    max-width: 26rem;
+  }
+
+  .login__wordmark {
+    margin: 0 0 var(--sp-6);
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-size: var(--fs-body);
+  }
+
+  .login__claim {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-display);
+    line-height: 1.15;
+  }
+
+  .login__tagline {
+    margin: var(--sp-4) 0 0;
+    font-size: var(--fs-body-lg, var(--fs-body));
+    line-height: var(--lh-body);
+    opacity: 0.9;
+  }
 }

@@ -7,14 +7,14 @@ import type {
   AccountActivation,
   ActivationResult,
   LoginCredentials,
-  LogoutResult,
   NewUser,
   PasswordReset,
-  PasswordResetRequest,
   PasswordResetRequested,
   PasswordResetResult,
   PatientRegistration,
+  PractitionerRegistration,
   RegisteredPatient,
+  RegisteredPractitioner,
   Session,
   VerifiedEmail,
 } from './iam.types';
@@ -59,18 +59,6 @@ export class IamClient {
       .pipe(map(toSession));
   }
 
-  /**
-   * `POST /iam/auth/logout`. Revoca la sesión del `sid` del token **y su refresh token**.
-   *
-   * `revoked: false` **no es un error**: significa que esa sesión ya no estaba activa —doble clic,
-   * o cerrada desde otro dispositivo— y el resultado deseado ya se cumplía.
-   */
-  logout(): Observable<LogoutResult> {
-    // Sin cuerpo: la sesión que se cierra es la del token, que ya viaja en `Authorization`. Mandar
-    // el `sid` sería dejar que el cliente elija qué sesión cerrar.
-    return this.http.post<LogoutResult>(this.url('/iam/auth/logout'), {});
-  }
-
   /** `POST /iam/auth/token/refresh`. Rota el par completo: el viejo deja de servir. */
   refresh(refreshToken: string): Observable<Session> {
     return this.http
@@ -90,6 +78,28 @@ export class IamClient {
     });
   }
 
+  /**
+   * `POST /iam/auth/register-practitioner`. Auto-registro de profesional.
+   *
+   * Su identificador de acceso es el **correo**, no el documento: es la
+   * diferencia con el alta de paciente.
+   */
+  registerPractitioner(
+    registration: PractitionerRegistration,
+  ): Observable<RegisteredPractitioner> {
+    return this.http.post<RegisteredPractitioner>(this.url('/iam/auth/register-practitioner'), {
+      email: registration.email,
+      password: registration.password,
+      displayName: registration.displayName,
+      licenseNumber: registration.licenseNumber,
+      credentialNumber: registration.credentialNumber,
+      ...(registration.professionalTitle === undefined
+        ? {}
+        : { professionalTitle: registration.professionalTitle }),
+      ...(registration.phone === undefined ? {} : { phone: registration.phone }),
+    });
+  }
+
   /** `POST /iam/auth/verify-email`. No desbloquea nada: deja constancia. */
   verifyEmail(token: string): Observable<VerifiedEmail> {
     return this.http.post<VerifiedEmail>(this.url('/iam/auth/verify-email'), { token });
@@ -104,20 +114,26 @@ export class IamClient {
   }
 
   /**
-   * `POST /iam/auth/forgot-password`. Responde **202 y siempre el mismo mensaje**, exista o no la
-   * cuenta. No hay ningún caso en el que esta llamada revele si un correo está registrado, y la
-   * pantalla no debe intentar deducirlo del resultado.
+   * `POST /iam/auth/logout`. Cierra **esta** sesión del lado del servidor.
    *
-   * Tiene un límite de 5 por minuto, más estricto que el del login, porque cada solicitud válida
-   * dispara un correo hacia la bandeja de un tercero.
+   * No lleva cuerpo: el servidor identifica la sesión por el token. Distinto de
+   * `logout-all`, que cierra las de todos los dispositivos.
    */
-  requestPasswordReset(request: PasswordResetRequest): Observable<PasswordResetRequested> {
+  logout(): Observable<unknown> {
+    return this.http.post(this.url('/iam/auth/logout'), {});
+  }
+
+  /**
+   * `POST /iam/auth/forgot-password`. El identificador es correo **o**
+   * documento, igual que en el login.
+   */
+  forgotPassword(identifier: string): Observable<PasswordResetRequested> {
     return this.http.post<PasswordResetRequested>(this.url('/iam/auth/forgot-password'), {
-      identifier: request.identifier,
+      identifier,
     });
   }
 
-  /** `POST /iam/auth/reset-password`. Fija la contraseña nueva y cierra las sesiones abiertas. */
+  /** `POST /iam/auth/reset-password`. Consume el token que llegó por correo. */
   resetPassword(reset: PasswordReset): Observable<PasswordResetResult> {
     return this.http.post<PasswordResetResult>(this.url('/iam/auth/reset-password'), {
       token: reset.token,

@@ -62,6 +62,42 @@ describe('decodeAccessToken', () => {
     expect(claims?.exp).toBe(1800000000);
   });
 
+  /**
+   * El backend declara `sid` y `tenants` opcionales en `jwt-payload.interface.ts`.
+   * Exigirlos seria ser mas estricto que el contrato, y un token valido sin
+   * `sid` sacaria al login a alguien con sesion abierta.
+   */
+  it('acepta un token sin `sid`, que el contrato declara opcional', () => {
+    const claims = decodeAccessToken(makeToken({ sub: 'u-1', roles: ['USER'] }));
+
+    expect(claims).not.toBeNull();
+    expect(claims?.sub).toBe('u-1');
+    expect(claims?.sid).toBeUndefined();
+  });
+
+  it('lee `name` y `tenantNames` cuando el token los trae', () => {
+    const claims = decodeAccessToken(
+      makeToken({
+        sub: 'u-1',
+        sid: 's-1',
+        name: 'Ana Peña',
+        tenants: ['t-1'],
+        tenantNames: { 't-1': 'Hospital Central' },
+      }),
+    );
+
+    expect(claims?.name).toBe('Ana Peña');
+    expect(claims?.tenantNames?.['t-1']).toBe('Hospital Central');
+  });
+
+  it('descarta un `tenantNames` que no sea un mapa de textos', () => {
+    const claims = decodeAccessToken(
+      makeToken({ sub: 'u-1', tenantNames: ['no', 'es', 'un', 'mapa'] }),
+    );
+
+    expect(claims?.tenantNames).toBeUndefined();
+  });
+
   describe('devuelve null en vez de lanzar', () => {
     it('ante un token con partes de menos', () => {
       expect(decodeAccessToken('solo.dos')).toBeNull();
@@ -71,7 +107,7 @@ describe('decodeAccessToken', () => {
       expect(decodeAccessToken('cabecera.@@@no-es-base64@@@.firma')).toBeNull();
     });
 
-    it('ante un payload sin los claims obligatorios', () => {
+    it('ante un payload sin `sub`, que es lo único imprescindible', () => {
       expect(decodeAccessToken(makeToken({ roles: ['USER'] }))).toBeNull();
     });
 

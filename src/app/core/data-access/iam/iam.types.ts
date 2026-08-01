@@ -75,48 +75,51 @@ export interface ActivationResult {
 }
 
 /**
- * Solicitud de restablecimiento de contraseña (UC-01-13).
+ * Alta de un profesional por sí mismo.
  *
- * **No es la unión discriminada del login.** Acá el backend acepta un solo campo `identifier` sin
- * distinguir si es correo o documento, y tiene sentido que así sea: la respuesta es idéntica en
- * todos los casos, así que ramificar el contrato no cambiaría nada de lo que pasa después.
+ * A diferencia del paciente, acá el **correo es obligatorio** —es su
+ * identificador de acceso— y hacen falta las dos credenciales que lo habilitan:
+ * la matrícula y el número del colegio. Un profesional sin habilitación
+ * comprobable no es un profesional.
  */
-export interface PasswordResetRequest {
-  /** Correo o documento, el mismo con el que la persona entra. */
-  readonly identifier: string;
+export interface PractitionerRegistration {
+  readonly email: string;
+  readonly password: string;
+  readonly displayName: string;
+  readonly licenseNumber: string;
+  readonly credentialNumber: string;
+  readonly professionalTitle?: string;
+  readonly phone?: string;
+}
+
+export interface RegisteredPractitioner {
+  readonly userId: string;
+  readonly personId: string;
+  readonly practitionerProfileId: string;
+  readonly practitionerCode: string;
 }
 
 /**
- * Respuesta de la solicitud. **Nunca dice si la cuenta existe**: el mensaje es el mismo exista o
- * no, porque un «no encontramos ese correo» convertiría el formulario en un oráculo de qué
- * direcciones están registradas en una plataforma de salud. Se muestra tal cual viene.
+ * Resultado de pedir la recuperación.
+ *
+ * El backend devuelve **siempre lo mismo**, exista o no la cuenta: decir «ese
+ * correo no está registrado» permitiría averiguar quién tiene cuenta probando
+ * direcciones.
  */
 export interface PasswordResetRequested {
   readonly message: string;
 }
 
-/** Consumo del token que llegó por correo. */
+/** Fijar la contraseña nueva con el token que llegó por correo. */
 export interface PasswordReset {
   readonly token: string;
-  /** Mínimo 8 caracteres, tal como lo valida el backend. */
   readonly newPassword: string;
 }
 
 export interface PasswordResetResult {
   readonly userId: string;
-  /** Cambiar la clave cierra **todas** las sesiones abiertas: quien recupera su cuenta lo hace
-   *  porque perdió el control de la anterior. */
+  /** Sesiones que se cerraron al cambiar la contraseña. */
   readonly revokedSessions: number;
-}
-
-/**
- * Resultado de cerrar sesión.
- *
- * `revoked: false` no es un fallo: la sesión ya estaba cerrada —doble clic, o cerrada desde otro
- * dispositivo— y el resultado deseado ya se cumplía. La ruta es idempotente a propósito.
- */
-export interface LogoutResult {
-  readonly revoked: boolean;
 }
 
 /** Alta de usuario hecha por un administrador. */

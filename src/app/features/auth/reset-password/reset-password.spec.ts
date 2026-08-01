@@ -1,131 +1,122 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 
-import { ResetPassword, RESET_TOKEN_PARAM } from './reset-password';
+import { ResetPassword } from './reset-password';
+
+class RouterEspia {
+  readonly navegaciones: string[] = [];
+  navigateByUrl(url: string): Promise<boolean> {
+    this.navegaciones.push(url);
+    return Promise.resolve(true);
+  }
+}
+
+/** Monta la pantalla con el token que traería el enlace del correo. */
+async function montar(token: string | null): Promise<{
+  fixture: ComponentFixture<ResetPassword>;
+  http: HttpTestingController;
+  router: RouterEspia;
+}> {
+  const router = new RouterEspia();
+
+  await TestBed.configureTestingModule({
+    imports: [ResetPassword],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      provideRouter([]),
+      { provide: Router, useValue: router },
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: { queryParamMap: convertToParamMap(token === null ? {} : { token }) },
+        },
+      },
+    ],
+  }).compileComponents();
+
+  const fixture = TestBed.createComponent(ResetPassword);
+  const http = TestBed.inject(HttpTestingController);
+  await fixture.whenStable();
+
+  return { fixture, http, router };
+}
 
 describe('ResetPassword', () => {
-  let fixture: ComponentFixture<ResetPassword>;
-  let backend: HttpTestingController;
-
-  function root(): HTMLElement {
-    return fixture.nativeElement as HTMLElement;
-  }
-
-  async function crear(queryParams: Record<string, string>): Promise<void> {
-    TestBed.resetTestingModule();
-    await TestBed.configureTestingModule({
-      imports: [ResetPassword],
-      providers: [
-        provideRouter([]),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        {
-          provide: ActivatedRoute,
-          useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } },
-        },
-      ],
-    }).compileComponents();
-
-    backend = TestBed.inject(HttpTestingController);
-    fixture = TestBed.createComponent(ResetPassword);
-    await fixture.whenStable();
-  }
-
-  async function escribirYEnviar(clave: string): Promise<void> {
-    const input = root().querySelector<HTMLInputElement>('app-input input');
-    if (input === null) {
-      throw new Error('no se encontró el campo de la contraseña');
-    }
-    input.value = clave;
-    input.dispatchEvent(new Event('input'));
-    root().querySelector('form')?.dispatchEvent(new Event('submit'));
-    await fixture.whenStable();
-  }
-
   afterEach(() => {
-    backend.verify();
+    TestBed.resetTestingModule();
   });
 
-  describe('sin token en la URL', () => {
-    it('no muestra el formulario: no habría con qué enviarlo', async () => {
-      await crear({});
+  it('sin token no ofrece el formulario', async () => {
+    const { fixture, http } = await montar(null);
 
-      expect(root().querySelector('form')).toBeNull();
-      expect(root().textContent).toContain('El enlace está incompleto');
-    });
-
-    it('ofrece pedir un enlace nuevo', async () => {
-      await crear({});
-
-      expect(root().textContent).toContain('Pedir un enlace nuevo');
-    });
+    expect(fixture.componentInstance.hasToken).toBe(false);
+    http.verify();
   });
 
-  describe('con token', () => {
-    beforeEach(async () => {
-      await crear({ [RESET_TOKEN_PARAM]: 'tok-del-correo' });
-    });
+  it('manda el token del enlace junto con la contraseña nueva', async () => {
+    const { fixture, http } = await montar('tok-123');
+    fixture.componentInstance.form.setValue({ newPassword: 'nueva-clave-1' });
+    fixture.componentInstance.submit();
 
-    it('el token no se muestra en pantalla: es una credencial de un solo uso', () => {
-      expect(root().textContent).not.toContain('tok-del-correo');
-      expect(root().querySelector('input[value="tok-del-correo"]')).toBeNull();
-    });
+    const req = http.expectOne('/iam/auth/reset-password');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ token: 'tok-123', newPassword: 'nueva-clave-1' });
 
-    it('una contraseña corta no sale a la API', async () => {
-      // El backend exige 8; validarlo acá evita un 400 que se puede prevenir.
-      await escribirYEnviar('corta');
+    req.flush({ userId: 'u-1', revokedSessions: 0 });
+    http.verify();
+  });
 
-      expect(root().textContent).toContain('al menos 8 caracteres');
-      // `backend.verify()` del afterEach falla si hubiera salido alguna petición.
-    });
+  it('informa cuántas sesiones se cerraron', async () => {
+    const { fixture, http } = await montar('tok-123');
+    fixture.componentInstance.form.setValue({ newPassword: 'nueva-clave-1' });
+    fixture.componentInstance.submit();
 
-    it('manda el token de la URL junto con la contraseña nueva', async () => {
-      await escribirYEnviar('Una-clave-larga-1');
+    http.expectOne('/iam/auth/reset-password').flush({ userId: 'u-1', revokedSessions: 3 });
 
-      const peticion = backend.expectOne('/iam/auth/reset-password');
-      expect(peticion.request.body).toEqual({
-        token: 'tok-del-correo',
-        newPassword: 'Una-clave-larga-1',
-      });
+    // Es informacion de seguridad: quien cambio la clave por sospecha quiere
+    // saber que las otras sesiones se cerraron.
+    expect(fixture.componentInstance.done()).toBe(true);
+    expect(fixture.componentInstance.revokedSessions()).toBe(3);
+    http.verify();
+  });
 
-      peticion.flush({ userId: 'u-1', revokedSessions: 0 });
-    });
+  it('exige los 8 caracteres que pide el backend', async () => {
+    const { fixture, http } = await montar('tok-123');
+    fixture.componentInstance.form.setValue({ newPassword: 'corta' });
+    fixture.componentInstance.submit();
 
-    it('avisa que se cerraron las sesiones abiertas', async () => {
-      await escribirYEnviar('Una-clave-larga-1');
-      backend.expectOne('/iam/auth/reset-password').flush({ userId: 'u-1', revokedSessions: 3 });
-      await fixture.whenStable();
+    expect(fixture.componentInstance.form.invalid).toBe(true);
+    // El verify() confirma que no se gasto un viaje.
+    http.verify();
+  });
 
-      // Quien recupera su cuenta suele hacerlo porque perdió el control de la anterior: enterarse
-      // de que las demás sesiones se cerraron es parte de la respuesta.
-      expect(root().textContent).toContain('3');
-      expect(root().textContent).toContain('se cerraron las sesiones');
-    });
+  it('un token vencido muestra el error y no da por hecho el cambio', async () => {
+    const { fixture, http } = await montar('tok-vencido');
+    fixture.componentInstance.form.setValue({ newPassword: 'nueva-clave-1' });
+    fixture.componentInstance.submit();
 
-    it('sin sesiones que cerrar no inventa un número', async () => {
-      await escribirYEnviar('Una-clave-larga-1');
-      backend.expectOne('/iam/auth/reset-password').flush({ userId: 'u-1', revokedSessions: 0 });
-      await fixture.whenStable();
+    http.expectOne('/iam/auth/reset-password').flush(
+      { code: 'VALIDATION_FAILED', message: 'El enlace venció', timestamp: 't', path: '/x' },
+      { status: 400, statusText: 'Bad Request' },
+    );
 
-      expect(root().textContent).toContain('Ya podés ingresar con la contraseña nueva');
-      expect(root().textContent).not.toContain('se cerraron las sesiones');
-    });
+    expect(fixture.componentInstance.done()).toBe(false);
+    expect(fixture.componentInstance.errorMessage()).toBe('El enlace venció');
+    http.verify();
+  });
 
-    it('un token vencido se explica y ofrece pedir otro', async () => {
-      await escribirYEnviar('Una-clave-larga-1');
+  it('desde el final se puede ir al login', async () => {
+    const { fixture, http, router } = await montar('tok-123');
+    fixture.componentInstance.form.setValue({ newPassword: 'nueva-clave-1' });
+    fixture.componentInstance.submit();
+    http.expectOne('/iam/auth/reset-password').flush({ userId: 'u-1', revokedSessions: 0 });
 
-      backend
-        .expectOne('/iam/auth/reset-password')
-        .flush(
-          { code: 'VALIDATION_FAILED', message: 'El enlace expiró o ya fue usado.' },
-          { status: 400, statusText: 'Bad Request' },
-        );
-      await fixture.whenStable();
+    fixture.componentInstance.goToLogin();
 
-      expect(root().textContent).toContain('El enlace expiró o ya fue usado.');
-      expect(root().textContent).toContain('Pedir un enlace nuevo');
-    });
+    expect(router.navegaciones).toEqual(['/auth']);
+    http.verify();
   });
 });

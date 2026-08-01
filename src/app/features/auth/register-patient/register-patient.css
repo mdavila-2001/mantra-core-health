@@ -1,4 +1,4 @@
-.nueva-clave {
+.registro {
   display: flex;
   min-height: 100dvh;
   align-items: center;
@@ -7,48 +7,49 @@
   background: var(--bg-surface-alt, var(--bg-surface));
 }
 
-.nueva-clave__card {
+.registro__card {
   width: 100%;
-  max-width: 27rem;
+  max-width: 28rem;
   padding: var(--sp-6);
   border: 1px solid var(--border-default);
   border-radius: var(--r-lg);
   background: var(--bg-surface);
 }
 
-.nueva-clave__title {
+.registro__title {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-h3, var(--fs-h2));
   color: var(--brand-primary);
 }
 
-.nueva-clave__text {
+.registro__subtitle {
   margin: var(--sp-2) 0 var(--sp-6);
   color: var(--text-secondary);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
 }
 
-.nueva-clave__alert {
+.registro__alert {
   display: block;
   margin-bottom: var(--sp-4);
 }
 
-.nueva-clave__card form {
+.registro__card form {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
 }
 
-.nueva-clave__submit {
+.registro__submit {
   margin-top: var(--sp-2);
   width: 100%;
 }
 
-.nueva-clave__pie {
+.registro__pie {
   margin: var(--sp-6) 0 0;
   text-align: center;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }

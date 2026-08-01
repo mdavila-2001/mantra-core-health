@@ -5,7 +5,7 @@ import {
   PublicClient,
   type PublicProjection,
 } from '../../core/data-access/public/public.client';
-import { viewStateFromHttpError } from '../../core/http/api-error';
+import { errorToViewState } from '../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready, stale } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Badge } from '../../shared/components/atoms/badge/badge';
@@ -54,7 +54,7 @@ export class Dashboard {
   private readonly auth = inject(AuthService);
   private readonly publicClient = inject(PublicClient);
 
-  protected readonly user = this.auth.user;
+  protected readonly userId = this.auth.userId;
   protected readonly roles = this.auth.roles;
   protected readonly activeTenantId = this.auth.activeTenantId;
 
@@ -66,10 +66,7 @@ export class Dashboard {
    */
   protected readonly tenantName = computed(() => {
     const id = this.activeTenantId();
-    if (id === null) {
-      return null;
-    }
-    return this.auth.tenantOptions().find((tenant) => tenant.id === id)?.name ?? id;
+    return id === null ? null : this.auth.tenantName(id);
   });
 
   protected readonly directory = signal<ViewState<PublicProjection>>(loading());
@@ -92,7 +89,7 @@ export class Dashboard {
   /**
    * Pide el directorio y traduce el resultado a un estado.
    *
-   * El fallo pasa por `viewStateFromHttpError`, así que un servidor caído se ve como S8 con su
+   * El fallo pasa por `errorToViewState`, así que un servidor caído se ve como S8 con su
    * botón de reintentar y un 500 como S9 con el identificador de la petición — sin que esta
    * pantalla escriba una sola línea sobre errores.
    */
@@ -101,8 +98,7 @@ export class Dashboard {
 
     this.publicClient.searchDirectory().subscribe({
       next: (projection) => this.directory.set(toState(projection)),
-      error: (error: unknown) =>
-        this.directory.set(viewStateFromHttpError<PublicProjection>(error)),
+      error: (error: unknown) => this.directory.set(errorToViewState<PublicProjection>(error)),
     });
   }
 }

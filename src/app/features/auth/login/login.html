@@ -1,53 +1,91 @@
-<app-auth-layout title="Ingresá a tu cuenta" subtitle="Red de salud REDESA">
-  <!-- `novalidate`: la validación la hace Angular y la muestra el `app-form-field`. Las burbujas
-       del navegador no se pueden estilar, no las anuncia ningún lector de pantalla y desaparecen
-       solas mientras la persona todavía las está leyendo. -->
-  <form class="login__form" novalidate [formGroup]="form" (ngSubmit)="submit()">
-    @if (failureMessages().length > 0) {
-      <app-alert tone="error" title="No se pudo iniciar sesión">
-        <ul class="login__issues">
-          @for (message of failureMessages(); track message) {
-            <li>{{ message }}</li>
-          }
-        </ul>
-      </app-alert>
-    }
+<div class="login">
+  <!-- Columna de marca. `aria-hidden` porque es decorativa: lo que importa está
+       en el formulario, y anunciarla duplicaría el mensaje. -->
+  <aside class="login__brand" aria-hidden="true">
+    <div class="login__brand-content">
+      <p class="login__wordmark">REDSAT</p>
+      <h2 class="login__claim">Tu salud,<br />conectada</h2>
+      <p class="login__tagline">La red de salud más grande de Bolivia, en un solo lugar.</p>
+    </div>
+  </aside>
 
-    <app-form-field label="Ingresá con">
-      <app-radio-group formControlName="identifierKind" name="login-identifier-kind">
-        <app-radio value="email" label="Correo electrónico" />
-        <app-radio value="nationalId" label="Documento de identidad" />
-      </app-radio-group>
-    </app-form-field>
+  <main class="login__panel">
+    <div class="login__form-wrap">
+      <h1 class="login__title">Iniciar sesión</h1>
+      <p class="login__subtitle">Ingresá con tu correo o tu documento de identidad.</p>
 
-    <app-form-field [label]="identifierLabel()" [hint]="identifierHint()" [required]="true">
-      <app-input
-        formControlName="identifier"
-        [type]="identifierType()"
-        [placeholder]="usesEmail() ? 'nombre@organizacion.bo' : '0000000'"
-      />
-    </app-form-field>
+      @if (errorMessage(); as mensaje) {
+        <app-alert tone="error" class="login__alert">{{ mensaje }}</app-alert>
+      }
 
-    <app-form-field label="Contraseña" [required]="true">
-      <app-input formControlName="password" type="password" placeholder="Tu contraseña" />
-    </app-form-field>
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <app-form-field
+          label="Correo o documento"
+          [required]="true"
+          [errorMessage]="
+            form.controls.identifier.touched && form.controls.identifier.invalid
+              ? 'Ingresá tu correo o tu documento.'
+              : ''
+          "
+        >
+          <!-- `username` sirve para correo y para documento: es el campo con el
+               que se entra, sea cual sea su forma. -->
+          <app-input
+            formControlName="identifier"
+            type="text"
+            autocomplete="username"
+            placeholder="correo@ejemplo.com o 1234567"
+          />
+        </app-form-field>
 
-    <button
-      app-button
-      type="submit"
-      variant="primary"
-      size="lg"
-      class="login__submit"
-      [isLoading]="isSubmitting()"
-    >
-      Ingresar
-    </button>
-  </form>
+        <app-form-field
+          label="Contraseña"
+          [required]="true"
+          [errorMessage]="
+            form.controls.password.touched && form.controls.password.invalid
+              ? 'Ingresá tu contraseña.'
+              : ''
+          "
+        >
+          <app-input
+            formControlName="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Tu contraseña"
+          />
+        </app-form-field>
 
-  <nav auth-footer class="login__footer" aria-label="Ayuda para ingresar">
-    <!-- El enlace que los diseños piden. Apunta a algo real desde que la API sumó
-         `POST /iam/auth/forgot-password`; antes de eso no existía y acá había un texto que
-         mandaba a hablar con el administrador. -->
-    <a app-link [routerLink]="forgotPasswordPath">¿Olvidaste tu contraseña?</a>
-  </nav>
-</app-auth-layout>
+        <app-form-field
+          label="Código de verificación (opcional)"
+          hint="Solo si tenés segundo factor activado."
+        >
+          <app-input
+            formControlName="mfaCode"
+            type="text"
+            autocomplete="one-time-code"
+            placeholder="123456"
+          />
+        </app-form-field>
+
+        <button
+          app-button
+          type="submit"
+          variant="primary"
+          size="lg"
+          class="login__submit"
+          [isLoading]="isSubmitting()"
+        >
+          Entrar
+        </button>
+      </form>
+
+      <p class="login__pie">
+        <a app-link routerLink="/auth/recuperar">¿Olvidaste tu contraseña?</a>
+      </p>
+
+      <p class="login__pie">
+        ¿No tenés cuenta? <a app-link routerLink="/auth/registro">Creá una con tu documento</a>
+      </p>
+    </div>
+  </main>
+</div>
