@@ -22,6 +22,7 @@ import {
  */
 @Component({
   selector: 'app-form-field',
+  standalone: true,
   templateUrl: './form-field.html',
   styleUrl: './form-field.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

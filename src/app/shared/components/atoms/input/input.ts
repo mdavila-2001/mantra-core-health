@@ -20,6 +20,7 @@ import type { InputType } from './input.types';
 
 @Component({
   selector: 'app-input',
+  standalone: true,
   templateUrl: './input.html',
   styleUrl: './input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

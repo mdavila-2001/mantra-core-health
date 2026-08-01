@@ -1,0 +1,62 @@
+@if (hasBreadcrumbs()) {
+  <app-breadcrumb [items]="breadcrumbs()" />
+}
+
+<div class="page-header__row">
+  <div class="page-header__heading">
+    <!-- El único h1 de la página: lo garantiza este organismo y lo verifica su spec. -->
+    <h1 class="page-header__title">{{ title() }}</h1>
+    @if (subtitle()) {
+      <p class="page-header__subtitle">{{ subtitle() }}</p>
+    }
+    <div class="page-header__meta">
+      <ng-content select="[page-meta]" />
+    </div>
+  </div>
+
+  <div class="page-header__actions">
+    <!-- Secundarias como botones: visibles desde tablet, o siempre si son ≤ 2. -->
+    @if (hasSecondaryActions()) {
+      <div
+        class="page-header__secondary"
+        [class.page-header__secondary--collapsible]="collapsesOnMobile()"
+      >
+        @for (action of secondaryActions(); track action.code) {
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            [disabled]="action.disabled ?? false"
+            (clicked)="select(action)"
+          >
+            {{ action.label }}
+          </button>
+        }
+      </div>
+
+      <!-- Las mismas secundarias como menú: solo en móvil y solo si son > 2. -->
+      @if (collapsesOnMobile()) {
+        <div class="page-header__overflow">
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            [appMenuTrigger]="menuAcciones"
+          >
+            Más acciones
+          </button>
+          <app-menu #menuAcciones>
+            @for (action of secondaryActions(); track action.code) {
+              <app-menu-item [disabled]="action.disabled ?? false" (selected)="select(action)">
+                {{ action.label }}
+              </app-menu-item>
+            }
+          </app-menu>
+        </div>
+      }
+    }
+
+    <!-- La primaria, proyectada: presente en TODOS los anchos, jamás en un menú. -->
+    <ng-content select="[page-actions]" />
+  </div>
+</div>

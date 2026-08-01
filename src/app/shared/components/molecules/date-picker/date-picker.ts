@@ -92,6 +92,7 @@ function startOfMonth(date: Date): Date {
  */
 @Component({
   selector: 'app-date-picker',
+  standalone: true,
   imports: [AppButton],
   templateUrl: './date-picker.html',
   styleUrl: './date-picker.css',

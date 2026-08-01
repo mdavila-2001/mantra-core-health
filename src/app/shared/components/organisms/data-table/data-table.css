@@ -1,0 +1,150 @@
+/* ============================================================================
+    Data table — MOBILE-FIRST (§0.1). En la base (teléfono) las columnas de
+    menor prioridad se pliegan a la fila de detalle; desde tablet vuelven a ser
+    columnas. **No se ocultan**: el M34 prohíbe esconder información clínica,
+    así que se reordenan a un toque de distancia.
+    ========================================================================== */
+
+:host {
+    display: block;
+    font-family: var(--font-body);
+}
+
+/* Una tabla ancha se desplaza dentro de su caja, no rompe la página. */
+.data-table__scroll {
+    overflow-x: auto;
+}
+
+.data-table__table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+}
+
+.data-table__cell {
+    padding: var(--sp-3);
+    text-align: start;
+    border-block-end: 1px solid var(--border-default);
+    vertical-align: top;
+}
+
+.data-table__cell--center {
+    text-align: center;
+}
+
+/* Cifras a la derecha y tabulares: así se comparan de un vistazo. */
+.data-table__cell--end {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+}
+
+thead .data-table__cell {
+    font-size: var(--fs-caption);
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.data-table__row:hover {
+    background: var(--bg-inset);
+}
+
+.data-table__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    padding: 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    cursor: pointer;
+}
+
+.data-table__sort-icon {
+    color: var(--text-muted);
+}
+
+.data-table__select-cell,
+.data-table__detail-toggle-cell {
+    inline-size: var(--sp-12);
+    padding: var(--sp-2) var(--sp-3);
+    border-block-end: 1px solid var(--border-default);
+}
+
+.data-table__detail-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* área táctil de 44 px aunque el triángulo sea chico */
+    inline-size: var(--sp-11, 44px);
+    block-size: var(--sp-11, 44px);
+    border: none;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.data-table__detail-row td {
+    padding: 0 var(--sp-3) var(--sp-3);
+    background: var(--bg-inset);
+    border-block-end: 1px solid var(--border-default);
+}
+
+.data-table__detail {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+    margin: 0;
+}
+
+.data-table__detail-item {
+    display: flex;
+    gap: var(--sp-2);
+}
+
+.data-table__detail dt {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.data-table__detail dd {
+    margin: 0;
+}
+
+.data-table__cursor {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    margin-block-start: var(--sp-4);
+}
+
+/* Base móvil: las secundarias no son columnas, viven en el detalle. */
+.data-table__secondary {
+    display: none;
+}
+
+/* ≥ tablet: entran como columnas y el botón de detalle deja de hacer falta. */
+@media (min-width: 780px) {
+    .data-table__secondary {
+        display: table-cell;
+    }
+
+    .data-table__detail-toggle-cell {
+        display: none;
+    }
+
+    .data-table__detail-row {
+        display: none;
+    }
+
+    .data-table__detail {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

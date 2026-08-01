@@ -31,6 +31,7 @@ const NO_SELECTION = '';
  */
 @Component({
   selector: 'app-select',
+  standalone: true,
   templateUrl: './select.html',
   styleUrl: './select.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

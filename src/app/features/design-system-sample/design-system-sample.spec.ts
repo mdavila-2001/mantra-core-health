@@ -30,10 +30,10 @@ describe('DesignSystemSample', () => {
     await fixture.whenStable();
   });
 
-  it('expone las 25 secciones del sistema, numeradas y en orden', () => {
+  it('expone las 26 secciones del sistema, numeradas y en orden', () => {
     const titulos = secciones();
 
-    expect(titulos).toHaveLength(25);
+    expect(titulos).toHaveLength(26);
     titulos.forEach((titulo, indice) => {
       expect(titulo).toMatch(new RegExp(`^${String(indice + 1).padStart(2, '0')} · `));
     });

@@ -27,6 +27,7 @@ import { createValueAccessorBridge } from '../../form-control/value-accessor';
  */
 @Component({
   selector: 'app-checkbox',
+  standalone: true,
   templateUrl: './checkbox.html',
   styleUrl: './checkbox.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +53,20 @@ export class Checkbox implements ControlValueAccessor {
   readonly disabled = input<boolean>(false);
   readonly label = input<string>('');
   readonly hasError = input<boolean>(false);
+
+  /**
+   * Estado parcial: ni tildada ni vacía. Lo necesita el «seleccionar todo» de
+   * una tabla cuando solo algunas filas están marcadas. Es una propiedad del
+   * DOM, no un atributo: sin bindearla, la casilla miente sobre su estado.
+   */
+  readonly indeterminate = input<boolean>(false);
+
+  /**
+   * Oculta el texto de la etiqueta a la vista **sin quitarlo**: sigue siendo
+   * el nombre accesible. Es lo que necesita una casilla dentro de una celda,
+   * donde el rótulo lo da el encabezado de la columna.
+   */
+  readonly hideLabel = input<boolean>(false);
 
   /**
    * Deshabilitada por la plantilla **o** por el formulario: `disabled` es un

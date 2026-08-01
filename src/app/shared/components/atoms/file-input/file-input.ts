@@ -30,6 +30,7 @@ export interface RejectedFile {
  */
 @Component({
   selector: 'app-file-input',
+  standalone: true,
   templateUrl: './file-input.html',
   styleUrl: './file-input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

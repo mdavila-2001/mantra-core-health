@@ -12,6 +12,7 @@ import {
  */
 @Component({
   selector: 'app-switch',
+  standalone: true,
   templateUrl: './switch.html',
   styleUrl: './switch.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

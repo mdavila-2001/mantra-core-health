@@ -69,6 +69,7 @@ import {
   DEMO_TOASTS,
   PERSISTENT_DEMO_TOAST,
 } from '../../core/dev/toast-samples';
+import { OrganismsGallery } from './organisms-gallery/organisms-gallery';
 import { ViewStateGallery } from './view-state-gallery/view-state-gallery';
 
 const DEMO_LOADING_MS = 1500;
@@ -115,6 +116,7 @@ const DEMO_UPLOAD_STEP = 12;
     Accordion,
     AccordionPanel,
     ViewStateGallery,
+    OrganismsGallery,
     ReactiveFormsModule,
     JsonPipe,
   ],

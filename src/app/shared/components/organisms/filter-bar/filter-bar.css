@@ -1,0 +1,50 @@
+/* ============================================================================
+    Filter bar — MOBILE-FIRST (§0.1): los controles se apilan en teléfono y
+    pasan a una fila desde tablet.
+    ========================================================================== */
+
+:host {
+    display: block;
+    margin-block-end: var(--sp-4);
+    font-family: var(--font-body);
+}
+
+.filter-bar__controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+}
+
+.filter-bar__filter {
+    min-inline-size: 0;
+}
+
+.filter-bar__unavailable {
+    margin: var(--sp-1) 0 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--st-warning-fg);
+}
+
+.filter-bar__active {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-block-start: var(--sp-3);
+}
+
+@media (min-width: 780px) {
+    .filter-bar__controls {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .filter-bar__search {
+        flex: 1 1 260px;
+    }
+
+    .filter-bar__filter {
+        flex: 0 1 200px;
+    }
+}

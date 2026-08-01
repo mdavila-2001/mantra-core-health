@@ -12,6 +12,7 @@ import { RadioGroup } from '../radio-group/radio-group';
  */
 @Component({
   selector: 'app-radio',
+  standalone: true,
   templateUrl: './radio.html',
   styleUrl: './radio.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
