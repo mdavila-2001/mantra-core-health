@@ -1,28 +1,50 @@
-# `data-access/terminology` — pendiente, a la espera del endpoint
+# `data-access/terminology`
 
-Esta carpeta queda **vacía a propósito**. La tarea J5 pedía crear el cliente de
-`GET /terminology/value-sets/:id/$expand` **sólo si el endpoint ya existía**, y
-verificado contra la API el 2026-07-31: **no existe todavía**.
+Cliente de lectura del catálogo de terminología. Cubre una sola operación, que es
+la única que esta aplicación necesita y puede ejercer:
 
-Lo que sí hay en el backend es otra cosa, y no sirve como reemplazo:
-
-```
-POST /terminology/ValueSet/:id/$expand    (terminology-fhir.controller.ts:66)
+```text
+GET /terminology/value-sets/:id/$expand
 ```
 
-Es la operación con nombre al estilo FHIR (UC-03-08): distinto verbo, distinta
-ruta y distinto contrato. Usarla en su lugar sería inventar una equivalencia que
-nadie declaró.
+Devuelve las opciones de un conjunto de valores —el `conceptId` que se manda de
+vuelta, más `code` y `display` para pintarlas—, paginadas por cursor.
 
-El endpoint de lectura paginado por cursor es la tarea **P3 de Pablo**
-(tarjeta 6). Cuando lo entregue:
+## Por qué sólo lectura
 
-1. crear `terminology.types.ts` y `terminology.client.ts` siguiendo el patrón de
-   los otros clientes de `data-access/`;
-2. paginar por cursor, no por número de página — es el contrato del M30
-   («cursor pagination with deterministic tie-breakers»);
-3. los códigos son valores estables de la API y las etiquetas son metadatos de
-   presentación: no ramificar por etiqueta.
+Las operaciones que **materializan** la expansión (`POST ValueSet/:id/$expand`) y
+el alta de conjuntos exigen rol `SECURITY_ADMIN`. Ningún usuario de esta
+aplicación lo tiene, así que envolverlas sería publicar una API que nadie puede
+llamar. El `GET`, en cambio, no pide rol de administración a propósito: un campo
+de formulario necesita su lista de opciones válidas.
 
-**No crear el cliente antes de que el endpoint exista.** El contrato lo fija la
-API, no la suposición del frontend.
+## Tres cosas que conviene no descubrir a los golpes
+
+**El cursor es opaco.** Se reenvía tal cual en `?cursor=` y no se interpreta. La
+API no publica su forma justamente para poder cambiar las columnas de orden sin
+romper a ningún cliente. Un cursor inventado a mano vuelve con 400.
+
+**No hay total.** La respuesta trae `count` (lo de esta página) y `nextCursor`,
+no un total de la expansión: contarlo exigiría una segunda pasada sobre la tabla
+en cada página. Para «¿hay más?», mirar `nextCursor`; para la lista entera,
+`readAllOptions`.
+
+**No ramificar por `display`.** El código y el `conceptId` son valores estables
+de la API; la etiqueta es metadato de presentación y puede cambiar sin aviso.
+
+## Uso
+
+```ts
+private readonly terminology = inject(TerminologyClient);
+
+// Lista completa, para un desplegable.
+readonly generos = toSignal(this.terminology.readAllOptions(VS_GENERO), {
+  initialValue: [],
+});
+
+// Página a página, si la lista es larga y se pagina en pantalla.
+this.terminology.readExpansion(VS_GENERO, { limit: 50 }).subscribe((pagina) => {
+  this.opciones.set(pagina.items);
+  this.cursor.set(pagina.nextCursor);
+});
+```

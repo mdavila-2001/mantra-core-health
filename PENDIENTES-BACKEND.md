@@ -1,141 +1,189 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-01 · Contrastado contra la cola de Pablo (`TAREAS-PABLO.md`, P0–P6) y
-verificado ejecutando sobre `mantra-core-health-redesa-api` en `dev` (`69526ce`).
+**Actualizado:** 2026-08-01 (madrugada) · Verificado ejecutando contra la API viva en
+`localhost:3000` —ya reconstruida— y con 17 comprobaciones de punta a punta con Playwright, del
+navegador al proxy y del proxy a la API.
 
-Existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber que algo
-dejó de ser un problema es tan útil como saber que lo sigue siendo.
+Existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber que algo dejó
+de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
 ## Resuelto — ya no bloquea
 
-**El esquema de la base.** Era el bloqueo más grande del proyecto: `docker compose up` sobre
-volúmenes vacíos dejaba Postgres corriendo **sin las 1 178 tablas del modelo**. El commit `41206d2`
-versionó el DDL: `apply_all.sql` + 350 archivos SQL + 23 de NoSQL.
+**El esquema de la base.** Era el bloqueo más grande del proyecto. El commit `41206d2` versionó el
+DDL: `apply_all.sql` + 350 archivos SQL + 23 de NoSQL.
 
-**`dev` volvió a compilar.** Tres commits habían entrado con archivos nuevos sin `git add`
-—`register-organization.dto.ts`, `directory.concepts.ts` y el `.swcrc`—. Verificado hoy:
-**`yarn typecheck` da 0 errores y `yarn build` genera el `dist/` completo.**
+**`dev` volvió a compilar.** Tres commits habían entrado con archivos nuevos sin `git add`.
 
-**El compose ya pasa `ORM_SCHEMA_SYNC`** a los contenedores con default `dry-run`. Antes la API
-dockerizada arrancaba en `safe` y aplicaba DDL por su cuenta.
+**El compose ya pasa `ORM_SCHEMA_SYNC`** a los contenedores con default `dry-run`.
 
-**Auto-registro de profesionales y de organización**, que el diseño del login ofrecía sin endpoint
-detrás. Y el **tipo de tenant obligatorio con campos por tipo**, con la validación cruzada que
-rechaza el bloque que no corresponde — justo lo que hace falta para un formulario condicional.
+**Auto-registro de profesionales y de organización**, y el tipo de tenant obligatorio con validación
+cruzada — justo lo que hace falta para un formulario condicional.
 
----
+**El catálogo de errores (P2).** Ver abajo: estaba, y desbloqueó la tarjeta 17 entera menos un punto.
 
-# Lo que falta, por tarea de su cola
+**La recuperación de contraseña.** Llegó, las dos pantallas están escritas y el flujo entero se
+verificó contra la base real: pedir el enlace, leerlo, cambiar la clave, entrar con la nueva, y que
+la vieja y el token usado dejen de servir.
 
-## P2 · Catálogo de formas reales de error — **lo único que bloquea**
-
-Sin entregar. Es lo que impide escribir el interceptor de errores del frontend (tarjeta 17), que
-traduce las respuestas de la API a los nueve estados de UX del M34.
-
-Su propia tarea ya enumera los nueve casos a capturar, así que no hace falta decidir nada: 400 por
-campo no declarado, 400 por validación, 401 por contraseña incorrecta, 401 por token ausente, 403
-por rol insuficiente, **403 del `VerifiedIdentityGuard`**, 404, 409 por email duplicado y 429 por
-throttle.
-
-El sexto es el que más importa, y su propia tarea lo marca en mayúsculas: **los dos 403 son estados
-distintos para la persona**. Uno es un muro y el otro es una puerta —«verificá tu identidad», con
-ruta al flujo de verificación—. Para distinguirlos hace falta saber **qué campo exacto** los separa
-en el cuerpo de la respuesta.
-
-No se puede adelantar sin inventar contratos, que es lo que el proyecto prohíbe. Es capturar, no
-programar.
-
-## P3 · Endpoint de lectura de value sets (tarjeta 6) — **no está el que se pidió**
-
-La tarea pedía `GET /terminology/value-sets/:id/$expand`, autenticado sin rol admin y paginado por
-cursor. Verificado hoy sobre el controlador: **`terminology/value-sets` sigue teniendo sólo un
-`@Post()`**. Ese GET no existe.
-
-Lo que sí llegó es otra cosa: **`GET /terminology/concepts`**, una búsqueda de conceptos que
-devuelve `conceptId`, `code`, `display`, `definition`, `selectable` y `codeSystemVersionId`, con
-`count` y `limit`.
-
-Puede que alcance para llenar un `<select>`, pero **no es lo mismo** y hay dos diferencias que
-importan: pagina por `limit`/`count` y no por cursor —el contrato del M30 pide cursor con desempate
-determinista—, y no está claro cómo se acota a **un value set concreto**, que es lo que un campo de
-formulario necesita.
-
-**Con una línea de confirmación alcanza:** ¿el frontend debe usar `GET /terminology/concepts`, o
-falta todavía el `$expand` por value set? Según la respuesta se escribe el cliente que hoy está
-como carpeta con README (`core/data-access/terminology/`).
-
-## P1 · Bootstrap del primer `SECURITY_ADMIN` (tarjeta 5) — funciona, pero no es lo que se pidió
-
-**Lo entregado funciona**: `yarn postman:bootstrap` (`tools/postman/bootstrap-admin.mjs`) siembra el
-primer administrador, es idempotente y reutiliza `IamUsersService.createUser`, así que la credencial
-se hashea con argon2id igual que por API. Requiere `yarn build` antes, porque importa desde `dist/`.
-
-Pero la tarea pedía otra forma, y las diferencias tienen consecuencias:
-
-| Se pidió | Se entregó |
-| --- | --- |
-| `BootstrapAdminSeedService` en `src/common/seed/`, con `OnApplicationBootstrap` | Script suelto en `tools/postman/` |
-| Activado por `BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` | Verificado: **no están en `.env.example`** |
-| Negarse en `NODE_ENV=production` salvo flag explícito | Sin verificar |
-
-Un script explícito puede ser incluso mejor que un seed que corre solo en cada arranque —se sabe
-cuándo pasa—, así que **no es un reclamo**: es que la tarjeta 5 no debería darse por cerrada sin
-decidir si esta forma reemplaza a la pedida, y sin dejar las variables documentadas para el resto
-del equipo.
-
-**Y falta el handoff:** la tarea decía «al cerrar, generá un token provisional y pasáselo a Justin
-por el canal — lo necesita para su interceptor (J3)». Ese token **nunca llegó**. J3 se terminó igual
-—se verificó entero con `HttpTestingController`—, pero la pasada real contra el stack sigue
-pendiente por eso.
-
-## P4 · Propuesta de layout de repos (tarjeta 1) — se ejecutó en vez de proponerse
-
-La tarea decía, textual: *«tu parte es preparar la propuesta»*, y su regla dura número 1 era **no
-tocar los mounts del compose ni el layout de `database/`** porque era una decisión con Marcelo.
-
-Lo que pasó es que el commit `41206d2` **versionó el DDL dentro del repo de la API**, que es
-ejecutar la opción (b) de las tres que había que proponer.
-
-El resultado es bueno y desbloqueó el proyecto entero, así que esto **no es un reproche**. Pero
-conviene que quede dicho, porque la decisión era de Marcelo y ahora está tomada de hecho: si el
-`SQL/` canónico del workspace cambia, hay que acordar cómo se sincroniza esa copia, que era
-justamente el riesgo que la opción (b) tenía anotado.
-
-## P5 · Revisión de los PRs del frontend — permanente, todavía sin arrancar
-
-Pablo es el único par de ojos activo del frontend. Hay trabajo publicado esperando revisión.
-
-## P6 · Orquestación del alta administrativa — opcional, no urgente
-
-Sólo si su cola se vacía, y es **propuesta escrita**, no implementación.
+**Los cuatro pedidos al backend.** Los 403 indistinguibles, la falta de logout, el token sin nombre
+y los tenants sin nombre: los cuatro cerrados. Ver abajo.
 
 ---
 
-## Además, fuera de su cola: recuperación de contraseña
+## Lo que quedó resuelto en esta sesión, y cómo
 
-No existe. Verificado sobre el módulo `iam` completo: **cero coincidencias** de `forgot`, `reset` o
-`recover`; el controlador de autenticación expone nueve rutas y ninguna es de recuperación.
+### P2 · El catálogo de errores estaba entregado
 
-Importa porque **los diseños sí la tienen**: las tres variantes de login llevan «¿Olvidó su clave?»
-y hay tres pantallas completas en la carpeta de diseño. Si se maqueta el login tal cual, queda un
-enlace que no lleva a ningún lado.
+Esta lista decía que era «lo único que bloquea» la tarjeta 17. **No lo era.**
+`src/common/errors/error-codes.ts` declara un enum de **once códigos estables**, y
+`AllExceptionsFilter` homogeneiza *toda* respuesta de error en la misma envoltura. El comentario del
+enum lo dice con todas las letras:
 
-No es decisión del frontend. Hay tres caminos: implementarla, sacar el enlace de la maqueta, o
-dejarlo apuntando a un aviso del tipo «contactá a tu administrador».
+> «Son parte del contrato de la API: el cliente puede ramificar sobre `error.code` sin parsear
+> mensajes, que están pensados para humanos y pueden cambiar de redacción o idioma.»
+
+Verificado también contra la API corriendo, no sólo leyendo:
+
+```text
+POST /iam/auth/login  {}                    -> 400 VALIDATION_FAILED + details.violations[]
+POST /iam/auth/login  {credenciales malas}  -> 401 UNAUTHENTICATED
+```
+
+La tarjeta 17 está hecha (`core/http/api-error.ts`), con ocho de sus nueve casos cubiertos y
+probados contra esos cuerpos reales.
+
+**Una nota de forma, chica pero real:** `correlationId` está declarado `string` en
+`ErrorResponseBody`, y en las respuestas reales llega **como número** (`"correlationId": 9451`),
+porque `pino-http` numera las peticiones. El cliente lo normaliza a texto. Vale corregir el DTO o
+`req.id`, porque hoy el contrato publicado y lo que viaja no coinciden.
+
+### La recuperación de contraseña llegó
+
+`POST /iam/auth/forgot-password` y `POST /iam/auth/reset-password`, ambos públicos. El enlace
+«¿Olvidaste tu contraseña?» del login ya apunta a pantallas reales.
+
+**Está bien resuelto y conviene que quede dicho por qué:** `forgot-password` responde 202 y el mismo
+mensaje siempre, exista o no la cuenta. Eso es lo correcto —un «no encontramos ese correo»
+convertiría un formulario público en un oráculo de qué personas tienen cuenta en una plataforma de
+salud— y el frontend lo respeta: la pantalla muestra ese mensaje y no deduce nada del resultado.
+
+**Pero la API que corre hoy en `:3000` no lo tiene.** Es un contenedor de Docker anterior a ese
+código:
+
+```text
+POST localhost:3000/iam/auth/forgot-password -> 404 · "Cannot POST /iam/auth/forgot-password"
+```
+
+El controlador está en el fuente (`iam-auth.controller.ts:189`). Hace falta reconstruir la imagen.
 
 ---
 
-## Una nota sobre los `git add`
+## Lo que estaba abierto, y cómo quedó
 
-Dicho con respeto y por una sola razón práctica: **tres commits** entraron a `dev` con archivos
-nuevos sin agregar. Los tres se corrigieron rápido, pero mientras tanto `dev` no compilaba para
-nadie.
+### Los cuatro puntos abiertos se cerraron esta madrugada
 
-Son archivos **nuevos**: si no se hace `git add` explícito quedan sin rastrear, y ni `git status` ni
-el push avisan. La red que lo caza tarda veinte segundos y ya está en sus propias herramientas:
+Los cuatro estaban bien planteados y los cuatro eran del backend. Están hechos y verificados contra
+la API viva, no sólo compilando.
+
+**1. Los dos 403 ya se distinguen por un campo estable.** Era «lo único que bloquea», y con razón:
+para la persona son estados opuestos —rol insuficiente es un muro sin salida, identidad sin
+verificar es una puerta— y separarlos comparando el texto del mensaje ataba la interfaz a una
+redacción que el propio catálogo declara cambiable.
+
+`VerifiedIdentityGuard` ahora lanza `IDENTITY_VERIFICATION_REQUIRED`, un código nuevo del enum, y
+además trae `details.reason` para los tres subcasos (`identity-not-verified`, `no-person-linked`,
+`no-authenticated-user`). `RolesGuard` sigue con `FORBIDDEN`. Comprobado en la misma corrida, con
+un paciente real:
+
+```text
+GET  /profiles/patients/me/summary  -> 403 IDENTITY_VERIFICATION_REQUIRED (identity-not-verified)
+POST /terminology/value-sets        -> 403 FORBIDDEN
+```
+
+**Se puede borrar `FORBIDDEN_IDENTITY_HINTS`** de `core/http/api-error.ts`: era justamente la
+constante aislada que esperaba este código.
+
+**2. `POST /iam/auth/logout` existe.** Revoca la sesión del `sid` del token **y su refresh token**,
+que era lo que de verdad sobrevivía al cierre. Es idempotente —cerrar algo ya cerrado devuelve
+`{revoked: false}` y no falla— y comprueba que la sesión sea de quien la cierra, para que un token
+válido no pueda cerrar la sesión de otro nombrando su `sid`. Verificado: tras el logout, reusar el
+refresh token devuelve 401.
+
+**3. El token ya trae nombre.** Claim `name`, poblado en el login **y en el refresco** —si sólo lo
+pusiera el login, la interfaz perdería el nombre en la primera rotación—. Va en el token y no en un
+`/me`: es un campo más de algo que ya se recibe, así que no reintroduce la petición por request que
+la ausencia de `/me` evitaba.
+
+**4. Los tenants ya se pueden mostrar por su nombre.** Claim `tenantNames`, un mapa `id -> nombre`.
+`tenants` sigue siendo la lista de uuid, porque es lo que valida el interceptor de tenant: esto es
+sólo para poder pintarlos. Prefiere el nombre comercial sobre el legal, con el código como último
+recurso para que la lista nunca tenga una entrada en blanco.
+
+Ambos claims **se omiten si están vacíos**: viajan en la cabecera de cada petición y un claim vacío
+ocupa lugar sin decir nada.
+
+```text
+name:        "Administrador Postman"
+tenantNames: { "1befcfea-…": "Mantra Core Default Tenant" }
+```
+
+### P3 · El `$expand` de value sets — hecho y verificado
+
+Autenticado, **sin exigir rol de administración**, paginado por cursor. El cliente
+(`core/data-access/terminology/`) está escrito y probado. Comprobado de punta a punta a través del
+proxy: 25 opciones en 3 páginas, sin duplicados ni saltos, cursor corrupto → 400, sin token → 401.
+
+**Un detalle que costó un 404 y conviene no repetir:** el `$` de la ruta va **literal**, no como
+`%24`. Express enruta sobre el path sin decodificar, así que `%24expand` no casa con `:id/$expand`.
+
+De paso apareció un fallo de fondo que nadie había visto: **ninguna expansión podía devolver un solo
+miembro**. `importConcepts` creaba los conceptos sin estado y la expansión sólo selecciona los
+activos, así que todo el camino documentado terminaba en `includedMembers: 0` **sin ningún error**.
+Corregido en los dos extremos; ahora importar 25 y publicar da 25.
+
+### P1 · El bootstrap del primer `SECURITY_ADMIN` — hecho y verificado
+
+`BootstrapAdminSeedService` en `src/common/seed/`, corriendo desde el `OnApplicationBootstrap` del
+orquestador de seeds, con `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD` y
+`BOOTSTRAP_ADMIN_ALLOW_PRODUCTION` documentadas en `.env.example`. Se niega en
+`NODE_ENV=production` salvo autorización explícita. Verificado en el arranque real: la línea
+«Administrador de arranque disponible» sale en el log y el login con esa cuenta devuelve 200.
+
+`yarn postman:bootstrap` pasó a ser un disparador manual del **mismo** servicio, no una segunda
+implementación.
+
+### Sigue abierto · P4 · La propuesta de layout de repos se ejecutó en vez de proponerse
+
+El commit `41206d2` versionó el DDL dentro del repo de la API, que es ejecutar la opción (b) de las
+tres que había que proponer. El resultado es bueno y desbloqueó el proyecto, así que **no es un
+reproche**: es que la decisión era de Marcelo y ahora está tomada de hecho. Si el `SQL/` canónico del
+workspace cambia, hay que acordar cómo se sincroniza esa copia — que era justamente el riesgo que la
+opción (b) tenía anotado.
+
+### Sigue abierto · P5 · Revisión de los PRs del frontend
+
+Permanente. Pablo es el único par de ojos activo del frontend, y hay trabajo publicado esperando.
+
+---
+
+## Un pedido operativo, no de código
+
+**Resuelto para la demostración, pendiente para el equipo.** Lo que escucha hoy en `:3000` es la
+API construida desde el fuente de esta rama, no el contenedor: por eso se pudo verificar todo de
+punta a punta. **El contenedor del compose sigue siendo anterior**, así que quien levante el stack
+con `docker compose up api` no va a tener nada de esto. Reconstruir la imagen sigue haciendo falta;
+lo que ya no hace falta es esperarla para saber si los contratos funcionan.
+
+Para levantar el entorno como quedó verificado:
 
 ```bash
-corepack yarn typecheck    # antes de abrir el PR
+docker compose up -d postgres mongodb redis opensearch minio   # nunca el servicio `api`
+corepack yarn build && BOOTSTRAP_ADMIN_EMAIL=admin@redesa.test \
+  BOOTSTRAP_ADMIN_PASSWORD='S3cret-passw0rd' node dist/src/main.js   # en el repo de la API
+corepack yarn start                                             # acá
 ```
+
+También hay una migración nueva que aplicar sobre bases ya existentes:
+`database/SQL/99_migrations/2026-08-01_password_reset.sql`.
