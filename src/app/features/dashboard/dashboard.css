@@ -1,5 +1,12 @@
 /* Panel de inicio. Dos tarjetas: la sesión y la lectura contra la API. */
 
+/* Pantalla enrutada: el host es un custom element y sin `display` sería EN
+   LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
+   contenido y hace scrollear la página de más. */
+:host {
+  display: block;
+}
+
 /* `auto-fit` con mínimo: en una sola columna cuando no entran dos, sin media query.
    El mínimo es el ancho al que el identificador de sesión deja de partirse feo. */
 .panel__grid {

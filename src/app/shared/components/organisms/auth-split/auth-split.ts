@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 
 import type { ThemeMode } from '../../../../core/tokens/design-tokens.types';
 import { ThemeService } from '../../../../core/tokens/theme.service';
@@ -39,6 +39,25 @@ export class AuthSplit {
 
   /** Bajada del titular. */
   readonly tagline = input<string>('');
+
+  /**
+   * El titular y la bajada, envueltos en una lista de un solo elemento para
+   * poder recorrerlos con `@for … track`.
+   *
+   * No es adorno: en el registro el texto cambia al elegir paciente o
+   * profesional, y una interpolación a secas lo reemplazaría de golpe, sin
+   * transición. Con `track` sobre el propio texto, cambiarlo destruye el nodo y
+   * crea otro, así que la animación de entrada vuelve a correr y el titular
+   * nuevo aparece en vez de aparecer ya puesto.
+   *
+   * Van como `computed` y no como literal en la plantilla para no alojar un
+   * arreglo nuevo en cada detección de cambios.
+   */
+  protected readonly claimKeyed = computed(() => [this.claim()]);
+  protected readonly taglineKeyed = computed(() => {
+    const texto = this.tagline();
+    return texto === '' ? [] : [texto];
+  });
 
   protected readonly theme = this.themeService.currentTheme;
 

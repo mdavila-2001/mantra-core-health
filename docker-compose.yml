@@ -4,8 +4,16 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     container_name: mantra-core-health-dev
+
+    # Compose lee `.env` de esta carpeta solo. Los `:-` son el valor por defecto:
+    # sin `.env`, todo funciona igual. Ver `.env.example`.
     ports:
-      - '4200:4200'
+      - '${FRONTEND_PORT:-4200}:4200'
+
+    environment:
+      # A dónde reenvía el proxy las rutas de la API. El contenedor lo sustituye
+      # en la plantilla `proxy.conf.docker.json` al arrancar.
+      BACKEND_ORIGIN: ${BACKEND_ORIGIN:-http://host.docker.internal:3000}
     volumes:
       # Se montan SOLO las fuentes y la configuración, nunca la raíz del
       # proyecto: montar `.` taparía el .pnp.cjs y el .yarn/unplugged de linux
@@ -18,10 +26,9 @@ services:
       # tsconfig.spec.json y vitest.config.ts quedan solo en la imagen: los usa
       # `ng test`, no el dev server, y Docker Desktop falla al bind-montearlos.
 
-      # El backend corre en el host. Dentro del contenedor `localhost` es el
-      # contenedor, así que se pisa proxy.conf.json por la variante que apunta
-      # a host.docker.internal. El archivo del host queda intacto para `yarn start`.
-      - ./proxy.conf.docker.json:/app/proxy.conf.json:ro
+      # proxy.conf.docker.json NO se monta: viaja en la imagen y el contenedor
+      # genera desde ella `proxy.generated.json` con BACKEND_ORIGIN sustituido.
+      # El proxy.conf.json del repo queda intacto para el `yarn start` del host.
 
       # Caché de Angular en volumen: sobrevive a los reinicios y no ensucia el host.
       - angular-cache:/app/.angular

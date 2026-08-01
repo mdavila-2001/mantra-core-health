@@ -1,6 +1,13 @@
 /* La estructura partida y el selector de tema son del organismo `app-auth-split`.
    Acá va solo lo propio del formulario de ingreso. */
 
+/* Pantalla enrutada: el host es un custom element y sin `display` sería EN
+   LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
+   contenido y hace scrollear la página de más. */
+:host {
+  display: block;
+}
+
 .login__title {
   margin: 0;
   font-family: var(--font-display);

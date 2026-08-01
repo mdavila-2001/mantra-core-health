@@ -129,6 +129,24 @@ export const BREAKPOINT_NAMES = ['sm', 'md', 'lg'] as const;
 export type BreakpointTokenName = (typeof BREAKPOINT_NAMES)[number];
 export type BreakpointToken = `--bp-${BreakpointTokenName}`;
 
+/* ---- movimiento ----------------------------------------------------------- */
+
+/**
+ * `fast` es el eco de un clic; `base`, un cambio de estado que hay que seguir
+ * con la vista; `slow`, algo que entra o sale de la pantalla.
+ *
+ * No hace falta consultar `prefers-reduced-motion` al usarlas: `styles.css`
+ * anula globalmente duraciones de transición y animación cuando está activo.
+ */
+export const DURATION_NAMES = ['fast', 'base', 'slow'] as const;
+export type DurationName = (typeof DURATION_NAMES)[number];
+export type DurationToken = `--dur-${DurationName}`;
+
+/** `spring` rebota: se reserva para confirmar el gesto, nunca para datos. */
+export const EASING_NAMES = ['standard', 'out', 'spring'] as const;
+export type EasingName = (typeof EASING_NAMES)[number];
+export type EasingToken = `--ease-${EasingName}`;
+
 /* ---- tipografía ----------------------------------------------------------- */
 
 export const FONT_FAMILY = {
@@ -181,6 +199,8 @@ export type DesignToken =
   | SpacingToken
   | RadiusToken
   | BreakpointToken
+  | DurationToken
+  | EasingToken
   | FontFamilyToken
   | FontSizeToken
   | LineHeightToken;
@@ -232,6 +252,8 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),
   ...BREAKPOINT_NAMES.map((name): BreakpointToken => `--bp-${name}`),
+  ...DURATION_NAMES.map((name): DurationToken => `--dur-${name}`),
+  ...EASING_NAMES.map((name): EasingToken => `--ease-${name}`),
   ...Object.values(FONT_FAMILY),
   ...TYPE_ROLES.map((role): FontSizeToken => `--fs-${role}`),
   ...LINE_HEIGHT_ROLES.map((role): LineHeightToken => `--lh-${role}`),
