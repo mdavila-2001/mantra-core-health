@@ -1,0 +1,96 @@
+/* Mobile-first: una columna. La de marca aparece recién en pantalla ancha,
+   donde sobra espacio; en el teléfono ocuparía la mitad útil sin aportar. */
+.login {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: 1fr;
+}
+
+.login__brand {
+  display: none;
+}
+
+.login__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  background: var(--bg-surface);
+}
+
+.login__form-wrap {
+  width: 100%;
+  max-width: 26rem;
+}
+
+.login__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  color: var(--brand-primary);
+}
+
+.login__subtitle {
+  margin: var(--sp-2) 0 var(--sp-6);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.login__alert {
+  display: block;
+  margin-bottom: var(--sp-4);
+}
+
+.login__form-wrap form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.login__submit {
+  margin-top: var(--sp-2);
+  width: 100%;
+}
+
+@media (min-width: 62rem) {
+  .login {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .login__brand {
+    display: flex;
+    align-items: flex-end;
+    padding: var(--sp-8);
+    /* Degradado de marca en vez de fotografía: no dependemos de un archivo que
+       todavía no está aprobado, y pesa cero. */
+    background: linear-gradient(150deg, var(--c-petrol-700), var(--c-petrol-500) 55%, var(--c-aqua-500));
+    color: #ffffff;
+  }
+
+  .login__brand-content {
+    max-width: 26rem;
+  }
+
+  .login__wordmark {
+    margin: 0 0 var(--sp-6);
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-size: var(--fs-body);
+  }
+
+  .login__claim {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-display);
+    line-height: 1.15;
+  }
+
+  .login__tagline {
+    margin: var(--sp-4) 0 0;
+    font-size: var(--fs-body-lg, var(--fs-body));
+    line-height: var(--lh-body);
+    opacity: 0.9;
+  }
+}

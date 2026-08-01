@@ -1,12 +1,17 @@
 import { Routes } from '@angular/router';
 import { Home } from './features/home/home';
-import { Auth } from './features/auth/auth';
+import { Login } from './features/auth/login/login';
+import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
+import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
     {
         path: '',
         component: Home,
         pathMatch: 'full',
+        // El guard resuelve la autorización ANTES de que la pantalla pida
+        // datos: es el estado S1 del M34, distinto de «cargando».
+        canActivate: [authGuard],
         title: 'Mantra Core Health',
     },
     {
@@ -22,8 +27,15 @@ export const routes: Routes = [
     },
     {
         path: 'auth',
-        component: Auth,
-        title: 'Mantra Core Health - Autenticación',
+        component: Login,
+        pathMatch: 'full',
+        title: 'Mantra Core Health - Iniciar sesión',
+    },
+    {
+        // La ruta la fija `TENANT_SELECTION_ROUTE`, que es a donde manda el guard.
+        path: 'auth/organizacion',
+        component: TenantSelection,
+        title: 'Mantra Core Health - Elegí tu organización',
     },
     {
         path: '**',

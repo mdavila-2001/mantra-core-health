@@ -1,0 +1,18 @@
+<main class="tenant">
+  <div class="tenant__card">
+    <h1 class="tenant__title">Elegí tu organización</h1>
+    <p class="tenant__subtitle">
+      Tu cuenta pertenece a más de una. La que elijas define qué información vas a ver.
+    </p>
+
+    <ul class="tenant__list">
+      @for (tenantId of tenants(); track tenantId) {
+        <li>
+          <button app-button variant="secondary" size="lg" (clicked)="choose(tenantId)">
+            {{ tenantId }}
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
+</main>
