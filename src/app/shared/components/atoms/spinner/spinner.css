@@ -1,0 +1,62 @@
+/* ============================================================================
+    Spinner — la geometría que vivía embebida en el botón (`.btn__spinner`),
+    ahora suelta. Cero color propio: `currentColor` hereda la tinta del
+    contenedor, igual que los íconos proyectados.
+
+    Los tamaños van en `em` y no en px: dentro de un botón `sm` el spinner
+    encoge con la tipografía sin que nadie lo configure.
+    ========================================================================== */
+
+:host {
+    --_spinner-size: 1.5em;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* la caja del host no debe crecer con la interlínea del texto vecino */
+    line-height: 0;
+    color: inherit;
+}
+
+:host(.spinner--sm) {
+    --_spinner-size: 1em;
+}
+
+:host(.spinner--md) {
+    --_spinner-size: 1.5em;
+}
+
+:host(.spinner--lg) {
+    --_spinner-size: 2em;
+}
+
+.spinner__ring {
+    width: var(--_spinner-size);
+    height: var(--_spinner-size);
+    /* en SVG el origen por defecto es la esquina, no el centro: girar sin esto
+       lanza el trazo fuera de la caja */
+    transform-origin: center;
+    animation: spinner-turn 0.7s linear infinite;
+}
+
+/* el aro de fondo: la misma proporción de tinta que usaba el botón */
+.spinner__track {
+    opacity: 0.35;
+}
+
+@keyframes spinner-turn {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* La regla global de prefers-reduced-motion congela toda animación — para un
+   spinner eso equivale a una UI colgada. Es feedback esencial (WCAG 2.3.3 lo
+   permite), así que acá se ralentiza en vez de frenarse. Gana por
+   especificidad: la global apunta a `*`. */
+@media (prefers-reduced-motion: reduce) {
+    .spinner__ring {
+        animation-duration: 1.8s !important;
+        animation-iteration-count: infinite !important;
+    }
+}

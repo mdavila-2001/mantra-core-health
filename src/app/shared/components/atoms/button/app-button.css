@@ -190,29 +190,10 @@
   transform: none;
 }
 
+/* La geometría y el giro los pone `app-spinner`; acá solo se lo centra y se le
+   devuelve la tinta: el estado de carga apaga el color del host (transparent)
+   y el spinner hereda con currentColor, así que sin esto sería invisible. */
 .btn__spinner {
   position: absolute;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid color-mix(in srgb, var(--_btn-fg) 40%, transparent);
-  border-top-color: var(--_btn-fg);
-  animation: btn-spin 0.7s linear infinite;
-}
-
-@keyframes btn-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* La regla global de prefers-reduced-motion congela toda animación — para un
-   spinner eso equivale a una UI colgada. Es feedback esencial (WCAG 2.3.3 lo
-   permite), así que acá se ralentiza en vez de frenarse. Gana por
-   especificidad: la global apunta a `*`. */
-@media (prefers-reduced-motion: reduce) {
-  .btn__spinner {
-    animation-duration: 1.8s !important;
-    animation-iteration-count: infinite !important;
-  }
+  color: var(--_btn-fg);
 }

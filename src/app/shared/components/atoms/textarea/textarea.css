@@ -1,0 +1,101 @@
+/* ============================================================================
+    Textarea — mismos bordes, estados y foco que `input.css`: en un formulario
+    clínico los dos controles tienen que leerse como el mismo material.
+    Cero valores propios de color: todo sale de tokens de src/styles.css.
+    ========================================================================== */
+
+:host {
+    display: block;
+    width: 100%;
+}
+
+.textarea-wrapper {
+    display: flex;
+    width: 100%;
+    background-color: var(--bg-surface);
+    border: 1.5px solid var(--border-strong);
+    border-radius: var(--r-sm);
+    padding: var(--sp-2) var(--sp-3);
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background-color 0.15s ease;
+}
+
+@media (max-width: 780px) {
+    .textarea-wrapper {
+        padding: var(--sp-3) var(--sp-4);
+    }
+}
+
+.native-textarea {
+    flex: 1;
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    padding: 0;
+    margin: 0;
+    /* el alto lo maneja `rows` o el crecimiento automático, no el tirador */
+    resize: vertical;
+}
+
+.native-textarea::placeholder {
+    color: var(--text-muted);
+}
+
+/* El TOPE del crecimiento es declarativo: filas × interlínea del sistema. Que
+   viva acá evita que el TypeScript mida tipografía para descubrir un valor que
+   el sistema de diseño ya declara. */
+.native-textarea.is-auto-resize {
+    resize: none;
+    overflow-y: auto;
+    max-height: calc(var(--_textarea-max-rows, 10) * var(--lh-body));
+}
+
+/* ---- estados: idénticos a los del input --------------------------------- */
+
+.textarea-wrapper.is-focused {
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.textarea-wrapper.status-error {
+    border-color: var(--c-error-500);
+}
+
+.textarea-wrapper.status-error.is-focused {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-error-500) 35%, transparent);
+}
+
+.textarea-wrapper.is-disabled {
+    background-color: var(--bg-inset);
+    border-color: var(--border-default);
+    cursor: not-allowed;
+}
+
+.textarea-wrapper.is-disabled .native-textarea {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+/* ---- contador ------------------------------------------------------------ */
+
+.textarea-counter {
+    margin: var(--sp-1) 0 0;
+    text-align: right;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* El límite no se dice solo con color: el aviso vivo lo enuncia en palabras. */
+.textarea-counter.is-at-limit {
+    color: var(--st-error-fg);
+    font-weight: 600;
+}

@@ -7,15 +7,9 @@
     (identidad-visual.md, pendientes).
     ========================================================================== */
 
-export const BADGE_VARIANTS = [
-  'primary',
-  'secondary',
-  'success',
-  'warning',
-  'error',
-  'info',
-] as const;
-export type BadgeVariant = (typeof BADGE_VARIANTS)[number];
+/** Los tonos compartidos con el Chip, sin `neutral`: un badge siempre significa algo. */
+export { TONES as BADGE_VARIANTS } from '../../tone/tone.types';
+export type { Tone as BadgeVariant } from '../../tone/tone.types';
 
 /** El spec define un solo tamaño (≡ `md`); `sm` y `lg` lo escalan. */
 export const BADGE_SIZES = ['sm', 'md', 'lg'] as const;

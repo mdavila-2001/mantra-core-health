@@ -1,0 +1,6 @@
+<!-- Cerrado no renderiza sus ítems. No es por accesibilidad —`display: none` ya
+     los saca del árbol— sino por costo: una tabla de 50 filas con un menú de 5
+     acciones cada una serían 250 vistas creadas para no mostrar ninguna. -->
+@if (isOpen()) {
+  <ng-content />
+}

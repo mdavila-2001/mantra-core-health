@@ -1,0 +1,51 @@
+/* ============================================================================
+    Pagination — sin color propio: los botones son AppButton (`secondary` marca
+    la página actual, `ghost` el resto) y el tamaño de página es un app-select.
+    ========================================================================== */
+
+:host {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-4);
+    font-family: var(--font-body);
+}
+
+.pagination__nav {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+}
+
+.pagination__pages {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    /* es una lista de verdad para el lector de pantalla, sin viñetas a la vista */
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pagination__gap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* mismo ancho que un botón de talle sm: la fila no salta al cambiar de tramo */
+    min-width: var(--sp-8);
+    color: var(--text-muted);
+}
+
+.pagination__range {
+    margin: 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.pagination__size {
+    /* el select no debe estirarse a todo el ancho como en un formulario */
+    width: auto;
+    min-width: 160px;
+    margin-left: auto;
+}

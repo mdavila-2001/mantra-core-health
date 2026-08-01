@@ -472,5 +472,602 @@
             </p>
             <pre class="data-panel" aria-label="Datos de los avisos de muestra">{{ toastSamplesJson }}</pre>
         </section>
+
+        <section class="showroom-section">
+            <h2>06 · Textarea</h2>
+            <p class="sandbox-note">
+                Mismo borde, foco y estados que <code>app-input</code>: en un formulario clínico
+                los dos controles son el mismo material. Dentro de un
+                <code>app-form-field</code> toma el <code>id</code>, el
+                <code>aria-describedby</code> y la obligatoriedad por DI — nunca se le pasan a
+                mano.
+            </p>
+
+            <div class="inputs-demo-grid">
+                <app-form-field label="Evolución" hint="Queda en la historia clínica">
+                    <app-textarea [(value)]="evolucionVal" [rows]="4" />
+                </app-form-field>
+
+                <app-form-field label="Nota breve" [required]="true">
+                    <app-textarea
+                        [(value)]="notaBreveVal"
+                        [maxLength]="120"
+                        placeholder="Máximo 120 caracteres"
+                    />
+                </app-form-field>
+
+                <app-form-field
+                    label="Indicaciones al alta"
+                    hint="Crece con el texto hasta 6 líneas"
+                >
+                    <app-textarea
+                        [(value)]="indicacionesVal"
+                        [autoResize]="true"
+                        [maxRows]="6"
+                        [rows]="2"
+                    />
+                </app-form-field>
+
+                <app-form-field label="Motivo del rechazo" errorMessage="Este campo es obligatorio">
+                    <app-textarea value="" />
+                </app-form-field>
+
+                <app-form-field label="Diagnóstico validado" hint="Solo lectura">
+                    <app-textarea value="Angina inestable (I20.0)" [disabled]="true" />
+                </app-form-field>
+            </div>
+
+            <p class="sandbox-note">
+                El contador de «Nota breve» habla <strong>dos veces</strong> y no más: al cruzar
+                el 90 % y al tocar el límite. La cifra visible va con
+                <code>aria-hidden</code> — anunciarla en cada tecla haría el campo inservible
+                con lector de pantalla.
+            </p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>07 · Spinner</h2>
+            <p class="sandbox-note">
+                Es la misma pieza que vive dentro del botón: el
+                <code>AppButton</code> ahora lo <strong>consume</strong> en vez de dibujarlo.
+                La tinta sale de <code>currentColor</code> y el tamaño va en <code>em</code>,
+                así que acompaña a la tipografía del contenedor.
+            </p>
+            <div class="sandbox-grid">
+                @for (size of spinnerSizes; track size) {
+                    <app-spinner [size]="size" [label]="'Cargando (' + size + ')'" />
+                }
+            </div>
+
+            <h3>Hereda la tinta del contexto</h3>
+            <div class="sandbox-grid">
+                <span class="spinner-ink-sample spinner-ink-sample--brand">
+                    <app-spinner size="sm" label="Cargando agenda" />
+                </span>
+                <span class="spinner-ink-sample spinner-ink-sample--error">
+                    <app-spinner size="sm" label="Reintentando envío" />
+                </span>
+                <button app-button [isLoading]="savingDemo()" (clicked)="simulateSave()">
+                    Guardar cambios
+                </button>
+            </div>
+            <p class="sandbox-note">
+                Dentro del botón va <code>decorative</code>: el botón ya declara
+                <code>aria-busy</code> y anunciar la carga dos veces es peor que no anunciarla.
+            </p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>08 · Tooltip</h2>
+            <p class="sandbox-note">
+                Directiva de atributo. El globo se cuelga del <code>&lt;body&gt;</code> con
+                <code>position: fixed</code>, así que no lo recorta ninguna tabla con
+                <code>overflow</code>; si el lado pedido no entra, <strong>voltea al
+                opuesto</strong>. Aparece al instante con el foco (probá con Tab) y tras una
+                espera corta con el puntero. <kbd>Escape</kbd> lo cierra.
+            </p>
+            <div class="sandbox-grid">
+                @for (position of tooltipPositions; track position) {
+                    <button
+                        app-button
+                        variant="outline"
+                        size="sm"
+                        [appTooltip]="'Se abre hacia ' + position"
+                        [appTooltipPosition]="position"
+                    >
+                        {{ position }}
+                    </button>
+                }
+            </div>
+
+            <h3>Sobre iconografía clínica densa</h3>
+            <div class="sandbox-grid">
+                <button
+                    app-button
+                    variant="neutral"
+                    [iconOnly]="true"
+                    aria-label="Imprimir receta"
+                    appTooltip="Imprimir receta"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 6 2 18 2 18 9" />
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                        <rect x="6" y="14" width="12" height="8" />
+                    </svg>
+                </button>
+                <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    class="tabular-nums"
+                    appTooltip="Índice de masa corporal"
+                    appTooltipPosition="right"
+                >IMC 24,1</button>
+            </div>
+        </section>
+
+        <section class="showroom-section">
+            <h2>09 · Chips</h2>
+            <p class="sandbox-note">
+                Comparten con el Badge <strong>el mismo archivo de tonos</strong>
+                (<code>tone.css</code>): una sola copia del mapeo tono → trío
+                <code>--st-*</code>. <code>neutral</code> es propio del chip — una faceta de
+                listado no es un estado clínico y no debe leerse como tal.
+            </p>
+            <div class="sandbox-grid">
+                @for (variant of chipVariants; track variant) {
+                    <app-chip [variant]="variant">{{ variant }}</app-chip>
+                }
+            </div>
+
+            <h3>Removibles — filtros activos</h3>
+            <div class="sandbox-grid">
+                @for (filtro of filtrosActivos(); track filtro) {
+                    <app-chip
+                        variant="info"
+                        [removable]="true"
+                        [label]="filtro"
+                        (removed)="quitarFiltro(filtro)"
+                    >{{ filtro }}</app-chip>
+                } @empty {
+                    <p class="sandbox-note">Sin filtros activos.</p>
+                }
+                <button app-button variant="ghost" size="sm" (clicked)="reponerFiltros()">
+                    Reponer
+                </button>
+            </div>
+            <p class="sandbox-note">
+                Se quitan con la <strong>X</strong>, con <kbd>Delete</kbd> o con
+                <kbd>Backspace</kbd> teniendo el chip enfocado.
+            </p>
+
+            <h3>Seleccionable</h3>
+            <div class="sandbox-grid">
+                <app-chip
+                    variant="primary"
+                    [selectable]="true"
+                    [(selected)]="soloUrgencias"
+                    label="Solo urgencias"
+                >Solo urgencias</app-chip>
+                <span class="sandbox-note">
+                    aria-pressed = {{ soloUrgencias() }} · alterna con Enter o Espacio
+                </span>
+            </div>
+
+            <h3>Tamaños y con ícono</h3>
+            <div class="sandbox-grid">
+                <app-chip variant="success" size="sm">Vigente</app-chip>
+                <app-chip variant="success" size="md">Vigente</app-chip>
+                <app-chip variant="warning" size="md">
+                    <svg slot="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    Requiere revisión
+                </app-chip>
+            </div>
+        </section>
+
+        <section class="showroom-section">
+            <h2>10 · Divider</h2>
+            <p class="sandbox-note">
+                Usa el token de borde <em>decorativo</em> (<code>--border-default</code>), que es
+                exactamente para lo que existe: separar sin delimitar un control.
+            </p>
+
+            <app-divider />
+            <app-divider label="Antecedentes" />
+            <app-divider />
+
+            <h3>Vertical</h3>
+            <div class="sandbox-grid divider-vertical-demo">
+                <span>Ambulatorio</span>
+                <app-divider orientation="vertical" />
+                <span>Internación</span>
+                <app-divider orientation="vertical" />
+                <span>Urgencias</span>
+            </div>
+        </section>
+
+        <section class="showroom-section">
+            <h2>11 · Enlaces</h2>
+            <p class="sandbox-note">
+                Selector de atributo sobre el <code>&lt;a&gt;</code>: el <code>href</code>, el
+                <code>routerLink</code> y el menú del navegador siguen siendo los nativos.
+                Todas las variantes <strong>subrayan</strong>: el color no puede ser el único
+                portador del significado «esto se puede seguir».
+            </p>
+            <div class="sandbox-grid">
+                @for (variant of linkVariants; track variant) {
+                    <a app-link href="/pacientes/123" [variant]="variant">Ver ficha ({{ variant }})</a>
+                }
+            </div>
+
+            <h3>Destino externo — detectado solo</h3>
+            <div class="sandbox-grid">
+                <a app-link href="https://www.who.int/es">Guía OMS</a>
+                <a app-link href="https://www.paho.org/es" variant="subtle">OPS Bolivia</a>
+                <a app-link href="mailto:mesa@redsat.salud.bo" variant="subtle">Escribir a mesa de ayuda</a>
+            </div>
+            <p class="sandbox-note">
+                El primero sale con <code>target="_blank"</code> y
+                <code>rel="noopener noreferrer"</code> sin que nadie lo pida, y lo dice en
+                palabras además del ícono. <code>mailto:</code> no abre pestaña, así que no se
+                marca.
+            </p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>12 · Siluetas de carga (Skeleton)</h2>
+            <p class="sandbox-note">
+                El hueco que va a ocupar el contenido (estado UX <strong>S8</strong>). Va
+                siempre con <code>aria-hidden</code>: quien lo monta es responsable de declarar
+                la carga con <code>aria-busy</code> o un <code>role="status"</code>.
+            </p>
+            <!-- `<output>` ya es una región viva: es el contenedor —y no la silueta— el
+                 que declara que hay algo cargando. -->
+            <output class="skeleton-demo" aria-busy="true" aria-label="Cargando ficha del paciente">
+                <span class="skeleton-demo__row">
+                    <app-skeleton variant="circle" width="48px" height="48px" />
+                    <app-skeleton variant="text" [lines]="2" />
+                </span>
+                <app-skeleton variant="rect" height="120px" />
+                <app-skeleton variant="text" [lines]="4" />
+            </output>
+        </section>
+
+        <section class="showroom-section">
+            <h2>13 · Progreso</h2>
+            <p class="sandbox-note">
+                Determinada con <code>value</code>; sin <code>value</code> es indeterminada y
+                <strong>no</strong> declara <code>aria-valuenow</code> — no hay valor que decir.
+                Sin tono ámbar: es el punto de acción único de la pantalla.
+            </p>
+
+            <div class="progress-demo">
+                @for (tone of progressTones; track tone) {
+                    <app-progress [value]="65" [tone]="tone" [label]="'Ejemplo ' + tone" />
+                }
+                <app-progress [value]="65" size="sm" label="Barra fina al 65 %" />
+                <app-progress label="Procesando el lote (indeterminada)" />
+            </div>
+
+            <h3>Subida real de un archivo</h3>
+            <div class="progress-demo">
+                <app-progress
+                    [value]="subidaProgreso()"
+                    [tone]="subidaProgreso() === 100 ? 'success' : 'primary'"
+                    label="Subida del informe"
+                />
+                <div class="sandbox-grid">
+                    <button app-button size="sm" (clicked)="simulateUpload()">Simular subida</button>
+                    <span class="sandbox-note tabular-nums">{{ subidaProgreso() }} %</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="showroom-section">
+            <h2>14 · Card</h2>
+            <p class="sandbox-note">
+                Tres huecos —encabezado, cuerpo y pie— y los extremos
+                <strong>se apagan solos</strong> si nadie proyecta nada. El default es
+                <code>outlined</code> y no <code>elevated</code>: veinte fichas con relieve no
+                jerarquizan nada.
+            </p>
+            <div class="cards-demo">
+                @for (variant of cardVariants; track variant) {
+                    <app-card [variant]="variant">
+                        <h3 card-header>{{ variant }}</h3>
+                        <p>Frecuencia cardíaca 72 lpm · TA 120/80 · SatO₂ 98 %</p>
+                        <div card-footer>
+                            <app-chip variant="success" size="sm">Dentro de rango</app-chip>
+                        </div>
+                    </app-card>
+                }
+                <app-card variant="flat" padding="lg">
+                    <p>Sin encabezado ni pie: los dos huecos desaparecen con su padding.</p>
+                </app-card>
+                <app-card
+                    variant="elevated"
+                    [interactive]="true"
+                    (activated)="registrarAccion('Abrió la ficha de Juan Pérez')"
+                >
+                    <h3 card-header>Ficha completa</h3>
+                    <p>La card entera es el control: Enter, Espacio o click.</p>
+                </app-card>
+            </div>
+            <p class="sandbox-note">Última acción: <strong>{{ ultimaAccion() }}</strong></p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>15 · Campo de búsqueda</h2>
+            <p class="sandbox-note">
+                Avisa con <strong>espera de 300 ms</strong> mientras se tipea, y
+                <strong>al instante</strong> con Enter o al limpiar. <kbd>Escape</kbd> limpia el
+                campo. Se nombra solo, así que no necesita un <code>app-form-field</code>
+                alrededor.
+            </p>
+            <div class="inputs-demo-grid">
+                <app-search-field
+                    [(value)]="filtroPacientes"
+                    [loading]="buscandoPacientes()"
+                    label="Buscar paciente por documento o apellido"
+                    placeholder="Documento o apellido"
+                    (searched)="buscarPacientes($event)"
+                />
+                <app-search-field label="Deshabilitado" [disabled]="true" value="Cardiología" />
+            </div>
+            <p class="sandbox-note">
+                Última búsqueda emitida: <strong>{{ ultimaBusqueda() }}</strong> — tipeá rápido y
+                vas a ver que sale <em>una sola</em>.
+            </p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>16 · Avisos en página (Alert)</h2>
+            <p class="sandbox-note">
+                A diferencia del toast, <strong>se queda</strong>: es el error de API que hay que
+                poder releer. El error usa <code>role="alert"</code> (interrumpe); el resto,
+                <code>role="status"</code>. El tono se dice también en palabras, para lectores de
+                pantalla.
+            </p>
+            <div class="alerts-demo">
+                @for (tone of alertTones; track tone) {
+                    <app-alert [tone]="tone" [title]="'Aviso de tipo ' + tone">
+                        Mismo cuerpo para los cuatro tonos, para comparar la receta tonal.
+                    </app-alert>
+                }
+
+                @if (avisoVisible()) {
+                    <app-alert
+                        tone="error"
+                        title="No se pudo guardar la evolución"
+                        [dismissible]="true"
+                        (dismissed)="avisoVisible.set(false)"
+                    >
+                        El servidor rechazó la operación. Reintentá en unos segundos.
+                        <div alert-actions>
+                            <button app-button size="sm" variant="danger">Reintentar</button>
+                            <button app-button size="sm" variant="ghost">Ver detalle</button>
+                        </div>
+                    </app-alert>
+                } @else {
+                    <button app-button variant="ghost" size="sm" (clicked)="avisoVisible.set(true)">
+                        Volver a mostrar el aviso cerrable
+                    </button>
+                }
+            </div>
+            <p class="sandbox-note">
+                El cerrable <strong>no se oculta solo</strong>: emite <code>dismissed</code> y esta
+                pantalla decide. Si se ocultara por su cuenta, el estado viviría en dos lugares.
+            </p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>17 · Menú de acciones</h2>
+            <p class="sandbox-note">
+                Sin CDK. El panel <strong>se muda al <code>&lt;body&gt;</code></strong> mientras
+                está abierto y vuelve a su lugar al cerrarse, así no lo recorta ninguna fila de
+                tabla con <code>overflow</code>. Probá con teclado:
+                <kbd>↓</kbd> <kbd>↑</kbd> <kbd>Home</kbd> <kbd>End</kbd>, <kbd>Escape</kbd>
+                devuelve el foco al disparador.
+            </p>
+            <div class="sandbox-grid">
+                <button app-button variant="outline" [appMenuTrigger]="accionesOrden">
+                    Acciones de la orden
+                </button>
+                <app-menu #accionesOrden>
+                    <app-menu-item (selected)="registrarAccion('Imprimir receta')">
+                        <svg slot="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                        </svg>
+                        Imprimir receta
+                    </app-menu-item>
+                    <app-menu-item (selected)="registrarAccion('Duplicar orden')">Duplicar orden</app-menu-item>
+                    <app-menu-item [disabled]="true">Firmar digitalmente</app-menu-item>
+                    <app-menu-item [destructive]="true" (selected)="registrarAccion('Anular orden')">
+                        Anular orden
+                    </app-menu-item>
+                </app-menu>
+
+                <button app-button variant="neutral" [iconOnly]="true" [appMenuTrigger]="accionesFila"
+                        aria-label="Acciones de la fila">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" aria-hidden="true">
+                        <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />
+                    </svg>
+                </button>
+                <app-menu #accionesFila>
+                    <app-menu-item (selected)="registrarAccion('Ver ficha')">Ver ficha</app-menu-item>
+                    <app-menu-item (selected)="registrarAccion('Editar')">Editar</app-menu-item>
+                </app-menu>
+
+                <span class="sandbox-note">Última acción: <strong>{{ ultimaAccion() }}</strong></span>
+            </div>
+            <p class="sandbox-note">
+                El ítem deshabilitado <strong>se saltea</strong> al navegar con flechas: no es solo
+                un color apagado.
+            </p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>18 · Pestañas</h2>
+            <p class="sandbox-note">
+                <strong>Activación manual</strong>: las flechas mueven el foco y recién
+                <kbd>Enter</kbd> o <kbd>Espacio</kbd> seleccionan. Con activación automática,
+                recorrer seis pestañas de una ficha dispararía seis cargas de panel. El panel
+                inactivo <strong>no existe en el DOM</strong>.
+            </p>
+            <app-tabs [(selectedIndex)]="seccionFicha">
+                <app-tab label="Evolución">
+                    <p>Paciente refiere dolor torácico opresivo de 2 horas de evolución.</p>
+                </app-tab>
+                <app-tab label="Laboratorio">
+                    <p>Hemograma completo · Troponina I · Ionograma</p>
+                </app-tab>
+                <app-tab label="Órdenes">
+                    <p>Radiografía de tórax (frente y perfil)</p>
+                </app-tab>
+                <app-tab label="Facturación" [disabled]="true">
+                    <p>Sin convenio activo.</p>
+                </app-tab>
+            </app-tabs>
+            <p class="sandbox-note">
+                Sección activa: <strong>{{ seccionFicha() }}</strong> · la deshabilitada no se
+                puede seleccionar ni con click ni con teclado.
+            </p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>19 · Paginación</h2>
+            <p class="sandbox-note">
+                Ventana con saltos: nunca más de siete botones, y siempre la primera y la última.
+                Cambiar el tamaño de página <strong>vuelve a la 1</strong>.
+            </p>
+            <app-pagination [totalItems]="340" [(page)]="paginaActual" [(pageSize)]="tamanoPagina" />
+            <p class="sandbox-note">
+                Página <strong>{{ paginaActual() }}</strong> de a
+                <strong>{{ tamanoPagina() }}</strong>. El rango
+                («21–40 de 340») se anuncia con <code>aria-live="polite"</code>.
+            </p>
+
+            <h3>Pocos ítems: sin saltos</h3>
+            <app-pagination [totalItems]="45" [showPageSize]="false" />
+        </section>
+
+        <section class="showroom-section">
+            <h2>20 · Ruta de navegación</h2>
+            <p class="sandbox-note">
+                El último escalón <strong>nunca es enlace</strong> y lleva
+                <code>aria-current="page"</code>. Con más de cuatro se colapsa a raíz + «…» + los
+                dos últimos, y el «…» abre un menú con los del medio.
+            </p>
+            <app-breadcrumb [items]="rutaCorta" />
+            <div class="sandbox-note">Ruta larga (colapsada):</div>
+            <app-breadcrumb [items]="rutaLarga" />
+        </section>
+
+        <section class="showroom-section">
+            <h2>21 · Estado vacío</h2>
+            <p class="sandbox-note">
+                Estado UX <strong>S7</strong>. Solo <code>no-results</code> es región viva: aparece
+                como respuesta a una búsqueda. Un vacío inicial o un error no se anuncian solos.
+            </p>
+            <div class="empty-demo">
+                <app-empty-state
+                    title="Todavía no hay evoluciones"
+                    description="Las evoluciones que registres van a aparecer acá, ordenadas por fecha."
+                >
+                    <svg empty-icon viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <button app-button empty-actions>Registrar evolución</button>
+                </app-empty-state>
+
+                <app-empty-state
+                    variant="no-results"
+                    title="Sin resultados"
+                    description="Probá con otro documento o apellido."
+                >
+                    <button app-button empty-actions variant="ghost">Limpiar filtros</button>
+                </app-empty-state>
+
+                <app-empty-state
+                    variant="error"
+                    title="No se pudo cargar el listado"
+                    description="El servidor no respondió. Reintentá en unos segundos."
+                >
+                    <svg empty-icon viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <button app-button empty-actions variant="outline">Reintentar</button>
+                </app-empty-state>
+            </div>
+        </section>
+
+        <section class="showroom-section">
+            <h2>22 · Diálogo de confirmación</h2>
+            <p class="sandbox-note">
+                Usa el <code>&lt;dialog&gt;</code> <strong>nativo</strong> con
+                <code>showModal()</code>: fondo, inertización del resto de la página y trampa de
+                foco vienen del navegador. En una acción destructiva el foco inicial va a
+                <strong>Cancelar</strong> — nadie debería dar de baja apretando Enter por inercia.
+            </p>
+            <div class="sandbox-grid">
+                <button app-button (clicked)="confirmarGuardado()">Guardar evolución</button>
+                <button app-button variant="danger" (clicked)="confirmarAnulacion()">
+                    Anular orden
+                </button>
+                <span class="sandbox-note">
+                    Última respuesta: <strong>{{ ultimaConfirmacion() }}</strong>
+                </span>
+            </div>
+            <p class="sandbox-note">
+                <kbd>Escape</kbd> cierra devolviendo <code>false</code>: cerrar nunca es confirmar.
+                Al cerrarse, el foco vuelve al botón que lo abrió.
+            </p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>23 · Acordeón</h2>
+            <p class="sandbox-note">
+                Cabeceras reales (<code>&lt;h3&gt;&lt;button aria-expanded&gt;</code>), nunca un
+                <code>div</code> con <code>role="button"</code>. El contenido plegado
+                <strong>no está en el DOM</strong>.
+            </p>
+
+            <h3>Una sección por vez (default)</h3>
+            <app-accordion>
+                <app-accordion-panel heading="Antecedentes personales">
+                    <p>Diabetes tipo 2 diagnosticada en 2019. Hipertensión arterial.</p>
+                </app-accordion-panel>
+                <app-accordion-panel heading="Medicación habitual">
+                    <p>Metformina 850 mg cada 12 h · Enalapril 10 mg/día</p>
+                </app-accordion-panel>
+                <app-accordion-panel heading="Alergias" [disabled]="true">
+                    <p>Sin alergias conocidas.</p>
+                </app-accordion-panel>
+            </app-accordion>
+
+            <h3>Varias a la vez</h3>
+            <app-accordion [multi]="true">
+                <app-accordion-panel heading="Signos vitales" [expanded]="true">
+                    <p>TA 120/80 · FC 72 · T 36,5 °C</p>
+                </app-accordion-panel>
+                <app-accordion-panel heading="Examen físico">
+                    <p>Buen estado general, lúcido, orientado en tiempo y espacio.</p>
+                </app-accordion-panel>
+            </app-accordion>
+        </section>
     </main>
 </div>

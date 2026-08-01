@@ -81,6 +81,92 @@
     max-width: 420px;
 }
 
+/* El spinner hereda `currentColor`: estas cajas existen para demostrarlo
+   pintando el CONTENEDOR, no el spinner. */
+.spinner-ink-sample {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--sp-2);
+    border-radius: var(--r-sm);
+    background: var(--bg-inset);
+}
+
+.spinner-ink-sample--brand {
+    color: var(--brand-primary);
+}
+
+.spinner-ink-sample--error {
+    color: var(--st-error-fg);
+}
+
+/* El separador vertical se estira al alto del contenedor flex: la fila
+   necesita alto propio para que se note. */
+.divider-vertical-demo {
+    align-items: stretch;
+    min-height: var(--sp-10);
+    color: var(--text-secondary);
+}
+
+.divider-vertical-demo > span {
+    display: flex;
+    align-items: center;
+}
+
+.skeleton-demo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+    margin-top: var(--sp-4);
+    max-width: 480px;
+}
+
+.skeleton-demo__row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+}
+
+/* La silueta de texto ocupa el resto de la fila junto al círculo. */
+.skeleton-demo__row app-skeleton[class~='skeleton--text'] {
+    flex: 1;
+}
+
+.progress-demo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+    margin-top: var(--sp-4);
+    max-width: 480px;
+}
+
+.cards-demo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--sp-4);
+    margin-top: var(--sp-4);
+    align-items: start;
+}
+
+.alerts-demo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    margin-top: var(--sp-4);
+}
+
+/* Los tres estados vacíos, uno al lado del otro para compararlos. */
+.empty-demo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--sp-4);
+    margin-top: var(--sp-4);
+}
+
+.empty-demo app-empty-state {
+    border: 1px dashed var(--border-default);
+    border-radius: var(--r-md);
+}
+
 /* Panel de datos: es código, no prosa — de ahí el monoespaciado, la única
    familia que el sistema no declara porque no aparece en la UI de producto. */
 .data-panel {

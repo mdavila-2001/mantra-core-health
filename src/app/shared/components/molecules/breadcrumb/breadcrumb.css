@@ -1,0 +1,61 @@
+/* ============================================================================
+    Breadcrumb — texto secundario; el escalón actual es el único con la tinta
+    principal, porque es el único que dice dónde estás.
+    ========================================================================== */
+
+:host {
+    display: block;
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.breadcrumb__list {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.breadcrumb__item {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-secondary);
+}
+
+/* El escalón actual: el único que no es enlace y el único con tinta plena. */
+.breadcrumb__item [aria-current='page'] {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.breadcrumb__separator {
+    color: var(--text-muted);
+    user-select: none;
+}
+
+.breadcrumb__more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* área táctil aunque el dibujo sean tres puntos */
+    min-width: var(--sp-6);
+    height: var(--sp-6);
+    padding: 0 var(--sp-1);
+    border: none;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.breadcrumb__more:hover {
+    background: var(--bg-inset);
+    color: var(--text-primary);
+}

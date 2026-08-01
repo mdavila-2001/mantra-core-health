@@ -1,0 +1,45 @@
+<!-- Sin campo externo, este label invisible es el único nombre del control.
+     Con campo externo lo pone él, y emitir otro daría dos nombres. -->
+@if (ownsLabel()) {
+  <label class="sr-only" [id]="labelId()" [for]="controlId()">{{ label() }}</label>
+}
+
+<!-- `type="text"` y no `search`: con `search` el átomo dibuja SU botón de
+     limpiar, que no puede avisar al instante ni devolver el foco. La lupa se
+     proyecta por el mismo contrato de íconos que usa el resto del sistema. -->
+<app-input
+  #inputHost
+  type="text"
+  [placeholder]="placeholder()"
+  [(value)]="value"
+  [disabled]="disabled()"
+>
+  <span slot="icon-start" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <line x1="21" y1="21" x2="16.2" y2="16.2" />
+    </svg>
+  </span>
+
+  <span slot="icon-end" class="search-field__trailing">
+    @if (loading()) {
+      <app-spinner size="sm" label="Buscando" />
+    }
+    @if (value() && !disabled()) {
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [iconOnly]="true"
+        aria-label="Limpiar búsqueda"
+        (clicked)="clear()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    }
+  </span>
+</app-input>

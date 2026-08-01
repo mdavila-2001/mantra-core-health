@@ -1,0 +1,72 @@
+/* ============================================================================
+    Progress — riel hundido + relleno con la tinta del tono. Sin ámbar: es el
+    punto de acción único del sistema y una barra lo repetiría en cada archivo
+    de una subida múltiple.
+    ========================================================================== */
+
+:host {
+    --_progress-fill: var(--brand-primary);
+    --_progress-height: var(--sp-2);
+
+    display: block;
+    width: 100%;
+    height: var(--_progress-height);
+    overflow: hidden;
+    background: var(--bg-inset);
+    border-radius: var(--r-full);
+}
+
+/* ---- tonos --------------------------------------------------------------- */
+
+:host(.progress--success) {
+    --_progress-fill: var(--c-success-500);
+}
+
+:host(.progress--error) {
+    --_progress-fill: var(--c-error-500);
+}
+
+/* ---- tamaños ------------------------------------------------------------- */
+
+:host(.progress--sm) {
+    --_progress-height: var(--sp-1);
+}
+
+:host(.progress--md) {
+    --_progress-height: var(--sp-2);
+}
+
+/* ---- relleno ------------------------------------------------------------- */
+
+.progress__fill {
+    display: block;
+    height: 100%;
+    background: var(--_progress-fill);
+    border-radius: var(--r-full);
+    transition: width 0.15s ease;
+}
+
+/* Indeterminada: una banda corta que recorre el riel. El ancho no lo pone el
+   valor —no hay valor— sino esta regla. */
+:host(.progress--indeterminate) .progress__fill {
+    width: 40%;
+    animation: progress-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes progress-slide {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(250%);
+    }
+}
+
+/* Es feedback esencial —igual que el spinner— así que se ralentiza en vez de
+   frenarse: una barra congelada se lee como un proceso colgado. */
+@media (prefers-reduced-motion: reduce) {
+    :host(.progress--indeterminate) .progress__fill {
+        animation-duration: 3s !important;
+        animation-iteration-count: infinite !important;
+    }
+}

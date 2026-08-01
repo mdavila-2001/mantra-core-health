@@ -1,0 +1,55 @@
+/* ============================================================================
+    Mapa tono → trío del sistema. ÚNICA copia: la importan `badge.css` y
+    `chip.css`, que ponen la clase `tone--<tono>` en su host.
+
+    Cero valores propios: cada tono es un trío `--st-*` de src/styles.css, así
+    el modo oscuro lo resuelve el tema y no este archivo. Las clases viven EN
+    el host de cada componente, por eso todo va con `:host(...)`.
+    ========================================================================== */
+
+:host(.tone--primary) {
+    --tone-bg: var(--st-primary-bg);
+    --tone-fg: var(--st-primary-fg);
+    --tone-bd: var(--st-primary-bd);
+}
+
+:host(.tone--secondary) {
+    --tone-bg: var(--st-secondary-bg);
+    --tone-fg: var(--st-secondary-fg);
+    --tone-bd: var(--st-secondary-bd);
+}
+
+:host(.tone--success) {
+    --tone-bg: var(--st-success-bg);
+    --tone-fg: var(--st-success-fg);
+    --tone-bd: var(--st-success-bd);
+}
+
+/* El ámbar entra SOLO por acá: es el trío `warning` del sistema, que ya
+   resuelve su propio contraste. Como color de acción está prohibido — es el
+   punto cálido único de la pantalla. */
+:host(.tone--warning) {
+    --tone-bg: var(--st-warning-bg);
+    --tone-fg: var(--st-warning-fg);
+    --tone-bd: var(--st-warning-bd);
+}
+
+:host(.tone--error) {
+    --tone-bg: var(--st-error-bg);
+    --tone-fg: var(--st-error-fg);
+    --tone-bd: var(--st-error-bd);
+}
+
+:host(.tone--info) {
+    --tone-bg: var(--st-info-bg);
+    --tone-fg: var(--st-info-fg);
+    --tone-bd: var(--st-info-bd);
+}
+
+/* Sin trío propio: un tono sin significado clínico se arma con la superficie
+   hundida del tema. Extensión propia — pendiente de validación del diseñador. */
+:host(.tone--neutral) {
+    --tone-bg: var(--bg-inset);
+    --tone-fg: var(--text-secondary);
+    --tone-bd: var(--border-default);
+}

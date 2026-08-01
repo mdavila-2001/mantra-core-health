@@ -1,0 +1,34 @@
+/* ============================================================================
+    Menu — superficie flotante del sistema. Mientras está abierto vive colgado
+    del <body> con `position: fixed`, así que no hereda nada de su lugar de
+    origen: tipografía y fondo se declaran acá.
+    ========================================================================== */
+
+:host {
+    display: none;
+}
+
+:host(.menu--open) {
+    display: block;
+    position: fixed;
+    /* misma capa que el resto de lo flotante (tooltip, toasts, calendario) */
+    z-index: 1000;
+    min-width: 200px;
+    max-width: 320px;
+    padding: var(--sp-1);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-lg);
+    /* una lista larga se desplaza en vez de salirse de la pantalla */
+    max-height: 60vh;
+    overflow-y: auto;
+    animation: menu-in 0.15s ease;
+}
+
+@keyframes menu-in {
+    from {
+        opacity: 0;
+        transform: translateY(calc(-1 * var(--sp-1)));
+    }
+}

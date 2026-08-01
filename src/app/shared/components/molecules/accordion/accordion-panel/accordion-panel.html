@@ -1,0 +1,25 @@
+<!-- Encabezado real: un <button> dentro de un <h3>. Un `div role="button"`
+     obligaría a reimplementar teclado y foco, y siempre queda a medias. -->
+<h3 class="accordion-panel__heading">
+  <button
+    type="button"
+    class="accordion-panel__trigger"
+    [id]="headerId"
+    [attr.aria-expanded]="expanded()"
+    [attr.aria-controls]="regionId"
+    [disabled]="disabled()"
+    (click)="toggle()"
+  >
+    <span class="accordion-panel__label">{{ heading() }}</span>
+    <svg class="accordion-panel__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  </button>
+</h3>
+
+<!-- Plegado = ausente, no escondido. -->
+@if (expanded()) {
+  <div class="accordion-panel__region" [id]="regionId" role="region" [attr.aria-labelledby]="headerId">
+    <ng-content />
+  </div>
+}

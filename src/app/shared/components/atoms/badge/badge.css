@@ -3,14 +3,17 @@
     REDSAT_Sistema_de_Diseno.html (líneas 359–364).
 
     Cero valores propios de color: cada variante es un trío `--st-<tono>-*` de
-    styles.css, así el modo oscuro lo resuelve el tema y no este archivo.
+    styles.css, así el modo oscuro lo resuelve el tema y no este archivo. El
+    mapeo tono → trío NO vive acá: es el mismo archivo que consume el Chip.
     Las clases viven EN el host, por eso todo va con `:host(...)`.
     ========================================================================== */
 
+@import '../../tone/tone.css';
+
 :host {
-    --_badge-bg: transparent;
-    --_badge-fg: currentColor;
-    --_badge-bd: transparent;
+    --_badge-bg: var(--tone-bg, transparent);
+    --_badge-fg: var(--tone-fg, currentColor);
+    --_badge-bd: var(--tone-bd, transparent);
 
     display: inline-flex;
     align-items: center;
@@ -28,43 +31,8 @@
     color: var(--_badge-fg);
 }
 
-/* ---- variantes: los 4 estados del spec + los 2 tonos de marca ------------ */
-
-:host(.badge--success) {
-    --_badge-bg: var(--st-success-bg);
-    --_badge-fg: var(--st-success-fg);
-    --_badge-bd: var(--st-success-bd);
-}
-
-:host(.badge--warning) {
-    --_badge-bg: var(--st-warning-bg);
-    --_badge-fg: var(--st-warning-fg);
-    --_badge-bd: var(--st-warning-bd);
-}
-
-:host(.badge--error) {
-    --_badge-bg: var(--st-error-bg);
-    --_badge-fg: var(--st-error-fg);
-    --_badge-bd: var(--st-error-bd);
-}
-
-:host(.badge--info) {
-    --_badge-bg: var(--st-info-bg);
-    --_badge-fg: var(--st-info-fg);
-    --_badge-bd: var(--st-info-bd);
-}
-
-:host(.badge--primary) {
-    --_badge-bg: var(--st-primary-bg);
-    --_badge-fg: var(--st-primary-fg);
-    --_badge-bd: var(--st-primary-bd);
-}
-
-:host(.badge--secondary) {
-    --_badge-bg: var(--st-secondary-bg);
-    --_badge-fg: var(--st-secondary-fg);
-    --_badge-bd: var(--st-secondary-bd);
-}
+/* Las variantes (los 4 estados del spec + los 2 tonos de marca) las resuelve
+   `tone.css` a partir de la clase `tone--<variante>` del host. */
 
 /* ---- tamaños: `md` son los valores del spec; sm y lg lo escalan ---------- */
 
