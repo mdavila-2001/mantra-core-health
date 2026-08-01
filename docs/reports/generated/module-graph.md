@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-228 archivos TypeScript bajo `src/` y 636 importaciones internas.
+226 archivos TypeScript bajo `src/` y 635 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -13,7 +13,6 @@ Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.jso
 
 Se excluyen los puntos de entrada del framework y las pruebas.
 
-- `src/app/core/observability/telemetry.bootstrap.ts`
 - `src/app/shared/index.ts`
 - `src/environments/environment.development.ts`
 
@@ -55,10 +54,8 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | `@angular/forms` | 14 |
 | `node:fs` | 13 |
 | `rxjs` | 10 |
-| `.` | 8 |
 | `@angular/platform-browser` | 4 |
 | `@angular/ssr` | 3 |
 | `node:path` | 2 |
-| `..` | 1 |
 | `express` | 1 |
 | `node:crypto` | 1 |

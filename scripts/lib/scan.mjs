@@ -314,6 +314,8 @@ export function scanModuleGraph() {
   const known = new Set(files);
   const edges = [];
   const external = new Map();
+  /** Imports internos que no resuelven: archivos que faltan o rutas mal escritas. */
+  const dangling = [];
 
   for (const file of files) {
     const source = read(join(REPO_ROOT, file));
@@ -324,6 +326,17 @@ export function scanModuleGraph() {
       const resolved = resolveSpecifier(file, specifier, known);
 
       if (resolved === null) {
+        // Un import relativo que no resuelve **no es un paquete externo**: es
+        // un import colgado, o un archivo que todavía no existe. Contarlo como
+        // paquete producía entradas absurdas —`.` y `..` figurando como
+        // dependencias— y, peor, inflaba el recuento de superficie externa,
+        // que es justo la cifra que este inventario existe para vigilar.
+        if (specifier.startsWith('.') || specifier.startsWith('@core/') ||
+            specifier.startsWith('@shared') || specifier.startsWith('@features/')) {
+          dangling.push({ from: file, specifier });
+          continue;
+        }
+
         const packageName = specifier.startsWith('@')
           ? specifier.split('/').slice(0, 2).join('/')
           : specifier.split('/')[0];
@@ -337,7 +350,7 @@ export function scanModuleGraph() {
     }
   }
 
-  return { files, edges, external };
+  return { files, edges, external, dangling };
 }
 
 /** Ruta de archivo del import, o `null` si es un paquete externo. */
