@@ -50,6 +50,12 @@ const CHECKS = [
     why: 'los endpoints del código coinciden con los declarados',
   },
   {
+    name: 'prefijos de la API',
+    script: 'check-api-prefixes.mjs',
+    args: [],
+    why: 'las tres declaraciones de la superficie de red dicen lo mismo',
+  },
+  {
     name: 'contrastes del sistema de diseño',
     script: 'check-contrast.mjs',
     args: [],

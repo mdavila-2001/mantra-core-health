@@ -37,23 +37,25 @@ Consecuencias operativas:
 **La segunda es más simple y probablemente la correcta**, pero exige que la
 decisión se tome.
 
-## La decisión pendiente
+## La decisión, tomada
 
-> **¿La API de producción va detrás del mismo dominio que el frontend?**
-
-| Opción | `PUBLIC_API_BASE_URL` | Consecuencias |
-|---|---|---|
-| **Mismo dominio** (`/iam` lo resuelve el servidor web) | Vacía | Sin CORS · CSP simple (`connect-src 'self'`) · una sola imagen · **recomendada** |
-| **Dominio distinto** (`https://api.ejemplo.com`) | La raíz absoluta | Requiere CORS en la API · CSP con el dominio · una imagen por entorno |
-
-**Sin esta decisión no se puede:**
-
-- Construir la imagen de producción.
-- Escribir la CSP.
-- Saber si hace falta configurar CORS.
-
-Es la primera pregunta a resolver, y no es del frontend: es de arquitectura de
-despliegue.
+> ## ✅ Decisión tomada: **la API va detrás del mismo dominio**
+>
+> `PUBLIC_API_BASE_URL` queda **vacía** en todos los entornos. Consecuencias, y
+> las tres son simplificaciones:
+>
+> | | |
+> |---|---|
+> | Peticiones | Relativas (`/iam/auth/login`) |
+> | CORS | **No hace falta**: el navegador ve un solo origen |
+> | CSP | `connect-src 'self'`, y no cambia nunca |
+> | Imágenes | **Una sola**, igual para todos los entornos |
+>
+> Lo que enruta los seis prefijos a la API es el reverse proxy:
+> [`deploy/nginx.conf`](../../deploy/nginx.conf), con un despliegue de
+> referencia en [`deploy/docker-compose.prod.yml`](../../deploy/docker-compose.prod.yml).
+>
+> El mecanismo para la otra opción sigue existiendo y probado — pero no se usa.
 
 ## El generador de entorno
 

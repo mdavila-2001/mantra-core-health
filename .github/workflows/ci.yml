@@ -76,6 +76,11 @@ jobs:
       - name: Arquitectura
         run: node scripts/check-architecture.mjs
 
+      # Los seis prefijos de la API dicen lo mismo en desarrollo, en el
+      # contenedor y en el reverse proxy de producción.
+      - name: Prefijos de la API
+        run: node scripts/check-api-prefixes.mjs
+
       # Inventarios al día, enlaces, cobertura documental y deriva de contrato.
       - name: Documentación
         run: node scripts/generate-doc-report.mjs

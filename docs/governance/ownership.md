@@ -100,7 +100,7 @@ Recogidas de los comentarios del propio código y de los documentos previos:
 | Confirmar la escala de breakpoints | `core/tokens/breakpoints.ts`: *«Pendiente de que el diseñador la confirme»* |
 | Si `subtle` puede subrayar solo al hover | `link.types.ts` |
 | Señal de MFA en el backend | `login.ts`, con un `TODO` |
-| Dominio de la API en producción | [Configuración](../operations/configuration.md#la-decisión-pendiente) |
+| Dominio de la API en producción | [Configuración](../operations/configuration.md#la-decisión-tomada) |
 | Marco normativo de privacidad | [Privacidad](../security/privacy.md#marco-normativo) |
 | Destino del barril `@shared` | [Reglas de composición](../components/composition-rules.md#el-barril-y-las-rutas-profundas) |
 

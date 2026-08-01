@@ -30,6 +30,7 @@ Registro de las decisiones que gobiernan el frontend.
 | [0008](ADR-0008-contrato-de-formularios.md) | Contrato de accesibilidad campo ↔ control por inyección | Aceptado | `form-control.context.ts`, comentado |
 | [0009](ADR-0009-vitrina-en-vez-de-storybook.md) | Vitrina interna en vez de Storybook | Aceptado | `/design-system` |
 | [0010](ADR-0010-css-critico-en-linea.md) | CSS crítico en línea desactivado | **Observado, sin motivo recuperable** | `angular.json` |
+| [0011](ADR-0011-api-mismo-dominio.md) | **La API va detrás del mismo dominio** | Aceptado | Decisión del equipo, 2026-08-01 |
 
 ## Plantilla
 

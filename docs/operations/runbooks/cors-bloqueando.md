@@ -31,14 +31,18 @@ es imposible.
 | `yarn start` (host) | **No.** El proxy hace que el navegador vea un solo origen |
 | `docker compose up` | **No.** Ídem, con `proxy.generated.json` |
 | Producción, mismo dominio | **No** |
-| **Producción, API en otro dominio** | **Sí** |
+| Producción, API en otro dominio | Sí |
 
 **Con `PUBLIC_API_BASE_URL` vacío no hay CORS posible**: las peticiones salen
 relativas.
 
-Es la razón por la que
-[configuración](../configuration.md#la-decisión-pendiente) recomienda el mismo
-dominio.
+> **Y ésa es la configuración decidida.** La API va detrás del mismo dominio,
+> con [`deploy/nginx.conf`](../../../deploy/nginx.conf) enrutando los seis
+> prefijos. En esa topología **este runbook no debería dispararse nunca**.
+>
+> Si se dispara, la primera hipótesis no es CORS: es que alguien construyó la
+> imagen con `PUBLIC_API_BASE_URL` definida. Ver
+> [runbook 8](variables-incorrectas.md).
 
 ## Diagnóstico
 

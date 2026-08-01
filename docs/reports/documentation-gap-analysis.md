@@ -73,7 +73,7 @@ acción — y con la columna que más importa: **si cambia el producto**.
 | ID | Área | Elemento real | Evidencia | Brecha | Riesgo | Acción | ¿Cambia producto? | Validación |
 |---|---|---|---|---|---|---|---|---|
 | **B-01** | Operación | `yarn build` produce artefacto completo | Solo existe `Dockerfile.dev`; sin destino, dominio ni pipeline | **No hay despliegue de producción** | No se puede entregar. Bloquea monitoreo, CSP probada, smoke, rollback y Web Vitals | Definir destino, imagen de producción y pipeline | **Sí** | Smoke de [despliegue](../operations/deployment.md#después--smoke) |
-| **B-02** | Operación | `PUBLIC_API_BASE_URL` configurable | [configuración](../operations/configuration.md#la-decisión-pendiente) | **No está decidido si la API va detrás del mismo dominio** | Sin esto no se puede construir la imagen, escribir la CSP ni saber si hace falta CORS | Decidir | **Sí** (arquitectura de despliegue) | Login funcionando en el entorno destino |
+| **B-02** | Operación | `PUBLIC_API_BASE_URL` configurable | [configuración](../operations/configuration.md#la-decisión-tomada) | **No está decidido si la API va detrás del mismo dominio** | Sin esto no se puede construir la imagen, escribir la CSP ni saber si hace falta CORS | Decidir | **Sí** (arquitectura de despliegue) | Login funcionando en el entorno destino |
 
 ## CRITICAL
 
