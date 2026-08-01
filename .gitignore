@@ -11,6 +11,10 @@
 npm-debug.log
 yarn-error.log
 
+# Yarn PnP: artefactos generados por `yarn install`, no código fuente
+.pnp.*
+.yarn/unplugged/
+
 # IDEs and editors
 .idea/
 .project
