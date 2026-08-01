@@ -1,7 +1,7 @@
 import { Component, isDevMode } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
-import { ToastContainer } from './shared/components/molecules/toast-container/toast-container';
+import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
 import { ToastDevPanel } from './core/dev/toast-dev-panel/toast-dev-panel';
 
 @Component({

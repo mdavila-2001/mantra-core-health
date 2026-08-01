@@ -1,0 +1,27 @@
+# Imagen de desarrollo: sirve `ng serve` con hot reload.
+# Debian slim y no Alpine porque las dependencias nativas del build de Angular
+# (esbuild, rolldown, lightningcss, lmdb) publican binarios contra glibc.
+FROM node:24-bookworm-slim
+
+# Corepack instala la versión de Yarn fijada en el campo `packageManager`.
+RUN corepack enable
+
+WORKDIR /app
+
+# Solo manifiesto y lockfile primero: la capa de instalación se reutiliza
+# mientras esos dos archivos no cambien.
+COPY package.json yarn.lock ./
+
+# El repo no fija `nodeLinker`, así que Yarn 4 instala en modo PnP y genera
+# .pnp.cjs y .yarn/unplugged con binarios nativos de ESTA plataforma (linux).
+# Por eso se instala acá adentro y .dockerignore excluye los del host.
+RUN yarn install --immutable
+
+COPY . .
+
+EXPOSE 4200
+
+# --host 0.0.0.0 para que el puerto sea alcanzable fuera del contenedor.
+# --poll porque los bind mounts de Docker Desktop en macOS no propagan
+# eventos fsevents, y sin polling el hot reload no se entera de los cambios.
+CMD ["yarn", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "2000"]

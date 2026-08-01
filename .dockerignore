@@ -1,0 +1,24 @@
+# Artefactos de instalación de Yarn generados en el host (darwin-arm64).
+# Si entraran al contexto, el `COPY . .` pisaría los que genera `yarn install`
+# dentro de la imagen, que son de linux. Es la causa más común de que el
+# contenedor falle con "Could not find the builder's node package".
+.pnp.*
+.yarn/unplugged
+.yarn/install-state.gz
+.yarn/cache
+node_modules
+
+# Salidas de build y cachés: se regeneran dentro del contenedor.
+dist
+.angular
+coverage
+out-tsc
+
+.git
+.gitignore
+.vscode
+.idea
+*.md
+Dockerfile.dev
+docker-compose.yml
+.DS_Store

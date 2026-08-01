@@ -14,9 +14,9 @@ import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 import {
   FORM_CONTROL_CONTEXT,
   nextControlId,
-} from '../../form-control/form-control.context';
-import { createValueAccessorBridge } from '../../form-control/value-accessor';
-import type { SelectOption } from '../input/input.types';
+} from '@shared/forms/form-control.context';
+import { createValueAccessorBridge } from '@shared/forms/value-accessor';
+import type { SelectOption } from './select.types';
 
 /** Valor del `<option>` que representa «nada elegido». */
 const NO_SELECTION = '';

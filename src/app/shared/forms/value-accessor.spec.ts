@@ -2,10 +2,10 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { Checkbox } from '../atoms/checkbox/checkbox';
-import { Input } from '../atoms/input/input';
-import { Select } from '../atoms/select/select';
-import type { SelectOption } from '../atoms/input/input.types';
+import { Checkbox } from '../components/atoms/checkbox/checkbox';
+import { Input } from '../components/atoms/input/input';
+import { Select } from '../components/atoms/select/select';
+import type { SelectOption } from '../components/atoms/select/select.types';
 
 /**
  * El contrato de estas pruebas es el de sustitución: un átomo enchufado a un

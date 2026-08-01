@@ -2,9 +2,9 @@ import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { Radio } from '../atoms/radio/radio';
-import { RadioGroup } from '../atoms/radio-group/radio-group';
-import { Switch } from '../atoms/switch/switch';
+import { Radio } from '../components/molecules/radio/radio';
+import { RadioGroup } from '../components/molecules/radio-group/radio-group';
+import { Switch } from '../components/atoms/switch/switch';
 
 /**
  * `ControlValueAccessor` de `radio-group` y `switch` (tarjeta 13), contra un

@@ -13,7 +13,19 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "module": "preserve"
+    "module": "preserve",
+    /* Fronteras de la aplicación. Un import que sube tres niveles con `../../../`
+       deja de decir de dónde viene y se rompe al mover el archivo. Estas tres
+       claves son además las únicas fronteras que la arquitectura reconoce:
+       lo que no entra en `@core`, `@shared` o `@features` no tiene lugar. */
+    "paths": {
+      /* `@shared` a secas es la API pública (el barril). `@shared/*` sigue
+         disponible para lo interno, pero un feature debería usar el primero. */
+      "@shared": ["./src/app/shared/index.ts"],
+      "@shared/*": ["./src/app/shared/*"],
+      "@core/*": ["./src/app/core/*"],
+      "@features/*": ["./src/app/features/*"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

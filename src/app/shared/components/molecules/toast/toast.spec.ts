@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Toast } from './toast';
 import { ToastService } from './toast.service';
 import type { ToastMessage } from './toast.types';
-import { ToastContainer } from '../toast-container/toast-container';
+import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
 
 const SAMPLE: ToastMessage = {
   id: 'aviso-1',

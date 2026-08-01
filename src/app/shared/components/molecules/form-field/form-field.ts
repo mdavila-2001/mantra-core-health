@@ -4,7 +4,7 @@ import {
   FORM_CONTROL_CONTEXT,
   nextControlId,
   type FormControlContext,
-} from '../../form-control/form-control.context';
+} from '@shared/forms/form-control.context';
 
 /**
  * Campo de formulario: label, hint, error y obligatoriedad alrededor de

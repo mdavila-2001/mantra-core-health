@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
-import { Toast } from '../toast/toast';
-import { ToastService } from '../toast/toast.service';
+import { Toast } from '../../molecules/toast/toast';
+import { ToastService } from '../../molecules/toast/toast.service';
 
 /**
  * Ancla de los avisos. Va una sola vez en la aplicación, fuera del

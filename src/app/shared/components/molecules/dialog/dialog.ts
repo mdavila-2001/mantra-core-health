@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
-import { nextControlId } from '../../form-control/form-control.context';
+import { nextControlId } from '@shared/forms/form-control.context';
 import {
   DEFAULT_CANCEL_LABEL,
   DEFAULT_CONFIRM_LABEL,

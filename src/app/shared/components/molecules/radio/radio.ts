@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 
-import { nextControlId } from '../../form-control/form-control.context';
+import { nextControlId } from '@shared/forms/form-control.context';
 import { RadioGroup } from '../radio-group/radio-group';
 
 /**

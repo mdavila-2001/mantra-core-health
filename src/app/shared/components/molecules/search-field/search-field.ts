@@ -22,7 +22,7 @@ import {
   FORM_CONTROL_CONTEXT,
   nextControlId,
   type FormControlContext,
-} from '../../form-control/form-control.context';
+} from '@shared/forms/form-control.context';
 import { SEARCH_DEBOUNCE_MS } from './search-field.types';
 
 /**

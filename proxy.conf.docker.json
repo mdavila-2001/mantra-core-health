@@ -1,0 +1,15 @@
+[
+  {
+    "context": [
+      "/iam",
+      "/public",
+      "/terminology",
+      "/profiles",
+      "/identity",
+      "/common"
+    ],
+    "target": "http://host.docker.internal:3000",
+    "secure": false,
+    "changeOrigin": true
+  }
+]

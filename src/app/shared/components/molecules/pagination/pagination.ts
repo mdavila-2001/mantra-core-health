@@ -9,7 +9,7 @@ import {
 
 import { AppButton } from '../../atoms/button/button';
 import { Select } from '../../atoms/select/select';
-import type { SelectOption } from '../../atoms/input/input.types';
+import type { SelectOption } from '../../atoms/select/select.types';
 import {
   DEFAULT_PAGE_SIZE,
   DEFAULT_PAGE_SIZE_OPTIONS,

@@ -8,7 +8,7 @@ import {
   model,
 } from '@angular/core';
 
-import { nextControlId } from '../../../form-control/form-control.context';
+import { nextControlId } from '@shared/forms/form-control.context';
 import { ACCORDION_PARENT } from '../accordion.types';
 
 /**

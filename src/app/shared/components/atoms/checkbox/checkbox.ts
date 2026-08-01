@@ -12,8 +12,8 @@ import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 import {
   FORM_CONTROL_CONTEXT,
   nextControlId,
-} from '../../form-control/form-control.context';
-import { createValueAccessorBridge } from '../../form-control/value-accessor';
+} from '@shared/forms/form-control.context';
+import { createValueAccessorBridge } from '@shared/forms/value-accessor';
 
 /**
  * Casilla sobre `<input type="checkbox">` nativo: teclado, foco y anuncio del

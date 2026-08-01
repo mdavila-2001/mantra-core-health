@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { Avatar } from '../avatar/avatar';
+import { Avatar } from '../../atoms/avatar/avatar';
 import { AvatarGroup } from './avatar-group';
 
 @Component({
