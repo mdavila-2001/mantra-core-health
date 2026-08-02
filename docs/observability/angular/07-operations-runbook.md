@@ -93,13 +93,19 @@ producción:
 | Almacenamiento de Jaeger | Uno real (Elasticsearch, Cassandra o el que use la organización) |
 | Acceso al panel de Jaeger | Detrás de autenticación. Contiene rutas visitadas, y la sección visitada ya es información de salud |
 | Retención | Definirla. Recomendación de partida: 7 días |
-| Límite de tasa en `/otel/v1/traces` | En el balanceador o el WAF. El endpoint no está autenticado y no puede estarlo |
+| Límite de tasa en `/otel/v1/traces` | **Ya está** en `deploy/nginx.conf`: 60 r/m por dirección, ráfaga de 20, cuerpo de 512 kB y solo POST. Reproducirlo si el despliegue usa otro proxy |
 | TLS | Extremo a extremo |
 | `PUBLIC_TELEMETRY_SAMPLE_RATIO` | Empezar en `0.1` y ajustar con volumen medido |
 
-El endpoint ya rechaza barato lo que puede: método distinto de POST (405), tipo
-de contenido que no sea JSON (415) y cuerpos de más de 512 kB (413), contando
-los bytes que llegan de verdad y no fiándose de `Content-Length`.
+El endpoint ya rechaza barato lo que puede, en dos capas. En nginx: solo POST,
+60 peticiones por minuto y por dirección, y 512 kB de cuerpo. Y en el propio
+gateway: método distinto de POST (405), tipo de contenido que no sea JSON (415)
+y cuerpos de más de 512 kB (413), contando los bytes que llegan de verdad y no
+fiándose de `Content-Length`.
+
+`deploy/nginx.conf` es una referencia funcional: si el despliegue usa un Ingress
+de Kubernetes, un ALB o Caddy, lo que hay que reproducir son esos tres controles
+y que `/otel` llegue al servidor de renderizado —**nunca** a la API—.
 
 ---
 
