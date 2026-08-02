@@ -37,6 +37,19 @@ export class DesignSystemPage extends BasePage {
   }
 
   /**
+   * Espera a que la vitrina anote la respuesta del diálogo.
+   *
+   * Cerrar el `<dialog>` y anotar el resultado son dos cosas distintas: la
+   * segunda ocurre cuando se resuelve la promesa de `confirm()`, en el ciclo
+   * siguiente. Leerla justo después de que el diálogo desaparece devuelve el
+   * valor inicial —«—»— una de cada tantas veces. Es la misma carrera de
+   * siempre y se arregla igual: esperando por la condición.
+   */
+  async esperarUltimaConfirmacion(patron: RegExp): Promise<string> {
+    return this.esperarTexto(this.porTestId('demo-ultima-confirmacion'), patron);
+  }
+
+  /**
    * Baja hasta los avisos de muestra.
    *
    * El panel de desarrollo que los lanzaba **no existe en el artefacto**: vive

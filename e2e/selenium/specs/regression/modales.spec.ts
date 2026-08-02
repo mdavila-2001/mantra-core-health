@@ -45,7 +45,7 @@ describe('Regresión · modales', () => {
     await dialogo.esperarAbierto();
     await dialogo.confirmar_();
 
-    expect(await vitrina.ultimaConfirmacion()).toMatch(/confirmó/i);
+    expect(await vitrina.esperarUltimaConfirmacion(/confirmó/i)).toMatch(/confirmó/i);
   });
 
   test('cancelar no confirma', async () => {
@@ -57,7 +57,7 @@ describe('Regresión · modales', () => {
     await dialogo.esperarAbierto();
     await dialogo.cancelar_();
 
-    expect(await vitrina.ultimaConfirmacion()).toMatch(/canceló/i);
+    expect(await vitrina.esperarUltimaConfirmacion(/canceló/i)).toMatch(/canceló/i);
   });
 
   test('Escape cierra devolviendo «no»: cerrar nunca es confirmar', async () => {
@@ -71,7 +71,7 @@ describe('Regresión · modales', () => {
 
     // Si `Escape` resolviera `true`, una tecla de escape anularía una orden de
     // laboratorio. Esta es la prueba que lo impide.
-    expect(await vitrina.ultimaConfirmacion()).toMatch(/canceló/i);
+    expect(await vitrina.esperarUltimaConfirmacion(/canceló/i)).toMatch(/canceló/i);
   });
 
   test('en una acción destructiva, cancelar va primero y es lo que recibe el foco', async () => {

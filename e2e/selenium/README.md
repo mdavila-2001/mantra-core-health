@@ -380,6 +380,8 @@ Dos matices que el artefacto impone:
 - **`security.allowedHosts` estaba vacío.** Con esa lista vacía, el servidor de
   Angular rechazaba *todos* los `Host` y respondía con renderizado de cliente en
   vez de SSR — en cualquier entorno, incluida producción. Se declararon los
-  hosts en `angular.json` y una prueba de humo lo vigila: comprueba que la
-  respuesta de `/auth` traiga la marca `ngh` del prerenderizado. **Falta añadir
-  el dominio productivo cuando exista.**
+  hosts en `angular.json` —lo que se sabe al construir— y el dominio público de
+  cada entorno se declara en tiempo de ejecución con `SSR_ALLOWED_HOSTS`, sin
+  reconstruir el artefacto. Dos pruebas de humo lo vigilan por los dos lados:
+  que un host declarado **sí** reciba el prerenderizado (`ngh`) y que uno
+  ajeno **no**.

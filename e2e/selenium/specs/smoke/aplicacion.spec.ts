@@ -1,3 +1,5 @@
+import { request } from 'node:http';
+
 import { describe, expect, test } from 'vitest';
 import { By } from 'selenium-webdriver';
 
@@ -107,6 +109,23 @@ describe('Humo', () => {
     expect(html).toContain('ngh=');
   });
 
+  test('un Host que no está declarado no obtiene renderizado del servidor', async () => {
+    /**
+     * La otra mitad del contrato anterior: el prerenderizado **solo** se
+     * entrega a los hosts declarados. Es la defensa contra SSRF de Angular —
+     * sin ella, alguien le pide al servidor que renderice con el `Host` que él
+     * eligió, y todo lo que el render construya a partir del origen sale
+     * apuntando a donde ese alguien quiso.
+     *
+     * Se usa `node:http` en vez de `fetch` porque el `Host` es una cabecera
+     * prohibida para `fetch`: no la deja escribir, que es justo lo que hay que
+     * hacer acá.
+     */
+    const html = await pedirCon('intruso.example', configuracion());
+
+    expect(html).not.toContain('ngh=');
+  });
+
   test('el servidor emite las cabeceras de seguridad del despliegue real', async () => {
     /**
      * Las cabeceras no se pueden leer desde el navegador, así que se piden
@@ -121,3 +140,26 @@ describe('Humo', () => {
     expect(respuesta.headers.get('x-frame-options')).toBe('DENY');
   });
 });
+
+/**
+ * Pide `/auth` con un `Host` elegido a mano y devuelve el HTML.
+ *
+ * `fetch` no sirve: `Host` está en su lista de cabeceras prohibidas y la
+ * descarta en silencio, así que la petición saldría con el host real y la
+ * prueba pasaría sin comprobar nada.
+ */
+function pedirCon(host: string, config: ReturnType<typeof configuracion>): Promise<string> {
+  return new Promise((resolver, rechazar) => {
+    const peticion = request(
+      { host: '127.0.0.1', port: config.puerto, path: '/auth', headers: { Host: host } },
+      (respuesta) => {
+        let cuerpo = '';
+        respuesta.setEncoding('utf8');
+        respuesta.on('data', (trozo: string) => (cuerpo += trozo));
+        respuesta.on('end', () => resolver(cuerpo));
+      },
+    );
+    peticion.on('error', rechazar);
+    peticion.end();
+  });
+}

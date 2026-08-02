@@ -2,7 +2,7 @@
 
 # Inventario de la suite de extremo a extremo (Selenium)
 
-Leído de `e2e/selenium/`. 14 archivos de prueba, 83 pruebas, 9 Page Objects y 11 escenarios de API.
+Leído de `e2e/selenium/`. 14 archivos de prueba, 84 pruebas, 9 Page Objects y 11 escenarios de API.
 
 La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—
 está en [`e2e/selenium/README.md`](../../../e2e/selenium/README.md).
@@ -24,16 +24,16 @@ está en [`e2e/selenium/README.md`](../../../e2e/selenium/README.md).
 | `regression` | Regresión · directorio del panel | 4 | `e2e/selenium/specs/regression/panel-directorio.spec.ts` |
 | `regression` | Regresión · tabla de datos | 6 | `e2e/selenium/specs/regression/tabla.spec.ts` |
 | `responsive` | Responsive · escritorio · Responsive · tableta · Responsive · móvil | 6 | `e2e/selenium/specs/responsive/responsive.spec.ts` |
-| `smoke` | Humo | 8 | `e2e/selenium/specs/smoke/aplicacion.spec.ts` |
+| `smoke` | Humo | 9 | `e2e/selenium/specs/smoke/aplicacion.spec.ts` |
 
 ## Page Objects
 
 | Clase | Ruta | Métodos | Archivo |
 | --- | --- | --- | --- |
-| `DashboardPage` | `/panel` | 9 | `e2e/selenium/pages/dashboard.page.ts` |
-| `DesignSystemPage` | `/design-system` | 5 | `e2e/selenium/pages/design-system.page.ts` |
+| `DashboardPage` | `/panel` | 10 | `e2e/selenium/pages/dashboard.page.ts` |
+| `DesignSystemPage` | `/design-system` | 6 | `e2e/selenium/pages/design-system.page.ts` |
 | `ForgotPasswordPage` | `/auth/recuperar` | 7 | `e2e/selenium/pages/forgot-password.page.ts` |
-| `LoginPage` | `/auth` | 16 | `e2e/selenium/pages/login.page.ts` |
+| `LoginPage` | `/auth` | 17 | `e2e/selenium/pages/login.page.ts` |
 | `NotFoundPage` | `/esta-ruta-no-existe` | 2 | `e2e/selenium/pages/not-found.page.ts` |
 | `RegisterPage` | `/auth/registro` | 12 | `e2e/selenium/pages/register.page.ts` |
 | `ResetPasswordPage` | `/auth/nueva-clave` | 13 | `e2e/selenium/pages/reset-password.page.ts` |

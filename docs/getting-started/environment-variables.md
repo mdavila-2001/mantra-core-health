@@ -9,11 +9,17 @@ navegador**. Esa distinción es lo importante de esta página.
 |---|---|---|---|
 | `PUBLIC_API_BASE_URL` | `scripts/generate-env.mjs` → el paquete | `''` (rutas relativas) | **Sí** |
 | `PORT` | `src/server.ts` (SSR en producción) | `4000` | No |
+| `SSR_ALLOWED_HOSTS` | `src/server.ts` (**decide si hay SSR**) | vacío | No |
 | `FRONTEND_PORT` | `docker-compose.yml` | `4200` | No |
 | `BACKEND_ORIGIN` | `docker-compose.yml` y `Dockerfile.dev` | `http://host.docker.internal:3000` | No |
 
 `.env.example` es la plantilla oficial y explica cada una. `.env` está ignorado
 por Git.
+
+De todas, la que más caro sale olvidar es **`SSR_ALLOWED_HOSTS`**: sin el
+dominio público declarado, el servidor no falla —responde 200— pero degrada a
+renderizado de cliente, así que se pierde el prerenderizado **en silencio**. El
+detalle está en [configuración](../operations/configuration.md).
 
 ```bash
 cp .env.example .env
