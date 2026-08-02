@@ -27,6 +27,13 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
 
+  // La suite de Selenium vive en `e2e/selenium/` y la corre Vitest con su
+  // propia configuración. El patrón por defecto de Playwright no la recogería
+  // —sus archivos no terminan en `.spec.ts` por casualidad, sino que ESTÁN
+  // dentro de esa carpeta— pero dejarlo explícito evita que un archivo nuevo
+  // termine ejecutándose por los dos corredores a la vez.
+  testIgnore: ['**/selenium/**'],
+
   // Sin paralelismo entre archivos: comparten el mismo servidor y el mismo
   // puerto, y el arranque del artefacto no es gratis.
   fullyParallel: false,

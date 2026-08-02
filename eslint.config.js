@@ -28,6 +28,11 @@ module.exports = tseslint.config(
       '.pnp.loader.mjs',
       '.yarn/**',
       '.claude/**',
+      /* Evidencias de una corrida de Selenium: capturas, HTML de la página y el
+         reporte. Es salida de una ejecución, no código, y está en `.gitignore`. */
+      'artifacts/**',
+      'test-results/**',
+      'playwright-report/**',
     ],
   },
   {
