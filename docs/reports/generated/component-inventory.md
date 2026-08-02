@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-64 componentes y 17 servicios inyectables, leídos de `src/`.
+64 componentes y 18 servicios inyectables, leídos de `src/`.
 
 ## Átomo (15)
 
@@ -17,7 +17,7 @@
 | `app-input` | `Input` | `type`, `autocomplete`, `placeholder`, `disabled`, `readonly`, `hasError`, `hasSuccess` | `focused`, `blurred` | `value` | OnPush | sí |
 | `a[app-link]` | `Link` | `variant`, `external` | — | — | OnPush | sí |
 | `app-progress` | `Progress` | `value`, `tone`, `size`, `label` | — | — | OnPush | sí |
-| `app-select` | `Select` | `options`, `disabled`, `placeholder`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
+| `app-select` | `Select` | `options`, `disabled`, `placeholder`, `hasError`, `ariaLabel` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-skeleton` | `Skeleton` | `variant`, `width`, `height`, `lines` | — | — | OnPush | sí |
 | `app-spinner` | `Spinner` | `size`, `label`, `decorative` | — | — | OnPush | sí |
 | `app-switch` | `Switch` | `disabled`, `label` | — | `checked` | OnPush | sí |
@@ -82,8 +82,8 @@
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
-| `app-identity-verification` | `IdentityVerification` | — | — | — | OnPush | **no** |
-| `app-not-found` | `NotFound` | — | — | — | OnPush | **no** |
+| `app-identity-verification` | `IdentityVerification` | — | — | — | OnPush | sí |
+| `app-not-found` | `NotFound` | — | — | — | OnPush | sí |
 | `app-shell-layout` | `ShellLayout` | — | — | — | OnPush | sí |
 
 ## Core (1)
@@ -98,11 +98,12 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (17)
+## Servicios (18)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
 | `AuthService` | `src/app/core/auth/auth.service.ts` | root | sí |
+| `IdleLogout` | `src/app/core/auth/idle-logout.ts` | root | sí |
 | `RefreshTokenStorage` | `src/app/core/auth/refresh-token.storage.ts` | root | **no** |
 | `SessionStore` | `src/app/core/auth/session.store.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
@@ -125,8 +126,6 @@
 - `ToastDevPanel` — `src/app/core/dev/toast-dev-panel/toast-dev-panel.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
-- `IdentityVerification` — `src/app/features/identity-verification/identity-verification.ts`
-- `NotFound` — `src/app/features/not-found/not-found.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`
 - `AccordionPanel` — `src/app/shared/components/molecules/accordion/accordion-panel/accordion-panel.ts`
 - `MenuItem` — `src/app/shared/components/molecules/menu/menu-item/menu-item.ts`

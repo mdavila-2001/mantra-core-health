@@ -68,14 +68,31 @@ export class AuthService {
    * quiso salir, y dejarla adentro por un error de red sería lo peor de los dos
    * mundos. El token local se descarta y el del servidor caduca solo.
    *
+   * ## El orden importa, y no es el intuitivo
+   *
+   * El aviso sale **primero** y la limpieza va **inmediatamente después**, sin
+   * esperar la respuesta.
+   *
+   * · Primero el aviso, porque el interceptor toma el access token del store en
+   *   el momento de suscribirse: limpiar antes lo dejaría sin credencial y el
+   *   servidor no revocaría nada.
+   *
+   * · Y sin esperar, porque quien pulsó «cerrar sesión» ya salió. Limpiar
+   *   dentro del callback dejaba una ventana de un viaje de red completo en la
+   *   que el refresh token **seguía en `localStorage`**: bastaba con que la
+   *   navegación al login ocurriera antes de la respuesta —que es lo normal,
+   *   porque es local e instantánea— para que el borrado nunca corriera y la
+   *   sesión volviera sola en la siguiente recarga. Lo destapó la prueba de
+   *   extremo a extremo, entrando de nuevo a `/panel` después de salir.
+   *
    * Usa `logout` y no `logout-all` a propósito: esa otra ruta cierra las
    * sesiones de **todos** sus dispositivos, que es otra intención.
    */
   logout(): void {
-    this.iam.logout().subscribe({
-      next: () => this.clearLocal(),
-      error: () => this.clearLocal(),
-    });
+    // Un error acá no cambia nada de lo que sigue: el aviso es cortesía hacia
+    // el servidor, no la condición para salir.
+    this.iam.logout().subscribe({ error: () => undefined });
+    this.clearLocal();
   }
 
   private clearLocal(): void {

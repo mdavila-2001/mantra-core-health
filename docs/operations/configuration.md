@@ -127,14 +127,40 @@ performance.getEntriesByType('resource').filter(r => r.name.includes('/iam'))
 // muestra contra qué origen salen las peticiones
 ```
 
+## Configuración que sí hay que tocar antes de desplegar
+
+Es la lista completa, y son **dos archivos**:
+
+| Dónde | Qué | Por qué no puede tener un valor por defecto |
+|---|---|---|
+| `deploy/nginx.conf` → `server_name` | El dominio real | Mientras diga `localhost`, solo responde en local |
+| Variables del entorno productivo | Credenciales y orígenes | No van en el repositorio |
+
+`PUBLIC_API_BASE_URL` **se deja vacía**: con la API detrás del mismo dominio las
+peticiones salen relativas, no hace falta CORS y la CSP se queda en
+`connect-src 'self'` para siempre.
+
+> ⚠️ `PUBLIC_API_BASE_URL` es de **build**, no de ejecución: queda compilada
+> dentro del paquete. Definirla obligaría a una imagen por entorno, que es
+> exactamente lo que la decisión de poner la API detrás evita.
+
+### El `Host` ya no se configura en el build
+
+`angular.json` tenía `build.options.security.allowedHosts`, que se hornea en el
+artefacto y hacía que el servidor devolviera **400 ante cualquier dominio real**.
+Se quitó, y la validación vive en nginx, donde es configuración en caliente. Ver
+[despliegue](deployment.md#validación-del-host).
+
 ## Lo que falta
 
 | # | Qué | Severidad |
 |---|---|---|
-| 1 | **Decidir el dominio de la API** | **BLOCKER** |
-| 2 | Variables del entorno productivo | BLOCKER |
-| 3 | Versión / identificador de build en el artefacto | HIGH |
-| 4 | Comprobación de que los dos proxys coinciden | LOW |
-| 5 | Banderas de funcionalidad | Ver [feature flags](feature-flags.md) |
+| 1 | Variables del entorno productivo | BLOCKER |
+| 2 | Banderas de funcionalidad | Ver [feature flags](feature-flags.md) |
+
+Cerradas: el dominio de la API (va detrás, `deploy/nginx.conf`), el identificador
+de build en el artefacto (`buildInfo`), y la comprobación de que los proxys
+coinciden (`scripts/check-api-prefixes.mjs`, que compara los seis prefijos entre
+`proxy.conf.json`, `proxy.conf.docker.json` y `deploy/nginx.conf`, y corre en CI).
 
 Registradas en [el análisis de brechas](../reports/documentation-gap-analysis.md).

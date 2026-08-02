@@ -145,10 +145,23 @@ inutilizable, y el aviso no lo impide.
 **Propuesta:** una prueba que recorra las plantillas buscando `iconOnly` sin
 `aria-label`.
 
-### A11Y-12 · `LOW` · Nada impide un control sin `app-form-field`
+### A11Y-12 · `LOW` · Nada impide un control sin `app-form-field` · **cerrado en parte**
 
 Un `app-input` suelto cae en su propio id **sin nombre accesible**. No hay regla
 de lint que lo prohíba.
+
+**Y ocurría.** `axe-core` lo encontró en tres sitios reales —el desplegable de
+resultados por página del paginado y los dos filtros de `app-filter-bar`—, con
+impacto **crítico** (`select-name`). Los tres pasaban un `placeholder`, que no
+nombra al control: se renderiza como `<option hidden>` y el lector de pantalla lo
+lee como una opción más.
+
+Corregido dando a `app-select` un `ariaLabel`, la misma vía que
+`app-search-field` ya usaba con un `<label>` invisible.
+
+Sigue sin haber regla de lint, pero ya no hace falta que la haya: la
+[auditoría de axe](../testing/accessibility-tests.md#2--axe-core--las-reglas-que-nadie-escribió-a-mano)
+corre en CI y falla ante el próximo caso.
 
 ### A11Y-13 · `LOW` · Sin gestión de foco entre pantallas de `auth/`
 

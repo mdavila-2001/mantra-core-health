@@ -162,6 +162,28 @@ describe('AuthService', () => {
       expect(almacen.value).toBeNull();
     });
 
+    it('limpia SIN esperar la respuesta del servidor', () => {
+      abrirSesion();
+
+      auth.logout();
+
+      // Todavía no se contestó nada, y la sesión local ya no existe.
+      //
+      // No es un detalle de implementación: la interfaz navega al login
+      // inmediatamente después de llamar acá, y esa navegación es local e
+      // instantánea mientras que la respuesta viaja por la red. Si el borrado
+      // esperara, la recarga siguiente encontraría el refresh token intacto y
+      // **restauraría la sesión que se acababa de cerrar**.
+      expect(auth.isAuthenticated()).toBe(false);
+      expect(almacen.value).toBeNull();
+
+      // Y el aviso salió igual, con la credencial puesta: sale antes de
+      // limpiar, porque el interceptor la lee del store al suscribirse.
+      const req = http.expectOne('/iam/auth/logout');
+      expect(req.request.method).toBe('POST');
+      req.flush({});
+    });
+
     it('usa `logout` y no `logout-all`: cierra esta sesión, no las de todos los dispositivos', () => {
       abrirSesion();
 

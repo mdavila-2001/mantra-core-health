@@ -15,8 +15,34 @@ const angular = require('angular-eslint');
 module.exports = tseslint.config(
   {
     /* Nada de esto es código fuente: `dist/` es salida del build y los `.pnp.*`
-       los genera Yarn. Sin esta lista, el lint reporta el HTML compilado. */
-    ignores: ['dist/**', '.angular/**', 'coverage/**', '.pnp.cjs', '.pnp.loader.mjs', '.yarn/**'],
+       los genera Yarn. Sin esta lista, el lint reporta el HTML compilado.
+
+       `.claude/` guarda worktrees de Git creados por herramientas de asistencia.
+       Son **copias completas del repositorio**, con su propio `tsconfig.json`, y
+       lintearlas duplicaría cada hallazgo sobre un árbol que no se entrega. */
+    ignores: [
+      'dist/**',
+      '.angular/**',
+      'coverage/**',
+      '.pnp.cjs',
+      '.pnp.loader.mjs',
+      '.yarn/**',
+      '.claude/**',
+    ],
+  },
+  {
+    /* La raíz, dicha en voz alta.
+
+       typescript-eslint la deduce buscando `tsconfig.json` hacia arriba, y con
+       un worktree dentro del repositorio encuentra **dos candidatas** y se
+       niega a elegir: el lint entero se cae con «No tsconfigRootDir was set»,
+       508 errores de parseo y ni una sola regla evaluada.
+
+       Ignorar `.claude/**` no alcanza —la detección corre antes—, así que la
+       raíz se fija acá y deja de depender de qué haya en el disco. */
+    languageOptions: {
+      parserOptions: { tsconfigRootDir: __dirname },
+    },
   },
   {
     files: ['**/*.ts'],

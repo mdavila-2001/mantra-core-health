@@ -12,6 +12,11 @@
     "src/**/*.ts"
   ],
   "exclude": [
-    "src/**/*.spec.ts"
+    "src/**/*.spec.ts",
+    /* Ayudantes de prueba. Nunca los importa el código de producción, así que
+       el bundler los descartaría igual; excluirlos acá es para que NO se
+       type-chequeen contra la configuración de la aplicación, que no conoce los
+       tipos de Vitest. Los revisa `tsconfig.spec.json`. */
+    "src/testing/**/*.ts"
   ]
 }

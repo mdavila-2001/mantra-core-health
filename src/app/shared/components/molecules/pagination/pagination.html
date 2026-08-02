@@ -58,6 +58,7 @@
 @if (showPageSize()) {
   <app-select
     class="pagination__size"
+    ariaLabel="Resultados por página"
     [options]="pageSizeChoices()"
     [value]="pageSize()"
     (valueChange)="changePageSize($event)"

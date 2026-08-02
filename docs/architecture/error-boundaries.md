@@ -51,39 +51,62 @@ El reintento **no recursa**, a propósito: si la petición reintentada vuelve a 
 401, el error sube. Un interceptor que reintenta en bucle agota el límite de
 peticiones y deja la interfaz colgada sin decir nada.
 
-## Nivel 3 — el hueco
+## Nivel 3 — lo que se rompe fuera de una petición
 
 ```ts
 // app.config.ts
-provideBrowserGlobalErrorListeners()
+provideBrowserGlobalErrorListeners(),
+{ provide: ErrorHandler, useClass: AppErrorHandler },
 ```
 
-Eso es **todo**. Ese proveedor engancha `window.onerror` y
-`window.onunhandledrejection` y los reenvía al `ErrorHandler` de Angular, cuyo
-comportamiento por defecto es **escribir en la consola**.
+`provideBrowserGlobalErrorListeners` engancha `window.onerror` y
+`window.onunhandledrejection`; `AppErrorHandler` decide qué hacer con lo que
+llega. Cubre lo que ninguna petición puede cubrir:
 
-Lo que eso implica, sin adornos:
-
-| Situación | Qué pasa hoy |
+| Situación | Qué pasa |
 |---|---|
-| Una excepción en el `constructor` de un componente | La pantalla no se pinta. **Blanco** |
+| Una excepción en el `constructor` de un componente | `AppErrorHandler` la registra y lleva a `/error` |
 | Una excepción en un `computed` usado por la plantilla | Ídem |
-| Un `null` inesperado en una plantilla | Ídem, o un fragmento sin pintar |
-| Un fragmento diferido que no baja (chunk 404 tras un despliegue) | La navegación no completa. Sin aviso |
-| Cualquiera de los anteriores | **Nadie se entera**: no hay captura remota de errores |
+| Un fragmento diferido que no baja (chunk 404 tras un despliegue) | Ídem, con el runbook de [chunks desactualizados](../operations/runbooks/chunks-desactualizados.md) |
 
-No hay:
+### El código de soporte
 
-- Ningún `ErrorHandler` propio.
-- Ningún componente que envuelva al `router-outlet` para capturar fallos de la
-  ruta hija.
-- Ninguna pantalla de «algo salió mal» con opción de recargar.
-- Ninguna telemetría que registre el fallo.
+`ErrorReporter` genera un `E-<commit>-<n>`: el commit del build y un contador de
+la sesión. Es lo que la persona puede leer por teléfono y lo que conecta su
+pantalla con el registro del servidor.
 
-**Esta es la brecha `CRITICAL` de la arquitectura de errores.** Está registrada
-en [el análisis de brechas](../reports/documentation-gap-analysis.md) y en
-[reporte de errores](../observability/error-reporting.md), con la propuesta
-correspondiente. No se implementa acá: es un cambio de producto.
+**Lo que deliberadamente NO registra**, y hay una prueba que lo fija:
+
+- La pila de llamadas.
+- Ningún identificador de la persona.
+- Ningún contenido de formulario.
+
+La prueba mete un valor con pinta de dato clínico y afirma que **no aparece** en
+lo reportado. Un reporte de errores es exactamente el lugar por donde se escapa
+PHI sin que nadie lo note.
+
+### La pantalla
+
+`features/error-recovery` muestra el código y ofrece recargar. No intenta
+explicar qué pasó —no lo sabe— y no ofrece «reintentar», que en un fallo de
+renderizado no significa nada.
+
+## Nivel 4 — la red que no responde
+
+Un servidor que **no contesta** no produce ningún error: produce una petición
+colgada, un spinner eterno y una persona esperando.
+
+`timeoutInterceptor` corta a los **30 segundos**, y a los **120** en las rutas de
+subida (`/common/files/upload`), donde un documento clínico legítimamente tarda.
+
+Dos decisiones:
+
+- Traduce el `TimeoutError` a un `HttpErrorResponse` con `status: 0`, para que la
+  interfaz lo pinte como **S8 (sin conexión)** y no como S9 genérico. Para quien
+  espera, un timeout y una red caída son lo mismo, y S8 ofrece la acción correcta.
+- Va **primero** en la cadena de interceptores, para que el límite cubra también
+  el refresco de token que el interceptor de autenticación pueda disparar. Puesto
+  después, una renovación colgada quedaba fuera del reloj.
 
 ## El estado S9 sí lleva identificador, y eso ayuda
 
@@ -98,8 +121,10 @@ Sale de `correlationId` del cuerpo, o de la cabecera `x-request-id`, o de
 `'sin-id'`. Es lo único que conecta lo que la persona reporta con los registros
 del servidor.
 
-Un fallo de nivel 3 **no tiene ese identificador**, porque nunca hubo una
-petición. Es otra razón por la que el hueco importa.
+Un fallo de nivel 3 no tiene ese identificador, porque nunca hubo una petición.
+Por eso `ErrorReporter` fabrica el suyo: `E-<commit>-<n>` cumple la misma función
+—conectar el relato de la persona con el registro— sin depender de que haya
+habido una petición.
 
 ## Degradación deliberada, que no es un error
 
@@ -134,18 +159,21 @@ Es el único `console.warn` de producción del proyecto, junto con el de
 `AppButton` que avisa de un botón de ícono sin nombre accesible (y ese solo corre
 en modo desarrollo).
 
-## Propuesta, no ejecutada
+## Lo que sigue faltando
 
-Para cerrar el nivel 3 harían falta cuatro cosas, en este orden de valor:
+Tres de las cuatro piezas del nivel 3 están:
 
-1. Un `ErrorHandler` propio que registre el fallo con contexto (ruta, versión,
-   identificador de sesión) — hoy no hay dónde registrarlo.
-2. Un componente frontera alrededor del `router-outlet` que muestre una pantalla
-   de recuperación en vez del blanco.
-3. Manejo explícito del fallo de carga de un fragmento diferido, que es el caso
-   más probable en producción (despliegue nuevo, chunk viejo en caché).
-4. Captura remota, sin la cual las tres anteriores solo mejoran lo que la persona
-   ve, no lo que el equipo sabe.
+| Pieza | Estado |
+|---|---|
+| Un `ErrorHandler` propio que registre el fallo con contexto | ✅ `AppErrorHandler` + `ErrorReporter` |
+| Una pantalla de recuperación en vez del blanco | ✅ `features/error-recovery` |
+| Manejo del fallo de carga de un fragmento diferido | ✅ mismo camino, con [su runbook](../operations/runbooks/chunks-desactualizados.md) |
+| **Captura remota** | ❌ **falta** |
 
-Cada una es un cambio de producto con su propio riesgo, prueba y plan de
-reversión. Ver [el análisis de brechas](../reports/documentation-gap-analysis.md).
+La que falta es la que decide cuánto valen las otras tres: hoy mejoran lo que la
+persona ve, no lo que el equipo sabe. `ErrorReporter` deja el código de soporte
+listo para enviarse, pero **no hay a dónde enviarlo** — y elegir destino es una
+decisión de operación con implicaciones de privacidad, no un cambio de código.
+
+Ver [reporte de errores](../observability/error-reporting.md) y
+[el análisis de brechas](../reports/documentation-gap-analysis.md).

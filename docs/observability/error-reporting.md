@@ -68,12 +68,17 @@ Código de soporte: <code class="tabular-nums">{{ fallo.requestId }}</code>
 
 **Eso es reporte manual bien resuelto.** Lo que falta es el automático.
 
-## El hueco: los fallos de render
+## Los fallos de render, y el código que los identifica
 
-Ver [error boundaries](../architecture/error-boundaries.md#nivel-3--el-hueco).
+Ver [error boundaries](../architecture/error-boundaries.md#nivel-3--lo-que-se-rompe-fuera-de-una-petición).
 
-Un fallo de render **no tiene identificador de correlación**, porque nunca hubo
-una petición. Es la clase de error que hoy es completamente invisible.
+Un fallo de render no tiene identificador de correlación, porque nunca hubo una
+petición. Por eso `ErrorReporter` fabrica el suyo —`E-<commit>-<n>`— y
+`features/error-recovery` lo muestra en pantalla.
+
+Lo que sigue faltando no es el identificador sino **el destino**: el código está
+listo para enviarse y no hay a dónde. Elegirlo es una decisión de operación con
+implicaciones de privacidad.
 
 ### El caso más probable en producción
 

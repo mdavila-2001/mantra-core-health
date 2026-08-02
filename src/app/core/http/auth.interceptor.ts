@@ -31,6 +31,12 @@ const PUBLIC_PATHS: readonly string[] = [
   '/iam/auth/register-practitioner',
   '/iam/auth/verify-email',
   '/iam/auth/activate',
+  // Las dos de recuperación: quien las usa no tiene sesión —justamente por eso
+  // las usa—. Sin declararlas, alguien con sesión abierta que abriera el enlace
+  // del correo dispararía un refresco ante su 401, que es el bucle que esta
+  // lista existe para evitar.
+  '/iam/auth/forgot-password',
+  '/iam/auth/reset-password',
 ];
 
 /**

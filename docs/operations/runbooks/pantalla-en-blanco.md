@@ -15,8 +15,10 @@ fallida.
 `provideBrowserGlobalErrorListeners()`, cuyo `ErrorHandler` por defecto **escribe
 en la consola** y nada más.
 
-Sin telemetría, **este fallo es invisible** hasta que alguien lo reporta. Ver
-[error boundaries](../../architecture/error-boundaries.md#nivel-3--el-hueco).
+`AppErrorHandler` lo lleva a `/error` con un código de soporte, así que la
+persona **tiene qué reportar**. Sin captura remota, sigue haciendo falta que lo
+reporte: el equipo no se entera solo. Ver
+[error boundaries](../../architecture/error-boundaries.md#nivel-3--lo-que-se-rompe-fuera-de-una-petición).
 
 ## Diagnóstico
 
@@ -106,11 +108,13 @@ S8 o S9 con su código, no una pantalla en blanco.
 
 ## Prevención
 
-Las cuatro, en orden de valor, de
-[error boundaries](../../architecture/error-boundaries.md#propuesta-no-ejecutada):
+De las cuatro piezas de
+[error boundaries](../../architecture/error-boundaries.md#lo-que-sigue-faltando),
+tres están. Queda la primera, que es la que decide cuánto valen las otras:
 
-1. **Telemetría de errores** — sin ella este fallo seguirá siendo invisible.
-2. **Componente frontera** alrededor del `router-outlet`, con pantalla de
+1. **Telemetría de errores** — sin ella este fallo sigue dependiendo de que
+   alguien lo reporte.
+2. ~~**Componente frontera** alrededor del `router-outlet`, con pantalla de
    recuperación.
 3. **Manejo del fallo de carga de un fragmento diferido.**
 4. **Probar `Dashboard` y `ShellLayout`** — no requiere ninguna herramienta

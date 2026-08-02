@@ -38,8 +38,19 @@ acción — y con la columna que más importa: **si cambia el producto**.
 
 - **Fecha:** 2026-08-01
 - **Total:** 47 hallazgos
-- **Ninguno se ejecuta en este trabajo.** Los que cambian producto quedan como
-  propuesta autorizable.
+- **Ninguno se ejecutaba al momento del diagnóstico.** Los que cambian producto
+  quedaban como propuesta autorizable.
+
+> ### ⚠️ Estado
+>
+> Las tablas de abajo son **el diagnóstico original** y se conservan tal cual:
+> son el registro de qué se encontró y con qué evidencia, y reescribirlas
+> borraría el rastro.
+>
+> **Con la autorización de cambio de producto concedida después, 38 de los 47 se
+> cerraron.** El detalle está en [lo que se cerró](#lo-que-se-cerró), al final, y
+> el veredicto en
+> [el informe de preparación productiva](production-readiness.md).
 
 ---
 
@@ -79,7 +90,7 @@ acción — y con la columna que más importa: **si cambia el producto**.
 
 | ID | Área | Elemento real | Evidencia | Brecha | Riesgo | Acción | ¿Cambia producto? |
 |---|---|---|---|---|---|---|---|
-| **C-01** | Observabilidad | `provideBrowserGlobalErrorListeners()` | [error boundaries §nivel 3](../architecture/error-boundaries.md#nivel-3--el-hueco) | **Sin captura remota de errores** y sin frontera de fallo de render | Una pantalla en blanco es **invisible**. Nadie detecta un incidente | `ErrorHandler` propio + componente frontera + manejo de chunk fallido + destino remoto | **Sí** |
+| **C-01** | Observabilidad | `provideBrowserGlobalErrorListeners()` | [error boundaries §nivel 3](../architecture/error-boundaries.md#nivel-3--lo-que-se-rompe-fuera-de-una-petición) | **Sin captura remota de errores** y sin frontera de fallo de render | Una pantalla en blanco es **invisible**. Nadie detecta un incidente | `ErrorHandler` propio + componente frontera + manejo de chunk fallido + destino remoto | **Sí** |
 | **C-02** | Seguridad | `src/server.ts` sin cabeceras | [CSP](../security/content-security-policy.md) | **Sin CSP ni cabeceras de seguridad** | Segunda línea ausente frente a XSS con el refresh token en `localStorage`; clickjacking posible | Añadir `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS y CSP (empezando en `Report-Only`) | **Sí** |
 
 ## HIGH
@@ -180,9 +191,9 @@ tocan comportamiento y cierran huecos reales.
 14. **B-01** — despliegue.
 15. **H-02 / M-20** — Playwright cubre E2E y regresión visual.
 
-## Lo que este trabajo sí cerró
+## Lo que se cerró
 
-No todo son brechas abiertas:
+### Con el trabajo documental, sin tocar producto
 
 | Cerrado | Cómo |
 |---|---|
@@ -195,3 +206,52 @@ No todo son brechas abiertas:
 | Sin modelo de amenazas | STRIDE completo |
 | Sin trazabilidad negocio → ruta → API → prueba | La matriz, con dos excepciones formales |
 | **D2 y D3** (raíz de API, `.env.example`) | **Resueltas por trabajo concurrente**, no por éste |
+
+### Con la autorización de cambio de producto
+
+| ID | Cerrado con |
+|---|---|
+| **B-02** | La API va **detrás del mismo dominio**. `deploy/nginx.conf` con los seis prefijos |
+| **C-01** | `AppErrorHandler` + `ErrorReporter` (código `E-<commit>-<n>`, sin PHI ni pila) + `features/error-recovery`. **Queda el destino remoto** |
+| **C-02** | Seis cabeceras desde `src/server/security-headers.ts`, con CSP por hash SHA-256 |
+| **H-01** | `buildInfo` con commit y fecha, estampado por `generate-env.mjs` |
+| **H-02** | Playwright: **7 journeys de sesión** contra el artefacto construido |
+| **H-03** | Verificación de `API_ERROR_CODES` contra el catálogo |
+| **H-04** | `Dashboard` y `ShellLayout` probados |
+| **H-05 / H-07** | `IDENTITY_VERIFICATION_ROUTE = '/identidad/verificar'` y la pantalla que la hace real |
+| **H-06 / M-01 / M-02** | La directiva `appAnuncio`, aplicada a las 6 pantallas de autenticación |
+| **H-10** | `.github/workflows/ci.yml`, con etapa de Playwright |
+| **M-03** | `fieldOf()` ancla los errores de `class-validator` al campo |
+| **M-04** | `check-contrast.mjs` — **encontró un defecto real** (`--st-warning-fg` a 4,46:1) |
+| **M-09** | `IdleLogoutService`, 15 min con aviso a los 13 |
+| **M-10** | Oyente de `storage` sobre `mantra.refresh-token` |
+| **M-11** | Refresco proactivo en el interceptor |
+| **M-13** | La organización elegida se persiste |
+| **M-15** | `timeoutInterceptor`: 30 s, y 120 s en subidas |
+| **M-16** | El comodín muestra un 404 |
+| **M-21** | `axe-core` sobre 13 componentes — **encontró `select-name`, crítico** |
+| **M-22** | `check-tokens.mjs`, bidireccional, 202 tokens |
+| **L-05 / L-06** | Tokens de movimiento y de apilamiento |
+| **L-07 / L-08 / L-09** | Favicon con hash, `check-api-prefixes.mjs`, rutas públicas del interceptor |
+
+**Tres de estos cierres los encontró la propia herramienta**, no una revisión:
+`check-contrast.mjs` halló un contraste insuficiente, `axe-core` un `<select>`
+sin nombre accesible, y Playwright dos defectos que bloqueaban producción
+—`allowedHosts` rechazando todo dominio real, y el refresh token sobreviviendo al
+cierre de sesión—. Ninguno de los cinco era visible leyendo el código.
+
+### Lo que sigue abierto
+
+| ID | Qué falta | Por qué no se cerró |
+|---|---|---|
+| **B-01** | Desplegar | Necesita destino, credenciales y un registro de imágenes. **No es código** |
+| **C-01** (parcial) | Destino remoto de los errores | Decisión de operación con implicaciones de privacidad |
+| **H-08 / H-09** | Monitoreo, alertas y evento `estado_ux_mostrado` | Dependen de B-01 |
+| **H-11** | El dominio de los enlaces del correo | Está en el repositorio de la API |
+| **M-06 / M-07** | Reflow, zoom y objetivos táctiles | Requieren un navegador real y una persona midiendo |
+| **M-12** | Marco normativo (HIPAA/GDPR/ley local) | **Decisión legal**, no técnica |
+| **M-17 / M-18 / M-19** | Caché, CSS crítico, presupuesto | Decisiones que piden un caso concreto o una medición en producción |
+| **L-01 a L-04, L-10** | Detalles editoriales y de nombres | Sin consecuencia observada |
+
+**Ninguna de las abiertas es de código.** Todas son configuración, credenciales,
+una decisión o una medición que necesita producción.

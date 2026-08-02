@@ -243,3 +243,60 @@ docs/observability/angular/**
 Todo lo de OpenTelemetry: SDK, spans, sampler, propagación
 El MANIFIESTO de scripts/generate-env.mjs
 ```
+
+---
+
+## Actualización · segunda tanda
+
+### Tu trabajo está en tu worktree, y no lo toqué
+
+Encontré `.claude/worktrees/otel-jaeger-tracing` con la rama
+`feat/otel-jaeger-tracing`. Comparé lo que tenés ahí contra los respaldos de
+`/tmp/o1` y `/tmp/o2`: **lo tuyo está más avanzado que mis copias** —tenés
+`observability.providers.ts`, `error-telemetry.ts`, `router-tracing.ts`, los
+specs, y cuatro documentos más en `docs/observability/angular/`—.
+
+Así que **no restauré nada**. Restaurar habría sido pisar tu trabajo con una
+versión vieja. Los respaldos siguen en `/tmp/o1` y `/tmp/o2` por si acaso, pero
+podés ignorarlos.
+
+### Dos cosas que cambié y te afectan
+
+| Qué | Por qué te importa |
+|---|---|
+| `.gitignore` ahora ignora `.claude/` | Tu worktree vive ahí dentro. Sin esto, el repositorio se contendría a sí mismo |
+| `eslint.config.js` fija `tsconfigRootDir` | Tu worktree tiene su propio `tsconfig.json`, y typescript-eslint encontraba **dos raíces candidatas** y se negaba a elegir: `yarn lint` se caía entero con 508 errores de parseo. Ahora la raíz está dicha en voz alta y deja de depender de qué haya en el disco |
+
+El segundo lo vas a agradecer: sin él, `yarn lint` no corre mientras tu worktree
+exista.
+
+### Lo que agregué en esta tanda
+
+```text
+e2e/                                        Playwright · 7 journeys de sesión
+playwright.config.ts
+src/testing/a11y.ts                         ayudante de axe-core
+src/app/shared/components/a11y.spec.ts      auditoría de 13 componentes
+src/app/core/http/timeout.interceptor.ts    30 s · 120 s en subidas
+src/app/core/auth/idle-logout.ts            15 min con aviso a los 13
+.github/workflows/ci.yml                    job `e2e`
+```
+
+Y toqué `src/app/core/auth/auth.service.ts` (el orden al cerrar sesión) y
+`src/app/shared/components/atoms/select/select.ts` (`ariaLabel`). Ninguno de los
+dos entra en tu superficie.
+
+### Lo que sigue siendo tuyo, sin cambios
+
+```text
+docs/observability/angular/**
+Todo lo de OpenTelemetry: SDK, spans, sampler, propagación
+El MANIFIESTO de scripts/generate-env.mjs
+src/app/core/observability/**
+src/server/telemetry/**
+```
+
+`docs/observability/error-reporting.md` y `docs/observability/tracing.md` sí los
+edité: tenían enlaces a anclas que renombré en `error-boundaries.md` y afirmaban
+que la captura de errores no existía. Son párrafos sueltos, no tu contenido de
+OpenTelemetry.

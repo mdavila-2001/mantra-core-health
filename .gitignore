@@ -62,6 +62,17 @@ testem.log
 /typings
 __screenshots__/
 
+# Playwright: salida de una corrida (trazas, capturas, contexto del fallo) y el
+# informe HTML. `__screenshots__/`, más arriba, cubre las capturas de referencia
+# de la regresión visual, que SÍ se versionan cuando existan.
+/test-results
+/playwright-report
+/.playwright
+
+# Worktrees de Git creados por herramientas de asistencia. Son copias completas
+# del repositorio: versionarlas metería el árbol dentro de sí mismo.
+.claude/
+
 # System files
 .DS_Store
 Thumbs.db

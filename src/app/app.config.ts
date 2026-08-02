@@ -13,7 +13,9 @@ import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { ThemeService } from './core/tokens/theme.service';
 import { authInterceptor } from './core/http/auth.interceptor';
+import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { AuthService } from './core/auth/auth.service';
+import { IdleLogout } from './core/auth/idle-logout';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 
 export const appConfig: ApplicationConfig = {
@@ -27,7 +29,10 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes), provideClientHydration(withEventReplay()),
     // `withFetch` no es opcional bajo SSR: sin él el cliente usa XHR, que en el
     // servidor obliga a un reemplazo y rompe la transferencia de estado.
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    // El orden importa: `timeoutInterceptor` va PRIMERO para que su límite
+    // cubra también el refresco de token que `authInterceptor` dispara. Al
+    // revés, un refresco colgado no venceria nunca.
+    provideHttpClient(withFetch(), withInterceptors([timeoutInterceptor, authInterceptor])),
     // El tema no depende de que exista un componente: se instancia al arrancar.
     provideAppInitializer(() => {
       inject(ThemeService);
@@ -46,6 +51,12 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       const baja = inject(AuthService).watchSessionClosedElsewhere();
       inject(DestroyRef).onDestroy(baja);
+    }),
+    // Cierre por inactividad. Se instancia al arrancar porque su reloj depende
+    // de la sesión, no de que exista un componente: sin esto, un consultorio
+    // vacío queda con la historia clínica de alguien en pantalla.
+    provideAppInitializer(() => {
+      inject(IdleLogout);
     }),
   ]
 };

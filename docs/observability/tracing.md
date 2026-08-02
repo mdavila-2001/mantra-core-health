@@ -91,9 +91,10 @@ y es lo que hay hasta que exista telemetría.
 una excepción en un `computed` no produce ninguno, porque nunca hubo una petición
 que numerar.
 
-Es otra cara del hueco de
-[error boundaries](../architecture/error-boundaries.md#nivel-3--el-hueco): un
-`ErrorHandler` propio podría generar un identificador de cliente para esos casos.
+Es la otra cara de
+[error boundaries](../architecture/error-boundaries.md#el-código-de-soporte):
+`AppErrorHandler` genera un identificador de cliente —`E-<commit>-<n>`— justo
+para esos casos.
 
 ## Propuesta
 

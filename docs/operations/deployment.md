@@ -104,7 +104,46 @@ Con `PUBLIC_API_BASE_URL` vacío, el navegador pide al mismo origen. **En
 producción no hay proxy**: o la API queda detrás del mismo dominio, o hay que
 definir la variable **en el build**, no en ejecución.
 
-Es la decisión pendiente número uno. Ver [configuración](configuration.md).
+La decisión está tomada: **la API va detrás del mismo dominio**. Ver
+[configuración](configuration.md) y `deploy/nginx.conf`.
+
+## Validación del `Host`
+
+`deploy/nginx.conf` declara dos bloques `server`: uno `default_server` que
+responde **421** a cualquier `Host` desconocido, y otro con los dominios reales.
+Cambiar de dominio es editar una línea y recargar nginx.
+
+### Por qué no está en Angular, que es donde venía
+
+`angular.json` traía `build.options.security.allowedHosts: ["localhost"]`, y esa
+opción **se hornea en el artefacto**. El resultado en producción era concreto y
+grave:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: localhost'            http://127.0.0.1:4173/auth   # 200
+curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: mantra.example.com'   http://127.0.0.1:4173/auth   # 400
+```
+
+**El servidor rechazaba con 400 cualquier petición de un dominio real.** No lo
+veía ninguna prueba unitaria, ni el build, ni el lint: solo aparece sirviendo el
+artefacto construido y pidiéndole con un `Host` que no sea `localhost`. Lo
+encontraron [las pruebas de extremo a extremo](../testing/e2e-tests.md#lo-que-encontró),
+que corren justo así.
+
+Se probaron las tres alternativas antes de mover el control:
+
+| Valor | Efecto |
+|---|---|
+| `["localhost"]` | 400 para todo dominio real |
+| `["**"]` | Rechaza **todo**, incluido `localhost` |
+| Sin la opción | Acepta cualquier `Host` |
+
+Y se eligió quitarla, porque enumerar el dominio en el build significa **una
+imagen distinta por dominio** y reconstruir para cambiarlo.
+
+Se pierde poco al moverlo: la protección existe contra un `Host` manipulado que
+lleve al servidor a pedirle algo a un host interno, y **este servidor SSR no hace
+ninguna petición saliente** — no habla con la API.
 
 ## Propuesta de imagen de producción
 
@@ -150,7 +189,8 @@ Para cuando exista:
 - [ ] `yarn lint` limpio
 - [ ] `yarn tsc -p tsconfig.app.json --noEmit` limpio
 - [ ] `yarn build` con el aviso conocido y ninguno nuevo
-- [ ] `yarn test:coverage` — 804 pruebas, umbrales cumplidos
+- [ ] `yarn test:coverage` — 903 pruebas, umbrales cumplidos
+- [ ] `yarn e2e` — 7 journeys de sesión contra el artefacto construido
 - [ ] `node scripts/generate-doc-report.mjs` limpio
 - [ ] `yarn npm audit --recursive` sin altas ni críticas
 - [ ] La versión anterior sigue disponible para revertir
@@ -172,9 +212,15 @@ Para cuando exista:
 - [ ] Recargar con sesión **no** vuelve al login (verifica `restoreSession`)
 - [ ] El tema no parpadea (verifica el script en línea)
 - [ ] `/auth/verificar?token=x` muestra el estado correcto
+- [ ] **Cerrar sesión y recargar `/panel`**: tiene que llevar al login
+- [ ] La respuesta trae las seis cabeceras de seguridad (`curl -I`)
 
 **El cuarto y el sexto son los que más fallan al desplegar por primera vez**, y
 los dos apuntan a la misma causa: la API no alcanzable.
+
+El penúltimo está en la lista porque **falló de verdad**: el borrado del refresh
+token esperaba a la respuesta de la API y la navegación al login llegaba antes.
+Ver [sesión y tokens](../security/session-and-tokens.md#el-orden-al-cerrar-sesión).
 
 ## Dependencias externas del despliegue
 

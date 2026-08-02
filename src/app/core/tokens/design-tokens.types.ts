@@ -147,6 +147,24 @@ export const EASING_NAMES = ['standard', 'out', 'spring'] as const;
 export type EasingName = (typeof EASING_NAMES)[number];
 export type EasingToken = `--ease-${EasingName}`;
 
+/* ---- apilamiento ---------------------------------------------------------
+   Escala cerrada: un `z-index` suelto en un componente vuelve a abrir el
+   problema que estos tokens cierran —dos capas con el mismo valor, y el orden
+   decidido por la posición en el DOM—. */
+
+export const LAYER_NAMES = [
+  'base',
+  'sticky',
+  'drawer',
+  'overlay',
+  'menu',
+  'tooltip',
+  'toast',
+  'dialog',
+] as const;
+export type LayerName = (typeof LAYER_NAMES)[number];
+export type LayerToken = `--z-${LayerName}`;
+
 /* ---- tipografía ----------------------------------------------------------- */
 
 export const FONT_FAMILY = {
@@ -199,6 +217,7 @@ export type DesignToken =
   | SpacingToken
   | RadiusToken
   | BreakpointToken
+  | LayerToken
   | DurationToken
   | EasingToken
   | FontFamilyToken
@@ -252,6 +271,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),
   ...BREAKPOINT_NAMES.map((name): BreakpointToken => `--bp-${name}`),
+  ...LAYER_NAMES.map((name): LayerToken => `--z-${name}`),
   ...DURATION_NAMES.map((name): DurationToken => `--dur-${name}`),
   ...EASING_NAMES.map((name): EasingToken => `--ease-${name}`),
   ...Object.values(FONT_FAMILY),
