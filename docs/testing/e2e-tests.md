@@ -1,14 +1,33 @@
 # Pruebas extremo a extremo
 
-**Siete journeys de sesión, con Playwright, contra el artefacto de producción.**
+**Dos suites, contra el mismo artefacto de producción, cubriendo cosas
+distintas.** Ninguna sustituye a la otra y las dos corren en su propio job de
+CI, en paralelo.
+
+| | Playwright | Selenium |
+|---|---|---|
+| Qué verifica | Contrato **visual** y 7 journeys de sesión | Comportamiento **funcional**: 54 pruebas |
+| Red | Interceptada desde el navegador | API simulada del lado del servidor |
+| Cubre además | Regresión visual por píxeles | Formularios, navegación, responsive y accesibilidad con `axe-core` |
+| Orden | `yarn e2e` | `yarn test:e2e` |
+| Job de CI | `e2e` | `selenium` |
+| Documentación | Esta página | [`e2e/selenium/README.md`](../../e2e/selenium/README.md) |
+
+El inventario de la suite de Selenium —sus pruebas, sus Page Objects y sus
+escenarios— se **genera del código**:
+[inventario E2E](../reports/generated/e2e-inventory.md). No se mantiene a mano,
+así que no puede quedar desactualizado cuando el frontend crezca.
 
 ```bash
-yarn e2e        # construye, sirve y corre
-yarn e2e:ui     # el modo interactivo, para depurar
+yarn e2e        # Playwright: construye, sirve y corre
+yarn e2e:ui     # Playwright interactivo, para depurar
+
+yarn test:e2e            # Selenium: la suite completa
+yarn test:e2e:smoke      # Selenium: solo humo
+yarn test:e2e:critical   # Selenium: humo + autenticación + navegación + formularios
 ```
 
-Corren en CI en un job propio (`e2e` en `.github/workflows/ci.yml`), en paralelo
-con el resto de la batería.
+El resto de esta página describe la suite de **Playwright**.
 
 ---
 
