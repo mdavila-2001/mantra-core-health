@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-64 componentes y 18 servicios inyectables, leídos de `src/`.
+64 componentes y 24 servicios inyectables, leídos de `src/`.
 
 ## Átomo (15)
 
@@ -98,7 +98,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (18)
+## Servicios (24)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -116,6 +116,12 @@
 | `ErrorReporter` | `src/app/core/errors/error-reporter.ts` | root | sí |
 | `TokenRefreshService` | `src/app/core/http/token-refresh.service.ts` | root | sí |
 | `Breakpoints` | `src/app/core/layout/breakpoints.ts` | root | sí |
+| `FormTracing` | `src/app/core/observability/business/form-tracing.ts` | root | **no** |
+| `ErrorDeduplicator` | `src/app/core/observability/errors/error-deduplicator.ts` | root | **no** |
+| `ErrorTelemetry` | `src/app/core/observability/errors/error-telemetry.ts` | root | sí |
+| `RouterTracing` | `src/app/core/observability/routing/router-tracing.ts` | root | sí |
+| `AppStabilityTracing` | `src/app/core/observability/tracing/app-stability.ts` | root | **no** |
+| `TracingService` | `src/app/core/observability/tracing/tracing.service.ts` | root | sí |
 | `ThemeService` | `src/app/core/tokens/theme.service.ts` | root | sí |
 | `DialogService` | `src/app/shared/components/molecules/dialog/dialog-service.ts` | root | **no** |
 | `ToastService` | `src/app/shared/components/molecules/toast/toast.service.ts` | root | sí |
