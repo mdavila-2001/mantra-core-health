@@ -5,6 +5,7 @@
     size="sm"
     [iconOnly]="true"
     class="app-header__menu-button"
+    data-testid="header-menu"
     [attr.aria-expanded]="menuOpen()"
     [attr.aria-controls]="navPanelId()"
     aria-label="Abrir la navegación"
@@ -27,6 +28,7 @@
 <div class="app-header__actions">
   @if (showsTenantSwitcher()) {
     <app-tenant-switcher
+      data-testid="header-organizacion"
       [tenants]="tenants()"
       [activeTenantId]="activeTenantId()"
       variant="compact"
@@ -54,6 +56,7 @@
       variant="ghost"
       size="sm"
       class="app-header__account"
+      data-testid="header-cuenta"
       [appMenuTrigger]="menuCuenta"
       [attr.aria-label]="'Cuenta de ' + persona.displayName"
     >
@@ -72,7 +75,9 @@
           }
         </span>
       </app-menu-item>
-      <app-menu-item [destructive]="true" (selected)="requestLogout()">Cerrar sesión</app-menu-item>
+      <app-menu-item data-testid="header-cerrar-sesion" [destructive]="true" (selected)="requestLogout()">
+        Cerrar sesión
+      </app-menu-item>
     </app-menu>
   }
 </div>

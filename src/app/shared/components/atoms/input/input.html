@@ -24,6 +24,7 @@
     [attr.aria-invalid]="invalid()"
     [attr.aria-required]="required() || null"
     [attr.aria-describedby]="describedBy()"
+    [attr.data-testid]="testId()"
     (input)="handleInput($event)"
     (focus)="handleFocus($event)"
     (blur)="handleBlur($event)"

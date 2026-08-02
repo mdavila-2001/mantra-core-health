@@ -7,10 +7,10 @@
     <p class="login__subtitle">Ingresá con tu correo o tu documento de identidad.</p>
 
     @if (errorMessage(); as mensaje) {
-      <app-alert appAnuncio tone="error" class="login__alert">{{ mensaje }}</app-alert>
+      <app-alert appAnuncio tone="error" class="login__alert" data-testid="login-error">{{ mensaje }}</app-alert>
     }
 
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="login-form">
       <app-form-field
         label="Correo o documento"
         [required]="true"
@@ -27,6 +27,7 @@
           type="text"
           autocomplete="username"
           placeholder="correo@ejemplo.com o 1234567"
+          testId="login-identifier"
         />
       </app-form-field>
 
@@ -44,6 +45,7 @@
           type="password"
           autocomplete="current-password"
           placeholder="Tu contraseña"
+          testId="login-password"
         />
       </app-form-field>
 
@@ -56,6 +58,7 @@
           type="text"
           autocomplete="one-time-code"
           placeholder="123456"
+          testId="login-mfa"
         />
       </app-form-field>
 
@@ -65,6 +68,7 @@
         variant="primary"
         size="lg"
         class="login__submit"
+        data-testid="login-submit"
         [isLoading]="isSubmitting()"
       >
         Entrar
@@ -72,11 +76,11 @@
     </form>
 
     <p class="login__pie">
-      <a app-link routerLink="/auth/recuperar">¿Olvidaste tu contraseña?</a>
+      <a app-link routerLink="/auth/recuperar" data-testid="login-recuperar">¿Olvidaste tu contraseña?</a>
     </p>
 
     <p class="login__pie">
-      ¿No tenés cuenta? <a app-link routerLink="/auth/registro">Creá una con tu documento</a>
+      ¿No tenés cuenta? <a app-link routerLink="/auth/registro" data-testid="login-registro">Creá una con tu documento</a>
     </p>
   </div>
 </app-auth-split>

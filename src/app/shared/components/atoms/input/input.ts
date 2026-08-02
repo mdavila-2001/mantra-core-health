@@ -63,6 +63,20 @@ export class Input implements ControlValueAccessor {
   readonly hasError = input<boolean>(false);
   readonly hasSuccess = input<boolean>(false);
 
+  /**
+   * Identificador estable para las pruebas de extremo a extremo.
+   *
+   * Existe porque el `<input>` real vive **dentro** del componente: un
+   * `data-testid` escrito sobre `<app-input>` se queda en el host y nunca llega
+   * al campo que la prueba tiene que escribir. Sin esto, localizarlo obliga a
+   * colgarse de la etiqueta visible o de la forma del DOM, y las dos se rompen
+   * con cualquier cambio de redacción o de maquetado.
+   *
+   * No cambia nada de lo que se ve ni de lo que valida: es un atributo más en
+   * el `<input>`, y sin valor no se emite ninguno.
+   */
+  readonly testId = input<string | null>(null);
+
   readonly focused = output<FocusEvent>();
   readonly blurred = output<FocusEvent>();
 
