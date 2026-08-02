@@ -113,6 +113,27 @@ export class LoginPage extends BasePage {
     return (await campo.getAttribute('type')) ?? '';
   }
 
+  /**
+   * Espera a que el campo llegue al tipo pedido y lo devuelve.
+   *
+   * Revelar la contraseña cambia un `computed` del componente, y el atributo
+   * `type` del `<input>` se actualiza en el ciclo siguiente al clic: leerlo
+   * enseguida devuelve el de antes. Hasta que las esperas dejaron de dormir de
+   * más por las animaciones, esta carrera estaba tapada.
+   */
+  async esperarTipoDelCampoPassword(esperado: 'password' | 'text'): Promise<string> {
+    let ultimo = '';
+    await this.driver.wait(
+      async () => {
+        ultimo = await this.tipoDelCampoPassword();
+        return ultimo === esperado;
+      },
+      15_000,
+      `El campo de contraseña nunca pasó a «${esperado}»; quedó en «${ultimo}».`,
+    );
+    return ultimo;
+  }
+
   async alternarVisibilidadPassword(): Promise<void> {
     await this.clic(this.verPassword);
   }

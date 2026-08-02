@@ -95,10 +95,10 @@ describe('Autenticación · inicio de sesión', () => {
     expect(await login.tipoDelCampoPassword()).toBe('password');
 
     await login.alternarVisibilidadPassword();
-    expect(await login.tipoDelCampoPassword()).toBe('text');
+    expect(await login.esperarTipoDelCampoPassword('text')).toBe('text');
 
     await login.alternarVisibilidadPassword();
-    expect(await login.tipoDelCampoPassword()).toBe('password');
+    expect(await login.esperarTipoDelCampoPassword('password')).toBe('password');
   });
 
   test('mientras la API responde, el botón queda ocupado y no admite un segundo envío', async () => {

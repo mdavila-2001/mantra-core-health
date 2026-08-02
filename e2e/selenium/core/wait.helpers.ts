@@ -225,23 +225,47 @@ export async function esperarAplicacionLista(driver: WebDriver, ms?: number): Pr
 }
 
 /**
- * Espera a que no quede ninguna animación corriendo.
+ * Espera a que **el elemento** deje de moverse.
  *
- * Un clic sobre un elemento que todavía se está desplazando aterriza en las
- * coordenadas viejas. Se consulta la API de animaciones del documento, que es
- * la verdad del navegador, en vez de dormir «lo que dure la transición».
+ * Un clic sobre algo que todavía se desplaza aterriza en las coordenadas
+ * viejas. La condición es la posición real del elemento medida dos veces
+ * seguidas: si no cambió entre dos cuadros, ya está quieto.
+ *
+ * Antes esto esperaba a que **no quedara ninguna animación en el documento**, y
+ * era una trampa: cualquier pantalla con un spinner, un esqueleto o una barra
+ * de progreso tiene animaciones corriendo para siempre, así que la espera no
+ * terminaba nunca y el fallo decía «quedaron animaciones» sin que nada
+ * estuviera mal. Lo que importa para clicar no es que la página esté quieta,
+ * sino que lo esté el elemento al que se apunta.
  */
-export async function esperarSinAnimaciones(driver: WebDriver, ms?: number): Promise<void> {
+export async function esperarPosicionEstable(
+  driver: WebDriver,
+  elemento: WebElement,
+  ms?: number,
+): Promise<void> {
+  let anterior: string | null = null;
+
   await driver.wait(
     async () => {
-      const quietas = await driver.executeScript<boolean>(
-        `return document.getAnimations === undefined ||
-                document.getAnimations().every((a) => a.playState !== 'running');`,
+      const actual = await tolerandoObsolescencia(
+        () =>
+          driver.executeScript<string>(
+            `const r = arguments[0].getBoundingClientRect();
+             return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)].join(',');`,
+            elemento,
+          ),
+        null,
       );
-      return quietas === true;
+      if (actual === null) {
+        anterior = null;
+        return false;
+      }
+      const quieto = anterior === actual;
+      anterior = actual;
+      return quieto;
     },
     techo(ms),
-    'Quedaron animaciones corriendo.',
+    'El elemento nunca dejó de moverse.',
   );
 }
 
@@ -258,7 +282,7 @@ export async function clicSeguro(driver: WebDriver, locator: Locator, ms?: numbe
     'arguments[0].scrollIntoView({ block: "center", inline: "nearest" });',
     elemento,
   );
-  await esperarSinAnimaciones(driver, ms);
+  await esperarPosicionEstable(driver, elemento, ms);
   await elemento.click();
 }
 
