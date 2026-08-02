@@ -1029,12 +1029,20 @@
                 <strong>Cancelar</strong> — nadie debería dar de baja apretando Enter por inercia.
             </p>
             <div class="sandbox-grid">
-                <button app-button (clicked)="confirmarGuardado()">Guardar evolución</button>
-                <button app-button variant="danger" (clicked)="confirmarAnulacion()">
+                <button app-button data-testid="demo-confirmar-guardado" (clicked)="confirmarGuardado()">
+                    Guardar evolución
+                </button>
+                <button
+                    app-button
+                    variant="danger"
+                    data-testid="demo-confirmar-anulacion"
+                    (clicked)="confirmarAnulacion()"
+                >
                     Anular orden
                 </button>
                 <span class="sandbox-note">
-                    Última respuesta: <strong>{{ ultimaConfirmacion() }}</strong>
+                    Última respuesta:
+                    <strong data-testid="demo-ultima-confirmacion">{{ ultimaConfirmacion() }}</strong>
                 </span>
             </div>
             <p class="sandbox-note">

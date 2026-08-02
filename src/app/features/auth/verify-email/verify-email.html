@@ -2,26 +2,32 @@
   <div class="verificacion__card">
     @switch (estado()) {
       @case ('verificando') {
-        <h1 class="verificacion__title">Verificando tu correo…</h1>
+        <h1 class="verificacion__title" data-testid="verificar-en-curso">Verificando tu correo…</h1>
         <p class="verificacion__text" role="status">Esto tarda un momento.</p>
       }
 
       @case ('verificado') {
-        <h1 appAnuncio [asertivo]="false" class="verificacion__title">Correo verificado</h1>
+        <h1 appAnuncio [asertivo]="false" class="verificacion__title" data-testid="verificar-ok">
+          Correo verificado
+        </h1>
         <p class="verificacion__text">
           Listo. Tu dirección quedó confirmada.
         </p>
       }
 
       @case ('sin-token') {
-        <h1 appAnuncio [asertivo]="false" class="verificacion__title">Falta el código</h1>
+        <h1 appAnuncio [asertivo]="false" class="verificacion__title" data-testid="verificar-sin-token">
+          Falta el código
+        </h1>
         <p class="verificacion__text">
           Este enlace está incompleto. Abrí el que te llegó por correo, tal cual.
         </p>
       }
 
       @case ('invalido') {
-        <h1 appAnuncio [asertivo]="false" class="verificacion__title">Ese enlace ya no sirve</h1>
+        <h1 appAnuncio [asertivo]="false" class="verificacion__title" data-testid="verificar-invalido">
+          Ese enlace ya no sirve
+        </h1>
         <!-- Sin alarma a propósito: la cuenta está activa desde el registro y
              verificar el correo no desbloquea nada. -->
         <p class="verificacion__text">
@@ -32,7 +38,14 @@
     }
 
     @if (!isVerifying()) {
-      <button app-button variant="primary" size="lg" class="verificacion__accion" (clicked)="goToLogin()">
+      <button
+        app-button
+        variant="primary"
+        size="lg"
+        class="verificacion__accion"
+        data-testid="verificar-ir-login"
+        (clicked)="goToLogin()"
+      >
         Ir a iniciar sesión
       </button>
     }

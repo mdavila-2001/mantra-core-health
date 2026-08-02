@@ -1,7 +1,7 @@
 <!-- Los 9 estados los dibuja el view-state-host: acá no se reimplementa ninguno. -->
 <app-view-state-host [state]="state()">
   <div class="data-table__scroll">
-    <table class="data-table__table">
+    <table class="data-table__table" data-testid="tabla">
       @if (caption()) {
         <caption class="sr-only">{{ caption() }}</caption>
       }
@@ -27,7 +27,13 @@
               [attr.aria-sort]="ariaSortFor(column)"
             >
               @if (column.sortable) {
-                <button type="button" class="data-table__sort" (click)="toggleSort(column)">
+                <button
+                  type="button"
+                  class="data-table__sort"
+                  data-testid="tabla-ordenar"
+                  [attr.data-columna]="column.key"
+                  (click)="toggleSort(column)"
+                >
                   {{ column.header }}
                   <span class="data-table__sort-icon" aria-hidden="true">
                     {{ sortDirectionFor(column) === 'asc' ? '▲' : sortDirectionFor(column) === 'desc' ? '▼' : '↕' }}
@@ -67,7 +73,7 @@
 
       <tbody>
         @for (row of rows(); track rowKey(row)) {
-          <tr class="data-table__row">
+          <tr class="data-table__row" data-testid="tabla-fila">
             @if (selectable()) {
               <td class="data-table__select-cell">
                 <app-checkbox
@@ -149,6 +155,7 @@
       app-button
       variant="outline"
       size="sm"
+      data-testid="tabla-anterior"
       [disabled]="!hasPrevious()"
       (clicked)="goPrevious()"
     >
@@ -158,6 +165,7 @@
       app-button
       variant="outline"
       size="sm"
+      data-testid="tabla-siguiente"
       [disabled]="!hasNext()"
       (clicked)="goNext()"
     >
