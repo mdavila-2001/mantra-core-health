@@ -1,4 +1,12 @@
-import { By, Key, until, type Locator, type WebDriver, type WebElement } from 'selenium-webdriver';
+import {
+  By,
+  error,
+  Key,
+  until,
+  type Locator,
+  type WebDriver,
+  type WebElement,
+} from 'selenium-webdriver';
 
 import { configuracion } from '../config/environment';
 
@@ -17,6 +25,29 @@ import { configuracion } from '../config/environment';
 
 function techo(ms?: number): number {
   return ms ?? configuracion().timeoutMs;
+}
+
+/**
+ * Ejecuta una comprobación tolerando que el elemento se haya reemplazado.
+ *
+ * `StaleElementReferenceError` no es un fallo: significa que Angular volvió a
+ * pintar entre que se encontró el nodo y que se lo consultó, que es lo normal
+ * en una pantalla que reacciona a datos. Tragarse **solo** ese error y seguir
+ * puliendo es lo correcto; atrapar cualquier excepción escondería defectos de
+ * verdad.
+ */
+async function tolerandoObsolescencia<T>(
+  comprobacion: () => Promise<T>,
+  cuandoEsObsoleto: T,
+): Promise<T> {
+  try {
+    return await comprobacion();
+  } catch (fallo) {
+    if (fallo instanceof error.StaleElementReferenceError) {
+      return cuandoEsObsoleto;
+    }
+    throw fallo;
+  }
 }
 
 /** Localizador por identificador de prueba. Es el que usan los Page Objects. */
@@ -39,8 +70,32 @@ export async function esperarVisible(
   locator: Locator,
   ms?: number,
 ): Promise<WebElement> {
-  const elemento = await esperarPresente(driver, locator, ms);
-  return driver.wait(until.elementIsVisible(elemento), techo(ms), `Nunca se hizo visible: ${locator}`);
+  let visible: WebElement | null = null;
+
+  await driver.wait(
+    async () => {
+      const elementos = await driver.findElements(locator);
+      const candidato = elementos[0];
+      if (candidato === undefined) {
+        return false;
+      }
+      // Se vuelve a localizar en cada vuelta a propósito: si el nodo anterior
+      // quedó obsoleto porque la pantalla se repintó, el siguiente intento
+      // trabaja con el nuevo en vez de fallar por uno que ya no existe.
+      const seVe = await tolerandoObsolescencia(() => candidato.isDisplayed(), false);
+      if (seVe) {
+        visible = candidato;
+      }
+      return seVe;
+    },
+    techo(ms),
+    `Nunca se hizo visible: ${locator}`,
+  );
+
+  if (visible === null) {
+    throw new Error(`Nunca se hizo visible: ${locator}`);
+  }
+  return visible;
 }
 
 /** Visible y habilitado: lo mínimo para que un clic signifique algo. */
@@ -80,7 +135,9 @@ export async function esperarAusente(
       }
       // Un elemento que ya no está en el DOM lanza al consultarlo: eso también
       // es haber desaparecido.
-      const visibles = await Promise.all(elementos.map((e) => e.isDisplayed().catch(() => false)));
+      const visibles = await Promise.all(
+        elementos.map((e) => tolerandoObsolescencia(() => e.isDisplayed(), false)),
+      );
       return !visibles.includes(true);
     },
     techo(ms),
@@ -124,10 +181,17 @@ export async function esperarTexto(
   await driver.wait(
     async () => {
       const elementos = await driver.findElements(locator);
-      if (elementos.length === 0) {
+      const candidato = elementos[0];
+      if (candidato === undefined) {
         return false;
       }
-      ultimo = (await elementos[0]!.getText()).trim();
+      // Leer el texto de un nodo que Angular acaba de reemplazar lanza; en la
+      // vuelta siguiente se localiza el nuevo y se lee de ahí.
+      const texto = await tolerandoObsolescencia(() => candidato.getText(), null);
+      if (texto === null) {
+        return false;
+      }
+      ultimo = texto.trim();
       return patron.test(ultimo);
     },
     techo(ms),

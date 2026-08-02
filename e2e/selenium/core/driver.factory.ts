@@ -110,6 +110,47 @@ function opcionesChrome(config: ConfiguracionE2e, viewport: Viewport): chrome.Op
   return opciones;
 }
 
+/**
+ * Levanta el navegador, reintentando **solo el arranque del driver**.
+ *
+ * `Server terminated early with status 1` es chromedriver que no llegó a
+ * escuchar: dos trabajadores arrancan a la vez, cada uno pide un puerto
+ * efímero, y de vez en cuando uno pierde la carrera. No es un fallo de la
+ * aplicación ni de la prueba —todavía no se abrió ninguna página— y por eso
+ * reintentar acá **no esconde nada**: es infraestructura, no resultado.
+ *
+ * Distinto sería reintentar la prueba: eso taparía una condición de carrera de
+ * verdad, y por eso `vitest.config.ts` mantiene `retry: 0`.
+ */
+async function construirConReintento(
+  config: ConfiguracionE2e,
+  viewport: Viewport,
+  intentos = 3,
+): Promise<WebDriver> {
+  let ultimoFallo: unknown = null;
+
+  for (let intento = 1; intento <= intentos; intento += 1) {
+    try {
+      return await new Builder()
+        .forBrowser('chrome')
+        .setChromeOptions(opcionesChrome(config, viewport))
+        .build();
+    } catch (fallo) {
+      ultimoFallo = fallo;
+      console.warn(
+        `[e2e] El navegador no arrancó (intento ${intento} de ${intentos}): ` +
+          `${fallo instanceof Error ? fallo.message.split('\n')[0] : String(fallo)}`,
+      );
+      await new Promise((resolver) => setTimeout(resolver, 500 * intento));
+    }
+  }
+
+  throw new Error(
+    `No se pudo abrir el navegador tras ${intentos} intentos. Último fallo: ` +
+      `${ultimoFallo instanceof Error ? ultimoFallo.message : String(ultimoFallo)}`,
+  );
+}
+
 export interface OpcionesDriver {
   /** Resolución de la ventana. Por defecto, la de la configuración. */
   readonly viewport?: Viewport;
@@ -128,10 +169,7 @@ export async function crearDriver(opciones: OpcionesDriver = {}): Promise<WebDri
   const config = configuracion();
   const viewport = opciones.viewport ?? config.viewport;
 
-  const driver = await new Builder()
-    .forBrowser('chrome')
-    .setChromeOptions(opcionesChrome(config, viewport))
-    .build();
+  const driver = await construirConReintento(config, viewport);
 
   await driver.manage().setTimeouts({
     implicit: 0,
