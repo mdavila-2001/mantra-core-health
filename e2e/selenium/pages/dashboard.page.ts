@@ -84,4 +84,16 @@ export class DashboardPage extends BasePage {
   async estaCargandoDirectorio(): Promise<boolean> {
     return this.existe(By.css('[data-testid="panel-directorio"] app-skeleton'));
   }
+
+  /**
+   * Espera a que el esqueleto se vaya.
+   *
+   * Es la afirmación que importa: un estado de carga que **no se resuelve** es
+   * el defecto de verdad. Preguntarlo sin esperar mide el instante equivocado
+   * —a veces antes de que la petición salga siquiera— y falla o pasa por azar.
+   */
+  async esperarSinEsqueleto(): Promise<boolean> {
+    await this.esperarAusente(By.css('[data-testid="panel-directorio"] app-skeleton'));
+    return false;
+  }
 }

@@ -20,7 +20,7 @@ describe('Regresión · directorio del panel', () => {
     await panel.esperarDirectorio();
     // El conteo solo aparece con registros; lo que no puede quedar es el
     // esqueleto de carga para siempre.
-    expect(await panel.estaCargandoDirectorio()).toBe(false);
+    expect(await panel.esperarSinEsqueleto()).toBe(false);
     expect(await panel.registrosDelDirectorio()).toBeNull();
   });
 

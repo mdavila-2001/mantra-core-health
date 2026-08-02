@@ -111,7 +111,7 @@ describe('Autenticación · inicio de sesión', () => {
 
     // El estado ocupado no es cosmético: es lo que impide que dos clics
     // seguidos abran dos sesiones y dejen una huérfana del lado del servidor.
-    expect(await login.estaEnviando()).toBe(true);
+    expect(await login.esperarEnviando()).toBe(true);
 
     await login.esperarSalidaDelLogin();
     expect(await login.urlActual()).toMatch(/\/panel$/);

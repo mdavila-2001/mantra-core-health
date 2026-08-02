@@ -96,6 +96,23 @@ export class LoginPage extends BasePage {
     return (await boton.getAttribute('aria-busy')) === 'true';
   }
 
+  /**
+   * Espera a que el botón se marque ocupado.
+   *
+   * `aria-busy` lo escribe Angular en el ciclo siguiente al clic, así que
+   * preguntarlo enseguida devuelve `false` aunque el envío ya haya salido. La
+   * espera no relaja la prueba: si el estado ocupado no llegara nunca, esto
+   * falla igual, y con un mensaje que lo dice.
+   */
+  async esperarEnviando(): Promise<boolean> {
+    await this.driver.wait(
+      async () => this.estaEnviando(),
+      15_000,
+      'El botón de entrar nunca se marcó ocupado: un segundo clic abriría otra sesión.',
+    );
+    return true;
+  }
+
   async irARecuperarPassword(): Promise<void> {
     await this.clic(this.enlaceRecuperar);
   }
