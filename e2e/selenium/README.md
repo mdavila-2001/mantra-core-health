@@ -3,7 +3,7 @@
 Suite de aceptación funcional del frontend. Conduce un Chrome de verdad contra
 el **artefacto de producción**, con la API simulada del lado del servidor.
 
-- **54 pruebas** en 9 archivos, ~100 s en paralelo de 2.
+- **83 pruebas** en 14 archivos, ~2 min en paralelo de 2.
 - **Cero pausas fijas.** Todas las esperas son por condición verificable.
 - **Un navegador nuevo por prueba**, con perfil limpio y cerrado pase lo que pase.
 - **Evidencias automáticas** en cada fallo: captura, HTML, consola del navegador,
@@ -19,7 +19,7 @@ Las dos suites cubren cosas distintas y **ninguna sustituye a la otra**:
 |---|---|---|
 | Qué verifica | Contrato **visual** y 7 journeys de sesión | Comportamiento **funcional** |
 | Red | Interceptada desde el navegador | API simulada del lado del servidor |
-| Cubre además | Regresión visual por píxeles | Formularios, navegación, responsive, accesibilidad |
+| Cubre además | Regresión visual por píxeles | Formularios, navegación, responsive, accesibilidad, modales, avisos y tabla |
 | Corre en CI | job `e2e` | job `selenium` |
 
 Reemplazar una por la otra habría significado tirar cobertura sin ganar nada.
@@ -113,12 +113,12 @@ e2e/selenium/
 ├── fixtures/                  Escenarios de la API y datos de prueba
 ├── helpers/                   Sesión, accesibilidad y resoluciones
 ├── specs/
-│   ├── smoke/                 ¿Está viva la aplicación?
+│   ├── smoke/                 ¿Está viva la aplicación? ¿Es el artefacto? ¿Prerenderiza?
 │   ├── authentication/        Login y vida de la sesión
-│   ├── navigation/            Menú, historial, rutas inexistentes
-│   ├── forms/                 Registro y recuperación de contraseña
+│   ├── navigation/            Menú, historial, rutas inexistentes, fragmento diferido
+│   ├── forms/                 Registro, recuperación, verificación de correo y nueva clave
 │   ├── responsive/            Escritorio, tableta y móvil
-│   └── regression/            Estados de vista y accesibilidad
+│   └── regression/            Estados de vista, accesibilidad, modales, avisos y tabla
 ├── vitest.config.ts
 └── tsconfig.json
 ```
@@ -155,7 +155,19 @@ await login.abrir('credenciales-invalidas');   // el login responderá 401
 Los escenarios están en [`fixtures/escenarios.ts`](fixtures/escenarios.ts):
 `sesion-simple`, `multi-organizacion`, `sin-organizacion`,
 `credenciales-invalidas`, `refresco-vencido`, `directorio-poblado`,
-`directorio-caido`, `registro-duplicado`, `api-lenta`.
+`directorio-caido`, `registro-duplicado`, `token-vencido`,
+`clave-cambiada-con-sesiones`, `api-lenta`.
+
+### Pantallas con token en la dirección
+
+`/auth/verificar` y `/auth/nueva-clave` leen su token del *query string* al
+construirse, así que hay que **llegar navegando a la dirección completa**, tal
+como quien abre el enlace del correo. Los Page Objects lo encapsulan:
+
+```ts
+await new VerifyEmailPage(driver).abrirConToken('token-de-prueba');
+await new ResetPasswordPage(driver).abrirConToken('token-vencido', 'token-vencido');
+```
 
 ### Estrategia de datos
 
@@ -289,6 +301,12 @@ Corriste con `E2E_SKIP_BUILD=true` sin haber construido nunca. Quitá la variabl
 **La suite tarda una eternidad la primera vez.**
 Es la construcción del artefacto. Con `E2E_SKIP_BUILD=true` se reutiliza.
 
+**«El elemento nunca dejó de moverse».**
+El elemento al que se apunta sigue animándose. Antes esta espera miraba *todas*
+las animaciones del documento y no terminaba nunca en pantallas con un spinner
+o un esqueleto; ahora mira solo la posición del elemento. Si aparece, es que
+algo se mueve de verdad.
+
 **Una prueba falla solo en CI.**
 Descargá el artefacto `selenium-artifacts` de la ejecución: la captura y el HTML
 del instante del fallo suelen bastar para entenderlo sin reproducirlo.
@@ -332,6 +350,26 @@ futura de Chrome lo arregla.
 
 ---
 
+## Lo que se prueba sobre la vitrina, y por qué
+
+El diálogo de confirmación, los avisos y la tabla de datos **todavía no los usa
+ninguna pantalla de producto**: su única instancia con datos vive en
+`/design-system`. Se prueban ahí igual, y a propósito — son los mismos
+componentes que van a heredar las pantallas clínicas, y fijar su contrato ahora
+sale mucho más barato que descubrirlo con la pantalla a medio hacer.
+
+Dos matices que el artefacto impone:
+
+- **El diálogo va sobre el `<dialog>` nativo.** `showModal()` no existe en
+  jsdom, así que el fondo, la inertización y el cierre con `Escape` **no los
+  puede probar ninguna prueba unitaria**. Es el hueco exacto que llena Selenium.
+- **Los avisos son presentacionales.** El panel que los lanzaba vive tras un
+  `@defer (when isDev)` y su fragmento no se descarga en producción, así que no
+  hay cola viva que probar. Lo que sí se fija es su contrato de accesibilidad:
+  un error interrumpe (`role="alert"`), el resto espera turno (`role="status"`).
+  Cuando exista una pantalla que emita avisos de verdad, acá se agrega el
+  journey completo.
+
 ## Deuda detectada
 
 - **Contraste de `--text-muted`.** `axe-core` lo marca como `serious` en el menú
@@ -342,4 +380,6 @@ futura de Chrome lo arregla.
 - **`security.allowedHosts` estaba vacío.** Con esa lista vacía, el servidor de
   Angular rechazaba *todos* los `Host` y respondía con renderizado de cliente en
   vez de SSR — en cualquier entorno, incluida producción. Se declararon los
-  hosts en `angular.json`; conviene añadir el dominio productivo cuando exista.
+  hosts en `angular.json` y una prueba de humo lo vigila: comprueba que la
+  respuesta de `/auth` traiga la marca `ngh` del prerenderizado. **Falta añadir
+  el dominio productivo cuando exista.**

@@ -6,9 +6,9 @@ CI, en paralelo.
 
 | | Playwright | Selenium |
 |---|---|---|
-| Qué verifica | Contrato **visual** y 7 journeys de sesión | Comportamiento **funcional**: 54 pruebas |
+| Qué verifica | Contrato **visual** y 7 journeys de sesión | Comportamiento **funcional**: 83 pruebas |
 | Red | Interceptada desde el navegador | API simulada del lado del servidor |
-| Cubre además | Regresión visual por píxeles | Formularios, navegación, responsive y accesibilidad con `axe-core` |
+| Cubre además | Regresión visual por píxeles | Formularios, navegación, responsive, accesibilidad con `axe-core`, modales, avisos y tabla |
 | Orden | `yarn e2e` | `yarn test:e2e` |
 | Job de CI | `e2e` | `selenium` |
 | Documentación | Esta página | [`e2e/selenium/README.md`](../../e2e/selenium/README.md) |
