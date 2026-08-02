@@ -8,6 +8,8 @@ import type {
   RegisteredPatient,
   Session,
 } from '../data-access/iam/iam.types';
+import { authMethodOf, loginFailureCategory } from '../observability/business/auth-tracing';
+import { TracingService } from '../observability/tracing/tracing.service';
 import { RefreshTokenStorage } from './refresh-token.storage';
 import { SessionStore } from './session.store';
 
@@ -30,6 +32,7 @@ export class AuthService {
   private readonly iam = inject(IamClient);
   private readonly session = inject(SessionStore);
   private readonly storage = inject(RefreshTokenStorage);
+  private readonly tracing = inject(TracingService);
 
   /** Lo que la interfaz necesita saber de quién está adentro. */
   readonly isAuthenticated = this.session.isAuthenticated;
@@ -46,9 +49,38 @@ export class AuthService {
     return this.session.tenantName(tenantId);
   }
 
-  /** Inicia sesión con correo o documento — nunca ambos, lo impide el tipo. */
+  /**
+   * Inicia sesión con correo o documento — nunca ambos, lo impide el tipo.
+   *
+   * El span `auth.login` cubre la operación entera, no solo la petición: la
+   * llamada a la API **y** el guardado de la sesión. Es lo que la persona vive
+   * como «entrar», y es donde hay que mirar cuando alguien dice que entrar
+   * tarda.
+   *
+   * De las credenciales solo viaja el **método** (`email` o `national_id`), que
+   * sale del discriminante del tipo. El correo, el documento, la contraseña y
+   * el código de segundo factor no se tocan. Ver `observability/business/auth-tracing.ts`.
+   */
   login(credentials: LoginCredentials): Observable<Session> {
-    return this.iam.login(credentials).pipe(tap((session) => this.open(session)));
+    return this.tracing.traceObservable(
+      'auth.login',
+      { 'auth.method': authMethodOf(credentials), 'app.feature': 'auth' },
+      (span) =>
+        this.iam.login(credentials).pipe(
+          tap({
+            next: (session) => {
+              this.open(session);
+              span.setAttribute('auth.result', 'success');
+            },
+            error: (error: unknown) => {
+              span.setAttribute('auth.result', 'failure');
+              // Categoría cerrada, nunca el mensaje de la API: puede citar el
+              // valor rechazado.
+              span.setAttribute('auth.failure.category', loginFailureCategory(error));
+            },
+          }),
+        ),
+    );
   }
 
   /**

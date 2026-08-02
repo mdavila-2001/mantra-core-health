@@ -1,0 +1,67 @@
+# Collector + Jaeger, para desarrollo.
+#
+#   docker compose -f infra/otel-collector/docker-compose.observability.yml up -d
+#   PUBLIC_TELEMETRY_ENABLED=true en el .env
+#   yarn start
+#   → Jaeger en http://localhost:16686
+#
+# Está aparte del `docker-compose.yml` del repositorio a propósito: la
+# aplicación tiene que poder levantarse sin esto. Un solo archivo obligaría a
+# arrancar dos contenedores más para trabajar en una pantalla.
+#
+# **Esto no es una configuración de producción.** Jaeger guarda en memoria y
+# pierde todo al reiniciar; no hay autenticación, no hay TLS y no hay
+# persistencia. En producción, Jaeger va detrás de autenticación y con un
+# almacenamiento de verdad; el Collector, en la red interna. Ver el runbook.
+
+name: mantra-observability
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    container_name: mantra-jaeger
+    ports:
+      # La interfaz web. Es lo único que hace falta abrir en el host.
+      - '16686:16686'
+    environment:
+      # El puerto 4317 acepta OTLP/gRPC, que es por donde entra el Collector.
+      COLLECTOR_OTLP_ENABLED: 'true'
+      # Memoria: suficiente para una sesión de trabajo, y explícito para que
+      # nadie confunda esto con almacenamiento.
+      SPAN_STORAGE_TYPE: memory
+      MEMORY_MAX_TRACES: '20000'
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:16686']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.115.1
+    container_name: mantra-otel-collector
+    command: ['--config=/etc/otel/config.yml']
+    volumes:
+      - ./otel-collector.angular.yml:/etc/otel/config.yml:ro
+    ports:
+      # 4318 = OTLP/HTTP. Se publica en el host solo porque en desarrollo el
+      # servidor de Angular (`yarn start`) corre fuera de Docker y necesita
+      # alcanzarlo.
+      #
+      # En producción esto NO se publica: el Collector vive en la red interna y
+      # el único que le habla es el servidor de la aplicación. Un Collector
+      # abierto a internet es un sumidero que cualquiera puede llenar de spans
+      # falsos, y no tiene forma de distinguirlos.
+      - '127.0.0.1:4318:4318'
+      - '127.0.0.1:13133:13133'
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:13133']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# La imagen `-contrib` y no la base: `tail_sampling`, `filter` y `transform`
+# —los tres procesadores que hacen el trabajo de privacidad y de volumen— solo
+# existen en la distribución contrib.

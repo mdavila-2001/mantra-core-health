@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
+import { fileAttributes } from '../../observability/business/file-tracing';
+import { TracingService } from '../../observability/tracing/tracing.service';
 import { API_BASE_URL, apiUrl } from '../api';
 
 /** Los dos únicos valores que admite el backend. */
@@ -31,8 +33,24 @@ export interface UploadedFile {
 export class FilesClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  private readonly tracing = inject(TracingService);
 
-  /** `POST /common/files/upload`. El campo del archivo se llama `file`. */
+  /**
+   * `POST /common/files/upload`. El campo del archivo se llama `file`.
+   *
+   * El span `document.upload` mide la subida entera. De lo que se sube solo
+   * viajan tres cosas: extensión, tipo MIME y **cubeta** de tamaño.
+   *
+   * **El nombre del archivo no.** En este sistema la gente sube cosas llamadas
+   * `analisis-ana-perez-marzo.pdf`: ese texto solo lleva un nombre completo y
+   * un diagnóstico. Y el tamaño va en cubetas porque un tamaño exacto, cruzado
+   * con la hora, señala una subida concreta entre miles. Ver
+   * `observability/business/file-tracing.ts`.
+   *
+   * `sensitivity` sí viaja, y es seguro: `NORMAL` o `PHI` describen **cómo se
+   * guarda** el archivo, no qué contiene. Saber que fallan las subidas marcadas
+   * `PHI` es exactamente el tipo de cosa para la que existe esto.
+   */
   upload(
     file: File,
     category: FileCategory,
@@ -43,6 +61,16 @@ export class FilesClient {
     form.append('category', category);
     form.append('sensitivity', sensitivity);
 
-    return this.http.post<UploadedFile>(apiUrl(this.baseUrl, '/common/files/upload'), form);
+    return this.tracing.traceObservable(
+      'document.upload',
+      {
+        ...fileAttributes(file),
+        'file.category': category,
+        'file.sensitivity': sensitivity,
+        'app.feature': 'files',
+        'ui.action': 'upload',
+      },
+      () => this.http.post<UploadedFile>(apiUrl(this.baseUrl, '/common/files/upload'), form),
+    );
   }
 }

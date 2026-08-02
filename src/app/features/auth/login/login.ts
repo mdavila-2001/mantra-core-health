@@ -10,6 +10,7 @@ import { loading, ready, validation } from '../../../core/view-state/view-state'
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { readApiError } from '../../../core/http/api-error';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { FormTracing } from '../../../core/observability/business/form-tracing';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
@@ -43,6 +44,7 @@ const HOME_ROUTE = '/';
 export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly formTracing = inject(FormTracing);
 
   readonly form = new FormGroup({
     identifier: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -92,10 +94,21 @@ export class Login {
 
     this.state.set(loading());
 
-    this.auth.login(this.credentials()).subscribe({
-      next: () => this.goAfterLogin(),
-      error: (error: unknown) => this.state.set(this.toState(error)),
-    });
+    /**
+     * El envío se envuelve en un span `angular.form.submit`, que cuelga de la
+     * navegación en curso y del que cuelga el `auth.login` del servicio y la
+     * petición HTTP. Con eso, una traza responde «cuánto tardó entrar» separando
+     * lo que fue red de lo que fue backend.
+     *
+     * De aquí no sale ningún valor del formulario: solo su nombre y cuántos
+     * controles estaban inválidos. Ver `observability/business/form-tracing.ts`.
+     */
+    this.formTracing
+      .traceSubmit('login', 'auth', this.form, () => this.auth.login(this.credentials()))
+      .subscribe({
+        next: () => this.goAfterLogin(),
+        error: (error: unknown) => this.state.set(this.toState(error)),
+      });
   }
 
   /**

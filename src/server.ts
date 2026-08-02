@@ -8,11 +8,28 @@ import express from 'express';
 import { join } from 'node:path';
 
 import { collectInlineScriptHashes, securityHeaders } from './server/security-headers';
+import { OTEL_TRACES_PATH, otelGateway } from './server/telemetry/otel-gateway';
+import { serverTelemetryConfig } from './server/telemetry/server-telemetry.config';
+import { serverTracingMiddleware } from './server/telemetry/server-tracing.middleware';
+import { startServerTelemetry } from './server/telemetry/server-telemetry';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
+
+/**
+ * Telemetría del servidor.
+ *
+ * Se arranca **lo primero**, antes de registrar ningún middleware: el SDK tiene
+ * que estar instalado antes de que exista la primera petición que trazar.
+ *
+ * Apagada salvo que `OTEL_SSR_ENABLED=true`. Con ella apagada esto es una
+ * lectura de variables de entorno y nada más — no se registra el middleware, no
+ * se abre ninguna conexión y el servidor se comporta como antes.
+ */
+const telemetry = serverTelemetryConfig();
+const telemetryHandle = startServerTelemetry(telemetry);
 
 /**
  * Cabeceras de seguridad, en **todas** las respuestas.
@@ -43,6 +60,26 @@ app.use((_request, response, next) => {
 });
 
 /**
+ * El endpoint al que el navegador manda sus trazas.
+ *
+ * Va **antes** que los estáticos y que el motor de Angular, porque es lo único
+ * que tiene que responder rápido y sin tocar nada más. Y va condicionado: sin
+ * telemetría no existe la ruta, así que un despliegue sin Collector no expone
+ * un reenviador hacia una dirección interna que nadie configuró.
+ *
+ * Ver `server/telemetry/otel-gateway.ts` para por qué el navegador no habla
+ * directamente con el Collector.
+ */
+if (telemetryHandle !== null) {
+  /**
+   * `all` y no `post`: con `post`, un `GET /otel/v1/traces` se escurría hasta
+   * el motor de Angular y devolvía la aplicación entera renderizada con un 200.
+   * Verificado y corregido — el endpoint responde 405 y nada más.
+   */
+  app.all(OTEL_TRACES_PATH, otelGateway(telemetry.collectorUrl));
+}
+
+/**
  * Serve static files from /browser
  */
 app.use(
@@ -52,6 +89,18 @@ app.use(
     redirect: false,
   }),
 );
+
+/**
+ * Traza de la petición, **después** de los estáticos.
+ *
+ * El orden es la decisión: un `.js` o una tipografía servidos por
+ * `express.static` no producen span. Son la mayoría de las peticiones y no
+ * dicen nada que valga un span cada una. Lo que sí se traza es lo que llega al
+ * motor de Angular, que es donde ocurre el render.
+ */
+if (telemetryHandle !== null) {
+  app.use(serverTracingMiddleware());
+}
 
 /**
  * Handle all other requests by rendering the Angular application.
@@ -78,6 +127,21 @@ if (isMainModule(import.meta.url) || process.env['pm_id']) {
 
     console.log(`Node Express server listening on http://localhost:${port}`);
   });
+
+  /**
+   * Cierre limpio de la telemetría.
+   *
+   * Sin esto, al reiniciar el servidor el proceso muere con la cola de spans
+   * llena y se pierden las trazas de justo antes del reinicio — que son
+   * exactamente las que explican por qué se reinició.
+   *
+   * `once` y no `on`: dos señales seguidas no deben disparar dos cierres.
+   */
+  for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+    process.once(signal, () => {
+      void telemetryHandle?.shutdown().finally(() => process.exit(0));
+    });
+  }
 }
 
 /**

@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { Router, type CanActivateFn } from '@angular/router';
 
 import { LOGIN_ROUTE } from '../http/auth.interceptor';
+import { tracedGuard } from '../observability/routing/guard-tracing';
 import { SessionStore } from './session.store';
 
 /**
@@ -28,7 +29,7 @@ export const TENANT_SELECTION_ROUTE = '/auth/organizacion';
  * 2. con sesión y varias organizaciones sin elegir → al selector;
  * 3. con sesión resuelta → pasa.
  */
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = tracedGuard('authGuard', () => {
   const session = inject(SessionStore);
   const router = inject(Router);
 
@@ -41,4 +42,4 @@ export const authGuard: CanActivateFn = () => {
   }
 
   return true;
-};
+});

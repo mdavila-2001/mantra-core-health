@@ -17,6 +17,8 @@ import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { IdleLogout } from './core/auth/idle-logout';
 import { AppErrorHandler } from './core/errors/app-error-handler';
+import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
+import { provideObservability } from './core/observability/observability.providers';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -29,10 +31,29 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes), provideClientHydration(withEventReplay()),
     // `withFetch` no es opcional bajo SSR: sin él el cliente usa XHR, que en el
     // servidor obliga a un reemplazo y rompe la transferencia de estado.
-    // El orden importa: `timeoutInterceptor` va PRIMERO para que su límite
-    // cubra también el refresco de token que `authInterceptor` dispara. Al
-    // revés, un refresco colgado no venceria nunca.
-    provideHttpClient(withFetch(), withInterceptors([timeoutInterceptor, authInterceptor])),
+    //
+    // El orden de los tres interceptores importa, y ninguno de los tres está
+    // donde está por gusto:
+    //
+    //   1. `tracingInterceptor` — el más externo. Mide la petición *lógica*:
+    //      con él por dentro, un refresco de sesión con reintento produciría
+    //      dos spans para lo que la pantalla vivió como una sola llamada. Y su
+    //      `traceparent` se pone antes de que nadie clone la petición, así que
+    //      sobrevive a los dos clones que vienen después.
+    //   2. `timeoutInterceptor` — su límite tiene que cubrir también el
+    //      refresco de token que `authInterceptor` dispara. Al revés, un
+    //      refresco colgado no vencería nunca.
+    //   3. `authInterceptor` — el más interno, el que habla con la sesión.
+    //
+    // Consecuencia buscada: un vencimiento por tiempo aparece como error
+    // *dentro* del span de la petición, que es donde hay que buscarlo.
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([tracingInterceptor, timeoutInterceptor, authInterceptor]),
+    ),
+    // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
+    // arranque y, con la telemetría apagada, no engancha nada.
+    provideObservability(),
     // El tema no depende de que exista un componente: se instancia al arrancar.
     provideAppInitializer(() => {
       inject(ThemeService);
