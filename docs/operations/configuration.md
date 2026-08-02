@@ -1,20 +1,51 @@
 # Configuración
 
-Cuatro variables, y **una decisión sin tomar** que bloquea el despliegue.
+Cinco variables, y una que **decide si hay SSR**.
 
 Para el detalle de cada variable, ver
 [variables de entorno](../getting-started/environment-variables.md).
 
 ---
 
-## Las cuatro variables
+## Las cinco variables
 
 | Variable | Momento | Consumidor | Llega al navegador |
 |---|---|---|---|
 | `PUBLIC_API_BASE_URL` | **Build** | El paquete, vía `generate-env.mjs` | **Sí** |
 | `PORT` | Ejecución | `src/server.ts` | No |
+| `SSR_ALLOWED_HOSTS` | Ejecución | `src/server.ts` | No |
 | `FRONTEND_PORT` | Ejecución | `docker-compose.yml` | No |
 | `BACKEND_ORIGIN` | Ejecución | `docker-compose.yml` y `Dockerfile.dev` | No |
+
+## La variable que decide si hay SSR
+
+`SSR_ALLOWED_HOSTS` lleva los dominios públicos que el servidor de renderizado
+acepta atender, separados por coma y **sin esquema ni ruta**:
+
+```env
+SSR_ALLOWED_HOSTS=salud.example.bo,www.salud.example.bo
+```
+
+**Su modo de fallo es silencioso, y por eso importa.** El motor de Angular
+compara el `Host` de cada petición contra su lista; si el dominio no está, no
+devuelve un error: responde 200 **degradando a renderizado de cliente**. La
+página funciona, más lenta y sin prerenderizado, y nada en el registro lo grita.
+Este proyecto vivió exactamente eso: la lista estuvo vacía desde el principio y
+el SSR no se aplicó nunca, en ningún entorno, hasta que las pruebas de extremo a
+extremo lo destaparon.
+
+Lo que se declara acá **se suma** a `security.allowedHosts` de `angular.json`,
+que ya trae lo que se conoce al construir: `localhost`, `127.0.0.1`,
+`mantra-core-health.local` y `frontend`, el servicio de compose. La división es
+la de siempre: en el artefacto lo que no cambia, en el entorno lo que sí.
+
+El comodín `*` **se rechaza**. Angular lo aceptaría con un aviso, pero delante
+hay un reverse proxy que ya reenvía el `Host` original
+(`proxy_set_header Host $host`), así que no resolvería ninguna necesidad real y
+apagaría la única comprobación que existe contra SSRF.
+
+Que funciona lo vigilan dos pruebas de humo por los dos lados: un host declarado
+recibe el prerenderizado (`ngh` en el HTML) y uno ajeno no.
 
 ## La distinción que más cuesta en producción
 
