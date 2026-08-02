@@ -20,6 +20,7 @@ import { join } from 'node:path';
 import {
   DOCS_ROOT,
   fanIn,
+  REPO_ROOT,
   findCycles,
   findOrphans,
   scanComponents,
@@ -27,6 +28,7 @@ import {
   scanModuleGraph,
   scanRoutes,
   scanServices,
+  walk,
 } from './lib/scan.mjs';
 
 const OUT_DIR = join(DOCS_ROOT, 'reports/generated');
@@ -48,6 +50,7 @@ const files = {
   'component-inventory.md': componentInventory(),
   'api-inventory.md': apiInventory(),
   'module-graph.md': moduleGraph(),
+  'e2e-inventory.md': e2eInventory(),
 };
 
 mkdirSync(OUT_DIR, { recursive: true });
@@ -266,4 +269,144 @@ function list_(names) {
 
 function capitalize(text) {
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// --- Suite de extremo a extremo ---------------------------------------------
+
+/**
+ * Inventario de la suite de Selenium.
+ *
+ * Existe por la misma razón que los otros cuatro: **la documentación de lo que
+ * se puede leer del código no se escribe a mano**, porque se desactualiza el
+ * día que alguien agrega una pantalla y se olvida del README.
+ *
+ * Y hace algo más que enumerar: cruza los `data-testid` que la suite usa con
+ * los que las plantillas declaran. Si alguien quita un atributo de una
+ * plantilla, la prueba que se apoyaba en él fallaría recién al correr con
+ * navegador —minutos— mientras que acá se ve en segundos y con nombre propio.
+ */
+function e2eInventory() {
+  const suite = join(REPO_ROOT, 'e2e/selenium');
+  const specs = walk(join(suite, 'specs'), ['.spec.ts']).sort();
+  const pages = walk(join(suite, 'pages'), ['.ts']).sort();
+
+  const filasSpecs = specs.map((file) => {
+    const source = safeRead(file) ?? '';
+    // Un archivo puede declarar más de un bloque —`responsive.spec.ts` tiene uno
+    // por resolución— y quedarse con el primero escondería los otros.
+    const bloques = [...source.matchAll(/describe\(\s*'([^']+)'/g)].map((m) => m[1]);
+    const suiteNombre = bloques.length === 0 ? '—' : bloques.join(' · ');
+    const pruebas = (source.match(/\n\s{2}test\(/g) ?? []).length;
+    const carpeta = repoRelative(file).split('/').at(-2) ?? '—';
+    return `| \`${carpeta}\` | ${suiteNombre} | ${pruebas} | \`${repoRelative(file)}\` |`;
+  });
+
+  const totalPruebas = specs.reduce(
+    (suma, file) => suma + ((safeRead(file) ?? '').match(/\n\s{2}test\(/g) ?? []).length,
+    0,
+  );
+
+  const filasPages = pages.map((file) => {
+    const source = safeRead(file) ?? '';
+    const clase = /export class (\w+)/.exec(source)?.[1] ?? '—';
+    const ruta = /readonly ruta = '([^']*)'/.exec(source)?.[1] ?? '—';
+    const acciones = (source.match(/\n {2}(?:async )?[a-zA-Z]\w*\(/g) ?? []).length;
+    return `| \`${clase}\` | \`${ruta}\` | ${acciones} | \`${repoRelative(file)}\` |`;
+  });
+
+  const escenarios = escenariosDeclarados();
+  const filasEscenarios = escenarios.map(
+    ({ nombre, descripcion }) => `| \`${nombre}\` | ${descripcion} |`,
+  );
+
+  const usados = testIdsUsados(suite);
+  const declarados = testIdsDeclarados();
+  const huerfanos = usados.filter((id) => !declarados.includes(id));
+
+  const coherencia =
+    huerfanos.length === 0
+      ? `Los ${usados.length} identificadores que la suite localiza están declarados en las plantillas.`
+      : `**${huerfanos.length} identificador(es) que la suite usa ya no existen en ninguna plantilla:** ` +
+        huerfanos.map((id) => `\`${id}\``).join(', ') +
+        '. Las pruebas que los usan van a fallar.';
+
+  return [
+    AVISO,
+    '# Inventario de la suite de extremo a extremo (Selenium)',
+    '',
+    `Leído de \`e2e/selenium/\`. ${specs.length} archivos de prueba, ${totalPruebas} pruebas, ` +
+      `${pages.length} Page Objects y ${escenarios.length} escenarios de API.`,
+    '',
+    'La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—',
+    'está en [`e2e/selenium/README.md`](../../../e2e/selenium/README.md).',
+    '',
+    '## Pruebas por suite',
+    '',
+    '| Suite | Bloque | Pruebas | Archivo |',
+    '| --- | --- | --- | --- |',
+    ...filasSpecs,
+    '',
+    '## Page Objects',
+    '',
+    '| Clase | Ruta | Métodos | Archivo |',
+    '| --- | --- | --- | --- |',
+    ...filasPages,
+    '',
+    '## Escenarios de la API simulada',
+    '',
+    '| Escenario | Qué provoca |',
+    '| --- | --- |',
+    ...filasEscenarios,
+    '',
+    '## Coherencia de los selectores',
+    '',
+    coherencia,
+    '',
+  ].join('\n');
+}
+
+/** Los escenarios y su descripción, leídos del catálogo tipado. */
+function escenariosDeclarados() {
+  const source = safeRead(join(REPO_ROOT, 'e2e/selenium/fixtures/escenarios.ts')) ?? '';
+  const bloque = source.slice(source.indexOf('export const ESCENARIOS'));
+  const encontrados = [];
+  const patron = /'([a-z-]+)':\s*\{\s*\n\s*descripcion: '([^']+)'/g;
+
+  let coincidencia;
+  while ((coincidencia = patron.exec(bloque)) !== null) {
+    encontrados.push({ nombre: coincidencia[1], descripcion: coincidencia[2] });
+  }
+  return encontrados;
+}
+
+/** Identificadores que la suite localiza, sin repetir. */
+function testIdsUsados(suite) {
+  const ids = new Set();
+  for (const file of walk(suite, ['.ts'])) {
+    const source = safeRead(file) ?? '';
+    for (const m of source.matchAll(/porTestId\('([^']+)'\)/g)) ids.add(m[1]);
+    for (const m of source.matchAll(/data-testid="([^"]+)"/g)) {
+      // `[data-testid="${…}"]` es el localizador genérico de `porTestId`, no un
+      // identificador: contarlo denunciaría un huérfano que no existe.
+      if (!m[1].includes('${')) ids.add(m[1]);
+    }
+  }
+  return [...ids].sort();
+}
+
+/** Identificadores que las plantillas declaran, sin repetir. */
+function testIdsDeclarados() {
+  const ids = new Set();
+  for (const file of walk(join(REPO_ROOT, 'src'), ['.html'])) {
+    const source = safeRead(file) ?? '';
+    for (const m of source.matchAll(/data-testid="([^"]+)"/g)) ids.add(m[1]);
+    // `testId="…"` es la pasarela del átomo `app-input` hacia su `<input>`.
+    for (const m of source.matchAll(/\btestId="([^"]+)"/g)) ids.add(m[1]);
+  }
+  return [...ids].sort();
+}
+
+/** Ruta relativa al repositorio, con barras normales. */
+function repoRelative(absolute) {
+  return absolute.startsWith(REPO_ROOT) ? absolute.slice(REPO_ROOT.length + 1) : absolute;
 }

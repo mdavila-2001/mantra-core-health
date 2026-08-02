@@ -1,7 +1,9 @@
 ﻿<app-auth-split [claim]="claim()" [tagline]="tagline()">
   <div>
     @if (registered()) {
-      <h1 appAnuncio [asertivo]="false" class="registro__title">Tu cuenta está lista</h1>
+      <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
+        Tu cuenta está lista
+      </h1>
       <p class="registro__subtitle">
         Ya podés entrar con {{ accessHint() }} y la contraseña que elegiste.
         @if (verificationSent()) {
@@ -9,7 +11,14 @@
           falta para usar tu cuenta.
         }
       </p>
-      <button app-button variant="primary" size="lg" class="registro__submit" (clicked)="goToLogin()">
+      <button
+        app-button
+        variant="primary"
+        size="lg"
+        class="registro__submit"
+        data-testid="registro-ir-login"
+        (clicked)="goToLogin()"
+      >
         Ir a iniciar sesión
       </button>
     } @else {
@@ -17,18 +26,27 @@
       <p class="registro__subtitle">Elegí qué tipo de cuenta necesitás.</p>
 
       <app-form-field label="Me registro como">
-        <app-radio-group [value]="tipo()" (valueChange)="cambiarTipo($event)">
+        <app-radio-group
+          data-testid="registro-tipo"
+          [value]="tipo()"
+          (valueChange)="cambiarTipo($event)"
+        >
           <app-radio value="paciente" label="Paciente" />
           <app-radio value="profesional" label="Profesional de salud" />
         </app-radio-group>
       </app-form-field>
 
       @if (errorMessage(); as mensaje) {
-        <app-alert appAnuncio tone="error" class="registro__alert">{{ mensaje }}</app-alert>
+        <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{ mensaje }}</app-alert>
       }
 
       @if (tipo() === 'paciente') {
-        <form [formGroup]="formPaciente" (ngSubmit)="submit()" novalidate>
+        <form
+          [formGroup]="formPaciente"
+          (ngSubmit)="submit()"
+          novalidate
+          data-testid="registro-form-paciente"
+        >
           <app-form-field
             label="Documento de identidad"
             hint="Con este número vas a iniciar sesión."
@@ -45,6 +63,7 @@
               type="text"
               autocomplete="username"
               placeholder="1234567"
+              testId="registro-documento"
             />
           </app-form-field>
 
@@ -62,6 +81,7 @@
               type="text"
               autocomplete="name"
               placeholder="Ana Paz"
+              testId="registro-nombre"
             />
           </app-form-field>
 
@@ -80,6 +100,7 @@
               type="password"
               autocomplete="new-password"
               placeholder="Tu contraseña"
+              testId="registro-password"
             />
           </app-form-field>
 
@@ -98,6 +119,7 @@
               type="email"
               autocomplete="email"
               placeholder="correo@ejemplo.com"
+              testId="registro-correo"
             />
           </app-form-field>
 
@@ -107,13 +129,19 @@
             variant="primary"
             size="lg"
             class="registro__submit"
+            data-testid="registro-submit"
             [isLoading]="isSubmitting()"
           >
             Crear cuenta
           </button>
         </form>
       } @else {
-        <form [formGroup]="formProfesional" (ngSubmit)="submit()" novalidate>
+        <form
+          [formGroup]="formProfesional"
+          (ngSubmit)="submit()"
+          novalidate
+          data-testid="registro-form-profesional"
+        >
           <app-form-field
             label="Nombre completo"
             [required]="true"
@@ -129,6 +157,7 @@
               type="text"
               autocomplete="name"
               placeholder="Dra. Ana Paz"
+              testId="registro-pro-nombre"
             />
           </app-form-field>
 
@@ -149,6 +178,7 @@
               type="email"
               autocomplete="username"
               placeholder="matricula@hospital.bo"
+              testId="registro-pro-correo"
             />
           </app-form-field>
 
@@ -167,6 +197,7 @@
               type="text"
               autocomplete="off"
               placeholder="MP-12345"
+              testId="registro-pro-matricula"
             />
           </app-form-field>
 
@@ -186,6 +217,7 @@
               type="text"
               autocomplete="off"
               placeholder="TIT-6789"
+              testId="registro-pro-credencial"
             />
           </app-form-field>
 
@@ -223,6 +255,7 @@
               type="password"
               autocomplete="new-password"
               placeholder="Tu contraseña"
+              testId="registro-pro-password"
             />
           </app-form-field>
 
@@ -232,6 +265,7 @@
             variant="primary"
             size="lg"
             class="registro__submit"
+            data-testid="registro-pro-submit"
             [isLoading]="isSubmitting()"
           >
             Crear cuenta profesional

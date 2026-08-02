@@ -8,7 +8,14 @@
     <ul class="tenant__list">
       @for (tenantId of tenants(); track tenantId) {
         <li>
-          <button app-button variant="secondary" size="lg" (clicked)="choose(tenantId)">
+          <button
+            app-button
+            variant="secondary"
+            size="lg"
+            data-testid="tenant-opcion"
+            [attr.data-tenant]="tenantId"
+            (clicked)="choose(tenantId)"
+          >
             {{ nombre(tenantId) }}
           </button>
         </li>
@@ -16,7 +23,7 @@
         <!-- Sin sesión, o con un token que no declara organizaciones. Antes
              quedaba una lista vacía sin mensaje ni salida: quien llegara acá
              directamente no tenía forma de saber qué había pasado. -->
-        <li appAnuncio [asertivo]="false" class="tenant__vacio">
+        <li appAnuncio [asertivo]="false" class="tenant__vacio" data-testid="tenant-vacio">
           <p class="tenant__text">
             No encontramos organizaciones para tu cuenta. Puede que tu sesión haya vencido.
           </p>

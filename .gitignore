@@ -15,6 +15,10 @@ yarn-error.log
 .env
 .env.*
 !.env.example
+# La plantilla de las variables de la suite de Selenium. El `.env.e2e` real,
+# que puede llevar credenciales de un entorno de ensayo, lo sigue cubriendo
+# `.env.*` de arriba.
+!.env.e2e.example
 
 # Proxy generado por el contenedor a partir de proxy.conf.docker.json.
 proxy.generated.json
@@ -68,6 +72,13 @@ __screenshots__/
 /test-results
 /playwright-report
 /.playwright
+
+# Selenium: capturas, HTML de la página, registros del navegador, JUnit y el
+# reporte navegable de cada corrida. Se organizan por marca de tiempo bajo
+# `artifacts/selenium/<corrida>/` y ninguno se versiona: son evidencias de una
+# ejecución, no del código. La carpeta se conserva con su `.gitkeep`.
+/artifacts/*
+!/artifacts/.gitkeep
 
 # Worktrees de Git creados por herramientas de asistencia. Son copias completas
 # del repositorio: versionarlas metería el árbol dentro de sí mismo.

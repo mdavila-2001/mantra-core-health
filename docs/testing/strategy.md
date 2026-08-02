@@ -124,7 +124,7 @@ un puñado de pruebas fallando por "token ilegible" y nadie miraría el entorno�
 
 | Capa | Severidad | Qué costaría |
 |---|---|---|
-| **E2E** | `HIGH` | Playwright + los journeys críticos |
+| **E2E** | `HIGH` | Playwright (journeys y visual) + Selenium (funcional, responsive y accesibilidad) |
 | **Contrato de API** | `HIGH` | Acceso al OpenAPI del backend |
 | **Accesibilidad automatizada** | `MEDIUM` | `axe-core` en las pruebas de componente |
 | **Regresión visual** | `MEDIUM` | Herramienta de captura + baseline |

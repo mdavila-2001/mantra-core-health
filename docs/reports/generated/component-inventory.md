@@ -14,7 +14,7 @@
 | `app-checkbox` | `Checkbox` | `disabled`, `label`, `hasError`, `indeterminate`, `hideLabel` | — | `checked` | OnPush | sí |
 | `app-chip` | `Chip` | `variant`, `size`, `label`, `removable`, `selectable` | `removed` | `selected` | OnPush | sí |
 | `app-divider` | `Divider` | `orientation`, `label` | — | — | OnPush | sí |
-| `app-input` | `Input` | `type`, `autocomplete`, `placeholder`, `disabled`, `readonly`, `hasError`, `hasSuccess` | `focused`, `blurred` | `value` | OnPush | sí |
+| `app-input` | `Input` | `type`, `autocomplete`, `placeholder`, `disabled`, `readonly`, `hasError`, `hasSuccess`, `testId` | `focused`, `blurred` | `value` | OnPush | sí |
 | `a[app-link]` | `Link` | `variant`, `external` | — | — | OnPush | sí |
 | `app-progress` | `Progress` | `value`, `tone`, `size`, `label` | — | — | OnPush | sí |
 | `app-select` | `Select` | `options`, `disabled`, `placeholder`, `hasError`, `ariaLabel` | `focused`, `blurred` | `value` | OnPush | sí |

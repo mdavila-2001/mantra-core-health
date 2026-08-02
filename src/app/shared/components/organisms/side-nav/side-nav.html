@@ -17,6 +17,8 @@
               <a
                 #navLink
                 class="side-nav__link"
+                data-testid="nav-enlace"
+                [attr.data-route]="item.route"
                 [routerLink]="item.route"
                 routerLinkActive="is-active"
                 #activo="routerLinkActive"

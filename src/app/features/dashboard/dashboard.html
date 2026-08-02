@@ -5,15 +5,15 @@
 <div class="panel__grid">
   <!-- Sesión. Todo esto sale del access token: ninguna petición de por medio,
        porque la API no expone `/me` y el token ya trae `sub`, `roles` y `tenants`. -->
-  <app-card variant="outlined" padding="lg">
+  <app-card variant="outlined" padding="lg" data-testid="panel-sesion">
     <h2 class="panel__card-title">Tu sesión</h2>
 
     <dl class="panel__datos">
       <dt>Identificador</dt>
-      <dd><code class="panel__id">{{ userId() ?? '—' }}</code></dd>
+      <dd><code class="panel__id" data-testid="panel-user-id">{{ userId() ?? '—' }}</code></dd>
 
       <dt>Roles</dt>
-      <dd class="panel__roles">
+      <dd class="panel__roles" data-testid="panel-roles">
         @for (role of roles(); track role) {
           <app-badge variant="info" [value]="role" />
         } @empty {
@@ -40,7 +40,7 @@
 
   <!-- Lectura real contra la API: cruza el proxy, el interceptor y la traducción
        de errores, y se pinta con los estados del M34. -->
-  <app-card variant="outlined" padding="lg">
+  <app-card variant="outlined" padding="lg" data-testid="panel-directorio">
     <h2 class="panel__card-title">Directorio público</h2>
     <p class="panel__nota">
       Una lectura real de <code>GET /public/directory</code>, para comprobar de punta a punta que
@@ -58,7 +58,9 @@
       </div>
 
       @if (recordCount(); as total) {
-        <p class="panel__conteo">{{ total }} registro(s) publicados.</p>
+        <p class="panel__conteo" data-testid="panel-directorio-conteo">
+          {{ total }} registro(s) publicados.
+        </p>
       }
     </app-view-state-host>
   </app-card>
