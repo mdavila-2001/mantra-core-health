@@ -89,6 +89,24 @@ describe('Humo', () => {
     expect(await script.getAttribute('src')).toMatch(/main-[A-Z0-9]{8}\.js$/i);
   });
 
+  test('las rutas públicas llegan prerenderizadas desde el servidor', async () => {
+    /**
+     * `ngh` es la marca que Angular deja en el HTML cuando lo pintó el servidor
+     * y el cliente lo va a hidratar. Se lee de la **respuesta cruda**, no del
+     * DOM: en el DOM ya no se distingue un HTML hidratado de uno pintado
+     * enteramente en el cliente.
+     *
+     * Esta prueba existe porque el proyecto ya vivió el caso contrario: con
+     * `security.allowedHosts` sin declarar, el servidor rechazaba todos los
+     * `Host` y degradaba a renderizado de cliente **sin fallar**. Nadie se
+     * enteró hasta que se montó este arnés. Con esto, si vuelve a pasar, falla.
+     */
+    const respuesta = await fetch(`${configuracion().baseUrl}/auth`);
+    const html = await respuesta.text();
+
+    expect(html).toContain('ngh=');
+  });
+
   test('el servidor emite las cabeceras de seguridad del despliegue real', async () => {
     /**
      * Las cabeceras no se pueden leer desde el navegador, así que se piden
