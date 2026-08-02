@@ -7,6 +7,7 @@ import {
 import express from 'express';
 import { join } from 'node:path';
 
+import { allowedHostsFromEnv } from './server/allowed-hosts';
 import { collectInlineScriptHashes, securityHeaders } from './server/security-headers';
 import { OTEL_TRACES_PATH, otelGateway } from './server/telemetry/otel-gateway';
 import { serverTelemetryConfig } from './server/telemetry/server-telemetry.config';
@@ -16,7 +17,20 @@ import { startServerTelemetry } from './server/telemetry/server-telemetry';
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
-const angularApp = new AngularNodeAppEngine();
+
+/**
+ * El motor de renderizado, con los hosts que este despliegue acepta.
+ *
+ * `angular.json` declara los que se conocen al construir —`localhost`,
+ * `127.0.0.1`, `mantra-core-health.local` y el nombre del servicio en compose—
+ * y `SSR_ALLOWED_HOSTS` **suma** el dominio público, que cambia por entorno y
+ * no se sabe al compilar.
+ *
+ * Sin el dominio en alguna de las dos listas el servidor no falla: responde 200
+ * degradando a renderizado de cliente. Es decir, se pierde el SSR **en
+ * silencio**. Ver `server/allowed-hosts.ts`.
+ */
+const angularApp = new AngularNodeAppEngine({ allowedHosts: [...allowedHostsFromEnv()] });
 
 /**
  * Telemetría del servidor.
