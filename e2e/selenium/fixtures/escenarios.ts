@@ -45,6 +45,10 @@ export interface Escenario {
   readonly registrosDirectorio?: number;
   /** `true` hace fallar el directorio con 503 `DEPENDENCY_UNAVAILABLE`. */
   readonly directorioCaido?: boolean;
+  /** `false` hace fallar el canje de un token de correo con 400 `VALIDATION_FAILED`. */
+  readonly tokenValido?: boolean;
+  /** Sesiones que el cambio de contraseña dice haber cerrado. */
+  readonly sesionesRevocadas?: number;
   /**
    * Demora artificial de las respuestas, en milisegundos.
    *
@@ -90,6 +94,14 @@ export const ESCENARIOS = {
   'registro-duplicado': {
     descripcion: 'El alta responde 409: ese documento ya tiene cuenta.',
     registroValido: false,
+  },
+  'token-vencido': {
+    descripcion: 'El token del correo ya no sirve: verificar y cambiar la clave fallan.',
+    tokenValido: false,
+  },
+  'clave-cambiada-con-sesiones': {
+    descripcion: 'El cambio de contraseña cierra otras dos sesiones abiertas.',
+    sesionesRevocadas: 2,
   },
   'api-lenta': {
     descripcion: 'Respuestas demoradas: hay estado de carga que observar.',

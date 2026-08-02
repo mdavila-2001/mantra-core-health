@@ -210,12 +210,26 @@ export function crearApiSimulada(): Router {
   });
 
   router.post('/iam/auth/reset-password', async (req, res) => {
-    await demorar(escenarioDe(req));
-    res.json({ userId: 'u-e2e', passwordChanged: true });
+    const escenario = escenarioDe(req);
+    await demorar(escenario);
+
+    if (escenario.tokenValido === false) {
+      error(res, 400, 'VALIDATION_FAILED', 'El enlace venció o ya se usó.');
+      return;
+    }
+    // `revokedSessions` es lo que la pantalla muestra en palabras: cambiar la
+    // contraseña cierra las demás sesiones, y decirlo es parte del contrato.
+    res.json({ userId: 'u-e2e', revokedSessions: escenario.sesionesRevocadas ?? 0 });
   });
 
   router.post('/iam/auth/verify-email', async (req, res) => {
-    await demorar(escenarioDe(req));
+    const escenario = escenarioDe(req);
+    await demorar(escenario);
+
+    if (escenario.tokenValido === false) {
+      error(res, 400, 'VALIDATION_FAILED', 'El enlace venció o ya se usó.');
+      return;
+    }
     res.json({ userId: 'u-e2e', emailVerified: true });
   });
 

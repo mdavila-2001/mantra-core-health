@@ -7,6 +7,7 @@ import { iniciarSesion } from '../../helpers/auth.helper';
 import { DashboardPage } from '../../pages/dashboard.page';
 import { LoginPage } from '../../pages/login.page';
 import { NotFoundPage } from '../../pages/not-found.page';
+import { DesignSystemPage } from '../../pages/design-system.page';
 import { ForgotPasswordPage } from '../../pages/forgot-password.page';
 import { RegisterPage } from '../../pages/register.page';
 
@@ -95,6 +96,21 @@ describe('Navegación', () => {
     const registro = new RegisterPage(navegador());
     await registro.esperarCargada();
     expect(await registro.urlActual()).toMatch(/\/auth\/registro$/);
+  });
+
+  test('la vitrina diferida se descarga y se pinta', async () => {
+    const vitrina = new DesignSystemPage(navegador());
+    await vitrina.abrir();
+
+    /**
+     * La ruta es `loadComponent` con un `catch`: si el fragmento no bajara
+     * —despliegue nuevo, pestaña vieja, hash que ya no existe— el router
+     * muestra la pantalla de recuperación en vez de dejar la navegación
+     * muerta. Que acá se pinte la vitrina prueba el camino feliz de ese
+     * mecanismo, que es el único que se puede provocar sin romper el artefacto.
+     */
+    await vitrina.esperarCargada();
+    expect(await vitrina.urlActual()).toMatch(/\/design-system$/);
   });
 
   test('el título de la pestaña cambia con la ruta', async () => {
