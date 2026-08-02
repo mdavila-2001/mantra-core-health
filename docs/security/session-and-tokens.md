@@ -81,10 +81,11 @@ return refresher.refresh().pipe(
 
 ```ts
 logout(): void {
-  this.iam.logout().subscribe({
-    next:  () => this.clearLocal(),
-    error: () => this.clearLocal(),
-  });
+  // El aviso sale primero: el interceptor toma el access token del store al
+  // suscribirse, y limpiar antes lo dejaría sin credencial.
+  this.iam.logout().subscribe({ error: () => undefined });
+  // Y la limpieza va YA, sin esperar la respuesta.
+  this.clearLocal();
 }
 ```
 
@@ -94,6 +95,32 @@ logout(): void {
 > error de red sería lo peor de los dos mundos. El token local se descarta y el
 > del servidor caduca solo.»*
 
+### El orden al cerrar sesión
+
+No es el intuitivo, y la versión intuitiva era un defecto.
+
+Antes, `clearLocal()` vivía **dentro del callback de la respuesta**. Eso abría una
+ventana de un viaje de red completo en la que el refresh token **seguía en
+`localStorage`** — y la interfaz navega al login inmediatamente después de llamar
+a `logout()`, con una navegación local e instantánea. La navegación ganaba
+siempre. El borrado no llegaba a correr. **La siguiente recarga restauraba la
+sesión que se acababa de cerrar.**
+
+Lo destapó [la prueba de extremo a extremo](../testing/e2e-tests.md#lo-que-encontró)
+que vuelve a entrar a `/panel` después de salir. Ninguna prueba unitaria podía
+verlo: todas hacían `flush()` de la respuesta, que es justo el caso en el que sí
+funcionaba.
+
+El orden actual resuelve las dos restricciones a la vez:
+
+| Paso | Por qué en ese orden |
+|---|---|
+| 1 · `iam.logout().subscribe(…)` | El interceptor lee el access token del store al suscribirse. Limpiar antes lo dejaría sin credencial y el servidor no revocaría nada. |
+| 2 · `clearLocal()`, sin esperar | Quien pulsó «cerrar sesión» ya salió. Ni la red ni una pestaña que se cierra pueden impedir el borrado. |
+
+Un error en el aviso no cambia nada de lo que sigue: es cortesía hacia el
+servidor, no la condición para salir.
+
 ### `logout`, no `logout-all`
 
 > *«esa otra ruta cierra las sesiones de **todos** sus dispositivos, que es otra
@@ -101,6 +128,35 @@ logout(): void {
 
 Cerrar sesión en el teléfono no debería cerrar la del consultorio. Que la API
 tenga las dos y el cliente use la correcta es una decisión, no un descuido.
+
+### Cierre por inactividad
+
+`IdleLogoutService` cierra la sesión tras **15 minutos sin interacción**, con un
+aviso 2 minutos antes. Está pensado para el dispositivo compartido —un
+consultorio, una recepción—, donde «la sesión dura mientras el refresh token
+sirva» es más de lo deseable.
+
+Tres detalles que no son accidentales:
+
+- Los eventos que cuentan como actividad son `pointerdown`, `keydown`, `scroll` y
+  `focus`. **`mousemove` no está**: un ratón apoyado sobre una mesa que vibra
+  mantendría la sesión abierta para siempre.
+- Los oyentes se registran con `runOutsideAngular`: un `scroll` no debe disparar
+  detección de cambios.
+- El temporizador lo gobierna un `effect` sobre `session.isAuthenticated()`, así
+  que arranca y se detiene solo, sin que nadie tenga que acordarse.
+
+### Cierre entre pestañas
+
+`watchSessionClosedElsewhere()` escucha el evento `storage` sobre
+`mantra.refresh-token`, que dispara en **las otras** pestañas del mismo origen.
+
+Sin esto, cerrar sesión en una pestaña dejaba la otra funcionando hasta que su
+access token expirara. En un dispositivo compartido, eso es una sesión abierta
+que alguien creyó haber cerrado.
+
+No llama a la API —la otra pestaña ya lo hizo— y se ignora el `key === null` de
+un `localStorage.clear()` ajeno, que no es nuestro cierre de sesión.
 
 ## El tenant activo
 
@@ -137,42 +193,29 @@ obligatorio**:
 
 ### 1 · El refresh token es alcanzable por XSS · `MEDIUM`
 
-Cualquier script en el origen puede leer `localStorage`.
+Cualquier script en el origen puede leer `localStorage`. **Es el riesgo abierto
+que queda**, y no se puede cerrar desde acá.
 
-**Mitigado por:** cero `innerHTML`, cero scripts de terceros, 10 dependencias.
-**Sin mitigar:** no hay CSP.
+**Mitigado por:** cero `innerHTML`, cero scripts de terceros, 10 dependencias, y
+[una CSP con `script-src` por hash](content-security-policy.md) que sirve el
+servidor de renderizado.
 **No es del frontend:** convertirlo en cookie `HttpOnly` exige que la API deje de
 entregarlo en el cuerpo.
 
-### 2 · Sin cierre por inactividad · `MEDIUM`
-
-La sesión dura mientras el refresh token sirva. En un dispositivo compartido —un
-consultorio, una recepción— eso es más de lo deseable.
-
-**Propuesta:** un temporizador de inactividad que llame a `logout()`. `exp` ya
-está disponible en los claims e `isAccessTokenExpired` ya existe.
-
-### 3 · Sin cierre de sesión entre pestañas · `MEDIUM`
-
-Cerrar en una pestaña **no cierra la otra**. Cada una tiene su `SessionStore` en
-memoria, y la que sigue abierta funciona hasta que su access token expire y el
-refresco falle.
-
-**Propuesta:** un oyente de `storage` sobre `mantra.refresh-token`, que dispara
-en las **otras** pestañas del mismo origen. Son pocas líneas.
-
-### 4 · `isAccessTokenExpired` sin consumidor · `MEDIUM`
-
-Está escrita, probada, con margen de 10 segundos, y **nadie la llama**. El
-refresco es reactivo: se espera al 401.
-
-**Consecuencia:** cada expiración cuesta una petición fallida.
-**Propuesta:** comprobar `exp` antes de mandar y refrescar de forma proactiva.
-
-### 5 · Sin señal de MFA · `LOW`
+### 2 · Sin señal de MFA · `LOW`
 
 El campo está siempre visible porque el backend no declara cuándo hace falta. Hay
 un `TODO` en `login.ts`. **Es del backend**, no de acá.
+
+### Cerrados
+
+| Riesgo | Cómo se cerró |
+|---|---|
+| Sin cierre por inactividad | `IdleLogoutService`, 15 min con aviso a los 13 |
+| Sin cierre entre pestañas | Oyente de `storage` sobre `mantra.refresh-token` |
+| `isAccessTokenExpired` sin consumidor | El interceptor la usa para refrescar **antes** de mandar, no después del 401 |
+| Sin CSP | Seis cabeceras de seguridad desde `src/server/security-headers.ts` |
+| El borrado al salir podía no ocurrir | Ver [el orden al cerrar sesión](#el-orden-al-cerrar-sesión) |
 
 ## Lo que está bien y conviene no perder
 
@@ -182,7 +225,8 @@ un `TODO` en `login.ts`. **Es del backend**, no de acá.
 | El refresh token se descarta en cuanto deja de servir | |
 | La rotación es completa | |
 | El refresco es único en vuelo y no recursa | |
-| El cierre de sesión limpia pase lo que pase | |
+| El cierre de sesión limpia pase lo que pase, **y sin esperar a la red** | |
+| La sesión se cierra sola por inactividad, y en todas las pestañas | |
 | `logout` y no `logout-all` | |
 | El tenant no se adivina | |
 | El token no se verifica en el cliente **a propósito** | |

@@ -56,6 +56,12 @@ const CHECKS = [
     why: 'las tres declaraciones de la superficie de red dicen lo mismo',
   },
   {
+    name: 'tokens del sistema de diseño',
+    script: 'check-tokens.mjs',
+    args: [],
+    why: 'el catálogo tipado y styles.css declaran lo mismo, en ambos sentidos',
+  },
+  {
     name: 'contrastes del sistema de diseño',
     script: 'check-contrast.mjs',
     args: [],

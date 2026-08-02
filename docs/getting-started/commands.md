@@ -57,13 +57,30 @@ node scripts/generate-doc-report.mjs
 
 Es la misma secuencia del [pipeline documental](../governance/change-management.md#pipeline).
 
+## Extremo a extremo
+
+| Orden | Qué hace |
+|---|---|
+| `yarn e2e` | Construye el artefacto, lo sirve en el puerto 4173 y corre los 7 journeys de sesión |
+| `yarn e2e:ui` | Lo mismo, en el modo interactivo de Playwright |
+
+Se prueba **contra el artefacto de producción**, no contra `ng serve`: el
+prerenderizado y las cabeceras de seguridad solo existen ahí. La red va simulada
+(`e2e/support/api.ts`), así que no hace falta una API levantada. Ver
+[pruebas E2E](../testing/e2e-tests.md).
+
+La primera corrida descarga Chromium:
+
+```bash
+yarn playwright install chromium
+```
+
 ## Órdenes que **no** existen en este proyecto
 
 Registradas para que nadie las busque:
 
 | Lo que se suele esperar | Estado |
 |---|---|
-| `yarn e2e` | No existe. No hay Playwright ni Cypress |
 | `yarn format` | No existe. Prettier está configurado pero sin alias: `yarn prettier --write .` |
 | `yarn analyze` | No existe. El build imprime tamaños, pero no hay visualizador de bundle |
 | `yarn storybook` | No existe. La vitrina es una ruta de la propia aplicación: `/design-system` |
@@ -71,13 +88,12 @@ Registradas para que nadie las busque:
 
 ## Notas sobre la salida
 
-**`yarn build` avisa que el presupuesto inicial se pasa.** Es un aviso conocido y
-preexistente (516,70 kB frente a un umbral de aviso de 500 kB). El build **no**
-falla; el umbral de error está en 1 MB. Ver
-[presupuestos](../performance/budgets.md).
+**`yarn build` ya no avisa del presupuesto.** El umbral se decidió en 560 kB
+—ver [presupuestos](../performance/budgets.md)— y `scripts/check-bundle-budget.mjs`
+lo verifica en CI contra el umbral de error.
 
 **`yarn test` avisa que PnP con Vite está desaconsejado.** Aviso conocido, sin
-efecto medido: las 804 pruebas pasan.
+efecto medido: las 903 pruebas pasan.
 
 **`yarn test:coverage` imprime un total global bajo (≈56 %).** No es la métrica
 del proyecto: los umbrales de `vitest.config.ts` son por glob

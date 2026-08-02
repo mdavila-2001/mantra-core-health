@@ -1,6 +1,6 @@
 # Informe de preparación para producción
 
-- **Fecha:** 2026-08-01 (segunda revisión, tras el endurecimiento de código)
+- **Fecha:** 2026-08-01 (tercera revisión, tras las pruebas contra el artefacto)
 - **Alcance:** frontend `mantra-core-health`
 - **Veredicto:** **APTO A NIVEL DE CÓDIGO** · pendiente de **configuración y
   credenciales**
@@ -23,6 +23,61 @@ Los cuatro se cerraron a nivel de código:
 | **B-02** | Sin decidir el dominio de la API | ✅ **Decidido: mismo dominio.** `PUBLIC_API_BASE_URL` vacía, proxy en `deploy/nginx.conf` |
 | **C-01** | Sin captura de errores; pantalla en blanco invisible | ✅ `ErrorHandler` propio, `ErrorReporter` con código de soporte, pantalla de recuperación, manejo de chunk fallido |
 | **C-02** | Sin CSP ni cabeceras | ✅ Seis cabeceras, CSP con hashes, **verificada contra el artefacto real** |
+
+## Lo que encontró probar de verdad
+
+Esta revisión añadió tres capas de verificación —Playwright contra el artefacto
+construido, `axe-core` sobre el sistema de diseño, y un verificador de tokens— y
+**las tres encontraron defectos que ninguna lectura del código había visto**.
+
+Dos de ellos bloqueaban producción.
+
+### 1 · `security.allowedHosts` rechazaba todo dominio real · era `BLOCKER`
+
+`angular.json` traía `build.options.security.allowedHosts: ["localhost"]`. Esa
+opción **se hornea en el artefacto**: el servidor de producción respondía **400 a
+cualquier petición cuyo `Host` no fuera `localhost`**.
+
+```text
+Host: localhost           → 200
+Host: mantra.example.com  → 400
+```
+
+Es decir: la aplicación **no habría respondido en producción**, y el síntoma
+—400 en todo— no apunta a Angular por ningún lado. Sin una prueba que sirviera el
+artefacto y le pidiera con otro `Host`, se descubría desplegando.
+
+Corregido quitando la opción del build y moviendo la validación del `Host` a
+`deploy/nginx.conf`, donde es configuración en caliente y no una imagen por
+dominio.
+
+### 2 · Cerrar sesión no borraba el refresh token · era `CRITICAL`
+
+`AuthService.logout()` limpiaba el almacenamiento **dentro del callback de la
+respuesta** de la API. La navegación al login es local e instantánea; la
+respuesta viaja por la red. La navegación ganaba siempre.
+
+**Resultado: la siguiente recarga restauraba la sesión que se acababa de
+cerrar.** En un dispositivo compartido —un consultorio, una recepción— eso es una
+sesión abierta que alguien creyó haber cerrado.
+
+Ninguna prueba unitaria podía verlo: todas hacían `flush()` de la respuesta, que
+es justo el caso en el que sí funcionaba. Lo encontró la prueba E2E que vuelve a
+entrar a `/panel` después de salir.
+
+### 3 · Tres `<select>` sin nombre accesible · era `A11Y-12`
+
+`axe-core` lo marcó como **crítico** el primer día: el desplegable de resultados
+por página y los dos filtros de `app-filter-bar` se anunciaban como «cuadro
+combinado» y nada más. Los tres pasaban un `placeholder`, que **no nombra al
+control**: se renderiza como `<option hidden>`.
+
+Corregido con un `ariaLabel` en `app-select`, la misma vía que `app-search-field`
+ya usaba.
+
+> **Lo que estos tres tienen en común:** ninguno se ve leyendo el código, y los
+> tres se ven a la primera corrida de la herramienta correcta. Es el argumento
+> completo a favor de estas tres capas.
 
 ## Lo que queda, y es todo configuración
 
@@ -112,36 +167,46 @@ Los cuatro se cerraron a nivel de código:
 | `TokenRefreshService` — la garantía de una sola petición en vuelo | Brecha declarada |
 | `ErrorReporter`, `AnnounceOnAppear`, `security-headers` | Código nuevo |
 
-**860 pruebas, 0 fallos.**
+### Pruebas añadidas en esta revisión
+
+| Qué | Cierra |
+|---|---|
+| **Playwright**: 7 journeys de sesión contra el artefacto construido | **H-02** |
+| **`axe-core`**: 13 componentes, ~90 reglas WCAG A/AA | **M-21** |
+| `IdentityVerification` y `ErrorRecovery` | Código nuevo sin cubrir |
+| `timeoutInterceptor` e `IdleLogoutService` | **M-15**, **M-09** |
+| Nombre accesible de `Select`, dentro y fuera de un campo | El defecto que encontró axe |
+
+**903 pruebas, 0 fallos.**
 
 ## Estado de la batería
 
 ```text
 yarn lint                       limpio
 yarn tsc --noEmit               limpio
-yarn build                      OK · 4 rutas prerenderizadas · 542,07 kB
+yarn build                      OK · 4 rutas prerenderizadas · 547,21 kB
                                      SIN avisos de presupuesto
-yarn test:coverage              77 archivos · 860 pruebas · 0 fallos
+yarn test:coverage              82 archivos · 903 pruebas · 0 fallos
+yarn e2e                        7 journeys · 0 fallos · contra el artefacto
 node scripts/generate-doc-report.mjs
-  ✓ inventarios · arquitectura · enlaces · cobertura
-  ✓ deriva de contrato · contrastes · presupuesto
+  ✓ las 9 verificaciones pasan
 ```
 
 ## Lo que sigue faltando, y no bloquea
 
 | # | Qué | Severidad |
 |---|---|---|
-| 1 | **Pruebas E2E** | HIGH — excepción formal declarada |
+| 1 | **Destino remoto de errores** | El `ErrorHandler` es el punto único donde enchufarlo |
 | 2 | **Pruebas de contrato** | HIGH — el OpenAPI del backend no es alcanzable |
-| 3 | **Destino remoto de errores** | El `ErrorHandler` es el punto único donde enchufarlo |
-| 4 | Regresión visual | MEDIUM |
-| 5 | Core Web Vitals medidos | MEDIUM — `npx lighthouse`, sin instalar nada |
-| 6 | Prueba de `IdentityVerification` | MEDIUM |
-| 7 | Marco normativo de privacidad declarado | MEDIUM — decisión, no código |
+| 3 | Capturas de regresión visual | MEDIUM — la configuración está; hay que generarlas **en el contenedor** |
+| 4 | Core Web Vitals medidos | MEDIUM — `npx lighthouse`, sin instalar nada |
+| 5 | Reflow, zoom y objetivos táctiles | MEDIUM — piden un navegador y una persona midiendo |
+| 6 | Prueba con lector de pantalla | La que más información aporta, y la única insustituible |
+| 7 | Marco normativo de privacidad declarado | MEDIUM — decisión legal, no código |
 
-Los tres primeros son los mismos de la revisión anterior. **Ninguno impide
-desplegar**; los tres mejoran lo que el equipo sabe, no lo que la aplicación
-hace.
+**Ninguno impide desplegar.** El 1 y el 2 mejoran lo que el equipo sabe, no lo
+que la aplicación hace; el 3 al 6 requieren un entorno o una persona que este
+repositorio no puede proveer; el 7 es una decisión.
 
 ## Riesgos residuales tras el despliegue
 
@@ -154,9 +219,16 @@ hace.
 | Chunk viejo tras un despliegue | Alto | Bajo — se detecta y se ofrece recargar |
 | API caída sin detección | **Alto** | **Alto** — sigue faltando telemetría |
 | Regresión de contraste | Medio | **Cerrado** — se mide en cada CI |
+| Regresión de accesibilidad estructural | Medio | **Cerrado** — `axe-core` en cada CI |
+| El artefacto no responde en el dominio real | **Alto** | **Cerrado** — era real, y lo destapó el E2E |
+| Sesión que sobrevive a cerrar sesión | **Alto** | **Cerrado** — ídem |
 
 **El único riesgo que no bajó es la detección de una API caída**, y depende de
-la decisión 8 (destino de telemetría).
+la decisión 6 (destino de telemetría).
+
+Los dos últimos de la tabla no estaban en la revisión anterior porque **nadie
+sabía que existían**. Los dos eran reales, los dos bloqueaban producción, y los
+dos los encontró probar contra el artefacto construido en vez de contra jsdom.
 
 ## Conclusión
 
@@ -168,6 +240,11 @@ la decisión 8 (destino de telemetría).
 >
 > La decisión de arquitectura ya está tomada —**la API va detrás del mismo
 > dominio**— y el código la refleja entero: imagen, proxy, CSP y variables.
+>
+> El veredicto se apoya en algo que las dos revisiones anteriores no tenían:
+> **la aplicación se probó construida, servida y pedida por un navegador real.**
+> Esa prueba encontró dos defectos que bloqueaban producción. Los dos están
+> corregidos y los dos tienen ahora una prueba que impide que vuelvan.
 
 Detalle de lo que sigue abierto en
 [el análisis de brechas](documentation-gap-analysis.md).

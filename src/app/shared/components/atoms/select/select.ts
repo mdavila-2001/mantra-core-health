@@ -59,6 +59,23 @@ export class Select<T> implements ControlValueAccessor {
   readonly placeholder = input<string>('Seleccionar opción');
   readonly hasError = input<boolean>(false);
 
+  /**
+   * Nombre accesible para el desplegable que va **suelto**, sin
+   * `app-form-field` alrededor.
+   *
+   * Hace falta porque el `placeholder` **no nombra al control**: se renderiza
+   * como un `<option hidden>`, y un lector de pantalla lo lee como una opción
+   * más, no como «de qué es este desplegable». Un `<select>` sin nombre se
+   * anuncia como «cuadro combinado» a secas, que no le dice nada a nadie.
+   *
+   * Lo destapó la auditoría de axe sobre el paginado —regla `select-name`,
+   * impacto crítico— y afectaba también a los dos filtros de `app-filter-bar`.
+   *
+   * Mismo criterio que `app-search-field`, que ya resolvía esto con un `<label>`
+   * invisible: quien monta el control suelto tiene que nombrarlo.
+   */
+  readonly ariaLabel = input<string>('');
+
   readonly focused = output<FocusEvent>();
   readonly blurred = output<FocusEvent>();
 
@@ -75,6 +92,18 @@ export class Select<T> implements ControlValueAccessor {
   private readonly ownId = nextControlId('select');
   protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
   protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
+
+  /**
+   * El `aria-label` se emite **solo fuera de un campo**.
+   *
+   * Dentro, el `<label>` del campo ya nombra al control, y un `aria-label`
+   * ganaría por precedencia: quien pasara los dos vería en el lector de
+   * pantalla algo distinto de lo que hay escrito en la pantalla. Ignorarlo acá
+   * hace imposible ese desacuerdo.
+   */
+  protected readonly accessibleLabel = computed(() =>
+    this.field !== null ? null : this.ariaLabel() || null,
+  );
   protected readonly required = computed(() => this.field?.required() === true);
   protected readonly invalid = computed(
     () => this.hasError() || this.field?.invalid() === true,

@@ -132,8 +132,9 @@ lado del servidor, y si el canje falla al arrancar la clave se borra.
 Quien no cierre sesión deja el token en disco. `logout()` limpia pase lo que
 pase, pero nadie obliga a cerrar sesión.
 
-**Propuesta:** cierre por inactividad. Ver
-[sesión y tokens](session-and-tokens.md#2--sin-cierre-por-inactividad--medium).
+**Cerrado:** `IdleLogoutService` cierra a los 15 minutos sin interacción, con
+aviso a los 13. Ver
+[sesión y tokens](session-and-tokens.md#cierre-por-inactividad).
 
 ### 4 · Otra pestaña no se entera · `MEDIUM`
 

@@ -4,6 +4,7 @@
     [id]="controlId()"
     [value]="selectedIndex()"
     [disabled]="isDisabled()"
+    [attr.aria-label]="accessibleLabel()"
     [attr.aria-invalid]="invalid()"
     [attr.aria-required]="required() || null"
     [attr.aria-describedby]="describedBy()"

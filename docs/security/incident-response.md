@@ -36,9 +36,10 @@ Sale de `correlationId` del cuerpo, o de la cabecera `x-request-id`, o de
 **Es lo único que conecta lo que la persona reporta con los registros del
 servidor.** Pedirlo debe ser la primera pregunta de cualquier reporte.
 
-> **Ojo:** un fallo de render (pantalla en blanco) **no tiene ese
-> identificador**, porque nunca hubo una petición. Ver
-> [error boundaries](../architecture/error-boundaries.md#nivel-3--el-hueco).
+> **Ojo:** un fallo de render (pantalla en blanco) no tiene ese identificador,
+> porque nunca hubo una petición. Lleva otro, `E-<commit>-<n>`, que la pantalla
+> de recuperación muestra. Ver
+> [error boundaries](../architecture/error-boundaries.md#el-código-de-soporte).
 
 ## Clasificación
 

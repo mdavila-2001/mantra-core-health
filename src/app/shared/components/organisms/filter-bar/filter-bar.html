@@ -10,6 +10,7 @@
     <div class="filter-bar__filter">
       @if (isAvailable(filter)) {
         <app-select
+          [ariaLabel]="filter.label"
           [options]="filter.options"
           [value]="valueOf(filter)"
           [placeholder]="filter.label"
@@ -19,7 +20,12 @@
         <!-- Sin value set el filtro se deshabilita CON el motivo a la vista.
              Degradarlo a texto libre rompería el contrato de terminología:
              un `*_concept_id` no se puede escribir a mano. -->
-        <app-select [options]="[]" [disabled]="true" [placeholder]="filter.label" />
+        <app-select
+          [ariaLabel]="filter.label"
+          [options]="[]"
+          [disabled]="true"
+          [placeholder]="filter.label"
+        />
         <p class="filter-bar__unavailable">
           {{ filter.unavailableReason || 'No se pudo cargar el listado de opciones.' }}
         </p>

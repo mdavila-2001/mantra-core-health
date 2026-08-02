@@ -2,9 +2,25 @@
 
 - **Fecha:** 2026-08-01
 - **Repositorio:** `mantra-core-health` · rama `dev` · commit base `ba2efd9`
-- **Veredicto de producto:** **NO APTO PARA PRODUCCIÓN**
+- **Veredicto de producto (al cierre de este trabajo):** **NO APTO PARA
+  PRODUCCIÓN**
 - **Veredicto del trabajo documental:** **completo, con cinco limitaciones
   declaradas**
+
+---
+
+> ### ⚠️ Este informe es el acta de un trabajo cerrado
+>
+> Documenta la fase de documentación, que se hizo **sin tocar un solo archivo de
+> `src/`**, y su veredicto corresponde a ese momento.
+>
+> Después se concedió autorización para cambiar producto, y los siete
+> bloqueantes de la §20 se cerraron. **El veredicto vigente está en
+> [el informe de preparación productiva](production-readiness.md): APTO A NIVEL
+> DE CÓDIGO.**
+>
+> Este documento se conserva sin reescribir porque es el registro de qué se
+> encontró, con qué evidencia y en qué estado estaba el repositorio antes.
 
 ---
 
@@ -233,19 +249,24 @@ Detalle en [el análisis de brechas](documentation-gap-analysis.md).
 
 ## 20 · Declaración
 
-### Del producto
+### Del producto — al cierre de este trabajo
 
 > ## ❌ NO APTO PARA PRODUCCIÓN
 
-**Requisitos bloqueantes**, en orden:
+**Requisitos bloqueantes**, en orden, y en qué quedaron:
 
-1. **Decidir si la API va detrás del mismo dominio** (B-02) — solo una decisión.
-2. **Imagen de producción, destino y pipeline** (B-01).
-3. **Versionar el artefacto** (H-01) — sin esto no hay reversión posible.
-4. **Cabeceras de seguridad y CSP** (C-02).
-5. **Telemetría de errores** (C-01).
-6. **Monitoreo de disponibilidad y alertas sobre picos de S8/S9.**
-7. **Smoke posterior al despliegue.**
+| # | Bloqueante | Estado hoy |
+|---|---|---|
+| 1 | Decidir si la API va detrás del mismo dominio (B-02) | ✅ **Va detrás.** `deploy/nginx.conf` |
+| 2 | Imagen de producción, destino y pipeline (B-01) | ✅ Imagen y pipeline · **el destino sigue siendo de infraestructura** |
+| 3 | Versionar el artefacto (H-01) | ✅ `buildInfo` con commit y fecha |
+| 4 | Cabeceras de seguridad y CSP (C-02) | ✅ Seis cabeceras, CSP por hash |
+| 5 | Telemetría de errores (C-01) | ⚠️ **Parcial**: el código de soporte existe; **falta el destino** |
+| 6 | Monitoreo de disponibilidad y alertas | ❌ Depende de que exista un despliegue |
+| 7 | Smoke posterior al despliegue | ✅ Checklist escrito · pendiente de ejecutarse |
+
+Veredicto vigente en
+[el informe de preparación productiva](production-readiness.md).
 
 ### Del trabajo documental
 

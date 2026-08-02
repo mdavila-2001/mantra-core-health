@@ -142,10 +142,56 @@ function issuesOf(body: ApiErrorBody): readonly ViewStateIssue[] {
   if (Array.isArray(messages) && messages.length > 0) {
     return messages
       .filter((item): item is string => typeof item === 'string')
-      .map((message) => ({ message, code: body.code }));
+      .map((message) => ({ ...fieldOf(message), message, code: body.code }));
   }
 
-  return [{ message: body.message, code: body.code }];
+  // El `ValidationPipe` no fue: `details` puede traer el campo por su cuenta.
+  const field = typeof body.details?.['field'] === 'string' ? body.details['field'] : undefined;
+
+  return [
+    {
+      ...(field === undefined ? {} : { field }),
+      message: body.message,
+      code: body.code,
+    },
+  ];
+}
+
+/**
+ * Deduce a qué campo se refiere un mensaje del `ValidationPipe`.
+ *
+ * `class-validator` compone sus mensajes empezando por el nombre de la
+ * propiedad: `"nationalId must be longer than or equal to 4 characters"`,
+ * `"email must be an email"`. Es una convención del backend, no un contrato, y
+ * por eso el reconocimiento es **conservador**: solo se acepta si la primera
+ * palabra es un identificador en `camelCase` y va seguida de otra.
+ *
+ * ## Por qué vale la pena aun siendo una heurística
+ *
+ * `ViewStateIssue` admite `field` y `ViewStateHost` lo pinta en negrita delante
+ * del mensaje, pero **nada lo rellenaba**: los errores del servidor se mostraban
+ * como una lista suelta arriba del formulario en vez de junto al campo que los
+ * causó. Para quien usa lector de pantalla la diferencia es grande.
+ *
+ * Y el modo de fallo es benigno: si no reconoce el campo, el mensaje se muestra
+ * igual, sin anclar — exactamente como antes. Nunca inventa un campo.
+ */
+function fieldOf(message: string): { field?: string } {
+  const match = /^([a-z][A-Za-z0-9]*)\s+\S/.exec(message);
+  if (match === null) {
+    return {};
+  }
+
+  const candidato = match[1];
+
+  // Palabras corrientes que abren una frase en inglés y no son un campo. Sin
+  // esto, «each value must be…» anclaría al campo «each».
+  const PALABRAS_COMUNES = new Set([
+    'each', 'all', 'the', 'this', 'that', 'value', 'property', 'nested',
+    'must', 'should', 'cannot', 'unexpected', 'invalid',
+  ]);
+
+  return PALABRAS_COMUNES.has(candidato.toLowerCase()) ? {} : { field: candidato };
 }
 
 /** El identificador que conecta el reporte de la persona con los registros. */

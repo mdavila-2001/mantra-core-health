@@ -86,17 +86,18 @@ Es la defensa contra las tres duplicaciones necesarias del proyecto (escala de
 breakpoints, umbral del cajón de navegación, clave del tema). Ver
 [tokens](../design-system/tokens.md#las-tres-duplicaciones-necesarias).
 
-## Lo que estas pruebas **no** cubren
+## Lo que `yarn test` **no** cubre
 
-| Capa | Estado |
+| Capa | Dónde está |
 |---|---|
-| Extremo a extremo (navegador real) | **No existe** |
-| Regresión visual | **No existe** |
-| Accesibilidad automatizada | **No existe** |
-| Contrato contra el OpenAPI del backend | **No existe** |
+| Extremo a extremo (navegador real) | `yarn e2e` — ver [pruebas E2E](../testing/e2e-tests.md) |
+| Accesibilidad automatizada | **Sí la cubre**: `src/app/shared/components/a11y.spec.ts` |
+| Contraste de color | `node scripts/check-contrast.mjs` — jsdom no calcula estilos |
+| Regresión visual | Configurada, **sin capturas**: hay que generarlas en el contenedor |
+| Contrato contra el OpenAPI del backend | **No existe** — el OpenAPI no es alcanzable |
 | Rendimiento / Lighthouse | **No existe** |
 
-Las cinco están analizadas, con su riesgo y su propuesta, en
+Las dos últimas están analizadas, con su riesgo y su propuesta, en
 [la estrategia de pruebas](../testing/strategy.md) y en
 [el análisis de brechas](../reports/documentation-gap-analysis.md).
 

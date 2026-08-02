@@ -81,9 +81,69 @@ jobs:
       - name: Prefijos de la API
         run: node scripts/check-api-prefixes.mjs
 
+      # El catálogo tipado y `styles.css` declaran lo mismo, en ambos sentidos.
+      - name: Tokens del sistema de diseño
+        run: node scripts/check-tokens.mjs
+
       # Inventarios al día, enlaces, cobertura documental y deriva de contrato.
       - name: Documentación
         run: node scripts/generate-doc-report.mjs
+
+  # Los journeys que jsdom no puede cubrir: hacen falta un router real, un `F5`
+  # de verdad y un navegador que ejecute la hidratación.
+  #
+  # Va en un job aparte y no como una etapa más de `verificar` por dos razones:
+  # corre en paralelo en vez de alargar la cadena, y necesita descargar un
+  # navegador —lo caro de esta etapa— que al resto no le sirve de nada.
+  #
+  # No depende de `verificar`: si el lint falla, esto igual dice si los journeys
+  # siguen en pie, y las dos respuestas llegan juntas.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: corepack enable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            .yarn/unplugged
+          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: yarn-${{ runner.os }}-
+
+      - run: yarn install --immutable
+
+      # Solo Chromium: es el único proyecto que declara `playwright.config.ts`.
+      # Bajar los tres navegadores costaría minutos por nada.
+      - name: Navegador
+        run: yarn playwright install --with-deps chromium
+
+      # `playwright.config.ts` construye el artefacto y lo sirve por su cuenta
+      # (`webServer`). Se prueba contra el build de producción a propósito: el
+      # prerenderizado y las cabeceras de seguridad **solo existen ahí**.
+      - name: Journeys de extremo a extremo
+        run: yarn e2e
+
+      # Las trazas del reintento son lo único que permite entender un fallo que
+      # no se reproduce en local.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
 
   dependencias:
     runs-on: ubuntu-latest

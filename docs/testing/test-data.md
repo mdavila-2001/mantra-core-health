@@ -84,9 +84,9 @@ de nadie.
 | Limpieza posterior, o entorno desechable | |
 | **Nunca contra producción** | |
 
-Con la red simulada —lo recomendado para empezar— nada de esto hace falta: las
-respuestas se declaran en la propia prueba. Ver
-[E2E](e2e-tests.md#el-obstáculo-real-el-backend).
+Con la red simulada —que es lo que se hizo— nada de esto hace falta: las
+respuestas se declaran en `e2e/support/api.ts`. Ver
+[E2E](e2e-tests.md#2--la-red-va-simulada).
 
 ## Lo que no hay
 

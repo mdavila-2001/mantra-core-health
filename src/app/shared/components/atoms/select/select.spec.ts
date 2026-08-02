@@ -1,5 +1,7 @@
+import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
+import { FormField } from '../../molecules/form-field/form-field';
 import type { SelectOption } from './select.types';
 import { Select } from './select';
 
@@ -102,6 +104,46 @@ describe('Select', () => {
     });
   });
 
+  /**
+   * El `placeholder` **no nombra al control**: se renderiza como un
+   * `<option hidden>` y el lector de pantalla lo lee como una opción, no como
+   * de qué es el desplegable. Sin `ariaLabel`, un `<select>` suelto se anuncia
+   * como «cuadro combinado» y nada más.
+   *
+   * Lo encontró la auditoría de axe (`select-name`, crítico) sobre el paginado.
+   */
+  describe('nombre accesible', () => {
+    it('suelto, `ariaLabel` nombra al control', async () => {
+      const fixture = crear<string>([{ value: 'a', label: 'A' }]);
+      fixture.componentRef.setInput('ariaLabel', 'Resultados por página');
+      await fixture.whenStable();
+
+      expect(native(fixture).getAttribute('aria-label')).toBe('Resultados por página');
+    });
+
+    it('sin `ariaLabel` no inventa uno: el placeholder no cuenta', async () => {
+      const fixture = crear<string>([{ value: 'a', label: 'A' }]);
+      fixture.componentRef.setInput('placeholder', 'Elegir sede');
+      await fixture.whenStable();
+
+      expect(native(fixture).hasAttribute('aria-label')).toBe(false);
+    });
+
+    it('dentro de un campo se ignora: el `<label>` manda', async () => {
+      const fixture = TestBed.createComponent(SelectEnCampo);
+      await fixture.whenStable();
+
+      // Un `aria-label` acá ganaría por precedencia y el lector diría algo
+      // distinto de lo que está escrito en pantalla. Ese desacuerdo silencioso
+      // es peor que no tener la vía de escape.
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('select');
+      expect(select.hasAttribute('aria-label')).toBe(false);
+
+      const label: HTMLLabelElement = fixture.nativeElement.querySelector('label');
+      expect(label.control).toBe(select);
+    });
+  });
+
   it('respeta las opciones deshabilitadas', async () => {
     const fixture = crear<string>([
       { value: 'a', label: 'A' },
@@ -115,3 +157,15 @@ describe('Select', () => {
     expect(options.at(-1)?.disabled).toBe(true);
   });
 });
+
+@Component({
+  imports: [FormField, Select],
+  template: `
+    <app-form-field label="Tipo de sangre">
+      <app-select ariaLabel="Otro nombre" [options]="opciones()" />
+    </app-form-field>
+  `,
+})
+class SelectEnCampo {
+  readonly opciones = signal<SelectOption<string>[]>([{ value: 'a+', label: 'A positivo' }]);
+}

@@ -1,8 +1,8 @@
 # Matriz de trazabilidad
 
-De negocio a ruta, a componente, a API, a prueba. **La columna E2E está vacía en
-todas las filas**, y esa ausencia se declara acá como excepción formal, tal como
-el plan permite.
+De negocio a ruta, a componente, a API, a prueba. **Seis de los diez journeys
+tienen E2E**; los cuatro que no, mantienen la excepción formal declarada más
+abajo, con el motivo de cada uno.
 
 ---
 
@@ -12,39 +12,54 @@ el plan permite.
 |---|---|---|---|---|---|---|---|---|---|---|
 | **J1** Registro paciente | `/auth/registro` → `/auth` | `RegisterPatient`, `AuthSplit`, `FormField`, `Input`, `Radio*` | `POST register-patient` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ A11Y-04 | Implementado |
 | **J2** Registro profesional | `/auth/registro` → `/auth` | Ídem | `POST register-practitioner` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ A11Y-04 | Implementado |
-| **J3** Login multi-organización | `/auth` → `/auth/organizacion` → `/panel` | `Login`, `TenantSelection`, `ShellLayout` | `POST login` | público | ✅ | ⚠️ parcial | **❌ E1** | ❌ | ⚠️ A11Y-03 | Implementado |
+| **J3** Login multi-organización | `/auth` → `/auth/organizacion` → `/panel` | `Login`, `TenantSelection`, `ShellLayout` | `POST login` | público | ✅ | ⚠️ parcial | **✅** | ❌ | ⚠️ A11Y-03 | Implementado |
 | **J4** Recuperación | `/auth/recuperar` → correo → `/auth/nueva-clave` | `ForgotPassword`, `ResetPassword` | `POST forgot-password`, `POST reset-password` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ **A11Y-01** | Implementado |
-| **J5** Sesión persistente | arranque | `AuthService`, `SessionStore`, `RefreshTokenStorage` | `POST token/refresh` | con sesión | ✅ | **❌** | **❌ E1** | ❌ | n/a | Implementado |
+| **J5** Sesión persistente | arranque | `AuthService`, `SessionStore`, `RefreshTokenStorage` | `POST token/refresh` | con sesión | ✅ | **❌** | **✅✅** | ❌ | n/a | Implementado |
 | **J6** Verificar correo | correo → `/auth/verificar` | `VerifyEmail` | `POST verify-email` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ A11Y-04 | Implementado |
-| **J7** Panel | `/panel` | `Dashboard`, `ShellLayout`, `ViewStateHost` | `GET /public/directory` | con sesión | ✅ | **❌** | **❌ E1** | ❌ | ✅ | Implementado |
-| **J8** Cambio de organización | armazón → `/panel` | `ShellLayout`, `TenantSwitcher` | — | con sesión | ✅ | **❌** | **❌ E1** | ❌ | ✅ | Implementado |
-| **J9** Cierre de sesión | armazón → `/auth` | `ShellLayout`, `Header`, `Menu` | `POST logout` | con sesión | ✅ | **❌** | **❌ E1** | ❌ | ✅ | Implementado |
-| **J10** Verificación de identidad | — | — | 4 de `IdentityClient` + `FilesClient` | con sesión | ✅ | n/a | n/a | n/a | n/a | **Sin pantalla** |
+| **J7** Panel | `/panel` | `Dashboard`, `ShellLayout`, `ViewStateHost` | `GET /public/directory` | con sesión | ✅ | ✅ | **✅** | ❌ | ✅ | Implementado |
+| **J8** Cambio de organización | armazón → `/panel` | `ShellLayout`, `TenantSwitcher` | — | con sesión | ✅ | ✅ | **❌ E1** | ❌ | ✅ | Implementado |
+| **J9** Cierre de sesión | armazón → `/auth` | `ShellLayout`, `Header`, `Menu` | `POST logout` | con sesión | ✅ | ✅ | **✅✅** | ❌ | ✅ | Implementado |
+| **J10** Verificación de identidad | `/identidad/verificar` | `IdentityVerification` | 4 de `IdentityClient` + `FilesClient` | con sesión | ✅ | ✅ | **❌ E1** | ❌ | ✅ | Implementado |
 
-## Excepción formal E1 — ausencia de pruebas E2E
+## Los journeys con E2E
+
+`e2e/sesion.spec.ts` corre **contra el artefacto de producción construido**, con
+la red simulada. Siete pruebas cubren J3, J5, J7 y J9, más dos caminos de fallo
+que ninguna fila de arriba representa: el guard sin sesión, y el refresh token
+muerto.
+
+Los marcados **✅✅** son los dos que encontraron un defecto real:
+
+| Journey | Qué encontró |
+|---|---|
+| **J5** Sesión persistente | Que `security.allowedHosts` hacía que el servidor devolviera **400 en cualquier dominio real** |
+| **J9** Cierre de sesión | Que el refresh token **sobrevivía al cierre de sesión** y la siguiente recarga restauraba la sesión |
+
+J5 era el journey señalado como «el más expuesto» en la revisión anterior. Lo era.
+
+## Excepción formal E1 — los cuatro journeys que siguen sin E2E
 
 > El plan exige: *«Cada journey crítico tiene al menos una validación E2E **o una
 > justificación formal**.»*
 
-**Justificación:**
+| Journey | Por qué no tiene E2E |
+|---|---|
+| **J1** Registro paciente | El alta cruza a la pantalla de login sin sesión; el valor añadido sobre la prueba de componente es bajo |
+| **J2** Registro profesional | Ídem |
+| **J4** Recuperación | **Cruza el correo.** Sin buzón no hay forma de seguir el enlace |
+| **J6** Verificar correo | Ídem |
+| **J8** Cambio de organización | Necesita un token con varias organizaciones **y** datos distintos por organización, que hoy no hay |
+| **J10** Verificación de identidad | Necesita subir un archivo real y un caso de verificación del lado de la API |
 
-1. **No existe herramienta E2E en el proyecto.** Ni Playwright, ni Cypress, ni
-   ninguna. Incorporarla es un cambio de producto que añade una dependencia
-   grande y requiere autorización.
-2. **Los nueve journeys implementados fueron verificados a mano contra la API
-   viva** por el equipo, y funcionaron
-   (`ESTADO-FRONTEND.md` §«El recorrido que se verificó en un navegador real»).
-3. **Los nueve tienen cobertura unitaria y de componente**, con umbrales
-   bloqueantes que se cumplen (`core` 87 %, `shared` 94 %, `features` 75 %).
-4. **La propuesta está escrita y priorizada** en
-   [pruebas E2E](../testing/e2e-tests.md), con herramienta recomendada
-   (Playwright, porque además cubre la regresión visual) y los cuatro journeys
-   por los que empezar.
+**Justificación común:** los seis tienen cobertura unitaria y de componente con
+umbrales bloqueantes (`core` 87 %, `shared` 94 %, `features` 75 %), y los cuatro
+primeros dependen de infraestructura que este repositorio no puede simular sin
+volver la prueba menos fiable que lo que verifica.
 
-**Riesgo residual asumido:** una regresión en cualquiera de los nueve journeys
-**no se detecta automáticamente**. El más expuesto es **J5**, cuya integración
-con el ciclo de arranque no está cubierta: un cambio en el orden de los
-`provideAppInitializer` lo rompería en silencio.
+**Riesgo residual asumido:** una regresión en J1, J2, J4, J6, J8 o J10 no se
+detecta automáticamente de punta a punta. J4 y J6 son los más expuestos, y su
+punto frágil está **fuera del frontend**: que el dominio de los enlaces del
+correo coincida con el del frontend (ver H-11).
 
 ## Componentes críticos
 
@@ -116,7 +131,7 @@ un `code` nuevo, que se degrada a S9 genérico sin romper nada.
 | Operaciones de API trazadas | **20/20 (100 %)** |
 | Componentes críticos identificados | **10/10** |
 | Journeys con prueba automatizada | 9/9 (unitaria/componente) |
-| **Journeys con E2E** | **0/9 — excepción E1** |
+| **Journeys con E2E** | **4/10** · 6 con excepción E1 |
 | **Operaciones con prueba de contrato** | **0/20 — excepción E2** |
 
 Las dos excepciones están declaradas arriba con su justificación y su riesgo
