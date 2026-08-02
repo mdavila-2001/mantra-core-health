@@ -11,5 +11,12 @@
     "target": "__BACKEND_ORIGIN__",
     "secure": false,
     "changeOrigin": true
+  },
+  {
+    "context": ["/otel"],
+    "target": "__COLLECTOR_ORIGIN__",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": { "^/otel": "" }
   }
 ]

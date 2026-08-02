@@ -1,4 +1,6 @@
-import { Injectable, isDevMode, signal } from '@angular/core';
+import { inject, Injectable, isDevMode, signal } from '@angular/core';
+
+import { ErrorTelemetry } from '../observability/errors/error-telemetry';
 
 /** Contexto mínimo que acompaña a un fallo. */
 export interface ErrorContext {
@@ -18,17 +20,22 @@ export interface ReportedError {
 /**
  * Registro de fallos del cliente.
  *
- * ## Por qué no manda nada a ningún lado (todavía)
+ * ## El destino remoto, y por qué éste sí
  *
- * Elegir destino remoto es una decisión con consecuencias de privacidad que en
- * un sistema de salud no son menores: un servicio de terceros vería la ruta que
- * cada persona visita, y **la sección visitada ya es información de salud**.
- * Esa decisión no se toma escribiendo un servicio.
+ * Este archivo decía que elegir destino remoto era una decisión de privacidad
+ * que no se toma escribiendo un servicio: un servicio de terceros vería la ruta
+ * que cada persona visita, y **la sección visitada ya es información de salud**.
  *
- * Lo que sí se puede hacer sin decidirla —y es lo que falta hoy— es que el
- * fallo **deje de ser invisible para quien lo sufre**: que tenga identificador,
- * que se pueda reportar, y que exista un punto único al que enchufar el destino
- * el día que se elija. Ese punto es {@link report}.
+ * El reparo era del *tercero*, no del envío. El destino que hay ahora es
+ * propio: las trazas salen al mismo origen desde el que se sirvió la
+ * aplicación, el servidor las reenvía a un Collector propio, y de ahí van a un
+ * Jaeger propio. Ningún proveedor externo ve nada. Lo que este archivo dejaba
+ * preparado —«un punto único al que enchufar el destino el día que se elija»—
+ * es la llamada a {@link ErrorTelemetry} de {@link report}.
+ *
+ * La regla de qué viaja **no cambia**, y sigue fijada por las pruebas de este
+ * archivo. La telemetría recibe el mismo error y aplica su propio saneado
+ * encima, que es más estricto: ver `observability/errors/error-sanitizer.ts`.
  *
  * ## Qué se registra, y qué no
  *
@@ -53,6 +60,12 @@ export class ErrorReporter {
   private readonly registrados = signal<readonly ReportedError[]>([]);
 
   readonly ultimo = signal<ReportedError | null>(null);
+
+  /**
+   * El destino remoto. Con la telemetría apagada —el valor por defecto— este
+   * servicio no hace nada y este archivo se comporta como antes.
+   */
+  private readonly telemetria = inject(ErrorTelemetry);
 
   private contador = 0;
 
@@ -88,6 +101,21 @@ export class ErrorReporter {
       // El objeto original solo en desarrollo: en producción su contenido es
       // impredecible y podría arrastrar datos a la consola de quien mire.
       console.error(error);
+    }
+
+    /**
+     * El identificador dictable viaja como atributo de la traza. Es lo que
+     * cierra el circuito que hasta ahora solo funcionaba para los fallos de
+     * API: quien recibe la llamada de soporte busca ese código y encuentra qué
+     * pasó, también cuando el fallo fue de render y nunca hubo petición.
+     *
+     * Va al final y envuelto: un problema al exportar una traza no puede
+     * impedir que el fallo original quede registrado.
+     */
+    try {
+      this.telemetria.report(error, 'error-handler', id, context.route);
+    } catch {
+      // La observabilidad no puede ser el motivo de un fallo nuevo.
     }
 
     return id;

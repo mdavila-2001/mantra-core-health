@@ -30,6 +30,10 @@ EXPOSE 4200
 # Dentro del contenedor `localhost` es el contenedor, así que el default apunta
 # al host. Se sobreescribe por entorno (ver .env.example).
 ENV BACKEND_ORIGIN=http://host.docker.internal:3000
+# A dónde reenvía el proxy las trazas del navegador (/otel/**). El valor por
+# defecto apunta al host: el Collector se levanta con
+# infra/otel-collector/docker-compose.observability.yml, que es otro compose.
+ENV COLLECTOR_ORIGIN=http://host.docker.internal:4318
 
 # Raíz de la API que usa el navegador. Vacía = rutas relativas, que es lo que
 # corresponde acá: las resuelve el proxy de arriba. Solo se define si el
@@ -50,4 +54,4 @@ ENV PUBLIC_API_BASE_URL=""
 # no viaja en la imagen (no se versiona) y sin él la compilación no resuelve el
 # import. Se genera con el entorno del contenedor, que docker-compose alinea
 # con el mismo `.env` que usa el host.
-CMD ["sh", "-c", "sed \"s|__BACKEND_ORIGIN__|$BACKEND_ORIGIN|\" proxy.conf.docker.json > proxy.generated.json && node scripts/generate-env.mjs && exec yarn ng serve --proxy-config proxy.generated.json --host 0.0.0.0 --port 4200 --poll 2000"]
+CMD ["sh", "-c", "sed -e \"s|__BACKEND_ORIGIN__|$BACKEND_ORIGIN|\" -e \"s|__COLLECTOR_ORIGIN__|$COLLECTOR_ORIGIN|\" proxy.conf.docker.json > proxy.generated.json && node scripts/generate-env.mjs && exec yarn ng serve --proxy-config proxy.generated.json --host 0.0.0.0 --port 4200 --poll 2000"]

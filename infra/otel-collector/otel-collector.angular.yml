@@ -1,0 +1,206 @@
+# OpenTelemetry Collector — trazas del frontend Angular
+#
+# La segunda red de seguridad de la privacidad, y la única que se puede cambiar
+# sin volver a desplegar el frontend.
+#
+# El cliente ya sanea: no manda query strings, ni cabeceras, ni cuerpos, ni
+# trazas de pila. Esto lo vuelve a hacer, y no por desconfianza del cliente sino
+# por aritmética: un paquete desplegado vive en los navegadores durante días
+# después de corregir un error, y aquí el arreglo entra en el siguiente
+# reinicio. Si algún día se cuela un atributo con datos, este archivo es lo que
+# corta el chorro hoy mismo.
+#
+# Orden de los procesadores: importa y no es alfabético.
+#   memory_limiter primero  — si no hay memoria, no se hace nada más.
+#   attributes/redact       — se borra ANTES de agrupar y de decidir.
+#   tail_sampling           — necesita la traza completa, así que va al final.
+#   batch último            — agrupa lo que ya sobrevivió.
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        # Solo HTTP: el navegador no habla gRPC. El puerto se publica en la red
+        # interna de Docker, nunca hacia fuera — el navegador llega por
+        # /otel/v1/traces del propio servidor de la aplicación.
+        endpoint: 0.0.0.0:4318
+
+        # CORS deliberadamente vacío.
+        #
+        # El navegador NO habla con este Collector: manda al mismo origen desde
+        # el que se sirvió y `src/server/telemetry/otel-gateway.ts` reenvía. Sin
+        # CORS configurado, un navegador no puede alcanzarlo aunque el puerto
+        # quedara expuesto por error. Es una defensa que no cuesta nada.
+
+processors:
+  # --- 1 · Protección del proceso ------------------------------------------
+  memory_limiter:
+    check_interval: 1s
+    # Por encima de esto, el Collector empieza a rechazar. Rechazar trazas es
+    # aceptable; que el Collector muera y arrastre lo que tenía en cola, no.
+    limit_percentage: 75
+    spike_limit_percentage: 20
+
+  # --- 2 · Borrado de atributos sensibles ----------------------------------
+  #
+  # La lista no describe lo que el cliente manda: describe lo que NUNCA debe
+  # llegar a Jaeger, venga de donde venga. Un atributo que no existe se ignora
+  # sin error, así que declarar de más es gratis y declarar de menos es la fuga.
+  attributes/redact:
+    actions:
+      # Credenciales y sesión
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+      - key: http.response.header.set-cookie
+        action: delete
+      - key: http.request.header.x-tenant-id
+        action: delete
+      - key: auth.token
+        action: delete
+      - key: user.id
+        action: delete
+      - key: enduser.id
+        action: delete
+      - key: session.id
+        action: delete
+
+      # Cuerpos y respuestas
+      - key: http.request.body
+        action: delete
+      - key: http.response.body
+        action: delete
+
+      # URLs completas: pueden llevar query string, y dos rutas de esta
+      # aplicación reciben el token de verificación por ahí.
+      - key: url.full
+        action: delete
+      - key: url.query
+        action: delete
+      - key: http.url
+        action: delete
+
+      # Trazas de pila: en Angular llevan valores interpolados de plantillas.
+      - key: exception.stacktrace
+        action: delete
+
+      # Datos de persona y de archivo
+      - key: file.name
+        action: delete
+      - key: user.email
+        action: delete
+      - key: user.name
+        action: delete
+
+  # --- 3 · Recorte de la ruta ----------------------------------------------
+  #
+  # Cinturón y tirantes: si algún atributo de ruta llegara con query string
+  # —por una instrumentación nueva, por una versión vieja del cliente todavía
+  # en algún navegador— se corta acá.
+  transform/strip-query:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - replace_pattern(attributes["url.path"], "\\?.*$", "")
+          - replace_pattern(attributes["app.route.template"], "\\?.*$", "")
+
+  # --- 4 · Ruido -----------------------------------------------------------
+  filter/noise:
+    error_mode: ignore
+    traces:
+      span:
+        # Comprobaciones de salud y del propio Collector: volumen sin señal.
+        - 'attributes["url.path"] == "/health"'
+        - 'attributes["url.path"] == "/healthz"'
+        - 'IsMatch(attributes["url.path"], "^/otel/")'
+
+  # --- 5 · Muestreo por cola -----------------------------------------------
+  #
+  # Lo que el muestreo del navegador NO puede hacer: cuando la traza empieza
+  # todavía no se sabe si va a fallar. Acá la traza está completa, así que se
+  # puede quedar con todos los errores y con lo lento, y tirar el resto.
+  #
+  # El precio: hay que esperar a que la traza termine, y por eso hay una
+  # ventana de 10 s. Una traza que dure más se evalúa incompleta.
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 50000
+    expected_new_traces_per_sec: 100
+    policies:
+      # Todo lo que falló, siempre. Es lo que se va a mirar.
+      - name: errores
+        type: status_code
+        status_code: { status_codes: [ERROR] }
+
+      # Lo lento, siempre. Es la otra mitad de para qué existe esto.
+      - name: lento
+        type: latency
+        latency: { threshold_ms: 2000 }
+
+      # Fallos de carga de fragmento: el modo de fallo más caro de este
+      # proyecto —se despliega una versión y a quien tenía la anterior abierta
+      # se le rompe la navegación— y el más difícil de reproducir.
+      - name: fragmento-caido
+        type: string_attribute
+        string_attribute:
+          key: angular.lazy.result
+          values: [failed]
+
+      # De lo que salió bien, una parte. Hace falta para tener con qué comparar:
+      # sin trazas correctas no se sabe si 800 ms es lo normal o una anomalía.
+      - name: muestra-base
+        type: probabilistic
+        probabilistic: { sampling_percentage: 10 }
+
+  # --- 6 · Agrupación ------------------------------------------------------
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+    send_batch_max_size: 1024
+
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      # Red interna de Docker. Con Jaeger en otra máquina esto cambia, y
+      # entonces sí hay que poner certificados.
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      # Acotado a propósito: reintentar indefinidamente convierte una caída de
+      # Jaeger en un Collector que crece hasta morir.
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      queue_size: 5000
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - attributes/redact
+        - transform/strip-query
+        - filter/noise
+        - tail_sampling
+        - batch
+      exporters: [otlp/jaeger]
+
+  telemetry:
+    logs:
+      level: warn
+    metrics:
+      # Métricas internas del Collector: cuántos spans entran, cuántos se
+      # descartan, cuántos fallan al exportar. Es lo que responde «¿por qué no
+      # veo mis trazas?» sin adivinar.
+      level: basic

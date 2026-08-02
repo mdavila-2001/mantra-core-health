@@ -191,6 +191,15 @@ nav:
       - Web Vitals: observability/web-vitals.md
       - Eventos analíticos: observability/analytics-events.md
       - Paneles y alertas: observability/dashboards-and-alerts.md
+      - Trazas distribuidas (OpenTelemetry · Jaeger):
+          - Auditoría del estado actual: observability/angular/00-current-state-audit.md
+          - Diseño de la arquitectura: observability/angular/01-architecture-design.md
+          - Convenciones de nombres: observability/angular/02-naming-conventions.md
+          - Contexto asíncrono sin Zone.js: observability/angular/03-async-context-strategy.md
+          - Instrumentar RxJS: observability/angular/04-rxjs-tracing-guidelines.md
+          - Rendimiento y Web Vitals: observability/angular/05-web-vitals-strategy.md
+          - Política de datos: observability/angular/06-data-privacy-policy.md
+          - Runbook de operación: observability/angular/07-operations-runbook.md
 
   - Pruebas:
       - Estrategia: testing/strategy.md

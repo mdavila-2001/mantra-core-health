@@ -52,6 +52,17 @@ jobs:
       - name: Instalación reproducible
         run: yarn install --immutable
 
+      # `src/environments/env.generated.ts` está en `.gitignore` —es lo que
+      # impide versionar la configuración de una máquina— así que en un clon
+      # limpio **no existe**, y los cuatro archivos que lo importan no compilan.
+      #
+      # En local no se nota: `start`, `build`, `watch` y `test` lo generan
+      # encadenado. Pero `lint` y `tsc` se invocan directos, sin pasar por esos
+      # scripts, y por eso la etapa de Tipos venía fallando en cada ejecución
+      # desde que existe este workflow —también en `dev`—.
+      - name: Entorno público
+        run: yarn env:generate
+
       - name: Lint
         run: yarn lint
 
