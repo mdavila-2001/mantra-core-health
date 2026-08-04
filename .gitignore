@@ -30,9 +30,11 @@ proxy.generated.json
 src/environments/env.generated.ts
 
 # Yarn 4 — artefactos generados por la instalación.
-# El repo no fija `nodeLinker`, así que Yarn instala en modo PnP y genera estos
-# archivos: cientos de dependencias desempaquetadas, binarios incluidos. Son
-# producto de `yarn install` y se regeneran solos; no van al repositorio.
+# El repo fija `nodeLinker: node-modules` en `.yarnrc.yml`, así que la
+# instalación vive en `/node_modules` (ignorado más arriba). Los archivos de
+# acá son los que quedan de una instalación previa en modo PnP o del estado
+# interno de Yarn: producto de `yarn install`, se regeneran solos y no van al
+# repositorio.
 .pnp.*
 .yarn/install-state.gz
 .yarn/unplugged/

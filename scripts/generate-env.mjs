@@ -34,8 +34,15 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const REPO_ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
+/**
+ * `fileURLToPath` y NO `.pathname`: el pathname de una URL `file:` viene
+ * percent-encoded y, en Windows, con una barra delante de la letra de unidad.
+ * Con el repositorio en una carpeta con espacios —«Sistema Salud»— el espacio
+ * llegaba como `%20` y el generador moría con `ENOENT … Sistema%20Salud`.
+ */
+const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]$/, '');
 const ENV_FILE = join(REPO_ROOT, '.env');
 const OUTPUT_FILE = join(REPO_ROOT, 'src/environments/env.generated.ts');
 
