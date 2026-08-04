@@ -1,61 +1,71 @@
 # Mantra Core Health
 
-Frontend Angular 21 + SSR del sistema médico de Mantra Core Technologies (nombre de producto provisional: **mantra-core-health**; el definitivo está pendiente).
+Frontend Angular 21 + SSR del sistema médico de Mantra Core Technologies (nombre de producto
+provisional: **mantra-core-health**; el definitivo está pendiente).
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.11.
-
-## Development server
-
-To start a local development server, run:
+## Arranque
 
 ```bash
-ng serve
+corepack enable          # habilita el Yarn que declara package.json (4.18)
+corepack yarn install
+corepack yarn test --watch=false
+corepack yarn start      # http://localhost:4200
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+**Usá siempre `corepack yarn <script>`, nunca `ng` a secas.** El CLI de Angular vive en las
+dependencias del proyecto: un `ng` global apunta a otra instalación y falla de formas que no
+señalan la causa. Todos los comandos de abajo pasan por los scripts de `package.json`.
 
-## Code scaffolding
+> **Si el proyecto está en una ruta con espacios** (por ejemplo `C:\...\Sistema Salud\`), no hace
+> falta hacer nada especial: `scripts/generate-env.mjs` resuelve la ruta con `fileURLToPath`. Si
+> ves un error del estilo `ENOENT ... Sistema%20Salud`, estás en un commit anterior al arreglo.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Comandos
+
+| Comando | Qué hace |
+| --- | --- |
+| `corepack yarn start` | Servidor de desarrollo en `:4200`, con el proxy hacia la API |
+| `corepack yarn build` | Compilación de producción con SSR en `dist/` |
+| `corepack yarn test --watch=false` | Pruebas unitarias (Vitest) |
+| `corepack yarn test:coverage` | Pruebas con cobertura y umbrales |
+| `corepack yarn lint` | ESLint, incluidas las reglas de arquitectura |
+| `corepack yarn e2e` | Suite Selenium de punta a punta |
+
+### Generar código
+
+Con el CLI del proyecto, **no a mano**: `angular.json` ya fija la convención de nombres
+(clase `X`, archivo `x.ts`, sin sufijo `Component`).
 
 ```bash
-ng generate component component-name
+corepack yarn ng generate component shared/components/atoms/mi-atomo
+corepack yarn ng generate interface shared/components/atoms/mi-atomo/mi-atomo --type=types
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### La API
 
-```bash
-ng generate --help
-```
+El frontend habla con `mantra-core-health-api` a través del proxy (`proxy.conf.json` → `:3000`),
+así que en desarrollo no hay CORS de por medio. Para levantar la API y su base, ver el README de
+ese repositorio. Con el stack en pie, la cuenta sembrada por el bootstrap sirve para entrar.
 
-## Building
+## Antes de tocar el código
 
-To build the project run:
+- **Coordinación.** Si hay más de una persona o sesión trabajando sobre la misma rama, declarar
+  los archivos que se van a tocar en [`COORDINACION-AGENTES.md`](COORDINACION-AGENTES.md) **antes**
+  de empezar. El archivo existe porque ya hubo un trabajo duplicado que costó reconciliar.
+- **Colores y tipografías salen de `src/styles.css`.** Nunca un hex literal en un componente. Los
+  exports de diseño (Stitch) traen su propia paleta Material y sus propias fuentes, que **no** son
+  las de este sistema: de esos archivos se toma la estructura y la jerarquía, jamás los valores.
+  Un hex copiado no lo detecta ninguna prueba, porque no es un token corrido sino uno nuevo.
+- **Mobile-first.** Las consultas de medios van con `min-width` sobre los breakpoints tokenizados;
+  el estilo base es el móvil.
+- **Todo tiene que renderizar bajo SSR:** sin `window`, `document` ni `localStorage` en la ruta de
+  render; lo que necesite el navegador va detrás de `afterNextRender()`.
 
-```bash
-ng build
-```
+## Documentos
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+| Archivo | Para qué |
+| --- | --- |
+| [`AVANCE-FRONTEND-CONSOLIDADO.md`](AVANCE-FRONTEND-CONSOLIDADO.md) | Qué hay construido y qué falta |
+| [`ESTADO-FRONTEND.md`](ESTADO-FRONTEND.md) | Detalle del estado por área |
+| [`PENDIENTES-BACKEND.md`](PENDIENTES-BACKEND.md) | Lo que el frontend espera de la API |
+| [`COORDINACION-AGENTES.md`](COORDINACION-AGENTES.md) | Protocolo entre sesiones en paralelo |
