@@ -11,8 +11,8 @@ export interface CaseStatusPresentation {
  * `identity_assurance`, con namespace constante del proyecto), así que los
  * identificadores son estables y se pueden mapear acá.
  *
- * TODO: migrar esta resolución a terminología (value set) cuando el backend
- * exponga códigos estables — informe a Marcelo del 2026-08-05.
+ * TODO(terminología): migrar esta resolución a terminología (value set) cuando el backend
+ * exponga códigos estables.
  */
 const CASE_STATUS_PRESENTATIONS: Readonly<Record<string, CaseStatusPresentation>> = Object.freeze({
   // CASE_OPEN
