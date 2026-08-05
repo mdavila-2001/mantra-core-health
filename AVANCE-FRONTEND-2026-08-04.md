@@ -222,7 +222,57 @@ Subido a **620 kB** por decisión explícita. El techo de *error* sigue en 1 MB,
 J3 completos el bundle inicial quedó en **586,63 kB**, y las dos altas viven en fragmentos
 diferidos (7,2 y 8,1 kB): sólo las descarga quien es `SECURITY_ADMIN` y entra.
 
-### 3. Cosas menores, anotadas y no arregladas
+### 3. Los guardrails aprobaban sin mirar (en Windows)
+
+**Lo encontró el CI, no yo.** El primer envío falló en `check-architecture`: cuatro imports de
+`core/navigation/` hacia `shared/components/`, contra la dirección de las capas
+(`features → shared → core`). La regla está bien puesta —un contrato de `core/` no debe depender
+de los tipos de un componente— y el arreglo fue que el registro declare lo suyo.
+
+Al ir a correr ese script en local para verificar el arreglo, apareció algo más grande:
+
+```text
+✓ check-architecture
+  0 archivos · 0 importaciones internas
+```
+
+**Aprobaba sin escanear nada.** `scan.mjs` deducía la raíz del repo con
+`new URL(...).pathname`, que no es una ruta sino el componente de una URL: en Windows devuelve
+`/C:/…` y deja los caracteres escapados, así que una ruta con espacio queda como
+`Sistema%20Salud`. `walk()` traga el `readdirSync` que falla y devuelve la lista vacía, así que
+todos los verificadores salían con ✓ habiendo mirado **cero archivos**. Medido: 0 antes, 291
+después.
+
+Y al regenerar los inventarios desde Windows apareció el tercero: `repoRelative` prometía en su
+comentario «con barras normales» y no normalizaba, así que el inventario de la suite e2e salía
+con `\` y con la columna de suite en `—`. El CI lo marcaba desactualizado sin que el código
+hubiera cambiado.
+
+**Los tres son el mismo defecto** —una ruta de sistema tratada como si fuera POSIX— y los tres
+son silenciosos: ninguno tira un error, todos dan una respuesta plausible y equivocada.
+
+| Dónde | Estado |
+| --- | --- |
+| `scripts/generate-env.mjs` | ya corregido en J1 |
+| `scripts/lib/scan.mjs` | **corregido acá** |
+| `scripts/generate-inventory.mjs` | **corregido acá** |
+
+En Linux los tres funcionaban, y por eso nadie los había visto. **Ender e Itzan trabajan en
+Windows:** sin esto, cualquier guardrail que corran en local les va a decir que todo está bien.
+
+> **La lección, hermana de la del *fixture* inventado:** un verificador que no puede fallar no
+> está verificando. Si un check pasa, conviene mirar **cuántas cosas dice haber mirado**.
+
+Lo que el CI destapó de rebote, ya corregido: `NavigationService` sin documentar y
+`POST /iam/users/assisted-registration` sin declarar en el catálogo de la API — el paso de
+Documentación nunca había llegado a correr porque el job abortaba antes.
+
+**Un falso positivo que NO se tocó:** con el escáner arreglado, `check-doc-links` reporta 114
+enlaces rotos en Windows. Se comprobó contra un árbol limpio de `dev` que ya estaban ahí, y el
+CI (Linux) los da por buenos. Es un problema de resolución de rutas del propio checker, no una
+deuda documental.
+
+## 4. Cosas menores, anotadas y no arregladas
 
 - **`dashboard.css` usa tokens que no existen.** `var(--space-5, 1.25rem)`, `var(--font-size-lg,
   …)`: la escala real es `--sp-*` y `--fs-*`. Vive de los valores de reserva, así que se ve bien
@@ -273,7 +323,10 @@ inventes — tarjeta a Marcelo».
 | Selenium — humo | 9 en verde |
 | Selenium — navegación · autenticación · formularios | 42 en verde |
 | Selenium — responsive · regresión | 33 en verde |
+| `yarn test:coverage` (umbrales bloqueantes) | exit 0 · 88,79 % sentencias · 87,11 % ramas |
 | `yarn build` (SSR) | exit 0, **sin aviso de presupuesto**, 586,63 kB / 620 |
+| `check-architecture` · `-api-prefixes` · `-tokens` · `-doc-coverage` · `-api-contract-drift` · `-contrast` | los seis ✓ |
+| **CI del PR #22** | **los cuatro jobs en verde** · `mergeable_state: clean` |
 
 Contra la API viva, con `admin@redesa.test` (roles `SECURITY_ADMIN`, `SUPERADMIN`):
 
@@ -299,3 +352,11 @@ convenciones.
 - **El alta de médico** espera el endpoint. Ver `PENDIENTES-BACKEND.md`.
 - **La decisión D3 del plan** conviene actualizarla: la orquestación con reanudación no aplica.
 - **`dashboard.css`** y **el arnés de Selenium** están anotados arriba; ninguno bloquea.
+- **Los guardrails ahora sirven en Windows.** Antes de dar algo por verificado en local, conviene
+  correr la batería que corre el CI, no solo `test` y `build`:
+
+  ```bash
+  yarn lint && yarn tsc -p tsconfig.app.json --noEmit && yarn test:coverage && yarn build
+  node scripts/check-architecture.mjs
+  node scripts/generate-doc-report.mjs   # incluye inventarios, enlaces, cobertura y deriva
+  ```
