@@ -47,6 +47,10 @@ export { SideNav } from './side-nav/side-nav';
 export { NAV_ICON_NAMES, NAV_MODES } from './side-nav/side-nav.types';
 export type { NavIconName, NavItem, NavMode, NavSection } from './side-nav/side-nav.types';
 
+export { StatusSeal } from './status-seal/status-seal';
+export { STATUS_SEAL_VARIANTS, UNKNOWN_STATUS_VARIANT } from './status-seal/status-seal.types';
+export type { StatusSealVariant } from './status-seal/status-seal.types';
+
 export { TenantSwitcher } from './tenant-switcher/tenant-switcher';
 export { TENANT_SWITCHER_VARIANTS } from './tenant-switcher/tenant-switcher.types';
 export type { TenantOption, TenantSwitcherVariant } from './tenant-switcher/tenant-switcher.types';
