@@ -15,7 +15,7 @@
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 
 import {
   DOCS_ROOT,
@@ -406,7 +406,21 @@ function testIdsDeclarados() {
   return [...ids].sort();
 }
 
-/** Ruta relativa al repositorio, con barras normales. */
+/**
+ * Ruta relativa al repositorio, con barras normales.
+ *
+ * La normalización es lo que hace cierta la frase de arriba: `join()` compone
+ * con el separador del sistema, así que en Windows esto devolvía
+ * `e2e\selenium\specs\…`. Dos consecuencias, las dos silenciosas:
+ *
+ * - el inventario quedaba distinto según quién lo regenerara, y CI lo marcaba
+ *   como desactualizado sin que el código hubiera cambiado;
+ * - la suite de cada spec se deduce partiendo por `/` (ver `e2eInventory`), así
+ *   que en Windows salía `—` para todas.
+ */
 function repoRelative(absolute) {
-  return absolute.startsWith(REPO_ROOT) ? absolute.slice(REPO_ROOT.length + 1) : absolute;
+  const relativa = absolute.startsWith(REPO_ROOT)
+    ? absolute.slice(REPO_ROOT.length + 1)
+    : absolute;
+  return relativa.split(sep).join('/');
 }
