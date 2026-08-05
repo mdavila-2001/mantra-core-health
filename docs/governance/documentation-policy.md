@@ -115,7 +115,7 @@ diga algo distinto del código.
 | Métrica | Objetivo | Estado |
 |---|---|---|
 | Rutas documentadas | 100 % | ✅ 11/11 |
-| Organismos documentados | 100 % | ✅ 14/14 |
+| Organismos documentados | 100 % | ✅ 15/15 |
 | Servicios documentados | 100 % | ✅ 15/15 |
 | Integraciones trazadas | 100 % | ✅ 20/20 |
 | Enlaces internos válidos | 100 % | ✅ verificado |

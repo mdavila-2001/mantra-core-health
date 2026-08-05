@@ -1,6 +1,6 @@
 # Catálogo de componentes
 
-48 componentes en `shared/`, más 11 de `features/`, 1 de `core/dev/` y la raíz.
+49 componentes en `shared/`, más 11 de `features/`, 1 de `core/dev/` y la raíz.
 La tabla exhaustiva con selectores, entradas, salidas y estado de prueba se
 regenera desde el código:
 
@@ -16,7 +16,7 @@ Esta página explica el catálogo; aquélla lo enumera.
 |---|---|---:|---|
 | **Átomos** | Un control, sin dominio | 15 | `app-button`, `app-input`, `app-badge`, `app-skeleton` |
 | **Moléculas** | Composición con comportamiento propio | 19 | `app-form-field`, `app-dialog`, `app-tabs`, `app-toast` |
-| **Organismos** | Estructura de pantalla o control complejo | 14 | `app-shell`, `app-data-table`, `app-view-state-host` |
+| **Organismos** | Estructura de pantalla o control complejo | 15 | `app-shell`, `app-data-table`, `app-view-state-host`, `app-status-seal` |
 
 El nivel **se deduce de la carpeta**, no se declara en el código. Mover una
 carpeta es reclasificar.

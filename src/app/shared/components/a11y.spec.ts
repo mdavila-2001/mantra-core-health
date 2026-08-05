@@ -24,6 +24,7 @@ import { RadioGroup } from './molecules/radio-group/radio-group';
 import { Tab } from './molecules/tabs/tab/tab';
 import { Tabs } from './molecules/tabs/tabs';
 import { DataTable } from './organisms/data-table/data-table';
+import { StatusSeal } from './organisms/status-seal/status-seal';
 
 /**
  * Auditoría automática de accesibilidad del sistema de diseño.
@@ -196,6 +197,14 @@ class Confirmacion {
   };
 }
 
+@Component({
+  imports: [StatusSeal],
+  template: `
+    <app-status-seal variant="approved" label="Aprobado">Emitido el 12 de julio de 2026.</app-status-seal>
+  `,
+})
+class SelloDeEstado {}
+
 interface Fila {
   readonly id: string;
   readonly nombre: string;
@@ -247,6 +256,7 @@ const CASOS: readonly { nombre: string; host: unknown }[] = [
   { nombre: 'paginado', host: Paginado },
   { nombre: 'confirmación destructiva', host: Confirmacion },
   { nombre: 'tabla con datos y una columna ordenada', host: Tabla },
+  { nombre: 'sello de estado con detalle', host: SelloDeEstado },
 ];
 
 describe('Accesibilidad del sistema de diseño (axe)', () => {

@@ -174,6 +174,29 @@ describe('IdentityVerification', () => {
     expect(interno<() => string | null>('rechazo')()).toContain('10 MB');
   });
 
+  /**
+   * El estado no se muestra como UUID: el sello lo traduce a una palabra. El
+   * mapeo completo lo fija `case-status.spec.ts`; acá se fija la integración.
+   */
+  it('con el caso CASE_ASSERTED el sello muestra «Aprobado», no el UUID', () => {
+    elegirArchivo();
+    subir();
+
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-1' });
+    http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
+      caseId: 'c-1',
+      checkId: 'ch-1',
+      status: 'd41fde09-6752-5bb6-8237-b786fe062ab2', // CASE_ASSERTED
+    });
+
+    fixture.detectChanges();
+
+    const sello = (fixture.nativeElement as HTMLElement).querySelector('app-status-seal');
+    expect(sello).not.toBeNull();
+    expect(sello?.textContent).toContain('Aprobado');
+    expect(sello?.textContent).not.toContain('d41fde09');
+  });
+
   it('actualizar el caso vuelve a consultarlo', () => {
     elegirArchivo();
     subir();

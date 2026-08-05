@@ -73,3 +73,11 @@
     min-inline-size: 0;
     padding: var(--sp-4);
 }
+
+/* Los sellos son inline: en fila y con aire para poder compararlos. */
+.og-seals {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--sp-3);
+}
