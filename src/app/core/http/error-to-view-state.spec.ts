@@ -43,6 +43,44 @@ describe('errorToViewState · catálogo real de la API', () => {
       }
     });
 
+    /**
+     * **La forma que el backend manda de verdad.** El cuerpo de abajo está
+     * copiado literal de la respuesta de
+     * `POST /iam/users/assisted-registration` sin `reason` (2026-08-04, stack
+     * local): `all-exceptions.filter.ts` arma `{ violations: obj.message }`,
+     * nunca `messages`.
+     *
+     * Mientras esta prueba no existió, la de arriba pasaba con una clave que la
+     * API no emite y **ningún mensaje por campo llegaba a la pantalla**: todo
+     * 400 de validación se veía como el genérico, sin decir qué corregir.
+     */
+    it('VALIDATION_FAILED expone las violaciones tal como las manda la API', () => {
+      const state = errorToViewState(
+        apiError(400, {
+          code: 'VALIDATION_FAILED',
+          message: 'Error de validación',
+          details: {
+            violations: [
+              'reason must be shorter than or equal to 500 characters',
+              'reason must be longer than or equal to 1 characters',
+              'reason must be a string',
+            ],
+          },
+          correlationId: '8',
+          timestamp: '2026-08-05T02:59:28.840Z',
+          path: '/iam/users/assisted-registration',
+        }),
+      );
+
+      expect(isValidation(state)).toBe(true);
+      if (isValidation(state)) {
+        expect(state.issues).toHaveLength(3);
+        // Y se anclan al campo, que es de lo que sirve la lista.
+        expect(state.issues[0]?.field).toBe('reason');
+        expect(state.issues[2]?.message).toBe('reason must be a string');
+      }
+    });
+
     it('VALIDATION_FAILED sin lista usa el mensaje general', () => {
       const state = errorToViewState(
         apiError(400, {
