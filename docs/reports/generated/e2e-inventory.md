@@ -11,34 +11,34 @@ está en [`e2e/selenium/README.md`](../../../e2e/selenium/README.md).
 
 | Suite | Bloque | Pruebas | Archivo |
 | --- | --- | --- | --- |
-| `authentication` | Autenticación · inicio de sesión | 7 | `e2e/selenium/specs/authentication/login.spec.ts` |
-| `authentication` | Autenticación · sesión | 6 | `e2e/selenium/specs/authentication/sesion.spec.ts` |
-| `forms` | Formularios · nueva contraseña | 6 | `e2e/selenium/specs/forms/nueva-clave.spec.ts` |
-| `forms` | Formularios · recuperar contraseña | 4 | `e2e/selenium/specs/forms/recuperar-password.spec.ts` |
-| `forms` | Formularios · registro | 7 | `e2e/selenium/specs/forms/registro.spec.ts` |
-| `forms` | Formularios · verificación de correo | 4 | `e2e/selenium/specs/forms/verificar-correo.spec.ts` |
-| `navigation` | Navegación | 8 | `e2e/selenium/specs/navigation/navegacion.spec.ts` |
-| `regression` | Regresión · accesibilidad | 6 | `e2e/selenium/specs/regression/accesibilidad.spec.ts` |
-| `regression` | Regresión · modales | 6 | `e2e/selenium/specs/regression/modales.spec.ts` |
-| `regression` | Regresión · notificaciones | 5 | `e2e/selenium/specs/regression/notificaciones.spec.ts` |
-| `regression` | Regresión · directorio del panel | 4 | `e2e/selenium/specs/regression/panel-directorio.spec.ts` |
-| `regression` | Regresión · tabla de datos | 6 | `e2e/selenium/specs/regression/tabla.spec.ts` |
-| `responsive` | Responsive · escritorio · Responsive · tableta · Responsive · móvil | 6 | `e2e/selenium/specs/responsive/responsive.spec.ts` |
-| `smoke` | Humo | 9 | `e2e/selenium/specs/smoke/aplicacion.spec.ts` |
+| `—` | Autenticación · inicio de sesión | 7 | `e2e\selenium\specs\authentication\login.spec.ts` |
+| `—` | Autenticación · sesión | 6 | `e2e\selenium\specs\authentication\sesion.spec.ts` |
+| `—` | Formularios · nueva contraseña | 6 | `e2e\selenium\specs\forms\nueva-clave.spec.ts` |
+| `—` | Formularios · recuperar contraseña | 4 | `e2e\selenium\specs\forms\recuperar-password.spec.ts` |
+| `—` | Formularios · registro | 7 | `e2e\selenium\specs\forms\registro.spec.ts` |
+| `—` | Formularios · verificación de correo | 4 | `e2e\selenium\specs\forms\verificar-correo.spec.ts` |
+| `—` | Navegación | 8 | `e2e\selenium\specs\navigation\navegacion.spec.ts` |
+| `—` | Regresión · accesibilidad | 6 | `e2e\selenium\specs\regression\accesibilidad.spec.ts` |
+| `—` | Regresión · modales | 6 | `e2e\selenium\specs\regression\modales.spec.ts` |
+| `—` | Regresión · notificaciones | 5 | `e2e\selenium\specs\regression\notificaciones.spec.ts` |
+| `—` | Regresión · directorio del panel | 4 | `e2e\selenium\specs\regression\panel-directorio.spec.ts` |
+| `—` | Regresión · tabla de datos | 6 | `e2e\selenium\specs\regression\tabla.spec.ts` |
+| `—` | Responsive · escritorio · Responsive · tableta · Responsive · móvil | 6 | `e2e\selenium\specs\responsive\responsive.spec.ts` |
+| `—` | Humo | 9 | `e2e\selenium\specs\smoke\aplicacion.spec.ts` |
 
 ## Page Objects
 
 | Clase | Ruta | Métodos | Archivo |
 | --- | --- | --- | --- |
-| `DashboardPage` | `/panel` | 10 | `e2e/selenium/pages/dashboard.page.ts` |
-| `DesignSystemPage` | `/design-system` | 6 | `e2e/selenium/pages/design-system.page.ts` |
-| `ForgotPasswordPage` | `/auth/recuperar` | 7 | `e2e/selenium/pages/forgot-password.page.ts` |
-| `LoginPage` | `/auth` | 17 | `e2e/selenium/pages/login.page.ts` |
-| `NotFoundPage` | `/esta-ruta-no-existe` | 2 | `e2e/selenium/pages/not-found.page.ts` |
-| `RegisterPage` | `/auth/registro` | 12 | `e2e/selenium/pages/register.page.ts` |
-| `ResetPasswordPage` | `/auth/nueva-clave` | 13 | `e2e/selenium/pages/reset-password.page.ts` |
-| `TenantSelectionPage` | `/auth/organizacion` | 5 | `e2e/selenium/pages/tenant-selection.page.ts` |
-| `VerifyEmailPage` | `/auth/verificar` | 8 | `e2e/selenium/pages/verify-email.page.ts` |
+| `DashboardPage` | `/panel` | 10 | `e2e\selenium\pages\dashboard.page.ts` |
+| `DesignSystemPage` | `/design-system` | 6 | `e2e\selenium\pages\design-system.page.ts` |
+| `ForgotPasswordPage` | `/auth/recuperar` | 7 | `e2e\selenium\pages\forgot-password.page.ts` |
+| `LoginPage` | `/auth` | 17 | `e2e\selenium\pages\login.page.ts` |
+| `NotFoundPage` | `/esta-ruta-no-existe` | 2 | `e2e\selenium\pages\not-found.page.ts` |
+| `RegisterPage` | `/auth/registro` | 12 | `e2e\selenium\pages\register.page.ts` |
+| `ResetPasswordPage` | `/auth/nueva-clave` | 13 | `e2e\selenium\pages\reset-password.page.ts` |
+| `TenantSelectionPage` | `/auth/organizacion` | 5 | `e2e\selenium\pages\tenant-selection.page.ts` |
+| `VerifyEmailPage` | `/auth/verificar` | 8 | `e2e\selenium\pages\verify-email.page.ts` |
 
 ## Escenarios de la API simulada
 

@@ -12,7 +12,11 @@ interna y un comodín. El inventario vivo está en
 graph TD
   ROOT["/ · ShellLayout<br/><b>canActivate: authGuard</b>"]
   ROOT --> RD["'' → redirige a /panel"]
-  ROOT --> PANEL["/panel · Dashboard"]
+  ROOT --> SEC["una hija por sección<br/><b>generadas desde APP_SECTIONS</b>"]
+  SEC --> PANEL["/panel · Dashboard"]
+  SEC --> IDV["/identidad/verificar · IdentityVerification"]
+  SEC --> ADM["/administracion/usuarios · UserRegistration<br/>/administracion/pacientes · AssistedRegistration<br/>diferidas"]
+  SEC --> PLAN["las planificadas · SectionPlaceholder<br/>diferida, estado S3"]
 
   DS["/design-system · DesignSystemSample<br/>diferida"]
   A1["/auth · Login"]
@@ -21,16 +25,75 @@ graph TD
   A4["/auth/verificar · VerifyEmail"]
   A5["/auth/recuperar · ForgotPassword"]
   A6["/auth/nueva-clave · ResetPassword"]
-  WILD["** → redirige a /"]
+  WILD["** · NotFound"]
 
   style ROOT fill:#0B557E,color:#fff
   style PANEL fill:#4FB3A9,color:#000
+  style SEC fill:#4FB3A9,color:#000
 ```
 
 Las rutas de `auth` **no están anidadas**: se declaran planas
 (`path: 'auth/registro'`), no como hijas de un padre `auth`. No hay layout
 compartido de autenticación en el router; lo comparten por composición, usando el
 organismo `AuthSplit` dentro de cada plantilla.
+
+## Las hijas del armazón no se escriben: se generan
+
+Las secciones del área con sesión se declaran **una sola vez** en
+`core/navigation/navigation.map.ts` (`APP_SECTIONS`), como datos puros. De ese
+array salen cuatro cosas a la vez:
+
+```text
+                          ┌── rutas hijas del armazón   (app.routes.ts)
+APP_SECTIONS  ────────────┼── menú lateral por roles    (NavigationService.menu)
+  (datos puros)           ├── título de cada pestaña    (titleOf)
+                          └── ruta de navegación        (NavigationService.breadcrumbs)
+```
+
+**Por qué importa:** antes el menú vivía en `ShellLayout` y las rutas en
+`app.routes.ts`, dos listas escritas a mano describiendo lo mismo. El defecto
+clásico —un ítem de menú que apunta a una ruta que nadie declaró— estaba
+vigilado por una prueba, pero nada impedía cometerlo. Ahora son el mismo array:
+o existen las dos cosas, o no existe ninguna.
+
+`core/navigation/` **no importa ningún componente**: son datos. Quién dibuja cada
+sección lo decide `app.routes.ts`, que es la capa que compone. Por la misma
+razón el registro declara sus propios `NAV_ICON_NAMES` y sus propios contratos de
+menú y breadcrumb en vez de importarlos del nav lateral — `core/` no puede
+importar de `shared/`, y `scripts/check-architecture.mjs` lo hace cumplir. Que
+las dos listas de íconos no se separen lo fija una prueba en
+`features/shell-layout`, la única capa que puede ver a las dos.
+
+### `NavigationService`
+
+Traduce el registro a lo que la interfaz necesita, y nada más:
+
+| Miembro | Qué da |
+|---|---|
+| `visibleSections` | las secciones que los roles del token permiten ver |
+| `menu` | esas mismas, agrupadas por dominio funcional y **sin grupos vacíos** |
+| `currentSection` | dónde está parada la persona, por coincidencia más larga de URL |
+| `breadcrumbs` | panel → dominio → sección; el dominio va sin enlace |
+
+**No autoriza.** Filtrar el menú por roles es cortesía —«descubrir la interfaz a
+base de `403` es mal diseño», dice el vault—, no seguridad: quien escriba la URL
+a mano llega igual y se topa con el `authGuard` y después con el `403` de la API,
+que es la única autoridad.
+
+La coincidencia más larga es lo que hace que una pantalla hija que todavía no
+existe —`/administracion/usuarios/nuevo`— resuelva a su sección padre en vez de
+quedarse sin menú marcado y sin breadcrumb.
+
+### Secciones planificadas
+
+Una sección puede declararse `planificada`: existe en el menú y en el router,
+pero su ruta carga `SectionPlaceholder`, que pinta el estado **S3** del M34
+—vacío con próxima acción— diciendo de qué es la sección y qué módulo del modelo
+la respalda.
+
+Es lo que permite recorrer el armazón entero antes de que existan las 693 vistas
+del vault, y le da a cada pantalla futura un lugar declarado donde montarse.
+Encenderla es agregar su componente en `app.routes.ts`; el menú no se toca.
 
 ## El guard está en el padre, no en cada hija
 

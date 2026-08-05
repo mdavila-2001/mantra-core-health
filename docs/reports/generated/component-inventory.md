@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-64 componentes y 24 servicios inyectables, leídos de `src/`.
+67 componentes y 25 servicios inyectables, leídos de `src/`.
 
 ## Átomo (15)
 
@@ -67,10 +67,12 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (14)
+## Feature (17)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
+| `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
+| `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
 | `app-forgot-password` | `ForgotPassword` | — | — | — | OnPush | sí |
 | `app-login` | `Login` | — | — | — | OnPush | sí |
 | `app-register-patient` | `RegisterPatient` | — | — | — | OnPush | sí |
@@ -84,6 +86,7 @@
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
 | `app-identity-verification` | `IdentityVerification` | — | — | — | OnPush | sí |
 | `app-not-found` | `NotFound` | — | — | — | OnPush | sí |
+| `app-section-placeholder` | `SectionPlaceholder` | — | — | — | OnPush | sí |
 | `app-shell-layout` | `ShellLayout` | — | — | — | OnPush | sí |
 
 ## Core (1)
@@ -98,7 +101,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (24)
+## Servicios (25)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -116,6 +119,7 @@
 | `ErrorReporter` | `src/app/core/errors/error-reporter.ts` | root | sí |
 | `TokenRefreshService` | `src/app/core/http/token-refresh.service.ts` | root | sí |
 | `Breakpoints` | `src/app/core/layout/breakpoints.ts` | root | sí |
+| `NavigationService` | `src/app/core/navigation/navigation.service.ts` | root | sí |
 | `FormTracing` | `src/app/core/observability/business/form-tracing.ts` | root | **no** |
 | `ErrorDeduplicator` | `src/app/core/observability/errors/error-deduplicator.ts` | root | **no** |
 | `ErrorTelemetry` | `src/app/core/observability/errors/error-telemetry.ts` | root | sí |

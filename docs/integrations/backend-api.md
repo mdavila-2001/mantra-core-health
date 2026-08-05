@@ -34,7 +34,7 @@ inyección»*.
 
 ## Catálogo de operaciones
 
-### `IamClient` — 11 operaciones
+### `IamClient` — 12 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
@@ -47,7 +47,34 @@ inyección»*.
 | `POST` | `/iam/auth/forgot-password` | `ForgotPassword` | No declarada |
 | `POST` | `/iam/auth/reset-password` | `ResetPassword` | No declarada |
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
-| `POST` | `/iam/users` | **Sin consumidor** | No |
+| `POST` | `/iam/users` | `UserRegistration` | No |
+| `POST` | `/iam/users/assisted-registration` | `AssistedRegistration` | No |
+
+#### Las tres altas no son la misma operación con distintos campos
+
+Se parecen y hacen cosas distintas; confundirlas es cómo alguien termina fijando
+la contraseña de otra persona.
+
+| | Quién la ejecuta | La contraseña la elige | Devuelve |
+|---|---|---|---|
+| `/iam/auth/register-patient` · `register-practitioner` | la persona, sin sesión | su dueño, al registrarse | los ids del perfil |
+| `/iam/users` | un `SECURITY_ADMIN` | **quien crea la cuenta** | la cuenta creada |
+| `/iam/users/assisted-registration` | un `SECURITY_ADMIN` o `CLINICIAN` | su dueño, **al activar** | un **token de activación de un solo uso** |
+
+`/iam/users` es la única de las tres que fija una clave desde afuera, y por eso
+la pantalla que la usa dice explícitamente que hay que entregarla por un canal
+seguro y pedir que la cambien.
+
+El **alta asistida no lleva contraseña en el cuerpo** —mandarla devuelve
+`400 property password should not exist`, porque el backend valida con
+`forbidNonWhitelisted`— y exige `reason`, que queda en la trazabilidad C-18: es
+lo que justifica haber creado una cuenta a nombre de otra persona.
+
+**Ninguna de las dos se orquesta desde el frontend.** El backend crea persona,
+perfil y cuenta en la misma transacción (registro CTI atómico, regla 11 de la
+v4.0.7), así que no hay estado intermedio que reanudar: o quedó todo, o no quedó
+nada. Lo que sí se evita acá es el **doble envío**, y de eso se ocupa
+`app-form-actions`.
 
 ### `PublicClient` — 1 operación
 
