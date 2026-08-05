@@ -227,3 +227,27 @@
     pliegan a la fila de detalle — no se ocultan.
   </p>
 </section>
+
+<!-- 12 · Status seal --------------------------------------------------------- -->
+<section class="og-block">
+  <h3>12 · Status seal — veredicto de un trámite</h3>
+  <p class="og-note">
+    El estado se dice tres veces: tono, forma del ícono y texto. El texto es obligatorio —
+    el color nunca es el único portador de significado.
+  </p>
+
+  <div class="og-surface og-seals">
+    <app-status-seal variant="pending" label="Pendiente" />
+    <app-status-seal variant="in-review" label="En revisión" />
+    <app-status-seal variant="approved" label="Aprobado">Emitido el 12/07/2026</app-status-seal>
+    <app-status-seal variant="rejected" label="Rechazado" />
+    <app-status-seal variant="expired" label="Vencido" />
+    <app-status-seal label="Desconocido" />
+  </div>
+
+  <p class="og-note">
+    El último es el <strong>fallback</strong> <code>unknown</code>: aparece cuando el backend
+    emite un estado que esta versión de la interfaz no conoce — se muestra en neutro en vez de
+    romper la pantalla.
+  </p>
+</section>

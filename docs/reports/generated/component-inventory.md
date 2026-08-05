@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-64 componentes y 24 servicios inyectables, leídos de `src/`.
+65 componentes y 24 servicios inyectables, leídos de `src/`.
 
 ## Átomo (15)
 
@@ -48,7 +48,7 @@
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
 
-## Organismo (14)
+## Organismo (15)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -63,6 +63,7 @@
 | `app-page-header` | `PageHeader` | `title`, `subtitle`, `breadcrumbs`, `secondaryActions` | `actionSelected` | — | OnPush | sí |
 | `app-shell` | `Shell` | `user`, `sections`, `tenants`, `activeTenantId`, `drawerMode` | `logoutRequested`, `tenantChanged` | — | OnPush | sí |
 | `app-side-nav` | `SideNav` | `sections`, `collapsed`, `drawer`, `open` | `closeRequested` | — | OnPush | sí |
+| `app-status-seal` | `StatusSeal` | `variant`, `label` | — | — | OnPush | sí |
 | `app-tenant-switcher` | `TenantSwitcher` | `tenants`, `activeTenantId`, `variant` | `tenantChanged` | — | OnPush | sí |
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |

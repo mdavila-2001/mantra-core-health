@@ -25,6 +25,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import type { PageHeaderAction } from '../../../shared/components/organisms/page-header/page-header';
 import { SideNav } from '../../../shared/components/organisms/side-nav/side-nav';
 import type { NavSection } from '../../../shared/components/organisms/side-nav/side-nav.types';
+import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { TenantSwitcher } from '../../../shared/components/organisms/tenant-switcher/tenant-switcher';
 import type { TenantOption } from '../../../shared/components/organisms/tenant-switcher/tenant-switcher.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -82,6 +83,7 @@ const PACIENTES: readonly PacienteDemo[] = [
     Input,
     PageHeader,
     SideNav,
+    StatusSeal,
     TenantSwitcher,
     ViewStateHost,
   ],

@@ -300,3 +300,37 @@ src/server/telemetry/**
 edité: tenían enlaces a anclas que renombré en `error-boundaries.md` y afirmaban
 que la captura de errores no existía. Son párrafos sueltos, no tu contenido de
 OpenTelemetry.
+
+---
+
+## Sesión en curso · I2 organismo de estado de trámite (status-seal)
+
+**Empezó:** 2026-08-05 · **Rama:** `itzan/i2-organismos-estado` · **Base:** `aeeb7fc`
+
+### Archivos que estoy creando (nuevos, no deberían chocar)
+
+```text
+src/app/shared/components/organisms/status-seal/         I2 · sello de estado de trámite/caso
+src/app/features/identity-verification/case-status.ts    I2 · mapa status_concept_id → variante del sello
+src/app/features/identity-verification/case-status.spec.ts
+```
+
+### Archivos existentes que estoy modificando
+
+| Archivo | Qué le hago |
+|---|---|
+| `src/app/shared/components/organisms/index.ts` | Export del organismo nuevo |
+| `src/app/features/design-system-sample/organisms-gallery/*` | Sección nueva del sello (h3 — no toco las 26 secciones h2 de la vitrina principal) |
+| `src/app/features/identity-verification/identity-verification.{ts,html,spec.ts}` | El estado del caso pasa de texto crudo al sello, dentro del `<dd>` existente |
+| `src/app/shared/components/a11y.spec.ts` | Línea del organismo nuevo en la auditoría central |
+| `docs/components/catalog.md` · `docs/reports/generated/{component-inventory,module-graph}.md` | Alta del organismo (gates de doc-coverage e inventario) |
+| `docs/routes/design-system.md` · `docs/governance/documentation-policy.md` | Conteos al día: 49 componentes / 15 organismos |
+| `docs/routes/identidad-verificar.md` | Lista de componentes de la ruta al día |
+| `scripts/lib/scan.mjs` · `scripts/generate-inventory.mjs` | Fix mínimo de portabilidad Windows (`URL.pathname` → `fileURLToPath`, backslashes → `/`): sin él, todos los gates de docs/inventario crashean en Windows |
+
+### Lo que NO estoy tocando — es todo tuyo
+
+- `src/app/core/**` completo (auth, http, data-access, tokens, view-state, observability)
+- `src/app/features/auth/**` · `dashboard/**` · `shell-layout/**`
+- `src/styles.css` y `src/app/shared/components/tone/**` (consumo los tonos, no los cambio)
+- `src/app/app.routes.ts` y todo el ruteo · `e2e/**` · `.github/**`

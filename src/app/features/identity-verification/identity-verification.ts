@@ -13,6 +13,8 @@ import { Card } from '../../shared/components/molecules/card/card';
 import { FileInput } from '../../shared/components/molecules/file-input/file-input';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
+import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
+import { toCaseStatusPresentation } from './case-status';
 
 /** Lo máximo que admite una evidencia. Un documento no pesa más que esto. */
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -54,7 +56,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
  */
 @Component({
   selector: 'app-identity-verification',
-  imports: [AnnounceOnAppear, AppButton, Alert, Card, FileInput, FormField, PageHeader],
+  imports: [AnnounceOnAppear, AppButton, Alert, Card, FileInput, FormField, PageHeader, StatusSeal],
   templateUrl: './identity-verification.html',
   styleUrl: './identity-verification.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,6 +77,9 @@ export class IdentityVerification {
 
   /** El caso abierto, cuando el envío salió bien. */
   protected readonly caso = signal<VerificationCase | null>(null);
+
+  /** El estado del caso, traducido de UUID de concepto a sello + palabra. */
+  protected readonly caseStatus = computed(() => toCaseStatusPresentation(this.caso()?.status));
 
   protected readonly enviando = computed(() => this.state().status === 'loading');
   protected readonly puedeEnviar = computed(

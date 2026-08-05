@@ -15,7 +15,9 @@
 
       <dl class="verificar__datos">
         <dt>Estado</dt>
-        <dd>{{ abierto.status }}</dd>
+        <dd>
+          <app-status-seal [variant]="caseStatus().variant" [label]="caseStatus().label" />
+        </dd>
 
         <dt>Código del caso</dt>
         <dd><code class="tabular-nums">{{ abierto.id }}</code></dd>

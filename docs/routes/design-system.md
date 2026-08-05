@@ -7,7 +7,7 @@
 
 ## 1 · Propósito
 
-Exhibir los 48 componentes de `shared/` con sus variantes y estados. **Es el
+Exhibir los 49 componentes de `shared/` con sus variantes y estados. **Es el
 Storybook de este proyecto**: no hay una herramienta de catálogo aparte, hay una
 ruta de la propia aplicación.
 
@@ -56,7 +56,7 @@ la galería. Es lo que la hace prerenderizable y lo que permite verla sin backen
 
 ## 6 · Componentes
 
-Los 48 de `shared/`, más `Radio`, `RadioGroup`, `DatePicker`, `FileInput`,
+Los 49 de `shared/`, más `Radio`, `RadioGroup`, `DatePicker`, `FileInput`,
 `AvatarGroup` importados por el alias `@shared/…`.
 
 ## 7 · Analítica

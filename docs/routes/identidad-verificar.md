@@ -99,7 +99,11 @@ Las fechas llegan como texto y el cliente las convierte a `Date`.
 ## 6 · Componentes
 
 `PageHeader` · `Card` · `FileInput` · `FormField` · `Alert` · `AppButton` ·
-`AnnounceOnAppear`
+`StatusSeal` · `AnnounceOnAppear`
+
+El estado del caso lo pinta `app-status-seal`: `case-status.ts` traduce el UUID
+de concepto que emite el backend a una variante del sello y una palabra
+(«Aprobado»), con fallback neutro para estados que esta versión no conoce.
 
 `app-file-input` avisa **qué** rechazó y por qué (`rejected`), y deja el mensaje
 a la pantalla: el componente no sabe qué límite es razonable en este contexto.
@@ -122,9 +126,11 @@ a la pantalla: el componente no sabe qué límite es razonable en este contexto.
 
 ## 9 · Pruebas
 
-Los tres clientes que encadena (`FilesClient`, `IdentityClient`) ya tenían
-prueba. **La pantalla no tiene `.spec.ts` propio todavía**: es la brecha abierta
-de esta ruta.
+Los clientes que encadena (`FilesClient`, `IdentityClient`) ya tenían prueba.
+La pantalla tiene su `identity-verification.spec.ts` propio: fija que la
+evidencia se sube como PHI, el encadenado de las dos peticiones y que el sello
+traduce el estado del caso a palabras. El mapeo completo UUID → presentación lo
+fija `case-status.spec.ts`.
 
 ## 10 · Notas operativas
 
