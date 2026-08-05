@@ -406,7 +406,8 @@ function testIdsDeclarados() {
   return [...ids].sort();
 }
 
-/** Ruta relativa al repositorio, con barras normales. */
+/** Ruta relativa al repositorio, con barras normales también en Windows. */
 function repoRelative(absolute) {
-  return absolute.startsWith(REPO_ROOT) ? absolute.slice(REPO_ROOT.length + 1) : absolute;
+  const relativa = absolute.startsWith(REPO_ROOT) ? absolute.slice(REPO_ROOT.length + 1) : absolute;
+  return relativa.replaceAll('\\', '/');
 }

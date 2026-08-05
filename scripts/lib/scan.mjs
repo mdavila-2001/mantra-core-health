@@ -13,9 +13,12 @@
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-/** Raíz del repositorio, deducida desde este archivo. */
-export const REPO_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
+/** Raíz del repositorio, deducida desde este archivo. `fileURLToPath` y no
+    `URL.pathname`: en Windows el pathname trae una barra inicial espuria
+    (`/C:/…`) que `fs` resuelve como `C:\C:\…`. */
+export const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url)).replace(/[\\/]$/, '');
 
 export const SRC_ROOT = join(REPO_ROOT, 'src');
 export const DOCS_ROOT = join(REPO_ROOT, 'docs');
