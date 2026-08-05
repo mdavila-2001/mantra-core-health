@@ -1,5 +1,3 @@
-import type { NavIconName } from '../../shared/components/organisms/side-nav/side-nav.types';
-
 /* ============================================================================
     Contratos del armazón interior — la navegación del área con sesión.
 
@@ -13,6 +11,62 @@ import type { NavIconName } from '../../shared/components/organisms/side-nav/sid
     3. «Autoservicio aparte»: lo que la persona hace sobre sus propios datos no
         comparte navegación con las pantallas de gestión.
     ========================================================================== */
+
+/**
+ * Nombres de ícono que el registro puede usar.
+ *
+ * **Está declarado acá y no importado del nav a propósito.** `core/` no importa
+ * de `shared/` —la dirección de las capas es `features → shared → core`, y
+ * `scripts/check-architecture.mjs` la hace cumplir—, así que el registro declara
+ * lo que necesita y el componente declara lo que dibuja. Que las dos listas
+ * coincidan lo fija una prueba en el punto donde se encuentran
+ * (`features/shell-layout`), que es la única capa que puede ver a las dos.
+ *
+ * Es un set cerrado por la misma razón que del otro lado: un nombre libre
+ * terminaría en un ícono mudo.
+ */
+export const NAV_ICON_NAMES = [
+  'home',
+  'patients',
+  'calendar',
+  'orders',
+  'results',
+  'billing',
+  'settings',
+] as const;
+export type NavIconName = (typeof NAV_ICON_NAMES)[number];
+
+/**
+ * Un destino del menú, tal como el registro lo declara.
+ *
+ * Coincide **estructuralmente** con lo que el nav lateral consume, así que no
+ * hace falta ningún adaptador: el tipado estructural de TypeScript se encarga.
+ * Son dos contratos distintos con la misma forma, y eso es correcto — uno dice
+ * *qué secciones tiene la aplicación* y el otro *qué sabe dibujar el componente*.
+ */
+export interface NavMenuItem {
+  readonly label: string;
+  readonly route: string;
+  readonly icon: NavIconName;
+}
+
+/** Un grupo rotulado de destinos. */
+export interface NavMenuSection {
+  readonly label: string;
+  readonly items: readonly NavMenuItem[];
+}
+
+/**
+ * Un escalón de la ruta de navegación. Sin `routerLink` es texto, no enlace.
+ *
+ * Más angosto que el del breadcrumb —que admite además un array de comandos—
+ * porque el armazón sólo produce rutas absolutas. Angosto sigue siendo
+ * asignable a ancho, que es lo que importa en el punto de encuentro.
+ */
+export interface NavBreadcrumbItem {
+  readonly label: string;
+  readonly routerLink?: string;
+}
 
 /**
  * Grupos de primer nivel del menú. Son **dominios funcionales**, no pantallas.

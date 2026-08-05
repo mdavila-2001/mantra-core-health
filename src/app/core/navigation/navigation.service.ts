@@ -3,11 +3,16 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 
-import type { BreadcrumbItem } from '../../shared/components/molecules/breadcrumb/breadcrumb.types';
-import type { NavSection } from '../../shared/components/organisms/side-nav/side-nav.types';
 import { AuthService } from '../auth/auth.service';
 import { APP_SECTIONS } from './navigation.map';
-import { isVisibleTo, NAV_GROUPS, routeOf, type AppSection } from './navigation.types';
+import {
+  isVisibleTo,
+  NAV_GROUPS,
+  routeOf,
+  type AppSection,
+  type NavBreadcrumbItem,
+  type NavMenuSection,
+} from './navigation.types';
 
 /**
  * Quién ve qué del armazón, y dónde está parado.
@@ -60,7 +65,7 @@ export class NavigationService {
    * dice a la persona que hay algo que no puede ver, que es justo lo que el
    * filtrado quería evitar.
    */
-  readonly menu = computed<readonly NavSection[]>(() => {
+  readonly menu = computed<readonly NavMenuSection[]>(() => {
     const visible = this.visibleSections();
 
     return NAV_GROUPS.map((group) => ({
@@ -85,7 +90,7 @@ export class NavigationService {
    * dominio va **sin enlace a propósito** — es un rótulo de agrupación, no una
    * pantalla— y el último escalón tampoco lleva enlace porque es donde estás.
    */
-  readonly breadcrumbs = computed<readonly BreadcrumbItem[]>(() => {
+  readonly breadcrumbs = computed<readonly NavBreadcrumbItem[]>(() => {
     const section = this.currentSection();
     if (section === null) {
       return [];

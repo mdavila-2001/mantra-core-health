@@ -1,7 +1,6 @@
 import { IDENTITY_VERIFICATION_ROUTE } from '../http/error-to-view-state';
-import { NAV_ICON_NAMES } from '../../shared/components/organisms/side-nav/side-nav.types';
 import { APP_SECTIONS } from './navigation.map';
-import { isVisibleTo, routeOf, titleOf, NAV_GROUPS } from './navigation.types';
+import { isVisibleTo, routeOf, titleOf, NAV_GROUPS, NAV_ICON_NAMES } from './navigation.types';
 
 /**
  * El registro es la única fuente de la navegación: si algo está mal acá, está

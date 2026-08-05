@@ -4,6 +4,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { NavigationService } from '../../core/navigation/navigation.service';
+import { NAV_ICON_NAMES } from '../../core/navigation/navigation.types';
+import {
+  NAV_ICON_NAMES as NAV_ICON_NAMES_DEL_NAV,
+  type NavSection,
+} from '../../shared/components/organisms/side-nav/side-nav.types';
 import { ShellLayout } from './shell-layout';
 
 /**
@@ -128,6 +134,29 @@ describe('ShellLayout', () => {
 
   it('la vitrina queda al final: es herramienta de quien construye, no del producto', () => {
     expect(rutasDelMenu().at(-1)).toBe('/design-system');
+  });
+
+  /**
+   * El armazón es **el único lugar que puede ver las dos capas**: `core/` no
+   * importa de `shared/` (lo hace cumplir `scripts/check-architecture.mjs`), así
+   * que el registro declara sus nombres de ícono y el nav declara los suyos.
+   *
+   * Que sean dos listas es correcto —una dice qué secciones hay, la otra qué
+   * sabe dibujar el componente—, pero si se separan el registro pediría un ícono
+   * que el nav no tiene y saldría el de reserva, sin que nada avise. Esta prueba
+   * es el punto de encuentro donde eso se detecta.
+   */
+  it('los nombres de ícono del registro y los del nav no se separaron', () => {
+    expect([...NAV_ICON_NAMES]).toEqual([...NAV_ICON_NAMES_DEL_NAV]);
+  });
+
+  it('lo que produce el registro encaja en lo que el nav consume', () => {
+    // La comprobación de verdad la hace el compilador con esta asignación: si
+    // las dos formas dejaran de coincidir, esto no compilaría. El `expect` está
+    // para que la prueba tenga un aserto y no parezca vacía.
+    const menu: readonly NavSection[] = TestBed.inject(NavigationService).menu();
+
+    expect(Array.isArray(menu)).toBe(true);
   });
 
   it('cambiar de organización vuelve al panel: es un cambio de contexto de datos', async () => {
