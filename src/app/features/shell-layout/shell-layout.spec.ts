@@ -98,14 +98,36 @@ describe('ShellLayout', () => {
     ]);
   });
 
-  it('el menú solo ofrece rutas que existen', () => {
-    const secciones = interno<() => readonly { items: readonly { route: string }[] }[]>(
-      'sections',
-    )();
-    const rutas = secciones.flatMap((s) => [...s.items].map((i) => i.route));
+  function rutasDelMenu(): readonly string[] {
+    const secciones =
+      interno<() => readonly { items: readonly { route: string }[] }[]>('sections')();
+    return secciones.flatMap((s) => [...s.items].map((i) => i.route));
+  }
 
-    // «un ítem que lleva a una ruta vacía es peor que no tenerlo»
-    expect(rutas).toEqual(['/panel', '/identidad/verificar', '/design-system']);
+  it('el menú solo ofrece rutas que existen', () => {
+    // «un ítem que lleva a una ruta vacía es peor que no tenerlo».
+    //
+    // Sin sesión los roles son `[]`, así que solo quedan las secciones que no
+    // exigen ninguno: el panel y el autoservicio. La vitrina la agrega el
+    // armazón porque no es una sección del producto.
+    expect(rutasDelMenu()).toEqual([
+      '/panel',
+      '/mi-cuenta',
+      '/identidad/verificar',
+      '/design-system',
+    ]);
+  });
+
+  it('el menú crece con los roles del token, sin que el armazón sepa cuáles hay', () => {
+    abrirSesion({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+
+    // El armazón no nombra ninguna sección: las pide al registro. Esta prueba
+    // es la que se rompería si alguien volviera a escribir el menú a mano acá.
+    expect(rutasDelMenu()).toContain('/administracion/usuarios');
+  });
+
+  it('la vitrina queda al final: es herramienta de quien construye, no del producto', () => {
+    expect(rutasDelMenu().at(-1)).toBe('/design-system');
   });
 
   it('cambiar de organización vuelve al panel: es un cambio de contexto de datos', async () => {

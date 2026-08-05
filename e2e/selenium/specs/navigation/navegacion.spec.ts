@@ -26,7 +26,14 @@ describe('Navegación', () => {
     await iniciarSesion(navegador());
 
     const menu = new SideNavComponent(navegador());
-    expect(await menu.rutas()).toEqual(['/panel', '/identidad/verificar', '/design-system']);
+
+    // La sesión simulada es de `PATIENT`, así que el menú trae lo que no exige
+    // ningún rol —el panel y el autoservicio— y nada de gestión. Las secciones
+    // administrativas existen en el registro pero no se le ofrecen: el menú se
+    // arma con los roles del token.
+    const rutas = await menu.rutas();
+    expect(rutas).toEqual(['/panel', '/mi-cuenta', '/identidad/verificar', '/design-system']);
+    expect(rutas).not.toContain('/administracion/usuarios');
 
     await menu.irA('/identidad/verificar');
     await esperarUrl(navegador(), /\/identidad\/verificar$/);

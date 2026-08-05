@@ -1,0 +1,57 @@
+/* Alta de usuario. El formulario hereda su ritmo de `app-form-section`; acá sólo
+   se resuelve el bloque de confirmación. */
+
+:host {
+  display: block;
+}
+
+form,
+.alta__resultado {
+  margin-block-start: var(--sp-6);
+  /* La lectura de un formulario se rompe cuando la línea es larga: el ancho lo
+     fija el contenido, no la ventana. */
+  max-inline-size: 40rem;
+}
+
+.alta__alert {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
+.alta__resultado-title {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 500;
+}
+
+.alta__datos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+}
+
+/* `--text-secondary` y no `--text-muted`: el rótulo de un dato es información,
+   no adorno, y el muted es la excepción E1 reservada a lo terciario. */
+.alta__datos dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.alta__datos dd {
+  margin: 0;
+}
+
+/* El identificador es un uuid: en cifras tabulares no se confunden 0 y O al
+   dictarlo por teléfono. */
+.alta__id {
+  font-size: var(--fs-data);
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+.alta__aviso {
+  display: block;
+  margin-block-end: var(--sp-5);
+}

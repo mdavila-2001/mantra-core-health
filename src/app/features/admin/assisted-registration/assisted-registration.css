@@ -1,0 +1,82 @@
+/* Alta asistida. La pieza que manda es el bloque del token: se muestra una sola
+   vez y tiene que leerse y dictarse sin errores. */
+
+:host {
+  display: block;
+}
+
+form,
+.asistida__resultado {
+  margin-block-start: var(--sp-6);
+  max-inline-size: 40rem;
+}
+
+.asistida__alert,
+.asistida__aviso {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
+.asistida__resultado-title {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 500;
+}
+
+.asistida__token {
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  margin-block-end: var(--sp-5);
+}
+
+.asistida__token-label {
+  margin: 0 0 var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Cifras tabulares y palabra partible: el código se dicta por teléfono y se lee
+   completo en pantalla chica sin desbordar. */
+.asistida__token-valor {
+  display: block;
+  font-size: var(--fs-data);
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+.asistida__token-acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-3);
+}
+
+.asistida__copiado {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.asistida__datos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-5);
+}
+
+.asistida__datos dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.asistida__datos dd {
+  margin: 0;
+}
+
+.asistida__id {
+  font-size: var(--fs-data);
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}

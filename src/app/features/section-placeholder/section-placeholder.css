@@ -1,0 +1,14 @@
+/* La sección planificada no tiene contenido propio: solo encabezado y estado. */
+
+/* Pantalla enrutada: el host es un custom element y sin `display` sería EN
+   LÍNEA, lo que arma una caja de línea alrededor del contenido. */
+:host {
+  display: block;
+}
+
+/* `--sp-6` existe de verdad en styles.css (la escala es `--sp-*`), así que va
+   sin valor de reserva: un fallback acá escondería que el token no llegó. */
+app-view-state-host {
+  display: block;
+  margin-block-start: var(--sp-6);
+}
