@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
+import { NavigationService } from '../../core/navigation/navigation.service';
 import { Shell } from '../../shared/components/organisms/shell/shell';
 import type { HeaderUser } from '../../shared/components/organisms/header/header.types';
 import type { NavSection } from '../../shared/components/organisms/side-nav/side-nav.types';
@@ -36,6 +37,7 @@ export class ShellLayout {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly breakpoints = inject(Breakpoints);
+  private readonly navigation = inject(NavigationService);
 
   protected readonly activeTenantId = this.auth.activeTenantId;
 
@@ -63,26 +65,24 @@ export class ShellLayout {
   );
 
   /**
-   * El menú. Hoy tiene lo que existe de verdad: el panel y la vitrina del sistema de diseño. Las 81
-   * secciones del modelo se van agregando a medida que sus pantallas se escriben — un ítem que
-   * lleva a una ruta vacía es peor que no tenerlo.
+   * El menú del área autenticada, más la vitrina.
+   *
+   * Los grupos de dominio los arma `NavigationService` desde el registro de secciones, que es
+   * también de donde salen las rutas: no hay forma de ofrecer acá un destino que el router no
+   * declare —«un ítem que lleva a una ruta vacía es peor que no tenerlo»— porque son la misma
+   * lista.
+   *
+   * La vitrina se agrega aparte porque **no es una sección del producto**: vive fuera del armazón,
+   * no tiene módulo del modelo que la respalde y es una herramienta de quien construye. Meterla en
+   * el registro la volvería una sección más, con su ficha de vista inexistente.
    */
-  protected readonly sections = computed<readonly NavSection[]>(() => {
-    const general: NavSection = {
-      label: 'General',
-      items: [
-        { label: 'Panel', route: '/panel', icon: 'home' },
-        { label: 'Verificar identidad', route: '/identidad/verificar', icon: 'patients' },
-      ],
-    };
-
-    const herramientas: NavSection = {
+  protected readonly sections = computed<readonly NavSection[]>(() => [
+    ...this.navigation.menu(),
+    {
       label: 'Herramientas',
       items: [{ label: 'Sistema de diseño', route: '/design-system', icon: 'settings' }],
-    };
-
-    return [general, herramientas];
-  });
+    },
+  ]);
 
   protected logout(): void {
     this.auth.logout();

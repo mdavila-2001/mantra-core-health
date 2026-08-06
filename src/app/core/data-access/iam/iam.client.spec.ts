@@ -164,4 +164,95 @@ describe('IamClient', () => {
 
     req.flush({ id: 'u-1' });
   });
+
+  it('createUser omite los opcionales que no se completaron', () => {
+    // `forbidNonWhitelisted` rechaza lo que sobra, pero un `undefined` explícito
+    // tampoco sirve: viaja como ausencia en JSON y ensucia la comparación acá.
+    client
+      .createUser({
+        displayName: 'Bruno',
+        email: 'bruno@mantra.test',
+        password: 'secreto12',
+        phone: '+591 700 00000',
+        initialRole: 'SECURITY_ADMIN',
+      })
+      .subscribe();
+
+    const req = http.expectOne('/iam/users');
+    expect(req.request.body).toEqual({
+      displayName: 'Bruno',
+      email: 'bruno@mantra.test',
+      password: 'secreto12',
+      phone: '+591 700 00000',
+      initialRole: 'SECURITY_ADMIN',
+    });
+
+    req.flush({
+      id: 'u-1',
+      displayName: 'Bruno',
+      status: 'c-1',
+      createdAt: '2026-08-04T10:00:00Z',
+    });
+  });
+
+  it('createUser nombra el estado como lo que es: un concept id, no una etiqueta', () => {
+    let creado: { statusConceptId: string; createdAt: Date } | undefined;
+    client
+      .createUser({ displayName: 'Bruno', email: 'b@m.test', password: 'secreto12' })
+      .subscribe((r) => (creado = r));
+
+    http.expectOne('/iam/users').flush({
+      id: 'u-1',
+      displayName: 'Bruno',
+      status: 'c-1',
+      createdAt: '2026-08-04T10:00:00Z',
+    });
+
+    expect(creado?.statusConceptId).toBe('c-1');
+    // La fecha llega como texto por el transporte y sale como fecha.
+    expect(creado?.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('assistedRegistration va a /iam/users/assisted-registration y no manda contraseña', () => {
+    client
+      .assistedRegistration({
+        displayName: 'Ana Paciente',
+        email: 'ana@mantra.test',
+        reason: 'No puede registrarse por sí misma',
+      })
+      .subscribe();
+
+    const req = http.expectOne('/iam/users/assisted-registration');
+    expect(req.request.method).toBe('POST');
+    // El titular fija su clave al activar: acá no viaja ninguna.
+    expect(req.request.body).toEqual({
+      displayName: 'Ana Paciente',
+      email: 'ana@mantra.test',
+      reason: 'No puede registrarse por sí misma',
+    });
+
+    req.flush({
+      userId: 'u-2',
+      activationToken: 'tok-1',
+      activationExpiresAt: '2026-08-05T10:00:00Z',
+      status: 'PENDING_ACTIVATION',
+    });
+  });
+
+  it('assistedRegistration devuelve la caducidad como fecha, no como texto', () => {
+    let resultado: { activationExpiresAt: Date } | undefined;
+    client
+      .assistedRegistration({ displayName: 'Ana', email: 'a@m.test', reason: 'motivo' })
+      .subscribe((r) => (resultado = r));
+
+    http.expectOne('/iam/users/assisted-registration').flush({
+      userId: 'u-2',
+      activationToken: 'tok-1',
+      activationExpiresAt: '2026-08-05T10:00:00Z',
+      status: 'PENDING_ACTIVATION',
+    });
+
+    // La pantalla tiene que poder decir cuándo vence sin volver a parsear.
+    expect(resultado?.activationExpiresAt).toBeInstanceOf(Date);
+  });
 });

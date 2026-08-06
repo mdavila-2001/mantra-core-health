@@ -4,6 +4,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { NavigationService } from '../../core/navigation/navigation.service';
+import { NAV_ICON_NAMES } from '../../core/navigation/navigation.types';
+import {
+  NAV_ICON_NAMES as NAV_ICON_NAMES_DEL_NAV,
+  type NavSection,
+} from '../../shared/components/organisms/side-nav/side-nav.types';
 import { ShellLayout } from './shell-layout';
 
 /**
@@ -98,14 +104,59 @@ describe('ShellLayout', () => {
     ]);
   });
 
-  it('el menú solo ofrece rutas que existen', () => {
-    const secciones = interno<() => readonly { items: readonly { route: string }[] }[]>(
-      'sections',
-    )();
-    const rutas = secciones.flatMap((s) => [...s.items].map((i) => i.route));
+  function rutasDelMenu(): readonly string[] {
+    const secciones =
+      interno<() => readonly { items: readonly { route: string }[] }[]>('sections')();
+    return secciones.flatMap((s) => [...s.items].map((i) => i.route));
+  }
 
-    // «un ítem que lleva a una ruta vacía es peor que no tenerlo»
-    expect(rutas).toEqual(['/panel', '/identidad/verificar', '/design-system']);
+  it('el menú solo ofrece rutas que existen', () => {
+    // «un ítem que lleva a una ruta vacía es peor que no tenerlo».
+    //
+    // Sin sesión los roles son `[]`, así que solo quedan las secciones que no
+    // exigen ninguno: el panel y el autoservicio. La vitrina la agrega el
+    // armazón porque no es una sección del producto.
+    expect(rutasDelMenu()).toEqual([
+      '/panel',
+      '/mi-cuenta',
+      '/identidad/verificar',
+      '/design-system',
+    ]);
+  });
+
+  it('el menú crece con los roles del token, sin que el armazón sepa cuáles hay', () => {
+    abrirSesion({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+
+    // El armazón no nombra ninguna sección: las pide al registro. Esta prueba
+    // es la que se rompería si alguien volviera a escribir el menú a mano acá.
+    expect(rutasDelMenu()).toContain('/administracion/usuarios');
+  });
+
+  it('la vitrina queda al final: es herramienta de quien construye, no del producto', () => {
+    expect(rutasDelMenu().at(-1)).toBe('/design-system');
+  });
+
+  /**
+   * El armazón es **el único lugar que puede ver las dos capas**: `core/` no
+   * importa de `shared/` (lo hace cumplir `scripts/check-architecture.mjs`), así
+   * que el registro declara sus nombres de ícono y el nav declara los suyos.
+   *
+   * Que sean dos listas es correcto —una dice qué secciones hay, la otra qué
+   * sabe dibujar el componente—, pero si se separan el registro pediría un ícono
+   * que el nav no tiene y saldría el de reserva, sin que nada avise. Esta prueba
+   * es el punto de encuentro donde eso se detecta.
+   */
+  it('los nombres de ícono del registro y los del nav no se separaron', () => {
+    expect([...NAV_ICON_NAMES]).toEqual([...NAV_ICON_NAMES_DEL_NAV]);
+  });
+
+  it('lo que produce el registro encaja en lo que el nav consume', () => {
+    // La comprobación de verdad la hace el compilador con esta asignación: si
+    // las dos formas dejaran de coincidir, esto no compilaría. El `expect` está
+    // para que la prueba tenga un aserto y no parezca vacía.
+    const menu: readonly NavSection[] = TestBed.inject(NavigationService).menu();
+
+    expect(Array.isArray(menu)).toBe(true);
   });
 
   it('cambiar de organización vuelve al panel: es un cambio de contexto de datos', async () => {

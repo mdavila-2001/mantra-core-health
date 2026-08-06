@@ -122,10 +122,66 @@ export interface PasswordResetResult {
   readonly revokedSessions: number;
 }
 
-/** Alta de usuario hecha por un administrador. */
+/**
+ * Roles con los que puede nacer una cuenta creada por un administrador.
+ *
+ * Son **los dos que el backend acepta** (`@IsIn(['USER', 'SECURITY_ADMIN'])`), no
+ * los 90 y pico del sistema: el resto se concede después, por su propia vía.
+ */
+export type InitialRole = 'USER' | 'SECURITY_ADMIN';
+
+/** Alta de usuario hecha por un administrador (`POST /iam/users`, UC-01-01). */
 export interface NewUser {
   readonly displayName: string;
   readonly email: string;
   readonly password: string;
+  readonly phone?: string;
   readonly timeZone?: string;
+  /** Ausente = `USER`, que es el valor con el que el backend completa. */
+  readonly initialRole?: InitialRole;
+}
+
+/**
+ * Lo que devuelve el alta de usuario. `status` es un **concept id**, no una
+ * etiqueta: mostrarlo crudo sería exactamente lo que las convenciones prohíben
+ * («en lectura se muestra siempre la etiqueta, nunca el UUID»).
+ */
+export interface CreatedUser {
+  readonly id: string;
+  readonly displayName: string;
+  readonly statusConceptId: string;
+  readonly createdAt: Date;
+}
+
+/**
+ * Alta asistida de un paciente que no puede registrarse por sí mismo
+ * (`POST /iam/users/assisted-registration`, C-18 / CAN-IDENT).
+ *
+ * **No lleva contraseña**: la fija el titular al activar. El `motivo` no es
+ * burocracia — queda en la trazabilidad C-18, que es lo que justifica que
+ * alguien haya creado una cuenta a nombre de otra persona.
+ */
+export interface AssistedPatientRegistration {
+  readonly displayName: string;
+  readonly email: string;
+  readonly reason: string;
+  readonly timeZone?: string;
+  /** Representación legal formal, si está registrada. */
+  readonly legalRepresentationId?: string;
+  /** El representante, cuando no hay representación formal cargada. */
+  readonly legalRepresentativeUserId?: string;
+}
+
+/**
+ * Resultado del alta asistida.
+ *
+ * El `activationToken` es **de un solo uso y se muestra una sola vez**: hay que
+ * entregárselo al titular por un canal seguro. Nunca es una contraseña.
+ */
+export interface AssistedRegistrationResult {
+  readonly userId: string;
+  readonly activationToken: string;
+  readonly activationExpiresAt: Date;
+  /** Estado de la cuenta recién creada, p. ej. `PENDING_ACTIVATION`. */
+  readonly status: string;
 }

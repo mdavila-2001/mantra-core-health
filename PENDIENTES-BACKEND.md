@@ -1,11 +1,89 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-01 (madrugada) · Verificado ejecutando contra la API viva en
-`localhost:3000` —ya reconstruida— y con 17 comprobaciones de punta a punta con Playwright, del
-navegador al proxy y del proxy a la API.
+**Actualizado:** 2026-08-04 · Verificado ejecutando contra la API viva en `localhost:3000` —con la
+cuenta del bootstrap— y con 84 comprobaciones de punta a punta con Selenium, del navegador al proxy
+y del proxy a la API.
 
 Existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber que algo dejó
 de ser un problema es tan útil como saber que lo sigue siendo.
+
+---
+
+## Abierto · P6 · Falta el endpoint de administrador para dar de alta a un profesional
+
+**Levantado el 2026-08-04 desde J3** (altas administrativas, tarjeta 23) · **Para:** Marcelo
+(modelo) y Pablo (API) · **Bloquea:** el tercer formulario de J3, y nada más.
+
+J3 pedía tres altas para `SECURITY_ADMIN`: usuario, paciente y médico. Las dos primeras están
+construidas y verificadas. **La tercera no tiene endpoint contra el cual construirse.**
+
+| Alta | Endpoint | Autorización | Estado |
+| --- | --- | --- | --- |
+| Usuario | `POST /iam/users` | `@Roles('SECURITY_ADMIN')` | ✅ construida |
+| Paciente (asistida) | `POST /iam/users/assisted-registration` | `@Roles('CLINICIAN','SECURITY_ADMIN')` | ✅ construida |
+| **Profesional** | `POST /iam/auth/register-practitioner` | **`@Public()`** | ❌ no es de administrador |
+
+### Por qué no se construyó sobre el endpoint público
+
+No es una objeción de estilo: el propio modelo lo declara al revés.
+
+1. **El DTO lo dice textual.** `register-practitioner.dto.ts`: «El profesional se da de alta **él
+   mismo**, sin que un administrador lo cree». Construir una pantalla de administrador encima sería
+   contradecir el contrato en el mismo archivo que lo define.
+2. **El límite de peticiones es de superficie pública.** `@Throttle({ limit: 10, ttl: 60_000 })`,
+   pensado para frenar automatización contra un formulario abierto — no para que una organización
+   cargue su plantel.
+3. **La contraseña la teclearía el administrador.** El alta asistida de paciente ya resolvió esto
+   bien: devuelve un token de activación de un solo uso y la clave la elige el titular. El alta de
+   profesional por administrador debería seguir ese camino, no el del autorregistro.
+
+### Qué haría falta
+
+Un endpoint autenticado, equivalente a `assisted-registration` pero para profesionales:
+
+```text
+POST /iam/users/assisted-practitioner-registration      (nombre a definir)
+@Roles('SECURITY_ADMIN')
+```
+
+- **Cuerpo:** el de `RegisterPractitionerDto` **menos `password`**, más `reason` — la misma
+  trazabilidad C-18 que ya exige el alta asistida de paciente.
+- **Respuesta:** la de `RegisterPractitionerResponseDto` más `activationToken` y su caducidad, como
+  en `AssistedRegistrationResponseDto`.
+- **Invariante a respetar:** registro CTI atómico (regla 11 de la v4.0.7) — cuenta, persona, perfil
+  profesional y licencia en la misma transacción, como ya hace el autorregistro.
+- La licencia debe seguir naciendo `PENDING`: registrarse no habilita a ejercer, y eso no cambia
+  porque lo cargue un administrador.
+
+### Qué queda listo de este lado
+
+Cuando exista, el trabajo del frontend es chico: los tipos ya están (`PractitionerRegistration` +
+`AssistedRegistrationResult`), `features/admin/assisted-registration/` es el molde exacto, y pasar
+la sección de `planificada` a `disponible` en `core/navigation/navigation.map.ts` es una línea.
+
+### Nota aparte: la orquestación de J3 no hacía falta
+
+El plan preveía «compuestas: perfil → cuenta → vínculo … orden fijo, idempotencia por intento,
+estado *perfil sin cuenta* visible y reanudable» (decisión D3). **El backend ya lo resuelve
+atómicamente:** las dos altas construidas son una sola petición y el modelo prohíbe el estado
+intermedio. Encadenar llamadas desde el frontend habría reintroducido exactamente el estado que el
+modelo declara imposible. Lo que sí se implementó es la protección contra el **doble envío**, que
+es el duplicado que sí puede ocurrir. Conviene actualizar D3 en el plan.
+
+---
+
+## Resuelto en esta sesión · las violaciones de validación no se leían
+
+**No era del backend: era nuestro, y llevaba semanas.** Este archivo ya lo documentaba —ver la
+línea del catálogo de errores, `400 VALIDATION_FAILED + details.violations[]`— pero
+`core/http/error-to-view-state.ts` leía `details.messages`, una clave que la API no emite.
+
+Consecuencia: **ningún mensaje de validación por campo llegó nunca a una pantalla**. Todo `400` se
+veía como el genérico «Error de validación», en toda la aplicación. La prueba que cubría ese camino
+no lo detectaba porque fabricaba su propio cuerpo con la clave equivocada.
+
+Corregido leyendo `violations` (con `messages` de reserva) y con una prueba cuyo cuerpo está copiado
+literal de la respuesta real de `POST /iam/users/assisted-registration` sin `reason`.
 
 ---
 

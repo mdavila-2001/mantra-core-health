@@ -133,11 +133,24 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
 /**
  * Convierte los detalles de validación en problemas por campo.
  *
- * El backend manda la lista en `details.messages` cuando el fallo viene del
- * `ValidationPipe`. Si no está, el mensaje general es lo único que hay.
+ * El backend manda la lista en **`details.violations`** cuando el fallo viene del
+ * `ValidationPipe` — lo arma `all-exceptions.filter.ts` con
+ * `{ violations: obj.message }`. Si no está, el mensaje general es lo único que
+ * hay.
+ *
+ * > **Corregido el 2026-08-04, verificado contra la API real.** Acá se leía
+ * > `details.messages`, una clave que el backend no emite, así que **ningún
+ * > mensaje por campo llegó nunca a la pantalla**: todos los 400 de validación
+ * > se veían como el genérico «Error de validación», sin decir qué campo estaba
+ * > mal. Se comprobó con
+ * > `POST /iam/users/assisted-registration` sin `reason`, que responde
+ * > `details.violations: ["reason must be a string", …]`.
+ * >
+ * > `messages` se sigue aceptando como reserva: no cuesta nada y cubre a
+ * > cualquier endpoint que use esa forma.
  */
 function issuesOf(body: ApiErrorBody): readonly ViewStateIssue[] {
-  const messages = body.details?.['messages'];
+  const messages = body.details?.['violations'] ?? body.details?.['messages'];
 
   if (Array.isArray(messages) && messages.length > 0) {
     return messages

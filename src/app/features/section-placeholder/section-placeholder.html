@@ -1,0 +1,9 @@
+<app-page-header [title]="section().label" [breadcrumbs]="breadcrumbs()">
+  <!-- Trazabilidad al modelo: qué módulo respalda la sección. No es un detalle
+       técnico de más — es lo que le dice a quien venga a construir la pantalla
+       qué ficha de `SALUD/Vistas/` abrir. -->
+  <span page-meta>Módulo del modelo: {{ section().module }}</span>
+</app-page-header>
+
+<!-- Sin `(retry)`: no hay nada que reintentar cuando no se pidió nada. -->
+<app-view-state-host [state]="state()" />

@@ -15,9 +15,24 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** Raíz del repositorio, deducida desde este archivo. `fileURLToPath` y no
-    `URL.pathname`: en Windows el pathname trae una barra inicial espuria
-    (`/C:/…`) que `fs` resuelve como `C:\C:\…`. */
+/**
+ * Raíz del repositorio, deducida desde este archivo.
+ *
+ * Va por `fileURLToPath` y no por `.pathname` porque `.pathname` **no es una
+ * ruta**: es el componente de una URL. En Windows devuelve `/C:/…` —con una
+ * barra de más delante de la unidad— y deja los caracteres escapados, así que
+ * una ruta con espacio queda como `Sistema%20Salud`. Ninguna de las dos existe
+ * en el disco.
+ *
+ * El modo de fallo era **silencioso y peor que un error**: `walk()` traga el
+ * `readdirSync` que falla y devuelve la lista vacía, así que
+ * `check-architecture` y los verificadores documentales escaneaban **cero
+ * archivos** y salían con ✓. Un guardrail que aprueba sin mirar es peor que no
+ * tenerlo, porque además da confianza. En CI (Linux, sin espacios) funcionaba,
+ * y por eso no se había notado.
+ *
+ * Es el mismo defecto que ya se corrigió en `scripts/generate-env.mjs`.
+ */
 export const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url)).replace(/[\\/]$/, '');
 
 export const SRC_ROOT = join(REPO_ROOT, 'src');

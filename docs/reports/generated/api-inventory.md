@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-20 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+21 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -30,6 +30,7 @@ Archivo: `src/app/core/data-access/iam/iam.client.ts`
 | `POST` | `/iam/auth/token/refresh` |
 | `POST` | `/iam/auth/verify-email` |
 | `POST` | `/iam/users` |
+| `POST` | `/iam/users/assisted-registration` |
 
 ## `IdentityClient`
 

@@ -6,6 +6,9 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AccountActivation,
   ActivationResult,
+  AssistedPatientRegistration,
+  AssistedRegistrationResult,
+  CreatedUser,
   LoginCredentials,
   NewUser,
   PasswordReset,
@@ -24,6 +27,21 @@ interface TokenResponseBody {
   readonly accessToken: string;
   readonly refreshToken: string;
   readonly expiresAt: string;
+}
+
+interface UserResponseBody {
+  readonly id: string;
+  readonly displayName: string;
+  /** Concept id del estado, no su etiqueta. */
+  readonly status: string;
+  readonly createdAt: string;
+}
+
+interface AssistedRegistrationBody {
+  readonly userId: string;
+  readonly activationToken: string;
+  readonly activationExpiresAt: string;
+  readonly status: string;
 }
 
 /**
@@ -84,9 +102,7 @@ export class IamClient {
    * Su identificador de acceso es el **correo**, no el documento: es la
    * diferencia con el alta de paciente.
    */
-  registerPractitioner(
-    registration: PractitionerRegistration,
-  ): Observable<RegisteredPractitioner> {
+  registerPractitioner(registration: PractitionerRegistration): Observable<RegisteredPractitioner> {
     return this.http.post<RegisteredPractitioner>(this.url('/iam/auth/register-practitioner'), {
       email: registration.email,
       password: registration.password,
@@ -141,14 +157,49 @@ export class IamClient {
     });
   }
 
-  /** `POST /iam/users`. Alta hecha por un administrador. */
-  createUser(user: NewUser): Observable<{ readonly id: string }> {
-    return this.http.post<{ readonly id: string }>(this.url('/iam/users'), {
-      displayName: user.displayName,
-      email: user.email,
-      password: user.password,
-      ...(user.timeZone === undefined ? {} : { timeZone: user.timeZone }),
-    });
+  /**
+   * `POST /iam/users` (UC-01-01). Alta hecha por un administrador.
+   *
+   * Es la única alta que fija una contraseña desde afuera; el resto de los
+   * caminos —autorregistro y alta asistida— hacen que la elija el titular.
+   */
+  createUser(user: NewUser): Observable<CreatedUser> {
+    return this.http
+      .post<UserResponseBody>(this.url('/iam/users'), {
+        displayName: user.displayName,
+        email: user.email,
+        password: user.password,
+        ...(user.phone === undefined ? {} : { phone: user.phone }),
+        ...(user.timeZone === undefined ? {} : { timeZone: user.timeZone }),
+        ...(user.initialRole === undefined ? {} : { initialRole: user.initialRole }),
+      })
+      .pipe(map(toCreatedUser));
+  }
+
+  /**
+   * `POST /iam/users/assisted-registration` (C-18 / CAN-IDENT).
+   *
+   * Una sola petición: el backend crea persona, perfil y cuenta **en la misma
+   * transacción** (regla 11 del modelo, registro CTI atómico). Por eso acá no
+   * hay orquestación ni reanudación que hacer — o quedó todo, o no quedó nada.
+   */
+  assistedRegistration(
+    registration: AssistedPatientRegistration,
+  ): Observable<AssistedRegistrationResult> {
+    return this.http
+      .post<AssistedRegistrationBody>(this.url('/iam/users/assisted-registration'), {
+        displayName: registration.displayName,
+        email: registration.email,
+        reason: registration.reason,
+        ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
+        ...(registration.legalRepresentationId === undefined
+          ? {}
+          : { legalRepresentationId: registration.legalRepresentationId }),
+        ...(registration.legalRepresentativeUserId === undefined
+          ? {}
+          : { legalRepresentativeUserId: registration.legalRepresentativeUserId }),
+      })
+      .pipe(map(toAssistedResult));
   }
 
   private url(path: string): string {
@@ -161,5 +212,25 @@ function toSession(body: TokenResponseBody): Session {
     accessToken: body.accessToken,
     refreshToken: body.refreshToken,
     expiresAt: new Date(body.expiresAt),
+  };
+}
+
+function toCreatedUser(body: UserResponseBody): CreatedUser {
+  return {
+    id: body.id,
+    displayName: body.displayName,
+    // Se renombra acá para que ninguna pantalla lo confunda con una etiqueta:
+    // el nombre dice que es un identificador de concepto.
+    statusConceptId: body.status,
+    createdAt: new Date(body.createdAt),
+  };
+}
+
+function toAssistedResult(body: AssistedRegistrationBody): AssistedRegistrationResult {
+  return {
+    userId: body.userId,
+    activationToken: body.activationToken,
+    activationExpiresAt: new Date(body.activationExpiresAt),
+    status: body.status,
   };
 }
