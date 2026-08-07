@@ -116,12 +116,13 @@
   background-color: var(--bg-surface-alt);
   border: 1px solid var(--border-default);
   border-radius: var(--r-sm);
-  min-height: 40px;
+  min-height: 44px;
 }
 
-@media (max-width: 780px) {
+/* Base = móvil: fila de archivo con área táctil de 44px. Desde 780px se compacta a 40px. */
+@media (min-width: 780px) {
   .file-item {
-    min-height: 44px;
+    min-height: 40px;
   }
 }
 

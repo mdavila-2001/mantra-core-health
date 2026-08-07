@@ -15,16 +15,17 @@
     background-color: var(--bg-surface);
     border: 1.5px solid var(--border-strong);
     border-radius: var(--r-sm);
-    padding: var(--sp-2) var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
     transition:
         border-color 0.15s ease,
         box-shadow 0.15s ease,
         background-color 0.15s ease;
 }
 
-@media (max-width: 780px) {
+/* Base = móvil: padding táctil mayor. Desde 780px (tablet/escritorio) se compacta. */
+@media (min-width: 780px) {
     .textarea-wrapper {
-        padding: var(--sp-3) var(--sp-4);
+        padding: var(--sp-2) var(--sp-3);
     }
 }
 

@@ -51,10 +51,12 @@
 :host(.avatar-group--xs) { --_group-side: 24px; --_group-font: 9px; }
 :host(.avatar-group--sm) { --_group-side: 32px; --_group-font: 11px; }
 :host(.avatar-group--md) { --_group-side: 40px; --_group-font: 13px; }
-:host(.avatar-group--lg) { --_group-side: 56px; --_group-font: 17px; }
-:host(.avatar-group--xl) { --_group-side: 80px; --_group-font: 24px; }
+/* base = móvil: los dos talles grandes arrancan achicados, en espejo con avatar */
+:host(.avatar-group--lg) { --_group-side: 44px; --_group-font: 15px; }
+:host(.avatar-group--xl) { --_group-side: 56px; --_group-font: 18px; }
 
-@media (max-width: 780px) {
-    :host(.avatar-group--lg) { --_group-side: 44px; --_group-font: 15px; }
-    :host(.avatar-group--xl) { --_group-side: 56px; --_group-font: 18px; }
+/* desde 780px (tablet/escritorio) lg y xl toman su tamaño pleno del spec */
+@media (min-width: 780px) {
+    :host(.avatar-group--lg) { --_group-side: 56px; --_group-font: 17px; }
+    :host(.avatar-group--xl) { --_group-side: 80px; --_group-font: 24px; }
 }

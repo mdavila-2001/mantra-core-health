@@ -18,11 +18,11 @@
   align-items: center;
   gap: var(--sp-2);
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   background-color: var(--bg-surface);
   border: 1.5px solid var(--border-strong);
   border-radius: var(--r-sm);
-  padding: 0 var(--sp-3);
+  padding: 0 var(--sp-4);
   font-family: var(--font-body);
   font-size: var(--fs-body);
   color: var(--text-primary);
@@ -31,10 +31,12 @@
   text-align: left;
 }
 
-@media (max-width: 780px) {
+/* Base = móvil: área táctil de 44px. Desde 780px (tablet/escritorio) el disparador
+   se compacta a 40px y padding menor. */
+@media (min-width: 780px) {
   .date-picker-trigger {
-    min-height: 44px;
-    padding: 0 var(--sp-4);
+    min-height: 40px;
+    padding: 0 var(--sp-3);
   }
 }
 

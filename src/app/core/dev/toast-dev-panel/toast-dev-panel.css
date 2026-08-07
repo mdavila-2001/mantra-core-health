@@ -3,10 +3,15 @@
     pisar la pila de avisos, que está abajo a la derecha.
     ========================================================================== */
 
+/* Base = móvil: la pila de avisos ocupa todo el ancho abajo, así que el panel se corre arriba
+   —pero no al borde: ahí está el botón de menú del shell, única forma de abrir la navegación en
+   este ancho. Taparlo dejaría la aplicación sin menú. El 56px es la altura del encabezado en
+   este ancho (`--header-height` en `header.css`); se repite acá porque el header la declara en
+   su propio `:host` y este panel es hermano del shell, no descendiente: no la hereda. */
 :host {
     position: fixed;
-    bottom: var(--sp-5);
-    left: var(--sp-5);
+    top: calc(56px + var(--sp-3));
+    left: var(--sp-4);
     z-index: 1000;
 }
 
@@ -49,17 +54,13 @@
     gap: var(--sp-2);
 }
 
-/* En móvil la pila de avisos ocupa todo el ancho, así que el panel se corre arriba —pero no
-   al borde: ahí está el botón de menú del shell, que en este ancho es la única forma de abrir
-   la navegación. Taparlo dejaría la aplicación sin menú.
-
-   El 56px es la altura del encabezado en este ancho (`--header-height` en `header.css`). Se
-   repite acá porque el header la declara en su propio `:host` y este panel es hermano del
-   shell, no descendiente: no la hereda. */
-@media (max-width: 780px) {
+/* Desde 780px (tablet/escritorio) el panel vuelve abajo a la izquierda. `top: auto` limpia el
+   anclaje superior del móvil: sin él, con top+bottom fijos el panel se estiraría en vertical.
+   `auto` es el valor que tenía el escritorio original (nunca declaraba `top`). */
+@media (min-width: 780px) {
     :host {
-        bottom: auto;
-        top: calc(56px + var(--sp-3));
-        left: var(--sp-4);
+        top: auto;
+        bottom: var(--sp-5);
+        left: var(--sp-5);
     }
 }
