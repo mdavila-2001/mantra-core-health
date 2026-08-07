@@ -1,0 +1,109 @@
+<app-page-header
+  [title]="nombreVisible()"
+  [subtitle]="subtitulo()"
+  [breadcrumbs]="breadcrumbs()"
+>
+  <!-- La defunción se dice arriba de todo y con palabras: es lo que cambia
+       cómo se lee el resto de la ficha. -->
+  @if (fallecido()) {
+    <span page-meta>
+      <app-badge variant="warning" value="Persona fallecida" />
+    </span>
+  }
+</app-page-header>
+
+<app-view-state-host [state]="ficha()" (retry)="recargar()">
+  @if (paciente(); as datos) {
+    <div class="ficha">
+      <app-card class="ficha__bloque">
+        <h2 class="ficha__titulo">Identificación</h2>
+        <dl class="ficha__datos">
+          @for (campo of identificacion(); track campo.etiqueta) {
+            <div class="ficha__dato">
+              <dt>{{ campo.etiqueta }}</dt>
+              <dd>{{ campo.valor }}</dd>
+            </div>
+          }
+          <div class="ficha__dato">
+            <dt>Fecha de nacimiento</dt>
+            <dd class="ficha__cifra">
+              @if (datos.birthDate) {
+                {{ datos.birthDate | date: 'dd/MM/yyyy' }}
+              } @else {
+                Sin registrar
+              }
+            </dd>
+          </div>
+        </dl>
+      </app-card>
+
+      <app-card class="ficha__bloque">
+        <h2 class="ficha__titulo">Datos demográficos</h2>
+        <dl class="ficha__datos">
+          @for (campo of demograficos(); track campo.etiqueta) {
+            <div class="ficha__dato">
+              <dt>{{ campo.etiqueta }}</dt>
+              <dd>{{ campo.valor }}</dd>
+            </div>
+          }
+        </dl>
+      </app-card>
+
+      <app-card class="ficha__bloque">
+        <h2 class="ficha__titulo">Datos asistenciales</h2>
+        <dl class="ficha__datos">
+          @for (campo of asistenciales(); track campo.etiqueta) {
+            <div class="ficha__dato">
+              <dt>{{ campo.etiqueta }}</dt>
+              <dd>{{ campo.valor }}</dd>
+            </div>
+          }
+        </dl>
+      </app-card>
+
+      <app-card class="ficha__bloque">
+        <h2 class="ficha__titulo">Estado del registro</h2>
+        <dl class="ficha__datos">
+          @for (campo of estado(); track campo.etiqueta) {
+            <div class="ficha__dato">
+              <dt>{{ campo.etiqueta }}</dt>
+              <dd>{{ campo.valor }}</dd>
+            </div>
+          }
+          @if (datos.deceasedAt; as fecha) {
+            <div class="ficha__dato">
+              <dt>Fecha de defunción</dt>
+              <dd class="ficha__cifra">{{ fecha | date: 'dd/MM/yyyy' }}</dd>
+            </div>
+          }
+        </dl>
+      </app-card>
+
+      <app-card class="ficha__bloque ficha__bloque--ancho">
+        <h2 class="ficha__titulo">Contactos y representantes</h2>
+        @if (contactos().length > 0) {
+          <ul class="ficha__contactos">
+            @for (contacto of contactos(); track contacto.id) {
+              <li class="ficha__contacto">
+                <span class="ficha__contacto-nombre">{{ contacto.nombre }}</span>
+                <span class="ficha__contacto-vinculo">{{ contacto.vinculo }}</span>
+                <!-- Los dos roles son distintos y acumulables: quien firma un
+                     consentimiento no es necesariamente a quien se llama. -->
+                @if (contacto.esTutor) {
+                  <app-badge variant="info" value="Representante legal" size="sm" />
+                }
+                @if (contacto.esEmergencia) {
+                  <app-badge variant="error" value="Contacto de emergencia" size="sm" />
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="ficha__vacio">
+            No hay contactos ni representantes registrados para esta persona.
+          </p>
+        }
+      </app-card>
+    </div>
+  }
+</app-view-state-host>
