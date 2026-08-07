@@ -4,7 +4,7 @@ import { Component, signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { loading, ready } from '../../../../core/view-state/view-state';
+import { loading, offline, ready, stale } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { DataTable } from './data-table';
 import type { ColumnDef, CursorState, SortState } from './data-table.types';
@@ -44,6 +44,8 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
       (sortChanged)="ordenes.push($event)"
       (cursorChanged)="cursores.push($event)"
       (selectionChanged)="selecciones.push($event)"
+      (retry)="reintentos = reintentos + 1"
+      (refresh)="refrescos = refrescos + 1"
     />
   `,
 })
@@ -58,6 +60,8 @@ class HostComponent {
   readonly ordenes: SortState[] = [];
   readonly cursores: string[] = [];
   readonly selecciones: (readonly Paciente[])[] = [];
+  reintentos = 0;
+  refrescos = 0;
 }
 
 describe('DataTable', () => {
@@ -126,6 +130,41 @@ describe('DataTable', () => {
 
       expect(root().querySelector('table')).toBeNull();
       expect(root().querySelector('app-skeleton')).not.toBeNull();
+    });
+
+    /**
+     * Delegar los estados obliga a **devolver** lo que el host emite.
+     *
+     * Sin esto el botón «Reintentar» de S8/S9 se dibujaba dentro de la tabla y
+     * no hacía absolutamente nada: el host emitía `retry`, la tabla no lo
+     * escuchaba, y ahí moría. Un control visible que no responde es peor que no
+     * ofrecerlo — quien lo pulsa concluye que la aplicación está rota, y tiene
+     * razón.
+     */
+    it('reemite el reintento del host: el botón de S8 tiene que hacer algo', async () => {
+      host.state.set(offline());
+      await fixture.whenStable();
+
+      const boton = botonPorTexto('Reintentar');
+      expect(boton, 'el host de estados dibuja el botón de reintento').toBeDefined();
+
+      boton?.click();
+      await fixture.whenStable();
+
+      expect(host.reintentos).toBe(1);
+    });
+
+    it('reemite el pedido de datos frescos de S7', async () => {
+      host.state.set(stale(FILAS, new Date('2026-08-01T10:00:00Z')));
+      await fixture.whenStable();
+
+      const boton = botonPorTexto('Actualizar');
+      expect(boton, 'el host de estados dibuja el botón de refresco').toBeDefined();
+
+      boton?.click();
+      await fixture.whenStable();
+
+      expect(host.refrescos).toBe(1);
     });
   });
 

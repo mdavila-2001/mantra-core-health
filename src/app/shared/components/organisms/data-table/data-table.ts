@@ -79,6 +79,20 @@ export class DataTable<Row> {
   readonly cursorChanged = output<string>();
   readonly selectionChanged = output<readonly Row[]>();
 
+  /**
+   * S8 y S9: la persona pide reintentar. **Se reemiten desde el host de
+   * estados**, que es quien dibuja el botón.
+   *
+   * Sin esto el botón «Reintentar» de una tabla no hacía nada: el host emitía
+   * el evento, la tabla no lo escuchaba y ahí moría. Un control visible que no
+   * responde es peor que no ofrecerlo — la persona concluye que la aplicación
+   * está rota, y tiene razón.
+   */
+  readonly retry = output<void>();
+
+  /** S7: la persona pide datos frescos. Misma razón que {@link retry}. */
+  readonly refresh = output<void>();
+
   /** Filas seleccionadas de **la página visible**. Con cursor no hay «todas». */
   private readonly selectedRows = signal<readonly Row[]>([]);
 
