@@ -61,7 +61,12 @@ describe('NavigationService', () => {
       abrirSesion([]);
 
       // Panel y autoservicio: lo que cualquiera puede hacer con su propia cuenta.
-      expect(rutasDelMenu()).toEqual(['/panel', '/mi-cuenta', '/identidad/verificar']);
+      expect(rutasDelMenu()).toEqual([
+        '/panel',
+        '/mi-cuenta',
+        '/identidad/verificar',
+        '/identidad/casos',
+      ]);
     });
 
     it('un administrador de seguridad ve las secciones de administración', () => {

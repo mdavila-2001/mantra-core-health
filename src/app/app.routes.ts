@@ -54,6 +54,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administracion/terminologia': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'mi-cuenta': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
+  'identidad/casos': () =>
+    import('./features/identity-assurance/verification-cases/verification-cases').then(
+      (m) => m.VerificationCases,
+    ),
 };
 
 /**
@@ -110,6 +114,16 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/patients/patient-detail/patient-detail')
         .then((m) => m.PatientDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Ficha de un caso de verificación (V27-01): una fila del listado de
+    // `identidad/casos` abierta.
+    path: 'identidad/casos/:caseId',
+    title: `${APP_TITLE} - Caso de verificación`,
+    loadComponent: () =>
+      import('./features/identity-assurance/verification-case-detail/verification-case-detail')
+        .then((m) => m.VerificationCaseDetail)
         .catch(() => chunkFallido()),
   },
 ];

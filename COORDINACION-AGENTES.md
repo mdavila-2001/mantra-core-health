@@ -385,9 +385,11 @@ OpenTelemetry.
 
 ---
 
-## Sesión en curso · I2 organismo de estado de trámite (status-seal)
+## Sesión cerrada · I2 organismo de estado de trámite (status-seal)
 
 **Empezó:** 2026-08-05 · **Rama:** `itzan/i2-organismos-estado` · **Base:** `aeeb7fc`
+**Cerró:** 2026-08-06 · PR #21 mergeado a `dev` y rama borrada. El organismo `status-seal`
+y el mapa `case-status.ts` quedaron disponibles para todos.
 
 ### Archivos que estoy creando (nuevos, no deberían chocar)
 
@@ -416,6 +418,45 @@ src/app/features/identity-verification/case-status.spec.ts
 - `src/app/features/auth/**` · `dashboard/**` · `shell-layout/**`
 - `src/styles.css` y `src/app/shared/components/tone/**` (consumo los tonos, no los cambio)
 - `src/app/app.routes.ts` y todo el ruteo · `e2e/**` · `.github/**`
+
+---
+
+## Sesión en curso · W2 vistas Fase 0 — identity_assurance, delegated_access, auth_providers
+
+**Empezó:** 2026-08-07 · **Rama:** `itzan/w2-vistas-identidad-acceso` · **Base:** `f8e2435` (dev)
+
+Carril W2 del plan de la semana: las 37 vistas de Fase 0 de M27/M29/M40. Se construye por
+fases (V27-01 primero, después autoservicio V27, V29 completo, V40, y V27 admin al final).
+Las tablas sin `GET` de colección quedan en `ViewState` S3 con TODO, como manda el plan.
+
+### Archivos que estoy creando (nuevos, no deberían chocar)
+
+```text
+src/app/features/identity-assurance/**       vistas M27 (casos propios, verificaciones, admin)
+src/app/features/delegated-access/**         vistas M29 (asignaciones, delegados, permisos…)
+src/app/features/auth-providers/**           vistas M40 (proveedores, claves, vínculos…)
+src/app/core/data-access/delegated-access/   client nuevo M29 (mismo molde que los existentes)
+src/app/core/data-access/auth-providers/     client nuevo M40
+```
+
+### Archivos existentes que estoy modificando
+
+| Archivo | Qué le hago |
+|---|---|
+| `src/app/core/data-access/identity/*` | Agrego el listado propio (`GET /identity/me/verification-cases`) y `requestTenantVerification` (`POST /identity/me/tenants/:id/verification`) — solo métodos nuevos, no toco los existentes |
+| `src/app/core/navigation/navigation.map.ts` | Filas nuevas para las secciones de mis 3 módulos (incluye rol `IDENTITY_ADMIN`, que hoy no existe en el mapa) |
+| `src/app/app.routes.ts` | Filas en `PANTALLAS_DIFERIDAS` para mis secciones + rutas hijas de detalle (`identidad/casos/:caseId`) con la sección madre en `data` — no reestructuro nada |
+| `app.routes.spec.ts` · `shell-layout.spec.ts` · `navigation.service.spec.ts` | Solo las listas esperadas del menú/rutas, que fijan inventario: cada sección nueva las mueve. En `app.routes.spec` la promesa de huérfanas ahora distingue fichas de detalle y les exige la sección madre en `data` |
+| `src/app/features/identity-verification/*` | Extendido (F2): selector de trámite con las 4 variantes de autoservicio — paciente, profesional, matrícula y organización (esta última elige entre los tenants del token). El flujo paciente no cambia |
+| `docs/**` (catálogo, rutas, inventario) | Solo las altas que exijan los gates de documentación |
+
+### Lo que NO estoy tocando — es todo tuyo
+
+- `src/app/shared/components/**` (átomos, moléculas, organismos) y `src/styles.css` — si un
+  hueco del banco me obliga a una pieza nueva, la propongo acá antes de escribirla
+- `src/app/features/auth/**` · `admin/**` · `dashboard/**` · `shell-layout/**` · la vitrina
+- `src/app/core/auth/**` · `core/http/**` · `core/tokens/**` · `core/view-state/**`
+- `e2e/**` · `.github/**` · todo lo de OpenTelemetry y telemetría
 
 ---
 

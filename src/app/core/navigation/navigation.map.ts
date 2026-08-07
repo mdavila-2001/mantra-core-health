@@ -180,4 +180,16 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Validá tu identidad para acceder a los datos clínicos.',
     module: 'M27 identity_assurance',
   },
+  {
+    // V27-01: los casos que la verificación de arriba abre. Sin roles porque
+    // el `GET /identity/me/verification-cases` tampoco los pide: cada quien
+    // ve únicamente lo suyo, y eso lo resuelve el backend.
+    path: 'identidad/casos',
+    label: 'Mis verificaciones',
+    group: 'Mi cuenta',
+    icon: 'patients',
+    availability: 'disponible',
+    summary: 'Seguí el estado de tus trámites de verificación de identidad.',
+    module: 'M27 identity_assurance',
+  },
 ];

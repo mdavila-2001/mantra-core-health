@@ -63,6 +63,33 @@ describe('IdentityClient', () => {
     sinJurisdiccion.flush({ caseId: 'c', checkId: 'ch', status: 'OPEN' });
   });
 
+  it('la organizacion viaja en la ruta y el cuerpo solo lleva la evidencia', () => {
+    client.requestTenantVerification('t-1', { evidenceFileId: 'file-5' }).subscribe();
+
+    const req = http.expectOne('/identity/me/tenants/t-1/verification');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ evidenceFileId: 'file-5' });
+
+    req.flush({ caseId: 'c', checkId: 'ch', status: 'OPEN' });
+  });
+
+  it('lista los casos propios y convierte las fechas de cada uno', () => {
+    let casos: readonly { id: string; openedAt?: Date }[] | undefined;
+    client.listVerificationCases().subscribe((value) => (casos = value));
+
+    const req = http.expectOne('/identity/me/verification-cases');
+    expect(req.request.method).toBe('GET');
+    req.flush([
+      { id: 'caso-1', status: 'OPEN', openedAt: '2026-07-31T12:00:00.000Z' },
+      { id: 'caso-2', status: 'VERIFIED' },
+    ]);
+
+    expect(casos?.length).toBe(2);
+    expect(casos?.[0].openedAt).toBeInstanceOf(Date);
+    // Sin fecha en el cuerpo, la clave no aparece inventada.
+    expect(casos?.[1].openedAt).toBeUndefined();
+  });
+
   it('getVerificationCase consulta por id y convierte las fechas que vengan', () => {
     let caso: { openedAt?: Date; completedAt?: Date } | undefined;
     client.getVerificationCase('caso-1').subscribe((value) => (caso = value));

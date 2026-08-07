@@ -66,6 +66,17 @@ export class IdentityClient {
     );
   }
 
+  /** `POST /identity/me/tenants/:tenantId/verification` — una institución propia. */
+  requestTenantVerification(
+    tenantId: string,
+    request: VerificationRequest,
+  ): Observable<VerificationRequestResult> {
+    return this.http.post<VerificationRequestResult>(
+      this.url(`/identity/me/tenants/${tenantId}/verification`),
+      { evidenceFileId: request.evidenceFileId },
+    );
+  }
+
   /**
    * `GET /identity/me/verification-cases` — todos los casos del titular.
    *
