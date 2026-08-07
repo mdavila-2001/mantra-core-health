@@ -1,20 +1,21 @@
 <main class="tenant">
   <div class="tenant__card">
-    <h1 class="tenant__title">Elegí tu organización</h1>
-    <p class="tenant__subtitle">
-      Tu cuenta pertenece a más de una. La que elijas define qué información vas a ver.
-    </p>
+    <div class="tenant__header">
+      <h1 class="tenant__title">Elegí tu organización</h1>
+      <p class="tenant__subtitle">
+        Tu cuenta pertenece a más de una. La que elijas define qué información vas a ver.
+      </p>
+    </div>
 
     <ul class="tenant__list">
       @for (tenantId of tenants(); track tenantId) {
         <li>
           <button
-            app-button
-            variant="secondary"
-            size="lg"
+            type="button"
+            class="tenant__option"
             data-testid="tenant-opcion"
             [attr.data-tenant]="tenantId"
-            (clicked)="choose(tenantId)"
+            (click)="choose(tenantId)"
           >
             {{ nombre(tenantId) }}
           </button>

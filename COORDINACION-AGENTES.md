@@ -334,3 +334,29 @@ src/app/features/identity-verification/case-status.spec.ts
 - `src/app/features/auth/**` · `dashboard/**` · `shell-layout/**`
 - `src/styles.css` y `src/app/shared/components/tone/**` (consumo los tonos, no los cambio)
 - `src/app/app.routes.ts` y todo el ruteo · `e2e/**` · `.github/**`
+
+---
+
+## Sesión en curso · E2 rediseño de auth con Stitch (familia expediente)
+
+**Empezó:** 2026-08-07 · **Rama:** `ender/e2-auth-stitch` · **Base:** `f8e2435`
+
+Rediseño **solo visual** de las pantallas de autenticación siguiendo los Stitch.
+Familia base **expediente**; kardex solo como acento donde encaje; **MFA fuera de
+alcance** (sería pantalla/ruta/contrato nuevos). Stitch guía estructura, jerarquía,
+disposición y densidad: **no** se copian Tailwind, hex, fuentes ni tokens de
+Material. Color y tipografía salen **exclusivamente** de los tokens REDSAT de
+`styles.css`. Sin cambios de lógica, rutas, contratos, `data-testid` ni accesibilidad.
+
+### Archivos que voy a modificar (por lotes; empiezo por Lote 1)
+
+| Archivo | Qué |
+|---|---|
+| `src/app/features/auth/login/login.{html,css}` | **Lote 1** · jerarquía tipo documento (membrete/reglas/anexo) |
+| `features/auth/{register-patient,tenant-selection,forgot-password,reset-password,verify-email}/*.{html,css}` | Lotes siguientes (aún no tocados) |
+| `shared/components/organisms/auth-split.{html,css}` | **Solo si** un lote lo exige (columna de marca); a coordinar |
+
+### Lo que NO estoy tocando
+
+- Ningún `.ts` / `.spec.ts`, ni rutas, ni `e2e/**`, ni `.github/**`.
+- `src/styles.css`, `core/**`, y el resto de `shared/components/**`.

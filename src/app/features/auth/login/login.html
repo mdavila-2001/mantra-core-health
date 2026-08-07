@@ -2,9 +2,11 @@
   claim="Tu salud, conectada"
   tagline="Entrá y encontrá tu historia clínica, tus turnos y tus estudios en un solo lugar."
 >
-  <div>
-    <h1 class="login__title">Iniciar sesión</h1>
-    <p class="login__subtitle">Ingresá con tu correo o tu documento de identidad.</p>
+  <div class="login">
+    <div class="login__header">
+      <h1 class="login__title">Iniciar sesión</h1>
+      <p class="login__subtitle">Ingresá con tu correo o tu documento de identidad.</p>
+    </div>
 
     @if (errorMessage(); as mensaje) {
       <app-alert appAnuncio tone="error" class="login__alert" data-testid="login-error">{{ mensaje }}</app-alert>
@@ -75,12 +77,14 @@
       </button>
     </form>
 
-    <p class="login__pie">
-      <a app-link routerLink="/auth/recuperar" data-testid="login-recuperar">¿Olvidaste tu contraseña?</a>
-    </p>
+    <div class="login__footer">
+      <p class="login__pie">
+        <a app-link routerLink="/auth/recuperar" data-testid="login-recuperar">¿Olvidaste tu contraseña?</a>
+      </p>
 
-    <p class="login__pie">
-      ¿No tenés cuenta? <a app-link routerLink="/auth/registro" data-testid="login-registro">Creá una con tu documento</a>
-    </p>
+      <p class="login__pie login__registro">
+        ¿No tenés cuenta? <a app-link routerLink="/auth/registro" data-testid="login-registro">Creá una con tu documento</a>
+      </p>
+    </div>
   </div>
 </app-auth-split>
