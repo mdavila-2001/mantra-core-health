@@ -58,6 +58,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
     ),
+  'administracion/acceso-delegado': () =>
+    import('./features/delegated-access/delegated-access-home/delegated-access-home').then(
+      (m) => m.DelegatedAccessHome,
+    ),
 };
 
 /**
@@ -129,6 +133,29 @@ const PANTALLAS_HIJAS: Routes = [
 ];
 
 /**
+ * Pantalla de operación de «Acceso delegado» (M29). No es sección de menú: es
+ * una acción de la sección, y toma prestada su sección para que el breadcrumb
+ * y el resaltado del menú tengan de dónde salir — el mismo criterio que la
+ * ficha del caso de verificación.
+ */
+function pantallaDeAccesoDelegado(
+  subpath: string,
+  titulo: string,
+  loader: () => Promise<Type<unknown>>,
+): Routes[number] {
+  return {
+    path: `administracion/acceso-delegado/${subpath}`,
+    title: `${APP_TITLE} - ${titulo}`,
+    data: {
+      [SECTION_ROUTE_DATA]: APP_SECTIONS.find(
+        (section) => section.path === 'administracion/acceso-delegado',
+      ),
+    },
+    loadComponent: () => loader().catch(() => chunkFallido()),
+  };
+}
+
+/**
  * Las rutas hijas del armazón, derivadas del registro de secciones.
  *
  * Construirlas en vez de escribirlas es lo que hace **estructuralmente
@@ -187,6 +214,24 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'panel' },
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
+      pantallaDeAccesoDelegado('delegaciones/nueva', 'Nueva delegación', () =>
+        import(
+          './features/delegated-access/practitioner-delegate-form/practitioner-delegate-form'
+        ).then((m) => m.PractitionerDelegateForm),
+      ),
+      pantallaDeAccesoDelegado('delegaciones/revocar', 'Revocar delegación', () =>
+        import('./features/delegated-access/delegation-revocation/delegation-revocation').then(
+          (m) => m.DelegationRevocation,
+        ),
+      ),
+      pantallaDeAccesoDelegado('delegaciones/solicitudes/nueva', 'Solicitar acceso delegado', () =>
+        import('./features/delegated-access/access-request-form/access-request-form').then(
+          (m) => m.AccessRequestForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('delegaciones/concesiones/nueva', 'Otorgar concesión', () =>
+        import('./features/delegated-access/grant-form/grant-form').then((m) => m.GrantForm),
+      ),
     ],
   },
   {

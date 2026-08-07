@@ -121,6 +121,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M04 directory',
   },
   {
+    // W2/F3 (M29): el backend del módulo es solo de comando —sin GET—, así
+    // que la sección entra como panel de operaciones; los listados llegan
+    // con sus endpoints de consulta.
+    path: 'administracion/acceso-delegado',
+    label: 'Acceso delegado',
+    group: 'Administración',
+    icon: 'settings',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Delegá acceso con alcance y vigencia, y administrá sus permisos.',
+    module: 'M29 delegated_access',
+  },
+  {
     path: 'administracion/terminologia',
     label: 'Terminología',
     group: 'Administración',

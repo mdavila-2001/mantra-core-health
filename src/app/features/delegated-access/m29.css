@@ -1,0 +1,52 @@
+/* Estilos comunes de las pantallas del M29. Cada componente los compila
+   scoped, así que compartir el archivo no filtra estilos entre pantallas. */
+
+.m29__resultado {
+    max-width: 60ch;
+    margin-top: var(--sp-6);
+}
+
+.m29__resultado-titulo {
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    margin-bottom: var(--sp-4);
+}
+
+.m29__texto {
+    color: var(--text-secondary);
+    margin: 0 0 var(--sp-5);
+}
+
+.m29__alert {
+    display: block;
+    margin-bottom: var(--sp-4);
+}
+
+.m29__datos {
+    display: grid;
+    gap: var(--sp-3);
+    margin: 0 0 var(--sp-5);
+}
+
+.m29__datos dt {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.m29__datos dd {
+    margin: 0;
+}
+
+.m29__datos code {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-xs);
+    padding: 0 var(--sp-1);
+    background: var(--bg-inset);
+    /* Es un dato para copiar entero: un click, todo seleccionado. */
+    user-select: all;
+}
+
+.m29__switches {
+    display: grid;
+    gap: var(--sp-3);
+}

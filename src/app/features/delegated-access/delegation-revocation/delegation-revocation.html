@@ -1,0 +1,65 @@
+<app-page-header
+  title="Revocar delegación"
+  subtitle="Corta el acceso delegado de inmediato y en cascada: caen también sus concesiones y solicitudes."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (revoked(); as delegacion) {
+  <div class="m29__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m29__resultado-titulo">La delegación quedó revocada</h2>
+
+    <dl class="m29__datos">
+      <div>
+        <dt>Delegación</dt>
+        <dd><code class="tabular-nums">{{ delegacion }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m29__texto">
+      La revocación queda auditada con el delegante y el delegado. Si ya estaba
+      revocada, repetirla no cambia nada.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraRevocacion()">Revocar otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Qué se revoca"
+      description="El efecto es inmediato y alcanza en cascada a todo lo que dependía de la delegación."
+    >
+      <app-form-field
+        label="Identificador de la delegación"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.delegationId.touched && form.controls.delegationId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="delegationId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Motivo"
+        hint="Opcional. Queda en la auditoría junto a quién revocó."
+      >
+        <app-textarea [(value)]="reason" autoResize [maxLength]="maxMotivo" [disabled]="isSubmitting()" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Revocar delegación"
+      destructive
+      confirmTitle="¿Revocar la delegación?"
+      confirmMessage="El acceso delegado se corta de inmediato y en cascada. La acción queda auditada."
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}
