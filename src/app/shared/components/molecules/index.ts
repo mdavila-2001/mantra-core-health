@@ -67,6 +67,13 @@ export type { PageGap, PageSlot } from './pagination/pagination.types';
 export { Radio } from './radio/radio';
 export { RadioGroup } from './radio-group/radio-group';
 
+export { ReferenceCombobox } from './reference-combobox/reference-combobox';
+export {
+  REFERENCE_COMBOBOX_DEBOUNCE_MS,
+  REFERENCE_COMBOBOX_MIN_QUERY_LENGTH,
+} from './reference-combobox/reference-combobox.types';
+export type { ReferenceOption } from './reference-combobox/reference-combobox.types';
+
 export { SearchField } from './search-field/search-field';
 export { SEARCH_DEBOUNCE_MS } from './search-field/search-field.types';
 

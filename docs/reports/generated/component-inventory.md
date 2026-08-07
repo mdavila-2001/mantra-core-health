@@ -2,19 +2,20 @@
 
 # Inventario de componentes y servicios
 
-68 componentes y 25 servicios inyectables, leídos de `src/`.
+70 componentes y 25 servicios inyectables, leídos de `src/`.
 
-## Átomo (15)
+## Átomo (16)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
 | `app-avatar` | `Avatar` | `src`, `name`, `initials`, `size`, `status`, `alt` | — | — | OnPush | sí |
 | `app-badge` | `Badge` | `variant`, `size`, `value`, `max`, `dotOnly`, `label` | — | — | OnPush | sí |
+| `a[app-button]` | `AppButtonLink` | `variant`, `size`, `disabled`, `iconOnly` | — | — | OnPush | sí |
 | `button[app-button]` | `AppButton` | `variant`, `size`, `isLoading`, `disabled`, `type`, `iconOnly` | `clicked` | — | OnPush | sí |
 | `app-checkbox` | `Checkbox` | `disabled`, `label`, `hasError`, `indeterminate`, `hideLabel` | — | `checked` | OnPush | sí |
 | `app-chip` | `Chip` | `variant`, `size`, `label`, `removable`, `selectable` | `removed` | `selected` | OnPush | sí |
 | `app-divider` | `Divider` | `orientation`, `label` | — | — | OnPush | sí |
-| `app-input` | `Input` | `type`, `autocomplete`, `placeholder`, `disabled`, `readonly`, `hasError`, `hasSuccess`, `testId` | `focused`, `blurred` | `value` | OnPush | sí |
+| `app-input` | `Input` | `type`, `autocomplete`, `placeholder`, `disabled`, `readonly`, `hasError`, `hasSuccess`, `testId`, `comboboxAria` | `focused`, `blurred` | `value` | OnPush | sí |
 | `a[app-link]` | `Link` | `variant`, `external` | — | — | OnPush | sí |
 | `app-progress` | `Progress` | `value`, `tone`, `size`, `label` | — | — | OnPush | sí |
 | `app-select` | `Select` | `options`, `disabled`, `placeholder`, `hasError`, `ariaLabel` | `focused`, `blurred` | `value` | OnPush | sí |
@@ -24,7 +25,7 @@
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (19)
+## Molécula (20)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -43,6 +44,7 @@
 | `app-pagination` | `Pagination` | `totalItems`, `pageSizeOptions`, `showPageSize` | — | `page`, `pageSize` | OnPush | sí |
 | `app-radio-group` | `RadioGroup` | `disabled`, `hasError`, `name` | — | `value` | OnPush | sí |
 | `app-radio` | `Radio` | `value`, `label`, `disabled` | — | — | OnPush | **no** |
+| `app-reference-combobox` | `ReferenceCombobox` | `selected`, `options`, `loading`, `disabled`, `placeholder`, `debounceMs`, `minQueryLength`, `label`, `emptyMessage` | `searched`, `selectionChange` | `value` | OnPush | sí |
 | `app-search-field` | `SearchField` | `placeholder`, `debounceMs`, `loading`, `disabled`, `label` | `searched` | `value` | OnPush | sí |
 | `app-tab` | `Tab` | `label`, `disabled` | — | — | OnPush | **no** |
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |

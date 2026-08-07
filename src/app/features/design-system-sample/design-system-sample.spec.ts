@@ -30,10 +30,10 @@ describe('DesignSystemSample', () => {
     await fixture.whenStable();
   });
 
-  it('expone las 26 secciones del sistema, numeradas y en orden', () => {
+  it('expone las 28 secciones del sistema, numeradas y en orden', () => {
     const titulos = secciones();
 
-    expect(titulos).toHaveLength(26);
+    expect(titulos).toHaveLength(28);
     titulos.forEach((titulo, indice) => {
       expect(titulo).toMatch(new RegExp(`^${String(indice + 1).padStart(2, '0')} · `));
     });
@@ -43,6 +43,7 @@ describe('DesignSystemSample', () => {
     const piezas = [
       'app-badge',
       'app-avatar',
+      'app-reference-combobox',
       'app-input',
       'app-textarea',
       'app-spinner',
@@ -79,6 +80,15 @@ describe('DesignSystemSample', () => {
   it('el enlace y el tooltip, que son de atributo, también están', () => {
     expect(root().querySelector('a[app-link]')).not.toBeNull();
     expect(root().querySelector('[appTooltip], [ng-reflect-app-tooltip]')).not.toBeNull();
+  });
+
+  it('la acción que navega se exhibe sobre un ancla, no sobre un botón', () => {
+    // Es la diferencia que motiva `a[app-button]`: sobre un <button> se pierden
+    // el clic con la rueda y «abrir en pestaña nueva».
+    const ancla = root().querySelector('a[app-button]');
+
+    expect(ancla).not.toBeNull();
+    expect(ancla?.className).toContain('btn--primary');
   });
 
   it('el selector de tema sigue expuesto: es la única UI del ThemeService', () => {

@@ -1,0 +1,85 @@
+<!-- Sin campo externo, este label invisible es el único nombre del control.
+     Con campo externo lo pone él, y emitir otro daría dos nombres. -->
+@if (ownsLabel()) {
+  <label class="sr-only" [id]="labelId()" [for]="controlId()">{{ label() }}</label>
+}
+
+<app-input
+  #inputHost
+  type="text"
+  autocomplete="off"
+  [placeholder]="placeholder()"
+  [(value)]="query"
+  [disabled]="disabled()"
+  [comboboxAria]="comboboxAria()"
+>
+  <span slot="icon-end" class="reference-combobox__trailing">
+    @if (loading()) {
+      <app-spinner size="sm" label="Buscando" />
+    }
+    @if (query() && !disabled()) {
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [iconOnly]="true"
+        aria-label="Limpiar selección"
+        (clicked)="clear()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    }
+  </span>
+</app-input>
+
+<!-- El listbox existe SIEMPRE en el DOM, aunque vacío: `aria-controls` del
+     combobox apunta a este id, y un id que no resuelve deja al lector de
+     pantalla anunciando un control que no sabe describir. -->
+<ul
+  class="reference-combobox__listbox"
+  [class.reference-combobox__listbox--open]="showPanel()"
+  [id]="listboxId"
+  role="listbox"
+  [attr.aria-label]="label()"
+  (mousedown)="keepFocus($event)"
+>
+  @for (option of options(); track option.value; let index = $index) {
+    <!-- El teclado no falta: en el patrón de combobox el foco NO se mueve a la
+         opción —se queda en el campo y la opción activa se señala con
+         `aria-activedescendant`—, así que `↓`, `↑`, `Enter` y `Escape` los
+         maneja el host. Hacer la opción enfocable rompería justamente el
+         patrón que este componente implementa. -->
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+    <li
+      class="reference-combobox__option"
+      [class.reference-combobox__option--active]="index === activeIndex()"
+      [class.reference-combobox__option--disabled]="option.disabled"
+      [id]="optionId(index)"
+      role="option"
+      [attr.aria-selected]="option.value === value()"
+      [attr.aria-disabled]="option.disabled ? true : null"
+      (click)="choose(option)"
+    >
+      <span class="reference-combobox__label">{{ option.label }}</span>
+      @if (option.hint) {
+        <span class="reference-combobox__hint">{{ option.hint }}</span>
+      }
+    </li>
+  }
+
+  <!-- El vacío va dentro del listbox y sin `role="option"`: no es elegible, y
+       ponerlo fuera dejaría el panel abierto con un contenedor vacío. -->
+  @if (showEmpty()) {
+    <li class="reference-combobox__empty">{{ emptyMessage() }}</li>
+  }
+</ul>
+
+<!-- Cuántos resultados hay sólo se ve; sin esto, quien usa lector de pantalla
+     no tiene forma de saber que la lista cambió bajo sus dedos. -->
+<span class="sr-only" [id]="statusId" role="status" aria-live="polite">
+  {{ statusMessage() }}
+</span>
