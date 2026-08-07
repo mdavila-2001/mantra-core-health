@@ -13,7 +13,12 @@ import { IdentityVerification } from './features/identity-verification/identity-
 import { NotFound } from './features/not-found/not-found';
 import { authGuard } from './core/auth/auth.guard';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
-import { SECTION_ROUTE_DATA, titleOf, type AppSection } from './core/navigation/navigation.types';
+import {
+  APP_TITLE,
+  SECTION_ROUTE_DATA,
+  titleOf,
+  type AppSection,
+} from './core/navigation/navigation.types';
 
 /**
  * Qué componente pinta cada sección **que ya tiene pantalla**.
@@ -42,10 +47,56 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administracion/usuarios': () =>
     import('./features/admin/user-registration/user-registration').then((m) => m.UserRegistration),
   'administracion/pacientes': () =>
-    import('./features/admin/assisted-registration/assisted-registration').then(
-      (m) => m.AssistedRegistration,
-    ),
+    import('./features/admin/patients/patient-list/patient-list').then((m) => m.PatientList),
+  'mi-cuenta': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
 };
+
+/**
+ * Pantallas que cuelgan de una sección **sin ser entradas de menú**: el alta,
+ * la ficha de un registro concreto, un flujo alternativo.
+ *
+ * Van aparte del registro de secciones a propósito. `APP_SECTIONS` responde
+ * «qué hay en el menú», y una ficha de paciente no está en el menú — está a un
+ * clic de una fila. Meterlas ahí llenaría la navegación de destinos a los que
+ * nadie llega desde el menú.
+ *
+ * **El orden importa.** El router prueba en orden de declaración, así que los
+ * segmentos fijos (`nuevo`, `alta-asistida`) van antes que el parámetro
+ * (`:profileId`), que si no se los tragaría.
+ *
+ * El breadcrumb y el menú marcado siguen funcionando sin tocar nada:
+ * `NavigationService` resuelve la sección por la coincidencia **más larga**, así
+ * que `/administracion/pacientes/nuevo` sigue resolviendo a «Pacientes».
+ */
+const PANTALLAS_HIJAS: Routes = [
+  {
+    path: 'administracion/pacientes/nuevo',
+    title: `${APP_TITLE} - Nuevo paciente`,
+    loadComponent: () =>
+      import('./features/admin/patients/patient-new/patient-new')
+        .then((m) => m.PatientNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Estaba en la raíz de la sección; se corre acá para dejarle el lugar al
+    // listado, que es la pantalla que el vault declara como principal de
+    // V05-01. Cambia la ruta, no la pantalla.
+    path: 'administracion/pacientes/alta-asistida',
+    title: `${APP_TITLE} - Alta asistida`,
+    loadComponent: () =>
+      import('./features/admin/assisted-registration/assisted-registration')
+        .then((m) => m.AssistedRegistration)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'administracion/pacientes/:profileId',
+    title: `${APP_TITLE} - Ficha de paciente`,
+    loadComponent: () =>
+      import('./features/admin/patients/patient-detail/patient-detail')
+        .then((m) => m.PatientDetail)
+        .catch(() => chunkFallido()),
+  },
+];
 
 /**
  * Las rutas hijas del armazón, derivadas del registro de secciones.
@@ -102,7 +153,11 @@ export const routes: Routes = [
     path: '',
     component: ShellLayout,
     canActivate: [authGuard],
-    children: [{ path: '', pathMatch: 'full', redirectTo: 'panel' }, ...rutasDeSecciones()],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'panel' },
+      ...rutasDeSecciones(),
+      ...PANTALLAS_HIJAS,
+    ],
   },
   {
     // Diferida a propósito: la vitrina expone el sistema de diseño entero
