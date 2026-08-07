@@ -106,12 +106,18 @@
     align-items: flex-end;
     padding: var(--sp-8);
     /* Degradado de marca en vez de fotografía: no dependemos de un archivo que
-       todavía no está aprobado, y pesa cero. */
+       todavía no está aprobado, y pesa cero.
+       Orden invertido a propósito: el contenido va `align-items: flex-end`
+       (abajo-izquierda), que en un degradado a 150° es el stop 100%. Ahí ponemos
+       el petróleo MÁS oscuro (petrol-800) para que el texto blanco quede a ~12:1,
+       y el aqua —acento de marca— sube a la esquina opuesta (arriba-derecha), sin
+       texto. Así se cumple la regla REDSAT «nada de blanco sobre aqua»
+       (identidad-visual.md 8.1) en toda la superficie del texto. */
     background: linear-gradient(
       150deg,
-      var(--c-petrol-700),
-      var(--c-petrol-500) 55%,
-      var(--c-aqua-500)
+      var(--c-aqua-500),
+      var(--c-petrol-500) 45%,
+      var(--c-petrol-800)
     );
     color: #ffffff;
     /* Ya no hace falta `position: sticky`: la columna mide lo que la ventana y
@@ -138,6 +144,12 @@
 
   .auth-split__claim {
     margin: 0;
+    /* El titular es un <h2>: la regla global `h1..h4 { color: var(--text-primary) }`
+       le gana por especificidad al blanco heredado del contenedor y lo dejaba en
+       tinta oscura sobre el degradado (1,86:1 sobre petróleo — falla). `inherit`
+       recupera el blanco de `.auth-split__brand`, que es #ffffff en ambos temas.
+       No se usa `--text-inverse`: en modo oscuro es petrol-900 y volvería a fallar. */
+    color: inherit;
     font-family: var(--font-display);
     font-size: var(--fs-display);
     line-height: 1.15;

@@ -1,5 +1,7 @@
-/* La estructura partida y el selector de tema son del organismo `app-auth-split`.
-   Acá va solo lo propio del formulario de ingreso. */
+/* La estructura partida (2 columnas) y el selector de tema son del organismo
+   `app-auth-split`. Acá va solo la jerarquía tipo "documento" de la columna del
+   formulario (familia expediente de los Stitch): membrete con regla, cuerpo y
+   pie separados por líneas, como un formulario oficial. Solo tokens REDSAT. */
 
 /* Pantalla enrutada: el host es un custom element y sin `display` sería EN
    LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
@@ -8,15 +10,31 @@
   display: block;
 }
 
+.login {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Membrete: título y bajada separados del cuerpo por una regla, como la
+   cabecera de un expediente. */
+.login__header {
+  margin-bottom: var(--sp-6);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-default);
+}
+
 .login__title {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-h2);
-  color: var(--brand-primary);
+  line-height: var(--lh-h2);
+  /* Documento: el título va en tinta (texto), no en color de marca; el acento
+     de marca queda para la acción primaria. */
+  color: var(--text-primary);
 }
 
 .login__subtitle {
-  margin: var(--sp-2) 0 var(--sp-6);
+  margin: var(--sp-2) 0 0;
   color: var(--text-secondary);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
@@ -38,10 +56,30 @@ form {
   width: 100%;
 }
 
+/* Pie del formulario: acciones secundarias separadas del cuerpo por una regla. */
+.login__footer {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
 .login__pie {
-  margin: var(--sp-4) 0 0;
+  margin: 0;
   text-align: center;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+}
+
+/* El alta se presenta como un "anexo" enmarcado —como en los Stitch expediente—,
+   no como un enlace suelto. Sigue siendo un `<a app-link>`: no cambia el
+   comportamiento ni el contrato. */
+.login__registro {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
 }

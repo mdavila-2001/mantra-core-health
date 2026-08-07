@@ -1,16 +1,18 @@
 ﻿<app-auth-split [claim]="claim()" [tagline]="tagline()">
-  <div>
+  <div class="registro">
     @if (registered()) {
-      <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
-        Tu cuenta está lista
-      </h1>
-      <p class="registro__subtitle">
-        Ya podés entrar con {{ accessHint() }} y la contraseña que elegiste.
-        @if (verificationSent()) {
-          Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no hace
-          falta para usar tu cuenta.
-        }
-      </p>
+      <div class="registro__header">
+        <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
+          Tu cuenta está lista
+        </h1>
+        <p class="registro__subtitle">
+          Ya podés entrar con {{ accessHint() }} y la contraseña que elegiste.
+          @if (verificationSent()) {
+            Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no hace
+            falta para usar tu cuenta.
+          }
+        </p>
+      </div>
       <button
         app-button
         variant="primary"
@@ -22,8 +24,10 @@
         Ir a iniciar sesión
       </button>
     } @else {
-      <h1 class="registro__title">Crear cuenta</h1>
-      <p class="registro__subtitle">Elegí qué tipo de cuenta necesitás.</p>
+      <div class="registro__header">
+        <h1 class="registro__title">Crear cuenta</h1>
+        <p class="registro__subtitle">Elegí qué tipo de cuenta necesitás.</p>
+      </div>
 
       <app-form-field label="Me registro como">
         <app-radio-group
@@ -182,62 +186,66 @@
             />
           </app-form-field>
 
-          <app-form-field
-            label="Número de matrícula"
-            [required]="true"
-            [errorMessage]="
-              formProfesional.controls.licenseNumber.touched &&
-              formProfesional.controls.licenseNumber.invalid
-                ? 'Ingresá tu matrícula profesional.'
-                : ''
-            "
-          >
-            <app-input
-              formControlName="licenseNumber"
-              type="text"
-              autocomplete="off"
-              placeholder="MP-12345"
-              testId="registro-pro-matricula"
-            />
-          </app-form-field>
+          <div class="registro__row">
+            <app-form-field
+              label="Número de matrícula"
+              [required]="true"
+              [errorMessage]="
+                formProfesional.controls.licenseNumber.touched &&
+                formProfesional.controls.licenseNumber.invalid
+                  ? 'Ingresá tu matrícula profesional.'
+                  : ''
+              "
+            >
+              <app-input
+                formControlName="licenseNumber"
+                type="text"
+                autocomplete="off"
+                placeholder="MP-12345"
+                testId="registro-pro-matricula"
+              />
+            </app-form-field>
 
-          <app-form-field
-            label="Número de credencial"
-            hint="El de tu colegio profesional."
-            [required]="true"
-            [errorMessage]="
-              formProfesional.controls.credentialNumber.touched &&
-              formProfesional.controls.credentialNumber.invalid
-                ? 'Ingresá el número de tu colegio.'
-                : ''
-            "
-          >
-            <app-input
-              formControlName="credentialNumber"
-              type="text"
-              autocomplete="off"
-              placeholder="TIT-6789"
-              testId="registro-pro-credencial"
-            />
-          </app-form-field>
+            <app-form-field
+              label="Número de credencial"
+              hint="El de tu colegio profesional."
+              [required]="true"
+              [errorMessage]="
+                formProfesional.controls.credentialNumber.touched &&
+                formProfesional.controls.credentialNumber.invalid
+                  ? 'Ingresá el número de tu colegio.'
+                  : ''
+              "
+            >
+              <app-input
+                formControlName="credentialNumber"
+                type="text"
+                autocomplete="off"
+                placeholder="TIT-6789"
+                testId="registro-pro-credencial"
+              />
+            </app-form-field>
+          </div>
 
-          <app-form-field label="Título profesional (opcional)">
-            <app-input
-              formControlName="professionalTitle"
-              type="text"
-              autocomplete="off"
-              placeholder="Cardiología"
-            />
-          </app-form-field>
+          <div class="registro__row">
+            <app-form-field label="Título profesional (opcional)">
+              <app-input
+                formControlName="professionalTitle"
+                type="text"
+                autocomplete="off"
+                placeholder="Cardiología"
+              />
+            </app-form-field>
 
-          <app-form-field label="Teléfono (opcional)">
-            <app-input
-              formControlName="phone"
-              type="text"
-              autocomplete="tel"
-              placeholder="+591 70012345"
-            />
-          </app-form-field>
+            <app-form-field label="Teléfono (opcional)">
+              <app-input
+                formControlName="phone"
+                type="text"
+                autocomplete="tel"
+                placeholder="+591 70012345"
+              />
+            </app-form-field>
+          </div>
 
           <app-form-field
             label="Contraseña"
@@ -273,9 +281,11 @@
         </form>
       }
 
-      <p class="registro__pie">
-        ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
-      </p>
+      <div class="registro__footer">
+        <p class="registro__pie">
+          ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+        </p>
+      </div>
     }
   </div>
 </app-auth-split>
