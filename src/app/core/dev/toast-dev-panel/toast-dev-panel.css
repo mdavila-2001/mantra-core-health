@@ -3,11 +3,13 @@
     pisar la pila de avisos, que está abajo a la derecha.
     ========================================================================== */
 
+/* Base = móvil: el panel va EN EL FLUJO del documento, no flotante. Se monta solo en la vitrina
+   (`@defer (when isDev)` en design-system-sample), justo debajo del texto que lo describe, así que
+   en flujo queda a mano y —a diferencia de un overlay `fixed`— no tapa el título ni los controles
+   en pantallas angostas. Tampoco invade la franja inferior, que es de la pila de avisos
+   (toast-container). `.dev-panel` ya se acota con max-width, así que no genera scroll horizontal. */
 :host {
-    position: fixed;
-    bottom: var(--sp-5);
-    left: var(--sp-5);
-    z-index: 1000;
+    position: static;
 }
 
 .dev-panel {
@@ -49,17 +51,14 @@
     gap: var(--sp-2);
 }
 
-/* En móvil la pila de avisos ocupa todo el ancho, así que el panel se corre arriba —pero no
-   al borde: ahí está el botón de menú del shell, que en este ancho es la única forma de abrir
-   la navegación. Taparlo dejaría la aplicación sin menú.
-
-   El 56px es la altura del encabezado en este ancho (`--header-height` en `header.css`). Se
-   repite acá porque el header la declara en su propio `:host` y este panel es hermano del
-   shell, no descendiente: no la hereda. */
-@media (max-width: 780px) {
+/* Desde 780px (tablet/escritorio) el panel pasa a ser un widget flotante abajo a la izquierda,
+   como lo describe la vitrina («abajo a la izquierda»); la pila de avisos entra abajo a la derecha.
+   Aquí sí hace falta `position: fixed` y el z-index, que en el flujo (móvil) no aplican. */
+@media (min-width: 780px) {
     :host {
-        bottom: auto;
-        top: calc(56px + var(--sp-3));
-        left: var(--sp-4);
+        position: fixed;
+        bottom: var(--sp-5);
+        left: var(--sp-5);
+        z-index: 1000;
     }
 }

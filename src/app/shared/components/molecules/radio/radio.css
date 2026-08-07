@@ -10,19 +10,13 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-3);
-  min-height: 40px;
+  min-height: 44px;
   cursor: pointer;
   user-select: none;
   font-family: var(--font-body);
   font-size: var(--fs-body);
   color: var(--text-primary);
   position: relative;
-}
-
-@media (max-width: 780px) {
-  .radio-container {
-    min-height: 44px;
-  }
 }
 
 /* Ocultar input nativo visualmente manteniendo accesibilidad */
@@ -34,10 +28,10 @@
   margin: 0;
 }
 
-/* Círculo indicador de 18px (22px móvil) con radio de 50% */
+/* Círculo indicador de 22px en móvil (base); 18px desde 780px. Radio de 50% */
 .radio-circle {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: 1.5px solid var(--border-strong);
   background-color: var(--bg-surface);
@@ -48,25 +42,29 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 780px) {
-  .radio-circle {
-    width: 22px;
-    height: 22px;
-  }
-}
-
-/* Indicador central interior */
+/* Indicador central interior de 10px en móvil (base); 8px desde 780px */
 .radio-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background-color: var(--brand-primary);
 }
 
-@media (max-width: 780px) {
+/* Base = móvil (área táctil 44px, círculo 22px, punto 10px).
+   Desde 780px (tablet/escritorio) el radio se compacta. */
+@media (min-width: 780px) {
+  .radio-container {
+    min-height: 40px;
+  }
+
+  .radio-circle {
+    width: 18px;
+    height: 18px;
+  }
+
   .radio-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
 }
 
