@@ -146,4 +146,54 @@ describe('TerminologyClient', () => {
     expect(req.request.url).not.toContain('%24');
     req.flush(page([], null));
   });
+
+  /* ---- resolución de ids a etiqueta -------------------------------------- */
+
+  it('readConceptLabels sin ids no llama a la API', () => {
+    let resuelto = false;
+    client.readConceptLabels([]).subscribe((mapa) => {
+      resuelto = mapa.size === 0;
+    });
+
+    // El `http.verify()` del afterEach falla si algo salió a la red.
+    expect(resuelto).toBe(true);
+  });
+
+  it('readConceptLabels manda los ids separados por coma y sin repetir', () => {
+    client.readConceptLabels(['c-A', 'c-B', 'c-A']).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts');
+    expect(req.request.params.get('ids')).toBe('c-A,c-B');
+
+    req.flush({ items: [], count: 0, limit: 50 });
+  });
+
+  it('readConceptLabels devuelve un mapa indexado por conceptId', () => {
+    let etiquetas: ReadonlyMap<string, ValueSetOption> = new Map();
+    client.readConceptLabels(['c-A']).subscribe((mapa) => (etiquetas = mapa));
+
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({
+      items: [option('A')],
+      count: 1,
+      limit: 50,
+    });
+
+    expect(etiquetas.get('c-A')?.display).toBe('a');
+  });
+
+  it('readConceptLabels omite los ids que el catálogo no conoce', () => {
+    let etiquetas: ReadonlyMap<string, ValueSetOption> = new Map();
+    client.readConceptLabels(['c-A', 'c-INEXISTENTE']).subscribe((mapa) => (etiquetas = mapa));
+
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({
+      items: [option('A')],
+      count: 1,
+      limit: 50,
+    });
+
+    // La ausencia la resuelve quien muestra, que es el único que sabe qué
+    // poner en su lugar. Acá simplemente no está.
+    expect(etiquetas.has('c-INEXISTENTE')).toBe(false);
+    expect(etiquetas.size).toBe(1);
+  });
 });
