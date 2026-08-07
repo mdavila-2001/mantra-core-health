@@ -145,7 +145,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Mi perfil',
     group: 'Mi cuenta',
     icon: 'patients',
-    availability: 'planificada',
+    // Encendida con V05-03: `GET /profiles/patients/me/summary` existe y no
+    // pide rol, sólo identidad verificada — y ese 403 ya tiene su puerta.
+    availability: 'disponible',
     summary: 'Revisá tus datos personales y el resumen de tu cuenta.',
     module: 'M05 profiles',
   },

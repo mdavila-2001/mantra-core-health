@@ -12,6 +12,8 @@ export interface NewPatientProfile {
    */
   readonly administrativeGenderConceptId?: string;
   readonly sexAtBirthConceptId?: string;
+  /** Código del índice maestro de pacientes. Único en toda la instalación. */
+  readonly masterPatientIndexCode?: string;
 }
 
 export interface PatientProfile {
@@ -56,4 +58,109 @@ export interface AccountLink {
   readonly userId: string;
   readonly status: string;
   readonly validFrom: Date;
+}
+
+/* ============================================================================
+    Lectura de pacientes (UC-05-13 y UC-05-14)
+
+    Las tres formas de abajo son las de la vista, no las del contrato: las
+    fechas llegan ya convertidas y los `*ConceptId` conservan el uuid porque
+    la etiqueta la resuelve `terminology`, nunca esta capa.
+    ========================================================================== */
+
+/** Filtro del listado. Sin `cursor` pide la primera página. */
+export interface PatientSearchQuery {
+  /** Texto libre sobre el código de paciente y el nombre. */
+  readonly query?: string;
+  /** Cursor opaco devuelto por la página anterior. */
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/**
+ * Fila del listado. Trae lo justo para decidir a cuál entrar; la ficha
+ * completa es {@link PatientDetail}.
+ */
+export interface PatientListItem {
+  readonly profileId: string;
+  readonly personId: string;
+  readonly patientCode: string;
+  readonly displayName?: string;
+  readonly birthDate?: Date;
+  readonly personStatusConceptId?: string;
+  /**
+   * Derivado del backend, y booleano a propósito: una lista de pacientes tiene
+   * que poder marcar a quien falleció sin resolver terminología antes.
+   */
+  readonly deceased: boolean;
+}
+
+/**
+ * Página del listado. Sin total: la paginación es por cursor, y pedir el total
+ * obligaría al backend a contar la tabla entera en cada página.
+ */
+export interface PatientPage {
+  readonly items: readonly PatientListItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Contacto o representante registrado de un paciente (UC-05-10). */
+export interface RelatedPerson {
+  readonly id: string;
+  readonly displayName?: string;
+  readonly relationshipConceptId?: string;
+  readonly isEmergencyContact: boolean;
+  readonly isLegalGuardian: boolean;
+}
+
+/**
+ * Ficha de filiación F-01 (UC-05-14).
+ *
+ * **No trae datos clínicos.** Condiciones, alergias y medicación viven en
+ * `clinical`, y las notas del expediente en `chart`: la separación es del
+ * backend y responde a que filiación y expediente los administran roles
+ * distintos.
+ */
+export interface PatientDetail {
+  readonly profileId: string;
+  readonly personId: string;
+  readonly patientCode: string;
+  readonly masterPatientIndexCode?: string;
+  readonly displayName?: string;
+  readonly birthDate?: Date;
+  readonly administrativeGenderConceptId?: string;
+  readonly sexAtBirthConceptId?: string;
+  readonly genderIdentityConceptId?: string;
+  readonly nationalityConceptId?: string;
+  readonly preferredLanguageConceptId?: string;
+  readonly personStatusConceptId?: string;
+  readonly vitalStatusConceptId?: string;
+  readonly deceasedAt?: Date;
+  readonly aboGroupConceptId?: string;
+  readonly rhFactorConceptId?: string;
+  readonly insuranceStatusConceptId?: string;
+  readonly clinicalLanguageConceptId?: string;
+  readonly recordLinkageStatusConceptId?: string;
+  readonly relatedPersons: readonly RelatedPerson[];
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
+/**
+ * Resumen que la persona consulta sobre sí misma (V05-03).
+ *
+ * El backend exige identidad verificada vigente: sin ella responde `403` con
+ * `IDENTITY_VERIFICATION_REQUIRED`, que `errorToViewState` ya convierte en un
+ * S5 **con salida** hacia la pantalla de verificación.
+ */
+export interface OwnPatientSummary {
+  readonly personId: string;
+  readonly patientProfileId: string;
+  readonly patientCode: string;
+  readonly displayName?: string;
+  readonly birthDate?: Date;
+  /** Concepto del estado de la persona; se resuelve contra `terminology`. */
+  readonly personStatus: string;
 }

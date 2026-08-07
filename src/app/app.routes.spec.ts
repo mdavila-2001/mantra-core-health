@@ -37,13 +37,58 @@ describe('rutas del armazón', () => {
     }
   });
 
-  it('no hay rutas hijas que el registro no declare', () => {
-    const declaradas = new Set<string>(APP_SECTIONS.map((s) => s.path));
+  /**
+   * Ninguna ruta puede quedar fuera del árbol que el registro declara.
+   *
+   * Una ruta hija es legítima de dos maneras: **es** una sección, o **cuelga**
+   * de una —el alta, la ficha de un registro, un flujo alternativo—. Lo que
+   * sigue prohibido es una ruta que no se pueda alcanzar desde ninguna sección:
+   * esa es una pantalla a la que el menú nunca lleva y que nadie recuerda
+   * mantener.
+   */
+  it('toda ruta hija pertenece a una sección del registro', () => {
+    const declaradas = APP_SECTIONS.map((s) => s.path);
     // La redirección de la raíz es la única hija sin sección: no es una
     // pantalla, es a dónde va quien entra sin ruta.
-    const huerfanas = hijas.filter((r) => r.path !== '' && !declaradas.has(r.path ?? ''));
+    const huerfanas = hijas.filter((r) => {
+      const path = r.path ?? '';
+      if (path === '') {
+        return false;
+      }
+      return !declaradas.some((seccion) => path === seccion || path.startsWith(`${seccion}/`));
+    });
 
     expect(huerfanas.map((r) => r.path)).toEqual([]);
+  });
+
+  /**
+   * El router prueba en orden de declaración, así que un segmento fijo detrás
+   * de un parámetro **no se alcanza nunca**: `:profileId` se tragaría `nuevo` y
+   * la ficha intentaría cargar un paciente llamado «nuevo».
+   *
+   * Es el defecto que el propio backend documenta haber evitado al declarar
+   * `patients/me/summary` antes que `patients/:profileId`. Acá se fija por
+   * prueba en vez de por comentario.
+   */
+  it('los segmentos fijos van antes que los paramétricos de su misma rama', () => {
+    const conParametro = hijas
+      .map((r, indice) => ({ path: r.path ?? '', indice }))
+      .filter((r) => r.path.includes('/:'));
+
+    for (const parametrica of conParametro) {
+      const rama = parametrica.path.slice(0, parametrica.path.indexOf('/:') + 1);
+      const fijasDespues = hijas
+        .map((r, indice) => ({ path: r.path ?? '', indice }))
+        .filter(
+          (r) =>
+            r.indice > parametrica.indice &&
+            r.path.startsWith(rama) &&
+            !r.path.includes('/:') &&
+            r.path !== rama.slice(0, -1),
+        );
+
+      expect(fijasDespues.map((r) => r.path), parametrica.path).toEqual([]);
+    }
   });
 
   it('cada sección tiene con qué pintarse, directa o diferida', () => {

@@ -1,9 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { expand, map, reduce, type Observable } from 'rxjs';
+import { expand, map, of, reduce, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
+  ConceptLabels,
   ValueSetExpansionPage,
   ValueSetExpansionQuery,
   ValueSetOption,
@@ -122,7 +123,48 @@ export class TerminologyClient {
     );
   }
 
+  /**
+   * `GET /terminology/concepts?ids=…` — traduce identificadores a etiqueta.
+   *
+   * Es el camino inverso al del selector, y el que necesita **cualquier
+   * pantalla que muestre lo que el contrato devuelve**: estados, ciclos de vida
+   * y clasificaciones viajan siempre como `*ConceptId` en uuid, y un uuid en
+   * pantalla no le dice nada a nadie.
+   *
+   * La lectura no exige rol de administración —el catálogo es metadato
+   * compartido, sin datos de paciente— y el backend no recorta por el tope de
+   * la búsqueda por texto: quien manda 120 ids recibe los 120.
+   *
+   * Devuelve un mapa y no una lista porque el uso siempre es «dame la etiqueta
+   * de este id»; buscar en un array en cada celda sería cuadrático sin motivo.
+   * Los ids que el catálogo no conozca sencillamente no aparecen: la ausencia
+   * la resuelve quien muestra, que es el único que sabe qué poner en su lugar.
+   *
+   * @param conceptIds - Identificadores a resolver. Vacío no llama a la API.
+   * @returns Las etiquetas encontradas, indexadas por identificador.
+   */
+  readConceptLabels(conceptIds: readonly string[]): Observable<ConceptLabels> {
+    const sinRepetir = [...new Set(conceptIds)];
+    if (sinRepetir.length === 0) {
+      return of(new Map<string, ValueSetOption>());
+    }
+
+    // El backend los espera separados por coma, no repitiendo la clave.
+    const params = new HttpParams().set('ids', sinRepetir.join(','));
+
+    return this.http
+      .get<ConceptSearchPage>(this.url('/terminology/concepts'), { params })
+      .pipe(map((page) => new Map(page.items.map((item) => [item.conceptId, item]))));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/** Respuesta de la búsqueda de conceptos. Sin cursor: la acota `limit`. */
+interface ConceptSearchPage {
+  readonly items: readonly ValueSetOption[];
+  readonly count: number;
+  readonly limit: number;
 }

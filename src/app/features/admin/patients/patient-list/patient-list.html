@@ -1,0 +1,70 @@
+<app-page-header
+  title="Pacientes"
+  subtitle="Registrá y mantené la filiación de las personas atendidas."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <!-- Botón y no enlace porque `app-button` es un selector de atributo sobre
+       `<button>`: el sistema todavía no tiene un ancla con aspecto de acción
+       primaria, y degradar la acción principal a un enlace de texto invertiría
+       la jerarquía que la ficha de la vista pide. -->
+  <button
+    app-button
+    page-actions
+    variant="primary"
+    data-testid="pacientes-nuevo"
+    (clicked)="irAlAlta()"
+  >
+    Nuevo paciente
+  </button>
+</app-page-header>
+
+<!-- El campo se nombra solo (publica su propio contexto de control): no va
+     dentro de un app-form-field, o quedarían dos nombres accesibles. -->
+<app-search-field
+  class="pacientes__buscador"
+  label="Buscar pacientes"
+  placeholder="Código de paciente o nombre"
+  [value]="busqueda()"
+  [loading]="cargando()"
+  (searched)="buscar($event)"
+/>
+
+<app-data-table
+  [state]="listado()"
+  [columns]="columnas()"
+  [trackBy]="porPerfil"
+  caption="Pacientes registrados en la organización"
+  [cursor]="cursor()"
+  (cursorChanged)="mover($event)"
+  (retry)="recargar()"
+/>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #celdaPaciente let-paciente>
+  <a app-link [routerLink]="rutaDeLaFicha(paciente.profileId)">
+    @if (paciente.displayName) {
+      {{ paciente.displayName }}
+    } @else {
+      <!-- Sin nombre visible, el enlace igual tiene que decir a quién abre: el
+           código es lo único que identifica a esa persona en la lista. -->
+      Sin nombre · {{ paciente.patientCode }}
+    }
+  </a>
+</ng-template>
+
+<ng-template #celdaNacimiento let-paciente>
+  @if (paciente.birthDate) {
+    <span class="pacientes__cifra">{{ paciente.birthDate | date: 'dd/MM/yyyy' }}</span>
+  } @else {
+    <span class="pacientes__vacio" aria-label="Sin fecha de nacimiento registrada">—</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstado let-paciente>
+  <!-- El estado nunca lo lleva solo el color: el badge trae su texto. -->
+  @if (paciente.deceased) {
+    <app-badge variant="warning" value="Fallecido/a" />
+  } @else {
+    <app-badge variant="success" value="Activo/a" />
+  }
+</ng-template>
