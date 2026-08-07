@@ -177,7 +177,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Mi cuenta',
     icon: 'patients',
     availability: 'disponible',
-    summary: 'Validá tu identidad para acceder a los datos clínicos.',
+    summary: 'Validá tu identidad, tu matrícula o una organización a tu cargo.',
     module: 'M27 identity_assurance',
   },
   {
