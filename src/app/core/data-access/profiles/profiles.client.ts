@@ -70,7 +70,7 @@ export class ProfilesClient {
     }
 
     return this.http
-      .get<WirePatientPage>(this.url('/profiles/patients'), { params })
+      .get<RespuestaPagina>(this.url('/profiles/patients'), { params })
       .pipe(
         map((body) => ({
           ...body,
@@ -87,16 +87,19 @@ export class ProfilesClient {
    */
   getPatient(profileId: string): Observable<PatientDetail> {
     return this.http
-      .get<WirePatientDetail>(this.url(`/profiles/patients/${encodeURIComponent(profileId)}`))
+      .get<RespuestaFicha>(this.url(`/profiles/patients/${encodeURIComponent(profileId)}`))
       .pipe(
-        map((body) => ({
-          ...body,
-          birthDate: maybeDate(body.birthDate),
-          deceasedAt: maybeDate(body.deceasedAt),
-          relatedPersons: body.relatedPersons.map((person): RelatedPerson => ({ ...person })),
-          createdAt: new Date(body.createdAt),
-          updatedAt: new Date(body.updatedAt),
-        })),
+        map(({ relatedPersons, ...resto }) => {
+          const limpio = sinNulos<Omit<WirePatientDetail, 'relatedPersons'>>(resto);
+          return {
+            ...limpio,
+            birthDate: maybeDateOnly(limpio.birthDate),
+            deceasedAt: maybeDate(limpio.deceasedAt),
+            relatedPersons: relatedPersons.map((persona) => sinNulos<RelatedPerson>(persona)),
+            createdAt: new Date(limpio.createdAt),
+            updatedAt: new Date(limpio.updatedAt),
+          };
+        }),
       );
   }
 
@@ -110,8 +113,13 @@ export class ProfilesClient {
    */
   getOwnSummary(): Observable<OwnPatientSummary> {
     return this.http
-      .get<WireOwnSummary>(this.url('/profiles/patients/me/summary'))
-      .pipe(map((body) => ({ ...body, birthDate: maybeDate(body.birthDate) })));
+      .get<RespuestaResumen>(this.url('/profiles/patients/me/summary'))
+      .pipe(
+        map((body) => {
+          const limpio = sinNulos<WireOwnSummary>(body);
+          return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
+        }),
+      );
   }
 
   /**
@@ -222,6 +230,20 @@ type WirePatientDetail = Omit<
 
 type WireOwnSummary = WireDates<OwnPatientSummary, 'birthDate'>;
 
+/* Lo que de verdad llega por el cable: la misma forma, con `null` donde el
+   backend no omite la clave. Se declara aparte para que el tipo del `get<>`
+   diga la verdad y la conversión no sea un acto de fe. */
+type RespuestaPagina = Omit<WirePatientPage, 'items'> & {
+  readonly items: readonly ConNulos<WirePatientListItem>[];
+};
+/* `relatedPersons` nunca llega nulo —el contrato la declara obligatoria y la
+   API viva devuelve `[]`—, así que se saca de la normalización y se trata
+   aparte: sus elementos sí traen opcionales en `null`. */
+type RespuestaFicha = ConNulos<Omit<WirePatientDetail, 'relatedPersons'>> & {
+  readonly relatedPersons: readonly ConNulos<RelatedPerson>[];
+};
+type RespuestaResumen = ConNulos<WireOwnSummary>;
+
 type WireMergeEvent = Omit<PatientMergeEvent, 'recordedAt'> & { readonly recordedAt: string };
 
 /** El evento con su marca de tiempo ya convertida. */
@@ -230,17 +252,93 @@ function toMergeEvent(body: WireMergeEvent): PatientMergeEvent {
 }
 
 /** Una fila del listado con su fecha ya convertida. */
-function toPatientListItem(item: WirePatientListItem): PatientListItem {
-  return { ...item, birthDate: maybeDate(item.birthDate) };
+function toPatientListItem(item: ConNulos<WirePatientListItem>): PatientListItem {
+  const limpio = sinNulos<WirePatientListItem>(item);
+  return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
 }
 
 /**
- * Convierte una fecha que puede no venir. Devolver `undefined` en vez de una
- * `Invalid Date` es lo que deja al consumidor distinguir «no hay dato» de «hay
- * un dato roto».
+ * Convierte una fecha que puede no venir.
+ *
+ * **`== null` y no `=== undefined`**, y la diferencia costó un defecto real: el
+ * backend manda los opcionales vacíos como `null`, no los omite, y
+ * `new Date(null)` **no** es una fecha inválida — es el 1 de enero de 1970.
+ * Un paciente sin fecha de nacimiento se mostraba como nacido en 1969.
+ *
+ * Devolver `undefined` en vez de una `Invalid Date` es lo que deja al
+ * consumidor distinguir «no hay dato» de «hay un dato roto».
  */
-function maybeDate(value?: string): Date | undefined {
-  return value === undefined ? undefined : new Date(value);
+function maybeDate(value?: string | null): Date | undefined {
+  return value == null ? undefined : new Date(value);
+}
+
+/**
+ * Convierte una fecha **sin hora** (`birthDate`) a la medianoche **local**.
+ *
+ * El contrato la declara `format: 'date'`, pero el servidor la serializa como
+ * instante: `"1985-03-14T00:00:00.000Z"`. Pasarla por `new Date()` la ancla a
+ * medianoche UTC, y al pintarla en hora local **retrocede un día** en cualquier
+ * huso al oeste de Greenwich.
+ *
+ * Verificado contra la API viva el 2026-08-08 desde `America/La_Paz` (UTC−4):
+ * se guardó `1985-03-14`, el servidor devolvió `1985-03-14T00:00:00.000Z` y la
+ * pantalla mostraba **13/03/1985**. Un día de diferencia en la fecha de
+ * nacimiento de alguien.
+ *
+ * Es el **espejo** del cuidado que ya tenían los formularios al enviar: allá se
+ * arma el `YYYY-MM-DD` con los componentes locales para no correrlo al pasar
+ * por UTC. Acá se hace el camino de vuelta.
+ *
+ * Una fecha con hora de verdad —`deceasedAt`, `createdAt`— **no** pasa por acá:
+ * ahí el instante es el dato y convertirlo sería romperlo.
+ */
+function maybeDateOnly(value?: string | null): Date | undefined {
+  if (value == null) {
+    return undefined;
+  }
+  const [anio, mes, dia] = value.slice(0, 10).split('-').map(Number);
+  if (anio === undefined || mes === undefined || dia === undefined) {
+    return undefined;
+  }
+  return new Date(anio, mes - 1, dia);
+}
+
+/* ============================================================================
+    El transporte manda `null`; los tipos de la vista dicen `?:`
+
+    Verificado contra la API viva el 2026-08-08: `GET /profiles/patients/:id`
+    devuelve `"birthDate": null`, `"deceasedAt": null`,
+    `"administrativeGenderConceptId": null`… — **no omite las claves**.
+
+    Los tipos de la vista declaran esos campos como `?:`, que en TypeScript
+    significa `undefined`. La diferencia no es cosmética:
+
+    - `new Date(null)` da **1970-01-01**, no `Invalid Date`.
+    - `deceasedAt !== undefined` es **`true`** cuando vale `null`, así que la
+      ficha marcaba **fallecida a toda persona viva**.
+
+    Las pruebas unitarias no lo veían porque fabricaban las respuestas con la
+    clave **ausente**, que es como yo suponía que venía. Es el mismo patrón que
+    el defecto de `details.messages` vs `details.violations`: una suposición
+    sobre la forma del cuerpo que sólo se cae al hablar con el servidor.
+
+    Se normaliza **en la frontera**, que es donde se promete la forma: quitar la
+    clave nula la vuelve ausente, y ausente es exactamente lo que `?:` declara.
+    ========================================================================== */
+
+/** La misma forma, admitiendo el `null` que el transporte sí manda. */
+type ConNulos<T> = { readonly [K in keyof T]: T[K] | null };
+
+/**
+ * Quita las claves que llegaron en `null`.
+ *
+ * No convierte a `undefined` explícito: **elimina la clave**. Es la única forma
+ * de que `'x' in objeto` y `Object.keys()` digan lo mismo que el tipo.
+ */
+function sinNulos<T extends object>(body: ConNulos<T>): T {
+  return Object.fromEntries(
+    Object.entries(body).filter(([, valor]) => valor !== null),
+  ) as T;
 }
 
 /**
