@@ -3,8 +3,10 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
+import { HttpErrorResponse } from '@angular/common/http';
+
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { loading, ready } from '../../../core/view-state/view-state';
+import { loading, notFound, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
@@ -145,8 +147,30 @@ export class ActivateAccount {
         this.state.set(ready(null));
         this.done.set(true);
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => this.state.set(this.traducir(error)),
     });
+  }
+
+  /**
+   * Traduce el fallo, con una salvedad propia de esta pantalla.
+   *
+   * **Verificado contra la API viva el 2026-08-08:** un token de activación
+   * inválido, vencido o ya usado responde `401 UNAUTHENTICATED`, no `404` ni
+   * `409`. La traducción general manda ese código a S9 —error inesperado con
+   * identificador de petición— porque asume que un `401` sólo llega cuando el
+   * interceptor agotó su intento de refresco.
+   *
+   * **Esa suposición no vale acá.** Esta pantalla es pública y se usa sin
+   * sesión: un `401` no puede significar «se te venció la sesión», sólo «ese
+   * código no sirve». Se traduce a S6, que es el estado que la pantalla ya sabe
+   * explicar con la salida correcta — pedir otro código, en vez de invitar a
+   * reintentar algo que no va a funcionar.
+   */
+  private traducir(error: unknown): ViewState<null> {
+    if (error instanceof HttpErrorResponse && error.status === 401) {
+      return notFound();
+    }
+    return errorToViewState<null>(error);
   }
 
   protected goToLogin(): void {

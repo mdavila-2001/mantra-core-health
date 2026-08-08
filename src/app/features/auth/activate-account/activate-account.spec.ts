@@ -169,6 +169,31 @@ describe('ActivateAccount', () => {
     expect(interno<() => boolean>('tokenInvalido')()).toBe(true);
   });
 
+  /**
+   * **Verificado contra la API viva el 2026-08-08:** el backend responde `401
+   * UNAUTHENTICATED` a un token inválido, vencido o ya usado — no `404` ni
+   * `409`. La traducción general manda ese código a S9 porque asume que un
+   * `401` es una sesión agotada; en una pantalla pública eso no puede pasar.
+   *
+   * Sin esta prueba, el mensaje cuidado de «pedí otro código» no se disparaba
+   * nunca y la persona veía un error inesperado con un identificador de
+   * petición.
+   */
+  it('el 401 real del backend se explica como token rechazado, no como error inesperado', async () => {
+    await montar();
+    completar();
+    enviar();
+
+    http.expectOne('/iam/auth/activate').flush(
+      { code: 'UNAUTHENTICATED', message: 'Token de activación inválido' },
+      { status: 401, statusText: 'Unauthorized' },
+    );
+    harness.detectChanges();
+
+    expect(interno<() => boolean>('tokenInvalido')()).toBe(true);
+    expect(interno<() => string | null>('errorMessage')()).toBeNull();
+  });
+
   it('un fallo de red NO se confunde con un token malo', async () => {
     await montar();
     completar();
