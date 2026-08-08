@@ -382,6 +382,26 @@ export const routes: Routes = [
           './features/identity-assurance/verification-policy-form/verification-policy-form'
         ).then((m) => m.VerificationPolicyForm),
       ),
+      pantallaDeVerificacionIdentidad('casos/nuevo', 'Abrir caso de verificación', () =>
+        import('./features/identity-assurance/case-open-form/case-open-form').then(
+          (m) => m.CaseOpenForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('casos/evidencia', 'Aportar evidencia a un caso', () =>
+        import('./features/identity-assurance/case-evidence-form/case-evidence-form').then(
+          (m) => m.CaseEvidenceForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('casos/checks', 'Planificar checks del caso', () =>
+        import('./features/identity-assurance/check-plan-form/check-plan-form').then(
+          (m) => m.CheckPlanForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('casos/barrido', 'Barrer casos vencidos', () =>
+        import('./features/identity-assurance/case-expire-sweep/case-expire-sweep').then(
+          (m) => m.CaseExpireSweep,
+        ),
+      ),
     ],
   },
   {

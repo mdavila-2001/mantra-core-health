@@ -35,6 +35,10 @@ describe('IdentityAdminHome', () => {
       '/administracion/verificacion-identidad/autoridades/nueva',
       '/administracion/verificacion-identidad/autoridades/endpoint',
       '/administracion/verificacion-identidad/politicas/nueva',
+      '/administracion/verificacion-identidad/casos/nuevo',
+      '/administracion/verificacion-identidad/casos/evidencia',
+      '/administracion/verificacion-identidad/casos/checks',
+      '/administracion/verificacion-identidad/casos/barrido',
     ]);
   });
 
@@ -43,8 +47,8 @@ describe('IdentityAdminHome', () => {
       '.portada__pendiente',
     );
 
-    // 14 comandos del contrato: 3 con pantalla, 11 a la espera de las suyas.
-    expect(pendientes.length).toBe(11);
+    // 14 comandos del contrato: 7 con pantalla, 7 a la espera de las suyas.
+    expect(pendientes.length).toBe(7);
   });
 
   it('avisa por qué no hay listados: el módulo no expone consultas todavía', () => {

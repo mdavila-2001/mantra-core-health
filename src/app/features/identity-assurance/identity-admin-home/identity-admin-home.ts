@@ -62,10 +62,10 @@ export class IdentityAdminHome {
       descripcion:
         'El expediente de una verificación: se abre contra una política, junta evidencia y vence.',
       operaciones: [
-        { label: 'Abrir caso de verificación' },
-        { label: 'Aportar evidencia' },
-        { label: 'Planificar checks' },
-        { label: 'Barrer casos vencidos' },
+        { label: 'Abrir caso de verificación', route: `${BASE}/casos/nuevo` },
+        { label: 'Aportar evidencia', route: `${BASE}/casos/evidencia` },
+        { label: 'Planificar checks', route: `${BASE}/casos/checks` },
+        { label: 'Barrer casos vencidos', route: `${BASE}/casos/barrido` },
       ],
     },
     {

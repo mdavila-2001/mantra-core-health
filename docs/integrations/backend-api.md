@@ -115,13 +115,13 @@ pegados; las operaciones sin consumidor esperan sus vistas de comando de V27
 | `POST` | `/identity/authorities` | `AuthorityForm` (V27-09) |
 | `POST` | `/identity/authorities/:authorityId/endpoints` | `AuthorityEndpointForm` (V27-10) |
 | `POST` | `/identity/verification-policies` | `VerificationPolicyForm` (V27-18) |
-| `POST` | `/identity/verification-cases` | — |
-| `POST` | `/identity/verification-cases/:caseId/evidence` | — |
-| `POST` | `/identity/verification-cases/:caseId/checks:plan` | — |
+| `POST` | `/identity/verification-cases` | `CaseOpenForm` (V27-02) |
+| `POST` | `/identity/verification-cases/:caseId/evidence` | `CaseEvidenceForm` (V27-05) |
+| `POST` | `/identity/verification-cases/:caseId/checks:plan` | `CheckPlanForm` (V27-04) |
 | `POST` | `/identity/verification-cases/:caseId/fraud-signals` | — |
 | `POST` | `/identity/verification-cases/:caseId/manual-review` | — |
 | `POST` | `/identity/verification-cases/:caseId/assertions` | — |
-| `POST` | `/identity/verification-cases/expire-sweep` | — |
+| `POST` | `/identity/verification-cases/expire-sweep` | `CaseExpireSweep` (V27-02·A) |
 | `POST` | `/identity/checks/:checkId/attempts` | — |
 | `POST` | `/identity/checks/:checkId/results` | — |
 | `POST` | `/identity/manual-review/:reviewId/decision` | — |

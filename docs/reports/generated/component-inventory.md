@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-113 componentes y 31 servicios inyectables, leídos de `src/`.
+117 componentes y 31 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,7 +70,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (60)
+## Feature (64)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -126,6 +126,10 @@
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
 | `app-authority-endpoint-form` | `AuthorityEndpointForm` | — | — | — | OnPush | sí |
 | `app-authority-form` | `AuthorityForm` | — | — | — | OnPush | sí |
+| `app-case-evidence-form` | `CaseEvidenceForm` | — | — | — | OnPush | sí |
+| `app-case-expire-sweep` | `CaseExpireSweep` | — | — | — | OnPush | sí |
+| `app-case-open-form` | `CaseOpenForm` | — | — | — | OnPush | sí |
+| `app-check-plan-form` | `CheckPlanForm` | — | — | — | OnPush | sí |
 | `app-identity-admin-home` | `IdentityAdminHome` | — | — | — | OnPush | sí |
 | `app-verification-case-detail` | `VerificationCaseDetail` | — | — | — | OnPush | sí |
 | `app-verification-cases` | `VerificationCases` | — | — | — | OnPush | sí |

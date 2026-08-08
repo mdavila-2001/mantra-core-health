@@ -45,3 +45,50 @@
     /* Es un dato para copiar entero: un click, todo seleccionado. */
     user-select: all;
 }
+
+.m27__subtitulo {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    margin: 0 0 var(--sp-3);
+}
+
+.m27__lista {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0 0 var(--sp-5);
+    padding-left: var(--sp-5);
+}
+
+.m27__lista code {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-xs);
+    padding: 0 var(--sp-1);
+    background: var(--bg-inset);
+    /* Mismo trato que en los datos: un click, todo seleccionado. */
+    user-select: all;
+}
+
+.m27__switches {
+    display: grid;
+    gap: var(--sp-3);
+}
+
+/* --- Repetidor de checks (V27-04) --- */
+
+.m27__item {
+    display: block;
+    margin-bottom: var(--sp-4);
+}
+
+.m27__item-encabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--sp-3);
+}
+
+.m27__item-titulo {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    margin: 0;
+}
