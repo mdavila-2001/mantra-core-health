@@ -14,8 +14,8 @@ Esta página explica el catálogo; aquélla lo enumera.
 
 | Nivel | Qué es | Cuántos | Ejemplos |
 |---|---|---:|---|
-| **Átomos** | Un control, sin dominio | 15 | `app-button`, `app-input`, `app-badge`, `app-skeleton` |
-| **Moléculas** | Composición con comportamiento propio | 19 | `app-form-field`, `app-dialog`, `app-tabs`, `app-toast` |
+| **Átomos** | Un control, sin dominio | 16 | `app-button`, `app-input`, `app-badge`, `app-skeleton` |
+| **Moléculas** | Composición con comportamiento propio | 20 | `app-form-field`, `app-dialog`, `app-tabs`, `app-toast` |
 | **Organismos** | Estructura de pantalla o control complejo | 15 | `app-shell`, `app-data-table`, `app-view-state-host`, `app-status-seal` |
 
 El nivel **se deduce de la carpeta**, no se declara en el código. Mover una
@@ -45,6 +45,15 @@ semántica, el teclado y los formularios vienen gratis.
 | `iconOnly` | `boolean` | `false` |
 
 Salida: `clicked: MouseEvent`.
+
+Si la acción **navega**, va sobre un ancla: `a[app-button]` (misma pinta, misma
+hoja de estilos, semántica de enlace). Un `<button>` que hace
+`router.navigateByUrl` pierde el clic con la rueda, «abrir en pestaña nueva» y
+el destino en la barra de estado.
+
+```html
+<a app-button variant="primary" routerLink="/pacientes/nuevo">Nuevo paciente</a>
+```
 
 **El deshabilitado es `aria-disabled`, no el atributo nativo.** El botón sigue
 siendo enfocable —el lector anuncia el estado en vez de hacer desaparecer el

@@ -16,7 +16,7 @@ import {
   nextControlId,
 } from '@shared/forms/form-control.context';
 import { createValueAccessorBridge } from '@shared/forms/value-accessor';
-import type { InputType } from './input.types';
+import type { InputComboboxAria, InputType } from './input.types';
 
 @Component({
   selector: 'app-input',
@@ -76,6 +76,16 @@ export class Input implements ControlValueAccessor {
    * el `<input>`, y sin valor no se emite ninguno.
    */
   readonly testId = input<string | null>(null);
+
+  /**
+   * Atributos ARIA de combobox, cuando el control es el campo de un buscador de
+   * referencia (`app-reference-combobox`).
+   *
+   * Vive acá y no en el molde de arriba porque el `<input>` real es este: un
+   * `role="combobox"` escrito sobre `<app-input>` se queda en el host y el
+   * lector de pantalla nunca lo ve. Sin valor no se emite ningún atributo.
+   */
+  readonly comboboxAria = input<InputComboboxAria | null>(null);
 
   readonly focused = output<FocusEvent>();
   readonly blurred = output<FocusEvent>();

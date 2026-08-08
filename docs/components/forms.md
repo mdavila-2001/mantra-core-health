@@ -166,6 +166,65 @@ cadena vacía no es lo mismo que la ausencia del campo.»*
 
 `ProfilesClient` generaliza la idea con `stripUndefined()`.
 
+## Los campos de clave foránea: `app-reference-combobox`
+
+El modelo referencia entidades por uuid, y ningún formulario debería pedirle a
+una persona que escriba uno. El buscador de referencia **muestra nombre y guarda
+uuid**:
+
+```html
+<app-form-field label="Médico tratante" required>
+  <app-reference-combobox
+    [(value)]="form.practitionerId"
+    [options]="resultados()"
+    [loading]="buscando()"
+    [selected]="medicoActual()"
+    (searched)="buscarMedicos($event)"
+  />
+</app-form-field>
+```
+
+| Entrada | Para qué |
+|---|---|
+| `options` | Resultados de la última búsqueda. Los provee quien consulta |
+| `selected` | Opción ya elegida, para hidratar el rótulo **al editar** |
+| `loading` | La consulta viaja |
+| `minQueryLength` | Cuántos caracteres antes de consultar (por defecto 1) |
+
+`value` es el uuid; `searched` sale con espera de 300 ms; `selectionChange` trae
+la opción completa para quien necesite el rótulo.
+
+**La molécula no consulta la red.** Un componente del sistema de diseño que sepa
+de `HttpClient` deja de poder probarse, y la arquitectura del proyecto confina la
+superficie de red a `core/data-access/`.
+
+**Nunca queda texto sin uuid.** Salir del campo sin elegir restaura el rótulo de
+lo último elegido —o vacía—: dejar escrito «Dr. Pére» junto a un uuid que no le
+corresponde sería peor que no ofrecer el campo. Escribir sobre una selección
+hecha la invalida en el acto.
+
+Teclado: `↓`/`↑` recorren con vuelta saltando lo deshabilitado, `Alt`+`↓`
+despliega sin mover, `Inicio`/`Fin` van a los extremos, `Enter` elige, `Escape`
+cierra —y con la lista cerrada, borra la selección—, `Tab` cierra y restaura.
+Poner el foco **no** despliega nada: hacerlo reabriría el panel sobre la opción
+recién elegida y consultaría cada vez que alguien tabula por el formulario.
+
+## Los campos de catálogo (`*_concept_id`)
+
+Todo campo `*_concept_id` se llena desde terminología, nunca a mano. El backend
+publica qué conjunto gobierna cada campo:
+
+```
+GET /system-context/dynamic-enums?target=profiles.persons.sex_at_birth_concept_id
+GET /system-context/dynamic-enums/bindings?schema=profiles&entity=persons
+```
+
+La respuesta trae `conceptId` para escribir y `display` para pintar, así que un
+`app-select` se puebla en una llamada. **Ni el uuid del conjunto ni el de las
+opciones se escriben en el código del front**: se piden por la ruta del campo,
+que sí es una constante estable. Lo prohíbe la regla de oro del proyecto y
+además se rompería en el próximo `load_seeds`.
+
 ## `autocomplete`
 
 | Campo | Valor | Correcto |

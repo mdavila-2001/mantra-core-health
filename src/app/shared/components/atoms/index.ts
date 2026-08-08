@@ -13,6 +13,7 @@ export { BADGE_SIZES, BADGE_VARIANTS } from './badge/badge.types';
 export type { BadgeSize, BadgeValue, BadgeVariant } from './badge/badge.types';
 
 export { AppButton } from './button/button';
+export { AppButtonLink } from './button/button-link';
 export { BUTTON_SIZES, BUTTON_VARIANTS } from './button/button.types';
 export type { ButtonSize, ButtonType, ButtonVariant } from './button/button.types';
 
@@ -28,7 +29,7 @@ export type { DividerOrientation } from './divider/divider.types';
 
 export { Input } from './input/input';
 export { INPUT_TYPES } from './input/input.types';
-export type { InputType } from './input/input.types';
+export type { InputComboboxAria, InputType } from './input/input.types';
 
 export { Link } from './link/link';
 export { BROWSABLE_PROTOCOLS, LINK_VARIANTS } from './link/link.types';

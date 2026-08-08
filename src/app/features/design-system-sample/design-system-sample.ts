@@ -19,6 +19,7 @@ import { AvatarGroup } from '@shared/components/molecules/avatar-group/avatar-gr
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { BADGE_SIZES, BADGE_VARIANTS } from '../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { BUTTON_SIZES, BUTTON_VARIANTS } from '../../shared/components/atoms/button/button.types';
 
 import { Checkbox } from '../../shared/components/atoms/checkbox/checkbox';
@@ -59,6 +60,8 @@ import { Menu } from '../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../shared/components/molecules/menu/menu-item/menu-item';
 import { MenuTrigger } from '../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { Pagination } from '../../shared/components/molecules/pagination/pagination';
+import { ReferenceCombobox } from '@shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '@shared/components/molecules/reference-combobox/reference-combobox.types';
 import { SearchField } from '../../shared/components/molecules/search-field/search-field';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
@@ -86,6 +89,7 @@ const DEMO_UPLOAD_STEP = 12;
     AvatarGroup,
     Badge,
     AppButton,
+    AppButtonLink,
     Input,
     Checkbox,
     Radio,
@@ -106,6 +110,7 @@ const DEMO_UPLOAD_STEP = 12;
     Progress,
     Card,
     SearchField,
+    ReferenceCombobox,
     Alert,
     Menu,
     MenuItem,
@@ -205,6 +210,25 @@ export class DesignSystemSample {
   protected readonly filtroPacientes = signal('');
   protected readonly buscandoPacientes = signal(false);
   protected readonly ultimaBusqueda = signal('—');
+
+  /* ---- buscador de referencia -------------------------------------------- */
+
+  /**
+   * Padrón de demostración. En una pantalla real esto llega de
+   * `core/data-access/`; acá se filtra en memoria para poder ver el control
+   * funcionando sin backend.
+   */
+  private readonly padronMedicos: readonly ReferenceOption[] = [
+    { value: '3f2b6c14-0001-4a41-b7c2-0a1e9f4d8b60', label: 'Ana Pérez Quiroga', hint: 'MP 12345 · Cardiología' },
+    { value: '3f2b6c14-0002-4a41-b7c2-0a1e9f4d8b60', label: 'Bruno Salas Ortiz', hint: 'MP 22222 · Clínica médica' },
+    { value: '3f2b6c14-0003-4a41-b7c2-0a1e9f4d8b60', label: 'Carla Vera Montaño', hint: 'MP 30014 · Pediatría' },
+    { value: '3f2b6c14-0004-4a41-b7c2-0a1e9f4d8b60', label: 'Diego Ruiz Arce', hint: 'MP 41120 · Traumatología' },
+    { value: '3f2b6c14-0005-4a41-b7c2-0a1e9f4d8b60', label: 'Elena Ríos Paz', hint: 'Licencia vencida', disabled: true },
+  ];
+
+  protected readonly medicoElegido = signal<string | null>(null);
+  protected readonly medicosEncontrados = signal<readonly ReferenceOption[]>([]);
+  protected readonly buscandoMedicos = signal(false);
 
   protected readonly avisoVisible = signal(true);
 
@@ -320,6 +344,28 @@ export class DesignSystemSample {
     this.ultimaBusqueda.set(termino === '' ? '(vacío)' : termino);
     this.buscandoPacientes.set(true);
     setTimeout(() => this.buscandoPacientes.set(false), DEMO_LOADING_MS);
+  }
+
+  /**
+   * Simula la consulta del buscador de referencia. Filtra en memoria tras la
+   * misma espera que tendría una llamada real, para que el spinner y el estado
+   * vacío se puedan ver de verdad.
+   */
+  protected buscarMedicos(termino: string): void {
+    this.buscandoMedicos.set(true);
+    setTimeout(() => {
+      const texto = termino.trim().toLowerCase();
+      this.medicosEncontrados.set(
+        texto === ''
+          ? []
+          : this.padronMedicos.filter(
+              (medico) =>
+                medico.label.toLowerCase().includes(texto) ||
+                (medico.hint ?? '').toLowerCase().includes(texto),
+            ),
+      );
+      this.buscandoMedicos.set(false);
+    }, DEMO_LOADING_MS);
   }
 
   protected registrarAccion(accion: string): void {

@@ -1142,5 +1142,69 @@
             </p>
             <app-organisms-gallery />
         </section>
+
+        <section class="showroom-section">
+            <h2>27 · Buscador de referencia (combobox)</h2>
+            <p class="sandbox-note">
+                <strong>Muestra nombre, guarda uuid.</strong> Es el control que piden ocho de las
+                once vistas de <code>V05</code> y el que faltaba para poder construir cualquier
+                formulario con una clave foránea. La molécula no consulta la red: recibe
+                <code>options</code> y emite <code>searched</code> con espera de 300 ms.
+            </p>
+            <p class="sandbox-note">
+                Teclado completo: <kbd>↓</kbd>/<kbd>↑</kbd> recorren con vuelta y saltan lo
+                deshabilitado, <kbd>Alt</kbd>+<kbd>↓</kbd> despliega sin mover,
+                <kbd>Inicio</kbd>/<kbd>Fin</kbd> van a los extremos, <kbd>Enter</kbd> elige,
+                <kbd>Escape</kbd> cierra —y con la lista cerrada, borra la selección—.
+                Salir del campo sin elegir <strong>restaura el texto</strong>: nunca queda escrito
+                algo que no corresponde a ningún uuid.
+            </p>
+            <div class="inputs-demo-grid">
+                <app-reference-combobox
+                    [(value)]="medicoElegido"
+                    [options]="medicosEncontrados()"
+                    [loading]="buscandoMedicos()"
+                    label="Médico tratante"
+                    placeholder="Nombre o matrícula"
+                    emptyMessage="Ningún médico coincide"
+                    (searched)="buscarMedicos($event)"
+                />
+                <app-reference-combobox
+                    label="Deshabilitado"
+                    placeholder="Sucursal"
+                    [disabled]="true"
+                />
+            </div>
+            <p class="sandbox-note">
+                Escribí <em>«pe»</em>, <em>«cardio»</em> o <em>«MP 4»</em>. Valor guardado:
+                <code>{{ medicoElegido() ?? 'null' }}</code> — es un uuid, no el nombre.
+            </p>
+        </section>
+
+        <section class="showroom-section">
+            <h2>28 · Enlace con aspecto de acción</h2>
+            <p class="sandbox-note">
+                <code>app-button</code> es <code>button[app-button]</code>: no se puede poner sobre
+                un <code>&lt;a&gt;</code>. Eso dejaba a toda pantalla de listado eligiendo entre un
+                botón que navega —perdiendo el clic con la rueda, «abrir en pestaña nueva» y el
+                destino en la barra de estado— o un enlace de texto, perdiendo la jerarquía.
+                <code>a[app-button]</code> cierra ese hueco: <strong>misma pinta, semántica de
+                enlace</strong>. Comparte hoja de estilos con el botón, así que no hay dos verdades
+                que puedan divergir.
+            </p>
+            <div class="sandbox-grid">
+                <a app-button href="/design-system#28" variant="primary">Nuevo paciente</a>
+                <a app-button href="/design-system#28" variant="secondary">Ver agenda</a>
+                <a app-button href="/design-system#28" variant="ghost" size="sm">Exportar</a>
+                <a app-button href="/design-system#28" variant="primary" [disabled]="true">
+                    Sin permiso
+                </a>
+            </div>
+            <p class="sandbox-note">
+                Si la acción <strong>no navega</strong> —guardar, borrar, abrir un diálogo— sigue
+                yendo un <code>&lt;button app-button&gt;</code>: un ancla sin destino real no se
+                activa con Espacio y el lector de pantalla la anuncia como enlace.
+            </p>
+        </section>
     </main>
 </div>

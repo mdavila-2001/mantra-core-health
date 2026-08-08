@@ -1,0 +1,106 @@
+/* ============================================================================
+    Reference combobox — la caja, el borde y el foco los pone `app-input`. Acá
+    van el panel de resultados y lo que se acomoda al final del campo.
+
+    Cero valores propios: todo alias de tokens de src/styles.css. El panel toma
+    los mismos que `app-menu`, para que las dos superficies flotantes del
+    sistema no se lean como dos productos.
+    ========================================================================== */
+
+:host {
+    display: block;
+    width: 100%;
+    /* El panel se posiciona contra el campo, no contra la página. */
+    position: relative;
+}
+
+.reference-combobox__trailing {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    /* el spinner hereda la tinta de los íconos del campo */
+    color: var(--text-secondary);
+}
+
+/* El listbox existe siempre para que `aria-controls` resuelva; oculto no ocupa
+   lugar ni queda accesible. */
+.reference-combobox__listbox {
+    display: none;
+    margin: 0;
+    padding: var(--sp-1);
+    list-style: none;
+}
+
+.reference-combobox__listbox--open {
+    display: block;
+    position: absolute;
+    inset-inline: 0;
+    top: calc(100% + var(--sp-1));
+    /* misma capa que el resto de lo flotante (menú, tooltip, toasts) */
+    z-index: 1000;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-lg);
+    /* una lista larga se desplaza en vez de salirse de la pantalla */
+    max-height: 18rem;
+    overflow-y: auto;
+    animation: reference-combobox-in 0.15s ease;
+}
+
+@keyframes reference-combobox-in {
+    from {
+        opacity: 0;
+        transform: translateY(calc(-1 * var(--sp-1)));
+    }
+}
+
+.reference-combobox__option {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--sp-1) / 2);
+    padding: var(--sp-2);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+}
+
+/* Un solo resaltado, el de la posición activa por teclado: el puntero mueve esa
+   misma posición, así que no hacen falta dos estados que puedan contradecirse. */
+.reference-combobox__option--active,
+.reference-combobox__option:hover {
+    background: var(--bg-inset);
+}
+
+.reference-combobox__option--disabled {
+    cursor: not-allowed;
+    color: var(--text-disabled);
+}
+
+.reference-combobox__option--disabled:hover {
+    background: transparent;
+}
+
+.reference-combobox__label {
+    font-weight: 500;
+}
+
+.reference-combobox__hint {
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+}
+
+.reference-combobox__empty {
+    padding: var(--sp-2);
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+}
+
+/* Quien pidió menos movimiento no necesita ver aparecer el panel. */
+@media (prefers-reduced-motion: reduce) {
+    .reference-combobox__listbox--open {
+        animation: none;
+    }
+}
