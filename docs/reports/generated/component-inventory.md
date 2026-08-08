@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-120 componentes y 31 servicios inyectables, leídos de `src/`.
+124 componentes y 31 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,7 +70,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (67)
+## Feature (71)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -124,6 +124,8 @@
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
+| `app-assertion-issue-form` | `AssertionIssueForm` | — | — | — | OnPush | sí |
+| `app-assertion-revoke-form` | `AssertionRevokeForm` | — | — | — | OnPush | sí |
 | `app-authority-endpoint-form` | `AuthorityEndpointForm` | — | — | — | OnPush | sí |
 | `app-authority-form` | `AuthorityForm` | — | — | — | OnPush | sí |
 | `app-case-evidence-form` | `CaseEvidenceForm` | — | — | — | OnPush | sí |
@@ -134,6 +136,8 @@
 | `app-check-result-form` | `CheckResultForm` | — | — | — | OnPush | sí |
 | `app-fraud-signal-form` | `FraudSignalForm` | — | — | — | OnPush | sí |
 | `app-identity-admin-home` | `IdentityAdminHome` | — | — | — | OnPush | sí |
+| `app-manual-review-form` | `ManualReviewForm` | — | — | — | OnPush | sí |
+| `app-review-decision-form` | `ReviewDecisionForm` | — | — | — | OnPush | sí |
 | `app-verification-case-detail` | `VerificationCaseDetail` | — | — | — | OnPush | sí |
 | `app-verification-cases` | `VerificationCases` | — | — | — | OnPush | sí |
 | `app-verification-policy-form` | `VerificationPolicyForm` | — | — | — | OnPush | sí |

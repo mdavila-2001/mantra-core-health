@@ -420,6 +420,26 @@ export const routes: Routes = [
           (m) => m.FraudSignalForm,
         ),
       ),
+      pantallaDeVerificacionIdentidad('revision/escalar', 'Escalar a revisión manual', () =>
+        import('./features/identity-assurance/manual-review-form/manual-review-form').then(
+          (m) => m.ManualReviewForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('revision/decision', 'Decidir revisión manual', () =>
+        import('./features/identity-assurance/review-decision-form/review-decision-form').then(
+          (m) => m.ReviewDecisionForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('aserciones/emitir', 'Emitir aserción', () =>
+        import('./features/identity-assurance/assertion-issue-form/assertion-issue-form').then(
+          (m) => m.AssertionIssueForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('aserciones/revocar', 'Revocar aserción', () =>
+        import('./features/identity-assurance/assertion-revoke-form/assertion-revoke-form').then(
+          (m) => m.AssertionRevokeForm,
+        ),
+      ),
     ],
   },
   {

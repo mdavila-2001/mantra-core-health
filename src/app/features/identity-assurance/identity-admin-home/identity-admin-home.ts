@@ -83,10 +83,10 @@ export class IdentityAdminHome {
       descripcion:
         'El desenlace: revisión humana cuando hace falta, y la aserción que acredita el nivel.',
       operaciones: [
-        { label: 'Escalar a revisión manual' },
-        { label: 'Decidir revisión manual' },
-        { label: 'Emitir aserción' },
-        { label: 'Revocar aserción' },
+        { label: 'Escalar a revisión manual', route: `${BASE}/revision/escalar` },
+        { label: 'Decidir revisión manual', route: `${BASE}/revision/decision` },
+        { label: 'Emitir aserción', route: `${BASE}/aserciones/emitir` },
+        { label: 'Revocar aserción', route: `${BASE}/aserciones/revocar` },
       ],
     },
   ];

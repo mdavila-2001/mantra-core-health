@@ -1,0 +1,127 @@
+<app-page-header
+  title="Emitir aserción"
+  subtitle="La credencial del caso: acredita el nivel alcanzado, vence y — si hace falta — se revoca."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (issued(); as asercion) {
+  <div class="m27__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m27__resultado-titulo">La aserción quedó emitida</h2>
+
+    <dl class="m27__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ asercion.id }}</code></dd>
+      </div>
+      @if (asercion.assertionIdentifier; as identificador) {
+        <div>
+          <dt>Identificador público</dt>
+          <dd><code class="tabular-nums">{{ identificador }}</code></dd>
+        </div>
+      }
+      <div>
+        <dt>Nivel de aseguramiento (concepto)</dt>
+        <dd><code class="tabular-nums">{{ asercion.assuranceLevel }}</code></dd>
+      </div>
+      @if (asercion.issuedAt; as emision) {
+        <div>
+          <dt>Emitida el</dt>
+          <dd>{{ emision.toLocaleString() }}</dd>
+        </div>
+      }
+      <div>
+        <dt>Estado del caso (concepto)</dt>
+        <dd><code class="tabular-nums">{{ asercion.caseStatus }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m27__texto">
+      Guardá el identificador: si la aserción se compromete, revocarla lo pide
+      — no se borra nunca.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraAsercion()">Emitir otra aserción</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué caso" description="El expediente resuelto cuyo desenlace se acredita.">
+      <app-form-field
+        label="Caso de verificación"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.caseId.touched && form.controls.caseId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="caseId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="La aserción"
+      description="Quién la emite, de qué tipo es y qué nivel acredita."
+    >
+      <app-form-field
+        label="Autoridad emisora"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.issuerIdentityAuthorityId.touched &&
+          form.controls.issuerIdentityAuthorityId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="issuerIdentityAuthorityId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Tipo de aserción (concepto)"
+        hint="Opcional: por defecto, aserción de identidad."
+        [errorMessage]="
+          form.controls.assertionTypeConceptId.touched &&
+          form.controls.assertionTypeConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="assertionTypeConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Nivel de aseguramiento (concepto)"
+        hint="Opcional: por defecto, el nivel solicitado del caso."
+        [errorMessage]="
+          form.controls.assuranceLevelConceptId.touched &&
+          form.controls.assuranceLevelConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="assuranceLevelConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Vence en (horas)"
+        hint="Opcional: por defecto, 8760 horas — un año."
+        [errorMessage]="
+          form.controls.expiresInHours.touched && form.controls.expiresInHours.invalid
+            ? 'La vigencia empieza en 1 hora.'
+            : ''
+        "
+      >
+        <app-input formControlName="expiresInHours" type="number" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Emitir aserción"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

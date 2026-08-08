@@ -42,16 +42,19 @@ describe('IdentityAdminHome', () => {
       '/administracion/verificacion-identidad/checks/intento',
       '/administracion/verificacion-identidad/checks/resultado',
       '/administracion/verificacion-identidad/checks/fraude',
+      '/administracion/verificacion-identidad/revision/escalar',
+      '/administracion/verificacion-identidad/revision/decision',
+      '/administracion/verificacion-identidad/aserciones/emitir',
+      '/administracion/verificacion-identidad/aserciones/revocar',
     ]);
   });
 
-  it('las operaciones sin pantalla se declaran en preparación, no se ocultan', () => {
+  it('no queda ninguna operación en preparación: los 14 comandos tienen pantalla', () => {
     const pendientes = (fixture.nativeElement as HTMLElement).querySelectorAll(
       '.portada__pendiente',
     );
 
-    // 14 comandos del contrato: 10 con pantalla, 4 a la espera de las suyas.
-    expect(pendientes.length).toBe(4);
+    expect(pendientes.length).toBe(0);
   });
 
   it('avisa por qué no hay listados: el módulo no expone consultas todavía', () => {

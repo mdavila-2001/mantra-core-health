@@ -1,0 +1,106 @@
+<app-page-header
+  title="Revocar aserción"
+  subtitle="La aserción no se borra: se revoca, y la revocación queda en el historial."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (revoked(); as asercion) {
+  <div class="m27__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m27__resultado-titulo">La aserción quedó revocada</h2>
+
+    <dl class="m27__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ asercion.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Revocada el</dt>
+        <dd>{{ asercion.revokedAt.toLocaleString() }}</dd>
+      </div>
+      <div>
+        <dt>Estado del caso (concepto)</dt>
+        <dd><code class="tabular-nums">{{ asercion.caseStatus }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m27__texto">
+      Quien confiaba en esta aserción deja de poder hacerlo desde ahora. Si se
+      derivó una señal de fraude, sigue su propio curso de revisión.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraRevocacion()">Revocar otra aserción</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué aserción" description="La credencial emitida que deja de valer.">
+      <app-form-field
+        label="Aserción"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.assertionId.touched && form.controls.assertionId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="assertionId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Motivo de revocación (concepto)"
+        hint="Opcional: por defecto, fraude."
+        [errorMessage]="
+          form.controls.revocationReasonConceptId.touched &&
+          form.controls.revocationReasonConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="revocationReasonConceptId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Señal derivada"
+      description="Si la revocación es por fraude, la misma operación puede registrar la señal."
+    >
+      <div class="m27__switches">
+        <app-switch formControlName="raiseFraudSignal" label="Derivar una señal de fraude" />
+      </div>
+
+      <app-form-field
+        label="Tipo de señal (concepto)"
+        hint="Opcional: qué se sospecha, si se deriva la señal."
+        [errorMessage]="
+          form.controls.fraudSignalTypeConceptId.touched &&
+          form.controls.fraudSignalTypeConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="fraudSignalTypeConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Severidad de la señal (concepto)"
+        hint="Opcional: con qué gravedad, si se deriva la señal."
+        [errorMessage]="
+          form.controls.fraudSeverityConceptId.touched &&
+          form.controls.fraudSeverityConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="fraudSeverityConceptId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Revocar aserción"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

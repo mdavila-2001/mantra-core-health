@@ -106,9 +106,9 @@ quiere verificar (`:tenantId`).
 
 El lado administrativo del M27 (`SECURITY_ADMIN`): autoridades, políticas y el
 ciclo completo del caso de verificación. El backend no expone ningún `GET`
-administrativo todavía, así que las pantallas operan con identificadores
-pegados; las operaciones sin consumidor esperan sus vistas de comando de V27
-(en construcción).
+administrativo todavía, así que las 14 pantallas operan con identificadores
+pegados; cuando lleguen los endpoints de consulta, los listados reemplazan ese
+gesto.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -119,13 +119,13 @@ pegados; las operaciones sin consumidor esperan sus vistas de comando de V27
 | `POST` | `/identity/verification-cases/:caseId/evidence` | `CaseEvidenceForm` (V27-05) |
 | `POST` | `/identity/verification-cases/:caseId/checks:plan` | `CheckPlanForm` (V27-04) |
 | `POST` | `/identity/verification-cases/:caseId/fraud-signals` | `FraudSignalForm` (V27-06) |
-| `POST` | `/identity/verification-cases/:caseId/manual-review` | — |
-| `POST` | `/identity/verification-cases/:caseId/assertions` | — |
+| `POST` | `/identity/verification-cases/:caseId/manual-review` | `ManualReviewForm` (V27-07) |
+| `POST` | `/identity/verification-cases/:caseId/assertions` | `AssertionIssueForm` (V27-03) |
 | `POST` | `/identity/verification-cases/expire-sweep` | `CaseExpireSweep` (V27-02·A) |
 | `POST` | `/identity/checks/:checkId/attempts` | `CheckAttemptForm` (V27-11) |
 | `POST` | `/identity/checks/:checkId/results` | `CheckResultForm` (V27-12) |
-| `POST` | `/identity/manual-review/:reviewId/decision` | — |
-| `POST` | `/identity/assertions/:assertionId/revoke` | — |
+| `POST` | `/identity/manual-review/:reviewId/decision` | `ReviewDecisionForm` (V27-13) |
+| `POST` | `/identity/assertions/:assertionId/revoke` | `AssertionRevokeForm` (V27-08·A) |
 
 **`checks:plan` lleva los dos puntos en la URL de verdad**: el backend declara
 el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
