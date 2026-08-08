@@ -1,0 +1,46 @@
+<app-page-header
+  title="Mi perfil"
+  subtitle="Los datos con los que figurás como paciente en esta organización."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="resumen()" (retry)="recargar()">
+  @if (datos(); as resumen) {
+    <app-card class="mi-perfil">
+      <dl class="mi-perfil__datos">
+        <div class="mi-perfil__dato">
+          <dt>Nombre</dt>
+          <dd>{{ resumen.displayName ?? 'Sin registrar' }}</dd>
+        </div>
+
+        <div class="mi-perfil__dato">
+          <dt>Código de paciente</dt>
+          <dd class="mi-perfil__cifra">{{ resumen.patientCode }}</dd>
+        </div>
+
+        <div class="mi-perfil__dato">
+          <dt>Fecha de nacimiento</dt>
+          <dd class="mi-perfil__cifra">
+            @if (resumen.birthDate) {
+              {{ resumen.birthDate | date: 'dd/MM/yyyy' }}
+            } @else {
+              Sin registrar
+            }
+          </dd>
+        </div>
+
+        <div class="mi-perfil__dato">
+          <dt>Estado</dt>
+          <dd>{{ estado() }}</dd>
+        </div>
+      </dl>
+
+      <!-- Los identificadores van visibles y al final: no le dicen nada a la
+           persona hasta que tiene que reportar un problema, y entonces son lo
+           único que sirve. -->
+      <p class="mi-perfil__ids">
+        Identificador de perfil: <span class="mi-perfil__cifra">{{ resumen.patientProfileId }}</span>
+      </p>
+    </app-card>
+  }
+</app-view-state-host>

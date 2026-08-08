@@ -1,0 +1,48 @@
+/* Resumen propio. Son cuatro datos: una sola columna en móvil, dos desde
+   tablet, y nada más. */
+
+:host {
+  display: block;
+}
+
+.mi-perfil {
+  display: block;
+  margin-block-start: var(--sp-6);
+  max-inline-size: 40rem;
+}
+
+.mi-perfil__datos {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+/* Tablet. El literal es obligado: una media query no admite var(); el token
+   --bp-md declara el mismo 780px para el resto del sistema. */
+@media (min-width: 780px) {
+  .mi-perfil__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.mi-perfil__dato dt {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.mi-perfil__dato dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.mi-perfil__cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+.mi-perfil__ids {
+  margin-block: var(--sp-6) 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  /* Un uuid no tiene espacios: sin esto desborda la tarjeta en móvil. */
+  overflow-wrap: anywhere;
+}

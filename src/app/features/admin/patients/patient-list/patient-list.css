@@ -1,0 +1,27 @@
+/* Listado de pacientes. La tabla trae su propio ritmo y sus propios estados:
+   acá sólo se resuelve la separación del buscador y el formato de las celdas
+   que la tabla no puede conocer. */
+
+:host {
+  display: block;
+}
+
+.pacientes__buscador {
+  display: block;
+  margin-block: var(--sp-6) var(--sp-4);
+  /* Un buscador tan ancho como la ventana obliga a barrer la pantalla entera
+     para volver al campo. El tope lo fija la longitud de lo que se escribe. */
+  max-inline-size: 28rem;
+}
+
+/* Fechas y códigos con cifras tabulares: en una columna, los dígitos tienen
+   que alinearse verticalmente para poder compararse de un vistazo. */
+.pacientes__cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+.pacientes__vacio {
+  /* Semántico y no una rampa cruda: el tono correcto en claro y en oscuro lo
+     resuelve el token, no esta hoja. */
+  color: var(--text-muted);
+}

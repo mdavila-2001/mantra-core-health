@@ -1,0 +1,86 @@
+<app-page-header
+  title="Nuevo paciente"
+  subtitle="Se registra la persona y su perfil de paciente en una sola operación."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (errorMessage(); as mensaje) {
+  <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-paciente-error">{{
+    mensaje
+  }}</app-alert>
+}
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="alta-paciente-form">
+  <app-form-section
+    legend="Identificación"
+    description="Con qué se lo busca y con qué se lo reconoce."
+  >
+    <app-form-field
+      label="Código de paciente"
+      hint="Único en la organización. Es con lo que se lo encuentra en el listado."
+      [required]="true"
+      [errorMessage]="
+        codigoEnConflicto()
+          ? 'Ya existe un paciente con este código. Probá con otro.'
+          : form.controls.patientCode.touched && form.controls.patientCode.invalid
+            ? 'Escribí el código de paciente.'
+            : ''
+      "
+    >
+      <app-input formControlName="patientCode" type="text" testId="alta-paciente-codigo" />
+    </app-form-field>
+
+    <app-form-field
+      label="Nombre visible"
+      hint="Opcional. Sin él, la persona figura en las listas por su código."
+      [errorMessage]="
+        form.controls.displayName.touched && form.controls.displayName.invalid
+          ? 'El nombre no puede superar los 300 caracteres.'
+          : ''
+      "
+    >
+      <app-input formControlName="displayName" type="text" testId="alta-paciente-nombre" />
+    </app-form-field>
+  </app-form-section>
+
+  <app-form-section
+    legend="Datos de la persona"
+    description="Lo que permite distinguirla de un homónimo."
+  >
+    <app-form-field
+      label="Fecha de nacimiento"
+      hint="Opcional. Se guarda tal como se elige, sin convertir de huso horario."
+    >
+      <app-date-picker
+        [value]="fechaDeNacimiento()"
+        (valueChange)="fechaDeNacimiento.set($event)"
+        placeholder="dd/mm/aaaa"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Código del índice maestro (MPI)"
+      hint="Opcional. Solo si esta persona ya tiene identidad en el índice maestro."
+      [errorMessage]="
+        form.controls.masterPatientIndexCode.touched &&
+        form.controls.masterPatientIndexCode.invalid
+          ? 'El código MPI no puede superar los 100 caracteres.'
+          : ''
+      "
+    >
+      <app-input
+        formControlName="masterPatientIndexCode"
+        type="text"
+        testId="alta-paciente-mpi"
+      />
+    </app-form-field>
+  </app-form-section>
+
+  <app-form-actions
+    submitLabel="Registrar paciente"
+    cancelLabel="Cancelar"
+    [pending]="enviando()"
+    (submitted)="submit()"
+    (cancelled)="cancelar()"
+  />
+</form>

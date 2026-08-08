@@ -10,19 +10,13 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-3);
-  min-height: 40px;
+  min-height: 44px;
   cursor: pointer;
   user-select: none;
   font-family: var(--font-body);
   font-size: var(--fs-body);
   color: var(--text-primary);
   position: relative;
-}
-
-@media (max-width: 780px) {
-  .switch-container {
-    min-height: 44px;
-  }
 }
 
 /* Input nativo oculto */
@@ -34,13 +28,13 @@
   margin: 0;
 }
 
-/* Pista/Track de 38x22px (44x26px en móvil) */
+/* Pista/Track de 44x26px en móvil (base); 38x22px desde 780px */
 .switch-track {
-  width: 38px;
-  height: 22px;
+  width: 44px;
+  height: 26px;
   border-radius: var(--r-full);
   background-color: var(--c-neutral-300);
-  padding: 2px;
+  padding: 3px;
   display: flex;
   align-items: center;
   transition: background-color 0.2s ease, box-shadow 0.15s ease;
@@ -48,18 +42,10 @@
   position: relative;
 }
 
-@media (max-width: 780px) {
-  .switch-track {
-    width: 44px;
-    height: 26px;
-    padding: 3px;
-  }
-}
-
 /* Perilla blanca flotante */
 .switch-thumb {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   /* literal del spec (.switch-knob: `background: #fff`): la perilla es
      blanca en ambos temas */
@@ -69,25 +55,36 @@
   transform: translateX(0);
 }
 
-@media (max-width: 780px) {
-  .switch-thumb {
-    width: 20px;
-    height: 20px;
-  }
-}
-
 /* Estado Marcado */
 .switch-container.is-checked .switch-track {
   background-color: var(--brand-primary);
 }
 
 .switch-container.is-checked .switch-thumb {
-  transform: translateX(16px);
+  transform: translateX(18px);
 }
 
-@media (max-width: 780px) {
+/* Base = móvil (área táctil 44px, pista 44×26 pad 3px, perilla 20px, recorrido 18px).
+   Desde 780px (tablet/escritorio) el switch recupera su geometría compacta.
+   El recorrido acompaña: pista interior 38−18 = 16px. */
+@media (min-width: 780px) {
+  .switch-container {
+    min-height: 40px;
+  }
+
+  .switch-track {
+    width: 38px;
+    height: 22px;
+    padding: 2px;
+  }
+
+  .switch-thumb {
+    width: 18px;
+    height: 18px;
+  }
+
   .switch-container.is-checked .switch-thumb {
-    transform: translateX(18px);
+    transform: translateX(16px);
   }
 }
 

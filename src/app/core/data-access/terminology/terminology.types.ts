@@ -38,6 +38,15 @@ export interface ValueSetExpansionPage {
   readonly nextCursor: string | null;
 }
 
+/**
+ * Etiquetas de un puñado de conceptos, por su identificador.
+ *
+ * Es el camino inverso al de un selector: el resto del contrato devuelve
+ * `*ConceptId` en uuid, y ninguna pantalla puede mostrar un uuid. Se resuelve
+ * con `GET /terminology/concepts?ids=…`.
+ */
+export type ConceptLabels = ReadonlyMap<string, ValueSetOption>;
+
 /** Parámetros opcionales de la lectura de una expansión. */
 export interface ValueSetExpansionQuery {
   /** Versión concreta a leer; por defecto, la vigente del conjunto. */

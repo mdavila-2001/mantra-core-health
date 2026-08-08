@@ -122,27 +122,29 @@
   min-height: var(--_btn-side);
 }
 
-:host(.btn--md) {
-  --_btn-side: 40px;
-  font-size: 14px;
-  padding: 11px var(--sp-5);
-  min-height: var(--_btn-side);
-}
-
+/* Base = móvil: md y lg comparten el área táctil mínima de 44 px. min-height y el
+   ancho del modo ícono derivan de --_btn-side, así que basta redefinir la variable
+   por talle en el corte de escritorio. */
+:host(.btn--md),
 :host(.btn--lg) {
-  --_btn-side: 48px;
-  font-size: 15.5px;
-  padding: 14px 28px;
+  --_btn-side: 44px;
+  padding: var(--sp-3) var(--sp-5);
+  font-size: 14.5px;
   min-height: var(--_btn-side);
 }
 
-/* móvil: área táctil mínima 44 px (breakpoint REDSAT < 780 px) */
-@media (max-width: 780px) {
-  :host(.btn--md),
+/* Desde 780px (tablet/escritorio) cada talle recupera su geometría del spec. */
+@media (min-width: 780px) {
+  :host(.btn--md) {
+    --_btn-side: 40px;
+    font-size: 14px;
+    padding: 11px var(--sp-5);
+  }
+
   :host(.btn--lg) {
-    --_btn-side: 44px;
-    padding: var(--sp-3) var(--sp-5);
-    font-size: 14.5px;
+    --_btn-side: 48px;
+    font-size: 15.5px;
+    padding: 14px 28px;
   }
 }
 

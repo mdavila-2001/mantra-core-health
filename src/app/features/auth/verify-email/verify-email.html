@@ -1,5 +1,6 @@
 <main class="verificacion">
   <div class="verificacion__card">
+    <div class="verificacion__header">
     @switch (estado()) {
       @case ('verificando') {
         <h1 class="verificacion__title" data-testid="verificar-en-curso">Verificando tu correo…</h1>
@@ -36,6 +37,7 @@
         </p>
       }
     }
+    </div>
 
     @if (!isVerifying()) {
       <button

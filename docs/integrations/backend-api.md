@@ -95,19 +95,44 @@ no filtrar. `Dashboard` llama sin ninguno.
 | `POST` | `/identity/me/practitioner/license-verification` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
-### `ProfilesClient` — 3 operaciones · sin consumidor
+### `ProfilesClient` — 6 operaciones
 
-| Método | Ruta |
-|---|---|
-| `POST` | `/profiles/patients` |
-| `POST` | `/profiles/practitioners` |
-| `POST` | `/profiles/persons/:personId/account-links` |
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) |
+| `GET` | `/profiles/patients/:profileId` | `PatientDetail` (ficha F-01) |
+| `GET` | `/profiles/patients/me/summary` | `MyProfile` (V05-03) |
+| `POST` | `/profiles/patients` | `PatientNew` (V05-01·F) |
+| `POST` | `/profiles/practitioners` | — |
+| `POST` | `/profiles/persons/:personId/account-links` | — |
 
-### `TerminologyClient` — 1 operación · sin consumidor
+Las tres lecturas entraron con el PR #31 del backend y son lo que sacó a la
+sección de pacientes del estado «Listado pendiente» que el vault marca en 674 de
+las 693 vistas.
 
-| Método | Ruta |
-|---|---|
-| `GET` | `/terminology/value-sets/:valueSetId/$expand` |
+**El listado pagina por cursor y no devuelve total.** Contarlo obligaría al
+backend a recorrer la tabla entera en cada página; para «¿hay más?», `nextCursor`.
+Como el contrato sólo entrega el cursor hacia adelante, el camino de vuelta lo
+recuerda la pantalla.
+
+**`GET /profiles/patients/me/summary` no lleva identificador**: el sujeto lo
+resuelve la sesión. Exige identidad verificada vigente y sin ella responde `403`
+con `IDENTITY_VERIFICATION_REQUIRED`, que es el único 403 del contrato que llega
+a la interfaz **con una salida** en vez de un muro.
+
+### `TerminologyClient` — 2 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/terminology/value-sets/:valueSetId/$expand` | — |
+| `GET` | `/terminology/concepts` | `PatientDetail`, `MyProfile` |
+
+La segunda se llama siempre con `?ids=` (los identificadores separados por coma).
+
+La segunda es el camino **inverso** al del selector: el resto del contrato
+devuelve `*ConceptId` en uuid y ninguna pantalla puede mostrar un uuid. Se piden
+todos los de una pantalla en una sola llamada, no uno por campo, y su fallo
+degrada esos campos a «Sin registrar» sin tumbar la pantalla.
 
 ### `FilesClient` — 1 operación · sin consumidor
 
@@ -115,8 +140,9 @@ no filtrar. `Dashboard` llama sin ninguno.
 |---|---|
 | `POST` | `/common/files/upload` |
 
-**Once operaciones sin pantalla que las llame.** No es código muerto: todas
-tienen prueba y son la mitad de un flujo cuya interfaz todavía no se escribió.
+**Siete operaciones sin pantalla que las llame** — eran once hasta que V05-01 y
+V05-03 encendieron cuatro. No es código muerto: todas tienen prueba y son la
+mitad de un flujo cuya interfaz todavía no se escribió.
 Ver [el mapa de integraciones §3](../architecture/integration-map.md#3--operaciones-sin-consumidor).
 
 ---

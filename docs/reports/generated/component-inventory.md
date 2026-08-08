@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-70 componentes y 25 servicios inyectables, leídos de `src/`.
+74 componentes y 25 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -56,7 +56,7 @@
 |---|---|---|---|---|---|---|
 | `app-auth-layout` | `AuthLayout` | `title`, `subtitle`, `showBrand` | — | — | OnPush | sí |
 | `app-auth-split` | `AuthSplit` | `claim`, `tagline` | — | — | OnPush | sí |
-| `app-data-table` | `DataTable` | `state`, `columns`, `trackBy`, `caption`, `selectable`, `sort`, `cursor` | `sortChanged`, `cursorChanged`, `selectionChanged` | — | OnPush | sí |
+| `app-data-table` | `DataTable` | `state`, `columns`, `trackBy`, `caption`, `selectable`, `sort`, `cursor` | `sortChanged`, `cursorChanged`, `selectionChanged`, `retry`, `refresh` | — | OnPush | sí |
 | `app-date-picker` | `DatePicker` | `mode`, `disabled`, `placeholder`, `hasError` | — | `value` | OnPush | sí |
 | `app-filter-bar` | `FilterBar` | `filters`, `searchLabel` | `filtersChanged` | — | OnPush | sí |
 | `app-form-actions` | `FormActions` | `submitLabel`, `cancelLabel`, `pending`, `disabled`, `destructive`, `correctionOnly`, `confirmTitle`, `confirmMessage` | `submitted`, `cancelled` | — | OnPush | sí |
@@ -70,11 +70,15 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (17)
+## Feature (21)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
+| `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
+| `app-patient-detail` | `PatientDetail` | — | — | — | OnPush | sí |
+| `app-patient-list` | `PatientList` | — | — | — | OnPush | sí |
+| `app-patient-new` | `PatientNew` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
 | `app-forgot-password` | `ForgotPassword` | — | — | — | OnPush | sí |
 | `app-login` | `Login` | — | — | — | OnPush | sí |
