@@ -1,12 +1,15 @@
+import type { AbstractControl, ValidationErrors } from '@angular/forms';
+
 import type { ViewState } from '../../core/view-state/view-state.types';
 
 /**
- * Apoyo común de los formularios del M29.
+ * Apoyo común de los formularios de los módulos solo-comando (M29, M40, …).
  *
  * Mientras el backend no exponga listados ni búsqueda, las referencias se
  * cargan **pegando el identificador**: este módulo concentra la validación de
  * ese gesto y la traducción de estados a mensajes, para que las pantallas no
- * lo repitan cada una a su manera.
+ * lo repitan cada una a su manera. Nació en el M29 y subió a `shared/` cuando
+ * el M40 lo necesitó igual.
  */
 
 /** Forma de un UUID. Valida lo pegado a mano antes de gastar una petición. */
@@ -54,4 +57,24 @@ export function opcionDe<T extends string>(opciones: readonly T[], valor: unknow
   return typeof valor === 'string' && (opciones as readonly string[]).includes(valor)
     ? (valor as T)
     : null;
+}
+
+/**
+ * El campo es opcional, pero si está tiene que ser un **objeto** JSON: el
+ * backend valida estos campos con `@IsObject`, que rechaza arrays y
+ * primitivos. El modelo no declara su esquema interior, así que inventarle
+ * campos sería adivinar: se pide el JSON tal cual y se valida su forma.
+ */
+export function objetoJson(control: AbstractControl<string>): ValidationErrors | null {
+  const texto = control.value.trim();
+  if (texto === '') {
+    return null;
+  }
+  try {
+    const valor: unknown = JSON.parse(texto);
+    const esObjeto = typeof valor === 'object' && valor !== null && !Array.isArray(valor);
+    return esObjeto ? null : { objetoJson: true };
+  } catch {
+    return { objetoJson: true };
+  }
 }

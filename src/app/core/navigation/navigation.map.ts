@@ -134,6 +134,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M29 delegated_access',
   },
   {
+    // W2/F4 (M40): primer uso de `IDENTITY_ADMIN` en el mapa — los doce
+    // comandos del backend lo exigen (`AUTH_SERVICE` también puede, pero es un
+    // rol de servicio, no de una persona que navega). Como el M29, el módulo
+    // no tiene GET: entra como panel de operaciones.
+    path: 'administracion/proveedores-identidad',
+    label: 'Proveedores de identidad',
+    group: 'Administración',
+    icon: 'settings',
+    roles: ['IDENTITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Configurá el login federado: proveedores, claves y vinculación.',
+    module: 'M40 auth_providers',
+  },
+  {
     path: 'administracion/terminologia',
     label: 'Terminología',
     group: 'Administración',

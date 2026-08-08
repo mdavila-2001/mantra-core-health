@@ -1,0 +1,62 @@
+<app-page-header
+  title="Publicar clave de firma"
+  subtitle="Sumá una clave del proveedor para validar los tokens que firma."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (published(); as key) {
+  <div class="m40__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m40__resultado-titulo">La clave quedó publicada</h2>
+
+    <dl class="m40__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ key.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Clave (kid)</dt>
+        <dd><code class="tabular-nums">{{ key.keyId }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado (concepto)</dt>
+        <dd><code class="tabular-nums">{{ key.stateConceptId }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m40__texto">
+      Cuando el proveedor cambie de clave, usá la rotación: retira las
+      salientes con gracia en lugar de invalidar los tokens en vuelo.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraClave()">Publicar otra clave</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="De qué proveedor" description="La clave cuelga del proveedor.">
+      <app-form-field
+        label="Identificador del proveedor"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.providerId.touched && form.controls.providerId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="providerId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section legend="La clave" description="Tal como el proveedor la publica.">
+      <app-signing-key-fields [disabled]="isSubmitting()" />
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Publicar clave"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

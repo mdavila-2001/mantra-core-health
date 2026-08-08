@@ -32,7 +32,7 @@ import { RadioGroup } from '../../../shared/components/molecules/radio-group/rad
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { errorMessageOf, opcionDe } from '../form-support';
+import { errorMessageOf, opcionDe } from '../../../shared/forms/form-support';
 import { SetItemsEditor } from '../set-items-editor/set-items-editor';
 
 const DELEGATE_TYPES: readonly PermissionSetDelegateType[] = [

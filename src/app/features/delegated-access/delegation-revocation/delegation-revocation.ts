@@ -15,7 +15,7 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../form-support';
+import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /** El `@MaxLength` del DTO: más que esto es 400. */
 const MAX_MOTIVO = 500;

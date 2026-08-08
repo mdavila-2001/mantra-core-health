@@ -25,7 +25,7 @@ import { DatePicker } from '../../../shared/components/organisms/date-picker/dat
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../form-support';
+import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 const DELEGATE_ROLES: readonly DelegateRole[] = ['ASSISTANT', 'SECRETARY', 'NURSE'];
 const PATIENT_SCOPES: readonly PatientScope[] = ['ASSIGNED', 'ALL'];

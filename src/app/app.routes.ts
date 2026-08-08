@@ -62,6 +62,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/delegated-access/delegated-access-home/delegated-access-home').then(
       (m) => m.DelegatedAccessHome,
     ),
+  'administracion/proveedores-identidad': () =>
+    import('./features/auth-providers/auth-providers-home/auth-providers-home').then(
+      (m) => m.AuthProvidersHome,
+    ),
 };
 
 /**
@@ -133,26 +137,37 @@ const PANTALLAS_HIJAS: Routes = [
 ];
 
 /**
- * Pantalla de operación de «Acceso delegado» (M29). No es sección de menú: es
- * una acción de la sección, y toma prestada su sección para que el breadcrumb
- * y el resaltado del menú tengan de dónde salir — el mismo criterio que la
- * ficha del caso de verificación.
+ * Pantalla de operación de una sección sin listados (M29, M40): una acción de
+ * la sección, no una entrada de menú. Como con las pantallas hijas, la sección
+ * del breadcrumb la resuelve `NavigationService` por la coincidencia más larga.
  */
-function pantallaDeAccesoDelegado(
+function pantallaDeOperacion(
+  seccion: string,
   subpath: string,
   titulo: string,
   loader: () => Promise<Type<unknown>>,
 ): Routes[number] {
   return {
-    path: `administracion/acceso-delegado/${subpath}`,
+    path: `${seccion}/${subpath}`,
     title: `${APP_TITLE} - ${titulo}`,
-    data: {
-      [SECTION_ROUTE_DATA]: APP_SECTIONS.find(
-        (section) => section.path === 'administracion/acceso-delegado',
-      ),
-    },
     loadComponent: () => loader().catch(() => chunkFallido()),
   };
+}
+
+function pantallaDeAccesoDelegado(
+  subpath: string,
+  titulo: string,
+  loader: () => Promise<Type<unknown>>,
+): Routes[number] {
+  return pantallaDeOperacion('administracion/acceso-delegado', subpath, titulo, loader);
+}
+
+function pantallaDeProveedoresDeIdentidad(
+  subpath: string,
+  titulo: string,
+  loader: () => Promise<Type<unknown>>,
+): Routes[number] {
+  return pantallaDeOperacion('administracion/proveedores-identidad', subpath, titulo, loader);
 }
 
 /**
@@ -264,6 +279,29 @@ export const routes: Routes = [
       ),
       pantallaDeAccesoDelegado('operacion/barrido-expiracion', 'Barrido de expiración', () =>
         import('./features/delegated-access/expiry-sweep/expiry-sweep').then((m) => m.ExpirySweep),
+      ),
+      pantallaDeProveedoresDeIdentidad('proveedores/nuevo', 'Registrar proveedor de identidad', () =>
+        import('./features/auth-providers/provider-form/provider-form').then(
+          (m) => m.ProviderForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad(
+        'proveedores/protocolo',
+        'Configurar protocolo del proveedor',
+        () =>
+          import('./features/auth-providers/protocol-config-form/protocol-config-form').then(
+            (m) => m.ProtocolConfigForm,
+          ),
+      ),
+      pantallaDeProveedoresDeIdentidad('claves/nueva', 'Publicar clave de firma', () =>
+        import('./features/auth-providers/signing-key-form/signing-key-form').then(
+          (m) => m.SigningKeyForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad('claves/rotar', 'Rotar clave de firma', () =>
+        import('./features/auth-providers/key-rotation-form/key-rotation-form').then(
+          (m) => m.KeyRotationForm,
+        ),
       ),
     ],
   },

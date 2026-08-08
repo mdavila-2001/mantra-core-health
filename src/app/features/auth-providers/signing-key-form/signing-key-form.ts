@@ -8,8 +8,8 @@ import {
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { DelegatedAccessClient } from '../../../core/data-access/delegated-access/delegated-access.client';
-import type { PermissionSetVersion } from '../../../core/data-access/delegated-access/delegated-access.types';
+import { AuthProvidersClient } from '../../../core/data-access/auth-providers/auth-providers.client';
+import type { PublishedSigningKey } from '../../../core/data-access/auth-providers/auth-providers.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
@@ -22,19 +22,20 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
-import { SetItemsEditor } from '../set-items-editor/set-items-editor';
+import {
+  errorMessageOf,
+  UUID_ERROR,
+  UUID_HINT,
+  UUID_PATTERN,
+} from '../../../shared/forms/form-support';
+import { SigningKeyFields } from '../signing-key-fields/signing-key-fields';
 
 /**
- * Publicar una versión nueva de un set de permisos (V29-09,
- * `POST /delegated-permission-sets/:id/versions`).
- *
- * El reemplazo es **all-or-nothing**: la versión nueva trae su lista completa
- * de ítems y sustituye entera a la vigente. No hay fusión — lo que no esté en
- * esta lista deja de estar en el set.
+ * Publicar una clave de firma del proveedor (V40-08,
+ * `POST /auth-providers/identity-providers/:id/signing-keys`).
  */
 @Component({
-  selector: 'app-set-version-form',
+  selector: 'app-signing-key-form',
   imports: [
     ReactiveFormsModule,
     Alert,
@@ -45,24 +46,24 @@ import { SetItemsEditor } from '../set-items-editor/set-items-editor';
     FormSection,
     Input,
     PageHeader,
-    SetItemsEditor,
+    SigningKeyFields,
   ],
-  templateUrl: './set-version-form.html',
-  styleUrl: '../m29.css',
+  templateUrl: './signing-key-form.html',
+  styleUrl: '../m40.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SetVersionForm {
-  private readonly client = inject(DelegatedAccessClient);
+export class SigningKeyForm {
+  private readonly client = inject(AuthProvidersClient);
   private readonly navigation = inject(NavigationService);
-
-  private readonly editor = viewChild.required(SetItemsEditor);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
 
+  protected readonly campos = viewChild.required(SigningKeyFields);
+
   protected readonly form = new FormGroup({
-    setId: new FormControl('', {
+    providerId: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(UUID_PATTERN)],
     }),
@@ -71,10 +72,10 @@ export class SetVersionForm {
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
 
-  protected readonly published = signal<PermissionSetVersion | null>(null);
+  protected readonly published = signal<PublishedSigningKey | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para versionar sets de permisos.'),
+    errorMessageOf(this.state(), 'No tenés permiso para publicar claves de firma.'),
   );
 
   protected submit(): void {
@@ -82,28 +83,33 @@ export class SetVersionForm {
       return;
     }
 
-    const items = this.editor().intentarEnvio();
-
-    if (this.form.invalid || items === null) {
+    // La clave se lee primero para que un solo intento marque los errores de
+    // los dos bloques a la vez, no de a uno.
+    const clave = this.campos().intentarLeer();
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+    if (clave === null) {
+      return;
+    }
 
-    const setId = this.form.getRawValue().setId.trim();
+    const { providerId } = this.form.getRawValue();
 
     this.state.set(loading());
 
-    this.client.publishSetVersion(setId, { items }).subscribe({
-      next: (version) => {
+    this.client.publishSigningKey(providerId.trim(), clave).subscribe({
+      next: (key) => {
         this.state.set(ready(null));
-        this.published.set(version);
+        this.published.set(key);
       },
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
   }
 
-  protected otraVersion(): void {
-    // El editor renace fresco al volver al formulario; solo el grupo persiste.
+  protected otraClave(): void {
+    // El panel de éxito desmontó los campos de la clave: renacen frescos al
+    // volver al formulario, así que acá solo se limpia lo propio.
     this.form.reset();
     this.published.set(null);
     this.state.set(ready(null));

@@ -1,13 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
-import {
-  FormArray,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-  type AbstractControl,
-  type ValidationErrors,
-} from '@angular/forms';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import type { PermissionSetItem } from '../../../core/data-access/delegated-access/delegated-access.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -16,7 +8,7 @@ import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../form-support';
+import { objetoJson, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /** Techo generoso para una restricción declarativa; el DDL no fija uno. */
 const MAX_CONSTRAINT = 2000;
@@ -26,24 +18,6 @@ type FilaDeItem = FormGroup<{
   constraintJson: FormControl<string>;
   requiresStepUpAuthentication: FormControl<boolean>;
 }>;
-
-/**
- * La restricción es opcional, pero si está tiene que ser un **objeto** JSON:
- * el backend la valida con `@IsObject`, que rechaza arrays y primitivos.
- */
-function objetoJson(control: AbstractControl<string>): ValidationErrors | null {
-  const texto = control.value.trim();
-  if (texto === '') {
-    return null;
-  }
-  try {
-    const valor: unknown = JSON.parse(texto);
-    const esObjeto = typeof valor === 'object' && valor !== null && !Array.isArray(valor);
-    return esObjeto ? null : { objetoJson: true };
-  } catch {
-    return { objetoJson: true };
-  }
-}
 
 function nuevaFila(): FilaDeItem {
   return new FormGroup({

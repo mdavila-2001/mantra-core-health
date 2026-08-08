@@ -11,7 +11,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { errorMessageOf } from '../form-support';
+import { errorMessageOf } from '../../../shared/forms/form-support';
 
 /**
  * Barrido de expiración (V29-07, `POST /delegated-access/expiry-sweep`).
