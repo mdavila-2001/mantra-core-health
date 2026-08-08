@@ -148,6 +148,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M40 auth_providers',
   },
   {
+    // W2/F5 (M27, lado administrativo): como M29 y M40, el backend es solo de
+    // comando —sin GET admin—, así que la sección entra como panel de
+    // operaciones con identificadores pegados. Distinta de «Verificar
+    // identidad» (autoservicio): acá se administra el ciclo, no se inicia el
+    // trámite propio.
+    path: 'administracion/verificacion-identidad',
+    label: 'Verificación de identidad',
+    group: 'Administración',
+    icon: 'settings',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Administrá autoridades, políticas y casos de verificación de identidad.',
+    module: 'M27 identity_assurance',
+  },
+  {
     path: 'administracion/terminologia',
     label: 'Terminología',
     group: 'Administración',

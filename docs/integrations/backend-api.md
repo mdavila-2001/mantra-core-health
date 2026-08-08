@@ -16,7 +16,7 @@ Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -101,6 +101,34 @@ Todo `identity/me` resuelve el sujeto de la sesión: ninguna ruta recibe a quié
 se verifica, y por eso la pantalla de verificación no tiene selector de persona.
 La única elección es cuál de las organizaciones **propias** — las del token — se
 quiere verificar (`:tenantId`).
+
+### `IdentityAdminClient` — 14 operaciones · sólo comando
+
+El lado administrativo del M27 (`SECURITY_ADMIN`): autoridades, políticas y el
+ciclo completo del caso de verificación. El backend no expone ningún `GET`
+administrativo todavía, así que las pantallas operan con identificadores
+pegados; las operaciones sin consumidor esperan sus vistas de comando de V27
+(en construcción).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/identity/authorities` | `AuthorityForm` (V27-09) |
+| `POST` | `/identity/authorities/:authorityId/endpoints` | `AuthorityEndpointForm` (V27-10) |
+| `POST` | `/identity/verification-policies` | `VerificationPolicyForm` (V27-18) |
+| `POST` | `/identity/verification-cases` | — |
+| `POST` | `/identity/verification-cases/:caseId/evidence` | — |
+| `POST` | `/identity/verification-cases/:caseId/checks:plan` | — |
+| `POST` | `/identity/verification-cases/:caseId/fraud-signals` | — |
+| `POST` | `/identity/verification-cases/:caseId/manual-review` | — |
+| `POST` | `/identity/verification-cases/:caseId/assertions` | — |
+| `POST` | `/identity/verification-cases/expire-sweep` | — |
+| `POST` | `/identity/checks/:checkId/attempts` | — |
+| `POST` | `/identity/checks/:checkId/results` | — |
+| `POST` | `/identity/manual-review/:reviewId/decision` | — |
+| `POST` | `/identity/assertions/:assertionId/revoke` | — |
+
+**`checks:plan` lleva los dos puntos en la URL de verdad**: el backend declara
+el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 
 ### `ProfilesClient` — 6 operaciones
 

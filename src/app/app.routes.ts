@@ -66,6 +66,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/auth-providers/auth-providers-home/auth-providers-home').then(
       (m) => m.AuthProvidersHome,
     ),
+  'administracion/verificacion-identidad': () =>
+    import('./features/identity-assurance/identity-admin-home/identity-admin-home').then(
+      (m) => m.IdentityAdminHome,
+    ),
 };
 
 /**
@@ -168,6 +172,14 @@ function pantallaDeProveedoresDeIdentidad(
   loader: () => Promise<Type<unknown>>,
 ): Routes[number] {
   return pantallaDeOperacion('administracion/proveedores-identidad', subpath, titulo, loader);
+}
+
+function pantallaDeVerificacionIdentidad(
+  subpath: string,
+  titulo: string,
+  loader: () => Promise<Type<unknown>>,
+): Routes[number] {
+  return pantallaDeOperacion('administracion/verificacion-identidad', subpath, titulo, loader);
 }
 
 /**
@@ -354,6 +366,21 @@ export const routes: Routes = [
           import('./features/auth-providers/identity-unlink-form/identity-unlink-form').then(
             (m) => m.IdentityUnlinkForm,
           ),
+      ),
+      pantallaDeVerificacionIdentidad('autoridades/nueva', 'Registrar autoridad de identidad', () =>
+        import('./features/identity-assurance/authority-form/authority-form').then(
+          (m) => m.AuthorityForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('autoridades/endpoint', 'Publicar endpoint de autoridad', () =>
+        import(
+          './features/identity-assurance/authority-endpoint-form/authority-endpoint-form'
+        ).then((m) => m.AuthorityEndpointForm),
+      ),
+      pantallaDeVerificacionIdentidad('politicas/nueva', 'Crear política de verificación', () =>
+        import(
+          './features/identity-assurance/verification-policy-form/verification-policy-form'
+        ).then((m) => m.VerificationPolicyForm),
       ),
     ],
   },
