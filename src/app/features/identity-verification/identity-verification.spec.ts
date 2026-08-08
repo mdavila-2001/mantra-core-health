@@ -27,6 +27,12 @@ describe('IdentityVerification', () => {
     fixture = TestBed.createComponent(IdentityVerification);
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
+
+    // Al construirse, la pantalla pide el historial de casos del titular: es lo
+    // que responde «¿esto ya lo mandé?» a quien vuelve. Se responde vacío acá
+    // para que cada prueba hable del envío, que es lo suyo; la prueba del
+    // historial lo responde con datos por su cuenta.
+    http.expectOne('/identity/me/verification-cases').flush([]);
   });
 
   afterEach(() => {

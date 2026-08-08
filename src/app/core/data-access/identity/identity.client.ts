@@ -66,21 +66,47 @@ export class IdentityClient {
     );
   }
 
+  /**
+   * `GET /identity/me/verification-cases` — todos los casos del titular.
+   *
+   * El backend lo expone desde siempre y nadie lo pedía: la pantalla mostraba
+   * **un** caso, el que estuviera abierto, y con eso quien ya se verificó ve un
+   * formulario vacío como si nunca hubiera hecho el trámite. El historial es lo
+   * que responde «¿esto ya lo mandé?», que es la pregunta que la gente trae.
+   *
+   * Sin argumentos: el sujeto lo resuelve el backend desde la sesión, igual que
+   * el resto de `identity/me`.
+   */
+  listVerificationCases(): Observable<readonly VerificationCase[]> {
+    return this.http
+      .get<readonly VerificationCaseBody[]>(this.url('/identity/me/verification-cases'))
+      .pipe(map((cuerpos) => cuerpos.map(toVerificationCase)));
+  }
+
   /** `GET /identity/me/verification-cases/:caseId`. */
   getVerificationCase(caseId: string): Observable<VerificationCase> {
     return this.http
       .get<VerificationCaseBody>(this.url(`/identity/me/verification-cases/${caseId}`))
-      .pipe(
-        map((body) => ({
-          id: body.id,
-          status: body.status,
-          ...(body.openedAt === undefined ? {} : { openedAt: new Date(body.openedAt) }),
-          ...(body.completedAt === undefined ? {} : { completedAt: new Date(body.completedAt) }),
-        })),
-      );
+      .pipe(map(toVerificationCase));
   }
 
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/**
+ * Del cuerpo de la API al tipo de la vista.
+ *
+ * Las fechas opcionales se omiten en vez de viajar como `undefined`: el tipo las
+ * declara opcionales, y una clave presente valiendo `undefined` no es lo mismo
+ * que una clave ausente para nada de lo que las consume.
+ */
+function toVerificationCase(body: VerificationCaseBody): VerificationCase {
+  return {
+    id: body.id,
+    status: body.status,
+    ...(body.openedAt === undefined ? {} : { openedAt: new Date(body.openedAt) }),
+    ...(body.completedAt === undefined ? {} : { completedAt: new Date(body.completedAt) }),
+  };
 }

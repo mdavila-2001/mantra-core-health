@@ -149,7 +149,15 @@
   </div>
 
   <!-- Cursor: solo anterior y siguiente. No hay números de página porque un
-       cursor no conoce el total ni cuántas páginas faltan. -->
+       cursor no conoce el total ni cuántas páginas faltan.
+
+       Y sólo si hay a dónde ir. Antes se dibujaba siempre, así que un listado
+       sin paginación —la búsqueda del catálogo de terminología, que la API acota
+       con `limit` y no pagina— quedaba con dos botones permanentemente
+       apagados: controles muertos que ocupan lugar, prometen una función que no
+       existe y hacen que la pantalla parezca rota. Un listado de una sola página
+       tampoco los necesita. -->
+  @if (hasPrevious() || hasNext()) {
   <nav class="data-table__cursor" aria-label="Paginación del listado">
     <button
       app-button
@@ -172,4 +180,5 @@
       Siguiente
     </button>
   </nav>
+  }
 </app-view-state-host>

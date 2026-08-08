@@ -2,9 +2,27 @@
 
 # Inventario de operaciones HTTP
 
-25 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+35 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
+
+## `AuthzClient`
+
+Archivo: `src/app/core/data-access/authz/authz.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/authz/care-relationships` |
+| `GET` | `/authz/legal-representations` |
+
+## `ClinicalClient`
+
+Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/charts/patients/:patientProfileId/chart` |
+| `GET` | `/clinical/patients/:patientProfileId/summary` |
 
 ## `FilesClient`
 
@@ -41,6 +59,7 @@ Archivo: `src/app/core/data-access/identity/identity.client.ts`
 | `POST` | `/identity/me/identity-verification` |
 | `POST` | `/identity/me/practitioner/identity-verification` |
 | `POST` | `/identity/me/practitioner/license-verification` |
+| `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
 ## `ProfilesClient`
@@ -64,11 +83,23 @@ Archivo: `src/app/core/data-access/public/public.client.ts`
 |---|---|
 | `GET` | `/public/directory` |
 
+## `SchedulingClient`
+
+Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/scheduling/bookings` |
+| `GET` | `/scheduling/bookings/:bookingId` |
+| `GET` | `/scheduling/resources` |
+| `GET` | `/scheduling/slots` |
+
 ## `TerminologyClient`
 
 Archivo: `src/app/core/data-access/terminology/terminology.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `GET` | `/terminology/concepts` |
 | `GET` | `/terminology/concepts` |
 | `GET` | `/terminology/value-sets/:valueSetId/$expand` |

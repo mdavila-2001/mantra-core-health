@@ -1,10 +1,20 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
+import { AuthService } from '../../../../core/auth/auth.service';
+import { AuthzClient } from '../../../../core/data-access/authz/authz.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import type { PatientDetail as FichaDePaciente } from '../../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
@@ -41,6 +51,28 @@ export interface FichaContacto {
   readonly esEmergencia: boolean;
 }
 
+/** Una relación asistencial de la ficha, con su tipo ya traducido. */
+export interface FichaRelacion {
+  readonly id: string;
+  readonly tipo: string;
+  readonly proposito: string;
+  readonly desde: Date;
+  readonly hasta?: Date;
+  readonly vigente: boolean;
+}
+
+/**
+ * El bloque de relaciones asistenciales, con su propio estado.
+ *
+ * Tiene uno propio y no comparte el de la ficha porque **falla distinto**: la
+ * lectura pide `CLINICIAN` o `SECURITY_ADMIN` y puede quedar prohibida sin que
+ * eso diga nada sobre la filiación, que es lo que la persona vino a ver.
+ */
+export interface FichaRelaciones {
+  readonly estado: 'cargando' | 'listo' | 'vacio' | 'sin-permiso';
+  readonly items: readonly FichaRelacion[];
+}
+
 /** Lo que se muestra cuando el registro no tiene ese dato cargado. */
 const SIN_DATO = 'Sin registrar';
 
@@ -74,6 +106,8 @@ const SIN_DATO = 'Sin registrar';
 })
 export class PatientDetail {
   private readonly profiles = inject(ProfilesClient);
+  private readonly authz = inject(AuthzClient);
+  private readonly auth = inject(AuthService);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
@@ -92,6 +126,15 @@ export class PatientDetail {
   );
 
   protected readonly ficha = signal<ViewState<FichaDePaciente>>(loading());
+
+  /**
+   * Las relaciones asistenciales (V06-01), con su estado aparte.
+   *
+   * Empieza «cargando» aunque todavía no se haya pedido nada: la petición sale
+   * en cuanto la ficha llega, y decir «vacío» antes de preguntar sería afirmar
+   * que nadie atiende a esta persona sin haberlo consultado.
+   */
+  protected readonly relaciones = signal<FichaRelaciones>({ estado: 'cargando', items: [] });
 
   /** Etiquetas de los conceptos de esta ficha. Vacío mientras no resuelvan. */
   private readonly etiquetas = signal<ConceptLabels>(new Map());
@@ -158,7 +201,10 @@ export class PatientDetail {
     }
 
     return [
-      { etiqueta: 'Género administrativo', valor: this.label(paciente.administrativeGenderConceptId) },
+      {
+        etiqueta: 'Género administrativo',
+        valor: this.label(paciente.administrativeGenderConceptId),
+      },
       { etiqueta: 'Sexo al nacer', valor: this.label(paciente.sexAtBirthConceptId) },
       { etiqueta: 'Identidad de género', valor: this.label(paciente.genderIdentityConceptId) },
       { etiqueta: 'Nacionalidad', valor: this.label(paciente.nationalityConceptId) },
@@ -191,7 +237,10 @@ export class PatientDetail {
     return [
       { etiqueta: 'Estado de la persona', valor: this.label(paciente.personStatusConceptId) },
       { etiqueta: 'Estado vital', valor: this.label(paciente.vitalStatusConceptId) },
-      { etiqueta: 'Vinculación de registros', valor: this.label(paciente.recordLinkageStatusConceptId) },
+      {
+        etiqueta: 'Vinculación de registros',
+        valor: this.label(paciente.recordLinkageStatusConceptId),
+      },
     ];
   });
 
@@ -242,6 +291,8 @@ export class PatientDetail {
   private cargar(): void {
     this.ficha.set(loading());
     this.etiquetas.set(new Map());
+    this.relaciones.set({ estado: 'cargando', items: [] });
+    this.cargarRelaciones();
 
     this.profiles
       .getPatient(this.profileId())
@@ -261,6 +312,76 @@ export class PatientDetail {
           this.ficha.set(ready(paciente));
         },
         error: (error: unknown) => this.ficha.set(errorToViewState<FichaDePaciente>(error)),
+      });
+  }
+
+  /**
+   * Las relaciones asistenciales del paciente (V06-01).
+   *
+   * Por su lado y no dentro del `forkJoin` de la ficha, a propósito: un `403`
+   * acá —la lectura pide `CLINICIAN` o `SECURITY_ADMIN`— no debe llevarse puesta
+   * la filiación, que es lo que la pantalla existe para mostrar.
+   *
+   * Sus etiquetas se resuelven en la misma llamada de terminología que el resto
+   * no puede reutilizar, porque llegan después: se pide un segundo lote sólo con
+   * los conceptos de las relaciones.
+   */
+  private cargarRelaciones(): void {
+    const tenantId = this.auth.activeTenantId();
+    const patientProfileId = this.profileId();
+
+    if (tenantId === null || patientProfileId === '') {
+      this.relaciones.set({ estado: 'vacio', items: [] });
+      return;
+    }
+
+    this.authz
+      .listCareRelationships({ tenantId, patientProfileId })
+      .pipe(
+        switchMap((items) =>
+          forkJoin({
+            items: of(items),
+            etiquetas: this.terminology
+              .readConceptLabels(
+                items
+                  .flatMap((relacion) => [
+                    relacion.relationshipTypeConceptId,
+                    relacion.purposeConceptId,
+                  ])
+                  .filter((id): id is string => id !== undefined),
+              )
+              .pipe(catchError(() => of<ConceptLabels>(new Map()))),
+          }),
+        ),
+      )
+      .subscribe({
+        next: ({ items, etiquetas }) => {
+          if (items.length === 0) {
+            this.relaciones.set({ estado: 'vacio', items: [] });
+            return;
+          }
+
+          const ahora = new Date();
+          this.relaciones.set({
+            estado: 'listo',
+            items: items.map((relacion) => ({
+              id: relacion.id,
+              tipo: etiquetas.get(relacion.relationshipTypeConceptId)?.display ?? SIN_DATO,
+              proposito:
+                relacion.purposeConceptId === undefined
+                  ? ''
+                  : (etiquetas.get(relacion.purposeConceptId)?.display ?? ''),
+              desde: relacion.validFrom,
+              ...(relacion.validTo === undefined ? {} : { hasta: relacion.validTo }),
+              // Vigente es una ventana, no una bandera: sin `validTo` la
+              // relación sigue abierta hasta que alguien la revoque.
+              vigente:
+                relacion.validFrom <= ahora &&
+                (relacion.validTo === undefined || relacion.validTo > ahora),
+            })),
+          });
+        },
+        error: () => this.relaciones.set({ estado: 'sin-permiso', items: [] }),
       });
   }
 

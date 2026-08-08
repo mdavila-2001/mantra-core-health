@@ -62,7 +62,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // El documento de actores ubica estos tres roles en M41; `SCHEDULER` queda
     // afuera a propósito: ahí figura en M32 (flujos), no en agenda.
     roles: ['SCHEDULING_ADMIN', 'SCHEDULING_AGENT', 'PRACTITIONER'],
-    availability: 'planificada',
+    // Encendida con la slice de lectura de agenda: `GET /scheduling/resources`,
+    // `/slots` y `/bookings` existen desde 2026-08-07. El módulo se había
+    // construido entero de escritura —se generaban cupos y se confirmaban citas,
+    // pero no había forma de verlos— y era eso, y no un `GET` de colección
+    // faltante en general, lo que la tenía en espera.
+    availability: 'disponible',
     summary: 'Gestioná disponibilidad, reservas y confirmaciones de turno.',
     module: 'M41 scheduling',
   },
@@ -72,9 +77,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Atención',
     icon: 'results',
     roles: ['CLINICIAN', 'PRACTITIONER'],
-    availability: 'planificada',
+    // Encendida con `GET /clinical/patients/:id/summary` (UC-39-20) y
+    // `GET /charts/patients/:id/chart` (UC-40-14). No hay —ni debe haber— un
+    // listado de todas las historias: se entra por persona, y la pantalla de la
+    // sección es justamente la que elige a quién se mira.
+    availability: 'disponible',
     summary: 'Consultá la historia clínica de los pacientes que atendés.',
-    module: 'M15 chart',
+    module: 'M08 clinical · M15 chart',
   },
 
   /* -- Administración · fase 0, la fundación ------------------------------- */
@@ -116,8 +125,16 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Terminología',
     group: 'Administración',
     icon: 'orders',
+    // La **lectura** del catálogo no pide rol —es metadato compartido, sin datos
+    // de paciente, y el backend lo dice explícitamente en UC-03-13—, pero la
+    // sección se deja acotada a quien administra porque es a quien le sirve:
+    // resolver un `*ConceptId` es una tarea de configuración, no de atención.
     roles: ['SECURITY_ADMIN'],
-    availability: 'planificada',
+    // Encendida con UC-03-13: `GET /terminology/concepts?q=` existe desde
+    // siempre. Lo que faltaba no era el listado del backend —el motivo general
+    // por el que 674 vistas siguen en espera— sino que el cliente implementaba
+    // sólo la mitad del endpoint: resolvía `?ids=` y nunca `?q=`.
+    availability: 'disponible',
     summary: 'Consultá los catálogos que alimentan todos los selectores.',
     module: 'M03 terminology',
   },

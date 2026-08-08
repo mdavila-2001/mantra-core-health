@@ -1,0 +1,65 @@
+/* Archivo clínico — la pantalla que elige a quién se mira. Una columna: el
+   buscador manda, la tabla lo sigue y el acceso directo cierra. Sólo
+   distribución. */
+
+:host {
+  display: block;
+}
+
+.archivo {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+.archivo__buscador {
+  display: block;
+  /* Un campo de texto de mil píxeles no ayuda a escribir un apellido. */
+  max-inline-size: 32rem;
+}
+
+.archivo__nombre {
+  display: block;
+  font-weight: 500;
+}
+
+/* El identificador acompaña al nombre en la misma celda: es el mismo dato visto
+   por la máquina, no una columna aparte. */
+.archivo__id {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+
+/* ── Acceso directo ────────────────────────────────────────────────────────*/
+
+.archivo__directo {
+  display: block;
+  max-inline-size: 68ch;
+}
+
+.archivo__directo-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.archivo__directo-texto {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+}
+
+.archivo__directo-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+.archivo__directo-campo {
+  flex: 1 1 22rem;
+}

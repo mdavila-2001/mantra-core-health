@@ -102,6 +102,50 @@ describe('Select', () => {
 
       expect(native(fixture).value).toBe('');
     });
+
+    /**
+     * El desplegable que **nace** con valor tiene que mostrarlo.
+     *
+     * Parece obvio y no lo era: la selección se aplicaba con un `[value]` sobre
+     * el `<select>`, y en el primer pase Angular escribe las propiedades del
+     * elemento **antes** de crear los `<option>` del `@for`. `select.value = "1"`
+     * sobre un select sin opciones no hace nada, así que quedaba en la primera
+     * —el placeholder oculto— y la pantalla decía «Seleccionar opción» con un
+     * valor elegido.
+     *
+     * No se veía con formularios, que escriben el valor **después** de montar.
+     * Lo destapó el recorrido con usuarios reales en el selector de recurso de
+     * la agenda, que nace con el primer recurso ya elegido.
+     */
+    it('el que nace con valor muestra su opción, no el placeholder', async () => {
+      const fixture = crear<string>(
+        [
+          { value: 'a', label: 'A' },
+          { value: 'b', label: 'B' },
+        ],
+        'b',
+      );
+      fixture.componentRef.setInput('placeholder', 'Seleccionar opción');
+      await fixture.whenStable();
+
+      expect(native(fixture).value).toBe('1');
+      expect(native(fixture).selectedIndex).toBe(2); // 0 es el placeholder
+    });
+
+    /** Y el que recibe sus opciones después —lo normal con datos remotos—. */
+    it('marca la opción cuando las opciones llegan después del valor', async () => {
+      const fixture = crear<string>([], 'b');
+      await fixture.whenStable();
+      expect(native(fixture).value).toBe('');
+
+      fixture.componentRef.setInput('options', [
+        { value: 'a', label: 'A' },
+        { value: 'b', label: 'B' },
+      ]);
+      await fixture.whenStable();
+
+      expect(native(fixture).value).toBe('1');
+    });
   });
 
   /**

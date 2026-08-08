@@ -1,0 +1,51 @@
+/* Expediente clínico. Aviso de recorte, pestañas y nota de alcance, en una
+   columna. Sólo distribución. */
+
+:host {
+  display: block;
+}
+
+.expediente {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+/* Registro arriba y su contexto debajo, en la misma celda: la dosis es parte
+   del medicamento, no una columna aparte. */
+.expediente__principal {
+  display: block;
+  font-weight: 500;
+}
+
+.expediente__secundario {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.expediente__fecha {
+  font-variant-numeric: tabular-nums;
+  /* Los meses abreviados llegan en minúscula del pipe de fecha. */
+  text-transform: capitalize;
+}
+
+/* ── Nota de alcance ───────────────────────────────────────────────────────*/
+
+.expediente__nota {
+  display: block;
+  /* Es texto corrido: la medida de lectura manda sobre el ancho de la tabla. */
+  max-inline-size: 68ch;
+}
+
+.expediente__nota-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.expediente__nota-texto {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+}

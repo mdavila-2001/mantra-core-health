@@ -84,4 +84,71 @@
       </button>
     </app-card>
   }
+
+  <!-- ─── Columna de contexto ───────────────────────────────────────────────
+       La pantalla era una tarjeta angosta y media pantalla en blanco. Lo que
+       falta al costado no es relleno: es lo que la gente pregunta cuando manda
+       un documento y no pasa nada visible. -->
+  <div class="verificar__contexto">
+    <!-- El historial responde «¿esto ya lo mandé?» sin que nadie pregunte.
+         `GET /identity/me/verification-cases`, que el backend publicaba desde
+         siempre y esta pantalla no pedía. -->
+    @if (historialOrdenado().length > 0) {
+      <app-card variant="outlined" padding="lg">
+        <h2 class="verificar__titulo">Tus trámites anteriores</h2>
+
+        <ul class="verificar__historial">
+          @for (previo of historialOrdenado(); track previo.id) {
+            <li class="verificar__historial-fila">
+              <app-status-seal [variant]="sello(previo).variant" [label]="sello(previo).label" />
+              <span class="verificar__historial-fecha">
+                @if (previo.completedAt) {
+                  Resuelto el {{ previo.completedAt.toLocaleDateString() }}
+                } @else if (previo.openedAt) {
+                  Abierto el {{ previo.openedAt.toLocaleDateString() }}
+                } @else {
+                  Sin fecha registrada
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      </app-card>
+    }
+
+    <app-card variant="outlined" padding="lg">
+      <h2 class="verificar__titulo">Cómo sigue</h2>
+
+      <!-- Numerada porque es una secuencia, no una lista de puntos: el orden es
+           la información. -->
+      <ol class="verificar__pasos">
+        <li>
+          <span class="verificar__paso-titulo">Subís el documento</span>
+          <span class="verificar__paso-texto">
+            Se guarda como información de salud protegida, cifrada y con acceso
+            registrado.
+          </span>
+        </li>
+        <li>
+          <span class="verificar__paso-titulo">Lo revisa la autoridad</span>
+          <span class="verificar__paso-texto">
+            No es automático ni instantáneo. No hace falta que hagas nada
+            mientras tanto.
+          </span>
+        </li>
+        <li>
+          <span class="verificar__paso-titulo">Se habilita tu acceso</span>
+          <span class="verificar__paso-texto">
+            Con la identidad verificada podés ver tus datos clínicos y tu
+            resumen de paciente.
+          </span>
+        </li>
+      </ol>
+
+      <p class="verificar__texto">
+        Sólo vos podés verificar tu identidad: ninguna de estas operaciones
+        admite hacerlo en nombre de otra persona.
+      </p>
+    </app-card>
+  </div>
 </div>

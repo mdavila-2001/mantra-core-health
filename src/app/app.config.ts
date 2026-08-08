@@ -1,8 +1,11 @@
+import { registerLocaleData } from '@angular/common';
+import localeEsBo from '@angular/common/locales/es-BO';
 import {
   ApplicationConfig,
   DestroyRef,
   ErrorHandler,
   inject,
+  LOCALE_ID,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
@@ -20,15 +23,41 @@ import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
 
+/**
+ * Datos de formato del idioma de la aplicación.
+ *
+ * Se registran **fuera** del arreglo de proveedores porque `registerLocaleData`
+ * es un efecto global de `@angular/common`, no una inyección: `LOCALE_ID` sólo
+ * dice cuál usar, y sin este registro Angular no tiene los nombres de los meses
+ * ni de los días para ese idioma y sigue formateando en inglés.
+ */
+registerLocaleData(localeEsBo);
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    /**
+     * El idioma con el que se formatean fechas y números.
+     *
+     * `index.html` declara `<html lang="es">` desde siempre, pero `LOCALE_ID`
+     * seguía en su valor por omisión —`en-US`—, así que la agenda mostraba
+     * «Monday 10 Aug» dentro de una pantalla escrita entera en castellano. Lo
+     * encontró el recorrido con usuarios reales, que fue el primero en pintar
+     * una fecha con nombre de día.
+     *
+     * `es-BO` y no `es` a secas porque es el país del despliegue: lo dicen la
+     * zona horaria de los recursos de agenda (`America/La_Paz`) y el prefijo
+     * telefónico del modelo. Con `es` genérico el formato numérico y el de fecha
+     * no son los que se leen acá.
+     */
+    { provide: LOCALE_ID, useValue: 'es-BO' },
     // `provideBrowserGlobalErrorListeners` engancha los fallos globales; esto
     // decide qué se hace con ellos. Sin este proveedor manda el manejador por
     // defecto de Angular, que escribe en consola y nada más: una excepción de
     // render dejaba la pantalla en blanco y nadie se enteraba.
     { provide: ErrorHandler, useClass: AppErrorHandler },
-    provideRouter(routes), provideClientHydration(withEventReplay()),
+    provideRouter(routes),
+    provideClientHydration(withEventReplay()),
     // `withFetch` no es opcional bajo SSR: sin él el cliente usa XHR, que en el
     // servidor obliga a un reemplazo y rompe la transferencia de estado.
     //
@@ -79,5 +108,5 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(IdleLogout);
     }),
-  ]
+  ],
 };
