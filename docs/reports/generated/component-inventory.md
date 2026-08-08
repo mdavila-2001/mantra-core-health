@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-93 componentes y 29 servicios inyectables, leídos de `src/`.
+104 componentes y 30 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,7 +70,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (40)
+## Feature (51)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -82,6 +82,17 @@
 | `app-terminology-catalog` | `TerminologyCatalog` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
 | `app-agenda` | `Agenda` | — | — | — | OnPush | sí |
+| `app-attribute-mappings-editor` | `AttributeMappingsEditor` | `disabled` | — | — | OnPush | sí |
+| `app-attribute-mappings-form` | `AttributeMappingsForm` | — | — | — | OnPush | sí |
+| `app-auth-providers-home` | `AuthProvidersHome` | — | — | — | OnPush | sí |
+| `app-discovered-keys-editor` | `DiscoveredKeysEditor` | `disabled` | — | — | OnPush | sí |
+| `app-key-rotation-form` | `KeyRotationForm` | — | — | — | OnPush | sí |
+| `app-protocol-config-form` | `ProtocolConfigForm` | — | — | — | OnPush | sí |
+| `app-provider-form` | `ProviderForm` | — | — | — | OnPush | sí |
+| `app-provisioning-rule-form` | `ProvisioningRuleForm` | — | — | — | OnPush | sí |
+| `app-signing-key-fields` | `SigningKeyFields` | `disabled` | — | — | OnPush | sí |
+| `app-signing-key-form` | `SigningKeyForm` | — | — | — | OnPush | sí |
+| `app-tenant-binding-form` | `TenantBindingForm` | — | — | — | OnPush | sí |
 | `app-forgot-password` | `ForgotPassword` | — | — | — | OnPush | sí |
 | `app-login` | `Login` | — | — | — | OnPush | sí |
 | `app-register-patient` | `RegisterPatient` | — | — | — | OnPush | sí |
@@ -127,7 +138,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (29)
+## Servicios (30)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -135,6 +146,7 @@
 | `IdleLogout` | `src/app/core/auth/idle-logout.ts` | root | sí |
 | `RefreshTokenStorage` | `src/app/core/auth/refresh-token.storage.ts` | root | **no** |
 | `SessionStore` | `src/app/core/auth/session.store.ts` | root | sí |
+| `AuthProvidersClient` | `src/app/core/data-access/auth-providers/auth-providers.client.ts` | root | sí |
 | `AuthzClient` | `src/app/core/data-access/authz/authz.client.ts` | root | sí |
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
 | `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |

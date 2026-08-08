@@ -15,7 +15,8 @@
       "/access-requests",
       "/delegated-access",
       "/delegated-permission-sets",
-      "/org"
+      "/org",
+      "/auth-providers"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

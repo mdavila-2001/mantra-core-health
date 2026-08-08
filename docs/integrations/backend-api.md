@@ -16,7 +16,7 @@ Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -96,6 +96,11 @@ no filtrar. `Dashboard` llama sin ninguno.
 | `POST` | `/identity/me/tenants/:tenantId/verification` |
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
+
+Todo `identity/me` resuelve el sujeto de la sesión: ninguna ruta recibe a quién
+se verifica, y por eso la pantalla de verificación no tiene selector de persona.
+La única elección es cuál de las organizaciones **propias** — las del token — se
+quiere verificar (`:tenantId`).
 
 ### `ProfilesClient` — 6 operaciones
 
@@ -208,6 +213,31 @@ las pantallas son paneles de operación con identificadores pegados.
 **La evaluación vive bajo `/authz`** aunque el módulo sea el M29: el evaluador
 del actor efectivo es el PDP, y el backend lo publica junto al resto de la
 autorización.
+
+### `AuthProvidersClient` — 12 operaciones · sólo comando
+
+El M40 (`IDENTITY_ADMIN`): proveedores de identidad federada, sus protocolos,
+mapeos, reglas, claves de firma y vinculación a organizaciones, más el flujo de
+login federado y la vinculación de cuentas. Sin `GET` en el backend todavía.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/auth-providers/identity-providers` | `ProviderForm` (V40-03) |
+| `POST` | `/auth-providers/identity-providers/:providerId/protocol-configs` | `ProtocolConfigForm` (V40-06) |
+| `PUT` | `/auth-providers/identity-providers/:providerId/attribute-mappings` | `AttributeMappingsForm` (V40-04) |
+| `POST` | `/auth-providers/identity-providers/:providerId/provisioning-rules` | `ProvisioningRuleForm` (V40-07) |
+| `POST` | `/auth-providers/identity-providers/:providerId/signing-keys` | `SigningKeyForm` (V40-08) |
+| `POST` | `/auth-providers/identity-providers/:providerId/signing-keys/rotate` | `KeyRotationForm` (V40-08·A) |
+| `POST` | `/auth-providers/tenant-bindings` | `TenantBindingForm` (V40-09) |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/authorize` | — |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/callback` | — |
+| `POST` | `/auth-providers/account-link-requests` | — |
+| `POST` | `/auth-providers/account-link-requests/complete` | — |
+| `POST` | `/auth-providers/federated-identities/:identityId/unlink` | — |
+
+Las cinco sin consumidor son el flujo de login federado y la vinculación de
+cuentas (V40-01/02/05/10): el client ya las cubre y sus pantallas están en
+construcción.
 
 ### `TerminologyClient` — 2 operaciones
 

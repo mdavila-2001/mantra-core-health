@@ -27,7 +27,8 @@
       "/access-requests",
       "/delegated-access",
       "/delegated-permission-sets",
-      "/org"
+      "/org",
+      "/auth-providers"
     ],
     "target": "http://localhost:3000",
     "secure": false,

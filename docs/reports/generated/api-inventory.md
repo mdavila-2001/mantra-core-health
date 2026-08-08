@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-47 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+59 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -23,6 +23,25 @@ Archivo: `src/app/core/data-access/delegated-access/delegated-access.client.ts`
 | `POST` | `/practitioner-delegates/:delegationId/access-requests` |
 | `POST` | `/practitioner-delegates/:delegationId/grants` |
 | `POST` | `/practitioner-delegates/:delegationId/revoke` |
+
+## `AuthProvidersClient`
+
+Archivo: `src/app/core/data-access/auth-providers/auth-providers.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/auth-providers/account-link-requests` |
+| `POST` | `/auth-providers/account-link-requests/complete` |
+| `POST` | `/auth-providers/federated-identities/:identityId/unlink` |
+| `POST` | `/auth-providers/identity-providers` |
+| `PUT` | `/auth-providers/identity-providers/:providerId/attribute-mappings` |
+| `POST` | `/auth-providers/identity-providers/:providerId/protocol-configs` |
+| `POST` | `/auth-providers/identity-providers/:providerId/provisioning-rules` |
+| `POST` | `/auth-providers/identity-providers/:providerId/signing-keys` |
+| `POST` | `/auth-providers/identity-providers/:providerId/signing-keys/rotate` |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/authorize` |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/callback` |
+| `POST` | `/auth-providers/tenant-bindings` |
 
 ## `AuthzClient`
 
