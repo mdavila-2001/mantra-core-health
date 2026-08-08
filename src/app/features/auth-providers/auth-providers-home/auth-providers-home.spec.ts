@@ -34,8 +34,11 @@ describe('AuthProvidersHome', () => {
     expect(enlaces()).toEqual([
       '/administracion/proveedores-identidad/proveedores/nuevo',
       '/administracion/proveedores-identidad/proveedores/protocolo',
+      '/administracion/proveedores-identidad/proveedores/mapeo-atributos',
+      '/administracion/proveedores-identidad/proveedores/regla-aprovisionamiento',
       '/administracion/proveedores-identidad/claves/nueva',
       '/administracion/proveedores-identidad/claves/rotar',
+      '/administracion/proveedores-identidad/organizaciones/vincular',
     ]);
   });
 
@@ -44,8 +47,8 @@ describe('AuthProvidersHome', () => {
       '.portada__pendiente',
     );
 
-    // 12 comandos del contrato: 4 con pantalla, 8 a la espera de las suyas.
-    expect(pendientes.length).toBe(8);
+    // 12 comandos del contrato: 7 con pantalla, 5 a la espera de las suyas.
+    expect(pendientes.length).toBe(5);
   });
 
   it('avisa por qué no hay listados: el módulo no expone consultas todavía', () => {

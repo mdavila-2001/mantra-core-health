@@ -49,8 +49,11 @@ export class AuthProvidersHome {
       operaciones: [
         { label: 'Registrar proveedor', route: `${BASE}/proveedores/nuevo` },
         { label: 'Configurar protocolo', route: `${BASE}/proveedores/protocolo` },
-        { label: 'Fijar mapeo de atributos' },
-        { label: 'Definir regla de aprovisionamiento' },
+        { label: 'Fijar mapeo de atributos', route: `${BASE}/proveedores/mapeo-atributos` },
+        {
+          label: 'Definir regla de aprovisionamiento',
+          route: `${BASE}/proveedores/regla-aprovisionamiento`,
+        },
       ],
     },
     {
@@ -65,7 +68,9 @@ export class AuthProvidersHome {
     {
       titulo: 'Organizaciones',
       descripcion: 'Qué organización puede usar cada proveedor y con qué aprovisionamiento.',
-      operaciones: [{ label: 'Vincular proveedor a una organización' }],
+      operaciones: [
+        { label: 'Vincular proveedor a una organización', route: `${BASE}/organizaciones/vincular` },
+      ],
     },
     {
       titulo: 'Login federado',

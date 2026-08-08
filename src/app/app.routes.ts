@@ -293,6 +293,19 @@ export const routes: Routes = [
             (m) => m.ProtocolConfigForm,
           ),
       ),
+      pantallaDeProveedoresDeIdentidad('proveedores/mapeo-atributos', 'Fijar mapeo de atributos', () =>
+        import('./features/auth-providers/attribute-mappings-form/attribute-mappings-form').then(
+          (m) => m.AttributeMappingsForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad(
+        'proveedores/regla-aprovisionamiento',
+        'Definir regla de aprovisionamiento',
+        () =>
+          import('./features/auth-providers/provisioning-rule-form/provisioning-rule-form').then(
+            (m) => m.ProvisioningRuleForm,
+          ),
+      ),
       pantallaDeProveedoresDeIdentidad('claves/nueva', 'Publicar clave de firma', () =>
         import('./features/auth-providers/signing-key-form/signing-key-form').then(
           (m) => m.SigningKeyForm,
@@ -302,6 +315,14 @@ export const routes: Routes = [
         import('./features/auth-providers/key-rotation-form/key-rotation-form').then(
           (m) => m.KeyRotationForm,
         ),
+      ),
+      pantallaDeProveedoresDeIdentidad(
+        'organizaciones/vincular',
+        'Vincular proveedor a una organización',
+        () =>
+          import('./features/auth-providers/tenant-binding-form/tenant-binding-form').then(
+            (m) => m.TenantBindingForm,
+          ),
       ),
     ],
   },
