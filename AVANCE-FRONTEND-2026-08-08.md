@@ -1,19 +1,25 @@
 # Avance de frontend · 2026-08-08 — W1 (vistas de Fase 0) y el estado real de los bloqueos
 
 **Autor:** Justin · **Tarea:** W1 del `PLAN-SEMANA-WEB-Y-MOVIL.md` (vistas de Fase 0 de
-`V01 iam` · `V02 common` · `V05 profiles`) · **Ramas:** `justin/w1-vistas-fase0-pacientes` (PR #25,
-mergeado) y `justin/w1-fusion-pacientes` (PR #27)
+`V01 iam` · `V02 common` · `V05 profiles`) · **PR:** #32 (`justin/w1-vistas-fase0`), que consolida
+todo el carril; el arranque ya entró con el #25
 
-> ⚠️ **Diferencia con los avances anteriores, y hay que decirla primero.** Los de agosto se
-> verificaron ejecutando contra la API viva en `localhost:3000`. **Éste no.** Docker Desktop estuvo
-> apagado toda la sesión y las 1 248 pruebas usan `HttpTestingController`, así que fijan **el
-> contrato leído de los DTOs, no el que el servidor responde**. Todo lo que sigue está verificado
-> por compilación, pruebas unitarias, guardrails y CI — pero no contra el backend real. Antes de
-> mergear el #27 conviene levantar el stack y recorrer las cinco pantallas a mano.
+> ⚠️ **Lo primero, porque cambia cómo se lee todo lo demás: sí se verificó contra la API viva, y
+> aparecieron tres defectos.**
+>
+> El trabajo se hizo con las 1 303 pruebas en verde, que usan `HttpTestingController` y por lo tanto
+> fijan **el contrato leído de los DTOs, no el que el servidor responde**. Al levantar el stack
+> `mantra-redesa` al final de la sesión y ejercer las pantallas contra `localhost:3000`, tres
+> suposiciones sobre la forma del cuerpo se cayeron de una — incluida una que marcaba **fallecida a
+> toda persona viva**. Están en la §5, y son lo primero que conviene revisar.
+>
+> **Lo que sigue sin cubrir:** las pantallas no se recorrieron a mano en el navegador; se ejercieron
+> los endpoints que consumen. La de fusión es la que más conviene probar así antes de mergear —
+> une dos historias clínicas.
 
 ---
 
-## Resumen en seis líneas
+## Resumen en siete líneas
 
 1. **V05-01 (Pacientes) y V05-03 (Resumen propio) están completas** — listado, ficha F-01, alta,
    fusión de duplicados y autoservicio. Dos de las 693 vistas, pero cerradas de verdad.
@@ -27,6 +33,8 @@ mergeado) y `justin/w1-fusion-pacientes` (PR #27)
 5. **Pablo destrabó el buscador de referencia** (PR #26) y la acción de fusionar se construyó
    encima el mismo día. El circuito «pedido → pieza → uso» funcionó.
 6. **Fusionar dos pacientes es irreversible en cuanto cerrás la pantalla.** Hallazgo nuevo.
+7. **Al ejercer contra la API viva cayeron tres suposiciones** sobre la forma de la respuesta —una
+   marcaba fallecida a toda persona viva—. Están en la §5 y son lo primero que conviene revisar.
 
 ---
 
@@ -39,7 +47,7 @@ mergeado) y `justin/w1-fusion-pacientes` (PR #27)
 
 Las dos quedaron marcadas `x` en el `🗺️ Orden de trabajo` del vault.
 
-**Números:** 1 248 pruebas en 108 archivos (+114 sobre el punto de partida) · build SSR en verde ·
+**Números:** 1 303 pruebas en 112 archivos (+169 sobre el punto de partida) · build SSR en verde ·
 CI 4/4 en los dos PRs · todos los guardrails salvo `check-doc-links`, que en Windows reporta el
 mismo número de rotos que un árbol limpio de `dev` — **ninguno lo agregó este trabajo**. Es el
 falso positivo de resolución de rutas ya conocido, y el CI de Linux lo confirmó pasando en el
@@ -154,7 +162,65 @@ Una lectura sobre `profiles.patient_merge_events` —tabla que ya existe— lo c
 
 ---
 
-## 5 · Lo que se destrabó, y por qué vale la pena contarlo
+## 5 · Tres defectos que sólo aparecieron hablando con el servidor
+
+Los tres estaban en código con las pruebas en verde. **Ninguno era detectable con
+`HttpTestingController`**, porque las pruebas fabricaban la respuesta con la forma que yo suponía.
+
+### 5.1 · El sello «Persona fallecida» aparecía en toda ficha
+
+**El backend no omite los campos opcionales vacíos: los manda como `null`.**
+
+```
+GET /profiles/patients/:id  →  "deceasedAt": null      ← persona viva
+```
+
+La ficha decidía con `deceasedAt !== undefined`, y eso es **verdadero** cuando el valor es `null`.
+
+El mismo `null` hacía que `new Date(null)` diera **1970-01-01** —no `Invalid Date`—, así que un
+paciente sin fecha de nacimiento figuraba nacido en 1969.
+
+### 5.2 · La fecha de nacimiento retrocedía un día
+
+El contrato declara `birthDate` como `format: 'date'`, pero el servidor **la serializa como
+instante**. Verificado de punta a punta desde `America/La_Paz` (UTC−4):
+
+| | |
+|---|---|
+| Se guardó | `1985-03-14` |
+| El servidor devolvió | `1985-03-14T00:00:00.000Z` |
+| La pantalla mostraba | **13/03/1985** |
+
+Es el espejo del cuidado que los formularios ya tenían al *enviar*. Faltaba el camino de vuelta.
+
+### 5.3 · El mismo defecto estaba en un segundo cliente
+
+`identity.client.ts` hacía `openedAt === undefined ? {} : new Date(...)`. Las dos fechas son
+columnas `nullable: true` que el servicio copia tal cual. La pantalla de verificación hace
+`@if (abierto.openedAt)`, y una fecha de 1970 es un valor verdadero: un caso sin fecha de apertura
+mostraba **«1/1/1970»** en vez de ocultar el dato.
+
+Que apareciera dos veces con la misma causa es lo que llevó a sacar los conversores a
+`core/data-access/wire.ts`: **se normaliza en la frontera**, una sola vez para todos los clientes.
+
+### Y una prueba encontró un hueco en la propia corrección
+
+`maybeDateOnly` guardaba contra `undefined` pero no contra `NaN`, así que un texto que no es una
+fecha producía una `Invalid Date` — que en una plantilla se cuela como valor verdadero, justo el
+modo de fallo que la función existe para evitar. Se corrigió la función, no la prueba.
+
+### La lección, que vale para todo el equipo
+
+Es el mismo patrón que el defecto ya documentado de `details.messages` vs `details.violations`:
+**una prueba que fabrica su propia respuesta valida la suposición, no el contrato.**
+
+Conviene revisar los clientes restantes con una pregunta concreta por cada campo opcional:
+**¿qué pasa si llega `null`?** Ya lo hice para los seis de `core/data-access/`; `public.client.ts`
+lo manejaba bien y el resto usa campos obligatorios.
+
+---
+
+## 6 · Lo que se destrabó, y por qué vale la pena contarlo
 
 **Pablo tomó el buscador de referencia** (`reference-combobox`, PR #26) después de que quedara
 levantado como bloqueo, y **el mismo día se construyó la fusión encima**. En el mismo PR vino
@@ -167,7 +233,7 @@ compuesto a mano dentro de una vista, hoy tendríamos tres versiones distintas y
 
 ---
 
-## 6 · Estado de mis 37 vistas de Fase 0
+## 7 · Estado de mis 37 vistas de Fase 0
 
 | Módulo | En Fase 0 | Construidas | Esperando `GET` |
 |---|---|---|---|
@@ -192,7 +258,7 @@ escribir pantallas toda la semana, pero cada campo de catálogo sale vacío — 
 
 ---
 
-## 7 · Notas de stack, para no tropezarlas
+## 8 · Notas de stack, para no tropezarlas
 
 - **`withComponentInputBinding()` no está habilitado.** Un `input.required<string>()` no se llena
   desde un segmento de ruta; hay que leer `ActivatedRoute`. Activarlo cambia cómo se enlazan las
@@ -216,7 +282,7 @@ escribir pantallas toda la semana, pero cada campo de catálogo sale vacío — 
 
 ---
 
-## 8 · Qué pido, y a quién
+## 9 · Qué pido, y a quién
 
 Los pedidos formales están en `PENDIENTES-BACKEND.md` (**P7 a P10**). En una línea cada uno:
 
