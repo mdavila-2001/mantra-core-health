@@ -1,0 +1,74 @@
+/* Tarjeta documento centrada, en la misma familia que forgot-password,
+   verify-email y nueva-clave: membrete con regla, título en tinta, cuerpo y
+   enlace secundario. Solo tokens REDSAT. */
+
+/* Pantalla enrutada: el host es un custom element y sin `display` sería EN
+   LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
+   contenido y hace scrollear la página de más. */
+:host {
+  display: block;
+}
+
+.activar {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  background: var(--bg-surface-alt);
+}
+
+.activar__card {
+  width: 100%;
+  max-width: 28rem;
+  padding: var(--sp-6);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+/* Membrete: título y texto separados del cuerpo por una regla. */
+.activar__header {
+  margin-bottom: var(--sp-6);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.activar__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--text-primary);
+}
+
+.activar__text {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.activar__alert {
+  display: block;
+  margin-bottom: var(--sp-4);
+}
+
+.activar__card form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.activar__submit {
+  margin-top: var(--sp-2);
+  width: 100%;
+}
+
+.activar__pie {
+  margin: var(--sp-6) 0 0;
+  text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

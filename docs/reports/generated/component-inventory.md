@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-76 componentes y 25 servicios inyectables, leídos de `src/`.
+78 componentes y 25 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,7 +70,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (23)
+## Feature (25)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -82,9 +82,11 @@
 | `app-patient-new` | `PatientNew` | — | — | — | OnPush | sí |
 | `app-related-person-form` | `RelatedPersonForm` | `profileId`, `yaTieneTutor` | `registered`, `cancelled` | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
+| `app-activate-account` | `ActivateAccount` | — | — | — | OnPush | sí |
 | `app-forgot-password` | `ForgotPassword` | — | — | — | OnPush | sí |
 | `app-login` | `Login` | — | — | — | OnPush | sí |
 | `app-register-patient` | `RegisterPatient` | — | — | — | OnPush | sí |
+| `app-resend-verification` | `ResendVerification` | — | — | — | OnPush | sí |
 | `app-reset-password` | `ResetPassword` | — | — | — | OnPush | sí |
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
