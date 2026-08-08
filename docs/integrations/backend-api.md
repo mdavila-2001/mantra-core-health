@@ -34,7 +34,7 @@ inyección»*.
 
 ## Catálogo de operaciones
 
-### `IamClient` — 12 operaciones
+### `IamClient` — 13 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
@@ -43,7 +43,8 @@ inyección»*.
 | `POST` | `/iam/auth/register-patient` | `RegisterPatient` | Sí |
 | `POST` | `/iam/auth/register-practitioner` | `RegisterPatient` | Sí |
 | `POST` | `/iam/auth/verify-email` | `VerifyEmail` | Sí |
-| `POST` | `/iam/auth/activate` | **Sin consumidor** | Sí |
+| `POST` | `/iam/auth/resend-verification` | `ResendVerification` (V01-14) | Sí |
+| `POST` | `/iam/auth/activate` | `ActivateAccount` (V01-08) | Sí |
 | `POST` | `/iam/auth/forgot-password` | `ForgotPassword` | No declarada |
 | `POST` | `/iam/auth/reset-password` | `ResetPassword` | No declarada |
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
@@ -140,7 +141,19 @@ degrada esos campos a «Sin registrar» sin tumbar la pantalla.
 |---|---|
 | `POST` | `/common/files/upload` |
 
-**Siete operaciones sin pantalla que las llame** — eran once hasta que V05-01 y
+> **`activate` dejó de estar sin consumidor, y era un flujo roto.** El alta asistida
+> (`/iam/users/assisted-registration`) entrega un **token de activación de un solo uso** y lo
+> muestra en pantalla, pero **no existía ninguna ruta donde usarlo**: el método estaba en el
+> cliente y ningún componente lo llamaba. Dábamos de alta a una persona, le entregábamos una llave
+> y no había puerta. Lo cierra `ActivateAccount` en `/auth/activar`, enlazada desde la propia
+> pantalla del alta.
+>
+> **`resend-verification` no estaba ni envuelto.** Se pide el identificador con el que la persona
+> inicia sesión, **no un correo de destino**: dejar elegir a dónde va el enlace convertiría el
+> formulario en un modo de mandar el token de una cuenta ajena a una bandeja propia. La respuesta
+> es siempre la misma exista o no la cuenta, y la pantalla lo respeta.
+
+**Seis operaciones sin pantalla que las llame** — eran once hasta que V05-01 y
 V05-03 encendieron cuatro. No es código muerto: todas tienen prueba y son la
 mitad de un flujo cuya interfaz todavía no se escribió.
 Ver [el mapa de integraciones §3](../architecture/integration-map.md#3--operaciones-sin-consumidor).

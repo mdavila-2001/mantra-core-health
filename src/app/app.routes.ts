@@ -8,6 +8,8 @@ import { RegisterPatient } from './features/auth/register-patient/register-patie
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
+import { ActivateAccount } from './features/auth/activate-account/activate-account';
+import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
@@ -202,6 +204,21 @@ export const routes: Routes = [
     path: 'auth/recuperar',
     component: ForgotPassword,
     title: 'Mantra Core Health - Recuperar contraseña',
+  },
+  {
+    // V01-08. El token puede venir por el enlace (`?token=…`) o escribirse a
+    // mano: el alta asistida lo entrega en pantalla para que alguien lo pase
+    // por teléfono o en papel, y obligar a armar una URL sería devolverle el
+    // problema a quien menos herramientas tiene.
+    path: 'auth/activar',
+    component: ActivateAccount,
+    title: 'Mantra Core Health - Activar cuenta',
+  },
+  {
+    // V01-14.
+    path: 'auth/reenviar-verificacion',
+    component: ResendVerification,
+    title: 'Mantra Core Health - Reenviar verificación',
   },
   {
     // También por query string: /auth/nueva-clave?token=…

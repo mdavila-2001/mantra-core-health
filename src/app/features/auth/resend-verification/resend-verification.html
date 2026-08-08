@@ -1,0 +1,85 @@
+<main class="reenviar">
+  <div class="reenviar__card">
+    @if (done()) {
+      <div class="reenviar__header">
+        <!-- No dice «te lo mandamos»: eso afirmaría que la cuenta existe, y el
+             backend devuelve lo mismo exista o no. -->
+        <h1 appAnuncio [asertivo]="false" class="reenviar__title" data-testid="reenviar-ok">
+          Revisá tu correo
+        </h1>
+        <p class="reenviar__text">
+          Si hay una cuenta con ese dato, el enlace de verificación va en camino. Puede tardar unos
+          minutos; mirá también la carpeta de correo no deseado.
+        </p>
+      </div>
+
+      <button
+        app-button
+        variant="outline"
+        size="lg"
+        class="reenviar__submit"
+        data-testid="reenviar-otro"
+        (clicked)="otroIntento()"
+      >
+        Probar con otro dato
+      </button>
+
+      <p class="reenviar__pie"><a app-link routerLink="/auth">Volver a iniciar sesión</a></p>
+    } @else {
+      <div class="reenviar__header">
+        <h1 class="reenviar__title">Reenviar la verificación</h1>
+        <p class="reenviar__text">
+          Poné el correo o el documento con el que iniciás sesión y te mandamos otra vez el enlace.
+        </p>
+      </div>
+
+      @if (esperaEnSegundos(); as segundos) {
+        <!-- Un límite de intentos no es un error: decirle «error» a quien
+             simplemente fue rápido lo invita a insistir. -->
+        <app-alert appAnuncio tone="warning" class="reenviar__alert" data-testid="reenviar-espera">
+          Probaste varias veces seguidas. Esperá {{ segundos }} segundos y volvé a intentarlo.
+        </app-alert>
+      } @else if (errorMessage(); as mensaje) {
+        <app-alert appAnuncio tone="error" class="reenviar__alert" data-testid="reenviar-error">{{
+          mensaje
+        }}</app-alert>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="reenviar-form">
+        <app-form-field
+          label="Correo o documento"
+          hint="El mismo con el que entrás. No es a dónde se manda: eso lo decide el sistema."
+          [required]="true"
+          [errorMessage]="
+            form.controls.identifier.touched && form.controls.identifier.invalid
+              ? 'Escribí el correo o el documento con el que iniciás sesión.'
+              : ''
+          "
+        >
+          <app-input
+            formControlName="identifier"
+            type="text"
+            autocomplete="username"
+            testId="reenviar-identificador"
+          />
+        </app-form-field>
+
+        <button
+          app-button
+          type="submit"
+          variant="primary"
+          size="lg"
+          class="reenviar__submit"
+          data-testid="reenviar-submit"
+          [isLoading]="isSubmitting()"
+        >
+          Reenviar el enlace
+        </button>
+      </form>
+
+      <p class="reenviar__pie">
+        ¿Ya lo verificaste? <a app-link routerLink="/auth">Iniciá sesión</a>
+      </p>
+    }
+  </div>
+</main>

@@ -2,7 +2,7 @@
 
 # Inventario de rutas
 
-Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 11 entradas declaradas.
+Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 13 entradas declaradas.
 
 | URL | Destino | Acceso | Render en servidor | Título |
 |---|---|---|---|---|
@@ -14,6 +14,8 @@ Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 11 entradas 
 | `/auth/registro` | `RegisterPatient` | Pública | Prerender | Mantra Core Health - Crear cuenta |
 | `/auth/verificar` | `VerifyEmail` | Pública | Client | Mantra Core Health - Verificar correo |
 | `/auth/recuperar` | `ForgotPassword` | Pública | Prerender | Mantra Core Health - Recuperar contraseña |
+| `/auth/activar` | `ActivateAccount` | Pública | Client | Mantra Core Health - Activar cuenta |
+| `/auth/reenviar-verificacion` | `ResendVerification` | Pública | Client | Mantra Core Health - Reenviar verificación |
 | `/auth/nueva-clave` | `ResetPassword` | Pública | Client | Mantra Core Health - Nueva contraseña |
 | `/error` | `ErrorRecovery` | Pública | Client | Mantra Core Health |
 | `/**` | `NotFound` | Pública | Client | Mantra Core Health - Página no encontrada |
