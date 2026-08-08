@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { maybeDate } from '../wire';
 import type {
   LicenseVerificationRequest,
   VerificationCase,
@@ -10,11 +11,17 @@ import type {
   VerificationRequestResult,
 } from './identity.types';
 
+/**
+ * El caso tal como llega.
+ *
+ * Las dos fechas son `nullable: true` en la entidad y el servicio las copia tal
+ * cual, así que **llegan como `null`, no ausentes** — igual que en `profiles`.
+ */
 interface VerificationCaseBody {
   readonly id: string;
   readonly status: string;
-  readonly openedAt?: string;
-  readonly completedAt?: string;
+  readonly openedAt?: string | null;
+  readonly completedAt?: string | null;
 }
 
 /**
@@ -71,11 +78,16 @@ export class IdentityClient {
     return this.http
       .get<VerificationCaseBody>(this.url(`/identity/me/verification-cases/${caseId}`))
       .pipe(
+        // `maybeDate` y no `=== undefined`: con `null`, aquella comparación era
+        // falsa y `new Date(null)` daba **1970-01-01**. La pantalla comprueba
+        // `@if (abierto.openedAt)`, y una fecha de 1970 es verdadera, así que un
+        // caso sin fecha de apertura mostraba «1/1/1970» en vez de ocultar el
+        // dato. Mismo defecto que el corregido en `profiles`.
         map((body) => ({
           id: body.id,
           status: body.status,
-          ...(body.openedAt === undefined ? {} : { openedAt: new Date(body.openedAt) }),
-          ...(body.completedAt === undefined ? {} : { completedAt: new Date(body.completedAt) }),
+          openedAt: maybeDate(body.openedAt),
+          completedAt: maybeDate(body.completedAt),
         })),
       );
   }

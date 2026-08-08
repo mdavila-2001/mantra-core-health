@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   AccountLink,
   NewPatientProfile,
@@ -255,90 +256,6 @@ function toMergeEvent(body: WireMergeEvent): PatientMergeEvent {
 function toPatientListItem(item: ConNulos<WirePatientListItem>): PatientListItem {
   const limpio = sinNulos<WirePatientListItem>(item);
   return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
-}
-
-/**
- * Convierte una fecha que puede no venir.
- *
- * **`== null` y no `=== undefined`**, y la diferencia costó un defecto real: el
- * backend manda los opcionales vacíos como `null`, no los omite, y
- * `new Date(null)` **no** es una fecha inválida — es el 1 de enero de 1970.
- * Un paciente sin fecha de nacimiento se mostraba como nacido en 1969.
- *
- * Devolver `undefined` en vez de una `Invalid Date` es lo que deja al
- * consumidor distinguir «no hay dato» de «hay un dato roto».
- */
-function maybeDate(value?: string | null): Date | undefined {
-  return value == null ? undefined : new Date(value);
-}
-
-/**
- * Convierte una fecha **sin hora** (`birthDate`) a la medianoche **local**.
- *
- * El contrato la declara `format: 'date'`, pero el servidor la serializa como
- * instante: `"1985-03-14T00:00:00.000Z"`. Pasarla por `new Date()` la ancla a
- * medianoche UTC, y al pintarla en hora local **retrocede un día** en cualquier
- * huso al oeste de Greenwich.
- *
- * Verificado contra la API viva el 2026-08-08 desde `America/La_Paz` (UTC−4):
- * se guardó `1985-03-14`, el servidor devolvió `1985-03-14T00:00:00.000Z` y la
- * pantalla mostraba **13/03/1985**. Un día de diferencia en la fecha de
- * nacimiento de alguien.
- *
- * Es el **espejo** del cuidado que ya tenían los formularios al enviar: allá se
- * arma el `YYYY-MM-DD` con los componentes locales para no correrlo al pasar
- * por UTC. Acá se hace el camino de vuelta.
- *
- * Una fecha con hora de verdad —`deceasedAt`, `createdAt`— **no** pasa por acá:
- * ahí el instante es el dato y convertirlo sería romperlo.
- */
-function maybeDateOnly(value?: string | null): Date | undefined {
-  if (value == null) {
-    return undefined;
-  }
-  const [anio, mes, dia] = value.slice(0, 10).split('-').map(Number);
-  if (anio === undefined || mes === undefined || dia === undefined) {
-    return undefined;
-  }
-  return new Date(anio, mes - 1, dia);
-}
-
-/* ============================================================================
-    El transporte manda `null`; los tipos de la vista dicen `?:`
-
-    Verificado contra la API viva el 2026-08-08: `GET /profiles/patients/:id`
-    devuelve `"birthDate": null`, `"deceasedAt": null`,
-    `"administrativeGenderConceptId": null`… — **no omite las claves**.
-
-    Los tipos de la vista declaran esos campos como `?:`, que en TypeScript
-    significa `undefined`. La diferencia no es cosmética:
-
-    - `new Date(null)` da **1970-01-01**, no `Invalid Date`.
-    - `deceasedAt !== undefined` es **`true`** cuando vale `null`, así que la
-      ficha marcaba **fallecida a toda persona viva**.
-
-    Las pruebas unitarias no lo veían porque fabricaban las respuestas con la
-    clave **ausente**, que es como yo suponía que venía. Es el mismo patrón que
-    el defecto de `details.messages` vs `details.violations`: una suposición
-    sobre la forma del cuerpo que sólo se cae al hablar con el servidor.
-
-    Se normaliza **en la frontera**, que es donde se promete la forma: quitar la
-    clave nula la vuelve ausente, y ausente es exactamente lo que `?:` declara.
-    ========================================================================== */
-
-/** La misma forma, admitiendo el `null` que el transporte sí manda. */
-type ConNulos<T> = { readonly [K in keyof T]: T[K] | null };
-
-/**
- * Quita las claves que llegaron en `null`.
- *
- * No convierte a `undefined` explícito: **elimina la clave**. Es la única forma
- * de que `'x' in objeto` y `Object.keys()` digan lo mismo que el tipo.
- */
-function sinNulos<T extends object>(body: ConNulos<T>): T {
-  return Object.fromEntries(
-    Object.entries(body).filter(([, valor]) => valor !== null),
-  ) as T;
 }
 
 /**
