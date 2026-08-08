@@ -75,16 +75,19 @@ export class AuthProvidersHome {
     {
       titulo: 'Login federado',
       descripcion: 'El intento se inicia con state y nonce; todo desenlace queda registrado.',
-      operaciones: [{ label: 'Iniciar login federado' }, { label: 'Procesar callback' }],
+      operaciones: [
+        { label: 'Iniciar login federado', route: `${BASE}/login/iniciar` },
+        { label: 'Procesar callback', route: `${BASE}/login/callback` },
+      ],
     },
     {
       titulo: 'Vinculación de cuentas',
       descripcion:
         'Sujetos externos que se vinculan a una cuenta local con un token de un solo uso.',
       operaciones: [
-        { label: 'Solicitar vinculación de cuenta' },
-        { label: 'Completar vinculación' },
-        { label: 'Desvincular identidad federada' },
+        { label: 'Solicitar vinculación de cuenta', route: `${BASE}/cuentas/vincular` },
+        { label: 'Completar vinculación', route: `${BASE}/cuentas/completar` },
+        { label: 'Desvincular identidad federada', route: `${BASE}/cuentas/desvincular` },
       ],
     },
   ];

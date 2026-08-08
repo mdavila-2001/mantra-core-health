@@ -39,16 +39,20 @@ describe('AuthProvidersHome', () => {
       '/administracion/proveedores-identidad/claves/nueva',
       '/administracion/proveedores-identidad/claves/rotar',
       '/administracion/proveedores-identidad/organizaciones/vincular',
+      '/administracion/proveedores-identidad/login/iniciar',
+      '/administracion/proveedores-identidad/login/callback',
+      '/administracion/proveedores-identidad/cuentas/vincular',
+      '/administracion/proveedores-identidad/cuentas/completar',
+      '/administracion/proveedores-identidad/cuentas/desvincular',
     ]);
   });
 
-  it('las operaciones sin pantalla se declaran en preparación, no se ocultan', () => {
+  it('no queda ninguna operación en preparación: los 12 comandos tienen pantalla', () => {
     const pendientes = (fixture.nativeElement as HTMLElement).querySelectorAll(
       '.portada__pendiente',
     );
 
-    // 12 comandos del contrato: 7 con pantalla, 5 a la espera de las suyas.
-    expect(pendientes.length).toBe(5);
+    expect(pendientes.length).toBe(0);
   });
 
   it('avisa por qué no hay listados: el módulo no expone consultas todavía', () => {

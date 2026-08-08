@@ -324,6 +324,37 @@ export const routes: Routes = [
             (m) => m.TenantBindingForm,
           ),
       ),
+      pantallaDeProveedoresDeIdentidad('login/iniciar', 'Iniciar login federado', () =>
+        import('./features/auth-providers/login-start-form/login-start-form').then(
+          (m) => m.LoginStartForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad('login/callback', 'Procesar callback del proveedor', () =>
+        import('./features/auth-providers/login-callback-form/login-callback-form').then(
+          (m) => m.LoginCallbackForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad('cuentas/vincular', 'Solicitar vinculación de cuenta', () =>
+        import('./features/auth-providers/account-link-request-form/account-link-request-form').then(
+          (m) => m.AccountLinkRequestForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad(
+        'cuentas/completar',
+        'Completar vinculación de cuenta',
+        () =>
+          import(
+            './features/auth-providers/account-link-complete-form/account-link-complete-form'
+          ).then((m) => m.AccountLinkCompleteForm),
+      ),
+      pantallaDeProveedoresDeIdentidad(
+        'cuentas/desvincular',
+        'Desvincular identidad federada',
+        () =>
+          import('./features/auth-providers/identity-unlink-form/identity-unlink-form').then(
+            (m) => m.IdentityUnlinkForm,
+          ),
+      ),
     ],
   },
   {

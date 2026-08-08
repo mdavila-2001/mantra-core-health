@@ -229,15 +229,15 @@ login federado y la vinculación de cuentas. Sin `GET` en el backend todavía.
 | `POST` | `/auth-providers/identity-providers/:providerId/signing-keys` | `SigningKeyForm` (V40-08) |
 | `POST` | `/auth-providers/identity-providers/:providerId/signing-keys/rotate` | `KeyRotationForm` (V40-08·A) |
 | `POST` | `/auth-providers/tenant-bindings` | `TenantBindingForm` (V40-09) |
-| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/authorize` | — |
-| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/callback` | — |
-| `POST` | `/auth-providers/account-link-requests` | — |
-| `POST` | `/auth-providers/account-link-requests/complete` | — |
-| `POST` | `/auth-providers/federated-identities/:identityId/unlink` | — |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/authorize` | `LoginStartForm` (V40-05·A) |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/callback` | `LoginCallbackForm` (V40-10) |
+| `POST` | `/auth-providers/account-link-requests` | `AccountLinkRequestForm` (V40-01) |
+| `POST` | `/auth-providers/account-link-requests/complete` | `AccountLinkCompleteForm` (V40-01·A) |
+| `POST` | `/auth-providers/federated-identities/:identityId/unlink` | `IdentityUnlinkForm` (V40-02·A) |
 
-Las cinco sin consumidor son el flujo de login federado y la vinculación de
-cuentas (V40-01/02/05/10): el client ya las cubre y sus pantallas están en
-construcción.
+Los doce comandos tienen pantalla. Las doce operan con identificadores pegados
+—o con el código del proveedor, en el flujo por `by-code`—; cuando lleguen los
+endpoints de consulta, los listados reemplazan ese gesto.
 
 ### `TerminologyClient` — 2 operaciones
 

@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-104 componentes y 30 servicios inyectables, leídos de `src/`.
+109 componentes y 30 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,7 +70,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (51)
+## Feature (56)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -82,11 +82,16 @@
 | `app-terminology-catalog` | `TerminologyCatalog` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
 | `app-agenda` | `Agenda` | — | — | — | OnPush | sí |
+| `app-account-link-complete-form` | `AccountLinkCompleteForm` | — | — | — | OnPush | sí |
+| `app-account-link-request-form` | `AccountLinkRequestForm` | — | — | — | OnPush | sí |
 | `app-attribute-mappings-editor` | `AttributeMappingsEditor` | `disabled` | — | — | OnPush | sí |
 | `app-attribute-mappings-form` | `AttributeMappingsForm` | — | — | — | OnPush | sí |
 | `app-auth-providers-home` | `AuthProvidersHome` | — | — | — | OnPush | sí |
 | `app-discovered-keys-editor` | `DiscoveredKeysEditor` | `disabled` | — | — | OnPush | sí |
+| `app-identity-unlink-form` | `IdentityUnlinkForm` | — | — | — | OnPush | sí |
 | `app-key-rotation-form` | `KeyRotationForm` | — | — | — | OnPush | sí |
+| `app-login-callback-form` | `LoginCallbackForm` | — | — | — | OnPush | sí |
+| `app-login-start-form` | `LoginStartForm` | — | — | — | OnPush | sí |
 | `app-protocol-config-form` | `ProtocolConfigForm` | — | — | — | OnPush | sí |
 | `app-provider-form` | `ProviderForm` | — | — | — | OnPush | sí |
 | `app-provisioning-rule-form` | `ProvisioningRuleForm` | — | — | — | OnPush | sí |

@@ -1,0 +1,112 @@
+<app-page-header
+  title="Iniciar login federado"
+  subtitle="Registra el intento contra el proveedor y devuelve el material que el callback tiene que traer de vuelta."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (started(); as intento) {
+  <div class="m40__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m40__resultado-titulo">El intento quedó iniciado</h2>
+
+    <p class="m40__texto">
+      El proveedor espera en su URL de autorización. El callback tiene que devolver el
+      «state» tal cual: es lo único que liga su respuesta con este intento.
+    </p>
+
+    <dl class="m40__datos">
+      <div>
+        <dt>Intento</dt>
+        <dd><code class="tabular-nums">{{ intento.attemptId }}</code></dd>
+      </div>
+      <div>
+        <dt>State</dt>
+        <dd><code class="tabular-nums">{{ intento.state }}</code></dd>
+      </div>
+      <div>
+        <dt>Nonce</dt>
+        <dd><code class="tabular-nums">{{ intento.nonce }}</code></dd>
+      </div>
+      <div>
+        <dt>URL de autorización</dt>
+        <dd><code>{{ intento.authorizeUrl }}</code></dd>
+      </div>
+      <div>
+        <dt>Exige PKCE</dt>
+        <dd>{{ intento.pkceRequired ? 'Sí' : 'No' }}</dd>
+      </div>
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otroIntento()">Iniciar otro intento</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Contra qué proveedor"
+      description="El proveedor se busca por su código, no por su identificador."
+    >
+      <app-form-field
+        label="Código del proveedor"
+        [required]="true"
+        hint="El código con el que se registró el proveedor, no su UUID."
+        [errorMessage]="
+          form.controls.providerCode.touched && form.controls.providerCode.invalid
+            ? 'Ingresá el código del proveedor.'
+            : ''
+        "
+      >
+        <app-input formControlName="providerCode" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Organización a la que se quiere entrar"
+        hint="Opcional: vacía, decide el vínculo del proveedor. Pegá el identificador (UUID)."
+        [errorMessage]="
+          form.controls.tenantId.touched && form.controls.tenantId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="tenantId" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Entorno" hint="Por defecto, Producción.">
+        <app-radio-group [value]="environment()" (valueChange)="elegirEntorno($event)">
+          <app-radio value="DEVELOPMENT" label="Desarrollo" />
+          <app-radio value="STAGING" label="Staging" />
+          <app-radio value="PRODUCTION" label="Producción" />
+        </app-radio-group>
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Rastro del intento"
+      description="De dónde sale el login; queda en el registro del intento."
+    >
+      <app-form-field
+        label="IP de origen"
+        hint="Opcional: vacía, no viaja."
+        [errorMessage]="
+          form.controls.ip.touched && form.controls.ip.invalid ? 'Hasta 100 caracteres.' : ''
+        "
+      >
+        <app-input formControlName="ip" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Agente de usuario"
+        hint="Opcional: el navegador o cliente que inicia el login."
+        [errorMessage]="
+          form.controls.userAgent.touched && form.controls.userAgent.invalid
+            ? 'Hasta 500 caracteres.'
+            : ''
+        "
+      >
+        <app-textarea formControlName="userAgent" [rows]="2" [autoResize]="true" [maxLength]="maxAgent" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions submitLabel="Iniciar login" [pending]="isSubmitting()" (submitted)="submit()" />
+  </form>
+}
