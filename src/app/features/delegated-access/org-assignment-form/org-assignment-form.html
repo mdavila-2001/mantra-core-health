@@ -1,0 +1,130 @@
+<app-page-header
+  title="Asignar usuario de organización"
+  subtitle="Sumá una persona de la organización con alcance acotado, supervisor responsable y vigencia."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as assignment) {
+  <div class="m29__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m29__resultado-titulo">La asignación quedó creada</h2>
+
+    <dl class="m29__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ assignment.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado (concepto)</dt>
+        <dd><code class="tabular-nums">{{ assignment.status }}</code></dd>
+      </div>
+      <div>
+        <dt>Creada el</dt>
+        <dd>{{ assignment.createdAt.toLocaleString() }}</dd>
+      </div>
+    </dl>
+
+    <p class="m29__texto">
+      Guardá el identificador: es el que después reasigna el supervisor o
+      suspende la asignación.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraAsignacion()">Asignar otra persona</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Sobre qué membresía"
+      description="La asignación cuelga de la membresía de la persona en la organización."
+    >
+      <app-form-field
+        label="Identificador de la membresía"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.tenantMembershipId.touched && form.controls.tenantMembershipId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="tenantMembershipId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Rol y alcance"
+      description="Opcional: sin elegir nada, el backend aplica sus valores por defecto."
+    >
+      <app-form-field label="Rol de la asignación">
+        <app-select
+          [(value)]="role"
+          [options]="roles"
+          [disabled]="isSubmitting()"
+          placeholder="Sin rol elegido"
+        />
+      </app-form-field>
+
+      <app-form-field label="Alcance de acceso">
+        <app-radio-group [value]="accessScope()" (valueChange)="elegirAlcance($event)">
+          <app-radio value="TENANT" label="Toda la organización" />
+          <app-radio value="PRACTICE" label="Práctica" />
+          <app-radio value="SITE" label="Sede" />
+          <app-radio value="UNIT" label="Unidad" />
+        </app-radio-group>
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Nodo de alcance"
+      description="Opcional: a qué parte de la organización queda acotada la asignación."
+    >
+      @for (nodo of nodosDeAlcance; track nodo.control) {
+        <app-form-field
+          [label]="nodo.label"
+          [hint]="uuidHint"
+          [errorMessage]="
+            form.controls[nodo.control].touched && form.controls[nodo.control].invalid
+              ? uuidError
+              : ''
+          "
+        >
+          <app-input [formControlName]="nodo.control" type="text" />
+        </app-form-field>
+      }
+    </app-form-section>
+
+    <app-form-section
+      legend="Supervisión y vigencia"
+      description="Opcional: quién responde por la asignación y en qué ventana rige."
+    >
+      <app-form-field
+        label="Supervisor responsable"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.supervisorUserId.touched && form.controls.supervisorUserId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="supervisorUserId" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Inicio de vigencia" hint="Sin fecha, rige desde ahora.">
+        <app-date-picker mode="date-time" [(value)]="validFrom" [disabled]="isSubmitting()" />
+      </app-form-field>
+
+      <app-form-field label="Fin de vigencia" hint="Sin fecha, no vence sola.">
+        <app-date-picker mode="date-time" [(value)]="validTo" [disabled]="isSubmitting()" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Crear asignación"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

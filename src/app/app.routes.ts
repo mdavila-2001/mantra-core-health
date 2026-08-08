@@ -232,6 +232,29 @@ export const routes: Routes = [
       pantallaDeAccesoDelegado('delegaciones/concesiones/nueva', 'Otorgar concesión', () =>
         import('./features/delegated-access/grant-form/grant-form').then((m) => m.GrantForm),
       ),
+      pantallaDeAccesoDelegado('asignaciones/nueva', 'Asignar usuario de organización', () =>
+        import('./features/delegated-access/org-assignment-form/org-assignment-form').then(
+          (m) => m.OrgAssignmentForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('asignaciones/editar', 'Reasignar o suspender asignación', () =>
+        import('./features/delegated-access/org-assignment-update/org-assignment-update').then(
+          (m) => m.OrgAssignmentUpdate,
+        ),
+      ),
+      pantallaDeAccesoDelegado('solicitudes/resolver', 'Resolver solicitud de acceso', () =>
+        import(
+          './features/delegated-access/access-request-resolution/access-request-resolution'
+        ).then((m) => m.AccessRequestResolution),
+      ),
+      pantallaDeAccesoDelegado('operacion/evaluar-actor', 'Evaluar actor efectivo', () =>
+        import('./features/delegated-access/actor-evaluation/actor-evaluation').then(
+          (m) => m.ActorEvaluation,
+        ),
+      ),
+      pantallaDeAccesoDelegado('operacion/barrido-expiracion', 'Barrido de expiración', () =>
+        import('./features/delegated-access/expiry-sweep/expiry-sweep').then((m) => m.ExpirySweep),
+      ),
     ],
   },
   {

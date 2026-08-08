@@ -1,0 +1,48 @@
+<app-page-header
+  title="Barrido de expiración"
+  subtitle="Expirá las delegaciones, concesiones y asignaciones cuya vigencia ya venció."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (resultado(); as barrido) {
+  <div class="m29__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m29__resultado-titulo">El barrido terminó</h2>
+
+    <dl class="m29__datos">
+      <div>
+        <dt>Concesiones expiradas</dt>
+        <dd class="tabular-nums">{{ barrido.expiredGrants }}</dd>
+      </div>
+      <div>
+        <dt>Delegaciones expiradas</dt>
+        <dd class="tabular-nums">{{ barrido.expiredDelegations }}</dd>
+      </div>
+      <div>
+        <dt>Asignaciones expiradas</dt>
+        <dd class="tabular-nums">{{ barrido.expiredOrgAssignments }}</dd>
+      </div>
+    </dl>
+
+    <p class="m29__texto">
+      Repetirlo es inofensivo: si no venció nada nuevo, el próximo barrido
+      devuelve todo en cero.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otroBarrido()">Ejecutar otro barrido</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
+  }
+
+  <p class="m29__texto">
+    El barrido recorre el módulo completo y marca como expirado todo lo que ya
+    pasó su fin de vigencia. No toca nada que siga vigente. En producción
+    también lo ejecuta el sistema en forma periódica; este botón es el disparo
+    manual.
+  </p>
+
+  <button app-button variant="primary" [isLoading]="isRunning()" (clicked)="ejecutar()">
+    Ejecutar barrido
+  </button>
+}

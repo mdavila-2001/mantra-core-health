@@ -29,12 +29,17 @@ describe('DelegatedAccessHome', () => {
     );
   }
 
-  it('las cuatro operaciones de delegación tienen su enlace', () => {
+  it('cada operación construida tiene su enlace, en el orden de las áreas', () => {
     expect(enlaces()).toEqual([
       '/administracion/acceso-delegado/delegaciones/nueva',
       '/administracion/acceso-delegado/delegaciones/solicitudes/nueva',
       '/administracion/acceso-delegado/delegaciones/concesiones/nueva',
       '/administracion/acceso-delegado/delegaciones/revocar',
+      '/administracion/acceso-delegado/asignaciones/nueva',
+      '/administracion/acceso-delegado/asignaciones/editar',
+      '/administracion/acceso-delegado/solicitudes/resolver',
+      '/administracion/acceso-delegado/operacion/evaluar-actor',
+      '/administracion/acceso-delegado/operacion/barrido-expiracion',
     ]);
   });
 

@@ -56,12 +56,15 @@ export class DelegatedAccessHome {
     {
       titulo: 'Asignaciones de organización',
       descripcion: 'Usuarios de la organización con alcance acotado y supervisor responsable.',
-      operaciones: [{ label: 'Alta y edición' }],
+      operaciones: [
+        { label: 'Asignar usuario', route: `${BASE}/asignaciones/nueva` },
+        { label: 'Reasignar o suspender', route: `${BASE}/asignaciones/editar` },
+      ],
     },
     {
       titulo: 'Solicitudes de acceso',
       descripcion: 'Resolución de solicitudes pendientes: aprobar o denegar, y emitir el grant.',
-      operaciones: [{ label: 'Resolver solicitud' }],
+      operaciones: [{ label: 'Resolver solicitud', route: `${BASE}/solicitudes/resolver` }],
     },
     {
       titulo: 'Conjuntos de permisos',
@@ -71,7 +74,10 @@ export class DelegatedAccessHome {
     {
       titulo: 'Operación',
       descripcion: 'Herramientas del administrador: evaluar el actor efectivo y expirar lo vencido.',
-      operaciones: [{ label: 'Evaluar actor efectivo' }, { label: 'Barrido de expiración' }],
+      operaciones: [
+        { label: 'Evaluar actor efectivo', route: `${BASE}/operacion/evaluar-actor` },
+        { label: 'Barrido de expiración', route: `${BASE}/operacion/barrido-expiracion` },
+      ],
     },
   ];
 }
