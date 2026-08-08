@@ -1,0 +1,87 @@
+<app-page-header
+  title="Terminología"
+  subtitle="El catálogo de conceptos que alimenta todos los selectores del sistema."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="catalogo">
+  <!-- El campo se nombra solo (publica su propio contexto de control): no va
+       dentro de un app-form-field, o quedarían dos nombres accesibles. -->
+  <app-search-field
+    class="catalogo__buscador"
+    label="Buscar conceptos"
+    placeholder="Código o denominación — p. ej. «femenino» o «ACTIVE»"
+    [value]="busqueda()"
+    [loading]="cargando()"
+    (searched)="buscar($event)"
+  />
+
+  <!-- Un recorte silencioso haría creer que el catálogo tiene exactamente
+       cincuenta conceptos. La API no publica cursor para esta búsqueda, así que
+       lo único honesto es decirlo y sugerir afinar. -->
+  @if (recortado()) {
+    <p class="catalogo__aviso" role="status">
+      Se muestran los primeros {{ tope }} de {{ totalDeclarado() }} conceptos.
+      Afiná el texto para acotar la búsqueda.
+    </p>
+  }
+
+  <app-data-table
+    [state]="resultados()"
+    [columns]="columnas()"
+    [trackBy]="porConcepto"
+    caption="Conceptos del catálogo de terminología"
+    (retry)="recargar()"
+  />
+
+  <!-- ─── Para qué sirve ────────────────────────────────────────────────────
+       No es relleno: es lo que convierte una tabla de uuids en algo que alguien
+       que no escribe `curl` puede usar. -->
+  <app-card variant="outlined" padding="lg" class="catalogo__ayuda">
+    <h2 class="catalogo__ayuda-titulo">Para qué sirve este identificador</h2>
+    <p class="catalogo__ayuda-texto">
+      Todo el contrato de la API viaja con los estados, ciclos de vida y
+      clasificaciones como <code>*ConceptId</code> en uuid, no como palabras. Este
+      catálogo es el que traduce en las dos direcciones:
+    </p>
+    <ul class="catalogo__ayuda-lista">
+      <li>
+        <strong>De uuid a palabra</strong> — cuando una ficha muestra «Sin
+        determinar», acá se ve qué concepto era y si existe.
+      </li>
+      <li>
+        <strong>De palabra a uuid</strong> — cuando un alta pide un
+        <code>*ConceptId</code>, el valor que hay que mandar es el de la columna
+        «Identificador de concepto».
+      </li>
+    </ul>
+    <p class="catalogo__ayuda-texto">
+      La lectura no exige rol de administración: el catálogo es metadato
+      compartido y no transporta ningún dato de paciente.
+    </p>
+  </app-card>
+</div>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #celdaConcepto let-concepto>
+  <span class="catalogo__denominacion">{{ concepto.display }}</span>
+  @if (concepto.definition) {
+    <span class="catalogo__definicion">{{ concepto.definition }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaId let-concepto>
+  <!-- `user-select: all` en el CSS: es el dato que se vino a copiar, y copiar un
+       uuid a mano es exactamente donde se cometen los errores. -->
+  <code class="catalogo__id">{{ concepto.conceptId }}</code>
+</ng-template>
+
+<ng-template #celdaUso let-concepto>
+  <!-- El estado nunca lo lleva solo el color: el badge trae su texto.
+       `selectable === false` es «agrupa, no se elige»; ausente significa que sí. -->
+  @if (concepto.selectable === false) {
+    <app-badge variant="secondary" value="Agrupador" />
+  } @else {
+    <app-badge variant="success" value="Seleccionable" />
+  }
+</ng-template>

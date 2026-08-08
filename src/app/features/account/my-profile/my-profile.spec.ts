@@ -34,6 +34,12 @@ describe('MyProfile', () => {
     fixture = TestBed.createComponent(MyProfile);
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+
+    // El historial de verificación se pide **en paralelo** al resumen, no
+    // encadenado: el resumen falla con 403 cuando falta verificar la identidad,
+    // que es justo cuando el historial tiene algo que decir. Se responde acá
+    // para que cada prueba hable de lo suyo.
+    http.expectOne('/identity/me/verification-cases').flush([]);
   });
 
   afterEach(() => http.verify());
@@ -120,5 +126,70 @@ describe('MyProfile', () => {
 
     expect(estado().status).toBe('ready');
     expect(interno<() => string>('estado')()).toBe('Sin determinar');
+  });
+
+  /**
+   * El historial de verificación es una petición aparte **a propósito**.
+   *
+   * Encadenarlo al resumen lo dejaría fuera justo en el caso en que más importa:
+   * el 403 que pide verificar la identidad. Quien cae ahí necesita ver si su
+   * trámite ya está en curso, y con las peticiones encadenadas no vería nada.
+   */
+  it('el historial sobrevive al 403 del resumen', () => {
+    http.expectOne('/profiles/patients/me/summary').flush(
+      { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    fixture.detectChanges();
+
+    expect(estado().status).toBe('forbidden');
+    // El historial se respondió en el beforeEach: llegó y no lo tumbó el 403.
+    expect(interno<() => readonly unknown[]>('casosOrdenados')()).toEqual([]);
+  });
+});
+
+/**
+ * El orden del historial es lo que decide cuál se muestra como vigente, y el
+ * backend no lo garantiza. Va en su propio `describe` porque necesita responder
+ * el historial con datos, y el `beforeEach` de arriba ya lo respondió vacío.
+ */
+describe('MyProfile · orden del historial', () => {
+  let fixture: ComponentFixture<MyProfile>;
+  let http: HttpTestingController;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(MyProfile);
+    http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => http.verify());
+
+  it('el caso vigente es el más reciente, y el cierre manda sobre la apertura', () => {
+    http.expectOne('/identity/me/verification-cases').flush([
+      // Abierto después, pero sin resolver.
+      { id: 'c-viejo', status: 'PENDING', openedAt: '2026-01-10T10:00:00.000Z' },
+      // Abierto antes y resuelto **después**: es el más reciente de los dos.
+      {
+        id: 'c-nuevo',
+        status: 'APPROVED',
+        openedAt: '2026-01-05T10:00:00.000Z',
+        completedAt: '2026-02-01T10:00:00.000Z',
+      },
+    ]);
+    http
+      .expectOne('/profiles/patients/me/summary')
+      .error(new ProgressEvent('error'), { status: 500 });
+    fixture.detectChanges();
+
+    const vigente = (
+      fixture.componentInstance as unknown as { casoVigente: () => { id: string } | null }
+    ).casoVigente();
+    expect(vigente?.id).toBe('c-nuevo');
   });
 });

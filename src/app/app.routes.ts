@@ -44,10 +44,15 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
+  agenda: () => import('./features/agenda/agenda').then((m) => m.Agenda),
+  clinico: () =>
+    import('./features/clinical-record/clinical-record').then((m) => m.ClinicalRecord),
   'administracion/usuarios': () =>
     import('./features/admin/user-registration/user-registration').then((m) => m.UserRegistration),
   'administracion/pacientes': () =>
     import('./features/admin/patients/patient-list/patient-list').then((m) => m.PatientList),
+  'administracion/terminologia': () =>
+    import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'mi-cuenta': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
 };
 
@@ -69,6 +74,17 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * que `/administracion/pacientes/nuevo` sigue resolviendo a «Pacientes».
  */
 const PANTALLAS_HIJAS: Routes = [
+  {
+    // El expediente de una persona concreta. Cuelga de «Archivo clínico», que
+    // es la pantalla que elige a quién se mira: sin paciente no hay expediente,
+    // y las dos lecturas del backend piden el perfil en la ruta.
+    path: 'clinico/:profileId',
+    title: `${APP_TITLE} - Expediente clínico`,
+    loadComponent: () =>
+      import('./features/clinical-record/patient-chart/patient-chart')
+        .then((m) => m.PatientChart)
+        .catch(() => chunkFallido()),
+  },
   {
     path: 'administracion/pacientes/nuevo',
     title: `${APP_TITLE} - Nuevo paciente`,

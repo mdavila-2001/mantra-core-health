@@ -211,7 +211,10 @@ describe('DataTable', () => {
   });
 
   describe('paginación por cursor', () => {
-    it('no hay números de página ni total: un cursor no los conoce', () => {
+    it('no hay números de página ni total: un cursor no los conoce', async () => {
+      host.cursor.set({ nextCursor: 'cur-sig' });
+      await fixture.whenStable();
+
       const paginacion = root().querySelector('nav[aria-label="Paginación del listado"]');
 
       expect(paginacion?.textContent).toContain('Anterior');
@@ -220,9 +223,29 @@ describe('DataTable', () => {
       expect(root().querySelector('app-pagination')).toBeNull();
     });
 
-    it('sin cursores, los dos botones están deshabilitados', () => {
+    /**
+     * Antes los dos botones se dibujaban siempre, apagados. Eran controles
+     * muertos: ocupan lugar, prometen una función que no existe y hacen que la
+     * pantalla parezca rota.
+     *
+     * El caso no es hipotético — la búsqueda del catálogo de terminología no
+     * pagina, porque la API la acota con `limit` y no publica cursor— y tampoco
+     * es raro: cualquier listado que entra en una sola página cae acá.
+     */
+    it('sin cursores, la paginación no se dibuja', () => {
+      expect(root().querySelector('nav[aria-label="Paginación del listado"]')).toBeNull();
+      expect(botonPorTexto('Anterior')).toBeUndefined();
+      expect(botonPorTexto('Siguiente')).toBeUndefined();
+    });
+
+    it('con un solo cursor, la paginación aparece y el otro botón queda apagado', async () => {
+      // La primera página del listado de pacientes: hay siguiente y no hay
+      // anterior. El control tiene que estar, y tiene que decir que no se puede.
+      host.cursor.set({ nextCursor: 'cur-sig' });
+      await fixture.whenStable();
+
       expect(botonPorTexto('Anterior')?.getAttribute('aria-disabled')).toBe('true');
-      expect(botonPorTexto('Siguiente')?.getAttribute('aria-disabled')).toBe('true');
+      expect(botonPorTexto('Siguiente')?.getAttribute('aria-disabled')).not.toBe('true');
     });
 
     it('emite el cursor recibido, no un número', async () => {

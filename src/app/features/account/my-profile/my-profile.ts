@@ -1,7 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
+import { AuthService } from '../../../core/auth/auth.service';
+import { IdentityClient } from '../../../core/data-access/identity/identity.client';
+import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import type { OwnPatientSummary } from '../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -10,9 +14,12 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { toCaseStatusPresentation } from '../../identity-verification/case-status';
 
 /**
  * Resumen propio — vista **V05-03** de `SALUD/Vistas/V05 profiles`
@@ -29,14 +36,26 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
  * El endpoint exige identidad verificada vigente. Sin ella responde `403` con
  * `IDENTITY_VERIFICATION_REQUIRED`, y `errorToViewState` ya lo traduce a un S5
  * **con acción**: el host de estados pinta el enlace a la pantalla de
- * verificación. Esta pantalla no escribe ni una línea sobre ese caso, y esa es
- * exactamente la prueba de que la traducción de errores está en el lugar
- * correcto — la ficha del vault lo pide con estas palabras: «la vista debe
- * ofrecer el camino para verificarse, no un error seco».
+ * verificación. Esta pantalla no escribe ni una línea sobre ese caso.
+ *
+ * ## Por qué son tres bloques y no una tarjeta
+ *
+ * Era una tarjeta de cuatro campos en una pantalla de mil cuatrocientos píxeles,
+ * y se leía como si la cuenta de alguien fuera eso y nada más. Lo que faltaba no
+ * era decoración: era **lo que la persona vino a averiguar**. Quien mira su
+ * perfil quiere saber tres cosas y sólo una estaba.
+ *
+ * 1. **Sus datos**, que ya estaban.
+ * 2. **En qué quedó su verificación de identidad** — el backend publica el
+ *    historial de casos desde siempre (`GET /identity/me/verification-cases`) y
+ *    nadie lo pedía; sin él, quien ya hizo el trámite no tiene forma de saber si
+ *    salió, y es la pregunta que más se hace en esta pantalla.
+ * 3. **Con qué credenciales está entrando** — organización y roles. Estaban sólo
+ *    en el panel, que es otra pantalla.
  */
 @Component({
   selector: 'app-my-profile',
-  imports: [Card, DatePipe, PageHeader, ViewStateHost],
+  imports: [Badge, Card, DatePipe, PageHeader, RouterLink, StatusSeal, ViewStateHost],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,7 +63,9 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 export class MyProfile {
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
+  private readonly identity = inject(IdentityClient);
   private readonly navigation = inject(NavigationService);
+  private readonly auth = inject(AuthService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -53,6 +74,40 @@ export class MyProfile {
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
   protected readonly datos = computed(() => dataOf(this.resumen()));
+
+  protected readonly roles = this.auth.roles;
+
+  protected readonly tenantName = computed(() => {
+    const id = this.auth.activeTenantId();
+    return id === null ? null : this.auth.tenantName(id);
+  });
+
+  /**
+   * Los casos de verificación, del más nuevo al más viejo.
+   *
+   * El backend los devuelve sin orden garantizado y la pregunta que traen es
+   * «¿cómo quedó el último?», así que ordenarlos acá evita que la respuesta
+   * dependa de en qué orden vinieron.
+   */
+  protected readonly casos = signal<readonly VerificationCase[]>([]);
+
+  protected readonly casosOrdenados = computed<readonly VerificationCase[]>(() =>
+    [...this.casos()].sort((a, b) => fecha(b) - fecha(a)),
+  );
+
+  protected readonly casoVigente = computed<VerificationCase | null>(
+    () => this.casosOrdenados()[0] ?? null,
+  );
+
+  protected readonly selloVigente = computed(() => {
+    const caso = this.casoVigente();
+    return caso === null ? null : toCaseStatusPresentation(caso.status);
+  });
+
+  /** La presentación de un caso cualquiera, para la lista del historial. */
+  protected sello(caso: VerificationCase): ReturnType<typeof toCaseStatusPresentation> {
+    return toCaseStatusPresentation(caso.status);
+  }
 
   /**
    * El estado de la persona, en palabras.
@@ -72,10 +127,27 @@ export class MyProfile {
 
   constructor() {
     this.cargar();
+    this.cargarCasos();
   }
 
   protected recargar(): void {
     this.cargar();
+    this.cargarCasos();
+  }
+
+  /**
+   * Pide el historial de verificaciones.
+   *
+   * Va aparte del resumen y **no comparte su estado de vista** a propósito: el
+   * resumen falla con 403 cuando falta verificar la identidad, que es
+   * justamente cuando el historial más importa. Encadenarlos dejaría la pantalla
+   * sin lo único que en ese caso tiene para decir.
+   */
+  private cargarCasos(): void {
+    this.identity.listVerificationCases().subscribe({
+      next: (casos) => this.casos.set(casos),
+      error: () => this.casos.set([]),
+    });
   }
 
   private cargar(): void {
@@ -104,4 +176,15 @@ export class MyProfile {
         error: (error: unknown) => this.resumen.set(errorToViewState<OwnPatientSummary>(error)),
       });
   }
+}
+
+/**
+ * La fecha por la que se ordena un caso.
+ *
+ * El cierre manda sobre la apertura —un caso resuelto ayer es más reciente que
+ * uno abierto la semana pasada y todavía en trámite— y sin ninguna de las dos
+ * el caso va al fondo en vez de romper la comparación con un `NaN`.
+ */
+function fecha(caso: VerificationCase): number {
+  return caso.completedAt?.getTime() ?? caso.openedAt?.getTime() ?? 0;
 }

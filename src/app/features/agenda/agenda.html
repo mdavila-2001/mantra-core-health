@@ -1,0 +1,162 @@
+<app-page-header
+  title="Agenda"
+  subtitle="Las citas comprometidas y los cupos que quedan por ofrecer."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="agenda">
+  <!-- ─── Sin organización ────────────────────────────────────────────────
+       `GET /scheduling/resources` exige `tenantId`. Decirlo así, y no con un
+       estado de error, es la diferencia entre «falta un paso» y «esto falló». -->
+  @if (sinOrganizacion()) {
+    <app-alert tone="info" title="Elegí una organización">
+      La agenda pertenece a una organización concreta. Elegí una en el selector del encabezado para
+      ver sus citas y sus cupos.
+    </app-alert>
+  } @else {
+    <!-- ─── Sin recursos agendables ───────────────────────────────────────
+         Es la precondición de todo lo demás: sin recurso no se pueden pedir las
+         citas, porque `GET /scheduling/bookings` sin acotar responde 422. -->
+    @if (sinRecursos()) {
+      <app-alert tone="info" title="Todavía no hay recursos agendables">
+        Una agenda se arma sobre recursos —la consulta de un profesional, un box, un equipo—. Cuando
+        esta organización tenga alguno, sus citas y sus cupos van a aparecer acá.
+      </app-alert>
+    }
+
+    <!-- El enlace apuntaba a un recurso que ya no está: se cae al primero, pero
+         callarlo haría creer que se está mirando el del enlace. -->
+    @if (recursoInexistente()) {
+      <app-alert tone="warning" title="Ese recurso ya no está en la organización">
+        Se muestra la agenda de «{{ nombreDelRecurso() }}» en su lugar.
+      </app-alert>
+    }
+
+    <!-- ─── Filtros ─────────────────────────────────────────────────────── -->
+    <form class="agenda__filtros" (submit)="$event.preventDefault()">
+      <!-- Sin opción «todos»: la agenda de la organización entera no se puede
+           pedir, y ofrecerla sería ofrecer un botón que devuelve un error. -->
+      <app-form-field
+        label="Recurso"
+        class="agenda__filtro"
+        hint="Las citas se listan por recurso; el backend no admite pedirlas todas juntas."
+      >
+        <app-select
+          [options]="opcionesDeRecurso()"
+          [value]="recursoElegido() ?? ''"
+          [disabled]="sinRecursos()"
+          (valueChange)="elegirRecurso($event)"
+        />
+      </app-form-field>
+
+      <app-form-field label="Ventana" class="agenda__filtro">
+        <app-select
+          [options]="opcionesDeVentana()"
+          [value]="ventanaElegida()"
+          (valueChange)="elegirVentana($event)"
+        />
+      </app-form-field>
+
+      <app-switch
+        class="agenda__filtro agenda__filtro--interruptor"
+        label="Incluir canceladas"
+        [checked]="incluirCanceladas()"
+        (checkedChange)="alternarCanceladas($event)"
+      />
+    </form>
+
+    <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="elegirPestana($event)">
+      <!-- ─── Citas ─────────────────────────────────────────────────────── -->
+      <app-tab [label]="rotuloDeCitas()">
+        @if (citasRecortadas()) {
+          <p class="agenda__aviso" role="status">
+            Se muestran las primeras {{ tope }} citas de la ventana. Acotá la ventana o elegí un
+            recurso para verlas todas.
+          </p>
+        }
+
+        <app-data-table
+          [state]="citas()"
+          [columns]="columnasDeCitas()"
+          [trackBy]="porCita"
+          caption="Citas de la ventana consultada"
+          (retry)="recargar()"
+        />
+      </app-tab>
+
+      <!-- ─── Cupos ─────────────────────────────────────────────────────── -->
+      <app-tab [label]="rotuloDeCupos()">
+        @if (cuposRecortados()) {
+          <p class="agenda__aviso" role="status">
+            Se muestran los primeros {{ tope }} cupos de la ventana. Una agenda a la que le faltan
+            huecos sin avisar se lee como una agenda llena.
+          </p>
+        }
+
+        <app-data-table
+          [state]="cupos()"
+          [columns]="columnasDeCupos()"
+          [trackBy]="porCupo"
+          caption="Cupos de la ventana consultada"
+          (retry)="recargar()"
+        />
+      </app-tab>
+    </app-tabs>
+  }
+</div>
+
+<!-- ─── Plantillas de celda ───────────────────────────────────────────────
+     El organismo las recibe por `ColumnDef.cell`. -->
+
+<ng-template #celdaCuando let-cita>
+  @if (cita.cuando) {
+    <span class="agenda__cuando">{{ cita.cuando | date: 'EEEE d MMM, HH:mm' }}</span>
+    @if (cita.hasta) {
+      <span class="agenda__hasta">hasta {{ cita.hasta | date: 'HH:mm' }}</span>
+    }
+  } @else {
+    <!-- El contrato lo admite: una cita puede quedar sin cupo. Decirlo es más
+         útil que dejar la celda vacía, que se lee como un dato que no cargó. -->
+    <span class="agenda__hasta">Sin cupo asignado</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstado let-cita>
+  <!-- El estado nunca viaja sólo en el color: el badge trae su texto. -->
+  <app-badge variant="info" [value]="cita.estado" />
+</ng-template>
+
+<ng-template #celdaPaciente let-cita>
+  @if (cita.rutaPaciente) {
+    <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
+  } @else if (cita.patientProfileId) {
+    <!-- Sin permiso para abrir la ficha, el enlace sería un 403 con forma de
+         invitación. Se dice que hay paciente y no cuál. -->
+    <span class="agenda__hasta">Paciente asignado</span>
+  } @else {
+    <span class="agenda__hasta">Sin paciente</span>
+  }
+</ng-template>
+
+<ng-template #celdaFranja let-cupo>
+  <span class="agenda__cuando">{{ cupo.desde | date: 'EEEE d MMM, HH:mm' }}</span>
+  <span class="agenda__hasta">hasta {{ cupo.hasta | date: 'HH:mm' }}</span>
+</ng-template>
+
+<ng-template #celdaDisponibilidad let-cupo>
+  @if (cupo.disponible) {
+    <!-- La concordancia se arma en el componente, no acá: «1 de 1 libres» se
+         lee mal y una expresión con ternario dentro de una interpolación se
+         lee peor. -->
+    <app-badge variant="success" [value]="cupo.disponibilidad" />
+  } @else {
+    <app-badge variant="warning" value="Completo" />
+  }
+</ng-template>
+
+<ng-template #celdaCupoId let-cupo>
+  <!-- `user-select: all` en el CSS: es el valor que hay que mandar a
+       `POST /scheduling/slots/{id}/holds`, y copiar un uuid a mano es
+       exactamente donde se cometen los errores. -->
+  <code class="agenda__id">{{ cupo.id }}</code>
+</ng-template>

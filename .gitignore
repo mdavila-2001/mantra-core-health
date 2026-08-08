@@ -75,10 +75,17 @@ __screenshots__/
 /playwright-report
 /.playwright
 
-# Selenium: capturas, HTML de la página, registros del navegador, JUnit y el
-# reporte navegable de cada corrida. Se organizan por marca de tiempo bajo
-# `artifacts/selenium/<corrida>/` y ninguno se versiona: son evidencias de una
-# ejecución, no del código. La carpeta se conserva con su `.gitkeep`.
+# Evidencias de una ejecución, no del código. Nada de acá se versiona; la
+# carpeta se conserva con su `.gitkeep`.
+#
+#   artifacts/selenium/<corrida>/  capturas de los fallos, HTML de la página,
+#                                  registros del navegador, JUnit y su reporte.
+#   artifacts/recorrido/           el recorrido visual: una carpeta de PNG por
+#                                  pantalla, el manifiesto y `reporte.html`.
+#                                  Son cientos de imágenes y varios cientos de
+#                                  megabytes por corrida — se regeneran con
+#                                  `yarn recorrido` y no tienen por qué vivir en
+#                                  la historia del repositorio.
 /artifacts/*
 !/artifacts/.gitkeep
 

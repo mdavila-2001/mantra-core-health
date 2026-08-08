@@ -32,7 +32,14 @@ export default defineConfig({
   // —sus archivos no terminan en `.spec.ts` por casualidad, sino que ESTÁN
   // dentro de esa carpeta— pero dejarlo explícito evita que un archivo nuevo
   // termine ejecutándose por los dos corredores a la vez.
-  testIgnore: ['**/selenium/**'],
+  // El recorrido visual (`e2e/recorrido/`) tiene su propia configuración y su
+  // propio comando: captura cientos de imágenes y tarda minutos. Sin esta
+  // exclusión, `yarn e2e` —que corre en cada cambio— lo arrastraría con él.
+  // `e2e/real/` también queda fuera: no simula la red, así que necesita el
+  // backend levantado y una base con datos. Arrastrarlo acá haría fallar
+  // `yarn e2e` en cualquier máquina sin API, que es justo lo que la simulación
+  // de esta suite existe para evitar.
+  testIgnore: ['**/selenium/**', '**/recorrido/**', '**/real/**'],
 
   // Sin paralelismo entre archivos: comparten el mismo servidor y el mismo
   // puerto, y el arranque del artefacto no es gratis.

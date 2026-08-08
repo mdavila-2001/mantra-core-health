@@ -81,6 +81,29 @@ export class IdentityVerification {
   /** El estado del caso, traducido de UUID de concepto a sello + palabra. */
   protected readonly caseStatus = computed(() => toCaseStatusPresentation(this.caso()?.status));
 
+  /**
+   * Los casos anteriores del titular — `GET /identity/me/verification-cases`.
+   *
+   * El backend lo publica desde siempre y la pantalla no lo pedía: mostraba el
+   * caso **de este envío**, así que quien ya se había verificado antes entraba y
+   * veía un formulario en blanco, sin ninguna señal de que el trámite ya estaba
+   * hecho. Con el historial, la primera pregunta que trae la gente —«¿esto ya lo
+   * mandé?»— se responde sin que nadie tenga que preguntar.
+   *
+   * Del más nuevo al más viejo: el backend no garantiza orden y lo que importa
+   * es el último.
+   */
+  protected readonly historial = signal<readonly VerificationCase[]>([]);
+
+  protected readonly historialOrdenado = computed<readonly VerificationCase[]>(() =>
+    [...this.historial()].sort((a, b) => fechaDeCaso(b) - fechaDeCaso(a)),
+  );
+
+  /** La presentación de un caso del historial. */
+  protected sello(caso: VerificationCase): ReturnType<typeof toCaseStatusPresentation> {
+    return toCaseStatusPresentation(caso.status);
+  }
+
   protected readonly enviando = computed(() => this.state().status === 'loading');
   protected readonly puedeEnviar = computed(
     () => this.evidencia().length === 1 && !this.enviando(),
@@ -102,6 +125,24 @@ export class IdentityVerification {
     }
     return null;
   });
+
+  constructor() {
+    this.cargarHistorial();
+  }
+
+  /**
+   * Pide el historial de casos.
+   *
+   * El fallo se traga: es contexto, y romper la pantalla del trámite porque el
+   * historial no cargó dejaría a la persona sin poder hacer justamente lo que
+   * vino a hacer.
+   */
+  protected cargarHistorial(): void {
+    this.identity.listVerificationCases().subscribe({
+      next: (casos) => this.historial.set(casos),
+      error: () => this.historial.set([]),
+    });
+  }
 
   /**
    * Traduce el rechazo del componente a algo que la persona pueda accionar.
@@ -174,4 +215,15 @@ export class IdentityVerification {
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
   }
+}
+
+/**
+ * La fecha por la que se ordena un caso del historial.
+ *
+ * El cierre manda sobre la apertura —un caso resuelto ayer es más reciente que
+ * uno abierto la semana pasada y todavía en trámite— y sin ninguna de las dos el
+ * caso va al fondo en vez de romper la comparación con un `NaN`.
+ */
+function fechaDeCaso(caso: VerificationCase): number {
+  return caso.completedAt?.getTime() ?? caso.openedAt?.getTime() ?? 0;
 }

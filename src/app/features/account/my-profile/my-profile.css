@@ -1,14 +1,34 @@
-/* Resumen propio. Son cuatro datos: una sola columna en móvil, dos desde
-   tablet, y nada más. */
+/* Resumen propio. Tres bloques que se acomodan solos: uno debajo del otro en
+   móvil, y en fila desde tablet. Sólo distribución — ni un color ni una
+   tipografía que el sistema no tenga ya. */
 
 :host {
   display: block;
 }
 
+/* `auto-fit` en vez de un número de columnas: si mañana se agrega un bloque, la
+   rejilla no hay que retocarla. El mínimo es el ancho al que un uuid deja de
+   partirse feo. */
 .mi-perfil {
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+  gap: var(--sp-4);
   margin-block-start: var(--sp-6);
-  max-inline-size: 40rem;
+  /* Los bloques tienen alturas distintas; sin esto, el más alto estira la fila
+     y los otros quedan flotando arriba con la tarjeta a medio pintar. */
+  align-items: start;
+}
+
+.mi-perfil__bloque {
+  display: block;
+  height: 100%;
+}
+
+.mi-perfil__titulo {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
 }
 
 .mi-perfil__datos {
@@ -22,6 +42,12 @@
 @media (min-width: 780px) {
   .mi-perfil__datos {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* El bloque de acceso tiene dos datos y uno de ellos es una fila de insignias:
+     en dos columnas quedan apretadas contra el borde. */
+  .mi-perfil__datos--una {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -37,6 +63,44 @@
 
 .mi-perfil__cifra {
   font-variant-numeric: tabular-nums;
+}
+
+.mi-perfil__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.mi-perfil__sello {
+  margin-block-end: var(--sp-4);
+}
+
+.mi-perfil__casos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mi-perfil__caso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mi-perfil__caso-fecha {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.mi-perfil__nota,
+.mi-perfil__vacio {
+  margin-block: var(--sp-4) 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
 }
 
 .mi-perfil__ids {
