@@ -14,10 +14,14 @@ import { NavigationService } from '../../../../core/navigation/navigation.servic
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { Card } from '../../../../shared/components/molecules/card/card';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { RelatedPersonForm } from '../related-person-form/related-person-form';
 import { PATIENTS_ROUTE } from '../patients.routes';
 
 /**
@@ -67,7 +71,17 @@ const SIN_DATO = 'Sin registrar';
  */
 @Component({
   selector: 'app-patient-detail',
-  imports: [Badge, Card, DatePipe, PageHeader, ViewStateHost],
+  imports: [
+    AppButton,
+    Badge,
+    Card,
+    DatePipe,
+    PageHeader,
+    RelatedPersonForm,
+    Tab,
+    Tabs,
+    ViewStateHost,
+  ],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -217,6 +231,44 @@ export class PatientDetail {
       esEmergencia: persona.isEmergencyContact,
     }));
   });
+
+  /** Pestaña visible. `model` del organismo, así que se enlaza en los dos sentidos. */
+  protected readonly pestana = signal(0);
+
+  /** Si el formulario de alta de contacto está desplegado. */
+  protected readonly agregando = signal(false);
+
+  /**
+   * El rótulo lleva la cuenta. En una ficha clínica saber que hay tres
+   * contactos sin tener que entrar a mirarlos es la diferencia entre una
+   * pestaña y un cajón.
+   */
+  protected readonly rotuloDeContactos = computed(() => {
+    const cuantos = this.contactos().length;
+    return cuantos === 0 ? 'Contactos' : `Contactos (${cuantos})`;
+  });
+
+  /**
+   * Si ya hay un tutor legal. El modelo admite **uno solo activo** por
+   * paciente, así que el formulario lo advierte antes de que el backend lo
+   * rechace.
+   */
+  protected readonly yaTieneTutor = computed(() =>
+    this.contactos().some((contacto) => contacto.esTutor),
+  );
+
+  /**
+   * Tras registrar un contacto se relee la ficha entera.
+   *
+   * Agregarlo a la lista en memoria sería más rápido y estaría mal: el backend
+   * decide el estado del vínculo y puede crear la persona, así que lo que
+   * quedó registrado no es exactamente lo que se envió. Releer es lo que
+   * garantiza que la pantalla muestre lo que hay, no lo que se pidió.
+   */
+  protected contactoRegistrado(): void {
+    this.agregando.set(false);
+    this.cargar();
+  }
 
   constructor() {
     // Ir de una ficha a otra reutiliza el componente: sin escuchar el

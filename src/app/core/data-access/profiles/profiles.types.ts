@@ -148,6 +148,39 @@ export interface PatientDetail {
   readonly updatedAt: Date;
 }
 
+/* ---- personas relacionadas / contactos (UC-05-10) ----------------------- */
+
+/**
+ * Alta de una persona relacionada.
+ *
+ * **Todos los campos son opcionales**, y no es descuido del contrato: sin
+ * `personId` el backend **crea** la persona con los datos que se le pasen, y
+ * con `personId` reutiliza una que ya existe. Son dos casos de uso en un solo
+ * cuerpo.
+ */
+export interface NewRelatedPerson {
+  /** Persona ya registrada. Omitirlo hace que el backend cree una nueva. */
+  readonly personId?: string;
+  readonly displayName?: string;
+  /** ISO `YYYY-MM-DD`. */
+  readonly birthDate?: string;
+  /** Parentesco. Se resuelve contra `terminology`, nunca texto libre. */
+  readonly relationshipConceptId?: string;
+  readonly isEmergencyContact?: boolean;
+  /** Tutor legal. El modelo admite **uno solo activo** por paciente. */
+  readonly isLegalGuardian?: boolean;
+}
+
+/** Lo que devuelve el alta de una persona relacionada. */
+export interface RelatedPersonCreated {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly personId: string;
+  /** Concepto del estado del vínculo. */
+  readonly status: string;
+  readonly createdAt: Date;
+}
+
 /* ---- fusión de pacientes duplicados (UC-05-08 y UC-05-09) ---------------- */
 
 /**

@@ -14,7 +14,12 @@
 
 <app-view-state-host [state]="ficha()" (retry)="recargar()">
   @if (paciente(); as datos) {
-    <div class="ficha">
+    <!-- La ficha es un espacio de trabajo con pestañas, que es como el vault
+         ubica a V05-02, V05-04 y V05-05: «pestaña dentro de la ficha de
+         Pacientes, no una entrada de menú propia». -->
+    <app-tabs [(selectedIndex)]="pestana">
+      <app-tab label="Filiación">
+        <div class="ficha">
       <app-card class="ficha__bloque">
         <h2 class="ficha__titulo">Identificación</h2>
         <dl class="ficha__datos">
@@ -79,31 +84,58 @@
         </dl>
       </app-card>
 
-      <app-card class="ficha__bloque ficha__bloque--ancho">
-        <h2 class="ficha__titulo">Contactos y representantes</h2>
-        @if (contactos().length > 0) {
-          <ul class="ficha__contactos">
-            @for (contacto of contactos(); track contacto.id) {
-              <li class="ficha__contacto">
-                <span class="ficha__contacto-nombre">{{ contacto.nombre }}</span>
-                <span class="ficha__contacto-vinculo">{{ contacto.vinculo }}</span>
-                <!-- Los dos roles son distintos y acumulables: quien firma un
-                     consentimiento no es necesariamente a quien se llama. -->
-                @if (contacto.esTutor) {
-                  <app-badge variant="info" value="Representante legal" size="sm" />
-                }
-                @if (contacto.esEmergencia) {
-                  <app-badge variant="error" value="Contacto de emergencia" size="sm" />
-                }
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="ficha__vacio">
-            No hay contactos ni representantes registrados para esta persona.
-          </p>
-        }
-      </app-card>
-    </div>
+        </div>
+      </app-tab>
+
+      <app-tab [label]="rotuloDeContactos()">
+        <!-- V05-05 · Personas relacionadas. NO estaba bloqueada: sus filas
+             llegan embebidas en la propia ficha F-01, así que la tabla es real
+             desde el primer día. -->
+        <div class="ficha__pestana">
+          @if (contactos().length > 0) {
+            <ul class="ficha__contactos">
+              @for (contacto of contactos(); track contacto.id) {
+                <li class="ficha__contacto">
+                  <span class="ficha__contacto-nombre">{{ contacto.nombre }}</span>
+                  <span class="ficha__contacto-vinculo">{{ contacto.vinculo }}</span>
+                  <!-- Los dos roles son distintos y acumulables: quien firma un
+                       consentimiento no es necesariamente a quien se llama. -->
+                  @if (contacto.esTutor) {
+                    <app-badge variant="info" value="Representante legal" size="sm" />
+                  }
+                  @if (contacto.esEmergencia) {
+                    <app-badge variant="error" value="Contacto de emergencia" size="sm" />
+                  }
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="ficha__vacio">
+              No hay contactos ni representantes registrados para esta persona.
+            </p>
+          }
+
+          @if (agregando()) {
+            <app-related-person-form
+              class="ficha__alta"
+              [profileId]="datos.profileId"
+              [yaTieneTutor]="yaTieneTutor()"
+              (registered)="contactoRegistrado()"
+              (cancelled)="agregando.set(false)"
+            />
+          } @else {
+            <button
+              app-button
+              variant="outline"
+              class="ficha__alta"
+              data-testid="ficha-agregar-contacto"
+              (clicked)="agregando.set(true)"
+            >
+              Agregar contacto o representante
+            </button>
+          }
+        </div>
+      </app-tab>
+    </app-tabs>
   }
 </app-view-state-host>

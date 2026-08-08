@@ -7,6 +7,7 @@ import type {
   AccountLink,
   NewPatientProfile,
   NewPractitionerProfile,
+  NewRelatedPerson,
   OwnPatientSummary,
   PatientDetail,
   PatientMergeEvent,
@@ -17,6 +18,7 @@ import type {
   PatientSearchQuery,
   PractitionerProfile,
   RelatedPerson,
+  RelatedPersonCreated,
 } from './profiles.types';
 
 /** Las mismas respuestas, con las fechas como viajan: texto. */
@@ -142,6 +144,29 @@ export class ProfilesClient {
         reasonConceptId === undefined ? {} : { reasonConceptId },
       )
       .pipe(map(toMergeEvent));
+  }
+
+  /**
+   * `POST /profiles/patients/:profileId/related-persons` — registra un contacto
+   * o representante (UC-05-10).
+   *
+   * Sin `personId` el backend **crea** la persona con los datos del cuerpo; con
+   * él, reutiliza una ya registrada. La pantalla decide cuál de los dos casos
+   * es; el cliente sólo se ocupa de no mandar lo que no tiene valor.
+   *
+   * Es el único endpoint de este módulo **sin `@Roles`**: lo puede ejercer
+   * cualquier sesión autenticada.
+   */
+  addRelatedPerson(
+    profileId: string,
+    person: NewRelatedPerson,
+  ): Observable<RelatedPersonCreated> {
+    return this.http
+      .post<Wire<RelatedPersonCreated>>(
+        this.url(`/profiles/patients/${encodeURIComponent(profileId)}/related-persons`),
+        stripUndefined(person),
+      )
+      .pipe(map((body) => ({ ...body, createdAt: new Date(body.createdAt) })));
   }
 
   /** `POST /profiles/patients`. */

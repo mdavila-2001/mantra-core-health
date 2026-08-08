@@ -171,6 +171,77 @@ describe('PatientDetail', () => {
     expect(anteultimo?.routerLink).toBe('/administracion/pacientes');
   });
 
+  /* ---- pestaña de contactos (V05-05) -------------------------------------- */
+
+  /**
+   * V05-05 figuraba «Listado pendiente» en el vault, pero **sus filas llegan
+   * embebidas en la propia ficha F-01**. La tabla es real desde el primer día;
+   * no hace falta ningún `GET` nuevo.
+   */
+  it('el rótulo de la pestaña lleva la cuenta de contactos', () => {
+    responder([]);
+
+    expect(interno<() => string>('rotuloDeContactos')()).toBe('Contactos (1)');
+  });
+
+  it('sin contactos, el rótulo no muestra un cero', () => {
+    http.expectOne('/profiles/patients/pp-1').flush({ ...FICHA, relatedPersons: [] });
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({
+      items: [],
+      count: 0,
+      limit: 50,
+    });
+    harness.detectChanges();
+
+    expect(interno<() => string>('rotuloDeContactos')()).toBe('Contactos');
+  });
+
+  /**
+   * El modelo admite **un solo tutor legal activo** por paciente. La ficha es
+   * la única que sabe si ya hay uno, así que se lo dice al formulario para que
+   * avise antes de gastar el viaje.
+   */
+  it('detecta que ya hay un tutor legal registrado', () => {
+    http.expectOne('/profiles/patients/pp-1').flush({
+      ...FICHA,
+      relatedPersons: [{ ...FICHA.relatedPersons[0], isLegalGuardian: true }],
+    });
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({
+      items: [],
+      count: 0,
+      limit: 50,
+    });
+    harness.detectChanges();
+
+    expect(interno<() => boolean>('yaTieneTutor')()).toBe(true);
+  });
+
+  it('sin tutor entre los contactos, no lo inventa', () => {
+    responder([]);
+
+    expect(interno<() => boolean>('yaTieneTutor')()).toBe(false);
+  });
+
+  /**
+   * Agregarlo a la lista en memoria sería más rápido y estaría mal: el backend
+   * decide el estado del vínculo y puede crear la persona, así que lo
+   * registrado no es exactamente lo enviado.
+   */
+  it('tras registrar un contacto relee la ficha entera', () => {
+    responder([]);
+
+    interno<() => void>('contactoRegistrado')();
+
+    http.expectOne('/profiles/patients/pp-1').flush(FICHA);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({
+      items: [],
+      count: 0,
+      limit: 50,
+    });
+
+    expect(interno<() => boolean>('agregando')()).toBe(false);
+  });
+
   it('un 404 se traduce a S6 sin filtrar si el registro existe', () => {
     http
       .expectOne('/profiles/patients/pp-1')

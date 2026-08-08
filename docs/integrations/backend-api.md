@@ -95,7 +95,7 @@ no filtrar. `Dashboard` llama sin ninguno.
 | `POST` | `/identity/me/practitioner/license-verification` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
-### `ProfilesClient` — 8 operaciones
+### `ProfilesClient` — 9 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -105,8 +105,17 @@ no filtrar. `Dashboard` llama sin ninguno.
 | `POST` | `/profiles/patients` | `PatientNew` (V05-01·F) |
 | `POST` | `/profiles/patients/merge` | `PatientMerge` (V05-01·A, UC-05-08) |
 | `POST` | `/profiles/patients/merge/:eventId/reverse` | `PatientMerge` (V05-01·A, UC-05-09) |
+| `POST` | `/profiles/patients/:profileId/related-persons` | `RelatedPersonForm` (V05-05, UC-05-10) |
 | `POST` | `/profiles/practitioners` | — |
 | `POST` | `/profiles/persons/:personId/account-links` | — |
+
+> **V05-05 no necesitó ningún `GET` nuevo.** El vault la marcaba «Listado pendiente», pero los
+> contactos llegan **embebidos** en la respuesta de `GET /profiles/patients/:profileId`
+> (`relatedPersons`). La tabla es real desde el primer día; sólo faltaba el alta.
+>
+> Sin `personId` el backend **crea** la persona con los datos del cuerpo; con él reutiliza una
+> existente. Hoy sólo se ofrece el primer caso: reutilizar exigiría un buscador de personas, y no
+> hay `GET /profiles/persons`.
 
 > **La reversión de una fusión sólo es posible en el momento.** El `eventId` que
 > `…/merge/:eventId/reverse` exige viene **únicamente** en la respuesta de

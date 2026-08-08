@@ -80,3 +80,15 @@
   margin: 0;
   color: var(--text-muted);
 }
+
+/* Contenido de una pestaña. La rejilla de arriba es de la de filiación; ésta
+   es una columna simple, que es lo que pide una lista de contactos. */
+.ficha__pestana {
+  margin-block-start: var(--sp-4);
+  max-inline-size: 40rem;
+}
+
+.ficha__alta {
+  display: block;
+  margin-block-start: var(--sp-6);
+}
