@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-74 componentes y 25 servicios inyectables, leídos de `src/`.
+75 componentes y 25 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,7 +70,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (21)
+## Feature (22)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -78,6 +78,7 @@
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-patient-detail` | `PatientDetail` | — | — | — | OnPush | sí |
 | `app-patient-list` | `PatientList` | — | — | — | OnPush | sí |
+| `app-patient-merge` | `PatientMerge` | — | — | — | OnPush | sí |
 | `app-patient-new` | `PatientNew` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
 | `app-forgot-password` | `ForgotPassword` | — | — | — | OnPush | sí |

@@ -78,6 +78,14 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    path: 'administracion/pacientes/fusionar',
+    title: `${APP_TITLE} - Fusionar duplicados`,
+    loadComponent: () =>
+      import('./features/admin/patients/patient-merge/patient-merge')
+        .then((m) => m.PatientMerge)
+        .catch(() => chunkFallido()),
+  },
+  {
     // Estaba en la raíz de la sección; se corre acá para dejarle el lugar al
     // listado, que es la pantalla que el vault declara como principal de
     // V05-01. Cambia la ruta, no la pantalla.

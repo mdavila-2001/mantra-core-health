@@ -148,6 +148,38 @@ export interface PatientDetail {
   readonly updatedAt: Date;
 }
 
+/* ---- fusión de pacientes duplicados (UC-05-08 y UC-05-09) ---------------- */
+
+/**
+ * Petición de fusión. Los dos perfiles son obligatorios y **no son
+ * intercambiables**: el que sobrevive conserva su historia y el otro queda
+ * absorbido.
+ */
+export interface PatientMergeRequest {
+  readonly survivingPatientProfileId: string;
+  readonly mergedPatientProfileId: string;
+  /** Concepto de la razón. Opcional en el contrato. */
+  readonly reasonConceptId?: string;
+}
+
+/**
+ * El evento que deja una fusión o su reversión.
+ *
+ * `id` es lo único con lo que se puede revertir después, y **el backend no
+ * expone ningún listado de estos eventos**: si se pierde, la fusión deja de ser
+ * reversible desde la interfaz.
+ */
+export interface PatientMergeEvent {
+  readonly id: string;
+  readonly survivingPatientProfileId: string;
+  readonly mergedPatientProfileId: string;
+  /** Concepto del estado de la decisión. */
+  readonly decisionStatus: string;
+  /** Presente sólo cuando este evento revierte a otro. */
+  readonly reversalOfEventId?: string;
+  readonly recordedAt: Date;
+}
+
 /**
  * Resumen que la persona consulta sobre sí misma (V05-03).
  *

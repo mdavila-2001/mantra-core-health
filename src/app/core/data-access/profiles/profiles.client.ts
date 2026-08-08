@@ -9,6 +9,8 @@ import type {
   NewPractitionerProfile,
   OwnPatientSummary,
   PatientDetail,
+  PatientMergeEvent,
+  PatientMergeRequest,
   PatientListItem,
   PatientPage,
   PatientProfile,
@@ -110,6 +112,38 @@ export class ProfilesClient {
       .pipe(map((body) => ({ ...body, birthDate: maybeDate(body.birthDate) })));
   }
 
+  /**
+   * `POST /profiles/patients/merge` — fusiona dos pacientes duplicados
+   * (UC-05-08).
+   *
+   * El orden de los dos perfiles **no es simétrico**: el que sobrevive conserva
+   * su historia y el otro queda absorbido. Intercambiarlos no es lo mismo, y
+   * por eso los dos viajan con nombre y no como un par.
+   */
+  mergePatients(request: PatientMergeRequest): Observable<PatientMergeEvent> {
+    return this.http
+      .post<WireMergeEvent>(this.url('/profiles/patients/merge'), stripUndefined(request))
+      .pipe(map(toMergeEvent));
+  }
+
+  /**
+   * `POST /profiles/patients/merge/:eventId/reverse` — revierte una fusión
+   * (UC-05-09).
+   *
+   * `eventId` sale de la respuesta de {@link mergePatients} y **no hay ninguna
+   * otra forma de obtenerlo**: el backend no expone listado de eventos de
+   * fusión. Quien pierda ese identificador pierde el camino de vuelta desde la
+   * interfaz.
+   */
+  reverseMerge(eventId: string, reasonConceptId?: string): Observable<PatientMergeEvent> {
+    return this.http
+      .post<WireMergeEvent>(
+        this.url(`/profiles/patients/merge/${encodeURIComponent(eventId)}/reverse`),
+        reasonConceptId === undefined ? {} : { reasonConceptId },
+      )
+      .pipe(map(toMergeEvent));
+  }
+
   /** `POST /profiles/patients`. */
   createPatient(profile: NewPatientProfile): Observable<PatientProfile> {
     return this.http
@@ -162,6 +196,13 @@ type WirePatientDetail = Omit<
 };
 
 type WireOwnSummary = WireDates<OwnPatientSummary, 'birthDate'>;
+
+type WireMergeEvent = Omit<PatientMergeEvent, 'recordedAt'> & { readonly recordedAt: string };
+
+/** El evento con su marca de tiempo ya convertida. */
+function toMergeEvent(body: WireMergeEvent): PatientMergeEvent {
+  return { ...body, recordedAt: new Date(body.recordedAt) };
+}
 
 /** Una fila del listado con su fecha ya convertida. */
 function toPatientListItem(item: WirePatientListItem): PatientListItem {

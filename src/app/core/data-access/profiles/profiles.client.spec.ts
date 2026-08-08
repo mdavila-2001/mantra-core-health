@@ -194,6 +194,77 @@ describe('ProfilesClient', () => {
     });
   });
 
+  /* ---- fusión de duplicados (UC-05-08 y UC-05-09) ------------------------ */
+
+  it('mergePatients manda los dos perfiles con su papel y sin el motivo ausente', () => {
+    client
+      .mergePatients({ survivingPatientProfileId: 'pp-A', mergedPatientProfileId: 'pp-B' })
+      .subscribe();
+
+    const req = http.expectOne('/profiles/patients/merge');
+    expect(req.request.method).toBe('POST');
+    // El orden no es simétrico: el que sobrevive conserva su historia.
+    expect(req.request.body).toEqual({
+      survivingPatientProfileId: 'pp-A',
+      mergedPatientProfileId: 'pp-B',
+    });
+
+    req.flush({
+      id: 'ev-1',
+      survivingPatientProfileId: 'pp-A',
+      mergedPatientProfileId: 'pp-B',
+      decisionStatus: 'c-1',
+      recordedAt: '2026-08-08T02:00:00.000Z',
+    });
+  });
+
+  it('mergePatients convierte la marca de tiempo del evento', () => {
+    let evento: { recordedAt: Date } | undefined;
+    client
+      .mergePatients({ survivingPatientProfileId: 'pp-A', mergedPatientProfileId: 'pp-B' })
+      .subscribe((e) => (evento = e));
+
+    http.expectOne('/profiles/patients/merge').flush({
+      id: 'ev-1',
+      survivingPatientProfileId: 'pp-A',
+      mergedPatientProfileId: 'pp-B',
+      decisionStatus: 'c-1',
+      recordedAt: '2026-08-08T02:00:00.000Z',
+    });
+
+    expect(evento?.recordedAt).toBeInstanceOf(Date);
+  });
+
+  it('reverseMerge pone el evento en la ruta y manda cuerpo vacío sin motivo', () => {
+    client.reverseMerge('ev-1').subscribe();
+
+    const req = http.expectOne('/profiles/patients/merge/ev-1/reverse');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+
+    req.flush({
+      id: 'ev-2',
+      survivingPatientProfileId: 'pp-A',
+      mergedPatientProfileId: 'pp-B',
+      decisionStatus: 'c-1',
+      reversalOfEventId: 'ev-1',
+      recordedAt: '2026-08-08T02:05:00.000Z',
+    });
+  });
+
+  it('reverseMerge escapa el identificador del evento', () => {
+    client.reverseMerge('ev/1').subscribe();
+
+    const req = http.expectOne('/profiles/patients/merge/ev%2F1/reverse');
+    req.flush({
+      id: 'ev-2',
+      survivingPatientProfileId: 'pp-A',
+      mergedPatientProfileId: 'pp-B',
+      decisionStatus: 'c-1',
+      recordedAt: '2026-08-08T02:05:00.000Z',
+    });
+  });
+
   it('linkAccount pone el id de la persona en la ruta y el usuario en el cuerpo', () => {
     client.linkAccount('persona-1', 'usuario-1').subscribe();
 

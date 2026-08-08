@@ -95,16 +95,26 @@ no filtrar. `Dashboard` llama sin ninguno.
 | `POST` | `/identity/me/practitioner/license-verification` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
-### `ProfilesClient` — 6 operaciones
+### `ProfilesClient` — 8 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) |
+| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) · `PatientMerge` (candidatos) |
 | `GET` | `/profiles/patients/:profileId` | `PatientDetail` (ficha F-01) |
 | `GET` | `/profiles/patients/me/summary` | `MyProfile` (V05-03) |
 | `POST` | `/profiles/patients` | `PatientNew` (V05-01·F) |
+| `POST` | `/profiles/patients/merge` | `PatientMerge` (V05-01·A, UC-05-08) |
+| `POST` | `/profiles/patients/merge/:eventId/reverse` | `PatientMerge` (V05-01·A, UC-05-09) |
 | `POST` | `/profiles/practitioners` | — |
 | `POST` | `/profiles/persons/:personId/account-links` | — |
+
+> **La reversión de una fusión sólo es posible en el momento.** El `eventId` que
+> `…/merge/:eventId/reverse` exige viene **únicamente** en la respuesta de
+> `POST /profiles/patients/merge`, y el backend no expone ningún listado de eventos de fusión. En
+> cuanto esa respuesta se pierde de vista, la fusión deja de ser reversible desde la aplicación.
+> Por eso `PatientMerge` ofrece el «Deshacer» en la pantalla de resultado y lo advierte con
+> palabras. Un `GET /profiles/patients/merge-events` lo convertiría en una operación reversible de
+> verdad.
 
 Las tres lecturas entraron con el PR #31 del backend y son lo que sacó a la
 sección de pacientes del estado «Listado pendiente» que el vault marca en 674 de
