@@ -7,7 +7,7 @@ import { DelegatedAccessHome } from './delegated-access-home';
 
 /**
  * La portada es el índice de un módulo sin listados: lo que se fija acá es que
- * lo construido tenga enlace y lo pendiente lo diga, sin puertas muertas.
+ * cada operación del contrato tenga su enlace, sin puertas muertas.
  */
 describe('DelegatedAccessHome', () => {
   let fixture: ComponentFixture<DelegatedAccessHome>;
@@ -29,7 +29,7 @@ describe('DelegatedAccessHome', () => {
     );
   }
 
-  it('cada operación construida tiene su enlace, en el orden de las áreas', () => {
+  it('las once operaciones del módulo tienen su enlace, en el orden de las áreas', () => {
     expect(enlaces()).toEqual([
       '/administracion/acceso-delegado/delegaciones/nueva',
       '/administracion/acceso-delegado/delegaciones/solicitudes/nueva',
@@ -38,20 +38,19 @@ describe('DelegatedAccessHome', () => {
       '/administracion/acceso-delegado/asignaciones/nueva',
       '/administracion/acceso-delegado/asignaciones/editar',
       '/administracion/acceso-delegado/solicitudes/resolver',
+      '/administracion/acceso-delegado/conjuntos/nuevo',
+      '/administracion/acceso-delegado/conjuntos/versionar',
       '/administracion/acceso-delegado/operacion/evaluar-actor',
       '/administracion/acceso-delegado/operacion/barrido-expiracion',
     ]);
   });
 
-  it('lo que no está construido lo dice, en vez de enlazar al vacío', () => {
+  it('ya no queda nada «en preparación»: los 11 comandos del contrato tienen pantalla', () => {
     const pendientes = (fixture.nativeElement as HTMLElement).querySelectorAll(
       '.portada__pendiente',
     );
 
-    expect(pendientes.length).toBeGreaterThan(0);
-    for (const pendiente of Array.from(pendientes)) {
-      expect(pendiente.textContent).toContain('en preparación');
-    }
+    expect(pendientes.length).toBe(0);
   });
 
   it('avisa por qué no hay listados: el módulo no expone consultas todavía', () => {

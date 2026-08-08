@@ -25,9 +25,9 @@ const BASE = '/administracion/acceso-delegado';
  * Portada de la sección «Acceso delegado» (M29).
  *
  * El módulo del backend es solo de comando —ningún `GET`—, así que esta
- * portada no lista nada: ordena las operaciones disponibles y dice qué está
- * en preparación. Cuando lleguen los endpoints de consulta, acá va el listado
- * de delegaciones con sus acciones por fila.
+ * portada no lista nada: ordena las once operaciones del contrato por área.
+ * Cuando lleguen los endpoints de consulta, acá va el listado de delegaciones
+ * con sus acciones por fila.
  */
 @Component({
   selector: 'app-delegated-access-home',
@@ -69,7 +69,10 @@ export class DelegatedAccessHome {
     {
       titulo: 'Conjuntos de permisos',
       descripcion: 'Sets versionados de permisos delegables; cada versión reemplaza entera a la anterior.',
-      operaciones: [{ label: 'Publicar set' }, { label: 'Versionar set' }],
+      operaciones: [
+        { label: 'Publicar set', route: `${BASE}/conjuntos/nuevo` },
+        { label: 'Versionar set', route: `${BASE}/conjuntos/versionar` },
+      ],
     },
     {
       titulo: 'Operación',

@@ -50,3 +50,23 @@
     display: grid;
     gap: var(--sp-3);
 }
+
+/* --- Repetidor de ítems (V29-08/09) --- */
+
+.m29__item {
+    display: block;
+    margin-bottom: var(--sp-4);
+}
+
+.m29__item-encabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--sp-3);
+}
+
+.m29__item-titulo {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    margin: 0;
+}

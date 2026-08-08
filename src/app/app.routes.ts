@@ -247,6 +247,16 @@ export const routes: Routes = [
           './features/delegated-access/access-request-resolution/access-request-resolution'
         ).then((m) => m.AccessRequestResolution),
       ),
+      pantallaDeAccesoDelegado('conjuntos/nuevo', 'Publicar set de permisos', () =>
+        import('./features/delegated-access/permission-set-form/permission-set-form').then(
+          (m) => m.PermissionSetForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('conjuntos/versionar', 'Versionar set de permisos', () =>
+        import('./features/delegated-access/set-version-form/set-version-form').then(
+          (m) => m.SetVersionForm,
+        ),
+      ),
       pantallaDeAccesoDelegado('operacion/evaluar-actor', 'Evaluar actor efectivo', () =>
         import('./features/delegated-access/actor-evaluation/actor-evaluation').then(
           (m) => m.ActorEvaluation,
