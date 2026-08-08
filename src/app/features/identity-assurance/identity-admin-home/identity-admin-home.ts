@@ -73,9 +73,9 @@ export class IdentityAdminHome {
       descripcion:
         'La consulta a la autoridad: sus intentos técnicos, el resultado inmutable y el fraude.',
       operaciones: [
-        { label: 'Registrar intento contra la autoridad' },
-        { label: 'Registrar resultado del check' },
-        { label: 'Registrar señal de fraude' },
+        { label: 'Registrar intento contra la autoridad', route: `${BASE}/checks/intento` },
+        { label: 'Registrar resultado del check', route: `${BASE}/checks/resultado` },
+        { label: 'Registrar señal de fraude', route: `${BASE}/checks/fraude` },
       ],
     },
     {

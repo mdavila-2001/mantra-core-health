@@ -1,0 +1,113 @@
+<app-page-header
+  title="Registrar resultado del check"
+  subtitle="El veredicto inmutable: no se edita — una corrección es una versión nueva."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (recorded(); as resultado) {
+  <div class="m27__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m27__resultado-titulo">El resultado quedó registrado</h2>
+
+    <dl class="m27__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ resultado.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Versión del resultado</dt>
+        <dd class="tabular-nums">{{ resultado.resultVersion }}</dd>
+      </div>
+      <div>
+        <dt>Veredicto</dt>
+        <dd><code class="tabular-nums">{{ resultado.result }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado del check (concepto)</dt>
+        <dd><code class="tabular-nums">{{ resultado.checkStatus }}</code></dd>
+      </div>
+      @if (resultado.caseStatus; as estadoDelCaso) {
+        <div>
+          <dt>Estado del caso (concepto)</dt>
+          <dd><code class="tabular-nums">{{ estadoDelCaso }}</code></dd>
+        </div>
+      }
+    </dl>
+
+    <p class="m27__texto">
+      @if (resultado.caseStatus) {
+        Este resultado completó los checks del caso: el estado de arriba es el
+        desenlace que le dejó.
+      } @else {
+        El caso sigue su curso: quedan checks pendientes o pasos por delante.
+      }
+    </p>
+
+    <button app-button variant="primary" (clicked)="otroResultado()">Registrar otro resultado</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué check" description="El check cuyo veredicto se registra.">
+      <app-form-field
+        label="Check"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.checkId.touched && form.controls.checkId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="checkId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="El veredicto"
+      description="Qué respondió la autoridad y con cuánta certeza."
+    >
+      <app-form-field label="Veredicto" [required]="true">
+        <app-radio-group [value]="result()" (valueChange)="elegirVeredicto($event)">
+          <app-radio value="MATCH" label="Coincide" />
+          <app-radio value="NO_MATCH" label="No coincide" />
+        </app-radio-group>
+      </app-form-field>
+
+      <app-form-field
+        label="Puntaje de coincidencia"
+        hint="Opcional: entre 0 y 1, como 0.98. Viaja como texto."
+        [errorMessage]="
+          form.controls.matchScore.touched && form.controls.matchScore.invalid ? scoreError : ''
+        "
+      >
+        <app-input formControlName="matchScore" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Códigos de discrepancia"
+        hint="Opcional: separá los códigos con comas, como DOB_MISMATCH, NAME_PARTIAL."
+      >
+        <app-input formControlName="discrepancyCodes" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Hash de la respuesta fuente"
+        hint="Opcional: hash de lo que respondió la autoridad (hasta 200 caracteres)."
+        [errorMessage]="
+          form.controls.sourceResponseHash.touched && form.controls.sourceResponseHash.invalid
+            ? 'Hasta 200 caracteres.'
+            : ''
+        "
+      >
+        <app-input formControlName="sourceResponseHash" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Registrar resultado"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

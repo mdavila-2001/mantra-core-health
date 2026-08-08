@@ -402,6 +402,24 @@ export const routes: Routes = [
           (m) => m.CaseExpireSweep,
         ),
       ),
+      pantallaDeVerificacionIdentidad(
+        'checks/intento',
+        'Registrar intento contra la autoridad',
+        () =>
+          import('./features/identity-assurance/check-attempt-form/check-attempt-form').then(
+            (m) => m.CheckAttemptForm,
+          ),
+      ),
+      pantallaDeVerificacionIdentidad('checks/resultado', 'Registrar resultado del check', () =>
+        import('./features/identity-assurance/check-result-form/check-result-form').then(
+          (m) => m.CheckResultForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('checks/fraude', 'Registrar señal de fraude', () =>
+        import('./features/identity-assurance/fraud-signal-form/fraud-signal-form').then(
+          (m) => m.FraudSignalForm,
+        ),
+      ),
     ],
   },
   {

@@ -118,12 +118,12 @@ pegados; las operaciones sin consumidor esperan sus vistas de comando de V27
 | `POST` | `/identity/verification-cases` | `CaseOpenForm` (V27-02) |
 | `POST` | `/identity/verification-cases/:caseId/evidence` | `CaseEvidenceForm` (V27-05) |
 | `POST` | `/identity/verification-cases/:caseId/checks:plan` | `CheckPlanForm` (V27-04) |
-| `POST` | `/identity/verification-cases/:caseId/fraud-signals` | — |
+| `POST` | `/identity/verification-cases/:caseId/fraud-signals` | `FraudSignalForm` (V27-06) |
 | `POST` | `/identity/verification-cases/:caseId/manual-review` | — |
 | `POST` | `/identity/verification-cases/:caseId/assertions` | — |
 | `POST` | `/identity/verification-cases/expire-sweep` | `CaseExpireSweep` (V27-02·A) |
-| `POST` | `/identity/checks/:checkId/attempts` | — |
-| `POST` | `/identity/checks/:checkId/results` | — |
+| `POST` | `/identity/checks/:checkId/attempts` | `CheckAttemptForm` (V27-11) |
+| `POST` | `/identity/checks/:checkId/results` | `CheckResultForm` (V27-12) |
 | `POST` | `/identity/manual-review/:reviewId/decision` | — |
 | `POST` | `/identity/assertions/:assertionId/revoke` | — |
 
