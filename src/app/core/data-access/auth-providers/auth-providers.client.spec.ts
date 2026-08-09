@@ -172,6 +172,21 @@ describe('AuthProvidersClient', () => {
     expect(inicio?.state).toBe('state-1');
   });
 
+  it('escapa el código del proveedor en la ruta: es texto libre, no un UUID', () => {
+    client.startFederatedLogin('anses/1', {}).subscribe();
+
+    // Sin escapar, la barra abriría un segmento nuevo y la petición iría a otra
+    // ruta del backend.
+    const req = http.expectOne('/auth-providers/identity-providers/by-code/anses%2F1/authorize');
+    req.flush({
+      attemptId: 'a-1',
+      state: 'state-1',
+      nonce: 'nonce-1',
+      authorizeUrl: 'https://idp.example/authorize',
+      pkceRequired: true,
+    });
+  });
+
   it('el callback presenta el state y los claims como objeto, tal cual', () => {
     client
       .processCallback('anses', {

@@ -80,12 +80,15 @@ describe('IdentityClient', () => {
     const req = http.expectOne('/identity/me/verification-cases');
     expect(req.request.method).toBe('GET');
     req.flush([
-      { id: 'caso-1', status: 'OPEN', openedAt: '2026-07-31T12:00:00.000Z' },
+      // El backend emite `completedAt: null` mientras el caso sigue abierto.
+      { id: 'caso-1', status: 'OPEN', openedAt: '2026-07-31T12:00:00.000Z', completedAt: null },
       { id: 'caso-2', status: 'VERIFIED' },
     ]);
 
     expect(casos?.length).toBe(2);
     expect(casos?.[0].openedAt).toBeInstanceOf(Date);
+    // `null` vale lo mismo que ausente: la clave no aparece (nada de 01/01/1970).
+    expect(casos?.[0]).not.toHaveProperty('completedAt');
     // Sin fecha en el cuerpo, la clave no aparece inventada.
     expect(casos?.[1].openedAt).toBeUndefined();
   });
@@ -96,10 +99,17 @@ describe('IdentityClient', () => {
 
     const req = http.expectOne('/identity/me/verification-cases/caso-1');
     expect(req.request.method).toBe('GET');
-    req.flush({ id: 'caso-1', status: 'OPEN', openedAt: '2026-07-31T12:00:00.000Z' });
+    req.flush({
+      id: 'caso-1',
+      status: 'OPEN',
+      openedAt: '2026-07-31T12:00:00.000Z',
+      // Asi lo manda el backend con el caso abierto: null, no ausente.
+      completedAt: null,
+    });
 
     expect(caso?.openedAt).toBeInstanceOf(Date);
-    // Sin veredicto todavia: la clave no debe aparecer inventada.
-    expect(caso?.completedAt).toBeUndefined();
+    // Sin veredicto todavia la clave no debe aparecer: un `new Date(null)`
+    // seria el 01/01/1970, truthy, y pasaria los @if de las pantallas.
+    expect(caso).not.toHaveProperty('completedAt');
   });
 });

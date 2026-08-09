@@ -78,6 +78,7 @@
     <app-form-actions
       submitLabel="Registrar decisión"
       [pending]="isSubmitting()"
+      [disabled]="decision() === null"
       (submitted)="submit()"
     />
   </form>

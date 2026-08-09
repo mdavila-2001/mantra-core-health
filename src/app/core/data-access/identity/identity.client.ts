@@ -13,8 +13,8 @@ import type {
 interface VerificationCaseBody {
   readonly id: string;
   readonly status: string;
-  readonly openedAt?: string;
-  readonly completedAt?: string;
+  readonly openedAt?: string | null;
+  readonly completedAt?: string | null;
 }
 
 /**
@@ -72,7 +72,7 @@ export class IdentityClient {
     request: VerificationRequest,
   ): Observable<VerificationRequestResult> {
     return this.http.post<VerificationRequestResult>(
-      this.url(`/identity/me/tenants/${tenantId}/verification`),
+      this.url(`/identity/me/tenants/${encodeURIComponent(tenantId)}/verification`),
       { evidenceFileId: request.evidenceFileId },
     );
   }
@@ -97,7 +97,9 @@ export class IdentityClient {
   /** `GET /identity/me/verification-cases/:caseId`. */
   getVerificationCase(caseId: string): Observable<VerificationCase> {
     return this.http
-      .get<VerificationCaseBody>(this.url(`/identity/me/verification-cases/${caseId}`))
+      .get<VerificationCaseBody>(
+        this.url(`/identity/me/verification-cases/${encodeURIComponent(caseId)}`),
+      )
       .pipe(map(toVerificationCase));
   }
 
@@ -109,15 +111,21 @@ export class IdentityClient {
 /**
  * Del cuerpo de la API al tipo de la vista.
  *
- * Las fechas opcionales se omiten en vez de viajar como `undefined`: el tipo las
+ * Las fechas sin valor se omiten en vez de viajar como `undefined`: el tipo las
  * declara opcionales, y una clave presente valiendo `undefined` no es lo mismo
- * que una clave ausente para nada de lo que las consume.
+ * que una clave ausente para nada de lo que las consume. El backend emite
+ * `null` mientras el caso sigue abierto, y `null` vale lo mismo que ausente:
+ * `new Date(null)` sería el 01/01/1970, una fecha inventada.
  */
 function toVerificationCase(body: VerificationCaseBody): VerificationCase {
   return {
     id: body.id,
     status: body.status,
-    ...(body.openedAt === undefined ? {} : { openedAt: new Date(body.openedAt) }),
-    ...(body.completedAt === undefined ? {} : { completedAt: new Date(body.completedAt) }),
+    ...(body.openedAt === undefined || body.openedAt === null
+      ? {}
+      : { openedAt: new Date(body.openedAt) }),
+    ...(body.completedAt === undefined || body.completedAt === null
+      ? {}
+      : { completedAt: new Date(body.completedAt) }),
   };
 }

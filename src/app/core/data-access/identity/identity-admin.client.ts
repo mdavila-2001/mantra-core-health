@@ -127,7 +127,7 @@ export class IdentityAdminClient {
   ): Observable<PublishedAuthorityEndpoint> {
     return this.http
       .post<EnCable<PublishedAuthorityEndpoint>>(
-        this.url(`/identity/authorities/${authorityId}/endpoints`),
+        this.url(`/identity/authorities/${encodeURIComponent(authorityId)}/endpoints`),
         endpoint,
       )
       .pipe(map(conAlta));
@@ -156,7 +156,7 @@ export class IdentityAdminClient {
   submitEvidence(caseId: string, evidence: NewCaseEvidence): Observable<SubmittedEvidence> {
     return this.http
       .post<EnCable<SubmittedEvidence>>(
-        this.url(`/identity/verification-cases/${caseId}/evidence`),
+        this.url(`/identity/verification-cases/${encodeURIComponent(caseId)}/evidence`),
         evidence,
       )
       .pipe(map(conAlta));
@@ -169,7 +169,7 @@ export class IdentityAdminClient {
    */
   planChecks(caseId: string, plan: CheckPlan): Observable<PlannedChecksResult> {
     return this.http.post<PlannedChecksResult>(
-      this.url(`/identity/verification-cases/${caseId}/checks:plan`),
+      this.url(`/identity/verification-cases/${encodeURIComponent(caseId)}/checks:plan`),
       plan,
     );
   }
@@ -177,7 +177,7 @@ export class IdentityAdminClient {
   /** `POST …/:id/fraud-signals` — registrar una señal de fraude sobre el caso. */
   raiseFraudSignal(caseId: string, signal: NewFraudSignal): Observable<RaisedFraudSignal> {
     return this.http.post<RaisedFraudSignal>(
-      this.url(`/identity/verification-cases/${caseId}/fraud-signals`),
+      this.url(`/identity/verification-cases/${encodeURIComponent(caseId)}/fraud-signals`),
       signal,
     );
   }
@@ -185,7 +185,7 @@ export class IdentityAdminClient {
   /** `POST …/:id/manual-review` — escalar el caso a revisión manual. */
   openManualReview(caseId: string, review: NewManualReview): Observable<OpenedManualReview> {
     return this.http.post<OpenedManualReview>(
-      this.url(`/identity/verification-cases/${caseId}/manual-review`),
+      this.url(`/identity/verification-cases/${encodeURIComponent(caseId)}/manual-review`),
       review,
     );
   }
@@ -197,7 +197,7 @@ export class IdentityAdminClient {
   ): Observable<IssuedAssertion> {
     return this.http
       .post<IssuedAssertionBody>(
-        this.url(`/identity/verification-cases/${caseId}/assertions`),
+        this.url(`/identity/verification-cases/${encodeURIComponent(caseId)}/assertions`),
         assertion,
       )
       .pipe(map(toIssuedAssertion));
@@ -214,7 +214,7 @@ export class IdentityAdminClient {
   /** `POST /identity/checks/:id/attempts` — el intento contra la autoridad. */
   recordCheckAttempt(checkId: string, attempt: NewCheckAttempt): Observable<RecordedAttempt> {
     return this.http.post<RecordedAttempt>(
-      this.url(`/identity/checks/${checkId}/attempts`),
+      this.url(`/identity/checks/${encodeURIComponent(checkId)}/attempts`),
       attempt,
     );
   }
@@ -222,7 +222,7 @@ export class IdentityAdminClient {
   /** `POST /identity/checks/:id/results` — el veredicto inmutable del check. */
   recordCheckResult(checkId: string, result: NewCheckResult): Observable<RecordedCheckResult> {
     return this.http.post<RecordedCheckResult>(
-      this.url(`/identity/checks/${checkId}/results`),
+      this.url(`/identity/checks/${encodeURIComponent(checkId)}/results`),
       result,
     );
   }
@@ -233,7 +233,7 @@ export class IdentityAdminClient {
     decision: ManualReviewDecision,
   ): Observable<DecidedManualReview> {
     return this.http.post<DecidedManualReview>(
-      this.url(`/identity/manual-review/${reviewId}/decision`),
+      this.url(`/identity/manual-review/${encodeURIComponent(reviewId)}/decision`),
       decision,
     );
   }
@@ -245,7 +245,7 @@ export class IdentityAdminClient {
   ): Observable<RevokedAssertion> {
     return this.http
       .post<RevokedAssertionBody>(
-        this.url(`/identity/assertions/${assertionId}/revoke`),
+        this.url(`/identity/assertions/${encodeURIComponent(assertionId)}/revoke`),
         revocation,
       )
       .pipe(map(toRevokedAssertion));

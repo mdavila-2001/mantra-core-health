@@ -107,6 +107,7 @@
     <app-form-actions
       submitLabel="Registrar resultado"
       [pending]="isSubmitting()"
+      [disabled]="result() === null"
       (submitted)="submit()"
     />
   </form>

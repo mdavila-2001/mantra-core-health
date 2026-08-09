@@ -57,7 +57,7 @@ export class DelegatedAccessClient {
   ): Observable<CreatedResource> {
     return this.http
       .post<CreatedResourceBody>(
-        this.url(`/org/${tenantMembershipId}/user-assignments`),
+        this.url(`/org/${encodeURIComponent(tenantMembershipId)}/user-assignments`),
         assignment,
       )
       .pipe(map(toCreatedResource));
@@ -69,7 +69,7 @@ export class DelegatedAccessClient {
     update: OrgUserAssignmentUpdate,
   ): Observable<OperationResult> {
     return this.http.patch<OperationResult>(
-      this.url(`/org/user-assignments/${assignmentId}`),
+      this.url(`/org/user-assignments/${encodeURIComponent(assignmentId)}`),
       update,
     );
   }
@@ -88,7 +88,7 @@ export class DelegatedAccessClient {
   ): Observable<CreatedResource> {
     return this.http
       .post<CreatedResourceBody>(
-        this.url(`/practitioner-delegates/${delegationId}/access-requests`),
+        this.url(`/practitioner-delegates/${encodeURIComponent(delegationId)}/access-requests`),
         request,
       )
       .pipe(map(toCreatedResource));
@@ -97,7 +97,10 @@ export class DelegatedAccessClient {
   /** `POST /practitioner-delegates/:id/grants` — grant temporal por propósito. */
   issueGrant(delegationId: string, grant: NewGrant): Observable<CreatedResource> {
     return this.http
-      .post<CreatedResourceBody>(this.url(`/practitioner-delegates/${delegationId}/grants`), grant)
+      .post<CreatedResourceBody>(
+        this.url(`/practitioner-delegates/${encodeURIComponent(delegationId)}/grants`),
+        grant,
+      )
       .pipe(map(toCreatedResource));
   }
 
@@ -107,7 +110,7 @@ export class DelegatedAccessClient {
     revocation: DelegationRevocation,
   ): Observable<OperationResult> {
     return this.http.post<OperationResult>(
-      this.url(`/practitioner-delegates/${delegationId}/revoke`),
+      this.url(`/practitioner-delegates/${encodeURIComponent(delegationId)}/revoke`),
       revocation,
     );
   }
@@ -118,7 +121,7 @@ export class DelegatedAccessClient {
     resolution: AccessRequestResolution,
   ): Observable<AccessRequestDecisionResult> {
     return this.http.post<AccessRequestDecisionResult>(
-      this.url(`/access-requests/${requestId}/decision`),
+      this.url(`/access-requests/${encodeURIComponent(requestId)}/decision`),
       resolution,
     );
   }
@@ -144,7 +147,7 @@ export class DelegatedAccessClient {
   /** `POST /delegated-permission-sets/:id/versions` — reemplazo all-or-nothing. */
   publishSetVersion(setId: string, version: NewSetVersion): Observable<PermissionSetVersion> {
     return this.http.post<PermissionSetVersion>(
-      this.url(`/delegated-permission-sets/${setId}/versions`),
+      this.url(`/delegated-permission-sets/${encodeURIComponent(setId)}/versions`),
       version,
     );
   }
