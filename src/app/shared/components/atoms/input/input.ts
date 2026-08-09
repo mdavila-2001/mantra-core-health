@@ -2,33 +2,60 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  forwardRef,
   inject,
   input,
   model,
   output,
   signal,
 } from '@angular/core';
+import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 
 import {
   FORM_CONTROL_CONTEXT,
   nextControlId,
-} from '../../form-control/form-control.context';
-import type { InputType } from './input.types';
+} from '@shared/forms/form-control.context';
+import { createValueAccessorBridge } from '@shared/forms/value-accessor';
+import type { InputComboboxAria, InputType } from './input.types';
 
 @Component({
   selector: 'app-input',
+  standalone: true,
   templateUrl: './input.html',
   styleUrl: './input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class.app-input-host]': 'true',
-    '[class.is-disabled]': 'disabled()',
+    '[class.is-disabled]': 'isDisabled()',
   },
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => Input),
+      multi: true,
+    },
+  ],
 })
-export class InputComponent {
+export class Input implements ControlValueAccessor {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
 
+  /** Puente con el formulario. Vacío e inofensivo si el control va suelto. */
+  private readonly formBridge = createValueAccessorBridge<string | number | null>();
+
   readonly type = input<InputType>('text');
+
+  /**
+   * Pista de autocompletado para el navegador.
+   *
+   * **No es opcional en la práctica.** Sin ella el navegador adivina cuál es el
+   * campo de usuario, y adivina mal: en el alta de profesional guardaba el
+   * número de credencial como nombre de usuario, así que al volver ofrecía una
+   * credencial donde iba el correo y el acceso fallaba.
+   *
+   * Valores del estándar HTML: `username`, `current-password`, `new-password`,
+   * `email`, `tel`, `name`… y `off` donde no corresponda ninguno.
+   */
+  readonly autocomplete = input<string | null>(null);
   readonly placeholder = input<string>('');
   readonly value = model<string | number | null>('');
   readonly disabled = input<boolean>(false);
@@ -36,11 +63,44 @@ export class InputComponent {
   readonly hasError = input<boolean>(false);
   readonly hasSuccess = input<boolean>(false);
 
+  /**
+   * Identificador estable para las pruebas de extremo a extremo.
+   *
+   * Existe porque el `<input>` real vive **dentro** del componente: un
+   * `data-testid` escrito sobre `<app-input>` se queda en el host y nunca llega
+   * al campo que la prueba tiene que escribir. Sin esto, localizarlo obliga a
+   * colgarse de la etiqueta visible o de la forma del DOM, y las dos se rompen
+   * con cualquier cambio de redacción o de maquetado.
+   *
+   * No cambia nada de lo que se ve ni de lo que valida: es un atributo más en
+   * el `<input>`, y sin valor no se emite ninguno.
+   */
+  readonly testId = input<string | null>(null);
+
+  /**
+   * Atributos ARIA de combobox, cuando el control es el campo de un buscador de
+   * referencia (`app-reference-combobox`).
+   *
+   * Vive acá y no en el molde de arriba porque el `<input>` real es este: un
+   * `role="combobox"` escrito sobre `<app-input>` se queda en el host y el
+   * lector de pantalla nunca lo ve. Sin valor no se emite ningún atributo.
+   */
+  readonly comboboxAria = input<InputComboboxAria | null>(null);
+
   readonly focused = output<FocusEvent>();
   readonly blurred = output<FocusEvent>();
 
   protected readonly isFocused = signal(false);
   protected readonly passwordVisible = signal(false);
+
+  /**
+   * Deshabilitado por la plantilla **o** por el formulario. Son dos fuentes
+   * independientes y basta con que una lo pida; `disabled` es un `input()` de
+   * solo lectura, así que `setDisabledState` no puede escribirlo.
+   */
+  protected readonly isDisabled = computed(
+    () => this.disabled() || this.formBridge.disabledByForm(),
+  );
 
   /** Id propio si el input vive suelto; el del campo si está envuelto. */
   private readonly ownId = nextControlId('input');
@@ -71,7 +131,7 @@ export class InputComponent {
     if (this.isFocused()) {
       classes.push('is-focused');
     }
-    if (this.disabled()) {
+    if (this.isDisabled()) {
       classes.push('is-disabled');
     }
     if (this.type() === 'number') {
@@ -80,18 +140,49 @@ export class InputComponent {
     return classes.join(' ');
   });
 
+  // --- ControlValueAccessor ------------------------------------------------
+  // Sólo se avisa al formulario de los cambios que hace la persona. `writeValue`
+  // escribe la señal y NO llama a `emitChange`: hacerlo devolvería al formulario
+  // el valor que él mismo acaba de mandar.
+
+  writeValue(value: string | number | null): void {
+    this.value.set(value ?? '');
+  }
+
+  registerOnChange(fn: (value: string | number | null) => void): void {
+    this.formBridge.registerOnChange(fn);
+  }
+
+  registerOnTouched(fn: () => void): void {
+    this.formBridge.registerOnTouched(fn);
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.formBridge.setDisabledState(isDisabled);
+  }
+
+  /**
+   * Único punto por donde entra un valor puesto por la persona: escribe la
+   * señal y avisa al formulario. Tenerlo en un solo lugar es lo que evita que
+   * un camino nuevo se olvide de avisar.
+   */
+  private commit(value: string | number | null): void {
+    this.value.set(value);
+    this.formBridge.emitChange(value);
+  }
+
   protected handleInput(event: Event): void {
     const target = event.target as HTMLInputElement;
 
     if (this.type() !== 'number') {
-      this.value.set(target.value);
+      this.commit(target.value);
       return;
     }
 
     // `valueAsNumber` es NaN con el campo vacío — y **0 es un valor válido**,
     // así que no se puede usar `||` para elegir: en clínica el 0 es un dato.
     const asNumber = target.valueAsNumber;
-    this.value.set(Number.isNaN(asNumber) ? null : asNumber);
+    this.commit(Number.isNaN(asNumber) ? null : asNumber);
   }
 
   protected handleFocus(event: FocusEvent): void {
@@ -102,6 +193,9 @@ export class InputComponent {
   protected handleBlur(event: FocusEvent): void {
     this.isFocused.set(false);
     this.normalizeValue();
+    // Se marca tocado después de normalizar, para que el formulario valide el
+    // valor ya limpio y no el que la persona dejó a medias.
+    this.formBridge.emitTouched();
     this.blurred.emit(event);
   }
 
@@ -110,7 +204,7 @@ export class InputComponent {
   }
 
   protected clearSearch(): void {
-    this.value.set('');
+    this.commit('');
   }
 
   /**
@@ -133,7 +227,7 @@ export class InputComponent {
     if (this.type() === 'email') {
       const withoutSpaces = trimmed.replace(/\s+/g, '');
       if (withoutSpaces !== raw) {
-        this.value.set(withoutSpaces);
+        this.commit(withoutSpaces);
       }
       return;
     }
@@ -141,13 +235,13 @@ export class InputComponent {
     if (this.type() === 'url') {
       const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
       if (withScheme !== raw) {
-        this.value.set(withScheme);
+        this.commit(withScheme);
       }
       return;
     }
 
     if (trimmed !== raw) {
-      this.value.set(trimmed);
+      this.commit(trimmed);
     }
   }
 }

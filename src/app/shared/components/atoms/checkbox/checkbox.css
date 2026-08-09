@@ -1,5 +1,5 @@
 /* ============================================================================
-    CheckboxComponent — Vanilla CSS con tokens REDSAT
+    Checkbox — Vanilla CSS con tokens REDSAT
     ========================================================================== */
 
 :host {
@@ -10,19 +10,13 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-3);
-  min-height: 40px;
+  min-height: 44px;
   cursor: pointer;
   user-select: none;
   font-family: var(--font-body);
   font-size: var(--fs-body);
   color: var(--text-primary);
   position: relative;
-}
-
-@media (max-width: 780px) {
-  .checkbox-container {
-    min-height: 44px;
-  }
 }
 
 /* Ocultar input nativo visualmente manteniendo soporte de accesibilidad */
@@ -34,10 +28,10 @@
   margin: 0;
 }
 
-/* Cuadro indicador de 18px (22px móvil) con radio de 5px */
+/* Cuadro indicador de 22px en móvil (base); 18px desde 780px. Radio de 5px */
 .checkbox-box {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   border-radius: 5px;
   border: 1.5px solid var(--border-strong);
   background-color: var(--bg-surface);
@@ -48,25 +42,29 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 780px) {
-  .checkbox-box {
-    width: 22px;
-    height: 22px;
-  }
-}
-
 .checkbox-box svg {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   /* literal del spec (.checkbox/.radio: `color: #fff`): el tilde es blanco
      en ambos temas, no sigue a --text-inverse */
   color: #ffffff;
 }
 
-@media (max-width: 780px) {
+/* Base = móvil (área táctil 44px, caja 22px, tilde 14px).
+   Desde 780px (tablet/escritorio) el checkbox se compacta. */
+@media (min-width: 780px) {
+  .checkbox-container {
+    min-height: 40px;
+  }
+
+  .checkbox-box {
+    width: 18px;
+    height: 18px;
+  }
+
   .checkbox-box svg {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
   }
 }
 

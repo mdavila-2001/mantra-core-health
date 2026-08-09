@@ -1,0 +1,32 @@
+/* Centrada y acotada: es una pantalla de una sola cosa, y una línea de texto
+   que cruza un monitor entero no se lee. */
+.recuperacion {
+    display: flex;
+    justify-content: center;
+    padding: var(--sp-8) var(--sp-4);
+}
+
+.recuperacion > * {
+    max-width: 60ch;
+    width: 100%;
+}
+
+/* El código y la versión se dictan por teléfono: cifras tabulares para que un
+   0 y una O no se confundan al leerlos en voz alta. */
+.recuperacion__codigo {
+    margin-top: var(--sp-4);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.recuperacion__codigo code {
+    /* Borde `strong`: delimita un dato que hay que poder seleccionar, no es un
+       divisor decorativo. */
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-xs);
+    padding: 0 var(--sp-1);
+    background: var(--bg-inset);
+    color: var(--text-primary);
+    user-select: all;
+}

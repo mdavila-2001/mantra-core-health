@@ -1,0 +1,73 @@
+/* ============================================================================
+    Accordion panel — separación por borde decorativo. Sin sombras: dentro de
+    un formulario largo, ocho relieves compiten con el contenido.
+    ========================================================================== */
+
+:host {
+    display: block;
+    border-bottom: 1px solid var(--border-default);
+    font-family: var(--font-body);
+}
+
+.accordion-panel__heading {
+    /* el <h3> aporta la semántica; el tamaño lo pone el botón */
+    margin: 0;
+    font: inherit;
+}
+
+.accordion-panel__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-4) var(--sp-2);
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    border-radius: var(--r-sm);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.accordion-panel__trigger:hover:not(:disabled) {
+    background: var(--bg-inset);
+}
+
+.accordion-panel__trigger:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.accordion-panel__chevron {
+    flex-shrink: 0;
+    width: var(--sp-5);
+    height: var(--sp-5);
+    color: var(--text-secondary);
+    transition: transform 0.15s ease;
+}
+
+/* La flecha gira; el estado real lo dice `aria-expanded`, no el dibujo. */
+:host(.is-expanded) .accordion-panel__chevron {
+    transform: rotate(180deg);
+}
+
+/* Entrada corta: el contenido aparece en su lugar, sin animar altura —que
+   obligaría a medir el DOM. La regla global de prefers-reduced-motion la
+   vuelve instantánea, que es exactamente lo que corresponde acá. */
+.accordion-panel__region {
+    padding: 0 var(--sp-2) var(--sp-4);
+    animation: accordion-reveal 0.15s ease;
+}
+
+@keyframes accordion-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(calc(-1 * var(--sp-1)));
+    }
+}

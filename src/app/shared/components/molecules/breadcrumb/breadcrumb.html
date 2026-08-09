@@ -1,0 +1,49 @@
+<nav aria-label="Ruta de navegación">
+  <ol class="breadcrumb__list">
+    @if (rootItem(); as root) {
+      <li class="breadcrumb__item">
+        @if (root.routerLink && !isLast(root)) {
+          <a app-link variant="subtle" [routerLink]="root.routerLink">{{ root.label }}</a>
+        } @else {
+          <span [attr.aria-current]="isLast(root) ? 'page' : null">{{ root.label }}</span>
+        }
+      </li>
+    }
+
+    @if (isCollapsed()) {
+      <li class="breadcrumb__separator" aria-hidden="true">/</li>
+      <li class="breadcrumb__item">
+        <!-- El salto no es decorativo: abre los escalones que no entran. -->
+        <button
+          type="button"
+          class="breadcrumb__more"
+          [appMenuTrigger]="ocultos"
+          aria-label="Mostrar los escalones ocultos de la ruta"
+        >
+          …
+        </button>
+        <app-menu #ocultos>
+          @for (item of collapsedItems(); track item.label) {
+            @if (item.routerLink) {
+              <app-menu-item [routerLink]="item.routerLink">{{ item.label }}</app-menu-item>
+            } @else {
+              <app-menu-item disabled>{{ item.label }}</app-menu-item>
+            }
+          }
+        </app-menu>
+      </li>
+    }
+
+    @for (item of tailItems(); track item.label) {
+      <li class="breadcrumb__separator" aria-hidden="true">/</li>
+      <li class="breadcrumb__item">
+        @if (item.routerLink && !isLast(item)) {
+          <a app-link variant="subtle" [routerLink]="item.routerLink">{{ item.label }}</a>
+        } @else {
+          <!-- Dónde estás: texto, y dicho con `aria-current`. -->
+          <span [attr.aria-current]="isLast(item) ? 'page' : null">{{ item.label }}</span>
+        }
+      </li>
+    }
+  </ol>
+</nav>

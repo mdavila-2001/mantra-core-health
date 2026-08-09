@@ -1,0 +1,93 @@
+/* ============================================================================
+    Chip — filtros y facetas de listado. El mapa de tonos es el MISMO archivo
+    que consume el Badge: una sola copia del mapeo tono → trío `--st-*`.
+
+    Geometría propia: el chip es más grande que un badge porque se toca y se
+    quita con el dedo, no solo se lee. Extensión propia sobre el spec REDSAT
+    — pendiente de validación del diseñador.
+    ========================================================================== */
+
+@import '../../tone/tone.css';
+
+:host {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-family: var(--font-body);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    border-radius: var(--r-full);
+    border: 1px solid var(--tone-bd, transparent);
+    background: var(--tone-bg, transparent);
+    color: var(--tone-fg, currentColor);
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+/* ---- tamaños: `md` es la escala del badge subida a área táctil ----------- */
+
+:host(.chip--sm) {
+    font-size: var(--fs-overline);
+    padding: var(--sp-1) var(--sp-2);
+}
+
+:host(.chip--md) {
+    font-size: var(--fs-caption);
+    padding: 6px var(--sp-3);
+}
+
+/* ---- modos interactivos -------------------------------------------------- */
+
+:host(.chip--selectable),
+:host(.chip--removable) {
+    cursor: pointer;
+}
+
+:host(.chip--selectable:hover) {
+    border-color: var(--tone-fg);
+}
+
+/* Seleccionado no se dice solo con color: el borde engorda y `aria-pressed`
+   lo enuncia. */
+:host(.chip--selected) {
+    box-shadow: inset 0 0 0 1.5px var(--tone-fg);
+}
+
+/* ---- botón de cierre ----------------------------------------------------- */
+
+.chip__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* el dibujo es chico, el área táctil no: el margen negativo se lo devuelve
+       al chip para que la píldora no crezca */
+    width: var(--sp-6);
+    height: var(--sp-6);
+    margin: calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) 0;
+    padding: 0;
+    border: none;
+    border-radius: var(--r-full);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.chip__remove:hover {
+    background: color-mix(in srgb, var(--tone-fg) 15%, transparent);
+}
+
+.chip__remove svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Los SVG proyectados conservan la encapsulación del padre: ::ng-deep es la
+   vía soportada. En `em` para que acompañen al talle, igual que en el botón. */
+:host ::ng-deep [slot='icon'] svg {
+    width: 1.1em;
+    height: 1.1em;
+    flex-shrink: 0;
+}

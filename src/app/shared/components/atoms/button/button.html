@@ -1,0 +1,6 @@
+<!-- El botón ya anuncia su carga con aria-busy: el spinner va decorativo para
+     que el lector no diga dos veces lo mismo. -->
+@if (isLoading()) {
+  <app-spinner class="btn__spinner" size="sm" decorative />
+}
+<ng-content />

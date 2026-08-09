@@ -4,8 +4,7 @@
      a los cambios de ruta y exista como región viva desde el primer render. -->
 <app-toast-container />
 
-<!-- Disparador de avisos para probar desde cualquier pantalla. `@defer` lo deja
-     en un chunk aparte que en producción NUNCA se descarga. -->
-@defer (when isDev) {
-  <app-toast-dev-panel />
-}
+<!-- El disparador de avisos flotante se quitó de acá: aparecía encima de TODAS
+     las pantallas en desarrollo, incluida una demostración. La vitrina ya tiene
+     su sección de avisos (05), que es donde uno va a probarlos; el componente
+     `app-toast-dev-panel` sigue disponible para quien lo quiera montar. -->

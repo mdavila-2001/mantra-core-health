@@ -1,0 +1,52 @@
+/* ============================================================================
+    Link — el subrayado NO es decoración: es el segundo portador del
+    significado «esto se puede seguir», imprescindible cuando el color no se
+    distingue. Por eso todas las variantes subrayan, incluida `subtle`.
+    TODO(diseñador): confirmar si `subtle` puede subrayar solo al hover.
+
+    El anillo de foco lo pone la regla global de `:focus-visible`.
+    ========================================================================== */
+
+:host {
+    --_link-fg: var(--brand-primary);
+    --_link-fg-hover: var(--brand-primary-hover);
+
+    display: inline;
+    align-items: baseline;
+    gap: var(--sp-1);
+    color: var(--_link-fg);
+    font-family: var(--font-body);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    border-radius: var(--r-xs);
+    transition: color 0.15s ease;
+    cursor: pointer;
+}
+
+:host(:hover) {
+    color: var(--_link-fg-hover);
+}
+
+/* ---- variantes ----------------------------------------------------------- */
+
+:host(.link--subtle) {
+    --_link-fg: var(--text-secondary);
+    --_link-fg-hover: var(--text-primary);
+}
+
+:host(.link--danger) {
+    --_link-fg: var(--st-error-fg);
+    --_link-fg-hover: var(--c-error-600);
+}
+
+/* ---- destino externo ------------------------------------------------------ */
+
+.link__external-icon {
+    width: 0.9em;
+    height: 0.9em;
+    /* el ícono acompaña la última palabra: no debe quedar solo en la línea
+       siguiente si el texto envuelve */
+    margin-left: var(--sp-1);
+    vertical-align: baseline;
+}

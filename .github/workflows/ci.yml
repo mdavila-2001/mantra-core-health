@@ -1,0 +1,266 @@
+# Batería completa en cada push y cada pull request.
+#
+# El orden es de coste creciente: falla primero lo barato. Un lint roto no
+# debería costar una compilación entera para enterarse.
+#
+# Ninguna etapa añade dependencias al proyecto: las seis verificaciones
+# documentales son scripts propios de Node, sin paquetes.
+
+name: CI
+
+on:
+  push:
+    branches: [dev, master]
+  pull_request:
+  # Para lanzar a mano la regresión completa de Selenium antes de un despliegue,
+  # sin esperar a que algo llegue a `master`.
+  workflow_dispatch:
+
+# Un push nuevo sobre la misma rama cancela el anterior: la respuesta que
+# importa es la del último commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # El generador de entorno estampa el commit en el paquete leyéndolo de
+          # Git. Con el clon superficial por defecto alcanza para `rev-parse`.
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Corepack instala la versión de Yarn que fija `packageManager`.
+      - run: corepack enable
+
+      # El repositorio instala en modo PnP: se cachea `.yarn/cache`, no
+      # `node_modules`, que no existe.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            .yarn/unplugged
+          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: yarn-${{ runner.os }}-
+
+      # `--immutable` falla si el lockfile no cuadra con el manifiesto.
+      - name: Instalación reproducible
+        run: yarn install --immutable
+
+      # `src/environments/env.generated.ts` está en `.gitignore` —es lo que
+      # impide versionar la configuración de una máquina— así que en un clon
+      # limpio **no existe**, y los cuatro archivos que lo importan no compilan.
+      #
+      # En local no se nota: `start`, `build`, `watch` y `test` lo generan
+      # encadenado. Pero `lint` y `tsc` se invocan directos, sin pasar por esos
+      # scripts, y por eso la etapa de Tipos venía fallando en cada ejecución
+      # desde que existe este workflow —también en `dev`—.
+      - name: Entorno público
+        run: yarn env:generate
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Tipos
+        run: yarn tsc -p tsconfig.app.json --noEmit
+
+      # Los umbrales de cobertura son por área y bloquean: si un cambio los baja,
+      # esta etapa falla en vez de avisar.
+      - name: Pruebas y cobertura
+        run: yarn test:coverage
+
+      - name: Build de producción
+        run: yarn build
+
+      # Falla solo por encima del umbral de ERROR. El aviso de presupuesto no
+      # bloquea: es deuda conocida y gobernada, no una regresión nueva.
+      - name: Presupuesto de bundle
+        run: node scripts/check-bundle-budget.mjs
+
+      # Ciclos, dirección de las capas y superficie de red confinada a
+      # `core/data-access/`.
+      - name: Arquitectura
+        run: node scripts/check-architecture.mjs
+
+      # Los seis prefijos de la API dicen lo mismo en desarrollo, en el
+      # contenedor y en el reverse proxy de producción.
+      - name: Prefijos de la API
+        run: node scripts/check-api-prefixes.mjs
+
+      # El catálogo tipado y `styles.css` declaran lo mismo, en ambos sentidos.
+      - name: Tokens del sistema de diseño
+        run: node scripts/check-tokens.mjs
+
+      # Inventarios al día, enlaces, cobertura documental y deriva de contrato.
+      - name: Documentación
+        run: node scripts/generate-doc-report.mjs
+
+  # Los journeys que jsdom no puede cubrir: hacen falta un router real, un `F5`
+  # de verdad y un navegador que ejecute la hidratación.
+  #
+  # Va en un job aparte y no como una etapa más de `verificar` por dos razones:
+  # corre en paralelo en vez de alargar la cadena, y necesita descargar un
+  # navegador —lo caro de esta etapa— que al resto no le sirve de nada.
+  #
+  # No depende de `verificar`: si el lint falla, esto igual dice si los journeys
+  # siguen en pie, y las dos respuestas llegan juntas.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: corepack enable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            .yarn/unplugged
+          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: yarn-${{ runner.os }}-
+
+      - run: yarn install --immutable
+
+      # Solo Chromium: es el único proyecto que declara `playwright.config.ts`.
+      # Bajar los tres navegadores costaría minutos por nada.
+      - name: Navegador
+        run: yarn playwright install --with-deps chromium
+
+      # `playwright.config.ts` construye el artefacto y lo sirve por su cuenta
+      # (`webServer`). Se prueba contra el build de producción a propósito: el
+      # prerenderizado y las cabeceras de seguridad **solo existen ahí**.
+      - name: Journeys de extremo a extremo
+        run: yarn e2e
+
+      # Las trazas del reintento son lo único que permite entender un fallo que
+      # no se reproduce en local.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # Selenium: la suite de aceptación funcional.
+  #
+  # ## Por qué convive con la de Playwright en vez de reemplazarla
+  #
+  # Cubren cosas distintas y ninguna sustituye a la otra. Playwright verifica el
+  # **contrato visual** —las capturas de referencia se generan en contenedor y
+  # comparan píxeles— y siete journeys de sesión con la red interceptada desde
+  # el propio navegador. Selenium verifica el **comportamiento funcional** contra
+  # un servidor de verdad, con una API simulada del lado del servidor, y suma lo
+  # que aquélla no cubre: formularios, tablas de navegación, resoluciones y
+  # accesibilidad con `axe-core` sobre la pantalla montada.
+  #
+  # Reemplazar una por otra habría significado tirar cobertura para no ganar
+  # nada. Corren en paralelo y ninguna depende de la otra.
+  selenium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: corepack enable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            .yarn/unplugged
+          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: yarn-${{ runner.os }}-
+
+      - run: yarn install --immutable
+
+      # El generador escribe `src/environments/env.generated.ts`, que está en
+      # `.gitignore` y que la construcción del artefacto necesita.
+      - name: Entorno público
+        run: yarn env:generate
+
+      # Los tipos de la suite se revisan aparte de los de la aplicación: un Page
+      # Object que apunta a un método que ya no existe tiene que fallar acá, en
+      # segundos, y no a mitad de una corrida con navegador.
+      - name: Tipos de la suite
+        run: yarn tsc -p e2e/selenium/tsconfig.json --noEmit
+
+      # No se instala ningún chromedriver: Selenium Manager resuelve el que
+      # corresponde al Chrome del agente, que ubuntu-latest ya trae.
+      - name: Versión de Chrome
+        run: google-chrome --version
+
+      # Humo primero, y aparte: si la aplicación no arranca, los fallos de la
+      # suite crítica no significan nada y leerlos es perder el tiempo.
+      # El artefacto lo construye el arnés (`harness/servidor.ts`).
+      - name: Humo
+        run: yarn test:e2e:smoke
+
+      # Reutiliza el artefacto que acaba de construir el humo: reconstruirlo
+      # costaría un minuto largo para producir exactamente lo mismo.
+      - name: Suite crítica
+        run: yarn test:e2e:critical
+        env:
+          E2E_SKIP_BUILD: 'true'
+
+      # La regresión completa solo en la rama principal y a mano: cubre casos de
+      # borde y responsive, que son valiosos y no bloquean un pull request.
+      - name: Regresión completa
+        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        run: yarn test:e2e
+        env:
+          E2E_SKIP_BUILD: 'true'
+
+      # Siempre, no solo al fallar: el reporte en verde también sirve —dice
+      # cuánto tardó cada prueba— y las capturas del fallo son lo único que
+      # permite entender en local algo que solo pasó en CI.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: selenium-artifacts
+          path: artifacts/selenium/
+          retention-days: 7
+
+  dependencias:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: yarn install --immutable
+
+      # No bloquea a propósito. La única vulnerabilidad conocida es moderada,
+      # transitiva de `@angular/cli` y NO llega al navegador; hacer fallar el
+      # pipeline por deuda preexistente entrena a ignorar el pipeline.
+      # Lo que sí interesa es enterarse de una alta o crítica nueva.
+      - name: Auditoría de dependencias
+        run: yarn npm audit --recursive --severity high
+        continue-on-error: true

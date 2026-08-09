@@ -1,0 +1,280 @@
+# Portal técnico del frontend Mantra Core Health.
+#
+# ⚠️  MkDocs NO está instalado en este proyecto y este archivo no lo instala.
+#     Añadirlo sería una dependencia nueva (Python) y necesita autorización; el
+#     plan maestro lo dice explícitamente. Este archivo existe para que el día
+#     que se apruebe, la navegación ya esté escrita y verificada.
+#
+#     Mientras tanto la documentación se lee como Markdown, y sus enlaces se
+#     verifican con `node scripts/check-doc-links.mjs`, que hace lo que la
+#     construcción estricta de MkDocs haría con los enlaces — sin instalar nada.
+#
+# Para levantarlo, con Python disponible:
+#     pip install mkdocs-material
+#     mkdocs serve
+#
+# `strict: true` convierte cualquier aviso en error, incluidos los enlaces rotos
+# y los archivos que no estén en la navegación.
+
+site_name: Mantra Core Health — Frontend
+site_description: Documentación técnica del frontend del ecosistema REDESA
+docs_dir: docs
+strict: true
+
+theme:
+  name: material
+  language: es
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - toc.follow
+  palette:
+    # Mismos roles que el sistema REDSAT: el azul estructura y la aguamarina
+    # acciona. Los valores viven en src/styles.css; acá solo la referencia.
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Cambiar a modo oscuro
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Cambiar a modo claro
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+
+plugins:
+  - search:
+      lang: es
+
+nav:
+  - Inicio: index.md
+
+  - Empezar:
+      - Requisitos previos: getting-started/prerequisites.md
+      - Instalación local: getting-started/local-setup.md
+      - Órdenes: getting-started/commands.md
+      - Variables de entorno: getting-started/environment-variables.md
+      - Ejecutar las pruebas: getting-started/running-tests.md
+      - Solución de problemas: getting-started/troubleshooting.md
+
+  - Producto:
+      - Contexto de negocio: business/business-context.md
+      - Actores y roles: business/actors-and-roles.md
+      - Capacidades: business/capabilities.md
+      - Recorridos de usuario: business/user-journeys.md
+      - Reglas de negocio: business/business-rules.md
+      - Glosario: business/glossary.md
+
+  - Arquitectura:
+      - Visión general: architecture/overview.md
+      - Contexto del sistema: architecture/system-context.md
+      - Contenedores: architecture/containers.md
+      - Capas del frontend: architecture/frontend-layers.md
+      - Dependencias entre módulos: architecture/module-dependencies.md
+      - Estrategia de renderizado: architecture/rendering-strategy.md
+      - Routing y navegación: architecture/routing-and-navigation.md
+      - Gestión de estado: architecture/state-management.md
+      - Flujo de datos: architecture/data-flow.md
+      - Manejo de errores: architecture/error-boundaries.md
+      - Mapa de integraciones: architecture/integration-map.md
+
+  - Rutas:
+      - Catálogo: routes/route-catalog.md
+      - /auth · Iniciar sesión: routes/auth-login.md
+      - /auth/registro · Crear cuenta: routes/auth-registro.md
+      - /auth/organizacion · Elegir organización: routes/auth-organizacion.md
+      - /auth/verificar · Verificar correo: routes/auth-verificar.md
+      - /auth/recuperar · Recuperar contraseña: routes/auth-recuperar.md
+      - /auth/nueva-clave · Nueva contraseña: routes/auth-nueva-clave.md
+      - /panel · Panel: routes/panel.md
+      - /identidad/verificar · Verificar identidad: routes/identidad-verificar.md
+      - /error y 404: routes/error-y-404.md
+      - /design-system · Vitrina: routes/design-system.md
+
+  - Componentes:
+      - Catálogo: components/catalog.md
+      - Reglas de composición: components/composition-rules.md
+      - Entradas y salidas: components/props-and-events.md
+      - Formularios: components/forms.md
+      - Tablas: components/tables.md
+      - Diálogos y capas: components/modals-and-overlays.md
+      - Notificaciones: components/notifications.md
+      - Deprecación: components/deprecation.md
+
+  - Sistema de diseño:
+      - Principios: design-system/principles.md
+      - Tokens: design-system/tokens.md
+      - Colores: design-system/colors.md
+      - Tipografía: design-system/typography.md
+      - Espaciado y radios: design-system/spacing.md
+      - Temas: design-system/themes.md
+      - Diseño adaptable: design-system/responsive-design.md
+      - Movimiento: design-system/motion.md
+      - Íconos: design-system/icons.md
+
+  - Datos y estado:
+      - Estado de servidor: data-and-state/server-state.md
+      - Estado de cliente: data-and-state/client-state.md
+      - Formularios y validación: data-and-state/forms-and-validation.md
+      - Caché: data-and-state/caching.md
+      - Persistencia: data-and-state/persistence.md
+      - Actualizaciones optimistas: data-and-state/optimistic-updates.md
+      - Invalidación: data-and-state/invalidation.md
+
+  - Integraciones:
+      - API de backend: integrations/backend-api.md
+      - Autenticación: integrations/authentication.md
+      - Archivos: integrations/file-storage.md
+      - Tiempo real: integrations/realtime.md
+      - Analítica: integrations/analytics.md
+      - Servicios externos: integrations/external-services.md
+
+  - Accesibilidad:
+      - Estándar y alcance: accessibility/standard-and-scope.md
+      - Informe de auditoría: accessibility/audit-report.md
+      - Teclado: accessibility/keyboard.md
+      - Gestión del foco: accessibility/focus-management.md
+      - Lectores de pantalla: accessibility/screen-readers.md
+      - Formularios y errores: accessibility/forms-and-errors.md
+      - Color y contraste: accessibility/color-and-contrast.md
+
+  - Rendimiento:
+      - Presupuestos: performance/budgets.md
+      - Core Web Vitals: performance/core-web-vitals.md
+      - Análisis del paquete: performance/bundle-analysis.md
+      - Imágenes y tipografías: performance/images-and-fonts.md
+      - Renderizado: performance/rendering.md
+      - Monitoreo: performance/monitoring.md
+
+  - Seguridad:
+      - Seguridad frontend: security/frontend-security.md
+      - Modelo de amenazas: security/threat-model.md
+      - Sesión y tokens: security/session-and-tokens.md
+      - Almacenamiento del navegador: security/browser-storage.md
+      - Política de seguridad de contenido: security/content-security-policy.md
+      - Dependencias: security/dependencies.md
+      - Privacidad: security/privacy.md
+      - Respuesta a incidentes: security/incident-response.md
+
+  - Observabilidad:
+      - Registros: observability/logging.md
+      - Reporte de errores: observability/error-reporting.md
+      - Trazabilidad y correlación: observability/tracing.md
+      - Web Vitals: observability/web-vitals.md
+      - Eventos analíticos: observability/analytics-events.md
+      - Paneles y alertas: observability/dashboards-and-alerts.md
+      - Trazas distribuidas (OpenTelemetry · Jaeger):
+          - Auditoría del estado actual: observability/angular/00-current-state-audit.md
+          - Diseño de la arquitectura: observability/angular/01-architecture-design.md
+          - Convenciones de nombres: observability/angular/02-naming-conventions.md
+          - Contexto asíncrono sin Zone.js: observability/angular/03-async-context-strategy.md
+          - Instrumentar RxJS: observability/angular/04-rxjs-tracing-guidelines.md
+          - Rendimiento y Web Vitals: observability/angular/05-web-vitals-strategy.md
+          - Política de datos: observability/angular/06-data-privacy-policy.md
+          - Runbook de operación: observability/angular/07-operations-runbook.md
+
+  - Pruebas:
+      - Estrategia: testing/strategy.md
+      - Unitarias: testing/unit-tests.md
+      - De componente: testing/component-tests.md
+      - De integración: testing/integration-tests.md
+      - Extremo a extremo: testing/e2e-tests.md
+      - Regresión visual: testing/visual-regression.md
+      - Recorrido visual: testing/recorrido-visual.md
+      - Recorrido con usuarios reales: testing/recorrido-con-usuarios-reales.md
+      - De contrato: testing/contract-tests.md
+      - De accesibilidad: testing/accessibility-tests.md
+      - Datos de prueba: testing/test-data.md
+
+  - Operación:
+      - Entornos: operations/environments.md
+      - Build: operations/build.md
+      - Despliegue: operations/deployment.md
+      - Configuración: operations/configuration.md
+      - Banderas de funcionalidad: operations/feature-flags.md
+      - Caché y CDN: operations/cache-and-cdn.md
+      - Reversión: operations/rollback.md
+      - Runbooks:
+          - Índice: operations/runbooks/index.md
+          - 1 · La aplicación no carga: operations/runbooks/app-no-carga.md
+          - 2 · Pantalla en blanco: operations/runbooks/pantalla-en-blanco.md
+          - 3 · Chunks desactualizados: operations/runbooks/chunks-desactualizados.md
+          - 4 · Backend no disponible: operations/runbooks/backend-no-disponible.md
+          - 5 · Autenticación en bucle: operations/runbooks/autenticacion-en-bucle.md
+          - 6 · CORS bloqueando: operations/runbooks/cors-bloqueando.md
+          - 7 · Assets no disponibles: operations/runbooks/assets-no-disponibles.md
+          - 8 · Variables incorrectas: operations/runbooks/variables-incorrectas.md
+          - 9 · Error de hidratación: operations/runbooks/error-de-hidratacion.md
+          - 10 · Aumento de errores: operations/runbooks/aumento-errores.md
+          - 11 · Degradación de Web Vitals: operations/runbooks/degradacion-web-vitals.md
+          - 12 · Reversión de una entrega: operations/runbooks/rollback-de-release.md
+
+  - Decisiones (ADR):
+      - Índice: adr/index.md
+      - ADR-0001 · Angular standalone con señales: adr/ADR-0001-angular-standalone-signals.md
+      - ADR-0002 · SSR con prerenderizado selectivo: adr/ADR-0002-ssr-prerenderizado-selectivo.md
+      - ADR-0003 · Sin store global: adr/ADR-0003-sin-store-global.md
+      - ADR-0004 · Sistema de diseño propio: adr/ADR-0004-sistema-de-diseno-propio.md
+      - ADR-0005 · ViewState y el M34: adr/ADR-0005-view-state-m34.md
+      - ADR-0006 · Sesión en memoria: adr/ADR-0006-sesion-en-memoria.md
+      - ADR-0007 · Fronteras por alias: adr/ADR-0007-fronteras-por-alias.md
+      - ADR-0008 · Contrato de formularios: adr/ADR-0008-contrato-de-formularios.md
+      - ADR-0009 · Vitrina en vez de Storybook: adr/ADR-0009-vitrina-en-vez-de-storybook.md
+      - ADR-0010 · CSS crítico en línea: adr/ADR-0010-css-critico-en-linea.md
+      - ADR-0011 · La API detrás del mismo dominio: adr/ADR-0011-api-mismo-dominio.md
+
+  - Gobierno:
+      - Política de documentación: governance/documentation-policy.md
+      - Proceso de revisión: governance/review-process.md
+      - Gestión del cambio: governance/change-management.md
+      - Cero regresiones: governance/zero-regression-policy.md
+      - Matriz de trazabilidad: governance/traceability-matrix.md
+      - Propiedad: governance/ownership.md
+
+  - Informes:
+      - Línea base: reports/baseline.md
+      - Auditoría de estructura: reports/graphify-audit.md
+      - Inventario funcional: reports/frontend-inventory.md
+      - Análisis de brechas: reports/documentation-gap-analysis.md
+      - Auditoría de rendimiento: reports/performance-audit.md
+      - Validación de regresiones: reports/regression-validation.md
+      - Preparación productiva: reports/production-readiness.md
+      - Validación final: reports/final-validation.md
+      - Generados:
+          - Inventario de rutas: reports/generated/route-inventory.md
+          - Inventario de componentes: reports/generated/component-inventory.md
+          - Inventario de API: reports/generated/api-inventory.md
+          - Grafo de módulos: reports/generated/module-graph.md
+          - Inventario E2E (Selenium): reports/generated/e2e-inventory.md
+
+  - Auditoría previa:
+      - Diagnóstico (fases 0–1): auditoria/01-diagnostico.md
+      - Fases ejecutadas 2–6: auditoria/02-fases-ejecutadas.md

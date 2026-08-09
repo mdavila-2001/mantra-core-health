@@ -2,18 +2,21 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  forwardRef,
   inject,
   input,
   model,
   output,
   signal,
 } from '@angular/core';
+import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 
 import {
   FORM_CONTROL_CONTEXT,
   nextControlId,
-} from '../../form-control/form-control.context';
-import type { SelectOption } from '../input/input.types';
+} from '@shared/forms/form-control.context';
+import { createValueAccessorBridge } from '@shared/forms/value-accessor';
+import type { SelectOption } from './select.types';
 
 /** Valor del `<option>` que representa «nada elegido». */
 const NO_SELECTION = '';
@@ -28,16 +31,27 @@ const NO_SELECTION = '';
  */
 @Component({
   selector: 'app-select',
+  standalone: true,
   templateUrl: './select.html',
   styleUrl: './select.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class.app-select-host]': 'true',
-    '[class.is-disabled]': 'disabled()',
+    '[class.is-disabled]': 'isDisabled()',
   },
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => Select),
+      multi: true,
+    },
+  ],
 })
-export class SelectComponent<T> {
+export class Select<T> implements ControlValueAccessor {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
+
+  /** Puente con el formulario. Vacío e inofensivo si el desplegable va suelto. */
+  private readonly formBridge = createValueAccessorBridge<T | null>();
 
   readonly value = model<T | null>(null);
   readonly options = input<readonly SelectOption<T>[]>([]);
@@ -45,24 +59,68 @@ export class SelectComponent<T> {
   readonly placeholder = input<string>('Seleccionar opción');
   readonly hasError = input<boolean>(false);
 
+  /**
+   * Nombre accesible para el desplegable que va **suelto**, sin
+   * `app-form-field` alrededor.
+   *
+   * Hace falta porque el `placeholder` **no nombra al control**: se renderiza
+   * como un `<option hidden>`, y un lector de pantalla lo lee como una opción
+   * más, no como «de qué es este desplegable». Un `<select>` sin nombre se
+   * anuncia como «cuadro combinado» a secas, que no le dice nada a nadie.
+   *
+   * Lo destapó la auditoría de axe sobre el paginado —regla `select-name`,
+   * impacto crítico— y afectaba también a los dos filtros de `app-filter-bar`.
+   *
+   * Mismo criterio que `app-search-field`, que ya resolvía esto con un `<label>`
+   * invisible: quien monta el control suelto tiene que nombrarlo.
+   */
+  readonly ariaLabel = input<string>('');
+
   readonly focused = output<FocusEvent>();
   readonly blurred = output<FocusEvent>();
 
   protected readonly isFocused = signal(false);
 
+  /**
+   * Deshabilitado por la plantilla **o** por el formulario: `disabled` es un
+   * `input()` de solo lectura y `setDisabledState` no puede escribirlo.
+   */
+  protected readonly isDisabled = computed(
+    () => this.disabled() || this.formBridge.disabledByForm(),
+  );
+
   private readonly ownId = nextControlId('select');
   protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
   protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
+
+  /**
+   * El `aria-label` se emite **solo fuera de un campo**.
+   *
+   * Dentro, el `<label>` del campo ya nombra al control, y un `aria-label`
+   * ganaría por precedencia: quien pasara los dos vería en el lector de
+   * pantalla algo distinto de lo que hay escrito en la pantalla. Ignorarlo acá
+   * hace imposible ese desacuerdo.
+   */
+  protected readonly accessibleLabel = computed(() =>
+    this.field !== null ? null : this.ariaLabel() || null,
+  );
   protected readonly required = computed(() => this.field?.required() === true);
   protected readonly invalid = computed(
     () => this.hasError() || this.field?.invalid() === true,
   );
 
-  /** El `<select>` se posiciona por índice; `''` cuando no hay selección. */
-  protected readonly selectedIndex = computed(() => {
-    const index = this.options().findIndex((option) => option.value === this.value());
-    return index >= 0 ? String(index) : NO_SELECTION;
-  });
+  /**
+   * Índice de la opción elegida, o `-1` si ninguna lo está.
+   *
+   * Número y no texto porque la plantilla lo compara contra el `$index` del
+   * `@for` para marcar el `<option>` con `[selected]`. Ver el comentario de
+   * `select.html`: marcar la opción es lo único que funciona cuando el control
+   * nace con valor, porque el `<select>` recibe sus propiedades antes de que
+   * sus opciones existan.
+   */
+  protected readonly selectedIndex = computed(() =>
+    this.options().findIndex((option) => option.value === this.value()),
+  );
 
   protected readonly wrapperClasses = computed(() => {
     const classes = ['select-wrapper'];
@@ -72,20 +130,46 @@ export class SelectComponent<T> {
     if (this.isFocused()) {
       classes.push('is-focused');
     }
-    if (this.disabled()) {
+    if (this.isDisabled()) {
       classes.push('is-disabled');
     }
     return classes.join(' ');
   });
 
+  // --- ControlValueAccessor ------------------------------------------------
+  // `writeValue` escribe la señal y NO avisa al formulario: devolverle el valor
+  // que él mismo acaba de mandar es la receta del bucle infinito.
+
+  writeValue(value: T | null): void {
+    this.value.set(value ?? null);
+  }
+
+  registerOnChange(fn: (value: T | null) => void): void {
+    this.formBridge.registerOnChange(fn);
+  }
+
+  registerOnTouched(fn: () => void): void {
+    this.formBridge.registerOnTouched(fn);
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.formBridge.setDisabledState(isDisabled);
+  }
+
   protected handleChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     if (target.value === NO_SELECTION) {
-      this.value.set(null);
+      this.commit(null);
       return;
     }
     const option = this.options()[Number(target.value)];
-    this.value.set(option ? option.value : null);
+    this.commit(option ? option.value : null);
+  }
+
+  /** Único punto por donde entra una elección de la persona. */
+  private commit(value: T | null): void {
+    this.value.set(value);
+    this.formBridge.emitChange(value);
   }
 
   protected handleFocus(event: FocusEvent): void {
@@ -95,6 +179,7 @@ export class SelectComponent<T> {
 
   protected handleBlur(event: FocusEvent): void {
     this.isFocused.set(false);
+    this.formBridge.emitTouched();
     this.blurred.emit(event);
   }
 }

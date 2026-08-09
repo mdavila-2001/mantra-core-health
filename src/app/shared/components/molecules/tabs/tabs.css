@@ -1,0 +1,110 @@
+/* ============================================================================
+    Tabs — la pestaña activa se marca con la línea de marca abajo Y con peso
+    tipográfico: el color no puede ser el único portador del estado.
+    ========================================================================== */
+
+:host {
+    display: block;
+    font-family: var(--font-body);
+}
+
+.tabs__list {
+    display: flex;
+    align-items: stretch;
+    gap: var(--sp-1);
+    border-bottom: 1px solid var(--border-default);
+    /* una ficha con muchas secciones desborda: se desplaza, no se apila */
+    overflow-x: auto;
+    /* deja lugar al anillo de foco, que si no queda recortado por el scroll */
+    padding-bottom: 2px;
+}
+
+.tabs__tab {
+    position: relative;
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    padding: var(--sp-3) var(--sp-4);
+    font-family: inherit;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--r-sm) var(--r-sm) 0 0;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.tabs__tab:hover:not(:disabled) {
+    color: var(--text-primary);
+    background: var(--bg-inset);
+}
+
+/* La línea: crece desde el centro en 150 ms. La regla global de
+   prefers-reduced-motion la vuelve instantánea, que para un indicador de
+   estado es exactamente lo deseado. */
+.tabs__tab::after {
+    content: '';
+    position: absolute;
+    inset-inline: var(--sp-2);
+    bottom: 0;
+    height: 2px;
+    border-radius: var(--r-full);
+    background: var(--brand-primary);
+    transform: scaleX(0);
+    transition: transform 0.15s ease;
+}
+
+.tabs__tab.is-selected {
+    color: var(--brand-primary);
+    font-weight: 700;
+}
+
+.tabs__tab.is-selected::after {
+    transform: scaleX(1);
+}
+
+.tabs__tab:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+/* ---- orientación vertical ------------------------------------------------ */
+
+:host(.tabs--vertical) {
+    display: flex;
+    gap: var(--sp-4);
+}
+
+:host(.tabs--vertical) .tabs__list {
+    flex-direction: column;
+    align-items: stretch;
+    border-bottom: none;
+    border-right: 1px solid var(--border-default);
+    overflow-x: visible;
+}
+
+:host(.tabs--vertical) .tabs__tab {
+    text-align: left;
+    border-radius: var(--r-sm) 0 0 var(--r-sm);
+}
+
+/* en vertical la línea va al costado, no abajo */
+:host(.tabs--vertical) .tabs__tab::after {
+    inset-inline: auto;
+    right: -1px;
+    top: var(--sp-2);
+    bottom: var(--sp-2);
+    width: 2px;
+    height: auto;
+    transform: scaleY(0);
+}
+
+:host(.tabs--vertical) .tabs__tab.is-selected::after {
+    transform: scaleY(1);
+}
+
+:host(.tabs--vertical) .tabs__panels {
+    flex: 1;
+    min-width: 0;
+}

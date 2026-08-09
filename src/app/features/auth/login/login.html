@@ -1,0 +1,90 @@
+<app-auth-split
+  claim="Tu salud, conectada"
+  tagline="Entrá y encontrá tu historia clínica, tus turnos y tus estudios en un solo lugar."
+>
+  <div class="login">
+    <div class="login__header">
+      <h1 class="login__title">Iniciar sesión</h1>
+      <p class="login__subtitle">Ingresá con tu correo o tu documento de identidad.</p>
+    </div>
+
+    @if (errorMessage(); as mensaje) {
+      <app-alert appAnuncio tone="error" class="login__alert" data-testid="login-error">{{ mensaje }}</app-alert>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="login-form">
+      <app-form-field
+        label="Correo o documento"
+        [required]="true"
+        [errorMessage]="
+          form.controls.identifier.touched && form.controls.identifier.invalid
+            ? 'Ingresá tu correo o tu documento.'
+            : ''
+        "
+      >
+        <!-- `username` sirve para correo y para documento: es el campo con el
+             que se entra, sea cual sea su forma. -->
+        <app-input
+          formControlName="identifier"
+          type="text"
+          autocomplete="username"
+          placeholder="correo@ejemplo.com o 1234567"
+          testId="login-identifier"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Contraseña"
+        [required]="true"
+        [errorMessage]="
+          form.controls.password.touched && form.controls.password.invalid
+            ? 'Ingresá tu contraseña.'
+            : ''
+        "
+      >
+        <app-input
+          formControlName="password"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Tu contraseña"
+          testId="login-password"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Código de verificación (opcional)"
+        hint="Solo si tenés segundo factor activado."
+      >
+        <app-input
+          formControlName="mfaCode"
+          type="text"
+          autocomplete="one-time-code"
+          placeholder="123456"
+          testId="login-mfa"
+        />
+      </app-form-field>
+
+      <button
+        app-button
+        type="submit"
+        variant="primary"
+        size="lg"
+        class="login__submit"
+        data-testid="login-submit"
+        [isLoading]="isSubmitting()"
+      >
+        Entrar
+      </button>
+    </form>
+
+    <div class="login__footer">
+      <p class="login__pie">
+        <a app-link routerLink="/auth/recuperar" data-testid="login-recuperar">¿Olvidaste tu contraseña?</a>
+      </p>
+
+      <p class="login__pie login__registro">
+        ¿No tenés cuenta? <a app-link routerLink="/auth/registro" data-testid="login-registro">Creá una con tu documento</a>
+      </p>
+    </div>
+  </div>
+</app-auth-split>

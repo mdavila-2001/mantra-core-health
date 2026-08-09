@@ -1,0 +1,51 @@
+/* ============================================================================
+    Status seal — el veredicto de un trámite como pieza de lectura, no de
+    acción.
+
+    Cero valores propios de color: el tono lo resuelve el mapa compartido
+    (`tone.css`) desde la clase `tone--<tono>` del host, igual que Badge y
+    Chip.
+    ========================================================================== */
+
+@import '../../tone/tone.css';
+
+:host {
+    display: inline-grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: var(--sp-2);
+    font-family: var(--font-body);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-sm);
+    border: 1px solid var(--tone-bd, transparent);
+    background: var(--tone-bg, transparent);
+    color: var(--tone-fg, currentColor);
+}
+
+.status-seal__icon {
+    display: inline-flex;
+}
+
+/* En `em`, como los íconos del botón: acompañan al cuerpo de texto. */
+.status-seal__icon svg {
+    width: 1.25em;
+    height: 1.25em;
+    flex-shrink: 0;
+}
+
+.status-seal__label {
+    font-weight: 700;
+    line-height: var(--lh-caption);
+}
+
+/* El detalle (fechas, guía) cuelga debajo del texto, alineado con él. */
+.status-seal__detail {
+    grid-column: 2;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* Sin contenido proyectado, el detalle no deja una caja vacía en la grilla. */
+.status-seal__detail:empty {
+    display: none;
+}

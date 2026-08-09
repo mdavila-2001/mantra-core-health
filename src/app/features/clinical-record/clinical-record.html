@@ -1,0 +1,66 @@
+<app-page-header
+  title="Archivo clínico"
+  subtitle="Elegí a la persona cuyo expediente querés consultar."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="archivo">
+  <!-- El campo se nombra solo (publica su propio contexto de control): no va
+       dentro de un app-form-field, o quedarían dos nombres accesibles. -->
+  <app-search-field
+    class="archivo__buscador"
+    label="Buscar pacientes"
+    placeholder="Nombre, código o documento"
+    [value]="busqueda()"
+    [loading]="cargando()"
+    (searched)="buscar($event)"
+  />
+
+  <app-data-table
+    [state]="resultados()"
+    [columns]="columnas()"
+    [trackBy]="porPaciente"
+    caption="Pacientes de la organización"
+    (retry)="recargar()"
+  />
+
+  <!-- ─── Abrir por identificador ──────────────────────────────────────────
+       No es un atajo para expertos: es el único camino que le queda a quien
+       atiende. `GET /profiles/patients` pide SECURITY_ADMIN, y el rol clínico
+       —el único que puede leer el expediente— llega con el identificador desde
+       su agenda, no con un buscador. -->
+  <app-card variant="outlined" padding="lg" class="archivo__directo">
+    <h2 class="archivo__directo-titulo">Abrir por identificador</h2>
+    <p class="archivo__directo-texto">
+      @if (buscadorProhibido()) {
+        Tu sesión no puede listar el padrón de pacientes, pero sí consultar el expediente de quien
+        atendés. Pegá el identificador de perfil que trae la cita en tu agenda.
+      } @else {
+        Si ya tenés el identificador de perfil del paciente —lo trae cada cita de la agenda— podés
+        ir directo al expediente.
+      }
+    </p>
+
+    <form class="archivo__directo-form" (submit)="$event.preventDefault(); abrirPorIdentificador()">
+      <app-form-field label="Identificador de perfil" class="archivo__directo-campo">
+        <app-input
+          type="text"
+          placeholder="00000000-0000-0000-0000-000000000000"
+          [value]="identificador()"
+          (valueChange)="fijarIdentificador($event)"
+        />
+      </app-form-field>
+      <button app-button type="submit" variant="secondary">Abrir expediente</button>
+    </form>
+  </app-card>
+</div>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #celdaPaciente let-paciente>
+  <span class="archivo__nombre">{{ paciente.displayName ?? 'Sin nombre registrado' }}</span>
+  <span class="archivo__id">{{ paciente.profileId }}</span>
+</ng-template>
+
+<ng-template #celdaAccion let-paciente>
+  <a app-link [routerLink]="rutaDe(paciente.profileId)">Ver expediente</a>
+</ng-template>

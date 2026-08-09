@@ -1,0 +1,53 @@
+<div class="filter-bar__controls">
+  <app-search-field
+    class="filter-bar__search"
+    [value]="searchTerm()"
+    [label]="searchLabel()"
+    (searched)="onSearch($event)"
+  />
+
+  @for (filter of filters(); track filter.key) {
+    <div class="filter-bar__filter">
+      @if (isAvailable(filter)) {
+        <app-select
+          [ariaLabel]="filter.label"
+          [options]="filter.options"
+          [value]="valueOf(filter)"
+          [placeholder]="filter.label"
+          (valueChange)="onFilterChange(filter, $event)"
+        />
+      } @else {
+        <!-- Sin value set el filtro se deshabilita CON el motivo a la vista.
+             Degradarlo a texto libre rompería el contrato de terminología:
+             un `*_concept_id` no se puede escribir a mano. -->
+        <app-select
+          [ariaLabel]="filter.label"
+          [options]="[]"
+          [disabled]="true"
+          [placeholder]="filter.label"
+        />
+        <p class="filter-bar__unavailable">
+          {{ filter.unavailableReason || 'No se pudo cargar el listado de opciones.' }}
+        </p>
+      }
+    </div>
+  }
+</div>
+
+@if (hasActiveFilters()) {
+  <div class="filter-bar__active">
+    @for (active of activeFilters(); track active.key) {
+      <!-- El chip muestra la etiqueta legible; lo que viaja es el código. -->
+      <app-chip
+        variant="info"
+        [removable]="true"
+        [label]="active.label"
+        (removed)="removeFilter(active)"
+      >
+        {{ active.label }}
+      </app-chip>
+    }
+
+    <button app-button variant="ghost" size="sm" (clicked)="clearAll()">Limpiar todo</button>
+  </div>
+}

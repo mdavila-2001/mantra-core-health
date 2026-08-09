@@ -1,0 +1,198 @@
+/* Panel de inicio.
+   Tres franjas: las cifras, los accesos y el estado. Todo lo de acá es
+   distribución — ni un color ni una tipografía que el sistema no tenga ya. */
+
+/* Pantalla enrutada: el host es un custom element y sin `display` sería EN
+   LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
+   contenido y hace scrollear la página de más. */
+:host {
+  display: block;
+}
+
+/* ── Cifras ───────────────────────────────────────────────────────────────
+   Mínimo chico a propósito: son cuatro tarjetas de una línea, y con el mínimo
+   de las tarjetas de contenido entrarían de a dos dejando la fila a medias. */
+.panel__cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-4, 1rem);
+  margin-block-start: var(--space-5, 1.25rem);
+}
+
+.panel__cifra-rotulo {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #64748b);
+}
+
+/* Tabular: cuatro cifras en fila se comparan de un vistazo sólo si los dígitos
+   ocupan lo mismo. */
+.panel__cifra-valor {
+  margin: var(--space-1, 0.25rem) 0 0;
+  font-size: var(--font-size-2xl, 1.5rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.panel__cifra-esperando {
+  color: var(--color-text-secondary, #64748b);
+}
+
+/* Ocupa el alto de una cifra para que la fila no quede desalineada por tener
+   una tarjeta con sello en vez de número. */
+.panel__cifra-sello {
+  margin: var(--space-1, 0.25rem) 0 0;
+  min-height: 1.8rem;
+  display: flex;
+  align-items: center;
+}
+
+.panel__cifra-pie {
+  margin: var(--space-2, 0.5rem) 0 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #64748b);
+}
+
+/* ── Rejilla de contenido ─────────────────────────────────────────────────
+   `auto-fit` con mínimo: en una sola columna cuando no entran dos, sin media
+   query. El mínimo es el ancho al que el identificador de sesión deja de
+   partirse feo. */
+.panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: var(--space-5, 1.25rem);
+  margin-block-start: var(--space-5, 1.25rem);
+  /* Sin esto, la tarjeta de accesos —que ocupa toda la fila— deja huecos
+     detrás cuando las que siguen no llenan su fila. */
+  grid-auto-flow: row dense;
+}
+
+/* Los accesos son la tarjeta más alta y la que más se lee: fila entera.
+   `:host ::ng-deep` no hace falta — la clase va en el `app-card`, que es un
+   elemento de ESTA plantilla y por lo tanto lleva el atributo del componente. */
+.panel__bloque--ancho {
+  grid-column: 1 / -1;
+}
+
+.panel__card-title {
+  margin: 0 0 var(--space-3, 0.75rem);
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: 600;
+}
+
+/* ── Accesos ──────────────────────────────────────────────────────────────
+   Dos o tres columnas según entre: son entre cinco y once ítems, y en una sola
+   columna la tarjeta se vuelve una lista larguísima que empuja todo abajo. */
+.panel__accesos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-3, 0.75rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel__acceso {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+  height: 100%;
+  padding: var(--space-3, 0.75rem);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-md, 0.5rem);
+  text-decoration: none;
+  color: inherit;
+}
+
+a.panel__acceso:hover,
+a.panel__acceso:focus-visible {
+  border-color: var(--color-border-strong, #94a3b8);
+  background: var(--color-surface-hover, #f8fafc);
+}
+
+/* La planificada no es un enlace, y tiene que verse que no lo es sin depender
+   sólo del cursor: nadie pasa el mouse por encima para averiguarlo. */
+.panel__acceso--planificada {
+  opacity: 0.72;
+}
+
+.panel__acceso-nombre {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  font-weight: 600;
+}
+
+.panel__acceso-resumen {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #64748b);
+}
+
+/* ── Listas y datos ───────────────────────────────────────────────────────*/
+
+.panel__lista {
+  display: grid;
+  gap: var(--space-2, 0.5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel__fila {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+}
+
+.panel__fila-nombre {
+  font-weight: 500;
+}
+
+/* Etiqueta arriba, valor abajo: el identificador es largo y en dos columnas
+   obligaría a partirlo o a comerse el ancho de la etiqueta. */
+.panel__datos {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.panel__datos dt {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #64748b);
+}
+
+.panel__datos dd {
+  margin: var(--space-1, 0.25rem) 0 0;
+}
+
+.panel__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+
+/* `anywhere` y no `break-all`: un UUID no tiene puntos de corte naturales y sin
+   esto desborda la tarjeta en pantallas angostas. */
+.panel__id {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--font-size-sm, 0.875rem);
+  overflow-wrap: anywhere;
+}
+
+.panel__nota,
+.panel__vacio {
+  color: var(--color-text-secondary, #64748b);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.panel__nota {
+  margin-block: var(--space-3, 0.75rem) 0;
+}
+
+.panel__conteo {
+  margin: 0;
+  font-weight: 600;
+}

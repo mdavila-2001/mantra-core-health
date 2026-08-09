@@ -1,0 +1,179 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  model,
+  output,
+  signal,
+} from '@angular/core';
+
+import {
+  FORM_CONTROL_CONTEXT,
+  nextControlId,
+} from '@shared/forms/form-control.context';
+
+const BYTES_PER_UNIT = 1024;
+const SIZE_UNITS = ['bytes', 'KB', 'MB', 'GB', 'TB'] as const;
+
+/** Motivo por el que un archivo quedó fuera; se muestra al usuario. */
+export interface RejectedFile {
+  readonly file: File;
+  readonly reason: 'tipo' | 'tamaño' | 'duplicado' | 'cupo';
+}
+
+/**
+ * Carga de archivos con área de soltar. `accept`, `maxSizeBytes` y `maxFiles`
+ * se validan **también al soltar**: el atributo `accept` nativo solo filtra el
+ * diálogo del sistema, y arrastrar lo esquiva por completo.
+ */
+@Component({
+  selector: 'app-file-input',
+  standalone: true,
+  templateUrl: './file-input.html',
+  styleUrl: './file-input.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '[class.app-file-input-host]': 'true',
+    '[class.is-disabled]': 'disabled()',
+  },
+})
+export class FileInput {
+  private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
+
+  readonly files = model<readonly File[]>([]);
+  readonly multiple = input<boolean>(false);
+  readonly disabled = input<boolean>(false);
+  /** Lista al estilo del atributo nativo: `image/*,.pdf`. */
+  readonly accept = input<string>('');
+  readonly maxSizeBytes = input<number | null>(null);
+  readonly maxFiles = input<number | null>(null);
+
+  /** Lo descartado en el último intento, para poder explicarlo. */
+  readonly rejected = output<readonly RejectedFile[]>();
+
+  protected readonly isDragging = signal(false);
+
+  private readonly ownId = nextControlId('file');
+  protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
+  protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
+
+  protected handleFileSelect(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.acceptFiles(Array.from(target.files ?? []));
+    // Permite volver a elegir el mismo archivo tras quitarlo de la lista.
+    target.value = '';
+  }
+
+  protected handleDragOver(event: DragEvent): void {
+    event.preventDefault();
+    if (!this.disabled()) {
+      this.isDragging.set(true);
+    }
+  }
+
+  protected handleDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+  }
+
+  protected handleDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+    this.acceptFiles(Array.from(event.dataTransfer?.files ?? []));
+  }
+
+  protected removeFile(index: number): void {
+    if (this.disabled()) {
+      return;
+    }
+    this.files.set(this.files().filter((_, position) => position !== index));
+  }
+
+  protected formatFileSize(bytes: number): string {
+    if (bytes <= 0) {
+      return `0 ${SIZE_UNITS[0]}`;
+    }
+    const exponent = Math.min(
+      Math.floor(Math.log(bytes) / Math.log(BYTES_PER_UNIT)),
+      SIZE_UNITS.length - 1,
+    );
+    const size = bytes / BYTES_PER_UNIT ** exponent;
+    return `${Number.parseFloat(size.toFixed(1))} ${SIZE_UNITS[exponent]}`;
+  }
+
+  private acceptFiles(incoming: File[]): void {
+    if (this.disabled() || incoming.length === 0) {
+      return;
+    }
+
+    const kept = this.multiple() ? [...this.files()] : [];
+    const rejected: RejectedFile[] = [];
+
+    for (const file of incoming) {
+      const reason = this.rejectionReason(file, kept);
+      if (reason) {
+        rejected.push({ file, reason });
+        continue;
+      }
+      kept.push(file);
+      if (!this.multiple()) {
+        break;
+      }
+    }
+
+    this.files.set(kept);
+    if (rejected.length > 0) {
+      this.rejected.emit(rejected);
+    }
+  }
+
+  private rejectionReason(file: File, kept: readonly File[]): RejectedFile['reason'] | null {
+    if (!this.matchesAccept(file)) {
+      return 'tipo';
+    }
+    const maxSize = this.maxSizeBytes();
+    if (maxSize !== null && file.size > maxSize) {
+      return 'tamaño';
+    }
+    if (kept.some((existing) => this.isSameFile(existing, file))) {
+      return 'duplicado';
+    }
+    const maxFiles = this.maxFiles();
+    if (this.multiple() && maxFiles !== null && kept.length >= maxFiles) {
+      return 'cupo';
+    }
+    return null;
+  }
+
+  /** Misma semántica que el atributo nativo: `.pdf`, `image/*` o un MIME exacto. */
+  private matchesAccept(file: File): boolean {
+    const patterns = this.accept()
+      .split(',')
+      .map((pattern) => pattern.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (patterns.length === 0) {
+      return true;
+    }
+
+    const mime = file.type.toLowerCase();
+    const name = file.name.toLowerCase();
+
+    return patterns.some((pattern) => {
+      if (pattern.startsWith('.')) {
+        return name.endsWith(pattern);
+      }
+      if (pattern.endsWith('/*')) {
+        return mime.startsWith(pattern.slice(0, -1));
+      }
+      return mime === pattern;
+    });
+  }
+
+  /** El navegador no da un id de archivo: se compara la terna que sí expone. */
+  private isSameFile(a: File, b: File): boolean {
+    return a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
+  }
+}

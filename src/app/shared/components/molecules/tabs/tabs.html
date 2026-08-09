@@ -1,0 +1,30 @@
+<div
+  class="tabs__list"
+  role="tablist"
+  [attr.aria-orientation]="orientation()"
+>
+  @for (tab of tabs(); track tab.panelId; let i = $index) {
+    <button
+      #tabButton
+      type="button"
+      class="tabs__tab"
+      [id]="tab.tabId"
+      role="tab"
+      [class.is-selected]="i === activeIndex()"
+      [attr.aria-selected]="i === activeIndex()"
+      [attr.aria-controls]="tab.panelId"
+      [attr.aria-disabled]="tab.disabled() ? true : null"
+      [disabled]="tab.disabled()"
+      [attr.tabindex]="i === activeIndex() ? 0 : -1"
+      (click)="select(i)"
+      (keydown)="handleTablistKeydown($event, i)"
+    >
+      {{ tab.label() }}
+    </button>
+  }
+</div>
+
+<!-- Los paneles se proyectan tal cual: cada `app-tab` decide si se dibuja. -->
+<div class="tabs__panels">
+  <ng-content />
+</div>

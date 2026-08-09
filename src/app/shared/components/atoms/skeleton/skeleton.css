@@ -1,0 +1,73 @@
+/* ============================================================================
+    Skeleton — el brillo se arma con las superficies del tema, así que el modo
+    oscuro sale solo: `--bg-inset` es el hueco y `--bg-surface-alt` el reflejo
+    que lo recorre.
+    ========================================================================== */
+
+:host {
+    display: block;
+    background: var(--bg-inset);
+    border-radius: var(--r-sm);
+}
+
+/* El brillo es una banda que cruza: 200 % de ancho desplazándose. */
+:host,
+.skeleton__line {
+    background-image: linear-gradient(
+        90deg,
+        var(--bg-inset) 0%,
+        var(--bg-surface-alt) 50%,
+        var(--bg-inset) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+/* ---- variantes ----------------------------------------------------------- */
+
+/* `text` es el contenedor de las líneas: el brillo lo llevan ellas. */
+:host(.skeleton--text) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    background: none;
+    animation: none;
+}
+
+.skeleton__line {
+    height: var(--lh-body);
+    border-radius: var(--r-xs);
+}
+
+:host(.skeleton--circle) {
+    width: var(--sp-10);
+    height: var(--sp-10);
+    border-radius: var(--r-full);
+}
+
+:host(.skeleton--rect) {
+    width: 100%;
+    height: var(--sp-16);
+    border-radius: var(--r-md);
+}
+
+@keyframes skeleton-sweep {
+    from {
+        background-position: 200% 0;
+    }
+    to {
+        background-position: -200% 0;
+    }
+}
+
+/* Un brillo que recorre la pantalla sin parar es exactamente lo que la
+   preferencia pide desactivar: acá SÍ se congela —a diferencia del spinner—
+   porque el hueco sigue comunicando «esto todavía no llegó» sin moverse. */
+@media (prefers-reduced-motion: reduce) {
+    :host,
+    .skeleton__line {
+        animation: none !important;
+        background-image: none;
+        background-color: var(--bg-inset);
+    }
+}

@@ -36,10 +36,16 @@
   @if (toast().title) {
     <p class="toast__title">{{ toast().title }}</p>
   }
-  <p class="toast__message">{{ toast().message }}</p>
+  <p class="toast__message" data-testid="toast-mensaje">{{ toast().message }}</p>
 </div>
 
-<button type="button" class="toast__close" (click)="dismiss()" aria-label="Cerrar aviso">
+<button
+  type="button"
+  class="toast__close"
+  data-testid="toast-cerrar"
+  (click)="dismiss()"
+  aria-label="Cerrar aviso"
+>
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <line x1="18" y1="6" x2="6" y2="18" />
     <line x1="6" y1="6" x2="18" y2="18" />

@@ -1,0 +1,219 @@
+/* ============================================================================
+    AppButton — traducción BEM del bloque Buttons de REDSAT_Sistema_de_Diseno.html
+    (el diseñador escribe `btn-primary`; acá `btn--primary` — mismos valores).
+    Cero valores propios: todo alias de tokens de src/styles.css, salvo el
+    blanco literal del danger/spinner que fija el propio spec (ver nota).
+
+    Las clases viven EN el host (`<button app-button class="btn …">`), por eso
+    todo selector de variante/estado va con `:host(...)`. Las variables locales
+    --_btn-* son el contrato interno: cada variante las redefine y los estados
+    (hover/spinner) las consumen sin repetir tokens.
+    ========================================================================== */
+
+:host {
+  --_btn-bg: transparent;
+  --_btn-fg: currentColor;
+  --_btn-bg-hover: var(--_btn-bg);
+  --_btn-fg-hover: var(--_btn-fg);
+
+  font-family: var(--font-body);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border-radius: var(--r-sm);
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-spring),
+    box-shadow var(--dur-base) var(--ease-standard);
+  white-space: nowrap;
+  position: relative;
+
+  background: var(--_btn-bg);
+  color: var(--_btn-fg);
+}
+
+/* Se levanta apenas y proyecta sombra: dice «esto responde» antes del clic.
+   1 px es a propósito — más que eso, en una fila de botones, se lee como que
+   algo se desacomodó. */
+:host(:hover) {
+  background: var(--_btn-bg-hover);
+  color: var(--_btn-fg-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Y se hunde al presionar. La vuelta usa `--ease-spring`, que sobrepasa un
+   poco: es lo que hace que el botón se sienta físico en vez de conmutado. */
+:host(:active) {
+  transform: translateY(1px);
+  box-shadow: none;
+  /* Bajar sin esperar: el eco del dedo tiene que ser inmediato. */
+  transition-duration: var(--dur-fast), var(--dur-fast), 0s, var(--dur-fast);
+}
+
+/* Un botón que no se puede tocar no se levanta ni se hunde. */
+:host(.btn--loading:hover),
+:host(.btn--disabled:hover) {
+  transform: none;
+  box-shadow: none;
+}
+
+/* el anillo --focus-ring lo pone la regla global de :focus-visible */
+
+/* ---- variantes ---------------------------------------------------------- */
+
+:host(.btn--primary) {
+  --_btn-bg: var(--brand-primary);
+  --_btn-fg: var(--text-inverse);
+  --_btn-bg-hover: var(--brand-primary-hover);
+}
+
+/* la variante con borde del spec: acción secundaria de marca */
+:host(.btn--secondary) {
+  --_btn-fg: var(--brand-primary);
+  --_btn-bg-hover: var(--st-info-bg);
+  box-shadow: inset 0 0 0 1.5px var(--brand-primary);
+}
+
+/* extensión propia (no está en el spec): outline neutro para acciones sin
+   peso de marca. Solo tokens REDSAT.
+   TODO(diseñador): validar — identidad-visual.md, pendientes. */
+:host(.btn--outline) {
+  --_btn-fg: var(--text-primary);
+  --_btn-bg-hover: var(--bg-inset);
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
+}
+
+:host(.btn--ghost) {
+  --_btn-fg: var(--text-secondary);
+  --_btn-bg-hover: var(--bg-inset);
+  --_btn-fg-hover: var(--text-primary);
+}
+
+/* los colores que el spec le da a `btn-icon`, disponibles también con texto */
+:host(.btn--neutral) {
+  --_btn-bg: var(--bg-inset);
+  --_btn-fg: var(--text-secondary);
+  --_btn-bg-hover: var(--border-default);
+  --_btn-fg-hover: var(--text-primary);
+}
+
+:host(.btn--danger) {
+  --_btn-bg: var(--c-error-500);
+  /* blanco literal del spec (btn-danger): en oscuro --text-inverse es
+     petrol-900 y el diseñador fija #fff en ambos temas */
+  --_btn-fg: #fff;
+  --_btn-bg-hover: var(--c-error-600);
+}
+
+/* ---- tamaños (sm solo escritorio/tablet según el spec) -------------------
+   --_btn-side es la altura del talle; el modo ícono la reusa como ancho para
+   quedar cuadrado sin repetir medidas. */
+
+:host(.btn--sm) {
+  --_btn-side: 32px;
+  font-size: 13px;
+  padding: var(--sp-2) 14px;
+  min-height: var(--_btn-side);
+}
+
+/* Base = móvil: md y lg comparten el área táctil mínima de 44 px. min-height y el
+   ancho del modo ícono derivan de --_btn-side, así que basta redefinir la variable
+   por talle en el corte de escritorio. */
+:host(.btn--md),
+:host(.btn--lg) {
+  --_btn-side: 44px;
+  padding: var(--sp-3) var(--sp-5);
+  font-size: 14.5px;
+  min-height: var(--_btn-side);
+}
+
+/* Desde 780px (tablet/escritorio) cada talle recupera su geometría del spec. */
+@media (min-width: 780px) {
+  :host(.btn--md) {
+    --_btn-side: 40px;
+    font-size: 14px;
+    padding: 11px var(--sp-5);
+  }
+
+  :host(.btn--lg) {
+    --_btn-side: 48px;
+    font-size: 15.5px;
+    padding: 14px 28px;
+  }
+}
+
+/* ---- modo ícono: solo geometría; el color lo sigue poniendo la variante -- */
+
+:host(.btn--icon-only) {
+  width: var(--_btn-side);
+  padding: 0;
+  border-radius: var(--r-full);
+}
+
+/* Los SVG llegan proyectados, así que conservan la encapsulación del padre y
+   los selectores normales no los alcanzan: ::ng-deep es la vía soportada.
+   Se dimensionan en `em` para que acompañen al talle del botón. */
+:host ::ng-deep svg {
+  width: 1.2em;
+  height: 1.2em;
+  flex-shrink: 0;
+}
+
+/* ---- estados ------------------------------------------------------------- */
+
+/* el spec define el deshabilitado para rellenos (neutral-200 / neutral-500);
+   en variantes transparentes se apaga la tinta y el borde.
+   TODO(diseñador): confirmar el tratamiento de las transparentes. */
+:host(.btn--disabled) {
+  cursor: not-allowed;
+}
+
+:host(.btn--disabled:active) {
+  transform: none;
+}
+
+:host(.btn--disabled.btn--primary),
+:host(.btn--disabled.btn--danger) {
+  --_btn-bg: var(--c-neutral-200);
+  --_btn-fg: var(--c-neutral-500);
+  --_btn-bg-hover: var(--c-neutral-200);
+  --_btn-fg-hover: var(--c-neutral-500);
+}
+
+:host(.btn--disabled.btn--secondary),
+:host(.btn--disabled.btn--outline),
+:host(.btn--disabled.btn--ghost) {
+  --_btn-fg: var(--text-muted);
+  --_btn-bg-hover: transparent;
+  --_btn-fg-hover: var(--text-muted);
+}
+
+:host(.btn--disabled.btn--secondary),
+:host(.btn--disabled.btn--outline) {
+  box-shadow: inset 0 0 0 1.5px var(--border-default);
+}
+
+/* texto transparente conserva el ancho; el spinner hereda la tinta de la
+   variante vía --_btn-fg, así también se ve en las transparentes */
+:host(.btn--loading) {
+  color: transparent;
+  pointer-events: none;
+}
+
+:host(.btn--loading:active) {
+  transform: none;
+}
+
+/* La geometría y el giro los pone `app-spinner`; acá solo se lo centra y se le
+   devuelve la tinta: el estado de carga apaga el color del host (transparent)
+   y el spinner hereda con currentColor, así que sin esto sería invisible. */
+.btn__spinner {
+  position: absolute;
+  color: var(--_btn-fg);
+}

@@ -1,0 +1,66 @@
+<nav class="pagination__nav" aria-label="Paginación">
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    [iconOnly]="true"
+    [disabled]="isFirstPage()"
+    aria-label="Página anterior"
+    (clicked)="goToPrevious()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  </button>
+
+  <ul class="pagination__pages">
+    @for (slot of pageSlots(); track $index) {
+      <li>
+        @if (slot === gap) {
+          <!-- Un salto no es una página: no se pulsa y no se anuncia. -->
+          <span class="pagination__gap" aria-hidden="true">…</span>
+        } @else {
+          <button
+            app-button
+            size="sm"
+            [variant]="slot === currentPage() ? 'secondary' : 'ghost'"
+            [attr.aria-label]="'Página ' + slot"
+            [attr.aria-current]="slot === currentPage() ? 'page' : null"
+            (clicked)="goTo(slot)"
+          >
+            {{ slot }}
+          </button>
+        }
+      </li>
+    }
+  </ul>
+
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    [iconOnly]="true"
+    [disabled]="isLastPage()"
+    aria-label="Página siguiente"
+    (clicked)="goToNext()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  </button>
+</nav>
+
+<!-- El rango cambia con cada salto de página: se anuncia, pero sin interrumpir. -->
+<p class="pagination__range tabular-nums" aria-live="polite">
+  {{ rangeStart() }}–{{ rangeEnd() }} de {{ totalItems() }}
+</p>
+
+@if (showPageSize()) {
+  <app-select
+    class="pagination__size"
+    ariaLabel="Resultados por página"
+    [options]="pageSizeChoices()"
+    [value]="pageSize()"
+    (valueChange)="changePageSize($event)"
+  />
+}

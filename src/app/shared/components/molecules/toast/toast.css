@@ -123,3 +123,43 @@
     width: 16px;
     height: 16px;
 }
+
+/* ---- entrada ------------------------------------------------------------- */
+
+/* Un aviso que aparece de golpe se lee como un salto del layout. Entra desde
+   la derecha, que es de donde viene la pila. */
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateX(var(--sp-4));
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+:host {
+    animation: toast-in 0.18s ease-out;
+}
+
+@keyframes toast-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Con movimiento reducido queda el fundido: la aparición sigue siendo
+   perceptible, pero nada se desplaza. */
+@media (prefers-reduced-motion: reduce) {
+    :host {
+        animation-name: toast-fade-in;
+    }
+
+    .toast__close {
+        transition: none;
+    }
+}

@@ -1,0 +1,13 @@
+<!-- `role="alert"`: la persona esperaba contenido y llegó acá; el cambio es la
+     noticia y hay que anunciarlo. -->
+<div class="no-encontrado" role="alert" data-testid="no-encontrado">
+  <app-empty-state
+    variant="no-results"
+    title="No encontramos lo que buscás"
+    description="Verificá la dirección o volvé al inicio."
+  >
+    <!-- Un enlace y no un botón: navega a otra ruta, así que tiene que poder
+         abrirse en una pestaña nueva y ofrecer su menú contextual. -->
+    <a app-link empty-actions routerLink="/">Ir al inicio</a>
+  </app-empty-state>
+</div>

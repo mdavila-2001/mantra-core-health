@@ -1,0 +1,184 @@
+<!-- Los 9 estados los dibuja el view-state-host: acá no se reimplementa ninguno. -->
+<app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="refresh.emit()">
+  <div class="data-table__scroll">
+    <table class="data-table__table" data-testid="tabla">
+      @if (caption()) {
+        <caption class="sr-only">{{ caption() }}</caption>
+      }
+
+      <thead>
+        <tr>
+          @if (selectable()) {
+            <th scope="col" class="data-table__select-cell">
+              <app-checkbox
+                [checked]="allVisibleSelected()"
+                [indeterminate]="someVisibleSelected()"
+                label="Seleccionar las filas visibles"
+                [hideLabel]="true"
+                (checkedChange)="toggleAllVisible()"
+              />
+            </th>
+          }
+
+          @for (column of primaryColumns(); track column.key) {
+            <th
+              scope="col"
+              [class]="'data-table__cell data-table__cell--' + (column.align ?? 'start')"
+              [attr.aria-sort]="ariaSortFor(column)"
+            >
+              @if (column.sortable) {
+                <button
+                  type="button"
+                  class="data-table__sort"
+                  data-testid="tabla-ordenar"
+                  [attr.data-columna]="column.key"
+                  (click)="toggleSort(column)"
+                >
+                  {{ column.header }}
+                  <span class="data-table__sort-icon" aria-hidden="true">
+                    {{ sortDirectionFor(column) === 'asc' ? '▲' : sortDirectionFor(column) === 'desc' ? '▼' : '↕' }}
+                  </span>
+                </button>
+              } @else {
+                {{ column.header }}
+              }
+            </th>
+          }
+
+          <!-- Las secundarias tienen su encabezado propio: en escritorio son
+               columnas normales; en móvil el CSS las pliega al detalle. -->
+          @for (column of secondaryColumns(); track column.key) {
+            <th
+              scope="col"
+              [class]="'data-table__cell data-table__secondary data-table__cell--' + (column.align ?? 'start')"
+              [attr.aria-sort]="ariaSortFor(column)"
+            >
+              @if (column.sortable) {
+                <button type="button" class="data-table__sort" (click)="toggleSort(column)">
+                  {{ column.header }}
+                </button>
+              } @else {
+                {{ column.header }}
+              }
+            </th>
+          }
+
+          @if (secondaryColumns().length > 0) {
+            <th scope="col" class="data-table__detail-toggle-cell">
+              <span class="sr-only">Ver el detalle de la fila</span>
+            </th>
+          }
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (row of rows(); track rowKey(row)) {
+          <tr class="data-table__row" data-testid="tabla-fila">
+            @if (selectable()) {
+              <td class="data-table__select-cell">
+                <app-checkbox
+                  [checked]="isSelected(row)"
+                  [label]="'Seleccionar la fila ' + rowKey(row)"
+                  [hideLabel]="true"
+                  (checkedChange)="toggleRow(row)"
+                />
+              </td>
+            }
+
+            @for (column of primaryColumns(); track column.key) {
+              <td [class]="'data-table__cell data-table__cell--' + (column.align ?? 'start')">
+                @if (column.cell) {
+                  <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
+                } @else {
+                  {{ cellValue(row, column) }}
+                }
+              </td>
+            }
+
+            @for (column of secondaryColumns(); track column.key) {
+              <td [class]="'data-table__cell data-table__secondary data-table__cell--' + (column.align ?? 'start')">
+                @if (column.cell) {
+                  <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
+                } @else {
+                  {{ cellValue(row, column) }}
+                }
+              </td>
+            }
+
+            @if (secondaryColumns().length > 0) {
+              <td class="data-table__detail-toggle-cell">
+                <button
+                  type="button"
+                  class="data-table__detail-toggle"
+                  [attr.aria-expanded]="isExpanded(row)"
+                  [attr.aria-label]="'Ver el detalle de ' + rowKey(row)"
+                  (click)="toggleDetail(row)"
+                >
+                  <span aria-hidden="true">{{ isExpanded(row) ? '▲' : '▼' }}</span>
+                </button>
+              </td>
+            }
+          </tr>
+
+          <!-- Fila de detalle: acá viven en móvil las columnas de menor
+               prioridad. No es `display:none` sobre datos clínicos, es un
+               reordenamiento — siguen a un toque de distancia. -->
+          @if (secondaryColumns().length > 0 && isExpanded(row)) {
+            <tr class="data-table__detail-row">
+              <td [attr.colspan]="primaryColumns().length + (selectable() ? 2 : 1)">
+                <dl class="data-table__detail">
+                  @for (column of secondaryColumns(); track column.key) {
+                    <div class="data-table__detail-item">
+                      <dt>{{ column.header }}</dt>
+                      <dd>
+                        @if (column.cell) {
+                          <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
+                        } @else {
+                          {{ cellValue(row, column) }}
+                        }
+                      </dd>
+                    </div>
+                  }
+                </dl>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Cursor: solo anterior y siguiente. No hay números de página porque un
+       cursor no conoce el total ni cuántas páginas faltan.
+
+       Y sólo si hay a dónde ir. Antes se dibujaba siempre, así que un listado
+       sin paginación —la búsqueda del catálogo de terminología, que la API acota
+       con `limit` y no pagina— quedaba con dos botones permanentemente
+       apagados: controles muertos que ocupan lugar, prometen una función que no
+       existe y hacen que la pantalla parezca rota. Un listado de una sola página
+       tampoco los necesita. -->
+  @if (hasPrevious() || hasNext()) {
+  <nav class="data-table__cursor" aria-label="Paginación del listado">
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      data-testid="tabla-anterior"
+      [disabled]="!hasPrevious()"
+      (clicked)="goPrevious()"
+    >
+      Anterior
+    </button>
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      data-testid="tabla-siguiente"
+      [disabled]="!hasNext()"
+      (clicked)="goNext()"
+    >
+      Siguiente
+    </button>
+  </nav>
+  }
+</app-view-state-host>

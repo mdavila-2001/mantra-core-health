@@ -1,0 +1,12 @@
+/* Mismo encuadre que la pantalla de recuperación: una sola cosa, centrada y
+   acotada. */
+.no-encontrado {
+    display: flex;
+    justify-content: center;
+    padding: var(--sp-8) var(--sp-4);
+}
+
+.no-encontrado > * {
+    max-width: 60ch;
+    width: 100%;
+}

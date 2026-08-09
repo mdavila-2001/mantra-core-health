@@ -1,0 +1,136 @@
+/* Una columna en móvil; desde escritorio, el trámite a la izquierda y el
+   contexto a la derecha.
+
+   Antes era `max-width: 60ch` a secas, que es la medida correcta para un texto
+   corrido y la equivocada para esta pantalla: dejaba el formulario angosto y
+   media pantalla en blanco al lado. El tope de lectura sigue existiendo, pero
+   ahora lo lleva la columna del trámite, que es la que tiene párrafos. */
+.verificar {
+    display: grid;
+    gap: var(--sp-4);
+    margin-top: var(--sp-6);
+    align-items: start;
+}
+
+/* El literal es obligado: una media query no admite var(); el token --bp-lg
+   declara el mismo 1024px para el resto del sistema. */
+@media (min-width: 1024px) {
+    .verificar {
+        /* La columna del trámite manda y la de contexto acompaña: 3fr/2fr y no
+           mitades, porque el formulario tiene el campo de archivo y el contexto
+           sólo texto corto. */
+        grid-template-columns: 3fr 2fr;
+        gap: var(--sp-5);
+    }
+}
+
+/* Las tarjetas del trámite conservan su medida de lectura dentro de su columna. */
+.verificar > app-card {
+    max-width: 60ch;
+}
+
+.verificar__contexto {
+    display: grid;
+    gap: var(--sp-4);
+}
+
+.verificar__titulo {
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    margin-bottom: var(--sp-2);
+}
+
+.verificar__texto {
+    color: var(--text-secondary);
+    margin: 0 0 var(--sp-5);
+}
+
+.verificar__alert {
+    display: block;
+    margin-bottom: var(--sp-4);
+}
+
+.verificar__enviar {
+    margin-top: var(--sp-5);
+}
+
+/* Lista de definiciones y no una tabla: son pares clave–valor de un registro,
+   que es exactamente para lo que existe `<dl>`. */
+.verificar__datos {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--sp-2) var(--sp-4);
+    margin: 0 0 var(--sp-5);
+}
+
+.verificar__datos dt {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.verificar__datos dd {
+    margin: 0;
+}
+
+.verificar__datos code {
+    /* `strong` porque delimita un dato seleccionable, no es un divisor. */
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-xs);
+    padding: 0 var(--sp-1);
+    background: var(--bg-inset);
+    user-select: all;
+}
+
+/* ── Historial y proceso ───────────────────────────────────────────────────*/
+
+.verificar__historial {
+    display: grid;
+    gap: var(--sp-3);
+    margin: 0 0 var(--sp-4);
+    padding: 0;
+    list-style: none;
+}
+
+.verificar__pasos {
+    margin: 0 0 var(--sp-4);
+}
+
+.verificar__historial-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.verificar__historial-fecha {
+    color: var(--text-muted);
+    font-size: var(--fs-caption);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Los números se conservan —el orden es la información— pero corridos adentro
+   para que no queden colgando fuera de la tarjeta. */
+.verificar__pasos {
+    padding-inline-start: var(--sp-5);
+}
+
+/* `display: grid` sobre el `<li>` le quita la caja de ítem de lista y con ella
+   el número, que en una secuencia ES la información. Se deja como ítem y el
+   apilado lo hacen los `<span>` de adentro. */
+.verificar__paso-titulo,
+.verificar__paso-texto {
+    display: block;
+}
+
+.verificar__pasos li + li {
+    margin-block-start: var(--sp-3);
+}
+
+.verificar__paso-titulo {
+    font-weight: 600;
+}
+
+.verificar__paso-texto {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}

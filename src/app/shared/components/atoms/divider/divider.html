@@ -1,0 +1,8 @@
+<!-- Sin rótulo el separador ES la línea del host: no hace falta ningún nodo.
+     Con rótulo, las dos líneas son decoración pura; el nombre accesible del
+     separador ya lo pone `aria-label`. -->
+@if (visibleLabel()) {
+  <span class="divider__line" aria-hidden="true"></span>
+  <span class="divider__label">{{ visibleLabel() }}</span>
+  <span class="divider__line" aria-hidden="true"></span>
+}

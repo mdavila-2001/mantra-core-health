@@ -11,6 +11,35 @@
 npm-debug.log
 yarn-error.log
 
+# Entorno local. La plantilla `.env.example` SÍ va al repo; el `.env` real no.
+.env
+.env.*
+!.env.example
+# La plantilla de las variables de la suite de Selenium. El `.env.e2e` real,
+# que puede llevar credenciales de un entorno de ensayo, lo sigue cubriendo
+# `.env.*` de arriba.
+!.env.e2e.example
+
+# Proxy generado por el contenedor a partir de proxy.conf.docker.json.
+proxy.generated.json
+
+# Entorno del navegador generado por scripts/generate-env.mjs desde el .env.
+# Fuera del repo a propósito: es lo que impide versionar sin querer la
+# configuración de una máquina o de un despliegue. Se regenera en cada
+# `yarn start`, `yarn build`, `yarn watch` y `yarn test`.
+src/environments/env.generated.ts
+
+# Yarn 4 — artefactos generados por la instalación.
+# El repo fija `nodeLinker: node-modules` en `.yarnrc.yml`, así que la
+# instalación vive en `/node_modules` (ignorado más arriba). Los archivos de
+# acá son los que quedan de una instalación previa en modo PnP o del estado
+# interno de Yarn: producto de `yarn install`, se regeneran solos y no van al
+# repositorio.
+.pnp.*
+.yarn/install-state.gz
+.yarn/unplugged/
+.yarn/cache/
+
 # IDEs and editors
 .idea/
 .project
@@ -39,6 +68,41 @@ testem.log
 /typings
 __screenshots__/
 
+# Playwright: salida de una corrida (trazas, capturas, contexto del fallo) y el
+# informe HTML. `__screenshots__/`, más arriba, cubre las capturas de referencia
+# de la regresión visual, que SÍ se versionan cuando existan.
+/test-results
+/playwright-report
+/.playwright
+
+# Evidencias de una ejecución, no del código. Nada de acá se versiona; la
+# carpeta se conserva con su `.gitkeep`.
+#
+#   artifacts/selenium/<corrida>/  capturas de los fallos, HTML de la página,
+#                                  registros del navegador, JUnit y su reporte.
+#   artifacts/recorrido/           el recorrido visual: una carpeta de PNG por
+#                                  pantalla, el manifiesto y `reporte.html`.
+#                                  Son cientos de imágenes y varios cientos de
+#                                  megabytes por corrida — se regeneran con
+#                                  `yarn recorrido` y no tienen por qué vivir en
+#                                  la historia del repositorio.
+/artifacts/*
+!/artifacts/.gitkeep
+
+# Worktrees de Git creados por herramientas de asistencia. Son copias completas
+# del repositorio: versionarlas metería el árbol dentro de sí mismo.
+.claude/
+
 # System files
 .DS_Store
 Thumbs.db
+
+# Nota sobre `src/environments/`: los tres archivos de ahí SÍ se versionan.
+# Ya no guardan ningún valor —solo la forma del entorno y los respaldos— y lo
+# que sale del `.env` va a `env.generated.ts`, ignorado más arriba. Ignorarlos
+# no funcionaría de todos modos: .gitignore no afecta a archivos ya rastreados,
+# así que seguirían viajando al repositorio con los cambios de cada quien.
+#
+# El `.env` real también está cubierto arriba, junto con la excepción de
+# `.env.example`. No repetir las reglas acá: una segunda regla `.env.*` después
+# de `!.env.example` vuelve a ignorar la plantilla.

@@ -1,0 +1,56 @@
+/* Tarjeta documento centrada, unificada con forgot-password y reset-password (y
+   en línea con login/register/tenant): membrete con regla, título en tinta y la
+   acción debajo. Sin `text-align: center`: se alinea como las demás. Solo tokens
+   REDSAT. */
+
+/* Pantalla enrutada: el host es un custom element y sin `display` sería EN
+   LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
+   contenido y hace scrollear la página de más. */
+:host {
+  display: block;
+}
+
+.verificacion {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  background: var(--bg-surface-alt);
+}
+
+.verificacion__card {
+  width: 100%;
+  max-width: 28rem;
+  padding: var(--sp-6);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+/* Membrete: el mensaje de estado (título + texto) separado de la acción por una
+   regla. Envuelve al `@switch`, así vale para los cuatro estados. */
+.verificacion__header {
+  margin-bottom: var(--sp-6);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.verificacion__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--text-primary);
+}
+
+.verificacion__text {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.verificacion__accion {
+  width: 100%;
+}

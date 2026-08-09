@@ -1,0 +1,57 @@
+<!-- El cambio de organización se anuncia: es un cambio de contexto de datos,
+     no un ajuste cosmético. -->
+<span class="sr-only" role="status" aria-live="polite">{{ announcement() }}</span>
+
+@switch (variant()) {
+  <!-- Vista de página (pantalla 5): una tarjeta por organización. -->
+  @case ('page') {
+    <ul class="tenant-switcher__list">
+      @for (tenant of tenants(); track tenant.id) {
+        <li>
+          <app-card
+            variant="outlined"
+            [interactive]="true"
+            [attr.aria-current]="tenant.id === activeTenantId() ? 'true' : null"
+            [class.is-active]="tenant.id === activeTenantId()"
+            (activated)="select(tenant)"
+          >
+            <p class="tenant-switcher__name">{{ tenant.name }}</p>
+            @if (tenant.role) {
+              <p class="tenant-switcher__role">{{ tenant.role }}</p>
+            }
+          </app-card>
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- Vista compacta (header): el activo visible y el resto en un menú. -->
+  @default {
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      [appMenuTrigger]="menuTenants"
+      [attr.aria-label]="'Organización activa: ' + triggerLabel() + '. Cambiar de organización'"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1M9 13h1m4 0h1M9 17h1m4 0h1" />
+      </svg>
+      <span class="tenant-switcher__trigger-label">{{ triggerLabel() }}</span>
+    </button>
+
+    <app-menu #menuTenants>
+      @for (tenant of tenants(); track tenant.id) {
+        <app-menu-item (selected)="select(tenant)">
+          {{ tenant.name }}
+          @if (tenant.role) {
+            <span class="tenant-switcher__role"> · {{ tenant.role }}</span>
+          }
+          @if (tenant.id === activeTenantId()) {
+            <span class="sr-only">(organización activa)</span>
+          }
+        </app-menu-item>
+      }
+    </app-menu>
+  }
+}

@@ -1,0 +1,116 @@
+/* Pantalla enrutada: el host es un custom element y sin `display` sería EN
+   LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
+   contenido y hace scrollear la página de más. */
+:host {
+  display: block;
+}
+
+.tenant {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  background: var(--bg-surface-alt, var(--bg-surface));
+}
+
+.tenant__card {
+  width: 100%;
+  max-width: 30rem;
+  padding: var(--sp-6);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+/* Membrete tipo documento, coherente con login/register: título y bajada
+   separados de la lista por una regla; el título va en tinta, no en marca. */
+.tenant__header {
+  margin-bottom: var(--sp-6);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.tenant__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--text-primary);
+}
+
+.tenant__subtitle {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.tenant__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada organización es una "ficha" seleccionable: el nombre manda y un acento a
+   la izquierda evoca el lomo de un expediente (acento kardex). La acción es la
+   ficha entera, que mantiene `choose()` al hacer clic. Sin metadatos: el
+   contrato solo expone el nombre. */
+.tenant__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-4);
+  text-align: left;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--r-md);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
+}
+
+.tenant__option:hover {
+  background: var(--bg-inset);
+  border-color: var(--brand-primary);
+}
+
+/* La flecha indica que la ficha es la acción; es afordancia decorativa, no un
+   dato del contrato. Va después del nombre, empujada a la derecha por el
+   `space-between`. */
+.tenant__option::after {
+  content: '→';
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* Estado vacío: sin sesión, o token sin organizaciones. */
+.tenant__vacio {
+  color: var(--text-secondary);
+}
+
+.tenant__text {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.tenant__pie {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

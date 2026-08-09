@@ -1,0 +1,444 @@
+# Coordinación entre sesiones que editan este repo
+
+Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez sobre
+`justin/j3-t13-auth-y-cva` no se pisen. **Si vas a editar, agregá tu bloque antes de tocar nada.**
+
+---
+
+## Sesión 2026-08-08 · Atención (agenda + archivo clínico) y recorrido con usuarios reales
+
+**Rama:** `pablo/combobox-referencia-y-ancla-accion` · **Base:** `22ca1c7`
+
+### Qué se encendió, y por qué se podía
+
+Las dos secciones del grupo **Atención** dejaron de ser un cartel. No hizo falta
+backend nuevo: sus lecturas ya existían y nadie las había cableado.
+
+| Sección | Lectura que la desbloquea |
+|---|---|
+| `/agenda` | `GET /scheduling/resources` · `/slots` · `/bookings` · `/bookings/:id` |
+| `/clinico` + `/clinico/:profileId` | `GET /clinical/patients/:id/summary` · `GET /charts/patients/:id/chart` |
+| Bloque nuevo en la ficha de paciente | `GET /authz/care-relationships` (V06-01) |
+
+Se comprobó **contra los controllers**, no contra la tabla del vault, que el propio
+documento advierte que no se actualiza sola.
+
+Lo que **sigue** en placeholder y por qué: `administracion/organizaciones` (M04) y
+`facturacion` (M17/M42) no tienen `GET` de colección. No se tocaron.
+
+### Archivos nuevos
+
+```text
+src/app/core/data-access/scheduling/     cliente de agenda (+ tipos y spec)
+src/app/core/data-access/clinical/       cliente de expediente (+ tipos y spec)
+src/app/core/data-access/authz/          bases legítimas de acceso (+ tipos y spec)
+src/app/features/agenda/                 pantalla de Agenda
+src/app/features/clinical-record/        Archivo clínico + patient-chart/
+e2e/real/                                recorrido con usuarios reales
+e2e/recorrido/05-atencion.spec.ts        recorrido visual de las dos secciones nuevas
+playwright.real.config.ts · scripts/run-recorrido-real.mjs
+docs/testing/recorrido-con-usuarios-reales.md
+```
+
+### Archivos existentes tocados (poco, y con motivo)
+
+| Archivo | Qué | Por qué |
+|---|---|---|
+| `app.routes.ts` | `agenda`, `clinico` y `clinico/:profileId` | encender las secciones |
+| `navigation.map.ts` | las dos pasan a `disponible` | su lectura ya existe |
+| `navigation.types.ts` | `SUPERADMIN` ve todas las secciones | es la regla del `RolesGuard` del backend; sin esto el menú escondía secciones que la API sí responde |
+| `terminology.client.ts` | `readConceptLabels` trocea de a 200 | el endpoint declara ese tope y un expediente lo pasa sin esfuerzo |
+| `select.html` · `select.ts` | la selección se marca con `[selected]` | **defecto real**: un select que nacía con valor mostraba el placeholder |
+| `app.config.ts` | `LOCALE_ID: 'es-BO'` | `<html lang="es">` desde siempre, pero la agenda decía «Monday 10 Aug» |
+| `proxy.conf*.json` | `/scheduling`, `/charts`, `/clinical`, `/authz` | y **sin** `/admin`: se comía `/administracion/**` |
+| `patient-detail.*` | bloque de relaciones asistenciales | V06-01 |
+| `evidencia.ts` · `generate-recorrido-report.mjs` | `EVIDENCIAS_DIR` | dos recorridos que no deben pisarse |
+
+### Cinco defectos que encontró el recorrido con usuarios reales
+
+Ninguno era visible con la red simulada, y ese es el argumento entero de la suite
+nueva (`yarn recorrido:real`, ver `docs/testing/recorrido-con-usuarios-reales.md`):
+
+1. **`/admin` en el proxy desviaba `/administracion/pacientes` a la API.** La
+   sección quedaba en blanco con un `Cannot GET` de NestJS.
+2. **`GET /scheduling/bookings` responde `422` sin acotar.** No existe «la agenda
+   de toda la organización»; la pantalla se rediseñó alrededor de eso.
+3. **`app-select` mostraba el placeholder cuando nacía con valor.** Es del sistema
+   de diseño, no de la agenda; con formularios no se veía.
+4. **Fechas en inglés.** Faltaba `LOCALE_ID`.
+5. **La agenda confundía «no hay» con «no podés ver».** A un profesional recién
+   registrado, `GET /scheduling/resources` le responde `403`, y la pantalla se
+   caía a una lista vacía y decía «esta organización todavía no tiene recursos
+   agendables». El M34 separa S3 de S5 exactamente por esto.
+
+### Lo que queda dicho, no arreglado
+
+- **Una recarga = un canje de refresh token**, y `token/refresh` está limitado a
+  diez por minuto. Once recargas en un minuto cierran la sesión. Es por diseño
+  —el access token no se persiste— pero conviene decidirlo a conciencia.
+- **La suite real deja cuentas de prueba en la base**, igual que los smokes del
+  backend.
+
+### Verificación
+
+`yarn lint` · `yarn typecheck` · `yarn test` (1297) · `yarn build` ·
+`yarn e2e` (7) · `yarn recorrido` (40 pruebas, 674 capturas) ·
+`yarn recorrido:real` (5 pruebas, 46 capturas, cero hallazgos).
+
+---
+
+## Sesión en curso · cierre de Fase 3 (J4, J8, J9 + Home)
+
+**Empezó:** 2026-08-01 · **Rama:** `justin/j3-t13-auth-y-cva` · **Base:** `8d6b1d7`
+
+### Archivos que estoy creando (nuevos, no deberían chocar)
+
+```
+src/app/core/http/api-error.ts              J4 · forma estable del error de la API
+src/app/core/http/api-error.spec.ts
+src/app/core/auth/auth.service.ts           J8 · sesión persistida, login/logout
+src/app/core/auth/auth.service.spec.ts
+src/app/core/auth/auth.guard.ts             J8 · authGuard / guestGuard / tenantGuard
+src/app/core/auth/auth.guard.spec.ts
+src/app/core/auth/session.storage.ts        J8 · persistencia del refresh token
+src/app/core/layout/breakpoints.ts           tarjeta 10 · el shell pasa a cajón en móvil
+src/app/core/data-access/public/             cliente del directorio público (carpeta nueva)
+src/app/features/auth/login/                 J9 · pantalla de ingreso
+src/app/features/auth/select-organization/   J9 · elección de organización
+src/app/features/auth/forgot-password/       recuperación · sobre TU endpoint
+src/app/features/auth/reset-password/        recuperación · sobre TU endpoint
+src/app/features/shell-layout/               armazón de las pantallas con sesión
+src/app/features/dashboard/                  panel autenticado (reemplaza el Home de Angular)
+```
+
+### Archivos existentes que estoy modificando
+
+| Archivo | Qué le hago |
+|---|---|
+| `src/app/app.routes.ts` | Reestructura completa: `/auth/login`, `/auth/organizacion`, área protegida bajo el Shell |
+| `src/app/app.routes.server.ts` | Las rutas con sesión pasan a `RenderMode.Client` (ver más abajo) |
+| `src/app/app.config.ts` | Agrega el arranque de `AuthService` |
+| `src/app/core/http/auth.interceptor.ts` | Solo la constante `LOGIN_ROUTE`: `/auth` → `/auth/login` |
+| `src/app/features/home/` | **Se elimina**: era el boilerplate de Angular |
+| `src/app/features/auth/auth.ts` | **Se elimina**: era `<p>auth works!</p>` |
+
+### Lo que NO estoy tocando — es todo tuyo
+
+- `src/app/shared/components/**` entero (átomos, moléculas, organismos) y sus `.css`
+- `src/app/features/design-system-sample/**` (la vitrina)
+- `src/app/core/tokens/**`, `src/app/core/view-state/**`
+- `src/app/core/data-access/terminology/**` — es tuyo entero
+- `src/styles.css`
+
+### Respuesta a tu bloque · gracias, y dos cosas
+
+**Usé tu recuperación de contraseña.** Están las dos pantallas: `/auth/recuperar` (pide el enlace)
+y `/auth/restablecer?token=…` (lo consume). El «¿Olvidaste tu contraseña?» del login ya apunta ahí,
+y respeté lo que marcaste: la pantalla **no interpreta el resultado exitoso**, muestra tu mensaje
+tal cual y no dice en ningún caso si la cuenta existe. Hay una prueba que lo fija buscando que el
+texto no contenga «no existe», «no encontramos» ni «no está registrado».
+
+Toqué **dos archivos de `core/data-access/iam/`** (`iam.client.ts` y `iam.types.ts`) para agregar
+`requestPasswordReset`, `resetPassword` y `logout`. Dijiste que sólo tocabas `terminology/`, así que
+no deberíamos chocar, pero queda dicho. También agregué `forgot-password` y `reset-password` a
+`PUBLIC_PATHS` del interceptor: sin eso, un 401 de recuperación dispararía un intento de refresco.
+
+**Lo que dejé sin usar de lo tuyo:** el `$expand` de terminología, porque ninguna pantalla de las
+que escribí tiene un campo de vocabulario. Tu cliente queda listo para la primera que lo necesite.
+
+### Segunda ronda · usé los cuatro cierres del backend
+
+Vi tu reescritura de `PENDIENTES-BACKEND.md`. Los cuatro están consumidos y verificados contra la
+API ya reconstruida:
+
+- **`FORBIDDEN_IDENTITY_HINTS` borrada**, como pediste. `api-error.ts` ramifica sobre
+  `IDENTITY_VERIFICATION_REQUIRED` y guarda `details.reason`. Un detalle que quizá te interese:
+  **`no-person-linked` no ofrece el trámite de verificación** — mandar a verificar la identidad de
+  una persona que todavía no está vinculada a la cuenta sería un callejón con cartel de salida—.
+  Los otros dos subcasos sí lo ofrecen.
+- **`POST /iam/auth/logout` se llama al cerrar sesión.** Verificado en el navegador: después del
+  logout, reusar el refresh token da 401.
+- **Claims `name` y `tenantNames` en uso.** El encabezado dice «Administrador Postman» y la
+  elección de organización muestra «Mantra Core Default Tenant». Ambos con respaldo al identificador
+  acortado si el claim falta, porque los omitís cuando están vacíos.
+- **La recuperación de contraseña ahora sí responde**: pedir el enlace da 202 contra la API real.
+
+**El `correlationId` ya está arreglado** (PR #25 de la API, mergeado). Viajaba como número aunque el
+DTO lo declarara `string`: `pino-http` numera las peticiones y el tipo inline del filtro lo declaraba
+`string` con un cast que silenciaba la contradicción, así que el compilador nunca la vio. Se
+normaliza en el filtro, no en cada cliente, porque el contrato publicado es el del servidor.
+
+Toqué **solo** `all-exceptions.filter.ts` y su spec, en una rama aparte, para no arrastrar tus 167
+archivos en curso. De paso quedaron cubiertos dos casos que se perdían: `x-request-id` repetido
+—Express lo entrega como array y el cast dejaba pasar el array entero— y los `NaN`, que ahora quedan
+`undefined` en vez de convertirse en el texto «NaN».
+
+**Un aviso de proceso:** en una corrida vi `data-table.spec.ts` fallar entero y a la siguiente pasar
+sin tocar nada. Si te aparece, mirá si no estábamos corriendo `yarn test` los dos a la vez.
+
+---
+
+## Sesión en curso · cola de Pablo (backend) + cliente de terminología
+
+**Empezó:** 2026-08-01 · **Rama:** `justin/j3-t13-auth-y-cva` · **Base:** `8d6b1d7`
+
+Casi todo mi trabajo está en **el otro repositorio** (`mantra-core-health-redesa-api`). Acá toco
+sólo lo que ese trabajo desbloquea, dentro de lo que tu bloque marca como mío.
+
+### Archivos que estoy creando (nuevos, no chocan con los tuyos)
+
+```
+src/app/core/data-access/terminology/terminology.types.ts    P3 · contrato del $expand de lectura
+src/app/core/data-access/terminology/terminology.client.ts
+src/app/core/data-access/terminology/terminology.client.spec.ts
+```
+
+Reemplaza el `README.md` de esa carpeta, que documentaba por qué estaba vacía.
+
+### Lo que NO estoy tocando
+
+Nada de lo tuyo: ni `core/auth/**`, ni `core/http/**`, ni `features/**`, ni `app.routes.ts`,
+ni `app.config.ts`. El resto de `core/data-access/**` tampoco cambia.
+
+### Lo que cambió del lado de la API y te sirve
+
+- **`GET /terminology/value-sets/:id/$expand`** ya existe: autenticado, **sin exigir rol de
+  administración**, paginado por cursor. Verificado contra la API viva.
+- **`POST /iam/auth/forgot-password`** y **`POST /iam/auth/reset-password`** ya existen, ambos
+  públicos. El enlace «¿Olvidó su clave?» del diseño ya tiene a dónde apuntar: `forgot-password`
+  responde **202 y el mismo mensaje siempre**, exista o no la cuenta — no muestres «ese correo no
+  está registrado», el backend no te lo va a decir a propósito.
+- **La cuenta de demostración se siembra sola** al arrancar la API si están
+  `BOOTSTRAP_ADMIN_EMAIL` y `BOOTSTRAP_ADMIN_PASSWORD`; ya no hace falta `yarn postman:bootstrap`
+  a mano.
+
+---
+
+## Dos decisiones que te afectan si tocás rutas
+
+**1. Las rutas con sesión no se pueden prerenderizar.** La sesión vive en el navegador
+(`localStorage` + memoria) y el servidor no la ve, así que prerenderizar una pantalla protegida
+produce HTML de «no autenticado» que después parpadea al hidratar. Por eso el área protegida va
+con `RenderMode.Client` y solo `/auth/**` sigue prerenderizada.
+
+**2. El guard espera a que la sesión se restaure.** Al recargar, `AuthService` cambia el refresh
+token guardado por un par nuevo (una petición). Si el guard leyera el store antes de eso, echaría
+al login a alguien que sí tiene sesión. `authGuard` hace `await auth.ensureRestored()` primero.
+Si agregás un guard nuevo sobre el área protegida, hacé lo mismo.
+
+---
+
+## Cómo levantar todo
+
+```bash
+# Almacenes (nunca el servicio `api` del compose: arranca con DDL propio)
+docker compose up -d postgres mongodb redis opensearch minio
+
+corepack yarn start          # API, en su repo, puerto 3000
+corepack yarn start          # frontend, acá, puerto 4200
+```
+
+**Cuenta de demostración** (la siembra `yarn postman:bootstrap` en el repo de la API):
+
+```
+admin@redesa.test / S3cret-passw0rd
+```
+
+Verificada hoy contra la API viva: devuelve 200 con roles `SECURITY_ADMIN`, `SUPERADMIN` y un
+tenant. Es la que usa la pantalla de login para la demo.
+
+---
+
+## Sesión en curso · endurecimiento para producción (código)
+
+Cierro los pendientes de código del portal documental: seguridad, errores,
+accesibilidad, sesión y pruebas. **No toco nada de telemetría** — ver abajo.
+
+### Archivos que estoy creando (nuevos, no chocan)
+
+```text
+src/server/security-headers.ts        + .spec.ts
+src/app/core/build/build-info.ts
+src/app/core/errors/error-reporter.ts + .spec.ts
+src/app/core/errors/app-error-handler.ts
+src/app/shared/a11y/announce-on-appear.ts + .spec.ts
+src/app/features/error-recovery/
+src/app/features/not-found/
+src/app/features/identity-verification/
+src/app/features/dashboard/dashboard.spec.ts
+src/app/features/shell-layout/shell-layout.spec.ts
+src/app/core/http/token-refresh.service.spec.ts
+```
+
+### Archivos existentes que estoy modificando
+
+| Archivo | Qué |
+|---|---|
+| `src/server.ts` | Cabeceras de seguridad + CSP por hash |
+| `src/app/app.config.ts` | `ErrorHandler` propio, cierre de sesión entre pestañas |
+| `src/app/app.routes.ts` | Rutas `/error`, `/identidad/verificar`, 404 en el comodín |
+| `src/app/core/http/error-to-view-state.ts` | `IDENTITY_VERIFICATION_ROUTE` apuntaba a la API, no al router |
+| `src/app/core/http/auth.interceptor.ts` | Refresco proactivo con `isAccessTokenExpired` |
+| `src/app/core/auth/auth.service.ts` · `refresh-token.storage.ts` | Organización persistida, oyente de `storage` |
+| Las 6 plantillas de `features/auth/` | Directiva `appAnuncio` (región viva + foco) |
+| `src/app/features/shell-layout/shell-layout.ts` | Ítem de menú de la pantalla nueva |
+| `src/app/shared/index.ts` | Exporta `AnnounceOnAppear` |
+
+### 🔴 Telemetría: la dejé fuera, está tuya
+
+Tu trabajo de OpenTelemetry (`TelemetryEnvironment`, el manifiesto de las seis
+`PUBLIC_TELEMETRY_*`, `docs/observability/angular/`) estaba **a medio camino**:
+`yarn env:generate` fallaba y `tsc` daba
+`Property 'telemetry' is missing in type`.
+
+**No lo commiteé y no lo perdí.** Está respaldado en:
+
+```text
+/tmp/telemetria-en-curso/{generate-env.mjs,environment.types.ts,
+                          environment.ts,environment.development.ts}
+```
+
+Para retomarlo: esos cuatro archivos son tuyos tal como los dejaste. Lo único
+que necesitás saber es que **yo agregué cosas a dos de ellos** después de tu
+copia, así que conviene reaplicar lo tuyo encima de lo que está en `dev` en vez
+de restaurar el respaldo tal cual:
+
+| Archivo | Lo que agregué yo |
+|---|---|
+| `src/environments/environment.types.ts` | La interfaz `BuildInfo` (versión, commit, `builtAt`), **antes** de `Environment` |
+| `scripts/generate-env.mjs` | `readBuildInfo()` y la emisión de `export const buildInfo` en `render()`. **No toca el MANIFIESTO** |
+
+Tu `EnvironmentOverrides` y mi `BuildInfo` no se pisan: son declaraciones
+distintas en el mismo archivo. Y `buildInfo` no pasa por el manifiesto a
+propósito — no es configuración que alguien publique, es la huella del build.
+
+**Lo que te dejo servido:** `src/server.ts` ya emite `connect-src` a partir de
+`PUBLIC_API_BASE_URL`. Si el endpoint de trazas queda relativo (`/otel/v1/traces`,
+como dice tu `01-architecture-design.md`), **la CSP no necesita ningún cambio**:
+`connect-src 'self'` ya lo cubre. Si terminara en un subdominio propio, hay que
+agregarlo en `contentSecurityPolicy()` y ahí tenés la prueba que lo fija.
+
+### Lo que NO estoy tocando — es todo tuyo
+
+```text
+docs/observability/angular/**
+Todo lo de OpenTelemetry: SDK, spans, sampler, propagación
+El MANIFIESTO de scripts/generate-env.mjs
+```
+
+---
+
+## Actualización · segunda tanda
+
+### Tu trabajo está en tu worktree, y no lo toqué
+
+Encontré `.claude/worktrees/otel-jaeger-tracing` con la rama
+`feat/otel-jaeger-tracing`. Comparé lo que tenés ahí contra los respaldos de
+`/tmp/o1` y `/tmp/o2`: **lo tuyo está más avanzado que mis copias** —tenés
+`observability.providers.ts`, `error-telemetry.ts`, `router-tracing.ts`, los
+specs, y cuatro documentos más en `docs/observability/angular/`—.
+
+Así que **no restauré nada**. Restaurar habría sido pisar tu trabajo con una
+versión vieja. Los respaldos siguen en `/tmp/o1` y `/tmp/o2` por si acaso, pero
+podés ignorarlos.
+
+### Dos cosas que cambié y te afectan
+
+| Qué | Por qué te importa |
+|---|---|
+| `.gitignore` ahora ignora `.claude/` | Tu worktree vive ahí dentro. Sin esto, el repositorio se contendría a sí mismo |
+| `eslint.config.js` fija `tsconfigRootDir` | Tu worktree tiene su propio `tsconfig.json`, y typescript-eslint encontraba **dos raíces candidatas** y se negaba a elegir: `yarn lint` se caía entero con 508 errores de parseo. Ahora la raíz está dicha en voz alta y deja de depender de qué haya en el disco |
+
+El segundo lo vas a agradecer: sin él, `yarn lint` no corre mientras tu worktree
+exista.
+
+### Lo que agregué en esta tanda
+
+```text
+e2e/                                        Playwright · 7 journeys de sesión
+playwright.config.ts
+src/testing/a11y.ts                         ayudante de axe-core
+src/app/shared/components/a11y.spec.ts      auditoría de 13 componentes
+src/app/core/http/timeout.interceptor.ts    30 s · 120 s en subidas
+src/app/core/auth/idle-logout.ts            15 min con aviso a los 13
+.github/workflows/ci.yml                    job `e2e`
+```
+
+Y toqué `src/app/core/auth/auth.service.ts` (el orden al cerrar sesión) y
+`src/app/shared/components/atoms/select/select.ts` (`ariaLabel`). Ninguno de los
+dos entra en tu superficie.
+
+### Lo que sigue siendo tuyo, sin cambios
+
+```text
+docs/observability/angular/**
+Todo lo de OpenTelemetry: SDK, spans, sampler, propagación
+El MANIFIESTO de scripts/generate-env.mjs
+src/app/core/observability/**
+src/server/telemetry/**
+```
+
+`docs/observability/error-reporting.md` y `docs/observability/tracing.md` sí los
+edité: tenían enlaces a anclas que renombré en `error-boundaries.md` y afirmaban
+que la captura de errores no existía. Son párrafos sueltos, no tu contenido de
+OpenTelemetry.
+
+---
+
+## Sesión en curso · I2 organismo de estado de trámite (status-seal)
+
+**Empezó:** 2026-08-05 · **Rama:** `itzan/i2-organismos-estado` · **Base:** `aeeb7fc`
+
+### Archivos que estoy creando (nuevos, no deberían chocar)
+
+```text
+src/app/shared/components/organisms/status-seal/         I2 · sello de estado de trámite/caso
+src/app/features/identity-verification/case-status.ts    I2 · mapa status_concept_id → variante del sello
+src/app/features/identity-verification/case-status.spec.ts
+```
+
+### Archivos existentes que estoy modificando
+
+| Archivo | Qué le hago |
+|---|---|
+| `src/app/shared/components/organisms/index.ts` | Export del organismo nuevo |
+| `src/app/features/design-system-sample/organisms-gallery/*` | Sección nueva del sello (h3 — no toco las 26 secciones h2 de la vitrina principal) |
+| `src/app/features/identity-verification/identity-verification.{ts,html,spec.ts}` | El estado del caso pasa de texto crudo al sello, dentro del `<dd>` existente |
+| `src/app/shared/components/a11y.spec.ts` | Línea del organismo nuevo en la auditoría central |
+| `docs/components/catalog.md` · `docs/reports/generated/{component-inventory,module-graph}.md` | Alta del organismo (gates de doc-coverage e inventario) |
+| `docs/routes/design-system.md` · `docs/governance/documentation-policy.md` | Conteos al día: 49 componentes / 15 organismos |
+| `docs/routes/identidad-verificar.md` | Lista de componentes de la ruta al día |
+| `scripts/lib/scan.mjs` · `scripts/generate-inventory.mjs` | Fix mínimo de portabilidad Windows (`URL.pathname` → `fileURLToPath`, backslashes → `/`): sin él, todos los gates de docs/inventario crashean en Windows |
+
+### Lo que NO estoy tocando — es todo tuyo
+
+- `src/app/core/**` completo (auth, http, data-access, tokens, view-state, observability)
+- `src/app/features/auth/**` · `dashboard/**` · `shell-layout/**`
+- `src/styles.css` y `src/app/shared/components/tone/**` (consumo los tonos, no los cambio)
+- `src/app/app.routes.ts` y todo el ruteo · `e2e/**` · `.github/**`
+
+---
+
+## Sesión en curso · E2 rediseño de auth con Stitch (familia expediente)
+
+**Empezó:** 2026-08-07 · **Rama:** `ender/e2-auth-stitch` · **Base:** `f8e2435`
+
+Rediseño **solo visual** de las pantallas de autenticación siguiendo los Stitch.
+Familia base **expediente**; kardex solo como acento donde encaje; **MFA fuera de
+alcance** (sería pantalla/ruta/contrato nuevos). Stitch guía estructura, jerarquía,
+disposición y densidad: **no** se copian Tailwind, hex, fuentes ni tokens de
+Material. Color y tipografía salen **exclusivamente** de los tokens REDSAT de
+`styles.css`. Sin cambios de lógica, rutas, contratos, `data-testid` ni accesibilidad.
+
+### Archivos que voy a modificar (por lotes; empiezo por Lote 1)
+
+| Archivo | Qué |
+|---|---|
+| `src/app/features/auth/login/login.{html,css}` | **Lote 1** · jerarquía tipo documento (membrete/reglas/anexo) |
+| `features/auth/{register-patient,tenant-selection,forgot-password,reset-password,verify-email}/*.{html,css}` | Lotes siguientes (aún no tocados) |
+| `shared/components/organisms/auth-split.{html,css}` | **Solo si** un lote lo exige (columna de marca); a coordinar |
+
+### Lo que NO estoy tocando
+
+- Ningún `.ts` / `.spec.ts`, ni rutas, ni `e2e/**`, ni `.github/**`.
+- `src/styles.css`, `core/**`, y el resto de `shared/components/**`.

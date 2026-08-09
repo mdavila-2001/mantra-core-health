@@ -1,0 +1,29 @@
+/* Configuración de tipos de las suites de Playwright.
+
+   Cubre `e2e/*.spec.ts`, `e2e/support/` y `e2e/recorrido/`. La suite de Selenium
+   queda fuera a propósito: tiene la suya —corre con Vitest y necesita sus
+   globales— y meter las dos acá obligaría a declarar tipos que a una de las dos
+   le sobran.
+
+   Existe por el mismo motivo que la de Selenium: Playwright transpila sin
+   comprobar tipos, así que sin esto un localizador que quedó apuntando a una
+   opción que ya no existe no falla al compilar —falla a los once minutos, a
+   mitad del recorrido visual, y hay que volver a correrlo entero.
+
+   Se type-chequea en `yarn typecheck` y en el pipeline. */
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../out-tsc/e2e-playwright",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    /* Node por el `Buffer` y el `node:fs` del recolector de evidencia. Los tipos
+       del DOM entran por el `target` y hacen falta igual: lo que corre dentro de
+       `page.evaluate()` es código de navegador, aunque viva en este archivo. */
+    "types": ["node"],
+    "allowJs": false,
+    "noEmit": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["selenium/**", "../node_modules"]
+}

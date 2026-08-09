@@ -1,5 +1,5 @@
 /* ============================================================================
-    SelectComponent — Vanilla CSS con tokens REDSAT
+    Select — Vanilla CSS con tokens REDSAT
     ========================================================================== */
 
 :host {
@@ -12,19 +12,21 @@
   align-items: center;
   position: relative;
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   background-color: var(--bg-surface);
   border: 1.5px solid var(--border-strong);
   border-radius: var(--r-sm);
-  padding: 0 var(--sp-3);
+  padding: 0 var(--sp-4);
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
   box-sizing: border-box;
 }
 
-@media (max-width: 780px) {
+/* Base = móvil: área táctil de 44px. Desde 780px (tablet/escritorio) el control
+   se compacta a 40px y padding menor. */
+@media (min-width: 780px) {
   .select-wrapper {
-    min-height: 44px;
-    padding: 0 var(--sp-4);
+    min-height: 40px;
+    padding: 0 var(--sp-3);
   }
 }
 

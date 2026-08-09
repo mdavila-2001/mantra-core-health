@@ -1,0 +1,77 @@
+/* Catálogo de terminología. Una columna: el buscador manda sobre la tabla y la
+   ayuda cierra. Sólo distribución — ni un color ni una tipografía que el
+   sistema no tenga ya. */
+
+:host {
+  display: block;
+}
+
+.catalogo {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+.catalogo__buscador {
+  display: block;
+  /* El buscador no se estira a todo el ancho de la tabla: un campo de texto de
+     mil píxeles no ayuda a escribir «femenino». */
+  max-inline-size: 32rem;
+}
+
+.catalogo__aviso {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* Denominación arriba y definición debajo, dentro de la misma celda: la
+   definición es contexto de la denominación, no una columna aparte. */
+.catalogo__denominacion {
+  display: block;
+  font-weight: 500;
+}
+
+.catalogo__definicion {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* El identificador es el dato que se vino a copiar. `all` selecciona el uuid
+   entero de un clic: copiarlo a mano es exactamente donde se cometen errores. */
+.catalogo__id {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-caption);
+  user-select: all;
+  /* Un uuid no tiene puntos de corte naturales; sin esto desborda la celda. */
+  overflow-wrap: anywhere;
+}
+
+/* ── Ayuda ─────────────────────────────────────────────────────────────────*/
+
+.catalogo__ayuda {
+  display: block;
+  /* Es texto corrido: la medida de lectura manda sobre el ancho de la tabla. */
+  max-inline-size: 68ch;
+}
+
+.catalogo__ayuda-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.catalogo__ayuda-texto {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+}
+
+.catalogo__ayuda-lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding-inline-start: var(--sp-5);
+  color: var(--text-secondary);
+}

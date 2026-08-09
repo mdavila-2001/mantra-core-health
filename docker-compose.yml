@@ -1,0 +1,48 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: mantra-core-health-dev
+
+    # Compose lee `.env` de esta carpeta solo. Los `:-` son el valor por defecto:
+    # sin `.env`, todo funciona igual. Ver `.env.example`.
+    ports:
+      - '${FRONTEND_PORT:-4200}:4200'
+
+    environment:
+      # A dónde reenvía el proxy las rutas de la API. El contenedor lo sustituye
+      # en la plantilla `proxy.conf.docker.json` al arrancar.
+      BACKEND_ORIGIN: ${BACKEND_ORIGIN:-http://host.docker.internal:3000}
+
+      # Raíz de la API que compila dentro del paquete del navegador. Se pasa el
+      # mismo valor que ve el host para que el `env.generated.ts` que escribe el
+      # contenedor sobre el bind mount de ./src coincida con el del host y no se
+      # pisen entre sí. Vacío = rutas relativas (lo normal: resuelve el proxy).
+      PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-}
+    volumes:
+      # Se montan SOLO las fuentes y la configuración, nunca la raíz del
+      # proyecto: montar `.` taparía el .pnp.cjs y el .yarn/unplugged de linux
+      # que vive dentro de la imagen con los de macOS, y el build no arrancaría.
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./angular.json:/app/angular.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./tsconfig.app.json:/app/tsconfig.app.json:ro
+      # tsconfig.spec.json y vitest.config.ts quedan solo en la imagen: los usa
+      # `ng test`, no el dev server, y Docker Desktop falla al bind-montearlos.
+
+      # proxy.conf.docker.json NO se monta: viaja en la imagen y el contenedor
+      # genera desde ella `proxy.generated.json` con BACKEND_ORIGIN sustituido.
+      # El proxy.conf.json del repo queda intacto para el `yarn start` del host.
+
+      # Caché de Angular en volumen: sobrevive a los reinicios y no ensucia el host.
+      - angular-cache:/app/.angular
+
+    extra_hosts:
+      # Docker Desktop ya lo resuelve solo; explícito para que también funcione
+      # en Docker Engine sobre Linux.
+      - 'host.docker.internal:host-gateway'
+
+volumes:
+  angular-cache:

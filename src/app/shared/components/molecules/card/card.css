@@ -1,0 +1,83 @@
+/* ============================================================================
+    Card — superficie del tema + las tres sombras del sistema. El default es
+    `outlined` y no `elevated`: en una pantalla clínica conviven veinte fichas
+    y veinte relieves no jerarquizan nada.
+    ========================================================================== */
+
+:host {
+    --_card-padding: var(--sp-4);
+
+    display: block;
+    background: var(--bg-surface);
+    border-radius: var(--r-md);
+    border: 1px solid transparent;
+    transition:
+        box-shadow 0.15s ease,
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+
+/* ---- variantes ----------------------------------------------------------- */
+
+:host(.card--outlined) {
+    border-color: var(--border-default);
+}
+
+:host(.card--elevated) {
+    box-shadow: var(--shadow-md);
+}
+
+:host(.card--flat) {
+    background: var(--bg-surface-alt);
+}
+
+/* ---- densidad ------------------------------------------------------------ */
+
+:host(.card--padding-none) {
+    --_card-padding: 0;
+}
+
+:host(.card--padding-sm) {
+    --_card-padding: var(--sp-3);
+}
+
+:host(.card--padding-md) {
+    --_card-padding: var(--sp-4);
+}
+
+:host(.card--padding-lg) {
+    --_card-padding: var(--sp-6);
+}
+
+.card__header,
+.card__body,
+.card__footer {
+    padding: var(--_card-padding);
+}
+
+/* Sin contenido proyectado el hueco desaparece — incluido su padding. */
+.card__header:empty,
+.card__footer:empty {
+    display: none;
+}
+
+.card__header {
+    padding-bottom: 0;
+}
+
+.card__footer {
+    padding-top: 0;
+}
+
+/* ---- interactiva ---------------------------------------------------------- */
+
+:host(.card--interactive) {
+    cursor: pointer;
+}
+
+:host(.card--interactive:hover) {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-md);
+}
+
+/* el anillo de foco lo pone la regla global de :focus-visible */

@@ -1,0 +1,5 @@
+<!-- `text` simula un párrafo: varias líneas, la última más corta. Las otras dos
+     variantes son el propio host, sin nodos adentro. -->
+@for (width of lineWidths(); track $index) {
+  <span class="skeleton__line" [style.width]="width"></span>
+}

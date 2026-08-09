@@ -1,0 +1,96 @@
+/* Ficha de filiación F-01. Mobile-first: una columna, y desde tablet la rejilla
+   se acomoda sola sin fijar cuántas columnas hay. */
+
+:host {
+  display: block;
+}
+
+.ficha {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+/* Tablet. El valor va literal porque una media query no admite var();
+   el token --bp-md declara el mismo 780px para el resto del sistema. */
+@media (min-width: 780px) {
+  .ficha {
+    /* `auto-fit` en vez de un número: si un bloque se agrega o se quita, la
+       rejilla no hay que retocarla. */
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  }
+
+  .ficha__bloque--ancho {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Escritorio.
+   Con `minmax(20rem)` entraban tres bloques por fila, y los bloques de datos
+   son **cuatro**: el cuarto caía solo a una fila propia con dos celdas vacías
+   al lado, que es el hueco más visible de la pantalla. Cuatro columnas fijas
+   los alinean en una sola fila y dejan la de contactos entera para ella.
+
+   El corte es 1180px y no el siguiente token porque es el ancho al que cuatro
+   columnas de 15rem más el menú lateral entran sin apretar los rótulos. */
+@media (min-width: 1180px) {
+  .ficha {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.ficha__titulo {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.ficha__datos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.ficha__dato dt {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.ficha__dato dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* Fechas y códigos: los dígitos se comparan de arriba abajo. */
+.ficha__cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+.ficha__contactos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha__contacto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.ficha__contacto-nombre {
+  font-weight: 600;
+}
+
+.ficha__contacto-vinculo {
+  color: var(--text-muted);
+}
+
+.ficha__vacio {
+  margin: 0;
+  color: var(--text-muted);
+}

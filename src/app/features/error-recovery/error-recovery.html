@@ -1,0 +1,29 @@
+<!-- `role="alert"` y no una región viva pasiva: esto reemplaza al contenido que
+     la persona esperaba ver, así que su aparición es la noticia. -->
+<div class="recuperacion" role="alert">
+  <app-alert tone="error" title="Algo salió mal">
+    <p>
+      No pudimos mostrar esta pantalla. Suele resolverse recargando: si acabamos
+      de publicar una versión nueva, tu navegador todavía tiene la anterior.
+    </p>
+
+    @if (codigo(); as id) {
+      <p class="recuperacion__codigo">
+        Código de soporte: <code class="tabular-nums">{{ id }}</code>
+        <br />
+        Versión: <code class="tabular-nums">{{ version }}</code>
+      </p>
+    } @else {
+      <p class="recuperacion__codigo">
+        Versión: <code class="tabular-nums">{{ version }}</code>
+      </p>
+    }
+
+    <div alert-actions>
+      <button app-button variant="primary" (clicked)="recargar()">Recargar</button>
+      @if (codigo()) {
+        <button app-button variant="outline" (clicked)="copiar()">Copiar código</button>
+      }
+    </div>
+  </app-alert>
+</div>

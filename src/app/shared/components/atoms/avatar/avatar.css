@@ -56,13 +56,14 @@
 :host(.avatar--xs) { --_avatar-side: 24px; --_avatar-font: 9px; }
 :host(.avatar--sm) { --_avatar-side: 32px; --_avatar-font: 11px; }
 :host(.avatar--md) { --_avatar-side: 40px; --_avatar-font: 13px; }
-:host(.avatar--lg) { --_avatar-side: 56px; --_avatar-font: 17px; }
-:host(.avatar--xl) { --_avatar-side: 80px; --_avatar-font: 24px; }
+/* base = móvil: los dos talles grandes arrancan achicados */
+:host(.avatar--lg) { --_avatar-side: 44px; --_avatar-font: 15px; }
+:host(.avatar--xl) { --_avatar-side: 56px; --_avatar-font: 18px; }
 
-/* móvil: los dos talles grandes se achican (breakpoint REDSAT < 780 px) */
-@media (max-width: 780px) {
-    :host(.avatar--lg) { --_avatar-side: 44px; --_avatar-font: 15px; }
-    :host(.avatar--xl) { --_avatar-side: 56px; --_avatar-font: 18px; }
+/* desde 780px (tablet/escritorio) lg y xl toman su tamaño pleno del spec */
+@media (min-width: 780px) {
+    :host(.avatar--lg) { --_avatar-side: 56px; --_avatar-font: 17px; }
+    :host(.avatar--xl) { --_avatar-side: 80px; --_avatar-font: 24px; }
 }
 
 /* ---- contenido: foto → iniciales → silueta ----------------------------- */

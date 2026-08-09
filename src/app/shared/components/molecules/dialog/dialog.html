@@ -1,0 +1,35 @@
+<!-- El clic es el atajo de ratón para cerrar por el fondo. El equivalente de
+     teclado no falta: `Escape` lo maneja el navegador sobre el `<dialog>` y
+     llega por `(cancel)`. Añadir un keydown acá duplicaría ese camino. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #nativeDialog
+  class="dialog"
+  data-testid="dialogo"
+  [attr.aria-labelledby]="titleId"
+  [attr.aria-describedby]="messageId"
+  (cancel)="handleNativeCancel($event)"
+  (click)="handleBackdropClick($event)"
+>
+  <div class="dialog__panel">
+    <h2 class="dialog__title" [id]="titleId" data-testid="dialogo-titulo">{{ config().title }}</h2>
+    <p class="dialog__message" [id]="messageId">{{ config().message }}</p>
+
+    <div class="dialog__actions">
+      <!-- Cancelar va primero en el DOM: en una acción destructiva es el que
+           recibe el foco inicial del navegador, que es lo que se busca. -->
+      <button app-button variant="ghost" data-testid="dialogo-cancelar" (clicked)="handleCancel()">
+        {{ cancelLabel() }}
+      </button>
+      <button
+        app-button
+        data-testid="dialogo-confirmar"
+        [variant]="isDestructive() ? 'danger' : 'primary'"
+        [attr.autofocus]="isDestructive() ? null : true"
+        (clicked)="handleConfirm()"
+      >
+        {{ confirmLabel() }}
+      </button>
+    </div>
+  </div>
+</dialog>

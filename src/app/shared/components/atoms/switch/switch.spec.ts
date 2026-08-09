@@ -1,17 +1,17 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { SwitchComponent } from './switch';
+import { Switch } from './switch';
 
-describe('SwitchComponent', () => {
-  let fixture: ComponentFixture<SwitchComponent>;
+describe('Switch', () => {
+  let fixture: ComponentFixture<Switch>;
 
   function native(): HTMLInputElement {
     return fixture.nativeElement.querySelector('input');
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [SwitchComponent] }).compileComponents();
-    fixture = TestBed.createComponent(SwitchComponent);
+    await TestBed.configureTestingModule({ imports: [Switch] }).compileComponents();
+    fixture = TestBed.createComponent(Switch);
     fixture.componentRef.setInput('label', 'Notificaciones');
     await fixture.whenStable();
   });

@@ -1,0 +1,7 @@
+/* Los custom elements son EN LÍNEA por defecto, y un elemento en línea que
+   contiene bloques arma una caja de línea con la interlínea del documento: una
+   franja del color del fondo arriba y abajo del contenido. Como el raíz envuelve
+   a toda pantalla enrutada, sin esto la franja aparece en TODAS. */
+:host {
+  display: block;
+}

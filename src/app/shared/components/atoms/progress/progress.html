@@ -1,0 +1,3 @@
+<!-- El relleno es decoración: lo que se anuncia son los aria-value* del host.
+     En indeterminada el ancho no significa nada, lo dice la animación. -->
+<span class="progress__fill" [style.width]="isIndeterminate() ? null : fillWidth()"></span>

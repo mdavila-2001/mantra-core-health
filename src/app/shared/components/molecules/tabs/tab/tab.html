@@ -1,0 +1,5 @@
+<!-- El panel inactivo no se oculta: no se renderiza. Con `hidden` a secas el
+     contenido —y sus consultas— seguiría vivo en el DOM. -->
+@if (isActive()) {
+  <ng-content />
+}

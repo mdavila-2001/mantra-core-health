@@ -1,0 +1,83 @@
+/* ============================================================================
+    Galería de organismos — andamiaje de la vitrina, no del producto.
+    Mobile-first, como todo lo nuevo (§0.1).
+    ========================================================================== */
+
+:host {
+    display: block;
+    font-family: var(--font-body);
+}
+
+.og-block {
+    padding-block: var(--sp-6);
+    border-block-start: 1px solid var(--border-default);
+}
+
+.og-block h3 {
+    margin: 0 0 var(--sp-2);
+    color: var(--text-primary);
+}
+
+.og-block h4 {
+    margin: var(--sp-6) 0 var(--sp-2);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.og-note {
+    margin: var(--sp-2) 0 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.og-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    margin-block: var(--sp-3);
+}
+
+/* Caja de observación: separa la pieza del andamiaje que la rodea. */
+.og-surface {
+    margin-block-start: var(--sp-3);
+    padding: var(--sp-4);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+}
+
+/* Para las piezas que traen su propio fondo (auth layout, shell). */
+.og-surface--frame {
+    padding: 0;
+    overflow: hidden;
+}
+
+.og-skeleton-demo {
+    padding: var(--sp-4);
+    border: 1px dashed var(--border-default);
+    border-radius: var(--r-sm);
+    color: var(--text-muted);
+}
+
+.og-shell-body {
+    display: flex;
+    min-block-size: 220px;
+}
+
+.og-shell-main {
+    flex: 1;
+    min-inline-size: 0;
+    padding: var(--sp-4);
+}
+
+/* Los sellos son inline: en fila y con aire para poder compararlos. */
+.og-seals {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--sp-3);
+}
