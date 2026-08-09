@@ -24,7 +24,7 @@ import { NavigationService } from '../../../../core/navigation/navigation.servic
 import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
-import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { SearchField } from '../../../../shared/components/molecules/search-field/search-field';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
@@ -33,7 +33,13 @@ import type {
   CursorState,
 } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { patientDetailRoute, PATIENTS_ROUTE, PATIENT_NEW_ROUTE } from '../patients.routes';
+import type { PageHeaderAction } from '../../../../shared/components/organisms/page-header/page-header';
+import {
+  patientDetailRoute,
+  PATIENTS_ROUTE,
+  PATIENT_MERGE_ROUTE,
+  PATIENT_NEW_ROUTE,
+} from '../patients.routes';
 
 /** Filas por página. El backend admite hasta 200 y aplica 50 por omisión. */
 const TAMANO_DE_PAGINA = 25;
@@ -81,7 +87,7 @@ const VOLVER = 'anterior';
  */
 @Component({
   selector: 'app-patient-list',
-  imports: [AppButton, Badge, DataTable, DatePipe, Link, PageHeader, RouterLink, SearchField],
+  imports: [AppButtonLink, Badge, DataTable, DatePipe, Link, PageHeader, RouterLink, SearchField],
   templateUrl: './patient-list.html',
   styleUrl: './patient-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,6 +100,7 @@ export class PatientList {
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly rutaDeLaFicha = patientDetailRoute;
+  protected readonly rutaDeAlta = PATIENT_NEW_ROUTE;
 
   private readonly celdaPaciente =
     viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaPaciente');
@@ -142,6 +149,24 @@ export class PatientList {
 
   protected readonly cargando = computed(() => this.listado().status === 'loading');
 
+  /**
+   * Acciones secundarias del encabezado.
+   *
+   * Fusionar va acá y no como acción de fila: no opera sobre **una** fila sino
+   * sobre un par, y ninguna fila es «la» fusión. Ponerla en el menú de una fila
+   * sugeriría que esa fila es el registro que sobrevive, que es exactamente la
+   * confusión que la pantalla de fusión se ocupa de evitar.
+   */
+  protected readonly accionesSecundarias: readonly PageHeaderAction[] = [
+    { code: 'fusionar', label: 'Fusionar duplicados' },
+  ];
+
+  protected ejecutarAccion(code: string): void {
+    if (code === 'fusionar') {
+      void this.router.navigateByUrl(PATIENT_MERGE_ROUTE);
+    }
+  }
+
   constructor() {
     // Un cambio de filtro es una lista nueva: el cursor que había era de la
     // anterior y seguirlo devolvería una página del listado viejo.
@@ -152,10 +177,6 @@ export class PatientList {
         this.cargar();
       });
     });
-  }
-
-  protected irAlAlta(): void {
-    void this.router.navigateByUrl(PATIENT_NEW_ROUTE);
   }
 
   /** La búsqueda se publica en la URL; el efecto de arriba hace el resto. */
