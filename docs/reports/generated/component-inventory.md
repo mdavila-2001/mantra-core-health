@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-78 componentes y 28 servicios inyectables, leídos de `src/`.
+80 componentes y 28 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,7 +70,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (25)
+## Feature (27)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -95,6 +95,8 @@
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
+| `app-verification-case-detail` | `VerificationCaseDetail` | — | — | — | OnPush | sí |
+| `app-verification-cases` | `VerificationCases` | — | — | — | OnPush | sí |
 | `app-identity-verification` | `IdentityVerification` | — | — | — | OnPush | sí |
 | `app-not-found` | `NotFound` | — | — | — | OnPush | sí |
 | `app-section-placeholder` | `SectionPlaceholder` | — | — | — | OnPush | sí |

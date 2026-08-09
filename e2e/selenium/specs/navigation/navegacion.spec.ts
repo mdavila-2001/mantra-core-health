@@ -32,7 +32,13 @@ describe('Navegación', () => {
     // administrativas existen en el registro pero no se le ofrecen: el menú se
     // arma con los roles del token.
     const rutas = await menu.rutas();
-    expect(rutas).toEqual(['/panel', '/mi-cuenta', '/identidad/verificar', '/design-system']);
+    expect(rutas).toEqual([
+      '/panel',
+      '/mi-cuenta',
+      '/identidad/verificar',
+      '/identidad/casos',
+      '/design-system',
+    ]);
     expect(rutas).not.toContain('/administracion/usuarios');
 
     await menu.irA('/identidad/verificar');

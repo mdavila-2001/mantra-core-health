@@ -86,13 +86,14 @@ Admite dos filtros opcionales de query string, `city` y `specialty`, que **se
 omiten si no vienen**: mandarlos vacíos filtraría por la cadena vacía en vez de
 no filtrar. `Dashboard` llama sin ninguno.
 
-### `IdentityClient` — 5 operaciones
+### `IdentityClient` — 6 operaciones
 
 | Método | Ruta |
 |---|---|
 | `POST` | `/identity/me/identity-verification` |
 | `POST` | `/identity/me/practitioner/identity-verification` |
 | `POST` | `/identity/me/practitioner/license-verification` |
+| `POST` | `/identity/me/tenants/:tenantId/verification` |
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
