@@ -1,12 +1,28 @@
 [
   {
+    "_comentario": [
+      "Los prefijos se comparan por INICIO de ruta, así que cada uno tiene que",
+      "ser inequívoco frente a las rutas del router de Angular.",
+      "",
+      "Ya mordió una vez: agregar `/admin` para `GET /admin/tenants` desvió",
+      "`/administracion/pacientes` —una ruta de la aplicación— hacia la API, que",
+      "respondió `Cannot GET /administracion/pacientes` y dejó la sección en",
+      "blanco. Lo encontró el recorrido con usuarios reales.",
+      "",
+      "Regla: sólo se listan prefijos que algún cliente de `core/data-access`",
+      "use de verdad, y que no sean prefijo de ninguna ruta de `APP_SECTIONS`."
+    ],
     "context": [
       "/iam",
       "/public",
       "/terminology",
       "/profiles",
       "/identity",
-      "/common"
+      "/common",
+      "/scheduling",
+      "/charts",
+      "/clinical",
+      "/authz"
     ],
     "target": "http://localhost:3000",
     "secure": false,

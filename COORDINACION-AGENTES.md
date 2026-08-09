@@ -5,6 +5,88 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión 2026-08-08 · Atención (agenda + archivo clínico) y recorrido con usuarios reales
+
+**Rama:** `pablo/combobox-referencia-y-ancla-accion` · **Base:** `22ca1c7`
+
+### Qué se encendió, y por qué se podía
+
+Las dos secciones del grupo **Atención** dejaron de ser un cartel. No hizo falta
+backend nuevo: sus lecturas ya existían y nadie las había cableado.
+
+| Sección | Lectura que la desbloquea |
+|---|---|
+| `/agenda` | `GET /scheduling/resources` · `/slots` · `/bookings` · `/bookings/:id` |
+| `/clinico` + `/clinico/:profileId` | `GET /clinical/patients/:id/summary` · `GET /charts/patients/:id/chart` |
+| Bloque nuevo en la ficha de paciente | `GET /authz/care-relationships` (V06-01) |
+
+Se comprobó **contra los controllers**, no contra la tabla del vault, que el propio
+documento advierte que no se actualiza sola.
+
+Lo que **sigue** en placeholder y por qué: `administracion/organizaciones` (M04) y
+`facturacion` (M17/M42) no tienen `GET` de colección. No se tocaron.
+
+### Archivos nuevos
+
+```text
+src/app/core/data-access/scheduling/     cliente de agenda (+ tipos y spec)
+src/app/core/data-access/clinical/       cliente de expediente (+ tipos y spec)
+src/app/core/data-access/authz/          bases legítimas de acceso (+ tipos y spec)
+src/app/features/agenda/                 pantalla de Agenda
+src/app/features/clinical-record/        Archivo clínico + patient-chart/
+e2e/real/                                recorrido con usuarios reales
+e2e/recorrido/05-atencion.spec.ts        recorrido visual de las dos secciones nuevas
+playwright.real.config.ts · scripts/run-recorrido-real.mjs
+docs/testing/recorrido-con-usuarios-reales.md
+```
+
+### Archivos existentes tocados (poco, y con motivo)
+
+| Archivo | Qué | Por qué |
+|---|---|---|
+| `app.routes.ts` | `agenda`, `clinico` y `clinico/:profileId` | encender las secciones |
+| `navigation.map.ts` | las dos pasan a `disponible` | su lectura ya existe |
+| `navigation.types.ts` | `SUPERADMIN` ve todas las secciones | es la regla del `RolesGuard` del backend; sin esto el menú escondía secciones que la API sí responde |
+| `terminology.client.ts` | `readConceptLabels` trocea de a 200 | el endpoint declara ese tope y un expediente lo pasa sin esfuerzo |
+| `select.html` · `select.ts` | la selección se marca con `[selected]` | **defecto real**: un select que nacía con valor mostraba el placeholder |
+| `app.config.ts` | `LOCALE_ID: 'es-BO'` | `<html lang="es">` desde siempre, pero la agenda decía «Monday 10 Aug» |
+| `proxy.conf*.json` | `/scheduling`, `/charts`, `/clinical`, `/authz` | y **sin** `/admin`: se comía `/administracion/**` |
+| `patient-detail.*` | bloque de relaciones asistenciales | V06-01 |
+| `evidencia.ts` · `generate-recorrido-report.mjs` | `EVIDENCIAS_DIR` | dos recorridos que no deben pisarse |
+
+### Cinco defectos que encontró el recorrido con usuarios reales
+
+Ninguno era visible con la red simulada, y ese es el argumento entero de la suite
+nueva (`yarn recorrido:real`, ver `docs/testing/recorrido-con-usuarios-reales.md`):
+
+1. **`/admin` en el proxy desviaba `/administracion/pacientes` a la API.** La
+   sección quedaba en blanco con un `Cannot GET` de NestJS.
+2. **`GET /scheduling/bookings` responde `422` sin acotar.** No existe «la agenda
+   de toda la organización»; la pantalla se rediseñó alrededor de eso.
+3. **`app-select` mostraba el placeholder cuando nacía con valor.** Es del sistema
+   de diseño, no de la agenda; con formularios no se veía.
+4. **Fechas en inglés.** Faltaba `LOCALE_ID`.
+5. **La agenda confundía «no hay» con «no podés ver».** A un profesional recién
+   registrado, `GET /scheduling/resources` le responde `403`, y la pantalla se
+   caía a una lista vacía y decía «esta organización todavía no tiene recursos
+   agendables». El M34 separa S3 de S5 exactamente por esto.
+
+### Lo que queda dicho, no arreglado
+
+- **Una recarga = un canje de refresh token**, y `token/refresh` está limitado a
+  diez por minuto. Once recargas en un minuto cierran la sesión. Es por diseño
+  —el access token no se persiste— pero conviene decidirlo a conciencia.
+- **La suite real deja cuentas de prueba en la base**, igual que los smokes del
+  backend.
+
+### Verificación
+
+`yarn lint` · `yarn typecheck` · `yarn test` (1297) · `yarn build` ·
+`yarn e2e` (7) · `yarn recorrido` (40 pruebas, 674 capturas) ·
+`yarn recorrido:real` (5 pruebas, 46 capturas, cero hallazgos).
+
+---
+
 ## Sesión en curso · cierre de Fase 3 (J4, J8, J9 + Home)
 
 **Empezó:** 2026-08-01 · **Rama:** `justin/j3-t13-auth-y-cva` · **Base:** `8d6b1d7`

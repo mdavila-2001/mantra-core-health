@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-78 componentes y 25 servicios inyectables, leídos de `src/`.
+82 componentes y 28 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,7 +70,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (25)
+## Feature (29)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -81,7 +81,9 @@
 | `app-patient-merge` | `PatientMerge` | — | — | — | OnPush | sí |
 | `app-patient-new` | `PatientNew` | — | — | — | OnPush | sí |
 | `app-related-person-form` | `RelatedPersonForm` | `profileId`, `yaTieneTutor` | `registered`, `cancelled` | — | OnPush | sí |
+| `app-terminology-catalog` | `TerminologyCatalog` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
+| `app-agenda` | `Agenda` | — | — | — | OnPush | sí |
 | `app-activate-account` | `ActivateAccount` | — | — | — | OnPush | sí |
 | `app-forgot-password` | `ForgotPassword` | — | — | — | OnPush | sí |
 | `app-login` | `Login` | — | — | — | OnPush | sí |
@@ -90,6 +92,8 @@
 | `app-reset-password` | `ResetPassword` | — | — | — | OnPush | sí |
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
+| `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
+| `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |
 | `app-dashboard` | `Dashboard` | — | — | — | OnPush | sí |
 | `app-design-system-sample` | `DesignSystemSample` | — | — | — | OnPush | sí |
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
@@ -112,7 +116,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (25)
+## Servicios (28)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -120,11 +124,14 @@
 | `IdleLogout` | `src/app/core/auth/idle-logout.ts` | root | sí |
 | `RefreshTokenStorage` | `src/app/core/auth/refresh-token.storage.ts` | root | **no** |
 | `SessionStore` | `src/app/core/auth/session.store.ts` | root | sí |
+| `AuthzClient` | `src/app/core/data-access/authz/authz.client.ts` | root | sí |
+| `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |
 | `PublicClient` | `src/app/core/data-access/public/public.client.ts` | root | **no** |
+| `SchedulingClient` | `src/app/core/data-access/scheduling/scheduling.client.ts` | root | sí |
 | `TerminologyClient` | `src/app/core/data-access/terminology/terminology.client.ts` | root | sí |
 | `AppErrorHandler` | `src/app/core/errors/app-error-handler.ts` | local | **no** |
 | `ErrorReporter` | `src/app/core/errors/error-reporter.ts` | root | sí |

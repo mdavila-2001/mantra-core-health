@@ -109,11 +109,18 @@ export class Select<T> implements ControlValueAccessor {
     () => this.hasError() || this.field?.invalid() === true,
   );
 
-  /** El `<select>` se posiciona por índice; `''` cuando no hay selección. */
-  protected readonly selectedIndex = computed(() => {
-    const index = this.options().findIndex((option) => option.value === this.value());
-    return index >= 0 ? String(index) : NO_SELECTION;
-  });
+  /**
+   * Índice de la opción elegida, o `-1` si ninguna lo está.
+   *
+   * Número y no texto porque la plantilla lo compara contra el `$index` del
+   * `@for` para marcar el `<option>` con `[selected]`. Ver el comentario de
+   * `select.html`: marcar la opción es lo único que funciona cuando el control
+   * nace con valor, porque el `<select>` recibe sus propiedades antes de que
+   * sus opciones existan.
+   */
+  protected readonly selectedIndex = computed(() =>
+    this.options().findIndex((option) => option.value === this.value()),
+  );
 
   protected readonly wrapperClasses = computed(() => {
     const classes = ['select-wrapper'];

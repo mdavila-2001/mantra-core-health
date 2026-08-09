@@ -25,6 +25,20 @@
   }
 }
 
+/* Escritorio.
+   Con `minmax(20rem)` entraban tres bloques por fila, y los bloques de datos
+   son **cuatro**: el cuarto caía solo a una fila propia con dos celdas vacías
+   al lado, que es el hueco más visible de la pantalla. Cuatro columnas fijas
+   los alinean en una sola fila y dejan la de contactos entera para ella.
+
+   El corte es 1180px y no el siguiente token porque es el ancho al que cuatro
+   columnas de 15rem más el menú lateral entran sin apretar los rótulos. */
+@media (min-width: 1180px) {
+  .ficha {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .ficha__titulo {
   margin: 0 0 var(--sp-4);
   font-size: var(--fs-h3);

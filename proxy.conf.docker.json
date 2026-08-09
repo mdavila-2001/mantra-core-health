@@ -6,7 +6,11 @@
       "/terminology",
       "/profiles",
       "/identity",
-      "/common"
+      "/common",
+      "/scheduling",
+      "/charts",
+      "/clinical",
+      "/authz"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

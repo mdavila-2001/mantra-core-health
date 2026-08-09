@@ -16,7 +16,7 @@ Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -87,13 +87,14 @@ Admite dos filtros opcionales de query string, `city` y `specialty`, que **se
 omiten si no vienen**: mandarlos vacíos filtraría por la cadena vacía en vez de
 no filtrar. `Dashboard` llama sin ninguno.
 
-### `IdentityClient` — 4 operaciones · sin consumidor
+### `IdentityClient` — 5 operaciones
 
 | Método | Ruta |
 |---|---|
 | `POST` | `/identity/me/identity-verification` |
 | `POST` | `/identity/me/practitioner/identity-verification` |
 | `POST` | `/identity/me/practitioner/license-verification` |
+| `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
 ### `ProfilesClient` — 9 operaciones
@@ -140,6 +141,68 @@ resuelve la sesión. Exige identidad verificada vigente y sin ella responde `403
 con `IDENTITY_VERIFICATION_REQUIRED`, que es el único 403 del contrato que llega
 a la interfaz **con una salida** en vez de un muro.
 
+
+### `SchedulingClient` — 4 operaciones · sólo lectura
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/scheduling/resources` | `Agenda` (V41) |
+| `GET` | `/scheduling/slots` | `Agenda` |
+| `GET` | `/scheduling/bookings` | `Agenda` |
+| `GET` | `/scheduling/bookings/:bookingId` | — |
+
+El módulo se había construido **entero de escritura**: se generaban cupos y se
+confirmaban citas, pero no había forma de verlos, y sin `GET /scheduling/slots`
+tampoco se podía obtener el `slotId` que exige
+`POST /scheduling/slots/{id}/holds`. Estas cuatro lecturas son las que sacaron a
+la agenda del estado de placeholder.
+
+**`GET /scheduling/bookings` exige acotar.** Sin `patientProfileId` ni
+`resourceId` responde `422 PRECONDITION_FAILED`: no existe «la agenda de toda la
+organización». Por eso la pantalla no ofrece un «todos los recursos» que sería un
+botón que devuelve un error, y elige el primer recurso cuando la URL no trae uno.
+
+**`GET /scheduling/resources` exige `tenantId`.** Sin organización elegida no se
+pide nada: un `400` ahí se leería como «la agenda falló» y lo que falta es un
+paso previo.
+
+### `ClinicalClient` — 2 operaciones · sólo lectura
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/clinical/patients/:patientProfileId/summary` | `PatientChart` (UC-39-20) |
+| `GET` | `/charts/patients/:patientProfileId/chart` | `PatientChart` (UC-40-14) |
+
+**Dos módulos del backend y un solo cliente**, porque son dos lecturas de lo
+mismo: `clinical` guarda lo estructurado —condiciones, alergias, medicación,
+observaciones, encuentros— y `chart` lo narrativo —notas, planes de cuidados,
+documentos—. La separación es de **escritura**: quien atiende no piensa en dos
+módulos, y ninguna pantalla quiere media historia clínica.
+
+Ambas exigen `CLINICIAN` o `PRACTITIONER` a nivel de controlador. **No existe un
+listado de colección, y no es una omisión**: la lista de todas las historias de
+una organización es exactamente el dato que no debe existir como pantalla.
+
+**El tope es por bloque, no por respuesta.** `limit` acota cada lista por
+separado y la respuesta declara en `truncated` cuáles quedaron cortadas. Se
+reenvía tal cual a la vista: un expediente al que le faltan notas sin avisar se
+lee como «no hay antecedentes».
+
+### `AuthzClient` — 2 operaciones · sólo lectura
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/authz/care-relationships` | `PatientDetail` (V06-01) |
+| `GET` | `/authz/legal-representations` | — |
+
+No son permisos: son el **motivo** por el que alguien puede mirar la historia de
+otra persona. El PDP los consume; la interfaz sólo los muestra.
+
+**Las dos exigen paciente**, y tampoco es una omisión: el listado completo de
+«quién atiende a quién» de una organización es un mapa de su actividad clínica
+entera. Se lee de a un paciente, que es como se usa —desde su ficha— y como se
+puede auditar. Las respuestas son arrays desnudos, sin sobre de paginación.
+
 ### `TerminologyClient` — 2 operaciones
 
 | Método | Ruta | Consumidor |
@@ -147,7 +210,13 @@ a la interfaz **con una salida** en vez de un muro.
 | `GET` | `/terminology/value-sets/:valueSetId/$expand` | — |
 | `GET` | `/terminology/concepts` | `PatientDetail`, `MyProfile` |
 
-La segunda se llama siempre con `?ids=` (los identificadores separados por coma).
+La segunda se llama con `?ids=` —los identificadores separados por coma— o con
+`?q=` para buscar por texto, que es lo que usa el catálogo de terminología.
+
+**La resolución por ids se trocea de a 200**, que es el tope que el endpoint
+declara. Un expediente clínico con sus ocho bloques lo pasa sin esfuerzo, y sin
+trocear la petición vuelve `400` y la pantalla entera se queda sin etiquetas por
+culpa del id doscientos uno.
 
 La segunda es el camino **inverso** al del selector: el resto del contrato
 devuelve `*ConceptId` en uuid y ninguna pantalla puede mostrar un uuid. Se piden

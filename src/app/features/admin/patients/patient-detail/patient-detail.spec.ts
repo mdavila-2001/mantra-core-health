@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import { SessionStore } from '../../../../core/auth/session.store';
 import { PatientDetail, type FichaCampo } from './patient-detail';
 
 /**
@@ -49,9 +50,7 @@ describe('PatientDetail', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([
-          { path: 'administracion/pacientes/:profileId', component: PatientDetail },
-        ]),
+        provideRouter([{ path: 'administracion/pacientes/:profileId', component: PatientDetail }]),
       ],
     });
 
@@ -90,11 +89,13 @@ describe('PatientDetail', () => {
     expect(req.request.method).toBe('GET');
     req.flush(FICHA);
 
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [],
-      count: 0,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [],
+        count: 0,
+        limit: 50,
+      });
   });
 
   it('pide las etiquetas de todos los conceptos en UNA sola petición', () => {
@@ -149,9 +150,15 @@ describe('PatientDetail', () => {
       { conceptId: VINCULO, code: 'BRO', display: 'Hermano/a', codeSystemVersionId: 'csv-1' },
     ]);
 
-    const contactos = interno<
-      () => readonly { nombre: string; vinculo: string; esTutor: boolean; esEmergencia: boolean }[]
-    >('contactos')();
+    const contactos =
+      interno<
+        () => readonly {
+          nombre: string;
+          vinculo: string;
+          esTutor: boolean;
+          esEmergencia: boolean;
+        }[]
+      >('contactos')();
 
     expect(contactos).toHaveLength(1);
     expect(contactos[0]?.vinculo).toBe('Hermano/a');
@@ -256,5 +263,163 @@ describe('PatientDetail', () => {
     // El mensaje del backend se descarta: repetirlo confirmaría que se consultó
     // por algo concreto.
     expect(estado.message).toBeUndefined();
+  });
+});
+
+/**
+ * Las relaciones asistenciales (V06-01) son un **bloque aparte** de la ficha, y
+ * eso es lo que estas pruebas fijan: su lectura pide `CLINICIAN` o
+ * `SECURITY_ADMIN`, y un `403` ahí no puede llevarse puesta la filiación, que es
+ * lo que la persona vino a ver.
+ *
+ * Van en su propio `describe` porque necesitan **sesión con organización**: sin
+ * `tenantId` la lectura no sale, que es el otro caso que se comprueba.
+ */
+describe('PatientDetail · relaciones asistenciales', () => {
+  let harness: RouterTestingHarness;
+  let componente: PatientDetail;
+  let http: HttpTestingController;
+
+  /** base64url **sobre UTF-8**, como el token real. */
+  function jwt(payload: Record<string, unknown>): string {
+    const b64 = (o: unknown) => {
+      const bytes = new TextEncoder().encode(JSON.stringify(o));
+      return btoa(String.fromCharCode(...bytes))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    };
+    return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
+  }
+
+  async function montar(conOrganizacion: boolean): Promise<void> {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: 'administracion/pacientes/:profileId', component: PatientDetail }]),
+      ],
+    });
+
+    http = TestBed.inject(HttpTestingController);
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({
+        sub: 'u-1',
+        roles: ['SECURITY_ADMIN'],
+        tenants: conOrganizacion ? ['t-1'] : [],
+      }),
+      refreshToken: 'r-1',
+    });
+
+    harness = await RouterTestingHarness.create();
+    componente = await harness.navigateByUrl('/administracion/pacientes/pp-1', PatientDetail);
+  }
+
+  function relaciones() {
+    return (
+      componente as unknown as {
+        relaciones: () => { estado: string; items: readonly Record<string, unknown>[] };
+      }
+    ).relaciones();
+  }
+
+  /** La ficha y su catálogo, que salen igual haya relaciones o no. */
+  function responderFicha(): void {
+    http.expectOne('/profiles/patients/pp-1').flush(FICHA);
+    http
+      .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('ids') !== null)
+      .flush({ items: [], count: 0, limit: 50 });
+  }
+
+  afterEach(() => http.verify());
+
+  it('pide las relaciones con la organización activa y el paciente de la ruta', async () => {
+    await montar(true);
+
+    const req = http.expectOne((r) => r.url === '/authz/care-relationships');
+    expect(req.request.params.get('tenantId')).toBe('t-1');
+    expect(req.request.params.get('patientProfileId')).toBe('pp-1');
+    req.flush([]);
+
+    responderFicha();
+    expect(relaciones().estado).toBe('vacio');
+  });
+
+  it('sin organización activa no pide nada', async () => {
+    await montar(false);
+    responderFicha();
+
+    // `http.verify()` del `afterEach` es la aserción: si hubiera salido la
+    // lectura de relaciones, quedaría una petición sin responder.
+    expect(relaciones().estado).toBe('vacio');
+  });
+
+  it('traduce el tipo de relación y calcula si está vigente', async () => {
+    await montar(true);
+
+    http.expectOne((r) => r.url === '/authz/care-relationships').flush([
+      {
+        id: 'cr-1',
+        patientProfileId: 'pp-1',
+        practitionerProfileId: 'pr-1',
+        relationshipTypeConceptId: 'c-tratante',
+        statusConceptId: 'c-act',
+        validFrom: '2020-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'cr-2',
+        patientProfileId: 'pp-1',
+        practitionerProfileId: 'pr-2',
+        relationshipTypeConceptId: 'c-tratante',
+        statusConceptId: 'c-act',
+        validFrom: '2020-01-01T00:00:00.000Z',
+        validTo: '2021-01-01T00:00:00.000Z',
+      },
+    ]);
+
+    // Las etiquetas de las relaciones se piden aparte: llegan después de la ficha.
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [
+          {
+            conceptId: 'c-tratante',
+            code: 'ATTENDING',
+            display: 'Médico tratante',
+            codeSystemVersionId: 'v1',
+          },
+        ],
+        count: 1,
+        limit: 50,
+      });
+
+    responderFicha();
+
+    const items = relaciones().items;
+    expect(relaciones().estado).toBe('listo');
+    expect(items[0]['tipo']).toBe('Médico tratante');
+    // Sin `validTo`, la relación sigue abierta.
+    expect(items[0]['vigente']).toBe(true);
+    // Con un fin en el pasado, no.
+    expect(items[1]['vigente']).toBe(false);
+  });
+
+  it('un 403 en las relaciones no tumba la ficha', async () => {
+    await montar(true);
+
+    http
+      .expectOne((r) => r.url === '/authz/care-relationships')
+      .flush(
+        { code: 'FORBIDDEN', message: 'Rol insuficiente' },
+        { status: 403, statusText: 'Forbidden' },
+      );
+
+    responderFicha();
+
+    expect(relaciones().estado).toBe('sin-permiso');
+    // Lo que importa: la filiación sigue en pie.
+    expect(
+      (componente as unknown as { ficha: () => { status: string } }).ficha().status,
+    ).toBe('ready');
   });
 });

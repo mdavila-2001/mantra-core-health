@@ -1,0 +1,66 @@
+/* Agenda. Filtros arriba, pestañas debajo. Sólo distribución — ni un color ni
+   una tipografía que el sistema no tenga ya. */
+
+:host {
+  display: block;
+}
+
+.agenda {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+/* Los filtros fluyen: en escritorio caben en una fila, en móvil se apilan solos
+   sin necesidad de una consulta de medios. */
+.agenda__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-4);
+}
+
+.agenda__filtro {
+  flex: 1 1 14rem;
+  /* Un selector de recursos de mil píxeles no ayuda a elegir uno. */
+  max-inline-size: 22rem;
+}
+
+/* El interruptor no tiene etiqueta encima, así que sin esto quedaría alineado
+   con el borde superior de los campos en vez de con su control. */
+.agenda__filtro--interruptor {
+  flex: 0 0 auto;
+  padding-block-end: var(--sp-2);
+}
+
+.agenda__aviso {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* Momento arriba y duración debajo, dentro de la misma celda: la hora de fin es
+   contexto de la de inicio, no una columna aparte. */
+.agenda__cuando {
+  display: block;
+  font-weight: 500;
+  /* Los días de la semana llegan en minúscula del pipe de fecha. */
+  text-transform: capitalize;
+}
+
+.agenda__hasta {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* El identificador del cupo es el que se manda para reservar. `all` lo
+   selecciona entero de un clic: copiar un uuid a mano es donde se cometen los
+   errores. */
+.agenda__id {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-caption);
+  user-select: all;
+  /* Un uuid no tiene puntos de corte naturales; sin esto desborda la celda. */
+  overflow-wrap: anywhere;
+}

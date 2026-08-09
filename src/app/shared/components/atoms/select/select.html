@@ -1,8 +1,18 @@
 <div [class]="wrapperClasses()">
+  <!-- La selección se marca en cada `<option>` con `[selected]`, y NO con un
+       `[value]` sobre el `<select>`.
+
+       El motivo es de orden de renderizado: en el primer pase, Angular aplica
+       las propiedades del elemento **antes** de crear los `<option>` del `@for`.
+       Escribir `select.value = "1"` cuando esa opción todavía no existe no hace
+       nada, y el navegador se queda en la primera —el placeholder oculto—. El
+       síntoma es un desplegable que dice «Seleccionar opción» aunque tenga
+       valor, y sólo aparece cuando el control **nace** con selección; con un
+       formulario, que la escribe después, no se veía. Lo encontró el recorrido
+       con usuarios reales, en el selector de recurso de la agenda. -->
   <select
     class="native-select"
     [id]="controlId()"
-    [value]="selectedIndex()"
     [disabled]="isDisabled()"
     [attr.aria-label]="accessibleLabel()"
     [attr.aria-invalid]="invalid()"
@@ -19,7 +29,11 @@
       <option value="" hidden>{{ placeholder() }}</option>
     }
     @for (option of options(); track $index) {
-      <option [value]="$index" [disabled]="option.disabled ?? false">
+      <option
+        [value]="$index"
+        [selected]="selectedIndex() === $index"
+        [disabled]="option.disabled ?? false"
+      >
         {{ option.label }}
       </option>
     }

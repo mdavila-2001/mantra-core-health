@@ -56,3 +56,26 @@ export interface ValueSetExpansionQuery {
   /** Miembros por página. La API acota el máximo. */
   readonly limit?: number;
 }
+
+/**
+ * Una página de la búsqueda de conceptos por texto.
+ *
+ * Sin cursor: la API la acota con `limit` y no publica continuación. Buscar por
+ * texto es acotar hasta encontrar, no pasear por el catálogo entero — para eso
+ * está la expansión de un conjunto de valores, que sí pagina.
+ */
+export interface ConceptSearchPage {
+  readonly items: readonly ValueSetOption[];
+  readonly count: number;
+  readonly limit: number;
+}
+
+/** Parámetros de la búsqueda de conceptos (UC-03-13). */
+export interface ConceptSearchQuery {
+  /** Texto a buscar en el código o la denominación. */
+  readonly query?: string;
+  /** Acota a una versión de sistema de códigos. */
+  readonly codeSystemVersionId?: string;
+  /** Tope de resultados; la API usa 50 por defecto. */
+  readonly limit?: number;
+}

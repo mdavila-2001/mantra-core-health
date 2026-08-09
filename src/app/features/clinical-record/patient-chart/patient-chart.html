@@ -1,0 +1,66 @@
+<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()" />
+
+<!-- El anfitrión resuelve los nueve estados del M34 sobre la lectura entera:
+     mientras el expediente no esté, no hay pestañas que dibujar. -->
+<app-view-state-host [state]="expediente()" (retry)="recargar()">
+  <div class="expediente">
+    <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
+    @if (recorte()) {
+      <app-alert tone="warning" title="Expediente recortado">
+        Se muestran los primeros {{ tope }} registros de cada bloque. Quedaron recortados:
+        {{ recorte() }}.
+      </app-alert>
+    }
+
+    <app-tabs>
+      @for (bloque of bloques(); track bloque.clave) {
+        <app-tab [label]="bloque.titulo + ' (' + bloque.filas.length + ')'">
+          <app-data-table
+            [state]="estadoDe(bloque.filas, bloque.titulo)"
+            [columns]="columnas()"
+            [trackBy]="porFila"
+            [caption]="bloque.titulo + ' del expediente'"
+            (retry)="recargar()"
+          />
+        </app-tab>
+      }
+    </app-tabs>
+
+    <!-- ─── De dónde sale esto ───────────────────────────────────────────
+         No es relleno: un expediente que no dice de dónde viene cada bloque
+         invita a suponer que lo trae todo, y no lo trae. -->
+    <app-card variant="outlined" padding="lg" class="expediente__nota">
+      <h2 class="expediente__nota-titulo">Qué se está mirando</h2>
+      <p class="expediente__nota-texto">
+        Los cinco primeros bloques salen del registro clínico estructurado; las notas, los planes y
+        los documentos, del expediente narrativo. Son dos lecturas del backend y una sola historia:
+        la separación es de quién la escribe, no de quién la lee.
+      </p>
+      <p class="expediente__nota-texto">
+        Esta pantalla es de <strong>consulta</strong>. Registrar un diagnóstico, firmar una nota o
+        indicar medicación son flujos con su propia confirmación, y no cuelgan de acá.
+      </p>
+    </app-card>
+  </div>
+</app-view-state-host>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #celdaPrincipal let-fila>
+  <span class="expediente__principal">{{ fila.principal }}</span>
+  @if (fila.secundario) {
+    <span class="expediente__secundario">{{ fila.secundario }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstado let-fila>
+  <!-- El estado nunca viaja sólo en el color: el badge trae su texto. -->
+  <app-badge variant="info" [value]="fila.estado" />
+</ng-template>
+
+<ng-template #celdaCuando let-fila>
+  @if (fila.cuando) {
+    <span class="expediente__fecha">{{ fila.cuando | date: 'd MMM y' }}</span>
+  } @else {
+    <span class="expediente__secundario">Sin fecha</span>
+  }
+</ng-template>

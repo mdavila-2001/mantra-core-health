@@ -73,26 +73,57 @@ export class IdentityClient {
     );
   }
 
+  /**
+   * `GET /identity/me/verification-cases` — todos los casos del titular.
+   *
+   * El backend lo expone desde siempre y nadie lo pedía: la pantalla mostraba
+   * **un** caso, el que estuviera abierto, y con eso quien ya se verificó ve un
+   * formulario vacío como si nunca hubiera hecho el trámite. El historial es lo
+   * que responde «¿esto ya lo mandé?», que es la pregunta que la gente trae.
+   *
+   * Sin argumentos: el sujeto lo resuelve el backend desde la sesión, igual que
+   * el resto de `identity/me`.
+   */
+  listVerificationCases(): Observable<readonly VerificationCase[]> {
+    return this.http
+      .get<readonly VerificationCaseBody[]>(this.url('/identity/me/verification-cases'))
+      .pipe(map((cuerpos) => cuerpos.map(toVerificationCase)));
+  }
+
   /** `GET /identity/me/verification-cases/:caseId`. */
   getVerificationCase(caseId: string): Observable<VerificationCase> {
     return this.http
       .get<VerificationCaseBody>(this.url(`/identity/me/verification-cases/${caseId}`))
-      .pipe(
-        // `maybeDate` y no `=== undefined`: con `null`, aquella comparación era
-        // falsa y `new Date(null)` daba **1970-01-01**. La pantalla comprueba
-        // `@if (abierto.openedAt)`, y una fecha de 1970 es verdadera, así que un
-        // caso sin fecha de apertura mostraba «1/1/1970» en vez de ocultar el
-        // dato. Mismo defecto que el corregido en `profiles`.
-        map((body) => ({
-          id: body.id,
-          status: body.status,
-          openedAt: maybeDate(body.openedAt),
-          completedAt: maybeDate(body.completedAt),
-        })),
-      );
+      .pipe(map(toVerificationCase));
   }
 
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/**
+ * Del cuerpo de la API al tipo de la vista.
+ *
+ * **Las dos fechas llegan como `null`, no ausentes.** Son columnas
+ * `nullable: true` que el servicio copia tal cual, y `=== undefined` no las
+ * atrapa: `new Date(null)` da **1970-01-01**, no `Invalid Date`. La pantalla
+ * comprueba `@if (caso.openedAt)` y una fecha de 1970 es un valor verdadero, así
+ * que un caso sin fecha mostraba «1/1/1970» en vez de ocultar el dato.
+ *
+ * Verificado contra el contrato del backend el 2026-08-08. Es el mismo defecto
+ * que se corrigió en `profiles`, y por eso la conversión vive ahora en
+ * `data-access/wire.ts`: se normaliza en la frontera, una sola vez.
+ *
+ * Las fechas opcionales se omiten en vez de viajar como `undefined`: el tipo las
+ * declara opcionales, y una clave presente valiendo `undefined` no es lo mismo
+ * que una clave ausente para nada de lo que las consume.
+ */
+function toVerificationCase(body: VerificationCaseBody): VerificationCase {
+  return {
+    id: body.id,
+    status: body.status,
+    openedAt: maybeDate(body.openedAt),
+    completedAt: maybeDate(body.completedAt),
+  };
 }

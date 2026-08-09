@@ -168,13 +168,31 @@ export function titleOf(section: AppSection): string {
 }
 
 /**
+ * Rol comodín: quien lo tiene ve todas las secciones.
+ *
+ * No es una licencia que se tome el menú: es **la regla del backend**. Su
+ * `RolesGuard` corta con `if (roles.includes('SUPERADMIN')) return true` antes
+ * de mirar los `@Roles(...)` del endpoint, así que sin esto el menú escondería
+ * secciones que la API sí le responde a esa sesión — y una sección que existe,
+ * funciona y no aparece es peor que una que aparece y da 403: no hay forma de
+ * descubrir que estaba.
+ */
+const WILDCARD_ROLE = 'SUPERADMIN';
+
+/**
  * Si los roles de una sesión alcanzan para ver la sección.
  *
  * Una sección sin `roles` la ve cualquier sesión; con `roles`, alcanza con
  * tener **uno** de ellos (son alternativas, no requisitos acumulativos: el
  * backend declara varios `@Roles(...)` sobre el mismo endpoint).
+ *
+ * **No autoriza nada.** Filtrar el menú es cortesía: quien escriba la ruta a
+ * mano llega igual, y quien la autoriza de verdad es el backend.
  */
 export function isVisibleTo(section: AppSection, roles: readonly string[]): boolean {
+  if (roles.includes(WILDCARD_ROLE)) {
+    return true;
+  }
   const required = section.roles;
   return required === undefined || required.some((role) => roles.includes(role));
 }
