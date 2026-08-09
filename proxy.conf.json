@@ -22,7 +22,12 @@
       "/scheduling",
       "/charts",
       "/clinical",
-      "/authz"
+      "/authz",
+      "/practitioner-delegates",
+      "/access-requests",
+      "/delegated-access",
+      "/delegated-permission-sets",
+      "/org"
     ],
     "target": "http://localhost:3000",
     "secure": false,

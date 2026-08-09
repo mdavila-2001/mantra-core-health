@@ -10,7 +10,12 @@
       "/scheduling",
       "/charts",
       "/clinical",
-      "/authz"
+      "/authz",
+      "/practitioner-delegates",
+      "/access-requests",
+      "/delegated-access",
+      "/delegated-permission-sets",
+      "/org"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,
