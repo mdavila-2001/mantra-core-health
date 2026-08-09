@@ -1,6 +1,6 @@
 # API de backend
 
-Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 72 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -287,15 +287,19 @@ devuelve `*ConceptId` en uuid y ninguna pantalla puede mostrar un uuid. Se piden
 todos los de una pantalla en una sola llamada, no uno por campo, y su fallo
 degrada esos campos a «Sin registrar» sin tumbar la pantalla.
 
-### `FilesClient` — 1 operación · sin consumidor
+### `FilesClient` — 1 operación
 
-| Método | Ruta |
-|---|---|
-| `POST` | `/common/files/upload` |
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) |
 
-**Siete operaciones sin pantalla que las llame** — eran once hasta que V05-01 y
-V05-03 encendieron cuatro. No es código muerto: todas tienen prueba y son la
-mitad de un flujo cuya interfaz todavía no se escribió.
+**Cinco operaciones sin pantalla que las llame** — las dos altas restantes de
+`ProfilesClient`, la reserva puntual de `SchedulingClient`, las bases legítimas
+de `AuthzClient` y el `$expand` de terminología. Eran más: V05-01 y V05-03
+encendieron las altas de perfil, y las vistas de verificación de identidad
+(V27-01 y V27-14…17) encendieron las cuatro de `IdentityClient` y esta subida.
+No es código muerto: todas tienen prueba y son la mitad de un flujo cuya
+interfaz todavía no se escribió.
 Ver [el mapa de integraciones §3](../architecture/integration-map.md#3--operaciones-sin-consumidor).
 
 ---
