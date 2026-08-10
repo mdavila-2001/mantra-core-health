@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-131 componentes y 32 servicios inyectables, leídos de `src/`.
+132 componentes y 32 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,10 +70,11 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (78)
+## Feature (79)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
+| `app-appointments` | `Appointments` | — | — | — | OnPush | **no** |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-organization-list` | `OrganizationList` | — | — | — | OnPush | sí |
@@ -205,6 +206,7 @@
 ## Componentes sin prueba
 
 - `ToastDevPanel` — `src/app/core/dev/toast-dev-panel/toast-dev-panel.ts`
+- `Appointments` — `src/app/features/account/appointments/appointments.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`
