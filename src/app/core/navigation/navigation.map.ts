@@ -126,6 +126,48 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M04 directory',
   },
   {
+    // W2/F3 (M29): el backend del módulo es solo de comando —sin GET—, así
+    // que la sección entra como panel de operaciones; los listados llegan
+    // con sus endpoints de consulta.
+    path: 'administracion/acceso-delegado',
+    label: 'Acceso delegado',
+    group: 'Administración',
+    icon: 'settings',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Delegá acceso con alcance y vigencia, y administrá sus permisos.',
+    module: 'M29 delegated_access',
+  },
+  {
+    // W2/F4 (M40): primer uso de `IDENTITY_ADMIN` en el mapa — los doce
+    // comandos del backend lo exigen (`AUTH_SERVICE` también puede, pero es un
+    // rol de servicio, no de una persona que navega). Como el M29, el módulo
+    // no tiene GET: entra como panel de operaciones.
+    path: 'administracion/proveedores-identidad',
+    label: 'Proveedores de identidad',
+    group: 'Administración',
+    icon: 'settings',
+    roles: ['IDENTITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Configurá el login federado: proveedores, claves y vinculación.',
+    module: 'M40 auth_providers',
+  },
+  {
+    // W2/F5 (M27, lado administrativo): como M29 y M40, el backend es solo de
+    // comando —sin GET admin—, así que la sección entra como panel de
+    // operaciones con identificadores pegados. Distinta de «Verificar
+    // identidad» (autoservicio): acá se administra el ciclo, no se inicia el
+    // trámite propio.
+    path: 'administracion/verificacion-identidad',
+    label: 'Verificación de identidad',
+    group: 'Administración',
+    icon: 'settings',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Administrá autoridades, políticas y casos de verificación de identidad.',
+    module: 'M27 identity_assurance',
+  },
+  {
     path: 'administracion/terminologia',
     label: 'Terminología',
     group: 'Administración',
@@ -182,7 +224,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Mi cuenta',
     icon: 'patients',
     availability: 'disponible',
-    summary: 'Validá tu identidad para acceder a los datos clínicos.',
+    summary: 'Validá tu identidad, tu matrícula o una organización a tu cargo.',
+    module: 'M27 identity_assurance',
+  },
+  {
+    // V27-01: los casos que la verificación de arriba abre. Sin roles porque
+    // el `GET /identity/me/verification-cases` tampoco los pide: cada quien
+    // ve únicamente lo suyo, y eso lo resuelve el backend.
+    path: 'identidad/casos',
+    label: 'Mis verificaciones',
+    group: 'Mi cuenta',
+    icon: 'patients',
+    availability: 'disponible',
+    summary: 'Seguí el estado de tus trámites de verificación de identidad.',
     module: 'M27 identity_assurance',
   },
 ];

@@ -1,0 +1,89 @@
+<app-page-header
+  title="Escalar a revisión manual"
+  subtitle="El desvío humano del ciclo: una persona toma el caso cuando lo automático no alcanza."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (opened(); as revision) {
+  <div class="m27__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m27__resultado-titulo">La revisión quedó abierta</h2>
+
+    <dl class="m27__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ revision.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado de la revisión (concepto)</dt>
+        <dd><code class="tabular-nums">{{ revision.status }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado del caso (concepto)</dt>
+        <dd><code class="tabular-nums">{{ revision.caseStatus }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m27__texto">
+      Guardá el identificador: decidir la revisión — aprobarla o rechazarla —
+      lo pide.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraRevision()">Escalar otro caso</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué caso" description="El expediente que pasa a manos de una persona.">
+      <app-form-field
+        label="Caso de verificación"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.caseId.touched && form.controls.caseId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="caseId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="La revisión"
+      description="Por qué se escala y quién la toma."
+    >
+      <app-form-field
+        label="Motivo de la revisión (concepto)"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.reviewReasonConceptId.touched &&
+          form.controls.reviewReasonConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="reviewReasonConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Revisor asignado"
+        hint="Opcional: sin revisor, la toma quien la escala."
+        [errorMessage]="
+          form.controls.assignedToUserId.touched && form.controls.assignedToUserId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="assignedToUserId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Escalar a revisión"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

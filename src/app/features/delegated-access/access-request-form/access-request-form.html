@@ -1,0 +1,114 @@
+<app-page-header
+  title="Solicitar acceso delegado"
+  subtitle="Pedí un permiso puntual para una delegación. Queda pendiente hasta que un aprobador lo resuelva."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as solicitud) {
+  <div class="m29__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m29__resultado-titulo">La solicitud quedó abierta</h2>
+
+    <dl class="m29__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ solicitud.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado (concepto)</dt>
+        <dd><code class="tabular-nums">{{ solicitud.status }}</code></dd>
+      </div>
+      <div>
+        <dt>Abierta el</dt>
+        <dd>{{ solicitud.createdAt.toLocaleString() }}</dd>
+      </div>
+    </dl>
+
+    <p class="m29__texto">
+      Con este identificador el aprobador la resuelve desde «Resolver solicitud».
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraSolicitud()">Solicitar otro acceso</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Qué se pide"
+      description="La solicitud pendiente es única por delegación, permiso y paciente o encuentro: repetirla da conflicto."
+    >
+      <app-form-field
+        label="Identificador de la delegación"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.delegationId.touched && form.controls.delegationId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="delegationId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Permiso solicitado"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.requestedPermissionId.touched &&
+          form.controls.requestedPermissionId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="requestedPermissionId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Sobre quién"
+      description="Opcional: acota la solicitud a un paciente o a un encuentro puntual."
+    >
+      <app-form-field
+        label="Paciente objetivo"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.patientProfileId.touched && form.controls.patientProfileId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="patientProfileId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Encuentro objetivo"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.encounterId.touched && form.controls.encounterId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="encounterId" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Justificación" hint="Opcional. La lee quien aprueba.">
+        <app-textarea
+          [(value)]="reasonText"
+          autoResize
+          [maxLength]="maxJustificacion"
+          [disabled]="isSubmitting()"
+        />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Enviar solicitud"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

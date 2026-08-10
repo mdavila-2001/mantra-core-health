@@ -1,0 +1,76 @@
+<app-page-header
+  title="Desvincular identidad federada"
+  subtitle="Se revoca, no se borra: el histórico de logins sigue apuntando a la identidad."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (unlinked(); as identidad) {
+  <div class="m40__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m40__resultado-titulo">La identidad quedó desvinculada</h2>
+
+    <p class="m40__texto">
+      El sujeto externo ya no entra por esta identidad. El desenlace quedó registrado
+      como intento, con el motivo en la auditoría.
+    </p>
+
+    <dl class="m40__datos">
+      <div>
+        <dt>Identidad</dt>
+        <dd><code class="tabular-nums">{{ identidad.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado (concepto)</dt>
+        <dd><code class="tabular-nums">{{ identidad.stateConceptId }}</code></dd>
+      </div>
+      <div>
+        <dt>Intento registrado</dt>
+        <dd><code class="tabular-nums">{{ identidad.attemptId }}</code></dd>
+      </div>
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otraDesvinculacion()">
+      Desvincular otra identidad
+    </button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Qué se desvincula"
+      description="La identidad federada y el porqué; el motivo queda en la auditoría."
+    >
+      <app-form-field
+        label="Identificador de la identidad federada"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.identityId.touched && form.controls.identityId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="identityId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Por qué se desvincula"
+        [required]="true"
+        hint="Queda en la auditoría junto al desenlace."
+        [errorMessage]="
+          form.controls.reason.touched && form.controls.reason.invalid
+            ? 'Ingresá el motivo de la desvinculación.'
+            : ''
+        "
+      >
+        <app-textarea formControlName="reason" [rows]="3" [autoResize]="true" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Desvincular identidad"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

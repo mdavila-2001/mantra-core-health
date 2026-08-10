@@ -73,6 +73,17 @@ export class IdentityClient {
     );
   }
 
+  /** `POST /identity/me/tenants/:tenantId/verification` — una institución propia. */
+  requestTenantVerification(
+    tenantId: string,
+    request: VerificationRequest,
+  ): Observable<VerificationRequestResult> {
+    return this.http.post<VerificationRequestResult>(
+      this.url(`/identity/me/tenants/${encodeURIComponent(tenantId)}/verification`),
+      { evidenceFileId: request.evidenceFileId },
+    );
+  }
+
   /**
    * `GET /identity/me/verification-cases` — todos los casos del titular.
    *
@@ -93,7 +104,9 @@ export class IdentityClient {
   /** `GET /identity/me/verification-cases/:caseId`. */
   getVerificationCase(caseId: string): Observable<VerificationCase> {
     return this.http
-      .get<VerificationCaseBody>(this.url(`/identity/me/verification-cases/${caseId}`))
+      .get<VerificationCaseBody>(
+        this.url(`/identity/me/verification-cases/${encodeURIComponent(caseId)}`),
+      )
       .pipe(map(toVerificationCase));
   }
 
@@ -117,13 +130,21 @@ export class IdentityClient {
  *
  * Las fechas opcionales se omiten en vez de viajar como `undefined`: el tipo las
  * declara opcionales, y una clave presente valiendo `undefined` no es lo mismo
- * que una clave ausente para nada de lo que las consume.
+ * que una clave ausente para nada de lo que las consume. El backend emite
+ * `null` mientras el caso sigue abierto, y `null` vale lo mismo que ausente:
+ * `new Date(null)` sería el 01/01/1970, una fecha inventada.
  */
 function toVerificationCase(body: VerificationCaseBody): VerificationCase {
+  // La conversión sale de `wire.ts` —una sola frontera para todo `data-access`—
+  // pero la clave se **omite** cuando no hay fecha, en vez de quedar presente
+  // valiendo `undefined`: es lo que fijan las pruebas de este cliente y lo que
+  // el comentario de arriba explica.
+  const openedAt = maybeDate(body.openedAt);
+  const completedAt = maybeDate(body.completedAt);
   return {
     id: body.id,
     status: body.status,
-    openedAt: maybeDate(body.openedAt),
-    completedAt: maybeDate(body.completedAt),
+    ...(openedAt ? { openedAt } : {}),
+    ...(completedAt ? { completedAt } : {}),
   };
 }

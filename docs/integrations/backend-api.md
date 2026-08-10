@@ -1,6 +1,6 @@
 # API de backend
 
-Las 41 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 79 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 41 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/admin/tenants` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -34,7 +34,7 @@ inyección»*.
 
 ## Catálogo de operaciones
 
-### `IamClient` — 13 operaciones
+### `IamClient` — 12 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
@@ -44,7 +44,7 @@ inyección»*.
 | `POST` | `/iam/auth/register-practitioner` | `RegisterPatient` | Sí |
 | `POST` | `/iam/auth/verify-email` | `VerifyEmail` | Sí |
 | `POST` | `/iam/auth/resend-verification` | `ResendVerification` (V01-14) | Sí |
-| `POST` | `/iam/auth/activate` | `ActivateAccount` (V01-08) | Sí |
+| `POST` | `/iam/auth/activate` | **Sin consumidor** | Sí |
 | `POST` | `/iam/auth/forgot-password` | `ForgotPassword` | No declarada |
 | `POST` | `/iam/auth/reset-password` | `ResetPassword` | No declarada |
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
@@ -88,15 +88,49 @@ Admite dos filtros opcionales de query string, `city` y `specialty`, que **se
 omiten si no vienen**: mandarlos vacíos filtraría por la cadena vacía en vez de
 no filtrar. `Dashboard` llama sin ninguno.
 
-### `IdentityClient` — 5 operaciones
+### `IdentityClient` — 6 operaciones
 
 | Método | Ruta |
 |---|---|
 | `POST` | `/identity/me/identity-verification` |
 | `POST` | `/identity/me/practitioner/identity-verification` |
 | `POST` | `/identity/me/practitioner/license-verification` |
+| `POST` | `/identity/me/tenants/:tenantId/verification` |
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
+
+Todo `identity/me` resuelve el sujeto de la sesión: ninguna ruta recibe a quién
+se verifica, y por eso la pantalla de verificación no tiene selector de persona.
+La única elección es cuál de las organizaciones **propias** — las del token — se
+quiere verificar (`:tenantId`).
+
+### `IdentityAdminClient` — 14 operaciones · sólo comando
+
+El lado administrativo del M27 (`SECURITY_ADMIN`): autoridades, políticas y el
+ciclo completo del caso de verificación. El backend no expone ningún `GET`
+administrativo todavía, así que las 14 pantallas operan con identificadores
+pegados; cuando lleguen los endpoints de consulta, los listados reemplazan ese
+gesto.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/identity/authorities` | `AuthorityForm` (V27-09) |
+| `POST` | `/identity/authorities/:authorityId/endpoints` | `AuthorityEndpointForm` (V27-10) |
+| `POST` | `/identity/verification-policies` | `VerificationPolicyForm` (V27-18) |
+| `POST` | `/identity/verification-cases` | `CaseOpenForm` (V27-02) |
+| `POST` | `/identity/verification-cases/:caseId/evidence` | `CaseEvidenceForm` (V27-05) |
+| `POST` | `/identity/verification-cases/:caseId/checks:plan` | `CheckPlanForm` (V27-04) |
+| `POST` | `/identity/verification-cases/:caseId/fraud-signals` | `FraudSignalForm` (V27-06) |
+| `POST` | `/identity/verification-cases/:caseId/manual-review` | `ManualReviewForm` (V27-07) |
+| `POST` | `/identity/verification-cases/:caseId/assertions` | `AssertionIssueForm` (V27-03) |
+| `POST` | `/identity/verification-cases/expire-sweep` | `CaseExpireSweep` (V27-02·A) |
+| `POST` | `/identity/checks/:checkId/attempts` | `CheckAttemptForm` (V27-11) |
+| `POST` | `/identity/checks/:checkId/results` | `CheckResultForm` (V27-12) |
+| `POST` | `/identity/manual-review/:reviewId/decision` | `ReviewDecisionForm` (V27-13) |
+| `POST` | `/identity/assertions/:assertionId/revoke` | `AssertionRevokeForm` (V27-08·A) |
+
+**`checks:plan` lleva los dos puntos en la URL de verdad**: el backend declara
+el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 
 ### `ProfilesClient` — 9 operaciones
 
@@ -221,6 +255,56 @@ otra persona. El PDP los consume; la interfaz sólo los muestra.
 entera. Se lee de a un paciente, que es como se usa —desde su ficha— y como se
 puede auditar. Las respuestas son arrays desnudos, sin sobre de paginación.
 
+### `DelegatedAccessClient` — 11 operaciones · sólo comando
+
+El M29 completo (`SECURITY_ADMIN`): delegaciones de profesional, solicitudes y
+concesiones, asignaciones de usuario de organización, sets de permisos y las dos
+operaciones de evaluación y barrido. El backend no expone ningún `GET`, así que
+las pantallas son paneles de operación con identificadores pegados.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/practitioner-delegates` | `PractitionerDelegateForm` (V29-01) |
+| `POST` | `/practitioner-delegates/:delegationId/revoke` | `DelegationRevocation` (V29-02) |
+| `POST` | `/practitioner-delegates/:delegationId/access-requests` | `AccessRequestForm` (V29-03) |
+| `POST` | `/practitioner-delegates/:delegationId/grants` | `GrantForm` (V29-04) |
+| `POST` | `/org/:tenantMembershipId/user-assignments` | `OrgAssignmentForm` (V29-05) |
+| `PATCH` | `/org/user-assignments/:assignmentId` | `OrgAssignmentUpdate` (V29-06) |
+| `POST` | `/access-requests/:requestId/decision` | `AccessRequestResolution` (V29-07) |
+| `POST` | `/delegated-permission-sets` | `PermissionSetForm` (V29-08) |
+| `POST` | `/delegated-permission-sets/:setId/versions` | `SetVersionForm` (V29-09) |
+| `POST` | `/authz/effective-actor/evaluate` | `ActorEvaluation` (V29-10) |
+| `POST` | `/delegated-access/expiry-sweep` | `ExpirySweep` (V29-11) |
+
+**La evaluación vive bajo `/authz`** aunque el módulo sea el M29: el evaluador
+del actor efectivo es el PDP, y el backend lo publica junto al resto de la
+autorización.
+
+### `AuthProvidersClient` — 12 operaciones · sólo comando
+
+El M40 (`IDENTITY_ADMIN`): proveedores de identidad federada, sus protocolos,
+mapeos, reglas, claves de firma y vinculación a organizaciones, más el flujo de
+login federado y la vinculación de cuentas. Sin `GET` en el backend todavía.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/auth-providers/identity-providers` | `ProviderForm` (V40-03) |
+| `POST` | `/auth-providers/identity-providers/:providerId/protocol-configs` | `ProtocolConfigForm` (V40-06) |
+| `PUT` | `/auth-providers/identity-providers/:providerId/attribute-mappings` | `AttributeMappingsForm` (V40-04) |
+| `POST` | `/auth-providers/identity-providers/:providerId/provisioning-rules` | `ProvisioningRuleForm` (V40-07) |
+| `POST` | `/auth-providers/identity-providers/:providerId/signing-keys` | `SigningKeyForm` (V40-08) |
+| `POST` | `/auth-providers/identity-providers/:providerId/signing-keys/rotate` | `KeyRotationForm` (V40-08·A) |
+| `POST` | `/auth-providers/tenant-bindings` | `TenantBindingForm` (V40-09) |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/authorize` | `LoginStartForm` (V40-05·A) |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/callback` | `LoginCallbackForm` (V40-10) |
+| `POST` | `/auth-providers/account-link-requests` | `AccountLinkRequestForm` (V40-01) |
+| `POST` | `/auth-providers/account-link-requests/complete` | `AccountLinkCompleteForm` (V40-01·A) |
+| `POST` | `/auth-providers/federated-identities/:identityId/unlink` | `IdentityUnlinkForm` (V40-02·A) |
+
+Los doce comandos tienen pantalla. Las doce operan con identificadores pegados
+—o con el código del proveedor, en el flujo por `by-code`—; cuando lleguen los
+endpoints de consulta, los listados reemplazan ese gesto.
+
 ### `TerminologyClient` — 2 operaciones
 
 | Método | Ruta | Consumidor |
@@ -241,27 +325,19 @@ devuelve `*ConceptId` en uuid y ninguna pantalla puede mostrar un uuid. Se piden
 todos los de una pantalla en una sola llamada, no uno por campo, y su fallo
 degrada esos campos a «Sin registrar» sin tumbar la pantalla.
 
-### `FilesClient` — 1 operación · sin consumidor
+### `FilesClient` — 1 operación
 
-| Método | Ruta |
-|---|---|
-| `POST` | `/common/files/upload` |
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) |
 
-> **`activate` dejó de estar sin consumidor, y era un flujo roto.** El alta asistida
-> (`/iam/users/assisted-registration`) entrega un **token de activación de un solo uso** y lo
-> muestra en pantalla, pero **no existía ninguna ruta donde usarlo**: el método estaba en el
-> cliente y ningún componente lo llamaba. Dábamos de alta a una persona, le entregábamos una llave
-> y no había puerta. Lo cierra `ActivateAccount` en `/auth/activar`, enlazada desde la propia
-> pantalla del alta.
->
-> **`resend-verification` no estaba ni envuelto.** Se pide el identificador con el que la persona
-> inicia sesión, **no un correo de destino**: dejar elegir a dónde va el enlace convertiría el
-> formulario en un modo de mandar el token de una cuenta ajena a una bandeja propia. La respuesta
-> es siempre la misma exista o no la cuenta, y la pantalla lo respeta.
-
-**Seis operaciones sin pantalla que las llame** — eran once hasta que V05-01 y
-V05-03 encendieron cuatro. No es código muerto: todas tienen prueba y son la
-mitad de un flujo cuya interfaz todavía no se escribió.
+**Cinco operaciones sin pantalla que las llame** — las dos altas restantes de
+`ProfilesClient`, la reserva puntual de `SchedulingClient`, las bases legítimas
+de `AuthzClient` y el `$expand` de terminología. Eran más: V05-01 y V05-03
+encendieron las altas de perfil, y las vistas de verificación de identidad
+(V27-01 y V27-14…17) encendieron las cuatro de `IdentityClient` y esta subida.
+No es código muerto: todas tienen prueba y son la mitad de un flujo cuya
+interfaz todavía no se escribió.
 Ver [el mapa de integraciones §3](../architecture/integration-map.md#3--operaciones-sin-consumidor).
 
 ---
