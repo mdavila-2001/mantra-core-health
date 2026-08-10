@@ -1,0 +1,70 @@
+<app-page-header
+  title="Fijar mapeo de atributos"
+  subtitle="Cómo se traducen los claims del proveedor a los atributos del modelo."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (applied(); as result) {
+  <div class="m40__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m40__resultado-titulo">El mapeo quedó fijado</h2>
+
+    <dl class="m40__datos">
+      <div>
+        <dt>Proveedor</dt>
+        <dd><code class="tabular-nums">{{ result.providerId }}</code></dd>
+      </div>
+      <div>
+        <dt>Mapeos activos</dt>
+        <dd class="tabular-nums">{{ result.mappingIds.length }}</dd>
+      </div>
+      <div>
+        <dt>Mapeos anteriores retirados</dt>
+        <dd class="tabular-nums">{{ result.removed }}</dd>
+      </div>
+      <div>
+        <dt>Claim identificador</dt>
+        <dd><code class="tabular-nums">{{ result.identifierClaim }}</code></dd>
+      </div>
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otroMapeo()">Fijar otro mapeo</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
+  }
+
+  <app-alert tone="info" class="m40__alert">
+    El mapeo se reemplaza completo: lo que no esté en la lista se retira. Tiene
+    que haber exactamente un claim identificador — el backend rechaza el mapeo
+    que no lo cumpla.
+  </app-alert>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué se configura" description="El proveedor cuyo mapeo se fija.">
+      <app-form-field
+        label="Identificador del proveedor"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.providerId.touched && form.controls.providerId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="providerId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Mapeos"
+      description="Al menos uno; los interruptores viajan siempre, como decisión explícita."
+    >
+      <app-attribute-mappings-editor [disabled]="isSubmitting()" />
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Fijar mapeo"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}
