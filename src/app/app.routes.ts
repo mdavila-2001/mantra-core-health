@@ -58,6 +58,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
     ),
+  'administracion/acceso-delegado': () =>
+    import('./features/delegated-access/delegated-access-home/delegated-access-home').then(
+      (m) => m.DelegatedAccessHome,
+    ),
 };
 
 /**
@@ -129,6 +133,29 @@ const PANTALLAS_HIJAS: Routes = [
 ];
 
 /**
+ * Pantalla de operación de «Acceso delegado» (M29). No es sección de menú: es
+ * una acción de la sección, y toma prestada su sección para que el breadcrumb
+ * y el resaltado del menú tengan de dónde salir — el mismo criterio que la
+ * ficha del caso de verificación.
+ */
+function pantallaDeAccesoDelegado(
+  subpath: string,
+  titulo: string,
+  loader: () => Promise<Type<unknown>>,
+): Routes[number] {
+  return {
+    path: `administracion/acceso-delegado/${subpath}`,
+    title: `${APP_TITLE} - ${titulo}`,
+    data: {
+      [SECTION_ROUTE_DATA]: APP_SECTIONS.find(
+        (section) => section.path === 'administracion/acceso-delegado',
+      ),
+    },
+    loadComponent: () => loader().catch(() => chunkFallido()),
+  };
+}
+
+/**
  * Las rutas hijas del armazón, derivadas del registro de secciones.
  *
  * Construirlas en vez de escribirlas es lo que hace **estructuralmente
@@ -187,6 +214,57 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'panel' },
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
+      pantallaDeAccesoDelegado('delegaciones/nueva', 'Nueva delegación', () =>
+        import(
+          './features/delegated-access/practitioner-delegate-form/practitioner-delegate-form'
+        ).then((m) => m.PractitionerDelegateForm),
+      ),
+      pantallaDeAccesoDelegado('delegaciones/revocar', 'Revocar delegación', () =>
+        import('./features/delegated-access/delegation-revocation/delegation-revocation').then(
+          (m) => m.DelegationRevocation,
+        ),
+      ),
+      pantallaDeAccesoDelegado('delegaciones/solicitudes/nueva', 'Solicitar acceso delegado', () =>
+        import('./features/delegated-access/access-request-form/access-request-form').then(
+          (m) => m.AccessRequestForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('delegaciones/concesiones/nueva', 'Otorgar concesión', () =>
+        import('./features/delegated-access/grant-form/grant-form').then((m) => m.GrantForm),
+      ),
+      pantallaDeAccesoDelegado('asignaciones/nueva', 'Asignar usuario de organización', () =>
+        import('./features/delegated-access/org-assignment-form/org-assignment-form').then(
+          (m) => m.OrgAssignmentForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('asignaciones/editar', 'Reasignar o suspender asignación', () =>
+        import('./features/delegated-access/org-assignment-update/org-assignment-update').then(
+          (m) => m.OrgAssignmentUpdate,
+        ),
+      ),
+      pantallaDeAccesoDelegado('solicitudes/resolver', 'Resolver solicitud de acceso', () =>
+        import(
+          './features/delegated-access/access-request-resolution/access-request-resolution'
+        ).then((m) => m.AccessRequestResolution),
+      ),
+      pantallaDeAccesoDelegado('conjuntos/nuevo', 'Publicar set de permisos', () =>
+        import('./features/delegated-access/permission-set-form/permission-set-form').then(
+          (m) => m.PermissionSetForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('conjuntos/versionar', 'Versionar set de permisos', () =>
+        import('./features/delegated-access/set-version-form/set-version-form').then(
+          (m) => m.SetVersionForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('operacion/evaluar-actor', 'Evaluar actor efectivo', () =>
+        import('./features/delegated-access/actor-evaluation/actor-evaluation').then(
+          (m) => m.ActorEvaluation,
+        ),
+      ),
+      pantallaDeAccesoDelegado('operacion/barrido-expiracion', 'Barrido de expiración', () =>
+        import('./features/delegated-access/expiry-sweep/expiry-sweep').then((m) => m.ExpirySweep),
+      ),
     ],
   },
   {

@@ -16,7 +16,7 @@ Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -183,6 +183,31 @@ otra persona. El PDP los consume; la interfaz sólo los muestra.
 «quién atiende a quién» de una organización es un mapa de su actividad clínica
 entera. Se lee de a un paciente, que es como se usa —desde su ficha— y como se
 puede auditar. Las respuestas son arrays desnudos, sin sobre de paginación.
+
+### `DelegatedAccessClient` — 11 operaciones · sólo comando
+
+El M29 completo (`SECURITY_ADMIN`): delegaciones de profesional, solicitudes y
+concesiones, asignaciones de usuario de organización, sets de permisos y las dos
+operaciones de evaluación y barrido. El backend no expone ningún `GET`, así que
+las pantallas son paneles de operación con identificadores pegados.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/practitioner-delegates` | `PractitionerDelegateForm` (V29-01) |
+| `POST` | `/practitioner-delegates/:delegationId/revoke` | `DelegationRevocation` (V29-02) |
+| `POST` | `/practitioner-delegates/:delegationId/access-requests` | `AccessRequestForm` (V29-03) |
+| `POST` | `/practitioner-delegates/:delegationId/grants` | `GrantForm` (V29-04) |
+| `POST` | `/org/:tenantMembershipId/user-assignments` | `OrgAssignmentForm` (V29-05) |
+| `PATCH` | `/org/user-assignments/:assignmentId` | `OrgAssignmentUpdate` (V29-06) |
+| `POST` | `/access-requests/:requestId/decision` | `AccessRequestResolution` (V29-07) |
+| `POST` | `/delegated-permission-sets` | `PermissionSetForm` (V29-08) |
+| `POST` | `/delegated-permission-sets/:setId/versions` | `SetVersionForm` (V29-09) |
+| `POST` | `/authz/effective-actor/evaluate` | `ActorEvaluation` (V29-10) |
+| `POST` | `/delegated-access/expiry-sweep` | `ExpirySweep` (V29-11) |
+
+**La evaluación vive bajo `/authz`** aunque el módulo sea el M29: el evaluador
+del actor efectivo es el PDP, y el backend lo publica junto al resto de la
+autorización.
 
 ### `TerminologyClient` — 2 operaciones
 

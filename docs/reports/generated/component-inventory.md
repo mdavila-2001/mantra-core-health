@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-80 componentes y 28 servicios inyectables, leídos de `src/`.
+93 componentes y 29 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,7 +70,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (27)
+## Feature (40)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -91,6 +91,19 @@
 | `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
 | `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |
 | `app-dashboard` | `Dashboard` | — | — | — | OnPush | sí |
+| `app-access-request-form` | `AccessRequestForm` | — | — | — | OnPush | sí |
+| `app-access-request-resolution` | `AccessRequestResolution` | — | — | — | OnPush | sí |
+| `app-actor-evaluation` | `ActorEvaluation` | — | — | — | OnPush | sí |
+| `app-delegated-access-home` | `DelegatedAccessHome` | — | — | — | OnPush | sí |
+| `app-delegation-revocation` | `DelegationRevocation` | — | — | — | OnPush | sí |
+| `app-expiry-sweep` | `ExpirySweep` | — | — | — | OnPush | sí |
+| `app-grant-form` | `GrantForm` | — | — | — | OnPush | sí |
+| `app-org-assignment-form` | `OrgAssignmentForm` | — | — | — | OnPush | sí |
+| `app-org-assignment-update` | `OrgAssignmentUpdate` | — | — | — | OnPush | sí |
+| `app-permission-set-form` | `PermissionSetForm` | — | — | — | OnPush | sí |
+| `app-practitioner-delegate-form` | `PractitionerDelegateForm` | — | — | — | OnPush | sí |
+| `app-set-items-editor` | `SetItemsEditor` | `disabled` | — | — | OnPush | sí |
+| `app-set-version-form` | `SetVersionForm` | — | — | — | OnPush | sí |
 | `app-design-system-sample` | `DesignSystemSample` | — | — | — | OnPush | sí |
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
@@ -114,7 +127,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (28)
+## Servicios (29)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -124,6 +137,7 @@
 | `SessionStore` | `src/app/core/auth/session.store.ts` | root | sí |
 | `AuthzClient` | `src/app/core/data-access/authz/authz.client.ts` | root | sí |
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
+| `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |

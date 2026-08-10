@@ -2,9 +2,27 @@
 
 # Inventario de operaciones HTTP
 
-36 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+47 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
+
+## `DelegatedAccessClient`
+
+Archivo: `src/app/core/data-access/delegated-access/delegated-access.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/access-requests/:requestId/decision` |
+| `POST` | `/authz/effective-actor/evaluate` |
+| `POST` | `/delegated-access/expiry-sweep` |
+| `POST` | `/delegated-permission-sets` |
+| `POST` | `/delegated-permission-sets/:setId/versions` |
+| `POST` | `/org/:tenantMembershipId/user-assignments` |
+| `PATCH` | `/org/user-assignments/:assignmentId` |
+| `POST` | `/practitioner-delegates` |
+| `POST` | `/practitioner-delegates/:delegationId/access-requests` |
+| `POST` | `/practitioner-delegates/:delegationId/grants` |
+| `POST` | `/practitioner-delegates/:delegationId/revoke` |
 
 ## `AuthzClient`
 

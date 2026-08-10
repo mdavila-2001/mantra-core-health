@@ -1,0 +1,57 @@
+import type { ViewState } from '../../core/view-state/view-state.types';
+
+/**
+ * Apoyo común de los formularios del M29.
+ *
+ * Mientras el backend no exponga listados ni búsqueda, las referencias se
+ * cargan **pegando el identificador**: este módulo concentra la validación de
+ * ese gesto y la traducción de estados a mensajes, para que las pantallas no
+ * lo repitan cada una a su manera.
+ */
+
+/** Forma de un UUID. Valida lo pegado a mano antes de gastar una petición. */
+export const UUID_PATTERN = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/** Mensaje único para todo campo de identificador con formato inválido. */
+export const UUID_ERROR = 'Pegá el identificador completo (formato UUID).';
+
+/**
+ * Ayuda compartida de los campos de identificador: dice por qué se pide pegado
+ * mientras no exista el listado que debería ofrecerlo.
+ */
+export const UUID_HINT = 'El módulo todavía no expone listados: pegá el identificador (UUID).';
+
+/**
+ * Mensaje de error de un `ViewState`, con el mismo criterio que el resto de
+ * las pantallas del producto: validación → los detalles de la API; prohibido →
+ * el mensaje del backend o el propio de la pantalla; S8/S9, textos comunes con
+ * `requestId` para poder reportar.
+ */
+export function errorMessageOf(
+  state: ViewState<unknown>,
+  forbiddenFallback: string,
+): string | null {
+  if (state.status === 'validation') {
+    return state.issues.map((issue) => issue.message).join(' ') || null;
+  }
+  if (state.status === 'forbidden') {
+    return state.message ?? forbiddenFallback;
+  }
+  if (state.status === 'offline') {
+    return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+  }
+  if (state.status === 'error') {
+    return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+  }
+  return null;
+}
+
+/**
+ * Estrecha lo que emite un grupo de radios (`unknown`) a una de las opciones
+ * declaradas, o `null`. Nada fuera del set entra a una señal tipada.
+ */
+export function opcionDe<T extends string>(opciones: readonly T[], valor: unknown): T | null {
+  return typeof valor === 'string' && (opciones as readonly string[]).includes(valor)
+    ? (valor as T)
+    : null;
+}

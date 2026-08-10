@@ -1,0 +1,70 @@
+<app-page-header
+  title="Versionar set de permisos"
+  subtitle="Publicá la lista completa de ítems de la versión nueva: reemplaza entera a la vigente."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (published(); as version) {
+  <div class="m29__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m29__resultado-titulo">La versión quedó publicada</h2>
+
+    <dl class="m29__datos">
+      <div>
+        <dt>Identificador de la versión</dt>
+        <dd><code class="tabular-nums">{{ version.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Versión</dt>
+        <dd class="tabular-nums">{{ version.versionNumber }}</dd>
+      </div>
+      <div>
+        <dt>Ítems</dt>
+        <dd class="tabular-nums">{{ version.itemCount }}</dd>
+      </div>
+    </dl>
+
+    <p class="m29__texto">
+      Las delegaciones que usan este set pasan a resolver contra esta versión;
+      la anterior queda en el historial.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraVersion()">Publicar otra versión</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
+  }
+
+  <app-alert tone="info" class="m29__alert">
+    El reemplazo es total: lo que no esté en esta lista deja de estar en el
+    set. No hay fusión con la versión vigente.
+  </app-alert>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué set" description="El set de permisos que se va a versionar.">
+      <app-form-field
+        label="Identificador del set"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.setId.touched && form.controls.setId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="setId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Ítems de la versión nueva"
+      description="La lista completa: al menos un permiso, cada uno con su restricción y su step-up."
+    >
+      <app-set-items-editor [disabled]="isSubmitting()" />
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Publicar versión"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}
