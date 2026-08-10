@@ -1,0 +1,54 @@
+/* Reserva de turno. El ritmo lo ponen las secciones del formulario; acá el
+   ancho de lectura, el resumen del cupo y la separación de los avisos. */
+
+:host {
+  display: block;
+}
+
+form,
+.reserva__resumen {
+  max-inline-size: 40rem;
+}
+
+.reserva__alert {
+  display: block;
+  margin-block: var(--sp-4);
+  max-inline-size: 40rem;
+}
+
+.reserva__cargando {
+  margin-block-start: var(--sp-6);
+  color: var(--text-muted);
+}
+
+/* Un par término-definición por dato: se lee como ficha, no como tabla. */
+.reserva__resumen {
+  margin-block: var(--sp-6);
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.reserva__dato {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.reserva__dato dt {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.reserva__dato dd {
+  margin: 0;
+}
+
+.reserva__cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+.reserva__acciones {
+  display: flex;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-4);
+}

@@ -115,9 +115,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Organizaciones',
     group: 'Administración',
     icon: 'settings',
+    // El listado admite además SUPERADMIN, pero ese rol es el comodín del
+    // menú (`isVisibleTo`) y no hace falta declararlo.
     roles: ['SECURITY_ADMIN'],
-    availability: 'planificada',
-    summary: 'Administrá sedes, membresías y datos de la organización.',
+    // Encendida con V04-01: `GET /admin/tenants` y el alta con tipo existen
+    // desde los PRs #28/#29 del backend. Sucursales y membresías siguen
+    // planificadas dentro de la sección: entran con sus propias vistas.
+    availability: 'disponible',
+    summary: 'Dá de alta clínicas, farmacias y aseguradoras, y seguí su verificación.',
     module: 'M04 directory',
   },
   {
@@ -209,6 +214,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Revisá tus datos personales y el resumen de tu cuenta.',
     module: 'M05 profiles',
+  },
+  {
+    // Las vistas `PATIENT` de M41. Es la contracara de la sección «Agenda»:
+    // aquélla mira los turnos de un recurso y exige roles de agenda; ésta mira
+    // los de una persona y no exige ninguno, porque el backend ya acota la
+    // lectura al perfil que se le pide.
+    //
+    // Sin `roles` a propósito: el filtro real es tener perfil de paciente, que
+    // no es un rol sino un dato de la cuenta —el claim `pid` del token—, y la
+    // pantalla lo dice cuando falta en vez de esconderse del menú.
+    path: 'mi-cuenta/turnos',
+    label: 'Mis turnos',
+    group: 'Mi cuenta',
+    icon: 'calendar',
+    availability: 'disponible',
+    summary: 'Mirá tus turnos y pedí uno nuevo con los horarios disponibles.',
+    module: 'M41 scheduling',
   },
   {
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino

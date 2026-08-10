@@ -1,0 +1,80 @@
+<app-page-header
+  title="Organizaciones"
+  subtitle="Dá de alta clínicas, farmacias y aseguradoras, y seguí su verificación."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <!-- Ancla con aspecto de acción: la acción principal navega, así que
+       conserva el clic con la rueda y «abrir en pestaña nueva». -->
+  <a
+    app-button
+    page-actions
+    variant="primary"
+    data-testid="organizaciones-nueva"
+    [routerLink]="rutaDeAlta"
+  >
+    Nueva organización
+  </a>
+</app-page-header>
+
+<!-- El campo se nombra solo (publica su propio contexto de control): no va
+     dentro de un app-form-field, o quedarían dos nombres accesibles. -->
+<app-search-field
+  class="organizaciones__buscador"
+  label="Buscar organizaciones"
+  placeholder="Código, razón social o nombre comercial"
+  [value]="busqueda()"
+  [loading]="cargando()"
+  (searched)="buscar($event)"
+/>
+
+<app-data-table
+  [state]="listado()"
+  [columns]="columnas()"
+  [trackBy]="porId"
+  caption="Organizaciones registradas en la plataforma"
+  [cursor]="cursor()"
+  (cursorChanged)="mover($event)"
+  (retry)="recargar()"
+/>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #celdaOrganizacion let-organizacion>
+  <span class="organizaciones__nombre">{{ organizacion.legalName }}</span>
+  @if (organizacion.tradeName) {
+    <span class="organizaciones__comercial">{{ organizacion.tradeName }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaTipo let-organizacion>
+  @if (etiquetaDe(organizacion.tenantTypeConceptId); as tipo) {
+    <app-badge variant="secondary" [value]="tipo.display" />
+  } @else {
+    <span class="organizaciones__vacio" aria-label="Tipo sin etiqueta en el catálogo">—</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstado let-organizacion>
+  <!-- El estado nunca lo lleva solo el color: el badge trae su texto. -->
+  @if (etiquetaDe(organizacion.statusConceptId); as estado) {
+    <app-badge [variant]="varianteDe(organizacion.statusConceptId)" [value]="estado.display" />
+  } @else {
+    <span class="organizaciones__vacio" aria-label="Estado sin etiqueta en el catálogo">—</span>
+  }
+</ng-template>
+
+<ng-template #celdaVerificacion let-organizacion>
+  @if (etiquetaDe(organizacion.verificationStatusConceptId); as verificacion) {
+    <app-badge
+      [variant]="varianteDe(organizacion.verificationStatusConceptId)"
+      [value]="verificacion.display"
+    />
+  } @else {
+    <span class="organizaciones__vacio" aria-label="Verificación sin etiqueta en el catálogo"
+      >—</span
+    >
+  }
+</ng-template>
+
+<ng-template #celdaAlta let-organizacion>
+  <span class="organizaciones__cifra">{{ organizacion.createdAt | date: 'dd/MM/yyyy' }}</span>
+</ng-template>

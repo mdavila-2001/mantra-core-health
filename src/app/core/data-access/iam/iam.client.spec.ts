@@ -85,15 +85,23 @@ describe('IamClient', () => {
   describe('registerPatient', () => {
     it('manda solo los campos obligatorios cuando no hay opcionales', () => {
       client
-        .registerPatient({ nationalId: '1234567', password: 'secreto12', displayName: 'Ana Paz' })
+        .registerPatient({
+          nationalId: '1234567',
+          password: 'secreto12',
+          name: 'Ana',
+          lastName: 'Paz',
+        })
         .subscribe();
 
       const req = http.expectOne('/iam/auth/register-patient');
       expect(req.request.method).toBe('POST');
+      // El nombre viaja en partes y el backend compone el visible: el segundo
+      // nombre y el apellido materno no se mandan si no vinieron.
       expect(req.request.body).toEqual({
         nationalId: '1234567',
         password: 'secreto12',
-        displayName: 'Ana Paz',
+        name: 'Ana',
+        lastName: 'Paz',
       });
 
       req.flush({
@@ -110,7 +118,10 @@ describe('IamClient', () => {
         .registerPatient({
           nationalId: '1234567',
           password: 'secreto12',
-          displayName: 'Ana Paz',
+          name: 'Ana',
+          middleName: 'María',
+          lastName: 'Paz',
+          motherLastName: 'Quiroga',
           email: 'ana@mantra.test',
           birthDate: '1990-04-12',
         })
@@ -119,6 +130,8 @@ describe('IamClient', () => {
       const req = http.expectOne('/iam/auth/register-patient');
       expect(req.request.body.email).toBe('ana@mantra.test');
       expect(req.request.body.birthDate).toBe('1990-04-12');
+      expect(req.request.body.middleName).toBe('María');
+      expect(req.request.body.motherLastName).toBe('Quiroga');
       expect('timeZone' in req.request.body).toBe(false);
 
       req.flush({

@@ -1,6 +1,6 @@
 # API de backend
 
-Las 76 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 83 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 76 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -48,6 +48,7 @@ inyección»*.
 | `POST` | `/iam/auth/forgot-password` | `ForgotPassword` | No declarada |
 | `POST` | `/iam/auth/reset-password` | `ResetPassword` | No declarada |
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
+| `GET` | `/iam/users` | `OrganizationNew` (buscador de owner, V04-01·F) | No |
 | `POST` | `/iam/users` | `UserRegistration` | No |
 | `POST` | `/iam/users/assisted-registration` | `AssistedRegistration` | No |
 
@@ -176,14 +177,43 @@ con `IDENTITY_VERIFICATION_REQUIRED`, que es el único 403 del contrato que lleg
 a la interfaz **con una salida** en vez de un muro.
 
 
-### `SchedulingClient` — 4 operaciones · sólo lectura
+### `DirectoryClient` — 2 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/admin/tenants` | `OrganizationList` (V04-01·L) |
+| `POST` | `/admin/tenants` | `OrganizationNew` (V04-01·F) |
+
+**`/admin/tenants` es la cara de plataforma del directorio**: opera fuera del
+contexto RLS de tenant. El listado admite `SECURITY_ADMIN` y `SUPERADMIN`; el
+alta, sólo `SUPERADMIN`. La organización nace `pending` y sin verificar — la
+verificación (`POST /admin/tenants/:tenantId/verification`) es otra operación,
+de otro rol, y el frontend todavía no la llama.
+
+**El proxy la declara con dos segmentos** (`/admin/tenants`, no `/admin`):
+`/admin` a secas capturaría `/administracion/*`, que es una ruta de la
+aplicación — ya desvió `/administracion/pacientes` una vez.
+
+### `SchedulingClient` — 8 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/scheduling/resources` | `Agenda` (V41) |
-| `GET` | `/scheduling/slots` | `Agenda` |
+| `GET` | `/scheduling/slots` | `Agenda` · `BookingNew` (revalida el cupo) |
 | `GET` | `/scheduling/bookings` | `Agenda` |
 | `GET` | `/scheduling/bookings/:bookingId` | — |
+| `POST` | `/scheduling/slots/:slotId/holds` | `BookingNew` (V41-09, UC-41-05) |
+| `POST` | `/scheduling/holds/:holdToken/confirm` | `BookingNew` (V41-05, UC-41-06) |
+| `POST` | `/scheduling/bookings/:bookingId/cancel` | `Agenda` (V41-02·A, UC-41-09) |
+| `POST` | `/scheduling/bookings/:bookingId/check-in` | `Agenda` (V41-02·A, UC-41-10) |
+
+**El ciclo de reserva es de dos pasos y el token viaja entre ellos.** El hold
+retiene el cupo con anti-double-booking y un TTL (300 s por defecto, de la
+política); el `holdToken` **se entrega una sola vez** y el confirm lo consume.
+Un hold vencido no se puede confirmar: `BookingNew` trata ese rechazo como
+«volver a retener», no como error terminal. Y **no existe
+`GET /scheduling/slots/:id`**: la pantalla de reserva reencuentra el cupo
+releyendo `GET /scheduling/slots` acotado a la franja que la URL trae.
 
 El módulo se había construido **entero de escritura**: se generaban cupos y se
 confirmaban citas, pero no había forma de verlos, y sin `GET /scheduling/slots`

@@ -29,18 +29,23 @@ import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { AppButton } from '../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { Link } from '../../shared/components/atoms/link/link';
 import { Select } from '../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { Switch } from '../../shared/components/atoms/switch/switch';
 import { Alert } from '../../shared/components/molecules/alert/alert';
+import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
+import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
+import { bookingNewRoute } from './agenda.routes';
 
 /**
  * Las ventanas que se ofrecen, en días.
@@ -80,6 +85,16 @@ const ROLES_CON_FICHA = ['SECURITY_ADMIN', 'SUPERADMIN'];
  */
 const ROLES_CON_EXPEDIENTE = ['CLINICIAN', 'PRACTITIONER', 'SUPERADMIN'];
 
+/**
+ * Roles que operan citas (`check-in`, `cancel`). Del backend: los dos
+ * endpoints declaran `SCHEDULING_ADMIN`/`SCHEDULING_AGENT`, y `SUPERADMIN` es
+ * el comodín de su `RolesGuard`.
+ */
+const ROLES_QUE_OPERAN_CITAS = ['SCHEDULING_ADMIN', 'SCHEDULING_AGENT', 'SUPERADMIN'];
+
+/** Roles que pueden retener y confirmar un cupo. `PATIENT` reserva para sí. */
+const ROLES_QUE_RESERVAN = [...ROLES_QUE_OPERAN_CITAS, 'PATIENT'];
+
 /** Una cita ya lista para pintar: sin uuid, con el recurso y el estado resueltos. */
 export interface CitaVisible {
   readonly id: string;
@@ -99,11 +114,15 @@ export interface CitaVisible {
    * encuentro: quien atiende no debería volver a teclear lo que la cita ya dice.
    */
   readonly motivoCrudo: string | null;
+  /** Con la llegada ya registrada, el check-in no se vuelve a ofrecer. */
+  readonly llegadaRegistrada: boolean;
 }
 
 /** Un cupo listo para pintar. */
 export interface CupoVisible {
   readonly id: string;
+  /** Para armar el enlace de reserva: la pantalla de reserva lo relee. */
+  readonly resourceId: string;
   readonly desde: Date;
   readonly hasta: Date;
   readonly recurso: string;
@@ -154,6 +173,8 @@ export interface CupoVisible {
   selector: 'app-agenda',
   imports: [
     Alert,
+    AppButton,
+    AppButtonLink,
     Badge,
     DataTable,
     DatePipe,
@@ -177,6 +198,8 @@ export class Agenda {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly dialogs = inject(DialogService);
+  private readonly toast = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -192,6 +215,10 @@ export class Agenda {
     viewChild.required<TemplateRef<{ $implicit: CupoVisible }>>('celdaDisponibilidad');
   private readonly celdaCupoId =
     viewChild.required<TemplateRef<{ $implicit: CupoVisible }>>('celdaCupoId');
+  private readonly celdaAccionesCita =
+    viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaAccionesCita');
+  private readonly celdaReservar =
+    viewChild.required<TemplateRef<{ $implicit: CupoVisible }>>('celdaReservar');
 
   /* -- Estado de la pantalla ---------------------------------------------- */
 
@@ -330,12 +357,36 @@ export class Agenda {
   protected readonly rotuloDeCitas = computed(() => rotulo('Citas', cuenta(this.citas())));
   protected readonly rotuloDeCupos = computed(() => rotulo('Cupos', cuenta(this.cupos())));
 
+  /** Si la sesión puede registrar llegadas y cancelar. Roles de los endpoints. */
+  protected readonly puedeOperarCitas = computed(() => {
+    const roles = this.auth.roles();
+    return ROLES_QUE_OPERAN_CITAS.some((rol) => roles.includes(rol));
+  });
+
+  /** Si la sesión puede retener y confirmar un cupo. */
+  protected readonly puedeReservar = computed(() => {
+    const roles = this.auth.roles();
+    return ROLES_QUE_RESERVAN.some((rol) => roles.includes(rol));
+  });
+
   protected readonly columnasDeCitas = computed<readonly ColumnDef<CitaVisible>[]>(() => [
     { key: 'cuando', header: 'Fecha y hora', priority: 1, cell: this.celdaCuando() },
     { key: 'recurso', header: 'Recurso', priority: 1 },
     { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
     { key: 'paciente', header: 'Paciente', priority: 2, cell: this.celdaPaciente() },
     { key: 'motivo', header: 'Motivo', priority: 3 },
+    // La columna sólo existe para quien puede ejecutar las acciones: ofrecer
+    // botones que la API va a rechazar con 403 es ofrecer un error.
+    ...(this.puedeOperarCitas()
+      ? [
+          {
+            key: 'acciones',
+            header: 'Acciones',
+            priority: 1,
+            cell: this.celdaAccionesCita(),
+          } satisfies ColumnDef<CitaVisible>,
+        ]
+      : []),
   ]);
 
   protected readonly columnasDeCupos = computed<readonly ColumnDef<CupoVisible>[]>(() => [
@@ -351,6 +402,16 @@ export class Agenda {
     // Se muestra por lo mismo que el catálogo muestra el `conceptId`: es el
     // valor que hay que mandar para reservar, no ruido técnico.
     { key: 'id', header: 'Identificador del cupo', priority: 3, cell: this.celdaCupoId() },
+    ...(this.puedeReservar()
+      ? [
+          {
+            key: 'reservar',
+            header: 'Reservar',
+            priority: 1,
+            cell: this.celdaReservar(),
+          } satisfies ColumnDef<CupoVisible>,
+        ]
+      : []),
   ]);
 
   protected readonly porCita = (fila: CitaVisible): string => fila.id;
@@ -401,6 +462,107 @@ export class Agenda {
 
   protected recargar(): void {
     this.cargarAgenda();
+  }
+
+  /* -- Acciones sobre una cita (UC-41-09 y UC-41-10) ----------------------- */
+
+  /** La cita sobre la que hay una operación en vuelo, para frenar el doble clic. */
+  protected readonly operando = signal<string | null>(null);
+
+  /**
+   * Registra la llegada. Sin diálogo: no es destructivo y se hace decenas de
+   * veces por día — la fricción del mostrador es un costo real.
+   */
+  protected registrarLlegada(cita: CitaVisible): void {
+    if (this.operando() !== null) {
+      return;
+    }
+    this.operando.set(cita.id);
+
+    this.scheduling.checkInBooking(cita.id).subscribe({
+      next: () => {
+        this.operando.set(null);
+        this.toast.success('La llegada quedó registrada.', 'Check-in');
+        this.cargarAgenda();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFallo(error, 'No se pudo registrar la llegada.');
+      },
+    });
+  }
+
+  /**
+   * Cancela con confirmación explícita — regla del M34 para acciones
+   * destructivas. `cancelledBy: 'PROVIDER'`: desde esta pantalla cancela la
+   * organización; la cancelación del propio paciente entra con su vista.
+   */
+  protected async cancelarCita(cita: CitaVisible): Promise<void> {
+    if (this.operando() !== null) {
+      return;
+    }
+
+    const confirmado = await this.dialogs.confirm({
+      title: 'Cancelar la cita',
+      message:
+        'La cita se cancela y el cupo vuelve a la agenda. La cancelación queda auditada.',
+      confirmLabel: 'Cancelar la cita',
+      cancelLabel: 'Volver',
+      destructive: true,
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    this.operando.set(cita.id);
+    this.scheduling.cancelBooking(cita.id, { cancelledBy: 'PROVIDER' }).subscribe({
+      next: (resultado) => {
+        this.operando.set(null);
+        this.toast.success(
+          resultado.capacityReleased
+            ? 'La cita se canceló y el cupo volvió a la agenda.'
+            : 'La cita se canceló.',
+          'Cancelación',
+        );
+        this.cargarAgenda();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFallo(error, 'No se pudo cancelar la cita.');
+      },
+    });
+  }
+
+  /** El destino del enlace «Reservar» de un cupo. */
+  protected rutaDeReserva(cupo: CupoVisible): string {
+    return bookingNewRoute(cupo.id);
+  }
+
+  /**
+   * La franja viaja con el enlace: la pantalla de reserva no puede leer un
+   * cupo por id —no existe ese GET— y con esto lo reencuentra y revalida.
+   */
+  protected paramsDeReserva(cupo: CupoVisible): Record<string, string> {
+    return {
+      recurso: cupo.resourceId,
+      desde: cupo.desde.toISOString(),
+      hasta: cupo.hasta.toISOString(),
+    };
+  }
+
+  /**
+   * El fallo de una acción de fila sale por toast, no pisando la tabla: la
+   * agenda que sí se leyó sigue siendo cierta aunque un botón haya fallado.
+   */
+  private avisarFallo(error: unknown, generico: string): void {
+    const estado = errorToViewState<null>(error);
+    const detalle =
+      estado.status === 'validation'
+        ? estado.issues.map((issue) => issue.message).join(' ')
+        : estado.status === 'forbidden' || estado.status === 'error'
+          ? (estado.message ?? '')
+          : '';
+    this.toast.error(detalle === '' ? generico : `${generico} ${detalle}`, 'Agenda');
   }
 
   /**
@@ -599,12 +761,14 @@ export class Agenda {
       rutaExpediente:
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,
+      llegadaRegistrada: cita.checkedInAt !== undefined,
     };
   }
 
   private aCupoVisible(cupo: AgendaSlot): CupoVisible {
     return {
       id: cupo.id,
+      resourceId: cupo.resourceId,
       desde: cupo.startAt,
       hasta: cupo.endAt,
       recurso: this.nombreDeRecurso(cupo.resourceId),

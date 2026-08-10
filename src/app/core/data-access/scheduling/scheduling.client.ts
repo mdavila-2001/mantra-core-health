@@ -11,27 +11,39 @@ import type {
   AgendaSlotPage,
   AgendaSlotQuery,
   Booking,
+  BookingCancellation,
+  BookingCancelled,
+  BookingCheckedIn,
+  BookingConfirmation,
+  BookingConfirmed,
   BookingPage,
   BookingQuery,
+  NewHold,
+  SlotHold,
 } from './scheduling.types';
 
 /**
- * Cliente de `scheduling` (M41) — **sólo lectura de la agenda**.
+ * Cliente de `scheduling` (M41): la lectura de la agenda y el ciclo de la
+ * reserva.
  *
- * ## Por qué existe recién ahora
+ * ## Por qué la lectura existe recién desde 2026-08-07
  *
  * El módulo se había construido entero de escritura: se generaban cupos y se
  * confirmaban citas, pero no había forma de *verlos*. Sin `GET /scheduling/slots`
  * tampoco se podía obtener el `slotId` que exige `POST /scheduling/slots/{id}/holds`,
- * así que reservar era imposible desde fuera de la base de datos. Las tres
- * lecturas de acá son las que abrieron esa puerta.
+ * así que reservar era imposible desde fuera de la base de datos.
  *
- * ## Lo que este cliente no hace
+ * ## El ciclo de reserva es de dos pasos, y no por ceremonia
  *
- * No reserva, no reprograma y no cancela. Esas operaciones existen en el backend
- * y van a necesitar su propio flujo —con confirmación, motivo y política de
- * cancelación—, y meterlas acá antes de tener la pantalla que las pide sería
- * escribir código sin nadie que lo llame.
+ * `placeHold` retiene el cupo (anti-double-booking, con TTL) y `confirmHold`
+ * lo convierte en cita con el token que la retención entregó **una sola vez**.
+ * Un hold vencido no se puede confirmar: la pantalla lo trata como paso a
+ * repetir, no como error terminal.
+ *
+ * ## Lo que este cliente sigue sin hacer
+ *
+ * Reprogramar (`/reschedule`), recordatorios, lista de espera: existen en el
+ * backend y entrarán con las pantallas que los pidan.
  */
 @Injectable({
   providedIn: 'root',
@@ -137,10 +149,74 @@ export class SchedulingClient {
       .pipe(map(toBooking));
   }
 
+  /**
+   * `POST /scheduling/slots/:id/holds` — retiene un cupo (UC-41-05).
+   *
+   * El backend bloquea el slot con `FOR UPDATE` y descuenta la capacidad: si
+   * dos personas retienen a la vez, una recibe el cupo y la otra un rechazo,
+   * nunca las dos. El cupo vuelve solo cuando la retención expira.
+   */
+  placeHold(slotId: string, hold: NewHold = {}): Observable<SlotHold> {
+    return this.http
+      .post<WireHold>(
+        this.url(`/scheduling/slots/${encodeURIComponent(slotId)}/holds`),
+        // Campo a campo: un opcional en `undefined` viaja como clave declarada
+        // y el backend lo rechaza con 400 (`forbidNonWhitelisted`).
+        hold.patientProfileId === undefined ? {} : { patientProfileId: hold.patientProfileId },
+      )
+      .pipe(map((body) => ({ ...body, expiresAt: new Date(body.expiresAt) })));
+  }
+
+  /**
+   * `POST /scheduling/holds/:holdToken/confirm` — confirma la cita
+   * (UC-41-06). Si la retención venció, el backend rechaza: se vuelve a
+   * retener, no se reintenta el confirm.
+   */
+  confirmHold(holdToken: string, confirmation: BookingConfirmation): Observable<BookingConfirmed> {
+    return this.http.post<BookingConfirmed>(
+      this.url(`/scheduling/holds/${encodeURIComponent(holdToken)}/confirm`),
+      {
+        tenantId: confirmation.tenantId,
+        patientProfileId: confirmation.patientProfileId,
+        channel: confirmation.channel,
+        ...(confirmation.reasonText === undefined ? {} : { reasonText: confirmation.reasonText }),
+      },
+    );
+  }
+
+  /**
+   * `POST /scheduling/bookings/:id/cancel` — cancela y libera el cupo
+   * (UC-41-09). El cargo por inasistencia sólo aplica si la política lo
+   * define **y** la cancelación va marcada como no-show.
+   */
+  cancelBooking(bookingId: string, cancellation: BookingCancellation): Observable<BookingCancelled> {
+    return this.http.post<BookingCancelled>(
+      this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/cancel`),
+      {
+        cancelledBy: cancellation.cancelledBy,
+        ...(cancellation.isNoShow === undefined ? {} : { isNoShow: cancellation.isNoShow }),
+      },
+    );
+  }
+
+  /** `POST /scheduling/bookings/:id/check-in` — registra la llegada (UC-41-10). */
+  checkInBooking(bookingId: string): Observable<BookingCheckedIn> {
+    return this.http
+      .post<WireCheckedIn>(
+        this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/check-in`),
+        {},
+      )
+      .pipe(map((body) => ({ ...body, checkedInAt: new Date(body.checkedInAt) })));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
 }
+
+type WireHold = Omit<SlotHold, 'expiresAt'> & { readonly expiresAt: string };
+
+type WireCheckedIn = Omit<BookingCheckedIn, 'checkedInAt'> & { readonly checkedInAt: string };
 
 /* ---- formas de transporte ------------------------------------------------
    Las fechas llegan como texto ISO. Se declaran acá y no en `scheduling.types`

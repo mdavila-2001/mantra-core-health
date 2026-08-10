@@ -40,7 +40,13 @@ export const RegisterPage = {
 
   completarPaciente(datos: AltaPaciente, opciones: { conCorreo?: boolean } = {}): void {
     cy.porTestId('registro-documento').clear().type(datos.documento);
+    // El nombre va en cuatro campos: dos obligatorios y dos que mucha gente no
+    // tiene. Se completan los cuatro para ejercitar el camino completo; el de
+    // los opcionales vacíos lo cubre la prueba de la API.
     cy.porTestId('registro-nombre').clear().type(datos.nombre);
+    cy.porTestId('registro-segundo-nombre').clear().type(datos.segundoNombre);
+    cy.porTestId('registro-apellido-paterno').clear().type(datos.apellidoPaterno);
+    cy.porTestId('registro-apellido-materno').clear().type(datos.apellidoMaterno);
     cy.porTestId('registro-password').clear().type(datos.password);
     if (opciones.conCorreo === true) {
       cy.porTestId('registro-correo').clear().type(datos.correo);

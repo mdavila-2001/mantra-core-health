@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-128 componentes y 31 servicios inyectables, leídos de `src/`.
+132 componentes y 32 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,12 +70,15 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (75)
+## Feature (79)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
+| `app-appointments` | `Appointments` | — | — | — | OnPush | **no** |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
+| `app-organization-list` | `OrganizationList` | — | — | — | OnPush | sí |
+| `app-organization-new` | `OrganizationNew` | — | — | — | OnPush | sí |
 | `app-patient-detail` | `PatientDetail` | — | — | — | OnPush | sí |
 | `app-patient-list` | `PatientList` | — | — | — | OnPush | sí |
 | `app-patient-merge` | `PatientMerge` | — | — | — | OnPush | sí |
@@ -84,6 +87,7 @@
 | `app-terminology-catalog` | `TerminologyCatalog` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
 | `app-agenda` | `Agenda` | — | — | — | OnPush | sí |
+| `app-booking-new` | `BookingNew` | — | — | — | OnPush | sí |
 | `app-account-link-complete-form` | `AccountLinkCompleteForm` | — | — | — | OnPush | sí |
 | `app-account-link-request-form` | `AccountLinkRequestForm` | — | — | — | OnPush | sí |
 | `app-attribute-mappings-editor` | `AttributeMappingsEditor` | `disabled` | — | — | OnPush | sí |
@@ -162,7 +166,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (31)
+## Servicios (32)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -174,6 +178,7 @@
 | `AuthzClient` | `src/app/core/data-access/authz/authz.client.ts` | root | sí |
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
 | `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |
+| `DirectoryClient` | `src/app/core/data-access/directory/directory.client.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |
 | `IdentityAdminClient` | `src/app/core/data-access/identity/identity-admin.client.ts` | root | sí |
@@ -201,6 +206,7 @@
 ## Componentes sin prueba
 
 - `ToastDevPanel` — `src/app/core/dev/toast-dev-panel/toast-dev-panel.ts`
+- `Appointments` — `src/app/features/account/appointments/appointments.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`

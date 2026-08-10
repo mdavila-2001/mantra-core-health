@@ -53,9 +53,15 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/user-registration/user-registration').then((m) => m.UserRegistration),
   'administracion/pacientes': () =>
     import('./features/admin/patients/patient-list/patient-list').then((m) => m.PatientList),
+  'administracion/organizaciones': () =>
+    import('./features/admin/organizations/organization-list/organization-list').then(
+      (m) => m.OrganizationList,
+    ),
   'administracion/terminologia': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'mi-cuenta': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
+  'mi-cuenta/turnos': () =>
+    import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'identidad/casos': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
@@ -146,6 +152,38 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/identity-assurance/verification-case-detail/verification-case-detail')
         .then((m) => m.VerificationCaseDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'administracion/organizaciones/nueva',
+    title: `${APP_TITLE} - Nueva organización`,
+    loadComponent: () =>
+      import('./features/admin/organizations/organization-new/organization-new')
+        .then((m) => m.OrganizationNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La reserva de un cupo concreto (V41-09 → V41-05). La franja viaja por
+    // query string porque la pantalla relee el cupo para revalidarlo.
+    path: 'agenda/reservar/:slotId',
+    title: `${APP_TITLE} - Reservar un turno`,
+    data: { entrada: 'DESK' },
+    loadComponent: () =>
+      import('./features/agenda/booking-new/booking-new')
+        .then((m) => m.BookingNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La MISMA pantalla de reserva, entrada del paciente: el turno queda a su
+    // nombre y el canal que se guarda es `PORTAL`. Es una ruta aparte y no un
+    // query param porque el destino del `routerLink` es lo que decide de qué
+    // sección cuelga el breadcrumb.
+    path: 'mi-cuenta/turnos/reservar/:slotId',
+    title: `${APP_TITLE} - Pedir un turno`,
+    data: { entrada: 'PORTAL' },
+    loadComponent: () =>
+      import('./features/agenda/booking-new/booking-new')
+        .then((m) => m.BookingNew)
         .catch(() => chunkFallido()),
   },
 ];

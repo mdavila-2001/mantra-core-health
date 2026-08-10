@@ -16,7 +16,8 @@
       "/delegated-access",
       "/delegated-permission-sets",
       "/org",
-      "/auth-providers"
+      "/auth-providers",
+      "/admin/tenants"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-77 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+86 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -23,6 +23,15 @@ Archivo: `src/app/core/data-access/delegated-access/delegated-access.client.ts`
 | `POST` | `/practitioner-delegates/:delegationId/access-requests` |
 | `POST` | `/practitioner-delegates/:delegationId/grants` |
 | `POST` | `/practitioner-delegates/:delegationId/revoke` |
+
+## `DirectoryClient`
+
+Archivo: `src/app/core/data-access/directory/directory.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/admin/tenants` |
+| `POST` | `/admin/tenants` |
 
 ## `AuthProvidersClient`
 
@@ -59,6 +68,8 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | Método | Ruta |
 |---|---|
 | `GET` | `/charts/patients/:patientProfileId/chart` |
+| `POST` | `/clinical/encounters/:encounterId/close` |
+| `POST` | `/clinical/encounters/check-in` |
 | `GET` | `/clinical/patients/:patientProfileId/summary` |
 
 ## `FilesClient`
@@ -85,6 +96,7 @@ Archivo: `src/app/core/data-access/iam/iam.client.ts`
 | `POST` | `/iam/auth/reset-password` |
 | `POST` | `/iam/auth/token/refresh` |
 | `POST` | `/iam/auth/verify-email` |
+| `GET` | `/iam/users` |
 | `POST` | `/iam/users` |
 | `POST` | `/iam/users/assisted-registration` |
 
@@ -154,8 +166,12 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 |---|---|
 | `GET` | `/scheduling/bookings` |
 | `GET` | `/scheduling/bookings/:bookingId` |
+| `POST` | `/scheduling/bookings/:bookingId/cancel` |
+| `POST` | `/scheduling/bookings/:bookingId/check-in` |
+| `POST` | `/scheduling/holds/:holdToken/confirm` |
 | `GET` | `/scheduling/resources` |
 | `GET` | `/scheduling/slots` |
+| `POST` | `/scheduling/slots/:slotId/holds` |
 
 ## `TerminologyClient`
 
