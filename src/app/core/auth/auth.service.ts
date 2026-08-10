@@ -45,6 +45,13 @@ export class AuthService {
   /** Nombre para mostrar y nombre de la organización, ambos del token. */
   readonly displayName = this.session.displayName;
 
+  /**
+   * Perfil de paciente del titular, si la cuenta es la de un paciente. Es lo
+   * que habilita el autoservicio del portal —reservar un turno para uno mismo—
+   * y `null` para el personal de salud o de administración.
+   */
+  readonly patientProfileId = this.session.patientProfileId;
+
   tenantName(tenantId: string): string {
     return this.session.tenantName(tenantId);
   }
