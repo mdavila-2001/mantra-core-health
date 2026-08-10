@@ -2,9 +2,18 @@
 
 # Inventario de operaciones HTTP
 
-39 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+42 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
+
+## `DirectoryClient`
+
+Archivo: `src/app/core/data-access/directory/directory.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/admin/tenants` |
+| `POST` | `/admin/tenants` |
 
 ## `AuthzClient`
 
@@ -48,6 +57,7 @@ Archivo: `src/app/core/data-access/iam/iam.client.ts`
 | `POST` | `/iam/auth/reset-password` |
 | `POST` | `/iam/auth/token/refresh` |
 | `POST` | `/iam/auth/verify-email` |
+| `GET` | `/iam/users` |
 | `POST` | `/iam/users` |
 | `POST` | `/iam/users/assisted-registration` |
 

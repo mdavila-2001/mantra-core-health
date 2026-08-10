@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-82 componentes y 28 servicios inyectables, leídos de `src/`.
+84 componentes y 29 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,12 +70,14 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (29)
+## Feature (31)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
+| `app-organization-list` | `OrganizationList` | — | — | — | OnPush | sí |
+| `app-organization-new` | `OrganizationNew` | — | — | — | OnPush | sí |
 | `app-patient-detail` | `PatientDetail` | — | — | — | OnPush | sí |
 | `app-patient-list` | `PatientList` | — | — | — | OnPush | sí |
 | `app-patient-merge` | `PatientMerge` | — | — | — | OnPush | sí |
@@ -116,7 +118,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (28)
+## Servicios (29)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -126,6 +128,7 @@
 | `SessionStore` | `src/app/core/auth/session.store.ts` | root | sí |
 | `AuthzClient` | `src/app/core/data-access/authz/authz.client.ts` | root | sí |
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
+| `DirectoryClient` | `src/app/core/data-access/directory/directory.client.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
