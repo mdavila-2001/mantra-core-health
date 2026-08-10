@@ -120,6 +120,7 @@
     <app-form-actions
       submitLabel="Registrar proveedor"
       [pending]="isSubmitting()"
+      [disabled]="faltanObligatorios()"
       (submitted)="submit()"
     />
   </form>

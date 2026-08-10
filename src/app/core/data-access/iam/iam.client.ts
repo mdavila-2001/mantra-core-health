@@ -13,6 +13,7 @@ import type {
   NewUser,
   PasswordReset,
   PasswordResetRequested,
+  VerificationResent,
   PasswordResetResult,
   PatientRegistration,
   PractitionerRegistration,
@@ -143,6 +144,23 @@ export class IamClient {
    * `POST /iam/auth/forgot-password`. El identificador es correo **o**
    * documento, igual que en el login.
    */
+  /**
+   * `POST /iam/auth/resend-verification` — vuelve a mandar el enlace de
+   * verificación del correo.
+   *
+   * Se pide el **identificador con el que la persona inicia sesión** —correo o
+   * documento— y no el correo de destino. La razón la escribe el propio DTO del
+   * backend: dejar elegir a dónde se manda el enlace convertiría el formulario
+   * en un modo de enviar tokens de una cuenta ajena a una bandeja propia.
+   *
+   * La respuesta es **siempre la misma**, exista o no la cuenta.
+   */
+  resendVerification(identifier: string): Observable<VerificationResent> {
+    return this.http.post<VerificationResent>(this.url('/iam/auth/resend-verification'), {
+      identifier,
+    });
+  }
+
   forgotPassword(identifier: string): Observable<PasswordResetRequested> {
     return this.http.post<PasswordResetRequested>(this.url('/iam/auth/forgot-password'), {
       identifier,

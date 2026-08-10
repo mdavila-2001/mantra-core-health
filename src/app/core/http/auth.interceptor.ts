@@ -30,7 +30,11 @@ const PUBLIC_PATHS: readonly string[] = [
   '/iam/auth/register-organization',
   '/iam/auth/register-practitioner',
   '/iam/auth/verify-email',
+  // Verificado contra la API viva: responde 401 con un token de activación
+  // inválido, así que sin declararla el interceptor intentaría refrescar una
+  // sesión que en esta pantalla no existe.
   '/iam/auth/activate',
+  '/iam/auth/resend-verification',
   // Las dos de recuperación: quien las usa no tiene sesión —justamente por eso
   // las usa—. Sin declararlas, alguien con sesión abierta que abriera el enlace
   // del correo dispararía un refresco ante su 401, que es el bucle que esta

@@ -137,6 +137,7 @@
     <app-form-actions
       submitLabel="Definir regla"
       [pending]="isSubmitting()"
+      [disabled]="effect() === null"
       (submitted)="submit()"
     />
   </form>

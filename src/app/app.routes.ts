@@ -8,6 +8,8 @@ import { RegisterPatient } from './features/auth/register-patient/register-patie
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
+import { ActivateAccount } from './features/auth/activate-account/activate-account';
+import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
@@ -66,6 +68,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/auth-providers/auth-providers-home/auth-providers-home').then(
       (m) => m.AuthProvidersHome,
     ),
+  'administracion/verificacion-identidad': () =>
+    import('./features/identity-assurance/identity-admin-home/identity-admin-home').then(
+      (m) => m.IdentityAdminHome,
+    ),
 };
 
 /**
@@ -103,6 +109,14 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/patients/patient-new/patient-new')
         .then((m) => m.PatientNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'administracion/pacientes/fusionar',
+    title: `${APP_TITLE} - Fusionar duplicados`,
+    loadComponent: () =>
+      import('./features/admin/patients/patient-merge/patient-merge')
+        .then((m) => m.PatientMerge)
         .catch(() => chunkFallido()),
   },
   {
@@ -168,6 +182,14 @@ function pantallaDeProveedoresDeIdentidad(
   loader: () => Promise<Type<unknown>>,
 ): Routes[number] {
   return pantallaDeOperacion('administracion/proveedores-identidad', subpath, titulo, loader);
+}
+
+function pantallaDeVerificacionIdentidad(
+  subpath: string,
+  titulo: string,
+  loader: () => Promise<Type<unknown>>,
+): Routes[number] {
+  return pantallaDeOperacion('administracion/verificacion-identidad', subpath, titulo, loader);
 }
 
 /**
@@ -355,6 +377,79 @@ export const routes: Routes = [
             (m) => m.IdentityUnlinkForm,
           ),
       ),
+      pantallaDeVerificacionIdentidad('autoridades/nueva', 'Registrar autoridad de identidad', () =>
+        import('./features/identity-assurance/authority-form/authority-form').then(
+          (m) => m.AuthorityForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('autoridades/endpoint', 'Publicar endpoint de autoridad', () =>
+        import(
+          './features/identity-assurance/authority-endpoint-form/authority-endpoint-form'
+        ).then((m) => m.AuthorityEndpointForm),
+      ),
+      pantallaDeVerificacionIdentidad('politicas/nueva', 'Crear política de verificación', () =>
+        import(
+          './features/identity-assurance/verification-policy-form/verification-policy-form'
+        ).then((m) => m.VerificationPolicyForm),
+      ),
+      pantallaDeVerificacionIdentidad('casos/nuevo', 'Abrir caso de verificación', () =>
+        import('./features/identity-assurance/case-open-form/case-open-form').then(
+          (m) => m.CaseOpenForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('casos/evidencia', 'Aportar evidencia a un caso', () =>
+        import('./features/identity-assurance/case-evidence-form/case-evidence-form').then(
+          (m) => m.CaseEvidenceForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('casos/checks', 'Planificar checks del caso', () =>
+        import('./features/identity-assurance/check-plan-form/check-plan-form').then(
+          (m) => m.CheckPlanForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('casos/barrido', 'Barrer casos vencidos', () =>
+        import('./features/identity-assurance/case-expire-sweep/case-expire-sweep').then(
+          (m) => m.CaseExpireSweep,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad(
+        'checks/intento',
+        'Registrar intento contra la autoridad',
+        () =>
+          import('./features/identity-assurance/check-attempt-form/check-attempt-form').then(
+            (m) => m.CheckAttemptForm,
+          ),
+      ),
+      pantallaDeVerificacionIdentidad('checks/resultado', 'Registrar resultado del check', () =>
+        import('./features/identity-assurance/check-result-form/check-result-form').then(
+          (m) => m.CheckResultForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('checks/fraude', 'Registrar señal de fraude', () =>
+        import('./features/identity-assurance/fraud-signal-form/fraud-signal-form').then(
+          (m) => m.FraudSignalForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('revision/escalar', 'Escalar a revisión manual', () =>
+        import('./features/identity-assurance/manual-review-form/manual-review-form').then(
+          (m) => m.ManualReviewForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('revision/decision', 'Decidir revisión manual', () =>
+        import('./features/identity-assurance/review-decision-form/review-decision-form').then(
+          (m) => m.ReviewDecisionForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('aserciones/emitir', 'Emitir aserción', () =>
+        import('./features/identity-assurance/assertion-issue-form/assertion-issue-form').then(
+          (m) => m.AssertionIssueForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('aserciones/revocar', 'Revocar aserción', () =>
+        import('./features/identity-assurance/assertion-revoke-form/assertion-revoke-form').then(
+          (m) => m.AssertionRevokeForm,
+        ),
+      ),
     ],
   },
   {
@@ -400,6 +495,21 @@ export const routes: Routes = [
     path: 'auth/recuperar',
     component: ForgotPassword,
     title: 'Mantra Core Health - Recuperar contraseña',
+  },
+  {
+    // V01-08. El token puede venir por el enlace (`?token=…`) o escribirse a
+    // mano: el alta asistida lo entrega en pantalla para que alguien lo pase
+    // por teléfono o en papel, y obligar a armar una URL sería devolverle el
+    // problema a quien menos herramientas tiene.
+    path: 'auth/activar',
+    component: ActivateAccount,
+    title: 'Mantra Core Health - Activar cuenta',
+  },
+  {
+    // V01-14.
+    path: 'auth/reenviar-verificacion',
+    component: ResendVerification,
+    title: 'Mantra Core Health - Reenviar verificación',
   },
   {
     // También por query string: /auth/nueva-clave?token=…

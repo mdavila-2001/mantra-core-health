@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-109 componentes y 30 servicios inyectables, leídos de `src/`.
+128 componentes y 31 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -70,7 +70,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (56)
+## Feature (75)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -78,7 +78,9 @@
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-patient-detail` | `PatientDetail` | — | — | — | OnPush | sí |
 | `app-patient-list` | `PatientList` | — | — | — | OnPush | sí |
+| `app-patient-merge` | `PatientMerge` | — | — | — | OnPush | sí |
 | `app-patient-new` | `PatientNew` | — | — | — | OnPush | sí |
+| `app-related-person-form` | `RelatedPersonForm` | `profileId`, `yaTieneTutor` | `registered`, `cancelled` | — | OnPush | sí |
 | `app-terminology-catalog` | `TerminologyCatalog` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
 | `app-agenda` | `Agenda` | — | — | — | OnPush | sí |
@@ -98,9 +100,11 @@
 | `app-signing-key-fields` | `SigningKeyFields` | `disabled` | — | — | OnPush | sí |
 | `app-signing-key-form` | `SigningKeyForm` | — | — | — | OnPush | sí |
 | `app-tenant-binding-form` | `TenantBindingForm` | — | — | — | OnPush | sí |
+| `app-activate-account` | `ActivateAccount` | — | — | — | OnPush | sí |
 | `app-forgot-password` | `ForgotPassword` | — | — | — | OnPush | sí |
 | `app-login` | `Login` | — | — | — | OnPush | sí |
 | `app-register-patient` | `RegisterPatient` | — | — | — | OnPush | sí |
+| `app-resend-verification` | `ResendVerification` | — | — | — | OnPush | sí |
 | `app-reset-password` | `ResetPassword` | — | — | — | OnPush | sí |
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
@@ -124,8 +128,23 @@
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
+| `app-assertion-issue-form` | `AssertionIssueForm` | — | — | — | OnPush | sí |
+| `app-assertion-revoke-form` | `AssertionRevokeForm` | — | — | — | OnPush | sí |
+| `app-authority-endpoint-form` | `AuthorityEndpointForm` | — | — | — | OnPush | sí |
+| `app-authority-form` | `AuthorityForm` | — | — | — | OnPush | sí |
+| `app-case-evidence-form` | `CaseEvidenceForm` | — | — | — | OnPush | sí |
+| `app-case-expire-sweep` | `CaseExpireSweep` | — | — | — | OnPush | sí |
+| `app-case-open-form` | `CaseOpenForm` | — | — | — | OnPush | sí |
+| `app-check-attempt-form` | `CheckAttemptForm` | — | — | — | OnPush | sí |
+| `app-check-plan-form` | `CheckPlanForm` | — | — | — | OnPush | sí |
+| `app-check-result-form` | `CheckResultForm` | — | — | — | OnPush | sí |
+| `app-fraud-signal-form` | `FraudSignalForm` | — | — | — | OnPush | sí |
+| `app-identity-admin-home` | `IdentityAdminHome` | — | — | — | OnPush | sí |
+| `app-manual-review-form` | `ManualReviewForm` | — | — | — | OnPush | sí |
+| `app-review-decision-form` | `ReviewDecisionForm` | — | — | — | OnPush | sí |
 | `app-verification-case-detail` | `VerificationCaseDetail` | — | — | — | OnPush | sí |
 | `app-verification-cases` | `VerificationCases` | — | — | — | OnPush | sí |
+| `app-verification-policy-form` | `VerificationPolicyForm` | — | — | — | OnPush | sí |
 | `app-identity-verification` | `IdentityVerification` | — | — | — | OnPush | sí |
 | `app-not-found` | `NotFound` | — | — | — | OnPush | sí |
 | `app-section-placeholder` | `SectionPlaceholder` | — | — | — | OnPush | sí |
@@ -143,7 +162,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (30)
+## Servicios (31)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -157,6 +176,7 @@
 | `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |
+| `IdentityAdminClient` | `src/app/core/data-access/identity/identity-admin.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |
 | `PublicClient` | `src/app/core/data-access/public/public.client.ts` | root | **no** |

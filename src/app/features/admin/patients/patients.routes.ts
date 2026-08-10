@@ -25,6 +25,9 @@ export const PATIENT_NEW_ROUTE = `${PATIENTS_ROUTE}/nuevo`;
  */
 export const PATIENT_ASSISTED_ROUTE = `${PATIENTS_ROUTE}/alta-asistida`;
 
+/** Fusión de pacientes duplicados (V05-01·A, UC-05-08 y UC-05-09). */
+export const PATIENT_MERGE_ROUTE = `${PATIENTS_ROUTE}/fusionar`;
+
 /** Ficha de filiación F-01 (UC-05-14) de un paciente concreto. */
 export function patientDetailRoute(profileId: string): string {
   return `${PATIENTS_ROUTE}/${profileId}`;

@@ -1,0 +1,59 @@
+@if (errorMessage(); as mensaje) {
+  <app-alert appAnuncio tone="error" class="contacto__alert" data-testid="contacto-error">{{
+    mensaje
+  }}</app-alert>
+}
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="contacto-form">
+  <app-form-field
+    label="Nombre de la persona"
+    hint="Con quién se contacta a esta persona si hace falta."
+    [required]="true"
+    [errorMessage]="
+      form.controls.displayName.touched && form.controls.displayName.invalid
+        ? 'Escribí el nombre del contacto.'
+        : ''
+    "
+  >
+    <app-input formControlName="displayName" type="text" testId="contacto-nombre" />
+  </app-form-field>
+
+  <app-form-field
+    label="Fecha de nacimiento"
+    hint="Opcional. Ayuda a distinguirla de un homónimo."
+  >
+    <app-date-picker
+      [value]="fechaDeNacimiento()"
+      (valueChange)="fechaDeNacimiento.set($event)"
+      placeholder="dd/mm/aaaa"
+    />
+  </app-form-field>
+
+  <!-- Los dos roles son distintos y acumulables: a quien se llama en una
+       urgencia no es necesariamente quien firma un consentimiento. -->
+  <div class="contacto__roles">
+    <app-switch
+      [(checked)]="esContactoDeEmergencia"
+      label="Es contacto de emergencia"
+      data-testid="contacto-emergencia"
+    />
+
+    <app-switch [(checked)]="esTutorLegal" label="Es tutor legal" data-testid="contacto-tutor" />
+  </div>
+
+  @if (conflictoDeTutor()) {
+    <app-alert appAnuncio tone="warning" class="contacto__alert" data-testid="contacto-tutor-aviso">
+      Este paciente ya tiene un tutor legal registrado y el modelo admite uno solo activo. Dale de
+      baja al anterior antes de designar a otro.
+    </app-alert>
+  }
+
+  <app-form-actions
+    submitLabel="Registrar contacto"
+    cancelLabel="Cancelar"
+    [pending]="enviando()"
+    [disabled]="conflictoDeTutor()"
+    (submitted)="submit()"
+    (cancelled)="cancelar()"
+  />
+</form>

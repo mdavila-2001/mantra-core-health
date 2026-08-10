@@ -97,6 +97,11 @@ export class ProviderForm {
 
   protected readonly created = signal<CreatedProvider | null>(null);
 
+  /** Falta alguna de las dos elecciones obligatorias que no viven en el grupo. */
+  protected readonly faltanObligatorios = computed(
+    () => this.protocol() === null || this.category() === null,
+  );
+
   protected readonly errorMessage = computed(() =>
     errorMessageOf(this.state(), 'No tenés permiso para registrar proveedores de identidad.'),
   );

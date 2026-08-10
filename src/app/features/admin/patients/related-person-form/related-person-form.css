@@ -1,0 +1,17 @@
+/* Alta de contacto. Vive dentro de la pestaña de la ficha, así que no pone
+   encabezado propio: el ritmo lo dan `app-form-field` y `app-form-actions`. */
+
+:host {
+  display: block;
+}
+
+.contacto__alert {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
+.contacto__roles {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block: var(--sp-4);
+}

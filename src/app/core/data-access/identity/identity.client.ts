@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { maybeDate } from '../wire';
 import type {
   LicenseVerificationRequest,
   VerificationCase,
@@ -10,11 +11,17 @@ import type {
   VerificationRequestResult,
 } from './identity.types';
 
+/**
+ * El caso tal como llega.
+ *
+ * Las dos fechas son `nullable: true` en la entidad y el servicio las copia tal
+ * cual, así que **llegan como `null`, no ausentes** — igual que en `profiles`.
+ */
 interface VerificationCaseBody {
   readonly id: string;
   readonly status: string;
-  readonly openedAt?: string;
-  readonly completedAt?: string;
+  readonly openedAt?: string | null;
+  readonly completedAt?: string | null;
 }
 
 /**
@@ -72,7 +79,7 @@ export class IdentityClient {
     request: VerificationRequest,
   ): Observable<VerificationRequestResult> {
     return this.http.post<VerificationRequestResult>(
-      this.url(`/identity/me/tenants/${tenantId}/verification`),
+      this.url(`/identity/me/tenants/${encodeURIComponent(tenantId)}/verification`),
       { evidenceFileId: request.evidenceFileId },
     );
   }
@@ -97,7 +104,9 @@ export class IdentityClient {
   /** `GET /identity/me/verification-cases/:caseId`. */
   getVerificationCase(caseId: string): Observable<VerificationCase> {
     return this.http
-      .get<VerificationCaseBody>(this.url(`/identity/me/verification-cases/${caseId}`))
+      .get<VerificationCaseBody>(
+        this.url(`/identity/me/verification-cases/${encodeURIComponent(caseId)}`),
+      )
       .pipe(map(toVerificationCase));
   }
 
@@ -109,15 +118,33 @@ export class IdentityClient {
 /**
  * Del cuerpo de la API al tipo de la vista.
  *
+ * **Las dos fechas llegan como `null`, no ausentes.** Son columnas
+ * `nullable: true` que el servicio copia tal cual, y `=== undefined` no las
+ * atrapa: `new Date(null)` da **1970-01-01**, no `Invalid Date`. La pantalla
+ * comprueba `@if (caso.openedAt)` y una fecha de 1970 es un valor verdadero, así
+ * que un caso sin fecha mostraba «1/1/1970» en vez de ocultar el dato.
+ *
+ * Verificado contra el contrato del backend el 2026-08-08. Es el mismo defecto
+ * que se corrigió en `profiles`, y por eso la conversión vive ahora en
+ * `data-access/wire.ts`: se normaliza en la frontera, una sola vez.
+ *
  * Las fechas opcionales se omiten en vez de viajar como `undefined`: el tipo las
  * declara opcionales, y una clave presente valiendo `undefined` no es lo mismo
- * que una clave ausente para nada de lo que las consume.
+ * que una clave ausente para nada de lo que las consume. El backend emite
+ * `null` mientras el caso sigue abierto, y `null` vale lo mismo que ausente:
+ * `new Date(null)` sería el 01/01/1970, una fecha inventada.
  */
 function toVerificationCase(body: VerificationCaseBody): VerificationCase {
+  // La conversión sale de `wire.ts` —una sola frontera para todo `data-access`—
+  // pero la clave se **omite** cuando no hay fecha, en vez de quedar presente
+  // valiendo `undefined`: es lo que fijan las pruebas de este cliente y lo que
+  // el comentario de arriba explica.
+  const openedAt = maybeDate(body.openedAt);
+  const completedAt = maybeDate(body.completedAt);
   return {
     id: body.id,
     status: body.status,
-    ...(body.openedAt === undefined ? {} : { openedAt: new Date(body.openedAt) }),
-    ...(body.completedAt === undefined ? {} : { completedAt: new Date(body.completedAt) }),
+    ...(openedAt ? { openedAt } : {}),
+    ...(completedAt ? { completedAt } : {}),
   };
 }

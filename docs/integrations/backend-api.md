@@ -1,6 +1,6 @@
 # API de backend
 
-Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 76 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -43,6 +43,7 @@ inyección»*.
 | `POST` | `/iam/auth/register-patient` | `RegisterPatient` | Sí |
 | `POST` | `/iam/auth/register-practitioner` | `RegisterPatient` | Sí |
 | `POST` | `/iam/auth/verify-email` | `VerifyEmail` | Sí |
+| `POST` | `/iam/auth/resend-verification` | `ResendVerification` (V01-14) | Sí |
 | `POST` | `/iam/auth/activate` | **Sin consumidor** | Sí |
 | `POST` | `/iam/auth/forgot-password` | `ForgotPassword` | No declarada |
 | `POST` | `/iam/auth/reset-password` | `ResetPassword` | No declarada |
@@ -102,16 +103,63 @@ se verifica, y por eso la pantalla de verificación no tiene selector de persona
 La única elección es cuál de las organizaciones **propias** — las del token — se
 quiere verificar (`:tenantId`).
 
-### `ProfilesClient` — 6 operaciones
+### `IdentityAdminClient` — 14 operaciones · sólo comando
+
+El lado administrativo del M27 (`SECURITY_ADMIN`): autoridades, políticas y el
+ciclo completo del caso de verificación. El backend no expone ningún `GET`
+administrativo todavía, así que las 14 pantallas operan con identificadores
+pegados; cuando lleguen los endpoints de consulta, los listados reemplazan ese
+gesto.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) |
+| `POST` | `/identity/authorities` | `AuthorityForm` (V27-09) |
+| `POST` | `/identity/authorities/:authorityId/endpoints` | `AuthorityEndpointForm` (V27-10) |
+| `POST` | `/identity/verification-policies` | `VerificationPolicyForm` (V27-18) |
+| `POST` | `/identity/verification-cases` | `CaseOpenForm` (V27-02) |
+| `POST` | `/identity/verification-cases/:caseId/evidence` | `CaseEvidenceForm` (V27-05) |
+| `POST` | `/identity/verification-cases/:caseId/checks:plan` | `CheckPlanForm` (V27-04) |
+| `POST` | `/identity/verification-cases/:caseId/fraud-signals` | `FraudSignalForm` (V27-06) |
+| `POST` | `/identity/verification-cases/:caseId/manual-review` | `ManualReviewForm` (V27-07) |
+| `POST` | `/identity/verification-cases/:caseId/assertions` | `AssertionIssueForm` (V27-03) |
+| `POST` | `/identity/verification-cases/expire-sweep` | `CaseExpireSweep` (V27-02·A) |
+| `POST` | `/identity/checks/:checkId/attempts` | `CheckAttemptForm` (V27-11) |
+| `POST` | `/identity/checks/:checkId/results` | `CheckResultForm` (V27-12) |
+| `POST` | `/identity/manual-review/:reviewId/decision` | `ReviewDecisionForm` (V27-13) |
+| `POST` | `/identity/assertions/:assertionId/revoke` | `AssertionRevokeForm` (V27-08·A) |
+
+**`checks:plan` lleva los dos puntos en la URL de verdad**: el backend declara
+el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
+
+### `ProfilesClient` — 9 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) · `PatientMerge` (candidatos) |
 | `GET` | `/profiles/patients/:profileId` | `PatientDetail` (ficha F-01) |
 | `GET` | `/profiles/patients/me/summary` | `MyProfile` (V05-03) |
 | `POST` | `/profiles/patients` | `PatientNew` (V05-01·F) |
+| `POST` | `/profiles/patients/merge` | `PatientMerge` (V05-01·A, UC-05-08) |
+| `POST` | `/profiles/patients/merge/:eventId/reverse` | `PatientMerge` (V05-01·A, UC-05-09) |
+| `POST` | `/profiles/patients/:profileId/related-persons` | `RelatedPersonForm` (V05-05, UC-05-10) |
 | `POST` | `/profiles/practitioners` | — |
 | `POST` | `/profiles/persons/:personId/account-links` | — |
+
+> **V05-05 no necesitó ningún `GET` nuevo.** El vault la marcaba «Listado pendiente», pero los
+> contactos llegan **embebidos** en la respuesta de `GET /profiles/patients/:profileId`
+> (`relatedPersons`). La tabla es real desde el primer día; sólo faltaba el alta.
+>
+> Sin `personId` el backend **crea** la persona con los datos del cuerpo; con él reutiliza una
+> existente. Hoy sólo se ofrece el primer caso: reutilizar exigiría un buscador de personas, y no
+> hay `GET /profiles/persons`.
+
+> **La reversión de una fusión sólo es posible en el momento.** El `eventId` que
+> `…/merge/:eventId/reverse` exige viene **únicamente** en la respuesta de
+> `POST /profiles/patients/merge`, y el backend no expone ningún listado de eventos de fusión. En
+> cuanto esa respuesta se pierde de vista, la fusión deja de ser reversible desde la aplicación.
+> Por eso `PatientMerge` ofrece el «Deshacer» en la pantalla de resultado y lo advierte con
+> palabras. Un `GET /profiles/patients/merge-events` lo convertiría en una operación reversible de
+> verdad.
 
 Las tres lecturas entraron con el PR #31 del backend y son lo que sacó a la
 sección de pacientes del estado «Listado pendiente» que el vault marca en 674 de
@@ -259,15 +307,19 @@ devuelve `*ConceptId` en uuid y ninguna pantalla puede mostrar un uuid. Se piden
 todos los de una pantalla en una sola llamada, no uno por campo, y su fallo
 degrada esos campos a «Sin registrar» sin tumbar la pantalla.
 
-### `FilesClient` — 1 operación · sin consumidor
+### `FilesClient` — 1 operación
 
-| Método | Ruta |
-|---|---|
-| `POST` | `/common/files/upload` |
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) |
 
-**Siete operaciones sin pantalla que las llame** — eran once hasta que V05-01 y
-V05-03 encendieron cuatro. No es código muerto: todas tienen prueba y son la
-mitad de un flujo cuya interfaz todavía no se escribió.
+**Cinco operaciones sin pantalla que las llame** — las dos altas restantes de
+`ProfilesClient`, la reserva puntual de `SchedulingClient`, las bases legítimas
+de `AuthzClient` y el `$expand` de terminología. Eran más: V05-01 y V05-03
+encendieron las altas de perfil, y las vistas de verificación de identidad
+(V27-01 y V27-14…17) encendieron las cuatro de `IdentityClient` y esta subida.
+No es código muerto: todas tienen prueba y son la mitad de un flujo cuya
+interfaz todavía no se escribió.
 Ver [el mapa de integraciones §3](../architecture/integration-map.md#3--operaciones-sin-consumidor).
 
 ---

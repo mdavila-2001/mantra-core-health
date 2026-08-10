@@ -93,7 +93,7 @@ export class AuthProvidersClient {
     config: NewProtocolConfig,
   ): Observable<ProtocolConfigResult> {
     return this.http.post<ProtocolConfigResult>(
-      this.url(`/auth-providers/identity-providers/${providerId}/protocol-configs`),
+      this.url(`/auth-providers/identity-providers/${encodeURIComponent(providerId)}/protocol-configs`),
       config,
     );
   }
@@ -101,7 +101,7 @@ export class AuthProvidersClient {
   /** `POST …/:id/signing-keys` — publicar una clave de firma. */
   publishSigningKey(providerId: string, key: NewSigningKey): Observable<PublishedSigningKey> {
     return this.http.post<PublishedSigningKey>(
-      this.url(`/auth-providers/identity-providers/${providerId}/signing-keys`),
+      this.url(`/auth-providers/identity-providers/${encodeURIComponent(providerId)}/signing-keys`),
       key,
     );
   }
@@ -113,7 +113,9 @@ export class AuthProvidersClient {
   ): Observable<KeyRotationResult> {
     return this.http
       .post<KeyRotationBody>(
-        this.url(`/auth-providers/identity-providers/${providerId}/signing-keys/rotate`),
+        this.url(
+          `/auth-providers/identity-providers/${encodeURIComponent(providerId)}/signing-keys/rotate`,
+        ),
         rotation,
       )
       .pipe(map(toKeyRotationResult));
@@ -125,7 +127,9 @@ export class AuthProvidersClient {
     replacement: AttributeMappingsReplacement,
   ): Observable<AttributeMappingsResult> {
     return this.http.put<AttributeMappingsResult>(
-      this.url(`/auth-providers/identity-providers/${providerId}/attribute-mappings`),
+      this.url(
+        `/auth-providers/identity-providers/${encodeURIComponent(providerId)}/attribute-mappings`,
+      ),
       replacement,
     );
   }
@@ -144,7 +148,9 @@ export class AuthProvidersClient {
     rule: NewProvisioningRule,
   ): Observable<CreatedProvisioningRule> {
     return this.http.post<CreatedProvisioningRule>(
-      this.url(`/auth-providers/identity-providers/${providerId}/provisioning-rules`),
+      this.url(
+        `/auth-providers/identity-providers/${encodeURIComponent(providerId)}/provisioning-rules`,
+      ),
       rule,
     );
   }
@@ -155,7 +161,9 @@ export class AuthProvidersClient {
     start: FederatedLoginStart,
   ): Observable<FederatedLoginStartResult> {
     return this.http.post<FederatedLoginStartResult>(
-      this.url(`/auth-providers/identity-providers/by-code/${providerCode}/authorize`),
+      this.url(
+        `/auth-providers/identity-providers/by-code/${encodeURIComponent(providerCode)}/authorize`,
+      ),
       start,
     );
   }
@@ -166,7 +174,9 @@ export class AuthProvidersClient {
     callback: FederatedCallback,
   ): Observable<FederatedCallbackResult> {
     return this.http.post<FederatedCallbackResult>(
-      this.url(`/auth-providers/identity-providers/by-code/${providerCode}/callback`),
+      this.url(
+        `/auth-providers/identity-providers/by-code/${encodeURIComponent(providerCode)}/callback`,
+      ),
       callback,
     );
   }
@@ -189,7 +199,7 @@ export class AuthProvidersClient {
   /** `POST /auth-providers/federated-identities/:id/unlink` — revoca, no borra. */
   unlinkIdentity(identityId: string, unlink: IdentityUnlink): Observable<IdentityUnlinkResult> {
     return this.http.post<IdentityUnlinkResult>(
-      this.url(`/auth-providers/federated-identities/${identityId}/unlink`),
+      this.url(`/auth-providers/federated-identities/${encodeURIComponent(identityId)}/unlink`),
       unlink,
     );
   }

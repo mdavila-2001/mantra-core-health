@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
@@ -20,6 +21,7 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { Link } from '../../../shared/components/atoms/link/link';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -75,7 +77,9 @@ const MAX_NOMBRE = 200;
     FormField,
     FormSection,
     Input,
+    Link,
     PageHeader,
+    RouterLink,
     Textarea,
   ],
   templateUrl: './assisted-registration.html',

@@ -25,6 +25,15 @@ export const UUID_ERROR = 'Pegá el identificador completo (formato UUID).';
 export const UUID_HINT = 'El módulo todavía no expone listados: pegá el identificador (UUID).';
 
 /**
+ * Forma de un puntaje que viaja como texto: el backend valida `matchScore` y
+ * `confidenceScore` con `@IsNumberString`, no con `@IsNumber`.
+ */
+export const NUMBER_STRING_PATTERN = /^[+-]?(\d+(\.\d+)?|\.\d+)$/;
+
+/** Mensaje único para los puntajes en texto con formato inválido. */
+export const NUMBER_STRING_ERROR = 'Ingresá un número, como 0.98.';
+
+/**
  * Mensaje de error de un `ViewState`, con el mismo criterio que el resto de
  * las pantallas del producto: validación → los detalles de la API; prohibido →
  * el mensaje del backend o el propio de la pantalla; S8/S9, textos comunes con

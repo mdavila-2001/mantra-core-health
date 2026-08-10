@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-59 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+77 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -81,11 +81,33 @@ Archivo: `src/app/core/data-access/iam/iam.client.ts`
 | `POST` | `/iam/auth/logout` |
 | `POST` | `/iam/auth/register-patient` |
 | `POST` | `/iam/auth/register-practitioner` |
+| `POST` | `/iam/auth/resend-verification` |
 | `POST` | `/iam/auth/reset-password` |
 | `POST` | `/iam/auth/token/refresh` |
 | `POST` | `/iam/auth/verify-email` |
 | `POST` | `/iam/users` |
 | `POST` | `/iam/users/assisted-registration` |
+
+## `IdentityAdminClient`
+
+Archivo: `src/app/core/data-access/identity/identity-admin.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/identity/assertions/:assertionId/revoke` |
+| `POST` | `/identity/authorities` |
+| `POST` | `/identity/authorities/:authorityId/endpoints` |
+| `POST` | `/identity/checks/:checkId/attempts` |
+| `POST` | `/identity/checks/:checkId/results` |
+| `POST` | `/identity/manual-review/:reviewId/decision` |
+| `POST` | `/identity/verification-cases` |
+| `POST` | `/identity/verification-cases/:caseId/assertions` |
+| `POST` | `/identity/verification-cases/:caseId/checks:plan` |
+| `POST` | `/identity/verification-cases/:caseId/evidence` |
+| `POST` | `/identity/verification-cases/:caseId/fraud-signals` |
+| `POST` | `/identity/verification-cases/:caseId/manual-review` |
+| `POST` | `/identity/verification-cases/expire-sweep` |
+| `POST` | `/identity/verification-policies` |
 
 ## `IdentityClient`
 
@@ -109,7 +131,10 @@ Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
 | `GET` | `/profiles/patients` |
 | `POST` | `/profiles/patients` |
 | `GET` | `/profiles/patients/:profileId` |
+| `POST` | `/profiles/patients/:profileId/related-persons` |
 | `GET` | `/profiles/patients/me/summary` |
+| `POST` | `/profiles/patients/merge` |
+| `POST` | `/profiles/patients/merge/:eventId/reverse` |
 | `POST` | `/profiles/persons/:personId/account-links` |
 | `POST` | `/profiles/practitioners` |
 

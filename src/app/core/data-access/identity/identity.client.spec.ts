@@ -80,12 +80,15 @@ describe('IdentityClient', () => {
     const req = http.expectOne('/identity/me/verification-cases');
     expect(req.request.method).toBe('GET');
     req.flush([
-      { id: 'caso-1', status: 'OPEN', openedAt: '2026-07-31T12:00:00.000Z' },
+      // El backend emite `completedAt: null` mientras el caso sigue abierto.
+      { id: 'caso-1', status: 'OPEN', openedAt: '2026-07-31T12:00:00.000Z', completedAt: null },
       { id: 'caso-2', status: 'VERIFIED' },
     ]);
 
     expect(casos?.length).toBe(2);
     expect(casos?.[0].openedAt).toBeInstanceOf(Date);
+    // `null` vale lo mismo que ausente: la clave no aparece (nada de 01/01/1970).
+    expect(casos?.[0]).not.toHaveProperty('completedAt');
     // Sin fecha en el cuerpo, la clave no aparece inventada.
     expect(casos?.[1].openedAt).toBeUndefined();
   });
@@ -96,10 +99,53 @@ describe('IdentityClient', () => {
 
     const req = http.expectOne('/identity/me/verification-cases/caso-1');
     expect(req.request.method).toBe('GET');
-    req.flush({ id: 'caso-1', status: 'OPEN', openedAt: '2026-07-31T12:00:00.000Z' });
+    req.flush({
+      id: 'caso-1',
+      status: 'OPEN',
+      openedAt: '2026-07-31T12:00:00.000Z',
+      // Asi lo manda el backend con el caso abierto: null, no ausente.
+      completedAt: null,
+    });
 
     expect(caso?.openedAt).toBeInstanceOf(Date);
-    // Sin veredicto todavia: la clave no debe aparecer inventada.
+    // Sin veredicto todavia la clave no debe aparecer: un `new Date(null)`
+    // seria el 01/01/1970, truthy, y pasaria los @if de las pantallas.
+    expect(caso).not.toHaveProperty('completedAt');
+  });
+
+  /**
+   * Verificado contra el contrato del backend: `openedAt` y `completedAt` son
+   * columnas `nullable: true` que el servicio copia tal cual, así que llegan
+   * como `null`. Con la comparación anterior (`=== undefined`) se convertían en
+   * `new Date(null)` = **1970-01-01**, y la pantalla —que hace
+   * `@if (abierto.openedAt)`— pintaba «1/1/1970» en vez de ocultar el dato.
+   */
+  it('un caso sin fechas no inventa el 1 de enero de 1970', () => {
+    let caso: { openedAt?: Date; completedAt?: Date } | undefined;
+    client.getVerificationCase('c-1').subscribe((r) => (caso = r));
+
+    http.expectOne('/identity/me/verification-cases/c-1').flush({
+      id: 'c-1',
+      status: 'concepto-en-curso',
+      openedAt: null,
+      completedAt: null,
+    });
+
+    expect(caso?.openedAt).toBeUndefined();
     expect(caso?.completedAt).toBeUndefined();
+  });
+
+  it('cuando las fechas vienen, conservan su instante', () => {
+    let caso: { openedAt?: Date } | undefined;
+    client.getVerificationCase('c-1').subscribe((r) => (caso = r));
+
+    http.expectOne('/identity/me/verification-cases/c-1').flush({
+      id: 'c-1',
+      status: 'concepto-en-curso',
+      openedAt: '2026-08-01T10:30:00.000Z',
+      completedAt: null,
+    });
+
+    expect(caso?.openedAt?.toISOString()).toBe('2026-08-01T10:30:00.000Z');
   });
 });

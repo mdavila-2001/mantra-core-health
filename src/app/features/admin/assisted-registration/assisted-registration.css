@@ -80,3 +80,12 @@ form,
   font-variant-numeric: tabular-nums;
   word-break: break-all;
 }
+
+/* Dónde se usa el código. Va pegado al bloque del token porque es su
+   continuación: el código sin destino no le sirve a nadie. */
+.asistida__donde {
+  margin: var(--sp-4) 0 var(--sp-6);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}

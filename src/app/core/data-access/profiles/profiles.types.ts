@@ -148,6 +148,71 @@ export interface PatientDetail {
   readonly updatedAt: Date;
 }
 
+/* ---- personas relacionadas / contactos (UC-05-10) ----------------------- */
+
+/**
+ * Alta de una persona relacionada.
+ *
+ * **Todos los campos son opcionales**, y no es descuido del contrato: sin
+ * `personId` el backend **crea** la persona con los datos que se le pasen, y
+ * con `personId` reutiliza una que ya existe. Son dos casos de uso en un solo
+ * cuerpo.
+ */
+export interface NewRelatedPerson {
+  /** Persona ya registrada. Omitirlo hace que el backend cree una nueva. */
+  readonly personId?: string;
+  readonly displayName?: string;
+  /** ISO `YYYY-MM-DD`. */
+  readonly birthDate?: string;
+  /** Parentesco. Se resuelve contra `terminology`, nunca texto libre. */
+  readonly relationshipConceptId?: string;
+  readonly isEmergencyContact?: boolean;
+  /** Tutor legal. El modelo admite **uno solo activo** por paciente. */
+  readonly isLegalGuardian?: boolean;
+}
+
+/** Lo que devuelve el alta de una persona relacionada. */
+export interface RelatedPersonCreated {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly personId: string;
+  /** Concepto del estado del vínculo. */
+  readonly status: string;
+  readonly createdAt: Date;
+}
+
+/* ---- fusión de pacientes duplicados (UC-05-08 y UC-05-09) ---------------- */
+
+/**
+ * Petición de fusión. Los dos perfiles son obligatorios y **no son
+ * intercambiables**: el que sobrevive conserva su historia y el otro queda
+ * absorbido.
+ */
+export interface PatientMergeRequest {
+  readonly survivingPatientProfileId: string;
+  readonly mergedPatientProfileId: string;
+  /** Concepto de la razón. Opcional en el contrato. */
+  readonly reasonConceptId?: string;
+}
+
+/**
+ * El evento que deja una fusión o su reversión.
+ *
+ * `id` es lo único con lo que se puede revertir después, y **el backend no
+ * expone ningún listado de estos eventos**: si se pierde, la fusión deja de ser
+ * reversible desde la interfaz.
+ */
+export interface PatientMergeEvent {
+  readonly id: string;
+  readonly survivingPatientProfileId: string;
+  readonly mergedPatientProfileId: string;
+  /** Concepto del estado de la decisión. */
+  readonly decisionStatus: string;
+  /** Presente sólo cuando este evento revierte a otro. */
+  readonly reversalOfEventId?: string;
+  readonly recordedAt: Date;
+}
+
 /**
  * Resumen que la persona consulta sobre sí misma (V05-03).
  *
