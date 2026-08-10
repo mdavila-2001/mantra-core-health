@@ -26,6 +26,12 @@
       "/charts",
       "/clinical",
       "/authz",
+      "/practitioner-delegates",
+      "/access-requests",
+      "/delegated-access",
+      "/delegated-permission-sets",
+      "/org",
+      "/auth-providers",
       "/admin/tenants"
     ],
     "target": "http://localhost:3000",

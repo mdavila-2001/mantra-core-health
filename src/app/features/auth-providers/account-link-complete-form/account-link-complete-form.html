@@ -1,0 +1,108 @@
+<app-page-header
+  title="Completar vinculación de cuenta"
+  subtitle="Presenta el token de un solo uso y deja la identidad federada activa."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (completed(); as vinculo) {
+  <div class="m40__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m40__resultado-titulo">La vinculación quedó completada</h2>
+
+    <p class="m40__texto">
+      La identidad federada quedó activa: el próximo login del sujeto externo entra
+      directo a la cuenta local.
+    </p>
+
+    <dl class="m40__datos">
+      <div>
+        <dt>Solicitud completada</dt>
+        <dd><code class="tabular-nums">{{ vinculo.requestId }}</code></dd>
+      </div>
+      <div>
+        <dt>Identidad federada</dt>
+        <dd><code class="tabular-nums">{{ vinculo.federatedIdentityId }}</code></dd>
+      </div>
+      <div>
+        <dt>Usuario local</dt>
+        <dd><code class="tabular-nums">{{ vinculo.userId }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado (concepto)</dt>
+        <dd><code class="tabular-nums">{{ vinculo.statusConceptId }}</code></dd>
+      </div>
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otraVinculacion()">Completar otra vinculación</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="El token"
+      description="El que devolvió la solicitud de vinculación; es de un solo uso."
+    >
+      <app-form-field
+        label="Token de vinculación"
+        [required]="true"
+        hint="Va enmascarado: es un secreto, no un dato para mostrar."
+        [errorMessage]="
+          form.controls.linkToken.touched && form.controls.linkToken.invalid
+            ? 'Ingresá el token, hasta 200 caracteres.'
+            : ''
+        "
+      >
+        <app-input formControlName="linkToken" type="password" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Con qué se completa la identidad"
+      description="Datos del sujeto externo; los que falten no viajan."
+    >
+      <app-form-field
+        label="Correo del sujeto externo"
+        hint="Opcional: vacío, no viaja."
+        [errorMessage]="
+          form.controls.externalEmail.touched && form.controls.externalEmail.invalid
+            ? 'Hasta 300 caracteres.'
+            : ''
+        "
+      >
+        <app-input formControlName="externalEmail" type="email" />
+      </app-form-field>
+
+      <app-form-field
+        label="Nombre visible"
+        hint="Opcional: cómo se muestra el sujeto en la plataforma."
+        [errorMessage]="
+          form.controls.displayName.touched && form.controls.displayName.invalid
+            ? 'Hasta 200 caracteres.'
+            : ''
+        "
+      >
+        <app-input formControlName="displayName" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Claims con los que se completa (JSON)"
+        hint="Opcional: un objeto JSON. Vacío, no viaja."
+        [errorMessage]="
+          form.controls.claims.touched && form.controls.claims.invalid
+            ? 'Tiene que ser un objeto JSON válido, como {&quot;email&quot;: &quot;valor&quot;}.'
+            : ''
+        "
+      >
+        <app-textarea formControlName="claims" [rows]="3" [autoResize]="true" [maxLength]="maxClaims" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Completar vinculación"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

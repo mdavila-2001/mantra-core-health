@@ -1,0 +1,32 @@
+<app-page-header
+  title="Verificación de identidad"
+  subtitle="Administrá autoridades, políticas y el ciclo del caso de verificación."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-alert tone="info" class="portada__alert">
+  El módulo todavía no expone consultas: estas pantallas operan pegando el
+  identificador del registro. Los listados llegan cuando el backend publique
+  sus endpoints de lectura.
+</app-alert>
+
+<div class="portada__areas">
+  @for (area of areas; track area.titulo) {
+    <app-card variant="outlined" padding="lg">
+      <h2 class="portada__titulo">{{ area.titulo }}</h2>
+      <p class="portada__texto">{{ area.descripcion }}</p>
+
+      <ul class="portada__operaciones">
+        @for (operacion of area.operaciones; track operacion.label) {
+          <li>
+            @if (operacion.route) {
+              <a app-link [routerLink]="operacion.route">{{ operacion.label }}</a>
+            } @else {
+              <span class="portada__pendiente">{{ operacion.label }} — en preparación</span>
+            }
+          </li>
+        }
+      </ul>
+    </app-card>
+  }
+</div>

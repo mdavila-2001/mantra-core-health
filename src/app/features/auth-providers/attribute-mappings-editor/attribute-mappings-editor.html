@@ -1,0 +1,79 @@
+@for (fila of filasVisibles(); track fila; let indice = $index) {
+  <app-card variant="outlined" padding="md" class="m40__item">
+    <div [formGroup]="fila">
+      <div class="m40__item-encabezado">
+        <h3 class="m40__item-titulo tabular-nums">Mapeo {{ indice + 1 }}</h3>
+        @if (filasVisibles().length > 1) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            [disabled]="disabled()"
+            (clicked)="quitarFila(indice)"
+          >
+            Quitar mapeo
+          </button>
+        }
+      </div>
+
+      <app-form-field
+        label="Claim que envía el proveedor"
+        [required]="true"
+        [errorMessage]="
+          fila.controls.sourceClaim.touched && fila.controls.sourceClaim.invalid
+            ? 'Obligatorio, hasta 200 caracteres.'
+            : ''
+        "
+      >
+        <app-input formControlName="sourceClaim" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Atributo del modelo al que se traduce"
+        [required]="true"
+        [errorMessage]="
+          fila.controls.targetAttribute.touched && fila.controls.targetAttribute.invalid
+            ? 'Obligatorio, hasta 200 caracteres.'
+            : ''
+        "
+      >
+        <app-input formControlName="targetAttribute" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Transformación a aplicar al valor (JSON)"
+        hint="Opcional: un objeto JSON. Vacía, no viaja."
+        [errorMessage]="
+          fila.controls.transformJson.touched && fila.controls.transformJson.invalid
+            ? 'Tiene que ser un objeto JSON válido, como {&quot;campo&quot;: &quot;valor&quot;}.'
+            : ''
+        "
+      >
+        <app-textarea
+          formControlName="transformJson"
+          [rows]="2"
+          [autoResize]="true"
+          [maxLength]="maxTransform"
+        />
+      </app-form-field>
+
+      <div class="m40__switches">
+        <app-switch
+          formControlName="isIdentifier"
+          label="Es el claim que identifica al sujeto (solo puede haber uno)"
+        />
+        <app-switch formControlName="required" label="Sin este claim el login se rechaza" />
+      </div>
+    </div>
+  </app-card>
+}
+
+<button
+  app-button
+  variant="secondary"
+  size="sm"
+  [disabled]="disabled()"
+  (clicked)="agregarFila()"
+>
+  Agregar mapeo
+</button>

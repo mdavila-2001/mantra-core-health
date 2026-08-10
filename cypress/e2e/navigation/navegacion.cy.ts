@@ -27,6 +27,7 @@ describe('Navegación', () => {
       '/panel',
       '/mi-cuenta',
       '/identidad/verificar',
+      '/identidad/casos',
       '/design-system',
     ]);
     SideNav.rutas().should('not.include', '/administracion/usuarios');

@@ -1,6 +1,6 @@
 <app-page-header
   title="Verificar identidad"
-  subtitle="Subí tu documento y lo revisamos. Solo vos podés verificar tu identidad."
+  subtitle="Subí la documentación y la revisamos. Verificás tu identidad, tu matrícula o una organización a tu cargo."
 />
 
 <div class="verificar">
@@ -36,17 +36,19 @@
         <app-alert appAnuncio tone="error" class="verificar__alert">{{ mensaje }}</app-alert>
       }
 
-      <button app-button variant="outline" [isLoading]="enviando()" (clicked)="actualizarCaso()">
-        Actualizar estado
-      </button>
+      <div class="verificar__acciones">
+        <button app-button variant="outline" [isLoading]="enviando()" (clicked)="actualizarCaso()">
+          Actualizar estado
+        </button>
+        <button app-button variant="ghost" [disabled]="enviando()" (clicked)="nuevaSolicitud()">
+          Iniciar otro trámite
+        </button>
+      </div>
     </app-card>
   } @else {
     <app-card variant="outlined" padding="lg">
-      <h2 class="verificar__titulo">Tu documento de identidad</h2>
-      <p class="verificar__texto">
-        Una foto o un PDF del documento, de hasta 10 MB. Se guarda como información
-        de salud protegida: solo lo ve quien tiene que revisarlo.
-      </p>
+      <h2 class="verificar__titulo">{{ textos().titulo }}</h2>
+      <p class="verificar__texto">{{ textos().texto }}</p>
 
       @if (errorMessage(); as mensaje) {
         <app-alert appAnuncio tone="error" class="verificar__alert">{{ mensaje }}</app-alert>
@@ -56,20 +58,45 @@
         <app-alert appAnuncio tone="warning" class="verificar__alert">{{ motivo }}</app-alert>
       }
 
-      <app-form-field
-        label="Documento"
-        [required]="true"
-        hint="Imagen o PDF, hasta 10 MB."
-      >
-        <app-file-input
-          [(files)]="evidencia"
-          accept="image/*,application/pdf"
-          [maxSizeBytes]="maxBytes"
-          [maxFiles]="1"
-          [disabled]="enviando()"
-          (rejected)="alRechazar($event)"
-        />
-      </app-form-field>
+      <div class="verificar__formulario">
+        <app-form-field label="¿Qué querés verificar?" [required]="true">
+          <app-radio-group [value]="tramite()" [disabled]="enviando()" (valueChange)="alElegirTramite($event)">
+            <app-radio value="patient" label="Mi identidad como paciente" />
+            <app-radio value="practitioner" label="Mi identidad como profesional" />
+            <app-radio value="license" label="Mi matrícula profesional" />
+            <app-radio value="tenant" label="Una organización que administro" />
+          </app-radio-group>
+        </app-form-field>
+
+        @if (tramite() === 'tenant') {
+          @if (sinOrganizaciones()) {
+            <app-alert appAnuncio tone="info" class="verificar__alert">
+              Tu sesión no tiene organizaciones a cargo, así que no hay nada para
+              verificar acá.
+            </app-alert>
+          } @else {
+            <app-form-field label="Organización" [required]="true">
+              <app-select
+                [(value)]="organizacionId"
+                [options]="organizaciones()"
+                [disabled]="enviando()"
+                placeholder="Elegí la organización"
+              />
+            </app-form-field>
+          }
+        }
+
+        <app-form-field [label]="textos().label" [required]="true" hint="Imagen o PDF, hasta 10 MB.">
+          <app-file-input
+            [(files)]="evidencia"
+            accept="image/*,application/pdf"
+            [maxSizeBytes]="maxBytes"
+            [maxFiles]="1"
+            [disabled]="enviando()"
+            (rejected)="alRechazar($event)"
+          />
+        </app-form-field>
+      </div>
 
       <button
         app-button

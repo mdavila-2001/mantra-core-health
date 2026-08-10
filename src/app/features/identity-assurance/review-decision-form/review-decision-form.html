@@ -1,0 +1,85 @@
+<app-page-header
+  title="Decidir revisión manual"
+  subtitle="El veredicto humano del caso: aprobar o rechazar, con su motivo."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (decided(); as revision) {
+  <div class="m27__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m27__resultado-titulo">La revisión quedó decidida</h2>
+
+    <dl class="m27__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ revision.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado de la revisión (concepto)</dt>
+        <dd><code class="tabular-nums">{{ revision.status }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado del caso (concepto)</dt>
+        <dd><code class="tabular-nums">{{ revision.caseStatus }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m27__texto">
+      Si la decisión aprobó el caso, emitir la aserción es el paso que acredita
+      el nivel alcanzado.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraDecision()">Decidir otra revisión</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué revisión" description="La revisión manual abierta que se decide.">
+      <app-form-field
+        label="Revisión manual"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.reviewId.touched && form.controls.reviewId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="reviewId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section legend="La decisión" description="Qué resolvió el revisor y por qué.">
+      <app-form-field label="Decisión" [required]="true">
+        <app-radio-group [value]="decision()" (valueChange)="elegirDecision($event)">
+          <app-radio value="APPROVED" label="Aprobar" />
+          <app-radio value="REJECTED" label="Rechazar" />
+        </app-radio-group>
+      </app-form-field>
+
+      <app-form-field
+        label="Motivo de la decisión"
+        hint="Opcional para el contrato, pero un rechazo sin motivo es difícil de auditar (hasta 500 caracteres)."
+        [errorMessage]="
+          form.controls.decisionReason.touched && form.controls.decisionReason.invalid
+            ? 'Hasta 500 caracteres.'
+            : ''
+        "
+      >
+        <app-textarea
+          formControlName="decisionReason"
+          [rows]="3"
+          [autoResize]="true"
+          [maxLength]="maxReason"
+        />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Registrar decisión"
+      [pending]="isSubmitting()"
+      [disabled]="decision() === null"
+      (submitted)="submit()"
+    />
+  </form>
+}

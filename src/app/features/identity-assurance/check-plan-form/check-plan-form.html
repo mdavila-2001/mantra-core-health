@@ -1,0 +1,115 @@
+<app-page-header
+  title="Planificar checks del caso"
+  subtitle="Qué se consulta y contra qué autoridad. El plan exige al menos un check."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (planned(); as plan) {
+  <div class="m27__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m27__resultado-titulo">Los checks quedaron planificados</h2>
+
+    <dl class="m27__datos">
+      <div>
+        <dt>Caso</dt>
+        <dd><code class="tabular-nums">{{ plan.caseId }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado del caso (concepto)</dt>
+        <dd><code class="tabular-nums">{{ plan.caseStatus }}</code></dd>
+      </div>
+    </dl>
+
+    <h3 class="m27__subtitulo">Checks creados</h3>
+    <ul class="m27__lista">
+      @for (checkId of plan.checkIds; track checkId) {
+        <li><code class="tabular-nums">{{ checkId }}</code></li>
+      }
+    </ul>
+
+    <p class="m27__texto">
+      Guardá estos identificadores: registrar el intento contra la autoridad y
+      el resultado del check los piden.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otroPlan()">Planificar otro caso</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué caso" description="El expediente cuyos checks se planifican.">
+      <app-form-field
+        label="Caso de verificación"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.caseId.touched && form.controls.caseId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="caseId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Checks requeridos"
+      description="Al menos uno. Cada check es una consulta que el caso necesita resuelta."
+    >
+      @for (fila of filasVisibles(); track fila; let indice = $index) {
+        <app-card variant="outlined" padding="md" class="m27__item">
+          <div [formGroup]="fila">
+            <div class="m27__item-encabezado">
+              <h3 class="m27__item-titulo tabular-nums">Check {{ indice + 1 }}</h3>
+              @if (filasVisibles().length > 1) {
+                <button app-button variant="ghost" size="sm" (clicked)="quitarFila(indice)">
+                  Quitar check
+                </button>
+              }
+            </div>
+
+            <app-form-field
+              label="Tipo de check (concepto)"
+              [required]="true"
+              [hint]="uuidHint"
+              [errorMessage]="
+                fila.controls.checkTypeConceptId.touched &&
+                fila.controls.checkTypeConceptId.invalid
+                  ? uuidError
+                  : ''
+              "
+            >
+              <app-input formControlName="checkTypeConceptId" type="text" />
+            </app-form-field>
+
+            <app-form-field
+              label="Autoridad"
+              hint="Opcional: contra qué autoridad registrada se ejecuta."
+              [errorMessage]="
+                fila.controls.authorityId.touched && fila.controls.authorityId.invalid
+                  ? uuidError
+                  : ''
+              "
+            >
+              <app-input formControlName="authorityId" type="text" />
+            </app-form-field>
+
+            <div class="m27__switches">
+              <app-switch formControlName="required" label="Check obligatorio" />
+            </div>
+          </div>
+        </app-card>
+      }
+
+      <button app-button variant="secondary" size="sm" (clicked)="agregarFila()">
+        Agregar check
+      </button>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Planificar checks"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

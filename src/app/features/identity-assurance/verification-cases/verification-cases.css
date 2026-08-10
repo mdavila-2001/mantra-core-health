@@ -1,0 +1,7 @@
+.casos {
+    margin-top: var(--sp-6);
+}
+
+.casos__sin-dato {
+    color: var(--text-secondary);
+}

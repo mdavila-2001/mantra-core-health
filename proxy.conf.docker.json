@@ -11,6 +11,12 @@
       "/charts",
       "/clinical",
       "/authz",
+      "/practitioner-delegates",
+      "/access-requests",
+      "/delegated-access",
+      "/delegated-permission-sets",
+      "/org",
+      "/auth-providers",
       "/admin/tenants"
     ],
     "target": "__BACKEND_ORIGIN__",

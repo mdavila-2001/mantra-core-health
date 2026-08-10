@@ -1,0 +1,70 @@
+@for (fila of filasVisibles(); track fila; let indice = $index) {
+  <app-card variant="outlined" padding="md" class="m40__item">
+    <div [formGroup]="fila">
+      <div class="m40__item-encabezado">
+        <h3 class="m40__item-titulo tabular-nums">Clave {{ indice + 1 }}</h3>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          [disabled]="disabled()"
+          (clicked)="quitarFila(indice)"
+        >
+          Quitar clave
+        </button>
+      </div>
+
+      <app-form-field
+        label="Identificador en el JWKS (kid)"
+        [required]="true"
+        [errorMessage]="
+          fila.controls.keyId.touched && fila.controls.keyId.invalid
+            ? 'Ingresá el identificador (hasta 200 caracteres).'
+            : ''
+        "
+      >
+        <app-input formControlName="keyId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Algoritmo de firma"
+        [required]="true"
+        hint="Por ejemplo RS256 o ES256."
+        [errorMessage]="
+          fila.controls.algorithm.touched && fila.controls.algorithm.invalid
+            ? 'Ingresá el algoritmo (hasta 50 caracteres).'
+            : ''
+        "
+      >
+        <app-input formControlName="algorithm" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Clave pública"
+        [required]="true"
+        hint="En formato PEM o JWK."
+        [errorMessage]="
+          fila.controls.publicKey.touched && fila.controls.publicKey.invalid
+            ? 'Pegá la clave pública.'
+            : ''
+        "
+      >
+        <app-textarea formControlName="publicKey" [rows]="3" [autoResize]="true" />
+      </app-form-field>
+
+      <app-form-field label="Certificado asociado" hint="Opcional.">
+        <app-textarea formControlName="certificate" [rows]="2" [autoResize]="true" />
+      </app-form-field>
+    </div>
+  </app-card>
+}
+
+<button
+  app-button
+  variant="secondary"
+  size="sm"
+  [disabled]="disabled()"
+  (clicked)="agregarFila()"
+>
+  Agregar clave
+</button>

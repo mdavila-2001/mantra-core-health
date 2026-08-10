@@ -1,0 +1,86 @@
+<app-page-header
+  title="Rotar clave de firma"
+  subtitle="Publicá la clave nueva; las salientes quedan retirándose durante la gracia."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (rotated(); as result) {
+  <div class="m40__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m40__resultado-titulo">La rotación quedó hecha</h2>
+
+    <dl class="m40__datos">
+      <div>
+        <dt>Clave nueva</dt>
+        <dd><code class="tabular-nums">{{ result.newKeyId }}</code></dd>
+      </div>
+      <div>
+        <dt>Claves retirándose</dt>
+        <dd class="tabular-nums">{{ result.retiringCount }}</dd>
+      </div>
+      @if (result.graceUntil; as graceUntil) {
+        <div>
+          <dt>Se aceptan hasta</dt>
+          <dd>{{ graceUntil.toLocaleString() }}</dd>
+        </div>
+      }
+    </dl>
+
+    <p class="m40__texto">
+      La clave nueva ya firma; las salientes siguen aceptándose hasta el fin de
+      la gracia y después se retiran solas.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraRotacion()">Rotar otra clave</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
+  }
+
+  <app-alert tone="info" class="m40__alert">
+    Con gracia 0 las salientes se retiran al instante — es lo que se quiere
+    ante una clave comprometida. Sin cargar nada, el backend aplica 24 horas.
+  </app-alert>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="De qué proveedor" description="La rotación alcanza a sus claves activas.">
+      <app-form-field
+        label="Identificador del proveedor"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.providerId.touched && form.controls.providerId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="providerId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section legend="La clave nueva" description="La que pasa a firmar desde ahora.">
+      <app-signing-key-fields [disabled]="isSubmitting()" />
+    </app-form-section>
+
+    <app-form-section
+      legend="Gracia de las salientes"
+      description="Cuántas horas siguen aceptándose las claves que salen."
+    >
+      <app-form-field
+        label="Horas de gracia"
+        hint="Entre 0 y 720. Vacío: el backend aplica 24."
+        [errorMessage]="
+          form.controls.graceHours.touched && form.controls.graceHours.invalid
+            ? 'Ingresá un valor entre 0 y 720.'
+            : ''
+        "
+      >
+        <app-input formControlName="graceHours" type="number" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Rotar clave"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}
