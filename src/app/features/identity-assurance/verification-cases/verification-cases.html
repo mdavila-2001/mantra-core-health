@@ -1,0 +1,44 @@
+<app-page-header
+  title="Mis verificaciones"
+  subtitle="El estado de tus trámites de verificación de identidad, y el detalle de cada uno."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="casos">
+  <app-view-state-host [state]="state()" (retry)="cargar()">
+    <app-data-table
+      [state]="state()"
+      [columns]="columns()"
+      [trackBy]="byId"
+      caption="Tus casos de verificación de identidad"
+    />
+  </app-view-state-host>
+</div>
+
+<!-- Celdas con presentación propia. Un ng-template no renderiza nada por sí
+     solo: la tabla las instancia por fila. -->
+<ng-template #idCell let-caso>
+  <a app-link class="tabular-nums" [routerLink]="['/identidad/casos', caso.id]">
+    {{ caso.id }}
+  </a>
+</ng-template>
+
+<ng-template #statusCell let-caso>
+  <app-badge [variant]="caso.statusVariant">{{ caso.statusLabel }}</app-badge>
+</ng-template>
+
+<ng-template #openedCell let-caso>
+  @if (caso.openedAt) {
+    {{ caso.openedAt | date: 'dd/MM/yyyy HH:mm' }}
+  } @else {
+    <span class="casos__sin-dato" aria-label="Sin fecha registrada">—</span>
+  }
+</ng-template>
+
+<ng-template #completedCell let-caso>
+  @if (caso.completedAt) {
+    {{ caso.completedAt | date: 'dd/MM/yyyy HH:mm' }}
+  } @else {
+    <span class="casos__sin-dato" aria-label="Sin fecha registrada">—</span>
+  }
+</ng-template>

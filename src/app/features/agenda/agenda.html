@@ -160,3 +160,50 @@
        exactamente donde se cometen los errores. -->
   <code class="agenda__id">{{ cupo.id }}</code>
 </ng-template>
+
+<ng-template #celdaAccionesCita let-cita>
+  <div class="agenda__acciones">
+    @if (!cita.llegadaRegistrada) {
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        [isLoading]="operando() === cita.id"
+        (clicked)="registrarLlegada(cita)"
+      >
+        Registrar llegada
+      </button>
+    } @else {
+      <span class="agenda__hasta">Llegó</span>
+    }
+    <!-- Destructiva: lleva su etiqueta y pide confirmación explícita. -->
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      [isLoading]="operando() === cita.id"
+      (clicked)="cancelarCita(cita)"
+    >
+      Cancelar
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #celdaReservar let-cupo>
+  @if (cupo.disponible) {
+    <!-- Ancla y no botón: reservar navega, así que conserva «abrir en pestaña
+         nueva» y el destino en la barra de estado. La franja viaja en la URL
+         porque la pantalla de reserva relee el cupo para revalidarlo. -->
+    <a
+      app-button
+      variant="primary"
+      size="sm"
+      [routerLink]="rutaDeReserva(cupo)"
+      [queryParams]="paramsDeReserva(cupo)"
+    >
+      Reservar
+    </a>
+  } @else {
+    <span class="agenda__hasta">Sin lugar</span>
+  }
+</ng-template>

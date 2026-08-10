@@ -2,9 +2,55 @@
 
 # Inventario de operaciones HTTP
 
-39 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+84 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
+
+## `DelegatedAccessClient`
+
+Archivo: `src/app/core/data-access/delegated-access/delegated-access.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/access-requests/:requestId/decision` |
+| `POST` | `/authz/effective-actor/evaluate` |
+| `POST` | `/delegated-access/expiry-sweep` |
+| `POST` | `/delegated-permission-sets` |
+| `POST` | `/delegated-permission-sets/:setId/versions` |
+| `POST` | `/org/:tenantMembershipId/user-assignments` |
+| `PATCH` | `/org/user-assignments/:assignmentId` |
+| `POST` | `/practitioner-delegates` |
+| `POST` | `/practitioner-delegates/:delegationId/access-requests` |
+| `POST` | `/practitioner-delegates/:delegationId/grants` |
+| `POST` | `/practitioner-delegates/:delegationId/revoke` |
+
+## `DirectoryClient`
+
+Archivo: `src/app/core/data-access/directory/directory.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/admin/tenants` |
+| `POST` | `/admin/tenants` |
+
+## `AuthProvidersClient`
+
+Archivo: `src/app/core/data-access/auth-providers/auth-providers.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/auth-providers/account-link-requests` |
+| `POST` | `/auth-providers/account-link-requests/complete` |
+| `POST` | `/auth-providers/federated-identities/:identityId/unlink` |
+| `POST` | `/auth-providers/identity-providers` |
+| `PUT` | `/auth-providers/identity-providers/:providerId/attribute-mappings` |
+| `POST` | `/auth-providers/identity-providers/:providerId/protocol-configs` |
+| `POST` | `/auth-providers/identity-providers/:providerId/provisioning-rules` |
+| `POST` | `/auth-providers/identity-providers/:providerId/signing-keys` |
+| `POST` | `/auth-providers/identity-providers/:providerId/signing-keys/rotate` |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/authorize` |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/callback` |
+| `POST` | `/auth-providers/tenant-bindings` |
 
 ## `AuthzClient`
 
@@ -48,8 +94,30 @@ Archivo: `src/app/core/data-access/iam/iam.client.ts`
 | `POST` | `/iam/auth/reset-password` |
 | `POST` | `/iam/auth/token/refresh` |
 | `POST` | `/iam/auth/verify-email` |
+| `GET` | `/iam/users` |
 | `POST` | `/iam/users` |
 | `POST` | `/iam/users/assisted-registration` |
+
+## `IdentityAdminClient`
+
+Archivo: `src/app/core/data-access/identity/identity-admin.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/identity/assertions/:assertionId/revoke` |
+| `POST` | `/identity/authorities` |
+| `POST` | `/identity/authorities/:authorityId/endpoints` |
+| `POST` | `/identity/checks/:checkId/attempts` |
+| `POST` | `/identity/checks/:checkId/results` |
+| `POST` | `/identity/manual-review/:reviewId/decision` |
+| `POST` | `/identity/verification-cases` |
+| `POST` | `/identity/verification-cases/:caseId/assertions` |
+| `POST` | `/identity/verification-cases/:caseId/checks:plan` |
+| `POST` | `/identity/verification-cases/:caseId/evidence` |
+| `POST` | `/identity/verification-cases/:caseId/fraud-signals` |
+| `POST` | `/identity/verification-cases/:caseId/manual-review` |
+| `POST` | `/identity/verification-cases/expire-sweep` |
+| `POST` | `/identity/verification-policies` |
 
 ## `IdentityClient`
 
@@ -60,6 +128,7 @@ Archivo: `src/app/core/data-access/identity/identity.client.ts`
 | `POST` | `/identity/me/identity-verification` |
 | `POST` | `/identity/me/practitioner/identity-verification` |
 | `POST` | `/identity/me/practitioner/license-verification` |
+| `POST` | `/identity/me/tenants/:tenantId/verification` |
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
@@ -95,8 +164,12 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 |---|---|
 | `GET` | `/scheduling/bookings` |
 | `GET` | `/scheduling/bookings/:bookingId` |
+| `POST` | `/scheduling/bookings/:bookingId/cancel` |
+| `POST` | `/scheduling/bookings/:bookingId/check-in` |
+| `POST` | `/scheduling/holds/:holdToken/confirm` |
 | `GET` | `/scheduling/resources` |
 | `GET` | `/scheduling/slots` |
+| `POST` | `/scheduling/slots/:slotId/holds` |
 
 ## `TerminologyClient`
 

@@ -196,3 +196,35 @@ export interface AssistedRegistrationResult {
   /** Estado de la cuenta recién creada, p. ej. `PENDING_ACTIVATION`. */
   readonly status: string;
 }
+
+/**
+ * Una fila del listado de usuarios (`GET /iam/users`, UC-01-01 cara de
+ * lectura). La fila es angosta a propósito; la ficha completa vive en
+ * `GET /iam/users/:id`.
+ */
+export interface UserListItem {
+  readonly id: string;
+  readonly displayName: string;
+  readonly statusConceptId: string;
+  readonly emailVerified: boolean;
+  /** Ausente si nunca inició sesión. */
+  readonly lastLoginAt?: Date;
+  readonly createdAt: Date;
+}
+
+/** Página del listado de usuarios. Sin total: paginación por cursor. */
+export interface UserPage {
+  readonly items: readonly UserListItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Parámetros de `GET /iam/users`. Todos opcionales. */
+export interface UserSearchQuery {
+  /** Texto sobre el nombre visible o el correo de acceso. */
+  readonly query?: string;
+  readonly statusConceptId?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}

@@ -1,0 +1,49 @@
+<app-page-header
+  title="Barrer casos vencidos"
+  subtitle="Expirá los casos de verificación cuyo plazo ya pasó sin resolverse."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (resultado(); as barrido) {
+  <div class="m27__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m27__resultado-titulo">El barrido terminó</h2>
+
+    <dl class="m27__datos">
+      <div>
+        <dt>Casos expirados</dt>
+        <dd class="tabular-nums">{{ barrido.expiredCount }}</dd>
+      </div>
+    </dl>
+
+    @if (barrido.caseIds.length > 0) {
+      <h3 class="m27__subtitulo">Qué casos expiraron</h3>
+      <ul class="m27__lista">
+        @for (caseId of barrido.caseIds; track caseId) {
+          <li><code class="tabular-nums">{{ caseId }}</code></li>
+        }
+      </ul>
+    }
+
+    <p class="m27__texto">
+      Repetirlo es inofensivo: si no venció nada nuevo, el próximo barrido
+      devuelve cero.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otroBarrido()">Ejecutar otro barrido</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
+  }
+
+  <p class="m27__texto">
+    El barrido recorre los casos de verificación y marca como expirado todo el
+    que pasó su vencimiento sin resolverse. No toca ningún caso vigente. En
+    producción también lo ejecuta el sistema en forma periódica; este botón es
+    el disparo manual.
+  </p>
+
+  <button app-button variant="primary" [isLoading]="isRunning()" (clicked)="ejecutar()">
+    Ejecutar barrido
+  </button>
+}

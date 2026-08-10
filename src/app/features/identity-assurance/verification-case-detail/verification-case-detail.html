@@ -1,0 +1,36 @@
+<app-page-header
+  title="Caso de verificación"
+  subtitle="El estado del trámite y sus fechas, tal como los registró la autoridad."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="caso">
+  <app-view-state-host [state]="state()" (retry)="cargar()">
+    @if (caso(); as abierto) {
+      <app-card variant="outlined" padding="lg">
+        <h2 class="caso__titulo">Datos del trámite</h2>
+
+        <dl class="caso__datos">
+          <dt>Estado</dt>
+          <dd>
+            <app-status-seal [variant]="estado().variant" [label]="estado().label" />
+          </dd>
+
+          <dt>Código del caso</dt>
+          <dd><code class="tabular-nums">{{ abierto.id }}</code></dd>
+
+          @if (abierto.openedAt) {
+            <dt>Abierto el</dt>
+            <dd>{{ abierto.openedAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          }
+          @if (abierto.completedAt) {
+            <dt>Resuelto el</dt>
+            <dd>{{ abierto.completedAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          }
+        </dl>
+
+        <a app-link [routerLink]="listRoute">Volver a mis verificaciones</a>
+      </app-card>
+    }
+  </app-view-state-host>
+</div>

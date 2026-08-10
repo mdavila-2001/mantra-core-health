@@ -141,4 +141,89 @@ describe('SchedulingClient', () => {
       createdAt: '2026-08-01T10:00:00.000Z',
     });
   });
+
+  /* ---- el ciclo de reserva: hold → confirm ------------------------------- */
+
+  it('placeHold sin paciente manda el cuerpo vacío, no una clave en undefined', () => {
+    client.placeHold('s-1').subscribe();
+
+    const req = http.expectOne('/scheduling/slots/s-1/holds');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+
+    req.flush({
+      id: 'h-1',
+      holdToken: 'tok-1',
+      expiresAt: '2026-08-10T13:05:00.000Z',
+      remainingCapacity: 1,
+    });
+  });
+
+  it('placeHold convierte el vencimiento de la retención en fecha', () => {
+    let retencion: { expiresAt: Date } | undefined;
+    client
+      .placeHold('s-1', { patientProfileId: 'pp-1' })
+      .subscribe((hold) => (retencion = hold));
+
+    const req = http.expectOne('/scheduling/slots/s-1/holds');
+    expect(req.request.body).toEqual({ patientProfileId: 'pp-1' });
+
+    req.flush({
+      id: 'h-1',
+      holdToken: 'tok-1',
+      expiresAt: '2026-08-10T13:05:00.000Z',
+      remainingCapacity: 0,
+    });
+
+    expect(retencion?.expiresAt).toBeInstanceOf(Date);
+    expect(retencion?.expiresAt.toISOString()).toBe('2026-08-10T13:05:00.000Z');
+  });
+
+  it('confirmHold manda el token por la ruta y el motivo sólo si existe', () => {
+    client
+      .confirmHold('tok-1', {
+        tenantId: 't-1',
+        patientProfileId: 'pp-1',
+        channel: 'DESK',
+      })
+      .subscribe();
+
+    const req = http.expectOne('/scheduling/holds/tok-1/confirm');
+    expect(req.request.body).toEqual({
+      tenantId: 't-1',
+      patientProfileId: 'pp-1',
+      channel: 'DESK',
+    });
+
+    req.flush({
+      id: 'b-9',
+      bookableSlotId: 's-1',
+      statusConceptId: 'c-conf',
+      remindersScheduled: 0,
+    });
+  });
+
+  it('cancelBooking no manda isNoShow si nadie lo marcó', () => {
+    client.cancelBooking('b-1', { cancelledBy: 'PROVIDER' }).subscribe();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/cancel');
+    // `isNoShow` es lo que dispara el cargo de la política: mandarlo en falso
+    // es distinto de no mandarlo sólo para quien lea el cuerpo, pero mandarlo
+    // en `undefined` es un 400 seguro.
+    expect(req.request.body).toEqual({ cancelledBy: 'PROVIDER' });
+
+    req.flush({ bookingId: 'b-1', capacityReleased: true });
+  });
+
+  it('checkInBooking convierte la marca de llegada en fecha', () => {
+    let llegada: { checkedInAt: Date } | undefined;
+    client.checkInBooking('b-1').subscribe((resultado) => (llegada = resultado));
+
+    const req = http.expectOne('/scheduling/bookings/b-1/check-in');
+    expect(req.request.body).toEqual({});
+
+    req.flush({ bookingId: 'b-1', checkedInAt: '2026-08-12T14:00:00.000Z' });
+
+    expect(llegada?.checkedInAt).toBeInstanceOf(Date);
+  });
 });

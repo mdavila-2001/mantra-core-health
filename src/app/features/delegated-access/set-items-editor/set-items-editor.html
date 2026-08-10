@@ -1,0 +1,67 @@
+@for (fila of filasVisibles(); track fila; let indice = $index) {
+  <app-card variant="outlined" padding="md" class="m29__item">
+    <div [formGroup]="fila">
+      <div class="m29__item-encabezado">
+        <h3 class="m29__item-titulo tabular-nums">Ítem {{ indice + 1 }}</h3>
+        @if (filasVisibles().length > 1) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            [disabled]="disabled()"
+            (clicked)="quitarFila(indice)"
+          >
+            Quitar ítem
+          </button>
+        }
+      </div>
+
+      <app-form-field
+        label="Permiso referenciado (authz)"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          fila.controls.permissionId.touched && fila.controls.permissionId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="permissionId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Restricción declarativa (JSON)"
+        hint="Opcional: un objeto JSON. Vacía, no viaja."
+        [errorMessage]="
+          fila.controls.constraintJson.touched && fila.controls.constraintJson.invalid
+            ? 'Tiene que ser un objeto JSON válido, como {&quot;campo&quot;: &quot;valor&quot;}.'
+            : ''
+        "
+      >
+        <app-textarea
+          formControlName="constraintJson"
+          [rows]="2"
+          [autoResize]="true"
+          [maxLength]="maxConstraint"
+        />
+      </app-form-field>
+
+      <div class="m29__switches">
+        <app-switch
+          formControlName="requiresStepUpAuthentication"
+          label="Requiere step-up (autenticación reforzada)"
+        />
+      </div>
+    </div>
+  </app-card>
+}
+
+<button
+  app-button
+  variant="secondary"
+  size="sm"
+  [disabled]="disabled()"
+  (clicked)="agregarFila()"
+>
+  Agregar ítem
+</button>
