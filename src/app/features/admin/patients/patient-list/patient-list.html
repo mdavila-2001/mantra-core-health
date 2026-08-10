@@ -2,20 +2,22 @@
   title="Pacientes"
   subtitle="Registrá y mantené la filiación de las personas atendidas."
   [breadcrumbs]="breadcrumbs()"
+  [secondaryActions]="accionesSecundarias"
+  (actionSelected)="ejecutarAccion($event)"
 >
-  <!-- Botón y no enlace porque `app-button` es un selector de atributo sobre
-       `<button>`: el sistema todavía no tiene un ancla con aspecto de acción
-       primaria, y degradar la acción principal a un enlace de texto invertiría
-       la jerarquía que la ficha de la vista pide. -->
-  <button
+  <!-- Ancla con aspecto de acción (`ButtonLink`, PR #26): la acción principal
+       navega, así que conserva el clic con la rueda, «abrir en pestaña nueva» y
+       el destino en la barra de estado. Antes era un `<button>` que navegaba a
+       mano, y perdía las tres cosas. -->
+  <a
     app-button
     page-actions
     variant="primary"
     data-testid="pacientes-nuevo"
-    (clicked)="irAlAlta()"
+    [routerLink]="rutaDeAlta"
   >
     Nuevo paciente
-  </button>
+  </a>
 </app-page-header>
 
 <!-- El campo se nombra solo (publica su propio contexto de control): no va

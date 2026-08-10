@@ -1,0 +1,105 @@
+<main class="activar">
+  <div class="activar__card">
+    @if (done()) {
+      <div class="activar__header">
+        <h1 appAnuncio [asertivo]="false" class="activar__title" data-testid="activar-ok">
+          Tu cuenta quedó activa
+        </h1>
+        <p class="activar__text">
+          Ya podés entrar con tu correo y la contraseña que acabás de elegir. El código que usaste
+          no vuelve a servir.
+        </p>
+      </div>
+      <button
+        app-button
+        variant="primary"
+        size="lg"
+        class="activar__submit"
+        data-testid="activar-ir-login"
+        (clicked)="goToLogin()"
+      >
+        Ir a iniciar sesión
+      </button>
+    } @else {
+      <div class="activar__header">
+        <h1 class="activar__title">Activá tu cuenta</h1>
+        <p class="activar__text">
+          Alguien creó esta cuenta a tu nombre. Elegí tu contraseña para terminar de activarla:
+          <strong>nadie más la conoce ni puede verla</strong>.
+        </p>
+      </div>
+
+      <!-- El token vencido o ya usado tiene su propia salida: reintentar no
+           sirve, hay que pedir uno nuevo a quien creó la cuenta. -->
+      @if (tokenInvalido()) {
+        <app-alert appAnuncio tone="warning" class="activar__alert" data-testid="activar-token-malo">
+          Este código no sirve: puede haber vencido o haberse usado ya. Pedile uno nuevo a quien te
+          creó la cuenta.
+        </app-alert>
+      } @else if (errorMessage(); as mensaje) {
+        <app-alert appAnuncio tone="error" class="activar__alert" data-testid="activar-error">{{
+          mensaje
+        }}</app-alert>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="activar-form">
+        <!-- Si vino por el enlace, el código ya está resuelto y pedirlo otra vez
+             sería pedirle a la persona que copie algo que ya tenemos. -->
+        @if (!tokenEnLaUrl) {
+          <app-form-field
+            label="Código de activación"
+            hint="Es el que te entregaron. Copialo tal cual, sin espacios."
+            [required]="true"
+            [errorMessage]="
+              form.controls.activationToken.touched && form.controls.activationToken.invalid
+                ? 'Escribí el código de activación.'
+                : ''
+            "
+          >
+            <app-input
+              formControlName="activationToken"
+              type="text"
+              autocomplete="one-time-code"
+              testId="activar-token"
+            />
+          </app-form-field>
+        }
+
+        <app-form-field
+          label="Tu contraseña"
+          hint="Al menos 8 caracteres. La elegís vos y no la ve nadie más."
+          [required]="true"
+          [errorMessage]="
+            form.controls.newPassword.touched && form.controls.newPassword.invalid
+              ? 'La contraseña necesita al menos 8 caracteres.'
+              : ''
+          "
+        >
+          <app-input
+            formControlName="newPassword"
+            type="password"
+            autocomplete="new-password"
+            placeholder="Tu contraseña"
+            testId="activar-password"
+          />
+        </app-form-field>
+
+        <button
+          app-button
+          type="submit"
+          variant="primary"
+          size="lg"
+          class="activar__submit"
+          data-testid="activar-submit"
+          [isLoading]="isSubmitting()"
+        >
+          Activar mi cuenta
+        </button>
+      </form>
+
+      <p class="activar__pie">
+        ¿Ya la activaste antes? <a app-link routerLink="/auth">Iniciá sesión</a>
+      </p>
+    }
+  </div>
+</main>

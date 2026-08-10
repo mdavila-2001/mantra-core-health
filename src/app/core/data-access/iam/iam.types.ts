@@ -106,6 +106,17 @@ export interface RegisteredPractitioner {
  * correo no está registrado» permitiría averiguar quién tiene cuenta probando
  * direcciones.
  */
+/**
+ * Lo que devuelve el reenvío de la verificación de correo.
+ *
+ * **El mensaje es siempre el mismo**, exista o no la cuenta: si cambiara,
+ * el formulario se convertiría en una forma de averiguar qué correos están
+ * registrados en el sistema.
+ */
+export interface VerificationResent {
+  readonly message: string;
+}
+
 export interface PasswordResetRequested {
   readonly message: string;
 }

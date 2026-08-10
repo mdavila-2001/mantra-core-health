@@ -34,7 +34,7 @@ inyección»*.
 
 ## Catálogo de operaciones
 
-### `IamClient` — 12 operaciones
+### `IamClient` — 13 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
@@ -43,7 +43,8 @@ inyección»*.
 | `POST` | `/iam/auth/register-patient` | `RegisterPatient` | Sí |
 | `POST` | `/iam/auth/register-practitioner` | `RegisterPatient` | Sí |
 | `POST` | `/iam/auth/verify-email` | `VerifyEmail` | Sí |
-| `POST` | `/iam/auth/activate` | **Sin consumidor** | Sí |
+| `POST` | `/iam/auth/resend-verification` | `ResendVerification` (V01-14) | Sí |
+| `POST` | `/iam/auth/activate` | `ActivateAccount` (V01-08) | Sí |
 | `POST` | `/iam/auth/forgot-password` | `ForgotPassword` | No declarada |
 | `POST` | `/iam/auth/reset-password` | `ResetPassword` | No declarada |
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
@@ -96,16 +97,35 @@ no filtrar. `Dashboard` llama sin ninguno.
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
-### `ProfilesClient` — 6 operaciones
+### `ProfilesClient` — 9 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) |
+| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) · `PatientMerge` (candidatos) |
 | `GET` | `/profiles/patients/:profileId` | `PatientDetail` (ficha F-01) |
 | `GET` | `/profiles/patients/me/summary` | `MyProfile` (V05-03) |
 | `POST` | `/profiles/patients` | `PatientNew` (V05-01·F) |
+| `POST` | `/profiles/patients/merge` | `PatientMerge` (V05-01·A, UC-05-08) |
+| `POST` | `/profiles/patients/merge/:eventId/reverse` | `PatientMerge` (V05-01·A, UC-05-09) |
+| `POST` | `/profiles/patients/:profileId/related-persons` | `RelatedPersonForm` (V05-05, UC-05-10) |
 | `POST` | `/profiles/practitioners` | — |
 | `POST` | `/profiles/persons/:personId/account-links` | — |
+
+> **V05-05 no necesitó ningún `GET` nuevo.** El vault la marcaba «Listado pendiente», pero los
+> contactos llegan **embebidos** en la respuesta de `GET /profiles/patients/:profileId`
+> (`relatedPersons`). La tabla es real desde el primer día; sólo faltaba el alta.
+>
+> Sin `personId` el backend **crea** la persona con los datos del cuerpo; con él reutiliza una
+> existente. Hoy sólo se ofrece el primer caso: reutilizar exigiría un buscador de personas, y no
+> hay `GET /profiles/persons`.
+
+> **La reversión de una fusión sólo es posible en el momento.** El `eventId` que
+> `…/merge/:eventId/reverse` exige viene **únicamente** en la respuesta de
+> `POST /profiles/patients/merge`, y el backend no expone ningún listado de eventos de fusión. En
+> cuanto esa respuesta se pierde de vista, la fusión deja de ser reversible desde la aplicación.
+> Por eso `PatientMerge` ofrece el «Deshacer» en la pantalla de resultado y lo advierte con
+> palabras. Un `GET /profiles/patients/merge-events` lo convertiría en una operación reversible de
+> verdad.
 
 Las tres lecturas entraron con el PR #31 del backend y son lo que sacó a la
 sección de pacientes del estado «Listado pendiente» que el vault marca en 674 de
@@ -209,7 +229,19 @@ degrada esos campos a «Sin registrar» sin tumbar la pantalla.
 |---|---|
 | `POST` | `/common/files/upload` |
 
-**Siete operaciones sin pantalla que las llame** — eran once hasta que V05-01 y
+> **`activate` dejó de estar sin consumidor, y era un flujo roto.** El alta asistida
+> (`/iam/users/assisted-registration`) entrega un **token de activación de un solo uso** y lo
+> muestra en pantalla, pero **no existía ninguna ruta donde usarlo**: el método estaba en el
+> cliente y ningún componente lo llamaba. Dábamos de alta a una persona, le entregábamos una llave
+> y no había puerta. Lo cierra `ActivateAccount` en `/auth/activar`, enlazada desde la propia
+> pantalla del alta.
+>
+> **`resend-verification` no estaba ni envuelto.** Se pide el identificador con el que la persona
+> inicia sesión, **no un correo de destino**: dejar elegir a dónde va el enlace convertiría el
+> formulario en un modo de mandar el token de una cuenta ajena a una bandeja propia. La respuesta
+> es siempre la misma exista o no la cuenta, y la pantalla lo respeta.
+
+**Seis operaciones sin pantalla que las llame** — eran once hasta que V05-01 y
 V05-03 encendieron cuatro. No es código muerto: todas tienen prueba y son la
 mitad de un flujo cuya interfaz todavía no se escribió.
 Ver [el mapa de integraciones §3](../architecture/integration-map.md#3--operaciones-sin-consumidor).

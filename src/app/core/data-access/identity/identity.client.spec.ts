@@ -75,4 +75,40 @@ describe('IdentityClient', () => {
     // Sin veredicto todavia: la clave no debe aparecer inventada.
     expect(caso?.completedAt).toBeUndefined();
   });
+
+  /**
+   * Verificado contra el contrato del backend: `openedAt` y `completedAt` son
+   * columnas `nullable: true` que el servicio copia tal cual, así que llegan
+   * como `null`. Con la comparación anterior (`=== undefined`) se convertían en
+   * `new Date(null)` = **1970-01-01**, y la pantalla —que hace
+   * `@if (abierto.openedAt)`— pintaba «1/1/1970» en vez de ocultar el dato.
+   */
+  it('un caso sin fechas no inventa el 1 de enero de 1970', () => {
+    let caso: { openedAt?: Date; completedAt?: Date } | undefined;
+    client.getVerificationCase('c-1').subscribe((r) => (caso = r));
+
+    http.expectOne('/identity/me/verification-cases/c-1').flush({
+      id: 'c-1',
+      status: 'concepto-en-curso',
+      openedAt: null,
+      completedAt: null,
+    });
+
+    expect(caso?.openedAt).toBeUndefined();
+    expect(caso?.completedAt).toBeUndefined();
+  });
+
+  it('cuando las fechas vienen, conservan su instante', () => {
+    let caso: { openedAt?: Date } | undefined;
+    client.getVerificationCase('c-1').subscribe((r) => (caso = r));
+
+    http.expectOne('/identity/me/verification-cases/c-1').flush({
+      id: 'c-1',
+      status: 'concepto-en-curso',
+      openedAt: '2026-08-01T10:30:00.000Z',
+      completedAt: null,
+    });
+
+    expect(caso?.openedAt?.toISOString()).toBe('2026-08-01T10:30:00.000Z');
+  });
 });

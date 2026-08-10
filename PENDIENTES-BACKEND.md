@@ -1,8 +1,10 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-04 · Verificado ejecutando contra la API viva en `localhost:3000` —con la
-cuenta del bootstrap— y con 84 comprobaciones de punta a punta con Selenium, del navegador al proxy
-y del proxy a la API.
+**Actualizado:** 2026-08-08 · Los pendientes hasta P6 se verificaron ejecutando contra la API viva
+en `localhost:3000` —con la cuenta del bootstrap— y con 84 comprobaciones de punta a punta con
+Selenium. **Los nuevos (P7–P10) no**: se levantaron leyendo los controllers, los DTOs y los seeds,
+con Docker apagado. Lo que se afirma de cada uno está verificado sobre el código y los datos
+sembrados, no contra el servidor corriendo.
 
 Existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber que algo dejó
 de ser un problema es tan útil como saber que lo sigue siendo.
@@ -69,6 +71,120 @@ atómicamente:** las dos altas construidas son una sola petición y el modelo pr
 intermedio. Encadenar llamadas desde el frontend habría reintroducido exactamente el estado que el
 modelo declara imposible. Lo que sí se implementó es la protección contra el **doble envío**, que
 es el duplicado que sí puede ocurrir. Conviene actualizar D3 en el plan.
+
+---
+
+## Abierto · P7 · Los campos de catálogo no tienen catálogo
+
+**Levantado el 2026-08-08 desde W1** (vistas de Fase 0) · **Para:** Marcelo (seeds y modelo) ·
+**Bloquea:** casi todos los formularios de las 693 vistas, **y el frente móvil**.
+
+Es el pendiente más caro que hay abierto. La regla del modelo es taxativa —todo `*_concept_id` es un
+selector poblado desde terminología, nunca entrada libre— y hoy no hay con qué poblarlo.
+
+Contado sobre `seedsGenerales/`:
+
+| | |
+| --- | --- |
+| Value sets sembrados | **55** (42 con miembros, 208 miembros en total) |
+| De qué son | los que agregaron los patches v4.0.2–v4.0.6: `Plan Feature Key`, `Api Key Scope`, `Feedback Status`… |
+| De género, sexo, nacionalidad o idioma | **ninguno** |
+| `administrative_gender_concept_id` de las personas sembradas | **uno solo** para todas, código `DEFAULT_ADMINISTRATIVE_GENDER` |
+| Placeholders `DEFAULT_*` en total | **737** |
+
+Ese concepto se describe a sí mismo como «Configuración de arranque para Terminology; debe revisarse
+por tenant y jurisdicción». Es relleno, no un género.
+
+**Es el mismo defecto que el `CLAUDE.md` ya documenta como bloqueador de móvil:**
+`iam.devices.platform_concept_id` apunta a `DEFAULT_PLATFORM` porque «no hay conceptos iOS/Android
+sembrados». No es un caso del módulo 05: es el patrón general de los 737.
+
+### Qué haría falta
+
+Sembrar los conjuntos de valores de los campos demográficos y clínicos básicos —género
+administrativo, sexo al nacer, identidad de género, nacionalidad, idioma, grupo ABO, factor Rh,
+estado de cobertura— con sus miembros reales. Es trabajo de `gen_seeds_v407.py` más las notas de
+value set en el vault: el mismo procedimiento que el `CLAUDE.md` describe para cerrar el bloqueo de
+`DEFAULT_PLATFORM`.
+
+### Qué salió mutilado por esto, ya
+
+El alta de paciente (V05-01·F) va **sin** género administrativo ni sexo al nacer, y las dos
+operaciones de fusión van **sin** motivo. Los cuatro campos son opcionales en el contrato, así que
+las pantallas funcionan — pero ninguna está completa, y la próxima persona que escriba un formulario
+se va a topar con lo mismo.
+
+---
+
+## Abierto · P8 · No hay forma de saber a qué value set se liga cada campo
+
+**Levantado el 2026-08-08 desde W1** · **Para:** Pablo (API) · **Depende de:** P7 · **Bloquea:** lo
+mismo que P7.
+
+Aun con los conjuntos sembrados, el frontend no puede encontrarlos:
+
+1. El único `GET` es `…/terminology/value-sets/:id/$expand`, que **pide el uuid** del conjunto. No
+   hay búsqueda por código ni por nombre.
+2. Los uuid se derivan con `uuid5` en `gen_seeds_v407.py` a partir de `(nombre, patch, módulo)`. Son
+   deterministas, pero reimplementar esa derivación en TypeScript acoplaría el frontend a las tripas
+   del generador de seeds: se rompería en silencio el día que alguien toque `VS_OWNER`.
+3. `…/terminology/concepts?q=` existe y no pide rol, pero busca texto libre sobre los 965 conceptos
+   del catálogo. Usarlo como selector de «sexo al nacer» dejaría elegir cualquiera y rompería el
+   vínculo que el modelo declara. Es peor que no ofrecer el campo.
+
+### Qué haría falta
+
+Cualquiera de estas dos, en orden de preferencia:
+
+- `GET /terminology/value-sets?binding=profiles.person_profiles.administrative_gender_concept_id` —
+  que la API diga a qué conjunto se liga cada columna.
+- O un `GET /terminology/value-sets?code=…` que permita resolver el uuid desde un código estable.
+
+**El orden con P7 importa: primero sembrar, después publicar el binding.** Al revés, el selector
+mostraría una sola opción sin significado.
+
+---
+
+## Abierto · P9 · Una fusión de pacientes es irreversible en cuanto se cierra la pantalla
+
+**Levantado el 2026-08-08 construyendo V05-01·A** · **Para:** Pablo (API) · **Bloquea:** que
+«revertir una fusión» signifique lo que parece.
+
+`POST /profiles/patients/merge/{eventId}/reverse` (UC-05-09) existe y funciona, pero exige el
+identificador del evento — y **el backend no expone ningún listado de eventos de fusión**.
+Verificado: no hay un solo `@Get` con `merge` en `ProfilesPatientsController`.
+
+Ese identificador aparece **una sola vez**: en la respuesta del `POST` de fusión. En cuanto esa
+respuesta se pierde de vista, unir dos historias clínicas deja de tener vuelta atrás desde la
+aplicación.
+
+### Qué se hizo mientras tanto
+
+El «Deshacer» vive en la pantalla de resultado de la fusión y advierte con palabras que al salir se
+pierde. Es lo único que el contrato permite. Pero quien se dé cuenta del error al día siguiente no
+tiene camino de vuelta.
+
+### Qué haría falta
+
+Un `GET /profiles/patients/merge-events` —o el evento embebido en la ficha del paciente
+resultante—. Es una lectura simple sobre `profiles.patient_merge_events`, tabla que ya existe.
+
+---
+
+## Abierto · P10 · `iam` y `directory` siguen sin ninguna lectura de colección
+
+**Levantado el 2026-08-08 desde W1** · **Para:** Pablo (API) · **Bloquea:** 23 de las 37 vistas de
+Fase 0 del reparto de Justin, y buena parte del de Itzan.
+
+Los `GET` de colección de los PRs #31 y #33 desbloquearon `profiles`, `scheduling`, `clinical`,
+`chart` y `terminology`. Siguen en cero: **`iam`**, **`directory`**, `delegated_access` y
+`auth_providers`.
+
+### Una corrección al plan de la semana
+
+El `PLAN-SEMANA-WEB-Y-MOVIL.md` cuenta a **`common`** entre los módulos «con lectura» (1 `GET`).
+Ese `GET` es `/common/files/:id/content` — **una descarga de archivo, no un listado**. Quien tome
+`common` creyendo que puede cerrarlo completo se va a encontrar con eso.
 
 ---
 

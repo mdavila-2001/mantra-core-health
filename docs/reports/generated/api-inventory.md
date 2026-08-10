@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-35 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+39 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -44,6 +44,7 @@ Archivo: `src/app/core/data-access/iam/iam.client.ts`
 | `POST` | `/iam/auth/logout` |
 | `POST` | `/iam/auth/register-patient` |
 | `POST` | `/iam/auth/register-practitioner` |
+| `POST` | `/iam/auth/resend-verification` |
 | `POST` | `/iam/auth/reset-password` |
 | `POST` | `/iam/auth/token/refresh` |
 | `POST` | `/iam/auth/verify-email` |
@@ -71,7 +72,10 @@ Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
 | `GET` | `/profiles/patients` |
 | `POST` | `/profiles/patients` |
 | `GET` | `/profiles/patients/:profileId` |
+| `POST` | `/profiles/patients/:profileId/related-persons` |
 | `GET` | `/profiles/patients/me/summary` |
+| `POST` | `/profiles/patients/merge` |
+| `POST` | `/profiles/patients/merge/:eventId/reverse` |
 | `POST` | `/profiles/persons/:personId/account-links` |
 | `POST` | `/profiles/practitioners` |
 
