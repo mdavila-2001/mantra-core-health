@@ -1,7 +1,7 @@
 /**
  * Reporte navegable del recorrido visual.
  *
- * Toma el manifiesto que deja la suite de `e2e/recorrido/` y lo convierte en una
+ * Toma el manifiesto que deja la suite de `cypress/e2e/recorrido/` y lo convierte en una
  * sola página con todas las capturas, agrupadas por pantalla y en el orden en
  * que se tomaron. Sin dependencias: lo único que hacía falta era una galería con
  * índice, y para eso alcanza con generar HTML.
@@ -17,7 +17,16 @@
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
-const RAIZ = resolve(new URL('..', import.meta.url).pathname.replace(/\/$/, ''));
+/**
+ * Raíz del repositorio.
+ *
+ * `import.meta.dirname` y no `new URL('..', import.meta.url).pathname`: el
+ * `pathname` de una URL viene **percent-encoded**, así que una ruta con espacios
+ * —como la de este repositorio— llegaba con `%20` y no existía ningún
+ * directorio con ese nombre. El reporte decía «no hay capturas» con las capturas
+ * ahí al lado, y solo pasaba en Windows.
+ */
+const RAIZ = resolve(import.meta.dirname, '..');
 
 /**
  * Carpeta de evidencias a reportar.

@@ -273,7 +273,7 @@ nav:
           - Inventario de componentes: reports/generated/component-inventory.md
           - Inventario de API: reports/generated/api-inventory.md
           - Grafo de módulos: reports/generated/module-graph.md
-          - Inventario E2E (Selenium): reports/generated/e2e-inventory.md
+          - Inventario E2E (Cypress): reports/generated/e2e-inventory.md
 
   - Auditoría previa:
       - Diagnóstico (fases 0–1): auditoria/01-diagnostico.md

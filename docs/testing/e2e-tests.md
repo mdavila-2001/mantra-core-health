@@ -1,141 +1,89 @@
-# Pruebas extremo a extremo
+# Pruebas de extremo a extremo
 
-**Dos suites, contra el mismo artefacto de producción, cubriendo cosas
-distintas.** Ninguna sustituye a la otra y las dos corren en su propio job de
-CI, en paralelo.
+Todo lo que se prueba con un navegador de verdad corre con **Cypress**, desde
+`cypress/`. La guía operativa —comandos, variables, cómo se escribe una prueba—
+está en [`cypress/README.md`](../../cypress/README.md); acá va el porqué.
 
-| | Playwright | Selenium |
-|---|---|---|
-| Qué verifica | Contrato **visual** y 7 journeys de sesión | Comportamiento **funcional**: 83 pruebas |
-| Red | Interceptada desde el navegador | API simulada del lado del servidor |
-| Cubre además | Regresión visual por píxeles | Formularios, navegación, responsive, accesibilidad con `axe-core`, modales, avisos y tabla |
-| Orden | `yarn e2e` | `yarn test:e2e` |
-| Job de CI | `e2e` | `selenium` |
-| Documentación | Esta página | [`e2e/selenium/README.md`](../../e2e/selenium/README.md) |
+## Por qué existen
 
-El inventario de la suite de Selenium —sus pruebas, sus Page Objects y sus
-escenarios— se **genera del código**:
-[inventario E2E](../reports/generated/e2e-inventory.md). No se mantiene a mano,
-así que no puede quedar desactualizado cuando el frontend crezca.
+Hay journeys que **jsdom no puede cubrir**, y no es cuestión de esfuerzo: hacen
+falta un router real, un `F5` de verdad y un navegador que ejecute la hidratación.
 
-```bash
-yarn e2e        # Playwright: construye, sirve y corre
-yarn e2e:ui     # Playwright interactivo, para depurar
+- Que el guard redirija al login sin sesión.
+- Que la sesión **sobreviva a una recarga** — el journey que más fácil se rompe:
+  un cambio en el orden de los `provideAppInitializer` lo tumba sin que ninguna
+  prueba unitaria se entere.
+- Que el `<dialog>` nativo cierre con `Escape` **devolviendo «no»**. En jsdom
+  `showModal()` ni siquiera está implementado.
+- Que el prerenderizado llegue del servidor y que las cabeceras de seguridad
+  existan. Solo están en el artefacto construido.
 
-yarn test:e2e            # Selenium: la suite completa
-yarn test:e2e:smoke      # Selenium: solo humo
-yarn test:e2e:critical   # Selenium: humo + autenticación + navegación + formularios
-```
+## De dos suites a una
 
-El resto de esta página describe la suite de **Playwright**.
+Antes convivían **Playwright** (journeys y regresión visual) y **Selenium**
+(funcional, responsive y accesibilidad). La justificación era que cubrían cosas
+distintas, y en parte era cierta — pero la regresión visual que sostenía el
+argumento **nunca se implementó**: `toHaveScreenshot` aparecía en la
+configuración de Playwright y en la documentación, en ninguna prueba. La
+diferencia real era el corredor, no la cobertura.
 
----
+Todo está en Cypress ahora, sin perder una sola prueba. Lo que sí cambió y hay
+que saber está en la sección de compromisos, más abajo.
 
-## Qué se prueba
+## Los tres frentes
 
-| # | Journey | Qué fija |
-|---|---|---|
-| 1 | Sin sesión, `/panel` manda al login | El guard con un router real |
-| 2 | Login con una organización entra directo | Guard, interceptor y store encadenados |
-| 3 | Con varias organizaciones hay que elegir | Tres componentes y dos navegaciones |
-| 4 | **La sesión sobrevive a una recarga** | `restoreSession` en el arranque real |
-| 5 | Con el refresh token muerto, la recarga lleva al login **sin error** | Que un token vencido no sea una pantalla de error |
-| 6 | Cerrar sesión vuelve al login **y no deja entrar atrás** | Que el borrado local sea de verdad |
-| 7 | Credenciales inválidas dan un mensaje accionable | Que `UNAUTHENTICATED` no se lea como «sesión vencida» |
+| Suite | Qué responde | Red | Comando |
+| --- | --- | --- | --- |
+| Funcional | ¿La aplicación **funciona**? | Simulada del lado del servidor | `yarn test:e2e` |
+| Recorrido visual | ¿Cómo se **ve** cada pantalla? | Simulada en el navegador | `yarn recorrido` |
+| Recorrido real | ¿Funciona con **permisos de verdad**? | Ninguna: API viva | `yarn recorrido:real` |
 
-El **4** es el más valioso: se rompe con un cambio de orden en los
-`provideAppInitializer` de `app.config.ts` —`restoreSession` corre **antes** de
-que el router evalúe el guard— y ninguna prueba unitaria puede enterarse.
+Las dos últimas quedan fuera de la corrida por defecto: una captura cientos de
+imágenes y la otra necesita el backend levantado.
 
-## Las dos decisiones de montaje
+## Contra qué se prueba
 
-### 1 · Contra el artefacto de producción, no contra `ng serve`
+Contra el **artefacto de producción**, servido por el propio arnés
+(`cypress/harness/`) con la API simulada delante. Probar contra `ng serve`
+dejaría fuera justo lo que más fácil se rompe: el prerenderizado y las cabeceras
+de seguridad solo existen en el build.
 
-`playwright.config.ts` levanta el servidor con
-`yarn build && PORT=4173 node dist/mantra-core-health/server/server.mjs`.
-
-Cuatro rutas se **prerenderizan en el build**, y el prerenderizado solo existe en
-el artefacto construido. Probar contra el servidor de desarrollo dejaría fuera
-justo lo que más fácil se rompe: que el HTML del servidor y el del cliente
-coincidan al hidratar.
-
-De paso se verifica la CSP: el artefacto es el que emite las cabeceras de
-seguridad, así que si una bloqueara un script la aplicación no arrancaría y estas
-pruebas lo dirían.
-
-**Esta decisión ya se pagó sola.** Ver «Lo que encontró», más abajo.
-
-> Cada corrida levanta un servidor **limpio**. Reutilizar uno existente ahorraba
-> un build y costaba mucho más: el servidor de renderizado lee el HTML
-> prerenderizado al arrancar y lo guarda en memoria, así que uno viejo sirve
-> referencias a chunks cuyo hash ya cambió y las siete pruebas fallan por tiempo
-> sin decir por qué. Si el puerto 4173 está ocupado, Playwright lo dice en una
-> línea.
-
-### 2 · La red va simulada
-
-`e2e/support/api.ts` intercepta las rutas de la API y responde lo que cada prueba
-necesita. Los siete journeys son de **navegación, estado y persistencia**, no de
-contrato — el contrato es [otra capa](contract-tests.md) y otra herramienta.
-
-Sin base de datos, sin datos sembrados, sin una API levantada, y **el mismo
-resultado en cada corrida**. Una suite E2E que falla al azar se termina
+La API va simulada porque lo que estas pruebas verifican es **navegación, estado,
+formularios y persistencia**, no el contrato — eso es otra capa y otra
+herramienta (`scripts/check-api-contract-drift.mjs`). Con la red simulada el
+resultado es el mismo en cada corrida; una suite E2E que falla al azar se termina
 ignorando, que es peor que no tenerla.
 
-## Lo que encontró
+Qué responde la API en cada caso lo decide un **escenario** que la prueba pide
+por cookie. Los once están declarados en
+`cypress/support/fixtures/escenarios.ts` y el inventario generado los lista con
+su descripción.
 
-Dos defectos que bloqueaban producción, ninguno visible de otra forma.
+## Los compromisos del cambio
 
-### `security.allowedHosts` rechazaba cualquier dominio real
+Tres cosas que Cypress hace distinto y que hubo que resolver. Están acá porque
+son las que se olvidan y después confunden:
 
-`angular.json` traía `build.options.security.allowedHosts: ["localhost"]`. Esa
-opción **se hornea en el artefacto**, así que el servidor de producción respondía
-**400 a toda petición cuyo `Host` no fuera `localhost`**.
+1. **Cypress elimina la cabecera CSP** para poder inyectarse en la página. Antes,
+   una CSP mal armada se detectaba de rebote —el navegador bloqueaba el script y
+   la consola lo gritaba—; ahora el navegador nunca la aplica. En su lugar, la
+   prueba de humo calcula los hashes de los scripts en línea del documento y
+   verifica que la cabecera los autorice: el mismo defecto, atrapado antes y con
+   un mensaje que lo nombra.
+2. **Las teclas van por CDP.** El `<dialog>` nativo solo cierra con un `Escape`
+   de confianza, y un evento sintético no lo cierra: la prueba pasaría sin haber
+   cerrado nada. Se despachan con `Cypress.automation`, que Cypress ya expone —
+   sin agregar dependencias. Eso ata la suite a navegadores Chromium, que es la
+   misma restricción que tenía Selenium.
+3. **Un `dist/` construido a mano no sirve.** El arnés construye con
+   `PUBLIC_API_BASE_URL` vacío para que la aplicación pida al mismo origen; un
+   `yarn build` normal toma la URL del `.env` y produce un paquete que le habla
+   al backend real. El arnés deja una marca y solo reutiliza el `dist/` si es
+   suya, porque el fallo contrario no menciona la causa por ningún lado.
 
-Verificado con `curl`: `Host: localhost` → 200, `Host: mantra.example.com` → 400.
+## Lo que no cubren
 
-Se quitó del build y la validación del `Host` pasó a `deploy/nginx.conf`, donde
-es configuración en caliente y no una imagen distinta por dominio. Ver
-[despliegue](../operations/deployment.md#validación-del-host).
-
-### Cerrar sesión no borraba el refresh token
-
-La prueba 6 entra a `/panel` **después** de salir. Volvía a entrar.
-
-`AuthService.logout()` limpiaba el almacenamiento **dentro del callback de la
-respuesta** de la API. La navegación al login es local e instantánea; la
-respuesta viaja por la red. La navegación ganaba siempre, el borrado no llegaba a
-correr, y la siguiente recarga **restauraba la sesión que se acababa de cerrar**.
-
-Se invirtió el orden: el aviso al servidor sale primero —el interceptor necesita
-el access token del store— y la limpieza va inmediatamente después, sin esperar.
-Ver [sesión y tokens](../security/session-and-tokens.md#el-orden-al-cerrar-sesión).
-
-## Lo que sigue sin cubrirse
-
-| Comportamiento | Estado |
-|---|---|
-| Recuperación completa de contraseña | Cruza el correo: necesita un buzón, no solo un navegador |
-| La trampa de foco de `<dialog>` | Cubierta por el navegador, no por una prueba propia |
-| El nav pasando a cajón bajo 780 px | Requiere las capturas de [regresión visual](visual-regression.md) |
-| El anillo de foco visible | Ídem |
-
-Las capturas visuales están configuradas pero **no generadas**: dependen del
-sistema donde se toman —las fuentes y el antialiasing de macOS no son los de
-Linux— y comparar entre plataformas produce diferencias que no son regresiones.
-Se generan en el contenedor; ver [regresión visual](visual-regression.md).
-
-## Datos
-
-| Regla | |
-|---|---|
-| Sintéticos y deterministas | El token de prueba se fabrica en `e2e/support/api.ts` |
-| **Nunca contra un entorno productivo** | El `webServer` es local por construcción |
-| **Nada que parezca PHI real**, ni de mentira | |
-
-## Estado
-
-La brecha `HIGH` de la estrategia de pruebas queda **cerrada** para los journeys
-de sesión. [La matriz de trazabilidad](../governance/traceability-matrix.md)
-sustituye la excepción formal por la prueba concreta en esos siete casos; el de
-recuperación de contraseña mantiene su justificación.
+- **Contrato de la API.** Lo cubre la verificación de deriva.
+- **Regresión visual por píxeles.** No existe hoy, y tampoco existía antes.
+  Cypress no la trae de fábrica; si se quiere, hay que elegir un plugin.
+- **Carga y rendimiento.** Otra herramienta.

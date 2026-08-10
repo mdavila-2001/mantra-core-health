@@ -1,0 +1,203 @@
+import { capturar, reiniciarContadores } from '../../support/recorrido/evidencia';
+import { admin, apiViva } from '../../support/real/actores';
+import { aparece, entrar, estable, irA, recorrer } from '../../support/real/sesion';
+import { describirHallazgos, Vigilante } from '../../support/real/vigilante';
+
+/**
+ * **Administrador** — la cuenta que la API siembra con `BOOTSTRAP_ADMIN_*`.
+ *
+ * Es la única sesión que alcanza el sistema entero: su rol `SUPERADMIN` es
+ * comodín en el `RolesGuard` del backend, así que ve todas las secciones y
+ * ninguna lectura debería devolverle un error de permisos. Eso la vuelve el
+ * mejor detector de defectos reales: casi cualquier error acá es del producto.
+ *
+ * ## Por qué es **una** prueba y no seis
+ *
+ * `POST /iam/auth/login` está limitado a diez por minuto y por IP —defensa
+ * contra fuerza bruta, no un estorbo—. Con una prueba por sección, los cuatro
+ * actores gastaban veinte ingresos en un minuto y la suite se rompía sola
+ * contra una protección que funciona.
+ *
+ * Un recorrido es, además, exactamente eso: un recorrido. Partirlo en pruebas
+ * sueltas tampoco daba independencia real.
+ */
+describe('Recorrido real · administrador', () => {
+  before(() => {
+    apiViva().should(
+      'equal',
+      true,
+      // El mensaje va acá porque un backend caído es la causa más común de que
+      // esta suite no arranque, y sin decirlo el fallo parece del frontend.
+    );
+  });
+
+  beforeEach(() => {
+    reiniciarContadores();
+  });
+
+  it('recorre el sistema entero sin errores', () => {
+    const vigilante = new Vigilante('administrador');
+    const cuenta = admin();
+
+    entrar({ ...cuenta, nombre: 'Administrador', datos: {} });
+
+    /* -- Punto de partida ------------------------------------------------- */
+
+    recorrer(vigilante, { ruta: '/panel', carpeta: 'admin-01-panel', titulo: 'Panel' });
+    recorrer(vigilante, {
+      ruta: '/mi-cuenta',
+      carpeta: 'admin-02-mi-cuenta',
+      titulo: 'Mi perfil',
+    });
+    recorrer(vigilante, {
+      ruta: '/identidad/verificar',
+      carpeta: 'admin-03-identidad',
+      titulo: 'Verificar identidad',
+    });
+
+    /* -- Padrón de pacientes ---------------------------------------------- */
+
+    recorrer(vigilante, {
+      ruta: '/administracion/pacientes',
+      carpeta: 'admin-04-pacientes',
+      titulo: 'Pacientes',
+    });
+
+    // La ficha se abre desde una fila, que es como se llega de verdad. Con el
+    // padrón vacío no hay fila que tocar y se sigue, en vez de fabricar un
+    // identificador que no existe.
+    aparece('table tbody tr a', 'admin-04-pacientes', 'la ficha de un paciente del padrón').then(
+      (hayFila) => {
+        if (!hayFila) {
+          return;
+        }
+        vigilante.en('Ficha de paciente');
+        cy.get('table tbody tr a').first().click();
+        estable();
+        capturar(
+          { carpeta: 'admin-05-ficha-paciente', titulo: 'Ficha de paciente' },
+          'desde-el-listado',
+        );
+        cy.get('h1').first().invoke('text').should('match', /\S/);
+      },
+    );
+
+    recorrer(vigilante, {
+      ruta: '/administracion/pacientes/nuevo',
+      carpeta: 'admin-06-alta-paciente',
+      titulo: 'Nuevo paciente',
+    });
+    recorrer(vigilante, {
+      ruta: '/administracion/pacientes/alta-asistida',
+      carpeta: 'admin-07-alta-asistida',
+      titulo: 'Alta asistida',
+    });
+
+    /* -- Catálogos y cuentas ---------------------------------------------- */
+
+    recorrer(vigilante, {
+      ruta: '/administracion/terminologia',
+      carpeta: 'admin-08-terminologia',
+      titulo: 'Terminología',
+    });
+
+    // El buscador contra el catálogo real: es la mitad del endpoint que el
+    // cliente no usaba, y la que enciende la sección.
+    cy.porEtiqueta(/buscar conceptos/i).clear().type('cholera');
+    estable();
+    capturar({ carpeta: 'admin-08-terminologia', titulo: 'Terminología' }, 'buscando-cholera');
+
+    recorrer(vigilante, {
+      ruta: '/administracion/usuarios',
+      carpeta: 'admin-09-usuarios',
+      titulo: 'Usuarios',
+    });
+
+    /* -- Agenda: la sección que dejó de ser un cartel ---------------------- */
+
+    recorrer(vigilante, { ruta: '/agenda', carpeta: 'admin-10-agenda', titulo: 'Agenda' });
+
+    /**
+     * El selector tiene que **mostrar** el recurso que se está mirando.
+     *
+     * Un desplegable que dice «Seleccionar opción» con una agenda cargada debajo
+     * es la pantalla contradiciéndose, y fue un defecto real del `app-select`:
+     * aplicaba la selección con un `[value]` que corría antes de que existieran
+     * las opciones. El vacío es el índice del placeholder oculto.
+     */
+    aparece('select', 'admin-10-agenda', 'el selector de recurso').then((haySelector) => {
+      if (!haySelector) {
+        return;
+      }
+      cy.porEtiqueta('Recurso').should('not.have.value', '');
+    });
+
+    // La pestaña de cupos: el panel inactivo no existe en el DOM, así que sin
+    // este clic la evidencia no mostraría la mitad de la pantalla.
+    aparece('[role="tab"]', 'admin-10-agenda', 'la pestaña de cupos').then((hayPestanas) => {
+      if (!hayPestanas) {
+        return;
+      }
+      cy.get('[role="tab"]').contains(/cupos/i).click();
+      estable();
+      capturar({ carpeta: 'admin-10-agenda', titulo: 'Agenda' }, 'pestana-cupos');
+    });
+
+    // La ventana de treinta días, que es la que más le pide al backend.
+    vigilante.en('Agenda · 30 días');
+    irA('/agenda?rango=mes');
+    estable();
+    capturar({ carpeta: 'admin-10-agenda', titulo: 'Agenda' }, 'ventana-30-dias');
+
+    /* -- Archivo clínico y expediente -------------------------------------- */
+
+    recorrer(vigilante, {
+      ruta: '/clinico',
+      carpeta: 'admin-11-archivo-clinico',
+      titulo: 'Archivo clínico',
+    });
+
+    aparece('a:contains("Ver expediente")', 'admin-11-archivo-clinico', 'el expediente de un paciente').then(
+      (hayExpediente) => {
+        if (!hayExpediente) {
+          return;
+        }
+        vigilante.en('Expediente clínico');
+        cy.contains('a', /ver expediente/i).first().click();
+        estable();
+        capturar(
+          { carpeta: 'admin-12-expediente', titulo: 'Expediente clínico' },
+          'desde-el-listado',
+        );
+
+        // Las ocho pestañas, una por una: cada panel se dibuja sólo cuando está
+        // activo, así que una sola captura no probaría ninguna de las otras siete.
+        cy.get('[role="tab"]').then(($pestanas) => {
+          const rotulos = $pestanas.toArray().map((nodo) => (nodo.textContent ?? '').trim());
+          rotulos.forEach((rotulo, indice) => {
+            cy.get('[role="tab"]').eq(indice).click();
+            estable();
+            capturar(
+              { carpeta: 'admin-12-expediente', titulo: 'Expediente clínico' },
+              rotulo === '' ? `pestana-${indice}` : rotulo,
+            );
+          });
+        });
+      },
+    );
+
+    /* -- Lo que sigue planificado ------------------------------------------ */
+
+    for (const [ruta, carpeta, titulo] of [
+      ['/administracion/organizaciones', 'admin-13-organizaciones', 'Organizaciones'],
+      ['/facturacion', 'admin-14-facturacion', 'Facturación'],
+    ] as const) {
+      recorrer(vigilante, { ruta, carpeta, titulo });
+    }
+
+    cy.then(() => {
+      vigilante.recoger();
+      expect(vigilante.hallazgos, describirHallazgos(vigilante.hallazgos)).to.deep.equal([]);
+    });
+  });
+});

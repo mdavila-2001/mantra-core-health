@@ -127,7 +127,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: mantra.example.com'   http://
 **El servidor rechazaba con 400 cualquier petición de un dominio real.** No lo
 veía ninguna prueba unitaria, ni el build, ni el lint: solo aparece sirviendo el
 artefacto construido y pidiéndole con un `Host` que no sea `localhost`. Lo
-encontraron [las pruebas de extremo a extremo](../testing/e2e-tests.md#lo-que-encontró),
+encontraron [las pruebas de extremo a extremo](../testing/e2e-tests.md#por-qué-existen),
 que corren justo así.
 
 Se probaron las tres alternativas antes de mover el control:

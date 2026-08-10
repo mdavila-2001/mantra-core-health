@@ -86,7 +86,7 @@ de nadie.
 
 Con la red simulada —que es lo que se hizo— nada de esto hace falta: las
 respuestas se declaran en `e2e/support/api.ts`. Ver
-[E2E](e2e-tests.md#2--la-red-va-simulada).
+[E2E](e2e-tests.md#contra-qué-se-prueba).
 
 ## Lo que no hay
 

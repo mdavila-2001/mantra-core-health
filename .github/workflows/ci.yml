@@ -12,7 +12,7 @@ on:
   push:
     branches: [dev, master]
   pull_request:
-  # Para lanzar a mano la regresión completa de Selenium antes de un despliegue,
+  # Para lanzar a mano la regresión completa de extremo a extremo antes de un despliegue,
   # sin esperar a que algo llegue a `master`.
   workflow_dispatch:
 
@@ -107,73 +107,20 @@ jobs:
   # de verdad y un navegador que ejecute la hidratación.
   #
   # Va en un job aparte y no como una etapa más de `verificar` por dos razones:
-  # corre en paralelo en vez de alargar la cadena, y necesita descargar un
-  # navegador —lo caro de esta etapa— que al resto no le sirve de nada.
+  # corre en paralelo en vez de alargar la cadena, y necesita un navegador —lo
+  # caro de esta etapa— que al resto no le sirve de nada.
   #
   # No depende de `verificar`: si el lint falla, esto igual dice si los journeys
   # siguen en pie, y las dos respuestas llegan juntas.
+  #
+  # ## Por qué una sola suite y no dos
+  #
+  # Antes convivían Playwright y Selenium. Cubrían cosas distintas, sí, pero la
+  # regresión visual que justificaba tener las dos **nunca se implementó**
+  # (`toHaveScreenshot` no aparecía en ninguna prueba, solo en la configuración),
+  # así que la diferencia real era el corredor, no la cobertura. Está todo en
+  # Cypress ahora, en un solo job.
   e2e:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - run: corepack enable
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            .yarn/cache
-            .yarn/unplugged
-          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-          restore-keys: yarn-${{ runner.os }}-
-
-      - run: yarn install --immutable
-
-      # Solo Chromium: es el único proyecto que declara `playwright.config.ts`.
-      # Bajar los tres navegadores costaría minutos por nada.
-      - name: Navegador
-        run: yarn playwright install --with-deps chromium
-
-      # `playwright.config.ts` construye el artefacto y lo sirve por su cuenta
-      # (`webServer`). Se prueba contra el build de producción a propósito: el
-      # prerenderizado y las cabeceras de seguridad **solo existen ahí**.
-      - name: Journeys de extremo a extremo
-        run: yarn e2e
-
-      # Las trazas del reintento son lo único que permite entender un fallo que
-      # no se reproduce en local.
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report
-          path: |
-            playwright-report/
-            test-results/
-          retention-days: 7
-
-  # Selenium: la suite de aceptación funcional.
-  #
-  # ## Por qué convive con la de Playwright en vez de reemplazarla
-  #
-  # Cubren cosas distintas y ninguna sustituye a la otra. Playwright verifica el
-  # **contrato visual** —las capturas de referencia se generan en contenedor y
-  # comparan píxeles— y siete journeys de sesión con la red interceptada desde
-  # el propio navegador. Selenium verifica el **comportamiento funcional** contra
-  # un servidor de verdad, con una API simulada del lado del servidor, y suma lo
-  # que aquélla no cubre: formularios, tablas de navegación, resoluciones y
-  # accesibilidad con `axe-core` sobre la pantalla montada.
-  #
-  # Reemplazar una por otra habría significado tirar cobertura para no ganar
-  # nada. Corren en paralelo y ninguna depende de la otra.
-  selenium:
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
@@ -196,7 +143,18 @@ jobs:
           key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
           restore-keys: yarn-${{ runner.os }}-
 
+      # El binario de Cypress vive fuera de `node_modules` y pesa 200 MB: sin
+      # cachearlo, cada corrida lo vuelve a bajar.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: cypress-${{ runner.os }}-
+
       - run: yarn install --immutable
+
+      - name: Binario de Cypress
+        run: yarn cypress install
 
       # El generador escribe `src/environments/env.generated.ts`, que está en
       # `.gitignore` y que la construcción del artefacto necesita.
@@ -207,21 +165,27 @@ jobs:
       # Object que apunta a un método que ya no existe tiene que fallar acá, en
       # segundos, y no a mitad de una corrida con navegador.
       - name: Tipos de la suite
-        run: yarn tsc -p e2e/selenium/tsconfig.json --noEmit
+        run: yarn tsc -p cypress/tsconfig.json --noEmit
 
-      # No se instala ningún chromedriver: Selenium Manager resuelve el que
-      # corresponde al Chrome del agente, que ubuntu-latest ya trae.
+      # No se instala ningún driver: Cypress conduce el Chrome que el agente ya
+      # trae, y `ubuntu-latest` lo trae.
       - name: Versión de Chrome
         run: google-chrome --version
 
       # Humo primero, y aparte: si la aplicación no arranca, los fallos de la
       # suite crítica no significan nada y leerlos es perder el tiempo.
-      # El artefacto lo construye el arnés (`harness/servidor.ts`).
+      #
+      # El artefacto lo construye el arnés (`cypress/harness/servidor.ts`) con
+      # `PUBLIC_API_BASE_URL` vacío, para que la aplicación pida al mismo origen
+      # y la API simulada la atienda. Con la URL de un `.env` cualquiera, el
+      # paquete le hablaría a un backend real y toda la suite fallaría sin decir
+      # por qué.
       - name: Humo
         run: yarn test:e2e:smoke
 
       # Reutiliza el artefacto que acaba de construir el humo: reconstruirlo
-      # costaría un minuto largo para producir exactamente lo mismo.
+      # costaría un minuto largo para producir exactamente lo mismo. El arnés
+      # comprueba que ese `dist/` sea suyo antes de reutilizarlo.
       - name: Suite crítica
         run: yarn test:e2e:critical
         env:
@@ -235,14 +199,13 @@ jobs:
         env:
           E2E_SKIP_BUILD: 'true'
 
-      # Siempre, no solo al fallar: el reporte en verde también sirve —dice
-      # cuánto tardó cada prueba— y las capturas del fallo son lo único que
+      # Siempre, no solo al fallar: las capturas y los videos son lo único que
       # permite entender en local algo que solo pasó en CI.
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: selenium-artifacts
-          path: artifacts/selenium/
+          name: cypress-artifacts
+          path: artifacts/cypress/
           retention-days: 7
 
   dependencias:
