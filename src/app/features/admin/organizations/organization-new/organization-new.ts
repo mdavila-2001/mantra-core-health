@@ -6,10 +6,12 @@ import { DirectoryClient } from '../../../../core/data-access/directory/director
 import {
   TENANT_TYPE_CODES,
   TENANT_TYPE_LABELS,
+  TERRITORIAL_TENANT_TYPES,
   type NewTenant,
   type TenantTypeCode,
 } from '../../../../core/data-access/directory/directory.types';
 import { IamClient } from '../../../../core/data-access/iam/iam.client';
+import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -58,11 +60,19 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
  * el front. Hoy los códigos vienen de `CreateTenantDto` (`@IsIn(...)`), que
  * es el único contrato legible; el backend los resuelve al concept id.
  *
- * ## Los `*ConceptId` opcionales no se ofrecen todavía
+ * ## País y jurisdicción se ofrecen porque sin ellos no hay alta
  *
- * Entidad legal, país, jurisdicción y región de datos son selectores de
- * catálogo sin value set publicado — la misma deuda, y la misma decisión,
- * que en el alta de paciente. Queda anotado como pendiente de contrato.
+ * Verificado contra la API viva: para los ocho tipos territoriales el backend
+ * responde `422 · «exige país y jurisdicción»`. Se resuelven con un buscador
+ * sobre la búsqueda de conceptos de `terminology` — el mismo trato que
+ * cualquier referencia: se elige una etiqueta, se guarda un uuid.
+ * TODO(IT3): acotar la búsqueda al value set que el modelo liga a cada
+ * columna; hoy busca sobre el catálogo entero, con el código como pista.
+ *
+ * ## Los `*ConceptId` opcionales siguen afuera
+ *
+ * Entidad legal y región de datos son opcionales y sin value set publicado —
+ * la misma deuda, y la misma decisión, que en el alta de paciente.
  */
 @Component({
   selector: 'app-organization-new',
@@ -85,6 +95,7 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
 export class OrganizationNew {
   private readonly directory = inject(DirectoryClient);
   private readonly iam = inject(IamClient);
+  private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
@@ -162,7 +173,73 @@ export class OrganizationNew {
   protected readonly esAseguradora = computed(() => this.tipo() === 'PAYER');
   protected readonly esCorredor = computed(() => this.tipo() === 'BROKER');
 
+  /** Prestadores, farmacias, hospitales…: los que declaran dónde operan. */
+  protected readonly esTerritorial = computed(() => {
+    const tipo = this.tipo();
+    return tipo !== null && TERRITORIAL_TENANT_TYPES.includes(tipo);
+  });
+
   protected readonly tipoFaltante = computed(() => this.enviado() && this.tipo() === null);
+
+  /* ---- país y jurisdicción: obligatorios para los tipos territoriales ---- */
+
+  protected readonly pais = signal<ReferenceOption | null>(null);
+  protected readonly candidatosPais = signal<readonly ReferenceOption[]>([]);
+  protected readonly buscandoPais = signal(false);
+
+  protected readonly jurisdiccion = signal<ReferenceOption | null>(null);
+  protected readonly candidatosJurisdiccion = signal<readonly ReferenceOption[]>([]);
+  protected readonly buscandoJurisdiccion = signal(false);
+
+  protected readonly paisFaltante = computed(
+    () => this.enviado() && this.esTerritorial() && this.pais() === null,
+  );
+  protected readonly jurisdiccionFaltante = computed(
+    () => this.enviado() && this.esTerritorial() && this.jurisdiccion() === null,
+  );
+
+  protected buscarPais(texto: string): void {
+    this.buscarConcepto(texto, this.candidatosPais, this.buscandoPais);
+  }
+
+  protected buscarJurisdiccion(texto: string): void {
+    this.buscarConcepto(texto, this.candidatosJurisdiccion, this.buscandoJurisdiccion);
+  }
+
+  /**
+   * Busca conceptos y los traduce a opciones, con el **código como pista**:
+   * la búsqueda es sobre el catálogo entero (TODO(IT3): acotarla al value
+   * set), así que «Bolivia» también trae la moneda — el código `JUR_BO`
+   * contra `BOB` es lo que permite elegir el correcto.
+   */
+  private buscarConcepto(
+    texto: string,
+    destino: { set: (opciones: readonly ReferenceOption[]) => void },
+    cargando: { set: (valor: boolean) => void },
+  ): void {
+    if (texto === '') {
+      destino.set([]);
+      return;
+    }
+
+    cargando.set(true);
+    this.terminology.searchConcepts({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
+      next: (pagina) => {
+        destino.set(
+          pagina.items.map((concepto) => ({
+            value: concepto.conceptId,
+            label: concepto.display,
+            hint: concepto.code,
+          })),
+        );
+        cargando.set(false);
+      },
+      error: () => {
+        destino.set([]);
+        cargando.set(false);
+      },
+    });
+  }
 
   /* ---- owner: se elige, nunca se tipea ---------------------------------- */
 
@@ -278,6 +355,9 @@ export class OrganizationNew {
     if (this.form.invalid || this.tipo() === null || this.owner() === null) {
       return false;
     }
+    if (this.esTerritorial() && (this.pais() === null || this.jurisdiccion() === null)) {
+      return false;
+    }
     if (this.esAseguradora() && this.formPayer.invalid) {
       return false;
     }
@@ -296,6 +376,12 @@ export class OrganizationNew {
     const tipo = this.tipo() ?? 'PROVIDER';
     const owner = this.owner();
 
+    // De los campos por tipo viaja sólo lo que el tipo exige: el backend
+    // rechaza un bloque `payer` —o un país— donde no corresponde.
+    const territorial = this.esTerritorial();
+    const pais = this.pais();
+    const jurisdiccion = this.jurisdiccion();
+
     return {
       code: code.trim(),
       legalName: legalName.trim(),
@@ -303,6 +389,10 @@ export class OrganizationNew {
       tenantType: tipo,
       ...(tradeName.trim() === '' ? {} : { tradeName: tradeName.trim() }),
       ...(timeZone.trim() === '' ? {} : { timeZone: timeZone.trim() }),
+      ...(territorial && pais !== null ? { countryConceptId: pais.value } : {}),
+      ...(territorial && jurisdiccion !== null
+        ? { jurisdictionConceptId: jurisdiccion.value }
+        : {}),
       ...(tipo === 'PAYER' ? { payer: this.formPayer.getRawValue() } : {}),
       ...(tipo === 'BROKER' ? { broker: this.formBroker.getRawValue() } : {}),
     };

@@ -67,6 +67,24 @@ export const TENANT_TYPE_CODES = [
 export type TenantTypeCode = (typeof TENANT_TYPE_CODES)[number];
 
 /**
+ * Tipos que operan atendiendo o formando en un territorio. Para ellos el
+ * backend **exige** país y jurisdicción (`422 PRECONDITION_FAILED` con
+ * `missing` si faltan — verificado contra la API viva): es lo que determina
+ * bajo qué regulador operan. `PAYER` y `BROKER` quedan fuera porque su
+ * regulador viaja dentro de su propio bloque.
+ */
+export const TERRITORIAL_TENANT_TYPES: readonly TenantTypeCode[] = [
+  'PROVIDER',
+  'UNIVERSITY',
+  'PHARMACY',
+  'HOSPITAL',
+  'MEDICAL_OFFICE',
+  'NURSING',
+  'HEALTH_OTHER',
+  'HEALTH_BUSINESS',
+];
+
+/**
  * Etiquetas visibles de cada tipo. Texto de la interfaz, no del catálogo: el
  * backend traduce el código al concept id; la pantalla sólo necesita nombrarlo
  * en el idioma de quien lo elige.
@@ -105,12 +123,12 @@ export interface BrokerProfile {
 /**
  * Alta de una organización raíz (`POST /admin/tenants`, UC-04-01).
  *
- * Los `*ConceptId` opcionales (entidad legal, país, jurisdicción, región de
- * datos) **no figuran acá todavía**: un campo de catálogo sólo puede ser un
- * selector poblado desde `terminology`, y el vínculo columna → value set no
- * está publicado en ningún contrato que el frontend pueda leer. Es la misma
- * decisión —y por la misma razón— que en el alta de paciente.
- * TODO(IT3): ofrecerlos cuando el servicio de `dynamic-enums` exista.
+ * País y jurisdicción figuran porque los tipos territoriales **no pueden**
+ * crearse sin ellos; se resuelven contra la búsqueda de conceptos de
+ * `terminology`. Los demás `*ConceptId` (entidad legal, región de datos)
+ * siguen fuera: son opcionales y su value set no está publicado en ningún
+ * contrato que el frontend pueda leer — misma decisión que en el alta de
+ * paciente. TODO(IT3): acotar y completar con `dynamic-enums` cuando exista.
  */
 export interface NewTenant {
   readonly code: string;
@@ -120,6 +138,10 @@ export interface NewTenant {
   readonly tradeName?: string;
   readonly tenantType: TenantTypeCode;
   readonly timeZone?: string;
+  /** Obligatorio para los tipos territoriales; el backend lo hace cumplir. */
+  readonly countryConceptId?: string;
+  /** Obligatoria para los tipos territoriales. */
+  readonly jurisdictionConceptId?: string;
   readonly payer?: PayerProfile;
   readonly broker?: BrokerProfile;
 }

@@ -24,6 +24,8 @@ const RESPUESTA = {
 };
 
 const OWNER: ReferenceOption = { value: 'u-1', label: 'María Condori' };
+const PAIS: ReferenceOption = { value: 'c-pe', label: 'Peru', hint: 'PE' };
+const JURISDICCION: ReferenceOption = { value: 'c-jur-bo', label: 'Bolivia', hint: 'JUR_BO' };
 
 describe('OrganizationNew', () => {
   let fixture: ComponentFixture<OrganizationNew>;
@@ -69,6 +71,10 @@ describe('OrganizationNew', () => {
     });
     crudo<{ set: (v: unknown) => void }>('tipo').set('PHARMACY');
     crudo<{ set: (v: unknown) => void }>('owner').set(OWNER);
+    // Una farmacia es territorial: sin país y jurisdicción el backend la
+    // rechaza con 422, así que el formulario los exige.
+    crudo<{ set: (v: unknown) => void }>('pais').set(PAIS);
+    crudo<{ set: (v: unknown) => void }>('jurisdiccion').set(JURISDICCION);
   }
 
   function enviar() {
@@ -88,21 +94,33 @@ describe('OrganizationNew', () => {
     expect(interno<() => { status: string }>('state')().status).toBe('ready');
   });
 
-  it('una farmacia viaja sin bloques y sin opcionales vacíos', () => {
+  it('una farmacia viaja con país y jurisdicción, sin bloques y sin vacíos', () => {
     completar();
     enviar();
 
     const req = http.expectOne('/admin/tenants');
     // El backend rechaza un bloque `payer` en una farmacia, y valida con
-    // `forbidNonWhitelisted`: lo que no corresponde no viaja.
+    // `forbidNonWhitelisted`: lo que no corresponde no viaja. País y
+    // jurisdicción sí: sin ellos el tipo territorial vuelve con 422.
     expect(req.request.body).toEqual({
       code: 'FARMACIA-SUR',
       legalName: 'Farmacia del Sur S.R.L.',
       ownerUserId: 'u-1',
       tenantType: 'PHARMACY',
+      countryConceptId: 'c-pe',
+      jurisdictionConceptId: 'c-jur-bo',
     });
 
     req.flush(RESPUESTA);
+  });
+
+  it('un tipo territorial sin país no se envía', () => {
+    completar();
+    crudo<{ set: (v: unknown) => void }>('pais').set(null);
+    enviar();
+
+    expect(interno<() => { status: string }>('state')().status).toBe('ready');
+    expect(interno<() => boolean>('paisFaltante')()).toBe(true);
   });
 
   it('una aseguradora exige su bloque: sin él no se envía', () => {
@@ -128,6 +146,9 @@ describe('OrganizationNew', () => {
       regulatorIdentifier: 'APS-123',
     });
     expect('broker' in (req.request.body as object)).toBe(false);
+    // No es territorial: aunque haya país elegido de un tipo anterior, no
+    // viaja — su regulador va dentro del bloque.
+    expect('countryConceptId' in (req.request.body as object)).toBe(false);
 
     req.flush(RESPUESTA);
   });

@@ -73,6 +73,47 @@
       />
     </app-form-field>
 
+    @if (esTerritorial()) {
+      <app-form-section
+        legend="Dónde opera"
+        description="El backend lo exige para este tipo: determina bajo qué regulador presta atención."
+      >
+        <app-form-field
+          label="País"
+          hint="Buscá por nombre; el código acompaña para distinguir homónimos."
+          [required]="true"
+          [errorMessage]="paisFaltante() ? 'Elegí el país donde opera.' : ''"
+        >
+          <app-reference-combobox
+            [selected]="pais()"
+            [options]="candidatosPais()"
+            [loading]="buscandoPais()"
+            placeholder="Nombre del país"
+            emptyMessage="Ningún concepto coincide"
+            (searched)="buscarPais($event)"
+            (selectionChange)="pais.set($event)"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Jurisdicción"
+          hint="La jurisdicción regulatoria, por ejemplo «Bolivia · JUR_BO»."
+          [required]="true"
+          [errorMessage]="jurisdiccionFaltante() ? 'Elegí la jurisdicción.' : ''"
+        >
+          <app-reference-combobox
+            [selected]="jurisdiccion()"
+            [options]="candidatosJurisdiccion()"
+            [loading]="buscandoJurisdiccion()"
+            placeholder="Nombre de la jurisdicción"
+            emptyMessage="Ningún concepto coincide"
+            (searched)="buscarJurisdiccion($event)"
+            (selectionChange)="jurisdiccion.set($event)"
+          />
+        </app-form-field>
+      </app-form-section>
+    }
+
     @if (esAseguradora()) {
       <app-form-section
         legend="Datos de la aseguradora"
