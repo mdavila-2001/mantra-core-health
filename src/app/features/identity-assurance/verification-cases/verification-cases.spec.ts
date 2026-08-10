@@ -4,10 +4,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { ESTADOS_DE_CASO, resolverEstadosDeCaso } from '../../../../testing/case-status';
 import { VerificationCases } from './verification-cases';
 
-/** UUIDs reales del mapa de `case-status.ts`: son deterministas, no inventados. */
-const CASE_VERIFIED = '6fb20fdf-1c92-502c-8e1f-54a9bb85ff98';
+/** UUID real del catálogo: determinista, no inventado. */
+const CASE_VERIFIED = ESTADOS_DE_CASO.CASE_VERIFIED;
 
 interface FilaVisible {
   readonly id: string;
@@ -35,6 +36,9 @@ describe('VerificationCases', () => {
     fixture = TestBed.createComponent(VerificationCases);
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
+    // La pantalla resuelve los estados contra terminología: sin responder esa
+    // búsqueda, las etiquetas quedan en neutro y `verify()` protesta.
+    resolverEstadosDeCaso(http);
   });
 
   afterEach(() => {
