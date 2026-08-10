@@ -50,8 +50,20 @@
     margin-bottom: var(--sp-4);
 }
 
+/* Los campos se apilan con el mismo aire entre sí, sea cuál sea el trámite. */
+.verificar__formulario {
+    display: grid;
+    gap: var(--sp-4);
+}
+
 .verificar__enviar {
     margin-top: var(--sp-5);
+}
+
+.verificar__acciones {
+    display: flex;
+    gap: var(--sp-3);
+    flex-wrap: wrap;
 }
 
 /* Lista de definiciones y no una tabla: son pares clave–valor de un registro,

@@ -1,0 +1,144 @@
+<app-page-header
+  title="Definir regla de aprovisionamiento"
+  subtitle="Qué hace el login federado con un sujeto nuevo: la primera regla que case decide."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as rule) {
+  <div class="m40__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m40__resultado-titulo">La regla quedó definida</h2>
+
+    <dl class="m40__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ rule.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Prioridad</dt>
+        <dd class="tabular-nums">{{ rule.priority }}</dd>
+      </div>
+      <div>
+        <dt>Efecto (concepto)</dt>
+        <dd><code class="tabular-nums">{{ rule.effectConceptId }}</code></dd>
+      </div>
+      <div>
+        <dt>Activa</dt>
+        <dd>{{ rule.isActive ? 'Sí' : 'No' }}</dd>
+      </div>
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otraRegla()">Definir otra regla</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
+  }
+
+  <app-alert tone="info" class="m40__alert">
+    Rol y organización asignados solo acompañan al efecto Permitir: una regla
+    que deniega no asigna nada. El backend rechaza la combinación inválida.
+  </app-alert>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué se configura" description="El proveedor y el alcance de la regla.">
+      <app-form-field
+        label="Identificador del proveedor"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.providerId.touched && form.controls.providerId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="providerId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Organización a la que aplica"
+        hint="Opcional: vacía, la regla aplica a todas. Pegá el identificador (UUID)."
+        [errorMessage]="
+          form.controls.tenantId.touched && form.controls.tenantId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="tenantId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Decisión"
+      description="Cuándo casa la regla y qué hace cuando casa."
+    >
+      <app-form-field
+        label="Prioridad"
+        [required]="true"
+        hint="Única por proveedor; la primera regla que case decide."
+        [errorMessage]="
+          form.controls.priority.touched && form.controls.priority.invalid
+            ? 'Un número entero desde 1.'
+            : ''
+        "
+      >
+        <app-input formControlName="priority" type="number" />
+      </app-form-field>
+
+      <app-form-field
+        label="Condición sobre los claims (JSON)"
+        hint="Opcional: un objeto JSON. Vacía, no viaja."
+        [errorMessage]="
+          form.controls.conditionJson.touched && form.controls.conditionJson.invalid
+            ? 'Tiene que ser un objeto JSON válido, como {&quot;campo&quot;: &quot;valor&quot;}.'
+            : ''
+        "
+      >
+        <app-textarea
+          formControlName="conditionJson"
+          [rows]="3"
+          [autoResize]="true"
+          [maxLength]="maxCondition"
+        />
+      </app-form-field>
+
+      <app-form-field label="Efecto" [required]="true">
+        <app-radio-group [value]="effect()" (valueChange)="elegirEfecto($event)">
+          <app-radio value="ALLOW" label="Permitir el aprovisionamiento" />
+          <app-radio value="DENY" label="Denegar el aprovisionamiento" />
+        </app-radio-group>
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Asignaciones"
+      description="Solo con efecto Permitir: qué recibe el sujeto aprovisionado."
+    >
+      <app-form-field
+        label="Rol a asignar (concepto)"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.assignRoleConceptId.touched && form.controls.assignRoleConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="assignRoleConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Organización a asignar"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.assignTenantId.touched && form.controls.assignTenantId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="assignTenantId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Definir regla"
+      [pending]="isSubmitting()"
+      [disabled]="effect() === null"
+      (submitted)="submit()"
+    />
+  </form>
+}

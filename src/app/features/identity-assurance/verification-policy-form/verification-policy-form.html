@@ -1,0 +1,193 @@
+<app-page-header
+  title="Crear política de verificación"
+  subtitle="Qué nivel de identidad exige cada trámite según su riesgo. Un caso se abre contra una política."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as policy) {
+  <div class="m27__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m27__resultado-titulo">La política quedó creada</h2>
+
+    <dl class="m27__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ policy.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Código</dt>
+        <dd><code class="tabular-nums">{{ policy.policyCode }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado (concepto)</dt>
+        <dd><code class="tabular-nums">{{ policy.status }}</code></dd>
+      </div>
+      <div>
+        <dt>Creada el</dt>
+        <dd>{{ policy.createdAt.toLocaleString() }}</dd>
+      </div>
+    </dl>
+
+    <p class="m27__texto">
+      Guardá el identificador: abrir un caso de verificación lo pide.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraPolitica()">Crear otra política</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué política" description="Cómo se identifica y qué versión es.">
+      <app-form-field
+        label="Código de la política"
+        [required]="true"
+        hint="Único; hasta 100 caracteres. Por ejemplo, IAL2-PACIENTE."
+        [errorMessage]="
+          form.controls.policyCode.touched && form.controls.policyCode.invalid
+            ? 'Ingresá el código (hasta 100 caracteres).'
+            : ''
+        "
+      >
+        <app-input formControlName="policyCode" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Número de versión"
+        hint="Opcional: si no se indica, arranca en 1."
+        [errorMessage]="
+          form.controls.versionNumber.touched && form.controls.versionNumber.invalid
+            ? 'La versión empieza en 1.'
+            : ''
+        "
+      >
+        <app-input formControlName="versionNumber" type="number" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="A quién y ante qué riesgo"
+      description="Qué tipo de sujeto se verifica y qué riesgo tiene la transacción que lo exige."
+    >
+      <app-form-field
+        label="Tipo de sujeto (concepto)"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.subjectTypeConceptId.touched &&
+          form.controls.subjectTypeConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="subjectTypeConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Riesgo de la transacción (concepto)"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.transactionRiskConceptId.touched &&
+          form.controls.transactionRiskConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="transactionRiskConceptId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Niveles exigidos"
+      description="El de identidad es obligatorio; autenticador y federación, solo si el trámite los pide."
+    >
+      <app-form-field
+        label="Nivel de identidad exigido — IAL (concepto)"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.requiredIdentityAssuranceLevelConceptId.touched &&
+          form.controls.requiredIdentityAssuranceLevelConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="requiredIdentityAssuranceLevelConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Nivel de autenticador — AAL (concepto)"
+        hint="Opcional."
+        [errorMessage]="
+          form.controls.requiredAuthenticatorAssuranceLevelConceptId.touched &&
+          form.controls.requiredAuthenticatorAssuranceLevelConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="requiredAuthenticatorAssuranceLevelConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Nivel de federación — FAL (concepto)"
+        hint="Opcional."
+        [errorMessage]="
+          form.controls.requiredFederationAssuranceLevelConceptId.touched &&
+          form.controls.requiredFederationAssuranceLevelConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="requiredFederationAssuranceLevelConceptId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Evidencia y controles"
+      description="Objetos declarativos del modelo; vacíos, no viajan."
+    >
+      <app-form-field
+        label="Requisitos de evidencia (JSON)"
+        hint="Opcional: un objeto JSON. Vacío, no viaja."
+        [errorMessage]="
+          form.controls.evidenceRequirementsJson.touched &&
+          form.controls.evidenceRequirementsJson.invalid
+            ? 'Tiene que ser un objeto JSON válido, como {&quot;campo&quot;: &quot;valor&quot;}.'
+            : ''
+        "
+      >
+        <app-textarea
+          formControlName="evidenceRequirementsJson"
+          [rows]="3"
+          [autoResize]="true"
+          [maxLength]="maxJson"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Controles de fraude (JSON)"
+        hint="Opcional: un objeto JSON. Vacío, no viaja."
+        [errorMessage]="
+          form.controls.fraudControlsJson.touched && form.controls.fraudControlsJson.invalid
+            ? 'Tiene que ser un objeto JSON válido, como {&quot;campo&quot;: &quot;valor&quot;}.'
+            : ''
+        "
+      >
+        <app-textarea
+          formControlName="fraudControlsJson"
+          [rows]="3"
+          [autoResize]="true"
+          [maxLength]="maxJson"
+        />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Crear política"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

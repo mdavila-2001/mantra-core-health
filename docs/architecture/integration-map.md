@@ -111,32 +111,25 @@ sería un bucle contra el límite de 10 intentos por minuto.
 
 ## 3 · Operaciones sin consumidor
 
-Once operaciones escritas, probadas, y sin ninguna pantalla que las llame:
+Cinco operaciones escritas, probadas, y sin ninguna pantalla que las llame:
 
 | Cliente | Operaciones | Para qué existen | Prueba |
 |---|---|---|---|
-| `IdentityClient` | 4 · verificación de identidad de paciente y de profesional, verificación de matrícula, consulta del caso | El flujo de verificación de identidad, al que apunta el estado S5 con acción | Sí |
-| `ProfilesClient` | 3 · alta de paciente, alta de profesional, vínculo de cuenta | Altas hechas por personal, no auto-registro | Sí |
+| `ProfilesClient` | 2 · alta de profesional, vínculo de cuenta | Altas hechas por personal, no auto-registro | Sí |
 | `TerminologyClient` | 1 · expansión de conjunto de valores | Las listas de opciones de cualquier formulario clínico | Sí |
-| `FilesClient` | 1 · subida | La evidencia que necesita `IdentityClient` | Sí |
-| `IamClient` | 2 · `activate`, `createUser` | Registro asistido y alta por administrador | Sí |
+| `SchedulingClient` | 1 · reserva por identificador | El detalle de una reserva puntual | Sí |
+| `AuthzClient` | 1 · bases legítimas de acceso | La justificación de acceso de la ficha de paciente | Sí |
 
-**No es código muerto**: todos tienen prueba y todos son la mitad de un flujo cuya
+**No es código muerto**: todas tienen prueba y todas son la mitad de un flujo cuya
 otra mitad —la pantalla— todavía no se escribió. La forma correcta de leerlo es
 «la capa de datos va por delante de la interfaz».
 
-El caso más notable es la cadena de verificación de identidad, que está completa
-salvo la pantalla:
+La cadena de verificación de identidad, que fue el caso más notable de esta
+lista, ya se cerró: `IdentityVerification` (V27-14…17) sube la evidencia con
+`FilesClient.upload`, abre el caso con los cuatro trámites de `IdentityClient`,
+y la lista y el detalle de casos propios (V27-01) consultan su estado.
 
-```text
-FilesClient.upload(evidencia)  →  fileId
-      ↓
-IdentityClient.requestPatientIdentityVerification({ evidenceFileId })
-      ↓
-IdentityClient.getVerificationCase(caseId)   ← consulta del estado
-```
-
-Y `errorToViewState` ya sabe mandar ahí cuando la API responde
+`errorToViewState` manda ahí cuando la API responde
 `IDENTITY_VERIFICATION_REQUIRED`:
 
 ```ts
@@ -146,9 +139,9 @@ return forbidden({
 });
 ```
 
-**Pero `IDENTITY_VERIFICATION_ROUTE` vale `/identity/me`, que es una ruta de la
-API y no del router.** Ninguna ruta de Angular coincide, así que el comodín la
-mandaría a `/`. Brecha `HIGH`, registrada.
+`IDENTITY_VERIFICATION_ROUTE` vale `/identidad/verificar`, una ruta real del
+router — la brecha `HIGH` que registraba esta sección (apuntaba a `/identity/me`,
+una ruta de la API) quedó cerrada junto con la pantalla.
 
 ## 4 · Las tres particularidades del transporte
 

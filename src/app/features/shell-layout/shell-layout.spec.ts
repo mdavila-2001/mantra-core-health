@@ -120,6 +120,7 @@ describe('ShellLayout', () => {
       '/panel',
       '/mi-cuenta',
       '/identidad/verificar',
+      '/identidad/casos',
       '/design-system',
     ]);
   });

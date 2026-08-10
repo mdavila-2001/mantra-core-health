@@ -385,9 +385,11 @@ OpenTelemetry.
 
 ---
 
-## Sesión en curso · I2 organismo de estado de trámite (status-seal)
+## Sesión cerrada · I2 organismo de estado de trámite (status-seal)
 
 **Empezó:** 2026-08-05 · **Rama:** `itzan/i2-organismos-estado` · **Base:** `aeeb7fc`
+**Cerró:** 2026-08-06 · PR #21 mergeado a `dev` y rama borrada. El organismo `status-seal`
+y el mapa `case-status.ts` quedaron disponibles para todos.
 
 ### Archivos que estoy creando (nuevos, no deberían chocar)
 
@@ -416,6 +418,58 @@ src/app/features/identity-verification/case-status.spec.ts
 - `src/app/features/auth/**` · `dashboard/**` · `shell-layout/**`
 - `src/styles.css` y `src/app/shared/components/tone/**` (consumo los tonos, no los cambio)
 - `src/app/app.routes.ts` y todo el ruteo · `e2e/**` · `.github/**`
+
+---
+
+## Sesión en curso · W2 vistas Fase 0 — identity_assurance, delegated_access, auth_providers
+
+**Empezó:** 2026-08-07 · **Rama:** `itzan/w2-vistas-fase0-identidad-acceso` · **Base:** `e33e190` (dev)
+
+Carril W2 del plan de la semana: las 37 vistas de Fase 0 de M27/M29/M40. Se construye por
+fases (V27-01 primero, después autoservicio V27, V29 completo, V40, y V27 admin al final).
+Las tablas sin `GET` de colección quedan en `ViewState` S3 con TODO, como manda el plan.
+
+**Rehecha sobre `dev` el 2026-08-10.** W2 se entregó como cadena de cuatro PRs apilados
+(#34 → #37), y la cadena se mergeó en orden inverso: cada eslabón entró en su propia base
+antes de que esa base recibiera al siguiente, así que el contenido nunca llegó a `dev` —
+`itzan/w2-pr1` quedó con la mitad de W2 y los módulos M40 y M27 admin quedaron sin PR que
+los llevara. La entrega vive ahora en **una sola rama** sobre `dev` al día. Las cuatro
+`itzan/w2-pr1…pr4` quedan obsoletas.
+
+### Archivos que estoy creando (nuevos, no deberían chocar)
+
+```text
+src/app/features/identity-assurance/**       vistas M27 (casos propios, verificaciones, admin)
+src/app/features/delegated-access/**         vistas M29 (asignaciones, delegados, permisos…)
+src/app/features/auth-providers/**           vistas M40 (proveedores, claves, vínculos…)
+src/app/core/data-access/delegated-access/   client nuevo M29 (mismo molde que los existentes)
+src/app/core/data-access/auth-providers/     client nuevo M40
+```
+
+### Archivos existentes que estoy modificando
+
+| Archivo | Qué le hago |
+|---|---|
+| `src/app/core/data-access/identity/*` | Agrego el listado propio (`GET /identity/me/verification-cases`) y `requestTenantVerification` (`POST /identity/me/tenants/:id/verification`) — solo métodos nuevos, no toco los existentes |
+| `src/app/core/navigation/navigation.map.ts` | Filas nuevas para las secciones de mis 3 módulos (incluye rol `IDENTITY_ADMIN`, que hoy no existe en el mapa) |
+| `src/app/app.routes.ts` | Filas en `PANTALLAS_DIFERIDAS` para mis secciones + rutas hijas de detalle (`identidad/casos/:caseId`) con la sección madre en `data` — no reestructuro nada |
+| `app.routes.spec.ts` · `shell-layout.spec.ts` · `navigation.service.spec.ts` | Solo las listas esperadas del menú/rutas, que fijan inventario: cada sección nueva las mueve. En `app.routes.spec` la promesa de huérfanas ahora distingue fichas de detalle y les exige la sección madre en `data` |
+| `src/app/features/identity-verification/*` | Extendido (F2): selector de trámite con las 4 variantes de autoservicio — paciente, profesional, matrícula y organización (esta última elige entre los tenants del token). El flujo paciente no cambia |
+| `docs/**` (catálogo, rutas, inventario) | Solo las altas que exijan los gates de documentación |
+
+### Lo que NO estoy tocando — es todo tuyo
+
+- `src/app/shared/components/**` (átomos, moléculas, organismos) y `src/styles.css` — si un
+  hueco del banco me obliga a una pieza nueva, la propongo acá antes de escribirla
+- `src/app/features/auth/**` · `admin/**` · `dashboard/**` · `shell-layout/**` · la vitrina
+- `src/app/core/auth/**` · `core/http/**` · `core/tokens/**` · `core/view-state/**`
+- `.github/**` · todo lo de OpenTelemetry y telemetría
+- `cypress/**`, con **una sola excepción declarada**: la lista de rutas esperadas del menú en
+  `cypress/e2e/navigation/navegacion.cy.ts`. W2 suma `identidad/casos` al registro de
+  navegación, y esa sección no exige rol, así que aparece en el menú de cualquier sesión y el
+  `deep.equal` del spec deja de cerrar. Se agrega la ruta a la lista y nada más: ni la lógica
+  de la suite ni sus otros casos se tocan. Es la misma regla que ya aplicamos en el resto de
+  la entrega — una expectativa derivada viaja con el cambio que la provoca
 
 ---
 

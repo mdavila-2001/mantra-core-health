@@ -1,0 +1,36 @@
+.caso {
+    max-width: 60ch;
+    margin-top: var(--sp-6);
+}
+
+.caso__titulo {
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    margin-bottom: var(--sp-4);
+}
+
+/* Pares clave–valor de un registro: exactamente para lo que existe `<dl>`. */
+.caso__datos {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--sp-2) var(--sp-4);
+    margin: 0 0 var(--sp-5);
+    align-items: center;
+}
+
+.caso__datos dt {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.caso__datos dd {
+    margin: 0;
+}
+
+.caso__datos code {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-xs);
+    padding: 0 var(--sp-1);
+    background: var(--bg-inset);
+    user-select: all;
+}

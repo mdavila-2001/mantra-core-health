@@ -1,0 +1,90 @@
+<app-page-header
+  title="Solicitar vinculación de cuenta"
+  subtitle="Liga un sujeto externo con una cuenta local mediante un token de un solo uso."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (requested(); as solicitud) {
+  <div class="m40__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m40__resultado-titulo">La solicitud quedó creada</h2>
+
+    <p class="m40__texto">
+      El token se muestra una sola vez: en la tabla queda su hash. Perderlo obliga a
+      solicitar la vinculación de nuevo.
+    </p>
+
+    <dl class="m40__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ solicitud.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Token de vinculación</dt>
+        <dd><code class="tabular-nums">{{ solicitud.linkToken }}</code></dd>
+      </div>
+      <div>
+        <dt>Vence el</dt>
+        <dd>{{ solicitud.expiresAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+      </div>
+      <div>
+        <dt>Estado (concepto)</dt>
+        <dd><code class="tabular-nums">{{ solicitud.statusConceptId }}</code></dd>
+      </div>
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otraSolicitud()">Solicitar otra vinculación</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Quién se vincula"
+      description="El proveedor donde vive el sujeto externo que se quiere ligar a una cuenta local."
+    >
+      <app-form-field
+        label="Identificador del proveedor"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.providerId.touched && form.controls.providerId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="providerId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Sujeto externo"
+        [required]="true"
+        hint="El identificador del sujeto en el proveedor."
+        [errorMessage]="
+          form.controls.externalSubject.touched && form.controls.externalSubject.invalid
+            ? 'Ingresá el sujeto externo, hasta 300 caracteres.'
+            : ''
+        "
+      >
+        <app-input formControlName="externalSubject" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Minutos de validez del token"
+        hint="Opcional: por defecto, 30 minutos. Hasta 1440 (un día)."
+        [errorMessage]="
+          form.controls.expiresInMinutes.touched && form.controls.expiresInMinutes.invalid
+            ? 'Un número entero entre 1 y 1440.'
+            : ''
+        "
+      >
+        <app-input formControlName="expiresInMinutes" type="number" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Solicitar vinculación"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

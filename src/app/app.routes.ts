@@ -56,6 +56,22 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administracion/terminologia': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'mi-cuenta': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
+  'identidad/casos': () =>
+    import('./features/identity-assurance/verification-cases/verification-cases').then(
+      (m) => m.VerificationCases,
+    ),
+  'administracion/acceso-delegado': () =>
+    import('./features/delegated-access/delegated-access-home/delegated-access-home').then(
+      (m) => m.DelegatedAccessHome,
+    ),
+  'administracion/proveedores-identidad': () =>
+    import('./features/auth-providers/auth-providers-home/auth-providers-home').then(
+      (m) => m.AuthProvidersHome,
+    ),
+  'administracion/verificacion-identidad': () =>
+    import('./features/identity-assurance/identity-admin-home/identity-admin-home').then(
+      (m) => m.IdentityAdminHome,
+    ),
 };
 
 /**
@@ -122,7 +138,59 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.PatientDetail)
         .catch(() => chunkFallido()),
   },
+  {
+    // Ficha de un caso de verificación (V27-01): una fila del listado de
+    // `identidad/casos` abierta.
+    path: 'identidad/casos/:caseId',
+    title: `${APP_TITLE} - Caso de verificación`,
+    loadComponent: () =>
+      import('./features/identity-assurance/verification-case-detail/verification-case-detail')
+        .then((m) => m.VerificationCaseDetail)
+        .catch(() => chunkFallido()),
+  },
 ];
+
+/**
+ * Pantalla de operación de una sección sin listados (M29, M40): una acción de
+ * la sección, no una entrada de menú. Como con las pantallas hijas, la sección
+ * del breadcrumb la resuelve `NavigationService` por la coincidencia más larga.
+ */
+function pantallaDeOperacion(
+  seccion: string,
+  subpath: string,
+  titulo: string,
+  loader: () => Promise<Type<unknown>>,
+): Routes[number] {
+  return {
+    path: `${seccion}/${subpath}`,
+    title: `${APP_TITLE} - ${titulo}`,
+    loadComponent: () => loader().catch(() => chunkFallido()),
+  };
+}
+
+function pantallaDeAccesoDelegado(
+  subpath: string,
+  titulo: string,
+  loader: () => Promise<Type<unknown>>,
+): Routes[number] {
+  return pantallaDeOperacion('administracion/acceso-delegado', subpath, titulo, loader);
+}
+
+function pantallaDeProveedoresDeIdentidad(
+  subpath: string,
+  titulo: string,
+  loader: () => Promise<Type<unknown>>,
+): Routes[number] {
+  return pantallaDeOperacion('administracion/proveedores-identidad', subpath, titulo, loader);
+}
+
+function pantallaDeVerificacionIdentidad(
+  subpath: string,
+  titulo: string,
+  loader: () => Promise<Type<unknown>>,
+): Routes[number] {
+  return pantallaDeOperacion('administracion/verificacion-identidad', subpath, titulo, loader);
+}
 
 /**
  * Las rutas hijas del armazón, derivadas del registro de secciones.
@@ -183,6 +251,205 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'panel' },
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
+      pantallaDeAccesoDelegado('delegaciones/nueva', 'Nueva delegación', () =>
+        import(
+          './features/delegated-access/practitioner-delegate-form/practitioner-delegate-form'
+        ).then((m) => m.PractitionerDelegateForm),
+      ),
+      pantallaDeAccesoDelegado('delegaciones/revocar', 'Revocar delegación', () =>
+        import('./features/delegated-access/delegation-revocation/delegation-revocation').then(
+          (m) => m.DelegationRevocation,
+        ),
+      ),
+      pantallaDeAccesoDelegado('delegaciones/solicitudes/nueva', 'Solicitar acceso delegado', () =>
+        import('./features/delegated-access/access-request-form/access-request-form').then(
+          (m) => m.AccessRequestForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('delegaciones/concesiones/nueva', 'Otorgar concesión', () =>
+        import('./features/delegated-access/grant-form/grant-form').then((m) => m.GrantForm),
+      ),
+      pantallaDeAccesoDelegado('asignaciones/nueva', 'Asignar usuario de organización', () =>
+        import('./features/delegated-access/org-assignment-form/org-assignment-form').then(
+          (m) => m.OrgAssignmentForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('asignaciones/editar', 'Reasignar o suspender asignación', () =>
+        import('./features/delegated-access/org-assignment-update/org-assignment-update').then(
+          (m) => m.OrgAssignmentUpdate,
+        ),
+      ),
+      pantallaDeAccesoDelegado('solicitudes/resolver', 'Resolver solicitud de acceso', () =>
+        import(
+          './features/delegated-access/access-request-resolution/access-request-resolution'
+        ).then((m) => m.AccessRequestResolution),
+      ),
+      pantallaDeAccesoDelegado('conjuntos/nuevo', 'Publicar set de permisos', () =>
+        import('./features/delegated-access/permission-set-form/permission-set-form').then(
+          (m) => m.PermissionSetForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('conjuntos/versionar', 'Versionar set de permisos', () =>
+        import('./features/delegated-access/set-version-form/set-version-form').then(
+          (m) => m.SetVersionForm,
+        ),
+      ),
+      pantallaDeAccesoDelegado('operacion/evaluar-actor', 'Evaluar actor efectivo', () =>
+        import('./features/delegated-access/actor-evaluation/actor-evaluation').then(
+          (m) => m.ActorEvaluation,
+        ),
+      ),
+      pantallaDeAccesoDelegado('operacion/barrido-expiracion', 'Barrido de expiración', () =>
+        import('./features/delegated-access/expiry-sweep/expiry-sweep').then((m) => m.ExpirySweep),
+      ),
+      pantallaDeProveedoresDeIdentidad('proveedores/nuevo', 'Registrar proveedor de identidad', () =>
+        import('./features/auth-providers/provider-form/provider-form').then(
+          (m) => m.ProviderForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad(
+        'proveedores/protocolo',
+        'Configurar protocolo del proveedor',
+        () =>
+          import('./features/auth-providers/protocol-config-form/protocol-config-form').then(
+            (m) => m.ProtocolConfigForm,
+          ),
+      ),
+      pantallaDeProveedoresDeIdentidad('proveedores/mapeo-atributos', 'Fijar mapeo de atributos', () =>
+        import('./features/auth-providers/attribute-mappings-form/attribute-mappings-form').then(
+          (m) => m.AttributeMappingsForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad(
+        'proveedores/regla-aprovisionamiento',
+        'Definir regla de aprovisionamiento',
+        () =>
+          import('./features/auth-providers/provisioning-rule-form/provisioning-rule-form').then(
+            (m) => m.ProvisioningRuleForm,
+          ),
+      ),
+      pantallaDeProveedoresDeIdentidad('claves/nueva', 'Publicar clave de firma', () =>
+        import('./features/auth-providers/signing-key-form/signing-key-form').then(
+          (m) => m.SigningKeyForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad('claves/rotar', 'Rotar clave de firma', () =>
+        import('./features/auth-providers/key-rotation-form/key-rotation-form').then(
+          (m) => m.KeyRotationForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad(
+        'organizaciones/vincular',
+        'Vincular proveedor a una organización',
+        () =>
+          import('./features/auth-providers/tenant-binding-form/tenant-binding-form').then(
+            (m) => m.TenantBindingForm,
+          ),
+      ),
+      pantallaDeProveedoresDeIdentidad('login/iniciar', 'Iniciar login federado', () =>
+        import('./features/auth-providers/login-start-form/login-start-form').then(
+          (m) => m.LoginStartForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad('login/callback', 'Procesar callback del proveedor', () =>
+        import('./features/auth-providers/login-callback-form/login-callback-form').then(
+          (m) => m.LoginCallbackForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad('cuentas/vincular', 'Solicitar vinculación de cuenta', () =>
+        import('./features/auth-providers/account-link-request-form/account-link-request-form').then(
+          (m) => m.AccountLinkRequestForm,
+        ),
+      ),
+      pantallaDeProveedoresDeIdentidad(
+        'cuentas/completar',
+        'Completar vinculación de cuenta',
+        () =>
+          import(
+            './features/auth-providers/account-link-complete-form/account-link-complete-form'
+          ).then((m) => m.AccountLinkCompleteForm),
+      ),
+      pantallaDeProveedoresDeIdentidad(
+        'cuentas/desvincular',
+        'Desvincular identidad federada',
+        () =>
+          import('./features/auth-providers/identity-unlink-form/identity-unlink-form').then(
+            (m) => m.IdentityUnlinkForm,
+          ),
+      ),
+      pantallaDeVerificacionIdentidad('autoridades/nueva', 'Registrar autoridad de identidad', () =>
+        import('./features/identity-assurance/authority-form/authority-form').then(
+          (m) => m.AuthorityForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('autoridades/endpoint', 'Publicar endpoint de autoridad', () =>
+        import(
+          './features/identity-assurance/authority-endpoint-form/authority-endpoint-form'
+        ).then((m) => m.AuthorityEndpointForm),
+      ),
+      pantallaDeVerificacionIdentidad('politicas/nueva', 'Crear política de verificación', () =>
+        import(
+          './features/identity-assurance/verification-policy-form/verification-policy-form'
+        ).then((m) => m.VerificationPolicyForm),
+      ),
+      pantallaDeVerificacionIdentidad('casos/nuevo', 'Abrir caso de verificación', () =>
+        import('./features/identity-assurance/case-open-form/case-open-form').then(
+          (m) => m.CaseOpenForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('casos/evidencia', 'Aportar evidencia a un caso', () =>
+        import('./features/identity-assurance/case-evidence-form/case-evidence-form').then(
+          (m) => m.CaseEvidenceForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('casos/checks', 'Planificar checks del caso', () =>
+        import('./features/identity-assurance/check-plan-form/check-plan-form').then(
+          (m) => m.CheckPlanForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('casos/barrido', 'Barrer casos vencidos', () =>
+        import('./features/identity-assurance/case-expire-sweep/case-expire-sweep').then(
+          (m) => m.CaseExpireSweep,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad(
+        'checks/intento',
+        'Registrar intento contra la autoridad',
+        () =>
+          import('./features/identity-assurance/check-attempt-form/check-attempt-form').then(
+            (m) => m.CheckAttemptForm,
+          ),
+      ),
+      pantallaDeVerificacionIdentidad('checks/resultado', 'Registrar resultado del check', () =>
+        import('./features/identity-assurance/check-result-form/check-result-form').then(
+          (m) => m.CheckResultForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('checks/fraude', 'Registrar señal de fraude', () =>
+        import('./features/identity-assurance/fraud-signal-form/fraud-signal-form').then(
+          (m) => m.FraudSignalForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('revision/escalar', 'Escalar a revisión manual', () =>
+        import('./features/identity-assurance/manual-review-form/manual-review-form').then(
+          (m) => m.ManualReviewForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('revision/decision', 'Decidir revisión manual', () =>
+        import('./features/identity-assurance/review-decision-form/review-decision-form').then(
+          (m) => m.ReviewDecisionForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('aserciones/emitir', 'Emitir aserción', () =>
+        import('./features/identity-assurance/assertion-issue-form/assertion-issue-form').then(
+          (m) => m.AssertionIssueForm,
+        ),
+      ),
+      pantallaDeVerificacionIdentidad('aserciones/revocar', 'Revocar aserción', () =>
+        import('./features/identity-assurance/assertion-revoke-form/assertion-revoke-form').then(
+          (m) => m.AssertionRevokeForm,
+        ),
+      ),
     ],
   },
   {
