@@ -196,7 +196,12 @@ describe('AuthService', () => {
 
   it('registerPatient NO abre sesión: el backend devuelve el perfil, no tokens', () => {
     auth
-      .registerPatient({ nationalId: '1234567', password: 'secreto12', displayName: 'Ana' })
+      .registerPatient({
+        nationalId: '1234567',
+        password: 'secreto12',
+        name: 'Ana',
+        lastName: 'Paz',
+      })
       .subscribe();
 
     http.expectOne('/iam/auth/register-patient').flush({

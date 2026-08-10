@@ -61,9 +61,13 @@ describe('NavigationService', () => {
       abrirSesion([]);
 
       // Panel y autoservicio: lo que cualquiera puede hacer con su propia cuenta.
+      // «Mis turnos» entra acá porque su filtro real es tener perfil de
+      // paciente —un dato de la cuenta, no un rol—, y eso lo resuelve la
+      // pantalla, no el menú.
       expect(rutasDelMenu()).toEqual([
         '/panel',
         '/mi-cuenta',
+        '/mi-cuenta/turnos',
         '/identidad/verificar',
         '/identidad/casos',
       ]);
