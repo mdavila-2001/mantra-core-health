@@ -39,11 +39,15 @@ function desdeProxyJson(archivo) {
  * Se normaliza la barra final: nginx la lleva —`location ^~ /iam/`— y el proxy
  * de Angular no —`"/iam"`—. Comparar sin normalizar daría seis diferencias
  * falsas y el verificador se volvería ruido.
+ *
+ * Admite prefijos de más de un segmento (`/admin/tenants`): son la salida
+ * cuando el primer segmento solo sería ambiguo frente a una ruta de la
+ * aplicación — `/admin` ya desvió `/administracion/pacientes` una vez.
  */
 function desdeNginx(archivo) {
   const conf = read(join(REPO_ROOT, archivo));
   const prefijos = new Set();
-  const location = /location\s+\^~\s+(\/[\w-]+)\/?\s/g;
+  const location = /location\s+\^~\s+(\/[\w-]+(?:\/[\w-]+)*)\/?\s/g;
 
   let match;
   while ((match = location.exec(conf)) !== null) {

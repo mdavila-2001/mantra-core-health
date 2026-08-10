@@ -10,7 +10,8 @@
       "/scheduling",
       "/charts",
       "/clinical",
-      "/authz"
+      "/authz",
+      "/admin/tenants"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

@@ -1,6 +1,6 @@
 # API de backend
 
-Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 41 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/admin/tenants` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -48,6 +48,7 @@ inyección»*.
 | `POST` | `/iam/auth/forgot-password` | `ForgotPassword` | No declarada |
 | `POST` | `/iam/auth/reset-password` | `ResetPassword` | No declarada |
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
+| `GET` | `/iam/users` | `OrganizationNew` (buscador de owner, V04-01·F) | No |
 | `POST` | `/iam/users` | `UserRegistration` | No |
 | `POST` | `/iam/users/assisted-registration` | `AssistedRegistration` | No |
 
@@ -141,6 +142,23 @@ resuelve la sesión. Exige identidad verificada vigente y sin ella responde `403
 con `IDENTITY_VERIFICATION_REQUIRED`, que es el único 403 del contrato que llega
 a la interfaz **con una salida** en vez de un muro.
 
+
+### `DirectoryClient` — 2 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/admin/tenants` | `OrganizationList` (V04-01·L) |
+| `POST` | `/admin/tenants` | `OrganizationNew` (V04-01·F) |
+
+**`/admin/tenants` es la cara de plataforma del directorio**: opera fuera del
+contexto RLS de tenant. El listado admite `SECURITY_ADMIN` y `SUPERADMIN`; el
+alta, sólo `SUPERADMIN`. La organización nace `pending` y sin verificar — la
+verificación (`POST /admin/tenants/:tenantId/verification`) es otra operación,
+de otro rol, y el frontend todavía no la llama.
+
+**El proxy la declara con dos segmentos** (`/admin/tenants`, no `/admin`):
+`/admin` a secas capturaría `/administracion/*`, que es una ruta de la
+aplicación — ya desvió `/administracion/pacientes` una vez.
 
 ### `SchedulingClient` — 4 operaciones · sólo lectura
 

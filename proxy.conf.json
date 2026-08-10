@@ -10,7 +10,10 @@
       "blanco. Lo encontró el recorrido con usuarios reales.",
       "",
       "Regla: sólo se listan prefijos que algún cliente de `core/data-access`",
-      "use de verdad, y que no sean prefijo de ninguna ruta de `APP_SECTIONS`."
+      "use de verdad, y que no sean prefijo de ninguna ruta de `APP_SECTIONS`.",
+      "",
+      "`/admin/tenants` va con dos segmentos por esa regla: `/admin` a secas",
+      "volvería a comerse `/administracion/*`."
     ],
     "context": [
       "/iam",
@@ -22,7 +25,8 @@
       "/scheduling",
       "/charts",
       "/clinical",
-      "/authz"
+      "/authz",
+      "/admin/tenants"
     ],
     "target": "http://localhost:3000",
     "secure": false,

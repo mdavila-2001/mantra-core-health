@@ -53,6 +53,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/user-registration/user-registration').then((m) => m.UserRegistration),
   'administracion/pacientes': () =>
     import('./features/admin/patients/patient-list/patient-list').then((m) => m.PatientList),
+  'administracion/organizaciones': () =>
+    import('./features/admin/organizations/organization-list/organization-list').then(
+      (m) => m.OrganizationList,
+    ),
   'administracion/terminologia': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'mi-cuenta': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
@@ -120,6 +124,14 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/patients/patient-detail/patient-detail')
         .then((m) => m.PatientDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'administracion/organizaciones/nueva',
+    title: `${APP_TITLE} - Nueva organización`,
+    loadComponent: () =>
+      import('./features/admin/organizations/organization-new/organization-new')
+        .then((m) => m.OrganizationNew)
         .catch(() => chunkFallido()),
   },
 ];

@@ -115,9 +115,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Organizaciones',
     group: 'Administración',
     icon: 'settings',
+    // El listado admite además SUPERADMIN, pero ese rol es el comodín del
+    // menú (`isVisibleTo`) y no hace falta declararlo.
     roles: ['SECURITY_ADMIN'],
-    availability: 'planificada',
-    summary: 'Administrá sedes, membresías y datos de la organización.',
+    // Encendida con V04-01: `GET /admin/tenants` y el alta con tipo existen
+    // desde los PRs #28/#29 del backend. Sucursales y membresías siguen
+    // planificadas dentro de la sección: entran con sus propias vistas.
+    availability: 'disponible',
+    summary: 'Dá de alta clínicas, farmacias y aseguradoras, y seguí su verificación.',
     module: 'M04 directory',
   },
   {
