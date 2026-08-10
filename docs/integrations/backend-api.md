@@ -1,6 +1,6 @@
 # API de backend
 
-Las 83 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 85 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -230,12 +230,24 @@ botón que devuelve un error, y elige el primer recurso cuando la URL no trae un
 pide nada: un `400` ahí se leería como «la agenda falló» y lo que falta es un
 paso previo.
 
-### `ClinicalClient` — 2 operaciones · sólo lectura
+### `ClinicalClient` — 4 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/clinical/patients/:patientProfileId/summary` | `PatientChart` (UC-39-20) |
 | `GET` | `/charts/patients/:patientProfileId/chart` | `PatientChart` (UC-40-14) |
+| `POST` | `/clinical/encounters/check-in` | `PatientChart` (UC-08-02) |
+| `POST` | `/clinical/encounters/:encounterId/close` | `PatientChart` (UC-08-14) |
+
+**El encuentro se abre y se cierra desde el expediente**, que es donde está
+quien atiende. Abrirlo no exige un episodio de cuidado previo (`episodeId` es
+opcional) y el backend le pone la hora de inicio y la clase por omisión.
+
+**Cerrar dos veces no es idempotente**: el backend responde `422` sobre un
+encuentro que ya no está en curso, así que la pantalla lo muestra como estado y
+no como fallo. El cierre admite `expectedRowVersion` para el bloqueo optimista
+que el modelo exige (`row_version`), y arrastra los periodos abiertos de
+participantes y ubicaciones.
 
 **Dos módulos del backend y un solo cliente**, porque son dos lecturas de lo
 mismo: `clinical` guarda lo estructurado —condiciones, alergias, medicación,
