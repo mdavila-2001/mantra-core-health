@@ -1,108 +1,77 @@
 /**
- * Genera el recorrido visual completo: corrida y reporte, en un solo comando.
+ * Lanzador del recorrido visual.
  *
- * Existe porque `yarn recorrido` encadenaba dos comandos con `&&`, y eso deja
- * dos cabos sueltos que sólo se notan cuando muerden:
+ * Corre la suite `cypress/e2e/recorrido/`, que **no entra** en la corrida por
+ * defecto: captura cientos de imágenes y tarda minutos, así que arrastrarla en
+ * cada cambio haría que nadie corriera las pruebas.
  *
- * 1. **El puerto ocupado.** El servidor de una corrida anterior que quedó vivo
- *    hace fallar el arranque con un mensaje que no dice qué hacer. Acá se avisa
- *    y se ofrece la salida.
- * 2. **El reporte de una corrida que falló.** Con `&&` no se genera, y entonces
- *    no hay forma de mirar las pantallas que **sí** se capturaron antes del
- *    fallo — que es justo cuando más falta hacen.
+ * Hace tres cosas que no se pueden dejar libradas a quien lo invoque:
  *
- *   node scripts/run-recorrido.mjs [--reusar-servidor] [-- <args de playwright>]
+ *  1. **Fija `EVIDENCIAS_DIR`** para que las capturas caigan en
+ *     `artifacts/recorrido/` y no pisen las del recorrido con usuarios reales.
+ *  2. **Vacía las evidencias de la corrida anterior.** Sin esto, una pantalla
+ *     que dejó de existir seguiría apareciendo en el reporte con la captura de
+ *     la corrida pasada, y nadie lo notaría: el reporte se arma leyendo el
+ *     directorio, no comparando contra nada.
+ *  3. **Genera el reporte también cuando la suite falla**, que es justamente
+ *     cuando hace falta mirarlo.
+ *
+ *   node scripts/run-recorrido.mjs [-- <args de cypress>]
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const RAIZ = resolve(new URL('..', import.meta.url).pathname.replace(/\/$/, ''));
-const PUERTO = 4173;
+const RAIZ = resolve(import.meta.dirname, '..');
+const CARPETA = 'recorrido';
+const EVIDENCIAS = resolve(RAIZ, 'artifacts', CARPETA);
 
-/** Separa nuestras banderas de las que hay que pasarle a Playwright tal cual. */
-function leerArgumentos() {
-  const argv = process.argv.slice(2);
-  const corte = argv.indexOf('--');
-  const propios = corte === -1 ? argv : argv.slice(0, corte);
-  const ajenos = corte === -1 ? [] : argv.slice(corte + 1);
-  return { reusar: propios.includes('--reusar-servidor'), ajenos };
+/** Lo que venga después de `--` se le pasa tal cual a Cypress. */
+function argumentosDeCypress() {
+  const separador = process.argv.indexOf('--');
+  return separador === -1 ? [] : process.argv.slice(separador + 1);
 }
 
-/**
- * Si el puerto del recorrido ya está tomado.
- *
- * `lsof` no está en todos lados, y no tenerlo no puede impedir la corrida: en
- * ese caso se sigue y, si el puerto estaba ocupado, lo dirá Playwright.
- */
-function puertoOcupado() {
-  const salida = spawnSync('lsof', ['-ti', `tcp:${PUERTO}`], { encoding: 'utf8' });
-  if (salida.error !== undefined || salida.status === null) {
-    return false;
-  }
-  return salida.stdout.trim() !== '';
-}
-
-function correr(comando, args, opciones = {}) {
-  const resultado = spawnSync(comando, args, {
+function correr(comando, args, entorno) {
+  return spawnSync(comando, args, {
     cwd: RAIZ,
     stdio: 'inherit',
+    env: entorno,
+    // `yarn` es un `.cmd` en Windows y sin shell no se encuentra.
     shell: process.platform === 'win32',
-    ...opciones,
   });
-  return resultado.status ?? 1;
 }
 
-function main() {
-  const { reusar, ajenos } = leerArgumentos();
+console.log('[recorrido] Vaciando las evidencias de la corrida anterior…');
+rmSync(EVIDENCIAS, { recursive: true, force: true });
+mkdirSync(EVIDENCIAS, { recursive: true });
 
-  if (puertoOcupado() && !reusar) {
-    console.error(
-      [
-        `El puerto ${PUERTO} está ocupado y no se pidió reutilizar el servidor.`,
-        '',
-        'Si es un servidor viejo que quedó vivo:',
-        `  lsof -ti tcp:${PUERTO} | xargs kill -9`,
-        '',
-        'Si es el artefacto ya construido y querés aprovecharlo:',
-        '  yarn recorrido --reusar-servidor',
-        '',
-        'Ojo con lo segundo: el servidor lee el HTML prerenderizado al arrancar',
-        'y lo guarda en memoria. Si el artefacto se reconstruyó desde entonces,',
-        'ese HTML apunta a fragmentos que ya no existen y no arranca nada.',
-      ].join('\n'),
-    );
-    process.exit(1);
-  }
+// `E2E_SUITE` levanta la exclusión que deja estas specs fuera de la corrida
+// por defecto; sin ella, el `--spec` de abajo no encontraría ningún archivo.
+const entorno = { ...process.env, EVIDENCIAS_DIR: CARPETA, E2E_SUITE: "recorrido" };
 
-  const entorno = reusar
-    ? { ...process.env, RECORRIDO_REUSAR_SERVIDOR: 'true' }
-    : process.env;
+const cypress = correr(
+  'yarn',
+  [
+    'cypress',
+    'run',
+    '--e2e',
+    '--browser',
+    'chrome',
+    '--spec',
+    'cypress/e2e/recorrido/**/*.cy.ts',
+    ...argumentosDeCypress(),
+  ],
+  entorno,
+);
 
-  const codigo = correr(
-    'npx',
-    ['playwright', 'test', '-c', 'playwright.recorrido.config.ts', ...ajenos],
-    { env: entorno },
-  );
-
-  // El reporte se genera **haya fallado o no**. Si la corrida se cortó a mitad,
-  // las pantallas que alcanzó a capturar siguen siendo la evidencia que hay, y
-  // no poder mirarlas por culpa del fallo sería perder dos cosas en vez de una.
-  const hayCapturas = existsSync(resolve(RAIZ, 'artifacts/recorrido/manifiesto.jsonl'));
-  if (hayCapturas) {
-    correr('node', ['scripts/generate-recorrido-report.mjs']);
-  }
-
-  if (codigo !== 0) {
-    console.error(
-      hayCapturas
-        ? '\nLa corrida falló. El reporte de arriba tiene lo que se alcanzó a capturar.'
-        : '\nLa corrida falló antes de capturar nada.',
-    );
-  }
-
-  process.exit(codigo);
+// El reporte se genera pase lo que pase: un recorrido a medias sigue teniendo
+// capturas que mirar, y son las que explican dónde se cortó.
+if (existsSync(resolve(EVIDENCIAS, 'manifiesto.jsonl'))) {
+  correr('node', ['scripts/generate-recorrido-report.mjs'], entorno);
+} else {
+  console.warn('[recorrido] No se escribió ninguna captura: no hay reporte que construir.');
 }
 
-main();
+process.exit(cypress.status ?? 1);

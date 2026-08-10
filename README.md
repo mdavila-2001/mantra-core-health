@@ -29,7 +29,7 @@ señalan la causa. Todos los comandos de abajo pasan por los scripts de `package
 | `corepack yarn test --watch=false` | Pruebas unitarias (Vitest) |
 | `corepack yarn test:coverage` | Pruebas con cobertura y umbrales |
 | `corepack yarn lint` | ESLint, incluidas las reglas de arquitectura |
-| `corepack yarn e2e` | Suite Selenium de punta a punta |
+| `corepack yarn e2e` | Suite Cypress de punta a punta |
 
 ### Generar código
 

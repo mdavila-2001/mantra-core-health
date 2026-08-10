@@ -68,24 +68,18 @@ testem.log
 /typings
 __screenshots__/
 
-# Playwright: salida de una corrida (trazas, capturas, contexto del fallo) y el
-# informe HTML. `__screenshots__/`, más arriba, cubre las capturas de referencia
-# de la regresión visual, que SÍ se versionan cuando existan.
-/test-results
-/playwright-report
-/.playwright
-
 # Evidencias de una ejecución, no del código. Nada de acá se versiona; la
 # carpeta se conserva con su `.gitkeep`.
 #
-#   artifacts/selenium/<corrida>/  capturas de los fallos, HTML de la página,
-#                                  registros del navegador, JUnit y su reporte.
-#   artifacts/recorrido/           el recorrido visual: una carpeta de PNG por
-#                                  pantalla, el manifiesto y `reporte.html`.
-#                                  Son cientos de imágenes y varios cientos de
-#                                  megabytes por corrida — se regeneran con
-#                                  `yarn recorrido` y no tienen por qué vivir en
-#                                  la historia del repositorio.
+#   artifacts/cypress/<corrida>/  capturas de los fallos, videos (solo en CI) y
+#                                 descargas de la suite funcional.
+#   artifacts/recorrido/          el recorrido visual: una carpeta de PNG por
+#                                 pantalla, el manifiesto y `reporte.html`.
+#                                 Son cientos de imágenes y varios cientos de
+#                                 megabytes por corrida — se regeneran con
+#                                 `yarn recorrido` y no tienen por qué vivir en
+#                                 la historia del repositorio.
+#   artifacts/real/               lo mismo, para el recorrido contra la API viva.
 /artifacts/*
 !/artifacts/.gitkeep
 

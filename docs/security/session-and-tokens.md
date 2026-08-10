@@ -106,7 +106,7 @@ a `logout()`, con una navegación local e instantánea. La navegación ganaba
 siempre. El borrado no llegaba a correr. **La siguiente recarga restauraba la
 sesión que se acababa de cerrar.**
 
-Lo destapó [la prueba de extremo a extremo](../testing/e2e-tests.md#lo-que-encontró)
+Lo destapó [la prueba de extremo a extremo](../testing/e2e-tests.md#por-qué-existen)
 que vuelve a entrar a `/panel` después de salir. Ninguna prueba unitaria podía
 verlo: todas hacían `flush()` de la respuesta, que es justo el caso en el que sí
 funcionaba.
