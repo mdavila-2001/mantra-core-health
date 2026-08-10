@@ -95,6 +95,57 @@ export interface Encounter {
 }
 
 /**
+ * Lo que hace falta para abrir un encuentro (UC-08-02).
+ *
+ * Sólo dos campos obligatorios, y no es una simplificación de este lado: el DTO
+ * del backend declara opcionales el episodio, la sucursal, el profesional y las
+ * dos clasificaciones, y aplica «ambulatorio» y «en curso» cuando no se los
+ * manda. Un formulario que los pidiera todos estaría inventando requisitos que
+ * el contrato no tiene.
+ *
+ * ## Lo que a propósito no está
+ *
+ * `appointmentId` — el encuentro puede declarar la cita que lo origina, pero esa
+ * clave apunta a `clinical.appointments`, y `GET /scheduling/bookings` no expone
+ * ninguna: mandarle el identificador de una reserva de agenda violaría la clave
+ * foránea. Queda anotado en `PENDIENTES-BACKEND.md` (P11).
+ *
+ * `primaryPractitionerId` — es el perfil profesional de quien atiende, y no hay
+ * lectura que lo devuelva para la sesión activa (P12 del mismo documento). Se
+ * omite antes que mandar un identificador equivocado.
+ */
+export interface NewEncounter {
+  readonly patientProfileId: string;
+  readonly tenantId: string;
+  /** Motivo de consulta, en palabras. */
+  readonly reasonText?: string;
+  readonly episodeId?: string;
+  readonly branchId?: string;
+  readonly primaryPractitionerId?: string;
+  readonly classConceptId?: string;
+  readonly typeConceptId?: string;
+}
+
+/**
+ * El encuentro recién abierto o recién cerrado, tal como lo devuelven las dos
+ * escrituras.
+ *
+ * `status` viaja sin el sufijo `ConceptId` porque así lo nombra el contrato,
+ * pero es un uuid de concepto igual que el resto: quien lo muestre lo traduce.
+ */
+export interface EncounterRegistration {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly episodeId: string | null;
+  readonly status: string;
+  readonly participantIds: readonly string[];
+  readonly locationIds: readonly string[];
+  readonly startAt: Date | null;
+  readonly endAt: Date | null;
+  readonly createdAt: Date;
+}
+
+/**
  * El historial clínico de un paciente en una lectura (UC-39-20).
  *
  * `truncated` nombra **los bloques** que quedaron recortados por el tope, no un
