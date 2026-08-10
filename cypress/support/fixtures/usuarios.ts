@@ -11,11 +11,13 @@
  * seguidas no pueden chocar entre sí, que es el requisito de poder correr la
  * suite dos veces sin limpiar nada en el medio.
  *
- * ## Por qué `Cypress.env()` y no `process.env`
+ * ## Por qué `Cypress.expose()` y no `process.env`
  *
  * Este archivo lo importan las pruebas, que corren **dentro del navegador**,
  * donde `process.env` no existe. `cypress.config.ts` lee el entorno de Node en
- * `credenciales()` y lo publica en `config.env`; acá se lo recoge.
+ * `credenciales()` y lo publica en su bloque `expose`, que es el canal de
+ * Cypress 15 para **configuración pública** — y nada de esto es un secreto: la
+ * API de la suite está simulada y acepta cualquier credencial.
  */
 
 export interface UsuarioPrueba {
@@ -27,7 +29,7 @@ export interface UsuarioPrueba {
 }
 
 function delEntorno(nombre: string, porDefecto: string): string {
-  const valor = Cypress.env(nombre) as unknown;
+  const valor = Cypress.expose(nombre) as unknown;
   return typeof valor === 'string' && valor.trim() !== '' ? valor.trim() : porDefecto;
 }
 
@@ -52,12 +54,12 @@ export function pacienteConDocumento(): UsuarioPrueba {
 /**
  * Sufijo único de la corrida.
  *
- * Sale del identificador de la corrida, que `cypress.config.ts` publica en
- * `config.env`: así todas las pruebas de una misma ejecución comparten sufijo y
+ * Sale del identificador de la corrida, que `cypress.config.ts` publica en su
+ * bloque `expose`: así todas las pruebas de una misma ejecución comparten sufijo y
  * dos ejecuciones distintas nunca lo comparten.
  */
 function sufijo(): string {
-  const runId = Cypress.env('E2E_RUN_ID') as unknown;
+  const runId = Cypress.expose('E2E_RUN_ID') as unknown;
   const crudo = typeof runId === 'string' && runId !== '' ? runId : String(Date.now());
   return crudo.replace(/[^0-9a-z]/gi, '').slice(-10);
 }

@@ -35,6 +35,7 @@ type CodigoError =
   | 'VALIDATION_FAILED'
   | 'UNAUTHENTICATED'
   | 'CONFLICT'
+  | 'RATE_LIMITED'
   | 'DEPENDENCY_UNAVAILABLE';
 
 function base64Url(valor: unknown): string {
@@ -256,6 +257,50 @@ export function crearApiSimulada(): Router {
     // `revokedSessions` es lo que la pantalla muestra en palabras: cambiar la
     // contraseña cierra las demás sesiones, y decirlo es parte del contrato.
     res.json({ userId: 'u-e2e', revokedSessions: escenario.sesionesRevocadas ?? 0 });
+  });
+
+  /**
+   * Activación de una cuenta creada por otro (alta asistida).
+   *
+   * Responde **401** cuando el código no sirve, no 400: es lo que devuelve la
+   * API real —verificado y documentado en `activate-account.ts`— y la pantalla
+   * traduce ese 401 a «pedí otro código» en vez de a «se te venció la sesión»,
+   * que es lo que significaría en cualquier otra pantalla. Si el arnés
+   * respondiera 400 acá, la prueba estaría cubriendo una traducción que la
+   * aplicación nunca ejecuta.
+   */
+  router.post('/iam/auth/activate', async (req, res) => {
+    const escenario = escenarioDe(req);
+    await demorar(escenario);
+
+    if (escenario.tokenValido === false) {
+      error(res, 401, 'UNAUTHENTICATED', 'El código de activación no sirve.');
+      return;
+    }
+    res.json({ userId: 'u-activado', activated: true });
+  });
+
+  /**
+   * Reenvío del correo de verificación.
+   *
+   * El `429` viaja con la cabecera `Retry-After`, que es de donde la aplicación
+   * saca los segundos que muestra (`retryAfterOf` en `error-to-view-state.ts`).
+   * Sin esa cabecera el estado seguiría siendo de validación pero **sin cifra**,
+   * y la pantalla mostraría el error genérico en lugar de la espera — que es
+   * justo la distinción que esta simulación existe para ejercitar.
+   */
+  router.post('/iam/auth/resend-verification', async (req, res) => {
+    const escenario = escenarioDe(req);
+    await demorar(escenario);
+
+    const espera = escenario.esperaReenvioSegundos;
+    if (espera !== undefined) {
+      res.set('Retry-After', String(espera));
+      error(res, 429, 'RATE_LIMITED', 'Probaste demasiadas veces seguidas.');
+      return;
+    }
+    // Como en `forgot-password`, la respuesta no delata si la cuenta existe.
+    res.json({ message: 'Si la cuenta existe, te enviamos el enlace otra vez.' });
   });
 
   router.post('/iam/auth/verify-email', async (req, res) => {

@@ -45,24 +45,46 @@ const artefactos = resolve(process.cwd(), config.artefactos, config.runId);
 
 export default defineConfig({
   /**
-   * `Cypress.env()` habilitado.
+   * `Cypress.env()` apagado.
    *
-   * En Cypress 15 esta opción no controla solo si se leen las variables
-   * `CYPRESS_*` del sistema: con `false`, **`Cypress.env()` deja de existir** y
-   * cualquier lectura lanza. Y es la única forma que tienen las pruebas —que
-   * corren en el navegador— de ver lo que `setupNodeEvents` publicó en
-   * `config.env`, porque ahí no hay `process.env`.
+   * No queda una sola lectura en la suite —todo pasa por `expose`, abajo— así
+   * que apagarlo no rompe nada y cierra dos cosas: el aviso de deprecación que
+   * Cypress imprimía en cada corrida, y el agujero que ese aviso describe
+   * (`Cypress.env()` deja que **cualquier** código del navegador, incluido el de
+   * la aplicación, lea esos valores).
    *
-   * La alternativa que propone Cypress es `cy.env()`, que es un **comando**: se
-   * encola, así que no se puede llamar desde una función pura como las de
-   * `support/fixtures/usuarios.ts`, que arman un objeto antes de que la cadena
-   * de comandos empiece.
-   *
-   * El efecto lateral —que también se lean las `CYPRESS_*` del sistema— es
-   * inocuo acá: las variables de esta suite se llaman `E2E_*` y las traduce
-   * `cypress/support/config.ts`, así que no hay dos convenciones compitiendo.
+   * Ojo: el valor por defecto es `true`. Quitar la opción no la desactiva; hay
+   * que escribir el `false`.
    */
-  allowCypressEnv: true,
+  allowCypressEnv: false,
+
+  /**
+   * Lo que las pruebas necesitan saber del entorno.
+   *
+   * Las pruebas corren **dentro del navegador**, donde no hay `process.env`, así
+   * que lo que se lee del entorno de Node tiene que viajar por acá.
+   *
+   * ## Por qué `expose` y no `env`
+   *
+   * `Cypress.env()` quedó deprecado en la 15 —avisa en cada corrida que lo va a
+   * quitar— y su reemplazo son dos cosas distintas: `cy.env()` para lo sensible
+   * y `Cypress.expose()` para **configuración pública**, que es exactamente lo
+   * de acá. Nada de esto es un secreto ni puede serlo: la API de la suite
+   * funcional está simulada por el propio arnés y acepta cualquier credencial.
+   *
+   * `cy.env()` además no serviría: es un **comando**, se encola, y las funciones
+   * que lo consumen —las de `support/fixtures/usuarios.ts`— arman un objeto
+   * antes de que la cadena de comandos empiece.
+   *
+   * Se calcula acá arriba y no dentro de `setupNodeEvents` porque este archivo
+   * ya corre en Node: `credenciales()` lee `process.env` al cargarse el módulo.
+   */
+  expose: {
+    ...credenciales(),
+    E2E_RUN_ID: config.runId,
+    E2E_PUERTO: config.puerto,
+    E2E_ARTEFACTOS: artefactos,
+  },
 
   viewportWidth: config.viewport.ancho,
   viewportHeight: config.viewport.alto,
@@ -146,16 +168,8 @@ export default defineConfig({
         await esperarSalud(config.baseUrl, '/');
       }
 
-      // Lo que las pruebas necesitan saber del entorno viaja por acá: dentro del
-      // navegador no hay `process.env`.
-      cypressConfig.env = {
-        ...cypressConfig.env,
-        ...credenciales(),
-        E2E_RUN_ID: config.runId,
-        E2E_PUERTO: config.puerto,
-        E2E_ARTEFACTOS: artefactos,
-      };
-
+      // Lo que las pruebas leen del entorno se declara en `expose`, arriba: acá
+      // ya es tarde para pensarlo y además no hace falta tocarlo.
       return cypressConfig;
     },
   },

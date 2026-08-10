@@ -54,8 +54,25 @@ export interface Escenario {
   readonly registrosDirectorio?: number;
   /** `true` hace fallar el directorio con 503 `DEPENDENCY_UNAVAILABLE`. */
   readonly directorioCaido?: boolean;
-  /** `false` hace fallar el canje de un token de correo con 400 `VALIDATION_FAILED`. */
+  /**
+   * `false` hace fallar el canje de un token que llegó por correo.
+   *
+   * Cada pantalla recibe el código que le devuelve la API **real**, que no es el
+   * mismo en todas: verificar el correo y cambiar la contraseña responden `400
+   * VALIDATION_FAILED`, y activar la cuenta responde `401 UNAUTHENTICATED` —
+   * verificado contra la API viva, y documentado en `activate-account.ts`
+   * justamente porque sorprende. Un escenario que respondiera lo mismo en las
+   * tres estaría probando una API que no existe.
+   */
   readonly tokenValido?: boolean;
+
+  /**
+   * Segundos de espera que el reenvío de verificación pide con un `429`.
+   *
+   * Va como número y no como booleano porque la pantalla **muestra la cifra**:
+   * el contrato no es «hubo límite», es «esperá N segundos».
+   */
+  readonly esperaReenvioSegundos?: number;
   /** Sesiones que el cambio de contraseña dice haber cerrado. */
   readonly sesionesRevocadas?: number;
   /**
@@ -112,6 +129,10 @@ export const ESCENARIOS = {
   'clave-cambiada-con-sesiones': {
     descripcion: 'El cambio de contraseña cierra otras dos sesiones abiertas.',
     sesionesRevocadas: 2,
+  },
+  'reenvio-limitado': {
+    descripcion: 'El reenvío de verificación responde 429: hay que esperar 45 segundos.',
+    esperaReenvioSegundos: 45,
   },
   'api-lenta': {
     descripcion: 'Respuestas demoradas: hay estado de carga que observar.',
