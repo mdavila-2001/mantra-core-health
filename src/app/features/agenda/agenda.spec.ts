@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
 import { Agenda } from './agenda';
 
 /**
@@ -358,5 +359,93 @@ describe('Agenda', () => {
 
     expect(interno<() => string>('rotuloDeCitas')()).toBe('Citas (1)');
     expect(interno<() => string>('rotuloDeCupos')()).toBe('Cupos (1)');
+  });
+
+  /* ---- acciones sobre una cita (UC-41-09 / UC-41-10) ---------------------- */
+
+  /** La recarga que sigue a una acción: citas, cupos y etiquetas de nuevo. */
+  function responderRecarga(): void {
+    http
+      .expectOne((r) => r.url === '/scheduling/bookings')
+      .flush({ items: [CITA], count: 1, limit: 100, truncated: false });
+    http
+      .expectOne((r) => r.url === '/scheduling/slots')
+      .flush({ items: [CUPO], count: 1, limit: 100, truncated: false });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({ items: [], count: 0, limit: 200 });
+  }
+
+  function primeraCita(): Record<string, unknown> {
+    const estado = citas();
+    return (estado.data ?? [])[0] as Record<string, unknown>;
+  }
+
+  it('registrar la llegada hace el check-in y recarga la agenda', async () => {
+    await montar();
+    await responder();
+
+    interno<(c: unknown) => void>('registrarLlegada')(primeraCita());
+
+    http
+      .expectOne('/scheduling/bookings/b-1/check-in')
+      .flush({ bookingId: 'b-1', checkedInAt: '2026-08-08T13:02:00.000Z' });
+    responderRecarga();
+
+    expect(citas().status).toBe('ready');
+  });
+
+  it('cancelar pide confirmación explícita y no hace nada sin ella', async () => {
+    await montar();
+    await responder();
+
+    const dialogs = TestBed.inject(DialogService);
+    vi.spyOn(dialogs, 'confirm').mockResolvedValue(false);
+
+    await interno<(c: unknown) => Promise<void>>('cancelarCita')(primeraCita());
+
+    // El `http.verify()` del afterEach falla si algo salió a la red.
+    expect(citas().status).toBe('ready');
+  });
+
+  it('cancelar confirmado libera el cupo y recarga', async () => {
+    await montar();
+    await responder();
+
+    const dialogs = TestBed.inject(DialogService);
+    vi.spyOn(dialogs, 'confirm').mockResolvedValue(true);
+
+    const pendiente = interno<(c: unknown) => Promise<void>>('cancelarCita')(primeraCita());
+    await harness.fixture.whenStable();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/cancel');
+    // Desde esta pantalla cancela la organización; `isNoShow` no viaja si
+    // nadie lo marcó, porque es lo que dispara el cargo de la política.
+    expect(req.request.body).toEqual({ cancelledBy: 'PROVIDER' });
+    req.flush({ bookingId: 'b-1', capacityReleased: true });
+    responderRecarga();
+    await pendiente;
+
+    expect(citas().status).toBe('ready');
+  });
+
+  /**
+   * Las columnas de acción sólo existen para quien puede ejecutarlas: un
+   * botón que la API va a rechazar con 403 es un error con forma de oferta.
+   */
+  it('un PATIENT ve el enlace de reservar pero no las acciones de mostrador', async () => {
+    session.start({
+      accessToken: jwt({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] }),
+      refreshToken: 'r-1',
+    });
+    harness = await RouterTestingHarness.create();
+    componente = await harness.navigateByUrl('/agenda', Agenda);
+    await responder();
+
+    const columnasDeCitas = interno<() => readonly { key: string }[]>('columnasDeCitas')();
+    const columnasDeCupos = interno<() => readonly { key: string }[]>('columnasDeCupos')();
+
+    expect(columnasDeCitas.some((columna) => columna.key === 'acciones')).toBe(false);
+    expect(columnasDeCupos.some((columna) => columna.key === 'reservar')).toBe(true);
   });
 });

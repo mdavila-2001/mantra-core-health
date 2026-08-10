@@ -134,6 +134,16 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.OrganizationNew)
         .catch(() => chunkFallido()),
   },
+  {
+    // La reserva de un cupo concreto (V41-09 → V41-05). La franja viaja por
+    // query string porque la pantalla relee el cupo para revalidarlo.
+    path: 'agenda/reservar/:slotId',
+    title: `${APP_TITLE} - Reservar un turno`,
+    loadComponent: () =>
+      import('./features/agenda/booking-new/booking-new')
+        .then((m) => m.BookingNew)
+        .catch(() => chunkFallido()),
+  },
 ];
 
 /**

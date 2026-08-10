@@ -1,6 +1,6 @@
 # API de backend
 
-Las 41 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 45 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -160,14 +160,26 @@ de otro rol, y el frontend todavía no la llama.
 `/admin` a secas capturaría `/administracion/*`, que es una ruta de la
 aplicación — ya desvió `/administracion/pacientes` una vez.
 
-### `SchedulingClient` — 4 operaciones · sólo lectura
+### `SchedulingClient` — 8 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/scheduling/resources` | `Agenda` (V41) |
-| `GET` | `/scheduling/slots` | `Agenda` |
+| `GET` | `/scheduling/slots` | `Agenda` · `BookingNew` (revalida el cupo) |
 | `GET` | `/scheduling/bookings` | `Agenda` |
 | `GET` | `/scheduling/bookings/:bookingId` | — |
+| `POST` | `/scheduling/slots/:slotId/holds` | `BookingNew` (V41-09, UC-41-05) |
+| `POST` | `/scheduling/holds/:holdToken/confirm` | `BookingNew` (V41-05, UC-41-06) |
+| `POST` | `/scheduling/bookings/:bookingId/cancel` | `Agenda` (V41-02·A, UC-41-09) |
+| `POST` | `/scheduling/bookings/:bookingId/check-in` | `Agenda` (V41-02·A, UC-41-10) |
+
+**El ciclo de reserva es de dos pasos y el token viaja entre ellos.** El hold
+retiene el cupo con anti-double-booking y un TTL (300 s por defecto, de la
+política); el `holdToken` **se entrega una sola vez** y el confirm lo consume.
+Un hold vencido no se puede confirmar: `BookingNew` trata ese rechazo como
+«volver a retener», no como error terminal. Y **no existe
+`GET /scheduling/slots/:id`**: la pantalla de reserva reencuentra el cupo
+releyendo `GET /scheduling/slots` acotado a la franja que la URL trae.
 
 El módulo se había construido **entero de escritura**: se generaban cupos y se
 confirmaban citas, pero no había forma de verlos, y sin `GET /scheduling/slots`
