@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-457 archivos TypeScript bajo `src/` y 1978 importaciones internas.
+457 archivos TypeScript bajo `src/` y 1980 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares

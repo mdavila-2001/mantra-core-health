@@ -145,9 +145,14 @@ describe('PatientChart', () => {
   }
 
   /** Abre sesión con organización activa: sin ella no hay encuentro que registrar. */
-  function abrirSesion(): void {
+  function abrirSesion(claims: Record<string, unknown> = {}): void {
     TestBed.inject(SessionStore).start({
-      accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] }),
+      accessToken: jwt({
+        sub: 'u-1',
+        roles: ['PRACTITIONER'],
+        tenants: ['t-1'],
+        ...claims,
+      }),
       refreshToken: 'r-1',
     });
   }
@@ -348,6 +353,68 @@ describe('PatientChart', () => {
     responderNombre();
     responderExpediente();
     expect(estado().status).toBe('ready');
+  });
+
+  /**
+   * El vínculo con el turno. `?cita=` trae el `appointmentId` de la reserva, que
+   * es una clave foránea real hacia `clinical.appointments`.
+   */
+  it('manda la cita de origen cuando se llegó desde la agenda', async () => {
+    abrirSesion();
+    responderNombre();
+    responderExpediente();
+
+    // Se llega con el turno puesto, como hace el enlace de la agenda. Mismo
+    // paciente, así que el expediente no se relee: sólo cambian los parámetros.
+    await harness.navigateByUrl('/clinico/p-1?cita=ap-1&motivo=Control');
+
+    interno<() => void>('registrarEncuentro')();
+
+    const req = http.expectOne('/clinical/encounters/check-in');
+    expect(req.request.body).toEqual({
+      patientProfileId: 'p-1',
+      tenantId: 't-1',
+      reasonText: 'Control',
+      appointmentId: 'ap-1',
+    });
+    req.flush(ENCUENTRO_ABIERTO);
+
+    responderNombre();
+    responderExpediente();
+  });
+
+  /**
+   * Un encuentro sin profesional es una marca de tiempo sin autor. El dato sale
+   * del claim `hpid`, que existe justamente porque no hay lectura que lo dé.
+   */
+  it('manda al profesional de la sesión como responsable', () => {
+    abrirSesion({ hpid: 'hp-1' });
+    responderNombre();
+    responderExpediente();
+
+    interno<() => void>('registrarEncuentro')();
+
+    const req = http.expectOne('/clinical/encounters/check-in');
+    expect((req.request.body as Record<string, unknown>)['primaryPractitionerId']).toBe('hp-1');
+    req.flush(ENCUENTRO_ABIERTO);
+
+    responderNombre();
+    responderExpediente();
+  });
+
+  it('una cuenta sin perfil profesional no manda responsable', () => {
+    abrirSesion();
+    responderNombre();
+    responderExpediente();
+
+    interno<() => void>('registrarEncuentro')();
+
+    const req = http.expectOne('/clinical/encounters/check-in');
+    expect(req.request.body).not.toHaveProperty('primaryPractitionerId');
+    req.flush(ENCUENTRO_ABIERTO);
+
+    responderNombre();
+    responderExpediente();
   });
 
   /**

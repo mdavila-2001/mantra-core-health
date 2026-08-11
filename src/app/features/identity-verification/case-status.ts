@@ -84,6 +84,29 @@ const catalogo = signal<ReadonlyMap<string, CaseStatusPresentation>>(new Map());
 const codigos = signal<ReadonlyMap<string, string>>(new Map());
 
 /**
+ * Vacía el catálogo. **Sólo para pruebas.**
+ *
+ * Ser estado de módulo es lo correcto en producción —el catálogo es público e
+ * idéntico para todos— pero en pruebas tiene un costo: sobrevive entre specs
+ * del mismo grafo de módulos, así que un archivo que lo resuelve deja el
+ * siguiente con el catálogo ya lleno. Eso hace que una prueba sobre «cuántas
+ * veces se pide» dependa del orden en que corrieron los archivos, que es
+ * exactamente el tipo de fragilidad que nadie quiere depurar a las tres de la
+ * mañana.
+ *
+ * Con esto, quien afirme algo sobre la carga arranca de un estado conocido.
+ *
+ * Vacía **las dos vistas**. Son dos señales pero un solo catálogo: dejar los
+ * códigos poblados con las presentaciones vacías inventaría un estado que la
+ * resolución real nunca produce, y una prueba que arranca de ahí no estaría
+ * arrancando de un estado conocido sino de uno imposible.
+ */
+export function resetCaseStatusCatalog(): void {
+  catalogo.set(new Map());
+  codigos.set(new Map());
+}
+
+/**
  * Cómo mostrar el estado de un caso.
  *
  * Jamás lanza ni devuelve null: un estado que el catálogo todavía no resolvió

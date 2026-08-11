@@ -78,6 +78,15 @@
         </app-alert>
       } @else {
         <form class="expediente__registro" (submit)="$event.preventDefault()">
+          <!-- Que el encuentro vaya a quedar atado a un turno no puede ser
+               invisible: es lo que distingue un registro trazable de una marca
+               de tiempo suelta, y quien firma tiene derecho a saber qué firma. -->
+          @if (citaDeOrigen()) {
+            <app-alert tone="info" title="Se registra sobre el turno de la agenda">
+              Este encuentro va a quedar vinculado a la cita desde la que llegaste.
+            </app-alert>
+          }
+
           <app-form-field
             label="Motivo de consulta"
             hint="Opcional. Si llegaste desde la agenda, viene el motivo de la cita."

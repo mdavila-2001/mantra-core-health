@@ -44,7 +44,11 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { CLINICAL_RECORD_ROUTE, MOTIVO_QUERY_PARAM } from '../clinical-record.routes';
+import {
+  CITA_QUERY_PARAM,
+  CLINICAL_RECORD_ROUTE,
+  MOTIVO_QUERY_PARAM,
+} from '../clinical-record.routes';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -200,6 +204,21 @@ export class PatientChart {
   private readonly motivoDeLaCita = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get(MOTIVO_QUERY_PARAM) ?? '')),
     { initialValue: '' },
+  );
+
+  /**
+   * La cita clínica del turno desde el que se llegó, si lo trae.
+   *
+   * A diferencia del motivo **no es una semilla editable**: es un identificador
+   * que ata el encuentro a su turno, y no hay nada que quien atiende pueda
+   * corregir a mano. Se lee de la URL en el momento de registrar.
+   *
+   * Su ausencia es corriente —una reserva sin cita clínica detrás, o una entrada
+   * al expediente que no vino de la agenda— y el encuentro se abre igual.
+   */
+  protected readonly citaDeOrigen = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get(CITA_QUERY_PARAM))),
+    { initialValue: null },
   );
 
   protected readonly expediente = signal<ViewState<Expediente>>(loading());
@@ -533,6 +552,8 @@ export class PatientChart {
     }
 
     const motivo = this.motivo().trim();
+    const cita = this.citaDeOrigen();
+    const profesional = this.auth.practitionerProfileId();
     this.registrando.set(true);
     this.registro.set(loading());
 
@@ -543,6 +564,14 @@ export class PatientChart {
         // El motivo es opcional en el contrato: una cadena vacía sería un motivo
         // registrado que no dice nada, y se lee peor que su ausencia.
         ...(motivo === '' ? {} : { reasonText: motivo }),
+        // El turno que originó la atención, cuando se llegó desde la agenda y la
+        // reserva tenía cita clínica detrás. Es una clave foránea real: si no
+        // viene, se omite en vez de mandar algo parecido.
+        ...(cita === null || cita === '' ? {} : { appointmentId: cita }),
+        // Quién atiende, del claim de la sesión. Un encuentro sin profesional es
+        // una marca de tiempo sin autor: mientras el dato no existía había que
+        // omitirlo, ahora no.
+        ...(profesional === null ? {} : { primaryPractitionerId: profesional }),
       })
       .subscribe({
         next: () => {
