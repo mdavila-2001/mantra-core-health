@@ -72,7 +72,13 @@ function unico(prefijo: string): string {
 
 export interface AltaPaciente {
   readonly documento: string;
+  /** Nombre de pila. El formulario pide el nombre en partes, no completo. */
   readonly nombre: string;
+  /** Segundo nombre. Opcional en el formulario. */
+  readonly segundoNombre: string;
+  readonly apellidoPaterno: string;
+  /** Apellido materno. Opcional en el formulario. */
+  readonly apellidoMaterno: string;
   readonly password: string;
   readonly correo: string;
 }
@@ -82,7 +88,12 @@ export function nuevoPaciente(): AltaPaciente {
   const id = unico('p');
   return {
     documento: id.replace(/\D/g, '').slice(-9).padStart(9, '7'),
-    nombre: `Paciente ${id}`,
+    // El identificador único va en el apellido paterno y no en el nombre: así
+    // el nombre para mostrar sigue leyéndose como un nombre en las capturas.
+    nombre: 'Paciente',
+    segundoNombre: 'De',
+    apellidoPaterno: `Prueba ${id}`,
+    apellidoMaterno: 'Automatizada',
     password: 'contrasena-de-prueba',
     correo: `${id}@mantra.test`,
   };

@@ -79,7 +79,14 @@ export class RegisterPatient {
         Validators.pattern(DOCUMENTO_VALIDO),
       ],
     }),
-    displayName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    // El nombre va en sus cuatro partes, no en un campo libre: es como lo emite
+    // el documento de identidad y como se comparan dos personas al buscar
+    // duplicados. Partir después una cadena es una conjetura que falla con los
+    // nombres compuestos y con los apellidos de más de una palabra.
+    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    middleName: new FormControl('', { nonNullable: true }),
+    lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    motherLastName: new FormControl('', { nonNullable: true }),
     password: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
@@ -213,12 +220,18 @@ export class RegisterPatient {
   }
 
   private datosPaciente(): PatientRegistration {
-    const { nationalId, displayName, password, email } = this.formPaciente.getRawValue();
+    const { nationalId, name, middleName, lastName, motherLastName, password, email } =
+      this.formPaciente.getRawValue();
     const correo = email.trim();
+    const segundoNombre = middleName.trim();
+    const apellidoMaterno = motherLastName.trim();
 
     return {
       nationalId: nationalId.trim(),
-      displayName: displayName.trim(),
+      name: name.trim(),
+      lastName: lastName.trim(),
+      ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
+      ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       password,
       // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
       // y una cadena vacía no es lo mismo que la ausencia del campo.

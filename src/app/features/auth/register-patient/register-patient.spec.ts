@@ -63,10 +63,20 @@ describe('RegisterPatient', () => {
     http.verify();
   });
 
-  function completar(extra: Partial<Record<'email', string>> = {}): void {
+  /**
+   * El nombre va en sus cuatro partes, como el documento de identidad. Las dos
+   * opcionales se completan acá para que el caso normal las ejerza; el que
+   * comprueba que se omiten cuando están vacías es su propia prueba.
+   */
+  function completar(
+    extra: Partial<Record<'email' | 'middleName' | 'motherLastName', string>> = {},
+  ): void {
     component.formPaciente.setValue({
       nationalId: '1234567',
-      displayName: 'Ana Paz',
+      name: 'Ana',
+      middleName: extra.middleName ?? '',
+      lastName: 'Paz',
+      motherLastName: extra.motherLastName ?? '',
       password: 'secreto12',
       email: extra.email ?? '',
     });
@@ -85,17 +95,41 @@ describe('RegisterPatient', () => {
     });
   }
 
-  it('manda solo los tres campos obligatorios cuando no hay correo', () => {
+  it('manda solo los campos obligatorios cuando no hay correo ni nombres opcionales', () => {
     completar();
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-patient');
     expect(req.request.method).toBe('POST');
     // Un correo vacío no es lo mismo que no mandar el campo:
-    // `forbidNonWhitelisted` rechaza lo que sobra.
+    // `forbidNonWhitelisted` rechaza lo que sobra. Mismo criterio para el
+    // segundo nombre y el apellido materno, que mucha gente no tiene.
     expect(req.request.body).toEqual({
       nationalId: '1234567',
-      displayName: 'Ana Paz',
+      name: 'Ana',
+      lastName: 'Paz',
+      password: 'secreto12',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * El backend compone el nombre visible con las cuatro partes: si el frontend
+   * mandara una cadena ya armada, la base guardaría una versión y el contrato
+   * otra.
+   */
+  it('manda el segundo nombre y el apellido materno cuando se completaron', () => {
+    completar({ middleName: 'María', motherLastName: 'Quiroga' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toEqual({
+      nationalId: '1234567',
+      name: 'Ana',
+      middleName: 'María',
+      lastName: 'Paz',
+      motherLastName: 'Quiroga',
       password: 'secreto12',
     });
 
@@ -198,7 +232,10 @@ describe('RegisterPatient', () => {
     it('no envía con el formulario incompleto', () => {
       component.formPaciente.setValue({
         nationalId: '',
-        displayName: '',
+        name: '',
+        middleName: '',
+        lastName: '',
+        motherLastName: '',
         password: '',
         email: '',
       });
@@ -210,7 +247,10 @@ describe('RegisterPatient', () => {
     it('rechaza un documento con caracteres que el backend no admite', () => {
       component.formPaciente.setValue({
         nationalId: 'ABC 123',
-        displayName: 'Ana',
+        name: 'Ana',
+        middleName: '',
+        lastName: 'Paz',
+        motherLastName: '',
         password: 'secreto12',
         email: '',
       });
@@ -222,7 +262,10 @@ describe('RegisterPatient', () => {
     it('exige los 8 caracteres de contraseña que pide el backend', () => {
       component.formPaciente.setValue({
         nationalId: '1234567',
-        displayName: 'Ana',
+        name: 'Ana',
+        middleName: '',
+        lastName: 'Paz',
+        motherLastName: '',
         password: 'corta',
         email: '',
       });

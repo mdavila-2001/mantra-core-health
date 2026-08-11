@@ -1,0 +1,85 @@
+/* ============================================================================
+    El portal de turnos del paciente.
+
+    Mobile-first: la lista es de una columna y sólo se ensancha cuando hay
+    lugar. Quien pide un turno lo hace desde el teléfono más veces que desde un
+    escritorio, y una tabla de agenda en 360 px no se lee.
+    ========================================================================== */
+
+.turnos__bloque {
+  margin-block-end: var(--sp-6);
+}
+
+.turnos__titulo {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin-block: 0 var(--sp-4);
+}
+
+.turnos__estado {
+  color: var(--text-muted);
+  margin-block: var(--sp-4);
+}
+
+.turnos__lista,
+.turnos__horarios {
+  display: grid;
+  gap: var(--sp-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.turnos__item,
+.turnos__horario {
+  align-items: start;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+}
+
+/* El horario y su acción caben lado a lado apenas hay ancho. */
+@media (min-width: 32rem) {
+  .turnos__item,
+  .turnos__horario {
+    align-items: center;
+    grid-template-columns: 1fr auto;
+  }
+
+  .turnos__motivo {
+    grid-column: 1 / -1;
+  }
+}
+
+.turnos__cuando {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.turnos__fecha {
+  color: var(--text-primary);
+  /* La primera letra del día viene en minúscula del locale. */
+  text-transform: capitalize;
+}
+
+.turnos__hora {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  /* Cifras de ancho fijo: una columna de horas que no baila al leerla. */
+  font-variant-numeric: tabular-nums;
+}
+
+.turnos__motivo {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  margin: 0;
+}
+
+.turnos__filtro {
+  display: block;
+  margin-block-end: var(--sp-4);
+  max-inline-size: 28rem;
+}

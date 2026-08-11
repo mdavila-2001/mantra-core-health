@@ -27,6 +27,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
 import { AGENDA_ROUTE } from '../agenda.routes';
 
 /** Largo que declara `ConfirmBookingDto` para el motivo. */
@@ -36,16 +37,33 @@ const MAX_MOTIVO = 500;
 const CANDIDATOS_POR_BUSQUEDA = 10;
 
 /**
- * Canal fijo de esta pantalla: la usa quien agenda en el mostrador
- * (`SCHEDULING_AGENT`/`SCHEDULING_ADMIN`). La entrada del paciente (canal
- * `PORTAL`, M1 del plan de demo) reusa esta misma pantalla con el paciente
- * resuelto por la sesión — pendiente de coordinar, no de rehacer.
+ * Por dónde entró quien está reservando. Coincide con el `channel` que declara
+ * `ConfirmBookingDto`, que es el dato que el backend guarda en la cita.
+ *
+ * - `DESK`: el mostrador reserva para otra persona y la elige de un buscador.
+ * - `PORTAL`: el paciente reserva para sí mismo y no elige a nadie.
+ *
+ * Es lo ÚNICO que distingue a las dos entradas: la revalidación del cupo, el
+ * ciclo retener → confirmar y el manejo del vencimiento son los mismos, y
+ * duplicarlos sería mantener dos veces la misma lógica de concurrencia.
  */
-const CANAL = 'DESK' as const;
+type Entrada = 'DESK' | 'PORTAL';
 
 /**
  * Reserva de un turno — el eslabón V41-09 → V41-05 del recorrido de demo
  * (`POST /scheduling/slots/:id/holds` → `POST /scheduling/holds/:token/confirm`).
+ *
+ * ## Una pantalla, dos entradas
+ *
+ * La usan el mostrador y el propio paciente. La ruta declara cuál es la entrada
+ * (`data.entrada`) y de ahí sale todo lo que difiere: el `channel` que se
+ * guarda en la cita, si hay que elegir paciente o ya se sabe quién es, y a
+ * dónde se vuelve al terminar.
+ *
+ * Son dos pantallas distintas para quien las mira y una sola para quien la
+ * mantiene. Duplicarla habría duplicado lo delicado —la revalidación del cupo y
+ * el vencimiento de la retención—, que es justo lo que no conviene tener por
+ * duplicado.
  *
  * ## Dos pasos porque el backend los exige, y se muestran como dos pasos
  *
@@ -92,7 +110,30 @@ export class BookingNew {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
 
-  /** El último escalón se reemplaza: desde la reserva se vuelve a la agenda. */
+  /* ---- por dónde entró quien reserva ------------------------------------- */
+
+  private readonly entrada: Entrada =
+    this.route.snapshot.data['entrada'] === 'PORTAL' ? 'PORTAL' : 'DESK';
+
+  /** El paciente reserva para sí mismo: no hay a quién elegir. */
+  protected readonly esAutoservicio = this.entrada === 'PORTAL';
+
+  /** Adónde se vuelve: a la agenda de la organización o a los turnos propios. */
+  protected readonly rutaDeVuelta = this.esAutoservicio
+    ? MIS_TURNOS_ROUTE
+    : AGENDA_ROUTE;
+
+  /**
+   * La cuenta no tiene perfil de paciente y entró por el portal.
+   *
+   * Pasa con el personal de salud y con administración: son cuentas reales, con
+   * sesión válida, que simplemente no son de un paciente. Decirlo es más útil
+   * que dejar el formulario servido para que el `confirm` lo rechace después.
+   */
+  protected readonly sinPerfilDePaciente =
+    this.esAutoservicio && this.auth.patientProfileId() === null;
+
+  /** El último escalón se reemplaza: desde la reserva se vuelve de dónde vino. */
   protected readonly breadcrumbs = computed<readonly BreadcrumbItem[]>(() => {
     const base = this.navigation.breadcrumbs();
     const ultimo = base.at(-1);
@@ -101,7 +142,7 @@ export class BookingNew {
     }
     return [
       ...base.slice(0, -1),
-      { label: ultimo.label, routerLink: AGENDA_ROUTE },
+      { label: ultimo.label, routerLink: this.rutaDeVuelta },
       { label: 'Reservar' },
     ];
   });
@@ -121,6 +162,7 @@ export class BookingNew {
     this.hasta === null;
 
   protected readonly rutaDeAgenda = AGENDA_ROUTE;
+  protected readonly rutaDeMisTurnos = MIS_TURNOS_ROUTE;
 
   /* ---- el cupo, revalidado al entrar ------------------------------------- */
 
@@ -185,6 +227,18 @@ export class BookingNew {
   });
 
   constructor() {
+    // Por el portal el paciente ya está decidido: es quien tiene la sesión. Se
+    // fija acá y no en la plantilla para que el resto del ciclo —retener,
+    // confirmar, el aviso de la retención— no tenga que saber por dónde entró.
+    if (this.esAutoservicio) {
+      const perfil = this.auth.patientProfileId();
+      if (perfil !== null) {
+        this.paciente.set({
+          value: perfil,
+          label: this.auth.displayName() ?? 'Vos',
+        });
+      }
+    }
     this.cargarCupo();
   }
 
@@ -209,8 +263,12 @@ export class BookingNew {
           if (cupo === undefined || cupo.remainingCapacity <= 0) {
             this.cupo.set(
               empty(
-                { label: 'Volver a la agenda', route: AGENDA_ROUTE },
-                'Ese cupo ya no está disponible: alguien lo tomó primero o se bloqueó. Elegí otro desde la agenda.',
+                this.esAutoservicio
+                  ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
+                  : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
+                this.esAutoservicio
+                  ? 'Ese horario ya no está disponible: alguien lo tomó primero. Elegí otro de la lista.'
+                  : 'Ese cupo ya no está disponible: alguien lo tomó primero o se bloqueó. Elegí otro desde la agenda.',
               ),
             );
             return;
@@ -286,16 +344,22 @@ export class BookingNew {
       .confirmHold(retencion.holdToken, {
         tenantId,
         patientProfileId: paciente.value,
-        channel: CANAL,
+        channel: this.entrada,
         ...(motivo === '' ? {} : { reasonText: motivo }),
       })
       .subscribe({
         next: () => {
           this.state.set(ready(null));
           this.toast.success(
-            `El turno de ${paciente.label} quedó confirmado.`,
+            this.esAutoservicio
+              ? 'Tu turno quedó confirmado.'
+              : `El turno de ${paciente.label} quedó confirmado.`,
             'Reserva confirmada',
           );
+          if (this.esAutoservicio) {
+            void this.router.navigateByUrl(MIS_TURNOS_ROUTE);
+            return;
+          }
           void this.router.navigate([AGENDA_ROUTE], {
             queryParams: this.resourceId === null ? {} : { recurso: this.resourceId },
           });
@@ -323,7 +387,7 @@ export class BookingNew {
   }
 
   protected cancelar(): void {
-    void this.router.navigateByUrl(AGENDA_ROUTE);
+    void this.router.navigateByUrl(this.rutaDeVuelta);
   }
 }
 

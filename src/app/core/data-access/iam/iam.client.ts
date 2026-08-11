@@ -94,7 +94,14 @@ export class IamClient {
     return this.http.post<RegisteredPatient>(this.url('/iam/auth/register-patient'), {
       nationalId: registration.nationalId,
       password: registration.password,
-      displayName: registration.displayName,
+      // El nombre viaja en partes y el backend compone el que se muestra: si el
+      // front lo compusiera, la base guardaría una versión y el contrato otra.
+      name: registration.name,
+      lastName: registration.lastName,
+      ...(registration.middleName === undefined ? {} : { middleName: registration.middleName }),
+      ...(registration.motherLastName === undefined
+        ? {}
+        : { motherLastName: registration.motherLastName }),
       ...(registration.email === undefined ? {} : { email: registration.email }),
       ...(registration.birthDate === undefined ? {} : { birthDate: registration.birthDate }),
       ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),

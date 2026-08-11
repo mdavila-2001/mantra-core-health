@@ -1,0 +1,124 @@
+<app-page-header
+  title="Mis turnos"
+  subtitle="Los turnos que pediste y los horarios que podés pedir."
+/>
+
+@if (sinPerfilDePaciente) {
+  <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
+       que esta pantalla no le corresponde. -->
+  <app-alert tone="info" title="Esta sección es para pacientes">
+    Tu cuenta no tiene un perfil de paciente. Si atendés turnos, entrá por la agenda de la
+    organización.
+  </app-alert>
+} @else {
+  <section class="turnos__bloque" aria-labelledby="turnos-propios">
+    <h2 id="turnos-propios" class="turnos__titulo">Tus turnos</h2>
+
+    @switch (turnos().status) {
+      @case ('loading') {
+        <p class="turnos__estado" role="status">Buscando tus turnos…</p>
+      }
+      @case ('ready') {
+        <ul class="turnos__lista">
+          @for (turno of turnosListos(); track turno.id) {
+            <li class="turnos__item">
+              <div class="turnos__cuando">
+                @if (turno.cuando !== null) {
+                  <span class="turnos__fecha">{{ turno.cuando | date: 'EEEE d MMM' }}</span>
+                  <span class="turnos__hora">
+                    {{ turno.cuando | date: 'HH:mm' }}
+                    @if (turno.hasta !== null) {
+                      – {{ turno.hasta | date: 'HH:mm' }}
+                    }
+                  </span>
+                } @else {
+                  <!-- La cita existe pero perdió su cupo: el contrato declara
+                       `startAt` opcional justamente por esto. -->
+                  <span class="turnos__fecha">Sin horario asignado</span>
+                }
+              </div>
+              <app-badge variant="info">{{ turno.estado }}</app-badge>
+              @if (turno.motivo !== '') {
+                <p class="turnos__motivo">{{ turno.motivo }}</p>
+              }
+            </li>
+          }
+        </ul>
+      }
+      @case ('empty') {
+        <app-alert tone="info" title="Todavía no tenés turnos">
+          Cuando pidas uno, lo vas a ver acá con su fecha y su estado.
+        </app-alert>
+      }
+      @default {
+        <app-alert tone="error" title="No pudimos traer tus turnos">
+          Reintentá en un momento.
+        </app-alert>
+        <button app-button variant="outline" (clicked)="cargarTurnos()">Reintentar</button>
+      }
+    }
+  </section>
+
+  <section class="turnos__bloque" aria-labelledby="pedir-turno">
+    <h2 id="pedir-turno" class="turnos__titulo">Pedir un turno</h2>
+
+    @if (organizacion() === null) {
+      <app-alert tone="warning" title="Elegí una organización">
+        Para ver horarios hace falta saber en qué organización te querés atender.
+      </app-alert>
+    } @else if (sinRecursos()) {
+      <app-alert tone="info" title="Todavía no hay agendas publicadas">
+        Esta organización no tiene horarios cargados. Volvé a probar más adelante.
+      </app-alert>
+    } @else {
+      <app-form-field label="¿Con quién te querés atender?" class="turnos__filtro">
+        <app-select
+          [options]="opcionesDeRecurso()"
+          [value]="recursoElegido() ?? ''"
+          placeholder="Elegí una agenda"
+          (valueChange)="elegirRecurso($event)"
+        />
+      </app-form-field>
+
+      @switch (horarios().status) {
+        @case ('loading') {
+          <p class="turnos__estado" role="status">Buscando horarios libres…</p>
+        }
+        @case ('ready') {
+          <ul class="turnos__horarios">
+            @for (horario of horariosListos(); track horario.id) {
+              <li class="turnos__horario">
+                <div class="turnos__cuando">
+                  <span class="turnos__fecha">{{ horario.desde | date: 'EEEE d MMM' }}</span>
+                  <span class="turnos__hora">
+                    {{ horario.desde | date: 'HH:mm' }} – {{ horario.hasta | date: 'HH:mm' }}
+                  </span>
+                </div>
+                <a
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  [routerLink]="rutaDeReserva(horario)"
+                  [queryParams]="paramsDeReserva(horario)"
+                >
+                  Pedir este horario
+                </a>
+              </li>
+            }
+          </ul>
+        }
+        @case ('empty') {
+          <app-alert tone="info" title="Sin horarios para mostrar">
+            {{ mensajeDeHorariosVacios() }}
+          </app-alert>
+        }
+        @default {
+          <app-alert tone="error" title="No pudimos traer los horarios">
+            Reintentá en un momento.
+          </app-alert>
+          <button app-button variant="outline" (clicked)="cargarHorarios()">Reintentar</button>
+        }
+      }
+    }
+  </section>
+}
