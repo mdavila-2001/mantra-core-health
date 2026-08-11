@@ -45,8 +45,9 @@ export interface TenantSearchQuery {
 /**
  * Códigos de tipo de organización que declara `CreateTenantDto`.
  *
- * TODO(IT3): cuando el servicio de `dynamic-enums` exista en el front
- * (`GET /system-context/dynamic-enums?target=…`), este set literal se
+ * Comparado con `dynamic-enums` el 2026-08-11: los diez códigos coinciden con
+ * `directory.tenants.tenant_type_concept_id`. Se mantiene literal a propósito
+ * —ver la nota de `organization-new.ts`—, porque este set literal se
  * reemplaza por el catálogo real. Hoy es la única fuente que el frontend
  * puede leer: el DTO los enumera (`@IsIn(TENANT_TYPE_CODES)`) y el backend
  * resuelve cada código a su concept id.
@@ -128,7 +129,8 @@ export interface BrokerProfile {
  * `terminology`. Los demás `*ConceptId` (entidad legal, región de datos)
  * siguen fuera: son opcionales y su value set no está publicado en ningún
  * contrato que el frontend pueda leer — misma decisión que en el alta de
- * paciente. TODO(IT3): acotar y completar con `dynamic-enums` cuando exista.
+ * paciente. País y jurisdicción **no tienen binding** en `dynamic-enums`
+ * (404, comprobado el 2026-08-11): hasta que lo tengan no se pueden acotar.
  */
 export interface NewTenant {
   readonly code: string;

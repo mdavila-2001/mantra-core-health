@@ -58,6 +58,31 @@
       />
     </app-form-field>
 
+    <!-- Los dos campos de catálogo. Estuvieron ausentes mientras no hubo forma
+         de saber qué conjunto de valores gobierna cada columna; con
+         `dynamic-enums` publicado, se ofrecen como lo que son: selectores. -->
+    <app-form-field
+      label="Género administrativo"
+      hint="Opcional. Cómo consta la persona a efectos administrativos."
+    >
+      <app-concept-select
+        target="profiles.persons.administrative_gender_concept_id"
+        [(value)]="generoAdministrativo"
+        [labels]="ETIQUETAS_DE_GENERO"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Sexo al nacer"
+      hint="Opcional. Dato clínico; no sustituye al género administrativo."
+    >
+      <app-concept-select
+        target="profiles.persons.sex_at_birth_concept_id"
+        [(value)]="sexoAlNacer"
+        [labels]="ETIQUETAS_DE_SEXO"
+      />
+    </app-form-field>
+
     <app-form-field
       label="Código del índice maestro (MPI)"
       hint="Opcional. Solo si esta persona ya tiene identidad en el índice maestro."
