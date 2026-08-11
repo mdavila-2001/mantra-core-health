@@ -1,6 +1,6 @@
 # API de backend
 
-Las 85 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 87 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -104,16 +104,24 @@ se verifica, y por eso la pantalla de verificación no tiene selector de persona
 La única elección es cuál de las organizaciones **propias** — las del token — se
 quiere verificar (`:tenantId`).
 
-### `IdentityAdminClient` — 14 operaciones · sólo comando
+### `IdentityAdminClient` — 15 operaciones · 14 comandos y una lectura
 
 El lado administrativo del M27 (`SECURITY_ADMIN`): autoridades, políticas y el
-ciclo completo del caso de verificación. El backend no expone ningún `GET`
-administrativo todavía, así que las 14 pantallas operan con identificadores
-pegados; cuando lleguen los endpoints de consulta, los listados reemplazan ese
-gesto.
+ciclo completo del caso de verificación. La única lectura es la **cola de
+revisión**, y es la que evita que quien revisa tenga que conocer de antemano el
+id del caso: enlaza a `revision/escalar` con `?caseId=`. El resto de las
+pantallas siguen operando con identificadores pegados hasta que el backend
+publique los `GET` que faltan.
+
+> La cola se acota **por rol, no por dato**:
+> `identity_assurance.identity_verification_cases` no tiene `tenant_id`, así
+> que el RLS por `app.current_tenant_id` no la alcanza y un `SECURITY_ADMIN` ve
+> los casos de todos los tenants. Deuda abierta, documentada también en
+> `IdentityCasesService.listQueue` del backend.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
+| `GET` | `/identity/verification-cases` | `CaseQueue` (V27-02·L) |
 | `POST` | `/identity/authorities` | `AuthorityForm` (V27-09) |
 | `POST` | `/identity/authorities/:authorityId/endpoints` | `AuthorityEndpointForm` (V27-10) |
 | `POST` | `/identity/verification-policies` | `VerificationPolicyForm` (V27-18) |
@@ -140,6 +148,7 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 | `GET` | `/profiles/patients/:profileId` | `PatientDetail` (ficha F-01) |
 | `GET` | `/profiles/patients/me/summary` | `MyProfile` (V05-03) |
 | `POST` | `/profiles/patients` | `PatientNew` (V05-01·F) |
+| `GET` | `/profiles/patients/merge-events` | `ProfilesClient.listMergeEvents` (UC-05-09·L) |
 | `POST` | `/profiles/patients/merge` | `PatientMerge` (V05-01·A, UC-05-08) |
 | `POST` | `/profiles/patients/merge/:eventId/reverse` | `PatientMerge` (V05-01·A, UC-05-09) |
 | `POST` | `/profiles/patients/:profileId/related-persons` | `RelatedPersonForm` (V05-05, UC-05-10) |
@@ -154,13 +163,17 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 > existente. Hoy sólo se ofrece el primer caso: reutilizar exigiría un buscador de personas, y no
 > hay `GET /profiles/persons`.
 
-> **La reversión de una fusión sólo es posible en el momento.** El `eventId` que
-> `…/merge/:eventId/reverse` exige viene **únicamente** en la respuesta de
-> `POST /profiles/patients/merge`, y el backend no expone ningún listado de eventos de fusión. En
-> cuanto esa respuesta se pierde de vista, la fusión deja de ser reversible desde la aplicación.
-> Por eso `PatientMerge` ofrece el «Deshacer» en la pantalla de resultado y lo advierte con
-> palabras. Un `GET /profiles/patients/merge-events` lo convertiría en una operación reversible de
-> verdad.
+> **La reversión de una fusión ya no caduca al cerrar la pantalla.** El `eventId` que
+> `…/merge/:eventId/reverse` exige venía **únicamente** en la respuesta de
+> `POST /profiles/patients/merge`: en cuanto se perdía de vista, unir dos historias clínicas dejaba
+> de tener vuelta atrás desde la aplicación. Eso era P9 y se cerró con
+> `GET /profiles/patients/merge-events`, que devuelve ese identificador — filtrando por paciente en
+> **los dos lados** de la fusión, porque quien revisa un registro no sabe si el que mira sobrevivió
+> o fue el absorbido.
+>
+> `PatientMerge` sigue ofreciendo el «Deshacer» en la pantalla de resultado, que es donde se
+> necesita —el error se ve en el momento—, pero su aviso dejó de decir que era la última
+> oportunidad.
 
 Las tres lecturas entraron con el PR #31 del backend y son lo que sacó a la
 sección de pacientes del estado «Listado pendiente» que el vault marca en 674 de

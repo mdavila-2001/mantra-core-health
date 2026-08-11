@@ -1,0 +1,59 @@
+<app-page-header
+  title="Cola de revisión"
+  subtitle="Los casos de verificación de identidad que esperan una decisión, del que más lleva esperando al más reciente."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="cola">
+  <app-view-state-host [state]="state()" (retry)="cargar()">
+    <app-data-table
+      [state]="state()"
+      [columns]="columns()"
+      [trackBy]="byId"
+      caption="Casos de verificación de identidad esperando revisión"
+    />
+  </app-view-state-host>
+</div>
+
+<!-- Celdas con presentación propia. Un ng-template no renderiza nada por sí
+     solo: la tabla las instancia por fila. -->
+<ng-template #statusCell let-caso>
+  <app-badge [variant]="caso.statusVariant">{{ caso.statusLabel }}</app-badge>
+</ng-template>
+
+<ng-template #caseCell let-caso>
+  <code class="tabular-nums cola__id">{{ caso.id }}</code>
+</ng-template>
+
+<ng-template #subjectCell let-caso>
+  <code class="tabular-nums cola__id">{{ caso.subjectEntityId }}</code>
+</ng-template>
+
+<ng-template #openedCell let-caso>
+  @if (caso.openedAt) {
+    {{ caso.openedAt | date: 'dd/MM/yyyy HH:mm' }}
+  } @else {
+    <span class="cola__sin-dato" aria-label="Sin fecha registrada">—</span>
+  }
+</ng-template>
+
+<ng-template #expiresCell let-caso>
+  @if (caso.expiresAt) {
+    {{ caso.expiresAt | date: 'dd/MM/yyyy HH:mm' }}
+  } @else {
+    <span class="cola__sin-dato" aria-label="Sin vencimiento registrado">—</span>
+  }
+</ng-template>
+
+<!-- El id viaja en la query para que el formulario abra con el caso ya puesto:
+     una cola desde la que hay que copiar un uuid a mano no resuelve nada. -->
+<ng-template #actionCell let-caso>
+  <a
+    app-link
+    [routerLink]="escalateRoute"
+    [queryParams]="{ caseId: caso.id }"
+    [attr.aria-label]="'Revisar el caso ' + caso.id"
+  >
+    Revisar
+  </a>
+</ng-template>

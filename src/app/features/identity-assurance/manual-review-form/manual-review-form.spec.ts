@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
 import { ManualReviewForm } from './manual-review-form';
 
@@ -80,5 +80,54 @@ describe('ManualReviewForm', () => {
 
     interno<() => void>('submit')();
     // `http.verify()` comprueba que nada salió.
+  });
+});
+
+/**
+ * Prefill desde la cola de revisión.
+ *
+ * Va en un bloque propio porque necesita una `ActivatedRoute` con parámetros,
+ * y el `beforeEach` de arriba monta el componente sin ninguno.
+ */
+describe('ManualReviewForm · caso precargado desde la cola', () => {
+  function montar(queryParams: Record<string, string>) {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [ManualReviewForm],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(ManualReviewForm);
+    fixture.detectChanges();
+    const form = (fixture.componentInstance as unknown as Record<string, unknown>)['form'] as {
+      getRawValue: () => { caseId: string };
+    };
+    return { fixture, form };
+  }
+
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
+  });
+
+  it('toma el caseId de la query y lo deja puesto', () => {
+    const { form } = montar({ caseId: CASO });
+    expect(form.getRawValue().caseId).toBe(CASO);
+  });
+
+  it('descarta un caseId que no sea uuid en vez de dejar el formulario inválido solo', () => {
+    const { form } = montar({ caseId: 'no-es-un-uuid' });
+    expect(form.getRawValue().caseId).toBe('');
+  });
+
+  it('sin query param arranca vacío, como siempre', () => {
+    const { form } = montar({});
+    expect(form.getRawValue().caseId).toBe('');
   });
 });

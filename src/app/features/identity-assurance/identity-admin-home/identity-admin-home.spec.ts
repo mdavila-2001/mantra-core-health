@@ -32,6 +32,8 @@ describe('IdentityAdminHome', () => {
 
   it('las pantallas ya construidas tienen su enlace, en el orden de las áreas', () => {
     expect(enlaces()).toEqual([
+      // La cola encabeza: es la lectura desde la que se llega a las demás.
+      '/administracion/verificacion-identidad/cola',
       '/administracion/verificacion-identidad/autoridades/nueva',
       '/administracion/verificacion-identidad/autoridades/endpoint',
       '/administracion/verificacion-identidad/politicas/nueva',
@@ -57,7 +59,7 @@ describe('IdentityAdminHome', () => {
     expect(pendientes.length).toBe(0);
   });
 
-  it('avisa por qué no hay listados: el módulo no expone consultas todavía', () => {
+  it('avisa que, salvo la cola, las pantallas siguen operando por identificador', () => {
     const aviso = (fixture.nativeElement as HTMLElement).querySelector('app-alert');
 
     expect(aviso?.textContent).toContain('identificador');
