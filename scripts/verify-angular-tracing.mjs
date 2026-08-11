@@ -122,7 +122,7 @@ function buildBatch(traceId, spanId) {
                 startTimeUnixNano: String(now),
                 endTimeUnixNano: String(now + DURATION_NS),
                 attributes: [
-                  attr('app.route.template', '/auth/verificar'),
+                  attr('app.route.template', '/auth/verify-email'),
                   attr('angular.navigation.result', 'completed'),
                   // El cebo: esto NO debe sobrevivir al Collector.
                   attr('url.full', 'https://app.example.com/auth/verificar?token=CEBO123456'),
@@ -227,7 +227,7 @@ async function main() {
 
   const plantilla = trace.spans?.[0]?.tags?.find((t) => t.key === 'app.route.template');
   record(
-    plantilla?.value === '/auth/verificar',
+    plantilla?.value === '/auth/verify-email',
     'la plantilla de ruta sobrevive intacta',
     `app.route.template = ${plantilla?.value ?? '(ausente)'}`,
   );

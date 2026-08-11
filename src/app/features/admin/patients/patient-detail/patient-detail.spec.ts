@@ -50,13 +50,13 @@ describe('PatientDetail', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'administracion/pacientes/:profileId', component: PatientDetail }]),
+        provideRouter([{ path: 'administration/patients/:profileId', component: PatientDetail }]),
       ],
     });
 
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/administracion/pacientes/pp-1', PatientDetail);
+    componente = await harness.navigateByUrl('/administration/patients/pp-1', PatientDetail);
   });
 
   afterEach(() => http.verify());
@@ -175,7 +175,7 @@ describe('PatientDetail', () => {
 
     expect(ultimo?.label).toBe('Ana Salas');
     expect(ultimo?.routerLink).toBeUndefined();
-    expect(anteultimo?.routerLink).toBe('/administracion/pacientes');
+    expect(anteultimo?.routerLink).toBe('/administration/patients');
   });
 
   /* ---- pestaña de contactos (V05-05) -------------------------------------- */
@@ -297,7 +297,7 @@ describe('PatientDetail · relaciones asistenciales', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'administracion/pacientes/:profileId', component: PatientDetail }]),
+        provideRouter([{ path: 'administration/patients/:profileId', component: PatientDetail }]),
       ],
     });
 
@@ -312,7 +312,7 @@ describe('PatientDetail · relaciones asistenciales', () => {
     });
 
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/administracion/pacientes/pp-1', PatientDetail);
+    componente = await harness.navigateByUrl('/administration/patients/pp-1', PatientDetail);
   }
 
   function relaciones() {

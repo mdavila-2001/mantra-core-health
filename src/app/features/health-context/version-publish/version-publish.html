@@ -1,0 +1,70 @@
+<app-page-header
+  title="Publicar versión"
+  subtitle="Deja la versión como vigente para consumo. La publicada anterior queda reemplazada en el mismo acto."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (published(); as resultado) {
+  <div class="m44__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m44__titulo">La versión quedó publicada</h2>
+
+    <dl class="m44__datos">
+      <div>
+        <dt>Versión</dt>
+        <dd><code>{{ resultado.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Número</dt>
+        <dd class="m44__cifra">{{ resultado.versionNumber }}</dd>
+      </div>
+      <div>
+        <dt>Contexto</dt>
+        <dd><code>{{ resultado.countryHealthContextId }}</code></dd>
+      </div>
+      @if (resultado.supersededVersionId; as anterior) {
+        <div>
+          <dt>Reemplazó a</dt>
+          <dd><code>{{ anterior }}</code></dd>
+        </div>
+      }
+    </dl>
+
+    <p class="m44__texto">
+      El contexto queda activo y la resolución para consumo ya entrega esta
+      versión.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraPublicacion()">Publicar otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Qué versión"
+      description="Solo se publica una versión con revisión de calidad aprobada; un rechazo la bloquea."
+    >
+      <app-form-field
+        label="Identificador de la versión"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.versionId.touched && form.controls.versionId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="versionId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Publicar versión"
+      destructive
+      confirmTitle="¿Publicar la versión?"
+      confirmMessage="La versión publicada anterior queda reemplazada en la misma transacción y el consumo pasa a entregar esta."
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

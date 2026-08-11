@@ -22,7 +22,7 @@ import { SectionPlaceholder } from './section-placeholder';
 class Anfitrion {}
 
 const SECCION: AppSection = {
-  path: 'agenda',
+  path: 'schedule',
   label: 'Agenda',
   group: 'Atención',
   icon: 'calendar',
@@ -75,7 +75,7 @@ describe('SectionPlaceholder', () => {
 
     // Acotado al estado: el breadcrumb también enlaza al panel, y esa no es la
     // salida que S3 exige — es de dónde venís, no a dónde podés ir desde acá.
-    const salida = fixture.nativeElement.querySelector('app-view-state-host a[href="/panel"]');
+    const salida = fixture.nativeElement.querySelector('app-view-state-host a[href="/dashboard"]');
     expect(salida).not.toBeNull();
     expect(salida?.textContent?.trim()).toBe('Volver al panel');
   });

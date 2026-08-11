@@ -11,7 +11,7 @@ import { SessionStore } from './session.store';
  * La pantalla la aporta J9; la constante vive acá porque es el guard quien
  * decide cuándo hace falta.
  */
-export const TENANT_SELECTION_ROUTE = '/auth/organizacion';
+export const TENANT_SELECTION_ROUTE = '/auth/organization';
 
 /**
  * Autorización de ruta — el estado **S1** del contrato del M34.

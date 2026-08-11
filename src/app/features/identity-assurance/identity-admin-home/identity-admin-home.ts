@@ -19,7 +19,7 @@ interface Area {
   readonly operaciones: readonly Operacion[];
 }
 
-const BASE = '/administracion/verificacion-identidad';
+const BASE = '/administration/identity-assurance';
 
 /**
  * Portada de la sección «Verificación de identidad» (M27, lado administrativo).
@@ -33,7 +33,7 @@ const BASE = '/administracion/verificacion-identidad';
   selector: 'app-identity-admin-home',
   imports: [Alert, Card, Link, PageHeader, RouterLink],
   templateUrl: './identity-admin-home.html',
-  styleUrl: './identity-admin-home.css',
+  styleUrl: '../../portada.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IdentityAdminHome {
@@ -46,32 +46,32 @@ export class IdentityAdminHome {
       titulo: 'Trabajo pendiente',
       descripcion:
         'Los casos que esperan una decisión, del que más lleva esperando al más reciente.',
-      operaciones: [{ label: 'Cola de revisión', route: `${BASE}/cola` }],
+      operaciones: [{ label: 'Cola de revisión', route: `${BASE}/queue` }],
     },
     {
       titulo: 'Autoridades',
       descripcion:
         'Contra quién se verifica: los registros oficiales y los endpoints por los que responden.',
       operaciones: [
-        { label: 'Registrar autoridad', route: `${BASE}/autoridades/nueva` },
-        { label: 'Publicar endpoint de autoridad', route: `${BASE}/autoridades/endpoint` },
+        { label: 'Registrar autoridad', route: `${BASE}/authorities/new` },
+        { label: 'Publicar endpoint de autoridad', route: `${BASE}/authorities/endpoint` },
       ],
     },
     {
       titulo: 'Políticas',
       descripcion:
         'Qué exige cada trámite según su riesgo: niveles de aseguramiento, evidencia y controles.',
-      operaciones: [{ label: 'Crear política de verificación', route: `${BASE}/politicas/nueva` }],
+      operaciones: [{ label: 'Crear política de verificación', route: `${BASE}/policies/new` }],
     },
     {
       titulo: 'Casos',
       descripcion:
         'El expediente de una verificación: se abre contra una política, junta evidencia y vence.',
       operaciones: [
-        { label: 'Abrir caso de verificación', route: `${BASE}/casos/nuevo` },
-        { label: 'Aportar evidencia', route: `${BASE}/casos/evidencia` },
-        { label: 'Planificar checks', route: `${BASE}/casos/checks` },
-        { label: 'Barrer casos vencidos', route: `${BASE}/casos/barrido` },
+        { label: 'Abrir caso de verificación', route: `${BASE}/cases/new` },
+        { label: 'Aportar evidencia', route: `${BASE}/cases/evidence` },
+        { label: 'Planificar checks', route: `${BASE}/cases/checks` },
+        { label: 'Barrer casos vencidos', route: `${BASE}/cases/expire-sweep` },
       ],
     },
     {
@@ -79,9 +79,9 @@ export class IdentityAdminHome {
       descripcion:
         'La consulta a la autoridad: sus intentos técnicos, el resultado inmutable y el fraude.',
       operaciones: [
-        { label: 'Registrar intento contra la autoridad', route: `${BASE}/checks/intento` },
-        { label: 'Registrar resultado del check', route: `${BASE}/checks/resultado` },
-        { label: 'Registrar señal de fraude', route: `${BASE}/checks/fraude` },
+        { label: 'Registrar intento contra la autoridad', route: `${BASE}/checks/attempt` },
+        { label: 'Registrar resultado del check', route: `${BASE}/checks/result` },
+        { label: 'Registrar señal de fraude', route: `${BASE}/checks/fraud-signal` },
       ],
     },
     {
@@ -89,10 +89,10 @@ export class IdentityAdminHome {
       descripcion:
         'El desenlace: revisión humana cuando hace falta, y la aserción que acredita el nivel.',
       operaciones: [
-        { label: 'Escalar a revisión manual', route: `${BASE}/revision/escalar` },
-        { label: 'Decidir revisión manual', route: `${BASE}/revision/decision` },
-        { label: 'Emitir aserción', route: `${BASE}/aserciones/emitir` },
-        { label: 'Revocar aserción', route: `${BASE}/aserciones/revocar` },
+        { label: 'Escalar a revisión manual', route: `${BASE}/review/escalate` },
+        { label: 'Decidir revisión manual', route: `${BASE}/review/decision` },
+        { label: 'Emitir aserción', route: `${BASE}/assertions/issue` },
+        { label: 'Revocar aserción', route: `${BASE}/assertions/revoke` },
       ],
     },
   ];

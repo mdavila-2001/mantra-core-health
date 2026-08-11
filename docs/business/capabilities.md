@@ -9,18 +9,18 @@ existe. **Nada de esta página es aspiracional.**
 
 | # | Capacidad | Ruta | Prueba |
 |---|---|---|---|
-| 1 | Registrarse como paciente con documento | `/auth/registro` | ✅ |
-| 2 | Registrarse como profesional con correo, matrícula y colegio | `/auth/registro` | ✅ |
+| 1 | Registrarse como paciente con documento | `/auth/register` | ✅ |
+| 2 | Registrarse como profesional con correo, matrícula y colegio | `/auth/register` | ✅ |
 | 3 | Iniciar sesión con correo o documento | `/auth` | ✅ |
 | 4 | Aportar código de segundo factor | `/auth` | ✅ |
-| 5 | Elegir organización cuando hay varias | `/auth/organizacion` | ✅ |
-| 6 | Verificar el correo desde el enlace | `/auth/verificar` | ✅ |
-| 7 | Pedir la recuperación de contraseña | `/auth/recuperar` | ✅ |
-| 8 | Fijar la contraseña nueva con el token del correo | `/auth/nueva-clave` | ✅ |
+| 5 | Elegir organización cuando hay varias | `/auth/organization` | ✅ |
+| 6 | Verificar el correo desde el enlace | `/auth/verify-email` | ✅ |
+| 7 | Pedir la recuperación de contraseña | `/auth/forgot-password` | ✅ |
+| 8 | Fijar la contraseña nueva con el token del correo | `/auth/reset-password` | ✅ |
 | 9 | Mantener la sesión entre recargas | — (arranque) | ✅ |
 | 10 | Cerrar sesión | Armazón | ✅ |
 | 11 | Cambiar de organización | Armazón | ❌ `ShellLayout` sin prueba |
-| 12 | Ver el estado de la sesión y la conexión | `/panel` | ❌ `Dashboard` sin prueba |
+| 12 | Ver el estado de la sesión y la conexión | `/dashboard` | ❌ `Dashboard` sin prueba |
 | 13 | Cambiar el tema (claro/oscuro/sistema) | Vitrina | ✅ |
 | 14 | Explorar el sistema de diseño | `/design-system` | ✅ |
 

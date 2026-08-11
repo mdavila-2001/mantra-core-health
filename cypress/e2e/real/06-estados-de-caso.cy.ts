@@ -85,7 +85,7 @@ describe('Recorrido real · estados de un caso de verificación', () => {
     cy.then(() => entrar(paciente));
     estable();
 
-    irA('/identidad/casos');
+    irA('/my-account/identity/cases');
     estable();
     capturar({ carpeta: 'estados-01-casos', titulo: 'Mis verificaciones' }, 'con-un-caso');
 

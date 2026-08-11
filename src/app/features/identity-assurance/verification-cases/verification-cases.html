@@ -18,7 +18,7 @@
 <!-- Celdas con presentación propia. Un ng-template no renderiza nada por sí
      solo: la tabla las instancia por fila. -->
 <ng-template #idCell let-caso>
-  <a app-link class="tabular-nums" [routerLink]="['/identidad/casos', caso.id]">
+  <a app-link class="tabular-nums" [routerLink]="['/my-account/identity/cases', caso.id]">
     {{ caso.id }}
   </a>
 </ng-template>

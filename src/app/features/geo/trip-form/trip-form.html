@@ -1,0 +1,91 @@
+<app-page-header
+  title="Iniciar viaje"
+  subtitle="Abre un recorrido dentro de una sesión de rastreo. Un viaje en curso por sesión."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as viaje) {
+  <div class="m13__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m13__titulo">El viaje quedó iniciado</h2>
+
+    <dl class="m13__datos">
+      <div>
+        <dt>Viaje</dt>
+        <dd><code>{{ viaje.id }}</code></dd>
+      </div>
+      @if (viaje.trackingSessionId; as sesion) {
+        <div>
+          <dt>Sesión</dt>
+          <dd><code>{{ sesion }}</code></dd>
+        </div>
+      }
+    </dl>
+
+    <p class="m13__texto">
+      Guardá el identificador del viaje: es el que pide el cierre, con la
+      distancia y la duración si se conocen.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otroViaje()">Iniciar otro</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="En qué sesión"
+      description="La sesión tiene que estar abierta y sin otro viaje en curso."
+    >
+      <app-form-field
+        label="Identificador de la sesión de rastreo"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.trackingSessionId.touched && form.controls.trackingSessionId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="trackingSessionId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="De dónde a dónde"
+      description="Opcional: un traslado de urgencia puede arrancar sin destino cargado."
+    >
+      <app-form-field
+        label="Dirección de origen"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.originAddressId.touched && form.controls.originAddressId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="originAddressId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Dirección de destino"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.destinationAddressId.touched &&
+          form.controls.destinationAddressId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="destinationAddressId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Iniciar viaje"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

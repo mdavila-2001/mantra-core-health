@@ -11,10 +11,10 @@
     ========================================================================== */
 
 /** Listado de pacientes (V05-01·L). Coincide con la sección del menú. */
-export const PATIENTS_ROUTE = '/administracion/pacientes';
+export const PATIENTS_ROUTE = '/administration/patients';
 
 /** Alta de persona y perfil de paciente (V05-01·F). */
-export const PATIENT_NEW_ROUTE = `${PATIENTS_ROUTE}/nuevo`;
+export const PATIENT_NEW_ROUTE = `${PATIENTS_ROUTE}/new`;
 
 /**
  * Alta asistida (`iam`), que ya existía como pantalla de la sección.
@@ -23,10 +23,10 @@ export const PATIENT_NEW_ROUTE = `${PATIENTS_ROUTE}/nuevo`;
  * que es lo que el vault declara como pantalla principal de V05-01. La ruta
  * cambia; la pantalla no.
  */
-export const PATIENT_ASSISTED_ROUTE = `${PATIENTS_ROUTE}/alta-asistida`;
+export const PATIENT_ASSISTED_ROUTE = `${PATIENTS_ROUTE}/assisted-registration`;
 
 /** Fusión de pacientes duplicados (V05-01·A, UC-05-08 y UC-05-09). */
-export const PATIENT_MERGE_ROUTE = `${PATIENTS_ROUTE}/fusionar`;
+export const PATIENT_MERGE_ROUTE = `${PATIENTS_ROUTE}/merge`;
 
 /** Ficha de filiación F-01 (UC-05-14) de un paciente concreto. */
 export function patientDetailRoute(profileId: string): string {

@@ -103,13 +103,13 @@ Lo mismo con las confirmaciones que reemplazan el formulario:
 
 | Pantalla | Lo que no se anuncia |
 |---|---|
-| `/auth/recuperar` | **El acuse** — la respuesta completa |
-| `/auth/registro` | «Tu cuenta se creó, entrá con tu documento» |
-| `/auth/nueva-clave` | La confirmación y cuántas sesiones se cerraron |
+| `/auth/forgot-password` | **El acuse** — la respuesta completa |
+| `/auth/register` | «Tu cuenta se creó, entrá con tu documento» |
+| `/auth/reset-password` | La confirmación y cuántas sesiones se cerraron |
 
 ### Severidad
 
-`HIGH` para `/auth/recuperar` (el acuse es toda la respuesta) y `MEDIUM` para las
+`HIGH` para `/auth/forgot-password` (el acuse es toda la respuesta) y `MEDIUM` para las
 demás. Ver [el informe de auditoría](audit-report.md).
 
 ### La propuesta

@@ -211,7 +211,7 @@ describe('PatientNew', () => {
     enviar();
     http.expectOne('/profiles/patients').flush(RESPUESTA);
 
-    expect(navegado).toEqual(['/administracion/pacientes/pp-9']);
+    expect(navegado).toEqual(['/administration/patients/pp-9']);
   });
 
   /**

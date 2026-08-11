@@ -43,14 +43,14 @@ describe('Recorrido real · administrador', () => {
 
     /* -- Punto de partida ------------------------------------------------- */
 
-    recorrer(vigilante, { ruta: '/panel', carpeta: 'admin-01-panel', titulo: 'Panel' });
+    recorrer(vigilante, { ruta: '/dashboard', carpeta: 'admin-01-panel', titulo: 'Panel' });
     recorrer(vigilante, {
-      ruta: '/mi-cuenta',
+      ruta: '/my-account',
       carpeta: 'admin-02-mi-cuenta',
       titulo: 'Mi perfil',
     });
     recorrer(vigilante, {
-      ruta: '/identidad/verificar',
+      ruta: '/my-account/identity/verify',
       carpeta: 'admin-03-identidad',
       titulo: 'Verificar identidad',
     });
@@ -58,7 +58,7 @@ describe('Recorrido real · administrador', () => {
     /* -- Padrón de pacientes ---------------------------------------------- */
 
     recorrer(vigilante, {
-      ruta: '/administracion/pacientes',
+      ruta: '/administration/patients',
       carpeta: 'admin-04-pacientes',
       titulo: 'Pacientes',
     });
@@ -83,12 +83,12 @@ describe('Recorrido real · administrador', () => {
     );
 
     recorrer(vigilante, {
-      ruta: '/administracion/pacientes/nuevo',
+      ruta: '/administration/patients/new',
       carpeta: 'admin-06-alta-paciente',
       titulo: 'Nuevo paciente',
     });
     recorrer(vigilante, {
-      ruta: '/administracion/pacientes/alta-asistida',
+      ruta: '/administration/patients/assisted-registration',
       carpeta: 'admin-07-alta-asistida',
       titulo: 'Alta asistida',
     });
@@ -96,7 +96,7 @@ describe('Recorrido real · administrador', () => {
     /* -- Catálogos y cuentas ---------------------------------------------- */
 
     recorrer(vigilante, {
-      ruta: '/administracion/terminologia',
+      ruta: '/administration/terminology',
       carpeta: 'admin-08-terminologia',
       titulo: 'Terminología',
     });
@@ -108,14 +108,14 @@ describe('Recorrido real · administrador', () => {
     capturar({ carpeta: 'admin-08-terminologia', titulo: 'Terminología' }, 'buscando-cholera');
 
     recorrer(vigilante, {
-      ruta: '/administracion/usuarios',
+      ruta: '/administration/users',
       carpeta: 'admin-09-usuarios',
       titulo: 'Usuarios',
     });
 
     /* -- Agenda: la sección que dejó de ser un cartel ---------------------- */
 
-    recorrer(vigilante, { ruta: '/agenda', carpeta: 'admin-10-agenda', titulo: 'Agenda' });
+    recorrer(vigilante, { ruta: '/schedule', carpeta: 'admin-10-agenda', titulo: 'Agenda' });
 
     /**
      * El selector tiene que **mostrar** el recurso que se está mirando.
@@ -181,14 +181,14 @@ describe('Recorrido real · administrador', () => {
 
     // La ventana de treinta días, que es la que más le pide al backend.
     vigilante.en('Agenda · 30 días');
-    irA('/agenda?rango=mes');
+    irA('/schedule?rango=mes');
     estable();
     capturar({ carpeta: 'admin-10-agenda', titulo: 'Agenda' }, 'ventana-30-dias');
 
     /* -- Archivo clínico y expediente -------------------------------------- */
 
     recorrer(vigilante, {
-      ruta: '/clinico',
+      ruta: '/medical-records',
       carpeta: 'admin-11-archivo-clinico',
       titulo: 'Archivo clínico',
     });
@@ -225,8 +225,8 @@ describe('Recorrido real · administrador', () => {
     /* -- Lo que sigue planificado ------------------------------------------ */
 
     for (const [ruta, carpeta, titulo] of [
-      ['/administracion/organizaciones', 'admin-13-organizaciones', 'Organizaciones'],
-      ['/facturacion', 'admin-14-facturacion', 'Facturación'],
+      ['/administration/organizations', 'admin-13-organizaciones', 'Organizaciones'],
+      ['/billing', 'admin-14-facturacion', 'Facturación'],
     ] as const) {
       recorrer(vigilante, { ruta, carpeta, titulo });
     }

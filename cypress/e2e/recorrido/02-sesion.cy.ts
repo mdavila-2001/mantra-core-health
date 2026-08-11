@@ -24,14 +24,14 @@ describe('Recorrido · área con sesión', () => {
 
   it('panel', () => {
     recorrer(
-      { ruta: '/panel', carpeta: '12-panel', titulo: 'Panel' },
+      { ruta: '/dashboard', carpeta: '12-panel', titulo: 'Panel' },
       { evitar: EVITAR_POR_DEFECTO },
     );
   });
 
   it('mi perfil', () => {
     recorrer(
-      { ruta: '/mi-cuenta', carpeta: '13-mi-perfil', titulo: 'Mi perfil' },
+      { ruta: '/my-account', carpeta: '13-mi-perfil', titulo: 'Mi perfil' },
       { evitar: EVITAR_POR_DEFECTO },
     );
   });
@@ -39,7 +39,7 @@ describe('Recorrido · área con sesión', () => {
   it('verificar identidad', () => {
     recorrer(
       {
-        ruta: '/identidad/verificar',
+        ruta: '/my-account/identity/verify',
         carpeta: '14-verificar-identidad',
         titulo: 'Verificar identidad',
       },
@@ -55,11 +55,11 @@ describe('Recorrido · área con sesión', () => {
    * es lo que permite revisar que cada una diga lo suyo.
    */
   for (const [ruta, nombre] of [
-    ['/administracion/organizaciones', 'organizaciones'],
+    ['/administration/organizations', 'organizaciones'],
     // Salieron de esta lista tres secciones, y las tres por el mismo motivo:
     // dejaron de ser un cartel cuando su lectura existió (terminología, agenda
     // y archivo clínico). Sus recorridos viven con administración y atención.
-    ['/facturacion', 'facturacion'],
+    ['/billing', 'facturacion'],
   ] as const) {
     it(`sección planificada · ${nombre}`, () => {
       recorrer(
@@ -141,7 +141,7 @@ describe('Recorrido · armazón', () => {
     // El nav pasa a cajón por debajo del punto de corte: en escritorio es una
     // columna fija y el botón de menú ni siquiera se dibuja.
     cy.viewport(VIEWPORTS.movil.ancho, VIEWPORTS.movil.alto);
-    cy.visit('/panel');
+    cy.visit('/dashboard');
     esperarEstable();
     capturar(pantalla, 'panel en móvil con el cajón cerrado');
 
@@ -155,7 +155,7 @@ describe('Recorrido · armazón', () => {
 
     const pantalla = { carpeta: '19-guard', titulo: 'Guard de sesión' };
 
-    cy.visit('/panel');
+    cy.visit('/dashboard');
     cy.location('pathname').should('match', /\/auth$/);
     esperarEstable();
     capturar(pantalla, 'sin sesión, /panel redirige al login');
@@ -170,7 +170,7 @@ describe('Recorrido · armazón', () => {
 
     const pantalla = { carpeta: '20-identidad-requerida', titulo: 'Identidad sin verificar' };
 
-    cy.visit('/mi-cuenta');
+    cy.visit('/my-account');
     esperarEstable();
     capturar(pantalla, 'mi perfil con identidad sin verificar');
   });
@@ -184,7 +184,7 @@ describe('Recorrido · armazón', () => {
 
     const pantalla = { carpeta: '21-panel-error', titulo: 'Panel · directorio caído' };
 
-    cy.visit('/panel');
+    cy.visit('/dashboard');
     esperarEstable();
     capturar(pantalla, 'panel con el directorio en error');
   });

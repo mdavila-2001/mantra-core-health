@@ -31,17 +31,17 @@ describe('DelegatedAccessHome', () => {
 
   it('las once operaciones del módulo tienen su enlace, en el orden de las áreas', () => {
     expect(enlaces()).toEqual([
-      '/administracion/acceso-delegado/delegaciones/nueva',
-      '/administracion/acceso-delegado/delegaciones/solicitudes/nueva',
-      '/administracion/acceso-delegado/delegaciones/concesiones/nueva',
-      '/administracion/acceso-delegado/delegaciones/revocar',
-      '/administracion/acceso-delegado/asignaciones/nueva',
-      '/administracion/acceso-delegado/asignaciones/editar',
-      '/administracion/acceso-delegado/solicitudes/resolver',
-      '/administracion/acceso-delegado/conjuntos/nuevo',
-      '/administracion/acceso-delegado/conjuntos/versionar',
-      '/administracion/acceso-delegado/operacion/evaluar-actor',
-      '/administracion/acceso-delegado/operacion/barrido-expiracion',
+      '/administration/delegated-access/delegations/new',
+      '/administration/delegated-access/delegations/requests/new',
+      '/administration/delegated-access/delegations/grants/new',
+      '/administration/delegated-access/delegations/revoke',
+      '/administration/delegated-access/assignments/new',
+      '/administration/delegated-access/assignments/edit',
+      '/administration/delegated-access/requests/resolve',
+      '/administration/delegated-access/permission-sets/new',
+      '/administration/delegated-access/permission-sets/new-version',
+      '/administration/delegated-access/operations/evaluate-actor',
+      '/administration/delegated-access/operations/expiry-sweep',
     ]);
   });
 

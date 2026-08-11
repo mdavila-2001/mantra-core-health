@@ -1,4 +1,4 @@
-# `/auth/recuperar` — Recuperar contraseña
+# `/auth/forgot-password` — Recuperar contraseña
 
 `src/app/features/auth/forgot-password/forgot-password.ts` · `ForgotPassword` ·
 `app-forgot-password`
@@ -8,7 +8,7 @@
 ## 1 · Propósito
 
 Pedir el correo de recuperación. Es la primera mitad del flujo; la segunda es
-[`/auth/nueva-clave`](auth-nueva-clave.md).
+[`/auth/reset-password`](auth-reset-password.md).
 
 ## 2 · Acceso y permisos
 
@@ -30,7 +30,7 @@ graph TD
   D -->|200| E["requested = true<br/>Acuse SIEMPRE igual"]
   D -->|error| F["errorToViewState → S4…S9"]
   E --> G["La API manda el correo con ?token="]
-  G --> H["/auth/nueva-clave"]
+  G --> H["/auth/reset-password"]
 
   style E fill:#DFEDE9,color:#000
 ```

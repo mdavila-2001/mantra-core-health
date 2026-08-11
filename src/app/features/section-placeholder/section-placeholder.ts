@@ -64,7 +64,7 @@ export class SectionPlaceholder {
    */
   protected readonly state = computed<ViewState<never>>(() =>
     empty(
-      { label: 'Volver al panel', route: '/panel' },
+      { label: 'Volver al panel', route: '/dashboard' },
       `${this.section().summary} La pantalla todavía no está construida.`,
     ),
   );

@@ -139,7 +139,7 @@ return forbidden({
 });
 ```
 
-`IDENTITY_VERIFICATION_ROUTE` vale `/identidad/verificar`, una ruta real del
+`IDENTITY_VERIFICATION_ROUTE` vale `/my-account/identity/verify`, una ruta real del
 router — la brecha `HIGH` que registraba esta sección (apuntaba a `/identity/me`,
 una ruta de la API) quedó cerrada junto con la pantalla.
 

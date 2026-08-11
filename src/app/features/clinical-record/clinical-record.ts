@@ -180,7 +180,7 @@ export class ClinicalRecord {
           this.resultados.set(
             texto === ''
               ? empty(
-                  { label: 'Ir a Pacientes', route: '/administracion/pacientes' },
+                  { label: 'Ir a Pacientes', route: '/administration/patients' },
                   'Todavía no hay pacientes registrados en esta organización.',
                 )
               : empty(

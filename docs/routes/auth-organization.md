@@ -1,4 +1,4 @@
-# `/auth/organizacion` — Elegir organización
+# `/auth/organization` — Elegir organización
 
 `src/app/features/auth/tenant-selection/tenant-selection.ts` · `TenantSelection`
 · `app-tenant-selection`

@@ -107,7 +107,7 @@ describe('Agenda', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'agenda', component: Agenda }]),
+        provideRouter([{ path: 'schedule', component: Agenda }]),
       ],
     });
 
@@ -123,7 +123,7 @@ describe('Agenda', () => {
    */
   async function montar(
     claims: Record<string, unknown> = {},
-    url = '/agenda',
+    url = '/schedule',
   ): Promise<void> {
     session.start({
       accessToken: jwt({
@@ -273,7 +273,7 @@ describe('Agenda', () => {
     await responder();
 
     expect((citas().data?.[0] as Record<string, unknown>)['rutaPaciente']).toBe(
-      '/administracion/pacientes/p-1',
+      '/administration/patients/p-1',
     );
   });
 
@@ -283,7 +283,7 @@ describe('Agenda', () => {
     await responder();
 
     expect((citas().data?.[0] as Record<string, unknown>)['rutaPaciente']).toBe(
-      '/administracion/pacientes/p-1',
+      '/administration/patients/p-1',
     );
   });
 
@@ -316,7 +316,7 @@ describe('Agenda', () => {
    * ganara, dos personas no podrían mirar la misma pantalla.
    */
   it('el recurso de la URL manda sobre la agenda propia', async () => {
-    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/agenda?recurso=r-0');
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?recurso=r-0');
     await responderRecursos([RECURSO_AJENO, RECURSO]);
     await responderResto();
 
@@ -348,7 +348,7 @@ describe('Agenda', () => {
     await responder();
 
     const fila = citas().data?.[0] as Record<string, unknown>;
-    expect(fila['rutaExpediente']).toBe('/clinico/p-1');
+    expect(fila['rutaExpediente']).toBe('/medical-records/p-1');
     // Y no la ficha de filiación, que su rol no puede abrir.
     expect(fila['rutaPaciente']).toBeNull();
   });
@@ -478,7 +478,7 @@ describe('Agenda', () => {
       refreshToken: 'r-1',
     });
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/agenda?recurso=r-borrado', Agenda);
+    componente = await harness.navigateByUrl('/schedule?recurso=r-borrado', Agenda);
 
     await responder();
 
@@ -513,7 +513,7 @@ describe('Agenda', () => {
       refreshToken: 'r-1',
     });
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/agenda', Agenda);
+    componente = await harness.navigateByUrl('/schedule', Agenda);
 
     http.verify();
     expect(interno<() => boolean>('sinOrganizacion')()).toBe(true);
@@ -605,7 +605,7 @@ describe('Agenda', () => {
       refreshToken: 'r-1',
     });
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/agenda', Agenda);
+    componente = await harness.navigateByUrl('/schedule', Agenda);
     await responder();
 
     const columnasDeCitas = interno<() => readonly { key: string }[]>('columnasDeCitas')();

@@ -1,0 +1,128 @@
+<app-page-header
+  title="Nueva geocerca"
+  subtitle="Define un área con nombre propio: un círculo con radio y centro, o un polígono con su geometría."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as geocerca) {
+  <div class="m13__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m13__titulo">La geocerca quedó creada</h2>
+
+    <dl class="m13__datos">
+      <div>
+        <dt>Geocerca</dt>
+        <dd><code>{{ geocerca.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Nombre</dt>
+        <dd>{{ geocerca.name }}</dd>
+      </div>
+    </dl>
+
+    <p class="m13__texto">
+      Guardá el identificador: es el que piden los cruces de entrada y salida.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraGeocerca()">Crear otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Identidad"
+      description="El nombre es único dentro de la organización: el duplicado se rechaza."
+    >
+      <app-form-field
+        label="Nombre"
+        [required]="true"
+        [errorMessage]="
+          form.controls.name.touched && form.controls.name.invalid
+            ? 'Escribí el nombre de la geocerca (máx. 200 caracteres).'
+            : ''
+        "
+      >
+        <app-input formControlName="name" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Forma" [required]="true">
+        <app-radio-group [value]="shapeType()" (valueChange)="elegirForma($event)">
+          <app-radio value="CIRCLE" label="Círculo: un centro y un radio" />
+          <app-radio value="POLYGON" label="Polígono: una geometría GeoJSON" />
+        </app-radio-group>
+      </app-form-field>
+    </app-form-section>
+
+    @if (esCirculo()) {
+      <app-form-section
+        legend="El círculo"
+        description="Radio en metros y centro en grados decimales. Los tres son obligatorios."
+      >
+        <app-form-field
+          label="Radio (metros)"
+          [required]="true"
+          [errorMessage]="
+            form.controls.radiusM.touched &&
+            (form.controls.radiusM.invalid || form.controls.radiusM.value.trim() === '')
+              ? 'Ingresá el radio en metros, como 500.'
+              : ''
+          "
+        >
+          <app-input formControlName="radiusM" type="text" />
+        </app-form-field>
+
+        <app-form-field
+          label="Latitud del centro"
+          [required]="true"
+          [errorMessage]="
+            form.controls.centerLat.touched &&
+            (form.controls.centerLat.invalid || form.controls.centerLat.value.trim() === '')
+              ? 'Ingresá la latitud en grados decimales, como -34.603765.'
+              : ''
+          "
+        >
+          <app-input formControlName="centerLat" type="text" />
+        </app-form-field>
+
+        <app-form-field
+          label="Longitud del centro"
+          [required]="true"
+          [errorMessage]="
+            form.controls.centerLng.touched &&
+            (form.controls.centerLng.invalid || form.controls.centerLng.value.trim() === '')
+              ? 'Ingresá la longitud en grados decimales, como -58.381592.'
+              : ''
+          "
+        >
+          <app-input formControlName="centerLng" type="text" />
+        </app-form-field>
+      </app-form-section>
+    }
+
+    @if (esPoligono()) {
+      <app-form-section
+        legend="El polígono"
+        description="La geometría GeoJSON del área, como la produce cualquier editor de mapas."
+      >
+        <app-form-field
+          label="Geometría (GeoJSON)"
+          [required]="true"
+          hint='Un objeto como {"type": "Polygon", "coordinates": [...]}.'
+          [errorMessage]="
+            geometriaInvalida() ? 'Tiene que ser un objeto JSON válido.' : ''
+          "
+        >
+          <app-textarea [(value)]="geometryJson" autoResize [disabled]="isSubmitting()" />
+        </app-form-field>
+      </app-form-section>
+    }
+
+    <app-form-actions
+      submitLabel="Crear geocerca"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

@@ -23,7 +23,7 @@ describe('rutas del armazón', () => {
   it('entrar a la raíz lleva al panel', () => {
     const raiz = hijas.find((route) => route.path === '');
 
-    expect(raiz?.redirectTo).toBe('panel');
+    expect(raiz?.redirectTo).toBe('dashboard');
     expect(raiz?.pathMatch).toBe('full');
   });
 
@@ -38,27 +38,100 @@ describe('rutas del armazón', () => {
   });
 
   /**
-   * Ninguna ruta puede quedar fuera del árbol que el registro declara.
+   * Ninguna **pantalla** puede quedar fuera del árbol que el registro declara.
    *
    * Una ruta hija es legítima de dos maneras: **es** una sección, o **cuelga**
    * de una —el alta, la ficha de un registro, un flujo alternativo—. Lo que
-   * sigue prohibido es una ruta que no se pueda alcanzar desde ninguna sección:
-   * esa es una pantalla a la que el menú nunca lleva y que nadie recuerda
-   * mantener.
+   * sigue prohibido es una pantalla que no se pueda alcanzar desde ninguna
+   * sección: esa es una pantalla a la que el menú nunca lleva y que nadie
+   * recuerda mantener.
+   *
+   * Las redirecciones quedan fuera porque no son pantallas: son las direcciones
+   * viejas, en castellano, que apuntan a una sección que sí está registrada. Su
+   * regla propia es la prueba de abajo, que es más exigente que ésta.
    */
-  it('toda ruta hija pertenece a una sección del registro', () => {
+  it('toda pantalla hija pertenece a una sección del registro', () => {
     const declaradas = APP_SECTIONS.map((s) => s.path);
-    // La redirección de la raíz es la única hija sin sección: no es una
-    // pantalla, es a dónde va quien entra sin ruta.
     const huerfanas = hijas.filter((r) => {
       const path = r.path ?? '';
-      if (path === '') {
+      if (path === '' || r.redirectTo !== undefined) {
         return false;
       }
       return !declaradas.some((seccion) => path === seccion || path.startsWith(`${seccion}/`));
     });
 
     expect(huerfanas.map((r) => r.path)).toEqual([]);
+  });
+
+  /**
+   * Las direcciones viejas tienen que llevar a algún lado real.
+   *
+   * Una redirección a una ruta que no existe es peor que no tenerla: promete
+   * que el favorito sigue sirviendo y termina en el comodín. Se comprueba
+   * contra el árbol declarado —secciones y pantallas hijas—, no contra una
+   * lista escrita a mano, para que borrar una sección haga fallar esto.
+   */
+  it('cada dirección vieja redirige a una ruta que existe', () => {
+    const destinos = [
+      ...APP_SECTIONS.map((s) => `/${s.path}`),
+      ...hijas.filter((r) => r.redirectTo === undefined).map((r) => `/${r.path ?? ''}`),
+      ...routes.filter((r) => r.redirectTo === undefined).map((r) => `/${r.path ?? ''}`),
+    ];
+
+    // `redirectTo` admite además una función desde Angular 19; las tablas de
+    // direcciones viejas son todas de texto, y el estrechamiento lo deja dicho.
+    const redirecciones = [...hijas, ...routes].filter(
+      (r): r is typeof r & { redirectTo: string } =>
+        typeof r.redirectTo === 'string' && (r.path ?? '') !== '',
+    );
+
+    // Que existan: si la tabla se vacía por un refactor, esta prueba pasaría
+    // sin comprobar nada.
+    expect(redirecciones.length).toBeGreaterThan(15);
+
+    for (const redireccion of redirecciones) {
+      expect(redireccion.pathMatch, redireccion.path).toBe('full');
+      expect(destinos, redireccion.path).toContain(redireccion.redirectTo);
+    }
+  });
+
+  /**
+   * Y no pueden tapar a ninguna pantalla.
+   *
+   * El router prueba en orden de declaración, así que una dirección vieja
+   * declarada antes de las pantallas se probaría primero. Hoy ninguna podría
+   * ganar —son textos distintos y van con `pathMatch: 'full'`—, pero el día que
+   * una ruta nueva se llame igual que una vieja, la que gana tiene que ser la
+   * que pinta algo. Se fija por orden y no por confianza en que no pase.
+   *
+   * El comodín queda fuera de la comparación: va último por definición, y una
+   * dirección vieja declarada **después** de él nunca se alcanzaría — que es el
+   * error opuesto y el que de verdad rompería los favoritos.
+   */
+  it('las direcciones viejas se declaran después de toda pantalla y antes del comodín', () => {
+    for (const lista of [hijas, routes]) {
+      const pantallas = lista
+        .map((r, indice) => ({ r, indice }))
+        .filter(({ r }) => typeof r.redirectTo !== 'string' && r.path !== '**');
+      const viejas = lista
+        .map((r, indice) => ({ r, indice }))
+        .filter(({ r }) => typeof r.redirectTo === 'string' && (r.path ?? '') !== '');
+
+      if (pantallas.length === 0 || viejas.length === 0) {
+        continue;
+      }
+
+      const ultimaPantalla = pantallas[pantallas.length - 1]?.indice ?? 0;
+      const primeraVieja = viejas[0]?.indice ?? 0;
+      const ultimaVieja = viejas[viejas.length - 1]?.indice ?? 0;
+      const comodin = lista.findIndex((r) => r.path === '**');
+
+      expect(primeraVieja, `${viejas[0]?.r.path}`).toBeGreaterThan(ultimaPantalla);
+
+      if (comodin !== -1) {
+        expect(ultimaVieja, `${viejas[viejas.length - 1]?.r.path}`).toBeLessThan(comodin);
+      }
+    }
   });
 
   /**

@@ -1,0 +1,142 @@
+<app-page-header
+  title="Registrar observación"
+  subtitle="Anota lo que una corrida leyó de una fuente. Inmutable y deduplicada por hash."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (recorded(); as observacion) {
+  <div class="m44__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m44__titulo">
+      @if (observacion.duplicate) {
+        La observación ya estaba registrada
+      } @else {
+        La observación quedó registrada
+      }
+    </h2>
+
+    @if (observacion.duplicate) {
+      <app-alert tone="info" class="m44__alert">
+        El mismo hash ya estaba en la corrida: el documento leído dos veces no
+        cuenta dos veces. Es la deduplicación funcionando, no un error.
+      </app-alert>
+    }
+
+    <dl class="m44__datos">
+      <div>
+        <dt>Observación</dt>
+        <dd><code>{{ observacion.id }}</code></dd>
+      </div>
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otraObservacion()">Registrar otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="De qué corrida y de qué fuente"
+      description="La corrida tiene que estar abierta; la fuente declara de dónde salió el dato."
+    >
+      <app-form-field
+        label="Identificador de la corrida"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.collectionRunId.touched && form.controls.collectionRunId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="collectionRunId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Identificador de la fuente"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.sourceId.touched && form.controls.sourceId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="sourceId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Qué se observó"
+      description="El hash identifica el contenido: el mismo documento dos veces se deduplica."
+    >
+      <app-form-field
+        label="Hash del contenido"
+        [required]="true"
+        hint="La huella del documento leído, como un SHA-256. Máx. 200 caracteres."
+        [errorMessage]="
+          form.controls.contentHash.touched && form.controls.contentHash.invalid
+            ? 'Escribí el hash del contenido (máx. 200 caracteres).'
+            : ''
+        "
+      >
+        <app-input formControlName="contentHash" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Veredicto" [required]="true">
+        <app-radio-group [value]="status()" (valueChange)="elegirEstado($event)">
+          <app-radio value="ACCEPTED" label="Aceptada: la fuente merece confianza" />
+          <app-radio value="REJECTED" label="Rechazada: queda registrada pero no respalda hechos" />
+        </app-radio-group>
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Rastro"
+      description="Opcional: dónde se encontró, cuándo, en qué formato y qué se extrajo."
+    >
+      <app-form-field label="Dónde se encontró" hint="Una URL o una referencia del documento.">
+        <app-input formControlName="sourceLocator" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Publicado" hint="Cuándo lo publicó la fuente.">
+        <app-date-picker mode="date-time" [(value)]="publishedAt" [disabled]="isSubmitting()" />
+      </app-form-field>
+
+      <app-form-field label="Recuperado" hint="Cuándo lo leyó el agente.">
+        <app-date-picker mode="date-time" [(value)]="retrievedAt" [disabled]="isSubmitting()" />
+      </app-form-field>
+
+      <app-form-field label="Tipo de contenido" hint="Como application/pdf. Máx. 100 caracteres.">
+        <app-input formControlName="mediaType" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Archivo crudo"
+        hint="Identificador del archivo ya subido con el contenido original (UUID)."
+        [errorMessage]="
+          form.controls.rawPayloadFileId.touched && form.controls.rawPayloadFileId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="rawPayloadFileId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Contenido extraído"
+        hint="Un objeto JSON con lo que el agente extrajo del documento."
+        [errorMessage]="
+          payloadInvalido() ? 'Tiene que ser un objeto JSON válido, como {&quot;casos&quot;: 12}.' : ''
+        "
+      >
+        <app-textarea [(value)]="extractedPayloadJson" autoResize [disabled]="isSubmitting()" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Registrar observación"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

@@ -1,3 +1,17 @@
+/* ============================================================================
+    La portada de un módulo que sólo tiene comandos.
+
+    Cinco secciones la usan —M29, M40, M27-admin, M44 y M13— porque todas
+    resuelven el mismo problema: el backend no expone `GET` de colección, así
+    que la pantalla de la sección no lista nada y en su lugar agrupa las
+    operaciones por área.
+
+    Vive acá y no junto a una de ellas porque ya había **tres copias idénticas**
+    de estas 40 líneas, y la cuarta y la quinta llegaban con W5. Angular las
+    sigue encapsulando por componente, así que compartir el archivo no cambia lo
+    que se descarga: sólo deja de haber cinco sitios donde tocar un margen.
+    ========================================================================== */
+
 .portada__alert {
     display: block;
     margin-top: var(--sp-5);

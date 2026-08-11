@@ -164,7 +164,7 @@ describe('OrganizationNew', () => {
     enviar();
     http.expectOne('/admin/tenants').flush(RESPUESTA);
 
-    expect(navegado).toEqual(['/administracion/organizaciones']);
+    expect(navegado).toEqual(['/administration/organizations']);
   });
 
   /**

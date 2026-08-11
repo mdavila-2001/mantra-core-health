@@ -19,7 +19,7 @@ class Vacio {}
 
 const RUTAS: Routes = [
   { path: 'auth', component: Vacio },
-  { path: 'panel', component: Vacio },
+  { path: 'dashboard', component: Vacio },
   { path: 'pacientes/:pacienteId', component: Vacio },
   { path: 'bloqueada', component: Vacio, canActivate: [() => false] },
   { path: 'redirigida', component: Vacio, canActivate: [() => inyectarUrlTree()] },
@@ -79,11 +79,11 @@ describe('RouterTracing', () => {
     exporter.getFinishedSpans().filter((span) => span.name === 'angular.navigation');
 
   it('abre un span por navegación y lo cierra al completar', async () => {
-    await router.navigateByUrl('/panel');
+    await router.navigateByUrl('/dashboard');
 
     const [span] = navegaciones();
     expect(span?.attributes['angular.navigation.result']).toBe('completed');
-    expect(span?.attributes['app.route.to']).toBe('/panel');
+    expect(span?.attributes['app.route.to']).toBe('/dashboard');
   });
 
   it('registra la plantilla, NUNCA el identificador', async () => {
@@ -95,7 +95,7 @@ describe('RouterTracing', () => {
   });
 
   it('descarta el query string, que es donde viaja el token del correo', async () => {
-    await router.navigateByUrl('/panel?token=eyJhbGciOi.abc.def');
+    await router.navigateByUrl('/dashboard?token=eyJhbGciOi.abc.def');
 
     expect(JSON.stringify(navegaciones()[0]?.attributes)).not.toContain('eyJhbGci');
   });
@@ -140,7 +140,7 @@ describe('RouterTracing', () => {
   it('no duplica spans si el inicializador corre dos veces', async () => {
     TestBed.inject(RouterTracing).start();
 
-    await router.navigateByUrl('/panel');
+    await router.navigateByUrl('/dashboard');
 
     expect(navegaciones()).toHaveLength(1);
   });

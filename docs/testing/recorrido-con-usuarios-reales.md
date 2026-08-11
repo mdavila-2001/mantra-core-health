@@ -32,7 +32,7 @@ defectos que no puede encontrar:
   `422 PRECONDITION_FAILED` de `GET /scheduling/bookings`, que no admite listar
   citas sin acotar por recurso o por paciente.
 - Un prefijo del proxy que se come una ruta de la aplicación. `/admin` desviaba
-  `/administracion/pacientes` hacia la API, que respondía `Cannot GET`.
+  `/administration/patients` hacia la API, que respondía `Cannot GET`.
 - Un rol que en la práctica no alcanza para la pantalla que su menú le ofrece.
 - Un desplegable que nace con valor y muestra el placeholder. Con formularios no
   se veía, porque escriben el valor después de montar.

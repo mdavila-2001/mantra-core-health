@@ -17,7 +17,7 @@ describe('Autenticación · sesión', () => {
   });
 
   it('sin sesión, el guard manda al login', () => {
-    DashboardPage.abrir('sesion-simple', '/panel');
+    DashboardPage.abrir('sesion-simple', '/dashboard');
 
     cy.location('pathname').should('match', /\/auth$/);
     LoginPage.esperarCargada();
@@ -71,7 +71,7 @@ describe('Autenticación · sesión', () => {
     cy.haySesionPersistida().should('equal', false);
 
     // Volver a escribir la dirección del panel no puede devolver la sesión.
-    cy.irA('/panel');
+    cy.irA('/dashboard');
     cy.location('pathname').should('match', /\/auth$/);
   });
 

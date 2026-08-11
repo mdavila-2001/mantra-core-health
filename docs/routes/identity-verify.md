@@ -1,4 +1,4 @@
-# `/identidad/verificar` — Verificar identidad
+# `/my-account/identity/verify` — Verificar identidad
 
 `src/app/features/identity-verification/identity-verification.ts` ·
 `IdentityVerification` · `app-identity-verification`

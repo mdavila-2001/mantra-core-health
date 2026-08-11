@@ -1,0 +1,72 @@
+<app-page-header
+  title="Cerrar sesión de rastreo"
+  subtitle="Termina la sesión abierta de un sujeto. Con viajes en curso, primero se cierran los viajes."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (closed(); as sesion) {
+  <div class="m13__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m13__titulo">La sesión quedó cerrada</h2>
+
+    <dl class="m13__datos">
+      <div>
+        <dt>Sesión</dt>
+        <dd><code>{{ sesion.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Sujeto rastreado</dt>
+        <dd><code>{{ sesion.trackedSubjectId }}</code></dd>
+      </div>
+      @if (sesion.startedAt; as inicio) {
+        <div>
+          <dt>Abierta</dt>
+          <dd>{{ inicio | date: 'medium' }}</dd>
+        </div>
+      }
+      @if (sesion.endedAt; as fin) {
+        <div>
+          <dt>Cerrada</dt>
+          <dd>{{ fin | date: 'medium' }}</dd>
+        </div>
+      }
+    </dl>
+
+    <p class="m13__texto">
+      Sin sesión abierta, la ingesta de posiciones del sujeto se rechaza hasta
+      que se abra una nueva.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otroCierre()">Cerrar otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Qué sesión"
+      description="Si la sesión tiene un viaje en curso, el cierre se rechaza: cerrá primero el viaje."
+    >
+      <app-form-field
+        label="Identificador de la sesión"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.sessionId.touched && form.controls.sessionId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="sessionId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Cerrar sesión"
+      destructive
+      confirmTitle="¿Cerrar la sesión de rastreo?"
+      confirmMessage="La sesión termina y la ingesta de posiciones del sujeto se rechaza hasta abrir una nueva."
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

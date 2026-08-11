@@ -1,7 +1,7 @@
 import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenarios';
 
 /**
- * Panel (`/panel`), la primera pantalla con sesión.
+ * Panel (`/dashboard`), la primera pantalla con sesión.
  *
  * Tiene dos mitades que se prueban por separado: los datos que salen del propio
  * token —sin ninguna petición detrás— y la lectura real del directorio público,
@@ -9,7 +9,7 @@ import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenar
  * estados de vista.
  */
 /** Fuera del objeto para que el valor por defecto de `abrir` no se autorreferencie. */
-const RUTA = '/panel';
+const RUTA = '/dashboard';
 
 export const DashboardPage = {
   ruta: RUTA,
