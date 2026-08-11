@@ -140,6 +140,7 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 | `GET` | `/profiles/patients/:profileId` | `PatientDetail` (ficha F-01) |
 | `GET` | `/profiles/patients/me/summary` | `MyProfile` (V05-03) |
 | `POST` | `/profiles/patients` | `PatientNew` (V05-01·F) |
+| `GET` | `/profiles/patients/merge-events` | `ProfilesClient.listMergeEvents` (UC-05-09·L) |
 | `POST` | `/profiles/patients/merge` | `PatientMerge` (V05-01·A, UC-05-08) |
 | `POST` | `/profiles/patients/merge/:eventId/reverse` | `PatientMerge` (V05-01·A, UC-05-09) |
 | `POST` | `/profiles/patients/:profileId/related-persons` | `RelatedPersonForm` (V05-05, UC-05-10) |
@@ -154,13 +155,17 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 > existente. Hoy sólo se ofrece el primer caso: reutilizar exigiría un buscador de personas, y no
 > hay `GET /profiles/persons`.
 
-> **La reversión de una fusión sólo es posible en el momento.** El `eventId` que
-> `…/merge/:eventId/reverse` exige viene **únicamente** en la respuesta de
-> `POST /profiles/patients/merge`, y el backend no expone ningún listado de eventos de fusión. En
-> cuanto esa respuesta se pierde de vista, la fusión deja de ser reversible desde la aplicación.
-> Por eso `PatientMerge` ofrece el «Deshacer» en la pantalla de resultado y lo advierte con
-> palabras. Un `GET /profiles/patients/merge-events` lo convertiría en una operación reversible de
-> verdad.
+> **La reversión de una fusión ya no caduca al cerrar la pantalla.** El `eventId` que
+> `…/merge/:eventId/reverse` exige venía **únicamente** en la respuesta de
+> `POST /profiles/patients/merge`: en cuanto se perdía de vista, unir dos historias clínicas dejaba
+> de tener vuelta atrás desde la aplicación. Eso era P9 y se cerró con
+> `GET /profiles/patients/merge-events`, que devuelve ese identificador — filtrando por paciente en
+> **los dos lados** de la fusión, porque quien revisa un registro no sabe si el que mira sobrevivió
+> o fue el absorbido.
+>
+> `PatientMerge` sigue ofreciendo el «Deshacer» en la pantalla de resultado, que es donde se
+> necesita —el error se ve en el momento—, pero su aviso dejó de decir que era la última
+> oportunidad.
 
 Las tres lecturas entraron con el PR #31 del backend y son lo que sacó a la
 sección de pacientes del estado «Listado pendiente» que el vault marca en 674 de
