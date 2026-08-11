@@ -21,7 +21,10 @@ import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
-import { toCaseStatusPresentation } from '../identity-verification/case-status';
+import {
+  CaseStatusCatalog,
+  toCaseStatusPresentation,
+} from '../identity-verification/case-status';
 
 /**
  * Panel de inicio de la aplicación autenticada.
@@ -64,6 +67,9 @@ export class Dashboard {
   private readonly auth = inject(AuthService);
   private readonly publicClient = inject(PublicClient);
   private readonly profiles = inject(ProfilesClient);
+  // El panel muestra el sello del trámite de identidad: necesita los estados
+  // resueltos contra terminología.
+  private readonly estadosDeCaso = inject(CaseStatusCatalog);
   private readonly identity = inject(IdentityClient);
   private readonly navigation = inject(NavigationService);
 

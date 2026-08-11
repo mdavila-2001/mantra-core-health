@@ -26,6 +26,81 @@
       }
     </app-tabs>
 
+    <!-- ─── El encuentro ─────────────────────────────────────────────────
+         La única escritura de la pantalla, y acá abajo a propósito: se registra
+         después de haber leído la historia, no antes. -->
+    <app-card variant="outlined" padding="lg" class="expediente__encuentro">
+      <h2 class="expediente__nota-titulo">Encuentro</h2>
+
+      @if (errorDelRegistro(); as mensaje) {
+        <app-alert tone="error" data-testid="encuentro-error">{{ mensaje }}</app-alert>
+      }
+
+      <!-- Los encuentros abiertos primero: si ya hay uno en curso, abrir otro
+           casi nunca es lo que se quiso hacer, y verlo antes lo evita. -->
+      @if (encuentrosEnCurso().length > 0) {
+        <ul class="expediente__en-curso" data-testid="encuentros-en-curso">
+          @for (encuentro of encuentrosEnCurso(); track encuentro.id) {
+            <li class="expediente__en-curso-item">
+              <div class="expediente__en-curso-datos">
+                <app-badge variant="warning" value="En curso" />
+                <span class="expediente__principal">{{ encuentro.motivo }}</span>
+                <span class="expediente__secundario">
+                  {{ encuentro.clase }}
+                  @if (encuentro.desde) {
+                    · desde {{ encuentro.desde | date: 'd MMM, HH:mm' }}
+                  }
+                </span>
+              </div>
+              <button
+                app-button
+                variant="outline"
+                type="button"
+                [isLoading]="cerrando() === encuentro.id"
+                [disabled]="cerrando() !== null"
+                (clicked)="cerrarEncuentro(encuentro)"
+              >
+                Cerrar
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <!-- Sin organización activa no se puede registrar: `tenantId` es el
+           custodio del encuentro y es obligatorio en el check-in. Decirlo así
+           —y no con un error tras el envío— es la diferencia entre «falta un
+           paso» y «esto falló». -->
+      @if (sinOrganizacion()) {
+        <app-alert tone="info" title="Elegí una organización">
+          Un encuentro queda bajo la custodia de una organización. Elegí una en el selector del
+          encabezado para poder registrarlo.
+        </app-alert>
+      } @else {
+        <form class="expediente__registro" (submit)="$event.preventDefault()">
+          <app-form-field
+            label="Motivo de consulta"
+            hint="Opcional. Si llegaste desde la agenda, viene el motivo de la cita."
+          >
+            <app-textarea
+              [(value)]="motivo"
+              [rows]="3"
+              [maxLength]="topeDelMotivo"
+              [autoResize]="true"
+              placeholder="Por qué consulta la persona"
+            />
+          </app-form-field>
+
+          <app-form-actions
+            submitLabel="Registrar encuentro"
+            [pending]="registrando()"
+            [disabled]="!puedeRegistrar()"
+            (submitted)="registrarEncuentro()"
+          />
+        </form>
+      }
+    </app-card>
+
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->
@@ -37,8 +112,10 @@
         la separación es de quién la escribe, no de quién la lee.
       </p>
       <p class="expediente__nota-texto">
-        Esta pantalla es de <strong>consulta</strong>. Registrar un diagnóstico, firmar una nota o
-        indicar medicación son flujos con su propia confirmación, y no cuelgan de acá.
+        De todo lo que se puede escribir en una historia clínica, acá sólo se registra el
+        <strong>encuentro</strong> —abrirlo y cerrarlo—, porque es lo único cuyo resultado esta
+        misma pantalla vuelve a mostrar. Diagnosticar, indicar medicación o firmar una nota tienen
+        su flujo propio y no cuelgan de acá.
       </p>
     </app-card>
   </div>

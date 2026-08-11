@@ -248,6 +248,60 @@ describe('Agenda', () => {
     );
   });
 
+  /**
+   * El enlace que cierra el recorrido del médico: del turno a la historia de
+   * quien llega. Es el que `CLINICIAN` y `PRACTITIONER` sí pueden abrir — la
+   * ficha de filiación pide `SECURITY_ADMIN`, que no tienen —, así que sin él la
+   * agenda de quien atiende terminaba en un callejón.
+   */
+  it('con rol clínico el turno enlaza al expediente', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    await responder();
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['rutaExpediente']).toBe('/clinico/p-1');
+    // Y no la ficha de filiación, que su rol no puede abrir.
+    expect(fila['rutaPaciente']).toBeNull();
+  });
+
+  it('sin rol clínico no ofrece el expediente', async () => {
+    await montar({ roles: ['SCHEDULING_AGENT'] });
+    await responder();
+
+    expect((citas().data?.[0] as Record<string, unknown>)['rutaExpediente']).toBeNull();
+  });
+
+  /**
+   * El motivo viaja al expediente para precargar el del encuentro. Va el
+   * **texto** y no un identificador porque `GET /scheduling/bookings` no expone
+   * `appointmentId` — ver P11 en `PENDIENTES-BACKEND.md`.
+   */
+  it('lleva el motivo de la cita para precargar el del encuentro', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    await responder();
+
+    expect((citas().data?.[0] as Record<string, unknown>)['motivoCrudo']).toBe('Control anual');
+  });
+
+  it('una cita sin motivo no inventa uno para llevar', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    const { reasonText: _omitido, ...sinMotivo } = CITA;
+    await responder({ citas: [sinMotivo] });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['motivoCrudo']).toBeNull();
+    // En la tabla sí se rellena: una celda vacía se lee como un dato que no cargó.
+    expect(fila['motivo']).toBe('Sin registrar');
+  });
+
+  it('una cita sin paciente no enlaza a ningún expediente', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    const { patientProfileId: _omitido, ...sinPaciente } = CITA;
+    await responder({ citas: [sinPaciente] });
+
+    expect((citas().data?.[0] as Record<string, unknown>)['rutaExpediente']).toBeNull();
+  });
+
   it('un fallo en citas no vacía los cupos, que sí respondieron', async () => {
     await montar();
 

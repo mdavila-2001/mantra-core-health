@@ -127,10 +127,28 @@
 </ng-template>
 
 <ng-template #celdaPaciente let-cita>
-  @if (cita.rutaPaciente) {
-    <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
+  <!-- Dos destinos distintos, no dos formas de lo mismo: el expediente es la
+       historia de quien llega y lo abre quien atiende; la ficha es la filiación
+       y la abre administración. Se ofrecen los que la sesión pueda abrir, y
+       ninguno cuando no puede abrir ninguno. -->
+  @if (cita.rutaExpediente || cita.rutaPaciente) {
+    <span class="agenda__accesos">
+      @if (cita.rutaExpediente) {
+        <!-- El motivo de la cita viaja para precargar el del encuentro: quien
+             atiende no debería teclear de nuevo lo que la cita ya dice. -->
+        <a
+          app-link
+          [routerLink]="cita.rutaExpediente"
+          [queryParams]="cita.motivoCrudo ? { motivo: cita.motivoCrudo } : {}"
+          >Abrir expediente</a
+        >
+      }
+      @if (cita.rutaPaciente) {
+        <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
+      }
+    </span>
   } @else if (cita.patientProfileId) {
-    <!-- Sin permiso para abrir la ficha, el enlace sería un 403 con forma de
+    <!-- Sin permiso para abrir nada, el enlace sería un 403 con forma de
          invitación. Se dice que hay paciente y no cuál. -->
     <span class="agenda__hasta">Paciente asignado</span>
   } @else {

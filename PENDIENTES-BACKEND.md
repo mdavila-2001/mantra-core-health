@@ -188,6 +188,76 @@ Ese `GET` es `/common/files/:id/content` — **una descarga de archivo, no un li
 
 ---
 
+## Abierto · P11 · El encuentro no se puede vincular al turno que lo originó
+
+**Levantado el 2026-08-10 desde P1** (recorrido del médico, Acto 4) · **Para:** Pablo (API) ·
+**Bloquea:** nada de la demo — el recorrido cierra igual. Bloquea la trazabilidad turno ↔ encuentro.
+
+`CheckInEncounterDto` admite `appointmentId` («cita que origina el check-in»), y a primera vista es
+exactamente lo que el Acto 4 necesita: el médico abre el turno de su agenda y deja constancia de que
+atendió **esa** cita. **No se puede.** Son dos cadenas distintas:
+
+| Extremo | Qué declara |
+| --- | --- |
+| `clinical.encounters.appointment_id` | FK → **`clinical.appointments`** |
+| `scheduling.appointment_bookings.appointment_id` | FK → **`clinical.appointments`**, y es *nullable* |
+| `BookingItemDto` (`GET /scheduling/bookings`) | **no expone `appointmentId`** en ninguna de sus 14 propiedades |
+
+Es decir: el puente existe en el modelo —la reserva puede apuntar a una cita clínica— pero **la
+lectura no lo devuelve**, así que el frontend no tiene forma de llegar a él. Mandar el `id` de la
+reserva como `appointmentId` violaría la clave foránea; mandarlo igual sería inventar un vínculo.
+
+### Qué haría falta
+
+Exponer `appointmentId` en `BookingItemDto` (una línea del mapeo, el dato ya está en la entidad). Con
+eso, el enlace de la agenda puede llevarlo y el check-in cerrar la trazabilidad.
+
+Conviene decidir a la vez qué pasa cuando es `null` —una reserva sin cita clínica detrás—, que por lo
+que se ve en los seeds es el caso corriente.
+
+### Qué se hizo mientras tanto
+
+El enlace de la agenda al expediente lleva el **motivo** de la cita como parámetro
+(`/clinico/:profileId?motivo=…`) y precarga con él el motivo de consulta del encuentro. Es el único
+dato del turno que el encuentro puede recibir sin inventar una clave foránea, y para la demo alcanza:
+el médico no vuelve a teclear lo que la cita ya dice. El vínculo por identificador queda pendiente.
+
+---
+
+## Abierto · P12 · No hay forma de saber qué agenda es la del profesional que inició sesión
+
+**Levantado el 2026-08-10 desde P1** · **Para:** Pablo (API) · **Bloquea:** que la agenda se abra
+sola en el recurso de quien la mira. No bloquea la demo: el selector de recurso ya está.
+
+`GET /scheduling/resources` devuelve `resourceRefType` y `resourceRefId` —y contra la API viva se
+confirma que un consultorio apunta a `practitioner_profiles`—, así que **el recurso sí sabe de quién
+es**. Lo que falta es el otro lado: la sesión no sabe cuál es su propio perfil profesional.
+
+| Lectura | Existe |
+| --- | --- |
+| `GET /profiles/patients/me/summary` | ✅ el paciente sí conoce su perfil |
+| `GET /profiles/practitioners/me` (o equivalente) | ❌ **no existe** — `profiles-practitioners.controller.ts` sólo tiene `POST` |
+| Claim `profileId` en el token | ❌ el JWT trae `sub`, `roles`, `tenants`, `name`, `tenantNames` |
+
+Sin ninguno de los dos, «la agenda del médico» no se puede resolver: la pantalla cae al primer
+recurso de la organización, que con varios consultorios sembrados no es el suyo.
+
+### Qué haría falta
+
+Lo más barato es el **claim**: si el token trajera el `practitionerProfileId` de la sesión cuando lo
+haya, la agenda podría preseleccionar su recurso sin ninguna petición extra. La alternativa es un
+`GET /profiles/practitioners/me` simétrico al de paciente, que además serviría para «mi perfil
+profesional», hoy inexistente.
+
+### Qué se hizo mientras tanto
+
+Nada, a propósito. El selector de recurso ya vive en la URL, así que el médico elige su consultorio
+una vez y el enlace queda compartible con el recurso puesto. Adivinar cuál es el suyo —por nombre,
+por orden— sería peor que preguntarlo: una agenda que muestra la de otro profesional sin decirlo es
+un error que no se ve.
+
+---
+
 ## Resuelto en esta sesión · las violaciones de validación no se leían
 
 **No era del backend: era nuestro, y llevaba semanas.** Este archivo ya lo documentaba —ver la

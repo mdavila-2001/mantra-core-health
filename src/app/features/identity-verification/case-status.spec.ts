@@ -1,47 +1,95 @@
-import { toCaseStatusPresentation } from './case-status';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
+import { ESTADOS_DE_CASO, resolverEstadosDeCaso } from '../../../testing/case-status';
+import { CaseStatusCatalog, toCaseStatusPresentation } from './case-status';
 
 /**
- * Lo que estas pruebas fijan: que cada estado del caso —un UUID de concepto—
- * se traduce a la variante y la palabra correctas, y que un estado desconocido
- * degrada a neutro en vez de romper la pantalla.
+ * Lo que estas pruebas fijan: que el estado de un caso se resuelve **contra
+ * terminología** y no contra un mapa de UUID escritos a mano, que hasta que el
+ * catálogo llega todo se ve en neutro en vez de romperse, y que las nueve
+ * frases que ve el titular del trámite son las que decidió la interfaz —el
+ * catálogo las trae en inglés, que es terminología técnica y no copy.
  */
-describe('toCaseStatusPresentation', () => {
-  const CASOS: readonly {
-    nombre: string;
-    conceptId: string;
-    variant: string;
-    label: string;
-  }[] = [
-    { nombre: 'CASE_OPEN', conceptId: '31f822ab-b48c-5570-a83c-cf16c37b5b9a', variant: 'pending', label: 'Pendiente' },
-    { nombre: 'CASE_IN_VERIFICATION', conceptId: 'ba5a0b9d-8a27-5379-8662-eea142b98a22', variant: 'in-review', label: 'En revisión' },
-    // A la persona verificada no se le revela la marca de riesgo.
-    { nombre: 'CASE_AT_RISK', conceptId: 'c919c1c1-e013-5542-914e-1fe706203cd2', variant: 'in-review', label: 'En revisión' },
-    { nombre: 'CASE_MANUAL_REVIEW', conceptId: 'a02659b9-802a-5acb-ac8f-093e0ddcdbf0', variant: 'in-review', label: 'En revisión' },
-    { nombre: 'CASE_VERIFIED', conceptId: '6fb20fdf-1c92-502c-8e1f-54a9bb85ff98', variant: 'approved', label: 'Aprobado' },
-    { nombre: 'CASE_ASSERTED', conceptId: 'd41fde09-6752-5bb6-8237-b786fe062ab2', variant: 'approved', label: 'Aprobado' },
-    { nombre: 'CASE_REJECTED', conceptId: '05c426b8-86f5-5709-a939-d6baa864fd21', variant: 'rejected', label: 'Rechazado' },
-    { nombre: 'CASE_REVOKED', conceptId: '235c658e-7679-5604-baba-764055398964', variant: 'rejected', label: 'Revocado' },
-    { nombre: 'CASE_EXPIRED', conceptId: '9d172ffe-1b1f-5318-9378-c924732d7967', variant: 'expired', label: 'Vencido' },
-  ];
+describe('Estados de un caso de verificación', () => {
+  let http: HttpTestingController;
 
-  for (const caso of CASOS) {
-    it(`${caso.nombre} → ${caso.variant} «${caso.label}»`, () => {
-      expect(toCaseStatusPresentation(caso.conceptId)).toEqual({
-        variant: caso.variant,
-        label: caso.label,
-      });
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
-  }
+    http = TestBed.inject(HttpTestingController);
+  });
 
-  it('un UUID que esta versión no conoce degrada a «Desconocido»', () => {
-    expect(toCaseStatusPresentation('00000000-0000-0000-0000-000000000000')).toEqual({
+  afterEach(() => {
+    http.verify();
+  });
+
+  it('sin estado, o con uno que el catálogo no trae, degrada a neutro sin lanzar', () => {
+    const neutro = { variant: 'unknown', label: 'Desconocido' };
+
+    expect(toCaseStatusPresentation(undefined)).toEqual(neutro);
+    expect(toCaseStatusPresentation(null)).toEqual(neutro);
+    expect(toCaseStatusPresentation('00000000-0000-0000-0000-000000000000')).toEqual(neutro);
+  });
+
+  it('el catálogo se pide una sola vez aunque lo inyecten varias pantallas', () => {
+    TestBed.inject(CaseStatusCatalog);
+
+    const peticiones = http.match((p) => p.url.includes('/terminology/concepts'));
+    expect(peticiones.length).toBe(1);
+    expect(peticiones[0]?.request.method).toBe('GET');
+    // Se piden por prefijo de código, que es lo que agrupa a los nueve.
+    expect(peticiones[0]?.request.params.get('q')).toBe('identity_assurance:CASE_');
+
+    peticiones[0]?.flush({ items: [], count: 0, limit: 50 });
+  });
+
+  it('resuelto el catálogo, cada estado se traduce a su variante y su palabra', () => {
+    TestBed.inject(CaseStatusCatalog);
+    resolverEstadosDeCaso(http);
+
+    const esperado: readonly [string, string, string][] = [
+      [ESTADOS_DE_CASO.CASE_OPEN, 'pending', 'Pendiente'],
+      [ESTADOS_DE_CASO.CASE_IN_VERIFICATION, 'in-review', 'En revisión'],
+      // A la persona verificada no se le revela la marca de riesgo: para ella
+      // el caso sigue «en revisión».
+      [ESTADOS_DE_CASO.CASE_AT_RISK, 'in-review', 'En revisión'],
+      [ESTADOS_DE_CASO.CASE_MANUAL_REVIEW, 'in-review', 'En revisión'],
+      [ESTADOS_DE_CASO.CASE_VERIFIED, 'approved', 'Aprobado'],
+      [ESTADOS_DE_CASO.CASE_ASSERTED, 'approved', 'Aprobado'],
+      [ESTADOS_DE_CASO.CASE_REJECTED, 'rejected', 'Rechazado'],
+      [ESTADOS_DE_CASO.CASE_REVOKED, 'rejected', 'Revocado'],
+      [ESTADOS_DE_CASO.CASE_EXPIRED, 'expired', 'Vencido'],
+    ];
+
+    for (const [conceptId, variant, label] of esperado) {
+      expect(toCaseStatusPresentation(conceptId)).toEqual({ variant, label });
+    }
+  });
+
+  it('un concepto del catálogo que la interfaz no sabe pintar queda en neutro', () => {
+    TestBed.inject(CaseStatusCatalog);
+
+    // El día que `identity_assurance` agregue un estado, llega en la respuesta
+    // y esta versión no tiene frase para él: neutro, no una pantalla rota.
+    http.match((p) => p.url.includes('/terminology/concepts'))[0]?.flush({
+      items: [
+        {
+          conceptId: 'c0ffee00-0000-5000-8000-000000000000',
+          code: 'identity_assurance:CASE_INVENTADO',
+          display: 'Case invented',
+          codeSystemVersionId: 'csv-terminologia',
+        },
+      ],
+      count: 1,
+      limit: 50,
+    });
+
+    expect(toCaseStatusPresentation('c0ffee00-0000-5000-8000-000000000000')).toEqual({
       variant: 'unknown',
       label: 'Desconocido',
     });
-  });
-
-  it('sin estado (undefined o null) también degrada, sin lanzar', () => {
-    expect(toCaseStatusPresentation(undefined)).toEqual({ variant: 'unknown', label: 'Desconocido' });
-    expect(toCaseStatusPresentation(null)).toEqual({ variant: 'unknown', label: 'Desconocido' });
   });
 });

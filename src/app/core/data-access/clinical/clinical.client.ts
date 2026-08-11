@@ -12,7 +12,9 @@ import type {
   ClinicalSummary,
   Condition,
   Encounter,
+  EncounterRegistration,
   MedicationRequest,
+  NewEncounter,
   Observation,
   PatientChart,
 } from './clinical.types';
@@ -38,6 +40,16 @@ import type {
  * `limit` acota **cada** lista por separado, y la respuesta declara en
  * `truncated` cuáles quedaron cortadas. Se reenvía tal cual a la vista: un
  * expediente al que le faltan notas sin avisar es un expediente que miente.
+ *
+ * ## Las dos escrituras que sí están
+ *
+ * El check-in y el cierre de un encuentro, y ninguna más. No es una lista
+ * arbitraria: son las dos únicas escrituras del módulo cuyo resultado **se
+ * vuelve a leer** desde el propio expediente —aparecen en el bloque
+ * «Encuentros» de `getSummary`—. Diagnosticar, indicar medicación o firmar una
+ * nota se escriben con endpoints que existen, pero el registro no se refleja en
+ * ninguna lectura que la pantalla tenga: construirlos sería ofrecer un
+ * formulario que traga el dato y no lo muestra.
  */
 @Injectable({
   providedIn: 'root',
@@ -93,9 +105,67 @@ export class ClinicalClient {
       );
   }
 
+  /**
+   * `POST /clinical/encounters/check-in` — abre el encuentro (UC-08-02).
+   *
+   * El backend le pone la hora de inicio, lo deja «en curso» y, si no se
+   * declara clase, lo clasifica como ambulatorio. No hace falta abrir antes un
+   * episodio de cuidado: `episodeId` es opcional y el encuentro vive sin él.
+   *
+   * @param encuentro - Paciente, organización y lo opcional que se haya cargado.
+   * @returns El encuentro abierto, con su identificador y su hora de inicio.
+   */
+  checkInEncounter(encuentro: NewEncounter): Observable<EncounterRegistration> {
+    return this.http
+      .post<WireEncounterRegistration>(
+        this.url('/clinical/encounters/check-in'),
+        // Sin las claves ausentes: el backend valida con `forbidNonWhitelisted`
+        // y un opcional en `undefined` viaja como clave declarada.
+        sinAusentes(encuentro),
+      )
+      .pipe(map(toEncounterRegistration));
+  }
+
+  /**
+   * `POST /clinical/encounters/:id/close` — cierra el encuentro en curso
+   * (UC-08-14).
+   *
+   * Cierra también los periodos abiertos de participantes y ubicaciones, y el
+   * backend rechaza con `422` un encuentro que ya no esté en curso: cerrar dos
+   * veces no es idempotente y la pantalla tiene que mostrarlo como tal.
+   *
+   * @param encounterId - Encuentro a cerrar.
+   * @param expectedRowVersion - Versión esperada, para el bloqueo optimista.
+   * @returns El encuentro cerrado, con su hora de fin.
+   */
+  closeEncounter(
+    encounterId: string,
+    expectedRowVersion?: number,
+  ): Observable<EncounterRegistration> {
+    return this.http
+      .post<WireEncounterRegistration>(
+        this.url(`/clinical/encounters/${encodeURIComponent(encounterId)}/close`),
+        expectedRowVersion === undefined ? {} : { expectedRowVersion },
+      )
+      .pipe(map(toEncounterRegistration));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/**
+ * El mismo objeto sin las claves cuyo valor es `undefined`.
+ *
+ * `JSON.stringify` ya las omitiría, pero depender de eso ata el cuerpo enviado a
+ * un detalle del serializador: acá se declara la intención, que es la que el
+ * `forbidNonWhitelisted` del backend está mirando.
+ */
+function sinAusentes<T extends object>(valor: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(valor).filter(([, v]) => v !== undefined),
+  ) as Partial<T>;
 }
 
 /** El tope como parámetro, o ninguno: la API tiene su propio valor por omisión. */
@@ -154,6 +224,36 @@ interface WireChart extends Omit<PatientChart, 'notes' | 'carePlans' | 'document
   readonly notes: readonly WireNote[];
   readonly carePlans: readonly WireCarePlan[];
   readonly documents: readonly WireDocument[];
+}
+
+/**
+ * El encuentro tal como vuelve de las dos escrituras.
+ *
+ * Sus tres instantes son `nullable` en el contrato —no ausentes— porque el DTO
+ * los declara así: un encuentro recién abierto tiene `endAt: null`, que no es lo
+ * mismo que no traer el campo.
+ */
+type WireEncounterRegistration = Omit<
+  EncounterRegistration,
+  'startAt' | 'endAt' | 'createdAt'
+> & {
+  readonly startAt: string | null;
+  readonly endAt: string | null;
+  readonly createdAt: string;
+};
+
+function toEncounterRegistration({
+  startAt,
+  endAt,
+  createdAt,
+  ...resto
+}: WireEncounterRegistration): EncounterRegistration {
+  return {
+    ...resto,
+    startAt: startAt === null ? null : new Date(startAt),
+    endAt: endAt === null ? null : new Date(endAt),
+    createdAt: new Date(createdAt),
+  };
 }
 
 function toCondition({ onsetAt, resolvedAt, createdAt, ...resto }: WireCondition): Condition {
