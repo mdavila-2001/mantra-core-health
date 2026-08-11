@@ -1,6 +1,6 @@
 # API de backend
 
-Las 86 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 87 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
