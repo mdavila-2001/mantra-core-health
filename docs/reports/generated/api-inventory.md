@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-88 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+89 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -174,6 +174,14 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 | `GET` | `/scheduling/resources` |
 | `GET` | `/scheduling/slots` |
 | `POST` | `/scheduling/slots/:slotId/holds` |
+
+## `SystemContextClient`
+
+Archivo: `src/app/core/data-access/system-context/system-context.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/system-context/dynamic-enums` |
 
 ## `TerminologyClient`
 

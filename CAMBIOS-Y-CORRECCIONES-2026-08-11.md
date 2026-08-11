@@ -150,10 +150,60 @@ citas clínicas: 1 · reservas enlazadas: 1 · encuentros atados a una cita: 1
 
 ---
 
-## 5 · Lo que queda por decidir, y no es un pendiente
+## 5 · Los cabos sueltos, cerrados
 
-- **Unificar `resourceRefType` en los seeds** (§2.5). Hoy funciona por tolerancia explícita.
-- **Los selectores de catálogo en el alta de paciente** (§3): backend listo, front por hacer.
+Los tres que habían quedado anotados como «por decidir» se cerraron.
+
+### 5.1 · Los selectores de catálogo ya existen · **IT3**
+
+`SystemContextClient` sobre `GET /system-context/dynamic-enums?target=…`, y
+`app-concept-select` como molécula reutilizable. El alta de paciente **ya ofrece género
+administrativo y sexo al nacer**, poblados desde el catálogo.
+
+Tres decisiones que las pruebas fijan:
+
+- **Se memoiza por target, y es parte del contrato**: los uuid son UUIDv5 deterministas y la
+  respuesta trae `cacheToken`. Dos selectores en una pantalla no pueden costar dos viajes.
+- **Un fallo no se memoiza.** Un corte de red no puede dejar un campo marcado como «sin opciones»
+  por el resto de la sesión.
+- **Sin catálogo el campo se deshabilita y lo dice** — no se cae a texto libre: un `*_concept_id`
+  tecleado a mano es un dato inválido, o peor, un uuid de otro conjunto que el backend acepta.
+
+Las etiquetas del catálogo vienen en inglés técnico («Administrative gender female»), así que se
+traducen por **código** (`GENDER_FEMALE`), que es la identidad semántica estable — el mismo criterio
+que `case-status.ts` ya usaba para los estados de un trámite.
+
+### 5.2 · `resourceRefType`: un solo nombre, normalizado al escribir
+
+Se comparó el contrato con los datos y **eran dos nombres para la misma tabla**. Ahora la API
+normaliza al crear el recurso: lo que entra queda canónico y ningún consumidor nuevo hereda la
+ambigüedad. Las 15 filas de la base de desarrollo quedaron normalizadas; la tolerancia en lectura se
+mantiene para lo anterior.
+
+### 5.3 · El tipo de organización **no** se migró, y es la decisión correcta
+
+Se comparó `directory.tenants.tenant_type_concept_id` con la lista de `CreateTenantDto`: **los diez
+códigos coinciden en los dos sentidos**. Aun así se mantiene la lista literal, porque no es un
+parche: alimenta `TERRITORIAL_TENANT_TYPES`, la regla que decide si país y jurisdicción son
+obligatorios. Con `TenantTypeCode` el compilador garantiza que las dos hablan de lo mismo; con
+códigos traídos de la red, un valor nuevo entraría al desplegable y saldría de la regla **en
+silencio**. Además el endpoint recibe el código, no el concept id: la lectura no ahorraría nada.
+
+Se documentó la comparación en vez de hacer el cambio.
+
+### 5.4 · Datos de prueba
+
+El recurso de comprobación se borró. Las dos cuentas **no**: 131 claves foráneas apuntan a
+`iam.users` y la auditoría es append-only — el sistema está diseñado para que una cuenta no se borre
+nunca, y forzarlo habría roto justo lo que esa auditoría protege. Quedaron **bloqueadas, sin
+membresía y renombradas `[PRUEBA] …`**, que es el camino que el modelo sí contempla.
+
+---
+
+## 6 · Lo que sigue abierto, y no depende de este trabajo
+
+- **País y jurisdicción del alta de organización** no tienen binding en `dynamic-enums` (404,
+  comprobado): hasta que lo tengan, su buscador no se puede acotar al value set.
 - **`delegated_access` y `auth_providers`** siguen sin lecturas de colección. No bloquean la demo.
 - **La ventana por defecto de la agenda** sigue en 7 días, que ya incluye hoy y tiene preset «Hoy».
   No se cambió por rol: un default distinto por persona hace que la misma pantalla se comporte de dos
