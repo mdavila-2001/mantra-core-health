@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-454 archivos TypeScript bajo `src/` y 1962 importaciones internas.
+456 archivos TypeScript bajo `src/` y 1974 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -26,19 +26,19 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | Archivo | Lo importan |
 |---|---:|
 | `src/app/shared/components/atoms/button/button.ts` | 79 |
-| `src/app/core/view-state/view-state.types.ts` | 77 |
-| `src/app/core/view-state/view-state.ts` | 72 |
-| `src/app/core/http/error-to-view-state.ts` | 66 |
+| `src/app/core/view-state/view-state.types.ts` | 78 |
+| `src/app/core/view-state/view-state.ts` | 73 |
+| `src/app/core/http/error-to-view-state.ts` | 67 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 67 |
 | `src/app/shared/components/molecules/form-field/form-field.ts` | 66 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 66 |
 | `src/app/shared/components/molecules/alert/alert.ts` | 63 |
-| `src/app/core/navigation/navigation.service.ts` | 61 |
+| `src/app/core/navigation/navigation.service.ts` | 62 |
 | `src/app/shared/components/atoms/input/input.ts` | 60 |
 | `src/app/shared/a11y/announce-on-appear.ts` | 55 |
 | `src/app/shared/components/organisms/form-actions/form-actions.ts` | 46 |
 | `src/app/shared/components/organisms/form-section/form-section.ts` | 44 |
 | `src/app/shared/forms/form-support.ts` | 39 |
-| `src/app/shared/components/atoms/link/link.ts` | 23 |
+| `src/app/shared/components/atoms/link/link.ts` | 24 |
 | `src/app/shared/components/atoms/textarea/textarea.ts` | 23 |
 | `src/app/shared/components/molecules/radio-group/radio-group.ts` | 23 |
 | `src/app/core/auth/session.store.ts` | 22 |
@@ -50,9 +50,9 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 393 |
-| `@angular/common` | 233 |
-| `@angular/router` | 144 |
+| `@angular/core` | 395 |
+| `@angular/common` | 236 |
+| `@angular/router` | 147 |
 | `@angular/forms` | 65 |
 | `rxjs` | 40 |
 | `node:fs` | 13 |

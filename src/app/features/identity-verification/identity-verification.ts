@@ -312,6 +312,11 @@ export class IdentityVerification {
       next: (resultado) => {
         this.state.set(ready(null));
         this.caso.set({ id: resultado.caseId, status: resultado.status });
+        // El historial es la columna de al lado y no se oculta al enviar: sin
+        // esto, la pantalla dice «tu solicitud quedó registrada» mientras «tus
+        // trámites anteriores» no la incluye. Se relee en vez de agregarla a
+        // mano porque la respuesta del alta no trae las fechas.
+        this.cargarHistorial();
       },
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
@@ -355,6 +360,10 @@ export class IdentityVerification {
       next: (caso) => {
         this.state.set(ready(null));
         this.caso.set(caso);
+        // El mismo trámite se ve en dos lugares a la vez. Actualizar sólo el
+        // panel dejaría el sello del historial con el estado anterior: dos
+        // sellos distintos del mismo caso, uno al lado del otro.
+        this.cargarHistorial();
       },
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });

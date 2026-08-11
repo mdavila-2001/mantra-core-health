@@ -71,6 +71,19 @@ const UNKNOWN_PRESENTATION: CaseStatusPresentation = Object.freeze({
 const catalogo = signal<ReadonlyMap<string, CaseStatusPresentation>>(new Map());
 
 /**
+ * El mismo catálogo visto por su código: identificador de concepto → código.
+ *
+ * La etiqueta no siempre alcanza para decidir. La cola de revisión necesita
+ * distinguir `CASE_AT_RISK` —que para el titular se enmascara como «En
+ * revisión», así que su etiqueta es indistinguible de otras dos— sin volver a
+ * escribir un UUID a mano, que es justo lo que esta resolución vino a eliminar.
+ *
+ * Se llena en el mismo recorrido que `catalogo`: son dos vistas de una única
+ * respuesta, no dos búsquedas.
+ */
+const codigos = signal<ReadonlyMap<string, string>>(new Map());
+
+/**
  * Vacía el catálogo. **Sólo para pruebas.**
  *
  * Ser estado de módulo es lo correcto en producción —el catálogo es público e
@@ -82,9 +95,15 @@ const catalogo = signal<ReadonlyMap<string, CaseStatusPresentation>>(new Map());
  * mañana.
  *
  * Con esto, quien afirme algo sobre la carga arranca de un estado conocido.
+ *
+ * Vacía **las dos vistas**. Son dos señales pero un solo catálogo: dejar los
+ * códigos poblados con las presentaciones vacías inventaría un estado que la
+ * resolución real nunca produce, y una prueba que arranca de ahí no estaría
+ * arrancando de un estado conocido sino de uno imposible.
  */
 export function resetCaseStatusCatalog(): void {
   catalogo.set(new Map());
+  codigos.set(new Map());
 }
 
 /**
@@ -104,6 +123,27 @@ export function toCaseStatusPresentation(
     return UNKNOWN_PRESENTATION;
   }
   return catalogo().get(statusConceptId) ?? UNKNOWN_PRESENTATION;
+}
+
+/**
+ * El código de catálogo de un estado, sin el prefijo del módulo:
+ * `CASE_AT_RISK`, no `identity_assurance:CASE_AT_RISK`.
+ *
+ * Devuelve `null` mientras el catálogo no esté resuelto, así que quien decida
+ * algo con esto tiene que tratar «todavía no lo sé» como un caso propio y no
+ * como un «no». Igual que `toCaseStatusPresentation`, lee la señal del módulo:
+ * lo que dependa de esto se reevalúa solo cuando el catálogo llega.
+ *
+ * @param statusConceptId - El estado tal como lo emite el backend.
+ * @returns El código del concepto, o `null` si todavía no se resolvió.
+ */
+export function toCaseStatusCode(
+  statusConceptId: string | null | undefined,
+): string | null {
+  if (statusConceptId === null || statusConceptId === undefined) {
+    return null;
+  }
+  return codigos().get(statusConceptId) ?? null;
 }
 
 /**
@@ -140,6 +180,7 @@ export class CaseStatusCatalog {
       .subscribe({
         next: (pagina) => {
           const resuelto = new Map<string, CaseStatusPresentation>();
+          const porCodigo = new Map<string, string>();
           for (const concepto of pagina.items) {
             const sufijo = concepto.code.startsWith(PREFIJO_DE_CODIGO)
               ? concepto.code.slice('identity_assurance:'.length)
@@ -147,10 +188,12 @@ export class CaseStatusCatalog {
             const presentacion = PRESENTACION_POR_CODIGO[sufijo];
             if (presentacion !== undefined) {
               resuelto.set(concepto.conceptId, presentacion);
+              porCodigo.set(concepto.conceptId, sufijo);
             }
           }
           if (resuelto.size > 0) {
             catalogo.set(resuelto);
+            codigos.set(porCodigo);
           }
         },
         // Sin catálogo, neutro. Se reintenta en el próximo arranque.

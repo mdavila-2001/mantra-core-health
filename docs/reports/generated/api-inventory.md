@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-87 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+88 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -112,6 +112,7 @@ Archivo: `src/app/core/data-access/identity/identity-admin.client.ts`
 | `POST` | `/identity/checks/:checkId/attempts` |
 | `POST` | `/identity/checks/:checkId/results` |
 | `POST` | `/identity/manual-review/:reviewId/decision` |
+| `GET` | `/identity/verification-cases` |
 | `POST` | `/identity/verification-cases` |
 | `POST` | `/identity/verification-cases/:caseId/assertions` |
 | `POST` | `/identity/verification-cases/:caseId/checks:plan` |
