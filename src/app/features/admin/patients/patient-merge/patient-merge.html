@@ -28,10 +28,13 @@
         <strong>{{ sobreviviente()?.label }}</strong>.
       </p>
 
-      <app-alert tone="warning" class="fusion__aviso">
-        Si te equivocaste, deshacelo ahora. Al salir de esta pantalla la fusión deja de ser
-        reversible desde la aplicación: el sistema no ofrece forma de volver a encontrar este
-        movimiento.
+      <!-- Este aviso decía que al salir la fusión dejaba de ser reversible. Era
+           cierto y ya no lo es: `GET /profiles/patients/merge-events` permite
+           recuperar el movimiento más tarde. Dejarlo habría sido asustar con un
+           límite que el sistema ya no tiene. -->
+      <app-alert tone="info" class="fusion__aviso">
+        Si te equivocaste, podés deshacerlo acá mismo. También más tarde: el movimiento queda
+        registrado y se puede recuperar desde el historial de fusiones.
       </app-alert>
 
       <div class="fusion__acciones">

@@ -12,6 +12,8 @@ import type {
   OwnPatientSummary,
   PatientDetail,
   PatientMergeEvent,
+  PatientMergeEventPage,
+  PatientMergeEventQuery,
   PatientMergeRequest,
   PatientListItem,
   PatientPage,
@@ -138,13 +140,43 @@ export class ProfilesClient {
   }
 
   /**
+   * `GET /profiles/patients/merge-events` — los eventos de fusión (UC-05-09·L).
+   *
+   * Es lo que hace que «revertir» signifique lo que parece. Antes el `eventId`
+   * sólo existía en la respuesta de {@link mergePatients}, así que una fusión
+   * dejaba de ser reversible desde la interfaz en cuanto esa respuesta se perdía
+   * de vista: quien se daba cuenta del error al día siguiente no tenía camino.
+   *
+   * El filtro por paciente busca en **los dos lados** de la fusión, del lado del
+   * backend: quien revisa un registro no sabe si el que mira sobrevivió o fue el
+   * absorbido.
+   *
+   * @param query - Paciente involucrado y tope, ambos opcionales.
+   * @returns Los eventos, del más reciente al más antiguo.
+   */
+  listMergeEvents(query: PatientMergeEventQuery = {}): Observable<PatientMergeEventPage> {
+    // Parámetro a parámetro: el backend valida con `forbidNonWhitelisted` y un
+    // opcional en `undefined` viajaría como clave declarada.
+    let params = new HttpParams();
+    if (query.patientProfileId !== undefined) {
+      params = params.set('patientProfileId', query.patientProfileId);
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+
+    return this.http
+      .get<WireMergeEventPage>(this.url('/profiles/patients/merge-events'), { params })
+      .pipe(map((body) => ({ ...body, items: body.items.map(toMergeEvent) })));
+  }
+
+  /**
    * `POST /profiles/patients/merge/:eventId/reverse` — revierte una fusión
    * (UC-05-09).
    *
-   * `eventId` sale de la respuesta de {@link mergePatients} y **no hay ninguna
-   * otra forma de obtenerlo**: el backend no expone listado de eventos de
-   * fusión. Quien pierda ese identificador pierde el camino de vuelta desde la
-   * interfaz.
+   * `eventId` sale de {@link listMergeEvents} o de la respuesta de
+   * {@link mergePatients}. Las dos vías sirven: la segunda es la del momento, la
+   * primera es la que permite deshacer un error descubierto más tarde.
    */
   reverseMerge(eventId: string, reasonConceptId?: string): Observable<PatientMergeEvent> {
     return this.http
@@ -246,6 +278,10 @@ type RespuestaFicha = ConNulos<Omit<WirePatientDetail, 'relatedPersons'>> & {
 type RespuestaResumen = ConNulos<WireOwnSummary>;
 
 type WireMergeEvent = Omit<PatientMergeEvent, 'recordedAt'> & { readonly recordedAt: string };
+
+interface WireMergeEventPage extends Omit<PatientMergeEventPage, 'items'> {
+  readonly items: readonly WireMergeEvent[];
+}
 
 /** El evento con su marca de tiempo ya convertida. */
 function toMergeEvent(body: WireMergeEvent): PatientMergeEvent {
