@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-84 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+86 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -68,6 +68,8 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | Método | Ruta |
 |---|---|
 | `GET` | `/charts/patients/:patientProfileId/chart` |
+| `POST` | `/clinical/encounters/:encounterId/close` |
+| `POST` | `/clinical/encounters/check-in` |
 | `GET` | `/clinical/patients/:patientProfileId/summary` |
 
 ## `FilesClient`

@@ -16,6 +16,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { patientChartRoute } from '../clinical-record/clinical-record.routes';
 import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
 import type {
   AgendaResource,
@@ -74,6 +75,17 @@ const SIN_DATO = 'Sin registrar';
 const ROLES_CON_FICHA = ['SECURITY_ADMIN', 'SUPERADMIN'];
 
 /**
+ * Roles que sí pueden abrir el expediente clínico.
+ *
+ * Los declara el backend a nivel de controlador en las dos lecturas del
+ * expediente (`GET /clinical/patients/:id/summary` y
+ * `GET /charts/patients/:id/chart`). `SUPERADMIN` entra por lo mismo que en la
+ * ficha: el `RolesGuard` lo trata como comodín, y esconderle el enlace lo
+ * escondería a alguien a quien la API sí le responde.
+ */
+const ROLES_CON_EXPEDIENTE = ['CLINICIAN', 'PRACTITIONER', 'SUPERADMIN'];
+
+/**
  * Roles que operan citas (`check-in`, `cancel`). Del backend: los dos
  * endpoints declaran `SCHEDULING_ADMIN`/`SCHEDULING_AGENT`, y `SUPERADMIN` es
  * el comodín de su `RolesGuard`.
@@ -93,6 +105,15 @@ export interface CitaVisible {
   readonly motivo: string;
   readonly patientProfileId: string | null;
   readonly rutaPaciente: string | null;
+  /** El expediente clínico de la persona citada, si la sesión puede abrirlo. */
+  readonly rutaExpediente: string | null;
+  /**
+   * El motivo tal cual vino, sin el relleno de ausencia.
+   *
+   * Viaja al expediente como parámetro para precargar el motivo de consulta del
+   * encuentro: quien atiende no debería volver a teclear lo que la cita ya dice.
+   */
+  readonly motivoCrudo: string | null;
   /** Con la llegada ya registrada, el check-in no se vuelve a ofrecer. */
   readonly llegadaRegistrada: boolean;
 }
@@ -737,6 +758,9 @@ export class Agenda {
       patientProfileId: paciente,
       rutaPaciente:
         paciente !== null && this.puedeVerFichas() ? `/administracion/pacientes/${paciente}` : null,
+      rutaExpediente:
+        paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
+      motivoCrudo: cita.reasonText ?? null,
       llegadaRegistrada: cita.checkedInAt !== undefined,
     };
   }
@@ -785,6 +809,19 @@ export class Agenda {
   private puedeVerFichas(): boolean {
     const roles = this.auth.roles();
     return ROLES_CON_FICHA.some((rol) => roles.includes(rol));
+  }
+
+  /**
+   * Si la sesión puede abrir el expediente clínico de la persona citada.
+   *
+   * Es el enlace que cierra el recorrido —del turno a la historia de quien
+   * llega— y el que quien atiende sí tiene: `CLINICIAN` y `PRACTITIONER` no
+   * pueden abrir la ficha de filiación (`SECURITY_ADMIN`), así que sin este
+   * enlace la agenda del médico terminaba en un callejón.
+   */
+  private puedeVerExpedientes(): boolean {
+    const roles = this.auth.roles();
+    return ROLES_CON_EXPEDIENTE.some((rol) => roles.includes(rol));
   }
 
   /**
