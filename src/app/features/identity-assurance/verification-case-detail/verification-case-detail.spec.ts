@@ -5,6 +5,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { of } from 'rxjs';
 
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { resolverEstadosDeCaso } from '../../../../testing/case-status';
 import { VerificationCaseDetail } from './verification-case-detail';
 
 const CASE_REJECTED = '05c426b8-86f5-5709-a939-d6baa864fd21';
@@ -33,6 +34,8 @@ describe('VerificationCaseDetail', () => {
     fixture = TestBed.createComponent(VerificationCaseDetail);
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
+    // El sello del caso sale de terminología; ver `resolverEstadosDeCaso`.
+    resolverEstadosDeCaso(http);
   }
 
   afterEach(() => {

@@ -19,7 +19,10 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { toCaseStatusPresentation } from '../../identity-verification/case-status';
+import {
+  CaseStatusCatalog,
+  toCaseStatusPresentation,
+} from '../../identity-verification/case-status';
 
 /**
  * Resumen propio — vista **V05-03** de `SALUD/Vistas/V05 profiles`
@@ -64,6 +67,10 @@ export class MyProfile {
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly identity = inject(IdentityClient);
+  // Declara que esta pantalla necesita los estados de caso resueltos contra
+  // terminología: al inyectarlo se resuelven, y `toCaseStatusPresentation` los
+  // encuentra. Sin esto los sellos se verían en neutro.
+  private readonly estadosDeCaso = inject(CaseStatusCatalog);
   private readonly navigation = inject(NavigationService);
   private readonly auth = inject(AuthService);
 

@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { resolverEstadosDeCaso } from '../../../testing/case-status';
 import { Dashboard } from './dashboard';
 
 /**
@@ -75,6 +76,8 @@ describe('Dashboard', () => {
     http
       .expectOne((request) => request.url.endsWith('/identity/me/verification-cases'))
       .flush([]);
+    // Y el sello de ese trámite sale de terminología, por el mismo motivo.
+    resolverEstadosDeCaso(http);
   }
 
   /** Acceso al estado protegido sin abrirlo en el componente. */
@@ -195,6 +198,7 @@ describe('Dashboard', () => {
     http
       .expectOne((request) => request.url.endsWith('/identity/me/verification-cases'))
       .error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
+    resolverEstadosDeCaso(http);
     responder([{ a: 1 }], null);
 
     expect(estado().status).toBe('ready');

@@ -14,7 +14,10 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { toCaseStatusPresentation } from '../../identity-verification/case-status';
+import {
+  CaseStatusCatalog,
+  toCaseStatusPresentation,
+} from '../../identity-verification/case-status';
 
 /** A dónde vuelve quien llegó a un caso que no existe o ya terminó de mirar. */
 const LIST_ROUTE = '/identidad/casos';
@@ -41,6 +44,8 @@ export class VerificationCaseDetail {
   private readonly identity = inject(IdentityClient);
   private readonly route = inject(ActivatedRoute);
   private readonly navigation = inject(NavigationService);
+  // El sello del caso sale de terminología: inyectarlo es lo que la resuelve.
+  private readonly estadosDeCaso = inject(CaseStatusCatalog);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly state = signal<ViewState<VerificationCase>>(loading());
