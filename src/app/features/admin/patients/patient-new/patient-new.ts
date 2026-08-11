@@ -19,6 +19,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
+import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { patientDetailRoute, PATIENTS_ROUTE } from '../patients.routes';
 
@@ -38,26 +39,25 @@ const MAX_MPI = 100;
  * desde acá reintroduciría el estado intermedio de «persona sin perfil» que el
  * modelo prohíbe: o queda todo, o no queda nada.
  *
- * ## Los dos campos de catálogo quedan pendientes, y está dicho
+ * ## Los dos campos de catálogo, que estuvieron ausentes
  *
- * `administrativeGenderConceptId` y `sexAtBirthConceptId` son opcionales en el
- * contrato y **no se ofrecen todavía**. Un campo `*ConceptId` sólo puede ser un
- * selector poblado desde `terminology`, y para poblarlo hace falta el
- * identificador del conjunto de valores al que el modelo lo liga — que hoy no
- * está publicado en ninguna parte que el frontend pueda leer. Las alternativas
- * eran peores: pedir un uuid a mano, o poblar el selector con una búsqueda
- * libre de conceptos, que dejaría elegir cualquier concepto del sistema y
- * rompería el vínculo que el modelo declara.
+ * `administrativeGenderConceptId` y `sexAtBirthConceptId` **ya se ofrecen**.
+ * Faltaron mientras no hubo forma de saber a qué conjunto de valores liga el
+ * modelo cada columna: un campo `*ConceptId` sólo puede ser un selector poblado
+ * desde terminología, y las alternativas eran pedir un uuid a mano o poblarlo
+ * con una búsqueda libre —que dejaría elegir cualquier concepto del sistema y
+ * rompería el vínculo que el modelo declara—.
  *
- * Es la misma decisión —y por la misma razón— que en el alta asistida con
- * `legalRepresentationId`. Queda anotado como pendiente de contrato, no como
- * olvido.
+ * `GET /system-context/dynamic-enums?target=…` lo publicó, y `app-concept-select`
+ * lo consume. Los dos siguen siendo opcionales en el contrato: sin elección, la
+ * clave no viaja.
  */
 @Component({
   selector: 'app-patient-new',
   imports: [
     Alert,
     AnnounceOnAppear,
+    ConceptSelect,
     DatePicker,
     FormActions,
     FormField,
@@ -106,6 +106,35 @@ export class PatientNew {
    * enviar, evita tener las dos formas dando vueltas por la pantalla.
    */
   protected readonly fechaDeNacimiento = signal<Date | null>(null);
+
+  /**
+   * Los dos campos de catálogo, fuera del `FormGroup` por lo mismo que la fecha:
+   * su valor es un `conceptId` que el selector resuelve solo, y meterlo en el
+   * grupo obligaría a validarlo contra una lista que la pantalla no conoce.
+   */
+  protected readonly generoAdministrativo = signal<string | null>(null);
+  protected readonly sexoAlNacer = signal<string | null>(null);
+
+  /**
+   * Las palabras en español de cada código.
+   *
+   * El catálogo trae «Administrative gender female» porque es terminología
+   * técnica, no copy. Se mapea por **código** y no por uuid: el código es la
+   * identidad semántica del concepto y sobrevive a un re-seed.
+   */
+  protected readonly ETIQUETAS_DE_GENERO: Readonly<Record<string, string>> = {
+    GENDER_MALE: 'Masculino',
+    GENDER_FEMALE: 'Femenino',
+    GENDER_OTHER: 'Otro',
+    GENDER_UNKNOWN: 'Sin especificar',
+  };
+
+  protected readonly ETIQUETAS_DE_SEXO: Readonly<Record<string, string>> = {
+    BIRTH_SEX_MALE: 'Masculino',
+    BIRTH_SEX_FEMALE: 'Femenino',
+    BIRTH_SEX_INTERSEX: 'Intersexual',
+    BIRTH_SEX_UNKNOWN: 'Sin especificar',
+  };
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
@@ -179,6 +208,8 @@ export class PatientNew {
   private datos(): NewPatientProfile {
     const { patientCode, displayName, masterPatientIndexCode } = this.form.getRawValue();
     const fecha = this.fechaDeNacimiento();
+    const genero = this.generoAdministrativo();
+    const sexo = this.sexoAlNacer();
 
     return {
       patientCode: patientCode.trim(),
@@ -187,6 +218,11 @@ export class PatientNew {
         ? {}
         : { masterPatientIndexCode: masterPatientIndexCode.trim() }),
       ...(fecha === null ? {} : { birthDate: isoDate(fecha) }),
+      // Los conceptos son opcionales en el contrato: sin elección no se manda la
+      // clave, en vez de mandarla vacía. `null` no es «sin especificar» — para
+      // eso el catálogo tiene su propio concepto.
+      ...(genero === null ? {} : { administrativeGenderConceptId: genero }),
+      ...(sexo === null ? {} : { sexAtBirthConceptId: sexo }),
     };
   }
 }

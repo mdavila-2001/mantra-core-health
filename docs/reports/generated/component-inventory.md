@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-133 componentes y 33 servicios inyectables, leídos de `src/`.
+134 componentes y 34 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -25,7 +25,7 @@
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (20)
+## Molécula (21)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -35,6 +35,7 @@
 | `app-avatar-group` | `AvatarGroup` | `overflow`, `size`, `label` | — | — | OnPush | sí |
 | `app-breadcrumb` | `Breadcrumb` | `items` | — | — | OnPush | sí |
 | `app-card` | `Card` | `variant`, `padding`, `interactive` | `activated` | — | OnPush | sí |
+| `app-concept-select` | `ConceptSelect` | `target`, `disabled`, `valueField`, `labels`, `placeholder` | — | `value` | OnPush | **no** |
 | `app-dialog` | `Dialog` | `config` | `resolved` | — | OnPush | sí |
 | `app-empty-state` | `EmptyState` | `title`, `description`, `variant` | — | — | OnPush | sí |
 | `app-file-input` | `FileInput` | `multiple`, `disabled`, `accept`, `maxSizeBytes`, `maxFiles` | `rejected` | `files` | OnPush | sí |
@@ -167,7 +168,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (33)
+## Servicios (34)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -187,6 +188,7 @@
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |
 | `PublicClient` | `src/app/core/data-access/public/public.client.ts` | root | **no** |
 | `SchedulingClient` | `src/app/core/data-access/scheduling/scheduling.client.ts` | root | sí |
+| `SystemContextClient` | `src/app/core/data-access/system-context/system-context.client.ts` | root | sí |
 | `TerminologyClient` | `src/app/core/data-access/terminology/terminology.client.ts` | root | sí |
 | `AppErrorHandler` | `src/app/core/errors/app-error-handler.ts` | local | **no** |
 | `ErrorReporter` | `src/app/core/errors/error-reporter.ts` | root | sí |
@@ -213,6 +215,7 @@
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`
 - `AccordionPanel` — `src/app/shared/components/molecules/accordion/accordion-panel/accordion-panel.ts`
+- `ConceptSelect` — `src/app/shared/components/molecules/concept-select/concept-select.ts`
 - `MenuItem` — `src/app/shared/components/molecules/menu/menu-item/menu-item.ts`
 - `Radio` — `src/app/shared/components/molecules/radio/radio.ts`
 - `Tab` — `src/app/shared/components/molecules/tabs/tab/tab.ts`

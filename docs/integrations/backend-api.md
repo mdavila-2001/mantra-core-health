@@ -362,6 +362,33 @@ devuelve `*ConceptId` en uuid y ninguna pantalla puede mostrar un uuid. Se piden
 todos los de una pantalla en una sola llamada, no uno por campo, y su fallo
 degrada esos campos a «Sin registrar» sin tumbar la pantalla.
 
+### `SystemContextClient` — 1 operación
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/system-context/dynamic-enums` | `ConceptSelect` (alta de paciente) |
+
+**Es lo que convierte un `*_concept_id` en un selector.** La regla del modelo es
+que ningún campo de catálogo se escribe a mano, pero para poblarlo hay que saber
+**qué conjunto de valores gobierna esa columna** — y eso no estaba en ninguna
+parte legible: el `$expand` de terminología exige el uuid del conjunto, y los
+uuid no eran constantes publicadas. Por eso el alta de paciente salió sin género
+ni sexo al nacer.
+
+Se pide por `?target=esquema.tabla.columna`: por **el campo que se va a llenar**,
+no por el catálogo que lo llena. Es la diferencia entre lo que un formulario sabe
+y lo que no tiene por qué averiguar.
+
+**Se memoiza por target, y eso es parte del contrato, no una optimización:** los
+identificadores son UUIDv5 deterministas y la respuesta trae `cacheToken`, la
+huella de la versión publicada. Un fallo **no** se memoiza — un corte de red no
+puede dejar un campo marcado como «sin opciones» por el resto de la sesión.
+
+Las etiquetas del catálogo vienen en inglés técnico («Administrative gender
+female») porque son terminología, no copy de producto: `ConceptSelect` las
+traduce por **código** —`GENDER_FEMALE`—, que es la identidad semántica estable
+del concepto, igual que hace `case-status.ts` con los estados de un trámite.
+
 ### `FilesClient` — 1 operación
 
 | Método | Ruta | Consumidor |
