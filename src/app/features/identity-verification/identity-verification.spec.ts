@@ -5,7 +5,6 @@ import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
 import { resolverEstadosDeCaso } from '../../../testing/case-status';
-import { CaseStatusCatalog } from './case-status';
 import { IdentityVerification } from './identity-verification';
 
 /** base64url sobre UTF-8, como el token real (ver `shell-layout.spec.ts`). */
@@ -49,12 +48,15 @@ describe('IdentityVerification', () => {
     // historial lo responde con datos por su cuenta.
     http.expectOne('/identity/me/verification-cases').flush([]);
 
-    // El sello traduce el estado con el catálogo de `case-status`, que esta
-    // pantalla lee por una **función pura**: no lo inyecta, así que nadie lo
-    // construye y la búsqueda de conceptos no sale sola. Se lo pide al inyector
-    // a propósito —es lo que en la aplicación real hace la pantalla que sí lo
-    // inyecta— y se responde su búsqueda; sin esto el estado sale «Desconocido».
-    TestBed.inject(CaseStatusCatalog);
+    // La pantalla **inyecta** el catálogo de estados, así que al construirse ya
+    // pide los conceptos: no hace falta pedírselo al inyector desde acá.
+    //
+    // `dev` había resuelto esta misma prueba haciendo el `TestBed.inject` en el
+    // arnés, con el argumento de que la pantalla lee el catálogo «por una
+    // función pura». Eso hacía pasar la prueba y dejaba el defecto en pie: en la
+    // aplicación real nadie construía el catálogo, y quien entra por la puerta
+    // del estado S5 —que lleva directo a esta pantalla— veía «Desconocido»
+    // sobre su propio trámite. Se arregló donde estaba: en el componente.
     resolverEstadosDeCaso(http);
   });
 
@@ -208,6 +210,9 @@ describe('IdentityVerification', () => {
    * mapeo completo lo fija `case-status.spec.ts`; acá se fija la integración.
    */
   it('con el caso CASE_ASSERTED el sello muestra «Aprobado», no el UUID', () => {
+    // El catálogo ya quedó resuelto en el `beforeEach`. Esta prueba fallaba
+    // porque la pantalla **no inyectaba** `CaseStatusCatalog`: nadie llenaba el
+    // mapa, y el sello del titular decía «Desconocido» sobre su propio trámite.
     elegirArchivo();
     subir();
 

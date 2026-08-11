@@ -202,6 +202,20 @@ export interface PatientMergeRequest {
  * expone ningún listado de estos eventos**: si se pierde, la fusión deja de ser
  * reversible desde la interfaz.
  */
+/** Filtros de `GET /profiles/patients/merge-events`. Todos opcionales. */
+export interface PatientMergeEventQuery {
+  /** Paciente involucrado, de cualquiera de los dos lados de la fusión. */
+  readonly patientProfileId?: string;
+  readonly limit?: number;
+}
+
+/** Una página de eventos de fusión, del más reciente al más antiguo. */
+export interface PatientMergeEventPage {
+  readonly items: readonly PatientMergeEvent[];
+  readonly count: number;
+  readonly limit: number;
+}
+
 export interface PatientMergeEvent {
   readonly id: string;
   readonly survivingPatientProfileId: string;
