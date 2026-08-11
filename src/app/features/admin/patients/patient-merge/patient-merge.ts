@@ -53,14 +53,17 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
  * revés no es un error de tipeo recuperable, así que la pantalla lo dice con
  * palabras en cada campo y repite ambos nombres en la confirmación.
  *
- * ## Revertir sólo es posible acá y ahora
+ * ## Revertir ya no es sólo acá y ahora
  *
  * `POST /profiles/patients/merge/:eventId/reverse` necesita el identificador
- * del evento, y **el backend no expone ningún listado de eventos de fusión**:
- * el único lugar del mundo donde ese identificador existe es la respuesta que
- * acaba de llegar. Por eso el «Deshacer» se ofrece en el resultado y se
- * advierte que, al salir, la fusión deja de ser reversible desde la interfaz.
- * No es una decisión de diseño: es lo único que el contrato permite.
+ * del evento, y durante un tiempo **el único lugar del mundo donde existía era
+ * la respuesta que acababa de llegar**: al salir de esta pantalla, unir dos
+ * historias clínicas dejaba de tener vuelta atrás. Eso era P9, y se cerró con
+ * `GET /profiles/patients/merge-events`.
+ *
+ * El «Deshacer» sigue viviendo en el resultado porque es donde se necesita —el
+ * error se ve en el momento— pero ya no es la última oportunidad, y el aviso de
+ * la pantalla dejó de decir que lo era.
  *
  * ## El motivo queda afuera
  *

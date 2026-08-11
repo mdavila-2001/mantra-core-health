@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { resolverEstadosDeCaso } from '../../../testing/case-status';
 import { IdentityVerification } from './identity-verification';
 
 /** base64url sobre UTF-8, como el token real (ver `shell-layout.spec.ts`). */
@@ -46,6 +47,12 @@ describe('IdentityVerification', () => {
     // para que cada prueba hable del envío, que es lo suyo; la prueba del
     // historial lo responde con datos por su cuenta.
     http.expectOne('/identity/me/verification-cases').flush([]);
+
+    // La pantalla inyecta el catálogo de estados, que al construirse pide los
+    // conceptos. Va acá y no en las pruebas que miran el sello porque la
+    // petición sale en todas: sin responderla, `http.verify()` falla con un
+    // mensaje que no menciona a los estados de caso.
+    resolverEstadosDeCaso(http);
   });
 
   afterEach(() => {
@@ -198,6 +205,9 @@ describe('IdentityVerification', () => {
    * mapeo completo lo fija `case-status.spec.ts`; acá se fija la integración.
    */
   it('con el caso CASE_ASSERTED el sello muestra «Aprobado», no el UUID', () => {
+    // El catálogo ya quedó resuelto en el `beforeEach`. Esta prueba fallaba
+    // porque la pantalla **no inyectaba** `CaseStatusCatalog`: nadie llenaba el
+    // mapa, y el sello del titular decía «Desconocido» sobre su propio trámite.
     elegirArchivo();
     subir();
 
