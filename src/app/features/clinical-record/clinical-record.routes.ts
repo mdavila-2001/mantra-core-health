@@ -20,14 +20,17 @@ export function patientChartRoute(profileId: string): string {
   return `${CLINICAL_RECORD_ROUTE}/${profileId}`;
 }
 
-/**
- * El parámetro con el que la agenda precarga el motivo de consulta.
- *
- * Viaja el **texto** del motivo de la cita y no su identificador, y no es una
- * simplificación: `GET /scheduling/bookings` no expone `appointmentId`, y el
- * `appointmentId` del encuentro apunta a `clinical.appointments`, no a una
- * reserva de agenda. El texto es el único dato de la cita que el encuentro
- * puede recibir sin inventar una clave foránea. Ver P11 en
- * `PENDIENTES-BACKEND.md`.
- */
+/** El parámetro con el que la agenda precarga el motivo de consulta. */
 export const MOTIVO_QUERY_PARAM = 'motivo';
+
+/**
+ * El parámetro que ata el encuentro al turno que lo originó.
+ *
+ * Lleva el `appointmentId` de la reserva —la cita clínica que la respalda—, que
+ * es lo que acepta `POST /clinical/encounters/check-in`. **No** el `id` de la
+ * reserva: apunta a otra tabla y violaría la clave foránea.
+ *
+ * Sólo viaja cuando la reserva tiene cita clínica detrás. Su ausencia es
+ * corriente y no rompe nada: el encuentro se abre igual, sin el vínculo.
+ */
+export const CITA_QUERY_PARAM = 'cita';

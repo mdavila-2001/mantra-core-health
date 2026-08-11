@@ -52,6 +52,13 @@ export class AuthService {
    */
   readonly patientProfileId = this.session.patientProfileId;
 
+  /**
+   * Perfil profesional del titular, si la cuenta es la de quien atiende. Es lo
+   * que identifica su agenda entre las de la organización, y `null` para
+   * pacientes o administración.
+   */
+  readonly practitionerProfileId = this.session.practitionerProfileId;
+
   tenantName(tenantId: string): string {
     return this.session.tenantName(tenantId);
   }

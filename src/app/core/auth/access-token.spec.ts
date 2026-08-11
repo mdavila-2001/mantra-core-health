@@ -90,6 +90,41 @@ describe('decodeAccessToken', () => {
     expect(claims?.tenantNames?.['t-1']).toBe('Hospital Central');
   });
 
+  /**
+   * El perfil profesional de la sesión. Es lo que identifica su agenda entre
+   * las de la organización: sin él, la agenda cae en la del primer recurso.
+   */
+  it('lee `hpid` cuando el token lo trae', () => {
+    const claims = decodeAccessToken(
+      makeToken({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'per-3' }),
+    );
+
+    expect(claims?.hpid).toBe('per-3');
+  });
+
+  it('omite `hpid` en una cuenta sin perfil profesional', () => {
+    const claims = decodeAccessToken(makeToken({ sub: 'u-1', roles: ['USER'], tenants: [] }));
+
+    expect(claims?.hpid).toBeUndefined();
+  });
+
+  /** Los dos perfiles conviven: quien atiende puede ser paciente de la casa. */
+  it('lee los dos perfiles a la vez', () => {
+    const claims = decodeAccessToken(
+      makeToken({ sub: 'u-1', roles: [], tenants: [], pid: 'per-4', hpid: 'per-4' }),
+    );
+
+    expect(claims?.pid).toBe('per-4');
+    expect(claims?.hpid).toBe('per-4');
+  });
+
+  /** Una cadena vacía no es un perfil: se descarta como el resto de lo vacío. */
+  it('descarta un `hpid` vacío', () => {
+    const claims = decodeAccessToken(makeToken({ sub: 'u-1', hpid: '' }));
+
+    expect(claims?.hpid).toBeUndefined();
+  });
+
   it('descarta un `tenantNames` que no sea un mapa de textos', () => {
     const claims = decodeAccessToken(
       makeToken({ sub: 'u-1', tenantNames: ['no', 'es', 'un', 'mapa'] }),

@@ -1,10 +1,13 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-08 · Los pendientes hasta P6 se verificaron ejecutando contra la API viva
+**Actualizado:** 2026-08-11 · Los pendientes hasta P6 se verificaron ejecutando contra la API viva
 en `localhost:3000` —con la cuenta del bootstrap— y con 84 comprobaciones de punta a punta con
-Selenium. **Los nuevos (P7–P10) no**: se levantaron leyendo los controllers, los DTOs y los seeds,
-con Docker apagado. Lo que se afirma de cada uno está verificado sobre el código y los datos
-sembrados, no contra el servidor corriendo.
+Selenium. **Los de P7 a P10 no**: se levantaron leyendo los controllers, los DTOs y los seeds, con
+Docker apagado. Lo que se afirma de cada uno está verificado sobre el código y los datos sembrados,
+no contra el servidor corriendo.
+
+**P11, P12 y P13 sí**, y contra la imagen reconstruida: los dos primeros se cerraron y se
+comprobaron en vivo; el tercero apareció justamente al comprobar el primero.
 
 Existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber que algo dejó
 de ser un problema es tan útil como saber que lo sigue siendo.
@@ -188,73 +191,81 @@ Ese `GET` es `/common/files/:id/content` — **una descarga de archivo, no un li
 
 ---
 
-## Abierto · P11 · El encuentro no se puede vincular al turno que lo originó
+## Resuelto · P11 · El encuentro ya se puede vincular al turno que lo originó
 
-**Levantado el 2026-08-10 desde P1** (recorrido del médico, Acto 4) · **Para:** Pablo (API) ·
-**Bloquea:** nada de la demo — el recorrido cierra igual. Bloquea la trazabilidad turno ↔ encuentro.
+**Levantado el 2026-08-10 desde P1 · cerrado el mismo día** · PR `mantra-core-health-api#42`.
 
-`CheckInEncounterDto` admite `appointmentId` («cita que origina el check-in»), y a primera vista es
-exactamente lo que el Acto 4 necesita: el médico abre el turno de su agenda y deja constancia de que
-atendió **esa** cita. **No se puede.** Son dos cadenas distintas:
+El dato existía en la entidad y no salía por ninguna lectura: `BookingItemDto` no exponía
+`appointmentId`, así que el portal no podía decirle al check-in de qué turno venía el encuentro.
+Ahora lo exponen **las dos** lecturas de reserva —el listado y el detalle—, porque si sólo lo trajera
+una, el detalle contradiría a la fila que lo abrió.
 
-| Extremo | Qué declara |
-| --- | --- |
-| `clinical.encounters.appointment_id` | FK → **`clinical.appointments`** |
-| `scheduling.appointment_bookings.appointment_id` | FK → **`clinical.appointments`**, y es *nullable* |
-| `BookingItemDto` (`GET /scheduling/bookings`) | **no expone `appointmentId`** en ninguna de sus 14 propiedades |
+Consumido de este lado: la agenda lo lleva al expediente en `?cita=`, y el check-in lo manda como
+`appointmentId`. Viaja `null` con normalidad y entonces el parámetro no se agrega.
 
-Es decir: el puente existe en el modelo —la reserva puede apuntar a una cita clínica— pero **la
-lectura no lo devuelve**, así que el frontend no tiene forma de llegar a él. Mandar el `id` de la
-reserva como `appointmentId` violaría la clave foránea; mandarlo igual sería inventar un vínculo.
-
-### Qué haría falta
-
-Exponer `appointmentId` en `BookingItemDto` (una línea del mapeo, el dato ya está en la entidad). Con
-eso, el enlace de la agenda puede llevarlo y el check-in cerrar la trazabilidad.
-
-Conviene decidir a la vez qué pasa cuando es `null` —una reserva sin cita clínica detrás—, que por lo
-que se ve en los seeds es el caso corriente.
-
-### Qué se hizo mientras tanto
-
-El enlace de la agenda al expediente lleva el **motivo** de la cita como parámetro
-(`/clinico/:profileId?motivo=…`) y precarga con él el motivo de consulta del encuentro. Es el único
-dato del turno que el encuentro puede recibir sin inventar una clave foránea, y para la demo alcanza:
-el médico no vuelve a teclear lo que la cita ya dice. El vínculo por identificador queda pendiente.
+> ⚠️ **Queda un pendiente distinto, y es de dominio — ver P13.** El vínculo está tendido de punta a
+> punta, pero hoy no se llena nunca.
 
 ---
 
-## Abierto · P12 · No hay forma de saber qué agenda es la del profesional que inició sesión
+## Resuelto · P12 · La sesión ya sabe cuál es su perfil profesional
 
-**Levantado el 2026-08-10 desde P1** · **Para:** Pablo (API) · **Bloquea:** que la agenda se abra
-sola en el recurso de quien la mira. No bloquea la demo: el selector de recurso ya está.
+**Levantado el 2026-08-10 desde P1 · cerrado el mismo día** · PR `mantra-core-health-api#42`.
 
-`GET /scheduling/resources` devuelve `resourceRefType` y `resourceRefId` —y contra la API viva se
-confirma que un consultorio apunta a `practitioner_profiles`—, así que **el recurso sí sabe de quién
-es**. Lo que falta es el otro lado: la sesión no sabe cuál es su propio perfil profesional.
+Se resolvió con el **claim `hpid`**, simétrico del `pid` de paciente que ya existía, y por la misma
+cadena sobre la otra tabla de perfil. Es lo más barato: no agrega una petición a cada arranque de
+sesión, y no había ninguna lectura que devolviera el dato —el controlador de profesionales sólo
+expone `POST`—.
 
-| Lectura | Existe |
+Como `pid`, **no es una credencial**: quién puede ver una agenda lo siguen decidiendo `roles` y el
+tenant del request. Se omite en toda cuenta sin perfil profesional, y convive con `pid` cuando quien
+atiende es además paciente de la casa.
+
+Consumido de este lado: la agenda se abre en la del profesional que entró —cruzando `hpid` con el
+`resourceRefId` del recurso— y lo dice en el campo, porque una agenda ajena y la propia se ven igual.
+El recurso de la URL sigue mandando, para que un enlace compartido abra lo que dice.
+
+### Un detalle que apareció al verificarlo
+
+El `resourceRefType` **no coincide entre el contrato y los datos**: el DTO ejemplifica
+`health_practitioner_profiles` —el nombre real de la tabla— y los 15 recursos sembrados traen
+`practitioner_profiles`. El frontend acepta los dos y lo dice en el código. Conviene unificarlo del
+lado de los seeds, pero no bloquea nada.
+
+---
+
+## Abierto · P13 · Nada crea citas clínicas, así que el vínculo del turno queda siempre vacío
+
+**Levantado el 2026-08-11 al verificar P11** · **Para:** Marcelo (modelo) y Pablo (API) ·
+**Bloquea:** la trazabilidad turno ↔ encuentro **en la práctica**. No bloquea la demo.
+
+P11 abrió la cañería y funciona, pero al probarla apareció que **no hay agua**:
+
+| Comprobación | Resultado |
 | --- | --- |
-| `GET /profiles/patients/me/summary` | ✅ el paciente sí conoce su perfil |
-| `GET /profiles/practitioners/me` (o equivalente) | ❌ **no existe** — `profiles-practitioners.controller.ts` sólo tiene `POST` |
-| Claim `profileId` en el token | ❌ el JWT trae `sub`, `roles`, `tenants`, `name`, `tenantNames` |
+| Filas en `clinical.appointments` | **0** |
+| Reservas con `appointment_id` no nulo | **0** |
+| Código que escribe en `clinical.appointments` | **ninguno** — no hay repositorio ni servicio |
+| Endpoint que cree una cita clínica | **ninguno** |
 
-Sin ninguno de los dos, «la agenda del médico» no se puede resolver: la pantalla cae al primer
-recurso de la organización, que con varios consultorios sembrados no es el suyo.
+O sea: `scheduling.appointment_bookings.appointment_id` es una columna que nadie llena. El encuentro
+va a quedar sin vincular no por un defecto del portal, sino porque la cita clínica que debería
+respaldarlo no se crea en ningún momento.
 
-### Qué haría falta
+### La decisión es de dominio, no de código
 
-Lo más barato es el **claim**: si el token trajera el `practitionerProfileId` de la sesión cuando lo
-haya, la agenda podría preseleccionar su recurso sin ninguna petición extra. La alternativa es un
-`GET /profiles/practitioners/me` simétrico al de paciente, que además serviría para «mi perfil
-profesional», hoy inexistente.
+Y por eso no se resolvió de oficio: hay que definir **cuándo nace una cita clínica**, y son caminos
+distintos con consecuencias distintas.
 
-### Qué se hizo mientras tanto
+1. **Al confirmar la reserva** — `confirm` crea la cita clínica y la enlaza. Toda reserva confirmada
+   queda trazable, pero se crea un registro clínico para turnos que quizá nunca se atiendan.
+2. **Al hacer el check-in del encuentro** — la cita se crea recién cuando alguien llega. No ensucia
+   con turnos no atendidos, pero entonces la cita nace *después* del encuentro y el vínculo se
+   invierte.
+3. **Como flujo propio** de `clinical`, independiente de la agenda.
 
-Nada, a propósito. El selector de recurso ya vive en la URL, así que el médico elige su consultorio
-una vez y el enlace queda compartible con el recurso puesto. Adivinar cuál es el suyo —por nombre,
-por orden— sería peor que preguntarlo: una agenda que muestra la de otro profesional sin decirlo es
-un error que no se ve.
+Mientras no se decida, todo funciona: el encuentro se abre igual y el portal trata la ausencia como
+lo normal que es.
 
 ---
 
