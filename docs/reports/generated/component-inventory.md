@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-132 componentes y 32 servicios inyectables, leídos de `src/`.
+132 componentes y 33 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -166,7 +166,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (32)
+## Servicios (33)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -199,6 +199,7 @@
 | `AppStabilityTracing` | `src/app/core/observability/tracing/app-stability.ts` | root | **no** |
 | `TracingService` | `src/app/core/observability/tracing/tracing.service.ts` | root | sí |
 | `ThemeService` | `src/app/core/tokens/theme.service.ts` | root | sí |
+| `CaseStatusCatalog` | `src/app/features/identity-verification/case-status.ts` | root | sí |
 | `DialogService` | `src/app/shared/components/molecules/dialog/dialog-service.ts` | root | **no** |
 | `ToastService` | `src/app/shared/components/molecules/toast/toast.service.ts` | root | sí |
 | `ShellService` | `src/app/shared/components/organisms/shell/shell-service.ts` | root | **no** |

@@ -48,10 +48,15 @@ describe('IdentityVerification', () => {
     // historial lo responde con datos por su cuenta.
     http.expectOne('/identity/me/verification-cases').flush([]);
 
-    // La pantalla inyecta el catálogo de estados, que al construirse pide los
-    // conceptos. Va acá y no en las pruebas que miran el sello porque la
-    // petición sale en todas: sin responderla, `http.verify()` falla con un
-    // mensaje que no menciona a los estados de caso.
+    // La pantalla **inyecta** el catálogo de estados, así que al construirse ya
+    // pide los conceptos: no hace falta pedírselo al inyector desde acá.
+    //
+    // `dev` había resuelto esta misma prueba haciendo el `TestBed.inject` en el
+    // arnés, con el argumento de que la pantalla lee el catálogo «por una
+    // función pura». Eso hacía pasar la prueba y dejaba el defecto en pie: en la
+    // aplicación real nadie construía el catálogo, y quien entra por la puerta
+    // del estado S5 —que lleva directo a esta pantalla— veía «Desconocido»
+    // sobre su propio trámite. Se arregló donde estaba: en el componente.
     resolverEstadosDeCaso(http);
   });
 
