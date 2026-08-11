@@ -125,10 +125,46 @@ describe('Recorrido real · administrador', () => {
      * aplicaba la selección con un `[value]` que corría antes de que existieran
      * las opciones. El vacío es el índice del placeholder oculto.
      */
-    aparece('select', 'admin-10-agenda', 'el selector de recurso').then((haySelector) => {
-      if (!haySelector) {
+    cy.document({ log: false }).then((doc) => {
+      /**
+       * El desplegable **de recurso**, no cualquiera.
+       *
+       * La pantalla tiene más de un `<select>` —el de la ventana de fechas es
+       * otro— y buscar «el primero» hacía que la comprobación mirara el
+       * equivocado: contaba las opciones del filtro de rango, concluía que había
+       * recursos y después afirmaba sobre un desplegable que efectivamente
+       * estaba vacío. Se resuelve por la etiqueta, que es lo que identifica al
+       * control para quien lo usa.
+       */
+      const etiqueta = [...doc.querySelectorAll('label')].find((el) =>
+        (el.textContent ?? '').trim().startsWith('Recurso'),
+      );
+      const destino = etiqueta?.getAttribute('for');
+      const selector = destino == null ? null : doc.getElementById(destino);
+
+      // El placeholder oculto también es una `<option>`: con una sola, no hay
+      // ningún recurso que el desplegable pueda estar mostrando.
+      const hayRecursos = selector !== null && selector.querySelectorAll('option').length > 1;
+
+      if (!hayRecursos) {
+        /**
+         * Sin recursos agendables no hay nada que comprobar, y afirmarlo igual
+         * sería exigir que el desplegable muestre algo que no existe.
+         *
+         * Pasa de verdad: el tenant del administrador de arranque se siembra
+         * **vacío**, así que en una base recién levantada esta comprobación no
+         * tiene datos. Se anota en vez de saltarse en silencio, porque «no se
+         * pudo comprobar» y «se comprobó y está bien» no son lo mismo.
+         */
+        cy.task('anotarOmision', {
+          pantalla: 'admin-10-agenda',
+          motivo:
+            'No se comprobó que el selector muestre el recurso activo: este tenant no tiene ' +
+            'recursos agendables, así que el desplegable sólo trae su placeholder.',
+        });
         return;
       }
+
       cy.porEtiqueta('Recurso').should('not.have.value', '');
     });
 

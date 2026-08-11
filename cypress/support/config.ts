@@ -14,7 +14,7 @@
  *
  * **Solo en Node**: lo importan `cypress.config.ts` y el arnés. Dentro del
  * navegador no hay `process.env`, así que lo que las pruebas necesitan saber
- * viaja por `config.env` de Cypress y se lee con `Cypress.env()`.
+ * viaja por el bloque `expose` de Cypress y se lee con `Cypress.expose()`.
  */
 
 import { VIEWPORTS, type Viewport } from './viewports';

@@ -2,7 +2,7 @@
 
 # Inventario de la suite de extremo a extremo (Cypress)
 
-Leído de `cypress/`. 25 archivos de prueba, 131 pruebas, 9 Page Objects y 11 escenarios de API.
+Leído de `cypress/`. 27 archivos de prueba, 141 pruebas, 11 Page Objects y 12 escenarios de API.
 
 La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—
 está en [`cypress/README.md`](../../../cypress/README.md).
@@ -13,8 +13,10 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | --- | --- | --- | --- |
 | `authentication` | Autenticación · inicio de sesión | 7 | `cypress/e2e/authentication/login.cy.ts` |
 | `authentication` | Autenticación · sesión | 6 | `cypress/e2e/authentication/sesion.cy.ts` |
+| `forms` | Formularios · activar cuenta | 5 | `cypress/e2e/forms/activar-cuenta.cy.ts` |
 | `forms` | Formularios · nueva contraseña | 6 | `cypress/e2e/forms/nueva-clave.cy.ts` |
 | `forms` | Formularios · recuperar contraseña | 4 | `cypress/e2e/forms/recuperar-password.cy.ts` |
+| `forms` | Formularios · reenviar verificación | 5 | `cypress/e2e/forms/reenviar-verificacion.cy.ts` |
 | `forms` | Formularios · registro | 7 | `cypress/e2e/forms/registro.cy.ts` |
 | `forms` | Formularios · verificación de correo | 4 | `cypress/e2e/forms/verificar-correo.cy.ts` |
 | `navigation` | Navegación | 8 | `cypress/e2e/navigation/navegacion.cy.ts` |
@@ -41,12 +43,14 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 
 | Objeto | Ruta | Métodos | Archivo |
 | --- | --- | --- | --- |
+| `ActivateAccountPage` | `/auth/activar` | 13 | `cypress/support/pages/activate-account.page.ts` |
 | `DashboardPage` | `/panel` | 11 | `cypress/support/pages/dashboard.page.ts` |
 | `DesignSystemPage` | `/design-system` | 7 | `cypress/support/pages/design-system.page.ts` |
 | `ForgotPasswordPage` | `/auth/recuperar` | 9 | `cypress/support/pages/forgot-password.page.ts` |
 | `LoginPage` | `/auth` | 17 | `cypress/support/pages/login.page.ts` |
 | `NotFoundPage` | `/esta-ruta-no-existe` | 4 | `cypress/support/pages/not-found.page.ts` |
 | `RegisterPage` | `/auth/registro` | 13 | `cypress/support/pages/register.page.ts` |
+| `ResendVerificationPage` | `/auth/reenviar-verificacion` | 10 | `cypress/support/pages/resend-verification.page.ts` |
 | `ResetPasswordPage` | `/auth/nueva-clave` | 12 | `cypress/support/pages/reset-password.page.ts` |
 | `TenantSelectionPage` | `/auth/organizacion` | 6 | `cypress/support/pages/tenant-selection.page.ts` |
 | `VerifyEmailPage` | `/auth/verificar` | 7 | `cypress/support/pages/verify-email.page.ts` |
@@ -65,8 +69,9 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `registro-duplicado` | El alta responde 409: ese documento ya tiene cuenta. |
 | `token-vencido` | El token del correo ya no sirve: verificar y cambiar la clave fallan. |
 | `clave-cambiada-con-sesiones` | El cambio de contraseña cierra otras dos sesiones abiertas. |
+| `reenvio-limitado` | El reenvío de verificación responde 429: hay que esperar 45 segundos. |
 | `api-lenta` | Respuestas demoradas: hay estado de carga que observar. |
 
 ## Coherencia de los selectores
 
-Los 66 identificadores que la suite localiza están declarados en las plantillas.
+Los 81 identificadores que la suite localiza están declarados en las plantillas.

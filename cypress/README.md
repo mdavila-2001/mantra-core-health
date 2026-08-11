@@ -107,12 +107,55 @@ Cuatro cosas que Cypress no da de fábrica y cuya solución está en la suite:
 4. **El `Host` a medida** va por `cy.task`, porque `cy.request` descarta esa
    cabecera en silencio y la prueba pasaría sin comprobar nada.
 
+## Contra qué se sirve cada suite (y por qué no es lo mismo)
+
+| Suite | Servidor | API que ve el navegador |
+| --- | --- | --- |
+| Funcional | El arnés, con el artefacto de producción | La **simulada**, misma origen |
+| Recorrido visual | El arnés, con el artefacto de producción | La **simulada**, más `cy.intercept` |
+| Recorrido real | `ng serve` con `proxy.conf.json` | La **viva**, en `E2E_API_URL` |
+
+La última fila es la que se equivoca fácil, y ya se equivocó una vez: si la suite
+real se sirve desde el arnés, la aplicación pide al mismo origen y **le contesta
+el simulador**. Los actores se crean de verdad contra el backend, pero la
+pantalla que los usa recibe respuestas inventadas: da verde y no significa nada.
+El síntoma con el que se descubrió fue un administrador «entrando» al panel con
+credenciales que la API real rechazaba con `401`.
+
+Por eso `scripts/run-recorrido-real.mjs` levanta `ng serve` —que tiene el proxy
+hacia el backend— y le pasa `E2E_BASE_URL` a Cypress, lo que **desactiva el
+arnés**. Si al correrla ves líneas `[e2e] Endpoint no simulado: …`, el arnés está
+en el medio y la corrida no vale.
+
+## Antes de correr `recorrido:real`: sembrar el administrador
+
+Dos de las cuatro specs entran con una cuenta de administración, y **el backend
+no la crea solo**: `BootstrapAdminSeedService` es opt-in y no hace nada sin
+`BOOTSTRAP_ADMIN_EMAIL` y `BOOTSTRAP_ADMIN_PASSWORD`. En una base recién
+levantada esa cuenta no existe, y el síntoma es un `401` en el login que se lee
+como «las credenciales están mal» cuando en realidad no hay ninguna cuenta.
+
+Se siembra con el comando del propio backend, que es idempotente:
+
+```bash
+cd ../mantra-core-health-api
+yarn build && yarn postman:bootstrap
+```
+
+Deja `admin@redesa.test` / `S3cret-passw0rd` —los mismos valores que documenta el
+`.env.example` de la API— que son los que esta suite trae por defecto. Con otras,
+exportá `E2E_ADMIN_EMAIL` y `E2E_ADMIN_PASSWORD`.
+
+> Ojo: `yarn build` en el backend pisa el `dist/` que `yarn start:dev` esté
+> usando y le tira el proceso abajo. Sembrá primero y levantá la API después.
+
 ## Deuda conocida
 
-- `allowCypressEnv: true` está habilitado porque es la única forma de que las
-  pruebas lean lo que `setupNodeEvents` publica en `config.env`. Cypress avisa en
-  cada corrida que lo va a quitar; migrar a `Cypress.expose()` es pendiente.
 - El recorrido de la vitrina de diseño es la prueba más larga de todas (más de
   doscientos controles sobre una pantalla de veinte mil píxeles de alto). Su tope
   de acciones existe para eso, y cuando corta **queda anotado** en
   `omisiones.jsonl` y el reporte lo muestra.
+- El tenant del administrador de arranque se siembra **sin recursos
+  agendables**, así que la comprobación de que el selector de recurso muestre el
+  activo no tiene datos y se salta dejando su nota. Con un tenant poblado, la
+  comprobación corre.
