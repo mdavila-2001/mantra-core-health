@@ -429,6 +429,51 @@ describe('ProfilesClient', () => {
     expect(evento?.recordedAt).toBeInstanceOf(Date);
   });
 
+  /**
+   * La lectura que hace reversible una fusión más allá de la pantalla que la
+   * hizo: sin ella, el `eventId` moría con la respuesta del POST.
+   */
+  it('listMergeEvents sin filtros no manda ningún parámetro', () => {
+    client.listMergeEvents().subscribe();
+
+    const req = http.expectOne((r) => r.url === '/profiles/patients/merge-events');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys()).toEqual([]);
+
+    req.flush({ items: [], count: 0, limit: 50 });
+  });
+
+  it('listMergeEvents manda el paciente y el tope cuando se piden', () => {
+    client.listMergeEvents({ patientProfileId: 'pp-A', limit: 10 }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/profiles/patients/merge-events');
+    expect(req.request.params.get('patientProfileId')).toBe('pp-A');
+    expect(req.request.params.get('limit')).toBe('10');
+
+    req.flush({ items: [], count: 0, limit: 10 });
+  });
+
+  it('listMergeEvents convierte la marca de tiempo de cada evento', () => {
+    let pagina: { items: readonly { recordedAt: Date }[] } | undefined;
+    client.listMergeEvents().subscribe((p) => (pagina = p));
+
+    http.expectOne((r) => r.url === '/profiles/patients/merge-events').flush({
+      items: [
+        {
+          id: 'ev-1',
+          survivingPatientProfileId: 'pp-A',
+          mergedPatientProfileId: 'pp-B',
+          decisionStatus: 'c-1',
+          recordedAt: '2026-08-08T02:05:00.000Z',
+        },
+      ],
+      count: 1,
+      limit: 50,
+    });
+
+    expect(pagina?.items[0]?.recordedAt).toBeInstanceOf(Date);
+  });
+
   it('reverseMerge pone el evento en la ruta y manda cuerpo vacío sin motivo', () => {
     client.reverseMerge('ev-1').subscribe();
 
