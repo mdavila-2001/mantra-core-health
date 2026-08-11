@@ -1,10 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AssertionRevocation,
+  CaseQueueQuery,
   CheckPlan,
   CreatedVerificationPolicy,
   DecidedManualReview,
@@ -25,6 +26,7 @@ import type {
   OpenedManualReview,
   PlannedChecksResult,
   PublishedAuthorityEndpoint,
+  QueuedCase,
   RaisedFraudSignal,
   RecordedAttempt,
   RecordedCheckResult,
@@ -86,6 +88,41 @@ function toIssuedAssertion(body: IssuedAssertionBody): IssuedAssertion {
   };
 }
 
+interface QueuedCaseBody {
+  readonly id: string;
+  readonly status: string;
+  readonly subjectTypeConceptId: string;
+  readonly subjectEntityId: string;
+  readonly identityVerificationPolicyId: string;
+  readonly riskScore?: string;
+  readonly openedAt?: string;
+  readonly expiresAt?: string;
+}
+
+interface CaseQueueBody {
+  readonly cases: readonly QueuedCaseBody[];
+}
+
+function colaDe(query: CaseQueueQuery): HttpParams {
+  let params = new HttpParams();
+  if (query.status !== undefined) params = params.set('status', query.status);
+  if (query.limit !== undefined) params = params.set('limit', query.limit);
+  return params;
+}
+
+function toQueuedCase(body: QueuedCaseBody): QueuedCase {
+  return {
+    id: body.id,
+    status: body.status,
+    subjectTypeConceptId: body.subjectTypeConceptId,
+    subjectEntityId: body.subjectEntityId,
+    identityVerificationPolicyId: body.identityVerificationPolicyId,
+    ...(body.riskScore === undefined ? {} : { riskScore: body.riskScore }),
+    ...(body.openedAt === undefined ? {} : { openedAt: new Date(body.openedAt) }),
+    ...(body.expiresAt === undefined ? {} : { expiresAt: new Date(body.expiresAt) }),
+  };
+}
+
 function toRevokedAssertion(body: RevokedAssertionBody): RevokedAssertion {
   return {
     id: body.id,
@@ -98,9 +135,10 @@ function toRevokedAssertion(body: RevokedAssertionBody): RevokedAssertion {
  * Cliente del lado administrativo de `identity_assurance` (M27): autoridades,
  * políticas y el ciclo del caso de verificación.
  *
- * Es **solo de comando** —14 POST, ningún GET de colección hasta que llegue
- * X1—, todos bajo `SECURITY_ADMIN`. El autoservicio del titular vive aparte,
- * en `IdentityClient`, igual que en el backend viven en controllers distintos.
+ * Casi todo de comando —14 POST—, más una única lectura: `listCaseQueue`, la
+ * cola de revisión. Todo bajo `SECURITY_ADMIN`. El autoservicio del titular
+ * vive aparte, en `IdentityClient`, igual que en el backend viven en
+ * controllers distintos.
  *
  * Los cuerpos viajan tal como los declaran los tipos: el backend valida con
  * `forbidNonWhitelisted`, así que una propiedad de más es un 400. Los campos
@@ -112,6 +150,23 @@ function toRevokedAssertion(body: RevokedAssertionBody): RevokedAssertion {
 export class IdentityAdminClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+
+  /**
+   * `GET /identity/verification-cases` — la cola de revisión.
+   *
+   * Sin `status`, el backend devuelve los estados que esperan a una persona y
+   * los ordena del más viejo al más nuevo: al frente va quien más esperó.
+   *
+   * Un caso sale de la cola al decidirse, así que la lista se relee después de
+   * cada decisión en vez de quitarse el elemento a mano.
+   */
+  listCaseQueue(query: CaseQueueQuery = {}): Observable<readonly QueuedCase[]> {
+    return this.http
+      .get<CaseQueueBody>(this.url('/identity/verification-cases'), {
+        params: colaDe(query),
+      })
+      .pipe(map((body) => body.cases.map(toQueuedCase)));
+  }
 
   /** `POST /identity/authorities` — registrar una autoridad de identidad. */
   registerAuthority(authority: NewIdentityAuthority): Observable<RegisteredAuthority> {

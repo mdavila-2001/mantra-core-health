@@ -430,6 +430,10 @@ export const routes: Routes = [
           './features/identity-assurance/verification-policy-form/verification-policy-form'
         ).then((m) => m.VerificationPolicyForm),
       ),
+      // La cola va primero: es la lectura desde la que se llega a las demás.
+      pantallaDeVerificacionIdentidad('cola', 'Cola de revisión de identidad', () =>
+        import('./features/identity-assurance/case-queue/case-queue').then((m) => m.CaseQueue),
+      ),
       pantallaDeVerificacionIdentidad('casos/nuevo', 'Abrir caso de verificación', () =>
         import('./features/identity-assurance/case-open-form/case-open-form').then(
           (m) => m.CaseOpenForm,

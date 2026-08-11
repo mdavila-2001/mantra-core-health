@@ -252,3 +252,30 @@ export interface ExpireSweepResult {
   readonly expiredCount: number;
   readonly caseIds: readonly string[];
 }
+
+/**
+ * Un caso esperando la decisión de un revisor, tal como lo lista la cola.
+ *
+ * Trae lo justo para priorizar y abrir el caso: el expediente completo se pide
+ * por id. Los `*ConceptId` son uuid de terminología, no etiquetas — mostrarlos
+ * como texto exige resolverlos contra el catálogo.
+ */
+export interface QueuedCase {
+  readonly id: string;
+  readonly status: string;
+  readonly subjectTypeConceptId: string;
+  readonly subjectEntityId: string;
+  readonly identityVerificationPolicyId: string;
+  readonly riskScore?: string;
+  readonly openedAt?: Date;
+  readonly expiresAt?: Date;
+}
+
+/**
+ * Filtro de la cola. Sin `status`, el backend devuelve los estados que esperan
+ * revisión; pedir uno concreto acota a ése.
+ */
+export interface CaseQueueQuery {
+  readonly status?: string;
+  readonly limit?: number;
+}

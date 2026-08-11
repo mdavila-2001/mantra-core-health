@@ -1,6 +1,6 @@
 # API de backend
 
-Las 85 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 86 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -104,16 +104,24 @@ se verifica, y por eso la pantalla de verificación no tiene selector de persona
 La única elección es cuál de las organizaciones **propias** — las del token — se
 quiere verificar (`:tenantId`).
 
-### `IdentityAdminClient` — 14 operaciones · sólo comando
+### `IdentityAdminClient` — 15 operaciones · 14 comandos y una lectura
 
 El lado administrativo del M27 (`SECURITY_ADMIN`): autoridades, políticas y el
-ciclo completo del caso de verificación. El backend no expone ningún `GET`
-administrativo todavía, así que las 14 pantallas operan con identificadores
-pegados; cuando lleguen los endpoints de consulta, los listados reemplazan ese
-gesto.
+ciclo completo del caso de verificación. La única lectura es la **cola de
+revisión**, y es la que evita que quien revisa tenga que conocer de antemano el
+id del caso: enlaza a `revision/escalar` con `?caseId=`. El resto de las
+pantallas siguen operando con identificadores pegados hasta que el backend
+publique los `GET` que faltan.
+
+> La cola se acota **por rol, no por dato**:
+> `identity_assurance.identity_verification_cases` no tiene `tenant_id`, así
+> que el RLS por `app.current_tenant_id` no la alcanza y un `SECURITY_ADMIN` ve
+> los casos de todos los tenants. Deuda abierta, documentada también en
+> `IdentityCasesService.listQueue` del backend.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
+| `GET` | `/identity/verification-cases` | `CaseQueue` (V27-02·L) |
 | `POST` | `/identity/authorities` | `AuthorityForm` (V27-09) |
 | `POST` | `/identity/authorities/:authorityId/endpoints` | `AuthorityEndpointForm` (V27-10) |
 | `POST` | `/identity/verification-policies` | `VerificationPolicyForm` (V27-18) |
