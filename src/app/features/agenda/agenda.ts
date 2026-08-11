@@ -16,7 +16,11 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { patientChartRoute } from '../clinical-record/clinical-record.routes';
+import {
+  CITA_QUERY_PARAM,
+  MOTIVO_QUERY_PARAM,
+  patientChartRoute,
+} from '../clinical-record/clinical-record.routes';
 import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
 import type {
   AgendaResource,
@@ -86,6 +90,21 @@ const ROLES_CON_FICHA = ['SECURITY_ADMIN', 'SUPERADMIN'];
 const ROLES_CON_EXPEDIENTE = ['CLINICIAN', 'PRACTITIONER', 'SUPERADMIN'];
 
 /**
+ * Cómo nombra un recurso a la tabla de perfiles profesionales.
+ *
+ * **Son dos porque el sistema dice las dos cosas**, y verificado contra la API
+ * viva: el DTO de `scheduling` ejemplifica `health_practitioner_profiles` —que es
+ * el nombre real de la tabla en el esquema `profiles`— pero los 14 recursos
+ * sembrados traen `practitioner_profiles`. Aceptar sólo el del contrato haría que
+ * la agenda propia no se encontrara nunca contra los datos de hoy; aceptar sólo
+ * el de los datos la rompería el día que se corrijan los seeds.
+ *
+ * El fallo de esta lista es benigno en los dos sentidos: si ninguno coincide, la
+ * agenda cae al primer recurso, que es exactamente lo que hacía antes.
+ */
+const TABLAS_DE_PERFIL_PROFESIONAL = ['practitioner_profiles', 'health_practitioner_profiles'];
+
+/**
  * Roles que operan citas (`check-in`, `cancel`). Del backend: los dos
  * endpoints declaran `SCHEDULING_ADMIN`/`SCHEDULING_AGENT`, y `SUPERADMIN` es
  * el comodín de su `RolesGuard`.
@@ -114,6 +133,23 @@ export interface CitaVisible {
    * encuentro: quien atiende no debería volver a teclear lo que la cita ya dice.
    */
   readonly motivoCrudo: string | null;
+  /**
+   * La cita clínica que respalda el turno, si la tiene.
+   *
+   * Viaja al expediente junto al motivo para que el encuentro quede atado al
+   * turno que lo originó. `null` es lo corriente y no es un fallo: la reserva
+   * nace en la agenda y la cita clínica es un registro posterior.
+   */
+  readonly appointmentId: string | null;
+  /**
+   * Lo que el enlace al expediente lleva en la URL, ya armado.
+   *
+   * Se compone acá y no en la plantilla porque son dos datos opcionales e
+   * independientes: la expresión en línea que los combinaba se volvió ilegible
+   * al segundo, y una plantilla que arma estructuras es una plantilla que nadie
+   * puede probar por separado.
+   */
+  readonly paramsDelExpediente: Readonly<Record<string, string>>;
   /** Con la llegada ya registrada, el check-in no se vuelve a ofrecer. */
   readonly llegadaRegistrada: boolean;
 }
@@ -254,9 +290,11 @@ export class Agenda {
    * agenda de la organización entera no se puede pedir, así que ofrecerla en el
    * selector sería ofrecer un botón que devuelve un error.
    *
-   * Sin recurso en la URL se toma el primero de la lista: entrar a la agenda y
-   * encontrarla vacía hasta elegir algo es peor que entrar y ver una agenda —
-   * cuál se está mirando lo dice el selector, que queda marcado.
+   * Sin recurso en la URL manda **la agenda propia**, si la sesión tiene una: a
+   * quien atiende le sirve la suya, no la primera de la organización. Recién si
+   * no la hay se cae al primer recurso — entrar a la agenda y encontrarla vacía
+   * hasta elegir algo es peor que entrar y ver una agenda, y cuál se está
+   * mirando lo dice el selector, que queda marcado.
    */
   protected readonly recursoElegido = computed(() => {
     const pedido = this.recursoPedido();
@@ -264,12 +302,50 @@ export class Agenda {
     if (pedido !== null && disponibles.some((recurso) => recurso.id === pedido)) {
       return pedido;
     }
+    // La URL manda sobre la agenda propia: un enlace compartido tiene que abrir
+    // lo que dice, aunque quien lo abra tenga la suya.
+    const propia = this.recursoPropio();
+    if (propia !== null) {
+      return propia;
+    }
     // `.at(0)` y no `[0]`: el proyecto no usa `noUncheckedIndexedAccess`, así
     // que el índice se tipa como si siempre hubiera elemento y el compilador
     // daba por imposible el `null` que en tiempo de ejecución sí ocurre —una
     // organización sin recursos—. `.at()` sí declara el `undefined`.
     return disponibles.at(0)?.id ?? null;
   });
+
+  /**
+   * El recurso de quien inició sesión, si la organización tiene uno suyo.
+   *
+   * El cruce es entre el claim `hpid` del token y el `resourceRefId` que declara
+   * cada recurso. Se exige **además** que `resourceRefType` sea el de perfiles
+   * profesionales: los identificadores no se comparan a ciegas entre tablas
+   * distintas, porque dos filas de tablas distintas pueden compartir un uuid sin
+   * tener nada que ver.
+   *
+   * `null` para pacientes, administración, o para un profesional que no tenga
+   * agenda cargada en esta organización — que es lo corriente en las
+   * instituciones donde no atiende.
+   */
+  private readonly recursoPropio = computed(() => {
+    const perfil = this.auth.practitionerProfileId();
+    if (perfil === null) {
+      return null;
+    }
+    return (
+      this.recursos().find(
+        (recurso) =>
+          recurso.resourceRefId === perfil &&
+          TABLAS_DE_PERFIL_PROFESIONAL.includes(recurso.resourceRefType),
+      )?.id ?? null
+    );
+  });
+
+  /** Si lo que se está mirando es la agenda propia, para poder decirlo. */
+  protected readonly mirandoAgendaPropia = computed(
+    () => this.recursoPropio() !== null && this.recursoElegido() === this.recursoPropio(),
+  );
 
   /**
    * Si la URL pide un recurso que la organización no tiene.
@@ -761,6 +837,13 @@ export class Agenda {
       rutaExpediente:
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,
+      appointmentId: cita.appointmentId ?? null,
+      paramsDelExpediente: {
+        ...(cita.reasonText === undefined ? {} : { [MOTIVO_QUERY_PARAM]: cita.reasonText }),
+        ...(cita.appointmentId === undefined || cita.appointmentId === null
+          ? {}
+          : { [CITA_QUERY_PARAM]: cita.appointmentId }),
+      },
       llegadaRegistrada: cita.checkedInAt !== undefined,
     };
   }

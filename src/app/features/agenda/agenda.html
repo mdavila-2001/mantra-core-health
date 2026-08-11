@@ -36,10 +36,17 @@
     <form class="agenda__filtros" (submit)="$event.preventDefault()">
       <!-- Sin opción «todos»: la agenda de la organización entera no se puede
            pedir, y ofrecerla sería ofrecer un botón que devuelve un error. -->
+      <!-- Cuál se está mirando importa más cuando la agenda la eligió sola: sin
+           decirlo, quien tiene la suya no sabe si está viendo la propia o la
+           primera de la lista, y las dos se ven igual. -->
       <app-form-field
         label="Recurso"
         class="agenda__filtro"
-        hint="Las citas se listan por recurso; el backend no admite pedirlas todas juntas."
+        [hint]="
+          mirandoAgendaPropia()
+            ? 'Estás viendo tu agenda. Podés cambiar a la de otro recurso.'
+            : 'Las citas se listan por recurso; el backend no admite pedirlas todas juntas.'
+        "
       >
         <app-select
           [options]="opcionesDeRecurso()"
@@ -134,12 +141,10 @@
   @if (cita.rutaExpediente || cita.rutaPaciente) {
     <span class="agenda__accesos">
       @if (cita.rutaExpediente) {
-        <!-- El motivo de la cita viaja para precargar el del encuentro: quien
-             atiende no debería teclear de nuevo lo que la cita ya dice. -->
-        <a
-          app-link
-          [routerLink]="cita.rutaExpediente"
-          [queryParams]="cita.motivoCrudo ? { motivo: cita.motivoCrudo } : {}"
+        <!-- El turno viaja con lo suyo: el motivo precarga el del encuentro y la
+             cita clínica lo ata a este turno. Los dos son opcionales y se
+             componen en el componente. -->
+        <a app-link [routerLink]="cita.rutaExpediente" [queryParams]="cita.paramsDelExpediente"
           >Abrir expediente</a
         >
       }

@@ -103,22 +103,33 @@ export interface Encounter {
  * manda. Un formulario que los pidiera todos estaría inventando requisitos que
  * el contrato no tiene.
  *
- * ## Lo que a propósito no está
+ * ## Los dos que ya no se omiten
  *
- * `appointmentId` — el encuentro puede declarar la cita que lo origina, pero esa
- * clave apunta a `clinical.appointments`, y `GET /scheduling/bookings` no expone
- * ninguna: mandarle el identificador de una reserva de agenda violaría la clave
- * foránea. Queda anotado en `PENDIENTES-BACKEND.md` (P11).
+ * `appointmentId` y `primaryPractitionerId` **estuvieron fuera** —anotados como
+ * P11 y P12— no por decisión de diseño sino porque el dato no existía de este
+ * lado: la reserva no exponía su cita clínica y la sesión no conocía su perfil
+ * profesional. Con las dos lecturas abiertas, el encuentro ya puede decir de qué
+ * turno viene y quién atendió, que es lo que lo vuelve un registro y no una
+ * marca de tiempo suelta.
  *
- * `primaryPractitionerId` — es el perfil profesional de quien atiende, y no hay
- * lectura que lo devuelva para la sesión activa (P12 del mismo documento). Se
- * omite antes que mandar un identificador equivocado.
+ * Siguen siendo opcionales, y su ausencia es corriente: se entra al expediente
+ * sin pasar por la agenda, y hay cuentas sin perfil profesional. Se omiten
+ * cuando no hay dato, nunca se rellenan con algo parecido — las dos son claves
+ * foráneas reales.
  */
 export interface NewEncounter {
   readonly patientProfileId: string;
   readonly tenantId: string;
   /** Motivo de consulta, en palabras. */
   readonly reasonText?: string;
+  /**
+   * La cita clínica que originó la atención.
+   *
+   * Es el `appointmentId` que trae la reserva de agenda —**no** el `id` de la
+   * reserva, que apunta a otra tabla—. La agenda lo pasa por la URL al abrir el
+   * expediente, y con él el encuentro queda atado al turno.
+   */
+  readonly appointmentId?: string;
   readonly episodeId?: string;
   readonly branchId?: string;
   readonly primaryPractitionerId?: string;
