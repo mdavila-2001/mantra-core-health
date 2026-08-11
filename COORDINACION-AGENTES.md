@@ -496,3 +496,58 @@ Material. Color y tipografía salen **exclusivamente** de los tokens REDSAT de
 
 - Ningún `.ts` / `.spec.ts`, ni rutas, ni `e2e/**`, ni `.github/**`.
 - `src/styles.css`, `core/**`, y el resto de `shared/components/**`.
+
+---
+
+## Sesión en curso · IT2 · el Acto 3 recorrido en un navegador
+
+**Empezó:** 2026-08-11 · **Rama:** `itzan/it2-recorrido-acto3-navegador` · **Base:** `85463fe`
+
+Último tramo de IT2. Las tres entregas anteriores —el refresco del historial, la
+cola de admin y su endpoint— ya están en `dev` (PR #47 y #49 acá, #45 en la API).
+Falta lo que la tarjeta pide para darla por terminada: **el ciclo corrido dos
+veces seguidas, con capturas**.
+
+### Archivos tocados (solo estos dos)
+
+| Archivo | Qué |
+|---|---|
+| `cypress/e2e/real/07-cola-de-revision.cy.ts` | Nuevo. Los cuatro pasos del Acto 3, **todos por pantalla**: el paciente sube su documento en `/identidad/verificar`, el caso aparece en la cola, el revisor lo escala y lo aprueba con los formularios de M27, y el titular lo ve aprobado |
+| `cypress/support/real/sesion.ts` | Arregla una carrera de hidratación en `entrar()` que rompía **cualquier** ingreso de la suite `real` |
+
+Sólo dos transiciones quedan fuera de la interfaz —ninguna del guion— porque no
+tienen pantalla propia: la consulta del catálogo que resuelve el motivo de la
+revisión, y la lectura que comprueba que un caso escalado sigue en la cola.
+
+### Cómo se corre contra la API viva — leé esto antes de tocar `cypress/e2e/real/`
+
+La suite `real` **no llega al backend con su invocación por defecto**: el arnés
+sirve la aplicación con `PUBLIC_API_BASE_URL` vacío y una API simulada delante,
+así que todo `/identity` vuelve `404`. Para recorrer de verdad hacen falta las
+dos variables, y por motivos distintos:
+
+```
+corepack yarn start                       # ng serve usa proxy.conf.json → API real en :3000
+E2E_SUITE=real E2E_BASE_URL=http://localhost:4200 corepack yarn test:e2e --spec "<ruta>"
+```
+
+- `E2E_BASE_URL` puesta ⇒ `levantarServidor: false` ⇒ **el arnés no se levanta**.
+- `E2E_SUITE=real` ⇒ saca `cypress/e2e/real/**` del `excludeSpecPattern`. Sin
+  ella el mensaje es «no spec files were found», que no menciona la exclusión.
+
+### La carrera de hidratación, para quien la herede
+
+La aplicación se sirve con render del servidor: el formulario existe en el HTML
+antes de que Angular lo hidrate, y las teclas pulsadas en esa ventana se pierden.
+Medido en dos corridas seguidas: se tecleó `CI-E2E-…` y quedó `E2E-…` (tres
+caracteres) y después `I-E2E-…` (uno). Número variable ⇒ carrera, no `maxlength`.
+
+El síntoma engaña: `POST /iam/auth/login` responde **401 con las credenciales
+correctas**, y la culpa parece del dato. `esperarAplicacionLista()` no lo cubre —
+comprueba que la aplicación pintó, no que el campo escuche.
+
+### Lo que NO estoy tocando
+
+- `src/**` entero: esta entrega no cambia una línea de la aplicación.
+- `cypress/harness/**` (el arnés y su API simulada), `cypress/e2e/` fuera de
+  `real/07-…`, rutas, `navigation.map.ts`, `app.routes.ts`, `.github/**`.
