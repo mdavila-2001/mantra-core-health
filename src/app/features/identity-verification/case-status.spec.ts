@@ -3,7 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { ESTADOS_DE_CASO, resolverEstadosDeCaso } from '../../../testing/case-status';
-import { CaseStatusCatalog, toCaseStatusPresentation } from './case-status';
+import {
+  CaseStatusCatalog,
+  resetCaseStatusCatalog,
+  toCaseStatusPresentation,
+} from './case-status';
 
 /**
  * Lo que estas pruebas fijan: que el estado de un caso se resuelve **contra
@@ -16,6 +20,13 @@ describe('Estados de un caso de verificación', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
+    // El catálogo vive en una señal de módulo, así que **sobrevive a otros
+    // specs**: si uno anterior lo resolvió, el servicio de acá no vuelve a
+    // pedirlo y la prueba de «se pide una sola vez» ve cero peticiones. Se
+    // arranca de un estado conocido para que el resultado no dependa del orden
+    // en que vitest recorrió los archivos.
+    resetCaseStatusCatalog();
+
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });

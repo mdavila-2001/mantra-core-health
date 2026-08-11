@@ -4,6 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { resolverEstadosDeCaso } from '../../../testing/case-status';
+import { CaseStatusCatalog } from './case-status';
 import { IdentityVerification } from './identity-verification';
 
 /** base64url sobre UTF-8, como el token real (ver `shell-layout.spec.ts`). */
@@ -46,6 +48,14 @@ describe('IdentityVerification', () => {
     // para que cada prueba hable del envío, que es lo suyo; la prueba del
     // historial lo responde con datos por su cuenta.
     http.expectOne('/identity/me/verification-cases').flush([]);
+
+    // El sello traduce el estado con el catálogo de `case-status`, que esta
+    // pantalla lee por una **función pura**: no lo inyecta, así que nadie lo
+    // construye y la búsqueda de conceptos no sale sola. Se lo pide al inyector
+    // a propósito —es lo que en la aplicación real hace la pantalla que sí lo
+    // inyecta— y se responde su búsqueda; sin esto el estado sale «Desconocido».
+    TestBed.inject(CaseStatusCatalog);
+    resolverEstadosDeCaso(http);
   });
 
   afterEach(() => {
