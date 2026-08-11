@@ -66,5 +66,10 @@
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.65.0",
     "vitest": "^4.0.8"
+  },
+  "dependenciesMeta": {
+    "cypress": {
+      "built": true
+    }
   }
 }
