@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { resolverEstadosDeCaso } from '../../../../testing/case-status';
 import { MyProfile } from './my-profile';
 
 /**
@@ -33,6 +34,9 @@ describe('MyProfile', () => {
 
     fixture = TestBed.createComponent(MyProfile);
     http = TestBed.inject(HttpTestingController);
+    // Los sellos de verificación salen de terminología: sin responder esa
+    // búsqueda quedan en neutro y `verify()` protesta.
+    resolverEstadosDeCaso(http);
     fixture.detectChanges();
 
     // El historial de verificación se pide **en paralelo** al resumen, no
@@ -165,6 +169,9 @@ describe('MyProfile · orden del historial', () => {
 
     fixture = TestBed.createComponent(MyProfile);
     http = TestBed.inject(HttpTestingController);
+    // Los sellos de verificación salen de terminología: sin responder esa
+    // búsqueda quedan en neutro y `verify()` protesta.
+    resolverEstadosDeCaso(http);
     fixture.detectChanges();
   });
 

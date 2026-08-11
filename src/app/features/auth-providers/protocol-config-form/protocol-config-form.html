@@ -1,0 +1,209 @@
+<app-page-header
+  title="Configurar protocolo del proveedor"
+  subtitle="Una configuración activa por entorno: reconfigurar reemplaza a la anterior."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (configured(); as config) {
+  <div class="m40__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m40__resultado-titulo">La configuración quedó activa</h2>
+
+    <dl class="m40__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ config.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Proveedor</dt>
+        <dd><code class="tabular-nums">{{ config.providerId }}</code></dd>
+      </div>
+      <div>
+        <dt>Entorno (concepto)</dt>
+        <dd><code class="tabular-nums">{{ config.environmentConceptId }}</code></dd>
+      </div>
+      <div>
+        <dt>Reemplazó a la configuración anterior</dt>
+        <dd>{{ config.replaced ? 'Sí' : 'No' }}</dd>
+      </div>
+      <div>
+        <dt>Claves importadas del JWKS</dt>
+        <dd class="tabular-nums">{{ config.importedKeyIds.length }}</dd>
+      </div>
+    </dl>
+
+    <p class="m40__texto">
+      Si el proveedor estaba en borrador, esta configuración es la que lo
+      activa para este entorno.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraConfiguracion()">Configurar otro entorno</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
+  }
+
+  <app-alert tone="info" class="m40__alert">
+    Cada protocolo exige lo suyo: SAML pide entity ID y ACS; OIDC y OAuth2,
+    cliente y endpoints — y OIDC además el JWKS o el documento de
+    descubrimiento. El backend rechaza la configuración incompleta.
+  </app-alert>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section legend="Qué se configura" description="El proveedor y el entorno al que aplica.">
+      <app-form-field
+        label="Identificador del proveedor"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.providerId.touched && form.controls.providerId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="providerId" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Entorno" [required]="true">
+        <app-radio-group [value]="environment()" (valueChange)="elegirEntorno($event)">
+          <app-radio value="DEVELOPMENT" label="Desarrollo" />
+          <app-radio value="STAGING" label="Staging" />
+          <app-radio value="PRODUCTION" label="Producción" />
+        </app-radio-group>
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Cliente ante el proveedor"
+      description="El secreto no viaja acá: se referencia por su entrada en el vault."
+    >
+      <app-form-field
+        label="Identificador de cliente"
+        [errorMessage]="
+          form.controls.clientId.touched && form.controls.clientId.invalid
+            ? 'Hasta 300 caracteres.'
+            : ''
+        "
+      >
+        <app-input formControlName="clientId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Referencia del secreto"
+        hint="La entrada del vault donde vive el secreto, no el secreto."
+        [errorMessage]="
+          form.controls.clientSecretRef.touched && form.controls.clientSecretRef.invalid
+            ? 'Hasta 300 caracteres.'
+            : ''
+        "
+      >
+        <app-input formControlName="clientSecretRef" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Endpoints OIDC / OAuth2"
+      description="Los que publica el proveedor para este entorno."
+    >
+      @for (endpoint of endpoints; track endpoint.control) {
+        <app-form-field [label]="endpoint.label" hint="https://…">
+          <app-input [formControlName]="endpoint.control" type="url" />
+        </app-form-field>
+      }
+    </app-form-section>
+
+    <app-form-section legend="SAML" description="Solo para proveedores SAML.">
+      <app-form-field
+        label="Entity ID"
+        [errorMessage]="
+          form.controls.samlEntityId.touched && form.controls.samlEntityId.invalid
+            ? 'Hasta 500 caracteres.'
+            : ''
+        "
+      >
+        <app-textarea formControlName="samlEntityId" [rows]="2" [autoResize]="true" [maxLength]="500" />
+      </app-form-field>
+
+      <app-form-field label="Assertion Consumer Service (ACS)" hint="https://…">
+        <app-input formControlName="samlAcsUrl" type="url" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Comportamiento del flujo"
+      description="Cómo se piden y se validan los tokens."
+    >
+      <app-form-field
+        label="Ámbitos solicitados"
+        hint="Separados por espacio, como los espera el proveedor."
+        [errorMessage]="
+          form.controls.scopes.touched && form.controls.scopes.invalid
+            ? 'Hasta 500 caracteres.'
+            : ''
+        "
+      >
+        <app-textarea formControlName="scopes" [rows]="2" [autoResize]="true" [maxLength]="500" />
+      </app-form-field>
+
+      <app-form-field
+        label="Response type"
+        [errorMessage]="
+          form.controls.responseType.touched && form.controls.responseType.invalid
+            ? 'Hasta 100 caracteres.'
+            : ''
+        "
+      >
+        <app-input formControlName="responseType" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Autenticación ante el endpoint de token">
+        <app-radio-group [value]="tokenEndpointAuth()" (valueChange)="elegirAutenticacion($event)">
+          <app-radio value="CLIENT_SECRET_POST" label="Secreto en el cuerpo (POST)" />
+          <app-radio value="CLIENT_SECRET_BASIC" label="Secreto en Basic" />
+          <app-radio value="PRIVATE_KEY_JWT" label="JWT con clave privada" />
+        </app-radio-group>
+      </app-form-field>
+
+      <div class="m40__switches">
+        <app-switch
+          formControlName="pkceRequired"
+          label="Exigir PKCE (desactivarlo abre el flujo a interceptación del código)"
+        />
+      </div>
+    </app-form-section>
+
+    <app-form-section
+      legend="Configuración adicional"
+      description="Lo que el proveedor pida y el contrato no nombre."
+    >
+      <app-form-field
+        label="Configuración adicional (JSON)"
+        hint="Opcional: un objeto JSON. Vacía, no viaja."
+        [errorMessage]="
+          form.controls.extraConfigJson.touched && form.controls.extraConfigJson.invalid
+            ? 'Tiene que ser un objeto JSON válido, como {&quot;campo&quot;: &quot;valor&quot;}.'
+            : ''
+        "
+      >
+        <app-textarea
+          formControlName="extraConfigJson"
+          [rows]="3"
+          [autoResize]="true"
+          [maxLength]="maxExtraConfig"
+        />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Claves del JWKS"
+      description="Opcional: las claves descubiertas se importan con la configuración."
+    >
+      <app-discovered-keys-editor [disabled]="isSubmitting()" />
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Configurar entorno"
+      [pending]="isSubmitting()"
+      [disabled]="environment() === null"
+      (submitted)="submit()"
+    />
+  </form>
+}

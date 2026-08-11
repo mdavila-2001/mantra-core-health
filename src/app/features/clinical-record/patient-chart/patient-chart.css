@@ -30,6 +30,50 @@
   text-transform: capitalize;
 }
 
+/* ── Encuentro ─────────────────────────────────────────────────────────────*/
+
+.expediente__encuentro {
+  display: grid;
+  gap: var(--sp-4);
+  /* Es un formulario de una sola pregunta: a lo ancho de la tabla, el campo de
+     motivo quedaría del largo de una pantalla y la línea sería ilegible. */
+  max-inline-size: 68ch;
+}
+
+.expediente__en-curso {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Datos y acción en fila cuando entran, apilados cuando no: el botón de cerrar
+   al lado de un motivo largo empuja el texto a una columna de dos palabras. */
+.expediente__en-curso-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.expediente__en-curso-datos {
+  display: grid;
+  gap: var(--sp-1);
+  /* Sin esto, un motivo largo estira la fila en vez de partirse. */
+  min-inline-size: 0;
+  flex: 1 1 20ch;
+}
+
+.expediente__registro {
+  display: grid;
+  gap: var(--sp-4);
+}
+
 /* ── Nota de alcance ───────────────────────────────────────────────────────*/
 
 .expediente__nota {

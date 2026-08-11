@@ -95,6 +95,68 @@ export interface Encounter {
 }
 
 /**
+ * Lo que hace falta para abrir un encuentro (UC-08-02).
+ *
+ * Sólo dos campos obligatorios, y no es una simplificación de este lado: el DTO
+ * del backend declara opcionales el episodio, la sucursal, el profesional y las
+ * dos clasificaciones, y aplica «ambulatorio» y «en curso» cuando no se los
+ * manda. Un formulario que los pidiera todos estaría inventando requisitos que
+ * el contrato no tiene.
+ *
+ * ## Los dos que ya no se omiten
+ *
+ * `appointmentId` y `primaryPractitionerId` **estuvieron fuera** —anotados como
+ * P11 y P12— no por decisión de diseño sino porque el dato no existía de este
+ * lado: la reserva no exponía su cita clínica y la sesión no conocía su perfil
+ * profesional. Con las dos lecturas abiertas, el encuentro ya puede decir de qué
+ * turno viene y quién atendió, que es lo que lo vuelve un registro y no una
+ * marca de tiempo suelta.
+ *
+ * Siguen siendo opcionales, y su ausencia es corriente: se entra al expediente
+ * sin pasar por la agenda, y hay cuentas sin perfil profesional. Se omiten
+ * cuando no hay dato, nunca se rellenan con algo parecido — las dos son claves
+ * foráneas reales.
+ */
+export interface NewEncounter {
+  readonly patientProfileId: string;
+  readonly tenantId: string;
+  /** Motivo de consulta, en palabras. */
+  readonly reasonText?: string;
+  /**
+   * La cita clínica que originó la atención.
+   *
+   * Es el `appointmentId` que trae la reserva de agenda —**no** el `id` de la
+   * reserva, que apunta a otra tabla—. La agenda lo pasa por la URL al abrir el
+   * expediente, y con él el encuentro queda atado al turno.
+   */
+  readonly appointmentId?: string;
+  readonly episodeId?: string;
+  readonly branchId?: string;
+  readonly primaryPractitionerId?: string;
+  readonly classConceptId?: string;
+  readonly typeConceptId?: string;
+}
+
+/**
+ * El encuentro recién abierto o recién cerrado, tal como lo devuelven las dos
+ * escrituras.
+ *
+ * `status` viaja sin el sufijo `ConceptId` porque así lo nombra el contrato,
+ * pero es un uuid de concepto igual que el resto: quien lo muestre lo traduce.
+ */
+export interface EncounterRegistration {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly episodeId: string | null;
+  readonly status: string;
+  readonly participantIds: readonly string[];
+  readonly locationIds: readonly string[];
+  readonly startAt: Date | null;
+  readonly endAt: Date | null;
+  readonly createdAt: Date;
+}
+
+/**
  * El historial clínico de un paciente en una lectura (UC-39-20).
  *
  * `truncated` nombra **los bloques** que quedaron recortados por el tope, no un

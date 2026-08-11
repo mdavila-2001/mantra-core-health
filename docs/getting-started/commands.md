@@ -61,18 +61,22 @@ Es la misma secuencia del [pipeline documental](../governance/change-management.
 
 | Orden | Qué hace |
 |---|---|
-| `yarn e2e` | Construye el artefacto, lo sirve en el puerto 4173 y corre los 7 journeys de sesión |
-| `yarn e2e:ui` | Lo mismo, en el modo interactivo de Playwright |
+| `yarn test:e2e` | Construye el artefacto, lo sirve en el puerto 4175 y corre la suite funcional |
+| `yarn test:e2e:smoke` | Solo humo: si esto falla, el resto de los fallos no significan nada |
+| `yarn test:e2e:critical` | Humo + autenticación + navegación + formularios |
+| `yarn e2e:open` | El modo interactivo de Cypress, para escribir pruebas |
+| `yarn recorrido` | El recorrido visual: cientos de capturas y un reporte HTML |
+| `yarn recorrido:real` | El recorrido contra la API viva (requiere el backend levantado) |
 
 Se prueba **contra el artefacto de producción**, no contra `ng serve`: el
-prerenderizado y las cabeceras de seguridad solo existen ahí. La red va simulada
-(`e2e/support/api.ts`), así que no hace falta una API levantada. Ver
-[pruebas E2E](../testing/e2e-tests.md).
+prerenderizado y las cabeceras de seguridad solo existen ahí. Lo construye y lo
+sirve el propio arnés (`cypress/harness/`), con la API simulada delante, así que
+no hace falta una API levantada. Ver [pruebas E2E](../testing/e2e-tests.md).
 
-La primera corrida descarga Chromium:
+La primera corrida descarga el binario de Cypress (~200 MB):
 
 ```bash
-yarn playwright install chromium
+yarn cypress install
 ```
 
 ## Órdenes que **no** existen en este proyecto

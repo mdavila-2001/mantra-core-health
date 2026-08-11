@@ -1,0 +1,43 @@
+/* Fusión de duplicados. El ritmo lo ponen `app-form-section` y `app-form-field`;
+   acá sólo el ancho de lectura y el bloque de resultado. */
+
+:host {
+  display: block;
+}
+
+.fusion__form,
+.fusion__resultado {
+  margin-block-start: var(--sp-6);
+  max-inline-size: 40rem;
+}
+
+.fusion__alert {
+  display: block;
+  margin-block-start: var(--sp-6);
+}
+
+.fusion__resultado-title {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.fusion__resumen {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-primary);
+}
+
+.fusion__aviso {
+  display: block;
+  margin-block-end: var(--sp-6);
+}
+
+.fusion__acciones {
+  display: flex;
+  /* Se envuelven en móvil en vez de comprimirse: un botón de deshacer
+     apretado contra otro es donde se pulsa el equivocado. */
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-4);
+}

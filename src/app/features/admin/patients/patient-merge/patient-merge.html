@@ -1,0 +1,115 @@
+<app-page-header
+  title="Fusionar duplicados"
+  subtitle="Une dos registros que son la misma persona. Queda auditado."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (errorMessage(); as mensaje) {
+  <app-alert appAnuncio tone="error" class="fusion__alert" data-testid="fusion-error">{{
+    mensaje
+  }}</app-alert>
+}
+
+@if (resultado()) {
+  <!-- Resultado. El deshacer vive acá y sólo acá: el identificador del evento no
+       se puede volver a conseguir. -->
+  <div class="fusion__resultado" data-testid="fusion-exito">
+    <h2 appAnuncio [asertivo]="false" class="fusion__resultado-title">
+      @if (deshecha()) {
+        La fusión quedó revertida
+      } @else {
+        Los dos registros quedaron fusionados
+      }
+    </h2>
+
+    @if (!deshecha()) {
+      <p class="fusion__resumen">
+        <strong>{{ absorbido()?.label }}</strong> quedó dentro de
+        <strong>{{ sobreviviente()?.label }}</strong>.
+      </p>
+
+      <!-- Este aviso decía que al salir la fusión dejaba de ser reversible. Era
+           cierto y ya no lo es: `GET /profiles/patients/merge-events` permite
+           recuperar el movimiento más tarde. Dejarlo habría sido asustar con un
+           límite que el sistema ya no tiene. -->
+      <app-alert tone="info" class="fusion__aviso">
+        Si te equivocaste, podés deshacerlo acá mismo. También más tarde: el movimiento queda
+        registrado y se puede recuperar desde el historial de fusiones.
+      </app-alert>
+
+      <div class="fusion__acciones">
+        <button
+          app-button
+          variant="outline"
+          [isLoading]="deshaciendo()"
+          data-testid="fusion-deshacer"
+          (clicked)="deshacer()"
+        >
+          Deshacer la fusión
+        </button>
+        <button app-button variant="primary" (clicked)="verSobreviviente()">
+          Ver la ficha resultante
+        </button>
+      </div>
+    }
+
+    <div class="fusion__acciones">
+      <button app-button variant="ghost" (clicked)="otraFusion()">Fusionar otro par</button>
+      <button app-button variant="ghost" (clicked)="volver()">Volver al listado</button>
+    </div>
+  </div>
+} @else {
+  <form class="fusion__form" (ngSubmit)="fusionar()" novalidate data-testid="fusion-form">
+    <app-form-section
+      legend="Qué registro sobrevive"
+      description="Conserva su historia y absorbe al otro. El orden no da lo mismo."
+    >
+      <app-form-field
+        label="Paciente que sobrevive"
+        hint="Buscá por nombre o por código de paciente."
+        [required]="true"
+      >
+        <app-reference-combobox
+          [selected]="sobreviviente()"
+          [options]="candidatosSobreviviente()"
+          [loading]="buscandoSobreviviente()"
+          placeholder="Nombre o código"
+          emptyMessage="Ningún paciente coincide"
+          (searched)="buscarSobreviviente($event)"
+          (selectionChange)="sobreviviente.set($event)"
+        />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Qué registro se absorbe"
+      description="Deja de usarse. Sus datos pasan al registro que sobrevive."
+    >
+      <app-form-field
+        label="Paciente que se fusiona"
+        hint="Es el duplicado: el registro que no debería haber existido."
+        [required]="true"
+        [errorMessage]="mismoPaciente() ? 'Elegiste dos veces el mismo paciente.' : ''"
+      >
+        <app-reference-combobox
+          [selected]="absorbido()"
+          [options]="candidatosAbsorbido()"
+          [loading]="buscandoAbsorbido()"
+          placeholder="Nombre o código"
+          emptyMessage="Ningún paciente coincide"
+          (searched)="buscarAbsorbido($event)"
+          (selectionChange)="absorbido.set($event)"
+        />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Fusionar"
+      cancelLabel="Cancelar"
+      [pending]="enviando()"
+      [disabled]="!puedeFusionar()"
+      (submitted)="fusionar()"
+      (cancelled)="volver()"
+    />
+  </form>
+}

@@ -58,6 +58,15 @@
       </div>
     </dl>
 
+    <!-- Sin esto el código no servía de nada: hasta el 2026-08-08 no había
+         ninguna pantalla donde usarlo, y quien lo recibía quedaba con una
+         llave sin puerta. -->
+    <p class="asistida__donde" data-testid="alta-paciente-donde-activar">
+      El titular lo usa en
+      <a app-link routerLink="/auth/activar">Activar cuenta</a> para elegir su contraseña. También
+      podés pasarle el enlace con el código ya incluido.
+    </p>
+
     <button app-button variant="primary" data-testid="alta-paciente-otra" (clicked)="altaNueva()">
       Registrar otro paciente
     </button>

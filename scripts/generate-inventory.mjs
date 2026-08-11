@@ -274,7 +274,7 @@ function capitalize(text) {
 // --- Suite de extremo a extremo ---------------------------------------------
 
 /**
- * Inventario de la suite de Selenium.
+ * Inventario de la suite de extremo a extremo.
  *
  * Existe por la misma razón que los otros cuatro: **la documentación de lo que
  * se puede leer del código no se escribe a mano**, porque se desactualiza el
@@ -286,32 +286,42 @@ function capitalize(text) {
  * navegador —minutos— mientras que acá se ve en segundos y con nombre propio.
  */
 function e2eInventory() {
-  const suite = join(REPO_ROOT, 'e2e/selenium');
-  const specs = walk(join(suite, 'specs'), ['.spec.ts']).sort();
-  const pages = walk(join(suite, 'pages'), ['.ts']).sort();
+  const suite = join(REPO_ROOT, 'cypress');
+  const specs = walk(join(suite, 'e2e'), ['.cy.ts']).sort();
+  const pages = walk(join(suite, 'support/pages'), ['.ts']).sort();
+
+  // Las pruebas de Cypress se declaran con `it(`, y las hay a dos niveles de
+  // sangría: dentro de un `describe` y dentro de un `for` que genera varias.
+  const contarPruebas = (source) => (source.match(/\n\s+it\(/g) ?? []).length;
 
   const filasSpecs = specs.map((file) => {
     const source = safeRead(file) ?? '';
-    // Un archivo puede declarar más de un bloque —`responsive.spec.ts` tiene uno
+    // Un archivo puede declarar más de un bloque —`responsive.cy.ts` tiene uno
     // por resolución— y quedarse con el primero escondería los otros.
     const bloques = [...source.matchAll(/describe\(\s*'([^']+)'/g)].map((m) => m[1]);
     const suiteNombre = bloques.length === 0 ? '—' : bloques.join(' · ');
-    const pruebas = (source.match(/\n\s{2}test\(/g) ?? []).length;
     const carpeta = repoRelative(file).split('/').at(-2) ?? '—';
-    return `| \`${carpeta}\` | ${suiteNombre} | ${pruebas} | \`${repoRelative(file)}\` |`;
+    return `| \`${carpeta}\` | ${suiteNombre} | ${contarPruebas(source)} | \`${repoRelative(file)}\` |`;
   });
 
   const totalPruebas = specs.reduce(
-    (suma, file) => suma + ((safeRead(file) ?? '').match(/\n\s{2}test\(/g) ?? []).length,
+    (suma, file) => suma + contarPruebas(safeRead(file) ?? ''),
     0,
   );
 
   const filasPages = pages.map((file) => {
     const source = safeRead(file) ?? '';
-    const clase = /export class (\w+)/.exec(source)?.[1] ?? '—';
-    const ruta = /readonly ruta = '([^']*)'/.exec(source)?.[1] ?? '—';
-    const acciones = (source.match(/\n {2}(?:async )?[a-zA-Z]\w*\(/g) ?? []).length;
-    return `| \`${clase}\` | \`${ruta}\` | ${acciones} | \`${repoRelative(file)}\` |`;
+    // Los Page Objects son objetos de funciones, no clases: en Cypress el sujeto
+    // es `cy`, que es global, así que una clase sería un envoltorio vacío.
+    const nombre = /export const (\w+)\s*=/.exec(source)?.[1] ?? '—';
+    // La ruta está en la propiedad, o en la constante que la propiedad usa
+    // cuando además es el valor por defecto de `abrir()`.
+    const ruta =
+      /ruta:\s*'([^']*)'/.exec(source)?.[1] ??
+      /const RUTA = '([^']*)'/.exec(source)?.[1] ??
+      '—';
+    const acciones = (source.match(/\n {2}[a-zA-Z]\w*\(/g) ?? []).length;
+    return `| \`${nombre}\` | \`${ruta}\` | ${acciones} | \`${repoRelative(file)}\` |`;
   });
 
   const escenarios = escenariosDeclarados();
@@ -332,13 +342,13 @@ function e2eInventory() {
 
   return [
     AVISO,
-    '# Inventario de la suite de extremo a extremo (Selenium)',
+    '# Inventario de la suite de extremo a extremo (Cypress)',
     '',
-    `Leído de \`e2e/selenium/\`. ${specs.length} archivos de prueba, ${totalPruebas} pruebas, ` +
+    `Leído de \`cypress/\`. ${specs.length} archivos de prueba, ${totalPruebas} pruebas, ` +
       `${pages.length} Page Objects y ${escenarios.length} escenarios de API.`,
     '',
     'La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—',
-    'está en [`e2e/selenium/README.md`](../../../e2e/selenium/README.md).',
+    'está en [`cypress/README.md`](../../../cypress/README.md).',
     '',
     '## Pruebas por suite',
     '',
@@ -348,7 +358,7 @@ function e2eInventory() {
     '',
     '## Page Objects',
     '',
-    '| Clase | Ruta | Métodos | Archivo |',
+    '| Objeto | Ruta | Métodos | Archivo |',
     '| --- | --- | --- | --- |',
     ...filasPages,
     '',
@@ -367,7 +377,7 @@ function e2eInventory() {
 
 /** Los escenarios y su descripción, leídos del catálogo tipado. */
 function escenariosDeclarados() {
-  const source = safeRead(join(REPO_ROOT, 'e2e/selenium/fixtures/escenarios.ts')) ?? '';
+  const source = safeRead(join(REPO_ROOT, 'cypress/support/fixtures/escenarios.ts')) ?? '';
   const bloque = source.slice(source.indexOf('export const ESCENARIOS'));
   const encontrados = [];
   const patron = /'([a-z-]+)':\s*\{\s*\n\s*descripcion: '([^']+)'/g;

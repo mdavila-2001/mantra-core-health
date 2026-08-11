@@ -30,6 +30,30 @@ export interface AccessTokenClaims {
   readonly name?: string;
   /** Nombre de cada tenant por su identificador, para no mostrar uuid crudos. */
   readonly tenantNames?: Readonly<Record<string, string>>;
+  /**
+   * Perfil de paciente del titular, si la cuenta es la de un paciente.
+   *
+   * Es lo que el autoservicio necesita para reservar un turno: `confirm` exige
+   * `patientProfileId`, y la lectura que lo devolvía
+   * (`GET /profiles/patients/me/summary`) está detrás de la verificación de
+   * identidad, que es un trámite posterior. Sin este claim, pedir un turno
+   * dependía de haber sido verificado antes.
+   */
+  readonly pid?: string;
+  /**
+   * Perfil profesional del titular, si la cuenta es la de quien atiende.
+   *
+   * El simétrico de `pid` del otro lado del mostrador. Es lo que permite saber
+   * **cuál de las agendas de la organización es la suya**: los recursos de
+   * `scheduling` declaran a qué perfil profesional pertenecen
+   * (`resourceRefType: 'practitioner_profiles'`), pero sin este dato la sesión
+   * no conocía el propio y la agenda caía en el primer recurso de la lista —que
+   * con varios consultorios es el de otra persona—.
+   *
+   * No hay lectura que lo devuelva: el controlador de profesionales sólo expone
+   * `POST`, y no existe un `me` como el de paciente.
+   */
+  readonly hpid?: string;
   /** Expiración en segundos desde epoch, si el token la declara. */
   readonly exp?: number;
 }
@@ -117,6 +141,8 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
 
   const sid = source['sid'];
   const name = source['name'];
+  const pid = source['pid'];
+  const hpid = source['hpid'];
   const exp = source['exp'];
 
   return {
@@ -125,6 +151,8 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
     tenants: toStringArray(source['tenants']),
     ...(typeof sid === 'string' ? { sid } : {}),
     ...(typeof name === 'string' ? { name } : {}),
+    ...(typeof pid === 'string' && pid !== '' ? { pid } : {}),
+    ...(typeof hpid === 'string' && hpid !== '' ? { hpid } : {}),
     ...(typeof exp === 'number' ? { exp } : {}),
     ...(toNameMap(source['tenantNames']) ?? {}),
   };

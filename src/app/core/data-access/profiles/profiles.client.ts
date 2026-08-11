@@ -3,18 +3,25 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   AccountLink,
   NewPatientProfile,
   NewPractitionerProfile,
+  NewRelatedPerson,
   OwnPatientSummary,
   PatientDetail,
+  PatientMergeEvent,
+  PatientMergeEventPage,
+  PatientMergeEventQuery,
+  PatientMergeRequest,
   PatientListItem,
   PatientPage,
   PatientProfile,
   PatientSearchQuery,
   PractitionerProfile,
   RelatedPerson,
+  RelatedPersonCreated,
 } from './profiles.types';
 
 /** Las mismas respuestas, con las fechas como viajan: texto. */
@@ -66,7 +73,7 @@ export class ProfilesClient {
     }
 
     return this.http
-      .get<WirePatientPage>(this.url('/profiles/patients'), { params })
+      .get<RespuestaPagina>(this.url('/profiles/patients'), { params })
       .pipe(
         map((body) => ({
           ...body,
@@ -83,16 +90,19 @@ export class ProfilesClient {
    */
   getPatient(profileId: string): Observable<PatientDetail> {
     return this.http
-      .get<WirePatientDetail>(this.url(`/profiles/patients/${encodeURIComponent(profileId)}`))
+      .get<RespuestaFicha>(this.url(`/profiles/patients/${encodeURIComponent(profileId)}`))
       .pipe(
-        map((body) => ({
-          ...body,
-          birthDate: maybeDate(body.birthDate),
-          deceasedAt: maybeDate(body.deceasedAt),
-          relatedPersons: body.relatedPersons.map((person): RelatedPerson => ({ ...person })),
-          createdAt: new Date(body.createdAt),
-          updatedAt: new Date(body.updatedAt),
-        })),
+        map(({ relatedPersons, ...resto }) => {
+          const limpio = sinNulos<Omit<WirePatientDetail, 'relatedPersons'>>(resto);
+          return {
+            ...limpio,
+            birthDate: maybeDateOnly(limpio.birthDate),
+            deceasedAt: maybeDate(limpio.deceasedAt),
+            relatedPersons: relatedPersons.map((persona) => sinNulos<RelatedPerson>(persona)),
+            createdAt: new Date(limpio.createdAt),
+            updatedAt: new Date(limpio.updatedAt),
+          };
+        }),
       );
   }
 
@@ -106,8 +116,98 @@ export class ProfilesClient {
    */
   getOwnSummary(): Observable<OwnPatientSummary> {
     return this.http
-      .get<WireOwnSummary>(this.url('/profiles/patients/me/summary'))
-      .pipe(map((body) => ({ ...body, birthDate: maybeDate(body.birthDate) })));
+      .get<RespuestaResumen>(this.url('/profiles/patients/me/summary'))
+      .pipe(
+        map((body) => {
+          const limpio = sinNulos<WireOwnSummary>(body);
+          return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
+        }),
+      );
+  }
+
+  /**
+   * `POST /profiles/patients/merge` — fusiona dos pacientes duplicados
+   * (UC-05-08).
+   *
+   * El orden de los dos perfiles **no es simétrico**: el que sobrevive conserva
+   * su historia y el otro queda absorbido. Intercambiarlos no es lo mismo, y
+   * por eso los dos viajan con nombre y no como un par.
+   */
+  mergePatients(request: PatientMergeRequest): Observable<PatientMergeEvent> {
+    return this.http
+      .post<WireMergeEvent>(this.url('/profiles/patients/merge'), stripUndefined(request))
+      .pipe(map(toMergeEvent));
+  }
+
+  /**
+   * `GET /profiles/patients/merge-events` — los eventos de fusión (UC-05-09·L).
+   *
+   * Es lo que hace que «revertir» signifique lo que parece. Antes el `eventId`
+   * sólo existía en la respuesta de {@link mergePatients}, así que una fusión
+   * dejaba de ser reversible desde la interfaz en cuanto esa respuesta se perdía
+   * de vista: quien se daba cuenta del error al día siguiente no tenía camino.
+   *
+   * El filtro por paciente busca en **los dos lados** de la fusión, del lado del
+   * backend: quien revisa un registro no sabe si el que mira sobrevivió o fue el
+   * absorbido.
+   *
+   * @param query - Paciente involucrado y tope, ambos opcionales.
+   * @returns Los eventos, del más reciente al más antiguo.
+   */
+  listMergeEvents(query: PatientMergeEventQuery = {}): Observable<PatientMergeEventPage> {
+    // Parámetro a parámetro: el backend valida con `forbidNonWhitelisted` y un
+    // opcional en `undefined` viajaría como clave declarada.
+    let params = new HttpParams();
+    if (query.patientProfileId !== undefined) {
+      params = params.set('patientProfileId', query.patientProfileId);
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+
+    return this.http
+      .get<WireMergeEventPage>(this.url('/profiles/patients/merge-events'), { params })
+      .pipe(map((body) => ({ ...body, items: body.items.map(toMergeEvent) })));
+  }
+
+  /**
+   * `POST /profiles/patients/merge/:eventId/reverse` — revierte una fusión
+   * (UC-05-09).
+   *
+   * `eventId` sale de {@link listMergeEvents} o de la respuesta de
+   * {@link mergePatients}. Las dos vías sirven: la segunda es la del momento, la
+   * primera es la que permite deshacer un error descubierto más tarde.
+   */
+  reverseMerge(eventId: string, reasonConceptId?: string): Observable<PatientMergeEvent> {
+    return this.http
+      .post<WireMergeEvent>(
+        this.url(`/profiles/patients/merge/${encodeURIComponent(eventId)}/reverse`),
+        reasonConceptId === undefined ? {} : { reasonConceptId },
+      )
+      .pipe(map(toMergeEvent));
+  }
+
+  /**
+   * `POST /profiles/patients/:profileId/related-persons` — registra un contacto
+   * o representante (UC-05-10).
+   *
+   * Sin `personId` el backend **crea** la persona con los datos del cuerpo; con
+   * él, reutiliza una ya registrada. La pantalla decide cuál de los dos casos
+   * es; el cliente sólo se ocupa de no mandar lo que no tiene valor.
+   *
+   * Es el único endpoint de este módulo **sin `@Roles`**: lo puede ejercer
+   * cualquier sesión autenticada.
+   */
+  addRelatedPerson(
+    profileId: string,
+    person: NewRelatedPerson,
+  ): Observable<RelatedPersonCreated> {
+    return this.http
+      .post<Wire<RelatedPersonCreated>>(
+        this.url(`/profiles/patients/${encodeURIComponent(profileId)}/related-persons`),
+        stripUndefined(person),
+      )
+      .pipe(map((body) => ({ ...body, createdAt: new Date(body.createdAt) })));
   }
 
   /** `POST /profiles/patients`. */
@@ -163,18 +263,35 @@ type WirePatientDetail = Omit<
 
 type WireOwnSummary = WireDates<OwnPatientSummary, 'birthDate'>;
 
-/** Una fila del listado con su fecha ya convertida. */
-function toPatientListItem(item: WirePatientListItem): PatientListItem {
-  return { ...item, birthDate: maybeDate(item.birthDate) };
+/* Lo que de verdad llega por el cable: la misma forma, con `null` donde el
+   backend no omite la clave. Se declara aparte para que el tipo del `get<>`
+   diga la verdad y la conversión no sea un acto de fe. */
+type RespuestaPagina = Omit<WirePatientPage, 'items'> & {
+  readonly items: readonly ConNulos<WirePatientListItem>[];
+};
+/* `relatedPersons` nunca llega nulo —el contrato la declara obligatoria y la
+   API viva devuelve `[]`—, así que se saca de la normalización y se trata
+   aparte: sus elementos sí traen opcionales en `null`. */
+type RespuestaFicha = ConNulos<Omit<WirePatientDetail, 'relatedPersons'>> & {
+  readonly relatedPersons: readonly ConNulos<RelatedPerson>[];
+};
+type RespuestaResumen = ConNulos<WireOwnSummary>;
+
+type WireMergeEvent = Omit<PatientMergeEvent, 'recordedAt'> & { readonly recordedAt: string };
+
+interface WireMergeEventPage extends Omit<PatientMergeEventPage, 'items'> {
+  readonly items: readonly WireMergeEvent[];
 }
 
-/**
- * Convierte una fecha que puede no venir. Devolver `undefined` en vez de una
- * `Invalid Date` es lo que deja al consumidor distinguir «no hay dato» de «hay
- * un dato roto».
- */
-function maybeDate(value?: string): Date | undefined {
-  return value === undefined ? undefined : new Date(value);
+/** El evento con su marca de tiempo ya convertida. */
+function toMergeEvent(body: WireMergeEvent): PatientMergeEvent {
+  return { ...body, recordedAt: new Date(body.recordedAt) };
+}
+
+/** Una fila del listado con su fecha ya convertida. */
+function toPatientListItem(item: ConNulos<WirePatientListItem>): PatientListItem {
+  const limpio = sinNulos<WirePatientListItem>(item);
+  return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
 }
 
 /**

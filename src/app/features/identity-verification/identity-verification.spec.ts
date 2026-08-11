@@ -3,7 +3,21 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { SessionStore } from '../../core/auth/session.store';
+import { resolverEstadosDeCaso } from '../../../testing/case-status';
 import { IdentityVerification } from './identity-verification';
+
+/** base64url sobre UTF-8, como el token real (ver `shell-layout.spec.ts`). */
+function jwt(payload: Record<string, unknown>): string {
+  const b64 = (o: unknown) => {
+    const bytes = new TextEncoder().encode(JSON.stringify(o));
+    return btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  };
+  return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
+}
 
 /**
  * Es el destino de la puerta del estado **S5**: cuando la API responde
@@ -33,6 +47,17 @@ describe('IdentityVerification', () => {
     // para que cada prueba hable del envío, que es lo suyo; la prueba del
     // historial lo responde con datos por su cuenta.
     http.expectOne('/identity/me/verification-cases').flush([]);
+
+    // La pantalla **inyecta** el catálogo de estados, así que al construirse ya
+    // pide los conceptos: no hace falta pedírselo al inyector desde acá.
+    //
+    // `dev` había resuelto esta misma prueba haciendo el `TestBed.inject` en el
+    // arnés, con el argumento de que la pantalla lee el catálogo «por una
+    // función pura». Eso hacía pasar la prueba y dejaba el defecto en pie: en la
+    // aplicación real nadie construía el catálogo, y quien entra por la puerta
+    // del estado S5 —que lleva directo a esta pantalla— veía «Desconocido»
+    // sobre su propio trámite. Se arregló donde estaba: en el componente.
+    resolverEstadosDeCaso(http);
   });
 
   afterEach(() => {
@@ -185,6 +210,9 @@ describe('IdentityVerification', () => {
    * mapeo completo lo fija `case-status.spec.ts`; acá se fija la integración.
    */
   it('con el caso CASE_ASSERTED el sello muestra «Aprobado», no el UUID', () => {
+    // El catálogo ya quedó resuelto en el `beforeEach`. Esta prueba fallaba
+    // porque la pantalla **no inyectaba** `CaseStatusCatalog`: nadie llenaba el
+    // mapa, y el sello del titular decía «Desconocido» sobre su propio trámite.
     elegirArchivo();
     subir();
 
@@ -201,6 +229,124 @@ describe('IdentityVerification', () => {
     expect(sello).not.toBeNull();
     expect(sello?.textContent).toContain('Aprobado');
     expect(sello?.textContent).not.toContain('d41fde09');
+  });
+
+  it('el historial se ordena del más nuevo al más viejo, junto al formulario', () => {
+    // El formulario del trámite y el historial conviven: uno no desplaza al
+    // otro. Se crea una instancia propia para responderle el historial con
+    // datos en vez del vacío del `beforeEach`.
+    const propia = TestBed.createComponent(IdentityVerification);
+    http.expectOne('/identity/me/verification-cases').flush([
+      { id: 'viejo', status: 'PENDING', openedAt: '2026-08-01T10:00:00.000Z' },
+      {
+        id: 'nuevo',
+        status: 'd41fde09-6752-5bb6-8237-b786fe062ab2', // CASE_ASSERTED
+        openedAt: '2026-07-20T10:00:00.000Z',
+        completedAt: '2026-08-05T10:00:00.000Z',
+      },
+    ]);
+    propia.detectChanges();
+
+    const filas = Array.from(
+      (propia.nativeElement as HTMLElement).querySelectorAll('.verificar__historial-fila'),
+    );
+    expect(filas.length).toBe(2);
+    // El cierre manda sobre la apertura: el caso resuelto ayer es más reciente
+    // que el abierto después y todavía en trámite.
+    expect(filas[0]?.textContent).toContain('Resuelto el');
+    expect(filas[1]?.textContent).toContain('Abierto el');
+    expect(
+      (propia.nativeElement as HTMLElement).querySelector('app-radio-group'),
+    ).not.toBeNull();
+  });
+
+  function elegirTramite(tramite: string) {
+    interno<(v: unknown) => void>('alElegirTramite')(tramite);
+  }
+
+  it('el trámite de profesional va a su endpoint, con el mismo flujo', () => {
+    elegirTramite('practitioner');
+    elegirArchivo();
+    subir();
+
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-7' });
+
+    const caso = http.expectOne((r) =>
+      r.url.endsWith('/identity/me/practitioner/identity-verification'),
+    );
+    expect(caso.request.body).toEqual({ evidenceFileId: 'f-7' });
+
+    caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
+  });
+
+  it('la matrícula no inventa la jurisdicción: el cuerpo solo lleva la evidencia', () => {
+    // No hay endpoint para buscar matrículas: omitida, el backend usa la única
+    // del profesional. Cuando exista el buscador, esta prueba cambia con él.
+    elegirTramite('license');
+    elegirArchivo();
+    subir();
+
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-8' });
+
+    const caso = http.expectOne((r) =>
+      r.url.endsWith('/identity/me/practitioner/license-verification'),
+    );
+    expect(Object.keys(caso.request.body as object)).toEqual(['evidenceFileId']);
+
+    caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
+  });
+
+  it('verificar una organización exige elegir cuál', () => {
+    elegirTramite('tenant');
+    elegirArchivo();
+
+    // Sin organización elegida no sale ninguna petición.
+    expect(interno<() => boolean>('puedeEnviar')()).toBe(false);
+    subir();
+
+    interno<{ set: (v: string | null) => void }>('organizacionId').set('t-9');
+    expect(interno<() => boolean>('puedeEnviar')()).toBe(true);
+    subir();
+
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-9' });
+    http
+      .expectOne((r) => r.url.endsWith('/identity/me/tenants/t-9/verification'))
+      .flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
+  });
+
+  it('con una sola organización en el token, queda elegida sola', () => {
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: [], tenants: ['t-1'] }),
+      refreshToken: 'r',
+    });
+
+    expect(interno<() => string | null>('organizacionId')()).toBe('t-1');
+  });
+
+  it('el selector solo acepta trámites reales', () => {
+    elegirTramite('license');
+    expect(interno<() => string>('tramite')()).toBe('license');
+
+    // Un valor que no es un trámite no cambia nada: viene de `unknown`.
+    elegirTramite('superadmin');
+    expect(interno<() => string>('tramite')()).toBe('license');
+  });
+
+  it('«iniciar otro trámite» vuelve al formulario y descarta la evidencia', () => {
+    elegirArchivo();
+    subir();
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-1' });
+    http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
+      caseId: 'c-1',
+      checkId: 'ch-1',
+      status: 'PENDING',
+    });
+
+    interno<() => void>('nuevaSolicitud')();
+
+    expect(interno<() => unknown>('caso')()).toBeNull();
+    // Cada trámite lleva su propio documento: el anterior no se reutiliza.
+    expect(interno<() => readonly File[]>('evidencia')()).toEqual([]);
   });
 
   it('actualizar el caso vuelve a consultarlo', () => {

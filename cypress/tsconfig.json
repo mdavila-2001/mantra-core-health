@@ -1,0 +1,33 @@
+/* Configuración de tipos de la suite de extremo a extremo.
+
+   Es propia y no una extensión de `tsconfig.spec.json` porque el alcance es el
+   opuesto: esto NO conoce el `TestBed` de Angular. Son pruebas que conducen la
+   aplicación desde afuera con los globales de Cypress y de Mocha.
+
+   Cubre los tres lados de la suite, que comparten archivos y no se pueden
+   separar en tres configuraciones sin duplicar tipos:
+
+   - `cypress/e2e/` y `cypress/support/`, que corren en el navegador;
+   - `cypress/harness/`, que corre en Node y necesita sus tipos;
+   - `cypress.config.ts`, que importa de los dos.
+
+   Se type-chequea en `yarn typecheck` y en el pipeline: un Page Object que
+   quedó apuntando a un método que ya no existe tiene que fallar al compilar, no
+   a mitad de una corrida con navegador. */
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../out-tsc/e2e",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    /* `cypress` trae los globales `cy`, `Cypress`, `describe` e `it`; `node` es
+       por el `node:fs`, `node:http` y `express` del arnés. Los tipos del DOM
+       entran por el `target` y hacen falta igual: lo que se ejecuta dentro de
+       `cy.window()` es código de navegador aunque viva en este archivo. */
+    "types": ["cypress", "node"],
+    "allowJs": false,
+    "noEmit": true
+  },
+  "include": ["**/*.ts", "../cypress.config.ts"],
+  "exclude": ["../node_modules"]
+}

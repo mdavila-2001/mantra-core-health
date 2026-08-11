@@ -1,6 +1,6 @@
 # API de backend
 
-Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 85 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 20 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -43,10 +43,12 @@ inyección»*.
 | `POST` | `/iam/auth/register-patient` | `RegisterPatient` | Sí |
 | `POST` | `/iam/auth/register-practitioner` | `RegisterPatient` | Sí |
 | `POST` | `/iam/auth/verify-email` | `VerifyEmail` | Sí |
+| `POST` | `/iam/auth/resend-verification` | `ResendVerification` (V01-14) | Sí |
 | `POST` | `/iam/auth/activate` | **Sin consumidor** | Sí |
 | `POST` | `/iam/auth/forgot-password` | `ForgotPassword` | No declarada |
 | `POST` | `/iam/auth/reset-password` | `ResetPassword` | No declarada |
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
+| `GET` | `/iam/users` | `OrganizationNew` (buscador de owner, V04-01·F) | No |
 | `POST` | `/iam/users` | `UserRegistration` | No |
 | `POST` | `/iam/users/assisted-registration` | `AssistedRegistration` | No |
 
@@ -86,26 +88,79 @@ Admite dos filtros opcionales de query string, `city` y `specialty`, que **se
 omiten si no vienen**: mandarlos vacíos filtraría por la cadena vacía en vez de
 no filtrar. `Dashboard` llama sin ninguno.
 
-### `IdentityClient` — 5 operaciones
+### `IdentityClient` — 6 operaciones
 
 | Método | Ruta |
 |---|---|
 | `POST` | `/identity/me/identity-verification` |
 | `POST` | `/identity/me/practitioner/identity-verification` |
 | `POST` | `/identity/me/practitioner/license-verification` |
+| `POST` | `/identity/me/tenants/:tenantId/verification` |
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
-### `ProfilesClient` — 6 operaciones
+Todo `identity/me` resuelve el sujeto de la sesión: ninguna ruta recibe a quién
+se verifica, y por eso la pantalla de verificación no tiene selector de persona.
+La única elección es cuál de las organizaciones **propias** — las del token — se
+quiere verificar (`:tenantId`).
+
+### `IdentityAdminClient` — 14 operaciones · sólo comando
+
+El lado administrativo del M27 (`SECURITY_ADMIN`): autoridades, políticas y el
+ciclo completo del caso de verificación. El backend no expone ningún `GET`
+administrativo todavía, así que las 14 pantallas operan con identificadores
+pegados; cuando lleguen los endpoints de consulta, los listados reemplazan ese
+gesto.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) |
+| `POST` | `/identity/authorities` | `AuthorityForm` (V27-09) |
+| `POST` | `/identity/authorities/:authorityId/endpoints` | `AuthorityEndpointForm` (V27-10) |
+| `POST` | `/identity/verification-policies` | `VerificationPolicyForm` (V27-18) |
+| `POST` | `/identity/verification-cases` | `CaseOpenForm` (V27-02) |
+| `POST` | `/identity/verification-cases/:caseId/evidence` | `CaseEvidenceForm` (V27-05) |
+| `POST` | `/identity/verification-cases/:caseId/checks:plan` | `CheckPlanForm` (V27-04) |
+| `POST` | `/identity/verification-cases/:caseId/fraud-signals` | `FraudSignalForm` (V27-06) |
+| `POST` | `/identity/verification-cases/:caseId/manual-review` | `ManualReviewForm` (V27-07) |
+| `POST` | `/identity/verification-cases/:caseId/assertions` | `AssertionIssueForm` (V27-03) |
+| `POST` | `/identity/verification-cases/expire-sweep` | `CaseExpireSweep` (V27-02·A) |
+| `POST` | `/identity/checks/:checkId/attempts` | `CheckAttemptForm` (V27-11) |
+| `POST` | `/identity/checks/:checkId/results` | `CheckResultForm` (V27-12) |
+| `POST` | `/identity/manual-review/:reviewId/decision` | `ReviewDecisionForm` (V27-13) |
+| `POST` | `/identity/assertions/:assertionId/revoke` | `AssertionRevokeForm` (V27-08·A) |
+
+**`checks:plan` lleva los dos puntos en la URL de verdad**: el backend declara
+el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
+
+### `ProfilesClient` — 9 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) · `PatientMerge` (candidatos) |
 | `GET` | `/profiles/patients/:profileId` | `PatientDetail` (ficha F-01) |
 | `GET` | `/profiles/patients/me/summary` | `MyProfile` (V05-03) |
 | `POST` | `/profiles/patients` | `PatientNew` (V05-01·F) |
+| `POST` | `/profiles/patients/merge` | `PatientMerge` (V05-01·A, UC-05-08) |
+| `POST` | `/profiles/patients/merge/:eventId/reverse` | `PatientMerge` (V05-01·A, UC-05-09) |
+| `POST` | `/profiles/patients/:profileId/related-persons` | `RelatedPersonForm` (V05-05, UC-05-10) |
 | `POST` | `/profiles/practitioners` | — |
 | `POST` | `/profiles/persons/:personId/account-links` | — |
+
+> **V05-05 no necesitó ningún `GET` nuevo.** El vault la marcaba «Listado pendiente», pero los
+> contactos llegan **embebidos** en la respuesta de `GET /profiles/patients/:profileId`
+> (`relatedPersons`). La tabla es real desde el primer día; sólo faltaba el alta.
+>
+> Sin `personId` el backend **crea** la persona con los datos del cuerpo; con él reutiliza una
+> existente. Hoy sólo se ofrece el primer caso: reutilizar exigiría un buscador de personas, y no
+> hay `GET /profiles/persons`.
+
+> **La reversión de una fusión sólo es posible en el momento.** El `eventId` que
+> `…/merge/:eventId/reverse` exige viene **únicamente** en la respuesta de
+> `POST /profiles/patients/merge`, y el backend no expone ningún listado de eventos de fusión. En
+> cuanto esa respuesta se pierde de vista, la fusión deja de ser reversible desde la aplicación.
+> Por eso `PatientMerge` ofrece el «Deshacer» en la pantalla de resultado y lo advierte con
+> palabras. Un `GET /profiles/patients/merge-events` lo convertiría en una operación reversible de
+> verdad.
 
 Las tres lecturas entraron con el PR #31 del backend y son lo que sacó a la
 sección de pacientes del estado «Listado pendiente» que el vault marca en 674 de
@@ -122,14 +177,43 @@ con `IDENTITY_VERIFICATION_REQUIRED`, que es el único 403 del contrato que lleg
 a la interfaz **con una salida** en vez de un muro.
 
 
-### `SchedulingClient` — 4 operaciones · sólo lectura
+### `DirectoryClient` — 2 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/admin/tenants` | `OrganizationList` (V04-01·L) |
+| `POST` | `/admin/tenants` | `OrganizationNew` (V04-01·F) |
+
+**`/admin/tenants` es la cara de plataforma del directorio**: opera fuera del
+contexto RLS de tenant. El listado admite `SECURITY_ADMIN` y `SUPERADMIN`; el
+alta, sólo `SUPERADMIN`. La organización nace `pending` y sin verificar — la
+verificación (`POST /admin/tenants/:tenantId/verification`) es otra operación,
+de otro rol, y el frontend todavía no la llama.
+
+**El proxy la declara con dos segmentos** (`/admin/tenants`, no `/admin`):
+`/admin` a secas capturaría `/administracion/*`, que es una ruta de la
+aplicación — ya desvió `/administracion/pacientes` una vez.
+
+### `SchedulingClient` — 8 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/scheduling/resources` | `Agenda` (V41) |
-| `GET` | `/scheduling/slots` | `Agenda` |
+| `GET` | `/scheduling/slots` | `Agenda` · `BookingNew` (revalida el cupo) |
 | `GET` | `/scheduling/bookings` | `Agenda` |
 | `GET` | `/scheduling/bookings/:bookingId` | — |
+| `POST` | `/scheduling/slots/:slotId/holds` | `BookingNew` (V41-09, UC-41-05) |
+| `POST` | `/scheduling/holds/:holdToken/confirm` | `BookingNew` (V41-05, UC-41-06) |
+| `POST` | `/scheduling/bookings/:bookingId/cancel` | `Agenda` (V41-02·A, UC-41-09) |
+| `POST` | `/scheduling/bookings/:bookingId/check-in` | `Agenda` (V41-02·A, UC-41-10) |
+
+**El ciclo de reserva es de dos pasos y el token viaja entre ellos.** El hold
+retiene el cupo con anti-double-booking y un TTL (300 s por defecto, de la
+política); el `holdToken` **se entrega una sola vez** y el confirm lo consume.
+Un hold vencido no se puede confirmar: `BookingNew` trata ese rechazo como
+«volver a retener», no como error terminal. Y **no existe
+`GET /scheduling/slots/:id`**: la pantalla de reserva reencuentra el cupo
+releyendo `GET /scheduling/slots` acotado a la franja que la URL trae.
 
 El módulo se había construido **entero de escritura**: se generaban cupos y se
 confirmaban citas, pero no había forma de verlos, y sin `GET /scheduling/slots`
@@ -146,12 +230,24 @@ botón que devuelve un error, y elige el primer recurso cuando la URL no trae un
 pide nada: un `400` ahí se leería como «la agenda falló» y lo que falta es un
 paso previo.
 
-### `ClinicalClient` — 2 operaciones · sólo lectura
+### `ClinicalClient` — 4 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/clinical/patients/:patientProfileId/summary` | `PatientChart` (UC-39-20) |
 | `GET` | `/charts/patients/:patientProfileId/chart` | `PatientChart` (UC-40-14) |
+| `POST` | `/clinical/encounters/check-in` | `PatientChart` (UC-08-02) |
+| `POST` | `/clinical/encounters/:encounterId/close` | `PatientChart` (UC-08-14) |
+
+**El encuentro se abre y se cierra desde el expediente**, que es donde está
+quien atiende. Abrirlo no exige un episodio de cuidado previo (`episodeId` es
+opcional) y el backend le pone la hora de inicio y la clase por omisión.
+
+**Cerrar dos veces no es idempotente**: el backend responde `422` sobre un
+encuentro que ya no está en curso, así que la pantalla lo muestra como estado y
+no como fallo. El cierre admite `expectedRowVersion` para el bloqueo optimista
+que el modelo exige (`row_version`), y arrastra los periodos abiertos de
+participantes y ubicaciones.
 
 **Dos módulos del backend y un solo cliente**, porque son dos lecturas de lo
 mismo: `clinical` guarda lo estructurado —condiciones, alergias, medicación,
@@ -183,6 +279,56 @@ otra persona. El PDP los consume; la interfaz sólo los muestra.
 entera. Se lee de a un paciente, que es como se usa —desde su ficha— y como se
 puede auditar. Las respuestas son arrays desnudos, sin sobre de paginación.
 
+### `DelegatedAccessClient` — 11 operaciones · sólo comando
+
+El M29 completo (`SECURITY_ADMIN`): delegaciones de profesional, solicitudes y
+concesiones, asignaciones de usuario de organización, sets de permisos y las dos
+operaciones de evaluación y barrido. El backend no expone ningún `GET`, así que
+las pantallas son paneles de operación con identificadores pegados.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/practitioner-delegates` | `PractitionerDelegateForm` (V29-01) |
+| `POST` | `/practitioner-delegates/:delegationId/revoke` | `DelegationRevocation` (V29-02) |
+| `POST` | `/practitioner-delegates/:delegationId/access-requests` | `AccessRequestForm` (V29-03) |
+| `POST` | `/practitioner-delegates/:delegationId/grants` | `GrantForm` (V29-04) |
+| `POST` | `/org/:tenantMembershipId/user-assignments` | `OrgAssignmentForm` (V29-05) |
+| `PATCH` | `/org/user-assignments/:assignmentId` | `OrgAssignmentUpdate` (V29-06) |
+| `POST` | `/access-requests/:requestId/decision` | `AccessRequestResolution` (V29-07) |
+| `POST` | `/delegated-permission-sets` | `PermissionSetForm` (V29-08) |
+| `POST` | `/delegated-permission-sets/:setId/versions` | `SetVersionForm` (V29-09) |
+| `POST` | `/authz/effective-actor/evaluate` | `ActorEvaluation` (V29-10) |
+| `POST` | `/delegated-access/expiry-sweep` | `ExpirySweep` (V29-11) |
+
+**La evaluación vive bajo `/authz`** aunque el módulo sea el M29: el evaluador
+del actor efectivo es el PDP, y el backend lo publica junto al resto de la
+autorización.
+
+### `AuthProvidersClient` — 12 operaciones · sólo comando
+
+El M40 (`IDENTITY_ADMIN`): proveedores de identidad federada, sus protocolos,
+mapeos, reglas, claves de firma y vinculación a organizaciones, más el flujo de
+login federado y la vinculación de cuentas. Sin `GET` en el backend todavía.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/auth-providers/identity-providers` | `ProviderForm` (V40-03) |
+| `POST` | `/auth-providers/identity-providers/:providerId/protocol-configs` | `ProtocolConfigForm` (V40-06) |
+| `PUT` | `/auth-providers/identity-providers/:providerId/attribute-mappings` | `AttributeMappingsForm` (V40-04) |
+| `POST` | `/auth-providers/identity-providers/:providerId/provisioning-rules` | `ProvisioningRuleForm` (V40-07) |
+| `POST` | `/auth-providers/identity-providers/:providerId/signing-keys` | `SigningKeyForm` (V40-08) |
+| `POST` | `/auth-providers/identity-providers/:providerId/signing-keys/rotate` | `KeyRotationForm` (V40-08·A) |
+| `POST` | `/auth-providers/tenant-bindings` | `TenantBindingForm` (V40-09) |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/authorize` | `LoginStartForm` (V40-05·A) |
+| `POST` | `/auth-providers/identity-providers/by-code/:providerCode/callback` | `LoginCallbackForm` (V40-10) |
+| `POST` | `/auth-providers/account-link-requests` | `AccountLinkRequestForm` (V40-01) |
+| `POST` | `/auth-providers/account-link-requests/complete` | `AccountLinkCompleteForm` (V40-01·A) |
+| `POST` | `/auth-providers/federated-identities/:identityId/unlink` | `IdentityUnlinkForm` (V40-02·A) |
+
+Los doce comandos tienen pantalla. Las doce operan con identificadores pegados
+—o con el código del proveedor, en el flujo por `by-code`—; cuando lleguen los
+endpoints de consulta, los listados reemplazan ese gesto.
+
 ### `TerminologyClient` — 2 operaciones
 
 | Método | Ruta | Consumidor |
@@ -203,15 +349,19 @@ devuelve `*ConceptId` en uuid y ninguna pantalla puede mostrar un uuid. Se piden
 todos los de una pantalla en una sola llamada, no uno por campo, y su fallo
 degrada esos campos a «Sin registrar» sin tumbar la pantalla.
 
-### `FilesClient` — 1 operación · sin consumidor
+### `FilesClient` — 1 operación
 
-| Método | Ruta |
-|---|---|
-| `POST` | `/common/files/upload` |
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) |
 
-**Siete operaciones sin pantalla que las llame** — eran once hasta que V05-01 y
-V05-03 encendieron cuatro. No es código muerto: todas tienen prueba y son la
-mitad de un flujo cuya interfaz todavía no se escribió.
+**Cinco operaciones sin pantalla que las llame** — las dos altas restantes de
+`ProfilesClient`, la reserva puntual de `SchedulingClient`, las bases legítimas
+de `AuthzClient` y el `$expand` de terminología. Eran más: V05-01 y V05-03
+encendieron las altas de perfil, y las vistas de verificación de identidad
+(V27-01 y V27-14…17) encendieron las cuatro de `IdentityClient` y esta subida.
+No es código muerto: todas tienen prueba y son la mitad de un flujo cuya
+interfaz todavía no se escribió.
 Ver [el mapa de integraciones §3](../architecture/integration-map.md#3--operaciones-sin-consumidor).
 
 ---

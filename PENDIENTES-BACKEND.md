@@ -1,74 +1,155 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-04 · Verificado ejecutando contra la API viva en `localhost:3000` —con la
-cuenta del bootstrap— y con 84 comprobaciones de punta a punta con Selenium, del navegador al proxy
-y del proxy a la API.
+**Actualizado:** 2026-08-11 · **No queda ningún pendiente abierto.** P6 a P13 están todos cerrados
+y comprobados **contra la API viva** en `localhost:3000`, con la imagen reconstruida — no leyendo el
+código.
 
-Existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber que algo dejó
-de ser un problema es tan útil como saber que lo sigue siendo.
+| | Cómo se cerró |
+| --- | --- |
+| **P6** alta administrativa de profesional | construido · `POST /iam/users/assisted-practitioner-registration` |
+| **P7 · P8** catálogos y sus bindings | **ya estaban resueltos**; el sondeo anterior usó identificadores equivocados |
+| **P9** fusión reversible más tarde | construido · `GET /profiles/patients/merge-events` |
+| **P10** colecciones de `iam`/`directory` | **ya estaban resueltas** (PR #38) |
+| **P11** cita clínica en la reserva | construido · expuesta en las dos lecturas |
+| **P12** perfil profesional de la sesión | construido · claim `hpid` |
+| **P13** nada creaba citas clínicas | construido · las crea la confirmación de la reserva |
+
+Dos de los siete no eran defectos sino **errores de comprobación míos**, y quedan anotados como tales:
+un 404 pedido con el identificador equivocado no prueba que algo no exista.
+
+Este archivo existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber
+que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
-## Abierto · P6 · Falta el endpoint de administrador para dar de alta a un profesional
+## Resuelto · P6 · El alta de un profesional por un administrador ya existe
 
-**Levantado el 2026-08-04 desde J3** (altas administrativas, tarjeta 23) · **Para:** Marcelo
-(modelo) y Pablo (API) · **Bloquea:** el tercer formulario de J3, y nada más.
+**Levantado el 2026-08-04 desde J3 · cerrado el 2026-08-11** · `POST /iam/users/assisted-practitioner-registration`, `@Roles('SECURITY_ADMIN')`.
 
-J3 pedía tres altas para `SECURITY_ADMIN`: usuario, paciente y médico. Las dos primeras están
-construidas y verificadas. **La tercera no tiene endpoint contra el cual construirse.**
+Se construyó como se había pedido: **equivalente a `assisted-registration` pero para profesionales**. Comparte transacción e invariantes con el autorregistro —el registro CTI atómico de la regla 11— porque es la misma alta; se parametrizó en vez de duplicarse.
 
-| Alta | Endpoint | Autorización | Estado |
-| --- | --- | --- | --- |
-| Usuario | `POST /iam/users` | `@Roles('SECURITY_ADMIN')` | ✅ construida |
-| Paciente (asistida) | `POST /iam/users/assisted-registration` | `@Roles('CLINICIAN','SECURITY_ADMIN')` | ✅ construida |
-| **Profesional** | `POST /iam/auth/register-practitioner` | **`@Public()`** | ❌ no es de administrador |
+| | Autorregistro | Alta administrativa |
+| --- | --- | --- |
+| Autorización | `@Public()`, 10/min | `SECURITY_ADMIN` |
+| Contraseña | la fija el titular | **no se manda**: token de activación de un solo uso |
+| Estado de la cuenta | `ACTIVE` | `PENDING` con `mustChangePassword` |
+| Trazabilidad | — | `reason` obligatorio (C-18) |
+| Matrícula | `PENDING` | `PENDING` — registrar no habilita a ejercer |
 
-### Por qué no se construyó sobre el endpoint público
+Verificado en vivo: 201 con `activationToken`, su caducidad y `verificationStatus: PENDING`.
 
-No es una objeción de estilo: el propio modelo lo declara al revés.
+---
 
-1. **El DTO lo dice textual.** `register-practitioner.dto.ts`: «El profesional se da de alta **él
-   mismo**, sin que un administrador lo cree». Construir una pantalla de administrador encima sería
-   contradecir el contrato en el mismo archivo que lo define.
-2. **El límite de peticiones es de superficie pública.** `@Throttle({ limit: 10, ttl: 60_000 })`,
-   pensado para frenar automatización contra un formulario abierto — no para que una organización
-   cargue su plantel.
-3. **La contraseña la teclearía el administrador.** El alta asistida de paciente ya resolvió esto
-   bien: devuelve un token de activación de un solo uso y la clave la elige el titular. El alta de
-   profesional por administrador debería seguir ese camino, no el del autorregistro.
+## Resuelto · P7 y P8 · Los campos de catálogo ya tienen catálogo, y se sabe cuál
 
-### Qué haría falta
+**Levantados el 2026-08-08 · cerrados por el PR `#38`** · Se daban por abiertos y **no lo estaban**:
+la comprobación del 2026-08-11 los encontró funcionando. Queda anotado el error de sondeo porque
+volver a levantarlos costaría el mismo tiempo dos veces.
 
-Un endpoint autenticado, equivalente a `assisted-registration` pero para profesionales:
+`DYNAMIC_ENUM_CATALOG` declara las enumeraciones bien conocidas —entre ellas `administrative-gender`
+y `sex-at-birth`, que eran justo las que faltaban— y `DynamicEnumSeedService` las materializa con
+uuid5 deterministas.
 
-```text
-POST /iam/users/assisted-practitioner-registration      (nombre a definir)
-@Roles('SECURITY_ADMIN')
-```
+| Comprobación en vivo | Resultado |
+| --- | --- |
+| `GET /terminology/value-sets?code=administrative-gender` | 200, con su conjunto |
+| `GET /system-context/dynamic-enums?target=profiles.persons.administrative_gender_concept_id` | 200, **4 opciones** con su `display` |
+| `GET /system-context/dynamic-enums/bindings` | 200, **45 bindings** registrados |
 
-- **Cuerpo:** el de `RegisterPractitionerDto` **menos `password`**, más `reason` — la misma
-  trazabilidad C-18 que ya exige el alta asistida de paciente.
-- **Respuesta:** la de `RegisterPractitionerResponseDto` más `activationToken` y su caducidad, como
-  en `AssistedRegistrationResponseDto`.
-- **Invariante a respetar:** registro CTI atómico (regla 11 de la v4.0.7) — cuenta, persona, perfil
-  profesional y licencia en la misma transacción, como ya hace el autorregistro.
-- La licencia debe seguir naciendo `PENDING`: registrarse no habilita a ejercer, y eso no cambia
-  porque lo cargue un administrador.
+> **Por qué parecían abiertos.** El primer sondeo usó `?code=ADMINISTRATIVE_GENDER` —el código real es
+> `administrative-gender`, en minúscula y con guion— y `profiles.person_profiles.…` como target,
+> cuando la tabla es `profiles.persons`. Los dos devolvieron vacío y 404, que se leyeron como
+> «no existe». **Un 404 con el identificador equivocado no prueba nada**, y conviene recordarlo.
 
-### Qué queda listo de este lado
+Lo que **sí** sigue pendiente es consumirlos: el alta de paciente sigue sin los selectores de género
+y sexo al nacer. No es un bloqueo de backend — es trabajo de front que ya tiene contra qué
+construirse (IT3 del plan).
 
-Cuando exista, el trabajo del frontend es chico: los tipos ya están (`PractitionerRegistration` +
-`AssistedRegistrationResult`), `features/admin/assisted-registration/` es el molde exacto, y pasar
-la sección de `planificada` a `disponible` en `core/navigation/navigation.map.ts` es una línea.
+---
 
-### Nota aparte: la orquestación de J3 no hacía falta
+## Resuelto · P9 · Una fusión ya no es irreversible al cerrar la pantalla
 
-El plan preveía «compuestas: perfil → cuenta → vínculo … orden fijo, idempotencia por intento,
-estado *perfil sin cuenta* visible y reanudable» (decisión D3). **El backend ya lo resuelve
-atómicamente:** las dos altas construidas son una sola petición y el modelo prohíbe el estado
-intermedio. Encadenar llamadas desde el frontend habría reintroducido exactamente el estado que el
-modelo declara imposible. Lo que sí se implementó es la protección contra el **doble envío**, que
-es el duplicado que sí puede ocurrir. Conviene actualizar D3 en el plan.
+**Levantado el 2026-08-08 · cerrado el 2026-08-11** · `GET /profiles/patients/merge-events`, `SECURITY_ADMIN`.
+
+`reverse` exige el `eventId` y ese identificador **sólo existía en la respuesta del POST que lo creaba**: al salir de la pantalla, unir dos historias clínicas dejaba de tener vuelta atrás. Quien se diera cuenta del error al día siguiente no tenía camino.
+
+El filtro por paciente busca en **los dos lados** de la fusión: quien revisa un registro no sabe si el que mira sobrevivió o fue el absorbido.
+
+Consumido de este lado: `ProfilesClient.listMergeEvents`. Y el aviso de la pantalla de fusión —que decía que al salir se perdía el camino de vuelta— dejó de decirlo, porque ya no es cierto.
+
+---
+
+## Resuelto · P10 · `iam` y `directory` ya tienen lecturas de colección
+
+**Levantado el 2026-08-08 · cerrado por el PR `#38`** · Comprobado en vivo el 2026-08-11:
+`GET /iam/users` → 200 y `GET /admin/tenants` → 200.
+
+Siguen sin lectura de colección `delegated_access` y `auth_providers`, que el original nombraba
+junto a estos dos. No bloquean el recorrido de la demo.
+
+### Una corrección al plan de la semana, que sigue vigente
+
+El `PLAN-SEMANA-WEB-Y-MOVIL.md` cuenta a **`common`** entre los módulos «con lectura» (1 `GET`).
+Ese `GET` es `/common/files/:id/content` — **una descarga de archivo, no un listado**.
+
+---
+
+## Resuelto · P11 · El encuentro ya se puede vincular al turno que lo originó
+
+**Levantado el 2026-08-10 desde P1 · cerrado el mismo día** · PR `mantra-core-health-api#42`.
+
+El dato existía en la entidad y no salía por ninguna lectura: `BookingItemDto` no exponía
+`appointmentId`, así que el portal no podía decirle al check-in de qué turno venía el encuentro.
+Ahora lo exponen **las dos** lecturas de reserva —el listado y el detalle—, porque si sólo lo trajera
+una, el detalle contradiría a la fila que lo abrió.
+
+Consumido de este lado: la agenda lo lleva al expediente en `?cita=`, y el check-in lo manda como
+`appointmentId`. Viaja `null` con normalidad y entonces el parámetro no se agrega.
+
+> ⚠️ **Queda un pendiente distinto, y es de dominio — ver P13.** El vínculo está tendido de punta a
+> punta, pero hoy no se llena nunca.
+
+---
+
+## Resuelto · P12 · La sesión ya sabe cuál es su perfil profesional
+
+**Levantado el 2026-08-10 desde P1 · cerrado el mismo día** · PR `mantra-core-health-api#42`.
+
+Se resolvió con el **claim `hpid`**, simétrico del `pid` de paciente que ya existía, y por la misma
+cadena sobre la otra tabla de perfil. Es lo más barato: no agrega una petición a cada arranque de
+sesión, y no había ninguna lectura que devolviera el dato —el controlador de profesionales sólo
+expone `POST`—.
+
+Como `pid`, **no es una credencial**: quién puede ver una agenda lo siguen decidiendo `roles` y el
+tenant del request. Se omite en toda cuenta sin perfil profesional, y convive con `pid` cuando quien
+atiende es además paciente de la casa.
+
+Consumido de este lado: la agenda se abre en la del profesional que entró —cruzando `hpid` con el
+`resourceRefId` del recurso— y lo dice en el campo, porque una agenda ajena y la propia se ven igual.
+El recurso de la URL sigue mandando, para que un enlace compartido abra lo que dice.
+
+### Un detalle que apareció al verificarlo
+
+El `resourceRefType` **no coincide entre el contrato y los datos**: el DTO ejemplifica
+`health_practitioner_profiles` —el nombre real de la tabla— y los 15 recursos sembrados traen
+`practitioner_profiles`. El frontend acepta los dos y lo dice en el código. Conviene unificarlo del
+lado de los seeds, pero no bloquea nada.
+
+---
+
+## Resuelto · P13 · La confirmación de una reserva ya crea su cita clínica
+
+**Levantado el 2026-08-11 al verificar P11 · cerrado el mismo día.**
+
+`clinical.appointments` tenía 0 filas y nada la escribía, así que el vínculo de P11 iba a estar siempre vacío. Ahora la confirmación de una reserva crea la cita y la enlaza.
+
+**Al confirmar y no en el check-in**, de las tres opciones que se habían planteado: una cita *es* el turno visto desde lo clínico; el registro de que alguien llegó es el encuentro, que es otra tabla. Crearla en el check-in la haría nacer después del encuentro que la referencia.
+
+El profesional de la cita sale del recurso, pero sólo si el recurso es de un profesional: copiar el id de una sala sería una clave foránea rota.
+
+> **Un defecto que sólo apareció ejecutando:** la primera confirmación contra la base real dio `422 fk_appointment_bookings_appointment_id`. Crear la entidad no basta — hay que `flush` antes de referenciarla, porque `appointment_id` es una columna uuid plana. Ninguna prueba con dobles lo veía.
+
+Verificado en la base: 1 cita clínica, 1 reserva enlazada, 1 encuentro atado, donde antes había 0.
 
 ---
 

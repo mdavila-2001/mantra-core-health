@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { sinNulos, type ConNulos } from '../wire';
 import type {
   AccountActivation,
   ActivationResult,
@@ -13,12 +14,16 @@ import type {
   NewUser,
   PasswordReset,
   PasswordResetRequested,
+  VerificationResent,
   PasswordResetResult,
   PatientRegistration,
   PractitionerRegistration,
   RegisteredPatient,
   RegisteredPractitioner,
   Session,
+  UserListItem,
+  UserPage,
+  UserSearchQuery,
   VerifiedEmail,
 } from './iam.types';
 
@@ -89,7 +94,14 @@ export class IamClient {
     return this.http.post<RegisteredPatient>(this.url('/iam/auth/register-patient'), {
       nationalId: registration.nationalId,
       password: registration.password,
-      displayName: registration.displayName,
+      // El nombre viaja en partes y el backend compone el que se muestra: si el
+      // front lo compusiera, la base guardaría una versión y el contrato otra.
+      name: registration.name,
+      lastName: registration.lastName,
+      ...(registration.middleName === undefined ? {} : { middleName: registration.middleName }),
+      ...(registration.motherLastName === undefined
+        ? {}
+        : { motherLastName: registration.motherLastName }),
       ...(registration.email === undefined ? {} : { email: registration.email }),
       ...(registration.birthDate === undefined ? {} : { birthDate: registration.birthDate }),
       ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
@@ -143,6 +155,23 @@ export class IamClient {
    * `POST /iam/auth/forgot-password`. El identificador es correo **o**
    * documento, igual que en el login.
    */
+  /**
+   * `POST /iam/auth/resend-verification` — vuelve a mandar el enlace de
+   * verificación del correo.
+   *
+   * Se pide el **identificador con el que la persona inicia sesión** —correo o
+   * documento— y no el correo de destino. La razón la escribe el propio DTO del
+   * backend: dejar elegir a dónde se manda el enlace convertiría el formulario
+   * en un modo de enviar tokens de una cuenta ajena a una bandeja propia.
+   *
+   * La respuesta es **siempre la misma**, exista o no la cuenta.
+   */
+  resendVerification(identifier: string): Observable<VerificationResent> {
+    return this.http.post<VerificationResent>(this.url('/iam/auth/resend-verification'), {
+      identifier,
+    });
+  }
+
   forgotPassword(identifier: string): Observable<PasswordResetRequested> {
     return this.http.post<PasswordResetRequested>(this.url('/iam/auth/forgot-password'), {
       identifier,
@@ -202,9 +231,71 @@ export class IamClient {
       .pipe(map(toAssistedResult));
   }
 
+  /**
+   * `GET /iam/users` — una página del listado (UC-01-01, cara de lectura).
+   *
+   * Busca con `?q=` sobre el nombre visible o el correo de acceso; pagina por
+   * cursor, sin total. Exige `SECURITY_ADMIN`.
+   */
+  searchUsers(query: UserSearchQuery = {}): Observable<UserPage> {
+    // Parámetro a parámetro: el backend valida con `forbidNonWhitelisted` y un
+    // opcional en `undefined` viaja como clave declarada, que vuelve 400.
+    let params = new HttpParams();
+    if (query.query !== undefined && query.query !== '') {
+      params = params.set('q', query.query);
+    }
+    if (query.statusConceptId !== undefined) {
+      params = params.set('status', query.statusConceptId);
+    }
+    if (query.cursor !== undefined) {
+      params = params.set('cursor', query.cursor);
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+
+    return this.http
+      .get<RespuestaPaginaUsuarios>(this.url('/iam/users'), { params })
+      .pipe(
+        map((body) => ({
+          ...body,
+          items: body.items.map(toUserListItem),
+        })),
+      );
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/* ---- transporte del listado de usuarios ---------------------------------- */
+
+type WireUserListItem = Omit<UserListItem, 'lastLoginAt' | 'createdAt'> & {
+  readonly lastLoginAt?: string;
+  readonly createdAt: string;
+};
+
+type RespuestaPaginaUsuarios = Omit<UserPage, 'items'> & {
+  readonly items: readonly ConNulos<WireUserListItem>[];
+};
+
+/**
+ * Una fila del listado con sus fechas convertidas. La fila del transporte trae
+ * además campos que la vista no usa (`mfaStatusConceptId`, `phoneVerified`);
+ * se dejan pasar sin declarar: sumarlos al tipo sería prometer datos que
+ * ninguna pantalla pide todavía.
+ */
+function toUserListItem(item: ConNulos<WireUserListItem>): UserListItem {
+  const limpio = sinNulos<WireUserListItem>(item);
+  return {
+    id: limpio.id,
+    displayName: limpio.displayName,
+    statusConceptId: limpio.statusConceptId,
+    emailVerified: limpio.emailVerified,
+    ...(limpio.lastLoginAt === undefined ? {} : { lastLoginAt: new Date(limpio.lastLoginAt) }),
+    createdAt: new Date(limpio.createdAt),
+  };
 }
 
 function toSession(body: TokenResponseBody): Session {

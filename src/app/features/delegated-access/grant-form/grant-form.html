@@ -1,0 +1,122 @@
+<app-page-header
+  title="Otorgar concesión"
+  subtitle="Autorizá a un delegado por un propósito concreto y por tiempo acotado. Toda concesión vence."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as grant) {
+  <div class="m29__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m29__resultado-titulo">La concesión quedó otorgada</h2>
+
+    <dl class="m29__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ grant.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado (concepto)</dt>
+        <dd><code class="tabular-nums">{{ grant.status }}</code></dd>
+      </div>
+      <div>
+        <dt>Otorgada el</dt>
+        <dd>{{ grant.createdAt.toLocaleString() }}</dd>
+      </div>
+    </dl>
+
+    <p class="m29__texto">
+      Al vencer expira sola con el barrido; no hace falta revocarla si solo se
+      terminó el plazo.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraConcesion()">Otorgar otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Sobre qué delegación"
+      description="La concesión cuelga de una delegación vigente."
+    >
+      <app-form-field
+        label="Identificador de la delegación"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.delegationId.touched && form.controls.delegationId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="delegationId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Propósito y vigencia"
+      description="Las dos elecciones obligatorias: para qué se usa y hasta cuándo."
+    >
+      <app-form-field label="Propósito de uso" [required]="true">
+        <app-radio-group [value]="purpose()" (valueChange)="elegirProposito($event)">
+          <app-radio value="TREATMENT" label="Tratamiento" />
+          <app-radio value="BILLING" label="Facturación" />
+          <app-radio value="OPERATIONS" label="Operaciones" />
+        </app-radio-group>
+      </app-form-field>
+
+      <app-form-field label="Fin de vigencia" [required]="true" hint="Obligatorio: toda concesión vence.">
+        <app-date-picker mode="date-time" [(value)]="validTo" [disabled]="isSubmitting()" />
+      </app-form-field>
+
+      <app-form-field label="Inicio de vigencia" hint="Sin fecha, rige desde ahora.">
+        <app-date-picker mode="date-time" [(value)]="validFrom" [disabled]="isSubmitting()" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Alcance"
+      description="Opcional: acota la concesión a un paciente, un encuentro o un tipo de recurso."
+    >
+      <app-form-field
+        label="Paciente objetivo"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.patientProfileId.touched && form.controls.patientProfileId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="patientProfileId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Encuentro objetivo"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.encounterId.touched && form.controls.encounterId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="encounterId" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Tipo de recurso">
+        <app-radio-group [value]="resourceType()" (valueChange)="elegirRecurso($event)">
+          <app-radio value="CLINICAL_NOTE" label="Nota clínica" />
+          <app-radio value="APPOINTMENT" label="Cita" />
+          <app-radio value="PRESCRIPTION" label="Receta" />
+        </app-radio-group>
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Otorgar concesión"
+      [pending]="isSubmitting()"
+      [disabled]="faltanObligatorios()"
+      (submitted)="submit()"
+    />
+  </form>
+}

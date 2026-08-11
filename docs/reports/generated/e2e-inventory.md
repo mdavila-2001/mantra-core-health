@@ -1,44 +1,55 @@
 <!-- GENERADO POR scripts/generate-inventory.mjs — NO EDITAR A MANO. -->
 
-# Inventario de la suite de extremo a extremo (Selenium)
+# Inventario de la suite de extremo a extremo (Cypress)
 
-Leído de `e2e/selenium/`. 14 archivos de prueba, 84 pruebas, 9 Page Objects y 11 escenarios de API.
+Leído de `cypress/`. 25 archivos de prueba, 131 pruebas, 9 Page Objects y 11 escenarios de API.
 
 La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—
-está en [`e2e/selenium/README.md`](../../../e2e/selenium/README.md).
+está en [`cypress/README.md`](../../../cypress/README.md).
 
 ## Pruebas por suite
 
 | Suite | Bloque | Pruebas | Archivo |
 | --- | --- | --- | --- |
-| `authentication` | Autenticación · inicio de sesión | 7 | `e2e/selenium/specs/authentication/login.spec.ts` |
-| `authentication` | Autenticación · sesión | 6 | `e2e/selenium/specs/authentication/sesion.spec.ts` |
-| `forms` | Formularios · nueva contraseña | 6 | `e2e/selenium/specs/forms/nueva-clave.spec.ts` |
-| `forms` | Formularios · recuperar contraseña | 4 | `e2e/selenium/specs/forms/recuperar-password.spec.ts` |
-| `forms` | Formularios · registro | 7 | `e2e/selenium/specs/forms/registro.spec.ts` |
-| `forms` | Formularios · verificación de correo | 4 | `e2e/selenium/specs/forms/verificar-correo.spec.ts` |
-| `navigation` | Navegación | 8 | `e2e/selenium/specs/navigation/navegacion.spec.ts` |
-| `regression` | Regresión · accesibilidad | 6 | `e2e/selenium/specs/regression/accesibilidad.spec.ts` |
-| `regression` | Regresión · modales | 6 | `e2e/selenium/specs/regression/modales.spec.ts` |
-| `regression` | Regresión · notificaciones | 5 | `e2e/selenium/specs/regression/notificaciones.spec.ts` |
-| `regression` | Regresión · directorio del panel | 4 | `e2e/selenium/specs/regression/panel-directorio.spec.ts` |
-| `regression` | Regresión · tabla de datos | 6 | `e2e/selenium/specs/regression/tabla.spec.ts` |
-| `responsive` | Responsive · escritorio · Responsive · tableta · Responsive · móvil | 6 | `e2e/selenium/specs/responsive/responsive.spec.ts` |
-| `smoke` | Humo | 9 | `e2e/selenium/specs/smoke/aplicacion.spec.ts` |
+| `authentication` | Autenticación · inicio de sesión | 7 | `cypress/e2e/authentication/login.cy.ts` |
+| `authentication` | Autenticación · sesión | 6 | `cypress/e2e/authentication/sesion.cy.ts` |
+| `forms` | Formularios · nueva contraseña | 6 | `cypress/e2e/forms/nueva-clave.cy.ts` |
+| `forms` | Formularios · recuperar contraseña | 4 | `cypress/e2e/forms/recuperar-password.cy.ts` |
+| `forms` | Formularios · registro | 7 | `cypress/e2e/forms/registro.cy.ts` |
+| `forms` | Formularios · verificación de correo | 4 | `cypress/e2e/forms/verificar-correo.cy.ts` |
+| `navigation` | Navegación | 8 | `cypress/e2e/navigation/navegacion.cy.ts` |
+| `real` | Recorrido real · administrador | 1 | `cypress/e2e/real/01-administrador.cy.ts` |
+| `real` | Recorrido real · paciente | 1 | `cypress/e2e/real/02-paciente.cy.ts` |
+| `real` | Recorrido real · médico | 2 | `cypress/e2e/real/03-medico.cy.ts` |
+| `real` | Recorrido real · organización | 1 | `cypress/e2e/real/04-organizacion.cy.ts` |
+| `real` | Recorrido real · portal de turnos del paciente | 1 | `cypress/e2e/real/05-portal-turnos.cy.ts` |
+| `real` | Recorrido real · estados de un caso de verificación | 1 | `cypress/e2e/real/06-estados-de-caso.cy.ts` |
+| `recorrido` | Recorrido · pantallas públicas | 11 | `cypress/e2e/recorrido/01-publico.cy.ts` |
+| `recorrido` | Recorrido · área con sesión · Recorrido · armazón | 10 | `cypress/e2e/recorrido/02-sesion.cy.ts` |
+| `recorrido` | Recorrido · administración | 10 | `cypress/e2e/recorrido/03-administracion.cy.ts` |
+| `recorrido` | Recorrido · vitrina de diseño | 3 | `cypress/e2e/recorrido/04-vitrina.cy.ts` |
+| `recorrido` | Recorrido · atención | 5 | `cypress/e2e/recorrido/05-atencion.cy.ts` |
+| `regression` | Regresión · accesibilidad | 6 | `cypress/e2e/regression/accesibilidad.cy.ts` |
+| `regression` | Regresión · modales | 6 | `cypress/e2e/regression/modales.cy.ts` |
+| `regression` | Regresión · notificaciones | 5 | `cypress/e2e/regression/notificaciones.cy.ts` |
+| `regression` | Regresión · directorio del panel | 4 | `cypress/e2e/regression/panel-directorio.cy.ts` |
+| `regression` | Regresión · tabla de datos | 6 | `cypress/e2e/regression/tabla.cy.ts` |
+| `responsive` | Responsive · escritorio · Responsive · tableta · Responsive · móvil | 6 | `cypress/e2e/responsive/responsive.cy.ts` |
+| `smoke` | Humo | 10 | `cypress/e2e/smoke/aplicacion.cy.ts` |
 
 ## Page Objects
 
-| Clase | Ruta | Métodos | Archivo |
+| Objeto | Ruta | Métodos | Archivo |
 | --- | --- | --- | --- |
-| `DashboardPage` | `/panel` | 10 | `e2e/selenium/pages/dashboard.page.ts` |
-| `DesignSystemPage` | `/design-system` | 6 | `e2e/selenium/pages/design-system.page.ts` |
-| `ForgotPasswordPage` | `/auth/recuperar` | 7 | `e2e/selenium/pages/forgot-password.page.ts` |
-| `LoginPage` | `/auth` | 17 | `e2e/selenium/pages/login.page.ts` |
-| `NotFoundPage` | `/esta-ruta-no-existe` | 2 | `e2e/selenium/pages/not-found.page.ts` |
-| `RegisterPage` | `/auth/registro` | 12 | `e2e/selenium/pages/register.page.ts` |
-| `ResetPasswordPage` | `/auth/nueva-clave` | 13 | `e2e/selenium/pages/reset-password.page.ts` |
-| `TenantSelectionPage` | `/auth/organizacion` | 5 | `e2e/selenium/pages/tenant-selection.page.ts` |
-| `VerifyEmailPage` | `/auth/verificar` | 8 | `e2e/selenium/pages/verify-email.page.ts` |
+| `DashboardPage` | `/panel` | 11 | `cypress/support/pages/dashboard.page.ts` |
+| `DesignSystemPage` | `/design-system` | 7 | `cypress/support/pages/design-system.page.ts` |
+| `ForgotPasswordPage` | `/auth/recuperar` | 9 | `cypress/support/pages/forgot-password.page.ts` |
+| `LoginPage` | `/auth` | 17 | `cypress/support/pages/login.page.ts` |
+| `NotFoundPage` | `/esta-ruta-no-existe` | 4 | `cypress/support/pages/not-found.page.ts` |
+| `RegisterPage` | `/auth/registro` | 13 | `cypress/support/pages/register.page.ts` |
+| `ResetPasswordPage` | `/auth/nueva-clave` | 12 | `cypress/support/pages/reset-password.page.ts` |
+| `TenantSelectionPage` | `/auth/organizacion` | 6 | `cypress/support/pages/tenant-selection.page.ts` |
+| `VerifyEmailPage` | `/auth/verificar` | 7 | `cypress/support/pages/verify-email.page.ts` |
 
 ## Escenarios de la API simulada
 
@@ -58,4 +69,4 @@ está en [`e2e/selenium/README.md`](../../../e2e/selenium/README.md).
 
 ## Coherencia de los selectores
 
-Los 63 identificadores que la suite localiza están declarados en las plantillas.
+Los 66 identificadores que la suite localiza están declarados en las plantillas.

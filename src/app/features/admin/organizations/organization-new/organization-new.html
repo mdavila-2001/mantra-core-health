@@ -1,0 +1,235 @@
+<app-page-header
+  title="Nueva organización"
+  subtitle="Se crea la organización con su tipo y su owner en una sola operación."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (errorMessage(); as mensaje) {
+  <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-organizacion-error">{{
+    mensaje
+  }}</app-alert>
+}
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="alta-organizacion-form">
+  <app-form-section
+    legend="Identificación"
+    description="Con qué se la encuentra y cómo se presenta."
+  >
+    <app-form-field
+      label="Código"
+      hint="Único en toda la plataforma. Es sobre lo que ordena el listado."
+      [required]="true"
+      [errorMessage]="
+        codigoEnConflicto()
+          ? 'Ya existe una organización con este código. Probá con otro.'
+          : form.controls.code.touched && form.controls.code.invalid
+            ? 'Escribí el código de la organización.'
+            : ''
+      "
+    >
+      <app-input formControlName="code" type="text" testId="alta-organizacion-codigo" />
+    </app-form-field>
+
+    <app-form-field
+      label="Razón social"
+      [required]="true"
+      [errorMessage]="
+        form.controls.legalName.touched && form.controls.legalName.invalid
+          ? 'Escribí la razón social (hasta 300 caracteres).'
+          : ''
+      "
+    >
+      <app-input formControlName="legalName" type="text" testId="alta-organizacion-razon" />
+    </app-form-field>
+
+    <app-form-field
+      label="Nombre comercial"
+      hint="Opcional. Cómo la conoce la gente, si difiere de la razón social."
+      [errorMessage]="
+        form.controls.tradeName.touched && form.controls.tradeName.invalid
+          ? 'El nombre comercial no puede superar los 300 caracteres.'
+          : ''
+      "
+    >
+      <app-input formControlName="tradeName" type="text" testId="alta-organizacion-comercial" />
+    </app-form-field>
+  </app-form-section>
+
+  <app-form-section
+    legend="Clasificación"
+    description="El tipo decide qué datos exige el alta y cómo opera la organización."
+  >
+    <app-form-field
+      label="Tipo de organización"
+      [required]="true"
+      [errorMessage]="tipoFaltante() ? 'Elegí el tipo de organización.' : ''"
+    >
+      <!-- TODO(IT3): poblar desde dynamic-enums; hoy son los códigos del DTO. -->
+      <app-select
+        [value]="tipo()"
+        (valueChange)="cambiarTipo($event)"
+        [options]="opcionesDeTipo"
+        placeholder="Elegí un tipo"
+      />
+    </app-form-field>
+
+    @if (esTerritorial()) {
+      <app-form-section
+        legend="Dónde opera"
+        description="El backend lo exige para este tipo: determina bajo qué regulador presta atención."
+      >
+        <app-form-field
+          label="País"
+          hint="Buscá por nombre; el código acompaña para distinguir homónimos."
+          [required]="true"
+          [errorMessage]="paisFaltante() ? 'Elegí el país donde opera.' : ''"
+        >
+          <app-reference-combobox
+            [selected]="pais()"
+            [options]="candidatosPais()"
+            [loading]="buscandoPais()"
+            placeholder="Nombre del país"
+            emptyMessage="Ningún concepto coincide"
+            (searched)="buscarPais($event)"
+            (selectionChange)="pais.set($event)"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Jurisdicción"
+          hint="La jurisdicción regulatoria, por ejemplo «Bolivia · JUR_BO»."
+          [required]="true"
+          [errorMessage]="jurisdiccionFaltante() ? 'Elegí la jurisdicción.' : ''"
+        >
+          <app-reference-combobox
+            [selected]="jurisdiccion()"
+            [options]="candidatosJurisdiccion()"
+            [loading]="buscandoJurisdiccion()"
+            placeholder="Nombre de la jurisdicción"
+            emptyMessage="Ningún concepto coincide"
+            (searched)="buscarJurisdiccion($event)"
+            (selectionChange)="jurisdiccion.set($event)"
+          />
+        </app-form-field>
+      </app-form-section>
+    }
+
+    @if (esAseguradora()) {
+      <app-form-section
+        legend="Datos de la aseguradora"
+        description="El backend los exige para este tipo: identifican a la aseguradora ante su regulador."
+        [formGroup]="formPayer"
+      >
+        <app-form-field
+          label="Código de la aseguradora"
+          [required]="true"
+          [errorMessage]="
+            formPayer.controls.carrierCode.touched && formPayer.controls.carrierCode.invalid
+              ? 'Escribí el código de la aseguradora (hasta 60 caracteres).'
+              : ''
+          "
+        >
+          <app-input formControlName="carrierCode" type="text" testId="alta-organizacion-carrier" />
+        </app-form-field>
+
+        <app-form-field
+          label="Identificador ante el regulador"
+          [required]="true"
+          [errorMessage]="
+            formPayer.controls.regulatorIdentifier.touched &&
+            formPayer.controls.regulatorIdentifier.invalid
+              ? 'Escribí el identificador ante el regulador (hasta 100 caracteres).'
+              : ''
+          "
+        >
+          <app-input
+            formControlName="regulatorIdentifier"
+            type="text"
+            testId="alta-organizacion-regulador"
+          />
+        </app-form-field>
+      </app-form-section>
+    }
+
+    @if (esCorredor()) {
+      <app-form-section
+        legend="Datos del corredor"
+        description="El backend los exige para este tipo: habilitan la intermediación."
+        [formGroup]="formBroker"
+      >
+        <app-form-field
+          label="Código del corredor"
+          [required]="true"
+          [errorMessage]="
+            formBroker.controls.brokerCode.touched && formBroker.controls.brokerCode.invalid
+              ? 'Escribí el código del corredor (hasta 60 caracteres).'
+              : ''
+          "
+        >
+          <app-input formControlName="brokerCode" type="text" testId="alta-organizacion-broker" />
+        </app-form-field>
+
+        <app-form-field
+          label="Número de licencia"
+          [required]="true"
+          [errorMessage]="
+            formBroker.controls.licenseNumber.touched &&
+            formBroker.controls.licenseNumber.invalid
+              ? 'Escribí el número de licencia (hasta 100 caracteres).'
+              : ''
+          "
+        >
+          <app-input
+            formControlName="licenseNumber"
+            type="text"
+            testId="alta-organizacion-licencia"
+          />
+        </app-form-field>
+      </app-form-section>
+    }
+  </app-form-section>
+
+  <app-form-section
+    legend="Titularidad"
+    description="Quién queda como owner inicial. La membresía se crea en la misma operación."
+  >
+    <app-form-field
+      label="Usuario owner"
+      hint="Buscá por nombre o correo. Debe existir antes del alta."
+      [required]="true"
+      [errorMessage]="ownerFaltante() ? 'Elegí el usuario que será owner.' : ''"
+    >
+      <app-reference-combobox
+        [selected]="owner()"
+        [options]="candidatosOwner()"
+        [loading]="buscandoOwner()"
+        placeholder="Nombre o correo"
+        emptyMessage="Ningún usuario coincide"
+        (searched)="buscarOwner($event)"
+        (selectionChange)="owner.set($event)"
+      />
+    </app-form-field>
+  </app-form-section>
+
+  <app-form-section legend="Datos operativos" description="Se pueden completar después.">
+    <app-form-field
+      label="Zona horaria"
+      hint="Opcional, en formato IANA (por ejemplo, America/La_Paz)."
+      [errorMessage]="
+        form.controls.timeZone.touched && form.controls.timeZone.invalid
+          ? 'La zona horaria no puede superar los 100 caracteres.'
+          : ''
+      "
+    >
+      <app-input formControlName="timeZone" type="text" testId="alta-organizacion-zona" />
+    </app-form-field>
+  </app-form-section>
+
+  <app-form-actions
+    submitLabel="Registrar organización"
+    cancelLabel="Cancelar"
+    [pending]="enviando()"
+    (submitted)="submit()"
+    (cancelled)="cancelar()"
+  />
+</form>

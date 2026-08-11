@@ -1,0 +1,35 @@
+/* Listado de organizaciones. La tabla trae su propio ritmo y sus estados: acá
+   sólo la separación del buscador y el formato de las celdas propias. */
+
+:host {
+  display: block;
+}
+
+.organizaciones__buscador {
+  display: block;
+  margin-block: var(--sp-6) var(--sp-4);
+  /* El tope lo fija la longitud de lo que se escribe, no la ventana. */
+  max-inline-size: 28rem;
+}
+
+.organizaciones__nombre {
+  display: block;
+}
+
+/* El nombre comercial acompaña, no compite: misma celda, un tono abajo. */
+.organizaciones__comercial {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Fechas con cifras tabulares: los dígitos de una columna se alinean para
+   poder compararse de un vistazo. */
+.organizaciones__cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+.organizaciones__vacio {
+  color: var(--text-muted);
+}

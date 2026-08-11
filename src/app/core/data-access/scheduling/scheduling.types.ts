@@ -100,6 +100,16 @@ export interface Booking {
   readonly patientProfileId?: string;
   readonly resourceId?: string;
   readonly bookableSlotId?: string;
+  /**
+   * Cita clínica que respalda la reserva, si la tiene.
+   *
+   * Es el valor que acepta el check-in de un encuentro en su `appointmentId` —y
+   * el único que acepta: el `id` de esta reserva apunta a otra tabla—. Llega
+   * `null` cuando la reserva no tiene cita clínica detrás, que hoy es el caso
+   * corriente porque la reserva nace en la agenda y la cita clínica es un
+   * registro posterior.
+   */
+  readonly appointmentId?: string | null;
   readonly startAt?: Date;
   readonly endAt?: Date;
   readonly statusConceptId: string;
@@ -128,4 +138,71 @@ export interface BookingQuery {
   /** Incluye canceladas y ausencias, que por omisión no vienen. */
   readonly includeCancelled?: boolean;
   readonly limit?: number;
+}
+
+/* ---- el flujo de reserva: hold → confirm ---------------------------------
+   El backend lo exige en dos pasos, y no es ceremonia: el hold decrementa la
+   capacidad con `FOR UPDATE` (anti-double-booking) y expira solo — TTL de la
+   política, 300 s por defecto. Un hold vencido no se puede confirmar. */
+
+/** Lo que pide la retención. El paciente puede resolverlo la sesión (rol PATIENT). */
+export interface NewHold {
+  readonly patientProfileId?: string;
+}
+
+/** Una retención vigente de un cupo (UC-41-05). */
+export interface SlotHold {
+  readonly id: string;
+  /**
+   * Token de un solo uso con el que se confirma. **Se entrega una sola vez**:
+   * quien lo pierda pierde la retención y tiene que volver a retener.
+   */
+  readonly holdToken: string;
+  /** Hasta cuándo vale. Pasado este instante, el confirm se rechaza. */
+  readonly expiresAt: Date;
+  /** Cupos que quedan libres en el slot después de esta retención. */
+  readonly remainingCapacity: number;
+}
+
+/** Canal por el que se origina la reserva. Del DTO del backend. */
+export type BookingChannel = 'PORTAL' | 'DESK' | 'PHONE';
+
+/** Cuerpo del confirm (UC-41-06). `tenantId` porque opera fuera del RLS. */
+export interface BookingConfirmation {
+  readonly tenantId: string;
+  readonly patientProfileId: string;
+  readonly channel: BookingChannel;
+  readonly reasonText?: string;
+}
+
+/** La cita recién confirmada. */
+export interface BookingConfirmed {
+  readonly id: string;
+  readonly bookableSlotId: string;
+  readonly statusConceptId: string;
+  readonly remindersScheduled: number;
+}
+
+/**
+ * Cancelación de una cita (UC-41-09).
+ *
+ * `isNoShow` no es un matiz: es lo que dispara el cargo de la política. Una
+ * cancelación avisada no se cobra.
+ */
+export interface BookingCancellation {
+  readonly cancelledBy: 'PATIENT' | 'PROVIDER';
+  readonly isNoShow?: boolean;
+}
+
+export interface BookingCancelled {
+  readonly bookingId: string;
+  /** Cargo aplicado, si la política lo contempla y fue no-show. */
+  readonly feeAmount?: string;
+  readonly capacityReleased: boolean;
+}
+
+/** Resultado del check-in (UC-41-10). */
+export interface BookingCheckedIn {
+  readonly bookingId: string;
+  readonly checkedInAt: Date;
 }

@@ -54,6 +54,16 @@
   font-size: var(--fs-caption);
 }
 
+/* Los dos accesos de una cita —expediente y ficha— apilados, no en fila: en la
+   columna angosta del móvil, dos enlaces uno al lado del otro se tocan con el
+   pulgar a la vez. */
+.agenda__accesos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  align-items: flex-start;
+}
+
 /* El identificador del cupo es el que se manda para reservar. `all` lo
    selecciona entero de un clic: copiar un uuid a mano es donde se cometen los
    errores. */
@@ -63,4 +73,13 @@
   user-select: all;
   /* Un uuid no tiene puntos de corte naturales; sin esto desborda la celda. */
   overflow-wrap: anywhere;
+}
+
+/* Las acciones de una fila van juntas y sin envolver: dos botones que se
+   separan en dos renglones se leen como dos filas. */
+.agenda__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: nowrap;
 }

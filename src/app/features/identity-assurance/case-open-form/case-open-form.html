@@ -1,0 +1,141 @@
+<app-page-header
+  title="Abrir caso de verificación"
+  subtitle="El expediente del ciclo: nace contra una política vigente y vence si nadie lo resuelve."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (opened(); as caso) {
+  <div class="m27__resultado">
+    <h2 appAnuncio [asertivo]="false" class="m27__resultado-titulo">El caso quedó abierto</h2>
+
+    <dl class="m27__datos">
+      <div>
+        <dt>Identificador</dt>
+        <dd><code class="tabular-nums">{{ caso.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Estado (concepto)</dt>
+        <dd><code class="tabular-nums">{{ caso.status }}</code></dd>
+      </div>
+      @if (caso.openedAt; as apertura) {
+        <div>
+          <dt>Abierto el</dt>
+          <dd>{{ apertura.toLocaleString() }}</dd>
+        </div>
+      }
+      @if (caso.expiresAt; as vencimiento) {
+        <div>
+          <dt>Vence el</dt>
+          <dd>{{ vencimiento.toLocaleString() }}</dd>
+        </div>
+      }
+    </dl>
+
+    <p class="m27__texto">
+      Guardá el identificador: aportar evidencia, planificar checks y el resto
+      del ciclo del caso lo piden.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otroCaso()">Abrir otro caso</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Qué se verifica"
+      description="La política que rige el caso y el sujeto al que se le verifica la identidad."
+    >
+      <app-form-field
+        label="Política de verificación"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.identityVerificationPolicyId.touched &&
+          form.controls.identityVerificationPolicyId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="identityVerificationPolicyId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Tipo de sujeto (concepto)"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.subjectTypeConceptId.touched &&
+          form.controls.subjectTypeConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="subjectTypeConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Entidad sujeto"
+        [required]="true"
+        hint="El id del paciente, profesional o representante que se verifica."
+        [errorMessage]="
+          form.controls.subjectEntityId.touched && form.controls.subjectEntityId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="subjectEntityId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Condiciones"
+      description="Nivel solicitado, idempotencia de la apertura y vencimiento."
+    >
+      <app-form-field
+        label="Nivel de aseguramiento solicitado (concepto)"
+        hint="Opcional: por defecto rige el que exige la política."
+        [errorMessage]="
+          form.controls.requestedAssuranceLevelConceptId.touched &&
+          form.controls.requestedAssuranceLevelConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="requestedAssuranceLevelConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Correlación (idempotencia)"
+        hint="Opcional: un UUID propio; repetir la apertura con el mismo no duplica el caso."
+        [errorMessage]="
+          form.controls.correlationId.touched && form.controls.correlationId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="correlationId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Vence en (horas)"
+        hint="Opcional: por defecto, 72 horas."
+        [errorMessage]="
+          form.controls.expiresInHours.touched && form.controls.expiresInHours.invalid
+            ? 'La vigencia empieza en 1 hora.'
+            : ''
+        "
+      >
+        <app-input formControlName="expiresInHours" type="number" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Abrir caso"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}
