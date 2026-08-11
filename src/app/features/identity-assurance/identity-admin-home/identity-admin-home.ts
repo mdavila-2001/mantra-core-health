@@ -24,10 +24,10 @@ const BASE = '/administracion/verificacion-identidad';
 /**
  * Portada de la sección «Verificación de identidad» (M27, lado administrativo).
  *
- * El backend no expone ningún `GET` administrativo —solo los catorce comandos—,
- * así que esta portada no lista nada: ordena las operaciones del contrato por
- * área. Cuando lleguen los endpoints de consulta, acá van los listados de
- * autoridades, políticas y casos.
+ * La portada ordena las operaciones del contrato por área, y arranca por la
+ * única lectura que el backend expone hoy: la **cola de revisión**. El resto
+ * siguen siendo comandos, así que no hay listados de autoridades ni de
+ * políticas — cuando lleguen sus `GET`, van acá.
  */
 @Component({
   selector: 'app-identity-admin-home',
@@ -42,6 +42,12 @@ export class IdentityAdminHome {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
   protected readonly areas: readonly Area[] = [
+    {
+      titulo: 'Trabajo pendiente',
+      descripcion:
+        'Los casos que esperan una decisión, del que más lleva esperando al más reciente.',
+      operaciones: [{ label: 'Cola de revisión', route: `${BASE}/cola` }],
+    },
     {
       titulo: 'Autoridades',
       descripcion:

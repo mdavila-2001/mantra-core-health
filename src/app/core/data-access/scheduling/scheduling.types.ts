@@ -100,6 +100,16 @@ export interface Booking {
   readonly patientProfileId?: string;
   readonly resourceId?: string;
   readonly bookableSlotId?: string;
+  /**
+   * Cita clínica que respalda la reserva, si la tiene.
+   *
+   * Es el valor que acepta el check-in de un encuentro en su `appointmentId` —y
+   * el único que acepta: el `id` de esta reserva apunta a otra tabla—. Llega
+   * `null` cuando la reserva no tiene cita clínica detrás, que hoy es el caso
+   * corriente porque la reserva nace en la agenda y la cita clínica es un
+   * registro posterior.
+   */
+  readonly appointmentId?: string | null;
   readonly startAt?: Date;
   readonly endAt?: Date;
   readonly statusConceptId: string;

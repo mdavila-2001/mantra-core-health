@@ -23,9 +23,14 @@ describe('Navegación', () => {
     // ningún rol —el panel y el autoservicio— y nada de gestión. Las secciones
     // administrativas existen en el registro pero no se le ofrecen: el menú se
     // arma con los roles del token.
+    //
+    // «Mis turnos» entra por lo mismo: no declara roles, porque el filtro real
+    // es tener perfil de paciente —un dato de la cuenta, no un rol—, y eso la
+    // pantalla lo resuelve por su cuenta.
     SideNav.rutas().should('deep.equal', [
       '/panel',
       '/mi-cuenta',
+      '/mi-cuenta/turnos',
       '/identidad/verificar',
       '/identidad/casos',
       '/design-system',

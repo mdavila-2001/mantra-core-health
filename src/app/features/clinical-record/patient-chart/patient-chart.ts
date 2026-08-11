@@ -15,6 +15,7 @@ import { ActivatedRoute } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import type {
   ClinicalSummary,
@@ -28,16 +29,26 @@ import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, empty, loading, notFound, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
+import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { CLINICAL_RECORD_ROUTE } from '../clinical-record';
+import {
+  CITA_QUERY_PARAM,
+  CLINICAL_RECORD_ROUTE,
+  MOTIVO_QUERY_PARAM,
+} from '../clinical-record.routes';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -56,6 +67,17 @@ const NOMBRE_DE_BLOQUE: Readonly<Record<string, string>> = {
   carePlans: 'planes de cuidados',
   documents: 'documentos',
 };
+
+/** Largo máximo del motivo de consulta. El backend no lo acota; la legibilidad sí. */
+const TOPE_DEL_MOTIVO = 500;
+
+/** Un encuentro abierto, listo para ofrecer su cierre. */
+export interface EncuentroEnCurso {
+  readonly id: string;
+  readonly clase: string;
+  readonly motivo: string;
+  readonly desde: Date | null;
+}
 
 /** Una fila de cualquiera de las tablas del expediente, ya sin uuid. */
 export interface FilaClinica {
@@ -100,10 +122,45 @@ interface Expediente {
  * `truncated` nombra los bloques cortados por el tope. Un expediente al que le
  * faltan notas sin avisar es un expediente que miente, y en clínica esa mentira
  * se lee como «no hay antecedentes».
+ *
+ * ## La única escritura que vive acá: el encuentro
+ *
+ * La pantalla era de consulta pura. Ahora abre y cierra **encuentros**
+ * (`POST /clinical/encounters/check-in` y `.../{id}/close`), y sólo eso, por un
+ * criterio que no es de alcance sino de honestidad: es la única escritura del
+ * archivo clínico cuyo resultado esta misma pantalla **vuelve a leer** —el
+ * bloque «Encuentros» sale de `GET /clinical/patients/:id/summary`—. Registrar
+ * un diagnóstico o firmar una nota tiene endpoint, pero el registro no se
+ * refleja en ninguna lectura disponible: sería un formulario que traga el dato.
+ *
+ * Es también el paso que cierra el recorrido de quien atiende: llega desde su
+ * agenda con el turno, abre el expediente, y deja constancia de que la persona
+ * fue atendida.
+ *
+ * ## Por qué no hay un `appointmentId` en el encuentro
+ *
+ * El contrato del check-in lo admite, pero apunta a `clinical.appointments` y
+ * `GET /scheduling/bookings` no expone ninguna. Lo que sí viaja desde la agenda
+ * es el **motivo** de la cita, como parámetro, para precargar el del encuentro.
+ * El vínculo por identificador queda anotado como P11 en `PENDIENTES-BACKEND.md`.
  */
 @Component({
   selector: 'app-patient-chart',
-  imports: [Alert, Badge, Card, DataTable, DatePipe, PageHeader, Tab, Tabs, ViewStateHost],
+  imports: [
+    Alert,
+    AppButton,
+    Badge,
+    Card,
+    DataTable,
+    DatePipe,
+    FormActions,
+    FormField,
+    PageHeader,
+    Tab,
+    Tabs,
+    Textarea,
+    ViewStateHost,
+  ],
   templateUrl: './patient-chart.html',
   styleUrl: './patient-chart.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,6 +170,9 @@ export class PatientChart {
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
+  private readonly auth = inject(AuthService);
+  private readonly dialogs = inject(DialogService);
+  private readonly toasts = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
 
   private readonly celdaPrincipal =
@@ -132,6 +192,33 @@ export class PatientChart {
   private readonly profileId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('profileId') ?? '')),
     { initialValue: '' },
+  );
+
+  /**
+   * El motivo de la cita desde la que se llegó, si se llegó desde una.
+   *
+   * Lo pone la agenda en `?motivo=`. Es una **semilla**, no un enlace: una vez
+   * sembrado, el campo es de quien escribe, y volver a leer el parámetro en cada
+   * cambio pisaría lo que acaba de teclear.
+   */
+  private readonly motivoDeLaCita = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get(MOTIVO_QUERY_PARAM) ?? '')),
+    { initialValue: '' },
+  );
+
+  /**
+   * La cita clínica del turno desde el que se llegó, si lo trae.
+   *
+   * A diferencia del motivo **no es una semilla editable**: es un identificador
+   * que ata el encuentro a su turno, y no hay nada que quien atiende pueda
+   * corregir a mano. Se lee de la URL en el momento de registrar.
+   *
+   * Su ausencia es corriente —una reserva sin cita clínica detrás, o una entrada
+   * al expediente que no vino de la agenda— y el encuentro se abre igual.
+   */
+  protected readonly citaDeOrigen = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get(CITA_QUERY_PARAM))),
+    { initialValue: null },
   );
 
   protected readonly expediente = signal<ViewState<Expediente>>(loading());
@@ -298,6 +385,106 @@ export class PatientChart {
 
   protected readonly tope = TOPE;
 
+  /* -- El encuentro: la única escritura de la pantalla --------------------- */
+
+  protected readonly topeDelMotivo = TOPE_DEL_MOTIVO;
+
+  /**
+   * La organización bajo la que se registra el encuentro.
+   *
+   * `tenantId` es obligatorio en el check-in, y no hay forma de deducirlo del
+   * paciente: una persona puede estar atendida en más de una. Es el custodio del
+   * registro, así que sale de la sesión activa, que es donde el usuario ya lo
+   * eligió.
+   */
+  protected readonly organizacion = this.auth.activeTenantId;
+
+  protected readonly sinOrganizacion = computed(() => this.organizacion() === null);
+
+  /**
+   * El motivo de consulta del encuentro a abrir.
+   *
+   * Se precarga con el `?motivo=` que trae la agenda —el de la cita— y desde ahí
+   * es de quien escribe: el efecto que lo siembra corre al entrar y al cambiar
+   * de persona, no en cada tecleo.
+   */
+  protected readonly motivo = signal('');
+
+  /**
+   * El resultado de la última escritura, para el aviso de la pantalla.
+   *
+   * Uno solo para las dos operaciones y no uno por cada una: sólo puede haber
+   * una en vuelo, y dos avisos simultáneos pidiendo atención sobre el mismo
+   * bloque compiten entre sí.
+   */
+  protected readonly registro = signal<ViewState<null>>(ready(null));
+
+  protected readonly registrando = signal(false);
+
+  /** El encuentro en curso que se está cerrando, o `null`. */
+  protected readonly cerrando = signal<string | null>(null);
+
+  /**
+   * El fallo de la escritura, en palabras.
+   *
+   * El `PRECONDITION_FAILED` se distingue dentro de S4 porque acá tiene un
+   * significado concreto: el encuentro dejó de estar en curso —lo cerró otra
+   * sesión, o esta pantalla está mirando datos viejos— y la salida es recargar,
+   * no reintentar. `errorToViewState` lo trae como una validación con su código,
+   * que es lo que permite reconocerlo sin mirar el mensaje.
+   */
+  protected readonly errorDelRegistro = computed<string | null>(() => {
+    const state = this.registro();
+    if (state.status === 'validation') {
+      if (state.issues.some((issue) => issue.code === 'PRECONDITION_FAILED')) {
+        return 'Ese encuentro ya no está en curso: alguien lo cerró antes. Recargá el expediente.';
+      }
+      return state.issues.map((issue) => issue.message).join(' ') || null;
+    }
+    if (state.status === 'forbidden') {
+      return state.message ?? 'Tu rol no permite registrar encuentros.';
+    }
+    if (state.status === 'not-found') {
+      return 'El encuentro ya no existe. Recargá el expediente.';
+    }
+    if (state.status === 'offline') {
+      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    }
+    if (state.status === 'error') {
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+    }
+    return null;
+  });
+
+  /**
+   * Los encuentros abiertos de esta persona.
+   *
+   * «Abierto» se deriva de `endAt` y no del estado: el estado es un uuid de
+   * concepto, y ramificar por su valor ataría la pantalla a un identificador de
+   * catálogo. El contrato ya declara `endAt` como el dato que dice si el
+   * encuentro terminó, y es el mismo que la tabla usa para escribir «En curso».
+   */
+  protected readonly encuentrosEnCurso = computed<readonly EncuentroEnCurso[]>(() =>
+    (this.datos()?.resumen.encounters ?? [])
+      .filter((encuentro) => encuentro.endAt === undefined)
+      .map((encuentro) => ({
+        id: encuentro.id,
+        clase: this.label(encuentro.classConceptId),
+        motivo: encuentro.reasonText ?? 'Sin motivo registrado',
+        desde: encuentro.startAt ?? null,
+      })),
+  );
+
+  /**
+   * Si la pantalla puede ofrecer el registro.
+   *
+   * Con el expediente todavía cargando —o caído— no: abrir un encuentro contra
+   * una persona cuyo expediente no se pudo leer es escribir a ciegas.
+   */
+  protected readonly puedeRegistrar = computed(
+    () => this.datos() !== null && !this.sinOrganizacion(),
+  );
+
   protected readonly columnas = computed<readonly ColumnDef<FilaClinica>[]>(() => [
     { key: 'principal', header: 'Registro', priority: 1, cell: this.celdaPrincipal() },
     { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
@@ -331,10 +518,113 @@ export class PatientChart {
       this.profileId();
       untracked(() => this.cargar());
     });
+
+    // El motivo que trae la agenda se siembra al entrar y al cambiar de
+    // persona. Depende del perfil a propósito: el motivo de la cita de alguien
+    // no debe sobrevivir a la navegación hacia el expediente de otro.
+    effect(() => {
+      this.profileId();
+      const dePar = this.motivoDeLaCita();
+      untracked(() => this.motivo.set(dePar));
+    });
   }
 
   protected recargar(): void {
     this.cargar();
+  }
+
+  /* -- Escritura ----------------------------------------------------------- */
+
+  /**
+   * Abre el encuentro (UC-08-02).
+   *
+   * Sin confirmación previa: abrir un encuentro no es destructivo ni
+   * irreversible —queda en curso y se cierra desde acá mismo—, y el M34 reserva
+   * el diálogo para lo que no se puede deshacer. Lo que sí hace falta es
+   * releer: el encuentro recién abierto tiene que aparecer en su bloque, o la
+   * pantalla estaría afirmando un registro que no muestra.
+   */
+  protected registrarEncuentro(): void {
+    const patientProfileId = this.profileId();
+    const tenantId = this.organizacion();
+    if (patientProfileId === '' || tenantId === null || this.registrando()) {
+      return;
+    }
+
+    const motivo = this.motivo().trim();
+    const cita = this.citaDeOrigen();
+    const profesional = this.auth.practitionerProfileId();
+    this.registrando.set(true);
+    this.registro.set(loading());
+
+    this.clinical
+      .checkInEncounter({
+        patientProfileId,
+        tenantId,
+        // El motivo es opcional en el contrato: una cadena vacía sería un motivo
+        // registrado que no dice nada, y se lee peor que su ausencia.
+        ...(motivo === '' ? {} : { reasonText: motivo }),
+        // El turno que originó la atención, cuando se llegó desde la agenda y la
+        // reserva tenía cita clínica detrás. Es una clave foránea real: si no
+        // viene, se omite en vez de mandar algo parecido.
+        ...(cita === null || cita === '' ? {} : { appointmentId: cita }),
+        // Quién atiende, del claim de la sesión. Un encuentro sin profesional es
+        // una marca de tiempo sin autor: mientras el dato no existía había que
+        // omitirlo, ahora no.
+        ...(profesional === null ? {} : { primaryPractitionerId: profesional }),
+      })
+      .subscribe({
+        next: () => {
+          this.registrando.set(false);
+          this.registro.set(ready(null));
+          this.motivo.set('');
+          this.toasts.success('Queda en curso hasta que lo cierres.', 'Encuentro abierto');
+          this.cargar();
+        },
+        error: (error: unknown) => {
+          this.registrando.set(false);
+          this.registro.set(errorToViewState<null>(error));
+        },
+      });
+  }
+
+  /**
+   * Cierra un encuentro en curso (UC-08-14).
+   *
+   * Con confirmación, y no por prudencia genérica: el backend responde `422` a
+   * un encuentro que ya no está en curso, así que cerrar es un paso sin vuelta
+   * desde la interfaz. Además dispara la facturación del lado del servidor.
+   */
+  protected async cerrarEncuentro(encuentro: EncuentroEnCurso): Promise<void> {
+    if (this.cerrando() !== null) {
+      return;
+    }
+
+    const confirmado = await this.dialogs.confirm({
+      title: '¿Cerrar el encuentro?',
+      message: `Se cierra «${encuentro.motivo}» y sus participantes y ubicaciones activos. Un encuentro cerrado no se puede volver a abrir.`,
+      confirmLabel: 'Cerrar encuentro',
+      destructive: true,
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    this.cerrando.set(encuentro.id);
+    this.registro.set(loading());
+
+    this.clinical.closeEncounter(encuentro.id).subscribe({
+      next: () => {
+        this.cerrando.set(null);
+        this.registro.set(ready(null));
+        this.toasts.success('Queda registrado con su hora de fin.', 'Encuentro cerrado');
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.cerrando.set(null);
+        this.registro.set(errorToViewState<null>(error));
+      },
+    });
   }
 
   /* -- Lectura ------------------------------------------------------------- */
@@ -344,6 +634,9 @@ export class PatientChart {
     this.expediente.set(loading());
     this.etiquetas.set(new Map());
     this.nombre.set('');
+    // El aviso de la escritura anterior no sobrevive a la relectura: tras un
+    // cierre exitoso seguiría en pantalla un error que ya no describe nada.
+    this.registro.set(ready(null));
 
     if (profileId === '') {
       // S6 y no un error: sin identificador no hay recurso que buscar, y decir

@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { resolverEstadosDeCaso } from '../../../testing/case-status';
 import { IdentityVerification } from './identity-verification';
 
 /** base64url sobre UTF-8, como el token real (ver `shell-layout.spec.ts`). */
@@ -46,6 +47,17 @@ describe('IdentityVerification', () => {
     // para que cada prueba hable del envío, que es lo suyo; la prueba del
     // historial lo responde con datos por su cuenta.
     http.expectOne('/identity/me/verification-cases').flush([]);
+
+    // La pantalla **inyecta** el catálogo de estados, así que al construirse ya
+    // pide los conceptos: no hace falta pedírselo al inyector desde acá.
+    //
+    // `dev` había resuelto esta misma prueba haciendo el `TestBed.inject` en el
+    // arnés, con el argumento de que la pantalla lee el catálogo «por una
+    // función pura». Eso hacía pasar la prueba y dejaba el defecto en pie: en la
+    // aplicación real nadie construía el catálogo, y quien entra por la puerta
+    // del estado S5 —que lleva directo a esta pantalla— veía «Desconocido»
+    // sobre su propio trámite. Se arregló donde estaba: en el componente.
+    resolverEstadosDeCaso(http);
   });
 
   afterEach(() => {
@@ -75,6 +87,17 @@ describe('IdentityVerification', () => {
 
   function subir() {
     interno<() => void>('enviar')();
+  }
+
+  /**
+   * Abrir un caso —y actualizar su estado— relee el historial: es la columna de
+   * al lado, que no se oculta al enviar. Toda prueba que llega al alta tiene que
+   * responder ese pedido, porque `http.verify()` no perdona una petición sin
+   * atender. Que aparezca en tantas pruebas es la señal de que la recarga
+   * existe, no ruido.
+   */
+  function responderHistorial(casos: readonly unknown[] = []) {
+    http.expectOne('/identity/me/verification-cases').flush(casos);
   }
 
   it('no deja enviar sin archivo', () => {
@@ -111,6 +134,7 @@ describe('IdentityVerification', () => {
       checkId: 'ch-1',
       status: 'PENDING',
     });
+    responderHistorial();
   });
 
   it('el `Content-Type` no se fija a mano: el navegador pone el boundary', () => {
@@ -126,6 +150,7 @@ describe('IdentityVerification', () => {
       checkId: 'ch-1',
       status: 'PENDING',
     });
+    responderHistorial();
   });
 
   it('encadena la apertura del caso con el identificador de la subida', () => {
@@ -138,6 +163,7 @@ describe('IdentityVerification', () => {
     expect(caso.request.body).toEqual({ evidenceFileId: 'f-42' });
 
     caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
+    responderHistorial();
 
     expect(interno<() => { id: string; status: string } | null>('caso')()).toEqual({
       id: 'c-1',
@@ -157,6 +183,7 @@ describe('IdentityVerification', () => {
     expect(Object.keys(caso.request.body as object)).toEqual(['evidenceFileId']);
 
     caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
+    responderHistorial();
   });
 
   it('un fallo de la subida se traduce a un estado del M34, no a una excepción', () => {
@@ -198,6 +225,9 @@ describe('IdentityVerification', () => {
    * mapeo completo lo fija `case-status.spec.ts`; acá se fija la integración.
    */
   it('con el caso CASE_ASSERTED el sello muestra «Aprobado», no el UUID', () => {
+    // El catálogo ya quedó resuelto en el `beforeEach`. Esta prueba fallaba
+    // porque la pantalla **no inyectaba** `CaseStatusCatalog`: nadie llenaba el
+    // mapa, y el sello del titular decía «Desconocido» sobre su propio trámite.
     elegirArchivo();
     subir();
 
@@ -207,6 +237,7 @@ describe('IdentityVerification', () => {
       checkId: 'ch-1',
       status: 'd41fde09-6752-5bb6-8237-b786fe062ab2', // CASE_ASSERTED
     });
+    responderHistorial();
 
     fixture.detectChanges();
 
@@ -262,6 +293,7 @@ describe('IdentityVerification', () => {
     expect(caso.request.body).toEqual({ evidenceFileId: 'f-7' });
 
     caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
+    responderHistorial();
   });
 
   it('la matrícula no inventa la jurisdicción: el cuerpo solo lleva la evidencia', () => {
@@ -279,6 +311,7 @@ describe('IdentityVerification', () => {
     expect(Object.keys(caso.request.body as object)).toEqual(['evidenceFileId']);
 
     caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
+    responderHistorial();
   });
 
   it('verificar una organización exige elegir cuál', () => {
@@ -297,6 +330,7 @@ describe('IdentityVerification', () => {
     http
       .expectOne((r) => r.url.endsWith('/identity/me/tenants/t-9/verification'))
       .flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
+    responderHistorial();
   });
 
   it('con una sola organización en el token, queda elegida sola', () => {
@@ -326,6 +360,7 @@ describe('IdentityVerification', () => {
       checkId: 'ch-1',
       status: 'PENDING',
     });
+    responderHistorial();
 
     interno<() => void>('nuevaSolicitud')();
 
@@ -343,13 +378,79 @@ describe('IdentityVerification', () => {
       checkId: 'ch-1',
       status: 'PENDING',
     });
+    responderHistorial();
 
     interno<() => void>('actualizarCaso')();
 
     http
       .expectOne((r) => r.url.endsWith('/identity/me/verification-cases/c-1'))
       .flush({ id: 'c-1', status: 'APPROVED' });
+    responderHistorial();
 
     expect(interno<() => { status: string } | null>('caso')()?.status).toBe('APPROVED');
+  });
+
+  /**
+   * El caso recién abierto y el historial se ven **a la vez**: el panel de la
+   * izquierda y la columna de contexto de la derecha. Sin releer, la pantalla
+   * anuncia «tu solicitud quedó registrada» mientras «tus trámites anteriores»
+   * no la incluye — se contradice a sí misma en el mismo pantallazo.
+   */
+  it('al abrir un caso relee el historial, que muestra el trámite recién enviado', () => {
+    elegirArchivo();
+    subir();
+
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-1' });
+    http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
+      caseId: 'c-nuevo',
+      checkId: 'ch-1',
+      status: 'PENDING',
+    });
+
+    // La relectura es la que trae las fechas: el alta sólo devuelve id y estado.
+    responderHistorial([{ id: 'c-nuevo', status: 'PENDING', openedAt: '2026-08-10T10:00:00.000Z' }]);
+    fixture.detectChanges();
+
+    const filas = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      '.verificar__historial-fila',
+    );
+    expect(filas.length).toBe(1);
+    expect(filas[0]?.textContent).toContain('Abierto el');
+  });
+
+  /**
+   * El momento de la demo: el estado pasa de pendiente a verificado. Sin releer,
+   * el sello del panel cambia y el de la fila del historial se queda con el
+   * estado viejo — dos sellos distintos del mismo trámite, uno al lado del otro.
+   */
+  it('al actualizar el estado relee el historial, y los dos sellos coinciden', () => {
+    elegirArchivo();
+    subir();
+
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-1' });
+    http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
+      caseId: 'c-1',
+      checkId: 'ch-1',
+      status: 'PENDING',
+    });
+    responderHistorial([{ id: 'c-1', status: 'PENDING', openedAt: '2026-08-10T10:00:00.000Z' }]);
+
+    interno<() => void>('actualizarCaso')();
+
+    const aprobado = 'd41fde09-6752-5bb6-8237-b786fe062ab2'; // CASE_ASSERTED
+    http
+      .expectOne((r) => r.url.endsWith('/identity/me/verification-cases/c-1'))
+      .flush({ id: 'c-1', status: aprobado });
+    responderHistorial([{ id: 'c-1', status: aprobado, openedAt: '2026-08-10T10:00:00.000Z' }]);
+    fixture.detectChanges();
+
+    const sellos = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('app-status-seal'),
+    );
+    // El del panel y el de la fila del historial: ninguno quedó atrás.
+    expect(sellos.length).toBe(2);
+    for (const sello of sellos) {
+      expect(sello.textContent).toContain('Aprobado');
+    }
   });
 });

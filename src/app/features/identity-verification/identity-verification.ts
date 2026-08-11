@@ -31,7 +31,7 @@ import { Radio } from '../../shared/components/molecules/radio/radio';
 import { RadioGroup } from '../../shared/components/molecules/radio-group/radio-group';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
-import { toCaseStatusPresentation } from './case-status';
+import { CaseStatusCatalog, toCaseStatusPresentation } from './case-status';
 
 /** Lo máximo que admite una evidencia. Un documento no pesa más que esto. */
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -138,6 +138,21 @@ export class IdentityVerification {
   private readonly files = inject(FilesClient);
   private readonly identity = inject(IdentityClient);
   private readonly session = inject(SessionStore);
+
+  /**
+   * Resuelve los estados de caso contra terminología.
+   *
+   * **No se usa: se inyecta.** El catálogo no expone métodos —su trabajo es
+   * llenar el mapa que lee `toCaseStatusPresentation`— así que inyectarlo es
+   * cómo una pantalla declara «necesito los estados en palabras».
+   *
+   * Faltaba, y era un defecto de verdad, no de forma: esta pantalla llamaba a
+   * `toCaseStatusPresentation` sin que nadie hubiera llenado el catálogo, así
+   * que el sello del titular decía **«Desconocido»** en lugar de «Aprobado».
+   * Todas las demás pantallas con sello sí lo inyectaban; ésta —la que mira la
+   * persona sobre su propio trámite— era la única que no.
+   */
+  private readonly estadosDeCaso = inject(CaseStatusCatalog);
 
   protected readonly maxBytes = MAX_BYTES;
 
@@ -297,6 +312,11 @@ export class IdentityVerification {
       next: (resultado) => {
         this.state.set(ready(null));
         this.caso.set({ id: resultado.caseId, status: resultado.status });
+        // El historial es la columna de al lado y no se oculta al enviar: sin
+        // esto, la pantalla dice «tu solicitud quedó registrada» mientras «tus
+        // trámites anteriores» no la incluye. Se relee en vez de agregarla a
+        // mano porque la respuesta del alta no trae las fechas.
+        this.cargarHistorial();
       },
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
@@ -340,6 +360,10 @@ export class IdentityVerification {
       next: (caso) => {
         this.state.set(ready(null));
         this.caso.set(caso);
+        // El mismo trámite se ve en dos lugares a la vez. Actualizar sólo el
+        // panel dejaría el sello del historial con el estado anterior: dos
+        // sellos distintos del mismo caso, uno al lado del otro.
+        this.cargarHistorial();
       },
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });

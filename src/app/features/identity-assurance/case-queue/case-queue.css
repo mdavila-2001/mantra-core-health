@@ -1,0 +1,15 @@
+.cola {
+    margin-top: var(--sp-6);
+}
+
+.cola__sin-dato {
+    color: var(--text-secondary);
+}
+
+/* Los uuid son largos y no se leen: se muestran, se copian, no se comparan a
+   ojo. Ocupan lo que la celda les dé y no empujan al resto de las columnas. */
+.cola__id {
+    overflow-wrap: anywhere;
+    font-size: var(--fs-data);
+    color: var(--text-secondary);
+}

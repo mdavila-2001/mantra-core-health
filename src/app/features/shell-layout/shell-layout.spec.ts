@@ -119,6 +119,7 @@ describe('ShellLayout', () => {
     expect(rutasDelMenu()).toEqual([
       '/panel',
       '/mi-cuenta',
+      '/mi-cuenta/turnos',
       '/identidad/verificar',
       '/identidad/casos',
       '/design-system',

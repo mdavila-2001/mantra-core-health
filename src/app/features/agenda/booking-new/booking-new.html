@@ -1,16 +1,34 @@
 <app-page-header
   title="Reservar un turno"
-  subtitle="Se retiene el cupo, se confirma, y la cita queda en la agenda."
+  [subtitle]="
+    esAutoservicio
+      ? 'Se retiene el horario, se confirma, y el turno queda en tu lista.'
+      : 'Se retiene el cupo, se confirma, y la cita queda en la agenda.'
+  "
   [breadcrumbs]="breadcrumbs()"
 />
 
-@if (sinContexto) {
-  <!-- Sin la franja en la URL no hay cómo reencontrar el cupo: no es un
-       error de red, es que a esta pantalla se llega desde una fila. -->
-  <app-alert tone="warning" title="Entrá desde la agenda" class="reserva__alert">
-    La reserva se abre desde un cupo concreto de la pestaña «Cupos» de la agenda.
+@if (sinPerfilDePaciente) {
+  <!-- Sesión válida, pero de una cuenta que no es de un paciente: no hay perfil
+       a nombre de quién reservar. Se dice acá y no en el `confirm`. -->
+  <app-alert tone="warning" title="Tu cuenta no reserva turnos propios" class="reserva__alert">
+    Esta cuenta no tiene un perfil de paciente. Si atendés turnos, reservá desde la agenda de la
+    organización.
   </app-alert>
   <a app-button variant="primary" [routerLink]="rutaDeAgenda">Ir a la agenda</a>
+} @else if (sinContexto) {
+  <!-- Sin la franja en la URL no hay cómo reencontrar el cupo: no es un
+       error de red, es que a esta pantalla se llega desde una fila. -->
+  <app-alert tone="warning" title="Elegí primero un horario" class="reserva__alert">
+    @if (esAutoservicio) {
+      La reserva se abre desde un horario concreto de la lista de disponibilidad.
+    } @else {
+      La reserva se abre desde un cupo concreto de la pestaña «Cupos» de la agenda.
+    }
+  </app-alert>
+  <a app-button variant="primary" [routerLink]="rutaDeVuelta">
+    {{ esAutoservicio ? 'Ver horarios disponibles' : 'Ir a la agenda' }}
+  </a>
 } @else {
   @if (errorMessage(); as mensaje) {
     <app-alert appAnuncio tone="error" class="reserva__alert" data-testid="reserva-error">{{
@@ -50,9 +68,14 @@
           <!-- Paso 2: el cupo ya está retenido a nombre del paciente. Lo único
                que queda es confirmar antes del vencimiento. -->
           <app-alert appAnuncio tone="success" title="Cupo retenido" class="reserva__alert">
-            Retenido a nombre de {{ paciente()?.label }} hasta las
-            {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirmá antes de esa hora o el cupo
-            vuelve a la agenda.
+            @if (esAutoservicio) {
+              Te lo guardamos hasta las {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirmá
+              antes de esa hora o el horario vuelve a quedar libre.
+            } @else {
+              Retenido a nombre de {{ paciente()?.label }} hasta las
+              {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirmá antes de esa hora o el cupo
+              vuelve a la agenda.
+            }
           </app-alert>
 
           <app-form-actions
@@ -63,29 +86,31 @@
             (cancelled)="volverAElegir()"
           />
         } @else {
-          <!-- Paso 1: para quién es el turno. -->
+          <!-- Paso 1: para quién es el turno. Por el portal ya se sabe. -->
           <form (ngSubmit)="retener()" novalidate data-testid="reserva-form">
-            <app-form-section
-              legend="Paciente"
-              description="El turno queda a nombre de una persona registrada."
-            >
-              <app-form-field
-                label="Paciente"
-                hint="Buscá por nombre o por código de paciente."
-                [required]="true"
-                [errorMessage]="pacienteFaltante() ? 'Elegí para quién es el turno.' : ''"
+            @if (!esAutoservicio) {
+              <app-form-section
+                legend="Paciente"
+                description="El turno queda a nombre de una persona registrada."
               >
-                <app-reference-combobox
-                  [selected]="paciente()"
-                  [options]="candidatos()"
-                  [loading]="buscando()"
-                  placeholder="Nombre o código"
-                  emptyMessage="Ningún paciente coincide"
-                  (searched)="buscarPaciente($event)"
-                  (selectionChange)="paciente.set($event)"
-                />
-              </app-form-field>
-            </app-form-section>
+                <app-form-field
+                  label="Paciente"
+                  hint="Buscá por nombre o por código de paciente."
+                  [required]="true"
+                  [errorMessage]="pacienteFaltante() ? 'Elegí para quién es el turno.' : ''"
+                >
+                  <app-reference-combobox
+                    [selected]="paciente()"
+                    [options]="candidatos()"
+                    [loading]="buscando()"
+                    placeholder="Nombre o código"
+                    emptyMessage="Ningún paciente coincide"
+                    (searched)="buscarPaciente($event)"
+                    (selectionChange)="paciente.set($event)"
+                  />
+                </app-form-field>
+              </app-form-section>
+            }
 
             <app-form-section legend="Motivo" description="Opcional. Acompaña a la cita.">
               <app-form-field
@@ -112,18 +137,22 @@
       }
     }
     @case ('empty') {
-      <app-alert appAnuncio tone="warning" title="El cupo ya no está" class="reserva__alert">
+      <app-alert appAnuncio tone="warning" title="Ese horario ya no está" class="reserva__alert">
         {{ mensajeDeVacio() }}
       </app-alert>
-      <a app-button variant="primary" [routerLink]="rutaDeAgenda">Volver a la agenda</a>
+      <a app-button variant="primary" [routerLink]="rutaDeVuelta">
+        {{ esAutoservicio ? 'Elegir otro horario' : 'Volver a la agenda' }}
+      </a>
     }
     @default {
       <app-alert appAnuncio tone="error" title="No se pudo leer el cupo" class="reserva__alert">
-        La agenda no respondió. Reintentá, o volvé y elegí el cupo de nuevo.
+        La agenda no respondió. Reintentá, o volvé y elegí el horario de nuevo.
       </app-alert>
       <div class="reserva__acciones">
         <button app-button variant="outline" (clicked)="cargarCupo()">Reintentar</button>
-        <a app-button variant="ghost" [routerLink]="rutaDeAgenda">Volver a la agenda</a>
+        <a app-button variant="ghost" [routerLink]="rutaDeVuelta">
+          {{ esAutoservicio ? 'Volver a mis turnos' : 'Volver a la agenda' }}
+        </a>
       </div>
     }
   }

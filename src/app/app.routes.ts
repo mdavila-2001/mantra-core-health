@@ -60,6 +60,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administracion/terminologia': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'mi-cuenta': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
+  'mi-cuenta/turnos': () =>
+    import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'identidad/casos': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
@@ -165,6 +167,20 @@ const PANTALLAS_HIJAS: Routes = [
     // query string porque la pantalla relee el cupo para revalidarlo.
     path: 'agenda/reservar/:slotId',
     title: `${APP_TITLE} - Reservar un turno`,
+    data: { entrada: 'DESK' },
+    loadComponent: () =>
+      import('./features/agenda/booking-new/booking-new')
+        .then((m) => m.BookingNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La MISMA pantalla de reserva, entrada del paciente: el turno queda a su
+    // nombre y el canal que se guarda es `PORTAL`. Es una ruta aparte y no un
+    // query param porque el destino del `routerLink` es lo que decide de qué
+    // sección cuelga el breadcrumb.
+    path: 'mi-cuenta/turnos/reservar/:slotId',
+    title: `${APP_TITLE} - Pedir un turno`,
+    data: { entrada: 'PORTAL' },
     loadComponent: () =>
       import('./features/agenda/booking-new/booking-new')
         .then((m) => m.BookingNew)
@@ -413,6 +429,10 @@ export const routes: Routes = [
         import(
           './features/identity-assurance/verification-policy-form/verification-policy-form'
         ).then((m) => m.VerificationPolicyForm),
+      ),
+      // La cola va primero: es la lectura desde la que se llega a las demás.
+      pantallaDeVerificacionIdentidad('cola', 'Cola de revisión de identidad', () =>
+        import('./features/identity-assurance/case-queue/case-queue').then((m) => m.CaseQueue),
       ),
       pantallaDeVerificacionIdentidad('casos/nuevo', 'Abrir caso de verificación', () =>
         import('./features/identity-assurance/case-open-form/case-open-form').then(

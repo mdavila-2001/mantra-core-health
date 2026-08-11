@@ -216,6 +216,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M05 profiles',
   },
   {
+    // Las vistas `PATIENT` de M41. Es la contracara de la sección «Agenda»:
+    // aquélla mira los turnos de un recurso y exige roles de agenda; ésta mira
+    // los de una persona y no exige ninguno, porque el backend ya acota la
+    // lectura al perfil que se le pide.
+    //
+    // Sin `roles` a propósito: el filtro real es tener perfil de paciente, que
+    // no es un rol sino un dato de la cuenta —el claim `pid` del token—, y la
+    // pantalla lo dice cuando falta en vez de esconderse del menú.
+    path: 'mi-cuenta/turnos',
+    label: 'Mis turnos',
+    group: 'Mi cuenta',
+    icon: 'calendar',
+    availability: 'disponible',
+    summary: 'Mirá tus turnos y pedí uno nuevo con los horarios disponibles.',
+    module: 'M41 scheduling',
+  },
+  {
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino
     // del 403 `IDENTITY_VERIFICATION_REQUIRED`: **no se renombra**. Cambiarla
     // rompería la puerta que traduce ese error en una salida.

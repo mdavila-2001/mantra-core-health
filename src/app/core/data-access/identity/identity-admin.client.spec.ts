@@ -6,6 +6,7 @@ import { IdentityAdminClient } from './identity-admin.client';
 import type {
   IssuedAssertion,
   OpenedCase,
+  QueuedCase,
   RegisteredAuthority,
   RevokedAssertion,
 } from './identity-admin.types';
@@ -33,6 +34,65 @@ describe('IdentityAdminClient', () => {
 
   afterEach(() => {
     http.verify();
+  });
+
+  it('pide la cola sin filtros y convierte las fechas', () => {
+    let cola: readonly QueuedCase[] | undefined;
+    client.listCaseQueue().subscribe((casos) => (cola = casos));
+
+    const req = http.expectOne('/identity/verification-cases');
+    expect(req.request.method).toBe('GET');
+    // Sin filtros no viaja ningún parámetro: el backend decide qué estados
+    // esperan revisión, y el front no duplica esa regla.
+    expect(req.request.params.keys()).toEqual([]);
+    req.flush({
+      cases: [
+        {
+          id: CASO,
+          status: CONCEPTO,
+          subjectTypeConceptId: CONCEPTO,
+          subjectEntityId: ORGANIZACION,
+          identityVerificationPolicyId: AUTORIDAD,
+          openedAt: '2026-08-10T12:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(cola?.length).toBe(1);
+    expect(cola?.[0].openedAt).toEqual(new Date('2026-08-10T12:00:00.000Z'));
+    expect(cola?.[0].id).toBe(CASO);
+  });
+
+  it('omite los campos opcionales que no llegan, en vez de dejarlos indefinidos', () => {
+    let cola: readonly QueuedCase[] | undefined;
+    client.listCaseQueue().subscribe((casos) => (cola = casos));
+
+    http.expectOne('/identity/verification-cases').flush({
+      cases: [
+        {
+          id: CASO,
+          status: CONCEPTO,
+          subjectTypeConceptId: CONCEPTO,
+          subjectEntityId: ORGANIZACION,
+          identityVerificationPolicyId: AUTORIDAD,
+        },
+      ],
+    });
+
+    expect(cola?.[0]).not.toHaveProperty('openedAt');
+    expect(cola?.[0]).not.toHaveProperty('riskScore');
+  });
+
+  it('manda status y limit cuando se los pide', () => {
+    client.listCaseQueue({ status: CONCEPTO, limit: 10 }).subscribe();
+
+    const req = http.expectOne(
+      (r) =>
+        r.url === '/identity/verification-cases' &&
+        r.params.get('status') === CONCEPTO &&
+        r.params.get('limit') === '10',
+    );
+    req.flush({ cases: [] });
   });
 
   it('registra la autoridad y convierte la fecha de alta', () => {

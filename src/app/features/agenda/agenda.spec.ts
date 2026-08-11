@@ -61,6 +61,29 @@ const CITA = {
   createdAt: '2026-08-01T10:00:00.000Z',
 };
 
+/** La agenda de OTRO profesional, para que «la primera» y «la mía» no coincidan. */
+const RECURSO_AJENO = {
+  ...RECURSO,
+  id: 'r-0',
+  name: 'Consultorio 0 · Dr. Otro',
+  resourceRefId: 'hp-0',
+};
+
+/**
+ * Un recurso que apunta al mismo uuid pero **desde otra tabla**.
+ *
+ * Existe para fijar que el cruce compara las dos cosas: si sólo mirara el
+ * identificador, dos filas de tablas distintas que compartan uuid se tomarían
+ * por la misma agenda.
+ */
+const RECURSO_DE_OTRA_TABLA = {
+  ...RECURSO,
+  id: 'r-9',
+  name: 'Sala de rayos',
+  resourceRefType: 'equipment',
+  resourceRefId: 'hp-1',
+};
+
 const CUPO = {
   id: 's-1',
   resourceId: 'r-1',
@@ -98,7 +121,10 @@ describe('Agenda', () => {
    * Abre sesión **antes** de montar: la agenda decide en su constructor si
    * puede pedir algo, y esa decisión sale de la organización del token.
    */
-  async function montar(claims: Record<string, unknown> = {}): Promise<void> {
+  async function montar(
+    claims: Record<string, unknown> = {},
+    url = '/agenda',
+  ): Promise<void> {
     session.start({
       accessToken: jwt({
         sub: 'u-1',
@@ -109,7 +135,7 @@ describe('Agenda', () => {
       refreshToken: 'r-1',
     });
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/agenda', Agenda);
+    componente = await harness.navigateByUrl(url, Agenda);
   }
 
   function interno<T>(nombre: string): T {
@@ -136,6 +162,19 @@ describe('Agenda', () => {
     opciones: { citas?: unknown[]; cupos?: unknown[]; recortadas?: boolean } = {},
   ): Promise<void> {
     await responderRecursos();
+    responderResto(opciones);
+  }
+
+  /**
+   * Todo menos los recursos, para los casos que necesitan sembrarlos a medida.
+   *
+   * Separado de `responder` porque **cuál recurso se elige** es justamente lo que
+   * varias pruebas ejercitan, y esas necesitan controlar la lista antes de que
+   * salgan las lecturas que dependen de ella.
+   */
+  function responderResto(
+    opciones: { citas?: unknown[]; cupos?: unknown[]; recortadas?: boolean } = {},
+  ): void {
     http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .flush({
@@ -246,6 +285,133 @@ describe('Agenda', () => {
     expect((citas().data?.[0] as Record<string, unknown>)['rutaPaciente']).toBe(
       '/administracion/pacientes/p-1',
     );
+  });
+
+  /* ---- la agenda propia (claim `hpid`) ----------------------------------- */
+
+  /**
+   * Sin el claim, la agenda cae en el primer recurso de la organización — que
+   * con varios consultorios es el de otra persona, y las dos se ven igual.
+   */
+  it('sin `hpid` se abre en el primer recurso, como antes', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    await responderRecursos([RECURSO_AJENO, RECURSO]);
+    await responderResto();
+
+    expect(interno<() => string | null>('recursoElegido')()).toBe('r-0');
+    expect(interno<() => boolean>('mirandoAgendaPropia')()).toBe(false);
+  });
+
+  it('con `hpid` se abre en la agenda propia aunque no sea la primera', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderRecursos([RECURSO_AJENO, RECURSO]);
+    await responderResto();
+
+    expect(interno<() => string | null>('recursoElegido')()).toBe('r-1');
+    expect(interno<() => boolean>('mirandoAgendaPropia')()).toBe(true);
+  });
+
+  /**
+   * Un enlace compartido tiene que abrir lo que dice. Si la agenda propia
+   * ganara, dos personas no podrían mirar la misma pantalla.
+   */
+  it('el recurso de la URL manda sobre la agenda propia', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/agenda?recurso=r-0');
+    await responderRecursos([RECURSO_AJENO, RECURSO]);
+    await responderResto();
+
+    expect(interno<() => string | null>('recursoElegido')()).toBe('r-0');
+    expect(interno<() => boolean>('mirandoAgendaPropia')()).toBe(false);
+  });
+
+  /**
+   * El identificador solo no alcanza: dos filas de tablas distintas pueden
+   * compartir uuid sin tener nada que ver.
+   */
+  it('no toma por propia una agenda que apunta a otra tabla', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderRecursos([RECURSO_DE_OTRA_TABLA, RECURSO_AJENO]);
+    await responderResto();
+
+    expect(interno<() => boolean>('mirandoAgendaPropia')()).toBe(false);
+    expect(interno<() => string | null>('recursoElegido')()).toBe('r-9');
+  });
+
+  /**
+   * El enlace que cierra el recorrido del médico: del turno a la historia de
+   * quien llega. Es el que `CLINICIAN` y `PRACTITIONER` sí pueden abrir — la
+   * ficha de filiación pide `SECURITY_ADMIN`, que no tienen —, así que sin él la
+   * agenda de quien atiende terminaba en un callejón.
+   */
+  it('con rol clínico el turno enlaza al expediente', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    await responder();
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['rutaExpediente']).toBe('/clinico/p-1');
+    // Y no la ficha de filiación, que su rol no puede abrir.
+    expect(fila['rutaPaciente']).toBeNull();
+  });
+
+  it('sin rol clínico no ofrece el expediente', async () => {
+    await montar({ roles: ['SCHEDULING_AGENT'] });
+    await responder();
+
+    expect((citas().data?.[0] as Record<string, unknown>)['rutaExpediente']).toBeNull();
+  });
+
+  /** El motivo viaja al expediente para precargar el del encuentro. */
+  it('lleva el motivo de la cita para precargar el del encuentro', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    await responder();
+
+    expect((citas().data?.[0] as Record<string, unknown>)['motivoCrudo']).toBe('Control anual');
+  });
+
+  /**
+   * El vínculo turno → encuentro. Viaja el `appointmentId` de la reserva —la
+   * cita clínica— y **no** el `id` de la reserva, que apunta a otra tabla y
+   * violaría la clave foránea del encuentro.
+   */
+  it('lleva la cita clínica del turno cuando la reserva la tiene', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    await responder({ citas: [{ ...CITA, appointmentId: 'ap-1' }] });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['appointmentId']).toBe('ap-1');
+    expect(fila['paramsDelExpediente']).toEqual({ motivo: 'Control anual', cita: 'ap-1' });
+  });
+
+  /**
+   * `null` es lo corriente —la reserva nace en la agenda y la cita clínica es un
+   * registro posterior— y no puede colarse en la URL como el texto «null».
+   */
+  it('una reserva sin cita clínica no manda el parámetro', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    await responder({ citas: [{ ...CITA, appointmentId: null }] });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['appointmentId']).toBeNull();
+    expect(fila['paramsDelExpediente']).toEqual({ motivo: 'Control anual' });
+  });
+
+  it('una cita sin motivo no inventa uno para llevar', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    const { reasonText: _omitido, ...sinMotivo } = CITA;
+    await responder({ citas: [sinMotivo] });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['motivoCrudo']).toBeNull();
+    // En la tabla sí se rellena: una celda vacía se lee como un dato que no cargó.
+    expect(fila['motivo']).toBe('Sin registrar');
+  });
+
+  it('una cita sin paciente no enlaza a ningún expediente', async () => {
+    await montar({ roles: ['PRACTITIONER'] });
+    const { patientProfileId: _omitido, ...sinPaciente } = CITA;
+    await responder({ citas: [sinPaciente] });
+
+    expect((citas().data?.[0] as Record<string, unknown>)['rutaExpediente']).toBeNull();
   });
 
   it('un fallo en citas no vacía los cupos, que sí respondieron', async () => {

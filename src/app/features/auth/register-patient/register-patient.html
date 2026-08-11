@@ -72,20 +72,58 @@
           </app-form-field>
 
           <app-form-field
-            label="Nombre completo"
+            label="Nombre"
             [required]="true"
             [errorMessage]="
-              formPaciente.controls.displayName.touched && formPaciente.controls.displayName.invalid
+              formPaciente.controls.name.touched && formPaciente.controls.name.invalid
                 ? 'Ingresá tu nombre.'
                 : ''
             "
           >
             <app-input
-              formControlName="displayName"
+              formControlName="name"
               type="text"
-              autocomplete="name"
-              placeholder="Ana Paz"
+              autocomplete="given-name"
+              placeholder="Lucía"
               testId="registro-nombre"
+            />
+          </app-form-field>
+
+          <app-form-field label="Segundo nombre" hint="Si no tenés, dejalo vacío.">
+            <app-input
+              formControlName="middleName"
+              type="text"
+              autocomplete="additional-name"
+              placeholder="Andrea"
+              testId="registro-segundo-nombre"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Apellido paterno"
+            [required]="true"
+            [errorMessage]="
+              formPaciente.controls.lastName.touched && formPaciente.controls.lastName.invalid
+                ? 'Ingresá tu apellido paterno.'
+                : ''
+            "
+          >
+            <app-input
+              formControlName="lastName"
+              type="text"
+              autocomplete="family-name"
+              placeholder="Mamani"
+              testId="registro-apellido-paterno"
+            />
+          </app-form-field>
+
+          <app-form-field label="Apellido materno" hint="Si no llevás, dejalo vacío.">
+            <app-input
+              formControlName="motherLastName"
+              type="text"
+              autocomplete="family-name"
+              placeholder="Quispe"
+              testId="registro-apellido-materno"
             />
           </app-form-field>
 

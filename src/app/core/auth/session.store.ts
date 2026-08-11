@@ -52,6 +52,29 @@ export class SessionStore {
   readonly displayName = computed<string | null>(() => this.claims()?.name ?? null);
 
   /**
+   * Perfil de paciente del titular, o `null` si la cuenta no es la de un
+   * paciente (personal de salud, administración).
+   *
+   * Es lo que distingue a quien puede usar el autoservicio del portal: sin este
+   * dato no se puede confirmar una reserva, porque `confirm` lo exige.
+   */
+  readonly patientProfileId = computed<string | null>(
+    () => this.claims()?.pid ?? null,
+  );
+
+  /**
+   * Perfil profesional del titular, o `null` si la cuenta no es la de quien
+   * atiende (pacientes, administración, cuentas de sistema).
+   *
+   * Es lo que permite que la agenda se abra en la del profesional que entró, en
+   * vez de en la primera de la organización. Los dos perfiles conviven: nada
+   * impide que quien atiende sea además paciente de la institución.
+   */
+  readonly practitionerProfileId = computed<string | null>(
+    () => this.claims()?.hpid ?? null,
+  );
+
+  /**
    * Nombre de una organización por su identificador.
    *
    * Cae al identificador cuando el token no trae el nombre: es feo, pero es

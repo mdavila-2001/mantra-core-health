@@ -36,10 +36,17 @@
     <form class="agenda__filtros" (submit)="$event.preventDefault()">
       <!-- Sin opción «todos»: la agenda de la organización entera no se puede
            pedir, y ofrecerla sería ofrecer un botón que devuelve un error. -->
+      <!-- Cuál se está mirando importa más cuando la agenda la eligió sola: sin
+           decirlo, quien tiene la suya no sabe si está viendo la propia o la
+           primera de la lista, y las dos se ven igual. -->
       <app-form-field
         label="Recurso"
         class="agenda__filtro"
-        hint="Las citas se listan por recurso; el backend no admite pedirlas todas juntas."
+        [hint]="
+          mirandoAgendaPropia()
+            ? 'Estás viendo tu agenda. Podés cambiar a la de otro recurso.'
+            : 'Las citas se listan por recurso; el backend no admite pedirlas todas juntas.'
+        "
       >
         <app-select
           [options]="opcionesDeRecurso()"
@@ -127,10 +134,26 @@
 </ng-template>
 
 <ng-template #celdaPaciente let-cita>
-  @if (cita.rutaPaciente) {
-    <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
+  <!-- Dos destinos distintos, no dos formas de lo mismo: el expediente es la
+       historia de quien llega y lo abre quien atiende; la ficha es la filiación
+       y la abre administración. Se ofrecen los que la sesión pueda abrir, y
+       ninguno cuando no puede abrir ninguno. -->
+  @if (cita.rutaExpediente || cita.rutaPaciente) {
+    <span class="agenda__accesos">
+      @if (cita.rutaExpediente) {
+        <!-- El turno viaja con lo suyo: el motivo precarga el del encuentro y la
+             cita clínica lo ata a este turno. Los dos son opcionales y se
+             componen en el componente. -->
+        <a app-link [routerLink]="cita.rutaExpediente" [queryParams]="cita.paramsDelExpediente"
+          >Abrir expediente</a
+        >
+      }
+      @if (cita.rutaPaciente) {
+        <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
+      }
+    </span>
   } @else if (cita.patientProfileId) {
-    <!-- Sin permiso para abrir la ficha, el enlace sería un 403 con forma de
+    <!-- Sin permiso para abrir nada, el enlace sería un 403 con forma de
          invitación. Se dice que hay paciente y no cuál. -->
     <span class="agenda__hasta">Paciente asignado</span>
   } @else {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 import { IdentityAdminClient } from '../../../core/data-access/identity/identity-admin.client';
 import type {
@@ -76,6 +77,21 @@ export class ManualReviewForm {
   protected readonly errorMessage = computed(() =>
     errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
   );
+
+  constructor() {
+    // La cola de revisión enlaza acá con `?caseId=`: es lo que evita que quien
+    // revisa tenga que copiar un uuid a mano entre dos pantallas. Se lee una
+    // sola vez, en la construcción, porque no se vuelve a esta ruta con otro
+    // caso sin reconstruir el componente.
+    //
+    // Llega como texto de una URL, así que se valida antes de escribirlo: un
+    // `?caseId=` inventado dejaría el formulario en un estado inválido sin que
+    // nadie haya tipeado nada, y el campo queda editable igual.
+    const caseId = inject(ActivatedRoute).snapshot.queryParamMap.get('caseId');
+    if (caseId !== null && UUID_PATTERN.test(caseId)) {
+      this.form.controls.caseId.setValue(caseId);
+    }
+  }
 
   protected submit(): void {
     if (this.isSubmitting()) {

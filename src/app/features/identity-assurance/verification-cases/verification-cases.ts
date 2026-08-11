@@ -27,7 +27,10 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { toCaseStatusPresentation } from '../../identity-verification/case-status';
+import {
+  CaseStatusCatalog,
+  toCaseStatusPresentation,
+} from '../../identity-verification/case-status';
 
 /** Fila de la tabla: presentación ya resuelta, no el DTO del backend. */
 interface CaseRow {
@@ -88,9 +91,28 @@ type CaseCell = TemplateRef<{ $implicit: CaseRow }>;
 export class VerificationCases {
   private readonly identity = inject(IdentityClient);
   private readonly navigation = inject(NavigationService);
+  // `toCaseRow` resuelve el estado con `toCaseStatusPresentation`, que lee el
+  // catálogo de terminología: inyectarlo acá es lo que lo llena.
+  private readonly estadosDeCaso = inject(CaseStatusCatalog);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  protected readonly state = signal<ViewState<readonly CaseRow[]>>(loading());
+  /**
+   * Los casos tal como los devuelve el backend, sin traducir.
+   *
+   * Se guardan crudos y la traducción se deriva: los estados se resuelven contra
+   * terminología, que responde **después** de que la lista llegó. Mapear en el
+   * `subscribe` congelaba las etiquetas en el instante equivocado y la tabla
+   * mostraba «Desconocido» para siempre, aunque el catálogo llegara un segundo
+   * más tarde.
+   */
+  private readonly casos = signal<ViewState<readonly VerificationCase[]>>(loading());
+
+  protected readonly state = computed<ViewState<readonly CaseRow[]>>(() => {
+    const estado = this.casos();
+    return estado.status === 'ready'
+      ? ready(estado.data.map(toCaseRow))
+      : (estado as ViewState<readonly CaseRow[]>);
+  });
 
   private readonly idCell = viewChild<CaseCell>('idCell');
   private readonly statusCell = viewChild<CaseCell>('statusCell');
@@ -112,20 +134,21 @@ export class VerificationCases {
   }
 
   protected cargar(): void {
-    this.state.set(loading());
+    this.casos.set(loading());
     this.identity.listVerificationCases().subscribe({
-      next: (casos) => this.state.set(this.aEstado(casos)),
-      error: (error: unknown) => this.state.set(errorToViewState<readonly CaseRow[]>(error)),
+      next: (casos) => this.casos.set(this.aEstado(casos)),
+      error: (error: unknown) =>
+        this.casos.set(errorToViewState<readonly VerificationCase[]>(error)),
     });
   }
 
-  private aEstado(casos: readonly VerificationCase[]): ViewState<readonly CaseRow[]> {
+  private aEstado(casos: readonly VerificationCase[]): ViewState<readonly VerificationCase[]> {
     if (casos.length === 0) {
       return empty(
         { label: 'Verificar mi identidad', route: IDENTITY_VERIFICATION_ROUTE },
         'Cuando inicies una verificación de identidad, tus trámites van a aparecer acá.',
       );
     }
-    return ready(casos.map(toCaseRow));
+    return ready(casos);
   }
 }
