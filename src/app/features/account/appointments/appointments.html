@@ -45,7 +45,21 @@
                   <span class="turnos__agenda">{{ turno.agenda }}</span>
                 }
               </div>
-              <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
+              <div class="turnos__acciones">
+                <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
+                @if (esCancelable(turno)) {
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    class="turnos__cancelar"
+                    [isLoading]="operando() === turno.id"
+                    (clicked)="cancelarTurno(turno)"
+                  >
+                    Cancelar
+                  </button>
+                }
+              </div>
               @if (turno.motivo !== '') {
                 <p class="turnos__motivo">{{ turno.motivo }}</p>
               }
