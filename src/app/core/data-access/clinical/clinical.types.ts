@@ -469,3 +469,47 @@ export interface ObservationRegistration {
   readonly rowVersion: number;
   readonly createdAt: Date;
 }
+
+/**
+ * Lo que hace falta para emitir un informe diagnóstico (UC-08-06).
+ *
+ * ## Existe el contrato y no la pantalla, a propósito
+ *
+ * El informe **no aparece en ninguna lectura**: no está en el bloque de
+ * `getSummary`, no está en `getChart`, y el backend no expone ningún `GET` de
+ * reportes. Construir el formulario hoy sería exactamente lo que el resto de
+ * este archivo evita —tragarse el dato y no mostrarlo—: quien lo emitiera no
+ * tendría forma de comprobar que existe, ni al recargar.
+ *
+ * El tipo y sus dos métodos entran igual porque el contrato **sí** está
+ * verificado, y así el día que el backend publique la lectura la pantalla es lo
+ * único que falta. Hasta entonces, la ficha del vault lo dice con el mismo
+ * aviso: «Tabla ⚠︎ — la pantalla necesita un listado que el backend todavía no
+ * expone».
+ */
+export interface NewDiagnosticReport {
+  readonly custodianTenantId: string;
+  readonly patientProfileId: string;
+  readonly codeConceptId: string;
+  readonly serviceRequestId?: string;
+  readonly encounterId?: string;
+  readonly categoryConceptId?: string;
+  readonly currentVersionId?: string;
+}
+
+/**
+ * El informe recién emitido o recién liberado.
+ *
+ * Dos estados y no uno: `lifecycleStatus` dice en qué punto está el informe
+ * —parcial, preliminar, final— y `resultReleaseStatus` si el resultado ya se
+ * le liberó a la persona. Son decisiones distintas: un informe final puede
+ * seguir retenido, y esa diferencia es justamente la que la liberación cambia.
+ */
+export interface DiagnosticReportRegistration {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly lifecycleStatus: string;
+  readonly resultReleaseStatus: string | null;
+  readonly serviceRequestId: string | null;
+  readonly createdAt: Date;
+}

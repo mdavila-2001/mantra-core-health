@@ -104,7 +104,19 @@ describe('MedicationBlock', () => {
     fixture.componentRef.setInput('recetas', []);
   });
 
-  afterEach(() => http.verify());
+  /**
+   * Vía y unidad se piden cuando el formulario se pinta, que puede ser después
+   * de `responderCatalogo` —en cuanto una prueba llama a `detectChanges`—. Se
+   * drenan acá para que `verify()` no tropiece con ellas: lo que gobierna si el
+   * alta se ofrece es el catálogo del medicamento, y eso lo cubren las pruebas
+   * de arriba.
+   */
+  afterEach(() => {
+    for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+      opcional.flush(CATALOGO_OPCIONAL);
+    }
+    http.verify();
+  });
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];

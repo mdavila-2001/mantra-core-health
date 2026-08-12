@@ -13,12 +13,14 @@ import type {
   ClinicalSummary,
   Condition,
   ConditionRegistration,
+  DiagnosticReportRegistration,
   Encounter,
   EncounterRegistration,
   MedicationRequest,
   MedicationRequestRegistration,
   NewAllergyIntolerance,
   NewCondition,
+  NewDiagnosticReport,
   NewEncounter,
   NewMedicationRequest,
   NewObservation,
@@ -327,6 +329,55 @@ export class ClinicalClient {
       .pipe(map(toObservationRegistration));
   }
 
+  /* -- El informe diagnóstico: contrato sin pantalla ----------------------- */
+
+  /**
+   * `POST /clinical/diagnostic-reports` — emite el informe desde la orden
+   * (UC-08-06).
+   *
+   * **Todavía no lo usa ninguna pantalla**, y no es un olvido: el informe no
+   * aparece en `getSummary` ni en `getChart`, y el backend no expone ningún
+   * `GET` de reportes. Ver {@link NewDiagnosticReport} — el contrato entra
+   * verificado para que, cuando exista la lectura, falte sólo la vista.
+   *
+   * @param informe - El estudio y su contexto.
+   */
+  createDiagnosticReport(
+    informe: NewDiagnosticReport,
+  ): Observable<DiagnosticReportRegistration> {
+    return this.http
+      .post<WireDiagnosticReportRegistration>(
+        this.url('/clinical/diagnostic-reports'),
+        sinAusentes(informe),
+      )
+      .pipe(map(toDiagnosticReportRegistration));
+  }
+
+  /**
+   * `POST /clinical/diagnostic-reports/:id/release` — libera el resultado
+   * (UC-08-07).
+   *
+   * Liberar es lo que hace visible el resultado para la persona, así que es un
+   * acto aparte de emitir: un informe final puede seguir retenido a propósito
+   * mientras se lo comunica en consulta.
+   *
+   * @param diagnosticReportId - Informe a liberar.
+   * @param expectedRowVersion - Versión esperada, para el bloqueo optimista.
+   */
+  releaseDiagnosticReport(
+    diagnosticReportId: string,
+    expectedRowVersion?: number,
+  ): Observable<DiagnosticReportRegistration> {
+    return this.http
+      .post<WireDiagnosticReportRegistration>(
+        this.url(
+          `/clinical/diagnostic-reports/${encodeURIComponent(diagnosticReportId)}/release`,
+        ),
+        expectedRowVersion === undefined ? {} : { expectedRowVersion },
+      )
+      .pipe(map(toDiagnosticReportRegistration));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
@@ -485,6 +536,17 @@ function toAllergyRegistration({
   createdAt,
   ...resto
 }: WireAllergyRegistration): AllergyIntoleranceRegistration {
+  return { ...resto, createdAt: new Date(createdAt) };
+}
+
+type WireDiagnosticReportRegistration = Omit<DiagnosticReportRegistration, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
+function toDiagnosticReportRegistration({
+  createdAt,
+  ...resto
+}: WireDiagnosticReportRegistration): DiagnosticReportRegistration {
   return { ...resto, createdAt: new Date(createdAt) };
 }
 

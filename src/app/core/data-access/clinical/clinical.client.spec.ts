@@ -7,6 +7,7 @@ import type {
   AllergyIntoleranceRegistration,
   ClinicalSummary,
   ConditionRegistration,
+  DiagnosticReportRegistration,
   EncounterRegistration,
   MedicationRequestRegistration,
   ObservationRegistration,
@@ -81,6 +82,16 @@ const OBSERVACION_REGISTRADA = {
   status: 'st-final',
   componentIds: [],
   rowVersion: 1,
+  createdAt: '2026-08-13T12:00:00.000Z',
+};
+
+/** Un informe recién emitido: su resultado todavía no se liberó. */
+const INFORME_EMITIDO = {
+  id: 'dr-1',
+  patientProfileId: 'p-1',
+  lifecycleStatus: 'st-final',
+  resultReleaseStatus: null,
+  serviceRequestId: null,
   createdAt: '2026-08-13T12:00:00.000Z',
 };
 
@@ -504,5 +515,51 @@ describe('ClinicalClient', () => {
 
     expect(observacion?.rowVersion).toBe(1);
     expect(observacion?.createdAt).toBeInstanceOf(Date);
+  });
+
+  /* ---- el informe diagnóstico: contrato sin pantalla ---------------------- */
+
+  /**
+   * Estos dos no los usa ninguna vista todavía —el informe no aparece en
+   * ninguna lectura del backend— pero el contrato está verificado y estas
+   * pruebas lo fijan: el día que exista el `GET`, la pantalla es lo único que
+   * falta.
+   */
+  it('createDiagnosticReport omite lo que no vino', () => {
+    let informe: DiagnosticReportRegistration | undefined;
+    client
+      .createDiagnosticReport({
+        custodianTenantId: 't-1',
+        patientProfileId: 'p-1',
+        codeConceptId: 'cod-1',
+      })
+      .subscribe((i) => (informe = i));
+
+    const req = http.expectOne('/clinical/diagnostic-reports');
+    expect(req.request.method).toBe('POST');
+    expect(Object.keys(req.request.body as object).sort()).toEqual([
+      'codeConceptId',
+      'custodianTenantId',
+      'patientProfileId',
+    ]);
+
+    req.flush(INFORME_EMITIDO);
+
+    // `resultReleaseStatus` nulo **es** el dato: el informe existe y su
+    // resultado todavía no se liberó a la persona.
+    expect(informe?.resultReleaseStatus).toBeNull();
+    expect(informe?.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('releaseDiagnosticReport manda la versión esperada sólo si la hay', () => {
+    client.releaseDiagnosticReport('dr-1').subscribe();
+    const sinVersion = http.expectOne('/clinical/diagnostic-reports/dr-1/release');
+    expect(sinVersion.request.body).toEqual({});
+    sinVersion.flush(INFORME_EMITIDO);
+
+    client.releaseDiagnosticReport('dr-1', 2).subscribe();
+    const conVersion = http.expectOne('/clinical/diagnostic-reports/dr-1/release');
+    expect(conVersion.request.body).toEqual({ expectedRowVersion: 2 });
+    conVersion.flush({ ...INFORME_EMITIDO, resultReleaseStatus: 'st-liberado' });
   });
 });
