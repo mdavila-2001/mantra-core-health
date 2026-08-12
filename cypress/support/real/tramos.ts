@@ -18,7 +18,9 @@ export type Tramo =
   /** Registrar diagnóstico y observación en el expediente. Esperan el merge de M1. */
   | 'TRAMO_M1_CLINICA'
   /** Crear → firmar → emitir una receta, y el 422 amable al emitir sin firmar. Espera el merge de P1. */
-  | 'TRAMO_P1_RECETA';
+  | 'TRAMO_P1_RECETA'
+  /** Aprobar la revisión deja al titular con acceso: su resumen pasa de 403 a 200. Espera el merge del PR #54 de la API (N4/H-01). */
+  | 'TRAMO_N4_ACCESO';
 
 const ENCENDIDO = ['1', 'true', 'si', 'sí', 'yes'];
 

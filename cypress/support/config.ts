@@ -159,6 +159,7 @@ export function tramos(): Record<string, string> {
     TRAMO_E1_CANCELAR: texto('TRAMO_E1_CANCELAR', ''),
     TRAMO_M1_CLINICA: texto('TRAMO_M1_CLINICA', ''),
     TRAMO_P1_RECETA: texto('TRAMO_P1_RECETA', ''),
+    TRAMO_N4_ACCESO: texto('TRAMO_N4_ACCESO', ''),
   };
 }
 

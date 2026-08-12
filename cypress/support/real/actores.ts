@@ -62,6 +62,23 @@ function corrida(): string {
   return crudo.replace(/[^0-9a-z]/gi, '').slice(-12);
 }
 
+let secuenciaDeAltas = 0;
+
+/**
+ * Sufijo único de **un alta**, no de la corrida entera.
+ *
+ * El documento, la matrícula y el correo son únicos en el backend: dos altas
+ * del mismo tipo con el sufijo de la corrida chocan con `409` en la segunda
+ * (medido: solo la primera spec que registraba sobrevivía, y la suite entera
+ * de un tirón —el objetivo de H-08— era imposible). El reloj distingue specs
+ * de la misma ejecución (cada una recarga este módulo) y la secuencia
+ * distingue altas dentro de una misma spec.
+ */
+function sufijoDeAlta(): string {
+  secuenciaDeAltas += 1;
+  return `${corrida().slice(-6)}${String(Date.now()).slice(-6)}${secuenciaDeAltas}`;
+}
+
 /** Un actor listo para entrar por la pantalla de ingreso. */
 export interface Actor {
   /** Lo que se escribe en «Correo o documento». */
@@ -158,7 +175,8 @@ const NOMBRE_PACIENTE = Object.freeze({
  * encabezado y en la reserva del portal— no la ejercitaba nadie.
  */
 export function crearPaciente(): Cypress.Chainable<Actor> {
-  const nationalId = `CI-E2E-${corrida()}`;
+  const sufijo = sufijoDeAlta();
+  const nationalId = `CI-E2E-${sufijo}`;
   const nombre = [
     NOMBRE_PACIENTE.name,
     NOMBRE_PACIENTE.middleName,
@@ -174,7 +192,7 @@ export function crearPaciente(): Cypress.Chainable<Actor> {
         nationalId,
         password: CLAVE,
         ...NOMBRE_PACIENTE,
-        email: `paciente-${corrida()}@example.test`,
+        email: `paciente-${sufijo}@example.test`,
         phone: '+591 70055555',
         gender: 'FEMALE',
         sexAtBirth: 'FEMALE',
@@ -202,7 +220,8 @@ export function crearPaciente(): Cypress.Chainable<Actor> {
  * tiene que poder mostrar qué ve alguien en ese estado.
  */
 export function crearMedico(): Cypress.Chainable<Actor> {
-  const email = `medico-${corrida()}@example.test`;
+  const sufijo = sufijoDeAlta();
+  const email = `medico-${sufijo}@example.test`;
   return cy
     .request({
       method: 'POST',
@@ -211,8 +230,8 @@ export function crearMedico(): Cypress.Chainable<Actor> {
         email,
         password: CLAVE,
         displayName: 'Dra. Recorrido',
-        licenseNumber: `MP-${corrida()}`,
-        credentialNumber: `TIT-${corrida()}`,
+        licenseNumber: `MP-${sufijo}`,
+        credentialNumber: `TIT-${sufijo}`,
         phone: '+591 70012345',
         gender: 'FEMALE',
         sexAtBirth: 'FEMALE',
@@ -259,15 +278,16 @@ export function crearOrganizacion(tokenAdmin: string): Cypress.Chainable<Actor> 
         );
       }
 
-      const email = `owner-${corrida()}@example.test`;
+      const sufijo = sufijoDeAlta();
+      const email = `owner-${sufijo}@example.test`;
       return cy
         .request({
           method: 'POST',
           url: `${api()}/iam/auth/register-organization`,
           body: {
             organization: {
-              code: `ORG-E2E-${corrida()}`,
-              legalName: `Organización de recorrido ${corrida()}`,
+              code: `ORG-E2E-${sufijo}`,
+              legalName: `Organización de recorrido ${sufijo}`,
               tenantType: 'HOSPITAL',
               countryConceptId: conceptId,
               jurisdictionConceptId: conceptId,

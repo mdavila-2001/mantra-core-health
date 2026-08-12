@@ -1,6 +1,8 @@
 import { capturar, reiniciarContadores } from '../../support/recorrido/evidencia';
-import { apiViva, CLAVE, crearPaciente, type Actor } from '../../support/real/actores';
+import { admin, apiViva, CLAVE, crearPaciente, tokenDe, type Actor } from '../../support/real/actores';
+import { conceptoPorCodigo, escalarYDecidir, resumenDelTitular } from '../../support/real/casos';
 import { entrar, estable, irA } from '../../support/real/sesion';
+import { subirDocumento } from '../../support/real/tramites';
 import { RUTAS, rutaDeCaso, rutaDeReservaDelPortal } from '../../support/real/rutas';
 import { anotarTramoApagado, tramoActivo } from '../../support/real/tramos';
 import { describirHallazgos, Vigilante, vigilarRed } from '../../support/real/vigilante';
@@ -24,9 +26,11 @@ import { describirHallazgos, Vigilante, vigilarRed } from '../../support/real/vi
  *
  * ## Qué fija esta suite que ninguna otra
  *
- * El ciclo **retener → confirmar** por pantalla: el 05 declara explícitamente
- * no confirmar. Necesita horarios sembrados (`yarn seed:dev` en la API); sin
- * ellos, el paso queda anotado como no ejercitado, no en verde de mentira.
+ * El **guion completo del consumidor** en una sola sesión: el 05 ya recorre
+ * retener → confirmar por su cuenta (desde d2a59f8), pero acá el turno es un
+ * paso del camino, no el objeto de la prueba. Necesita horarios sembrados
+ * (`yarn seed:dev` en la API); sin ellos, el paso queda anotado como no
+ * ejercitado, no en verde de mentira.
  *
  * ## Todas las rutas salen de `support/real/rutas.ts`
  *
@@ -242,33 +246,8 @@ describe('Recorrido real · el camino del consumidor', () => {
     });
   }
 
-  /**
-   * Sube el documento por la pantalla y devuelve el código del caso, leído de
-   * lo que el titular ve. Mismo gesto que en el 07/08: el identificador sale
-   * de la pantalla, no de una respuesta de la API.
-   */
-  function subirDocumento(): Cypress.Chainable<string> {
-    cy.get('input[type=file]').selectFile(
-      {
-        contents: Cypress.Buffer.from('documento de prueba'),
-        fileName: 'documento.pdf',
-        mimeType: 'application/pdf',
-      },
-      { force: true },
-    );
-
-    cy.contains('button', 'Enviar para revisión').click();
-    estable();
-
-    cy.contains('Tu solicitud quedó registrada', { timeout: 20_000 }).should('exist');
-
-    return cy
-      .contains('dt', 'Código del caso')
-      .siblings('dd')
-      .find('code')
-      .invoke('text')
-      .then((texto) => cy.wrap(texto.trim(), { log: false }));
-  }
+  // `subirDocumento` vive en `support/real/tramites.ts` desde que `dev` lo
+  // extrajo para el 02 (6c63fe5): acá se importa, no se repite.
 
   it('entra, pide y confirma un turno, sube su evidencia y ve el caso en palabras', () => {
     const vigilante = new Vigilante('consumidor');
@@ -380,6 +359,57 @@ describe('Recorrido real · el camino del consumidor', () => {
       .should('match', /En revisión/)
       .and('not.match', /[0-9a-f]{8}-[0-9a-f]{4}/);
     capturar({ carpeta: 'consumidor-05-casos', titulo: 'El caso del titular' }, 'detalle');
+
+    // ── 7. El desenlace: lo aprueban y el acceso se habilita — tramo N4 ────
+    if (tramoActivo('TRAMO_N4_ACCESO')) {
+      const credenciales = { tokenTitular: '', tokenAdmin: '', motivo: '' };
+      cy.then(() => tokenDe(consumidor.identificador, consumidor.clave)).then((token) => {
+        credenciales.tokenTitular = token;
+      });
+      cy.then(() => tokenDe(admin().identificador, admin().clave)).then((token) => {
+        credenciales.tokenAdmin = token;
+      });
+      cy.then(() => conceptoPorCodigo(credenciales.tokenAdmin, 'ACTIVE')).then((motivo) => {
+        credenciales.motivo = motivo;
+      });
+
+      // Mientras el caso espera, el resumen del titular sigue cerrado.
+      cy.then(() => resumenDelTitular(credenciales.tokenTitular)).then((antes) => {
+        expect(antes.status, 'antes de la decisión, el resumen está cerrado').to.equal(403);
+      });
+
+      // La decisión va por la API: el formulario del revisor ya lo cubre `07`.
+      cy.then(() =>
+        escalarYDecidir(
+          credenciales.tokenAdmin,
+          contexto.caso,
+          credenciales.motivo,
+          'APPROVED',
+          'Documento legible',
+        ),
+      );
+
+      // El titular vuelve a mirar: el sello dice «Aprobado»…
+      irA(RUTAS.panel);
+      estable();
+      irA(RUTAS.misCasos);
+      estable();
+      cy.then(() => {
+        cy.contains('tr', contexto.caso, { timeout: 20_000 }).should('contain.text', 'Aprobado');
+      });
+      capturar({ carpeta: 'consumidor-06-acceso', titulo: 'Mis verificaciones' }, 'aprobado');
+
+      // …y la promesa de la pantalla de verificación se cumple: acceso habilitado.
+      cy.then(() => resumenDelTitular(credenciales.tokenTitular)).then((despues) => {
+        expect(despues.status, 'aprobar tiene que habilitar el acceso del titular').to.equal(200);
+      });
+    } else {
+      anotarTramoApagado(
+        'TRAMO_N4_ACCESO',
+        'Mis verificaciones',
+        'el desenlace del guion: aprobar el caso y ver el acceso habilitado (espera el PR #54 de la API)',
+      );
+    }
 
     // ── Cierre: lo que el vigilante haya visto, a la cara ──────────────────
     cy.then(() => {
