@@ -16,6 +16,11 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
+import {
+  toBookingStatusPresentation,
+  type BookingStatusPresentation,
+} from './booking-status';
 import {
   CITA_QUERY_PARAM,
   MOTIVO_QUERY_PARAM,
@@ -120,7 +125,15 @@ export interface CitaVisible {
   readonly cuando: Date | null;
   readonly hasta: Date | null;
   readonly recurso: string;
-  readonly estado: string;
+  /**
+   * El estado con su sello: tono, forma y palabra.
+   *
+   * No es un `string` como en los cupos, y la diferencia es de la identidad:
+   * el estado de una cita es información de estado, y el sistema de diseño
+   * exige codificarla en **tres canales** —el color solo no alcanza para quien
+   * no lo distingue—.
+   */
+  readonly estado: BookingStatusPresentation;
   readonly motivo: string;
   readonly patientProfileId: string | null;
   readonly rutaPaciente: string | null;
@@ -212,6 +225,7 @@ export interface CupoVisible {
     AppButton,
     AppButtonLink,
     Badge,
+    StatusSeal,
     DataTable,
     DatePipe,
     FormField,
@@ -829,7 +843,12 @@ export class Agenda {
       cuando: cita.startAt ?? null,
       hasta: cita.endAt ?? null,
       recurso: this.nombreDeRecurso(cita.resourceId),
-      estado: this.label(cita.statusConceptId),
+      estado: toBookingStatusPresentation(
+        cita.statusConceptId === undefined
+          ? undefined
+          : this.etiquetas().get(cita.statusConceptId),
+        SIN_DATO,
+      ),
       motivo: cita.reasonText ?? SIN_DATO,
       patientProfileId: paciente,
       rutaPaciente:

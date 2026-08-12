@@ -43,6 +43,7 @@ import { DataTable } from '../../../shared/components/organisms/data-table/data-
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import {
   CITA_QUERY_PARAM,
@@ -156,6 +157,7 @@ interface Expediente {
     FormActions,
     FormField,
     PageHeader,
+    StatusSeal,
     Tab,
     Tabs,
     Textarea,
