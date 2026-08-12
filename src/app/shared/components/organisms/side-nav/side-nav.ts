@@ -85,6 +85,38 @@ export class SideNav {
     return classes.join(' ');
   });
 
+  /**
+   * Rutas del menú que son prefijo de otro destino del menú.
+   *
+   * `routerLinkActive` por prefijo marcaría al padre Y al descendiente a la
+   * vez —dos `aria-current="page"`, dos «acá estás» para quien usa lector de
+   * pantalla—, así que esas rutas se activan solo con coincidencia exacta.
+   * Las hojas siguen por prefijo: una pantalla hija que no está en el menú
+   * (el detalle de un caso) mantiene encendido a su padre visible.
+   */
+  private readonly exactRoutes = computed(() => {
+    const routes = this.sections().flatMap((section) => section.items.map((item) => item.route));
+    return new Set(
+      routes.filter((route) => {
+        const prefix = route.endsWith('/') ? route : `${route}/`;
+        return routes.some((other) => other !== route && other.startsWith(prefix));
+      }),
+    );
+  });
+
+  /**
+   * Identidades estables: un literal en la plantilla sería un objeto nuevo en
+   * cada pase de detección, y cada identidad nueva dispara el `ngOnChanges`
+   * de `routerLinkActive` — que en su `update()` vuelve a decidir el
+   * `aria-current` — una vez por render, para no cambiar nada.
+   */
+  private static readonly EXACT_MATCH = { exact: true };
+  private static readonly PREFIX_MATCH = { exact: false };
+
+  protected activeOptionsFor(item: NavItem): { exact: boolean } {
+    return this.exactRoutes().has(item.route) ? SideNav.EXACT_MATCH : SideNav.PREFIX_MATCH;
+  }
+
   constructor() {
     // Mientras el cajón está abierto, el resto de la aplicación es inerte y el
     // foco entra al panel. Sin `inert`, el tabulador sigue recorriendo la

@@ -82,6 +82,7 @@ describe('SideNav', () => {
         provideRouter([
           { path: '', component: RutaVacia },
           { path: 'pacientes', component: RutaVacia },
+          { path: 'pacientes/nuevo', component: RutaVacia },
           { path: 'schedule', component: RutaVacia },
           { path: 'billing', component: RutaVacia },
         ]),
@@ -125,6 +126,54 @@ describe('SideNav', () => {
       const activos = enlaces().filter((link) => link.getAttribute('aria-current') === 'page');
       expect(activos).toHaveLength(1);
       expect(activos[0].getAttribute('href')).toBe('/');
+    });
+
+    /**
+     * Un menú puede anunciar destinos anidados (`/my-account` y
+     * `/my-account/identity/verify`). Con la coincidencia por prefijo de
+     * `routerLinkActive`, abrir el hijo marcaba TAMBIÉN al padre: dos
+     * `aria-current="page"`, dos «acá estás» para quien usa lector de
+     * pantalla. La ruta que es prefijo de otro ítem se activa solo con
+     * coincidencia exacta.
+     */
+    it('con destinos anidados, solo el más profundo anuncia la página actual', async () => {
+      host.secciones.set([
+        {
+          label: 'Atención',
+          items: [
+            { label: 'Pacientes', route: '/pacientes', icon: 'patients' },
+            { label: 'Nuevo paciente', route: '/pacientes/nuevo', icon: 'patients' },
+          ],
+        },
+      ]);
+      await TestBed.inject(Router).navigate(['/pacientes/nuevo']);
+      // `RouterLinkActive.update()` difiere a un microtask; sin drenarlo, el
+      // `aria-current` del template todavía no se pintó.
+      await new Promise((resolve) => queueMicrotask(() => resolve(undefined)));
+      await fixture.whenStable();
+
+      const activos = enlaces().filter((link) => link.getAttribute('aria-current') === 'page');
+      expect(activos).toHaveLength(1);
+      expect(activos[0].getAttribute('href')).toBe('/pacientes/nuevo');
+    });
+
+    it('el padre de un destino anidado sigue anunciándose en su propia pantalla', async () => {
+      host.secciones.set([
+        {
+          label: 'Atención',
+          items: [
+            { label: 'Pacientes', route: '/pacientes', icon: 'patients' },
+            { label: 'Nuevo paciente', route: '/pacientes/nuevo', icon: 'patients' },
+          ],
+        },
+      ]);
+      await TestBed.inject(Router).navigate(['/pacientes']);
+      await new Promise((resolve) => queueMicrotask(() => resolve(undefined)));
+      await fixture.whenStable();
+
+      const activos = enlaces().filter((link) => link.getAttribute('aria-current') === 'page');
+      expect(activos).toHaveLength(1);
+      expect(activos[0].getAttribute('href')).toBe('/pacientes');
     });
   });
 
