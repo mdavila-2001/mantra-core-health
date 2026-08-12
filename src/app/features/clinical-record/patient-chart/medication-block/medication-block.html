@@ -1,0 +1,162 @@
+<app-card variant="outlined" padding="lg" class="receta">
+  <h2 class="receta__titulo">Medicación</h2>
+
+  <!-- El aviso de precondición va primero y en ámbar: no es un fallo, es un
+       paso que falta, y su salida —firmar— está en la lista de abajo. -->
+  @if (avisoDePrecondicion(); as aviso) {
+    <app-alert tone="warning" title="Falta la firma" data-testid="receta-precondicion">
+      {{ aviso }} Firmala con el botón «Firmar» y volvé a emitirla.
+    </app-alert>
+  }
+
+  @if (errorDeLaReceta(); as mensaje) {
+    <app-alert tone="error" data-testid="receta-error">{{ mensaje }}</app-alert>
+  }
+
+  <!-- Las recetas ya cargadas, con su acción pendiente al lado. Van antes del
+       formulario a propósito: quien atiende mira qué hay indicado antes de
+       indicar una cosa más. -->
+  @if (recetas().length > 0) {
+    <ul class="receta__lista" data-testid="recetas">
+      @for (receta of recetas(); track receta.id) {
+        <li class="receta__item">
+          <div class="receta__datos">
+            <app-status-seal [variant]="selloDe(receta)" [label]="receta.estado" />
+            <span class="receta__principal">{{ receta.medicamento }}</span>
+            @if (receta.indicacion) {
+              <span class="receta__secundario">{{ receta.indicacion }}</span>
+            }
+          </div>
+
+          <!-- Una receta emitida no ofrece nada: es inmutable, y un botón que
+               siempre responde 422 es una trampa, no una acción. -->
+          @if (!receta.emitida) {
+            <div class="receta__acciones">
+              @if (!receta.firmada) {
+                <button
+                  app-button
+                  variant="outline"
+                  type="button"
+                  [isLoading]="accionEnCurso() === receta.id"
+                  [disabled]="accionEnCurso() !== null"
+                  (clicked)="firmar(receta)"
+                >
+                  Firmar
+                </button>
+              }
+              <button
+                app-button
+                variant="primary"
+                type="button"
+                [isLoading]="accionEnCurso() === receta.id"
+                [disabled]="accionEnCurso() !== null"
+                (clicked)="emitir(receta)"
+              >
+                Emitir
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- ─── Prescribir ───────────────────────────────────────────────────
+       Tres condiciones antes del formulario, y cada una se dice con su propia
+       explicación: «no se puede» sin decir qué falta obliga a adivinar. -->
+  @if (sinOrganizacion()) {
+    <app-alert tone="info" title="Elegí una organización">
+      Una receta queda bajo la custodia de una organización. Elegí una en el selector del encabezado
+      para poder prescribir.
+    </app-alert>
+  } @else if (!hayEncuentro()) {
+    <app-alert tone="info" title="Abrí el encuentro para recetar">
+      La receta se registra dentro de la consulta que la motivó. Registrá el encuentro acá abajo y el
+      formulario aparece.
+    </app-alert>
+  } @else if (catalogoListo() === false) {
+    <!-- El selector no cae a texto libre por diseño: un uuid tecleado a mano es
+         un dato inválido o, peor, uno válido de otro conjunto. Así que cuando el
+         catálogo no está, lo honesto es no ofrecer el formulario y decir por qué. -->
+    <app-alert tone="warning" title="El catálogo de medicamentos no está publicado">
+      El medicamento se elige del catálogo y esa columna todavía no tiene un conjunto de valores
+      declarado, así que no se puede prescribir desde acá. No es algo que puedas resolver en esta
+      pantalla: hay que declarar el catálogo del lado del servidor. Firmar y emitir las recetas ya
+      cargadas sí funciona.
+    </app-alert>
+  } @else {
+    <form class="receta__formulario" (submit)="$event.preventDefault()">
+      <app-form-field
+        label="Medicamento"
+        hint="Del catálogo de terminología. Es lo único obligatorio."
+        [required]="true"
+      >
+        <app-concept-select
+          [target]="targetMedicamento"
+          [(value)]="medicamento"
+          placeholder="Elegí un medicamento"
+        />
+      </app-form-field>
+
+      <!-- Dosis y frecuencia son texto libre del contrato: no hay value set
+           detrás, y un selector inventado empobrecería la indicación. -->
+      <app-form-field label="Dosis" hint="Opcional. En tus palabras: «500 mg».">
+        <app-input
+          type="text"
+          autocomplete="off"
+          [(value)]="dosis"
+          placeholder="500 mg"
+          testId="receta-dosis"
+        />
+      </app-form-field>
+
+      <app-form-field label="Frecuencia" hint="Opcional. En tus palabras: «cada 8 horas».">
+        <app-input
+          type="text"
+          autocomplete="off"
+          [(value)]="frecuencia"
+          placeholder="cada 8 horas"
+          testId="receta-frecuencia"
+        />
+      </app-form-field>
+
+      <!-- Vía y unidad son opcionales en el contrato, así que se ofrecen sin
+           condicionar el alta: si su binding no estuviera, el selector queda
+           deshabilitado, el valor sigue en `null` y la clave se omite. -->
+      <app-form-field label="Vía de administración" hint="Opcional. Por dónde se administra.">
+        <app-concept-select
+          [target]="targetVia"
+          [(value)]="via"
+          [labels]="etiquetasDeVia"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field label="Cantidad" hint="Opcional. Cuántas unidades se prescriben.">
+        <app-input
+          type="number"
+          autocomplete="off"
+          [(value)]="cantidad"
+          placeholder="21"
+          testId="receta-cantidad"
+        />
+      </app-form-field>
+
+      <app-form-field label="Unidad" hint="Opcional. La unidad de la cantidad de arriba.">
+        <app-concept-select
+          [target]="targetUnidad"
+          [(value)]="unidad"
+          [labels]="etiquetasDeUnidad"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-actions
+        submitLabel="Prescribir"
+        [pending]="registrando()"
+        [disabled]="!puedeRecetar()"
+        (submitted)="recetar()"
+      />
+    </form>
+  }
+</app-card>
