@@ -100,3 +100,5 @@ Thumbs.db
 # El `.env` real también está cubierto arriba, junto con la excepción de
 # `.env.example`. No repetir las reglas acá: una segunda regla `.env.*` después
 # de `!.env.example` vuelve a ignorar la plantilla.
+# Artefacto de una corrida de Cypress, no fuente.
+/test-results/
