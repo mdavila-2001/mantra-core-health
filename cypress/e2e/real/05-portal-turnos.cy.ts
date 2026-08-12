@@ -1,4 +1,4 @@
-import { capturar, reiniciarContadores } from '../../support/recorrido/evidencia';
+import { anotarOmision, capturar, reiniciarContadores } from '../../support/recorrido/evidencia';
 import { apiViva, crearPaciente, type Actor } from '../../support/real/actores';
 import { entrar, estable, irA } from '../../support/real/sesion';
 
@@ -19,10 +19,16 @@ import { entrar, estable, irA } from '../../support/real/sesion';
  *   paciente, porque ya se sabe quién es.
  * - **Sin agendas cargadas la pantalla lo dice.** Un portal que se queda mudo
  *   cuando la organización no publicó horarios se lee como un portal roto.
+ * - **El ciclo retener → confirmar cierra desde la pantalla**, y el turno
+ *   aparece después en «Tus turnos» con su estado en castellano.
  *
- * No confirma la reserva: eso exige una agenda sembrada, y sembrarla desde una
- * prueba de interfaz mezclaría dos responsabilidades. El ciclo completo
- * hold → confirm está verificado contra la API.
+ * ## Por qué la reserva completa puede omitirse y no fallar
+ *
+ * Reservar exige que la organización tenga agenda publicada, y eso no lo puede
+ * crear una prueba de interfaz sin mezclar dos responsabilidades: los datos los
+ * siembra `yarn seed:dev` del backend. Cuando no hay agendas, el caso **anota la
+ * omisión** en vez de fallar —un rojo ahí acusaría a la aplicación de algo que
+ * es del entorno— y sigue comprobando lo que sí depende de la pantalla.
  */
 describe('Recorrido real · portal de turnos del paciente', () => {
   let paciente: Actor;
@@ -74,4 +80,93 @@ describe('Recorrido real · portal de turnos del paciente', () => {
     // Y por el portal jamás se pide elegir paciente: ya se sabe quién es.
     cy.contains(/buscá por nombre o por código de paciente/i).should('not.exist');
   });
+
+  it('elige agenda, retiene y confirma: el turno queda en su lista', () => {
+    cy.then(() => entrar(paciente));
+    irA('/my-account/appointments');
+    estable();
+
+    // Sin agenda publicada no hay nada que reservar; se deja constancia y se
+    // corta, que es distinto de fallar.
+    cy.get('body').then(($portal) => {
+      if (/todav[íi]a no hay agendas publicadas/i.test($portal.text())) {
+        anotarOmision(
+          'Mis turnos · reserva',
+          'La organización no tiene agendas publicadas: correr `yarn seed:dev` en el backend.',
+        );
+        return;
+      }
+
+      elegirLaPrimeraAgenda();
+
+      cy.get('body').then(($conHorarios) => {
+        if ($conHorarios.find('a:contains("Pedir este horario")').length === 0) {
+          anotarOmision(
+            'Mis turnos · reserva',
+            'La agenda elegida no tiene horarios libres en las próximas dos semanas.',
+          );
+          return;
+        }
+
+        reservarElPrimerHorario();
+        comprobarQueElTurnoQuedo();
+      });
+    });
+  });
+
+  /**
+   * Elige una agenda cualquiera del desplegable.
+   *
+   * Se toma la primera opción real —saltando el `<option hidden>` que hace de
+   * marcador— y no una por nombre: los nombres los siembra el backend y atarse
+   * a uno haría fallar la prueba cada vez que cambien los datos de desarrollo.
+   */
+  function elegirLaPrimeraAgenda(): void {
+    cy.get('app-select select').should('exist');
+    cy.get('app-select select option:not([hidden])')
+      .first()
+      .then(($opcion) => {
+        cy.get('app-select select').select(String($opcion.val()));
+      });
+    estable();
+    capturar({ carpeta: 'turnos-04-horarios', titulo: 'Horarios libres' }, 'con-agenda');
+  }
+
+  /** Abre el primer horario libre y recorre el ciclo retener → confirmar. */
+  function reservarElPrimerHorario(): void {
+    cy.contains('a', 'Pedir este horario').first().click();
+    estable();
+    capturar({ carpeta: 'turnos-05-reserva', titulo: 'Reservar un turno' }, 'antes-de-retener');
+
+    // La misma pantalla del mostrador, con la otra entrada: acá no se elige
+    // paciente porque la sesión ya dice quién es.
+    cy.contains(/buscá por nombre o por código de paciente/i).should('not.exist');
+    cy.get('[data-testid="reserva-resumen"]').should('exist');
+
+    cy.contains('button', 'Retener el cupo').click();
+    estable();
+
+    // El paso 2 se anuncia: el cupo está guardado y con hora de vencimiento.
+    cy.contains(/cupo retenido/i).should('exist');
+    capturar({ carpeta: 'turnos-06-retenido', titulo: 'Cupo retenido' }, 'antes-de-confirmar');
+
+    cy.contains('button', 'Confirmar la reserva').click();
+    estable();
+  }
+
+  /** Comprueba lo que ve el paciente al volver: su turno, dicho en castellano. */
+  function comprobarQueElTurnoQuedo(): void {
+    // Confirmar devuelve a «Mis turnos», y el vacío ya no está.
+    cy.location('pathname').should('include', '/my-account/appointments');
+    cy.contains(/todav[íi]a no ten[ée]s turnos|todav[íi]a no pediste/i).should('not.exist');
+
+    // El estado sale de terminología y lo nombra la interfaz: si volviera el
+    // `display` del catálogo, acá se leería «Booking confirmed».
+    cy.get('app-badge').first().should('contain.text', 'Confirmado');
+
+    // Y el turno dice con quién es. Una lista que sólo da fecha y hora obliga a
+    // recordar a qué médico se pidió, que es justo lo que nadie recuerda.
+    cy.get('.turnos__agenda').first().invoke('text').should('match', /\S/);
+    capturar({ carpeta: 'turnos-07-confirmado', titulo: 'Turno confirmado' }, 'en-mis-turnos');
+  }
 });

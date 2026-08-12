@@ -680,9 +680,15 @@ export function simularApiTotal(opciones: OpcionesApi = {}): void {
 
   /* -- Archivos ------------------------------------------------------------ */
 
+  // `id`, no `fileId`: es lo que devuelve `POST /common/files/upload` de verdad
+  // y lo único que `FilesClient.upload` lee. Con `fileId`, el `evidenceFileId`
+  // de la petición siguiente viajaba `undefined` y la pantalla igual mostraba
+  // «Tu solicitud quedó registrada», porque el intercept del alta responde 201
+  // pase lo que pase: el simulador tapaba justo el eslabón que encadena las dos
+  // llamadas.
   cy.intercept('POST', '**/common/files/upload', {
     statusCode: 201,
-    body: { fileId: 'file-1', url: '/files/file-1' },
+    body: { id: 'file-1', url: '/files/file-1' },
   });
 
   /* -- Agenda (M41) --------------------------------------------------------- */

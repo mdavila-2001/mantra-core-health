@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-515 archivos TypeScript bajo `src/` y 2414 importaciones internas.
+519 archivos TypeScript bajo `src/` y 2428 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -14,7 +14,6 @@ Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.jso
 Se excluyen los puntos de entrada del framework y las pruebas.
 
 - `src/app/core/observability/browser/telemetry-browser.bootstrap.ts`
-- `src/app/features/account/appointments/appointments.ts`
 - `src/app/shared/index.ts`
 - `src/environments/environment.development.ts`
 
@@ -43,18 +42,18 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | `src/app/shared/components/molecules/radio/radio.ts` | 30 |
 | `src/app/shared/components/atoms/link/link.ts` | 28 |
 | `src/app/shared/components/molecules/card/card.ts` | 26 |
-| `src/app/core/auth/session.store.ts` | 24 |
+| `src/app/core/auth/session.store.ts` | 25 |
 | `src/app/shared/forms/form-control.context.ts` | 20 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 451 |
-| `@angular/common` | 293 |
-| `@angular/router` | 174 |
+| `@angular/core` | 453 |
+| `@angular/common` | 295 |
+| `@angular/router` | 175 |
 | `@angular/forms` | 87 |
-| `rxjs` | 44 |
+| `rxjs` | 45 |
 | `node:fs` | 13 |
 | `@opentelemetry/api` | 12 |
 | `@opentelemetry/sdk-trace-web` | 9 |

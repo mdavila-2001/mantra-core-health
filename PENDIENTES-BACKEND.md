@@ -1,8 +1,9 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-11 · **No queda ningún pendiente abierto.** P6 a P13 están todos cerrados
-y comprobados **contra la API viva** en `localhost:3000`, con la imagen reconstruida — no leyendo el
-código.
+**Actualizado:** 2026-08-12 (tarde) · **P14 tiene diagnóstico nuevo y procedimiento de cierre —
+ver su sección: el modelo YA tiene las columnas; lo que falta es aplicar un patch en cada
+entorno con base viva.** P6 a P13 siguen cerrados y comprobados **contra la API viva** en
+`localhost:3000`, con la imagen reconstruida — no leyendo el código.
 
 | | Cómo se cerró |
 | --- | --- |
@@ -19,6 +20,90 @@ un 404 pedido con el identificador equivocado no prueba que algo no exista.
 
 Este archivo existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber
 que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
+
+---
+
+## Abierto · P14 · El autorregistro de paciente devuelve 500: la base no tiene las columnas del nombre
+
+**Levantado el 2026-08-12** contra la API viva, preparando el entorno del viernes.
+**Bloquea el paso 1 del guion del consumidor**, que es la única puerta de entrada de quien
+prueba el producto sin que nadie lo acompañe.
+
+```
+POST /iam/auth/register-patient
+→ 500  {"code":"INTERNAL","message":"Error interno del servidor"}
+
+Log de la API (reqId 527):
+InvalidFieldNameException: column "name" of relation "persons" does not exist
+```
+
+**La causa es deriva de las cuatro capas.** El cambio del «nombre en cuatro partes» se hizo en
+la API y en el frontend, pero **nunca llegó a `SQL/` ni a la base**:
+
+| Capa | Qué dice |
+| --- | --- |
+| DTO / API | escribe `name`, `middleName`, `lastName`, `motherLastName` |
+| Frontend | los pide en el formulario y los manda (PR #41) |
+| **`SQL/05_profiles/02_tables.sql`** | **sólo declara `display_name`** |
+| **Base viva** | `information_schema` confirma: en `profiles.persons` la única columna de nombre es `display_name` |
+
+Comprobación directa contra la base:
+
+```sql
+select column_name from information_schema.columns
+where table_schema='profiles' and table_name='persons'
+  and column_name in ('name','middle_name','last_name','mother_last_name','display_name');
+-- (1 row)  display_name
+```
+
+**Por qué no lo vio nadie hasta ahora** — y esto importa más que el defecto:
+
+- Las **1 639 pruebas del frontend** pasan porque `HttpTestingController` finge la respuesta:
+  ninguna toca la base.
+- El **CI de la API está rojo por lint desde el 2026-08-11**, y con él **los 20 pasos siguientes
+  del pipeline están saltados**, incluidas las pruebas que habrían tocado esto. Es exactamente lo
+  que la tarea D2 del plan advierte: «hoy nadie sabe si la API pasa sus pruebas».
+- **`seed:dev` no lo detecta**: crea pacientes por la vía administrativa, no por el autorregistro.
+  Su corrida da 524/524 conformes y aun así este camino está roto.
+
+**Qué haría falta** (no se hizo acá: toca el modelo y sus generadores, no el frontend): declarar
+las columnas en el `.puml` de `profiles`, regenerar `SQL/` con `gen_ddl.py`, y materializarlas en
+la base. La regla del proyecto es explícita — `SQL/` **no se edita a mano**, se regenera.
+
+### Diagnóstico corregido y cierre (2026-08-12, tarde — Marcelo)
+
+**El modelo YA tenía las columnas.** El desdoble del nombre se propagó por las 4 capas el
+**2026-08-10**: `.puml` de profiles, `SQL/05_profiles/02_tables.sql`, el patch
+`SQL/patches/2026-08-10_v4011_person_name_components.sql` y la entidad `Persons` (que está en
+`dev` de la API — no es una edición a mano). Lo que nadie vio: **`SQL/` y `Mantra Core Health
+Context/` no son repos git**, así que ese trabajo nunca salió de la máquina donde se hizo. La
+tabla de arriba es correcta para toda copia de `SQL/` anterior al 08-10 — que es exactamente lo
+que tiene cualquier otro entorno. El P4 de este archivo venía avisando este riesgo.
+
+**Cómo se cierra en un entorno con base viva (el del viernes incluido)** — dos patches
+idempotentes, en orden, con el rol `mantra`; NO hace falta rebuild y no se pierde nada sembrado:
+
+```bash
+docker exec -i mantra-redesa-postgres-1 psql -U mantra -d mantra_redesa_health \
+  -v ON_ERROR_STOP=1 < SQL/patches/2026-08-10_v4011_person_name_components.sql
+docker exec -i mantra-redesa-postgres-1 psql -U mantra -d mantra_redesa_health \
+  -v ON_ERROR_STOP=1 < SQL/patches/2026-08-12_v4011_persons_photo_file_id.sql
+```
+
+(El segundo es `photo_file_id` → `common.files`, cerrado hoy; re-aplicarlos da no-ops, está
+verificado.) Los archivos de `SQL/` actualizados viajan por el canal en un zip — hasta que
+`SQL/` tenga distribución versionada, **todo cambio del modelo viaja con su patch y se anuncia**.
+Si el entorno se reconstruye desde cero con la copia nueva de `SQL/`, los patches no hacen falta.
+
+**Verificado ejecutando (2026-08-12):** sobre base parcheada, `POST /iam/auth/register-patient`
+con los 4 nombres → **201**, login con ese documento → 200, `display_name` compuesto desde las
+partes; fidelidad `dry-run` → `6 diferencias (tabla-ausente=6)` y **cero** `columna-ausente`.
+El primer paso del guion del consumidor queda destrabado en cuanto el entorno del viernes
+aplique los patches.
+
+> **Nota de método:** el `smoke` **borra el administrador de arranque**, así que la secuencia de
+> J2 no es de dos pasos sino de tres: `yarn smoke` → `yarn postman:bootstrap` → `yarn seed:dev`.
+> Sin el del medio, `seed:dev` muere en su primera llamada con `401 UNAUTHENTICATED` y siembra cero.
 
 ---
 

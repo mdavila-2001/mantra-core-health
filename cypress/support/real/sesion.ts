@@ -76,10 +76,6 @@ export function entrar(actor: Actor): void {
   // Dos destinos legítimos: el panel, o la elección de organización cuando la
   // sesión pertenece a más de una. Esperar sólo el panel dejaría la suite roja
   // para cualquiera con dos organizaciones, que es normal.
-  //
-  // `dashboard` y `organization`: el renombre de rutas del PR #55 había dejado
-  // esta aserción en castellano —el login aterriza en `/dashboard` desde el
-  // 2026-08-12— y toda la suite real moría acá con el timeout.
   cy.location('pathname', { timeout: 30_000 }).should('match', /^\/(dashboard|auth\/organization)/);
 
   cy.location('pathname').then((ruta) => {
