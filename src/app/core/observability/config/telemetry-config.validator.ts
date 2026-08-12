@@ -63,8 +63,8 @@ export function checkTelemetryConfig(config: TelemetryConfig): TelemetryConfigCh
  *
  * Se rechaza cualquier otra cosa —`javascript:`, `data:`, una ruta relativa sin
  * barra inicial— porque el endpoint acaba en un `fetch` y una ruta relativa se
- * resolvería contra la ruta actual: la telemetría de `/auth/verificar` iría a
- * un sitio distinto que la de `/panel`, y ninguna de las dos existiría.
+ * resolvería contra la ruta actual: la telemetría de `/auth/verify-email` iría a
+ * un sitio distinto que la de `/dashboard`, y ninguna de las dos existiría.
  */
 function isUsableEndpoint(endpoint: string): boolean {
   if (endpoint.startsWith('/')) {

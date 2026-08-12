@@ -31,9 +31,9 @@ import {
 import { AT_RISK_CODE, toReviewerStatusLabel } from './case-queue.presentation';
 
 /** Ruta del formulario que escala un caso a revisión manual. */
-const ESCALATE_ROUTE = '/administracion/verificacion-identidad/revision/escalar';
+const ESCALATE_ROUTE = '/administration/identity-assurance/review/escalate';
 /** Ruta del alta de caso, salida del estado vacío. */
-const OPEN_CASE_ROUTE = '/administracion/verificacion-identidad/casos/nuevo';
+const OPEN_CASE_ROUTE = '/administration/identity-assurance/cases/new';
 
 /** Fila de la cola: presentación resuelta, no el DTO del backend. */
 interface QueueRow {

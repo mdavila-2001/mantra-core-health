@@ -150,7 +150,7 @@ export class Dashboard {
 
   /** La ruta de la ficha de un paciente. Se arma acá para no repetirla en la plantilla. */
   protected rutaDeLaFicha(profileId: string): string {
-    return `/administracion/pacientes/${profileId}`;
+    return `/administration/patients/${profileId}`;
   }
 
   /**
@@ -169,7 +169,7 @@ export class Dashboard {
         this.pacientes.set(
           page.count === 0
             ? empty(
-                { label: 'Registrar el primero', route: '/administracion/pacientes/nuevo' },
+                { label: 'Registrar el primero', route: '/administration/patients/new' },
                 'Todavía no hay pacientes registrados en esta organización.',
               )
             : ready({ total: page.count, ultimos: page.items }),

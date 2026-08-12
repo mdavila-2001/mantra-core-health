@@ -30,7 +30,7 @@ describe('Recorrido · atención', () => {
 
     const pantalla = { carpeta: '40-agenda', titulo: 'Agenda' };
 
-    cy.visit('/agenda');
+    cy.visit('/schedule');
     esperarEstable();
     capturar(pantalla, 'citas de la ventana por defecto');
 
@@ -47,12 +47,12 @@ describe('Recorrido · atención', () => {
       ['hoy', 'ventana de hoy'],
       ['mes', 'ventana de 30 días'],
     ] as const) {
-      cy.visit(`/agenda?rango=${rango}`);
+      cy.visit(`/schedule?rango=${rango}`);
       esperarEstable();
       capturar(pantalla, nombre);
     }
 
-    cy.visit('/agenda?canceladas=si');
+    cy.visit('/schedule?canceladas=si');
     esperarEstable();
     capturar(pantalla, 'incluyendo canceladas');
   });
@@ -64,7 +64,7 @@ describe('Recorrido · atención', () => {
     // El estado de un tenant recién creado. No se alcanza con datos cargados:
     // hay que pedirle a la API simulada que no devuelva ningún recurso.
     recorrer(
-      { ruta: '/agenda', carpeta: '41-agenda-sin-recursos', titulo: 'Agenda · sin recursos' },
+      { ruta: '/schedule', carpeta: '41-agenda-sin-recursos', titulo: 'Agenda · sin recursos' },
       { evitar: EVITAR_POR_DEFECTO, maxAcciones: 20 },
     );
   });
@@ -74,7 +74,7 @@ describe('Recorrido · atención', () => {
     iniciarSesionEnRecorrido();
 
     recorrer(
-      { ruta: '/clinico', carpeta: '42-archivo-clinico', titulo: 'Archivo clínico' },
+      { ruta: '/medical-records', carpeta: '42-archivo-clinico', titulo: 'Archivo clínico' },
       { evitar: EVITAR_POR_DEFECTO, maxAcciones: 25 },
     );
   });
@@ -85,7 +85,7 @@ describe('Recorrido · atención', () => {
 
     const pantalla = { carpeta: '43-expediente', titulo: 'Expediente clínico' };
 
-    cy.visit('/clinico/p-001');
+    cy.visit('/medical-records/p-001');
     esperarEstable();
     capturar(pantalla, 'al entrar');
 
@@ -115,7 +115,7 @@ describe('Recorrido · atención', () => {
     // ofrece salir, no cargar — la pantalla es de lectura.
     recorrer(
       {
-        ruta: '/clinico/p-001',
+        ruta: '/medical-records/p-001',
         carpeta: '44-expediente-vacio',
         titulo: 'Expediente · sin registros',
       },

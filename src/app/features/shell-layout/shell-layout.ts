@@ -96,6 +96,6 @@ export class ShellLayout {
    */
   protected changeTenant(tenantId: string): void {
     this.auth.selectTenant(tenantId);
-    void this.router.navigateByUrl('/panel');
+    void this.router.navigateByUrl('/dashboard');
   }
 }

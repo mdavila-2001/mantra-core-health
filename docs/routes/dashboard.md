@@ -1,4 +1,4 @@
-# `/panel` — Panel
+# `/dashboard` — Panel
 
 `src/app/features/dashboard/dashboard.ts` · `Dashboard` · `app-dashboard`
 Layout padre: `src/app/features/shell-layout/shell-layout.ts` · `ShellLayout`
@@ -41,7 +41,7 @@ puro organismo y los recibe.
 
 ```ts
 protected readonly sections = computed<readonly NavSection[]>(() => [
-  { label: 'General',      items: [{ label: 'Panel', route: '/panel', icon: 'home' }] },
+  { label: 'General',      items: [{ label: 'Panel', route: '/dashboard', icon: 'home' }] },
   { label: 'Herramientas', items: [{ label: 'Sistema de diseño', route: '/design-system', icon: 'settings' }] },
 ]);
 ```
@@ -61,7 +61,7 @@ vacía es peor que no tenerlo.
 graph TD
   A["Navegación a / o /panel"] --> B["authGuard · S1"]
   B -->|sin sesión| L["/auth"]
-  B -->|falta elegir organización| O["/auth/organizacion"]
+  B -->|falta elegir organización| O["/auth/organization"]
   B -->|pasa| C["ShellLayout monta app-shell"]
   C --> D["Dashboard: constructor → loadDirectory()"]
   D --> E["state = loading() · S2"]

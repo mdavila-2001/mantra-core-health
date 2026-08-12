@@ -113,13 +113,13 @@ describe('PatientChart', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'clinico/:profileId', component: PatientChart }]),
+        provideRouter([{ path: 'medical-records/:profileId', component: PatientChart }]),
       ],
     });
 
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/clinico/p-1', PatientChart);
+    componente = await harness.navigateByUrl('/medical-records/p-1', PatientChart);
   });
 
   afterEach(() => http.verify());
@@ -366,7 +366,7 @@ describe('PatientChart', () => {
 
     // Se llega con el turno puesto, como hace el enlace de la agenda. Mismo
     // paciente, así que el expediente no se relee: sólo cambian los parámetros.
-    await harness.navigateByUrl('/clinico/p-1?cita=ap-1&motivo=Control');
+    await harness.navigateByUrl('/medical-records/p-1?cita=ap-1&motivo=Control');
 
     interno<() => void>('registrarEncuentro')();
 

@@ -551,3 +551,39 @@ comprueba que la aplicación pintó, no que el campo escuche.
 - `src/**` entero: esta entrega no cambia una línea de la aplicación.
 - `cypress/harness/**` (el arnés y su API simulada), `cypress/e2e/` fuera de
   `real/07-…`, rutas, `navigation.map.ts`, `app.routes.ts`, `.github/**`.
+
+---
+
+## Sesión en curso · IT2 · estados de caso con datos reales (el sello del titular)
+
+**Empezó:** 2026-08-12 (nocturna) · **Rama:** `itzan/it2-estados-caso-sello` · **Base:** `c6081bb` (dev)
+
+El delta que le falta a IT2 sobre el 07 ya mergeado: asertar el **sello del titular
+ANTES** (En revisión) y **DESPUÉS** (Aprobado/Rechazado) en `/identidad/casos` y en el
+detalle `/identidad/casos/:caseId`, con captura de cada estado. Contexto del P14,
+medido contra la API viva: el 500 del registro solo salta cuando el payload lleva el
+nombre en **4 partes** (lo que manda la pantalla del front — eso sigue roto y es del
+carril backend, PR #56); el contrato viejo de `actores.ts` registra **201**, así que
+esta suite crea sus actores igual que el 06 y el 07, sin ningún fallback.
+
+### Archivos que estoy creando (nuevos, no chocan)
+
+```text
+cypress/e2e/real/08-sello-del-titular.cy.ts     el delta de IT2
+```
+
+*(El módulo de actores con fallback que llegó a estar anunciado acá se descartó antes
+de escribirse — el preflight demostró que habría sido código muerto.)*
+
+### Archivos existentes que podría tocar
+
+Solo los reportes generados del inventario (`scripts/generate-inventory.mjs`), por el
+alta del spec nuevo. Nada más.
+
+### Lo que NO estoy tocando
+
+- `src/**` entero — esta entrega no cambia una línea de la aplicación.
+- `cypress/support/real/actores.ts` — su contrato queda intacto (los specs 02/05 lo usan
+  tal cual; que fallen por el P14 es un hallazgo del backend, no algo que se maquille acá).
+- `cypress/e2e/real/07-cola-de-revision.cy.ts` y el resto de `cypress/e2e/`.
+- `cypress/harness/**`, rutas, `navigation.map.ts`, `app.routes.ts`, `.github/**`.

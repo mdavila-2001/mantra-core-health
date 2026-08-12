@@ -1,4 +1,4 @@
-# `/auth/verificar` — Verificar correo
+# `/auth/verify-email` — Verificar correo
 
 `src/app/features/auth/verify-email/verify-email.ts` · `VerifyEmail` ·
 `app-verify-email`

@@ -1,4 +1,4 @@
-# `/auth/registro` — Crear cuenta
+# `/auth/register` — Crear cuenta
 
 `src/app/features/auth/register-patient/register-patient.ts` · `RegisterPatient`
 · `app-register-patient`

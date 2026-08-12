@@ -13,7 +13,7 @@
     ========================================================================== */
 
 /** Elección de persona (M08 + M15). Coincide con la sección del menú. */
-export const CLINICAL_RECORD_ROUTE = '/clinico';
+export const CLINICAL_RECORD_ROUTE = '/medical-records';
 
 /** Expediente clínico de una persona concreta (UC-39-20 y UC-40-14). */
 export function patientChartRoute(profileId: string): string {

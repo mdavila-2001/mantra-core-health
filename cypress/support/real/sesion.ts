@@ -79,7 +79,7 @@ export function entrar(actor: Actor): void {
   cy.location('pathname', { timeout: 30_000 }).should('match', /^\/(panel|auth\/organizacion)/);
 
   cy.location('pathname').then((ruta) => {
-    if (!ruta.includes('/auth/organizacion')) {
+    if (!ruta.includes('/auth/organization')) {
       return;
     }
     capturar({ carpeta: 'sesion', titulo: 'Elegir organización' }, 'elegir-organizacion');

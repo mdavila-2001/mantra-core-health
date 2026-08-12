@@ -45,14 +45,14 @@ describe('Recorrido · pantallas públicas', () => {
     // Es el formulario más largo de la aplicación —tiene dos ramas, paciente y
     // profesional— y cada rama muestra sus propios campos.
     recorrer(
-      { ruta: '/auth/registro', carpeta: '03-registro', titulo: 'Crear cuenta' },
+      { ruta: '/auth/register', carpeta: '03-registro', titulo: 'Crear cuenta' },
       { maxAcciones: 60, evitar: EVITAR_POR_DEFECTO },
     );
   });
 
   it('recuperar contraseña', () => {
     recorrer({
-      ruta: '/auth/recuperar',
+      ruta: '/auth/forgot-password',
       carpeta: '04-recuperar',
       titulo: 'Recuperar contraseña',
     });
@@ -62,7 +62,7 @@ describe('Recorrido · pantallas públicas', () => {
     // El enlace del correo trae el token por query string; sin él la pantalla
     // muestra el estado de enlace inválido, que también vale la pena capturar.
     recorrer({
-      ruta: '/auth/nueva-clave?token=token-de-prueba',
+      ruta: '/auth/reset-password?token=token-de-prueba',
       carpeta: '05-nueva-clave',
       titulo: 'Nueva contraseña',
     });
@@ -70,7 +70,7 @@ describe('Recorrido · pantallas públicas', () => {
 
   it('nueva contraseña sin token', () => {
     recorrer({
-      ruta: '/auth/nueva-clave',
+      ruta: '/auth/reset-password',
       carpeta: '06-nueva-clave-sin-token',
       titulo: 'Nueva contraseña · enlace inválido',
     });
@@ -78,7 +78,7 @@ describe('Recorrido · pantallas públicas', () => {
 
   it('verificar correo', () => {
     recorrer({
-      ruta: '/auth/verificar?token=token-de-prueba',
+      ruta: '/auth/verify-email?token=token-de-prueba',
       carpeta: '07-verificar-correo',
       titulo: 'Verificar correo',
     });
@@ -86,7 +86,7 @@ describe('Recorrido · pantallas públicas', () => {
 
   it('verificar correo sin token', () => {
     recorrer({
-      ruta: '/auth/verificar',
+      ruta: '/auth/verify-email',
       carpeta: '08-verificar-sin-token',
       titulo: 'Verificar correo · enlace inválido',
     });

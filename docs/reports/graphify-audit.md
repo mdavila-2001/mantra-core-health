@@ -258,7 +258,7 @@ producto. Están priorizadas en
 > *«No hay enlace de "olvidé mi contraseña": **la API no tiene ese endpoint**
 > todavía. Un enlace que no lleva a ningún lado es peor que su ausencia.»*
 
-Pero `login.html` **sí tiene ese enlace** (`routerLink="/auth/recuperar"`), la
+Pero `login.html` **sí tiene ese enlace** (`routerLink="/auth/forgot-password"`), la
 ruta existe, el componente `ForgotPassword` existe y `IamClient.forgotPassword`
 llama a `POST /iam/auth/forgot-password`. El comentario quedó de una etapa
 anterior; `PENDIENTES-BACKEND.md` §«La recuperación de contraseña llegó» confirma

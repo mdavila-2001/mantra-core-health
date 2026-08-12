@@ -89,7 +89,7 @@ describe('CaseQueue', () => {
       fixture.nativeElement.querySelector(`a[href*="caseId=${CASO}"]`);
     expect(enlace).not.toBeNull();
     expect(enlace?.getAttribute('href')).toContain(
-      '/administracion/verificacion-identidad/revision/escalar',
+      '/administration/identity-assurance/review/escalate',
     );
   });
 

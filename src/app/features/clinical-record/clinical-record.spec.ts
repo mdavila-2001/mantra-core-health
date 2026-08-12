@@ -49,17 +49,17 @@ describe('ClinicalRecord', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([
-          { path: 'clinico', component: ClinicalRecord },
+          { path: 'medical-records', component: ClinicalRecord },
           // El expediente cuelga de acá. Se declara para que la prueba del
           // acceso directo navegue de verdad y no contra una ruta inexistente.
-          { path: 'clinico/:profileId', component: ExpedienteDoble },
+          { path: 'medical-records/:profileId', component: ExpedienteDoble },
         ]),
       ],
     });
 
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/clinico', ClinicalRecord);
+    componente = await harness.navigateByUrl('/medical-records', ClinicalRecord);
   });
 
   afterEach(() => http.verify());
@@ -121,7 +121,7 @@ describe('ClinicalRecord', () => {
 
     // El identificador se recorta antes de navegar: un espacio pegado de más no
     // debería producir una ruta distinta.
-    expect(router.url).toBe('/clinico/p-001');
+    expect(router.url).toBe('/medical-records/p-001');
   });
 
   it('abrir por identificador con el campo vacío no navega', async () => {
@@ -131,7 +131,7 @@ describe('ClinicalRecord', () => {
     interno<() => void>('abrirPorIdentificador')();
     await harness.fixture.whenStable();
 
-    expect(router.url).toBe('/clinico');
+    expect(router.url).toBe('/medical-records');
   });
 
   it('sin filtro, el vacío dice que no hay pacientes registrados', () => {

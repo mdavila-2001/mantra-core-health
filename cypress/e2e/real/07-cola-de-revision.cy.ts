@@ -15,7 +15,7 @@ import { subirDocumento } from '../../support/real/tramites';
  * ## Qué se hace por la interfaz y qué por la API
  *
  * Por la **interfaz** van las dos puntas del trámite, que son las que se muestran
- * el día de la demo: el paciente sube su documento en `/identidad/verificar` y
+ * el día de la demo: el paciente sube su documento en `/my-account/identity/verify` y
  * lee ahí el código de su caso, y del otro lado la cola lo muestra, su enlace
  * llega con el identificador puesto, el caso resuelto desaparece y el titular ve
  * su estado en palabras.
@@ -127,9 +127,9 @@ describe('Recorrido real · la cola de revisión de identidad', () => {
    * caso resuelto desapareció.
    */
   function volverALaCola(): void {
-    irA('/panel');
+    irA('/dashboard');
     estable();
-    irA('/administracion/verificacion-identidad/cola');
+    irA('/administration/identity-assurance/queue');
     estable();
   }
 
@@ -160,7 +160,7 @@ describe('Recorrido real · la cola de revisión de identidad', () => {
     // ── 1. El paciente sube su documento, por la pantalla ──────────────────
     cy.then(() => entrar(paciente));
     estable();
-    irA('/identidad/verificar');
+    irA('/my-account/identity/verify');
     estable();
 
     subirDocumento().then((caseId) => {
@@ -182,7 +182,7 @@ describe('Recorrido real · la cola de revisión de identidad', () => {
     cy.then(() => entrar(revisor));
     estable();
 
-    irA('/administracion/verificacion-identidad/cola');
+    irA('/administration/identity-assurance/queue');
     estable();
 
     // Que el caso esté acá es lo que la cola vino a resolver: antes, un caso
@@ -244,7 +244,7 @@ describe('Recorrido real · la cola de revisión de identidad', () => {
       );
     });
 
-    irA('/administracion/verificacion-identidad/cola');
+    irA('/administration/identity-assurance/queue');
     estable();
     cy.then(() => {
       cy.contains('app-data-table', contexto.caso, { timeout: 20_000 }).should('exist');
@@ -255,7 +255,7 @@ describe('Recorrido real · la cola de revisión de identidad', () => {
     );
 
     // ── 5. Resolverlo sí lo saca. Es lo que hace de esto una cola ──────────
-    irA('/administracion/verificacion-identidad/revision/decision');
+    irA('/administration/identity-assurance/review/decision');
     estable();
     cy.then(() => {
       escribirEnCampo('Revisión manual', contexto.revision);
@@ -283,7 +283,7 @@ describe('Recorrido real · la cola de revisión de identidad', () => {
     // ── 6. Y el titular lo ve, en su idioma y sin uuid ─────────────────────
     cy.then(() => entrar(paciente));
     estable();
-    irA('/identidad/casos');
+    irA('/my-account/identity/cases');
     estable();
 
     cy.get('app-badge', { timeout: 20_000 }).should('contain.text', 'Aprobado');

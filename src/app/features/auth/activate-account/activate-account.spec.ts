@@ -21,12 +21,12 @@ describe('ActivateAccount', () => {
   let componente: ActivateAccount;
   let http: HttpTestingController;
 
-  async function montar(url = '/auth/activar') {
+  async function montar(url = '/auth/activate') {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'auth/activar', component: ActivateAccount }, { path: '**', children: [] }]),
+        provideRouter([{ path: 'auth/activate', component: ActivateAccount }, { path: '**', children: [] }]),
       ],
     });
 
@@ -62,7 +62,7 @@ describe('ActivateAccount', () => {
    * menos herramientas tiene.
    */
   it('toma el token del enlace y no vuelve a pedirlo', async () => {
-    await montar('/auth/activar?token=tok-del-enlace');
+    await montar('/auth/activate?token=tok-del-enlace');
 
     expect(interno<boolean>('tokenEnLaUrl')).toBe(true);
     expect(

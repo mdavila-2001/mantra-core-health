@@ -1,7 +1,7 @@
 import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenarios';
 
 /**
- * Reenviar la verificación de correo (`/auth/reenviar-verificacion`).
+ * Reenviar la verificación de correo (`/auth/resend-verification`).
  *
  * Comparte la regla de privacidad de la recuperación de contraseña —responde lo
  * mismo exista o no la cuenta— y suma una propia: **un límite de intentos no es
@@ -10,7 +10,7 @@ import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenar
  * que conviene. Por eso la espera tiene su propio estado, con los segundos
  * escritos.
  */
-const RUTA = '/auth/reenviar-verificacion';
+const RUTA = '/auth/resend-verification';
 
 export const ResendVerificationPage = {
   ruta: RUTA,

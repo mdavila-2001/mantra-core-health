@@ -16,7 +16,7 @@ import { PatientList } from './patient-list';
  * navegaría al vacío y el efecto que recarga no se enteraría nunca. Es la
  * diferencia entre probar la pantalla y probar una maqueta suya.
  */
-const RUTA = '/administracion/pacientes';
+const RUTA = '/administration/patients';
 
 const FILA = {
   profileId: 'pp-1',
@@ -41,7 +41,7 @@ describe('PatientList', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'administracion/pacientes', component: PatientList }]),
+        provideRouter([{ path: 'administration/patients', component: PatientList }]),
       ],
     });
 
@@ -96,7 +96,7 @@ describe('PatientList', () => {
 
     const vacio = estado() as { status: string; nextAction: { route?: string } };
     expect(vacio.status).toBe('empty');
-    expect(vacio.nextAction.route).toBe('/administracion/pacientes/nuevo');
+    expect(vacio.nextAction.route).toBe('/administration/patients/new');
   });
 
   it('sin resultados pero con filtro, el vacío ofrece volver a la lista completa', async () => {
@@ -109,7 +109,7 @@ describe('PatientList', () => {
     expect(vacio.status).toBe('empty');
     // Una salida que de verdad funciona: sin ruta, el host la pinta como texto
     // inerte y la persona queda encerrada en su propio filtro.
-    expect(vacio.nextAction.route).toBe('/administracion/pacientes');
+    expect(vacio.nextAction.route).toBe('/administration/patients');
     expect(vacio.message).toContain('salas');
   });
 

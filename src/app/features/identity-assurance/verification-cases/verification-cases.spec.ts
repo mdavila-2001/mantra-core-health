@@ -91,7 +91,7 @@ describe('VerificationCases', () => {
     if (vacio.status !== 'empty') return;
 
     // La próxima acción es la puerta de la pantalla que abre casos.
-    expect(vacio.nextAction.route).toBe('/identidad/verificar');
+    expect(vacio.nextAction.route).toBe('/my-account/identity/verify');
   });
 
   it('el error no queda como listo, y reintentar vuelve a pedir', () => {

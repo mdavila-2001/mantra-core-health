@@ -15,7 +15,7 @@ describe('ErrorReporter', () => {
   let reporter: ErrorReporter;
   let consola: ReturnType<typeof vi.spyOn>;
 
-  const contexto = { version: '1.2.3', commit: 'abc1234', route: '/panel' };
+  const contexto = { version: '1.2.3', commit: 'abc1234', route: '/dashboard' };
 
   beforeEach(() => {
     TestBed.configureTestingModule({});

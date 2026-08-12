@@ -14,7 +14,7 @@ import { OrganizationList } from './organization-list';
  * Se monta con `RouterTestingHarness` porque el filtro vive en la URL: sin un
  * router de verdad, `buscar()` navegaría al vacío.
  */
-const RUTA = '/administracion/organizaciones';
+const RUTA = '/administration/organizations';
 
 const FILA = {
   id: 't-1',
@@ -67,7 +67,7 @@ describe('OrganizationList', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'administracion/organizaciones', component: OrganizationList }]),
+        provideRouter([{ path: 'administration/organizations', component: OrganizationList }]),
       ],
     });
 
@@ -143,7 +143,7 @@ describe('OrganizationList', () => {
 
     const vacio = estado() as { status: string; nextAction: { route?: string } };
     expect(vacio.status).toBe('empty');
-    expect(vacio.nextAction.route).toBe('/administracion/organizaciones/nueva');
+    expect(vacio.nextAction.route).toBe('/administration/organizations/new');
   });
 
   it('sin resultados pero con filtro, el vacío ofrece volver a la lista completa', async () => {
@@ -154,7 +154,7 @@ describe('OrganizationList', () => {
 
     const vacio = estado() as { status: string; nextAction: { route?: string }; message?: string };
     expect(vacio.status).toBe('empty');
-    expect(vacio.nextAction.route).toBe('/administracion/organizaciones');
+    expect(vacio.nextAction.route).toBe('/administration/organizations');
     expect(vacio.message).toContain('andina');
   });
 

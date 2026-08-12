@@ -43,7 +43,7 @@ describe('Recorrido real · paciente', () => {
     /* -- Las dos pantallas públicas --------------------------------------- */
 
     vigilante.en('Crear cuenta');
-    cy.visit('/auth/registro');
+    cy.visit('/auth/register');
     estable();
     capturar({ carpeta: 'pac-01-registro', titulo: 'Crear cuenta' }, 'formulario');
     cy.get('h1').first().invoke('text').should('match', /\S/);
@@ -58,12 +58,12 @@ describe('Recorrido real · paciente', () => {
     cy.then(() => entrar(paciente));
     estable();
     capturar({ carpeta: 'pac-03-panel', titulo: 'Panel del paciente' }, 'al-entrar');
-    cy.location('pathname').should('contain', '/panel');
+    cy.location('pathname').should('contain', '/dashboard');
 
     /* -- La puerta: 403 por identidad, con salida -------------------------- */
 
     recorrer(vigilante, {
-      ruta: '/mi-cuenta',
+      ruta: '/my-account',
       carpeta: 'pac-04-mi-perfil',
       titulo: 'Mi perfil',
     });
@@ -80,7 +80,7 @@ describe('Recorrido real · paciente', () => {
     );
 
     recorrer(vigilante, {
-      ruta: '/identidad/verificar',
+      ruta: '/my-account/identity/verify',
       carpeta: 'pac-06-identidad',
       titulo: 'Verificar identidad',
     });
@@ -118,7 +118,7 @@ describe('Recorrido real · paciente', () => {
     /* -- Lo que su rol no alcanza ------------------------------------------ */
 
     vigilante.en('Menú del paciente');
-    irA('/panel');
+    irA('/dashboard');
     estable();
     capturar({ carpeta: 'pac-07-menu', titulo: 'Menú del paciente' }, 'navegacion-completa');
 
@@ -132,8 +132,8 @@ describe('Recorrido real · paciente', () => {
     // la sección— y no una en blanco ni una excepción. Los `403` de esas lecturas
     // están en la lista de esperados: lo que se juzga es que se sepan contar.
     for (const [ruta, carpeta, titulo] of [
-      ['/administracion/pacientes', 'pac-08-padron-denegado', 'Pacientes · sin permiso'],
-      ['/clinico', 'pac-09-clinico-denegado', 'Archivo clínico · sin permiso'],
+      ['/administration/patients', 'pac-08-padron-denegado', 'Pacientes · sin permiso'],
+      ['/medical-records', 'pac-09-clinico-denegado', 'Archivo clínico · sin permiso'],
     ] as const) {
       vigilante.en(titulo);
       irA(ruta);

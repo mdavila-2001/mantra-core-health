@@ -6,7 +6,7 @@
     ========================================================================== */
 
 /** Los turnos de quien está adentro: los suyos, no los de la organización. */
-export const MIS_TURNOS_ROUTE = '/mi-cuenta/turnos';
+export const MIS_TURNOS_ROUTE = '/my-account/appointments';
 
 /**
  * La reserva de un cupo concreto **desde el portal** (canal `PORTAL`).
@@ -21,5 +21,5 @@ export const MIS_TURNOS_ROUTE = '/mi-cuenta/turnos';
  * cupo al recargar: no existe `GET /scheduling/slots/:id`.
  */
 export function reservaDelPortalRoute(slotId: string): string {
-  return `${MIS_TURNOS_ROUTE}/reservar/${slotId}`;
+  return `${MIS_TURNOS_ROUTE}/book/${slotId}`;
 }

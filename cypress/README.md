@@ -52,7 +52,7 @@ Dos cosas que hay que saber antes de tocarlo:
   **toda la suite falla sin decir por qué**. Por eso el arnés deja una marca en
   `dist/mantra-core-health/.arnes-e2e` y solo reutiliza el `dist/` si es suya.
 - **El escenario viaja en una cookie.** `cy.abrirEscenario('directorio-caido',
-  '/panel')` pasa por `/__e2e__/escenario`, que la deja y redirige: así la
+  '/dashboard')` pasa por `/__e2e__/escenario`, que la deja y redirige: así la
   elección ocurre en una sola navegación y la API ya sabe qué responder cuando la
   aplicación arranca. Los once escenarios están en
   [`support/fixtures/escenarios.ts`](support/fixtures/escenarios.ts).

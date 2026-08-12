@@ -26,7 +26,7 @@ No es medición; es lectura. Cada afirmación es verificable en el código.
 
 | Decisión | Efecto |
 |---|---|
-| **4 rutas prerenderizadas** | `/auth`, `/auth/registro`, `/auth/recuperar` y `/design-system` salen del servidor **ya pintadas**. Es justo donde el SSR paga |
+| **4 rutas prerenderizadas** | `/auth`, `/auth/register`, `/auth/forgot-password` y `/design-system` salen del servidor **ya pintadas**. Es justo donde el SSR paga |
 | **Tipografías autoalojadas** | Cero peticiones a un CDN externo, cero resolución DNS de terceros |
 | **Inter Variable en un solo archivo** | Un archivo cubre 100–900 |
 | **Cero scripts de terceros** | Nada bloquea la carga |
@@ -38,7 +38,7 @@ No es medición; es lectura. Cada afirmación es verificable en el código.
 |---|---|
 | **516,70 kB iniciales** (132,27 kB en tránsito) | Todo eso hay que descargar, analizar y ejecutar antes de hidratar |
 | **Poppins es estática, tres pesos** | Tres archivos, no uno |
-| **Todo lo que tiene sesión se pinta en el cliente** | `/panel` no puede prerenderizarse: el servidor no ve la sesión |
+| **Todo lo que tiene sesión se pinta en el cliente** | `/dashboard` no puede prerenderizarse: el servidor no ve la sesión |
 | `inlineCritical: false` en producción | El CSS crítico **no** se pone en línea: hay una petición de estilos bloqueante |
 
 ### A favor del CLS
@@ -108,7 +108,7 @@ npx lighthouse http://localhost:4000/auth --view
 **No requiere instalar nada permanente** (`npx` lo baja al vuelo) y da LCP, FCP y
 CLS de las cuatro rutas prerenderizadas. Es el primer paso obvio.
 
-Para `/panel` haría falta una sesión, así que la medición sintética cubre lo
+Para `/dashboard` haría falta una sesión, así que la medición sintética cubre lo
 público y deja fuera lo autenticado.
 
 ### Medición de campo — la única que da INP

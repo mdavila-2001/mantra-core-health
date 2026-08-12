@@ -117,7 +117,7 @@ encabezado `X-Tenant-Id` no se manda:
 ```ts
 protected changeTenant(tenantId: string): void {
   this.auth.selectTenant(tenantId);
-  void this.router.navigateByUrl('/panel');
+  void this.router.navigateByUrl('/dashboard');
 }
 ```
 

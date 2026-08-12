@@ -21,7 +21,7 @@ import { readApiError, type ApiErrorBody } from './api-error';
  * La pantalla que la atiende es `features/identity-verification/`, que encadena
  * `FilesClient.upload` con `IdentityClient.requestPatientIdentityVerification`.
  */
-export const IDENTITY_VERIFICATION_ROUTE = '/identidad/verificar';
+export const IDENTITY_VERIFICATION_ROUTE = '/my-account/identity/verify';
 
 /**
  * Traduce un fallo de la API a uno de los 9 estados de UX del M34.

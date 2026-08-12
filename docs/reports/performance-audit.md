@@ -81,7 +81,7 @@ yarn build && yarn serve:ssr:mantra-core-health &
 npx lighthouse http://localhost:4000/auth --view
 ```
 
-Cubre las cuatro rutas prerenderizadas. `/panel` necesita sesión, así que queda
+Cubre las cuatro rutas prerenderizadas. `/dashboard` necesita sesión, así que queda
 fuera de la medición sintética.
 
 ### P-04 · `LOW` · Tres tipografías instaladas y sin importar

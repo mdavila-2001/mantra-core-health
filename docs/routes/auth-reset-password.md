@@ -1,4 +1,4 @@
-# `/auth/nueva-clave` — Fijar contraseña nueva
+# `/auth/reset-password` — Fijar contraseña nueva
 
 `src/app/features/auth/reset-password/reset-password.ts` · `ResetPassword` ·
 `app-reset-password`
@@ -126,4 +126,4 @@ de longitud y la exposición de `revokedSessions`.
   sesión actual —si la hubiera— también quedaría inválida, y el interceptor
   mandaría al login en la siguiente petición.
 - **El dominio del enlace lo arma la API.** Ver la nota equivalente en
-  [`/auth/verificar`](auth-verificar.md#10--notas-operativas).
+  [`/auth/verify-email`](auth-verify-email.md#10--notas-operativas).

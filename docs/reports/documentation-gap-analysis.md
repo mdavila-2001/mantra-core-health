@@ -102,7 +102,7 @@ acción — y con la columna que más importa: **si cambia el producto**.
 | **H-03** | Pruebas | **Sin pruebas de contrato** | Un cambio del backend no se detecta hasta producción. Un `code` nuevo se degrada a S9 en silencio | Verificar `API_ERROR_CODES` contra el catálogo (barato); publicar el OpenAPI (externo) | **Sí** |
 | **H-04** | Pruebas | **`Dashboard` y `ShellLayout` sin prueba** | La única pantalla autenticada y su layout. Dos reglas de producto (`toState`) sin nada que las fije | Escribirlas. **No requiere herramientas nuevas** | **No** (solo pruebas) |
 | **H-05** | Arquitectura | `IDENTITY_VERIFICATION_ROUTE = '/identity/me'` es ruta de la **API** | El estado S5 «con acción» ofrece una puerta que **no lleva a ninguna parte** | Apuntarla a una ruta del router, o quitar la acción | **Sí** |
-| **H-06** | Accesibilidad | **A11Y-01**: el acuse de `/auth/recuperar` no se anuncia | Es toda la respuesta que recibe la persona | Región viva + foco | **Sí** |
+| **H-06** | Accesibilidad | **A11Y-01**: el acuse de `/auth/forgot-password` no se anuncia | Es toda la respuesta que recibe la persona | Región viva + foco | **Sí** |
 | **H-07** | Accesibilidad | **A11Y-02**: ídem H-05 desde la perspectiva de accesibilidad | — | — | **Sí** |
 | **H-08** | Observabilidad | **Sin monitoreo de disponibilidad ni alertas** | Un pico de S8 (API caída) no se detecta | Monitor externo de una URL — **no requiere instrumentar nada** | **Sí** |
 | **H-09** | Observabilidad | **Sin evento `estado_ux_mostrado`** | La instrumentación más barata y valiosa: **un solo punto** (`ViewStateHost`) | Instrumentar | **Sí** |
@@ -120,7 +120,7 @@ acción — y con la columna que más importa: **si cambia el producto**.
 | **M-05** | Accesibilidad | A11Y-07: E1/E2 (`--text-muted`) no se hacen cumplir | Regla de lint cuando existan secciones clínicas | Sí |
 | **M-06** | Accesibilidad | A11Y-08: reflow y zoom sin verificar | Verificación manual + evaluar `clamp()` | Parcial |
 | **M-07** | Accesibilidad | A11Y-09: objetivos táctiles sin medir | Medir | No (medición) |
-| **M-08** | Accesibilidad | A11Y-10: `/auth/organizacion` sin estado vacío ni guard | Añadir mensaje y evaluar el guard | Sí |
+| **M-08** | Accesibilidad | A11Y-10: `/auth/organization` sin estado vacío ni guard | Añadir mensaje y evaluar el guard | Sí |
 | **M-09** | Seguridad | Sin cierre de sesión por inactividad | Temporizador que llame a `logout()` | Sí |
 | **M-10** | Seguridad | Cerrar sesión en una pestaña no cierra la otra | Oyente de `storage` | Sí |
 | **M-11** | Seguridad | `isAccessTokenExpired` **existe y nadie la llama** | Refresco proactivo | Sí |
@@ -218,7 +218,7 @@ tocan comportamiento y cierran huecos reales.
 | **H-02** | Playwright: **7 journeys de sesión** contra el artefacto construido |
 | **H-03** | Verificación de `API_ERROR_CODES` contra el catálogo |
 | **H-04** | `Dashboard` y `ShellLayout` probados |
-| **H-05 / H-07** | `IDENTITY_VERIFICATION_ROUTE = '/identidad/verificar'` y la pantalla que la hace real |
+| **H-05 / H-07** | `IDENTITY_VERIFICATION_ROUTE = '/my-account/identity/verify'` y la pantalla que la hace real |
 | **H-06 / M-01 / M-02** | La directiva `appAnuncio`, aplicada a las 6 pantallas de autenticación |
 | **H-10** | `.github/workflows/ci.yml`, con etapa de Playwright |
 | **M-03** | `fieldOf()` ancla los errores de `class-validator` al campo |

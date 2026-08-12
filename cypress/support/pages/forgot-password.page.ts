@@ -1,7 +1,7 @@
 import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenarios';
 
 /**
- * Recuperación de contraseña (`/auth/recuperar`).
+ * Recuperación de contraseña (`/auth/forgot-password`).
  *
  * La confirmación dice lo mismo exista o no la cuenta: lo contrario permitiría
  * averiguar quién está registrado probando direcciones. El Page Object expone
@@ -9,7 +9,7 @@ import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenar
  * intercambia y una prueba tiene que poder distinguirlas.
  */
 export const ForgotPasswordPage = {
-  ruta: '/auth/recuperar',
+  ruta: '/auth/forgot-password',
 
   abrir(escenario: NombreEscenario = ESCENARIO_POR_DEFECTO): void {
     cy.abrirEscenario(escenario, ForgotPasswordPage.ruta);

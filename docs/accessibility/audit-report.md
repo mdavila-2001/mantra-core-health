@@ -30,7 +30,7 @@ del sistema que aparece visualmente y no se anuncia.
 
 ### A11Y-01 · `HIGH` · El acuse de recuperación no se anuncia
 
-**Dónde:** `/auth/recuperar` — `forgot-password.ts` / `.html`
+**Dónde:** `/auth/forgot-password` — `forgot-password.ts` / `.html`
 
 Tras enviar, `requested()` pasa a `true` y el formulario se reemplaza por el
 acuse. **No hay región viva ni se mueve el foco.**
@@ -76,7 +76,7 @@ aplicarla. No hay que reescribir nada.
 
 ### A11Y-04 · `MEDIUM` · Las confirmaciones no se anuncian
 
-**Dónde:** `/auth/registro`, `/auth/nueva-clave`, `/auth/verificar`
+**Dónde:** `/auth/register`, `/auth/reset-password`, `/auth/verify-email`
 
 Reemplazan el formulario sin anuncio ni foco.
 
@@ -131,7 +131,7 @@ en todos los anchos).
 WCAG 2.2 §2.5.8 exige 24×24 px mínimo. Los tamaños de `AppButton` y de los
 controles **no se midieron**.
 
-### A11Y-10 · `MEDIUM` · `/auth/organizacion` sin estado vacío
+### A11Y-10 · `MEDIUM` · `/auth/organization` sin estado vacío
 
 Sin sesión, la pantalla muestra una lista vacía **sin mensaje ni salida**.
 

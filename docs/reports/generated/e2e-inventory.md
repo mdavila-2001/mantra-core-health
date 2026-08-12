@@ -2,7 +2,7 @@
 
 # Inventario de la suite de extremo a extremo (Cypress)
 
-Leído de `cypress/`. 28 archivos de prueba, 142 pruebas, 11 Page Objects y 12 escenarios de API.
+Leído de `cypress/`. 29 archivos de prueba, 143 pruebas, 11 Page Objects y 12 escenarios de API.
 
 La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—
 está en [`cypress/README.md`](../../../cypress/README.md).
@@ -27,6 +27,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `real` | Recorrido real · portal de turnos del paciente | 1 | `cypress/e2e/real/05-portal-turnos.cy.ts` |
 | `real` | Recorrido real · estados de un caso de verificación | 1 | `cypress/e2e/real/06-estados-de-caso.cy.ts` |
 | `real` | Recorrido real · la cola de revisión de identidad | 1 | `cypress/e2e/real/07-cola-de-revision.cy.ts` |
+| `real` | Recorrido real · el sello del titular sigue al caso | 1 | `cypress/e2e/real/08-sello-del-titular.cy.ts` |
 | `recorrido` | Recorrido · pantallas públicas | 11 | `cypress/e2e/recorrido/01-publico.cy.ts` |
 | `recorrido` | Recorrido · área con sesión · Recorrido · armazón | 10 | `cypress/e2e/recorrido/02-sesion.cy.ts` |
 | `recorrido` | Recorrido · administración | 10 | `cypress/e2e/recorrido/03-administracion.cy.ts` |
@@ -44,17 +45,17 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 
 | Objeto | Ruta | Métodos | Archivo |
 | --- | --- | --- | --- |
-| `ActivateAccountPage` | `/auth/activar` | 13 | `cypress/support/pages/activate-account.page.ts` |
-| `DashboardPage` | `/panel` | 11 | `cypress/support/pages/dashboard.page.ts` |
+| `ActivateAccountPage` | `/auth/activate` | 13 | `cypress/support/pages/activate-account.page.ts` |
+| `DashboardPage` | `/dashboard` | 11 | `cypress/support/pages/dashboard.page.ts` |
 | `DesignSystemPage` | `/design-system` | 7 | `cypress/support/pages/design-system.page.ts` |
-| `ForgotPasswordPage` | `/auth/recuperar` | 9 | `cypress/support/pages/forgot-password.page.ts` |
+| `ForgotPasswordPage` | `/auth/forgot-password` | 9 | `cypress/support/pages/forgot-password.page.ts` |
 | `LoginPage` | `/auth` | 17 | `cypress/support/pages/login.page.ts` |
 | `NotFoundPage` | `/esta-ruta-no-existe` | 4 | `cypress/support/pages/not-found.page.ts` |
-| `RegisterPage` | `/auth/registro` | 13 | `cypress/support/pages/register.page.ts` |
-| `ResendVerificationPage` | `/auth/reenviar-verificacion` | 10 | `cypress/support/pages/resend-verification.page.ts` |
-| `ResetPasswordPage` | `/auth/nueva-clave` | 12 | `cypress/support/pages/reset-password.page.ts` |
-| `TenantSelectionPage` | `/auth/organizacion` | 6 | `cypress/support/pages/tenant-selection.page.ts` |
-| `VerifyEmailPage` | `/auth/verificar` | 7 | `cypress/support/pages/verify-email.page.ts` |
+| `RegisterPage` | `/auth/register` | 13 | `cypress/support/pages/register.page.ts` |
+| `ResendVerificationPage` | `/auth/resend-verification` | 10 | `cypress/support/pages/resend-verification.page.ts` |
+| `ResetPasswordPage` | `/auth/reset-password` | 12 | `cypress/support/pages/reset-password.page.ts` |
+| `TenantSelectionPage` | `/auth/organization` | 6 | `cypress/support/pages/tenant-selection.page.ts` |
+| `VerifyEmailPage` | `/auth/verify-email` | 7 | `cypress/support/pages/verify-email.page.ts` |
 
 ## Escenarios de la API simulada
 

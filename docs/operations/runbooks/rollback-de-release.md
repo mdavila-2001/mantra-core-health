@@ -46,7 +46,7 @@ unión.
 
 ### 2 · Cuatro rutas son HTML estático
 
-`/auth`, `/auth/registro`, `/auth/recuperar` y `/design-system` se generan en el
+`/auth`, `/auth/register`, `/auth/forgot-password` y `/design-system` se generan en el
 build.
 
 **Regla: el artefacto se revierte entero**, `browser` y `server` juntos. Revertir
@@ -83,7 +83,7 @@ Hoy: por el commit. Cuando exista versionado, por la etiqueta del artefacto.
 - [ ] `/auth` carga
 - [ ] `/design-system` carga (verifica el prerenderizado)
 - [ ] Iniciar sesión funciona
-- [ ] `/panel` **no** muestra S8 (verifica que la API es alcanzable)
+- [ ] `/dashboard` **no** muestra S8 (verifica que la API es alcanzable)
 - [ ] Recargar con sesión **no** vuelve al login (verifica `restoreSession`)
 - [ ] El tema no parpadea (verifica el script en línea)
 

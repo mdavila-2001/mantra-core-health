@@ -47,15 +47,15 @@ describe('Recorrido real · médico', () => {
     entrar(medico);
     estable();
     capturar({ carpeta: 'med-01-panel', titulo: 'Panel del médico' }, 'al-entrar');
-    cy.location('pathname').should('contain', '/panel');
+    cy.location('pathname').should('contain', '/dashboard');
 
     recorrer(vigilante, {
-      ruta: '/mi-cuenta',
+      ruta: '/my-account',
       carpeta: 'med-02-mi-cuenta',
       titulo: 'Mi perfil',
     });
     recorrer(vigilante, {
-      ruta: '/identidad/verificar',
+      ruta: '/my-account/identity/verify',
       carpeta: 'med-03-identidad',
       titulo: 'Verificar identidad',
     });
@@ -63,7 +63,7 @@ describe('Recorrido real · médico', () => {
     /* -- El archivo clínico de quien atiende ------------------------------- */
 
     recorrer(vigilante, {
-      ruta: '/clinico',
+      ruta: '/medical-records',
       carpeta: 'med-04-archivo-clinico',
       titulo: 'Archivo clínico',
     });
@@ -79,7 +79,7 @@ describe('Recorrido real · médico', () => {
     // Un identificador bien formado y ajeno: uno mal formado probaría la
     // validación del backend, no la pantalla.
     vigilante.en('Expediente inexistente');
-    irA('/clinico/00000000-0000-4000-8000-000000000000');
+    irA('/medical-records/00000000-0000-4000-8000-000000000000');
     estable();
     capturar(
       { carpeta: 'med-05-expediente-inexistente', titulo: 'Expediente · no encontrado' },
@@ -91,7 +91,7 @@ describe('Recorrido real · médico', () => {
     /* -- Su agenda ---------------------------------------------------------- */
 
     recorrer(vigilante, {
-      ruta: '/agenda',
+      ruta: '/schedule',
       carpeta: 'med-06-agenda',
       titulo: 'Agenda del médico',
     });
