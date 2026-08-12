@@ -50,6 +50,7 @@ import {
   CLINICAL_RECORD_ROUTE,
   MOTIVO_QUERY_PARAM,
 } from '../clinical-record.routes';
+import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -124,19 +125,20 @@ interface Expediente {
  * faltan notas sin avisar es un expediente que miente, y en clínica esa mentira
  * se lee como «no hay antecedentes».
  *
- * ## La única escritura que vive acá: el encuentro
+ * ## Lo que se escribe acá: el encuentro y la receta
  *
- * La pantalla era de consulta pura. Ahora abre y cierra **encuentros**
- * (`POST /clinical/encounters/check-in` y `.../{id}/close`), y sólo eso, por un
- * criterio que no es de alcance sino de honestidad: es la única escritura del
- * archivo clínico cuyo resultado esta misma pantalla **vuelve a leer** —el
- * bloque «Encuentros» sale de `GET /clinical/patients/:id/summary`—. Registrar
- * un diagnóstico o firmar una nota tiene endpoint, pero el registro no se
- * refleja en ninguna lectura disponible: sería un formulario que traga el dato.
+ * La pantalla era de consulta pura. Abre y cierra **encuentros**
+ * (`POST /clinical/encounters/check-in` y `.../{id}/close`) y, desde el
+ * encuentro abierto, **receta** (`app-medication-block`). El criterio para
+ * admitir una escritura no cambió y no es de alcance sino de honestidad: se
+ * ofrece la que esta misma pantalla **vuelve a leer**. Encuentros y medicación
+ * salen los dos de `GET /clinical/patients/:id/summary`, así que lo que se
+ * registra aparece; firmar una nota tiene endpoint pero no lectura, y sería un
+ * formulario que traga el dato.
  *
- * Es también el paso que cierra el recorrido de quien atiende: llega desde su
- * agenda con el turno, abre el expediente, y deja constancia de que la persona
- * fue atendida.
+ * Juntas cierran el recorrido de quien atiende: llega desde su agenda con el
+ * turno, abre el expediente, deja constancia de que la persona fue atendida y
+ * le indica el tratamiento sin salir de la ficha.
  *
  * ## Por qué no hay un `appointmentId` en el encuentro
  *
@@ -156,6 +158,7 @@ interface Expediente {
     DatePipe,
     FormActions,
     FormField,
+    MedicationBlock,
     PageHeader,
     StatusSeal,
     Tab,
@@ -195,6 +198,9 @@ export class PatientChart {
     this.route.paramMap.pipe(map((params) => params.get('profileId') ?? '')),
     { initialValue: '' },
   );
+
+  /** El mismo perfil, para los bloques hijos que escriben contra él. */
+  protected readonly pacienteDeLaFicha = this.profileId;
 
   /**
    * El motivo de la cita desde la que se llegó, si se llegó desde una.
@@ -485,6 +491,39 @@ export class PatientChart {
    */
   protected readonly puedeRegistrar = computed(
     () => this.datos() !== null && !this.sinOrganizacion(),
+  );
+
+  /* -- La receta, que se escribe desde el encuentro ------------------------ */
+
+  /**
+   * El encuentro sobre el que se receta, o `null`.
+   *
+   * El primero de los abiertos, y no una elección: tener dos encuentros en
+   * curso para la misma persona ya es una anomalía que el bloque de arriba
+   * muestra. Pedir que se elija uno convertiría ese caso raro en una pregunta
+   * para todos.
+   */
+  protected readonly encuentroParaRecetar = computed<string | null>(
+    () => this.encuentrosEnCurso()[0]?.id ?? null,
+  );
+
+  /**
+   * Las recetas del expediente, con su ciclo resuelto.
+   *
+   * «Firmada» y «emitida» salen de `signedAt` e `issuedAt`, no del estado: el
+   * estado es un uuid de concepto, y ramificar por su valor ataría la pantalla
+   * a un identificador de catálogo. Es el mismo criterio con el que el bloque
+   * de encuentros deriva «en curso» de `endAt`.
+   */
+  protected readonly recetas = computed<readonly RecetaEnFicha[]>(() =>
+    (this.datos()?.resumen.medicationRequests ?? []).map((receta) => ({
+      id: receta.id,
+      medicamento: this.label(receta.medicationConceptId),
+      indicacion: [receta.doseText, receta.frequencyText].filter(Boolean).join(' · '),
+      estado: this.label(receta.statusConceptId),
+      firmada: receta.signedAt !== undefined,
+      emitida: receta.issuedAt !== undefined,
+    })),
   );
 
   protected readonly columnas = computed<readonly ColumnDef<FilaClinica>[]>(() => [

@@ -122,7 +122,28 @@ describe('PatientChart', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1', PatientChart);
   });
 
-  afterEach(() => http.verify());
+  /**
+   * El bloque de medicación pregunta por su catálogo apenas se crea, y esa
+   * petición aparece en cualquier prueba que llegue a pintar el expediente.
+   *
+   * Se responde con el `404` de «sin binding declarado» —el estado real hoy—
+   * para que `verify()` no tropiece con ella. Lo que el bloque hace con esa
+   * respuesta lo fijan sus propias pruebas: acá sólo importa que no se cuele
+   * como una petición huérfana del expediente.
+   */
+  function responderCatalogoDeMedicacion(): void {
+    for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+      req.flush(
+        { code: 'NOT_FOUND', message: 'Enumeración no encontrada', timestamp: '', path: '' },
+        { status: 404, statusText: 'Not Found' },
+      );
+    }
+  }
+
+  afterEach(() => {
+    responderCatalogoDeMedicacion();
+    http.verify();
+  });
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
@@ -490,5 +511,68 @@ describe('PatientChart', () => {
     );
 
     expect(interno<() => string | null>('errorDelRegistro')()).toContain('Recargá el expediente');
+  });
+
+  /* ---- lo que baja al bloque de medicación -------------------------------- */
+
+  /**
+   * «Firmada» y «emitida» salen de `signedAt` e `issuedAt`, no del estado: el
+   * estado es un uuid de concepto, y ramificar por su valor ataría la pantalla
+   * a un identificador de catálogo.
+   */
+  it('resuelve el ciclo de cada receta por sus instantes, no por su estado', () => {
+    abrirSesion();
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        medicationRequests: [
+          {
+            id: 'rx-1',
+            medicationConceptId: 'con-diabetes',
+            statusConceptId: 'st-activa',
+            doseText: '500 mg',
+            frequencyText: 'cada 8 horas',
+            createdAt: HACE_UNA_HORA,
+          },
+          {
+            id: 'rx-2',
+            medicationConceptId: 'con-diabetes',
+            statusConceptId: 'st-activa',
+            signedAt: HACE_UNA_HORA,
+            issuedAt: HACE_UNA_HORA,
+            createdAt: HACE_UNA_HORA,
+          },
+        ],
+      },
+    });
+
+    const recetas = interno<() => readonly Record<string, unknown>[]>('recetas')();
+    expect(recetas[0]['firmada']).toBe(false);
+    expect(recetas[0]['emitida']).toBe(false);
+    // Y traducida: ningún uuid baja al bloque.
+    expect(recetas[0]['medicamento']).toBe('Diabetes tipo 2');
+    expect(recetas[0]['indicacion']).toBe('500 mg · cada 8 horas');
+    expect(recetas[1]['firmada']).toBe(true);
+    expect(recetas[1]['emitida']).toBe(true);
+  });
+
+  it('sin encuentro abierto no baja ninguno: la receta vive dentro de la consulta', () => {
+    abrirSesion();
+    responderNombre();
+    responderExpediente();
+
+    expect(interno<() => string | null>('encuentroParaRecetar')()).toBeNull();
+  });
+
+  it('con un encuentro en curso, es ese el que recibe la receta', () => {
+    abrirSesion();
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        encounters: [{ id: 'e-1', statusConceptId: 'st-activa', startAt: HACE_UNA_HORA }],
+      },
+    });
+
+    expect(interno<() => string | null>('encuentroParaRecetar')()).toBe('e-1');
   });
 });

@@ -243,7 +243,7 @@ botón que devuelve un error, y elige el primer recurso cuando la URL no trae un
 pide nada: un `400` ahí se leería como «la agenda falló» y lo que falta es un
 paso previo.
 
-### `ClinicalClient` — 4 operaciones
+### `ClinicalClient` — 10 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -251,6 +251,30 @@ paso previo.
 | `GET` | `/charts/patients/:patientProfileId/chart` | `PatientChart` (UC-40-14) |
 | `POST` | `/clinical/encounters/check-in` | `PatientChart` (UC-08-02) |
 | `POST` | `/clinical/encounters/:encounterId/close` | `PatientChart` (UC-08-14) |
+| `POST` | `/clinical/conditions` | `PatientChart` — diagnóstico |
+| `POST` | `/clinical/allergy-intolerances` | `PatientChart` — alergia |
+| `POST` | `/clinical/observations` | `PatientChart` — observación |
+| `POST` | `/clinical/medication-requests` | `PatientChart` — prescripción |
+| `POST` | `/clinical/medication-requests/:medicationRequestId/sign` | `PatientChart` — firma |
+| `POST` | `/clinical/medication-requests/:medicationRequestId/issue` | `PatientChart` — emisión |
+| `POST` | `/clinical/diagnostic-reports` | `ClinicalClient` — informe diagnóstico (UC-08-06) |
+| `POST` | `/clinical/diagnostic-reports/:diagnosticReportId/release` | `ClinicalClient` — liberación (UC-08-07) |
+
+Las seis escrituras clínicas **no estaban declaradas**: entraron con el registro
+del expediente y el contrato quedó atrás, así que la comprobación de deriva
+—que compara lo que el código llama contra lo que este archivo declara— venía
+fallando en `dev` para todo el mundo. Se declaran acá.
+
+Las dos últimas —el informe diagnóstico— son las únicas de la tabla que
+**ninguna pantalla usa todavía**, y la columna «Consumidor» lo dice nombrando al
+cliente en vez de a una vista. No es un olvido: el informe no aparece en
+`getSummary` ni en `getChart`, y el backend no expone ningún `GET` de reportes,
+así que el formulario se tragaría el dato sin poder mostrarlo. El contrato entra
+verificado para que, cuando exista la lectura, falte sólo la vista.
+
+La prescripción son **tres pasos y no uno**: crear, firmar y emitir. El modelo
+los separa porque firmar es un acto del profesional y emitir es lo que la vuelve
+utilizable en una farmacia; colapsarlos escondería quién hizo qué.
 
 **El encuentro se abre y se cierra desde el expediente**, que es donde está
 quien atiende. Abrirlo no exige un episodio de cuidado previo (`episodeId` es

@@ -1,0 +1,73 @@
+/* Bloque de medicación: recetas cargadas arriba, formulario de alta debajo.
+   Sólo distribución — mismo reparto que el bloque de encuentro del expediente,
+   porque son la misma clase de tarjeta: una lista con acciones y un alta. */
+
+:host {
+  display: block;
+}
+
+.receta {
+  display: grid;
+  gap: var(--sp-4);
+  /* Cuatro campos cortos: a lo ancho de la tabla, la línea de la dosis quedaría
+     del largo de la pantalla y sería ilegible. */
+  max-inline-size: 68ch;
+}
+
+.receta__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.receta__lista {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Datos y acciones en fila cuando entran, apiladas cuando no: dos botones al
+   lado de un nombre de medicamento largo lo empujan a una columna angosta. */
+.receta__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.receta__datos {
+  display: grid;
+  gap: var(--sp-1);
+  /* Sin esto, un nombre largo estira la fila en vez de partirse. */
+  min-inline-size: 0;
+  flex: 1 1 20ch;
+}
+
+.receta__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.receta__principal {
+  display: block;
+  font-weight: 500;
+}
+
+.receta__secundario {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.receta__formulario {
+  display: grid;
+  gap: var(--sp-4);
+}
