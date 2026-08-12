@@ -50,11 +50,11 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 451 |
+| `@angular/core` | 452 |
 | `@angular/common` | 293 |
 | `@angular/router` | 174 |
 | `@angular/forms` | 87 |
-| `rxjs` | 44 |
+| `rxjs` | 45 |
 | `node:fs` | 13 |
 | `@opentelemetry/api` | 12 |
 | `@opentelemetry/sdk-trace-web` | 9 |
