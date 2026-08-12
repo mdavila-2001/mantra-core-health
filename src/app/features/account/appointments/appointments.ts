@@ -56,6 +56,10 @@ interface TurnoVisible {
   readonly estado: string;
   /** El tono del badge, que sale del mismo código que la palabra. */
   readonly tono: BadgeVariant;
+  /** La agenda del turno. Se conserva el id para reetiquetar cuando llegue. */
+  readonly resourceId: string;
+  /** Con quién es el turno, en palabras. Vacío mientras no se sepa. */
+  readonly agenda: string;
   readonly motivo: string;
 }
 
@@ -224,6 +228,10 @@ export class Appointments {
       next: (pagina) => {
         this.recursos.set(pagina.items);
         this.sinRecursos.set(pagina.items.length === 0);
+        // Los turnos pueden haberse pintado antes que esto: las dos lecturas
+        // del arranque salen a la vez. Se rehacen para que tomen el nombre de
+        // su agenda, igual que con las etiquetas de estado.
+        this.reetiquetarTurnos();
       },
       // Un fallo acá no se cuenta como «no hay agendas»: eso mandaría a la
       // persona a esperar a que la organización cargue algo que quizá ya tiene.
@@ -305,11 +313,23 @@ export class Appointments {
         this.etiquetas.set(new Map([...this.etiquetas(), ...etiquetas]));
         // La lista ya está pintada con el texto neutro: hay que rehacerla para
         // que tome las etiquetas que acaban de llegar.
-        const estado = this.turnos();
-        if (estado.status === 'ready') {
-          this.turnos.set(ready(estado.data.map((turno) => this.conEtiqueta(turno))));
-        }
+        this.reetiquetarTurnos();
       });
+  }
+
+  /**
+   * Rehace la lista ya pintada con lo que se sepa ahora.
+   *
+   * La pantalla arranca tres lecturas que terminan en cualquier orden —los
+   * turnos, las agendas y el catálogo de estados— y las dos últimas aportan
+   * texto a la primera. En vez de esperar a todas para pintar algo, se pinta lo
+   * que hay y se rehace cuando llega el resto.
+   */
+  private reetiquetarTurnos(): void {
+    const estado = this.turnos();
+    if (estado.status === 'ready') {
+      this.turnos.set(ready(estado.data.map((turno) => this.conEtiqueta(turno))));
+    }
   }
 
   /* ---- destinos ----------------------------------------------------------- */
@@ -334,6 +354,7 @@ export class Appointments {
 
   private aTurnoVisible(cita: Booking): TurnoVisible {
     const estado = this.presentacionDelEstado(cita.statusConceptId);
+    const resourceId = cita.resourceId ?? '';
     return {
       id: cita.id,
       cuando: cita.startAt ?? null,
@@ -341,6 +362,8 @@ export class Appointments {
       statusConceptId: cita.statusConceptId,
       estado: estado.label,
       tono: estado.tone,
+      resourceId,
+      agenda: this.nombreDeLaAgenda(resourceId),
       motivo: cita.reasonText ?? '',
     };
   }
@@ -348,7 +371,28 @@ export class Appointments {
   /** Reetiqueta un turno con lo que el catálogo haya traído desde entonces. */
   private conEtiqueta(turno: TurnoVisible): TurnoVisible {
     const estado = this.presentacionDelEstado(turno.statusConceptId);
-    return { ...turno, estado: estado.label, tono: estado.tone };
+    return {
+      ...turno,
+      estado: estado.label,
+      tono: estado.tone,
+      agenda: this.nombreDeLaAgenda(turno.resourceId),
+    };
+  }
+
+  /**
+   * Con quién es el turno.
+   *
+   * Sale de las agendas que la pantalla ya cargó para el selector, así que no
+   * cuesta una petición más. Devuelve vacío mientras no se sepa —las dos
+   * lecturas del arranque corren en paralelo y los turnos pueden llegar
+   * primero—, y la plantilla omite la línea en vez de mostrar un hueco o, peor,
+   * el identificador del recurso.
+   */
+  private nombreDeLaAgenda(resourceId: string): string {
+    if (resourceId === '') {
+      return '';
+    }
+    return this.recursos().find((recurso) => recurso.id === resourceId)?.name ?? '';
   }
 
   /**

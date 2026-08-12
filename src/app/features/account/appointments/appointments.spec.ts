@@ -41,6 +41,7 @@ function cita(id: string, statusConceptId: string): Record<string, unknown> {
   return {
     id,
     patientProfileId: 'pp-1',
+    resourceId: 'r-1',
     bookableSlotId: 's-1',
     statusConceptId,
     startAt: '2026-08-12T13:00:00.000Z',
@@ -172,6 +173,33 @@ describe('Appointments', () => {
     const turnos = interno<() => readonly { estado: string }[]>('turnosListos')();
     expect(turnos).toHaveLength(1);
     expect(turnos[0].estado).toBe('Sin confirmar el estado');
+  });
+
+  it('dice con quién es el turno, aunque las agendas lleguen después', () => {
+    montar();
+
+    // Los turnos responden primero: todavía no hay con qué nombrar la agenda.
+    http
+      .expectOne((r) => r.url === '/scheduling/bookings')
+      .flush({ items: [cita('b-1', CONFIRMADO)], count: 1, limit: 50, truncated: false });
+    fixture.detectChanges();
+    expect(interno<() => readonly { agenda: string }[]>('turnosListos')()[0].agenda).toBe('');
+
+    // Y cuando llegan, la lista ya pintada las toma.
+    http
+      .expectOne((r) => r.url === '/scheduling/resources')
+      .flush({
+        items: [{ id: 'r-1', name: 'Consultorio Cardiología', capacity: 1 }],
+        count: 1,
+      });
+    fixture.detectChanges();
+    responderTerminologia([
+      { conceptId: CONFIRMADO, code: 'BOOKING_CONFIRMED', display: 'Booking confirmed' },
+    ]);
+
+    expect(interno<() => readonly { agenda: string }[]>('turnosListos')()[0].agenda).toBe(
+      'Consultorio Cardiología',
+    );
   });
 
   it('jamás muestra el uuid del estado en pantalla', () => {

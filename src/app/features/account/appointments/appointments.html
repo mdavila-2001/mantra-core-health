@@ -36,6 +36,14 @@
                        `startAt` opcional justamente por esto. -->
                   <span class="turnos__fecha">Sin horario asignado</span>
                 }
+                @if (turno.agenda !== '') {
+                  <!-- Con quién es el turno. Va acá dentro y no como hermano
+                       del badge: el item es una grilla de dos columnas, y un
+                       tercer hermano correría el badge a la fila siguiente.
+                       Se omite mientras no se sepa, en vez de dejar un hueco o
+                       mostrar el identificador del recurso. -->
+                  <span class="turnos__agenda">{{ turno.agenda }}</span>
+                }
               </div>
               <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
               @if (turno.motivo !== '') {

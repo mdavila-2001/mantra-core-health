@@ -163,6 +163,10 @@ describe('Recorrido real · portal de turnos del paciente', () => {
     // El estado sale de terminología y lo nombra la interfaz: si volviera el
     // `display` del catálogo, acá se leería «Booking confirmed».
     cy.get('app-badge').first().should('contain.text', 'Confirmado');
+
+    // Y el turno dice con quién es. Una lista que sólo da fecha y hora obliga a
+    // recordar a qué médico se pidió, que es justo lo que nadie recuerda.
+    cy.get('.turnos__agenda').first().invoke('text').should('match', /\S/);
     capturar({ carpeta: 'turnos-07-confirmado', titulo: 'Turno confirmado' }, 'en-mis-turnos');
   }
 });
