@@ -38,7 +38,7 @@ export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 ```
 
 ```ts
-{ label: 'Panel', route: '/panel', icon: 'home' }
+{ label: 'Panel', route: '/dashboard', icon: 'home' }
 { label: 'Sistema de diseño', route: '/design-system', icon: 'settings' }
 ```
 

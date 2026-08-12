@@ -10,7 +10,7 @@ enumera lo que no hay.
 | Servicio | Estado | Evidencia |
 |---|---|---|
 | **API REDESA** | **Única integración.** 20 operaciones | `core/data-access/**` |
-| Correo electrónico | **Indirecta.** Lo envía la API; el enlace vuelve al frontend con un token | `/auth/verificar`, `/auth/nueva-clave` |
+| Correo electrónico | **Indirecta.** Lo envía la API; el enlace vuelve al frontend con un token | `/auth/verify-email`, `/auth/reset-password` |
 | Todo lo demás | **No existe** | Ver abajo |
 
 ## Lo que no hay

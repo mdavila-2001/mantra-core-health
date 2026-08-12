@@ -91,7 +91,7 @@ describe('MyProfile', () => {
 
     const actual = estado();
     expect(actual.status).toBe('forbidden');
-    expect(actual.nextAction?.route).toBe('/identidad/verificar');
+    expect(actual.nextAction?.route).toBe('/my-account/identity/verify');
   });
 
   it('un 403 corriente NO ofrece salida: no hay nada que la persona pueda hacer', () => {

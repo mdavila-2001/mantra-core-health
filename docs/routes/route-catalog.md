@@ -18,22 +18,90 @@ página es su lectura.
 
 | URL | Pantalla | Acceso | Render | Datos | Ficha |
 |---|---|---|---|---|---|
-| `/` | `ShellLayout` (layout) | `authGuard` | Cliente | — | [ficha](panel.md#el-armazón) |
-| `/panel` | `Dashboard` | `authGuard` | Cliente | `GET /public/directory` | [ficha](panel.md) |
-| `/identidad/verificar` | `IdentityVerification` | `authGuard` | Cliente | subida + verificación | [ficha](identidad-verificar.md) |
+| `/` | `ShellLayout` (layout) | `authGuard` | Cliente | — | [ficha](dashboard.md#el-armazón) |
+| `/dashboard` | `Dashboard` | `authGuard` | Cliente | `GET /public/directory` | [ficha](dashboard.md) |
+| `/my-account/identity/verify` | `IdentityVerification` | `authGuard` | Cliente | subida + verificación | [ficha](identity-verify.md) |
 | `/auth` | `Login` | Pública | **Prerender** | `POST /iam/auth/login` | [ficha](auth-login.md) |
-| `/auth/registro` | `RegisterPatient` | Pública | **Prerender** | `POST …/register-patient` · `…/register-practitioner` | [ficha](auth-registro.md) |
-| `/auth/organizacion` | `TenantSelection` | Pública* | Cliente | — (lee el token) | [ficha](auth-organizacion.md) |
-| `/auth/verificar` | `VerifyEmail` | Pública | Cliente | `POST /iam/auth/verify-email` | [ficha](auth-verificar.md) |
-| `/auth/recuperar` | `ForgotPassword` | Pública | **Prerender** | `POST /iam/auth/forgot-password` | [ficha](auth-recuperar.md) |
-| `/auth/nueva-clave` | `ResetPassword` | Pública | Cliente | `POST /iam/auth/reset-password` | [ficha](auth-nueva-clave.md) |
+| `/auth/register` | `RegisterPatient` | Pública | **Prerender** | `POST …/register-patient` · `…/register-practitioner` | [ficha](auth-register.md) |
+| `/auth/organization` | `TenantSelection` | Pública* | Cliente | — (lee el token) | [ficha](auth-organization.md) |
+| `/auth/verify-email` | `VerifyEmail` | Pública | Cliente | `POST /iam/auth/verify-email` | [ficha](auth-verify-email.md) |
+| `/auth/forgot-password` | `ForgotPassword` | Pública | **Prerender** | `POST /iam/auth/forgot-password` | [ficha](auth-forgot-password.md) |
+| `/auth/reset-password` | `ResetPassword` | Pública | Cliente | `POST /iam/auth/reset-password` | [ficha](auth-reset-password.md) |
 | `/design-system` | `DesignSystemSample` | Pública | **Prerender** | — | [ficha](design-system.md) |
 | `/error` | `ErrorRecovery` | Pública | Cliente | — | [ficha](error-y-404.md) |
 | `**` | `NotFound` | Pública | Cliente | — | [ficha](error-y-404.md) |
-| `''` (hija) | redirige a `/panel` | `authGuard` | — | — | — |
+| `''` (hija) | redirige a `/dashboard` | `authGuard` | — | — | — |
 
-\* `/auth/organizacion` **no tiene guard**: es alcanzable sin sesión y en ese caso
+\* `/auth/organization` **no tiene guard**: es alcanzable sin sesión y en ese caso
 muestra una lista vacía. Ver su ficha.
+
+## Direcciones viejas · las rutas en castellano
+
+El router pasó de castellano a inglés el **2026-08-11**, apuntando a un despliegue
+fuera del país. Una dirección no es un identificador interno: está en los favoritos
+de alguien, en un correo ya enviado y en el historial del navegador. Estas
+redirecciones existen para que nada de eso se convierta en un 404.
+
+Las declara `RUTAS_HEREDADAS` (dentro del armazón) y `RUTAS_HEREDADAS_PUBLICAS`
+(a nivel raíz) en `src/app/app.routes.ts`. Todas llevan `pathMatch: 'full'`: sin
+él, `administracion/pacientes` capturaría también `administracion/pacientes/<id>`
+y lo mandaría al listado perdiendo el identificador en silencio, que es peor que
+el 404.
+
+**El router conserva el query string al redirigir**, y de eso depende que
+`/auth/verificar?token=…` —el enlace del correo de verificación— siga funcionando.
+Es la razón principal de que la tabla exista.
+
+| Dirección vieja | Lleva a |
+|---|---|
+| `/panel` | `/dashboard` |
+| `/agenda` | `/schedule` |
+| `/clinico` | `/medical-records` |
+| `/facturacion` | `/billing` |
+| `/mi-cuenta` | `/my-account` |
+| `/mi-cuenta/turnos` | `/my-account/appointments` |
+| `/identidad/verificar` | `/my-account/identity/verify` |
+| `/identidad/casos` | `/my-account/identity/cases` |
+| `/administracion/pacientes` | `/administration/patients` |
+| `/administracion/usuarios` | `/administration/users` |
+| `/administracion/organizaciones` | `/administration/organizations` |
+| `/administracion/acceso-delegado` | `/administration/delegated-access` |
+| `/administracion/proveedores-identidad` | `/administration/identity-providers` |
+| `/administracion/verificacion-identidad` | `/administration/identity-assurance` |
+| `/administracion/terminologia` | `/administration/terminology` |
+| `/auth/organizacion` | `/auth/organization` |
+| `/auth/registro` | `/auth/register` |
+| `/auth/verificar` | `/auth/verify-email` |
+| `/auth/recuperar` | `/auth/forgot-password` |
+| `/auth/nueva-clave` | `/auth/reset-password` |
+| `/auth/activar` | `/auth/activate` |
+| `/auth/reenviar-verificacion` | `/auth/resend-verification` |
+
+Se redirigen **las raíces de sección y las landings públicas**, que es donde viven
+los enlaces que salieron del producto. Las sub-rutas de los paneles de operación
+no: a ellas se llega desde su panel, no desde un favorito.
+
+**Retirada:** cuando deje de haber tráfico en estas direcciones. Tres pruebas de
+`app.routes.spec.ts` las cuidan mientras tanto: que cada una lleve a una ruta que
+existe, que se declaren después de toda pantalla, y que ninguna quede detrás del
+comodín.
+
+### La trampa que la migración destapó
+
+Los nombres en castellano eran seguros **por accidente**: el proxy de la API está
+en inglés. Al traducir aparecieron tres colisiones de golpe, porque el proxy
+compara por inicio de ruta con `indexOf(...) === 0` —sin límite de segmento—, que
+es el mismo motivo por el que `/admin` capturó `/administracion/pacientes` y dejó
+la sección en blanco.
+
+| Traducción ingenua | Prefijo de la API | Nombre adoptado |
+|---|---|---|
+| `clinical-record` | `/clinical` | **`medical-records`** |
+| `identity/verify` · `identity/cases` | `/identity` | **`my-account/identity/*`** |
+| `scheduling` | `/scheduling` | **`schedule`** |
+
+Lo hace cumplir `node scripts/check-route-prefixes.mjs`, que corre en CI y dentro
+del informe documental.
 
 ## Cobertura
 
@@ -52,18 +120,18 @@ muestra una lista vacía. Ver su ficha.
 
 ```mermaid
 graph TD
-  EXT([Enlace externo · correo]) --> VER["/auth/verificar?token="]
-  EXT --> NUE["/auth/nueva-clave?token="]
+  EXT([Enlace externo · correo]) --> VER["/auth/verify-email?token="]
+  EXT --> NUE["/auth/reset-password?token="]
 
-  LOGIN["/auth"] -->|«Creá una cuenta»| REG["/auth/registro"]
-  LOGIN -->|«¿Olvidaste tu contraseña?»| REC["/auth/recuperar"]
+  LOGIN["/auth"] -->|«Creá una cuenta»| REG["/auth/register"]
+  LOGIN -->|«¿Olvidaste tu contraseña?»| REC["/auth/forgot-password"]
   REG -->|tras registrarse| LOGIN
   REC -->|acuse| REC
   VER -->|«Ir al login»| LOGIN
   NUE -->|tras fijarla| LOGIN
 
-  LOGIN -->|1 organización| PANEL["/panel"]
-  LOGIN -->|varias| ORG["/auth/organizacion"]
+  LOGIN -->|1 organización| PANEL["/dashboard"]
+  LOGIN -->|varias| ORG["/auth/organization"]
   ORG --> PANEL
   PANEL -->|menú lateral| DS["/design-system"]
   PANEL -->|cerrar sesión| LOGIN

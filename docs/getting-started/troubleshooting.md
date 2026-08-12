@@ -99,7 +99,7 @@ Qué mirar:
   modo privado, cookies de terceros deshabilitadas), la sesión **funciona
   durante la pestaña y se pierde al recargar**: es una degradación deliberada.
 - ¿El token trae más de una organización? Entonces no te está sacando: te está
-  mandando a `/auth/organizacion` a elegir. Es el segundo camino del `authGuard`.
+  mandando a `/auth/organization` a elegir. Es el segundo camino del `authGuard`.
 - ¿El reloj de la máquina está bien? `isAccessTokenExpired` compara contra `exp`
   con 10 s de margen.
 

@@ -10,16 +10,16 @@ abajo, con el motivo de cada uno.
 
 | Journey | Rutas | Componentes | API | Roles | Unit. | Comp. | **E2E** | Visual | A11y | Estado |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **J1** Registro paciente | `/auth/registro` → `/auth` | `RegisterPatient`, `AuthSplit`, `FormField`, `Input`, `Radio*` | `POST register-patient` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ A11Y-04 | Implementado |
-| **J2** Registro profesional | `/auth/registro` → `/auth` | Ídem | `POST register-practitioner` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ A11Y-04 | Implementado |
-| **J3** Login multi-organización | `/auth` → `/auth/organizacion` → `/panel` | `Login`, `TenantSelection`, `ShellLayout` | `POST login` | público | ✅ | ⚠️ parcial | **✅** | ❌ | ⚠️ A11Y-03 | Implementado |
-| **J4** Recuperación | `/auth/recuperar` → correo → `/auth/nueva-clave` | `ForgotPassword`, `ResetPassword` | `POST forgot-password`, `POST reset-password` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ **A11Y-01** | Implementado |
+| **J1** Registro paciente | `/auth/register` → `/auth` | `RegisterPatient`, `AuthSplit`, `FormField`, `Input`, `Radio*` | `POST register-patient` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ A11Y-04 | Implementado |
+| **J2** Registro profesional | `/auth/register` → `/auth` | Ídem | `POST register-practitioner` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ A11Y-04 | Implementado |
+| **J3** Login multi-organización | `/auth` → `/auth/organization` → `/dashboard` | `Login`, `TenantSelection`, `ShellLayout` | `POST login` | público | ✅ | ⚠️ parcial | **✅** | ❌ | ⚠️ A11Y-03 | Implementado |
+| **J4** Recuperación | `/auth/forgot-password` → correo → `/auth/reset-password` | `ForgotPassword`, `ResetPassword` | `POST forgot-password`, `POST reset-password` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ **A11Y-01** | Implementado |
 | **J5** Sesión persistente | arranque | `AuthService`, `SessionStore`, `RefreshTokenStorage` | `POST token/refresh` | con sesión | ✅ | **❌** | **✅✅** | ❌ | n/a | Implementado |
-| **J6** Verificar correo | correo → `/auth/verificar` | `VerifyEmail` | `POST verify-email` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ A11Y-04 | Implementado |
-| **J7** Panel | `/panel` | `Dashboard`, `ShellLayout`, `ViewStateHost` | `GET /public/directory` | con sesión | ✅ | ✅ | **✅** | ❌ | ✅ | Implementado |
-| **J8** Cambio de organización | armazón → `/panel` | `ShellLayout`, `TenantSwitcher` | — | con sesión | ✅ | ✅ | **❌ E1** | ❌ | ✅ | Implementado |
+| **J6** Verificar correo | correo → `/auth/verify-email` | `VerifyEmail` | `POST verify-email` | público | ✅ | ✅ | **❌ E1** | ❌ | ⚠️ A11Y-04 | Implementado |
+| **J7** Panel | `/dashboard` | `Dashboard`, `ShellLayout`, `ViewStateHost` | `GET /public/directory` | con sesión | ✅ | ✅ | **✅** | ❌ | ✅ | Implementado |
+| **J8** Cambio de organización | armazón → `/dashboard` | `ShellLayout`, `TenantSwitcher` | — | con sesión | ✅ | ✅ | **❌ E1** | ❌ | ✅ | Implementado |
 | **J9** Cierre de sesión | armazón → `/auth` | `ShellLayout`, `Header`, `Menu` | `POST logout` | con sesión | ✅ | ✅ | **✅✅** | ❌ | ✅ | Implementado |
-| **J10** Verificación de identidad | `/identidad/verificar` | `IdentityVerification` | 4 de `IdentityClient` + `FilesClient` | con sesión | ✅ | ✅ | **❌ E1** | ❌ | ✅ | Implementado |
+| **J10** Verificación de identidad | `/my-account/identity/verify` | `IdentityVerification` | 4 de `IdentityClient` + `FilesClient` | con sesión | ✅ | ✅ | **❌ E1** | ❌ | ✅ | Implementado |
 
 ## Los journeys con E2E
 
@@ -71,10 +71,10 @@ correo coincida con el del frontend (ver H-11).
 | `Input` | 11 | Las 6 con formulario | ✅ | ❌ |
 | `FormField` | 11 | Ídem | ✅ | ❌ |
 | `SessionStore` | 8 | Toda superficie autenticada | ✅ | n/a |
-| `ViewStateHost` | — | `/panel` | ✅ | ❌ |
-| `Shell` | — | `/panel` | ✅ | ❌ |
-| **`ShellLayout`** | — | `/panel` | **❌** | ❌ |
-| **`Dashboard`** | — | `/panel` | **❌** | ❌ |
+| `ViewStateHost` | — | `/dashboard` | ✅ | ❌ |
+| `Shell` | — | `/dashboard` | ✅ | ❌ |
+| **`ShellLayout`** | — | `/dashboard` | **❌** | ❌ |
+| **`Dashboard`** | — | `/dashboard` | **❌** | ❌ |
 
 ## Operaciones de API
 

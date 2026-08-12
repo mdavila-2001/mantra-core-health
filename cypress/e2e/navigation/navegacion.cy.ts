@@ -28,20 +28,20 @@ describe('Navegación', () => {
     // es tener perfil de paciente —un dato de la cuenta, no un rol—, y eso la
     // pantalla lo resuelve por su cuenta.
     SideNav.rutas().should('deep.equal', [
-      '/panel',
-      '/mi-cuenta',
-      '/mi-cuenta/turnos',
-      '/identidad/verificar',
-      '/identidad/casos',
+      '/dashboard',
+      '/my-account',
+      '/my-account/appointments',
+      '/my-account/identity/verify',
+      '/my-account/identity/cases',
       '/design-system',
     ]);
-    SideNav.rutas().should('not.include', '/administracion/usuarios');
+    SideNav.rutas().should('not.include', '/administration/users');
 
-    SideNav.irA('/identidad/verificar');
+    SideNav.irA('/my-account/identity/verify');
     cy.location('pathname').should('match', /\/identidad\/verificar$/);
 
-    SideNav.irA('/panel');
-    cy.location('pathname').should('match', /\/panel$/);
+    SideNav.irA('/dashboard');
+    cy.location('pathname').should('match', /\/dashboard$/);
   });
 
   it('la ruta activa se anuncia, y no solo se colorea', () => {
@@ -49,21 +49,21 @@ describe('Navegación', () => {
 
     // `aria-current="page"` es lo que oye quien usa lector de pantalla. Sin
     // esto, la marca de «acá estás» existe únicamente para quien ve el color.
-    SideNav.esperarRutaActual('/panel');
+    SideNav.esperarRutaActual('/dashboard');
 
-    SideNav.irA('/identidad/verificar');
-    SideNav.esperarRutaActual('/identidad/verificar');
+    SideNav.irA('/my-account/identity/verify');
+    SideNav.esperarRutaActual('/my-account/identity/verify');
   });
 
   it('el botón de atrás del navegador deshace la navegación', () => {
     iniciarSesion();
 
-    SideNav.irA('/identidad/verificar');
+    SideNav.irA('/my-account/identity/verify');
     cy.location('pathname').should('match', /\/identidad\/verificar$/);
 
     cy.go('back');
 
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
     DashboardPage.esperarTitulo('Panel');
   });
 
@@ -72,7 +72,7 @@ describe('Navegación', () => {
 
     cy.irA('/');
 
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
   });
 
   it('una dirección inexistente muestra la pantalla de no encontrado y ofrece salida', () => {
@@ -91,7 +91,7 @@ describe('Navegación', () => {
 
     LoginPage.irARecuperarPassword();
     ForgotPasswordPage.esperarCargada();
-    cy.location('pathname').should('match', /\/auth\/recuperar$/);
+    cy.location('pathname').should('match', /\/auth\/forgot-password$/);
 
     cy.go('back');
     LoginPage.esperarCargada();
@@ -118,7 +118,7 @@ describe('Navegación', () => {
     LoginPage.abrir();
     cy.title().should('match', /Iniciar sesión/i);
 
-    cy.irA('/auth/registro');
+    cy.irA('/auth/register');
     cy.title().should('match', /Crear cuenta/i);
   });
 });

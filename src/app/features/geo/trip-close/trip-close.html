@@ -1,0 +1,104 @@
+<app-page-header
+  title="Cerrar viaje"
+  subtitle="Termina un viaje en curso, con su distancia y su duración si se conocen."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (closed(); as viaje) {
+  <div class="m13__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m13__titulo">El viaje quedó cerrado</h2>
+
+    <dl class="m13__datos">
+      <div>
+        <dt>Viaje</dt>
+        <dd><code>{{ viaje.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Distancia</dt>
+        <dd class="m13__cifra">
+          @if (viaje.distanceM) {
+            {{ viaje.distanceM }} m
+          } @else {
+            Sin dato
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Duración</dt>
+        <dd class="m13__cifra">
+          @if (viaje.durationS !== undefined) {
+            {{ viaje.durationS }} s
+          } @else {
+            Sin dato
+          }
+        </dd>
+      </div>
+      @if (viaje.endedAt; as fin) {
+        <div>
+          <dt>Cerrado</dt>
+          <dd>{{ fin | date: 'medium' }}</dd>
+        </div>
+      }
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otroCierre()">Cerrar otro</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Qué viaje"
+      description="Solo se cierra un viaje en curso; la sesión queda libre para el siguiente."
+    >
+      <app-form-field
+        label="Identificador del viaje"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.tripId.touched && form.controls.tripId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="tripId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Medidas del recorrido"
+      description="Opcionales: si el dispositivo no las reportó, el viaje se cierra sin ellas."
+    >
+      <app-form-field
+        label="Distancia recorrida (metros)"
+        [errorMessage]="
+          form.controls.distanceM.touched && form.controls.distanceM.invalid
+            ? 'Ingresá un número entero de metros, sin signo.'
+            : ''
+        "
+      >
+        <app-input formControlName="distanceM" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Duración (segundos)"
+        [errorMessage]="
+          form.controls.durationS.touched && form.controls.durationS.invalid
+            ? 'Ingresá un número entero de segundos, sin signo.'
+            : ''
+        "
+      >
+        <app-input formControlName="durationS" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Cerrar viaje"
+      destructive
+      confirmTitle="¿Cerrar el viaje?"
+      confirmMessage="Un viaje cerrado no se reabre; las medidas quedan como definitivas."
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

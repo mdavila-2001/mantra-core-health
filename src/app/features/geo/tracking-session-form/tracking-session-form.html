@@ -1,0 +1,95 @@
+<app-page-header
+  title="Abrir sesión de rastreo"
+  subtitle="Habilita la ingesta de posiciones de un sujeto activo. Una sesión abierta por sujeto."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as sesion) {
+  <div class="m13__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m13__titulo">La sesión quedó abierta</h2>
+
+    <dl class="m13__datos">
+      <div>
+        <dt>Sesión</dt>
+        <dd><code>{{ sesion.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Sujeto rastreado</dt>
+        <dd><code>{{ sesion.trackedSubjectId }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m13__texto">
+      Con la sesión abierta ya entran posiciones y se pueden iniciar viajes.
+      Guardá el identificador de la sesión: lo piden el viaje y el cierre.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraApertura()">Abrir otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="De quién"
+      description="El sujeto tiene que estar activo y sin otra sesión abierta."
+    >
+      <app-form-field
+        label="Identificador del sujeto rastreado"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.trackedSubjectId.touched && form.controls.trackedSubjectId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="trackedSubjectId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Para qué"
+      description="Opcional: el propósito y el recurso que justifica el rastreo quedan auditados con la sesión."
+    >
+      <app-form-field
+        label="Propósito"
+        hint="Identificador del concepto de propósito (UUID)."
+        [errorMessage]="
+          form.controls.purposeConceptId.touched && form.controls.purposeConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="purposeConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Tipo del recurso relacionado"
+        hint="Por ejemplo, un traslado o una visita domiciliaria. Máx. 100 caracteres."
+      >
+        <app-input formControlName="relatedResourceType" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Identificador del recurso relacionado"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.relatedResourceId.touched && form.controls.relatedResourceId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="relatedResourceId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Abrir sesión"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

@@ -42,7 +42,7 @@ function desdeProxyJson(archivo) {
  *
  * Admite prefijos de más de un segmento (`/admin/tenants`): son la salida
  * cuando el primer segmento solo sería ambiguo frente a una ruta de la
- * aplicación — `/admin` ya desvió `/administracion/pacientes` una vez.
+ * aplicación — `/admin` ya desvió `/administration/patients` una vez.
  */
 function desdeNginx(archivo) {
   const conf = read(join(REPO_ROOT, archivo));

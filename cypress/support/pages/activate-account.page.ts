@@ -1,7 +1,7 @@
 import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenarios';
 
 /**
- * Activación de cuenta (`/auth/activar`).
+ * Activación de cuenta (`/auth/activate`).
  *
  * Es la salida del **alta asistida**: alguien crea la cuenta a nombre de otro y
  * le entrega un código. Por eso el token tiene dos caminos —el enlace del correo
@@ -14,7 +14,7 @@ import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenar
  * sesión»; acá tiene que leerse como «pedí otro código», con esa salida y no con
  * una invitación a reintentar algo que no va a funcionar.
  */
-const RUTA = '/auth/activar';
+const RUTA = '/auth/activate';
 
 export const ActivateAccountPage = {
   ruta: RUTA,

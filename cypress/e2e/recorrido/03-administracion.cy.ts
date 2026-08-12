@@ -24,7 +24,7 @@ describe('Recorrido · administración', () => {
 
     recorrer(
       {
-        ruta: '/administracion/pacientes',
+        ruta: '/administration/patients',
         carpeta: '22-pacientes-listado',
         titulo: 'Pacientes · listado',
       },
@@ -41,7 +41,7 @@ describe('Recorrido · administración', () => {
     // no devuelva ninguno.
     recorrer(
       {
-        ruta: '/administracion/pacientes',
+        ruta: '/administration/patients',
         carpeta: '23-pacientes-vacio',
         titulo: 'Pacientes · sin resultados',
       },
@@ -55,7 +55,7 @@ describe('Recorrido · administración', () => {
 
     recorrer(
       {
-        ruta: '/administracion/pacientes/p-001',
+        ruta: '/administration/patients/p-001',
         carpeta: '24-paciente-ficha',
         titulo: 'Pacientes · ficha',
       },
@@ -69,7 +69,7 @@ describe('Recorrido · administración', () => {
 
     recorrer(
       {
-        ruta: '/administracion/pacientes/nuevo',
+        ruta: '/administration/patients/new',
         carpeta: '25-paciente-alta',
         titulo: 'Pacientes · alta',
       },
@@ -83,7 +83,7 @@ describe('Recorrido · administración', () => {
 
     const pantalla = { carpeta: '26-paciente-alta-envio', titulo: 'Pacientes · alta enviada' };
 
-    cy.visit('/administracion/pacientes/nuevo');
+    cy.visit('/administration/patients/new');
     esperarEstable();
 
     // El explorador toca los controles de a uno y nunca llega a mandar el
@@ -109,7 +109,7 @@ describe('Recorrido · administración', () => {
 
     recorrer(
       {
-        ruta: '/administracion/pacientes/alta-asistida',
+        ruta: '/administration/patients/assisted-registration',
         carpeta: '27-alta-asistida',
         titulo: 'Pacientes · alta asistida',
       },
@@ -122,7 +122,7 @@ describe('Recorrido · administración', () => {
     iniciarSesionEnRecorrido();
 
     recorrer(
-      { ruta: '/administracion/usuarios', carpeta: '28-usuarios-alta', titulo: 'Usuarios · alta' },
+      { ruta: '/administration/users', carpeta: '28-usuarios-alta', titulo: 'Usuarios · alta' },
       { evitar: EVITAR_POR_DEFECTO, maxAcciones: 35 },
     );
   });
@@ -133,7 +133,7 @@ describe('Recorrido · administración', () => {
 
     const pantalla = { carpeta: '29-pacientes-busqueda', titulo: 'Pacientes · búsqueda' };
 
-    cy.visit('/administracion/pacientes');
+    cy.visit('/administration/patients');
     esperarEstable();
     capturar(pantalla, 'listado antes de buscar');
 
@@ -155,7 +155,7 @@ describe('Recorrido · administración', () => {
 
     recorrer(
       {
-        ruta: '/administracion/terminologia',
+        ruta: '/administration/terminology',
         carpeta: '30-terminologia',
         titulo: 'Terminología · catálogo',
       },
@@ -169,7 +169,7 @@ describe('Recorrido · administración', () => {
 
     const pantalla = { carpeta: '31-terminologia-busqueda', titulo: 'Terminología · búsqueda' };
 
-    cy.visit('/administracion/terminologia');
+    cy.visit('/administration/terminology');
     esperarEstable();
     capturar(pantalla, 'catálogo completo');
 

@@ -151,12 +151,12 @@ Las que no usan `ViewStateHost` **no tienen región viva propia**:
 
 | Pantalla | Qué no se anuncia |
 |---|---|
-| `/auth/recuperar` | **El acuse** — que es toda la respuesta |
-| `/auth/registro` | La confirmación de alta |
-| `/auth/nueva-clave` | La confirmación y `revokedSessions` |
-| `/auth/verificar` | La transición de «verificando» a «verificado» |
+| `/auth/forgot-password` | **El acuse** — que es toda la respuesta |
+| `/auth/register` | La confirmación de alta |
+| `/auth/reset-password` | La confirmación y `revokedSessions` |
+| `/auth/verify-email` | La transición de «verificando» a «verificado» |
 
-Más el estado vacío de `/auth/organizacion`, que no tiene mensaje.
+Más el estado vacío de `/auth/organization`, que no tiene mensaje.
 
 En las cuatro, **la respuesta del sistema aparece visualmente y no se anuncia**.
 Es la familia de hallazgos más consistente de esta auditoría. Ver

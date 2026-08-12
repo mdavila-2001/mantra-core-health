@@ -65,28 +65,28 @@ describe('NavigationService', () => {
       // paciente —un dato de la cuenta, no un rol—, y eso lo resuelve la
       // pantalla, no el menú.
       expect(rutasDelMenu()).toEqual([
-        '/panel',
-        '/mi-cuenta',
-        '/mi-cuenta/turnos',
-        '/identidad/verificar',
-        '/identidad/casos',
+        '/dashboard',
+        '/my-account',
+        '/my-account/appointments',
+        '/my-account/identity/verify',
+        '/my-account/identity/cases',
       ]);
     });
 
     it('un administrador de seguridad ve las secciones de administración', () => {
       abrirSesion(['SECURITY_ADMIN']);
 
-      expect(rutasDelMenu()).toContain('/administracion/usuarios');
-      expect(rutasDelMenu()).toContain('/administracion/pacientes');
+      expect(rutasDelMenu()).toContain('/administration/users');
+      expect(rutasDelMenu()).toContain('/administration/patients');
     });
 
     it('un rol clínico no ve administración, y un administrador no ve el archivo clínico', () => {
       abrirSesion(['CLINICIAN']);
-      expect(rutasDelMenu()).toContain('/clinico');
-      expect(rutasDelMenu()).not.toContain('/administracion/usuarios');
+      expect(rutasDelMenu()).toContain('/medical-records');
+      expect(rutasDelMenu()).not.toContain('/administration/users');
 
       abrirSesion(['SECURITY_ADMIN']);
-      expect(rutasDelMenu()).not.toContain('/clinico');
+      expect(rutasDelMenu()).not.toContain('/medical-records');
     });
 
     it('no quedan grupos vacíos: un rótulo sin ítems anuncia lo que no se puede ver', () => {
@@ -120,16 +120,16 @@ describe('NavigationService', () => {
     });
 
     it('en el panel el breadcrumb es un solo escalón, y sin enlace: es donde estás', async () => {
-      await router.navigateByUrl('/panel');
+      await router.navigateByUrl('/dashboard');
 
       expect(service.breadcrumbs()).toEqual([{ label: 'Panel' }]);
     });
 
     it('en una sección el breadcrumb dice de dónde venís, el dominio y dónde estás', async () => {
-      await router.navigateByUrl('/administracion/usuarios');
+      await router.navigateByUrl('/administration/users');
 
       expect(service.breadcrumbs()).toEqual([
-        { label: 'Panel', routerLink: '/panel' },
+        { label: 'Panel', routerLink: '/dashboard' },
         // El dominio no es una pantalla: va sin enlace a propósito.
         { label: 'Administración' },
         { label: 'Usuarios' },
@@ -139,22 +139,22 @@ describe('NavigationService', () => {
     it('una pantalla hija resuelve a su sección padre', async () => {
       // El alta todavía no existe, pero cuando exista no debe dejar el menú sin
       // marcar ni la pantalla sin ruta de navegación.
-      await router.navigateByUrl('/administracion/usuarios/nuevo');
+      await router.navigateByUrl('/administration/users/new');
 
       expect(service.currentSection()?.label).toBe('Usuarios');
     });
 
     it('gana la coincidencia más larga, no la primera que empareja', async () => {
-      await router.navigateByUrl('/administracion/pacientes');
+      await router.navigateByUrl('/administration/patients');
 
-      // `/administracion/usuarios` y `/administracion/pacientes` comparten
+      // `/administration/users` y `/administration/patients` comparten
       // prefijo: comparar de a segmentos completos es lo que evita que una
       // sección se coma a su vecina.
       expect(service.currentSection()?.label).toBe('Pacientes');
     });
 
     it('los parámetros de consulta no confunden a la sección', async () => {
-      await router.navigateByUrl('/agenda?fecha=2026-08-04');
+      await router.navigateByUrl('/schedule?fecha=2026-08-04');
 
       expect(service.currentSection()?.label).toBe('Agenda');
     });

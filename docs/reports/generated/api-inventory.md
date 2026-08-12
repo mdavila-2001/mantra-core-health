@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-89 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+111 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -79,6 +79,42 @@ Archivo: `src/app/core/data-access/files/files.client.ts`
 | Método | Ruta |
 |---|---|
 | `POST` | `/common/files/upload` |
+
+## `GeoClient`
+
+Archivo: `src/app/core/data-access/geo/geo.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/geo/geofence-events` |
+| `POST` | `/geo/geofences` |
+| `POST` | `/geo/tracked-subjects` |
+| `GET` | `/geo/tracked-subjects/:trackedSubjectId/last-position` |
+| `POST` | `/geo/tracked-subjects/:trackedSubjectId/pings` |
+| `POST` | `/geo/tracked-subjects/:trackedSubjectId/revoke-consent` |
+| `POST` | `/geo/tracking-sessions` |
+| `POST` | `/geo/tracking-sessions/:sessionId/close` |
+| `POST` | `/geo/trips` |
+| `POST` | `/geo/trips/:tripId/close` |
+
+## `HealthContextClient`
+
+Archivo: `src/app/core/data-access/health-context/health-context.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/health-context/agents` |
+| `POST` | `/health-context/collection-runs` |
+| `POST` | `/health-context/collection-runs/:collectionRunId/finish` |
+| `POST` | `/health-context/collection-runs/:collectionRunId/observations` |
+| `POST` | `/health-context/contexts` |
+| `POST` | `/health-context/contexts/:contextId/versions` |
+| `GET` | `/health-context/contexts/resolve` |
+| `POST` | `/health-context/schedules` |
+| `POST` | `/health-context/sources` |
+| `POST` | `/health-context/versions/:versionId/publish` |
+| `POST` | `/health-context/versions/:versionId/quality-reviews` |
+| `POST` | `/health-context/versions/:versionId/supersede` |
 
 ## `IamClient`
 

@@ -11,14 +11,14 @@ viva a mano por el equipo. **Ninguno tiene prueba E2E.**
 
 ```mermaid
 graph LR
-  A["/auth"] --> B["/auth/registro"]
+  A["/auth"] --> B["/auth/register"]
   B --> C["Tipo: paciente"]
   C --> D["Documento · nombre · contraseña · correo opcional"]
   D --> E["POST register-patient"]
   E --> F["Confirmación:<br/>«entrá con tu documento»"]
   F --> G["/auth"]
   G --> H["POST login"]
-  H --> I["/panel"]
+  H --> I["/dashboard"]
   style I fill:#DFEDE9,color:#000
 ```
 
@@ -54,7 +54,7 @@ graph LR
   A["/auth"] --> B["POST login"]
   B --> C{"needsTenantSelection?"}
   C -->|"1 organización"| D["/ → /panel"]
-  C -->|"varias"| E["/auth/organizacion"]
+  C -->|"varias"| E["/auth/organization"]
   E --> F["selectTenant(id)"]
   F --> D
   style D fill:#DFEDE9,color:#000
@@ -75,10 +75,10 @@ graph LR
 
 ```mermaid
 graph LR
-  A["/auth/recuperar"] --> B["POST forgot-password"]
+  A["/auth/forgot-password"] --> B["POST forgot-password"]
   B --> C["Acuse SIEMPRE igual"]
   C --> D["Correo con ?token="]
-  D --> E["/auth/nueva-clave"]
+  D --> E["/auth/reset-password"]
   E --> F["POST reset-password"]
   F --> G["Confirmación + sesiones revocadas"]
   G --> H["/auth"]

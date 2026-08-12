@@ -23,7 +23,7 @@ import { isPlatformBrowser } from '@angular/common';
  * que no lo era: quien usa lector de pantalla **no se enteraba** de que había
  * aparecido un mensaje.
  *
- * El caso más grave era el acuse de `/auth/recuperar`, que **es toda la
+ * El caso más grave era el acuse de `/auth/forgot-password`, que **es toda la
  * respuesta** que recibe la persona.
  *
  * Esta directiva extrae las dos reglas de `ViewStateHost` para que cualquier

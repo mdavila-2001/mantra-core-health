@@ -63,7 +63,7 @@ describe('Responsive · móvil', () => {
     Header.abrirNavegacion();
 
     SideNav.esperarVisible();
-    SideNav.rutas().should('include', '/panel');
+    SideNav.rutas().should('include', '/dashboard');
   });
 
   it('se puede iniciar sesión en un teléfono', () => {

@@ -19,7 +19,7 @@ interface Area {
   readonly operaciones: readonly Operacion[];
 }
 
-const BASE = '/administracion/acceso-delegado';
+const BASE = '/administration/delegated-access';
 
 /**
  * Portada de la sección «Acceso delegado» (M29).
@@ -33,7 +33,7 @@ const BASE = '/administracion/acceso-delegado';
   selector: 'app-delegated-access-home',
   imports: [Alert, Card, Link, PageHeader, RouterLink],
   templateUrl: './delegated-access-home.html',
-  styleUrl: './delegated-access-home.css',
+  styleUrl: '../../portada.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DelegatedAccessHome {
@@ -47,39 +47,39 @@ export class DelegatedAccessHome {
       descripcion:
         'Un profesional delega parte de su acceso en alguien de su equipo, con alcance y vigencia.',
       operaciones: [
-        { label: 'Nueva delegación', route: `${BASE}/delegaciones/nueva` },
-        { label: 'Solicitar acceso delegado', route: `${BASE}/delegaciones/solicitudes/nueva` },
-        { label: 'Otorgar concesión', route: `${BASE}/delegaciones/concesiones/nueva` },
-        { label: 'Revocar delegación', route: `${BASE}/delegaciones/revocar` },
+        { label: 'Nueva delegación', route: `${BASE}/delegations/new` },
+        { label: 'Solicitar acceso delegado', route: `${BASE}/delegations/requests/new` },
+        { label: 'Otorgar concesión', route: `${BASE}/delegations/grants/new` },
+        { label: 'Revocar delegación', route: `${BASE}/delegations/revoke` },
       ],
     },
     {
       titulo: 'Asignaciones de organización',
       descripcion: 'Usuarios de la organización con alcance acotado y supervisor responsable.',
       operaciones: [
-        { label: 'Asignar usuario', route: `${BASE}/asignaciones/nueva` },
-        { label: 'Reasignar o suspender', route: `${BASE}/asignaciones/editar` },
+        { label: 'Asignar usuario', route: `${BASE}/assignments/new` },
+        { label: 'Reasignar o suspender', route: `${BASE}/assignments/edit` },
       ],
     },
     {
       titulo: 'Solicitudes de acceso',
       descripcion: 'Resolución de solicitudes pendientes: aprobar o denegar, y emitir el grant.',
-      operaciones: [{ label: 'Resolver solicitud', route: `${BASE}/solicitudes/resolver` }],
+      operaciones: [{ label: 'Resolver solicitud', route: `${BASE}/requests/resolve` }],
     },
     {
       titulo: 'Conjuntos de permisos',
       descripcion: 'Sets versionados de permisos delegables; cada versión reemplaza entera a la anterior.',
       operaciones: [
-        { label: 'Publicar set', route: `${BASE}/conjuntos/nuevo` },
-        { label: 'Versionar set', route: `${BASE}/conjuntos/versionar` },
+        { label: 'Publicar set', route: `${BASE}/permission-sets/new` },
+        { label: 'Versionar set', route: `${BASE}/permission-sets/new-version` },
       ],
     },
     {
       titulo: 'Operación',
       descripcion: 'Herramientas del administrador: evaluar el actor efectivo y expirar lo vencido.',
       operaciones: [
-        { label: 'Evaluar actor efectivo', route: `${BASE}/operacion/evaluar-actor` },
-        { label: 'Barrido de expiración', route: `${BASE}/operacion/barrido-expiracion` },
+        { label: 'Evaluar actor efectivo', route: `${BASE}/operations/evaluate-actor` },
+        { label: 'Barrido de expiración', route: `${BASE}/operations/expiry-sweep` },
       ],
     },
   ];

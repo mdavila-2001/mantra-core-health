@@ -741,7 +741,7 @@ export class Agenda {
             errorToViewState<never[]>(fallo)
           : this.recursosLeidos()
             ? empty(
-                { label: 'Volver al panel', route: '/panel' },
+                { label: 'Volver al panel', route: '/dashboard' },
                 'Esta organización todavía no tiene recursos agendables cargados.',
               )
             : loading();
@@ -801,7 +801,7 @@ export class Agenda {
     if (resultado.items.length === 0) {
       this.citas.set(
         empty(
-          { label: 'Ver los cupos libres', route: '/agenda' },
+          { label: 'Ver los cupos libres', route: '/schedule' },
           `No hay citas ${this.resumenDeVentana()} con los filtros puestos.`,
         ),
       );
@@ -824,7 +824,7 @@ export class Agenda {
     if (resultado.items.length === 0) {
       this.cupos.set(
         empty(
-          { label: 'Ampliar a 30 días', route: '/agenda' },
+          { label: 'Ampliar a 30 días', route: '/schedule' },
           `No hay cupos generados ${this.resumenDeVentana()} para lo que estás mirando.`,
         ),
       );
@@ -852,7 +852,7 @@ export class Agenda {
       motivo: cita.reasonText ?? SIN_DATO,
       patientProfileId: paciente,
       rutaPaciente:
-        paciente !== null && this.puedeVerFichas() ? `/administracion/pacientes/${paciente}` : null,
+        paciente !== null && this.puedeVerFichas() ? `/administration/patients/${paciente}` : null,
       rutaExpediente:
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,

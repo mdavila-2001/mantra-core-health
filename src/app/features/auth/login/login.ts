@@ -30,7 +30,7 @@ const HOME_ROUTE = '/';
  * que pedir dos campos obligaría a la persona a saber cuál le toca. Se detecta
  * por la arroba, que es la misma regla que usaría cualquiera al mirarlo.
  *
- * El enlace de «olvidé mi contraseña» lleva a `/auth/recuperar`, que consume
+ * El enlace de «olvidé mi contraseña» lleva a `/auth/forgot-password`, que consume
  * `POST /iam/auth/forgot-password`. (Este comentario decía lo contrario hasta
  * que el endpoint llegó; la plantilla ya tenía el enlace.)
  */

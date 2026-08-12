@@ -1,8 +1,8 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-11 · **No queda ningún pendiente abierto.** P6 a P13 están todos cerrados
-y comprobados **contra la API viva** en `localhost:3000`, con la imagen reconstruida — no leyendo el
-código.
+**Actualizado:** 2026-08-12 · **Hay un pendiente abierto y es bloqueante: [P14](#abierto--p14--el-autorregistro-de-paciente-devuelve-500-la-base-no-tiene-las-columnas-del-nombre).**
+P6 a P13 siguen cerrados y comprobados **contra la API viva** en `localhost:3000`, con la imagen
+reconstruida — no leyendo el código.
 
 | | Cómo se cerró |
 | --- | --- |
@@ -19,6 +19,59 @@ un 404 pedido con el identificador equivocado no prueba que algo no exista.
 
 Este archivo existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber
 que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
+
+---
+
+## Abierto · P14 · El autorregistro de paciente devuelve 500: la base no tiene las columnas del nombre
+
+**Levantado el 2026-08-12** contra la API viva, preparando el entorno del viernes.
+**Bloquea el paso 1 del guion del consumidor**, que es la única puerta de entrada de quien
+prueba el producto sin que nadie lo acompañe.
+
+```
+POST /iam/auth/register-patient
+→ 500  {"code":"INTERNAL","message":"Error interno del servidor"}
+
+Log de la API (reqId 527):
+InvalidFieldNameException: column "name" of relation "persons" does not exist
+```
+
+**La causa es deriva de las cuatro capas.** El cambio del «nombre en cuatro partes» se hizo en
+la API y en el frontend, pero **nunca llegó a `SQL/` ni a la base**:
+
+| Capa | Qué dice |
+| --- | --- |
+| DTO / API | escribe `name`, `middleName`, `lastName`, `motherLastName` |
+| Frontend | los pide en el formulario y los manda (PR #41) |
+| **`SQL/05_profiles/02_tables.sql`** | **sólo declara `display_name`** |
+| **Base viva** | `information_schema` confirma: en `profiles.persons` la única columna de nombre es `display_name` |
+
+Comprobación directa contra la base:
+
+```sql
+select column_name from information_schema.columns
+where table_schema='profiles' and table_name='persons'
+  and column_name in ('name','middle_name','last_name','mother_last_name','display_name');
+-- (1 row)  display_name
+```
+
+**Por qué no lo vio nadie hasta ahora** — y esto importa más que el defecto:
+
+- Las **1 639 pruebas del frontend** pasan porque `HttpTestingController` finge la respuesta:
+  ninguna toca la base.
+- El **CI de la API está rojo por lint desde el 2026-08-11**, y con él **los 20 pasos siguientes
+  del pipeline están saltados**, incluidas las pruebas que habrían tocado esto. Es exactamente lo
+  que la tarea D2 del plan advierte: «hoy nadie sabe si la API pasa sus pruebas».
+- **`seed:dev` no lo detecta**: crea pacientes por la vía administrativa, no por el autorregistro.
+  Su corrida da 524/524 conformes y aun así este camino está roto.
+
+**Qué haría falta** (no se hizo acá: toca el modelo y sus generadores, no el frontend): declarar
+las columnas en el `.puml` de `profiles`, regenerar `SQL/` con `gen_ddl.py`, y materializarlas en
+la base. La regla del proyecto es explícita — `SQL/` **no se edita a mano**, se regenera.
+
+> **Nota de método:** el `smoke` **borra el administrador de arranque**, así que la secuencia de
+> J2 no es de dos pasos sino de tres: `yarn smoke` → `yarn postman:bootstrap` → `yarn seed:dev`.
+> Sin el del medio, `seed:dev` muere en su primera llamada con `401 UNAUTHENTICATED` y siembra cero.
 
 ---
 

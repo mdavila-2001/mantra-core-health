@@ -7,16 +7,16 @@ Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 13 entradas 
 | URL | Destino | Acceso | Render en servidor | Título |
 |---|---|---|---|---|
 | `/` | `ShellLayout` | Protegida (`authGuard`) | Client | — |
-| `/` | redirige a `panel` | Protegida (`authGuard`) | Client | — |
+| `/` | redirige a `dashboard` | Protegida (`authGuard`) | Client | — |
 | `/design-system` | `DesignSystemSample` (diferida) | Pública | Prerender | Mantra Core Health - Vitrina de Diseño |
 | `/auth` | `Login` | Pública | Prerender | Mantra Core Health - Iniciar sesión |
-| `/auth/organizacion` | `TenantSelection` | Pública | Client | Mantra Core Health - Elegí tu organización |
-| `/auth/registro` | `RegisterPatient` | Pública | Prerender | Mantra Core Health - Crear cuenta |
-| `/auth/verificar` | `VerifyEmail` | Pública | Client | Mantra Core Health - Verificar correo |
-| `/auth/recuperar` | `ForgotPassword` | Pública | Prerender | Mantra Core Health - Recuperar contraseña |
-| `/auth/activar` | `ActivateAccount` | Pública | Client | Mantra Core Health - Activar cuenta |
-| `/auth/reenviar-verificacion` | `ResendVerification` | Pública | Client | Mantra Core Health - Reenviar verificación |
-| `/auth/nueva-clave` | `ResetPassword` | Pública | Client | Mantra Core Health - Nueva contraseña |
+| `/auth/organization` | `TenantSelection` | Pública | Client | Mantra Core Health - Elegí tu organización |
+| `/auth/register` | `RegisterPatient` | Pública | Prerender | Mantra Core Health - Crear cuenta |
+| `/auth/verify-email` | `VerifyEmail` | Pública | Client | Mantra Core Health - Verificar correo |
+| `/auth/forgot-password` | `ForgotPassword` | Pública | Prerender | Mantra Core Health - Recuperar contraseña |
+| `/auth/activate` | `ActivateAccount` | Pública | Client | Mantra Core Health - Activar cuenta |
+| `/auth/resend-verification` | `ResendVerification` | Pública | Client | Mantra Core Health - Reenviar verificación |
+| `/auth/reset-password` | `ResetPassword` | Pública | Client | Mantra Core Health - Nueva contraseña |
 | `/error` | `ErrorRecovery` | Pública | Client | Mantra Core Health |
 | `/**` | `NotFound` | Pública | Client | Mantra Core Health - Página no encontrada |
 

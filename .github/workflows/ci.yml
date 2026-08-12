@@ -90,10 +90,16 @@ jobs:
       - name: Arquitectura
         run: node scripts/check-architecture.mjs
 
-      # Los seis prefijos de la API dicen lo mismo en desarrollo, en el
+      # Los diecinueve prefijos de la API dicen lo mismo en desarrollo, en el
       # contenedor y en el reverse proxy de producción.
       - name: Prefijos de la API
         run: node scripts/check-api-prefixes.mjs
+
+      # Y ninguna ruta del router empieza con uno de esos prefijos: el proxy
+      # compara por inicio de ruta, así que una que lo hiciera se iría a la API
+      # y dejaría la pantalla en blanco (ya pasó con `/admin`).
+      - name: Rutas contra prefijos
+        run: node scripts/check-route-prefixes.mjs
 
       # El catálogo tipado y `styles.css` declaran lo mismo, en ambos sentidos.
       - name: Tokens del sistema de diseño

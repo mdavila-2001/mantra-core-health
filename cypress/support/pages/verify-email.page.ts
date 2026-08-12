@@ -1,7 +1,7 @@
 import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenarios';
 
 /**
- * Verificación de correo (`/auth/verificar?token=…`).
+ * Verificación de correo (`/auth/verify-email?token=…`).
  *
  * El token llega por la barra de direcciones, así que la pantalla se prueba
  * **navegando con query string**: es la única forma de reproducir lo que hace
@@ -12,7 +12,7 @@ import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenar
  * afirmar sobre ellos no depende de la redacción del texto.
  */
 export const VerifyEmailPage = {
-  ruta: '/auth/verificar',
+  ruta: '/auth/verify-email',
 
   /** Abre el enlace tal como llega en el correo. */
   abrirConToken(token: string, escenario: NombreEscenario = ESCENARIO_POR_DEFECTO): void {

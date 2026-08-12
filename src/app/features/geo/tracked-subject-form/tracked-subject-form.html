@@ -1,0 +1,77 @@
+<app-page-header
+  title="Nuevo sujeto rastreado"
+  subtitle="Registra a quién se rastrea, con su consentimiento vigente."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as sujeto) {
+  <div class="m13__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m13__titulo">El sujeto quedó registrado</h2>
+
+    <dl class="m13__datos">
+      <div>
+        <dt>Sujeto rastreado</dt>
+        <dd><code>{{ sujeto.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Identidad rastreada</dt>
+        <dd><code>{{ sujeto.subjectId }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m13__texto">
+      Guardá el identificador del sujeto: es el que piden la ingesta de
+      posiciones, las sesiones y la
+      <a app-link href="/administration/geolocation/subjects/last-position/{{ sujeto.id }}">
+        consulta de última posición</a
+      >.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraAlta()">Registrar otro</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Quién se rastrea"
+      description="Un segundo sujeto activo con el mismo tipo e identidad es un duplicado y se rechaza."
+    >
+      <app-form-field
+        label="Identidad del sujeto"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.subjectId.touched && form.controls.subjectId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="subjectId" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Qué es" [required]="true">
+        <app-radio-group [value]="subjectType()" (valueChange)="elegirTipo($event)">
+          <app-radio value="PERSON" label="Una persona" />
+          <app-radio value="VEHICLE" label="Un vehículo" />
+        </app-radio-group>
+      </app-form-field>
+
+      <app-form-field
+        label="Dispositivo que reporta"
+        hint="Opcional: el dispositivo registrado que va a mandar las posiciones."
+        [errorMessage]="
+          form.controls.deviceId.touched && form.controls.deviceId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="deviceId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Registrar sujeto"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

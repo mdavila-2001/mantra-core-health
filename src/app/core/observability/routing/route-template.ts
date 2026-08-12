@@ -13,7 +13,7 @@ import { sanitizeUrl } from '../privacy/sanitize-url';
  * ## Por qué contra la configuración del Router y no con una expresión regular
  *
  * Una expresión regular tiene que **adivinar** qué segmento es un
- * identificador. Se equivoca en las dos direcciones: `/panel/2026` es un año
+ * identificador. Se equivoca en las dos direcciones: `/dashboard/2026` es un año
  * que forma parte de la ruta, y un identificador con forma de palabra
  * (`/organizacion/clinica-norte`) pasaría intacto. Las dos equivocaciones son
  * caras — la primera parte una operación en mil, la segunda deja un dato

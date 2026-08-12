@@ -207,12 +207,12 @@ Para cuando exista:
 - [ ] `/auth` carga y el formulario se ve
 - [ ] `/design-system` carga (verifica el prerenderizado)
 - [ ] Iniciar sesión funciona (verifica que la API es alcanzable)
-- [ ] `/panel` muestra la tarjeta de sesión
+- [ ] `/dashboard` muestra la tarjeta de sesión
 - [ ] La tarjeta del directorio **no** muestra S8 (verifica el proxy/CORS)
 - [ ] Recargar con sesión **no** vuelve al login (verifica `restoreSession`)
 - [ ] El tema no parpadea (verifica el script en línea)
-- [ ] `/auth/verificar?token=x` muestra el estado correcto
-- [ ] **Cerrar sesión y recargar `/panel`**: tiene que llevar al login
+- [ ] `/auth/verify-email?token=x` muestra el estado correcto
+- [ ] **Cerrar sesión y recargar `/dashboard`**: tiene que llevar al login
 - [ ] La respuesta trae las seis cabeceras de seguridad (`curl -I`)
 
 **El cuarto y el sexto son los que más fallan al desplegar por primera vez**, y

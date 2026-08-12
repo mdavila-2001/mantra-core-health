@@ -15,12 +15,12 @@ const SECCIONES: readonly NavSection[] = [
     items: [
       { label: 'Inicio', route: '/', icon: 'home' },
       { label: 'Pacientes', route: '/pacientes', icon: 'patients', badge: 3 },
-      { label: 'Agenda', route: '/agenda', icon: 'calendar' },
+      { label: 'Agenda', route: '/schedule', icon: 'calendar' },
     ],
   },
   {
     label: 'Administración',
-    items: [{ label: 'Facturación', route: '/facturacion', icon: 'billing', disabled: true }],
+    items: [{ label: 'Facturación', route: '/billing', icon: 'billing', disabled: true }],
   },
 ];
 
@@ -82,8 +82,8 @@ describe('SideNav', () => {
         provideRouter([
           { path: '', component: RutaVacia },
           { path: 'pacientes', component: RutaVacia },
-          { path: 'agenda', component: RutaVacia },
-          { path: 'facturacion', component: RutaVacia },
+          { path: 'schedule', component: RutaVacia },
+          { path: 'billing', component: RutaVacia },
         ]),
       ],
     }).compileComponents();

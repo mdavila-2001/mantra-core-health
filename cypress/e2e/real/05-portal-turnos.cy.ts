@@ -49,7 +49,7 @@ describe('Recorrido real · portal de turnos del paciente', () => {
 
     /* -- La pantalla del portal ------------------------------------------- */
 
-    irA('/mi-cuenta/turnos');
+    irA('/my-account/appointments');
     estable();
     capturar({ carpeta: 'turnos-02-portal', titulo: 'Mis turnos' }, 'al-entrar');
 
@@ -64,7 +64,7 @@ describe('Recorrido real · portal de turnos del paciente', () => {
 
     /* -- La reserva sin contexto explica cómo se llega -------------------- */
 
-    irA('/mi-cuenta/turnos/reservar/00000000-0000-0000-0000-000000000000');
+    irA('/my-account/appointments/book/00000000-0000-0000-0000-000000000000');
     estable();
     capturar({ carpeta: 'turnos-03-reserva', titulo: 'Reserva sin horario' }, 'sin-contexto');
 

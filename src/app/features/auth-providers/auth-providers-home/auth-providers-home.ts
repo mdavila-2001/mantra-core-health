@@ -19,7 +19,7 @@ interface Area {
   readonly operaciones: readonly Operacion[];
 }
 
-const BASE = '/administracion/proveedores-identidad';
+const BASE = '/administration/identity-providers';
 
 /**
  * Portada de la sección «Proveedores de identidad» (M40).
@@ -33,7 +33,7 @@ const BASE = '/administracion/proveedores-identidad';
   selector: 'app-auth-providers-home',
   imports: [Alert, Card, Link, PageHeader, RouterLink],
   templateUrl: './auth-providers-home.html',
-  styleUrl: './auth-providers-home.css',
+  styleUrl: '../../portada.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthProvidersHome {
@@ -47,12 +47,12 @@ export class AuthProvidersHome {
       descripcion:
         'El proveedor nace en borrador; configurar su protocolo por entorno es lo que lo activa.',
       operaciones: [
-        { label: 'Registrar proveedor', route: `${BASE}/proveedores/nuevo` },
-        { label: 'Configurar protocolo', route: `${BASE}/proveedores/protocolo` },
-        { label: 'Fijar mapeo de atributos', route: `${BASE}/proveedores/mapeo-atributos` },
+        { label: 'Registrar proveedor', route: `${BASE}/providers/new` },
+        { label: 'Configurar protocolo', route: `${BASE}/providers/protocol` },
+        { label: 'Fijar mapeo de atributos', route: `${BASE}/providers/attribute-mappings` },
         {
           label: 'Definir regla de aprovisionamiento',
-          route: `${BASE}/proveedores/regla-aprovisionamiento`,
+          route: `${BASE}/providers/provisioning-rule`,
         },
       ],
     },
@@ -61,22 +61,22 @@ export class AuthProvidersHome {
       descripcion:
         'Con qué firma el proveedor. La rotación retira las salientes con gracia, no de golpe.',
       operaciones: [
-        { label: 'Publicar clave de firma', route: `${BASE}/claves/nueva` },
-        { label: 'Rotar clave de firma', route: `${BASE}/claves/rotar` },
+        { label: 'Publicar clave de firma', route: `${BASE}/keys/new` },
+        { label: 'Rotar clave de firma', route: `${BASE}/keys/rotate` },
       ],
     },
     {
       titulo: 'Organizaciones',
       descripcion: 'Qué organización puede usar cada proveedor y con qué aprovisionamiento.',
       operaciones: [
-        { label: 'Vincular proveedor a una organización', route: `${BASE}/organizaciones/vincular` },
+        { label: 'Vincular proveedor a una organización', route: `${BASE}/organizations/link` },
       ],
     },
     {
       titulo: 'Login federado',
       descripcion: 'El intento se inicia con state y nonce; todo desenlace queda registrado.',
       operaciones: [
-        { label: 'Iniciar login federado', route: `${BASE}/login/iniciar` },
+        { label: 'Iniciar login federado', route: `${BASE}/login/start` },
         { label: 'Procesar callback', route: `${BASE}/login/callback` },
       ],
     },
@@ -85,9 +85,9 @@ export class AuthProvidersHome {
       descripcion:
         'Sujetos externos que se vinculan a una cuenta local con un token de un solo uso.',
       operaciones: [
-        { label: 'Solicitar vinculación de cuenta', route: `${BASE}/cuentas/vincular` },
-        { label: 'Completar vinculación', route: `${BASE}/cuentas/completar` },
-        { label: 'Desvincular identidad federada', route: `${BASE}/cuentas/desvincular` },
+        { label: 'Solicitar vinculación de cuenta', route: `${BASE}/accounts/link` },
+        { label: 'Completar vinculación', route: `${BASE}/accounts/complete` },
+        { label: 'Desvincular identidad federada', route: `${BASE}/accounts/unlink` },
       ],
     },
   ];

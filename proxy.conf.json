@@ -13,7 +13,14 @@
       "use de verdad, y que no sean prefijo de ninguna ruta de `APP_SECTIONS`.",
       "",
       "`/admin/tenants` va con dos segmentos por esa regla: `/admin` a secas",
-      "volvería a comerse `/administracion/*`."
+      "volvería a comerse `/administracion/*`.",
+      "",
+      "Desde el 2026-08-11 la regla la hace cumplir `check-route-prefixes.mjs`,",
+      "que corre en CI: un comentario no impide nada. Y al pasar el router a",
+      "inglés la regla dejó de cumplirse por accidente — los nombres en",
+      "castellano eran seguros porque el proxy está en inglés. Por eso M13 vive",
+      "en `administration/geolocation` y no en `geolocation`: `/geo` se la",
+      "comería entera."
     ],
     "context": [
       "/iam",
@@ -32,7 +39,9 @@
       "/delegated-permission-sets",
       "/org",
       "/auth-providers",
-      "/admin/tenants"
+      "/admin/tenants",
+      "/health-context",
+      "/geo"
     ],
     "target": "http://localhost:3000",
     "secure": false,
