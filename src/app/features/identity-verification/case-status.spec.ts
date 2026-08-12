@@ -51,8 +51,11 @@ describe('Estados de un caso de verificación', () => {
     const peticiones = http.match((p) => p.url.includes('/terminology/concepts'));
     expect(peticiones.length).toBe(1);
     expect(peticiones[0]?.request.method).toBe('GET');
-    // Se piden por prefijo de código, que es lo que agrupa a los nueve.
-    expect(peticiones[0]?.request.params.get('q')).toBe('identity_assurance:CASE_');
+    // Se piden por prefijo de código, que es lo que agrupa a los nueve. El
+    // prefijo real es `IDA_`: con `identity_assurance:` la búsqueda no traía
+    // ninguno y los nueve estados se leían «Desconocido» en pantalla, pero esta
+    // prueba pasaba igual porque afirmaba el prefijo equivocado contra un doble.
+    expect(peticiones[0]?.request.params.get('q')).toBe('IDA_CASE_');
 
     peticiones[0]?.flush({ items: [], count: 0, limit: 50 });
   });
@@ -89,7 +92,7 @@ describe('Estados de un caso de verificación', () => {
       items: [
         {
           conceptId: 'c0ffee00-0000-5000-8000-000000000000',
-          code: 'identity_assurance:CASE_INVENTADO',
+          code: 'IDA_CASE_INVENTADO',
           display: 'Case invented',
           codeSystemVersionId: 'csv-terminologia',
         },

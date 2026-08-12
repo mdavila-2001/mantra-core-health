@@ -13,8 +13,19 @@ export interface CaseStatusPresentation {
  * Prefijo de los códigos de estado de caso en el catálogo. Es lo que se busca
  * para traerlos todos de una vez, y lo que los agrupa: son los nueve estados de
  * `identity_assurance` y ningún otro concepto empieza así.
+ *
+ * ## Por qué `IDA_CASE_` y no `identity_assurance:CASE_`
+ *
+ * Los dos formatos de código conviven en el catálogo —los cortos del núcleo y
+ * los prefijados por módulo con dos puntos— y este módulo usa un tercero: sus
+ * conceptos se declaran con prefijo `IDA_`
+ * (`identity_assurance.concepts.ts`: `IDA_CASE_OPEN`, `IDA_CASE_VERIFIED`…).
+ * Con `identity_assurance:CASE_` la búsqueda no encontraba **ninguno**, el
+ * catálogo quedaba vacío y los nueve estados se leían «Desconocido» en las dos
+ * pantallas que los muestran. Encontrado corriendo el recorrido, no leyendo el
+ * código: el fallo era silencioso porque el camino de error ya estaba previsto.
  */
-const PREFIJO_DE_CODIGO = 'identity_assurance:CASE_';
+const PREFIJO_DE_CODIGO = 'IDA_CASE_';
 
 /**
  * Cómo se ve cada estado, por **código de catálogo**.
@@ -182,8 +193,10 @@ export class CaseStatusCatalog {
           const resuelto = new Map<string, CaseStatusPresentation>();
           const porCodigo = new Map<string, string>();
           for (const concepto of pagina.items) {
-            const sufijo = concepto.code.startsWith(PREFIJO_DE_CODIGO)
-              ? concepto.code.slice('identity_assurance:'.length)
+            // `IDA_CASE_VERIFIED` → `CASE_VERIFIED`: las claves del mapa nombran
+            // el estado, no el módulo que lo emite.
+            const sufijo = concepto.code.startsWith('IDA_')
+              ? concepto.code.slice('IDA_'.length)
               : concepto.code;
             const presentacion = PRESENTACION_POR_CODIGO[sufijo];
             if (presentacion !== undefined) {
