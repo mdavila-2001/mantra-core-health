@@ -41,7 +41,7 @@ describe('Navegación', () => {
     cy.location('pathname').should('match', /\/identidad\/verificar$/);
 
     SideNav.irA('/dashboard');
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
   });
 
   it('la ruta activa se anuncia, y no solo se colorea', () => {
@@ -63,7 +63,7 @@ describe('Navegación', () => {
 
     cy.go('back');
 
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
     DashboardPage.esperarTitulo('Panel');
   });
 
@@ -72,7 +72,7 @@ describe('Navegación', () => {
 
     cy.irA('/');
 
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
   });
 
   it('una dirección inexistente muestra la pantalla de no encontrado y ofrece salida', () => {
@@ -91,7 +91,7 @@ describe('Navegación', () => {
 
     LoginPage.irARecuperarPassword();
     ForgotPasswordPage.esperarCargada();
-    cy.location('pathname').should('match', /\/auth\/recuperar$/);
+    cy.location('pathname').should('match', /\/auth\/forgot-password$/);
 
     cy.go('back');
     LoginPage.esperarCargada();

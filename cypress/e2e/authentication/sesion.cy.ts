@@ -38,7 +38,7 @@ describe('Autenticación · sesión', () => {
 
     cy.recargar();
 
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
     DashboardPage.esperarTitulo('Panel');
 
     /**
