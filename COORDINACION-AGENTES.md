@@ -554,9 +554,10 @@ comprueba que la aplicación pintó, no que el campo escuche.
 
 ---
 
-## Sesión en curso · IT2 · estados de caso con datos reales (el sello del titular)
+## Sesión cerrada · IT2 · estados de caso con datos reales (el sello del titular)
 
 **Empezó:** 2026-08-12 (nocturna) · **Rama:** `itzan/it2-estados-caso-sello` · **Base:** `c6081bb` (dev)
+**Cerrada:** mergeada como #57 el 2026-08-12 por la mañana.
 
 El delta que le falta a IT2 sobre el 07 ya mergeado: asertar el **sello del titular
 ANTES** (En revisión) y **DESPUÉS** (Aprobado/Rechazado) en `/identidad/casos` y en el
@@ -566,24 +567,40 @@ nombre en **4 partes** (lo que manda la pantalla del front — eso sigue roto y 
 carril backend, PR #56); el contrato viejo de `actores.ts` registra **201**, así que
 esta suite crea sus actores igual que el 06 y el 07, sin ningún fallback.
 
-### Archivos que estoy creando (nuevos, no chocan)
+---
 
-```text
-cypress/e2e/real/08-sello-del-titular.cy.ts     el delta de IT2
-```
+## Sesión en curso · IT1 · los dos recorridos del viernes (rev. 2)
 
-*(El módulo de actores con fallback que llegó a estar anunciado acá se descartó antes
-de escribirse — el preflight demostró que habría sido código muerto.)*
+**Empezó:** 2026-08-12 · **Rama:** `itzan/it1-recorridos-viernes` · **Base:** `c6081bb`,
+con `origin/dev` (`2b359b9`, incluye #57/#58/#59) mergeado el 2026-08-12 por la tarde.
 
-### Archivos existentes que podría tocar
+Estructura de los dos caminos que se recorren el viernes con el cliente, al
+estilo del 07: los tramos que ya están en `dev` corren y quedan verdes; los que
+esperan merges ajenos (cancelar turno, formularios clínicos, receta) quedan
+detrás de flags `TRAMO_*` apagados. Rev. 2 del plan: se suman los arreglos del
+arnés H-08/H-09 del informe de Marcelo y el tramo «acceso habilitado» (N4)
+detrás de flag. **Con `dev` verde tras #58/#59, esta rama sí termina en PR.**
 
-Solo los reportes generados del inventario (`scripts/generate-inventory.mjs`), por el
-alta del spec nuevo. Nada más.
+### Archivos de esta rama
+
+| Archivo | Qué |
+|---|---|
+| `cypress/support/real/rutas.ts` | Nuevo. Mapa central de rutas: los specs 09/10 no escriben una ruta suelta. Es la mitigación del PR #55 (rutas en inglés, sin decidir): si se mergea, el renombre cuesta este archivo y una re-corrida |
+| `cypress/support/real/tramos.ts` | Nuevo. Los flags `TRAMO_REGISTRO` / `TRAMO_E1_CANCELAR` / `TRAMO_M1_CLINICA` / `TRAMO_P1_RECETA`; la ausencia de la variable es «apagado» |
+| `cypress/support/config.ts` | `tramos()`: los flags viajan al navegador por el bloque `expose`, como el resto de la configuración |
+| `cypress.config.ts` | `...tramos()` en `expose` |
+| `cypress/e2e/real/09-camino-consumidor.cy.ts` | Nuevo. La hoja del consumidor: entrar por documento → panel → pedir y **confirmar** un turno → subir evidencia → verla en «Mis verificaciones» |
+| `cypress/e2e/real/10-camino-medico.cy.ts` | Nuevo. La hoja del médico: agenda de hoy → registrar llegada → expediente → encuentro |
+| `cypress/support/real/sesion.ts` | **Media-migración del #55**: la aserción del login seguía esperando `/panel\|/auth/organizacion` y el login aterriza en `/dashboard` desde el merge — toda la suite real moría ahí. Migrada a `/dashboard\|/auth/organization` |
+| `cypress/e2e/navigation/navegacion.cy.ts` | **Media-migración del #55**: 3 aserciones con rutas viejas (`/identidad/verificar`, `/auth/registro`) — eran 3 de los 4 fallos del **CI ROJO de `dev`** (run 31599344925). Migradas. El 4.º fallo es regresión de producto (aria-current doble), NO se toca acá — ver HALLAZGOS-IT1 |
+| `cypress/e2e/responsive/responsive.cy.ts` | Ídem: `/panel$` → `/dashboard$` |
+| `scripts/run-recorrido-real.mjs` | **H-09**: el lanzador corre con `electron` (chrome se colgaba indefinidamente); **H-08**: el preflight instruye levantar la API con `RATE_LIMIT_DISABLED=true` |
+| `cypress/support/real/tramos.ts` | Flag nuevo `TRAMO_N4_ACCESO`: el desenlace «acceso habilitado» espera el merge del PR #54 de la API |
+| `cypress/e2e/real/08-sello-del-titular.cy.ts` | Extensión N4 detrás del flag: aprobar → el sello pasa a Aprobado **y el titular deja de estar bloqueado** |
+| `cypress/e2e/real/09-camino-consumidor.cy.ts` | Tramo 5-6 «acceso habilitado» detrás del mismo flag |
+| `docs/reports/generated/e2e-inventory.md` | Regenerado al final |
 
 ### Lo que NO estoy tocando
 
-- `src/**` entero — esta entrega no cambia una línea de la aplicación.
-- `cypress/support/real/actores.ts` — su contrato queda intacto (los specs 02/05 lo usan
-  tal cual; que fallen por el P14 es un hallazgo del backend, no algo que se maquille acá).
-- `cypress/e2e/real/07-cola-de-revision.cy.ts` y el resto de `cypress/e2e/`.
-- `cypress/harness/**`, rutas, `navigation.map.ts`, `app.routes.ts`, `.github/**`.
+- `src/**` entero, `cypress/harness/**`, `cypress/e2e/` fuera de `real/08`, `real/09` y
+  `real/10`, `.github/**`, y el contrato de `actores.ts` (lo usan 02/05 tal cual).

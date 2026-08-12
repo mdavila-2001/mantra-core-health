@@ -26,6 +26,9 @@
  * comentario sobre la CSP en `support/real/vigilante.ts`.
  *
  *   node scripts/run-recorrido-real.mjs [-- <args de cypress>]
+ *
+ * El backend tiene que estar levantado **con `RATE_LIMIT_DISABLED=true`**: cada
+ * spec crea sus actores contra `/iam/auth/*`, que limita a 10 por minuto.
  */
 
 import { spawn, spawnSync } from 'node:child_process';
@@ -75,6 +78,12 @@ async function esperar(url, intentos, queEs) {
 if (!(await esperar(`${API}/health`, 3, 'La API'))) {
   console.error(
     'Levantá el backend antes de correr esta suite, o apuntá E2E_API_URL a donde esté.',
+  );
+  console.error(
+    // H-08: cada spec crea sus propios actores y el backend limita registro y
+    // login a 10 por minuto — la suite corrida de un tirón revienta en la
+    // segunda spec. El backend ya honra la variable (igual que en su smoke).
+    'Levantalo con RATE_LIMIT_DISABLED=true: sin eso, la suite entera no llega ni a la segunda spec.',
   );
   process.exit(2);
 }
@@ -143,8 +152,11 @@ const cypress = correr(
     'cypress',
     'run',
     '--e2e',
+    // Electron, no Chrome: el lanzador con Chrome se cuelga indefinidamente en
+    // esta suite (H-09, medido: 1 h 33 min sin arrancar); con Electron la misma
+    // spec corre en 17–30 s.
     '--browser',
-    'chrome',
+    'electron',
     '--spec',
     'cypress/e2e/real/**/*.cy.ts',
     ...argumentosDeCypress(),
