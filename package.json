@@ -6,6 +6,7 @@
     "env:generate": "node scripts/generate-env.mjs",
     "config:env": "yarn env:generate",
     "start": "yarn env:generate && ng serve",
+    "start:lan": "yarn env:generate && ng serve --host 0.0.0.0",
     "build": "yarn env:generate && ng build",
     "watch": "yarn env:generate && ng build --watch --configuration development",
     "test": "yarn env:generate && ng test",

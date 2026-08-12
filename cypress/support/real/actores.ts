@@ -129,13 +129,43 @@ export function tokenDe(identificador: string, clave: string): Cypress.Chainable
 }
 
 /**
+ * El nombre del paciente, en las cuatro partes que manda el formulario.
+ *
+ * Se declara acá y no dentro del alta porque el `displayName` que devuelve la
+ * API es la composición de estas cuatro, y el rótulo del actor tiene que decir
+ * lo mismo que la pantalla va a mostrar.
+ */
+const NOMBRE_PACIENTE = Object.freeze({
+  name: 'Ana',
+  middleName: 'Lucía',
+  lastName: 'Quispe',
+  motherLastName: 'Mamani',
+});
+
+/**
  * **Paciente** — se da de alta solo, sin admin ni token.
  *
  * Entra con su **documento**, no con su correo: es el camino que la pantalla de
  * ingreso resuelve por la ausencia de `@`, y el que ninguna otra prueba recorre.
+ *
+ * ## Por qué las cuatro partes del nombre y no `displayName`
+ *
+ * `displayName` está **deprecado** en `RegisterPatientDto`: la pantalla de
+ * registro manda `name`, `middleName`, `lastName` y `motherLastName` desde que
+ * el modelo los declara, y el backend compone el nombre para mostrar. Un actor
+ * dado de alta por el campo viejo recorría la aplicación con datos que ninguna
+ * persona real produce, así que la composición del nombre —lo que se ve en el
+ * encabezado y en la reserva del portal— no la ejercitaba nadie.
  */
 export function crearPaciente(): Cypress.Chainable<Actor> {
   const nationalId = `CI-E2E-${corrida()}`;
+  const nombre = [
+    NOMBRE_PACIENTE.name,
+    NOMBRE_PACIENTE.middleName,
+    NOMBRE_PACIENTE.lastName,
+    NOMBRE_PACIENTE.motherLastName,
+  ].join(' ');
+
   return cy
     .request({
       method: 'POST',
@@ -143,11 +173,11 @@ export function crearPaciente(): Cypress.Chainable<Actor> {
       body: {
         nationalId,
         password: CLAVE,
-        displayName: 'Paciente de recorrido',
+        ...NOMBRE_PACIENTE,
         email: `paciente-${corrida()}@example.test`,
         phone: '+591 70055555',
-        gender: 'MALE',
-        sexAtBirth: 'MALE',
+        gender: 'FEMALE',
+        sexAtBirth: 'FEMALE',
       },
     })
     .then((respuesta): Actor => {
@@ -155,7 +185,7 @@ export function crearPaciente(): Cypress.Chainable<Actor> {
       return {
         identificador: nationalId,
         clave: CLAVE,
-        nombre: 'Paciente de recorrido',
+        nombre,
         datos: {
           userId: campo(cuerpo, 'userId'),
           personId: campo(cuerpo, 'personId'),

@@ -76,7 +76,7 @@ export function entrar(actor: Actor): void {
   // Dos destinos legítimos: el panel, o la elección de organización cuando la
   // sesión pertenece a más de una. Esperar sólo el panel dejaría la suite roja
   // para cualquiera con dos organizaciones, que es normal.
-  cy.location('pathname', { timeout: 30_000 }).should('match', /^\/(panel|auth\/organizacion)/);
+  cy.location('pathname', { timeout: 30_000 }).should('match', /^\/(dashboard|auth\/organization)/);
 
   cy.location('pathname').then((ruta) => {
     if (!ruta.includes('/auth/organization')) {
@@ -84,7 +84,7 @@ export function entrar(actor: Actor): void {
     }
     capturar({ carpeta: 'sesion', titulo: 'Elegir organización' }, 'elegir-organizacion');
     cy.porTestId('tenant-opcion').first().click();
-    cy.location('pathname', { timeout: 30_000 }).should('match', /\/panel/);
+    cy.location('pathname', { timeout: 30_000 }).should('match', /\/dashboard/);
   });
 }
 

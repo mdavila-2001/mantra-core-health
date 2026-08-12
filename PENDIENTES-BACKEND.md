@@ -1,8 +1,9 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-12 · **Hay un pendiente abierto y es bloqueante: [P14](#abierto--p14--el-autorregistro-de-paciente-devuelve-500-la-base-no-tiene-las-columnas-del-nombre).**
-P6 a P13 siguen cerrados y comprobados **contra la API viva** en `localhost:3000`, con la imagen
-reconstruida — no leyendo el código.
+**Actualizado:** 2026-08-12 (tarde) · **P14 tiene diagnóstico nuevo y procedimiento de cierre —
+ver su sección: el modelo YA tiene las columnas; lo que falta es aplicar un patch en cada
+entorno con base viva.** P6 a P13 siguen cerrados y comprobados **contra la API viva** en
+`localhost:3000`, con la imagen reconstruida — no leyendo el código.
 
 | | Cómo se cerró |
 | --- | --- |
@@ -68,6 +69,37 @@ where table_schema='profiles' and table_name='persons'
 **Qué haría falta** (no se hizo acá: toca el modelo y sus generadores, no el frontend): declarar
 las columnas en el `.puml` de `profiles`, regenerar `SQL/` con `gen_ddl.py`, y materializarlas en
 la base. La regla del proyecto es explícita — `SQL/` **no se edita a mano**, se regenera.
+
+### Diagnóstico corregido y cierre (2026-08-12, tarde — Marcelo)
+
+**El modelo YA tenía las columnas.** El desdoble del nombre se propagó por las 4 capas el
+**2026-08-10**: `.puml` de profiles, `SQL/05_profiles/02_tables.sql`, el patch
+`SQL/patches/2026-08-10_v4011_person_name_components.sql` y la entidad `Persons` (que está en
+`dev` de la API — no es una edición a mano). Lo que nadie vio: **`SQL/` y `Mantra Core Health
+Context/` no son repos git**, así que ese trabajo nunca salió de la máquina donde se hizo. La
+tabla de arriba es correcta para toda copia de `SQL/` anterior al 08-10 — que es exactamente lo
+que tiene cualquier otro entorno. El P4 de este archivo venía avisando este riesgo.
+
+**Cómo se cierra en un entorno con base viva (el del viernes incluido)** — dos patches
+idempotentes, en orden, con el rol `mantra`; NO hace falta rebuild y no se pierde nada sembrado:
+
+```bash
+docker exec -i mantra-redesa-postgres-1 psql -U mantra -d mantra_redesa_health \
+  -v ON_ERROR_STOP=1 < SQL/patches/2026-08-10_v4011_person_name_components.sql
+docker exec -i mantra-redesa-postgres-1 psql -U mantra -d mantra_redesa_health \
+  -v ON_ERROR_STOP=1 < SQL/patches/2026-08-12_v4011_persons_photo_file_id.sql
+```
+
+(El segundo es `photo_file_id` → `common.files`, cerrado hoy; re-aplicarlos da no-ops, está
+verificado.) Los archivos de `SQL/` actualizados viajan por el canal en un zip — hasta que
+`SQL/` tenga distribución versionada, **todo cambio del modelo viaja con su patch y se anuncia**.
+Si el entorno se reconstruye desde cero con la copia nueva de `SQL/`, los patches no hacen falta.
+
+**Verificado ejecutando (2026-08-12):** sobre base parcheada, `POST /iam/auth/register-patient`
+con los 4 nombres → **201**, login con ese documento → 200, `display_name` compuesto desde las
+partes; fidelidad `dry-run` → `6 diferencias (tabla-ausente=6)` y **cero** `columna-ausente`.
+El primer paso del guion del consumidor queda destrabado en cuanto el entorno del viernes
+aplique los patches.
 
 > **Nota de método:** el `smoke` **borra el administrador de arranque**, así que la secuencia de
 > J2 no es de dos pasos sino de tres: `yarn smoke` → `yarn postman:bootstrap` → `yarn seed:dev`.

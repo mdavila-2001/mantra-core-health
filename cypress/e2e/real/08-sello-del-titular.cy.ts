@@ -171,9 +171,9 @@ describe('Recorrido real · el sello del titular sigue al caso', () => {
    * la misma vuelta que documenta `07` para la cola.
    */
   function volverALaLista(): void {
-    irA('/panel');
+    irA('/dashboard');
     estable();
-    irA('/identidad/casos');
+    irA('/my-account/identity/cases');
     estable();
   }
 
@@ -206,7 +206,7 @@ describe('Recorrido real · el sello del titular sigue al caso', () => {
     // ── 2. ANTES · «En revisión» en la lista y en el detalle ────────────────
     cy.then(() => entrar(paciente));
     estable();
-    irA('/identidad/casos');
+    irA('/my-account/identity/cases');
     estable();
 
     cy.then(() => {
@@ -218,7 +218,7 @@ describe('Recorrido real · el sello del titular sigue al caso', () => {
       'en-revision',
     );
 
-    cy.then(() => irA(`/identidad/casos/${contexto.casoRechazado}`));
+    cy.then(() => irA(`/my-account/identity/cases/${contexto.casoRechazado}`));
     estable();
     selloDelDetalle().should('contain.text', 'En revisión');
     // El sello dice palabras, jamás el identificador del concepto.
@@ -250,7 +250,7 @@ describe('Recorrido real · el sello del titular sigue al caso', () => {
       'rechazado',
     );
 
-    cy.then(() => irA(`/identidad/casos/${contexto.casoRechazado}`));
+    cy.then(() => irA(`/my-account/identity/cases/${contexto.casoRechazado}`));
     estable();
     selloDelDetalle().should('contain.text', 'Rechazado');
     selloDelDetalle()
@@ -301,7 +301,7 @@ describe('Recorrido real · el sello del titular sigue al caso', () => {
       'veredictos',
     );
 
-    cy.then(() => irA(`/identidad/casos/${contexto.casoAprobado}`));
+    cy.then(() => irA(`/my-account/identity/cases/${contexto.casoAprobado}`));
     estable();
     selloDelDetalle().should('contain.text', 'Aprobado');
     selloDelDetalle()

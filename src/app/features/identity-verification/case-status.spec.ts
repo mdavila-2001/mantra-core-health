@@ -52,6 +52,13 @@ describe('Estados de un caso de verificación', () => {
     expect(peticiones.length).toBe(1);
     expect(peticiones[0]?.request.method).toBe('GET');
     // Se piden por prefijo de código, que es lo que agrupa a los nueve.
+    //
+    // Este valor se comprobó contra la base viva y no contra el backend leído:
+    // `identity_assurance.concepts.ts` declara `IDA_CASE_*`, pero el seeder
+    // guarda la CLAVE en la columna `code`, así que lo que existe es
+    // `identity_assurance:CASE_*`. Cambiarlo por el otro deja los nueve estados
+    // en «Desconocido» sin romper ninguna pantalla — y esta prueba, contra un
+    // doble, no lo notaría. Sólo lo ve `06-estados-de-caso.cy.ts`.
     expect(peticiones[0]?.request.params.get('q')).toBe('identity_assurance:CASE_');
 
     peticiones[0]?.flush({ items: [], count: 0, limit: 50 });
