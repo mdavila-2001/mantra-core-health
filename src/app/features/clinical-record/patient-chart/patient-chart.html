@@ -43,7 +43,11 @@
           @for (encuentro of encuentrosEnCurso(); track encuentro.id) {
             <li class="expediente__en-curso-item">
               <div class="expediente__en-curso-datos">
-                <app-badge variant="warning" value="En curso" />
+                <!-- El encuentro abierto es un estado, y va con sus tres
+                     canales. Aquí la variante es fija y no sale del catálogo:
+                     «en curso» es un derivado del contrato —el encuentro no
+                     tiene `endAt`—, no un concepto que terminología resuelva. -->
+                <app-status-seal variant="in-review" label="En curso" />
                 <span class="expediente__principal">{{ encuentro.motivo }}</span>
                 <span class="expediente__secundario">
                   {{ encuentro.clase }}
