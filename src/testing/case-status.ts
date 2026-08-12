@@ -42,13 +42,13 @@ export function resolverEstadosDeCaso(http: HttpTestingController): void {
 
   for (const peticion of pendientes) {
     peticion.flush({
-      // `IDA_CASE_OPEN`, no `identity_assurance:CASE_OPEN`: es el prefijo que
-      // el módulo declara de verdad (`identity_assurance.concepts.ts`). El
-      // formato equivocado hacía que estas pruebas pasaran mientras la pantalla
-      // no resolvía ni un solo estado contra la API real.
+      // `identity_assurance:CASE_OPEN` es lo que la base guarda de verdad en la
+      // columna `code` —la clave del concepto, no el `code` que declara
+      // `identity_assurance.concepts.ts`, que el seeder descarta por unicidad—.
+      // Comprobado contra la base viva; ver el encabezado de `case-status.ts`.
       items: Object.entries(ESTADOS_DE_CASO).map(([codigo, conceptId]) => ({
         conceptId,
-        code: `IDA_${codigo}`,
+        code: `identity_assurance:${codigo}`,
         display: codigo,
         codeSystemVersionId: 'csv-terminologia',
       })),
