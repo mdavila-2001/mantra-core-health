@@ -2,7 +2,7 @@
 
 # Inventario de la suite de extremo a extremo (Cypress)
 
-Leído de `cypress/`. 28 archivos de prueba, 142 pruebas, 11 Page Objects y 12 escenarios de API.
+Leído de `cypress/`. 30 archivos de prueba, 145 pruebas, 11 Page Objects y 12 escenarios de API.
 
 La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—
 está en [`cypress/README.md`](../../../cypress/README.md).
@@ -27,6 +27,8 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `real` | Recorrido real · portal de turnos del paciente | 1 | `cypress/e2e/real/05-portal-turnos.cy.ts` |
 | `real` | Recorrido real · estados de un caso de verificación | 1 | `cypress/e2e/real/06-estados-de-caso.cy.ts` |
 | `real` | Recorrido real · la cola de revisión de identidad | 1 | `cypress/e2e/real/07-cola-de-revision.cy.ts` |
+| `real` | Recorrido real · el camino del consumidor | 1 | `cypress/e2e/real/09-camino-consumidor.cy.ts` |
+| `real` | Recorrido real · el camino del médico | 2 | `cypress/e2e/real/10-camino-medico.cy.ts` |
 | `recorrido` | Recorrido · pantallas públicas | 11 | `cypress/e2e/recorrido/01-publico.cy.ts` |
 | `recorrido` | Recorrido · área con sesión · Recorrido · armazón | 10 | `cypress/e2e/recorrido/02-sesion.cy.ts` |
 | `recorrido` | Recorrido · administración | 10 | `cypress/e2e/recorrido/03-administracion.cy.ts` |
@@ -75,4 +77,4 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 
 ## Coherencia de los selectores
 
-Los 81 identificadores que la suite localiza están declarados en las plantillas.
+Los 84 identificadores que la suite localiza están declarados en las plantillas.

@@ -69,7 +69,7 @@ describe('Responsive · móvil', () => {
   it('se puede iniciar sesión en un teléfono', () => {
     iniciarSesion();
 
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
     cy.hayDesbordeHorizontal().should('equal', false);
   });
 

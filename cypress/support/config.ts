@@ -146,6 +146,23 @@ export function verificarEntornoSeguro(config: ConfiguracionE2e = configuracion(
 }
 
 /**
+ * Flags de los tramos de los recorridos del viernes (`e2e/real/09` y `10`).
+ *
+ * Cada uno cubre un pedazo del guion que espera un merge ajeno; la ausencia de
+ * la variable es «apagado». Se leen acá —el único lugar que toca
+ * `process.env`— y viajan al navegador por el bloque `expose`, donde
+ * `cypress/support/real/tramos.ts` los interpreta.
+ */
+export function tramos(): Record<string, string> {
+  return {
+    TRAMO_REGISTRO: texto('TRAMO_REGISTRO', ''),
+    TRAMO_E1_CANCELAR: texto('TRAMO_E1_CANCELAR', ''),
+    TRAMO_M1_CLINICA: texto('TRAMO_M1_CLINICA', ''),
+    TRAMO_P1_RECETA: texto('TRAMO_P1_RECETA', ''),
+  };
+}
+
+/**
  * Credenciales de prueba, leídas del entorno.
  *
  * Ninguna abre nada: la API de la suite está simulada y acepta cualquier

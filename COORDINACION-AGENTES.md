@@ -551,3 +551,36 @@ comprueba que la aplicación pintó, no que el campo escuche.
 - `src/**` entero: esta entrega no cambia una línea de la aplicación.
 - `cypress/harness/**` (el arnés y su API simulada), `cypress/e2e/` fuera de
   `real/07-…`, rutas, `navigation.map.ts`, `app.routes.ts`, `.github/**`.
+
+---
+
+## Sesión en curso · IT1 · los dos recorridos del viernes
+
+**Empezó:** 2026-08-12 · **Rama:** `itzan/it1-recorridos-viernes` · **Base:** `c6081bb` (= `origin/dev`)
+
+Estructura de los dos caminos que se recorren el viernes con el cliente, al
+estilo del 07: los tramos que ya están en `dev` corren y quedan verdes; los que
+esperan merges ajenos (cancelar turno, formularios clínicos, receta) quedan
+detrás de flags `TRAMO_*` apagados. **Esta rama no lleva PR esta noche**
+(decisión de Itzan): los tramos entran a cuentagotas y la pasada final es del
+jueves a la tarde — termina pusheada como respaldo.
+
+### Archivos de esta rama
+
+| Archivo | Qué |
+|---|---|
+| `cypress/support/real/rutas.ts` | Nuevo. Mapa central de rutas: los specs 09/10 no escriben una ruta suelta. Es la mitigación del PR #55 (rutas en inglés, sin decidir): si se mergea, el renombre cuesta este archivo y una re-corrida |
+| `cypress/support/real/tramos.ts` | Nuevo. Los flags `TRAMO_REGISTRO` / `TRAMO_E1_CANCELAR` / `TRAMO_M1_CLINICA` / `TRAMO_P1_RECETA`; la ausencia de la variable es «apagado» |
+| `cypress/support/config.ts` | `tramos()`: los flags viajan al navegador por el bloque `expose`, como el resto de la configuración |
+| `cypress.config.ts` | `...tramos()` en `expose` |
+| `cypress/e2e/real/09-camino-consumidor.cy.ts` | Nuevo. La hoja del consumidor: entrar por documento → panel → pedir y **confirmar** un turno → subir evidencia → verla en «Mis verificaciones» |
+| `cypress/e2e/real/10-camino-medico.cy.ts` | Nuevo. La hoja del médico: agenda de hoy → registrar llegada → expediente → encuentro |
+| `cypress/support/real/sesion.ts` | **Media-migración del #55**: la aserción del login seguía esperando `/panel\|/auth/organizacion` y el login aterriza en `/dashboard` desde el merge — toda la suite real moría ahí. Migrada a `/dashboard\|/auth/organization` |
+| `cypress/e2e/navigation/navegacion.cy.ts` | **Media-migración del #55**: 3 aserciones con rutas viejas (`/identidad/verificar`, `/auth/registro`) — eran 3 de los 4 fallos del **CI ROJO de `dev`** (run 31599344925). Migradas. El 4.º fallo es regresión de producto (aria-current doble), NO se toca acá — ver HALLAZGOS-IT1 |
+| `cypress/e2e/responsive/responsive.cy.ts` | Ídem: `/panel$` → `/dashboard$` |
+| `docs/reports/generated/e2e-inventory.md` | Regenerado al final |
+
+### Lo que NO estoy tocando
+
+- `src/**` entero, `cypress/harness/**`, `cypress/e2e/` fuera de `real/09` y
+  `real/10`, `.github/**`, y el contrato de `actores.ts` (lo usan 02/05 tal cual).
