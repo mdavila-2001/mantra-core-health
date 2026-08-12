@@ -88,7 +88,7 @@ Diferirlas es el cambio de mayor relación beneficio/riesgo del proyecto. Pero:
 
 | A favor | En contra |
 |---|---|
-| Baja el paquete inicial | `/auth`, `/auth/registro` y `/auth/recuperar` están **prerenderizadas** |
+| Baja el paquete inicial | `/auth`, `/auth/register` y `/auth/forgot-password` están **prerenderizadas** |
 | Cada pantalla se paga al usarla | Diferir una ruta prerenderizada exige comprobar que el prerender sigue funcionando |
 | Es el patrón que ya usa la vitrina | Añade un salto de red en la primera navegación |
 

@@ -7,7 +7,7 @@
     ========================================================================== */
 
 /** La sección de agenda (M41). Coincide con la entrada del menú. */
-export const AGENDA_ROUTE = '/agenda';
+export const AGENDA_ROUTE = '/schedule';
 
 /**
  * La reserva de un cupo concreto (V41-09 → V41-05: hold → confirm).
@@ -18,5 +18,5 @@ export const AGENDA_ROUTE = '/agenda';
  * lo reencuentra con `GET /scheduling/slots?resourceId=…&from=…&to=…`.
  */
 export function bookingNewRoute(slotId: string): string {
-  return `${AGENDA_ROUTE}/reservar/${slotId}`;
+  return `${AGENDA_ROUTE}/book/${slotId}`;
 }

@@ -90,7 +90,7 @@ la herramienta.
 | 2 | `/design-system` con `prefers-reduced-motion` | Verifica que nada quede invisible |
 | 3 | `/auth`, dos temas, dos anchos | La pantalla más vista |
 | 4 | `ViewStateGallery`, los nueve estados | El contrato del M34, visualmente |
-| 5 | `/panel` con sesión simulada | La única pantalla autenticada |
+| 5 | `/dashboard` con sesión simulada | La única pantalla autenticada |
 
 ## Las dificultades conocidas
 

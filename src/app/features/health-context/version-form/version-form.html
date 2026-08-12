@@ -1,0 +1,239 @@
+<app-page-header
+  title="Redactar versión"
+  subtitle="Arma un borrador con sus hechos y la evidencia que respalda a cada uno."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (drafted(); as borrador) {
+  <div class="m44__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m44__titulo">La versión quedó en borrador</h2>
+
+    <dl class="m44__datos">
+      <div>
+        <dt>Versión</dt>
+        <dd><code>{{ borrador.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Número</dt>
+        <dd class="m44__cifra">{{ borrador.versionNumber }}</dd>
+      </div>
+      <div>
+        <dt>Hechos</dt>
+        <dd class="m44__cifra">{{ borrador.factIds.length }}</dd>
+      </div>
+      <div>
+        <dt>Evidencias</dt>
+        <dd class="m44__cifra">{{ borrador.evidenceCount }}</dd>
+      </div>
+    </dl>
+
+    <p class="m44__texto">
+      No toca la versión vigente: para publicarla, primero tiene que pasar una
+      revisión de calidad aprobada.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraVersion()">Redactar otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="De dónde sale"
+      description="La versión se redacta desde una corrida del mismo país del contexto."
+    >
+      <app-form-field
+        label="Identificador del contexto"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.contextId.touched && form.controls.contextId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="contextId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Identificador de la corrida"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.collectionRunId.touched && form.controls.collectionRunId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="collectionRunId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="El contenido"
+      description="El cuerpo de la versión es un objeto JSON; su forma la define cada país."
+    >
+      <app-form-field
+        label="Contenido (JSON)"
+        [required]="true"
+        [errorMessage]="
+          form.controls.contextPayloadJson.touched && form.controls.contextPayloadJson.invalid
+            ? 'Tiene que ser un objeto JSON válido.'
+            : ''
+        "
+      >
+        <app-textarea formControlName="contextPayloadJson" [rows]="4" [autoResize]="true" />
+      </app-form-field>
+
+      <app-form-field label="Resumen" hint="Opcional: qué cambió respecto de la anterior. Máx. 2000 caracteres.">
+        <app-textarea formControlName="summary" [rows]="2" [autoResize]="true" />
+      </app-form-field>
+
+      <app-form-field label="Versión del esquema" hint="Opcional. Máx. 50 caracteres.">
+        <app-input formControlName="schemaVersion" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Los hechos"
+      description="Cada hecho apunta a observaciones aceptadas de la misma corrida: sin evidencia no se acepta."
+    >
+      @for (hecho of hechosVisibles(); track hecho; let indiceHecho = $index) {
+        <app-card variant="outlined" padding="md" class="m44__alert">
+          <div [formGroup]="hecho">
+            <h3 class="m44__titulo">Hecho {{ indiceHecho + 1 }}</h3>
+
+            <app-form-field
+              label="Clave del hecho"
+              [required]="true"
+              hint="Como poblacion.total. Máx. 200 caracteres."
+              [errorMessage]="
+                hecho.controls.factKey.touched && hecho.controls.factKey.invalid
+                  ? 'Escribí la clave del hecho (máx. 200 caracteres).'
+                  : ''
+              "
+            >
+              <app-input formControlName="factKey" type="text" />
+            </app-form-field>
+
+            <app-form-field
+              label="Tipo del valor"
+              [required]="true"
+              hint="Como number, string o ratio. Máx. 50 caracteres."
+              [errorMessage]="
+                hecho.controls.valueType.touched && hecho.controls.valueType.invalid
+                  ? 'Escribí el tipo del valor (máx. 50 caracteres).'
+                  : ''
+              "
+            >
+              <app-input formControlName="valueType" type="text" />
+            </app-form-field>
+
+            <app-form-field
+              label="Valor (JSON)"
+              [required]="true"
+              hint='Un objeto, como {"total": 47000000}.'
+              [errorMessage]="
+                hecho.controls.valueJson.touched && hecho.controls.valueJson.invalid
+                  ? 'Tiene que ser un objeto JSON válido.'
+                  : ''
+              "
+            >
+              <app-textarea formControlName="valueJson" [rows]="2" [autoResize]="true" />
+            </app-form-field>
+
+            <app-form-field
+              label="Confianza"
+              hint="Opcional: un número entre 0 y 1, como 0.98."
+              [errorMessage]="
+                hecho.controls.confidenceScore.touched &&
+                hecho.controls.confidenceScore.invalid
+                  ? 'Ingresá un número, como 0.98.'
+                  : ''
+              "
+            >
+              <app-input formControlName="confidenceScore" type="text" />
+            </app-form-field>
+
+            <h4 class="m44__titulo">Evidencia</h4>
+
+            @for (evidencia of evidenciasDe(hecho); track evidencia; let indiceEv = $index) {
+              <div [formGroup]="evidencia">
+                <app-form-field
+                  label="Observación que lo respalda ({{ indiceEv + 1 }})"
+                  [required]="true"
+                  hint="Aceptada y de la misma corrida, o el backend rechaza el hecho."
+                  [errorMessage]="
+                    evidencia.controls.sourceObservationId.touched &&
+                    evidencia.controls.sourceObservationId.invalid
+                      ? uuidError
+                      : ''
+                  "
+                >
+                  <app-input formControlName="sourceObservationId" type="text" />
+                </app-form-field>
+
+                <app-form-field
+                  label="Relevancia"
+                  hint="Opcional: cuánto pesa esta observación en el hecho."
+                  [errorMessage]="
+                    evidencia.controls.relevanceScore.touched &&
+                    evidencia.controls.relevanceScore.invalid
+                      ? 'Ingresá un número, como 0.9.'
+                      : ''
+                  "
+                >
+                  <app-input formControlName="relevanceScore" type="text" />
+                </app-form-field>
+
+                @if (evidenciasDe(hecho).length > 1) {
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    (clicked)="quitarEvidencia(hecho, indiceEv)"
+                  >
+                    Quitar evidencia
+                  </button>
+                }
+              </div>
+            }
+
+            <button
+              app-button
+              variant="secondary"
+              size="sm"
+              type="button"
+              (clicked)="agregarEvidencia(hecho)"
+            >
+              Agregar evidencia
+            </button>
+
+            @if (hechosVisibles().length > 1) {
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                (clicked)="quitarHecho(indiceHecho)"
+              >
+                Quitar hecho
+              </button>
+            }
+          </div>
+        </app-card>
+      }
+
+      <button app-button variant="secondary" type="button" (clicked)="agregarHecho()">
+        Agregar hecho
+      </button>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Guardar borrador"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

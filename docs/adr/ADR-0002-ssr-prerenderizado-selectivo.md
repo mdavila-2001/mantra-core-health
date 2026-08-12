@@ -37,10 +37,10 @@ Y dos más:
 
 | Ruta | Modo |
 |---|---|
-| `/auth`, `/auth/registro`, `/auth/recuperar`, `/design-system` | **Prerender** |
-| `/auth/verificar`, `/auth/nueva-clave` | Cliente — leen `?token=` |
-| `/auth/organizacion` | Cliente — la lista sale del token |
-| `**` (`/`, `/panel`) | Cliente — tienen sesión |
+| `/auth`, `/auth/register`, `/auth/forgot-password`, `/design-system` | **Prerender** |
+| `/auth/verify-email`, `/auth/reset-password` | Cliente — leen `?token=` |
+| `/auth/organization` | Cliente — la lista sale del token |
+| `**` (`/`, `/dashboard`) | Cliente — tienen sesión |
 
 Con `provideClientHydration(withEventReplay())` y `withFetch()` obligatorio.
 

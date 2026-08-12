@@ -1,0 +1,101 @@
+<app-page-header
+  title="Última posición conocida"
+  subtitle="El último punto que reportó el dispositivo de un sujeto rastreado."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="state()" (retry)="cargar()">
+  <div vsh-skeleton>
+    <app-skeleton variant="text" [lines]="4" />
+  </div>
+
+  @if (posicion(); as p) {
+    <app-card variant="outlined" padding="lg" class="m13__seccion">
+      <h2 class="m13__titulo">Posición</h2>
+
+      <dl class="m13__datos">
+        <div>
+          <dt>Latitud</dt>
+          <!-- Texto tal como llegó: convertirlo perdería decimales. -->
+          <dd class="m13__cifra">{{ p.latitude }}</dd>
+        </div>
+        <div>
+          <dt>Longitud</dt>
+          <dd class="m13__cifra">{{ p.longitude }}</dd>
+        </div>
+        <div>
+          <dt>Precisión horizontal</dt>
+          <dd class="m13__cifra">
+            @if (p.accuracyM) {
+              {{ p.accuracyM }} m
+            } @else {
+              Sin dato
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Capturada por el dispositivo</dt>
+          <dd>
+            @if (p.capturedAt; as capturada) {
+              <time [attr.datetime]="capturada.toISOString()" [title]="capturada.toISOString()">
+                {{ capturada | date: 'medium' }}
+              </time>
+            } @else {
+              Sin dato
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Recibida por el servidor</dt>
+          <dd>
+            <time [attr.datetime]="p.recordedAt.toISOString()" [title]="p.recordedAt.toISOString()">
+              {{ p.recordedAt | date: 'medium' }}
+            </time>
+          </dd>
+        </div>
+      </dl>
+    </app-card>
+
+    <app-card variant="outlined" padding="lg" class="m13__seccion">
+      <h2 class="m13__titulo">Referencias</h2>
+      <dl class="m13__datos">
+        <div>
+          <dt>Ping</dt>
+          <dd><code>{{ p.pingId }}</code></dd>
+        </div>
+        <div>
+          <dt>Sujeto rastreado</dt>
+          <dd><code>{{ p.trackedSubjectId }}</code></dd>
+        </div>
+      </dl>
+    </app-card>
+  }
+</app-view-state-host>
+
+<form class="m13__seccion" [formGroup]="form" (ngSubmit)="consultar()" novalidate>
+  <app-form-section
+    legend="Consultar un sujeto"
+    description="El identificador queda en la dirección, así que la consulta se puede compartir y recargar."
+  >
+    <app-form-field
+      label="Identificador del sujeto rastreado"
+      [required]="true"
+      [hint]="uuidHint"
+      [errorMessage]="
+        form.controls.trackedSubjectId.touched && form.controls.trackedSubjectId.invalid
+          ? uuidError
+          : ''
+      "
+    >
+      <app-input formControlName="trackedSubjectId" type="text" />
+    </app-form-field>
+  </app-form-section>
+
+  <!-- Sin `cancelLabel`: no hay nada que cancelar en una consulta, y el
+       componente esconde el secundario cuando la etiqueta va vacía. -->
+  <app-form-actions
+    submitLabel="Consultar"
+    [pending]="state().status === 'loading'"
+    (submitted)="consultar()"
+  />
+</form>

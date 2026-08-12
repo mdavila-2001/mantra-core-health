@@ -117,11 +117,11 @@ describe('ShellLayout', () => {
     // exigen ninguno: el panel y el autoservicio. La vitrina la agrega el
     // armazón porque no es una sección del producto.
     expect(rutasDelMenu()).toEqual([
-      '/panel',
-      '/mi-cuenta',
-      '/mi-cuenta/turnos',
-      '/identidad/verificar',
-      '/identidad/casos',
+      '/dashboard',
+      '/my-account',
+      '/my-account/appointments',
+      '/my-account/identity/verify',
+      '/my-account/identity/cases',
       '/design-system',
     ]);
   });
@@ -131,7 +131,7 @@ describe('ShellLayout', () => {
 
     // El armazón no nombra ninguna sección: las pide al registro. Esta prueba
     // es la que se rompería si alguien volviera a escribir el menú a mano acá.
-    expect(rutasDelMenu()).toContain('/administracion/usuarios');
+    expect(rutasDelMenu()).toContain('/administration/users');
   });
 
   it('la vitrina queda al final: es herramienta de quien construye, no del producto', () => {
@@ -170,7 +170,7 @@ describe('ShellLayout', () => {
     expect(session.activeTenantId()).toBe('t-2');
     // No se recarga la vista actual: podría ser el detalle de un recurso que en
     // esta organización no existe.
-    expect(navegar).toHaveBeenCalledWith('/panel');
+    expect(navegar).toHaveBeenCalledWith('/dashboard');
   });
 
   it('cerrar sesión limpia y manda al login', () => {

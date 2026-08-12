@@ -11,7 +11,7 @@
     ========================================================================== */
 
 /** Listado de organizaciones (V04-01·L). Coincide con la sección del menú. */
-export const ORGANIZATIONS_ROUTE = '/administracion/organizaciones';
+export const ORGANIZATIONS_ROUTE = '/administration/organizations';
 
 /** Alta de una organización raíz con su tipo (V04-01·F). */
-export const ORGANIZATION_NEW_ROUTE = `${ORGANIZATIONS_ROUTE}/nueva`;
+export const ORGANIZATION_NEW_ROUTE = `${ORGANIZATIONS_ROUTE}/new`;

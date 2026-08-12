@@ -1,0 +1,55 @@
+/* ============================================================================
+    La portada de un módulo que sólo tiene comandos.
+
+    Cinco secciones la usan —M29, M40, M27-admin, M44 y M13— porque todas
+    resuelven el mismo problema: el backend no expone `GET` de colección, así
+    que la pantalla de la sección no lista nada y en su lugar agrupa las
+    operaciones por área.
+
+    Vive acá y no junto a una de ellas porque ya había **tres copias idénticas**
+    de estas 40 líneas, y la cuarta y la quinta llegaban con W5. Angular las
+    sigue encapsulando por componente, así que compartir el archivo no cambia lo
+    que se descarga: sólo deja de haber cinco sitios donde tocar un margen.
+    ========================================================================== */
+
+.portada__alert {
+    display: block;
+    margin-top: var(--sp-5);
+    margin-bottom: var(--sp-5);
+    max-width: 72ch;
+}
+
+/* Mobile-first: una columna; con lugar, tarjetas lado a lado. */
+.portada__areas {
+    display: grid;
+    gap: var(--sp-4);
+}
+
+@media (min-width: 720px) {
+    .portada__areas {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.portada__titulo {
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    margin-bottom: var(--sp-2);
+}
+
+.portada__texto {
+    color: var(--text-secondary);
+    margin: 0 0 var(--sp-4);
+}
+
+.portada__operaciones {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sp-2);
+}
+
+.portada__pendiente {
+    color: var(--text-secondary);
+}

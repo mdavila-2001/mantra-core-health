@@ -59,7 +59,7 @@ npx lighthouse http://localhost:4000/auth --output=json --output-path=./lh.json
 |---|---|
 | No requiere instalar nada permanente (`npx`) | Mide una máquina de CI, no un usuario |
 | Detecta regresiones entre commits | No mide INP |
-| Da la primera línea base real | Solo cubre las 4 rutas públicas: `/panel` necesita sesión |
+| Da la primera línea base real | Solo cubre las 4 rutas públicas: `/dashboard` necesita sesión |
 
 **Es el primer paso obvio**, y el único que no requiere ninguna decisión de
 privacidad.

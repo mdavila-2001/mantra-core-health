@@ -32,18 +32,18 @@ describe('AuthProvidersHome', () => {
 
   it('las pantallas ya construidas tienen su enlace, en el orden de las áreas', () => {
     expect(enlaces()).toEqual([
-      '/administracion/proveedores-identidad/proveedores/nuevo',
-      '/administracion/proveedores-identidad/proveedores/protocolo',
-      '/administracion/proveedores-identidad/proveedores/mapeo-atributos',
-      '/administracion/proveedores-identidad/proveedores/regla-aprovisionamiento',
-      '/administracion/proveedores-identidad/claves/nueva',
-      '/administracion/proveedores-identidad/claves/rotar',
-      '/administracion/proveedores-identidad/organizaciones/vincular',
-      '/administracion/proveedores-identidad/login/iniciar',
-      '/administracion/proveedores-identidad/login/callback',
-      '/administracion/proveedores-identidad/cuentas/vincular',
-      '/administracion/proveedores-identidad/cuentas/completar',
-      '/administracion/proveedores-identidad/cuentas/desvincular',
+      '/administration/identity-providers/providers/new',
+      '/administration/identity-providers/providers/protocol',
+      '/administration/identity-providers/providers/attribute-mappings',
+      '/administration/identity-providers/providers/provisioning-rule',
+      '/administration/identity-providers/keys/new',
+      '/administration/identity-providers/keys/rotate',
+      '/administration/identity-providers/organizations/link',
+      '/administration/identity-providers/login/start',
+      '/administration/identity-providers/login/callback',
+      '/administration/identity-providers/accounts/link',
+      '/administration/identity-providers/accounts/complete',
+      '/administration/identity-providers/accounts/unlink',
     ]);
   });
 

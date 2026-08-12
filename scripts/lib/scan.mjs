@@ -70,8 +70,31 @@ export function walk(root, extensions) {
   return found.sort();
 }
 
+/**
+ * Lee un archivo **normalizando los finales de línea a `\n`**.
+ *
+ * La normalización no es cosmética: sin ella, la mitad de las expresiones
+ * regulares de este archivo y de los verificadores mienten en silencio.
+ *
+ * En JavaScript **`.` no coincide con `\r`** —es un terminador de línea, igual
+ * que `\n`— y `$` sin la bandera `m` solo casa al final del texto o antes de un
+ * `\n` final. Así que sobre un archivo CRLF, un patrón tan corriente como
+ * `/^#{1,6}\s+(.*)$/` **no encuentra ni un encabezado**: `(.*)` se detiene ante
+ * el `\r` y `$` ya no puede casar.
+ *
+ * Eso es exactamente lo que pasaba. De las 165 páginas de `docs/`, **159 son
+ * CRLF**, así que `check-doc-links` creía que ninguna ofrecía anclas y reportaba
+ * como roto todo enlace con `#seccion` — 110 falsos positivos que mantenían la
+ * verificación en rojo de forma permanente, y una verificación siempre roja es
+ * una que nadie mira.
+ *
+ * Es el mismo defecto, y por la misma causa, que ya se corrigió en
+ * `tools/catalog/lib/vault.mjs`: sus 2 547 notas también son CRLF y el lector
+ * devolvía una bóveda vacía sin fallar. Se arregla en la frontera y una sola
+ * vez, para que ningún consumidor tenga que acordarse.
+ */
 export function read(file) {
-  return readFileSync(file, 'utf8');
+  return readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
 }
 
 export function exists(file) {

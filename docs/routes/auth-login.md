@@ -34,7 +34,7 @@ graph TD
   G --> H
   H -->|200| I["AuthService.open(): SessionStore.start + persiste el refresh token"]
   I --> J{¿needsTenantSelection?}
-  J -->|sí| K["/auth/organizacion"]
+  J -->|sí| K["/auth/organization"]
   J -->|no| L["/ → /panel"]
   H -->|401| M["S4 · «Las credenciales no son válidas.»"]
   H -->|otro| N["errorToViewState → S4…S9"]

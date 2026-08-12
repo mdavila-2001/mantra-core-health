@@ -34,15 +34,15 @@ viven en [`generated/`](generated/route-inventory.md).
 | URL | Pantalla | Acceso | Render | Datos |
 |---|---|---|---|---|
 | `/` | `ShellLayout` (layout) | `authGuard` | Cliente | — |
-| `/panel` | `Dashboard` | `authGuard` | Cliente | `GET /public/directory` |
+| `/dashboard` | `Dashboard` | `authGuard` | Cliente | `GET /public/directory` |
 | `/auth` | `Login` | Pública | **Prerender** | `POST login` |
-| `/auth/registro` | `RegisterPatient` | Pública | **Prerender** | 2 registros |
-| `/auth/organizacion` | `TenantSelection` | Pública* | Cliente | — (token) |
-| `/auth/verificar` | `VerifyEmail` | Pública | Cliente | `POST verify-email` |
-| `/auth/recuperar` | `ForgotPassword` | Pública | **Prerender** | `POST forgot-password` |
-| `/auth/nueva-clave` | `ResetPassword` | Pública | Cliente | `POST reset-password` |
+| `/auth/register` | `RegisterPatient` | Pública | **Prerender** | 2 registros |
+| `/auth/organization` | `TenantSelection` | Pública* | Cliente | — (token) |
+| `/auth/verify-email` | `VerifyEmail` | Pública | Cliente | `POST verify-email` |
+| `/auth/forgot-password` | `ForgotPassword` | Pública | **Prerender** | `POST forgot-password` |
+| `/auth/reset-password` | `ResetPassword` | Pública | Cliente | `POST reset-password` |
 | `/design-system` | `DesignSystemSample` | Pública | **Prerender** | — |
-| `''` (hija) | → `/panel` | `authGuard` | — | — |
+| `''` (hija) | → `/dashboard` | `authGuard` | — | — |
 | `**` | → `/` | Pública | Cliente | — |
 
 \* Sin guard: alcanzable sin sesión, y entonces muestra una lista vacía.

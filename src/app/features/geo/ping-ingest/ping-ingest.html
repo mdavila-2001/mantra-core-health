@@ -1,0 +1,124 @@
+<app-page-header
+  title="Ingerir posiciones"
+  subtitle="Carga a mano un lote de puntos de un sujeto con sesión abierta. De 1 a 1000 por envío."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (recorded() !== null) {
+  <div class="m13__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m13__titulo">Las posiciones quedaron registradas</h2>
+
+    <dl class="m13__datos">
+      <div>
+        <dt>Puntos registrados</dt>
+        <dd class="m13__cifra">{{ recorded() }}</dd>
+      </div>
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otraIngesta()">Cargar más puntos</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="De quién"
+      description="El sujeto tiene que estar activo y con una sesión de rastreo abierta, o la ingesta se rechaza."
+    >
+      <app-form-field
+        label="Identificador del sujeto rastreado"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.trackedSubjectId.touched && form.controls.trackedSubjectId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="trackedSubjectId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Los puntos"
+      description="Coordenadas en grados decimales. Sin momento de captura, queda el de la recepción."
+    >
+      @for (fila of filasVisibles(); track fila; let indice = $index) {
+        <app-card variant="outlined" padding="md" class="m13__alert">
+          <div [formGroup]="fila">
+            <div class="m13__datos">
+              <app-form-field
+                label="Latitud (punto {{ indice + 1 }})"
+                [required]="true"
+                [errorMessage]="
+                  fila.controls.latitude.touched && fila.controls.latitude.invalid
+                    ? 'Ingresá la latitud en grados decimales, como -34.603765.'
+                    : ''
+                "
+              >
+                <app-input formControlName="latitude" type="text" />
+              </app-form-field>
+
+              <app-form-field
+                label="Longitud"
+                [required]="true"
+                [errorMessage]="
+                  fila.controls.longitude.touched && fila.controls.longitude.invalid
+                    ? 'Ingresá la longitud en grados decimales, como -58.381592.'
+                    : ''
+                "
+              >
+                <app-input formControlName="longitude" type="text" />
+              </app-form-field>
+
+              <app-form-field
+                label="Precisión (metros)"
+                [errorMessage]="
+                  fila.controls.accuracyM.touched && fila.controls.accuracyM.invalid
+                    ? 'Ingresá un número, como 12.5.'
+                    : ''
+                "
+              >
+                <app-input formControlName="accuracyM" type="text" />
+              </app-form-field>
+
+              <app-form-field label="Capturado (ISO 8601)" hint="Como 2026-08-11T10:15:00Z.">
+                <app-input formControlName="capturedAt" type="text" />
+              </app-form-field>
+            </div>
+
+            @if (filasVisibles().length > 1) {
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                (clicked)="quitarFila(indice)"
+              >
+                Quitar punto
+              </button>
+            }
+          </div>
+        </app-card>
+      }
+
+      <button
+        app-button
+        variant="secondary"
+        type="button"
+        [disabled]="filasVisibles().length >= maxPings"
+        (clicked)="agregarFila()"
+      >
+        Agregar punto
+      </button>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Registrar posiciones"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

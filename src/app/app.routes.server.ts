@@ -31,25 +31,25 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Prerender,
   },
   {
-    path: 'auth/registro',
+    path: 'auth/register',
     renderMode: RenderMode.Prerender,
   },
   {
-    path: 'auth/recuperar',
+    path: 'auth/forgot-password',
     renderMode: RenderMode.Prerender,
   },
   {
-    path: 'auth/verificar',
+    path: 'auth/verify-email',
     renderMode: RenderMode.Client,
   },
   {
-    path: 'auth/nueva-clave',
+    path: 'auth/reset-password',
     renderMode: RenderMode.Client,
   },
   {
     // La elección de organización depende de los tenants del token: sin sesión no hay lista que
     // prerenderizar, solo el caso «tu sesión expiró».
-    path: 'auth/organizacion',
+    path: 'auth/organization',
     renderMode: RenderMode.Client,
   },
   {

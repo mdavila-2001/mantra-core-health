@@ -5,26 +5,26 @@ import { apiRouteTemplate, hostOf, sanitizeUrl, schemeOf } from './sanitize-url'
  * nunca llegue a Jaeger**.
  *
  * Dos rutas de esta aplicación reciben una credencial de un solo uso por query
- * string (`/auth/verificar?token=…`, `/auth/nueva-clave?token=…`). Si alguna
+ * string (`/auth/verify-email?token=…`, `/auth/reset-password?token=…`). Si alguna
  * vez alguien «mejora» esta función para conservar los parámetros seguros, esta
  * prueba tiene que fallar.
  */
 describe('sanitizeUrl', () => {
   it('descarta el query string entero, que es donde viaja el token del correo', () => {
-    expect(sanitizeUrl('/auth/verificar?token=eyJhbGciOiJIUzI1NiJ9.abc.def')).toBe(
-      '/auth/verificar',
+    expect(sanitizeUrl('/auth/verify-email?token=eyJhbGciOiJIUzI1NiJ9.abc.def')).toBe(
+      '/auth/verify-email',
     );
   });
 
   it('descarta también el de la ruta de nueva contraseña', () => {
-    const limpia = sanitizeUrl('/auth/nueva-clave?token=abc123&origen=correo');
+    const limpia = sanitizeUrl('/auth/reset-password?token=abc123&origen=correo');
 
-    expect(limpia).toBe('/auth/nueva-clave');
+    expect(limpia).toBe('/auth/reset-password');
     expect(limpia).not.toContain('abc123');
   });
 
   it('descarta el fragmento', () => {
-    expect(sanitizeUrl('/panel#seccion-privada')).toBe('/panel');
+    expect(sanitizeUrl('/dashboard#seccion-privada')).toBe('/dashboard');
   });
 
   it('conserva la ruta de una URL absoluta y descarta el resto', () => {

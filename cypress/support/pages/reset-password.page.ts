@@ -1,7 +1,7 @@
 import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenarios';
 
 /**
- * Nueva contraseña (`/auth/nueva-clave?token=…`).
+ * Nueva contraseña (`/auth/reset-password?token=…`).
  *
  * Como la verificación de correo, el token viaja por la barra de direcciones.
  * A diferencia de aquélla, acá hay un formulario de por medio y una consecuencia
@@ -9,7 +9,7 @@ import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenar
  * las otras sesiones abiertas.
  */
 export const ResetPasswordPage = {
-  ruta: '/auth/nueva-clave',
+  ruta: '/auth/reset-password',
 
   abrirConToken(token: string, escenario: NombreEscenario = ESCENARIO_POR_DEFECTO): void {
     cy.abrirEscenario(escenario, `${ResetPasswordPage.ruta}?token=${encodeURIComponent(token)}`);

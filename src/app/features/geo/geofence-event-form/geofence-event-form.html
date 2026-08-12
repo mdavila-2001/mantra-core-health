@@ -1,0 +1,100 @@
+<app-page-header
+  title="Registrar cruce de geocerca"
+  subtitle="Anota que un sujeto entró o salió de un área. Dos cruces iguales seguidos se rechazan."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as evento) {
+  <div class="m13__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m13__titulo">El cruce quedó registrado</h2>
+
+    <dl class="m13__datos">
+      <div>
+        <dt>Evento</dt>
+        <dd><code>{{ evento.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Geocerca</dt>
+        <dd><code>{{ evento.geofenceId }}</code></dd>
+      </div>
+      <div>
+        <dt>Sujeto</dt>
+        <dd><code>{{ evento.trackedSubjectId }}</code></dd>
+      </div>
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otroCruce()">Registrar otro</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Qué cruce"
+      description="El registro es idempotente por sentido: si el sujeto ya estaba de ese lado, se rechaza."
+    >
+      <app-form-field
+        label="Identificador de la geocerca"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.geofenceId.touched && form.controls.geofenceId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="geofenceId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Identificador del sujeto rastreado"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.trackedSubjectId.touched && form.controls.trackedSubjectId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="trackedSubjectId" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Sentido" [required]="true">
+        <app-radio-group [value]="eventType()" (valueChange)="elegirSentido($event)">
+          <app-radio value="ENTER" label="Entró al área" />
+          <app-radio value="EXIT" label="Salió del área" />
+        </app-radio-group>
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Con qué respaldo"
+      description="Opcional: el ping que evidenció el cruce y el momento exacto, si se conocen."
+    >
+      <app-form-field
+        label="Ping de ubicación"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.locationPingId.touched && form.controls.locationPingId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="locationPingId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Cuándo ocurrió"
+        hint="Sin este dato, queda el momento en que se registró."
+      >
+        <app-date-picker mode="date-time" [(value)]="occurredAt" [disabled]="isSubmitting()" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Registrar cruce"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

@@ -33,21 +33,21 @@ describe('IdentityAdminHome', () => {
   it('las pantallas ya construidas tienen su enlace, en el orden de las áreas', () => {
     expect(enlaces()).toEqual([
       // La cola encabeza: es la lectura desde la que se llega a las demás.
-      '/administracion/verificacion-identidad/cola',
-      '/administracion/verificacion-identidad/autoridades/nueva',
-      '/administracion/verificacion-identidad/autoridades/endpoint',
-      '/administracion/verificacion-identidad/politicas/nueva',
-      '/administracion/verificacion-identidad/casos/nuevo',
-      '/administracion/verificacion-identidad/casos/evidencia',
-      '/administracion/verificacion-identidad/casos/checks',
-      '/administracion/verificacion-identidad/casos/barrido',
-      '/administracion/verificacion-identidad/checks/intento',
-      '/administracion/verificacion-identidad/checks/resultado',
-      '/administracion/verificacion-identidad/checks/fraude',
-      '/administracion/verificacion-identidad/revision/escalar',
-      '/administracion/verificacion-identidad/revision/decision',
-      '/administracion/verificacion-identidad/aserciones/emitir',
-      '/administracion/verificacion-identidad/aserciones/revocar',
+      '/administration/identity-assurance/queue',
+      '/administration/identity-assurance/authorities/new',
+      '/administration/identity-assurance/authorities/endpoint',
+      '/administration/identity-assurance/policies/new',
+      '/administration/identity-assurance/cases/new',
+      '/administration/identity-assurance/cases/evidence',
+      '/administration/identity-assurance/cases/checks',
+      '/administration/identity-assurance/cases/expire-sweep',
+      '/administration/identity-assurance/checks/attempt',
+      '/administration/identity-assurance/checks/result',
+      '/administration/identity-assurance/checks/fraud-signal',
+      '/administration/identity-assurance/review/escalate',
+      '/administration/identity-assurance/review/decision',
+      '/administration/identity-assurance/assertions/issue',
+      '/administration/identity-assurance/assertions/revoke',
     ]);
   });
 

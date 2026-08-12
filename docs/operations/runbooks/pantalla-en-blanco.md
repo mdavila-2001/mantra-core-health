@@ -44,16 +44,16 @@ F12 → Red    → ¿hay algún 404?
 
 | Ruta | Nota |
 |---|---|
-| `/auth`, `/auth/registro`, `/auth/recuperar`, `/design-system` | **Prerenderizadas**: el HTML debería verse aunque JavaScript falle. Blanco acá es más grave |
-| `/panel`, `/` | Cliente. Blanco puede ser una excepción en `Dashboard` o `ShellLayout` |
-| `/auth/verificar`, `/auth/nueva-clave` | Cliente, con token del query string |
+| `/auth`, `/auth/register`, `/auth/forgot-password`, `/design-system` | **Prerenderizadas**: el HTML debería verse aunque JavaScript falle. Blanco acá es más grave |
+| `/dashboard`, `/` | Cliente. Blanco puede ser una excepción en `Dashboard` o `ShellLayout` |
+| `/auth/verify-email`, `/auth/reset-password` | Cliente, con token del query string |
 
 **Que una ruta prerenderizada salga en blanco apunta al servidor**, no al
 cliente: el HTML se genera en el build.
 
 ### 3 · ¿Con sesión o sin ella?
 
-`/panel` y `/` tienen sesión, y ahí concentran la lógica sin prueba:
+`/dashboard` y `/` tienen sesión, y ahí concentran la lógica sin prueba:
 
 ```ts
 // Dashboard — sin .spec.ts

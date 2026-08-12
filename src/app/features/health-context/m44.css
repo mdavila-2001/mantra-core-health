@@ -1,0 +1,84 @@
+/* Estilos comunes de las pantallas del M44. Cada componente los compila
+   scoped, así que compartir el archivo no filtra estilos entre pantallas.
+   Mismo criterio que `m29.css` del acceso delegado. */
+
+.m44__seccion {
+    display: block;
+    margin-top: var(--sp-6);
+}
+
+.m44__titulo {
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    margin-bottom: var(--sp-4);
+}
+
+.m44__texto {
+    color: var(--text-secondary);
+    margin: 0 0 var(--sp-5);
+    max-width: 68ch;
+}
+
+.m44__alert {
+    display: block;
+    margin-bottom: var(--sp-4);
+}
+
+.m44__datos {
+    display: grid;
+    gap: var(--sp-3);
+    margin: 0;
+}
+
+/* Mobile-first: una columna; con lugar, dos. */
+@media (min-width: 720px) {
+    .m44__datos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.m44__datos dt {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.m44__datos dd {
+    margin: 0;
+}
+
+.m44__datos code {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-xs);
+    padding: 0 var(--sp-1);
+    background: var(--bg-inset);
+    /* Es un dato para copiar entero: un click, todo seleccionado. */
+    user-select: all;
+}
+
+.m44__cifra {
+    font-variant-numeric: tabular-nums;
+}
+
+/**
+ * El contenido de la versión es JSON arbitrario del país: no se sabe qué forma
+ * tiene, así que se muestra crudo y **con scroll propio**. Sin el
+ * `overflow: auto` una línea larga empujaría el ancho de toda la página.
+ */
+.m44__payload {
+    margin: 0;
+    padding: var(--sp-3);
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    overflow-x: auto;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    max-height: 24rem;
+    overflow-y: auto;
+}
+
+/* La escotilla de identificador pegado, cuando el catálogo no ofrece el valor. */
+.m44__escotilla {
+    display: block;
+    margin-bottom: var(--sp-3);
+}

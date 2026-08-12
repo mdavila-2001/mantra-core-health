@@ -72,7 +72,7 @@ Ver el runbook
 
 ### 2 · Las 4 rutas prerenderizadas son HTML estático
 
-`/auth`, `/auth/registro`, `/auth/recuperar` y `/design-system` **se generan en el
+`/auth`, `/auth/register`, `/auth/forgot-password` y `/design-system` **se generan en el
 build**. Revertir el JavaScript sin revertir ese HTML deja las dos mitades
 descoordinadas.
 
@@ -113,7 +113,7 @@ la API**, y revertir el frontend no arregla ninguno.
 - [ ] `/auth` carga
 - [ ] `/design-system` carga (verifica el prerenderizado)
 - [ ] Iniciar sesión funciona
-- [ ] `/panel` no muestra S8 (verifica que la API es alcanzable)
+- [ ] `/dashboard` no muestra S8 (verifica que la API es alcanzable)
 - [ ] Recargar con sesión no vuelve al login
 - [ ] El tema no parpadea
 

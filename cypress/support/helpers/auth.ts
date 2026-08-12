@@ -42,7 +42,7 @@ export function iniciarSesion(opciones: OpcionesSesion = {}): void {
   LoginPage.esperarSalidaDelLogin();
 
   cy.location('pathname').then((ruta) => {
-    if (!/\/auth\/organizacion$/.test(ruta)) {
+    if (!/\/auth\/organization$/.test(ruta)) {
       return;
     }
     TenantSelectionPage.organizacionesOfrecidas().then((organizaciones) => {
@@ -54,7 +54,7 @@ export function iniciarSesion(opciones: OpcionesSesion = {}): void {
     });
   });
 
-  cy.location('pathname').should('match', /\/panel$/);
+  cy.location('pathname').should('match', /\/dashboard$/);
   DashboardPage.esperarCargada();
 }
 
@@ -65,6 +65,6 @@ export function iniciarSesionSinElegirOrganizacion(opciones: OpcionesSesion = {}
   LoginPage.abrir(escenario);
   LoginPage.entrar(usuario);
 
-  cy.location('pathname').should('match', /\/auth\/organizacion$/);
+  cy.location('pathname').should('match', /\/auth\/organization$/);
   TenantSelectionPage.esperarCargada();
 }

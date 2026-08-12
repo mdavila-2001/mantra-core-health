@@ -115,10 +115,10 @@ justamente lo que pide el modelo del proyecto.
 
 | Superficie | Modo | Por qué |
 |---|---|---|
-| `/auth`, `/auth/registro`, `/auth/recuperar`, `/design-system` | **Prerender** | Se ven igual para todo el mundo: salen del servidor ya pintadas |
-| `/auth/verificar`, `/auth/nueva-clave` | Cliente | Leen un token del query string, que en el build no existe |
-| `/auth/organizacion` | Cliente | La lista de organizaciones sale del token de sesión |
-| `/` y `/panel` | Cliente | Tienen sesión, y el servidor no la ve |
+| `/auth`, `/auth/register`, `/auth/forgot-password`, `/design-system` | **Prerender** | Se ven igual para todo el mundo: salen del servidor ya pintadas |
+| `/auth/verify-email`, `/auth/reset-password` | Cliente | Leen un token del query string, que en el build no existe |
+| `/auth/organization` | Cliente | La lista de organizaciones sale del token de sesión |
+| `/` y `/dashboard` | Cliente | Tienen sesión, y el servidor no la ve |
 
 El detalle está en [estrategia de renderizado](rendering-strategy.md).
 

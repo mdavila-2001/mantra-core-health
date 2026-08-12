@@ -19,7 +19,7 @@ import { BROWSABLE_PROTOCOLS, type LinkVariant } from './link.types';
  *
  * ```html
  * <a app-link href="/pacientes/123">Ver ficha</a>
- * <a app-link routerLink="/agenda" variant="subtle">Agenda del día</a>
+ * <a app-link routerLink="/schedule" variant="subtle">Agenda del día</a>
  * <a app-link href="https://www.who.int/es">Guía OMS</a>
  * ```
  *

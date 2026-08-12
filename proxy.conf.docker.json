@@ -17,7 +17,9 @@
       "/delegated-permission-sets",
       "/org",
       "/auth-providers",
-      "/admin/tenants"
+      "/admin/tenants",
+      "/health-context",
+      "/geo"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

@@ -1,0 +1,132 @@
+<app-page-header
+  title="Nueva fuente"
+  subtitle="Registra de dónde salen los datos, con qué confianza y bajo qué licencia."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as fuente) {
+  <div class="m44__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m44__titulo">La fuente quedó registrada</h2>
+
+    <dl class="m44__datos">
+      <div>
+        <dt>Fuente</dt>
+        <dd><code>{{ fuente.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Código</dt>
+        <dd><code>{{ fuente.code }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m44__texto">
+      Guardá el identificador: es el que piden las observaciones para declarar
+      de dónde salió cada dato.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraAlta()">Registrar otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Identidad de la fuente"
+      description="El código es único; el nombre es el que se lee en los reportes."
+    >
+      <app-form-field
+        label="Código"
+        [required]="true"
+        hint="Único y estable, como boletin-epidemiologico-msal. Máx. 100 caracteres."
+        [errorMessage]="
+          form.controls.code.touched && form.controls.code.invalid
+            ? 'Escribí el código de la fuente (máx. 100 caracteres).'
+            : ''
+        "
+      >
+        <app-input formControlName="code" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Nombre"
+        [required]="true"
+        [errorMessage]="
+          form.controls.name.touched && form.controls.name.invalid
+            ? 'Escribí el nombre de la fuente (máx. 200 caracteres).'
+            : ''
+        "
+      >
+        <app-input formControlName="name" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Tipo de fuente"
+        [required]="true"
+        hint="Identificador del concepto de tipo (UUID)."
+        [errorMessage]="
+          form.controls.sourceTypeConceptId.touched &&
+          form.controls.sourceTypeConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="sourceTypeConceptId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Gobierno del dato"
+      description="La confianza gobierna qué se acepta, y la licencia dice con qué derecho se usa."
+    >
+      <app-form-field
+        label="Nivel de confianza"
+        [required]="true"
+        hint="Identificador del concepto de nivel (UUID)."
+        [errorMessage]="
+          form.controls.trustTierConceptId.touched && form.controls.trustTierConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="trustTierConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Texto de la licencia" hint="Opcional, pero sin él no se puede defender el uso del dato.">
+        <app-textarea [(value)]="licenseText" autoResize [disabled]="isSubmitting()" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Procedencia"
+      description="Opcional: quién publica la fuente, dónde vive y de qué país es."
+    >
+      <app-form-field label="Organismo dueño" hint="Máx. 200 caracteres.">
+        <app-input formControlName="ownerName" type="text" />
+      </app-form-field>
+
+      <app-form-field label="URL canónica">
+        <app-input formControlName="canonicalUrl" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="País"
+        hint="Identificador del concepto de país (UUID)."
+        [errorMessage]="
+          form.controls.countryConceptId.touched && form.controls.countryConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="countryConceptId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Registrar fuente"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

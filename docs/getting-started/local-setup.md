@@ -98,7 +98,7 @@ yarn start                            # http://localhost:4200
 | `http://localhost:4200/design-system` | La vitrina pinta. No necesita API |
 | `http://localhost:4200/auth` | El login pinta |
 | `http://localhost:4200/` sin sesión | Redirige a `/auth` — es el `authGuard` |
-| Entrar con la cuenta de demostración | Cae en `/panel` |
+| Entrar con la cuenta de demostración | Cae en `/dashboard` |
 | El panel, con la API caída | Tarjeta «Directorio público» en estado S8 o S9 |
 
 Esa última fila es una **prueba, no un fallo**: la aplicación debe decir que no

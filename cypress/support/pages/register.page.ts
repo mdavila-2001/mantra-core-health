@@ -2,7 +2,7 @@ import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenar
 import type { AltaPaciente } from '../fixtures/usuarios';
 
 /**
- * Alta de cuenta (`/auth/registro`).
+ * Alta de cuenta (`/auth/register`).
  *
  * La pantalla tiene dos formularios excluyentes —paciente y profesional— que un
  * grupo de opciones intercambia. Son contratos distintos: el paciente entra con
@@ -10,7 +10,7 @@ import type { AltaPaciente } from '../fixtures/usuarios';
  * necesita matrícula y credencial.
  */
 export const RegisterPage = {
-  ruta: '/auth/registro',
+  ruta: '/auth/register',
 
   abrir(escenario: NombreEscenario = ESCENARIO_POR_DEFECTO): void {
     cy.abrirEscenario(escenario, RegisterPage.ruta);

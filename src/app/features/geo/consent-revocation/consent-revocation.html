@@ -1,0 +1,58 @@
+<app-page-header
+  title="Revocar consentimiento"
+  subtitle="Suspende el rastreo del sujeto y cierra en cascada sus sesiones abiertas."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (revoked(); as sujeto) {
+  <div class="m13__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m13__titulo">El consentimiento quedó revocado</h2>
+
+    <dl class="m13__datos">
+      <div>
+        <dt>Sujeto rastreado</dt>
+        <dd><code>{{ sujeto }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m13__texto">
+      El sujeto quedó suspendido, sus sesiones abiertas se cerraron y la ingesta
+      de posiciones se rechaza desde ahora.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraRevocacion()">Revocar otro</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Qué sujeto"
+      description="La revocación suspende el rastreo y corta las sesiones abiertas en el mismo acto."
+    >
+      <app-form-field
+        label="Identificador del sujeto rastreado"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.trackedSubjectId.touched && form.controls.trackedSubjectId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="trackedSubjectId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Revocar consentimiento"
+      destructive
+      confirmTitle="¿Revocar el consentimiento?"
+      confirmMessage="El sujeto queda suspendido y sus sesiones abiertas se cierran. Repetirlo sobre un sujeto ya suspendido es un error."
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

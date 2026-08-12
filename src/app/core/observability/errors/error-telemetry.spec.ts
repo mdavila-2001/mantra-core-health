@@ -103,7 +103,7 @@ describe('ErrorTelemetry', () => {
   it('abre una traza propia cuando no hay ninguna: el fallo de render era invisible', () => {
     montar();
 
-    telemetry.report(new Error('roto al pintar'), 'error-handler', 'E-abc1234-001', '/panel');
+    telemetry.report(new Error('roto al pintar'), 'error-handler', 'E-abc1234-001', '/dashboard');
 
     const [span] = exporter.getFinishedSpans();
     expect(span?.name).toBe('angular.error');
@@ -116,7 +116,7 @@ describe('ErrorTelemetry', () => {
   it('lleva el código de soporte, que es lo que cierra el circuito con la persona', () => {
     montar();
 
-    telemetry.report(new Error('roto'), 'error-handler', 'E-abc1234-007', '/panel');
+    telemetry.report(new Error('roto'), 'error-handler', 'E-abc1234-007', '/dashboard');
 
     expect(exporter.getFinishedSpans()[0]?.attributes['app.support.id']).toBe('E-abc1234-007');
   });
@@ -125,7 +125,7 @@ describe('ErrorTelemetry', () => {
     montar();
 
     tracing.runInSpan('angular.navigation', {}, () => {
-      telemetry.report(new Error('roto'), 'router', 'E-abc1234-002', '/panel');
+      telemetry.report(new Error('roto'), 'router', 'E-abc1234-002', '/dashboard');
     });
 
     const spans = exporter.getFinishedSpans();
@@ -147,7 +147,7 @@ describe('ErrorTelemetry', () => {
 
     const error = new Error('roto');
     error.stack = 'Error: roto\n    at Paciente (dni 12345678)';
-    telemetry.report(error, 'error-handler', 'E-1', '/panel');
+    telemetry.report(error, 'error-handler', 'E-1', '/dashboard');
 
     const [span] = exporter.getFinishedSpans();
     const expuesto = `${JSON.stringify(span?.attributes)} ${span?.status.message ?? ''}`;
@@ -158,7 +158,7 @@ describe('ErrorTelemetry', () => {
   it('sanea el mensaje antes de ponerlo en el estado', () => {
     montar();
 
-    telemetry.report(new Error('falló para ana@clinica.example'), 'http', 'E-1', '/panel');
+    telemetry.report(new Error('falló para ana@clinica.example'), 'http', 'E-1', '/dashboard');
 
     expect(exporter.getFinishedSpans()[0]?.status.message).toBe('falló para «correo»');
   });
@@ -166,7 +166,7 @@ describe('ErrorTelemetry', () => {
   it('con la telemetría apagada no hace nada', () => {
     montar({ enabled: false });
 
-    telemetry.report(new Error('roto'), 'error-handler', 'E-1', '/panel');
+    telemetry.report(new Error('roto'), 'error-handler', 'E-1', '/dashboard');
 
     expect(exporter.getFinishedSpans()).toHaveLength(0);
   });
@@ -175,8 +175,8 @@ describe('ErrorTelemetry', () => {
     montar();
 
     const error = new Error('roto');
-    telemetry.report(error, 'error-handler', 'E-1', '/panel');
-    telemetry.report(error, 'router', 'E-2', '/panel');
+    telemetry.report(error, 'error-handler', 'E-1', '/dashboard');
+    telemetry.report(error, 'router', 'E-2', '/dashboard');
 
     expect(exporter.getFinishedSpans()).toHaveLength(1);
   });

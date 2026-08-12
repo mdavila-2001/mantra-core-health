@@ -43,7 +43,7 @@ import type { AppSection } from './navigation.types';
  */
 export const APP_SECTIONS: readonly AppSection[] = [
   {
-    path: 'panel',
+    path: 'dashboard',
     label: 'Panel',
     group: 'General',
     icon: 'home',
@@ -55,7 +55,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
   /* -- Atención · fase 1 del orden de trabajo ------------------------------ */
 
   {
-    path: 'agenda',
+    path: 'schedule',
     label: 'Agenda',
     group: 'Atención',
     icon: 'calendar',
@@ -72,7 +72,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M41 scheduling',
   },
   {
-    path: 'clinico',
+    path: 'medical-records',
     label: 'Archivo clínico',
     group: 'Atención',
     icon: 'results',
@@ -89,7 +89,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
   /* -- Administración · fase 0, la fundación ------------------------------- */
 
   {
-    path: 'administracion/pacientes',
+    path: 'administration/patients',
     label: 'Pacientes',
     group: 'Administración',
     icon: 'patients',
@@ -101,7 +101,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M05 profiles',
   },
   {
-    path: 'administracion/usuarios',
+    path: 'administration/users',
     label: 'Usuarios',
     group: 'Administración',
     icon: 'settings',
@@ -111,7 +111,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M01 iam',
   },
   {
-    path: 'administracion/organizaciones',
+    path: 'administration/organizations',
     label: 'Organizaciones',
     group: 'Administración',
     icon: 'settings',
@@ -129,7 +129,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // W2/F3 (M29): el backend del módulo es solo de comando —sin GET—, así
     // que la sección entra como panel de operaciones; los listados llegan
     // con sus endpoints de consulta.
-    path: 'administracion/acceso-delegado',
+    path: 'administration/delegated-access',
     label: 'Acceso delegado',
     group: 'Administración',
     icon: 'settings',
@@ -143,7 +143,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // comandos del backend lo exigen (`AUTH_SERVICE` también puede, pero es un
     // rol de servicio, no de una persona que navega). Como el M29, el módulo
     // no tiene GET: entra como panel de operaciones.
-    path: 'administracion/proveedores-identidad',
+    path: 'administration/identity-providers',
     label: 'Proveedores de identidad',
     group: 'Administración',
     icon: 'settings',
@@ -158,7 +158,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // operaciones con identificadores pegados. Distinta de «Verificar
     // identidad» (autoservicio): acá se administra el ciclo, no se inicia el
     // trámite propio.
-    path: 'administracion/verificacion-identidad',
+    path: 'administration/identity-assurance',
     label: 'Verificación de identidad',
     group: 'Administración',
     icon: 'settings',
@@ -168,7 +168,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M27 identity_assurance',
   },
   {
-    path: 'administracion/terminologia',
+    path: 'administration/terminology',
     label: 'Terminología',
     group: 'Administración',
     icon: 'orders',
@@ -185,11 +185,49 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Consultá los catálogos que alimentan todos los selectores.',
     module: 'M03 terminology',
   },
+  {
+    // W5/M44. El backend tiene **una** lectura —`GET /health-context/contexts/
+    // resolve`— y doce comandos, así que la sección entra como panel de
+    // operaciones, igual que M29, M40 y M27: la portada agrupa lo que se puede
+    // hacer y el resolver es su acción primaria. Los listados llegan con sus
+    // `GET` de colección, que hoy no existen.
+    path: 'administration/health-context',
+    label: 'Contexto sanitario',
+    group: 'Administración',
+    // Mismo ícono que Terminología, y por la misma razón: los dos son catálogos
+    // de plataforma que alimentan decisiones, no registros de atención.
+    icon: 'orders',
+    // Los cinco roles humanos de `HealthContextController`. `SYSTEM` queda
+    // afuera a propósito: es un rol de servicio para el scheduler, no de alguien
+    // que navega — el mismo criterio que dejó a `AUTH_SERVICE` fuera de M40.
+    roles: ['CONTEXT_CURATOR', 'CONTEXT_CONSUMER', 'SOURCE_ADMIN', 'QUALITY_REVIEWER', 'PLATFORM_ADMIN'],
+    availability: 'disponible',
+    summary: 'Recolectá y publicá el contexto sanitario de cada país, con su evidencia.',
+    module: 'M44 health_context',
+  },
+  {
+    // W5/M13. Una lectura (`GET /geo/tracked-subjects/:id/last-position`) y diez
+    // comandos: mismo patrón de panel de operaciones.
+    //
+    // **La ruta cuelga de `administration/` y eso no es decoración**: el prefijo
+    // de la API es `/geo`, y el proxy compara por inicio de ruta sin límite de
+    // segmento. Una sección llamada `geolocation` a nivel raíz se iría entera a
+    // la API. Lo verifica `scripts/check-route-prefixes.mjs`.
+    path: 'administration/geolocation',
+    label: 'Geolocalización',
+    group: 'Administración',
+    icon: 'settings',
+    // Los cuatro controllers del módulo exigen el mismo rol, sin excepción.
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Seguí sujetos rastreados, sus recorridos y las geocercas de la organización.',
+    module: 'M13 geo',
+  },
 
   /* -- Facturación · fase 2 ------------------------------------------------ */
 
   {
-    path: 'facturacion',
+    path: 'billing',
     label: 'Facturación',
     group: 'Facturación',
     icon: 'billing',
@@ -205,7 +243,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
      mirar lo suyo. */
 
   {
-    path: 'mi-cuenta',
+    path: 'my-account',
     label: 'Mi perfil',
     group: 'Mi cuenta',
     icon: 'patients',
@@ -224,7 +262,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Sin `roles` a propósito: el filtro real es tener perfil de paciente, que
     // no es un rol sino un dato de la cuenta —el claim `pid` del token—, y la
     // pantalla lo dice cuando falta en vez de esconderse del menú.
-    path: 'mi-cuenta/turnos',
+    path: 'my-account/appointments',
     label: 'Mis turnos',
     group: 'Mi cuenta',
     icon: 'calendar',
@@ -236,7 +274,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino
     // del 403 `IDENTITY_VERIFICATION_REQUIRED`: **no se renombra**. Cambiarla
     // rompería la puerta que traduce ese error en una salida.
-    path: 'identidad/verificar',
+    path: 'my-account/identity/verify',
     label: 'Verificar identidad',
     group: 'Mi cuenta',
     icon: 'patients',
@@ -248,7 +286,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // V27-01: los casos que la verificación de arriba abre. Sin roles porque
     // el `GET /identity/me/verification-cases` tampoco los pide: cada quien
     // ve únicamente lo suyo, y eso lo resuelve el backend.
-    path: 'identidad/casos',
+    path: 'my-account/identity/cases',
     label: 'Mis verificaciones',
     group: 'Mi cuenta',
     icon: 'patients',

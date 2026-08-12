@@ -63,7 +63,7 @@ sesión abierta que alguien creyó haber cerrado.
 
 Ninguna prueba unitaria podía verlo: todas hacían `flush()` de la respuesta, que
 es justo el caso en el que sí funcionaba. Lo encontró la prueba E2E que vuelve a
-entrar a `/panel` después de salir.
+entrar a `/dashboard` después de salir.
 
 ### 3 · Tres `<select>` sin nombre accesible · era `A11Y-12`
 
@@ -132,7 +132,7 @@ ya usaba.
 |---|---|
 | Directiva `appAnuncio`: región viva + foco | **A11Y-01, A11Y-03, A11Y-04** |
 | Aplicada a las 6 pantallas de `auth/` | El acuse de recuperación ya se anuncia |
-| Estado vacío en `/auth/organizacion` | **A11Y-10** |
+| Estado vacío en `/auth/organization` | **A11Y-10** |
 | **Verificador de contrastes** sin dependencias | **A11Y-06** |
 | Pantalla de verificación de identidad | **A11Y-02** — la puerta ya lleva a algún lado |
 

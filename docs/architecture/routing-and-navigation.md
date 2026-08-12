@@ -33,7 +33,7 @@ graph TD
 ```
 
 Las rutas de `auth` **no están anidadas**: se declaran planas
-(`path: 'auth/registro'`), no como hijas de un padre `auth`. No hay layout
+(`path: 'auth/register'`), no como hijas de un padre `auth`. No hay layout
 compartido de autenticación en el router; lo comparten por composición, usando el
 organismo `AuthSplit` dentro de cada plantilla.
 
@@ -81,7 +81,7 @@ a mano llega igual y se topa con el `authGuard` y después con el `403` de la AP
 que es la única autoridad.
 
 La coincidencia más larga es lo que hace que una pantalla hija que todavía no
-existe —`/administracion/usuarios/nuevo`— resuelva a su sección padre en vez de
+existe —`/administration/users/new`— resuelva a su sección padre en vez de
 quedarse sin menú marcado y sin breadcrumb.
 
 ### Secciones planificadas
@@ -143,7 +143,7 @@ No hay un archivo de constantes. Cada ruta vive donde primero se necesita:
 | Constante | Valor | Archivo |
 |---|---|---|
 | `LOGIN_ROUTE` | `/auth` | `core/http/auth.interceptor.ts` |
-| `TENANT_SELECTION_ROUTE` | `/auth/organizacion` | `core/auth/auth.guard.ts` |
+| `TENANT_SELECTION_ROUTE` | `/auth/organization` | `core/auth/auth.guard.ts` |
 | `IDENTITY_VERIFICATION_ROUTE` | `/identity/me` | `core/http/error-to-view-state.ts` |
 | `HOME_ROUTE` | `/` | `features/auth/login/login.ts` |
 
@@ -161,10 +161,10 @@ Seis lugares llaman a `router.navigateByUrl`:
 | Origen | Destino | Cuándo |
 |---|---|---|
 | `authInterceptor` → `endSession` | `/auth` | 401 sin refresh token, o refresco fallido |
-| `Login.goAfterLogin` | `/auth/organizacion` o `/` | Tras iniciar sesión, según haga falta elegir |
+| `Login.goAfterLogin` | `/auth/organization` o `/` | Tras iniciar sesión, según haga falta elegir |
 | `TenantSelection.choose` | `/` | Tras elegir organización |
 | `ShellLayout.logout` | `/auth` | Tras cerrar sesión |
-| `ShellLayout.changeTenant` | `/panel` | Tras cambiar de organización |
+| `ShellLayout.changeTenant` | `/dashboard` | Tras cambiar de organización |
 | `VerifyEmail` / `ResetPassword` / `RegisterPatient` `.goToLogin` | `/auth` | Botón «Ir al login» |
 
 ### Cambiar de organización vuelve al panel
@@ -172,7 +172,7 @@ Seis lugares llaman a `router.navigateByUrl`:
 ```ts
 protected changeTenant(tenantId: string): void {
   this.auth.selectTenant(tenantId);
-  void this.router.navigateByUrl('/panel');
+  void this.router.navigateByUrl('/dashboard');
 }
 ```
 
@@ -184,10 +184,10 @@ ser el detalle de un recurso que en esta organización no existe.
 
 | Desde | Hacia | Tipo |
 |---|---|---|
-| `/` (hija, `pathMatch: 'full'`) | `/panel` | Redirección de router |
+| `/` (hija, `pathMatch: 'full'`) | `/dashboard` | Redirección de router |
 | `**` | `/` | Comodín |
 | `/` sin sesión | `/auth` | `UrlTree` del guard |
-| `/` con varias organizaciones | `/auth/organizacion` | `UrlTree` del guard |
+| `/` con varias organizaciones | `/auth/organization` | `UrlTree` del guard |
 
 **El comodín redirige a `/`, no a una pantalla 404.** Una URL mal escrita
 termina en el panel (o en el login). Es una decisión de producto sin registrar;

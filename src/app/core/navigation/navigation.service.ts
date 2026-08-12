@@ -43,7 +43,7 @@ export class NavigationService {
    * Se escucha `NavigationEnd` y no `router.url` a secas porque `router.url` no
    * es reactivo: leerlo dentro de un `computed` daría el valor del primer
    * cálculo para siempre. `urlAfterRedirects` es la que corresponde — entrar a
-   * `/` redirige a `/panel`, y el menú tiene que marcar el panel.
+   * `/` redirige a `/dashboard`, y el menú tiene que marcar el panel.
    */
   private readonly currentUrl = toSignal(
     this.router.events.pipe(

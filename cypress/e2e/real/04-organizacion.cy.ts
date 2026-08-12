@@ -38,12 +38,12 @@ describe('Recorrido real · organización', () => {
     entrar(owner);
     estable();
     capturar({ carpeta: 'org-01-panel', titulo: 'Panel de la organización' }, 'al-entrar');
-    cy.location('pathname').should('contain', '/panel');
+    cy.location('pathname').should('contain', '/dashboard');
 
     for (const [ruta, carpeta, titulo] of [
-      ['/agenda', 'org-02-agenda-vacia', 'Agenda sin recursos'],
-      ['/clinico', 'org-03-clinico-vacio', 'Archivo clínico sin pacientes'],
-      ['/mi-cuenta', 'org-04-mi-cuenta', 'Mi perfil del owner'],
+      ['/schedule', 'org-02-agenda-vacia', 'Agenda sin recursos'],
+      ['/medical-records', 'org-03-clinico-vacio', 'Archivo clínico sin pacientes'],
+      ['/my-account', 'org-04-mi-cuenta', 'Mi perfil del owner'],
     ] as const) {
       recorrer(vigilante, { ruta, carpeta, titulo });
     }

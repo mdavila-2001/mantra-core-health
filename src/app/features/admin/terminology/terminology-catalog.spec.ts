@@ -15,7 +15,7 @@ import { TerminologyCatalog } from './terminology-catalog';
  * **el filtro vive en la URL**: sin un router de verdad, `buscar()` navegaría al
  * vacío y el efecto que recarga no se enteraría nunca.
  */
-const RUTA = '/administracion/terminologia';
+const RUTA = '/administration/terminology';
 
 const CONCEPTO = {
   conceptId: '11111111-1111-4111-8111-111111111111',
@@ -34,7 +34,7 @@ describe('TerminologyCatalog', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'administracion/terminologia', component: TerminologyCatalog }]),
+        provideRouter([{ path: 'administration/terminology', component: TerminologyCatalog }]),
       ],
     });
 
