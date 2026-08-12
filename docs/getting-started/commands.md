@@ -8,6 +8,7 @@ Nada de esta página es aspiracional: si una orden está acá, corre.
 | Orden | Qué hace | Duración medida |
 |---|---|---|
 | `yarn start` | Genera el entorno y levanta el servidor de desarrollo en el 4200 | — |
+| `yarn start:lan` | Igual, pero escuchando en toda la red local: sirve para probar desde un teléfono | — |
 | `yarn build` | Genera el entorno y compila para producción, con SSR y prerenderizado | ~5–10 s |
 | `yarn watch` | Compila en modo desarrollo y se queda observando | — |
 | `yarn test` | Corre las pruebas en modo observador | — |
