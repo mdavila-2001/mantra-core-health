@@ -36,6 +36,43 @@ Log de la API (reqId 527):
 InvalidFieldNameException: column "name" of relation "persons" does not exist
 ```
 
+### Alcance medido (2026-08-12, contra la API viva) — **la API no está rota**
+
+El 500 aparece **sólo con el payload nuevo**. El DTO conserva `displayName` como «forma anterior
+de declarar el nombre», y por ese camino el registro funciona:
+
+| Payload | Resultado |
+| --- | --- |
+| `name` · `middleName` · `lastName` · `motherLastName` — **el que manda el front hoy** | **500 INTERNAL** |
+| `displayName` | **201 OK** |
+
+**Y el resto del recorrido del consumidor funciona.** Verificado de punta a punta con una cuenta
+creada por el camino viejo:
+
+| Paso | Resultado |
+| --- | --- |
+| Login con documento | ✅ |
+| Claims del token | ✅ `roles=[USER, PATIENT]` · **`pid` presente** · 1 organización |
+| Panel (`/profiles/patients/me/summary`) | ⚠️ 403 `IDENTITY_VERIFICATION_REQUIRED` — por diseño, con su puerta |
+| Agendas · horarios libres | ✅ 9 recursos · 5 cupos |
+| Retener → confirmar (canal `PORTAL`) | ✅ cita creada |
+| «Mis turnos» | ✅ 1 turno |
+
+O sea: **B1 y B2 del plan de M1 están efectivamente cerrados**, y lo único que rompe es el
+puente entre el formulario y la base.
+
+### Dos salidas, para decidir antes del corte
+
+1. **Arreglo canónico** — `.puml` → `gen_ddl.py` → patch en `SQL/patches/` → base. Es lo correcto.
+2. **Workaround en el front** — que el registro vuelva a mandar `displayName`. Chico y reversible.
+
+> ### ⚠️ Mientras el patch no exista, **reconstruir la base es perder el entorno**
+>
+> Donde hoy el registro con cuatro partes funciona, la base tiene las columnas **por un camino que
+> no quedó en `SQL/`**: el DDL canónico (`SQL/05_profiles/02_tables.sql`) sigue declarando sólo
+> `display_name`, y **no hay ningún patch** en `SQL/patches/` (el último es del 2026-08-06). Un
+> `rebuild_stack.py` las borra y el 500 aparece también ahí.
+
 **La causa es deriva de las cuatro capas.** El cambio del «nombre en cuatro partes» se hizo en
 la API y en el frontend, pero **nunca llegó a `SQL/` ni a la base**:
 
