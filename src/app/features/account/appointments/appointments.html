@@ -37,7 +37,7 @@
                   <span class="turnos__fecha">Sin horario asignado</span>
                 }
               </div>
-              <app-badge variant="info">{{ turno.estado }}</app-badge>
+              <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
               @if (turno.motivo !== '') {
                 <p class="turnos__motivo">{{ turno.motivo }}</p>
               }

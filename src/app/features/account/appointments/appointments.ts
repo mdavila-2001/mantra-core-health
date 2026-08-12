@@ -22,12 +22,14 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { reservaDelPortalRoute } from './appointments.routes';
+import { toBookingStatusPresentation } from './booking-status';
 
 /**
  * Cuántos días hacia adelante se ofrecen.
@@ -52,6 +54,8 @@ interface TurnoVisible {
   /** El uuid del catálogo. Se conserva para poder reetiquetar cuando llegue. */
   readonly statusConceptId: string;
   readonly estado: string;
+  /** El tono del badge, que sale del mismo código que la palabra. */
+  readonly tono: BadgeVariant;
   readonly motivo: string;
 }
 
@@ -329,30 +333,34 @@ export class Appointments {
   /* ---- mapeos ------------------------------------------------------------- */
 
   private aTurnoVisible(cita: Booking): TurnoVisible {
+    const estado = this.presentacionDelEstado(cita.statusConceptId);
     return {
       id: cita.id,
       cuando: cita.startAt ?? null,
       hasta: cita.endAt ?? null,
       statusConceptId: cita.statusConceptId,
-      estado: this.nombreDelEstado(cita.statusConceptId),
+      estado: estado.label,
+      tono: estado.tone,
       motivo: cita.reasonText ?? '',
     };
   }
 
   /** Reetiqueta un turno con lo que el catálogo haya traído desde entonces. */
   private conEtiqueta(turno: TurnoVisible): TurnoVisible {
-    return { ...turno, estado: this.nombreDelEstado(turno.statusConceptId) };
+    const estado = this.presentacionDelEstado(turno.statusConceptId);
+    return { ...turno, estado: estado.label, tono: estado.tone };
   }
 
   /**
-   * El nombre del estado.
+   * Cómo se muestra el estado: la palabra y el tono.
    *
-   * Mientras la etiqueta no llegue se dice «Sin confirmar el estado», no el
-   * uuid: un identificador en pantalla no le dice nada a nadie, y es
-   * exactamente lo que la regla del M34 pide evitar.
+   * El catálogo resuelve el uuid a un **código**, y el código decide las dos
+   * cosas. Ni el uuid ni el `display` en inglés del catálogo llegan a la
+   * pantalla: el primero no le dice nada a nadie —es justo lo que la regla del
+   * M34 pide evitar— y el segundo es una etiqueta de API en otro idioma.
    */
-  private nombreDelEstado(conceptId: string): string {
-    return this.etiquetas().get(conceptId)?.display ?? 'Sin confirmar el estado';
+  private presentacionDelEstado(conceptId: string) {
+    return toBookingStatusPresentation(this.etiquetas().get(conceptId));
   }
 
   private aHorarioVisible(cupo: AgendaSlot): HorarioVisible {
