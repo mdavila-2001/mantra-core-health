@@ -1,0 +1,101 @@
+<app-page-header
+  title="Retirar versión"
+  subtitle="Saca una versión publicada de circulación, con reemplazo o dejándola caducar."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (superseded(); as resultado) {
+  <div class="m44__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m44__resultado-titulo m44__titulo">
+      La versión quedó retirada
+    </h2>
+
+    <dl class="m44__datos">
+      <div>
+        <dt>Versión</dt>
+        <dd><code>{{ resultado.id }}</code></dd>
+      </div>
+      @if (resultado.currentVersionId; as vigente) {
+        <div>
+          <dt>Versión vigente ahora</dt>
+          <dd><code>{{ vigente }}</code></dd>
+        </div>
+      } @else {
+        <div>
+          <dt>Versión vigente ahora</dt>
+          <dd>Ninguna: el contexto quedó obsoleto y el consumo lo va a ver marcado.</dd>
+        </div>
+      }
+    </dl>
+
+    <button app-button variant="primary" (clicked)="otroRetiro()">Retirar otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Qué versión se retira"
+      description="Solo se retira una versión publicada; un borrador se descarta por otro camino."
+    >
+      <app-form-field
+        label="Identificador de la versión"
+        [required]="true"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.versionId.touched && form.controls.versionId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="versionId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="Cómo se retira"
+      description="Con reemplazo el contexto sigue activo; sin él queda obsoleto y el consumo lo ve marcado."
+    >
+      <app-form-field label="Modo" [required]="true">
+        <app-radio-group [value]="mode()" (valueChange)="elegirModo($event)">
+          <app-radio value="SUPERSEDED" label="Reemplazada por otra versión" />
+          <app-radio value="EXPIRED" label="Caducada, sin reemplazo" />
+        </app-radio-group>
+      </app-form-field>
+
+      @if (exigeReemplazo()) {
+        <app-form-field
+          label="Versión que la reemplaza"
+          [required]="true"
+          [hint]="uuidHint"
+          [errorMessage]="
+            form.controls.replacementVersionId.touched &&
+            (form.controls.replacementVersionId.invalid ||
+              form.controls.replacementVersionId.value.trim() === '')
+              ? uuidError
+              : ''
+          "
+        >
+          <app-input formControlName="replacementVersionId" type="text" />
+        </app-form-field>
+      }
+
+      <app-form-field
+        label="Motivo"
+        [required]="true"
+        hint="Queda en la auditoría: un retiro sin por qué no se puede defender."
+      >
+        <app-textarea [(value)]="reason" autoResize [disabled]="isSubmitting()" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Retirar versión"
+      destructive
+      confirmTitle="¿Retirar la versión?"
+      confirmMessage="La versión deja de entregarse al consumo. Sin reemplazo, el contexto queda obsoleto."
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

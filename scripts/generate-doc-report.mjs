@@ -56,6 +56,12 @@ const CHECKS = [
     why: 'las tres declaraciones de la superficie de red dicen lo mismo',
   },
   {
+    name: 'rutas contra prefijos',
+    script: 'check-route-prefixes.mjs',
+    args: [],
+    why: 'ninguna ruta del router empieza con un prefijo de la API',
+  },
+  {
     name: 'tokens del sistema de diseño',
     script: 'check-tokens.mjs',
     args: [],

@@ -205,7 +205,7 @@ de otro rol, y el frontend todavía no la llama.
 
 **El proxy la declara con dos segmentos** (`/admin/tenants`, no `/admin`):
 `/admin` a secas capturaría `/administracion/*`, que es una ruta de la
-aplicación — ya desvió `/administracion/pacientes` una vez.
+aplicación — ya desvió `/administration/patients` una vez.
 
 ### `SchedulingClient` — 8 operaciones
 
@@ -388,6 +388,79 @@ Las etiquetas del catálogo vienen en inglés técnico («Administrative gender
 female») porque son terminología, no copy de producto: `ConceptSelect` las
 traduce por **código** —`GENDER_FEMALE`—, que es la identidad semántica estable
 del concepto, igual que hace `case-status.ts` con los estados de un trámite.
+
+### `HealthContextClient` — 12 operaciones · 11 comandos y una lectura
+
+El M44 completo salvo la operación de sistema. Recolección gobernada del
+contexto sanitario de un país: agentes, fuentes con su licencia y su nivel de
+confianza, programaciones, corridas idempotentes, observaciones inmutables y
+contextos versionados con hechos trazables a su evidencia.
+
+La única lectura, `contexts/resolve`, **no es un listado**: exige país, dominio y
+clave, y los dos primeros pasan por `ParseUUIDPipe`. No existe `GET` de colección
+de nada, así que el resto de las pantallas son formularios con identificadores
+pegados.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/health-context/contexts/resolve` | `ContextResolve` (V44-03·L) |
+| `POST` | `/health-context/agents` | `AgentForm` (V44-07) |
+| `POST` | `/health-context/sources` | `SourceForm` (V44-09) |
+| `POST` | `/health-context/schedules` | `ScheduleForm` (V44-08) |
+| `POST` | `/health-context/contexts` | `ContextForm` (V44-03·F) |
+| `POST` | `/health-context/contexts/:contextId/versions` | `VersionForm` (V44-04) |
+| `POST` | `/health-context/versions/:versionId/quality-reviews` | `QualityReviewForm` (V44-06) |
+| `POST` | `/health-context/versions/:versionId/publish` | `VersionPublish` (V44-05·A) |
+| `POST` | `/health-context/versions/:versionId/supersede` | `VersionSupersede` (V44-05·A) |
+| `POST` | `/health-context/collection-runs` | `CollectionRunForm` (V44-01) |
+| `POST` | `/health-context/collection-runs/:collectionRunId/observations` | `ObservationForm` (V44-02) |
+| `POST` | `/health-context/collection-runs/:collectionRunId/finish` | `CollectionRunFinish` (V44-01·A) |
+
+**`POST /health-context/internal/schedules/run-due` no está en el cliente.** Es
+`@Roles('SYSTEM')`: ninguna persona lo puede ejecutar, así que un método que
+siempre responde 403 sería código muerto. El vault lo cataloga aparte, en su
+tabla de operaciones internas (V44-10).
+
+### `GeoClient` — 11 operaciones · 10 comandos y una lectura
+
+El M13 completo (`SECURITY_ADMIN` en los cuatro controllers): sujetos rastreados
+con su consentimiento, sesiones, pings de alta frecuencia, viajes y geocercas con
+sus cruces.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/geo/tracked-subjects/:trackedSubjectId/last-position` | `LastPosition` (V13-02) |
+| `POST` | `/geo/tracked-subjects` | `TrackedSubjectForm` (V13-01) |
+| `POST` | `/geo/tracked-subjects/:trackedSubjectId/pings` | `PingIngest` (V13-03) |
+| `POST` | `/geo/tracked-subjects/:trackedSubjectId/revoke-consent` | `ConsentRevocation` (V13-01·A) |
+| `POST` | `/geo/tracking-sessions` | `TrackingSessionForm` (V13-04) |
+| `POST` | `/geo/tracking-sessions/:sessionId/close` | `TrackingSessionClose` (V13-04·A) |
+| `POST` | `/geo/trips` | `TripForm` (V13-05) |
+| `POST` | `/geo/trips/:tripId/close` | `TripClose` (V13-05·A) |
+| `POST` | `/geo/geofences` | `GeofenceForm` (V13-07) |
+| `POST` | `/geo/geofence-events` | `GeofenceEventForm` (V13-06) |
+
+#### Dos asimetrías del contrato que el cliente respeta
+
+**Las coordenadas entran como número y salen como texto.** El `POST` de pings las
+valida con `@IsLatitude`/`@IsLongitude` sobre `number`; la lectura las devuelve
+`string` porque son `numeric` de Postgres. Convertirlas al leer perdería
+decimales y ceros significativos, así que `LastPosition.latitude` es `string` y
+hay un assert dedicado a impedir que alguien lo «arregle». Lo mismo vale para
+`Trip.distanceM` y para los tres contadores de `RunFinished`, que son `bigint`.
+
+**`state`, `status`, `subjectType`, `shapeType` y `eventType` de las respuestas
+son uuid de concepto**, no las palabras que se mandan al crear. Para mostrarlos
+hay que resolverlos contra terminología; si eso falla, se muestra el uuid, nunca
+una etiqueta inventada.
+
+#### `tenantId` es un campo de propiedad, no un dato más
+
+`NewTrackedSubject.tenantId` (opcional) y `NewGeofence.tenantId` (obligatorio)
+están en la lista `OWNERSHIP_FIELDS` del backend: su interceptor de tenant los
+contrasta con la cabecera `X-Tenant-Id` y responde **403** si difieren. En el
+sujeto conviene omitirlo y dejar que lo resuelva el interceptor; en la geocerca
+tiene que ser el tenant activo de la sesión.
 
 ### `FilesClient` — 1 operación
 

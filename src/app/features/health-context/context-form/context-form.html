@@ -1,0 +1,106 @@
+<app-page-header
+  title="Nuevo contexto de país"
+  subtitle="Crea la raíz: un contexto nace en borrador y publica su primera versión después."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (created(); as contexto) {
+  <div class="m44__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m44__titulo">El contexto quedó creado</h2>
+
+    <dl class="m44__datos">
+      <div>
+        <dt>Contexto</dt>
+        <dd><code>{{ contexto.id }}</code></dd>
+      </div>
+      <div>
+        <dt>Clave</dt>
+        <dd><code>{{ contexto.contextKey }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m44__texto">
+      Está en borrador: hasta que una versión pase la revisión de calidad y se
+      publique, la
+      <a app-link href="/administration/health-context/contexts/resolve">resolución para consumo</a>
+      lo va a responder como sin versión vigente.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraAlta()">Crear otro</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Dónde vive"
+      description="País, dominio y clave forman la identidad del contexto: la combinación repetida es un duplicado."
+    >
+      <app-form-field
+        label="País"
+        [required]="true"
+        hint="Identificador del concepto de país (UUID)."
+        [errorMessage]="
+          form.controls.countryConceptId.touched && form.controls.countryConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="countryConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Dominio del contexto"
+        [required]="true"
+        hint="Identificador del concepto de dominio (UUID)."
+        [errorMessage]="
+          form.controls.contextDomainConceptId.touched &&
+          form.controls.contextDomainConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="contextDomainConceptId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Clave del contexto"
+        [required]="true"
+        hint="La clave dentro del dominio, como cobertura.publica. Máx. 200 caracteres."
+        [errorMessage]="
+          form.controls.contextKey.touched && form.controls.contextKey.invalid
+            ? 'Escribí la clave del contexto (máx. 200 caracteres).'
+            : ''
+        "
+      >
+        <app-input formControlName="contextKey" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section legend="Cómo se presenta" description="El título es el que se lee en los reportes.">
+      <app-form-field
+        label="Título"
+        [required]="true"
+        [errorMessage]="
+          form.controls.title.touched && form.controls.title.invalid
+            ? 'Escribí el título del contexto (máx. 300 caracteres).'
+            : ''
+        "
+      >
+        <app-input formControlName="title" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Descripción" hint="Opcional.">
+        <app-textarea [(value)]="description" autoResize [disabled]="isSubmitting()" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Crear contexto"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}
