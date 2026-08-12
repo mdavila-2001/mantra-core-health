@@ -87,7 +87,12 @@
           />
         } @else {
           <!-- Paso 1: para quién es el turno. Por el portal ya se sabe. -->
-          <form (ngSubmit)="retener()" novalidate data-testid="reserva-form">
+          <form
+            [formGroup]="formulario"
+            (ngSubmit)="retener()"
+            novalidate
+            data-testid="reserva-form"
+          >
             @if (!esAutoservicio) {
               <app-form-section
                 legend="Paciente"
@@ -121,7 +126,7 @@
                     : ''
                 "
               >
-                <app-textarea [formControl]="motivo" [maxLength]="maxMotivo" [rows]="3" />
+                <app-textarea formControlName="motivo" [maxLength]="maxMotivo" [rows]="3" />
               </app-form-field>
             </app-form-section>
 

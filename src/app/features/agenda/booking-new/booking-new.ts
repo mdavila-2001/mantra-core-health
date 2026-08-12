@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -192,6 +192,24 @@ export class BookingNew {
   protected readonly buscando = signal(false);
 
   protected readonly motivo = new FormControl('', { nonNullable: true });
+
+  /**
+   * El formulario que envuelve al motivo. Un solo control, pero declarado como
+   * grupo **a propósito**.
+   *
+   * Sin `[formGroup]` en el `<form>`, Angular no aplica ninguna directiva de
+   * formulario, y entonces `(ngSubmit)` **no es una salida de nada**: el
+   * navegador hace su envío nativo, la página recarga y la query string se
+   * pierde. Acá eso no era cosmético — `recurso`, `desde` y `hasta` viajan por
+   * query string y son lo único que permite reencontrar el cupo, así que tras
+   * el recargo la pantalla mostraba «Elegí primero un horario» mientras el
+   * `POST .../holds` ya había salido: el cupo quedaba retenido en el servidor
+   * durante los 5 minutos del TTL y quien reservaba no se enteraba.
+   *
+   * Lo encontró el recorrido en navegador; las pruebas unitarias llaman a
+   * `retener()` directamente y nunca pasan por el envío del formulario.
+   */
+  protected readonly formulario = new FormGroup({ motivo: this.motivo });
   protected readonly maxMotivo = MAX_MOTIVO;
 
   private readonly enviado = signal(false);
