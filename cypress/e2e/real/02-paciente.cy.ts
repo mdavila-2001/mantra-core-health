@@ -1,6 +1,7 @@
 import { capturar, reiniciarContadores } from '../../support/recorrido/evidencia';
 import { apiViva, crearPaciente, type Actor } from '../../support/real/actores';
 import { entrar, estable, irA, recorrer } from '../../support/real/sesion';
+import { subirDocumento } from '../../support/real/tramites';
 import { describirHallazgos, Vigilante } from '../../support/real/vigilante';
 
 /**
@@ -83,6 +84,36 @@ describe('Recorrido real · paciente', () => {
       carpeta: 'pac-06-identidad',
       titulo: 'Verificar identidad',
     });
+
+    /* -- Y hace el trámite: sube su documento ------------------------------ */
+
+    // Es el gesto que abre el caso que después se revisa, y hasta acá el
+    // recorrido del paciente llegaba a la pantalla y se iba sin tocarla: quien
+    // lo leyera podía creer que el trámite estaba cubierto, y sólo lo ejercitaba
+    // la prueba del revisor.
+    vigilante.en('Verificar identidad · trámite');
+    subirDocumento().then((caseId) => {
+      expect(caseId, 'la pantalla tiene que devolverle el código de su caso').to.match(
+        /^[0-9a-f-]{36}$/,
+      );
+    });
+    capturar(
+      { carpeta: 'pac-06b-solicitud', titulo: 'Verificar identidad · la solicitud registrada' },
+      'enviada',
+    );
+
+    // El estado se dice en palabras. «Desconocido» es el neutro con que degrada
+    // la pantalla si el catálogo no resuelve, así que su ausencia es lo que
+    // prueba que resolvió; y el sello nunca puede ser el uuid del concepto.
+    cy.get('app-status-seal').should('contain.text', 'En revisión');
+    cy.contains(/desconocido/i).should('not.exist');
+
+    /* -- Y lo ve después en su lista de trámites --------------------------- */
+
+    irA('/identidad/casos');
+    estable();
+    capturar({ carpeta: 'pac-06c-casos', titulo: 'Mis verificaciones' }, 'con-el-tramite');
+    cy.get('app-badge').should('contain.text', 'En revisión');
 
     /* -- Lo que su rol no alcanza ------------------------------------------ */
 
