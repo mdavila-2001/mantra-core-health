@@ -38,7 +38,7 @@ describe('Navegación', () => {
     SideNav.rutas().should('not.include', '/administration/users');
 
     SideNav.irA('/my-account/identity/verify');
-    cy.location('pathname').should('match', /\/identidad\/verificar$/);
+    cy.location('pathname').should('match', /\/my-account\/identity\/verify$/);
 
     SideNav.irA('/dashboard');
     cy.location('pathname').should('match', /\/dashboard$/);
@@ -59,7 +59,7 @@ describe('Navegación', () => {
     iniciarSesion();
 
     SideNav.irA('/my-account/identity/verify');
-    cy.location('pathname').should('match', /\/identidad\/verificar$/);
+    cy.location('pathname').should('match', /\/my-account\/identity\/verify$/);
 
     cy.go('back');
 
@@ -98,7 +98,7 @@ describe('Navegación', () => {
 
     LoginPage.irARegistro();
     RegisterPage.esperarCargada();
-    cy.location('pathname').should('match', /\/auth\/registro$/);
+    cy.location('pathname').should('match', /\/auth\/register$/);
   });
 
   it('la vitrina diferida se descarga y se pinta', () => {

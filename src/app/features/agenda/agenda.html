@@ -129,8 +129,11 @@
 </ng-template>
 
 <ng-template #celdaEstado let-cita>
-  <!-- El estado nunca viaja sólo en el color: el badge trae su texto. -->
-  <app-badge variant="info" [value]="cita.estado" />
+  <!-- Tres canales, no dos: tono, **forma** y palabra. La regla del sistema de
+       diseño es que la silueta del ícono cambie con el estado —«no el mismo
+       círculo teñido»—, porque quien no distingue los colores necesita algo más
+       que el color para separar una cita confirmada de una cancelada. -->
+  <app-status-seal [variant]="cita.estado.variant" [label]="cita.estado.label" />
 </ng-template>
 
 <ng-template #celdaPaciente let-cita>
