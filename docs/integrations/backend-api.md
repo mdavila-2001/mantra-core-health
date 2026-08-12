@@ -257,11 +257,20 @@ paso previo.
 | `POST` | `/clinical/medication-requests` | `PatientChart` — prescripción |
 | `POST` | `/clinical/medication-requests/:medicationRequestId/sign` | `PatientChart` — firma |
 | `POST` | `/clinical/medication-requests/:medicationRequestId/issue` | `PatientChart` — emisión |
+| `POST` | `/clinical/diagnostic-reports` | `ClinicalClient` — informe diagnóstico (UC-08-06) |
+| `POST` | `/clinical/diagnostic-reports/:diagnosticReportId/release` | `ClinicalClient` — liberación (UC-08-07) |
 
 Las seis escrituras clínicas **no estaban declaradas**: entraron con el registro
 del expediente y el contrato quedó atrás, así que la comprobación de deriva
 —que compara lo que el código llama contra lo que este archivo declara— venía
 fallando en `dev` para todo el mundo. Se declaran acá.
+
+Las dos últimas —el informe diagnóstico— son las únicas de la tabla que
+**ninguna pantalla usa todavía**, y la columna «Consumidor» lo dice nombrando al
+cliente en vez de a una vista. No es un olvido: el informe no aparece en
+`getSummary` ni en `getChart`, y el backend no expone ningún `GET` de reportes,
+así que el formulario se tragaría el dato sin poder mostrarlo. El contrato entra
+verificado para que, cuando exista la lectura, falte sólo la vista.
 
 La prescripción son **tres pasos y no uno**: crear, firmar y emitir. El modelo
 los separa porque firmar es un acto del profesional y emitir es lo que la vuelve
