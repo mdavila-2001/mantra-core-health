@@ -110,7 +110,7 @@ describe('Recorrido real · paciente', () => {
 
     /* -- Y lo ve después en su lista de trámites --------------------------- */
 
-    irA('/identidad/casos');
+    irA('/my-account/identity/cases');
     estable();
     capturar({ carpeta: 'pac-06c-casos', titulo: 'Mis verificaciones' }, 'con-el-tramite');
     cy.get('app-badge').should('contain.text', 'En revisión');

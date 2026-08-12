@@ -83,7 +83,7 @@ describe('Recorrido real · portal de turnos del paciente', () => {
 
   it('elige agenda, retiene y confirma: el turno queda en su lista', () => {
     cy.then(() => entrar(paciente));
-    irA('/mi-cuenta/turnos');
+    irA('/my-account/appointments');
     estable();
 
     // Sin agenda publicada no hay nada que reservar; se deja constancia y se
@@ -157,7 +157,7 @@ describe('Recorrido real · portal de turnos del paciente', () => {
   /** Comprueba lo que ve el paciente al volver: su turno, dicho en castellano. */
   function comprobarQueElTurnoQuedo(): void {
     // Confirmar devuelve a «Mis turnos», y el vacío ya no está.
-    cy.location('pathname').should('include', '/mi-cuenta/turnos');
+    cy.location('pathname').should('include', '/my-account/appointments');
     cy.contains(/todav[íi]a no ten[ée]s turnos|todav[íi]a no pediste/i).should('not.exist');
 
     // El estado sale de terminología y lo nombra la interfaz: si volviera el
