@@ -260,7 +260,7 @@ silencio es un balance que miente.
 otra organización. Es lo que hace seguro que las pueda pedir un `PRACTITIONER`
 y no sólo un `SECURITY_ADMIN`.
 
-### `SchedulingClient` — 8 operaciones
+### `SchedulingClient` — 9 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -272,6 +272,7 @@ y no sólo un `SECURITY_ADMIN`.
 | `POST` | `/scheduling/holds/:holdToken/confirm` | `BookingNew` (V41-05, UC-41-06) |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` | `Agenda` (V41-02·A, UC-41-09) |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` | `Agenda` (V41-02·A, UC-41-10) |
+| `POST` | `/scheduling/bookings/:bookingId/reschedule` | `Appointments` (mi cuenta: mover el turno a otro cupo) |
 
 **El ciclo de reserva es de dos pasos y el token viaja entre ellos.** El hold
 retiene el cupo con anti-double-booking y un TTL (300 s por defecto, de la

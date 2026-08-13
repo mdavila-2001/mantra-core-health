@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-672 archivos TypeScript bajo `src/` y 2515 importaciones internas.
+672 archivos TypeScript bajo `src/` y 2512 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -14,6 +14,7 @@ Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.jso
 Se excluyen los puntos de entrada del framework y las pruebas.
 
 - `src/app/core/observability/browser/telemetry-browser.bootstrap.ts`
+- `src/app/core/redsat/redsat-runtime.service.ts`
 - `src/app/features/accounting/accounting.ts`
 - `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
 - `src/app/features/redsat/accesos/acceso-de-emergencia-formulario/acceso-de-emergencia-formulario.ts`
@@ -132,6 +133,7 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/redsat/personas/vinculos-de-cuenta-listado/vinculos-de-cuenta-listado.ts`
 - `src/app/features/redsat/personas/vinculos-de-identidad-formulario/vinculos-de-identidad-formulario.ts`
 - `src/app/features/redsat/personas/vinculos-de-identidad-listado/vinculos-de-identidad-listado.ts`
+- `src/app/features/redsat/redsat.routes.ts`
 - `src/app/features/redsat/shell/redsat-public-shell.ts`
 - `src/app/features/redsat/shell/redsat-shell.ts`
 - `src/app/features/redsat/terminologia/conceptos-listado/conceptos-listado.ts`
@@ -168,8 +170,8 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | Archivo | Lo importan |
 |---|---:|
 | `src/app/core/view-state/view-state.types.ts` | 114 |
-| `src/app/shared/components/atoms/button/button.ts` | 100 |
 | `src/app/core/view-state/view-state.ts` | 99 |
+| `src/app/shared/components/atoms/button/button.ts` | 99 |
 | `src/app/core/http/error-to-view-state.ts` | 93 |
 | `src/app/shared/components/organisms/page-header/page-header.ts` | 93 |
 | `src/app/shared/components/molecules/form-field/form-field.ts` | 91 |
@@ -192,11 +194,11 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 612 |
+| `@angular/core` | 610 |
 | `@angular/router` | 315 |
 | `@angular/common` | 303 |
 | `@angular/forms` | 87 |
-| `rxjs` | 52 |
+| `rxjs` | 50 |
 | `node:fs` | 13 |
 | `@opentelemetry/api` | 12 |
 | `@opentelemetry/sdk-trace-web` | 9 |
