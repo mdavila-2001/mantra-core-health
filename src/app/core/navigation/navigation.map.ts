@@ -237,6 +237,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 billing · M42 payments',
   },
 
+  {
+    path: 'administration/accounting',
+    label: 'Contabilidad',
+    group: 'Facturación',
+    icon: 'billing',
+    // `PRACTITIONER` a propósito: los libros son de la práctica y quien la
+    // ejerce tiene que poder verlos. El control de que la práctica consultada
+    // es la suya lo hace la API, que responde 403 ante la de otra organización.
+    roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary:
+      'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
+    module: 'M16 accounting',
+  },
+
   /* -- Mi cuenta · autoservicio, con navegación propia --------------------
      El vault lo pide separado: son datos de la persona sobre sí misma, no
      registros que administra. Sin roles, porque nadie necesita permiso para

@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-124 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+130 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -23,6 +23,18 @@ Archivo: `src/app/core/data-access/delegated-access/delegated-access.client.ts`
 | `POST` | `/practitioner-delegates/:delegationId/access-requests` |
 | `POST` | `/practitioner-delegates/:delegationId/grants` |
 | `POST` | `/practitioner-delegates/:delegationId/revoke` |
+
+## `AccountingClient`
+
+Archivo: `src/app/core/data-access/accounting/accounting.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/accounting/accounts` |
+| `GET` | `/accounting/journal-transactions` |
+| `GET` | `/accounting/journal-transactions/:transactionId` |
+| `GET` | `/accounting/trial-balance` |
+| `GET` | `/practices` |
 
 ## `DirectoryClient`
 
@@ -219,6 +231,7 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 | `GET` | `/scheduling/bookings/:bookingId` |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` |
+| `POST` | `/scheduling/bookings/:bookingId/reschedule` |
 | `POST` | `/scheduling/holds/:holdToken/confirm` |
 | `GET` | `/scheduling/resources` |
 | `GET` | `/scheduling/slots` |

@@ -57,6 +57,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/organizations/organization-list/organization-list').then(
       (m) => m.OrganizationList,
     ),
+  'administration/accounting': () =>
+    import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
@@ -340,6 +342,7 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   agenda: '/schedule',
   clinico: '/medical-records',
   facturacion: '/billing',
+  contabilidad: '/administration/accounting',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
   'identidad/verificar': '/my-account/identity/verify',

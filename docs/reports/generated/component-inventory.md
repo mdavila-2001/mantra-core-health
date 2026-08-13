@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-161 componentes y 36 servicios inyectables, leídos de `src/`.
+162 componentes y 37 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -71,12 +71,13 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (107)
+## Feature (108)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
 | `app-appointments` | `Appointments` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
+| `app-accounting` | `Accounting` | — | — | — | OnPush | **no** |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-organization-detail` | `OrganizationDetail` | — | — | — | OnPush | **no** |
 | `app-organization-list` | `OrganizationList` | — | — | — | OnPush | sí |
@@ -195,7 +196,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (36)
+## Servicios (37)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -203,6 +204,7 @@
 | `IdleLogout` | `src/app/core/auth/idle-logout.ts` | root | sí |
 | `RefreshTokenStorage` | `src/app/core/auth/refresh-token.storage.ts` | root | **no** |
 | `SessionStore` | `src/app/core/auth/session.store.ts` | root | sí |
+| `AccountingClient` | `src/app/core/data-access/accounting/accounting.client.ts` | root | **no** |
 | `AuthProvidersClient` | `src/app/core/data-access/auth-providers/auth-providers.client.ts` | root | sí |
 | `AuthzClient` | `src/app/core/data-access/authz/authz.client.ts` | root | sí |
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
@@ -239,6 +241,7 @@
 ## Componentes sin prueba
 
 - `ToastDevPanel` — `src/app/core/dev/toast-dev-panel/toast-dev-panel.ts`
+- `Accounting` — `src/app/features/accounting/accounting.ts`
 - `OrganizationDetail` — `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`

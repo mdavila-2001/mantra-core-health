@@ -231,7 +231,36 @@ costaron un 403 y un falso verde:
 `listBranches` y `listBranchAssignments` **no paginan**: devuelven todo con su
 `count`, así que la pantalla no puede prometer «Siguientes» sobre eso.
 
-### `SchedulingClient` — 8 operaciones
+### `AccountingClient` — 5 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practices` | `Accounting` (elige de qué práctica son los libros) |
+| `GET` | `/accounting/accounts` | `Accounting` (plan de cuentas, UC-16-01·L) |
+| `GET` | `/accounting/trial-balance` | `Accounting` (sumas y saldos, UC-16-06) |
+| `GET` | `/accounting/journal-transactions` | `Accounting` (libro diario, UC-16-01·L) |
+| `GET` | `/accounting/journal-transactions/:transactionId` | `Accounting` (el asiento con sus líneas, UC-16-01·D) |
+
+**Todo cuelga de un `practiceId`** y no existe «la práctica del usuario»: una
+organización puede tener varias. Por eso `/practices` va primero; sin esa lista
+la pantalla no tiene qué pedir. La API lo acota por el tenant del contexto, no
+por un parámetro.
+
+**Los importes viajan como texto decimal** (`"1250.00"`), y así se quedan. Pasarlos
+a `number` sería el error clásico: `0.1 + 0.2` no da `0.3` en coma flotante y un
+balance descuadrado por un céntimo no se distingue de uno con un error contable
+real. Los totales los calcula la API con enteros; el navegador no suma dinero.
+
+**`balanced` y `truncated` se leen, no se deducen.** El primero es la
+comprobación de la que depende que el resto del informe signifique algo; el
+segundo avisa de que la agregación tocó su tope — un balance recortado en
+silencio es un balance que miente.
+
+**Las cuatro lecturas del mayor responden 403** si el `practiceId` pertenece a
+otra organización. Es lo que hace seguro que las pueda pedir un `PRACTITIONER`
+y no sólo un `SECURITY_ADMIN`.
+
+### `SchedulingClient` — 9 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -243,6 +272,7 @@ costaron un 403 y un falso verde:
 | `POST` | `/scheduling/holds/:holdToken/confirm` | `BookingNew` (V41-05, UC-41-06) |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` | `Agenda` (V41-02·A, UC-41-09) |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` | `Agenda` (V41-02·A, UC-41-10) |
+| `POST` | `/scheduling/bookings/:bookingId/reschedule` | `Appointments` (mi cuenta: mover el turno a otro cupo) |
 
 **El ciclo de reserva es de dos pasos y el token viaja entre ellos.** El hold
 retiene el cupo con anti-double-booking y un TTL (300 s por defecto, de la
