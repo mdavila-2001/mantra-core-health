@@ -8,9 +8,11 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session.store';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
+import type { ValueSetOption } from '../../../core/data-access/terminology/terminology.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { Appointments } from './appointments';
+import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 
 /**
  * El portal de turnos es el Acto 2 del recorrido de demo: la pantalla donde
@@ -121,6 +123,16 @@ describe('Appointments', () => {
 
     // El `http.verify()` del afterEach falla si algo salió a la red.
     expect(interno<boolean>('sinPerfilDePaciente')).toBe(true);
+  });
+
+  it('sin perfil de paciente ofrece la salida a la agenda, no solo la explicación', () => {
+    montar({ pid: undefined });
+
+    // El aviso manda a la agenda de la organización: el enlace tiene que estar.
+    // Sigue sin salir nada a la red (el `http.verify()` del afterEach lo fija).
+    const ancla = (fixture.nativeElement as HTMLElement).querySelector('a[href="/schedule"]');
+    expect(ancla).not.toBeNull();
+    expect(ancla?.textContent).toContain('Ir a la agenda');
   });
 
   it('el turno pide sus turnos por perfil, no por organización', () => {
@@ -357,7 +369,7 @@ function api(comp: Appointments) {
     reprogramarA(h: unknown): Promise<void>;
     reprogramando(): string | null;
     elegirRecurso(id: string | null): void;
-    turnosListos(): readonly { id: string; codigo: string; resourceId: string }[];
+    turnosListos(): readonly { id: string; codigo: string; resourceId: string; estado: string }[];
   };
 }
 
@@ -743,5 +755,113 @@ describe('Appointments · reprogramar turno propio', () => {
     // El modo sigue activo: el turno origen no cambió, sólo hay que elegir
     // otro horario de la lista ya refrescada.
     expect(a.reprogramando()).toBe('b1');
+  });
+});
+
+/**
+ * La presentación del estado (E3 — barrido del lado paciente).
+ *
+ * Antes el mapa sólo nombraba cuatro estados y comparaba el código **sin
+ * normalizar**: un turno `scheduling:BOOKING_REQUESTED` —la forma real del
+ * catálogo vivo— se leía «Sin confirmar el estado» al lado de un botón
+ * Cancelar que sí sabía qué estado era. Estas pruebas fijan que etiqueta y
+ * allowlists usan el mismo normalizador y que ningún estado real queda mudo.
+ */
+describe('booking-status · presentación por código normalizado', () => {
+  function concepto(code: string): ValueSetOption {
+    return { conceptId: 'c-x', code, display: code, codeSystemVersionId: 'csv-1' };
+  }
+
+  it('recorta el prefijo de módulo hasta el último «:»', () => {
+    expect(sufijoDeCodigo('scheduling:BOOKING_REQUESTED')).toBe('BOOKING_REQUESTED');
+    expect(sufijoDeCodigo('BOOKING_REQUESTED')).toBe('BOOKING_REQUESTED');
+    expect(sufijoDeCodigo('a:b:CODIGO')).toBe('CODIGO');
+  });
+
+  it('nombra en castellano los estados que faltaban, con y sin prefijo', () => {
+    const casos: readonly [string, string][] = [
+      ['BOOKING_REQUESTED', 'Pedido'],
+      ['scheduling:BOOKING_REQUESTED', 'Pedido'],
+      ['BOOKING_PENDING_CONFIRMATION', 'Por confirmar'],
+      ['scheduling:BOOKING_PENDING_CONFIRMATION', 'Por confirmar'],
+      ['BOOKING_COMPLETED', 'Atendido'],
+      ['scheduling:BOOKING_COMPLETED', 'Atendido'],
+      // «Atendido» tiene un segundo código en el catálogo vivo: el evento.
+      ['EV_BOOKING_DONE', 'Atendido'],
+      ['BOOKING_NO_SHOW', 'No asististe'],
+      ['scheduling:BOOKING_NO_SHOW', 'No asististe'],
+    ];
+
+    for (const [code, label] of casos) {
+      expect(toBookingStatusPresentation(concepto(code)).label).toBe(label);
+    }
+  });
+
+  it('los estados que ya se nombraban no cambian de palabra ni de tono', () => {
+    expect(toBookingStatusPresentation(concepto('BOOKING_CONFIRMED'))).toEqual({
+      tone: 'success',
+      label: 'Confirmado',
+    });
+    expect(toBookingStatusPresentation(concepto('BOOKING_CHECKED_IN'))).toEqual({
+      tone: 'info',
+      label: 'Ya llegaste',
+    });
+    expect(toBookingStatusPresentation(concepto('BOOKING_CANCELLED'))).toEqual({
+      tone: 'error',
+      label: 'Cancelado',
+    });
+    expect(toBookingStatusPresentation(concepto('BOOKING_RESCHEDULED'))).toEqual({
+      tone: 'warning',
+      label: 'Reprogramado',
+    });
+  });
+
+  it('lo desconocido y lo no resuelto caen al neutro, nunca al «display»', () => {
+    expect(toBookingStatusPresentation(concepto('FOO')).label).toBe('Sin confirmar el estado');
+    expect(toBookingStatusPresentation(undefined).label).toBe('Sin confirmar el estado');
+  });
+});
+
+/**
+ * Los avisos del barrido (E3), vistos desde el componente: el estado nuevo
+ * llega con su palabra hasta la fila, y el vacío de organización dice dónde
+ * está el control en vez de dejar a la persona buscándolo.
+ */
+describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
+  it('un turno solicitado dice «Pedido», se puede cancelar y no se puede mover', () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [citaMock('b-req', 's-req')],
+      labels: [etiqueta('s-req', 'scheduling:BOOKING_REQUESTED', 'Booking requested')],
+    });
+    fixture.detectChanges();
+
+    expect(api(comp).turnosListos()[0].estado).toBe('Pedido');
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('Pedido');
+    expect(texto).not.toContain('Sin confirmar el estado');
+    expect(fixture.nativeElement.querySelector('.turnos__cancelar')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.turnos__reprogramar')).toBeNull();
+  });
+
+  it('un turno ya atendido dice «Atendido» y no ofrece ninguna acción', () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [citaMock('b-done', 's-done')],
+      labels: [etiqueta('s-done', 'EV_BOOKING_DONE', 'Booking done')],
+    });
+    fixture.detectChanges();
+
+    expect(api(comp).turnosListos()[0].estado).toBe('Atendido');
+    expect(fixture.nativeElement.querySelector('.turnos__cancelar')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.turnos__reprogramar')).toBeNull();
+  });
+
+  it('sin organización activa, el aviso dice que se elige desde el encabezado', () => {
+    // Sin `tenant`: el caso real de una sesión sin organización activa.
+    const { fixture } = montarCancelacion({ bookings: [], labels: [] });
+    fixture.detectChanges();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('Elegí una organización');
+    expect(texto).toContain('encabezado');
   });
 });
