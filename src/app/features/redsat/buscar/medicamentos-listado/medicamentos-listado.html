@@ -1,0 +1,185 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M12 8.5v7M8.5 12h7"></path></svg></span>
+      <div class="app-page-header__texto">
+        <div class="app-page-header__titulo"><h1>Dónde conseguir tu medicamento</h1></div>
+        <p class="caption">La farmacia más cercana que lo tenga, con su precio y su horario. La disponibilidad la reporta cada farmacia y puede cambiar entre que la ves y que llegás: si el viaje es largo, llamá antes.</p>
+      </div>
+
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Qué estás buscando">
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/buscador-listado">Todo</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/profesionales-listado">Profesionales</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Medicamentos</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/hospitales-listado">Hospitales y clínicas</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/laboratorios-listado">Laboratorios e imagen</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/aseguradoras-listado">Aseguradoras</a>
+    </div>
+    <div class="app-card app-card--inset">
+      <p class="overline">Estás buscando</p>
+      <h2 style="margin-top:var(--e2)">Losartán 50 mg · comprimido recubierto</h2>
+      <dl class="lista-definiciones" style="margin-top:var(--e4)">
+        <div><dt>Principio activo</dt><dd>Losartán potásico</dd></div>
+        <div><dt>Concentración</dt><dd class="num">50 mg</dd></div>
+        <div><dt>Forma farmacéutica</dt><dd>Comprimido recubierto</dd></div>
+        <div><dt>Clasificación ATC</dt><dd class="col-codigo">C09CA01</dd></div>
+        <div><dt>Condición de venta</dt><dd>Con receta médica</dd></div>
+        <div><dt>Equivalentes</dt><dd><a app-link="" aria-disabled="true" data-sin-destino="">7 presentaciones con el mismo principio activo</a></dd></div>
+      </dl>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá por principio activo, marca o código</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por principio activo, marca o código">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-ciudad">Dónde</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-ciudad">
+            <option>La Paz</option>
+            <option>El Alto</option>
+            <option>Santa Cruz de la Sierra</option>
+            <option>Cochabamba</option>
+            <option>Sucre</option>
+            <option>Tarija</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-dist">A qué distancia</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-dist">
+            <option>Hasta 2 km</option>
+            <option>Hasta 5 km</option>
+            <option>Hasta 10 km</option>
+            <option>Toda la ciudad</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-stock">Disponibilidad</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-stock">
+            <option>Cualquiera</option>
+            <option>Solo con stock reportado</option>
+            <option>Con entrega a domicilio</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-horario">Horario</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-horario">
+            <option>Cualquiera</option>
+            <option>Abierta ahora</option>
+            <option>Abierta 24 horas</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-equiv">Presentación</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-equiv">
+            <option>Esta presentación</option>
+            <option>Cualquier equivalente del mismo principio activo</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-orden">Ordenar por</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-orden">
+            <option>Más cerca</option>
+            <option>Precio más bajo</option>
+            <option>Abierta ahora</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      </div>
+    </section>
+    <p class="app-revelacion"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Precio y disponibilidad los reporta cada farmacia y pueden cambiar sin aviso. AloVida no vende medicamentos ni cobra comisión sobre estos precios.</p>
+    <section class="app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <ul class="app-resultado-lista">
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">FC</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-farmacia-detalle">Farmacia Chávez · Miraflores</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M12 8.5v7M8.5 12h7"></path></svg>Farmacia</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Av. Busch 1234 · 0,8 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>07:00 – 22:00</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 8 4.3v8.4l-8 4.3-8-4.3V7.8z"></path><path d="m4 7.8 8 4.3 8-4.3"></path><path d="M12 12.1V20.5"></path></svg>Retiro en sucursal o envío</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Disponible</span><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Abierta ahora</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 8 4.3v8.4l-8 4.3-8-4.3V7.8z"></path><path d="m4 7.8 8 4.3 8-4.3"></path><path d="M12 12.1V20.5"></path></svg>Entrega a domicilio</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 34,50<small>caja de 30 · Bs 1,15 c/u</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-farmacia-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">FP</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-farmacia-detalle">Farmacorp · Sopocachi</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M12 8.5v7M8.5 12h7"></path></svg>Farmacia</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Av. 6 de Agosto 2170 · 1,4 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>24 horas</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 8 4.3v8.4l-8 4.3-8-4.3V7.8z"></path><path d="m4 7.8 8 4.3 8-4.3"></path><path d="M12 12.1V20.5"></path></svg>Solo retiro en sucursal</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Disponible</span><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Abierta ahora</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 38,00<small>caja de 30 · Bs 1,27 c/u</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-farmacia-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">FB</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-farmacia-detalle">Farmacia Bolivia · San Pedro</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M12 8.5v7M8.5 12h7"></path></svg>Farmacia</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Calle México 1580 · 2,1 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>08:00 – 20:30</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 8 4.3v8.4l-8 4.3-8-4.3V7.8z"></path><path d="m4 7.8 8 4.3 8-4.3"></path><path d="M12 12.1V20.5"></path></svg>Retiro en sucursal</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Últimas unidades</span><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Abierta ahora</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 31,90<small>caja de 30 · Bs 1,06 c/u</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-farmacia-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">FS</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-farmacia-detalle">Farmacia San Martín · Calacoto</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M12 8.5v7M8.5 12h7"></path></svg>Farmacia</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Calle 21 esq. Montenegro · 5,7 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>08:30 – 21:00</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"></circle></svg>Sin stock reportado</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Cierra a las 21:00</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">—<small>sin precio publicado</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-farmacia-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      </ul>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">4 de 31 farmacias con este medicamento · 25 por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M12 8.5v7M8.5 12h7"></path></svg></span>
+        <h2>Ninguna farmacia cercana reportó este medicamento</h2>
+        <p>Puede ser que ninguna lo tenga hoy, o que las de tu zona no publiquen su inventario. Dos salidas: ampliá la distancia, o buscá por principio activo en vez de por marca —una presentación equivalente suele estar disponible cuando la marca exacta no lo está.</p>
+        <a app-button="" data-variante="secundario" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Buscando…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos completar la búsqueda de farmacias.</strong>
+            <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento; tu búsqueda se mantiene escrita.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

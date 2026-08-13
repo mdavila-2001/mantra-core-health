@@ -173,6 +173,117 @@ describe('ShellLayout', () => {
     expect(navegar).toHaveBeenCalledWith('/dashboard');
   });
 
+  /**
+   * El armazón dejó de delegar en el organismo `app-shell` y pinta el marco
+   * REDSAT directamente. Estas pruebas fijan lo que ese cambio podría romper
+   * en silencio: la geometría del marco —que es lo que la hoja de la bóveda
+   * espera encontrar— y que el menú siga saliendo del registro de secciones.
+   */
+  describe('marco REDSAT', () => {
+    function raiz(): HTMLElement {
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('monta la geometría que espera la hoja: nav, luego columna con header y contenido', () => {
+      const marco = raiz().querySelector('.app-shell');
+
+      expect(marco).not.toBeNull();
+      // El orden importa: en REDSAT el nav es columna de altura completa y el
+      // header vive DENTRO de la columna de contenido, no encima de las dos.
+      expect(marco?.children[0]?.classList.contains('app-side-nav')).toBe(true);
+      expect(marco?.children[1]?.classList.contains('app-main')).toBe(true);
+      expect(marco?.querySelector('.app-main > .app-header')).not.toBeNull();
+      expect(marco?.querySelector('.app-main > .app-main__inner')).not.toBeNull();
+    });
+
+    it('el contenido de la ruta se pinta dentro del main, no fuera del marco', () => {
+      expect(raiz().querySelector('.app-main__inner router-outlet')).not.toBeNull();
+    });
+
+    it('el nav pinta un grupo por sección del registro, con sus destinos', () => {
+      const grupos = raiz().querySelectorAll('.app-side-nav__group');
+      const secciones = interno<() => readonly { label: string }[]>('sections')();
+
+      expect(grupos.length).toBe(secciones.length);
+      // Sin sesión sólo quedan las secciones sin roles, más la vitrina.
+      const destinos = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+        a.getAttribute('data-route'),
+      );
+      expect(destinos).toContain('/dashboard');
+      expect(destinos).toContain('/design-system');
+    });
+
+    it('el enlace de salto apunta al contenido, que es enfocable por script', () => {
+      const salto = raiz().querySelector('.shell__skip-link');
+      const contenido = raiz().querySelector('#contenido-principal');
+
+      expect(salto?.getAttribute('href')).toBe('#contenido-principal');
+      // `tabindex="-1"` lo hace enfocable sin meterlo en el orden de tabulación.
+      expect(contenido?.getAttribute('tabindex')).toBe('-1');
+    });
+
+    it('sin sesión el header no ofrece la cuenta: no hay a quién nombrar', () => {
+      expect(raiz().querySelector('[data-testid="header-cuenta"]')).toBeNull();
+    });
+
+    it('con una sola organización no se ofrece cambiarla', () => {
+      abrirSesion({ sub: 'u-1', name: 'Ana Salas', roles: [], tenants: ['t-1'] });
+
+      expect(raiz().querySelector('[data-testid="header-organizacion"]')).toBeNull();
+      expect(raiz().querySelector('[data-testid="header-cuenta"]')).not.toBeNull();
+    });
+
+    function sesionConDosOrganizaciones() {
+      abrirSesion({
+        sub: 'u-1',
+        name: 'Ana Salas',
+        roles: [],
+        tenants: ['t-1', 't-2'],
+        tenantNames: { 't-1': 'Clínica Norte', 't-2': 'Clínica Sur' },
+      });
+    }
+
+    function opcionesDeOrganizacion(): readonly Element[] {
+      return [...raiz().querySelectorAll('#menu-organizaciones .app-menu-item')];
+    }
+
+    it('con varias organizaciones el selector las lista todas, con su nombre legible', () => {
+      sesionConDosOrganizaciones();
+
+      expect(raiz().querySelector('[data-testid="header-organizacion"]')).not.toBeNull();
+      expect(opcionesDeOrganizacion().map((o) => o.textContent?.trim())).toEqual([
+        'Clínica Norte',
+        'Clínica Sur',
+      ]);
+    });
+
+    it('mientras no se elija una, ninguna aparece como activa', () => {
+      sesionConDosOrganizaciones();
+
+      // Con varias organizaciones la sesión no elige por su cuenta: marcar una
+      // sería afirmar un contexto de datos que la persona no eligió.
+      expect(opcionesDeOrganizacion().filter((o) => o.getAttribute('aria-current'))).toHaveLength(0);
+    });
+
+    it('elegir una la marca, y sólo a ella', () => {
+      sesionConDosOrganizaciones();
+      interno<(id: string) => void>('changeTenant')('t-2');
+
+      const marcadas = opcionesDeOrganizacion().filter(
+        (o) => o.getAttribute('aria-current') === 'true',
+      );
+      expect(marcadas).toHaveLength(1);
+      expect(marcadas[0].textContent?.trim()).toBe('Clínica Sur');
+    });
+
+    it('el avatar lleva las iniciales del nombre, no el nombre entero', () => {
+      abrirSesion({ sub: 'u-1', name: 'Rocío Salazar', roles: [], tenants: ['t-1'] });
+
+      expect(raiz().querySelector('[data-testid="header-cuenta"]')?.textContent?.trim()).toBe('RS');
+    });
+  });
+
   it('cerrar sesión limpia y manda al login', () => {
     abrirSesion({ sub: 'u-1', roles: [], tenants: ['t-1'] });
     const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);

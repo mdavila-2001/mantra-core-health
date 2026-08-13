@@ -1,0 +1,3366 @@
+/* ============================================================================
+    REDSAT v1.1 — hoja normativa del sistema de diseño.
+
+    ARCHIVO GENERADO. No se edita a mano: se regenera desde la bóveda con
+    scripts/sync-redsat.mjs. La fuente de verdad es
+    SALUD/Vistas/HTML/_assets/redsat.css en el vault de documentación, que es
+    la misma hoja contra la que están maquetadas las 133 vistas HTML.
+
+    Diferencias con el original, ambas mecánicas:
+      · las tipografías se sirven desde /redsat/tipografias/ (public/)
+      · los selectores de tema oscuro llevan gemelo en [data-theme="dark"],
+        que es el atributo que estampa ThemeService.
+
+    Los tokens de esta hoja (--tinta, --petroleo, --e1…--e6, --r-card…) son
+    disjuntos de los de src/styles.css (--text-primary, --sp-4, --r-md…): las
+    dos capas conviven y ninguna pisa a la otra.
+    ========================================================================== */
+
+/* ============================================================================
+   AloVida · SALUD — SISTEMA DE DISEÑO REDSAT v1.1
+   Hoja única para todas las pantallas de SALUD/Vistas/HTML.
+   Los hex, la escala de 4 px, los seis roles tipográficos y el marco
+   invariante son normativos: salen del prompt maestro de cada ficha «VNN».
+   v1.1 agrega, sin salirse de la paleta: profundidad por sombra interior
+   azul, nav con textura y reacción al puntero, y jerarquía en azul profundo.
+   ========================================================================= */
+
+/* --- 0 · Tipografía auto-hospedada -------------------------------------- *
+   Avenir es de Linotype y no se puede redistribuir con el proyecto. Nunito
+   Sans es la alternativa libre más cercana en carácter y aguanta los 13 px de
+   las tablas densas. Los archivos viven en `_assets/tipografias/`: sin CDN, la
+   pantalla se ve igual en cualquier equipo y funciona sin conexión.
+   Detalle y licencias en `_assets/tipografias/LICENCIAS.md`.               */
+
+@font-face {
+  font-family: "Nunito Sans"; font-style: normal; font-weight: 400 800; font-display: swap;
+  src: url("/redsat/tipografias/nunito-sans-variable.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Nunito Sans"; font-style: normal; font-weight: 400 800; font-display: swap;
+  src: url("/redsat/tipografias/nunito-sans-variable-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Poppins"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url("/redsat/tipografias/poppins-500.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Poppins"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url("/redsat/tipografias/poppins-500-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Poppins"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("/redsat/tipografias/poppins-600.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Poppins"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("/redsat/tipografias/poppins-600-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* --- 1 · Tokens ---------------------------------------------------------- */
+
+:root {
+  /* El tema lo fija `data-tema` en el <html>. Sin atributo, claro. */
+  color-scheme: light;
+
+  /* Fondo vivo de la página — los cuatro focos de las dos capas reactivas.
+     Son tokens porque el modo oscuro los cambia enteros: el fondo sigue
+     respondiendo al puntero, pero con azules profundos en vez de menta. */
+  --fondo-a: rgba(159, 216, 208, .82);
+  --fondo-b: rgba(79, 179, 169, .48);
+  --fondo-c: rgba(122, 191, 232, .62);
+  --fondo-d: rgba(159, 216, 208, .58);
+
+  /* Fondo del nav: viñeta y halo */
+  --nav-vineta-a: rgba(9, 62, 92, .72);
+  --nav-vineta-b: rgba(7, 47, 69, .82);
+  --nav-halo-a:   rgba(79, 179, 169, .30);
+  --nav-halo-b:   rgba(79, 179, 169, .16);
+  --nav-halo-c:   rgba(122, 191, 232, .06);
+  --nav-halo-0:   rgba(122, 191, 232, 0);
+
+  /* Superficies */
+  --sup-pagina:   #F6F3ED;
+  --sup-tarjeta:  #FFFFFF;
+  --sup-inset:    #F9F8F4;
+  --sup-nav:      #0B557E;
+
+  /* Tinta */
+  --tinta:        #242828;
+  --tinta-2:      #4E5151;
+  --tinta-3:      #787B7B;
+  --tinta-nav:    #FFFFFF;
+
+  /* Marca */
+  --petroleo:     #0B557E;
+  --petroleo-h:   #0B4768;
+  --petroleo-p:   #0B3953;
+  --aguamarina:   #4FB3A9;
+  --menta:        #9FD8D0;
+  --ambar:        #E4A96B;
+
+  /* Azules profundos derivados del petróleo — jerarquía, textura y sombra
+     interior. No son colores nuevos: son el mismo tono, más oscuro. */
+  --tinta-marca:  #0A3E5C;
+  --petroleo-x:   #072F45;
+  --petroleo-xx:  #052232;
+  --sombra-azul:  rgba(11, 85, 126, .14);
+  --sombra-azul-suave: rgba(11, 85, 126, .07);
+
+  /* Líneas — tres pesos, tres trabajos distintos. No son intercambiables:
+     usar el estructural en una superficie es lo que hace que la pantalla se
+     lea como una pila de cajas.
+       --filete      ESTRUCTURA. Separa zonas del marco: header, cabecera de
+                     página, cabecera de tabla, pie de paginación, pestañas.
+       --filete-2    SUPERFICIE. El filo de una tarjeta, un menú, un chip. Casi
+                     no se ve: quien separa ahí es la sombra y el aire.
+       --borde-ctrl  CONTROL. Sólo inputs. Un campo editable SIEMPRE lleva
+                     borde nítido — es lo que dice que se puede escribir. */
+  --filete:       #CDD9D5;
+  --filete-2:     #E3EAE7;
+  --borde-ctrl:   #7D8786;
+  --anillo-foco:  rgba(79, 179, 169, .45);
+
+  /* Estados: fondo tintado claro + tinta oscura del mismo tono */
+  --ok-bg:        #DFEDE9;  --ok-tinta:     #27725C;
+  --aviso-bg:     #FBF2E8;  --aviso-tinta:  #8B6A47;
+  --error-bg:     #F4E5E1;  --error-tinta:  #924534;
+  --info-bg:      #E4F3F2;  --info-tinta:   #33706C;
+  --neutro-bg:    #F3F6F5;  --neutro-tinta: #4E5151;
+
+  /* Movimiento — un solo lenguaje para todo el producto. Corto, suave y
+     predecible: la animación dice «el sistema respondió», no «mirá esto». */
+  --mov-rapido: 110ms;
+  --mov-medio:  190ms;
+  --mov-lento:  320ms;
+  --curva:      cubic-bezier(.2, .7, .3, 1);
+
+  /* Profundidad — cuatro capas, todas con sombra azulada muy leve.
+     Fondo → superficie de contenido → tarjeta → elemento interactivo.
+     Cada sombra son dos trazos: un contacto de 1–2 px que apoya la pieza en
+     su plano, y una difusión ancha y muy tenue que la despega. La difusión es
+     la que reemplaza al borde: por eso el filo de las tarjetas puede bajar a
+     `--filete-2` sin que la pieza se pierda contra el fondo. */
+  --sombra-1: 0 1px 2px rgba(11, 85, 126, .05), 0 4px 14px -6px rgba(11, 85, 126, .10);
+  --sombra-2: 0 2px 4px rgba(11, 85, 126, .07), 0 10px 24px -10px rgba(11, 85, 126, .16);
+
+  /* Elevación: sólo modal, menú y toast */
+  --sombra:       0 16px 40px rgba(11, 85, 126, .16), 0 2px 6px rgba(11, 85, 126, .08);
+  --velo:         rgba(10, 28, 39, .55);
+
+  /* Sombra interior azul de los controles de texto */
+  --inset-ctrl:   inset 0 2px 5px rgba(11, 85, 126, .13), inset 0 1px 0 rgba(11, 85, 126, .07);
+  --inset-ctrl-h: inset 0 3px 7px rgba(11, 85, 126, .18), inset 0 1px 0 rgba(11, 85, 126, .10);
+
+  /* Radios */
+  --r-ctrl: 8px;
+  --r-menu: 12px;
+  --r-card: 18px;
+  --r-pill: 999px;
+
+  /* Escala de 4 px */
+  --e1: 4px;  --e2: 8px;  --e3: 12px; --e4: 16px; --e5: 20px;
+  --e6: 24px; --e7: 32px; --e8: 40px; --e9: 48px; --e10: 64px;
+
+  /* Alturas fijas */
+  --h-ctrl:      40px;
+  --h-ctrl-sm:   32px;
+  --h-ctrl-lg:   48px;
+  --h-fila:      48px;
+  --h-cabecera:  40px;
+  --h-header:    64px;
+  --w-nav:      264px;
+  --w-modal:    560px;
+
+  /* Tipografía — geométrica humanista, nunca la Arial del sistema.
+     Si la organización compra Avenir, alcanza con anteponerla acá. */
+  --f-titulo: "Poppins", "Avenir Next", Avenir, "Century Gothic", "Segoe UI", sans-serif;
+  --f-texto:  "Nunito Sans", "Avenir Next", Avenir, "Century Gothic", "Segoe UI", sans-serif;
+  --f-mono:   "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+
+}
+
+/* --- 2 · Base ------------------------------------------------------------ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+/* Fondo general de la vista. La imagen (`background-image`) la pone cada
+   pantalla en su propio <body>, porque vive en el `imagenes/` de su módulo y
+   esta hoja es compartida: acá van sólo el encuadre y el color de respaldo.
+   No se usa una variable CSS para la imagen — un `url()` dentro de una custom
+   property se resuelve contra la hoja, no contra la página, y rompe la ruta. */
+body {
+  margin: 0;
+  background-color: var(--sup-pagina);
+  background-size: cover; background-position: center;
+  background-repeat: no-repeat; background-attachment: scroll;
+  color: var(--tinta);
+  font-family: var(--f-texto);
+  font-size: 15px;
+  line-height: 23px;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fondo vivo — pero vivo POR EL USUARIO, no por un temporizador.
+   Dos capas de menta y aguamarina que siguen al puntero con distinta
+   inercia: al mover el mouse el fondo respira, y cuando la mano se detiene
+   el fondo se detiene con ella. No hay bucle ni animación automática.
+   redsat.js actualiza --raton-x / --raton-y; el desplazamiento lo hace una
+   transición de transform, que compone la GPU. */
+body::before, body::after {
+  content: ""; position: fixed; inset: -45%; z-index: -1; pointer-events: none;
+  /* Muy corto: el fondo va CON la mano, no detrás de ella. */
+  transition: transform 170ms cubic-bezier(.22, .85, .3, 1);
+}
+/* Capa cercana: menta y aguamarina. Además de desplazarse, los centros de los
+   degradados se corren con el puntero, así el movimiento se lee de verdad. */
+body::before {
+  background:
+    radial-gradient(36% 32% at calc(20% + var(--raton-x, .5) * 30%) calc(22% + var(--raton-y, .5) * 26%), var(--fondo-a), transparent 62%),
+    radial-gradient(32% 30% at calc(80% - var(--raton-x, .5) * 28%) calc(30% + var(--raton-y, .5) * 22%), var(--fondo-b), transparent 64%);
+  transform: translate3d(calc(var(--raton-x, .5) * 200px - 100px), calc(var(--raton-y, .5) * 150px - 75px), 0);
+}
+/* Capa lejana: se mueve al revés y algo más lento. El desfase entre las dos
+   es lo que da profundidad; sin él el fondo se vería como una calcomanía. */
+body::after {
+  background:
+    radial-gradient(40% 36% at calc(50% - var(--raton-x, .5) * 26%) calc(80% - var(--raton-y, .5) * 22%), var(--fondo-c), transparent 66%),
+    radial-gradient(32% 30% at calc(8% + var(--raton-x, .5) * 24%) calc(64% - var(--raton-y, .5) * 18%), var(--fondo-d), transparent 62%);
+  transition-duration: 340ms;
+  transform: translate3d(calc(var(--raton-x, .5) * -130px + 65px), calc(var(--raton-y, .5) * -100px + 50px), 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after { transform: none; transition: none; }
+}
+h1, h2, h3 { margin: 0; font-family: var(--f-titulo); color: var(--tinta-marca); }
+h1, .titulo-h1 { font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -.015em; }
+.titulo-h1 { font-family: var(--f-titulo); color: var(--tinta-marca); margin: 0; }
+h2 { font-size: 26px; line-height: 34px; font-weight: 600; letter-spacing: -.01em; }
+h3 { font-size: 21px; line-height: 28px; font-weight: 500; }
+p  { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+
+.caption  { font-size: 13px; line-height: 18px; font-weight: 500; color: var(--tinta-2); }
+.muted    { color: var(--tinta-3); }
+.overline {
+  font-size: 11px; line-height: 16px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-2);
+}
+.num {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--anillo-foco);
+  border-radius: var(--r-ctrl);
+}
+
+/* `left: 0` es obligatorio: sin él, un <caption> absoluto se ancla en su
+   posición estática —el borde derecho de una tabla ancha— y estira el
+   documento a lo ancho. */
+.solo-lectores {
+  position: absolute; left: 0; top: auto; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.icono { width: 20px; height: 20px; flex: none; stroke-width: 1.5; }
+.icono--sm { width: 16px; height: 16px; }
+
+[hidden] { display: none !important; }
+.pila-contenidos { display: contents; }
+.pila { display: flex; flex-direction: column; gap: var(--e7); }
+
+/* --- 3 · Marco: app-shell, side nav, header ------------------------------ */
+
+/* El nav es una columna FIJA, no una celda de grilla: así cubre siempre del
+   borde superior al inferior, pase lo que pase con el scroll. Cuando era una
+   celda sticky de alto 100vh, al bajar la página se veía el fondo por debajo
+   y el menú parecía cortado. */
+.app-shell {
+  min-height: 100vh; padding-left: var(--w-nav); position: relative;
+  background: linear-gradient(90deg, var(--petroleo-x) 0 var(--w-nav), transparent var(--w-nav));
+}
+
+/* Fondo del menú de navegación: la imagen azul del módulo. Encima va un velo
+   petróleo —el color de marca— que garantiza el contraste del texto blanco
+   sobre las zonas claras de la imagen; sin él, la banda de luz se come las
+   etiquetas. */
+.app-side-nav {
+  position: fixed; top: 0; left: 0; bottom: 56px; width: var(--w-nav); z-index: 30;
+  overflow: hidden auto;
+  background-color: var(--sup-nav);
+  color: var(--tinta-nav);
+  padding: var(--e6) 0 var(--e7);
+  display: flex; flex-direction: column; gap: var(--e5);
+  isolation: isolate;
+}
+
+/* Fondo del nav: viñeta + textura SVG + halo que sigue al puntero.
+   Los tres son azules más profundos que el petróleo del nav; nunca aclaran.
+
+   Van en `fixed` con la misma geometría que el nav, no en `absolute`.
+   El nav es `overflow: hidden auto`, así que un hijo absoluto con `inset: 0`
+   se mide contra la caja VISIBLE, no contra el alto que scrollea: en un menú
+   más largo que la pantalla —el de terminology, con sus ocho subítems— la
+   capa cortaba a media altura y por debajo asomaba el petróleo pelado.
+   `fixed` no lo recorta el scroll, y `--w-nav` mantiene el ancho en sincro
+   con el del propio nav en cada punto de quiebre. */
+.app-side-nav::before,
+.app-side-nav__fondo {
+  content: ""; position: fixed; top: 0; left: 0; bottom: 56px;
+  width: var(--w-nav); pointer-events: none;
+}
+.app-side-nav::before {
+  z-index: -2;
+  background: linear-gradient(180deg, var(--nav-vineta-a), var(--nav-vineta-b));
+}
+.app-side-nav__fondo { z-index: -1; overflow: hidden; }
+
+/* La textura se desplaza con el puntero, apenas: doce píxeles en vertical y
+   diez en horizontal. Se la dibuja más grande que su caja para que ese
+   corrimiento no descubra un borde. */
+.app-side-nav__textura {
+  position: absolute; inset: -12px;
+  width: calc(100% + 24px); height: calc(100% + 24px); display: block;
+  transform: translate3d(
+    calc(var(--puntero-xn, .5) * 10px - 5px),
+    calc(var(--puntero-yn, .5) * 16px - 8px), 0);
+  transition: transform 220ms var(--curva);
+}
+
+/* Las dos líneas del monitor son lo único vivo del nav por su cuenta: el
+   trazo avanza en bucle, como un electro. Los tres `rect` de la textura
+   pintan con `fill`; las únicas `path` del SVG son estas dos. */
+.app-side-nav__textura path {
+  stroke-dasharray: 96 404;
+  animation: nav-pulso 7s linear infinite;
+}
+.app-side-nav__textura path + path {
+  stroke-dasharray: 72 428;
+  animation-duration: 11s;
+  animation-delay: -3.5s;
+}
+@keyframes nav-pulso {
+  from { stroke-dashoffset: 500; }
+  to   { stroke-dashoffset: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-side-nav__textura { transition: none; transform: none; }
+  .app-side-nav__textura path { animation: none; stroke-dasharray: none; }
+}
+/* El halo aclara, no oscurece: celeste de marca sobre el petróleo. */
+/* Halo del nav: chico y celeste. Sin `screen` —esa mezcla lo empujaba hacia
+   el blanco— y con caída larga, para que se lea como un reflejo y no como
+   una linterna. */
+.app-side-nav__brillo {
+  position: absolute; inset: 0;
+  background: radial-gradient(
+    150px 150px at var(--puntero-x, 50%) var(--puntero-y, -20%),
+    var(--nav-halo-a) 0%,
+    var(--nav-halo-b) 38%,
+    var(--nav-halo-c) 66%,
+    var(--nav-halo-0) 100%
+  );
+  opacity: 0; transition: opacity .3s ease;
+}
+.app-side-nav:hover .app-side-nav__brillo { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .app-side-nav__brillo { transition: none; } }
+
+.app-side-nav__marca {
+  display: flex; align-items: center; gap: var(--e3);
+  padding: 0 var(--e6) var(--e5); margin-bottom: var(--e1);
+  border-bottom: 1px solid rgba(255, 255, 255, .12);
+}
+.app-side-nav__marca img { display: block; width: 34px; height: auto; flex: none; }
+.app-side-nav__marca span {
+  font-family: var(--f-titulo); font-size: 22px; line-height: 28px; font-weight: 600;
+  letter-spacing: .01em; color: #fff;
+}
+.app-side-nav__group { display: flex; flex-direction: column; gap: 2px; }
+.app-side-nav__eyebrow { padding: var(--e3) var(--e6) var(--e2); color: rgba(255, 255, 255, .5); }
+
+.app-side-nav__item {
+  position: relative;
+  display: flex; align-items: center; gap: var(--e3);
+  min-height: var(--h-ctrl); padding: 0 var(--e6);
+  margin: 0 var(--e3);
+  border-radius: var(--r-ctrl);
+  color: rgba(255, 255, 255, .84);
+  text-decoration: none; font-size: 15px;
+  transition: background-color .16s ease, color .16s ease;
+}
+.app-side-nav__item .icono { opacity: .85; }
+.app-side-nav__item:hover {
+  color: #fff;
+  background: rgba(159, 216, 208, .16);
+}
+.app-side-nav__item:hover .icono { opacity: 1; }
+.app-side-nav__item[aria-current="true"],
+.app-side-nav__item.is-activo {
+  color: #fff; font-weight: 600;
+  background: rgba(159, 216, 208, .22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+.app-side-nav__item[aria-current="true"]::before,
+.app-side-nav__item.is-activo::before {
+  content: ""; position: absolute; left: -12px; top: 8px; bottom: 8px;
+  width: 3px; border-radius: var(--r-pill); background: var(--aguamarina);
+}
+.app-side-nav__sub { display: flex; flex-direction: column; gap: 2px; padding: var(--e1) 0 var(--e2); }
+.app-side-nav__sub .app-side-nav__item {
+  padding-left: var(--e8); min-height: var(--h-ctrl-sm); font-size: 14px;
+  color: rgba(255, 255, 255, .72);
+}
+.app-side-nav__sub .app-side-nav__item.is-activo { color: #fff; }
+
+/* El header deja ver el fondo de la vista, pero con suficiente blanco encima
+   para que el buscador y el selector de organización se lean como controles. */
+.app-header {
+  height: var(--h-header); flex: none;
+  background: var(--sup-pagina);
+  border-bottom: 1px solid var(--filete);
+  display: flex; align-items: center; gap: var(--e4);
+  padding: 0 var(--e8);
+  position: sticky; top: 0; z-index: 20;
+}
+.app-header__buscador { flex: 1; max-width: 420px; min-width: 200px; }
+.app-header__derecha { margin-left: auto; display: flex; align-items: center; gap: var(--e3); flex: none; }
+
+.app-tenant-switcher {
+  display: inline-flex; align-items: center; gap: var(--e2);
+  height: var(--h-ctrl); padding: 0 var(--e3);
+  background: var(--sup-tarjeta); border: 1px solid var(--filete-2);
+  border-radius: var(--r-ctrl); color: var(--tinta-marca); font: inherit; font-weight: 500;
+  cursor: pointer; max-width: 300px;
+  box-shadow: inset 0 -1px 0 var(--sombra-azul-suave);
+}
+.app-tenant-switcher:hover { border-color: var(--petroleo); }
+.app-tenant-switcher span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-avatar {
+  width: var(--h-ctrl); height: var(--h-ctrl); border-radius: var(--r-pill);
+  background: var(--menta); color: var(--petroleo-p);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 13px; flex: none;
+  box-shadow: inset 0 0 0 1px rgba(11, 85, 126, .14);
+}
+.app-header__campana {
+  position: relative;
+  width: var(--h-ctrl); height: var(--h-ctrl); border-radius: var(--r-ctrl);
+  border: 1px solid transparent; background: transparent; color: var(--tinta-2);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.app-header__campana:hover { background: var(--sup-tarjeta); border-color: var(--filete); }
+/* El único punto ámbar de la pantalla: avisos sin leer. */
+.app-header__sin-leer {
+  position: absolute; top: 8px; right: 9px;
+  width: 8px; height: 8px; border-radius: var(--r-pill);
+  background: var(--ambar); border: 2px solid var(--sup-pagina);
+}
+
+.app-main { display: flex; flex-direction: column; min-width: 0; width: 100%; }
+.app-main__inner {
+  padding: var(--e8) var(--e8) var(--e10);
+  max-width: 1440px; width: 100%;
+  display: flex; flex-direction: column; gap: var(--e7);
+}
+.app-main__inner > * { min-width: 0; }
+
+/* --- 4 · Cabecera de página --------------------------------------------- */
+
+/* Este bloque va directo sobre el fondo celeste, así que su tinta sube de
+   contraste: azul profundo en el título y gris azulado oscuro en el resto. */
+.app-page-header {
+  display: flex; align-items: flex-start; gap: var(--e6); flex-wrap: wrap;
+  padding-bottom: var(--e6);
+  border-bottom: 1px solid var(--filete);
+}
+.app-page-header__texto > p { color: var(--tinta-2); }
+.app-page-header__texto { min-width: 260px; flex: 1 1 420px; display: flex; flex-direction: column; gap: var(--e2); }
+.app-page-header__titulo { display: flex; align-items: center; gap: var(--e3); flex-wrap: wrap; }
+.app-page-header__texto > p { max-width: 88ch; color: var(--tinta-2); }
+.app-page-header__acciones { margin-left: auto; display: flex; align-items: center; gap: var(--e2); flex: none; padding-top: var(--e5); }
+
+.app-breadcrumb { display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap; }
+.app-breadcrumb li { display: flex; align-items: center; gap: var(--e2); font-size: 13px; line-height: 18px; font-weight: 500; }
+.app-breadcrumb a { color: var(--tinta-2); text-decoration: none; }
+.app-breadcrumb a:hover { color: var(--petroleo); text-decoration: underline; }
+.app-breadcrumb [aria-current="page"] { color: var(--tinta-3); }
+.app-breadcrumb__sep { color: var(--filete); }
+
+/* --- 5 · Botones y enlaces ---------------------------------------------- */
+
+[app-button] {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--e2);
+  height: var(--h-ctrl); padding: 0 var(--e5);
+  border-radius: var(--r-ctrl); border: 1px solid transparent;
+  font: inherit; font-weight: 500; cursor: pointer; text-decoration: none;
+  background: transparent; color: var(--tinta); white-space: nowrap;
+  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+[app-button][data-variante="primario"] {
+  background: var(--petroleo); border-color: var(--petroleo); color: #fff;
+  box-shadow: var(--sombra-1);
+}
+[app-button][data-variante="primario"]:hover { background: var(--petroleo-h); border-color: var(--petroleo-h); box-shadow: var(--sombra-2); }
+[app-button][data-variante="primario"]:active { background: var(--petroleo-p); border-color: var(--petroleo-p); }
+[app-button][data-variante="secundario"] {
+  background: var(--sup-tarjeta); border-color: var(--borde-ctrl); color: var(--tinta-marca);
+  box-shadow: inset 0 -1px 0 var(--sombra-azul-suave);
+}
+[app-button][data-variante="secundario"]:hover { border-color: var(--petroleo); background: #fff; }
+[app-button][data-variante="fantasma"] { color: var(--tinta-2); }
+[app-button][data-variante="fantasma"]:hover { background: var(--sup-inset); }
+[app-button][data-tam="sm"] { height: var(--h-ctrl-sm); padding: 0 var(--e3); font-size: 13px; }
+[app-button][aria-disabled="true"] { opacity: .5; cursor: not-allowed; box-shadow: none; }
+[app-button][aria-busy="true"] { pointer-events: none; }
+
+a[app-link] { color: var(--petroleo); font-weight: 500; text-decoration: none; border-bottom: 1px solid transparent; }
+a[app-link]:hover { border-bottom-color: currentColor; }
+
+/* --- 6 · Tarjetas -------------------------------------------------------- */
+
+/* La tarjeta se apoya en su plano por superficie y sombra, no por contorno:
+   filo de superficie —casi invisible— y la difusión de `--sombra-1`. El borde
+   sigue estando, porque sin él la tarjeta se disuelve en un monitor sin
+   contraste; lo que ya no hace es dibujar una caja alrededor de todo. */
+.app-card {
+  background: var(--sup-tarjeta);
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-card);
+  padding: var(--e6);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 1px var(--sombra-azul-suave);
+}
+.app-card--plano { padding: 0; overflow: hidden; }
+/* Ficha compacta de sólo lectura —«Registro afectado», «Registro elegido»—.
+   Llevaba `--inset-ctrl`, que es la sombra de un CONTROL: la hacía parecer un
+   campo editable hundido. Es una superficie de descanso, no un input: marfil
+   cálido y un filo de superficie. Misma caja, mismas medidas. */
+.app-card--inset {
+  background: var(--sup-inset);
+  border-color: var(--filete-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55);
+}
+.app-card__cabecera {
+  display: flex; align-items: center; gap: var(--e3);
+  margin-bottom: var(--e5); padding-bottom: var(--e4);
+  border-bottom: 1px solid var(--filete-2);
+}
+.app-card__cabecera h2, .app-card__cabecera h3 { font-size: 21px; line-height: 28px; font-weight: 600; }
+
+.app-divider { height: 1px; background: var(--filete); border: 0; margin: 0; }
+
+/* --- 7 · Badges y chips -------------------------------------------------- */
+
+/* Una fila de tabla puede llevar diez badges. Con un anillo de 1 px cada uno,
+   la fila se lee como diez cajitas en vez de como una frase. El fondo tintado
+   y la tinta oscura del mismo tono ya separan la pieza del papel; el anillo
+   queda apenas como apoyo en pantallas de poco contraste.
+   Los tres canales del estado —fondo tintado, icono de silueta propia y
+   etiqueta escrita— no se tocan: el color nunca es el único canal. */
+.app-badge {
+  display: inline-flex; align-items: center; gap: var(--e2);
+  height: 28px; padding: 0 var(--e3); border-radius: var(--r-ctrl);
+  font-size: 13px; line-height: 18px; font-weight: 500; white-space: nowrap;
+  background: var(--neutro-bg); color: var(--neutro-tinta);
+}
+.app-badge .icono { width: 14px; height: 14px; }
+.app-badge[data-tono="ok"]      { background: var(--ok-bg);     color: var(--ok-tinta);     box-shadow: inset 0 0 0 1px rgba(39, 114, 92, .09); }
+.app-badge[data-tono="aviso"]   { background: var(--aviso-bg);  color: var(--aviso-tinta);  box-shadow: inset 0 0 0 1px rgba(139, 106, 71, .09); }
+.app-badge[data-tono="error"]   { background: var(--error-bg);  color: var(--error-tinta);  box-shadow: inset 0 0 0 1px rgba(146, 69, 52, .09); }
+.app-badge[data-tono="info"]    { background: var(--info-bg);   color: var(--info-tinta);   box-shadow: inset 0 0 0 1px rgba(51, 112, 108, .09); }
+.app-badge[data-tono="neutro"]  { background: var(--neutro-bg); color: var(--neutro-tinta); }
+
+/* El chip es un filtro puesto, no un control hundido: superficie tintada y
+   filo de superficie. Antes llevaba borde estructural Y sombra interior —dos
+   contornos para una pieza de 32 px—. */
+.app-chip {
+  display: inline-flex; align-items: center; gap: var(--e2);
+  height: var(--h-ctrl-sm); padding: 0 var(--e2) 0 var(--e3);
+  border-radius: var(--r-ctrl); border: 1px solid var(--filete-2);
+  background: var(--sup-inset); color: var(--tinta-marca); font-size: 13px; font-weight: 500;
+}
+.app-chip button {
+  width: 20px; height: 20px; border: 0; background: transparent; padding: 0;
+  color: var(--tinta-3); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--r-ctrl);
+}
+.app-chip button:hover { color: var(--petroleo); background: rgba(11, 85, 126, .08); }
+.app-chip-lista { display: flex; flex-wrap: wrap; gap: var(--e2); }
+
+/* --- 8 · Controles de formulario ---------------------------------------- */
+
+.app-form-field { display: flex; flex-direction: column; gap: var(--e2); min-width: 0; }
+.app-form-field__label { font-size: 13px; line-height: 18px; font-weight: 600; color: var(--tinta-marca); }
+.app-form-field__label .req { color: var(--tinta-3); font-weight: 400; }
+.app-form-field__ayuda { font-size: 13px; line-height: 18px; color: var(--tinta-3); }
+.app-form-field__error { font-size: 13px; line-height: 18px; color: var(--error-tinta); display: flex; align-items: center; gap: var(--e2); }
+
+/* Sombra interior azul: el relieve del control sale del propio azul de marca. */
+.app-input, .app-select, .app-textarea, .app-date-picker__input {
+  width: 100%; height: var(--h-ctrl); padding: 0 var(--e3);
+  border: 1px solid var(--borde-ctrl); border-radius: var(--r-ctrl);
+  background: var(--sup-inset); color: var(--tinta);
+  font: inherit;
+  box-shadow: var(--inset-ctrl);
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+.app-textarea { height: auto; min-height: 96px; padding: var(--e2) var(--e3); line-height: 23px; resize: vertical; }
+.app-textarea--mono { font-family: var(--f-mono); font-size: 13px; }
+.app-input::placeholder, .app-textarea::placeholder { color: var(--tinta-3); }
+.app-input:hover, .app-select:hover, .app-textarea:hover, .app-date-picker__input:hover {
+  border-color: var(--petroleo); box-shadow: var(--inset-ctrl-h);
+}
+.app-input:focus-visible, .app-select:focus-visible, .app-textarea:focus-visible, .app-date-picker__input:focus-visible {
+  border-color: var(--aguamarina);
+  box-shadow: var(--inset-ctrl), 0 0 0 4px var(--anillo-foco);
+}
+.app-input[aria-invalid="true"], .app-textarea[aria-invalid="true"], .app-select[aria-invalid="true"] {
+  border-color: var(--error-tinta); border-width: 1.5px;
+}
+.app-input[data-num="1"] { font-variant-numeric: tabular-nums; font-weight: 600; }
+.app-select { appearance: none; background-image: none; padding-right: var(--e8); color: var(--tinta-marca); font-weight: 500; }
+.app-select-envoltorio { position: relative; display: block; }
+.app-select-envoltorio .icono { position: absolute; right: var(--e3); top: 10px; color: var(--petroleo); pointer-events: none; }
+
+.app-search-field { position: relative; display: block; }
+.app-search-field .icono--busqueda { position: absolute; left: var(--e3); top: 10px; color: var(--tinta-3); pointer-events: none; z-index: 1; }
+.app-search-field .app-input { padding-left: var(--e8); }
+
+.app-radio-group { display: flex; flex-wrap: wrap; gap: var(--e2); }
+.app-radio {
+  display: inline-flex; align-items: center; gap: var(--e2);
+  height: var(--h-ctrl); padding: 0 var(--e4);
+  border: 1px solid var(--borde-ctrl); border-radius: var(--r-ctrl);
+  background: var(--sup-inset); cursor: pointer; font-size: 15px;
+  box-shadow: var(--inset-ctrl);
+  transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+.app-radio:hover { border-color: var(--petroleo); }
+.app-radio input { accent-color: var(--aguamarina); width: 16px; height: 16px; margin: 0; }
+.app-radio:has(input:checked) {
+  border-color: var(--aguamarina); border-width: 1.5px; background: var(--sup-tarjeta);
+  font-weight: 600; color: var(--tinta-marca); box-shadow: inset 0 0 0 2px rgba(79, 179, 169, .12);
+}
+
+.app-switch { display: inline-flex; align-items: center; gap: var(--e2); cursor: pointer; }
+.app-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.app-switch__pista {
+  width: 40px; height: 24px; border-radius: var(--r-pill);
+  background: var(--sup-inset); border: 1px solid var(--borde-ctrl);
+  position: relative; flex: none; box-shadow: var(--inset-ctrl);
+}
+.app-switch__pista::after {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; border-radius: var(--r-pill); background: var(--tinta-3);
+}
+.app-switch input:checked + .app-switch__pista { border-color: var(--aguamarina); background: var(--info-bg); }
+.app-switch input:checked + .app-switch__pista::after { left: 19px; background: var(--aguamarina); }
+.app-switch input:focus-visible + .app-switch__pista { box-shadow: var(--inset-ctrl), 0 0 0 4px var(--anillo-foco); }
+
+.app-date-picker { position: relative; display: block; }
+.app-date-picker .icono--calendario { position: absolute; right: var(--e3); top: 10px; color: var(--petroleo); pointer-events: none; }
+.app-date-picker__input { font-variant-numeric: tabular-nums; padding-right: var(--e8); }
+
+.app-form-section { display: flex; flex-direction: column; gap: var(--e5); border: 0; margin: 0; padding: 0; }
+.app-form-section + .app-form-section { margin-top: var(--e7); padding-top: var(--e7); border-top: 1px solid var(--filete); }
+.app-form-section__legend { padding: 0; margin-bottom: var(--e1); }
+.app-form-section__desc { font-size: 13px; line-height: 18px; color: var(--tinta-3); margin-top: var(--e1); }
+
+/* Dos anchos que hasta ahora viajaban en `style=` dentro de cada pantalla, en
+   contra de §5.1 de la skill: el buscador global de la barra de filtros y el
+   campo de hora que acompaña al date-picker. Viven acá para que el día que
+   haya que ceder ancho se ceda en las 693 a la vez. */
+.app-filter-bar > .app-search-field { max-width: 420px; }
+.app-input[type="time"] { max-width: 140px; }
+
+/* Barra de avance. Es del banco de los 48 y hasta ahora ninguna vista la usaba:
+   un formulario largo sin ella obliga a adivinar cuánto falta. Tono aguamarina
+   porque es progreso, no estado; el número va aparte, en texto, porque el ancho
+   de la barra por sí solo no es un canal accesible. */
+.app-progress {
+  display: block; height: 6px; border-radius: 999px; overflow: hidden;
+  background: var(--sup-inset); box-shadow: inset 0 0 0 1px var(--filete);
+}
+.app-progress__relleno {
+  display: block; height: 100%; border-radius: inherit;
+  background: var(--aguamarina); transition: width .25s ease;
+}
+.app-progress[data-tam="sm"] { height: 4px; }
+
+/* Indicador de pasos: la fila de app-badge numerados unidos por app-divider que
+   pide el prompt maestro. El paso hecho, el actual y el pendiente se distinguen
+   por icono y por texto, no sólo por color. */
+.pasos { display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap; margin-bottom: var(--e4); }
+.pasos .app-divider { flex: 1 1 24px; min-width: 16px; height: 1px; }
+.paso-actual { box-shadow: inset 0 0 0 1.5px var(--aguamarina); }
+.avance-formulario { display: flex; flex-direction: column; gap: var(--e3); margin-bottom: var(--e6); }
+.avance-formulario__pie { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e4); }
+
+.app-form-actions {
+  display: flex; align-items: center; justify-content: flex-end; gap: var(--e3); flex-wrap: wrap;
+  padding-top: var(--e6); margin-top: var(--e7); border-top: 1px solid var(--filete);
+}
+.app-form-actions__nota { margin-right: auto; font-size: 13px; line-height: 18px; color: var(--tinta-3); max-width: 46ch; }
+
+.formulario-columna { max-width: 760px; }
+
+/* --- 9 · Barra de filtros ----------------------------------------------- */
+
+.app-filter-bar {
+  background: var(--sup-tarjeta); border: 1px solid var(--filete-2); border-radius: var(--r-card);
+  padding: var(--e6); display: flex; flex-direction: column; gap: var(--e5);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 1px var(--sombra-azul-suave);
+}
+.app-filter-bar__fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--e5) var(--e6); }
+.app-filter-bar__pie { display: flex; align-items: center; gap: var(--e3); flex-wrap: wrap; }
+
+/* --- 10 · Tabla ---------------------------------------------------------- */
+
+/* La sombra del borde derecho avisa que la tabla sigue: sin ella, una tabla
+   ancha parece cortada en vez de desplazable. */
+.tabla-envoltorio {
+  overflow-x: auto; max-width: 100%;
+  background:
+    linear-gradient(90deg, var(--sup-tarjeta) 30%, rgba(255, 255, 255, 0)) left / 40px 100% no-repeat,
+    linear-gradient(270deg, var(--sup-tarjeta) 30%, rgba(255, 255, 255, 0)) right / 40px 100% no-repeat,
+    radial-gradient(farthest-side at 0 50%, var(--sombra-azul), rgba(11, 85, 126, 0)) left / 14px 100% no-repeat,
+    radial-gradient(farthest-side at 100% 50%, var(--sombra-azul), rgba(11, 85, 126, 0)) right / 14px 100% no-repeat;
+  background-attachment: local, local, scroll, scroll;
+  scrollbar-width: thin;
+}
+.tabla-envoltorio::-webkit-scrollbar { height: 10px; }
+.tabla-envoltorio::-webkit-scrollbar-track { background: var(--sup-inset); }
+.tabla-envoltorio::-webkit-scrollbar-thumb { background: var(--filete); border-radius: var(--r-pill); border: 3px solid var(--sup-inset); }
+.tabla-envoltorio::-webkit-scrollbar-thumb:hover { background: var(--menta); }
+
+.app-data-table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--sup-tarjeta); }
+.app-data-table thead th {
+  position: sticky; top: 0; z-index: 2;
+  height: var(--h-cabecera); background: var(--sup-inset);
+  padding: 0 var(--e5); text-align: left; white-space: nowrap;
+  font-size: 11px; line-height: 16px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--tinta-marca);
+  border-bottom: 1px solid var(--filete);
+  box-shadow: inset 0 -1px 0 var(--filete);
+}
+.app-data-table tbody td {
+  height: var(--h-fila); padding: 0 var(--e5);
+  border-bottom: 1px solid var(--filete-2);
+  vertical-align: middle; white-space: nowrap;
+}
+.app-data-table tbody tr:last-child td { border-bottom: 0; }
+.app-data-table tbody tr { transition: background-color .12s ease; }
+.app-data-table .col-num, .app-data-table th.col-num { text-align: right; font-variant-numeric: tabular-nums; }
+.app-data-table td.col-num { font-weight: 600; color: var(--tinta-marca); }
+.app-data-table .col-codigo { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--tinta-marca); }
+.app-data-table .col-fecha { font-variant-numeric: tabular-nums; }
+/* Las dos columnas que no pueden quedar fuera de vista en una tabla ancha:
+   el identificador —que dice de qué fila estás leyendo— y el menú de acciones
+   —que si se corta deja la fila sin operar—. Se congelan a cada lado. */
+.app-data-table .col-acciones { width: 56px; text-align: right; padding-right: var(--e4); }
+.app-data-table th.col-acciones, .app-data-table td.col-acciones {
+  position: sticky; right: 0; z-index: 3;
+  background: var(--sup-tarjeta);
+  box-shadow: -10px 0 12px -8px rgba(11, 85, 126, .18);
+}
+.app-data-table thead th.col-acciones { background: var(--sup-inset); z-index: 4; }
+
+.app-data-table th:first-child, .app-data-table td:first-child {
+  position: sticky; left: 0; z-index: 3;
+  background: var(--sup-tarjeta);
+  box-shadow: 10px 0 12px -8px rgba(11, 85, 126, .12);
+}
+.app-data-table thead th:first-child { background: var(--sup-inset); z-index: 4; }
+.celda-truncada { display: inline-block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+.celda-si-no { display: inline-flex; align-items: center; gap: var(--e2); }
+
+.boton-desborde {
+  width: var(--h-ctrl-sm); height: var(--h-ctrl-sm); border-radius: var(--r-ctrl);
+  border: 1px solid transparent; background: transparent; color: var(--tinta-2);
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.boton-desborde:hover { border-color: var(--filete); background: var(--sup-inset); color: var(--petroleo); }
+
+.app-pagination {
+  display: flex; align-items: center; gap: var(--e3); flex-wrap: wrap;
+  padding: var(--e4) var(--e6); border-top: 1px solid var(--filete);
+  background: var(--sup-inset);
+}
+.app-pagination__nota { margin-right: auto; font-size: 13px; line-height: 18px; color: var(--tinta-3); }
+
+/* --- 11 · Menús, tooltips y diálogos ------------------------------------ */
+
+/* Fondo del menú desplegable: la imagen celeste del módulo, con un velo
+   blanco encima para que los ítems se lean como una lista, no como un cartel. */
+.app-menu {
+  min-width: 240px; padding: var(--e1); border-radius: var(--r-menu);
+  background:
+    linear-gradient(rgba(255, 255, 255, .88), rgba(255, 255, 255, .94)),
+    radial-gradient(130% 95% at 8% 4%, #FFFFFF 0%, #D8EAF8 36%, #9CC8EC 70%, #77B2E4 100%);
+  border: 1px solid var(--filete-2); box-shadow: var(--sombra);
+}
+.app-menu-item {
+  display: flex; align-items: center; gap: var(--e3); width: 100%;
+  min-height: var(--h-ctrl-sm); padding: var(--e2) var(--e3);
+  border: 0; border-radius: var(--r-ctrl); background: transparent;
+  font: inherit; color: var(--tinta); text-align: left; cursor: pointer; text-decoration: none;
+}
+.app-menu-item:hover { background: var(--info-bg); color: var(--tinta-marca); }
+.menu-anclaje { position: relative; display: inline-block; }
+.menu-anclaje .app-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; }
+
+.app-tooltip-panel { border-bottom: 1px dotted var(--tinta-3); cursor: help; }
+
+.app-dialog-capa {
+  position: fixed; inset: 0 0 56px 0; z-index: 60;
+  background: var(--velo);
+  display: flex; align-items: center; justify-content: center; padding: var(--e7);
+}
+.app-dialog {
+  width: var(--w-modal); max-width: 100%; max-height: calc(100vh - 64px); overflow-y: auto;
+  background: var(--sup-tarjeta); border-radius: var(--r-card); box-shadow: var(--sombra);
+  padding: var(--e7);
+  border-top: 3px solid var(--petroleo);
+}
+.app-dialog__cabecera { display: flex; align-items: flex-start; gap: var(--e3); margin-bottom: var(--e5); }
+.app-dialog__titulo { font-family: var(--f-titulo); font-size: 22px; line-height: 30px; font-weight: 600; color: var(--tinta-marca); }
+.app-dialog__cerrar {
+  margin-left: auto; width: var(--h-ctrl-sm); height: var(--h-ctrl-sm); flex: none;
+  border: 1px solid transparent; border-radius: var(--r-ctrl); background: transparent;
+  color: var(--tinta-2); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.app-dialog__cerrar:hover { border-color: var(--filete); background: var(--sup-inset); }
+.app-dialog__cuerpo { display: flex; flex-direction: column; gap: var(--e5); }
+.app-dialog .app-form-actions { margin-top: var(--e6); }
+
+.marco-atenuado { filter: saturate(.8) contrast(.98); }
+
+/* --- 12 · Pestañas ------------------------------------------------------- */
+
+.app-tabs { border-bottom: 1px solid var(--filete); display: flex; gap: var(--e6); flex-wrap: wrap; }
+.app-tab {
+  display: inline-flex; align-items: center; gap: var(--e2);
+  height: var(--h-ctrl-lg); padding: 0 var(--e1);
+  color: var(--tinta-2); text-decoration: none; font-size: 15px;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.app-tab:hover { color: var(--tinta-marca); }
+.app-tab[aria-selected="true"] { color: var(--tinta-marca); font-weight: 600; border-bottom-color: var(--aguamarina); }
+
+/* --- 13 · Estados: carga, vacío, error, avisos -------------------------- */
+
+.app-empty-state {
+  padding: var(--e10) var(--e6);
+  display: flex; flex-direction: column; align-items: center; gap: var(--e3); text-align: center;
+}
+/* Sin borde: el halo de menta de la sección 19 ya lo separa, y un contorno
+   además del halo convertía el gesto más cálido de la pantalla en un cuadro. */
+.app-empty-state__icono {
+  width: 56px; height: 56px; border-radius: var(--r-card);
+  background: var(--info-bg); border: 0;
+  display: inline-flex; align-items: center; justify-content: center; color: var(--petroleo);
+  box-shadow: inset 0 2px 6px var(--sombra-azul-suave);
+  margin-bottom: var(--e1);
+}
+.app-empty-state h2 { font-size: 21px; line-height: 28px; font-weight: 600; }
+.app-empty-state p { max-width: 56ch; color: var(--tinta-2); }
+.app-empty-state [app-button] { margin-top: var(--e3); }
+
+.app-skeleton { display: block; height: 12px; border-radius: var(--r-ctrl); background: var(--filete); opacity: .5; }
+.app-skeleton--titulo { height: 20px; }
+/* Dos anchos de esqueleto que viajaban en `style=` dentro de las pantallas de
+   detalle, contra §5.1: la etiqueta corta de una lista de definiciones y el
+   encabezado que la precede. */
+.app-skeleton--etiqueta   { width: 120px; }
+.app-skeleton--encabezado { width: 220px; margin-bottom: var(--e5); }
+/* El grupo que envuelve las filas de esqueleto: se usaba en las 116 pantallas
+   sin ninguna regla, así que la última fila dejaba un filete suelto al aire y el
+   bloque no reservaba el alto de la cabecera de tabla que reemplaza. */
+.app-skeleton-grupo { display: block; }
+.app-skeleton-grupo .esqueleto-fila:last-child { border-bottom: 0; }
+.esqueleto-fila { display: flex; align-items: center; gap: var(--e6); height: var(--h-fila); padding: 0 var(--e5); border-bottom: 1px solid var(--filete-2); }
+.esqueleto-fila .app-skeleton:nth-child(1) { width: 14%; }
+.esqueleto-fila .app-skeleton:nth-child(2) { width: 22%; }
+.esqueleto-fila .app-skeleton:nth-child(3) { width: 18%; }
+.esqueleto-fila .app-skeleton:nth-child(4) { width: 26%; }
+.esqueleto-fila .app-skeleton:nth-child(5) { width: 10%; }
+
+.app-spinner {
+  width: 16px; height: 16px; border-radius: var(--r-pill);
+  border: 2px solid currentColor; border-right-color: transparent; display: inline-block;
+  animation: girar .8s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .app-spinner { animation-duration: 3s; } }
+
+.app-alert {
+  display: flex; align-items: flex-start; gap: var(--e3);
+  padding: var(--e4) var(--e5); border-radius: var(--r-ctrl);
+  background: var(--neutro-bg); color: var(--neutro-tinta);
+  box-shadow: inset 0 0 0 1px rgba(36, 40, 40, .05);
+}
+/* El aviso sí es un bloque: se lo deja contenido. Pero el anillo baja al peso
+   del resto del sistema — un error no necesita gritar para leerse, ya lo dice
+   el fondo tintado, el icono y el texto. */
+.app-alert[data-tono="error"] { background: var(--error-bg); color: var(--error-tinta); box-shadow: inset 0 0 0 1px rgba(146, 69, 52, .11); }
+.app-alert[data-tono="aviso"] { background: var(--aviso-bg); color: var(--aviso-tinta); box-shadow: inset 0 0 0 1px rgba(139, 106, 71, .11); }
+.app-alert[data-tono="info"]  { background: var(--info-bg);  color: var(--info-tinta);  box-shadow: inset 0 0 0 1px rgba(51, 112, 108, .11); }
+.app-alert[data-tono="ok"]    { background: var(--ok-bg);    color: var(--ok-tinta);    box-shadow: inset 0 0 0 1px rgba(39, 114, 92, .11); }
+.app-alert .icono { margin-top: 2px; }
+.app-alert__cuerpo { display: flex; flex-direction: column; gap: var(--e1); min-width: 0; }
+.app-alert strong { font-weight: 600; }
+.app-alert ul { list-style: disc; padding-left: var(--e5); }
+
+.app-toast-container { position: fixed; right: var(--e8); bottom: 72px; z-index: 80; display: flex; flex-direction: column; gap: var(--e3); }
+.app-toast {
+  display: flex; align-items: flex-start; gap: var(--e3);
+  min-width: 340px; max-width: 440px; padding: var(--e4) var(--e5);
+  background: var(--sup-tarjeta); border: 1px solid var(--filete-2);
+  border-left: 3px solid var(--aguamarina);
+  border-radius: var(--r-menu); box-shadow: var(--sombra);
+}
+.app-toast[data-tono="ok"] .icono { color: var(--ok-tinta); }
+.app-toast__cuerpo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.app-toast strong { color: var(--tinta-marca); }
+
+/* --- 14 · Ficha de detalle ---------------------------------------------- */
+
+.lista-definiciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--e5) var(--e7); }
+.lista-definiciones > div { display: flex; flex-direction: column; gap: var(--e1); min-width: 0; }
+.lista-definiciones dt { font-size: 11px; line-height: 16px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-2); }
+.lista-definiciones dd { margin: 0; overflow-wrap: anywhere; }
+.lista-definiciones dd.num { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--tinta-marca); }
+
+.lista-referencias { display: flex; flex-direction: column; }
+.lista-referencias li { display: flex; align-items: center; gap: var(--e3); min-height: var(--h-fila); border-bottom: 1px solid var(--filete-2); flex-wrap: wrap; }
+.lista-referencias li:last-child { border-bottom: 0; }
+.lista-referencias li .icono { color: var(--petroleo); }
+.lista-referencias li .app-badge { margin-left: auto; }
+
+.pie-auditoria { background: var(--sup-inset); }
+
+/* --- 15 · Índices (no son pantallas de producto) ------------------------- */
+
+.pagina-indice { max-width: 1120px; margin: 0 auto; padding: var(--e10) var(--e8); display: flex; flex-direction: column; gap: var(--e8); }
+.pagina-indice__marca { display: flex; align-items: center; gap: var(--e3); margin-bottom: var(--e5); }
+.pagina-indice__marca img { width: 40px; height: auto; }
+.pagina-indice__marca span { font-family: var(--f-titulo); font-size: 24px; font-weight: 600; color: var(--tinta-marca); }
+.indice-tabla { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--sup-tarjeta); }
+.indice-tabla th {
+  height: var(--h-cabecera); background: var(--sup-inset); padding: 0 var(--e5); text-align: left;
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--tinta-marca); border-bottom: 1px solid var(--filete);
+}
+.indice-tabla td { padding: var(--e3) var(--e5); border-bottom: 1px solid var(--filete-2); vertical-align: middle; }
+.indice-tabla tr:last-child td { border-bottom: 0; }
+.indice-tabla td.col-codigo { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--tinta-marca); }
+.indice-tabla code { font-family: var(--f-mono); font-size: 13px; color: var(--tinta-2); }
+.indice-tabla tr:hover td { background: #FBFCFC; }
+
+/* --- 16 · Barra de maqueta ---------------------------------------------- *
+   Andamiaje de la maqueta estática, NO parte del diseño del producto: sirve
+   para saber de qué tipo de usuario es la pantalla y para ver los estados que
+   en la aplicación real pinta `app-view-state-host`. No existe en el producto. */
+
+/* Barra inferior de ancho completo con su espacio reservado en el <body>:
+   así nunca tapa una fila de la tabla ni la paginación. */
+body { padding-bottom: 56px; }
+
+.barra-maqueta {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; height: 56px;
+  display: flex; align-items: center; gap: var(--e5);
+  padding: 0 var(--e8);
+  background: var(--sup-tarjeta); border-top: 1px solid var(--filete);
+  box-shadow: 0 -6px 24px rgba(11, 85, 126, .10);
+}
+.barra-maqueta__actor { display: flex; flex-direction: column; justify-content: center; padding-right: var(--e5); border-right: 1px solid var(--filete); }
+.barra-maqueta__actor strong { font-size: 13px; line-height: 18px; font-weight: 600; color: var(--petroleo); white-space: nowrap; }
+
+/* Selector de pantalla: el salto directo a cualquier vista del módulo, sin
+   volver al índice. Es andamiaje como el resto de la barra, así que no usa
+   `app-select` —ese es el control del producto, de 40 px— sino los mismos
+   tokens a la altura de 32 px de la barra. `<optgroup>` agrupa por ficha:
+   una vista y sus formularios y modales viajan juntos. */
+.barra-maqueta__pantalla {
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  padding-right: var(--e5); border-right: 1px solid var(--filete);
+}
+.barra-maqueta__pantalla select {
+  height: var(--h-ctrl-sm); min-width: 240px; max-width: 380px;
+  padding: 0 var(--e2); border-radius: var(--r-ctrl);
+  border: 1px solid var(--borde-ctrl); background: var(--sup-inset);
+  color: var(--tinta); font: inherit; font-size: 13px; cursor: pointer;
+  transition: border-color var(--mov-rapido) var(--curva);
+}
+.barra-maqueta__pantalla select:hover { border-color: var(--aguamarina); }
+.barra-maqueta__pantalla select:focus-visible {
+  outline: none; border-color: var(--aguamarina);
+  box-shadow: 0 0 0 4px var(--anillo-foco);
+}
+.barra-maqueta__pantalla optgroup { font-weight: 700; color: var(--tinta); }
+.barra-maqueta__pantalla option { font-weight: 400; color: var(--tinta); }
+@media (prefers-reduced-motion: reduce) { .barra-maqueta__pantalla select { transition: none; } }
+.barra-maqueta__estados { display: flex; align-items: center; gap: var(--e1); flex-wrap: wrap; }
+.barra-maqueta__etiqueta { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--tinta-3); }
+/* Cada botón toma el tono que le corresponde del banco: el mismo par
+   fondo-tintado / tinta-del-mismo-tono con el que `app-badge` pinta los
+   estados. Antes todos se encendían en celeste, así que «Error» y «Vacío»
+   se veían igual que «Con datos». El tono vive en dos variables, y como
+   salen del banco funcionan sin cambios en claro y en oscuro. */
+.barra-maqueta button {
+  --tono-bg:    var(--neutro-bg);
+  --tono-tinta: var(--neutro-tinta);
+  height: var(--h-ctrl-sm); padding: 0 var(--e3); border-radius: var(--r-ctrl);
+  border: 1px solid transparent; background: transparent; color: var(--tinta-2);
+  font: inherit; font-size: 13px; cursor: pointer;
+  transition:
+    background-color var(--mov-rapido) var(--curva),
+    border-color     var(--mov-rapido) var(--curva),
+    color            var(--mov-rapido) var(--curva);
+}
+
+.barra-maqueta button[data-estado="datos"],
+.barra-maqueta button[data-estado="exito"]    { --tono-bg: var(--ok-bg);     --tono-tinta: var(--ok-tinta); }
+.barra-maqueta button[data-estado="carga"],
+.barra-maqueta button[data-estado="cargando"],
+.barra-maqueta button[data-estado^="paso"]    { --tono-bg: var(--info-bg);   --tono-tinta: var(--info-tinta); }
+.barra-maqueta button[data-estado="error"]    { --tono-bg: var(--error-bg);  --tono-tinta: var(--error-tinta); }
+.barra-maqueta button[data-estado="vacio"],
+.barra-maqueta button[data-estado="inicial"],
+.barra-maqueta button[data-estado="normal"]   { --tono-bg: var(--neutro-bg); --tono-tinta: var(--neutro-tinta); }
+
+.barra-maqueta button:hover { background: var(--tono-bg); color: var(--tono-tinta); }
+.barra-maqueta button:focus-visible {
+  outline: none; background: var(--tono-bg); color: var(--tono-tinta);
+  box-shadow: 0 0 0 4px var(--anillo-foco);
+}
+.barra-maqueta button[aria-pressed="true"] {
+  background: var(--tono-bg); color: var(--tono-tinta);
+  border-color: currentColor; font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) { .barra-maqueta button { transition: none; } }
+@media print { .barra-maqueta { display: none; } }
+
+/* --- 17 · Ventanas angostas --------------------------------------------- *
+   Movido al final de la hoja, a la sección 21 · Sistema responsive. Va último
+   a propósito: varias de sus reglas tienen que ganarle por orden de cascada a
+   los bloques de realce, tabla y modo oscuro que vienen más abajo. */
+
+/* --- 18 · Animación de entrada — UNA SOLA VEZ --------------------------- *
+   Se ejecuta al abrir la pantalla y termina. No hay bucle, no hay rebote y
+   no hay reaparición: los fotogramas finales son exactamente el estado
+   natural del elemento (opacidad 1, sin desplazamiento).
+
+   El seguro está en la clase `entrando` del <body>: TODA la animación cuelga
+   de ella, y `redsat.js` la retira apenas la secuencia termina. A partir de
+   ese momento los elementos no tienen ninguna propiedad de animación, así
+   que no pueden volver a animarse aunque se los muestre y se los oculte —
+   por ejemplo al cambiar de estado en la barra inferior de la maqueta.
+
+   Si el JavaScript no corre, la clase se queda: la animación igual se
+   ejecuta una vez y termina con todo visible, porque `fill-mode` es `both`
+   y `iteration-count` es 1. Nunca queda nada invisible.                    */
+
+@keyframes entrada-sube {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes entrada-aparece {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.entrando .app-page-header .app-breadcrumb,
+.entrando .app-page-header__titulo,
+.entrando .app-page-header__texto > p,
+.entrando .app-page-header__acciones,
+.entrando .app-filter-bar,
+.entrando .app-main__inner > .app-card,
+.entrando .app-main__inner > form.app-card,
+.entrando .app-main__inner > .app-view-state-host,
+.entrando .pila > .app-card,
+.entrando .app-tabs,
+.entrando .app-form-field,
+.entrando .app-form-actions,
+.entrando .app-pagination,
+.entrando .app-dialog {
+  animation-duration: .46s;
+  animation-timing-function: cubic-bezier(.2, .7, .3, 1);
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+  animation-direction: normal;
+}
+
+/* 1 · Breadcrumb · 2 · Título · 3 · Texto — suben mientras aparecen */
+.entrando .app-page-header .app-breadcrumb { animation-name: entrada-sube; animation-delay: .06s; }
+.entrando .app-page-header__titulo         { animation-name: entrada-sube; animation-delay: .15s; }
+.entrando .app-page-header__texto > p      { animation-name: entrada-sube; animation-delay: .24s; }
+.entrando .app-page-header__acciones       { animation-name: entrada-sube; animation-delay: .30s; }
+
+/* 4 · Formulario, tabla, filtros y tarjetas — el bloque de contenido */
+.entrando .app-filter-bar,
+.entrando .app-main__inner > .app-card,
+.entrando .app-main__inner > form.app-card,
+.entrando .app-main__inner > .app-view-state-host,
+.entrando .pila > .app-card,
+.entrando .app-tabs,
+.entrando .app-dialog { animation-name: entrada-sube; animation-delay: .38s; }
+
+/* 5 · Campos, empezando por el identificador — sólo aparecen */
+.entrando .app-form-field { animation-name: entrada-aparece; animation-delay: .48s; }
+.entrando .app-form-field:nth-of-type(2) { animation-delay: .53s; }
+.entrando .app-form-field:nth-of-type(3) { animation-delay: .58s; }
+.entrando .app-form-field:nth-of-type(4) { animation-delay: .63s; }
+.entrando .app-form-field:nth-of-type(n+5) { animation-delay: .68s; }
+
+/* 6 · Cancelar y Guardar, y la paginación de los listados */
+.entrando .app-form-actions,
+.entrando .app-pagination { animation-name: entrada-aparece; animation-delay: .74s; }
+
+/* Quien pidió menos movimiento entra directo al estado final. */
+@media (prefers-reduced-motion: reduce) {
+  .entrando * { animation: none !important; }
+}
+
+/* --- 19 · Experiencia: microinteracciones y profundidad ------------------ *
+   Evolución de la experiencia sin tocar el ADN de REDSAT: mismos hex, misma
+   tipografía, mismos componentes, misma arquitectura. Lo que cambia es cómo
+   RESPONDE la interfaz. Regla de fondo: viva cuando se la usa, quieta cuando
+   no. Nada de esto se mueve solo.                                          */
+
+/* Un solo lenguaje de transición para todo lo que se puede tocar. */
+[app-button],
+a[app-link],
+.app-side-nav__item,
+.app-menu-item,
+.app-tab,
+.app-chip,
+.app-chip button,
+.app-tenant-switcher,
+.app-header__campana,
+.boton-desborde,
+.app-input, .app-select, .app-textarea, .app-date-picker__input,
+.app-radio, .app-switch__pista,
+.app-data-table tbody tr,
+.indice-tabla tr,
+.lista-referencias li {
+  transition:
+    background-color var(--mov-rapido) var(--curva),
+    border-color     var(--mov-rapido) var(--curva),
+    box-shadow       var(--mov-medio)  var(--curva),
+    color            var(--mov-rapido) var(--curva),
+    transform         90ms             var(--curva);
+}
+
+/* Press: 100 % → 98 % → 100 %. Sólo confirma que el clic llegó. */
+[app-button]:active,
+.boton-desborde:active,
+.app-tenant-switcher:active { transform: scale(.98); }
+[app-button][aria-disabled="true"]:active { transform: none; }
+
+/* Secundario y fantasma también reaccionan, sin robarle peso al primario. */
+[app-button][data-variante="secundario"]:hover { box-shadow: var(--sombra-1); }
+
+/* La escalera de profundidad, explícita. Cuatro planos y ni uno más; lo que
+   distingue un plano del siguiente es la sombra y la superficie, nunca un
+   contorno más grueso.
+     0 · Fondo de la vista        sin sombra
+     1 · Superficie de contenido  --sombra-1 + filo --filete-2  (tarjeta, filtros)
+     2 · Elevación                --sombra                      (menú, modal, toast)
+     3 · Elemento interactivo     textura propia del botón
+   Una pieza no sube de plano por estar «destacada»: sube porque flota de
+   verdad sobre lo que hay debajo. */
+.app-card, .app-filter-bar { box-shadow: var(--sombra-1); }
+
+/* Sólo las tarjetas que llevan a algún lado reaccionan al cursor. Una tarjeta
+   de sólo lectura no se eleva: prometería una interacción que no existe. */
+.lista-referencias li { border-radius: var(--r-ctrl); padding: 0 var(--e3); margin: 0 calc(var(--e3) * -1); }
+.lista-referencias li:hover { background: var(--info-bg); }
+
+/* Filas: el realce entra por la izquierda, como una guía de lectura. */
+.indice-tabla tr:hover td { background: #FAFCFC; }
+
+/* Navegación: el ítem activo se sostiene, el resto responde y vuelve. */
+.app-side-nav__item:active { transform: translateX(1px); }
+
+/* Menú: el ítem bajo el cursor se lee sin necesidad de leerlo entero. */
+.app-menu-item:hover { padding-left: var(--e4); }
+
+/* Chips y badges: el chip se puede quitar, el badge no. Sólo el chip reacciona. */
+.app-chip:hover { border-color: var(--menta); }
+
+/* Estado vacío: la pantalla sin datos también está cuidada. */
+.app-empty-state__icono { box-shadow: 0 0 0 6px rgba(159, 216, 208, .18), inset 0 2px 6px var(--sombra-azul-suave); }
+
+/* Éxito y error: el mismo peso visual, distinto tono. Ninguno alarma. */
+.app-toast { animation: entrada-sube var(--mov-lento) var(--curva) both; }
+.app-alert { align-items: flex-start; }
+
+/* --- 20 · Aparición ligada al scroll ------------------------------------ *
+   Lo que está fuera de la pantalla al cargar aparece cuando el usuario llega
+   a ello, UNA vez, y se queda. Lo gobierna un IntersectionObserver en
+   redsat.js: está atado al scroll, no a un temporizador, y no hay bucle.   */
+
+[data-revelar] { opacity: 0; transform: translateY(10px); }
+[data-revelar].revelado {
+  opacity: 1; transform: none;
+  transition: opacity var(--mov-lento) var(--curva), transform var(--mov-lento) var(--curva);
+}
+
+/* --- 21 · Personalidad por contexto ------------------------------------- *
+   Mismo sistema, distinta respiración. La identidad no cambia; cambia el
+   ritmo, que es lo que hace que un formulario se sienta calmado y un listado
+   se sienta activo.                                                        */
+
+/* Formulario y modal: más aire, columna más contenida, lectura tranquila. */
+body[data-arquetipo="formulario"] .app-main__inner { gap: var(--e8); }
+body[data-arquetipo="formulario"] .formulario-columna { padding: var(--e8); }
+body[data-arquetipo="formulario"] .app-form-field { gap: var(--e3); }
+body[data-arquetipo="formulario"] .app-page-header { border-bottom: 0; padding-bottom: var(--e2); }
+
+/* Detalle: bloques bien separados, para leer de a un bloque por vez. */
+body[data-arquetipo="detalle"] .pila { gap: var(--e8); }
+
+/* Listado: densidad. Es la pantalla de trabajo diario. */
+body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-revelar] { opacity: 1; transform: none; }
+  .app-toast { animation: none; }
+  [app-button]:active, .boton-desborde:active, .app-tenant-switcher:active,
+  .app-side-nav__item:active { transform: none; }
+}
+
+/* --- 22 · Botones: forma, textura y color reactivo ---------------------- *
+   La textura no es un degradado decorativo: es una línea de luz interior de
+   1 px arriba y una sombra azul de 1 px abajo, que es lo que hace que un
+   botón se lea como una pieza y no como un rectángulo pintado. El color
+   reacciona en los tres estados —reposo, cursor, pulsado— sin salirse de la
+   paleta: petróleo, aguamarina y menta. */
+
+[app-button] {
+  padding: 0 var(--e5);
+  letter-spacing: .002em;
+  position: relative;
+}
+
+/* Primario — petróleo. Al pasar el cursor sube un punto y se anilla en menta. */
+[app-button][data-variante="primario"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .20),
+    inset 0 -1px 0 rgba(5, 34, 50, .28),
+    var(--sombra-1);
+}
+[app-button][data-variante="primario"]:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .24),
+    inset 0 -1px 0 rgba(5, 34, 50, .30),
+    0 0 0 3px rgba(159, 216, 208, .38),
+    var(--sombra-2);
+}
+[app-button][data-variante="primario"]:active {
+  box-shadow: inset 0 2px 4px rgba(5, 34, 50, .32);
+}
+
+/* Secundario — marfil con filo. Al pasar el cursor se tiñe de menta. */
+[app-button][data-variante="secundario"] {
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 var(--sombra-azul-suave);
+}
+[app-button][data-variante="secundario"]:hover {
+  border-color: var(--aguamarina);
+  background: var(--info-bg);
+  color: var(--tinta-marca);
+  box-shadow: inset 0 1px 0 #fff, var(--sombra-1);
+}
+[app-button][data-variante="secundario"]:active {
+  background: var(--menta);
+  box-shadow: inset 0 2px 4px rgba(11, 85, 126, .18);
+}
+
+/* Fantasma — sin caja hasta que se lo toca. */
+[app-button][data-variante="fantasma"]:hover { background: var(--info-bg); color: var(--tinta-marca); }
+
+/* El icono acompaña al texto: se corre 1 px cuando el botón responde. */
+[app-button] .icono { transition: transform var(--mov-medio) var(--curva); }
+[app-button]:hover .icono { transform: translateX(1px); }
+[app-button][data-variante="secundario"]:hover .icono { transform: translateX(-1px); }
+
+/* Los demás controles con superficie propia también reaccionan. */
+.app-tenant-switcher:hover { border-color: var(--aguamarina); background: var(--info-bg); }
+.app-header__campana:hover { color: var(--petroleo); }
+.boton-desborde:hover { border-color: var(--menta); background: var(--info-bg); }
+
+/* Icono de contexto de la pantalla, en la cabecera de página. */
+.app-page-header__icono {
+  width: var(--h-ctrl-lg); height: var(--h-ctrl-lg); flex: none;
+  border-radius: var(--r-ctrl);
+  background: var(--info-bg); color: var(--petroleo);
+  display: inline-flex; align-items: center; justify-content: center;
+  box-shadow: inset 0 0 0 1px rgba(79, 179, 169, .28);
+}
+.app-page-header__icono .icono { width: 24px; height: 24px; }
+/* El icono es hermano del bloque de texto, no su contenedor: la cabecera ya
+   es una fila, así que no hace falta anidar nada. Anidarlo fue lo que puso
+   migas, título y descripción en tres columnas encimadas. */
+
+/* Icono en la cabecera de cada tarjeta: dice de qué habla el bloque. */
+.app-card__cabecera .icono { color: var(--petroleo); }
+
+/* --- 23 · Tablas reactivas ---------------------------------------------- *
+   La tabla es la pantalla de trabajo: pasa horas abierta y tiene que
+   responder. La fila bajo el cursor se tiñe de celeste claro, se marca con
+   la guía aguamarina que crece desde la izquierda, y sus piezas —badges,
+   enlaces, menú— acusan recibo. Nada se mueve solo: todo esto ocurre sólo
+   mientras el cursor está encima.
+
+   La fila NO se desplaza con `transform`: eso crearía un bloque contenedor
+   y rompería las columnas congeladas de los extremos. El movimiento entra
+   por la guía, por los badges y por el icono del menú.                     */
+
+:root { --fila-celeste: #EDF7F5; --fila-celeste-borde: #E0F0EE; }
+
+.app-data-table tbody td {
+  transition:
+    background-color var(--mov-rapido) var(--curva),
+    box-shadow       var(--mov-medio)  var(--curva),
+    border-color     var(--mov-rapido) var(--curva);
+}
+
+/* Fila bajo el cursor: celeste claro en toda la fila, extremos incluidos. */
+.app-data-table tbody tr:hover td,
+.app-data-table tbody tr:hover td:first-child,
+.app-data-table tbody tr:hover td.col-acciones { background: var(--fila-celeste); }
+.app-data-table tbody tr:hover td { border-bottom-color: var(--fila-celeste-borde); }
+
+/* La guía crece desde la izquierda: 0 → 3 px. Es el movimiento de la fila. */
+.app-data-table tbody td:first-child { box-shadow: inset 0 0 0 var(--aguamarina), 10px 0 12px -8px rgba(11, 85, 126, .12); }
+.app-data-table tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--aguamarina), 10px 0 12px -8px rgba(11, 85, 126, .12); }
+
+/* Las piezas de la fila acusan recibo, cada una a su manera. */
+.app-data-table tbody .app-badge { transition: transform var(--mov-medio) var(--curva), box-shadow var(--mov-medio) var(--curva); }
+.app-data-table tbody tr:hover .app-badge { transform: translateY(-1px); box-shadow: inset 0 0 0 1px rgba(11, 85, 126, .10), var(--sombra-1); }
+.app-data-table tbody tr:hover a[app-link] { border-bottom-color: currentColor; }
+.app-data-table tbody tr:hover .boton-desborde { color: var(--petroleo); border-color: var(--menta); background: var(--sup-tarjeta); }
+.app-data-table tbody tr:hover .celda-truncada { border-bottom-color: var(--petroleo); }
+
+/* La fila con el foco dentro se marca igual que con el cursor: quien navega
+   con teclado ve exactamente lo mismo. */
+.app-data-table tbody tr:focus-within td { background: var(--fila-celeste); }
+.app-data-table tbody tr:focus-within td:first-child { box-shadow: inset 3px 0 0 var(--aguamarina), 10px 0 12px -8px rgba(11, 85, 126, .12); }
+
+/* La cabecera también responde al recorrido de las columnas. */
+.app-data-table thead th { transition: color var(--mov-rapido) var(--curva); }
+.app-data-table thead th:hover { color: var(--petroleo); }
+
+/* Mismo trato en las tablas de los índices. */
+.indice-tabla tbody tr:hover td { background: var(--fila-celeste); }
+.indice-tabla tbody td { transition: background-color var(--mov-rapido) var(--curva); }
+.indice-tabla tbody tr:hover .app-badge { transform: translateY(-1px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-data-table tbody tr:hover .app-badge,
+  .indice-tabla tbody tr:hover .app-badge { transform: none; }
+}
+
+/* --- 20 · Modo oscuro ---------------------------------------------------- *
+   El maestro de REDSAT fija tema claro y sin modo oscuro. Esta sección lo
+   agrega por pedido expreso: el interruptor del header escribe `data-tema`
+   en el <html> y acá se redefinen los tokens. Ni una regla de layout cambia
+   —los mismos componentes, las mismas medidas, la misma escala de 4 px—:
+   cambia la paleta, y el fondo sigue igual de vivo, con azules profundos en
+   lugar de menta. Sin el atributo, todo queda como estaba.               */
+
+:root[data-tema="oscuro"],
+/* --- 20 · Modo oscuro ---------------------------------------------------- *
+   El maestro de REDSAT fija tema claro y sin modo oscuro. Esta sección lo
+   agrega por pedido expreso: el interruptor del header escribe `data-tema`
+   en el <html> y acá se redefinen los tokens. Ni una regla de layout cambia
+   —los mismos componentes, las mismas medidas, la misma escala de 4 px—:
+   cambia la paleta, y el fondo sigue igual de vivo, con azules profundos en
+   lugar de menta. Sin el atributo, todo queda como estaba.               */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* El fondo respira igual, pero en petróleo nocturno. */
+  --fondo-a: rgba(24, 92, 96, .58);
+  --fondo-b: rgba(17, 74, 106, .52);
+  --fondo-c: rgba(14, 62, 98, .58);
+  --fondo-d: rgba(20, 84, 88, .46);
+
+  --nav-vineta-a: rgba(3, 20, 28, .70);
+  --nav-vineta-b: rgba(1, 10, 15, .86);
+  --nav-halo-a:   rgba(87, 194, 183, .26);
+  --nav-halo-b:   rgba(87, 194, 183, .13);
+  --nav-halo-c:   rgba(86, 150, 190, .06);
+  --nav-halo-0:   rgba(86, 150, 190, 0);
+
+  /* Superficies — neutros con sesgo al petróleo, nunca gris puro. */
+  --sup-pagina:   #08161C;
+  --sup-tarjeta:  #0F2028;
+  --sup-inset:    #0C1B22;
+  --sup-nav:      #061821;
+
+  /* Tinta — celeste pálido, no blanco. Sobre el petróleo nocturno el blanco
+     puro vibra; un celeste desaturado se despega igual del fondo y descansa
+     la vista en una pantalla que se mira horas. */
+  --tinta:        #CFE7F2;
+  --tinta-2:      #A3C4D4;
+  --tinta-3:      #7C97A5;
+  --tinta-nav:    #FFFFFF;
+
+  /* Marca — el petróleo se aclara para seguir leyéndose sobre fondo oscuro. */
+  --petroleo:     #12719F;
+  --petroleo-h:   #1580B4;
+  --petroleo-p:   #0E5F87;
+  --aguamarina:   #57C2B7;
+  --menta:        #1C4A4C;
+  --ambar:        #E4A96B;
+
+  --tinta-marca:  #BFE4F5;
+  --petroleo-x:   #041219;
+  --petroleo-xx:  #020B10;
+  --sombra-azul:  rgba(0, 0, 0, .50);
+  --sombra-azul-suave: rgba(0, 0, 0, .28);
+
+  /* Líneas */
+  --filete:       #1E3138;
+  --filete-2:     #17272D;
+  --borde-ctrl:   #4A5F64;
+  --anillo-foco:  rgba(87, 194, 183, .42);
+
+  /* Estados: fondo tintado oscuro + tinta clara del mismo tono */
+  --ok-bg:        #0E2E27;  --ok-tinta:     #79CFAF;
+  --aviso-bg:     #2E2417;  --aviso-tinta:  #E0B27A;
+  --error-bg:     #33201A;  --error-tinta:  #EFA08C;
+  --info-bg:      #0D2C2B;  --info-tinta:   #7FCEC8;
+  --neutro-bg:    #16232A;  --neutro-tinta: #A3C4D4;
+
+  /* Misma escalera que en claro —contacto + difusión—, pero de noche la
+     difusión es lo único que separa dos superficies casi del mismo valor. */
+  --sombra-1: 0 1px 2px rgba(0, 0, 0, .40), 0 4px 14px -6px rgba(0, 0, 0, .45);
+  --sombra-2: 0 2px 4px rgba(0, 0, 0, .45), 0 10px 24px -10px rgba(0, 0, 0, .55);
+  --sombra:   0 16px 40px rgba(0, 0, 0, .60), 0 2px 6px rgba(0, 0, 0, .45);
+  --velo:     rgba(1, 8, 11, .72);
+
+  --inset-ctrl:   inset 0 2px 5px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(0, 0, 0, .30);
+  --inset-ctrl-h: inset 0 3px 7px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(0, 0, 0, .35);
+
+  --fila-celeste: #12292F;
+  --fila-celeste-borde: #1B383F;
+}
+
+/* La imagen de fondo la trae cada pantalla en su `style` y no se puede
+   sustituir desde acá; se la multiplica contra la página para que se apague
+   sin perder su encuadre. */
+:root[data-tema="oscuro"] body,
+/* La imagen de fondo la trae cada pantalla en su `style` y no se puede
+   sustituir desde acá; se la multiplica contra la página para que se apague
+   sin perder su encuadre. */
+:root[data-theme="dark"] body { background-blend-mode: multiply; }
+
+/* Los cuatro brillos blancos del tema claro pasan a un filo apenas visible.
+   La difusión de `--sombra-1` va incluida a propósito: esta regla se declara
+   después de la escalera de profundidad de la sección 19 y la pisa entera, y
+   sin ella la tarjeta quedaría plana justo donde el filo también es tenue.
+   De noche, la sombra es casi lo único que separa dos superficies. */
+:root[data-tema="oscuro"] .app-card,
+:root[data-tema="oscuro"] .app-filter-bar,
+/* Los cuatro brillos blancos del tema claro pasan a un filo apenas visible.
+   La difusión de `--sombra-1` va incluida a propósito: esta regla se declara
+   después de la escalera de profundidad de la sección 19 y la pisa entera, y
+   sin ella la tarjeta quedaría plana justo donde el filo también es tenue.
+   De noche, la sombra es casi lo único que separa dos superficies. */
+:root[data-theme="dark"] .app-card,
+:root[data-theme="dark"] .app-filter-bar {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), var(--sombra-1);
+}
+:root[data-tema="oscuro"] [app-button][data-variante="secundario"],
+:root[data-theme="dark"] [app-button][data-variante="secundario"] {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), inset 0 -1px 0 var(--sombra-azul-suave);
+}
+:root[data-tema="oscuro"] [app-button][data-variante="secundario"]:hover,
+:root[data-theme="dark"] [app-button][data-variante="secundario"]:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), var(--sombra-1);
+}
+:root[data-tema="oscuro"] [app-button][data-variante="secundario"]:hover,
+:root[data-theme="dark"] [app-button][data-variante="secundario"]:hover { background: var(--info-bg); }
+:root[data-tema="oscuro"] [app-button][data-variante="secundario"]:active,
+:root[data-theme="dark"] [app-button][data-variante="secundario"]:active { background: var(--menta); color: var(--tinta); }
+:root[data-tema="oscuro"] [app-button][data-variante="secundario"]:hover,
+:root[data-theme="dark"] [app-button][data-variante="secundario"]:hover { border-color: var(--aguamarina); }
+
+/* El menú tenía un vidrio celeste; de noche es el mismo vidrio, en petróleo. */
+:root[data-tema="oscuro"] .app-menu,
+/* El menú tenía un vidrio celeste; de noche es el mismo vidrio, en petróleo. */
+:root[data-theme="dark"] .app-menu {
+  background:
+    linear-gradient(rgba(15, 32, 40, .92), rgba(12, 27, 34, .96)),
+    radial-gradient(130% 95% at 8% 4%, #16323E 0%, #113040 36%, #0C2532 70%, #081A24 100%);
+}
+:root[data-tema="oscuro"] .indice-tabla tr:hover td,
+:root[data-theme="dark"] .indice-tabla tr:hover td { background: var(--fila-celeste); }
+:root[data-tema="oscuro"] .app-alert,
+:root[data-theme="dark"] .app-alert { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07); }
+:root[data-tema="oscuro"] .app-skeleton,
+:root[data-theme="dark"] .app-skeleton { background: linear-gradient(90deg, #142329, #1B2F36, #142329); }
+
+/* --- 21 · Interruptor de tema — sol / luna ------------------------------- *
+   Pieza 49 del banco, añadida con el modo oscuro. Es un `switch` de verdad:
+   `role="switch"` + `aria-checked`, operable con teclado, con foco visible y
+   con la etiqueta escrita, nunca sólo el icono.                           */
+
+.app-theme-toggle {
+  display: inline-flex; align-items: center; flex: none;
+  padding: 0; border: 0; background: none; cursor: pointer;
+}
+.app-theme-toggle__pista {
+  position: relative; display: inline-flex; align-items: center;
+  justify-content: space-between; gap: var(--e2);
+  width: 64px; height: 32px; padding: 0 7px;
+  border-radius: var(--r-pill);
+  background: var(--sup-inset); border: 1px solid var(--borde-ctrl);
+  box-shadow: var(--inset-ctrl);
+  transition: background var(--mov-medio) var(--curva), border-color var(--mov-medio) var(--curva);
+}
+.app-theme-toggle:hover .app-theme-toggle__pista { border-color: var(--aguamarina); }
+.app-theme-toggle:focus-visible { outline: none; }
+.app-theme-toggle:focus-visible .app-theme-toggle__pista {
+  box-shadow: var(--inset-ctrl), 0 0 0 4px var(--anillo-foco);
+}
+.app-theme-toggle .icono {
+  position: relative; z-index: 1; width: 16px; height: 16px;
+  color: var(--tinta-3);
+  transition: color var(--mov-medio) var(--curva);
+}
+.app-theme-toggle__perilla {
+  position: absolute; top: 3px; left: 3px; width: 24px; height: 24px;
+  border-radius: var(--r-pill); background: var(--petroleo);
+  box-shadow: var(--sombra-1);
+  transition: transform var(--mov-medio) var(--curva), background var(--mov-medio) var(--curva);
+}
+.app-theme-toggle__sol { color: var(--tinta-nav); }
+
+:root[data-tema="oscuro"] .app-theme-toggle__perilla,
+:root[data-theme="dark"] .app-theme-toggle__perilla { transform: translateX(32px); }
+:root[data-tema="oscuro"] .app-theme-toggle__sol,
+:root[data-theme="dark"] .app-theme-toggle__sol { color: var(--tinta-3); }
+:root[data-tema="oscuro"] .app-theme-toggle__luna,
+:root[data-theme="dark"] .app-theme-toggle__luna { color: var(--tinta-nav); }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-theme-toggle__pista, .app-theme-toggle .icono, .app-theme-toggle__perilla { transition: none; }
+}
+
+/* La menta es fondo del avatar: de noche es fondo oscuro y la inicial se
+   invierte, o quedaría tinta oscura sobre tinta oscura. */
+:root[data-tema="oscuro"] .app-avatar,
+/* La menta es fondo del avatar: de noche es fondo oscuro y la inicial se
+   invierte, o quedaría tinta oscura sobre tinta oscura. */
+:root[data-theme="dark"] .app-avatar { color: var(--tinta-marca); }
+
+/* --- 21 · Sistema responsive — de 320 px a 2560 px ---------------------- *
+
+   Toda la adaptación del sistema vive acá y sólo acá: ninguna pantalla lleva
+   su propia `@media`. Si algo se rompe a 390 px, lo que está mal es el
+   componente, y se arregla una vez para las 693 vistas.
+
+   Cinco puntos de quiebre, elegidos por cuándo se rompe el contenido y no por
+   el nombre de un teléfono:
+
+     1320  ceden los márgenes
+     1120  nav a 232 px, header compacto
+      900  el nav pasa a cajón, el buscador a icono, la barra a una fila
+      640  la tabla pasa a tarjetas, el modal a hoja, todo a una columna
+      400  densidad mínima y botones de ancho completo
+
+   La sección va última en la hoja a propósito: varias de sus reglas tienen
+   que ganarle por orden de cascada a los bloques de realce (19) y de modo
+   oscuro (20), que usan la misma especificidad.
+
+   Lo que NO cambia en ningún ancho: los hex, la tipografía, los radios y la
+   escala de 4 px. Adaptar es reordenar y ceder margen, nunca achicar el
+   texto para que entre. */
+
+/* 21.0 · Guardas de desborde ---------------------------------------------- */
+
+/* Alto de la barra de maqueta. Es andamiaje, pero tres piezas del marco se
+   miden contra ella —el hueco del <body>, el pie del nav y el del velo del
+   modal—, así que vale la pena tenerla en una variable en vez de repetir el
+   número en cada punto de quiebre.
+
+   El valor de acá es sólo el punto de partida: `redsat.js` mide la barra de
+   verdad y escribe el alto real en el <html>. Hace falta porque los rótulos
+   de estado no son fijos —un formulario por pasos rotula «Paso 1 ·
+   Identificación», no «Con datos»— y con un número clavado a mano la barra
+   crecía por encima del hueco reservado y se cortaba contra el borde. */
+:root { --h-barra: 56px; }
+
+body { padding-bottom: var(--h-barra); }
+.app-side-nav,
+.app-side-nav::before,
+.app-side-nav__fondo { bottom: var(--h-barra); }
+.app-dialog-capa { bottom: var(--h-barra); }
+
+img, svg, video, iframe { max-width: 100%; }
+.app-card > *, .app-dialog__cuerpo > *, .app-filter-bar > * { min-width: 0; }
+.app-breadcrumb li, .app-page-header__titulo { min-width: 0; }
+/* Un identificador largo sin espacios —un código, un correo, una ruta— es la
+   causa más común de desborde en una tarjeta angosta. */
+.lista-definiciones dd, .app-alert__cuerpo, .app-toast__cuerpo { overflow-wrap: anywhere; }
+code, .app-textarea--mono { overflow-wrap: anywhere; }
+/* Un título de ficha puede traer un término del catálogo sin espacios —
+   «Reidentificación», «CLINICAL_APPROVER»— y a 320 px se pasaba de la caja. */
+h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
+/* La cabecera de tarjeta lleva el título y su badge de recuento en una fila.
+   Sin `wrap`, en un teléfono el badge se iba fuera de la tarjeta. */
+.app-card__cabecera { flex-wrap: wrap; }
+
+/* 21.1 · ≤ 1320 px — ceden los márgenes ---------------------------------- */
+
+@media (max-width: 1320px) {
+  .app-main__inner { padding: var(--e7) var(--e7) var(--e9); }
+  .app-header { padding: 0 var(--e7); }
+  .barra-maqueta { padding: 0 var(--e7); }
+}
+
+/* 21.2 · ≤ 1120 px — nav más angosto, header compacto -------------------- */
+
+@media (max-width: 1120px) {
+  :root { --w-nav: 232px; }
+  .app-main__inner { padding: var(--e6) var(--e6) var(--e8); }
+  .app-header { padding: 0 var(--e6); gap: var(--e3); }
+  .app-header__buscador { max-width: 260px; }
+  .app-tenant-switcher { max-width: 210px; }
+  .barra-maqueta { padding: 0 var(--e6); }
+}
+
+/* 21.3 · Cajón de navegación --------------------------------------------- *
+   El botón y el velo los inyecta `redsat.js`, no el HTML de cada pantalla:
+   son 117 archivos y el marco tiene que seguir siendo idéntico en todos.
+   Por eso todo el bloque del cajón cuelga de `html[data-js]`. Sin JavaScript
+   el nav se queda en el flujo, arriba del contenido: se ve distinto, pero
+   ninguna ruta queda inalcanzable. */
+
+.app-nav-toggle {
+  display: none;
+  width: var(--h-ctrl); height: var(--h-ctrl); flex: none;
+  align-items: center; justify-content: center;
+  border: 1px solid var(--filete-2); border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta); color: var(--petroleo); cursor: pointer;
+  box-shadow: inset 0 -1px 0 var(--sombra-azul-suave);
+}
+.app-nav-toggle:hover { border-color: var(--petroleo); }
+.app-buscar-toggle {
+  display: none;
+  width: var(--h-ctrl); height: var(--h-ctrl); flex: none;
+  align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: var(--r-ctrl);
+  background: transparent; color: var(--tinta-2); cursor: pointer;
+}
+.app-buscar-toggle:hover { background: var(--sup-tarjeta); border-color: var(--filete); }
+.app-buscar-toggle[aria-expanded="true"] { background: var(--info-bg); color: var(--petroleo); }
+.app-nav-velo {
+  display: none; position: fixed; inset: 0; z-index: 29;
+  background: var(--velo); opacity: 0; pointer-events: none;
+  transition: opacity var(--mov-medio) var(--curva);
+}
+@media (prefers-reduced-motion: reduce) { .app-nav-velo { transition: none; } }
+
+@media (max-width: 900px) {
+  /* Respaldo sin JavaScript: el nav vuelve al flujo. La capa decorativa deja
+     de ser `fixed` para medirse contra el propio nav. */
+  .app-shell { padding-left: 0; background: none; }
+  .app-side-nav { position: relative; width: auto; height: auto; bottom: auto; }
+  .app-side-nav::before,
+  .app-side-nav__fondo { position: absolute; inset: 0; width: auto; }
+
+  /* Con JavaScript: cajón fuera de pantalla, velo y bloqueo de scroll. */
+  html[data-js] .app-side-nav {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 30;
+    width: min(84vw, 300px); height: auto;
+    padding-bottom: calc(var(--h-barra) + var(--e6));
+    transform: translateX(-101%);
+    transition: transform var(--mov-medio) var(--curva);
+    box-shadow: var(--sombra);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html[data-js] .app-side-nav { transition: none; }
+  }
+  html[data-js].nav-abierto .app-side-nav { transform: none; }
+  /* En una pantalla de modal el marco de atrás lleva `marco-atenuado`, y un
+     `filter` convierte a ese elemento en el bloque contenedor de todo lo
+     `fixed` que cuelga de él: el cajón dejaba de medirse contra la ventana y
+     se estiraba al alto entero de la página —5 132 px en el listado de
+     pacientes—, con sus últimos ítems fuera de la pantalla y sin scroll.
+     Mientras el cajón está abierto se retira la atenuación: es decorativa, y
+     el modal ya queda tapado por el velo del propio cajón. */
+  html[data-js].nav-abierto .marco-atenuado { filter: none; }
+  /* El halo y la textura se apoyaban en una geometría `fixed` que el
+     `transform` del cajón deja de contener bien. En el cajón el nav es
+     petróleo pleno: mismo hex, sin la capa decorativa. */
+  html[data-js] .app-side-nav__fondo,
+  html[data-js] .app-side-nav__brillo,
+  html[data-js] .app-side-nav::before { display: none; }
+  .app-nav-velo { display: block; }
+  html.nav-abierto .app-nav-velo { opacity: 1; pointer-events: auto; }
+  html.nav-abierto body { overflow: hidden; }
+  .app-nav-toggle { display: inline-flex; }
+
+  /* Header: entra la hamburguesa y el buscador se colapsa a icono. Al abrirlo
+     baja como una fila propia bajo el header, que es `sticky` y por lo tanto
+     ya es el bloque contenedor de su hijo absoluto. */
+  .app-header { padding: 0 var(--e5); gap: var(--e3); }
+  .app-header__buscador { display: none; }
+  html[data-js] .app-buscar-toggle { display: inline-flex; }
+  html[data-js] .app-header.is-buscando .app-header__buscador {
+    display: block; position: absolute; top: 100%; left: 0; right: 0;
+    max-width: none; padding: var(--e2) var(--e5) var(--e3);
+    background: var(--sup-pagina); border-bottom: 1px solid var(--filete);
+    box-shadow: var(--sombra-1);
+  }
+  .app-tenant-switcher { max-width: 168px; }
+
+  /* Contenido */
+  .app-main__inner { padding: var(--e5) var(--e5) var(--e8); }
+  .app-page-header__acciones { margin-left: 0; padding-top: var(--e3); }
+  .app-filter-bar__fila { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  /* Las pestañas dejan de envolver: envueltas, la fila activa quedaba lejos
+     del contenido que rotula. Ruedan en horizontal, sin barra a la vista. */
+  .app-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .app-tabs::-webkit-scrollbar { display: none; }
+
+  /* Desvanecido en el borde, como pide §5.3 de la skill: las dos piezas que
+     ruedan en horizontal —las pestañas y los estados de la barra— no daban
+     ninguna señal de que había más a los lados. Es la técnica de sombra de
+     scroll: las capas `local` viajan con el contenido y tapan la sombra cuando
+     ya llegaste al extremo, así el desvanecido aparece sólo si queda algo. */
+  .app-tabs, .barra-maqueta__estados {
+    background-repeat: no-repeat;
+    background-size: 28px 100%, 28px 100%, 14px 100%, 14px 100%;
+    background-position: left center, right center, left center, right center;
+    background-attachment: local, local, scroll, scroll;
+  }
+  .app-tabs {
+    background-image:
+      linear-gradient(to right,  var(--sup-pagina), transparent),
+      linear-gradient(to left,   var(--sup-pagina), transparent),
+      linear-gradient(to right,  rgba(11, 85, 126, .12), transparent),
+      linear-gradient(to left,   rgba(11, 85, 126, .12), transparent);
+  }
+  .barra-maqueta__estados {
+    background-image:
+      linear-gradient(to right,  var(--sup-tarjeta), transparent),
+      linear-gradient(to left,   var(--sup-tarjeta), transparent),
+      linear-gradient(to right,  rgba(11, 85, 126, .12), transparent),
+      linear-gradient(to left,   rgba(11, 85, 126, .12), transparent);
+  }
+  .app-tab { flex: none; }
+
+  /* Barra de maqueta en una sola fila: se van las etiquetas, no los controles. */
+  .barra-maqueta { padding: 0 var(--e5); gap: var(--e3); }
+  .barra-maqueta__actor { padding-right: var(--e3); }
+  .barra-maqueta__actor .barra-maqueta__etiqueta { display: none; }
+  .barra-maqueta__pantalla { flex: 1; min-width: 0; padding-right: var(--e3); }
+  .barra-maqueta__pantalla .barra-maqueta__etiqueta { display: none; }
+  .barra-maqueta__pantalla select { min-width: 0; width: 100%; max-width: none; }
+  .barra-maqueta__estados { flex: none; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .barra-maqueta__estados::-webkit-scrollbar { display: none; }
+
+  .pagina-indice { padding: var(--e8) var(--e6); }
+}
+
+/* 21.4 · ≤ 640 px — la tabla pasa a tarjetas ----------------------------- *
+   Una tabla de nueve columnas con scroll horizontal en un teléfono es
+   ilegible: obliga a recordar el encabezado mientras se arrastra. Cada fila
+   pasa a ser una tarjeta con `etiqueta: valor`, y la etiqueta la copia
+   `redsat.js` del `<th>` que le corresponde. Ninguna columna desaparece. */
+
+@media (max-width: 640px) {
+  :root { --h-barra: 104px; }
+
+  .app-main__inner { padding: var(--e4) var(--e4) var(--e8); }
+  .app-header { padding: 0 var(--e4); }
+  .pagina-indice { padding: var(--e7) var(--e4); gap: var(--e6); }
+
+  /* El selector de organización se muda al cajón. En un header de 320 px no
+     entra —quedaban 33 px de desborde con la hamburguesa, el buscador, el
+     interruptor de tema, la campana y el avatar— y encima ahí arriba compite
+     con la acción principal. Dentro del cajón recupera su nombre completo y
+     queda al lado de lo que gobierna: la navegación de esa organización.
+     Lo muda `redsat.js`; acá va sólo cómo se ve sobre el petróleo. */
+  html[data-js] .app-side-nav .app-tenant-switcher {
+    width: calc(100% - var(--e6) * 2); margin: 0 var(--e6); max-width: none;
+    background: rgba(255, 255, 255, .10); border-color: rgba(255, 255, 255, .24);
+    color: var(--tinta-nav); box-shadow: none;
+  }
+  html[data-js] .app-side-nav .app-tenant-switcher:hover { border-color: var(--menta); }
+  html[data-js] .app-side-nav .app-tenant-switcher span { display: inline; }
+
+  /* Todo a una columna */
+  .app-filter-bar__fila,
+  .lista-definiciones { grid-template-columns: 1fr; }
+  .app-page-header { gap: var(--e4); }
+  .app-page-header__texto { min-width: 0; flex-basis: 100%; }
+  .celda-truncada { max-width: 100%; }
+  /* Un badge de estado con leyenda larga —«Consentimiento vigente hasta el
+     30/09/2026»— no puede seguir en una sola línea a 320 px. Deja de ser una
+     píldora de una línea y pasa a dos; sigue siendo el mismo par fondo/tinta
+     con su icono, que es lo que lo hace legible sin depender del color. */
+  .app-badge { white-space: normal; max-width: 100%; align-items: flex-start; }
+  .app-badge .icono { margin-top: 2px; }
+  .esqueleto-fila { gap: var(--e3); padding: 0 var(--e4); }
+  .menu-anclaje .app-menu { max-width: calc(100vw - var(--e8)); }
+
+  /* Migas: se conserva la última, que es dónde estás, y la anterior. */
+  .app-breadcrumb li:not(:nth-last-child(-n+3)) { display: none; }
+
+  /* Tabla → tarjetas */
+  html[data-js] .tabla-envoltorio { overflow: visible; background: transparent; }
+  html[data-js] .app-data-table,
+  html[data-js] .indice-tabla { display: block; background: transparent; }
+  html[data-js] .app-data-table thead,
+  html[data-js] .indice-tabla thead { display: none; }
+  html[data-js] .app-data-table tbody,
+  html[data-js] .indice-tabla tbody { display: flex; flex-direction: column; gap: var(--e3); }
+  html[data-js] .app-data-table tbody tr,
+  html[data-js] .indice-tabla tbody tr {
+    display: block; background: var(--sup-tarjeta);
+    border: 1px solid var(--filete-2); border-radius: var(--r-card);
+    box-shadow: var(--sombra-1); overflow: hidden;
+  }
+  html[data-js] .app-data-table tbody td,
+  html[data-js] .indice-tabla tbody td {
+    display: block; width: auto; height: auto; text-align: left;
+    position: static; box-shadow: none;
+    padding: var(--e3) var(--e4);
+    border-bottom: 1px solid var(--filete-2);
+  }
+  html[data-js] .app-data-table tbody td:last-child,
+  html[data-js] .indice-tabla tbody td:last-child { border-bottom: 0; }
+  html[data-js] .app-data-table tbody td[data-etiqueta]::before,
+  html[data-js] .indice-tabla tbody td[data-etiqueta]::before {
+    content: attr(data-etiqueta);
+    display: block; margin-bottom: 2px;
+    font-size: 11px; line-height: 16px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-2);
+  }
+  /* La celda de acciones no tiene rótulo —su `<th>` está vacío— así que se
+     rotula desde acá para que no quede un botón suelto al pie de la tarjeta. */
+  html[data-js] .app-data-table tbody td.col-acciones {
+    width: auto; text-align: left; padding-right: var(--e4);
+  }
+  html[data-js] .app-data-table tbody td.col-acciones::before {
+    content: "Acciones"; display: block; margin-bottom: var(--e1);
+    font-size: 11px; line-height: 16px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-2);
+  }
+  html[data-js] .app-data-table tbody td.col-num { text-align: left; }
+  /* Fila de estado vacío o de error: ocupa la tarjeta entera, sin rótulo. */
+  html[data-js] .app-data-table tbody td[colspan]::before { content: none; }
+  html[data-js] .app-data-table tbody td[colspan] { padding: var(--e5) var(--e4); }
+  /* El realce de fila de la sección 19 apuntaba a la primera celda fija: en
+     tarjeta el filete aguamarina pasa al borde de la tarjeta entera. */
+  html[data-js] .app-data-table tbody td:first-child,
+  html[data-js] .app-data-table tbody tr:hover td:first-child { box-shadow: none; }
+  html[data-js] .app-data-table tbody tr:hover td,
+  html[data-js] .indice-tabla tbody tr:hover td { background: transparent; }
+  html[data-js] .app-data-table tbody tr:focus-within {
+    border-color: var(--aguamarina); box-shadow: 0 0 0 1px var(--aguamarina), var(--sombra-1);
+  }
+
+  /* Modal → hoja desde abajo, por encima de la barra de maqueta. */
+  .app-dialog-capa { inset: 0 0 var(--h-barra) 0; padding: 0; align-items: flex-end; }
+  .app-dialog {
+    width: 100%; max-width: none; padding: var(--e6);
+    border-radius: var(--r-card) var(--r-card) 0 0;
+    max-height: calc(100dvh - var(--h-barra) - var(--e7));
+  }
+
+  /* Toasts: dejan de colgar de una esquina fija y ocupan el ancho útil. */
+  .app-toast-container { left: var(--e4); right: var(--e4); bottom: calc(var(--h-barra) + var(--e4)); }
+
+  /* La barra de maqueta pasa a dos filas —actor y selector arriba, estados
+     abajo— y el marco se corre con ella. Los estados no envuelven: ruedan en
+     horizontal, así la barra mide dos filas y no cuatro con los rótulos
+     largos de un formulario por pasos. El alto real lo publica `redsat.js`. */
+  .barra-maqueta { height: auto; padding: var(--e2) var(--e4); flex-wrap: wrap; }
+  .barra-maqueta__actor, .barra-maqueta__pantalla { border-right: 0; }
+  .barra-maqueta__estados { flex: 1 0 100%; flex-wrap: nowrap; }
+  .barra-maqueta__estados .barra-maqueta__etiqueta { display: none; }
+  .barra-maqueta button { flex: none; white-space: nowrap; }
+}
+
+/* 21.5 · ≤ 400 px — densidad mínima -------------------------------------- */
+
+@media (max-width: 400px) {
+  .app-main__inner { padding: var(--e4) var(--e3) var(--e7); }
+  .app-header { padding: 0 var(--e3); gap: var(--e2); }
+  .app-card { padding: var(--e4); }
+  .pagina-indice { padding: var(--e6) var(--e3); }
+  .app-tenant-switcher span { display: none; }
+  .app-tenant-switcher { max-width: none; padding: 0 var(--e2); }
+
+  /* La acción principal deja de competir por el ancho: se apila y manda.
+     `column-reverse` la deja arriba sin tocar el orden del HTML, que es el
+     que sigue el teclado. */
+  .app-page-header__acciones,
+  .app-form-actions { width: 100%; flex-direction: column-reverse; align-items: stretch; }
+  .app-page-header__acciones [app-button],
+  .app-form-actions [app-button] { width: 100%; }
+  .app-form-actions__nota { margin-right: 0; text-align: center; }
+  .app-filter-bar__pie [app-button] { flex: 1; }
+}
+
+/* 21.6 · Piso táctil ------------------------------------------------------ *
+   Por debajo de 900 px todo control tocable llega a 44 × 44 px. El dibujo no
+   cambia: se agranda el área con un `::after` transparente y centrado, así el
+   botón de 32 px del banco sigue midiendo 32 px a la vista. */
+
+@media (max-width: 900px) {
+  .boton-desborde, .app-dialog__cerrar, .app-header__campana, .app-nav-toggle, .app-buscar-toggle { position: relative; }
+  .boton-desborde::after,
+  .app-dialog__cerrar::after,
+  .app-header__campana::after,
+  .app-nav-toggle::after,
+  .app-buscar-toggle::after {
+    content: ""; position: absolute; top: 50%; left: 50%;
+    width: 44px; height: 44px; transform: translate(-50%, -50%);
+  }
+  .app-side-nav__item, .app-menu-item, .app-tab { min-height: 44px; }
+  .app-menu-item { align-items: center; }
+  .app-radio { min-height: 44px; }
+  /* Ocho píxeles de aire entre dos objetivos táctiles contiguos. */
+  .app-page-header__acciones, .app-form-actions, .app-filter-bar__pie { gap: var(--e2); }
+}
+
+/* 21.7 · Pantallas muy anchas -------------------------------------------- *
+   Arriba de 1600 px la columna de 1440 dejaba un vacío enorme a la derecha y
+   el contenido quedaba pegado al nav. Se centra: no cambia ninguna medida,
+   sólo dónde cae el bloque. */
+
+@media (min-width: 1600px) {
+  .app-main__inner { margin-inline: auto; }
+}
+
+/* 21.8 · Alto escaso y orientación horizontal ---------------------------- *
+   Un teléfono acostado deja ~380 px de alto útil: el modal centrado no entra
+   y la hoja de 21.4 tampoco. Acá manda el alto, no el ancho. */
+
+@media (max-height: 520px) and (max-width: 900px) {
+  .app-dialog { max-height: calc(100dvh - var(--h-barra)); border-radius: 0; }
+  .app-dialog-capa { align-items: stretch; }
+  .app-header { position: static; }
+}
+
+/* --- 24 · Superficie pública: portada de AloVida ------------------------- *
+
+   La cuarta superficie. El banco fija tres —aplicación, pública de acceso y
+   modal—; ésta es la que ve alguien que todavía no es usuario. No inventa
+   identidad: los mismos hex, la misma Poppins/Nunito Sans, la misma escala de
+   4 px, los mismos radios y las mismas piezas del banco. Lo que cambia es el
+   ritmo, y la narrativa que lo ordena.
+
+   LA IDEA QUE MANDA. «Toda la operación de tu red de salud en una sola
+   historia» no es sólo el titular: es el lenguaje visual de la página. Se
+   llama EL HILO y aparece tres veces, nunca más:
+     · como rail que conecta los siete hitos del recorrido de un paciente,
+     · como rail que enhebra los seis cimientos de la plataforma,
+     · como trazo de pulso —el trazo del logo— en la portada y en el cierre.
+   Cada vez, el hilo se dibuja al llegar el visitante y se queda quieto. Un
+   hilo que late todo el tiempo es decoración; uno que se completa mientras
+   bajás es el argumento.
+
+   Tres licencias sobre el maestro de REDSAT, y ninguna más:
+
+   1 · Un séptimo rol tipográfico, `landing-display`. Los seis roles están
+       calibrados para pantallas de trabajo, donde un H1 de 32 px manda; en una
+       portada, 32 px no sostiene el primer pantallazo. Es la MISMA Poppins 600
+       con el mismo tracking negativo, sólo que fluida.
+   2 · Movimiento con función. La regla del producto —«viva cuando se la usa,
+       quieta cuando no»— se mantiene casi entera: acá lo único que corre solo
+       es la marquesina y la cola de avisos de la ventana de producto, y esa
+       cola corre porque ES el dato (el sistema recibe eventos). Nada flota,
+       nada rebota, nada gira. Todo cae bajo `prefers-reduced-motion`.
+   3 · Más de un botón primario. La portada repite su llamada a la acción en
+       cada tramo: es una sola acción repetida, no dos compitiendo. Y la acción
+       es siempre la misma frase, «Solicitar acceso», para que el visitante no
+       tenga que decidir cuál de dos verbos lo lleva al mismo lugar.
+
+   El responsive vive entero en 24.22, al final de esta sección.            */
+
+/* 24.1 · Tokens del lienzo ------------------------------------------------ *
+   Tres tokens propios, todos derivados de la escala de 4 px. El ritmo entre
+   capítulos es fluido porque el aire que sobra en un monitor de 27" ahoga a un
+   teléfono; los extremos siguen siendo múltiplos de 8.                     */
+
+.landing, .landing-pie {
+  --ritmo:     clamp(56px, 7vw, 96px);   /* aire entre capítulos            */
+  --ritmo-int: clamp(32px, 4vw, 56px);   /* aire dentro de un capítulo      */
+  --r-bloque:  24px;                     /* superficie grande: ventana, bloque oscuro */
+  --rail:      2px;                      /* grosor del hilo                 */
+
+  /* La portada usa DOS niveles de tinta secundaria, no tres. El `--tinta-3`
+     del producto —#787B7B— da 4,0:1 sobre el marfil: alcanza para el metadato
+     de una tabla densa, donde quien mira ya sabe qué está mirando, y no
+     alcanza para una portada, donde el texto chico ES el argumento y lo tiene
+     que poder leer cualquiera. No se inventa un hex: se resuelve al
+     `--tinta-2` que ya existe, que da 7,5:1. La jerarquía la sostienen el
+     tamaño y el peso, que es de donde tiene que venir. */
+  --tinta-3: #4E5151;
+}
+
+.landing {
+  position: relative; z-index: 0;
+  display: flex; flex-direction: column;
+  /* Sólo el eje horizontal, y con `clip`, no con `hidden`: `hidden` crearía un
+     contenedor de scroll y dejaría muerto el `position: sticky`. Lo que se
+     recorta es el ambiente, nunca el contenido. */
+  overflow-x: clip;
+}
+
+.landing-seccion {
+  position: relative;
+  padding: var(--ritmo) var(--e8);
+  scroll-margin-top: 84px;               /* la nav fija no tapa el ancla */
+}
+.landing-seccion:focus { outline: none; }
+.landing-ancho { width: 100%; max-width: 1180px; margin-inline: auto; }
+.landing-ancho--angosto { max-width: 800px; }
+
+/* Rótulo de capítulo. Un solo patrón para toda la página: overline, título y
+   —sólo cuando hace falta— una bajada. Que sea siempre el mismo es lo que
+   permite que la COMPOSICIÓN de cada capítulo sea distinta sin que la página
+   se desarme. */
+.landing-rotulo { display: flex; flex-direction: column; gap: var(--e3); max-width: 62ch; }
+.landing-rotulo p { color: var(--tinta-2); font-size: 17px; line-height: 27px; }
+.landing-rotulo--centro { margin-inline: auto; text-align: center; align-items: center; }
+
+/* El overline lleva la marca del hilo: un trazo corto de aguamarina. Es el
+   único turquesa de un bloque de texto, y por eso se ve. */
+.landing-overline {
+  display: inline-flex; align-items: center; gap: var(--e3);
+  font-size: 11px; line-height: 16px; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--tinta-3);
+}
+.landing-overline::before {
+  content: ""; width: 20px; height: var(--rail); border-radius: var(--r-pill); flex: none;
+  background: var(--aguamarina);
+}
+.landing-rotulo--centro .landing-overline::after {
+  content: ""; width: 20px; height: var(--rail); border-radius: var(--r-pill); flex: none;
+  background: var(--aguamarina);
+}
+
+/* 24.2 · Escala tipográfica de la portada -------------------------------- *
+   Cuatro tamaños y ni uno más. Cada capítulo usa `landing-h2` para su título
+   y `landing-display` sólo en la portada y en el cierre: dos momentos, no
+   nueve. Lo que distingue a un capítulo del siguiente es la composición, no
+   un tamaño de letra distinto cada vez.                                    */
+
+.landing-display {
+  font-family: var(--f-titulo); font-weight: 600;
+  font-size: clamp(38px, 5.2vw, 66px);
+  line-height: 1.06; letter-spacing: -.03em;
+  color: var(--tinta-marca); margin: 0;
+  text-wrap: balance;
+}
+.landing-display em {
+  font-style: normal; color: var(--petroleo);
+  background: linear-gradient(98deg, var(--petroleo), var(--aguamarina));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.landing-h2 {
+  font-family: var(--f-titulo); font-weight: 600;
+  font-size: clamp(26px, 2.9vw, 38px);
+  line-height: 1.16; letter-spacing: -.022em;
+  color: var(--tinta-marca); margin: 0; text-wrap: balance;
+}
+.landing-h3 { font-size: 19px; line-height: 26px; font-weight: 600; }
+.landing-lead { font-size: 18px; line-height: 29px; color: var(--tinta-2); max-width: 50ch; }
+
+/* 24.3 · La firma: el hilo ------------------------------------------------ *
+   Un rail de 2 px que se completa con el scroll. `--avance` va de 0 a 1 y lo
+   publica `landing.js`; se aplica con `transform: scaleX`, no con `width`,
+   para que la GPU haga el trabajo y no haya un reflow por cuadro.          */
+
+.landing-rail {
+  position: absolute; z-index: 0;
+  background: var(--filete-2); border-radius: var(--r-pill);
+  pointer-events: none;
+}
+.landing-rail i {
+  display: block; width: 100%; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--petroleo), var(--aguamarina));
+  transform: scaleX(var(--avance, 0)); transform-origin: left center;
+  transition: transform 260ms linear;
+}
+
+/* El trazo de pulso —el mismo gesto del logo— se DIBUJA una vez, cuando el
+   visitante llega, y se queda. La longitud del recorrido la mide `landing.js`
+   y la publica en `--largo`. */
+.landing-pulso { display: block; width: 100%; overflow: visible; }
+.landing-pulso path {
+  fill: none; stroke-linecap: round; stroke-linejoin: round;
+  stroke: var(--aguamarina); stroke-width: 2;
+  stroke-dasharray: var(--largo, 1200); stroke-dashoffset: var(--largo, 1200);
+}
+.landing-pulso.esta-trazado path { transition: stroke-dashoffset 2.2s var(--curva); stroke-dashoffset: 0; }
+.landing-pulso path.landing-pulso__guia {
+  stroke: var(--filete); stroke-width: 1.25; opacity: .75;
+  stroke-dasharray: none; stroke-dashoffset: 0; transition: none;
+}
+
+/* 24.4 · Aparición ligada al scroll -------------------------------------- *
+   Tres entradas, cortas, y un retardo por pieza. Entra una vez y se queda.
+   Sin JavaScript el atributo `data-js` no existe y todo aparece de una.    */
+
+html[data-js] .landing [data-aparece] {
+  opacity: 0;
+  transition:
+    opacity 560ms var(--curva) var(--retardo, 0ms),
+    transform 620ms var(--curva) var(--retardo, 0ms);
+}
+html[data-js] .landing [data-aparece="sube"] { transform: translate3d(0, 20px, 0); }
+html[data-js] .landing [data-aparece="izq"]  { transform: translate3d(-24px, 0, 0); }
+html[data-js] .landing [data-aparece="der"]  { transform: translate3d(24px, 0, 0); }
+html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
+
+/* 24.5 · Barra de lectura y navegación pública --------------------------- */
+
+.landing-progreso {
+  position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 60;
+  pointer-events: none;
+}
+.landing-progreso__linea {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, var(--petroleo), var(--aguamarina));
+  transform: scaleX(var(--leido, 0)); transform-origin: left center;
+}
+
+.landing-nav {
+  position: fixed; inset: 0 0 auto 0; z-index: 55;
+  height: 72px; display: flex; align-items: center; gap: var(--e5);
+  padding: 0 var(--e8);
+  transition: height var(--mov-medio) var(--curva);
+}
+.landing-nav::after {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: color-mix(in srgb, var(--sup-pagina) 82%, transparent);
+  backdrop-filter: saturate(1.3) blur(12px);
+  -webkit-backdrop-filter: saturate(1.3) blur(12px);
+  border-bottom: 1px solid transparent;
+  opacity: 0; transition: opacity var(--mov-medio) var(--curva);
+}
+.landing-nav.esta-pegada { height: 60px; }
+.landing-nav.esta-pegada::after { opacity: 1; border-bottom-color: var(--filete-2); }
+
+.landing-marca { display: inline-flex; align-items: center; gap: var(--e3); text-decoration: none; flex: none; }
+.landing-marca img { width: 32px; height: auto; }
+.landing-marca span { font-family: var(--f-titulo); font-size: 21px; font-weight: 600; color: var(--tinta-marca); letter-spacing: -.01em; }
+
+.landing-nav__enlaces { display: flex; align-items: center; gap: var(--e1); margin-left: auto; }
+.landing-nav__enlace {
+  position: relative; padding: var(--e2) var(--e3); border-radius: var(--r-ctrl);
+  font-size: 14px; font-weight: 500; color: var(--tinta-2); text-decoration: none;
+  transition: color var(--mov-rapido) var(--curva);
+}
+.landing-nav__enlace::after {
+  content: ""; position: absolute; left: var(--e3); right: var(--e3); bottom: 1px; height: var(--rail);
+  border-radius: var(--r-pill); background: var(--aguamarina);
+  transform: scaleX(0); transform-origin: left; transition: transform var(--mov-medio) var(--curva);
+}
+.landing-nav__enlace:hover { color: var(--tinta-marca); }
+.landing-nav__enlace:hover::after { transform: scaleX(1); }
+.landing-nav__enlace.esta-activo { color: var(--tinta-marca); font-weight: 600; }
+.landing-nav__enlace.esta-activo::after { transform: scaleX(1); }
+.landing-nav__acciones { display: flex; align-items: center; gap: var(--e3); flex: none; margin-left: auto; }
+.landing-nav__enlaces + .landing-nav__acciones { margin-left: var(--e4); }
+
+/* 24.6 · Ambiente -------------------------------------------------------- *
+   Dos focos difusos, no tres, y a menos opacidad que antes: el ambiente
+   acompaña, no compite con la ventana de producto. Se corren con el puntero
+   —`--raton-x/y` los publica `redsat.js`— y no tienen animación propia.    */
+
+.landing-ambiente { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.landing-ambiente span {
+  position: absolute; border-radius: 50%; filter: blur(80px); opacity: .42;
+  transition: transform 900ms cubic-bezier(.22, .85, .3, 1);
+  will-change: transform;
+}
+.landing-ambiente span:nth-child(1) {
+  width: 44vw; height: 44vw; left: -10vw; top: -14vw;
+  background: radial-gradient(circle, var(--menta), transparent 68%);
+  transform: translate3d(calc(var(--raton-x, .5) * 48px - 24px), calc(var(--raton-y, .5) * 36px - 18px), 0);
+}
+.landing-ambiente span:nth-child(2) {
+  width: 38vw; height: 38vw; right: -12vw; top: 2vw;
+  background: radial-gradient(circle, rgba(122, 191, 232, .60), transparent 66%);
+  transform: translate3d(calc(var(--raton-x, .5) * -56px + 28px), calc(var(--raton-y, .5) * 40px - 20px), 0);
+}
+
+/* Retícula clínica: la cuadrícula de 4 px llevada a 40, desvanecida. */
+.landing-reticula {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .42;
+  background-image:
+    linear-gradient(var(--filete) 1px, transparent 1px),
+    linear-gradient(90deg, var(--filete) 1px, transparent 1px);
+  background-size: 40px 40px;
+  -webkit-mask-image: radial-gradient(68% 56% at 50% 30%, #000 0%, transparent 76%);
+  mask-image: radial-gradient(68% 56% at 50% 30%, #000 0%, transparent 76%);
+}
+
+/* 24.7 · Portada --------------------------------------------------------- */
+
+.landing-hero {
+  position: relative;
+  display: grid; align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 72px);
+  padding: calc(72px + var(--ritmo)) var(--e8) var(--ritmo);
+}
+.landing-hero__texto { display: flex; flex-direction: column; align-items: flex-start; gap: var(--e5); }
+.landing-hero__texto .landing-display { margin-block: var(--e1) var(--e2); }
+
+/* Etiqueta de contexto: dice de qué categoría es el producto antes de que el
+   titular tenga que explicarlo. Es un enlace porque lleva a la convocatoria. */
+.landing-eyebrow {
+  display: inline-flex; align-items: center; gap: var(--e3);
+  height: 32px; padding: 0 var(--e4) 0 var(--e3);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--sup-tarjeta) 80%, transparent);
+  box-shadow: inset 0 0 0 1px var(--filete-2);
+  font-size: 12px; font-weight: 600; letter-spacing: .01em; color: var(--tinta-2);
+  text-decoration: none;
+  transition: box-shadow var(--mov-medio) var(--curva), color var(--mov-medio) var(--curva);
+}
+.landing-eyebrow:hover { color: var(--tinta-marca); box-shadow: inset 0 0 0 1px var(--aguamarina); }
+.landing-eyebrow b { color: var(--tinta-marca); font-weight: 700; }
+.landing-eyebrow .landing-punto { margin-right: -2px; }
+.landing-punto {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--aguamarina); flex: none;
+}
+
+/* Palabra que rota dentro del título. Va en RENGLÓN PROPIO: al ser una grilla
+   su ancho lo fija la palabra más larga, así que en línea dejaba un hueco de
+   aire después de la más corta y el titular se leía roto. El alto fijo es
+   obligatorio: sin él, el H1 salta de línea en cada vuelta. */
+.landing-rotador { display: grid; width: fit-content; overflow: hidden; height: 1.1em; }
+.landing-rotador span {
+  grid-area: 1 / 1;
+  color: var(--petroleo);
+  background: linear-gradient(96deg, var(--petroleo), var(--aguamarina));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+  opacity: 0; transform: translate3d(0, 100%, 0);
+  transition: opacity 380ms var(--curva), transform 480ms var(--curva);
+}
+.landing-rotador span.esta-dentro { opacity: 1; transform: none; }
+.landing-rotador span.esta-fuera  { opacity: 0; transform: translate3d(0, -100%, 0); }
+
+.landing-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e3); }
+
+/* Botón de portada: el primario del banco en talla grande. Sin barrido de luz
+   ni imán: la acción principal de una página de salud no juega con el cursor.
+   Lo que hace es lo que hace todo el sistema —subir un punto y anillarse en
+   menta—, que ya está en §22. */
+[app-button][data-tam="lg"] { height: var(--h-ctrl-lg); padding: 0 var(--e6); font-size: 16px; }
+
+/* Enlace de apoyo: baja al capítulo siguiente. La flecha es la única pieza
+   que se mueve, y sólo bajo el cursor. */
+.landing-enlace-baja {
+  display: inline-flex; align-items: center; gap: var(--e2);
+  height: var(--h-ctrl-lg); padding: 0 var(--e3);
+  font-size: 15px; font-weight: 600; color: var(--tinta-marca); text-decoration: none;
+}
+.landing-enlace-baja .icono { transition: transform var(--mov-medio) var(--curva); color: var(--petroleo); }
+.landing-enlace-baja:hover .icono { transform: translateY(3px); }
+.landing-enlace-baja:hover { color: var(--petroleo); }
+
+/* Pie de la portada: la prueba, en una línea, sin tarjetas. */
+.landing-prueba {
+  display: flex; align-items: center; gap: var(--e4); flex-wrap: wrap;
+  padding-top: var(--e4); border-top: 1px solid var(--filete-2); width: 100%;
+}
+.landing-caras { display: flex; }
+.landing-caras > * {
+  width: 32px; height: 32px; border-radius: 50%; margin-left: -9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--f-titulo); font-size: 12px; font-weight: 600;
+  background: var(--menta); color: var(--tinta-marca);
+  box-shadow: 0 0 0 2px var(--sup-pagina);
+}
+.landing-caras > :first-child { margin-left: 0; }
+.landing-caras > :nth-child(2) { background: var(--info-bg); color: var(--info-tinta); }
+.landing-caras > :nth-child(3) { background: var(--ok-bg); color: var(--ok-tinta); }
+.landing-caras > :nth-child(4) { background: var(--neutro-bg); color: var(--neutro-tinta); }
+
+/* 24.8 · Ventana de producto --------------------------------------------- *
+   No es una imagen puesta en la portada: es una ventana del sistema, con su
+   nav escrito, su cabecera de página, sus fichas y su tabla. Está quieta. Lo
+   único que cambia es la cola de avisos, porque un sistema de salud recibe
+   eventos y eso es exactamente lo que la pieza tiene que contar.           */
+
+/* La ventana vive dentro de un lienzo propio porque la cola de avisos
+   sobresale de su borde: metida dentro de la ventana, el `overflow: hidden`
+   que le redondea las esquinas la recortaba, y subida al contenido tapaba una
+   ficha de la vista. El lienzo es el que ancla lo que orbita. */
+.landing-lienzo { position: relative; justify-self: end; width: 100%; max-width: 580px; }
+
+.landing-ventana {
+  position: relative; width: 100%;
+  background: var(--sup-tarjeta);
+  border: 1px solid var(--filete-2); border-radius: var(--r-bloque);
+  box-shadow: 0 1px 2px var(--sombra-azul-suave), 0 18px 40px -24px var(--sombra-azul);
+  overflow: hidden;
+}
+.landing-ventana__barra {
+  height: 38px; display: flex; align-items: center; gap: var(--e2);
+  padding: 0 var(--e4); background: var(--sup-inset); border-bottom: 1px solid var(--filete-2);
+}
+.landing-ventana__barra i { width: 8px; height: 8px; border-radius: 50%; background: var(--filete); flex: none; }
+.landing-ventana__barra b {
+  margin-left: var(--e3); font-size: 11px; font-weight: 600; color: var(--tinta-3);
+  font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.landing-ventana__cuerpo { display: grid; grid-template-columns: 116px minmax(0, 1fr); }
+
+/* El nav de la ventana lleva sus etiquetas escritas. Barras grises darían la
+   idea de «maqueta»; los nombres dan la de «sistema». */
+.landing-ventana__nav {
+  background: linear-gradient(168deg, var(--petroleo) 0%, var(--petroleo-x) 100%);
+  padding: var(--e4) var(--e2); display: flex; flex-direction: column; gap: 2px;
+}
+.landing-ventana__nav span {
+  display: flex; align-items: center; gap: var(--e2);
+  padding: var(--e2) var(--e3); border-radius: var(--r-ctrl);
+  font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, .70);
+  white-space: nowrap;
+}
+.landing-ventana__nav span .icono { width: 13px; height: 13px; }
+.landing-ventana__nav span[data-activo] {
+  background: rgba(255, 255, 255, .14); color: #fff;
+  box-shadow: inset 2px 0 0 var(--aguamarina);
+}
+.landing-ventana__vista { padding: var(--e4); display: flex; flex-direction: column; gap: var(--e4); min-width: 0; }
+.landing-ventana__cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3); }
+.landing-ventana__cabecera b { font-family: var(--f-titulo); font-size: 14px; font-weight: 600; color: var(--tinta-marca); }
+.landing-ventana__cabecera small { font-size: 11px; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
+
+.landing-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2); }
+.landing-tiles > div {
+  background: var(--sup-inset); border: 1px solid var(--filete-2);
+  border-radius: var(--r-ctrl); padding: var(--e3);
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.landing-tiles small { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--tinta-3); }
+.landing-tiles b { font-family: var(--f-titulo); font-size: 17px; line-height: 22px; color: var(--tinta-marca); font-variant-numeric: tabular-nums; }
+
+/* Tabla en miniatura: las mismas columnas y el mismo badge del producto. */
+.landing-tabla { display: flex; flex-direction: column; }
+.landing-tabla__fila {
+  display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; gap: var(--e3);
+  padding: var(--e2) 0; border-top: 1px solid var(--filete-2); min-width: 0;
+}
+.landing-tabla__fila:first-child { border-top: 0; }
+.landing-tabla__fila time { font-size: 11px; font-weight: 700; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
+.landing-tabla__fila span { font-size: 12px; color: var(--tinta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.landing-tabla .app-badge { height: 22px; font-size: 10px; padding: 0 var(--e2); gap: 4px; }
+.landing-tabla .app-badge .icono { width: 11px; height: 11px; }
+/* La fila que acaba de cambiar de estado se marca con la misma guía
+   aguamarina que usa la tabla real. */
+.landing-tabla__fila[data-cambia] { transition: background-color var(--mov-lento) var(--curva); }
+.landing-tabla__fila.esta-fresca { background: var(--fila-celeste); box-shadow: inset 3px 0 0 var(--aguamarina); }
+
+/* Cola de avisos: una ranura, un aviso por vez. Reemplaza a las tres fichas
+   que orbitaban: tres piezas moviéndose a destiempo tapaban la ventana y no
+   decían nada; una sola, entrando cada cuatro segundos, cuenta que el sistema
+   está recibiendo lo que pasa en la institución. */
+.landing-cola {
+  position: absolute; z-index: 2; right: 20px; bottom: -26px;
+  width: 272px; height: 54px;
+}
+.landing-cola__aviso {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; gap: var(--e3);
+  padding: var(--e2) var(--e4) var(--e2) var(--e2);
+  background: var(--sup-tarjeta);
+  border: 1px solid var(--filete-2); border-radius: var(--r-menu);
+  box-shadow: 0 1px 2px var(--sombra-azul-suave), 0 12px 28px -16px var(--sombra-azul);
+  opacity: 0; transform: translate3d(0, 10px, 0);
+  transition: opacity 460ms var(--curva), transform 520ms var(--curva);
+  pointer-events: none;
+}
+.landing-cola__aviso.esta-visible { opacity: 1; transform: none; }
+.landing-cola__aviso b { font-size: 12px; font-weight: 600; color: var(--tinta-marca); display: block; }
+.landing-cola__aviso small { font-size: 11px; color: var(--tinta-3); display: block; font-variant-numeric: tabular-nums; }
+.landing-cola__icono {
+  width: 30px; height: 30px; border-radius: 50%; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--info-bg); color: var(--info-tinta);
+}
+.landing-cola__aviso[data-tono="ok"] .landing-cola__icono { background: var(--ok-bg); color: var(--ok-tinta); }
+.landing-cola__aviso[data-tono="aviso"] .landing-cola__icono { background: var(--aviso-bg); color: var(--aviso-tinta); }
+
+/* 24.9 · Marquesina ------------------------------------------------------- */
+
+.landing-marquesina {
+  position: relative; overflow: hidden; padding-block: var(--e4);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+.landing-marquesina__pista { display: flex; width: max-content; animation: landing-desfile 46s linear infinite; }
+.landing-marquesina:hover .landing-marquesina__pista,
+.landing-marquesina:focus-within .landing-marquesina__pista { animation-play-state: paused; }
+.landing-marquesina__grupo { display: flex; align-items: center; gap: var(--e9); padding-right: var(--e9); }
+.landing-marquesina__grupo span {
+  display: inline-flex; align-items: center; gap: var(--e2);
+  font-size: 14px; font-weight: 600; color: var(--tinta-3); white-space: nowrap;
+}
+.landing-marquesina__grupo .icono { width: 16px; height: 16px; color: var(--tinta-3); }
+@keyframes landing-desfile { to { transform: translate3d(-50%, 0, 0); } }
+
+/* 24.10 · El hilo: el recorrido de una historia --------------------------- *
+   El capítulo que convierte el titular en argumento. Siete hitos sobre un
+   rail que se completa mientras bajás. Sin tarjetas: el contenido se apoya
+   directo sobre el fondo, que es lo que lo distingue de todo lo demás.     */
+
+.landing-hilo { margin-top: var(--ritmo-int); }
+/* El rail se ancla a la PISTA, no al capítulo entero: anclado al capítulo, en
+   vertical se estiraba por debajo del último hito y cruzaba el párrafo de
+   cierre de arriba abajo. La pista termina donde termina el último nodo. */
+.landing-hilo__pista { position: relative; }
+.landing-hilo__rail { top: 21px; left: 6%; right: 6%; height: var(--rail); }
+.landing-hilo__hitos {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--e3);
+}
+.landing-hito { display: flex; flex-direction: column; align-items: center; gap: var(--e3); text-align: center; min-width: 0; }
+.landing-hito__nodo {
+  width: 44px; height: 44px; border-radius: 50%; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--sup-pagina); color: var(--tinta-3);
+  box-shadow: inset 0 0 0 var(--rail) var(--filete);
+  transition: background var(--mov-lento) var(--curva), color var(--mov-lento) var(--curva),
+              box-shadow var(--mov-lento) var(--curva);
+}
+.landing-hito.esta-alcanzado .landing-hito__nodo {
+  background: var(--sup-tarjeta); color: var(--petroleo);
+  box-shadow: inset 0 0 0 var(--rail) var(--aguamarina), 0 0 0 5px rgba(79, 179, 169, .14);
+}
+.landing-hito b { font-size: 14px; font-weight: 600; color: var(--tinta-marca); line-height: 20px; }
+.landing-hito small { font-size: 12px; line-height: 17px; color: var(--tinta-3); display: block; }
+/* El último hito es la conclusión: se marca sin cambiar de color de marca. */
+.landing-hito--cierre .landing-hito__nodo { background: var(--petroleo); color: #fff; box-shadow: none; }
+.landing-hito--cierre.esta-alcanzado .landing-hito__nodo { box-shadow: 0 0 0 5px rgba(79, 179, 169, .18); }
+
+.landing-hilo__cierre {
+  margin-top: var(--ritmo-int); padding-top: var(--e6);
+  border-top: 1px solid var(--filete-2);
+  display: flex; gap: var(--e8); align-items: baseline; flex-wrap: wrap;
+}
+.landing-hilo__cierre p { color: var(--tinta-2); max-width: 56ch; font-size: 16px; line-height: 26px; }
+.landing-hilo__cierre strong { color: var(--tinta-marca); font-weight: 600; }
+.landing-hilo__cierre .landing-enlace-baja { margin-left: auto; flex: none; }
+
+/* 24.11 · Métricas editoriales -------------------------------------------- *
+   Sin tarjetas. Cuatro cifras grandes separadas por filetes, con la lectura
+   escrita debajo: lo que importa no es el número, es qué habilita.         */
+
+.landing-metricas {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--e6); margin-top: var(--ritmo-int);
+}
+.landing-metrica {
+  display: flex; flex-direction: column; gap: var(--e2);
+  padding-left: var(--e5); border-left: 1px solid var(--filete-2); min-width: 0;
+}
+.landing-metrica b {
+  font-family: var(--f-titulo); font-weight: 600; font-size: clamp(38px, 4vw, 52px);
+  line-height: 1; letter-spacing: -.03em; color: var(--tinta-marca);
+  font-variant-numeric: tabular-nums;
+}
+.landing-metrica strong { font-size: 14px; font-weight: 600; color: var(--tinta-marca); }
+.landing-metrica span { font-size: 13px; line-height: 19px; color: var(--tinta-3); }
+
+/* 24.12 · La plataforma como arquitectura -------------------------------- *
+   Seis filas enhebradas por un rail vertical, no seis tarjetas sueltas: lo
+   que se tiene que entender es que son capas de una misma cosa. Cada fila
+   reserva el alto de su tira de piezas, así que al revelarla no hay salto de
+   maquetación: aparece con opacidad, no empujando lo de abajo.            */
+
+.landing-arquitectura { display: grid; grid-template-columns: minmax(0, 330px) minmax(0, 1fr); gap: clamp(32px, 5vw, 80px); align-items: start; }
+.landing-pegado { position: sticky; top: 108px; display: flex; flex-direction: column; gap: var(--e5); }
+
+.landing-capas { position: relative; padding-left: var(--e8); }
+.landing-capas__rail { left: 15px; top: 22px; bottom: 22px; width: var(--rail); }
+.landing-capas__rail i {
+  background: linear-gradient(180deg, var(--petroleo), var(--aguamarina));
+  transform: scaleY(var(--avance, 0)); transform-origin: center top;
+}
+
+.landing-capa {
+  position: relative; display: block; text-decoration: none; color: inherit;
+  padding: var(--e5) var(--e5) var(--e5) 0;
+  border-top: 1px solid var(--filete-2);
+  transition: background var(--mov-medio) var(--curva);
+}
+.landing-capa:first-child { border-top: 0; }
+.landing-capa__numero {
+  position: absolute; left: calc(var(--e8) * -1); top: var(--e5);
+  width: 32px; height: 32px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+  background: var(--sup-pagina); color: var(--tinta-3);
+  box-shadow: inset 0 0 0 var(--rail) var(--filete);
+  transition: background var(--mov-medio) var(--curva), color var(--mov-medio) var(--curva),
+              box-shadow var(--mov-medio) var(--curva);
+}
+.landing-capa.esta-alcanzado .landing-capa__numero {
+  background: var(--sup-tarjeta); color: var(--petroleo);
+  box-shadow: inset 0 0 0 var(--rail) var(--aguamarina);
+}
+.landing-capa__titulo { display: flex; align-items: center; gap: var(--e3); }
+.landing-capa__titulo h3 { font-size: 19px; line-height: 26px; font-weight: 600; }
+.landing-capa__titulo .icono { margin-left: auto; color: var(--petroleo); opacity: 0; transform: translateX(-6px); transition: opacity var(--mov-medio) var(--curva), transform var(--mov-medio) var(--curva); }
+.landing-capa p { color: var(--tinta-2); font-size: 15px; margin-top: var(--e2); max-width: 60ch; }
+
+/* La tira de piezas es la prueba de que la capa existe: son los objetos
+   reales del módulo. Se enciende bajo el cursor y con el foco, nunca sola. */
+.landing-capa__piezas { display: flex; flex-wrap: wrap; gap: var(--e2); margin-top: var(--e3); min-height: 26px; }
+.landing-capa__piezas span {
+  display: inline-flex; align-items: center; height: 26px; padding: 0 var(--e3);
+  border-radius: var(--r-ctrl); font-size: 12px; font-weight: 600;
+  background: var(--sup-inset); color: var(--tinta-3);
+  box-shadow: inset 0 0 0 1px var(--filete-2);
+  transition: background var(--mov-medio) var(--curva), color var(--mov-medio) var(--curva),
+              box-shadow var(--mov-medio) var(--curva);
+}
+.landing-capa:hover, .landing-capa:focus-visible { background: color-mix(in srgb, var(--sup-tarjeta) 60%, transparent); }
+.landing-capa:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--anillo-foco); border-radius: var(--r-menu); }
+.landing-capa:hover .landing-capa__titulo .icono,
+.landing-capa:focus-visible .landing-capa__titulo .icono { opacity: 1; transform: none; }
+.landing-capa:hover .landing-capa__piezas span,
+.landing-capa:focus-visible .landing-capa__piezas span {
+  background: var(--info-bg); color: var(--info-tinta); box-shadow: inset 0 0 0 1px rgba(79, 179, 169, .28);
+}
+.landing-capa:hover .landing-capa__numero,
+.landing-capa:focus-visible .landing-capa__numero { color: var(--petroleo); box-shadow: inset 0 0 0 var(--rail) var(--aguamarina); }
+
+/* 24.13 · Cómo funciona: cuatro capítulos -------------------------------- *
+   Cada etapa es una fila asimétrica: texto de un lado, un fragmento real de
+   interfaz del otro, alternando. El fragmento no es una ilustración: son las
+   mismas piezas del banco a escala reducida.                               */
+
+.landing-etapas { display: flex; flex-direction: column; gap: var(--ritmo); margin-top: var(--ritmo-int); }
+.landing-etapa {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 64px); align-items: center;
+}
+.landing-etapa:nth-child(even) .landing-etapa__texto { order: 2; }
+.landing-etapa__texto { display: flex; flex-direction: column; gap: var(--e3); }
+.landing-etapa__numero {
+  display: inline-flex; align-items: center; gap: var(--e3);
+  font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--petroleo); font-variant-numeric: tabular-nums;
+}
+.landing-etapa__numero::after { content: ""; width: 32px; height: var(--rail); background: var(--filete); border-radius: var(--r-pill); }
+.landing-etapa h3 { font-size: clamp(21px, 2.1vw, 26px); line-height: 1.24; font-weight: 600; }
+.landing-etapa p { color: var(--tinta-2); max-width: 52ch; }
+
+/* Fragmento de interfaz. Una sola superficie, radio de menú —no de tarjeta—,
+   para que se lea como un recorte de pantalla y no como otra card. */
+.landing-fragmento {
+  background: var(--sup-tarjeta); border: 1px solid var(--filete-2);
+  border-radius: var(--r-bloque); padding: var(--e5);
+  box-shadow: 0 1px 2px var(--sombra-azul-suave), 0 14px 34px -22px var(--sombra-azul);
+  display: flex; flex-direction: column; gap: var(--e3); min-width: 0;
+}
+.landing-fragmento__rotulo {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--e3);
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-3);
+  padding-bottom: var(--e3); border-bottom: 1px solid var(--filete-2);
+}
+
+/* a · Estructura institucional: una organización y sus sedes. */
+.landing-org { display: flex; flex-direction: column; align-items: center; gap: var(--e3); }
+.landing-org__nodo {
+  display: inline-flex; align-items: center; gap: var(--e2);
+  height: 34px; padding: 0 var(--e4); border-radius: var(--r-ctrl);
+  background: var(--petroleo); color: #fff; font-size: 13px; font-weight: 600;
+}
+.landing-org__linea { width: var(--rail); height: 18px; background: var(--filete); }
+.landing-org__hijos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2); width: 100%; }
+.landing-org__hijos span {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 52px; padding: var(--e2); border-radius: var(--r-ctrl);
+  background: var(--sup-inset); box-shadow: inset 0 0 0 1px var(--filete-2);
+  font-size: 11px; font-weight: 600; color: var(--tinta-2); text-align: center;
+}
+.landing-org__hijos small { font-size: 10px; color: var(--tinta-3); font-weight: 500; }
+
+/* b · Padrón importado. */
+.landing-mini-lista { display: flex; flex-direction: column; gap: var(--e2); }
+.landing-mini-lista > div {
+  display: flex; align-items: center; gap: var(--e3);
+  padding: var(--e2) var(--e3); border-radius: var(--r-ctrl);
+  background: var(--sup-inset); box-shadow: inset 0 0 0 1px var(--filete-2); min-width: 0;
+}
+.landing-mini-lista i {
+  width: 26px; height: 26px; border-radius: 50%; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--menta); color: var(--tinta-marca);
+  font-family: var(--f-titulo); font-size: 11px; font-weight: 600; font-style: normal;
+}
+.landing-mini-lista b { font-size: 12px; font-weight: 600; color: var(--tinta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.landing-mini-lista small { font-size: 11px; color: var(--tinta-3); font-variant-numeric: tabular-nums; margin-left: auto; flex: none; }
+
+/* c · Roles y permisos. */
+.landing-permisos { display: flex; flex-direction: column; }
+.landing-permisos > div {
+  display: flex; align-items: center; gap: var(--e3);
+  padding: var(--e3) 0; border-top: 1px solid var(--filete-2);
+}
+.landing-permisos > div:first-child { border-top: 0; }
+.landing-permisos > div > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.landing-permisos b { font-size: 12px; font-weight: 600; color: var(--tinta); }
+.landing-permisos small { font-size: 11px; color: var(--tinta-3); }
+.landing-permisos__estado { margin-left: auto; display: inline-flex; align-items: center; gap: var(--e2); flex: none; }
+.landing-switch {
+  width: 34px; height: 20px; border-radius: var(--r-pill); flex: none; position: relative;
+  background: var(--filete); box-shadow: inset 0 1px 2px var(--sombra-azul-suave);
+}
+.landing-switch::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px;
+  border-radius: 50%; background: var(--sup-tarjeta); box-shadow: var(--sombra-1);
+}
+.landing-switch[data-si] { background: var(--aguamarina); }
+.landing-switch[data-si]::after { left: 17px; }
+
+/* d · La operación andando. */
+.landing-operacion { display: flex; flex-direction: column; gap: var(--e2); }
+.landing-operacion > div {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: var(--e3);
+  padding: var(--e2) var(--e3); border-radius: var(--r-ctrl);
+  background: var(--sup-inset); box-shadow: inset 0 0 0 1px var(--filete-2);
+}
+.landing-operacion time { font-size: 11px; font-weight: 700; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
+.landing-operacion span { font-size: 12px; color: var(--tinta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.landing-operacion .app-badge { height: 22px; font-size: 10px; padding: 0 var(--e2); gap: 4px; }
+.landing-operacion .app-badge .icono { width: 11px; height: 11px; }
+
+/* 24.14 · El producto en el teléfono ------------------------------------- */
+
+.landing-movil { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: clamp(32px, 5vw, 72px); align-items: center; }
+.landing-movil__texto { display: flex; flex-direction: column; gap: var(--e5); align-items: flex-start; }
+
+/* La secuencia es el argumento de la sección: un resultado de laboratorio
+   entra, alguien lo abre, y termina pegado a la historia del paciente. Los
+   tres pasos son botones de verdad —se puede saltar a cualquiera— y también
+   avanzan solos mientras la sección está a la vista. */
+.landing-secuencia { display: flex; flex-direction: column; gap: 0; width: 100%; }
+.landing-secuencia__paso {
+  display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--e4);
+  padding: var(--e3) 0; border: 0; background: none; text-align: left;
+  font: inherit; color: inherit; cursor: pointer; width: 100%;
+}
+.landing-secuencia__marca { position: relative; display: flex; justify-content: center; }
+.landing-secuencia__marca::before {
+  content: ""; position: absolute; top: 26px; bottom: -10px; width: var(--rail);
+  background: var(--filete); border-radius: var(--r-pill);
+}
+.landing-secuencia__paso:last-child .landing-secuencia__marca::before { display: none; }
+.landing-secuencia__marca i {
+  width: 22px; height: 22px; border-radius: 50%; flex: none; z-index: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--sup-pagina); box-shadow: inset 0 0 0 var(--rail) var(--filete);
+  transition: background var(--mov-medio) var(--curva), box-shadow var(--mov-medio) var(--curva);
+}
+.landing-secuencia__paso[aria-selected="true"] .landing-secuencia__marca i {
+  background: var(--petroleo); box-shadow: 0 0 0 4px rgba(79, 179, 169, .18);
+}
+.landing-secuencia__texto b { display: block; font-size: 15px; font-weight: 600; color: var(--tinta-3); transition: color var(--mov-medio) var(--curva); }
+.landing-secuencia__texto small { display: block; font-size: 13px; line-height: 19px; color: var(--tinta-3); opacity: 0; max-height: 0; overflow: hidden; transition: opacity var(--mov-medio) var(--curva); }
+.landing-secuencia__paso[aria-selected="true"] .landing-secuencia__texto b { color: var(--tinta-marca); }
+.landing-secuencia__paso[aria-selected="true"] .landing-secuencia__texto small { opacity: 1; max-height: 60px; margin-top: var(--e1); }
+.landing-secuencia__paso:focus-visible { outline: none; }
+.landing-secuencia__paso:focus-visible .landing-secuencia__texto b { box-shadow: 0 0 0 3px var(--anillo-foco); border-radius: var(--r-ctrl); }
+
+.landing-telefono {
+  position: relative; justify-self: center;
+  width: 296px; height: 600px; flex: none;
+  border-radius: 42px; padding: 11px;
+  background: linear-gradient(160deg, var(--petroleo-x), var(--petroleo-xx));
+  box-shadow: 0 2px 6px var(--sombra-azul), 0 30px 60px -32px rgba(5, 34, 50, .55);
+}
+.landing-telefono__pantalla {
+  position: relative; height: 100%; border-radius: 32px; overflow: hidden;
+  background: var(--sup-pagina); display: flex; flex-direction: column;
+}
+.landing-telefono__isla {
+  position: absolute; top: 9px; left: 50%; translate: -50% 0; z-index: 4;
+  width: 88px; height: 22px; border-radius: var(--r-pill); background: var(--petroleo-xx);
+}
+.landing-telefono__estado {
+  height: 42px; flex: none; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--e5); font-size: 11px; font-weight: 700; color: var(--tinta-2);
+  font-variant-numeric: tabular-nums;
+}
+.landing-telefono__estado span { display: inline-flex; align-items: center; gap: 4px; }
+.landing-telefono__barra {
+  height: 52px; flex: none; display: flex; align-items: center; gap: var(--e2);
+  padding: 0 var(--e4);
+  background: linear-gradient(180deg, var(--petroleo), var(--petroleo-h)); color: #fff;
+}
+.landing-telefono__barra b { font-family: var(--f-titulo); font-size: 14px; font-weight: 600; }
+.landing-telefono__barra .landing-telefono__ruta { margin-left: auto; font-size: 10px; color: rgba(255, 255, 255, .72); font-weight: 600; }
+.landing-telefono__cuerpo { flex: 1; overflow: hidden; position: relative; }
+
+.landing-pantalla {
+  position: absolute; inset: 0; padding: var(--e4);
+  display: flex; flex-direction: column; gap: var(--e2);
+  opacity: 0; transform: translate3d(12px, 0, 0); pointer-events: none;
+  transition: opacity 340ms var(--curva), transform 420ms var(--curva);
+  overflow: hidden;
+}
+.landing-pantalla.esta-activa { opacity: 1; transform: none; pointer-events: auto; }
+/* El título de la pantalla del teléfono NO es un encabezado del documento: es
+   contenido de una ilustración. Como <h4> abría un salto de nivel desde el
+   <h2> del capítulo, se pinta con el mismo peso pero sin rango. */
+.landing-pantalla__titulo {
+  margin: 0 0 var(--e1); font-family: var(--f-titulo); font-size: 14px; font-weight: 600; color: var(--tinta-marca);
+}
+.landing-pantalla .caption { font-size: 11px; }
+.landing-fila-movil {
+  display: flex; align-items: center; gap: var(--e3);
+  padding: var(--e3); border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta); border: 1px solid var(--filete-2);
+  min-width: 0;
+}
+.landing-fila-movil--destacada { box-shadow: inset 3px 0 0 var(--aguamarina); border-color: var(--menta); }
+.landing-fila-movil__inicial {
+  width: 32px; height: 32px; border-radius: 50%; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--menta); color: var(--tinta-marca);
+  font-family: var(--f-titulo); font-size: 12px; font-weight: 600;
+}
+.landing-fila-movil__texto { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.landing-fila-movil__texto b { font-size: 12px; font-weight: 600; color: var(--tinta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.landing-fila-movil__texto small { font-size: 11px; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
+.landing-fila-movil .app-badge { margin-left: auto; height: 22px; font-size: 10px; padding: 0 var(--e2); flex: none; gap: 4px; }
+.landing-fila-movil .app-badge .icono { width: 11px; height: 11px; }
+
+.landing-telefono__pie {
+  height: 54px; flex: none; display: flex; align-items: center; justify-content: space-around;
+  border-top: 1px solid var(--filete-2); background: var(--sup-tarjeta);
+}
+.landing-telefono__pie i { width: 20px; height: 20px; border-radius: 6px; background: var(--filete-2); }
+.landing-telefono__pie i:first-child { background: var(--aguamarina); }
+.landing-telefono__asa {
+  position: absolute; bottom: 6px; left: 50%; translate: -50% 0; z-index: 4;
+  width: 104px; height: 4px; border-radius: var(--r-pill); background: var(--filete);
+}
+
+/* El aviso del sistema entra sobre la pantalla, una sola vez por vuelta de la
+   secuencia: es el disparador de la historia que cuenta la sección. */
+.landing-empuje {
+  position: absolute; z-index: 5; left: var(--e3); right: var(--e3); top: 48px;
+  display: flex; align-items: center; gap: var(--e3);
+  padding: var(--e2) var(--e3);
+  border-radius: var(--r-menu);
+  background: color-mix(in srgb, var(--sup-tarjeta) 96%, transparent);
+  border: 1px solid var(--filete-2);
+  box-shadow: 0 12px 28px -14px var(--sombra-azul);
+  opacity: 0; transform: translate3d(0, -12px, 0); pointer-events: none;
+  transition: opacity 420ms var(--curva), transform 460ms var(--curva);
+}
+.landing-empuje.esta-visible { opacity: 1; transform: none; }
+.landing-empuje b { display: block; font-size: 12px; font-weight: 600; color: var(--tinta-marca); }
+.landing-empuje small { display: block; font-size: 11px; color: var(--tinta-3); }
+.landing-empuje .landing-cola__icono { width: 26px; height: 26px; }
+
+/* 24.15 · Confianza: el bloque oscuro ------------------------------------ *
+   El único tramo oscuro de la página, y por eso pesa. No cambia ni un
+   componente: redefine los tokens de tinta y superficie, y todo lo que hay
+   dentro se adapta solo. Eso es lo que hace que siga siendo REDSAT.        */
+
+.landing-oscuro {
+  --tinta:        #DCEAF2;
+  --tinta-2:      #A6C4D4;
+  --tinta-3:      #7F9EAF;
+  --tinta-marca:  #FFFFFF;
+  --filete:       rgba(255, 255, 255, .20);
+  --filete-2:     rgba(255, 255, 255, .11);
+  --sup-tarjeta:  rgba(255, 255, 255, .05);
+  --sup-inset:    rgba(255, 255, 255, .04);
+  color: var(--tinta);
+  background:
+    radial-gradient(90% 120% at 8% 0%, rgba(79, 179, 169, .16), transparent 56%),
+    linear-gradient(158deg, var(--petroleo-x) 0%, var(--petroleo-xx) 100%);
+}
+.landing-oscuro .landing-overline::before,
+.landing-oscuro .landing-overline::after { background: var(--menta); }
+.landing-oscuro .landing-overline { color: var(--menta); }
+
+.landing-garantias { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e8); margin-top: var(--ritmo-int); }
+.landing-garantia { display: flex; flex-direction: column; gap: var(--e3); padding-top: var(--e5); border-top: 1px solid var(--filete-2); }
+.landing-garantia__icono {
+  width: 40px; height: 40px; border-radius: var(--r-ctrl); flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(159, 216, 208, .14); color: var(--menta);
+}
+.landing-garantia b { font-family: var(--f-titulo); font-size: 17px; font-weight: 600; color: var(--tinta-marca); }
+.landing-garantia p { font-size: 15px; line-height: 24px; color: var(--tinta-2); }
+
+/* La prueba de la trazabilidad no se afirma: se muestra. Es el registro de
+   auditoría del producto, con las columnas que tiene de verdad. */
+.landing-registro {
+  margin-top: var(--ritmo-int);
+  border: 1px solid var(--filete-2); border-radius: var(--r-bloque);
+  background: rgba(0, 0, 0, .16); overflow: hidden;
+}
+.landing-registro__cabecera {
+  display: flex; align-items: center; gap: var(--e3);
+  padding: var(--e4) var(--e5); border-bottom: 1px solid var(--filete-2);
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-3);
+}
+.landing-registro__cabecera .landing-punto { background: var(--menta); }
+.landing-registro__tabla { width: 100%; border-collapse: collapse; }
+.landing-registro__tabla th {
+  text-align: left; padding: var(--e3) var(--e5); font-size: 10px; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase; color: var(--tinta-3);
+  border-bottom: 1px solid var(--filete-2); white-space: nowrap;
+}
+.landing-registro__tabla td {
+  padding: var(--e3) var(--e5); font-size: 13px; color: var(--tinta);
+  border-bottom: 1px solid var(--filete-2); vertical-align: middle;
+}
+.landing-registro__tabla tr:last-child td { border-bottom: 0; }
+.landing-registro__tabla .num { font-variant-numeric: tabular-nums; color: var(--tinta-2); white-space: nowrap; }
+.landing-oscuro .app-badge { background: rgba(159, 216, 208, .14); color: var(--menta); box-shadow: none; }
+.landing-oscuro .app-badge[data-tono="aviso"] { background: rgba(228, 169, 107, .16); color: var(--ambar); }
+.landing-registro__pie { padding: var(--e4) var(--e5); font-size: 12px; color: var(--tinta-3); }
+
+/* 24.16 · Voces ----------------------------------------------------------- *
+   Tres citas sobre el fondo, sin caja: lo que las separa es el filete y el
+   aire. Y llevan escrito, en su propio rótulo, que son contenido de ejemplo
+   de la maqueta: una portada de salud no puede insinuar respaldos que no
+   tiene.                                                                   */
+
+.landing-voces { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e8); margin-top: var(--ritmo-int); }
+.landing-voz { display: flex; flex-direction: column; gap: var(--e4); padding-top: var(--e5); border-top: 1px solid var(--filete-2); }
+.landing-voz blockquote {
+  margin: 0; font-family: var(--f-titulo); font-weight: 500;
+  font-size: 17px; line-height: 27px; color: var(--tinta-marca); letter-spacing: -.01em;
+}
+.landing-voz figcaption { display: flex; align-items: center; gap: var(--e3); margin-top: auto; }
+.landing-voz figcaption b { display: block; font-size: 13px; font-weight: 600; color: var(--tinta-marca); }
+.landing-voz figcaption small { font-size: 12px; color: var(--tinta-3); }
+.landing-voz__inicial {
+  width: 36px; height: 36px; border-radius: 50%; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--info-bg); color: var(--info-tinta);
+  font-family: var(--f-titulo); font-size: 13px; font-weight: 600;
+}
+
+/* 24.17 · Convocatoria ---------------------------------------------------- *
+   Institucional, no de venta agresiva: superficie clara, filete, y el reloj
+   como un dato más. La urgencia la da la fecha, no el color.               */
+
+.landing-convocatoria {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+  gap: clamp(32px, 5vw, 64px); align-items: center;
+  padding: clamp(28px, 4vw, 48px);
+  border: 1px solid var(--filete-2); border-radius: var(--r-bloque);
+  background: color-mix(in srgb, var(--sup-tarjeta) 78%, transparent);
+  box-shadow: 0 1px 2px var(--sombra-azul-suave);
+}
+.landing-convocatoria__texto { display: flex; flex-direction: column; gap: var(--e4); align-items: flex-start; }
+.landing-convocatoria__texto p { color: var(--tinta-2); max-width: 54ch; }
+
+.landing-reloj { display: flex; align-items: stretch; gap: var(--e2); width: 100%; }
+.landing-reloj__casilla {
+  flex: 1 1 0; min-width: 0; padding: var(--e3) var(--e2);
+  border-radius: var(--r-menu);
+  background: var(--sup-inset); box-shadow: inset 0 0 0 1px var(--filete-2);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.landing-reloj__valor {
+  font-family: var(--f-titulo); font-size: clamp(26px, 3vw, 34px); line-height: 1.1;
+  font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  color: var(--tinta-marca);
+}
+.landing-reloj__rotulo {
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-3);
+}
+
+.landing-cupo { display: flex; flex-direction: column; gap: var(--e2); width: 100%; }
+.landing-cupo__barra { height: 6px; border-radius: var(--r-pill); background: var(--filete-2); overflow: hidden; }
+.landing-cupo__barra i {
+  display: block; height: 100%; width: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--petroleo), var(--aguamarina));
+  transform: scaleX(var(--ocupado, 0)); transform-origin: left center;
+  transition: transform 1.4s var(--curva);
+}
+.landing-cupo small { font-size: 12px; color: var(--tinta-3); display: flex; justify-content: space-between; gap: var(--e3); }
+
+.landing-formulario { display: flex; flex-direction: column; gap: var(--e3); width: 100%; }
+.landing-formulario__fila { display: flex; gap: var(--e2); }
+.landing-formulario .app-input { flex: 1 1 auto; min-width: 0; height: var(--h-ctrl-lg); }
+.landing-formulario [app-button] { flex: none; }
+.landing-formulario .caption { color: var(--tinta-3); }
+
+/* 24.18 · Preguntas ------------------------------------------------------- */
+
+.landing-preguntas { display: flex; flex-direction: column; margin-top: var(--ritmo-int); }
+.landing-pregunta { border-top: 1px solid var(--filete-2); }
+.landing-pregunta:last-child { border-bottom: 1px solid var(--filete-2); }
+.landing-pregunta summary {
+  list-style: none; cursor: pointer; padding: var(--e5) 0;
+  display: flex; align-items: baseline; gap: var(--e4);
+  font-family: var(--f-titulo); font-size: 17px; line-height: 26px; font-weight: 500; color: var(--tinta-marca);
+  transition: color var(--mov-medio) var(--curva);
+}
+.landing-pregunta summary:hover { color: var(--petroleo); }
+.landing-pregunta summary::-webkit-details-marker { display: none; }
+.landing-pregunta summary::after {
+  content: ""; margin-left: auto; flex: none; align-self: center;
+  width: 10px; height: 10px;
+  border-right: 2px solid var(--petroleo); border-bottom: 2px solid var(--petroleo);
+  rotate: 45deg; translate: 0 -3px;
+  transition: rotate var(--mov-medio) var(--curva);
+}
+.landing-pregunta[open] summary::after { rotate: -135deg; translate: 0 2px; }
+.landing-pregunta summary:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--anillo-foco); border-radius: var(--r-ctrl); }
+.landing-pregunta__cuerpo { padding: 0 var(--e9) var(--e5) 0; color: var(--tinta-2); max-width: 74ch; }
+.landing-pregunta[open] .landing-pregunta__cuerpo { animation: landing-despliega 300ms var(--curva); }
+@keyframes landing-despliega { from { opacity: 0; transform: translate3d(0, -6px, 0); } to { opacity: 1; transform: none; } }
+
+/* 24.19 · Cierre y pie ---------------------------------------------------- */
+
+.landing-cierre { text-align: center; display: flex; flex-direction: column; align-items: center; gap: var(--e6); }
+.landing-cierre .landing-display { max-width: 18ch; }
+.landing-cierre p { max-width: 54ch; }
+/* La firma de la marca cierra la página con el mismo trazo con que la abrió. */
+.landing-cierre .landing-pulso { max-width: 320px; margin-inline: auto; }
+.landing-oscuro .landing-pulso path.landing-pulso__guia { stroke: rgba(255, 255, 255, .14); }
+
+.landing-pie {
+  border-top: 1px solid var(--filete-2);
+  padding: var(--ritmo-int) var(--e8) var(--e7);
+}
+.landing-pie__grilla { display: grid; grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr)); gap: var(--e8); }
+.landing-pie h3 {
+  margin: 0 0 var(--e3); font-family: var(--f-texto);
+  font-size: 11px; line-height: 16px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--tinta-3);
+}
+.landing-pie ul { display: flex; flex-direction: column; gap: var(--e2); }
+.landing-pie a { color: var(--tinta-2); text-decoration: none; font-size: 14px; }
+.landing-pie a:hover { color: var(--petroleo); }
+.landing-pie__legal {
+  margin-top: var(--e7); padding-top: var(--e5); border-top: 1px solid var(--filete-2);
+  display: flex; justify-content: space-between; gap: var(--e4); flex-wrap: wrap;
+  font-size: 12px; color: var(--tinta-3);
+}
+
+/* 24.20 · Modo oscuro ----------------------------------------------------- *
+   Sólo lo que la redefinición de tokens no alcanza. El bloque «oscuro» de
+   confianza ya define los suyos, así que de noche no cambia: sigue siendo el
+   tramo con más autoridad de la página.                                    */
+
+:root[data-tema="oscuro"] .landing-reticula,
+/* 24.20 · Modo oscuro ----------------------------------------------------- *
+   Sólo lo que la redefinición de tokens no alcanza. El bloque «oscuro» de
+   confianza ya define los suyos, así que de noche no cambia: sigue siendo el
+   tramo con más autoridad de la página.                                    */
+
+:root[data-theme="dark"] .landing-reticula { opacity: .26; }
+:root[data-tema="oscuro"] .landing-ambiente span,
+:root[data-theme="dark"] .landing-ambiente span { opacity: .34; }
+:root[data-tema="oscuro"] .landing-ventana,
+:root[data-tema="oscuro"] .landing-fragmento,
+:root[data-tema="oscuro"] .landing-cola__aviso,
+:root[data-theme="dark"] .landing-ventana,
+:root[data-theme="dark"] .landing-fragmento,
+:root[data-theme="dark"] .landing-cola__aviso {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .40), 0 18px 40px -24px rgba(0, 0, 0, .60);
+}
+/* De noche el aviso queda apoyado sobre el borde de la ventana, que es del
+   mismo valor: sin un filo nítido las dos superficies se funden. */
+:root[data-tema="oscuro"] .landing-cola__aviso,
+/* De noche el aviso queda apoyado sobre el borde de la ventana, que es del
+   mismo valor: sin un filo nítido las dos superficies se funden. */
+:root[data-theme="dark"] .landing-cola__aviso { border-color: var(--filete); background: var(--sup-tarjeta); }
+:root[data-tema="oscuro"] .landing-telefono,
+:root[data-theme="dark"] .landing-telefono { box-shadow: 0 2px 6px rgba(0, 0, 0, .45), 0 30px 60px -32px rgba(0, 0, 0, .70); }
+:root[data-tema="oscuro"] .landing-caras > *,
+:root[data-theme="dark"] .landing-caras > * { box-shadow: 0 0 0 2px var(--sup-pagina); }
+:root[data-tema="oscuro"] .landing-oscuro,
+:root[data-theme="dark"] .landing-oscuro { background: linear-gradient(158deg, #061821 0%, #020B10 100%); }
+
+/* 24.21 · Movimiento reducido -------------------------------------------- *
+   Quien lo pidió ve la misma portada, con la misma información y el mismo
+   orden. Se apaga el bucle, nunca el contenido: los estados finales quedan
+   puestos —el rail lleno, el trazo dibujado, los nodos alcanzados—.        */
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-marquesina__pista { animation: none; }
+  html[data-js] .landing [data-aparece] { opacity: 1; transform: none; transition: none; }
+  .landing-pulso path { stroke-dashoffset: 0; transition: none; }
+  .landing-rail i, .landing-cupo__barra i { transition: none; }
+  .landing-cola__aviso, .landing-empuje, .landing-pantalla,
+  .landing-rotador span { transition: opacity 1ms linear; }
+  .landing-pregunta[open] .landing-pregunta__cuerpo { animation: none; }
+  .landing-enlace-baja:hover .icono { transform: none; }
+}
+
+/* 24.22 · Responsive ------------------------------------------------------ *
+   Los mismos cinco puntos de quiebre del sistema (§21). La portada no inventa
+   ninguno: cede márgenes a 1320, reordena a 1120, pasa a una columna a 900,
+   apila a 640 y llega a densidad mínima a 400. Cada quiebre está elegido por
+   dónde se rompe el contenido:
+     1320 · la ventana de producto empieza a comerse el titular
+     1120 · la portada ya no sostiene dos columnas
+      900 · el hilo de siete hitos no entra en horizontal → pasa a vertical
+      640 · dos columnas dejan de tener sentido en cualquier bloque
+      400 · densidad mínima                                                 */
+
+@media (max-width: 1320px) {
+  .landing-seccion, .landing-nav, .landing-hero, .landing-pie { padding-inline: var(--e7); }
+  .landing-metricas { gap: var(--e5); }
+  .landing-garantias, .landing-voces { gap: var(--e6); }
+  .landing-cola { right: 0; }
+}
+
+@media (max-width: 1120px) {
+  .landing-hero { grid-template-columns: minmax(0, 1fr); }
+  .landing-hero__texto { max-width: 640px; }
+  .landing-lienzo { justify-self: stretch; max-width: 100%; margin-top: var(--e6); }
+  .landing-arquitectura { grid-template-columns: minmax(0, 1fr); gap: var(--ritmo-int); }
+  .landing-pegado { position: static; }
+  .landing-movil { grid-template-columns: minmax(0, 1fr); }
+  .landing-convocatoria { grid-template-columns: minmax(0, 1fr); }
+  .landing-metricas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e6) var(--e5); }
+  .landing-garantias, .landing-voces { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .landing-garantia:last-child, .landing-voz:last-child { grid-column: 1 / -1; }
+  .landing-pie__grilla { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e7); }
+}
+
+@media (max-width: 900px) {
+  .landing-nav__enlaces { display: none; }        /* los anclajes quedan en el pie */
+  .landing-nav__enlaces + .landing-nav__acciones { margin-left: auto; }
+
+  /* El hilo pasa a vertical: siete hitos en horizontal a 900 px dan 118 px por
+     hito y la etiqueta se parte en cuatro líneas. En vertical se lee entero. */
+  .landing-hilo__hitos { grid-template-columns: minmax(0, 1fr); gap: var(--e6); }
+  .landing-hito { flex-direction: row; align-items: flex-start; text-align: left; gap: var(--e4); }
+  .landing-hito > div { display: flex; flex-direction: column; gap: 2px; }
+  .landing-hilo__rail { top: 22px; bottom: 22px; left: 21px; right: auto; width: var(--rail); height: auto; }
+  .landing-hilo__cierre { margin-top: var(--ritmo-int); }
+  .landing-hilo__rail i { transform: scaleY(var(--avance, 0)); transform-origin: center top; }
+
+  .landing-etapa { grid-template-columns: minmax(0, 1fr); gap: var(--e6); }
+  .landing-etapa:nth-child(even) .landing-etapa__texto { order: 0; }
+
+  /* Piso táctil de §21.6: 44 × 44 en todo control de la portada. */
+  .landing-secuencia__paso { min-height: 44px; }
+  .landing-pregunta summary { min-height: 44px; }
+  .landing-eyebrow { min-height: 44px; height: auto; padding-block: var(--e2); }
+  .landing-nav__enlace { min-height: 44px; display: inline-flex; align-items: center; }
+}
+
+@media (max-width: 640px) {
+  .landing-seccion, .landing-nav, .landing-hero, .landing-pie { padding-inline: var(--e5); }
+  .landing-metricas, .landing-garantias, .landing-voces { grid-template-columns: minmax(0, 1fr); }
+  .landing-garantia:last-child, .landing-voz:last-child { grid-column: auto; }
+  .landing-pie__grilla { grid-template-columns: minmax(0, 1fr); gap: var(--e6); }
+  .landing-acciones { width: 100%; }
+  .landing-acciones [app-button] { flex: 1 1 100%; }
+  .landing-formulario__fila { flex-direction: column; }
+  .landing-formulario [app-button] { width: 100%; }
+  .landing-hilo__cierre { gap: var(--e4); }
+  .landing-ventana__cuerpo { grid-template-columns: minmax(0, 1fr); }
+  /* El nav de la ventana pasa a una fila horizontal: en 320 px una columna de
+     116 px se comía la mitad del ancho útil de la vista. */
+  .landing-ventana__nav { flex-direction: row; overflow: hidden; padding: var(--e2); gap: var(--e1); }
+  .landing-ventana__nav span:nth-child(n+4) { display: none; }
+  .landing-cola { position: static; width: 100%; height: auto; margin-top: var(--e4); }
+  .landing-cola__aviso { position: relative; opacity: 1; transform: none; }
+  .landing-cola__aviso:not(.esta-visible) { display: none; }
+  .landing-telefono { width: min(100%, 280px); height: 568px; }
+  .landing-registro__tabla th:nth-child(4), .landing-registro__tabla td:nth-child(4) { display: none; }
+  .landing-registro__tabla th, .landing-registro__tabla td { padding-inline: var(--e4); }
+  .landing-pregunta__cuerpo { padding-right: 0; }
+  .landing-org__hijos { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e1); }
+  .landing-marquesina__grupo { gap: var(--e7); padding-right: var(--e7); }
+}
+
+@media (max-width: 400px) {
+  .landing-seccion, .landing-nav, .landing-hero, .landing-pie { padding-inline: var(--e4); }
+  .landing-marca span { font-size: 19px; }
+  .landing-nav__acciones { gap: var(--e2); }
+  .landing-metrica { padding-left: var(--e4); }
+  .landing-reloj { flex-wrap: wrap; }
+  .landing-reloj__casilla { flex: 1 1 40%; }
+  .landing-fragmento, .landing-convocatoria { padding: var(--e4); }
+  .landing-telefono { width: min(100%, 252px); height: 524px; padding: 9px; border-radius: 34px; }
+  .landing-telefono__pantalla { border-radius: 26px; }
+  .landing-pie__legal { flex-direction: column; gap: var(--e2); }
+  .landing-registro__tabla th:nth-child(3), .landing-registro__tabla td:nth-child(3) { display: none; }
+}
+
+/* --- 25 · Superficie pública de aplicación: buscador y perfiles ---------- *
+   El marco de §8 del brief tiene dos superficies: aplicación (side nav +
+   header + columna de contenido) y pública (`app-auth-split`, la tarjeta de
+   420 px del login). Ninguna de las dos sirve para el buscador: no hay sesión
+   —así que no hay nav ni selector de organización— pero tampoco es un
+   formulario de 420 px, es un catálogo de ancho completo que un desconocido
+   recorre desde el teléfono.
+
+   De ahí la tercera superficie, y sólo la tercera: `app-public-shell`. Es el
+   marco de aplicación al que se le quita la columna petróleo y se le cambia
+   el header por uno de marca. La columna de contenido es la MISMA
+   `app-main__inner` de las otras 116 pantallas —mismo padding, mismos cinco
+   breakpoints, misma aparición por scroll— justamente para no volver a
+   resolver lo ya resuelto.                                                  */
+
+.app-public-shell { min-height: 100vh; display: flex; flex-direction: column; }
+
+.app-public-header {
+  height: var(--h-header); flex: none;
+  background: var(--sup-pagina);
+  border-bottom: 1px solid var(--filete);
+  display: flex; align-items: center; gap: var(--e4);
+  padding: 0 var(--e8);
+  position: sticky; top: 0; z-index: 20;
+}
+.app-public-header__marca {
+  display: inline-flex; align-items: center; gap: var(--e2);
+  font-family: var(--f-titulo); font-weight: 600; font-size: 19px;
+  color: var(--tinta-marca); text-decoration: none; flex: none;
+}
+/* El buscador del header público NO es el buscador de la pantalla: es el que
+   te lleva de un perfil de vuelta a los resultados. Por eso se ensancha más
+   que el de la aplicación —es la acción principal de toda la superficie— y
+   por eso no se colapsa a icono: sin él, un público sin sesión no tiene
+   ninguna otra forma de moverse. */
+.app-public-header__buscador { flex: 1 1 auto; max-width: 520px; min-width: 160px; }
+.app-public-header__acciones { margin-left: auto; display: flex; align-items: center; gap: var(--e2); flex: none; }
+
+.app-public-shell > main { flex: 1; }
+
+/* Pie público: la letra chica obligatoria de la regla 2 del hogar —quién paga
+   lo que ves— y el aviso de que precio y disponibilidad los reporta el
+   prestador. No es decoración: `PAC-MED-012` lo exige por escrito. */
+.app-public-pie {
+  border-top: 1px solid var(--filete);
+  padding: var(--e7) var(--e8) var(--e9);
+  display: flex; flex-wrap: wrap; gap: var(--e6);
+  color: var(--tinta-2); font-size: 13px; line-height: 18px;
+}
+.app-public-pie > * { flex: 1 1 280px; min-width: 0; }
+.app-public-pie strong { display: block; color: var(--tinta); margin-bottom: var(--e1); }
+
+/* --- Resultado de búsqueda ---------------------------------------------- *
+   Una fila de tabla no sirve acá: el resultado de un buscador se lee de un
+   vistazo —quién es, si está verificado, a qué distancia, cuánto cuesta— y
+   esas cuatro cosas no son columnas comparables entre un médico, una farmacia
+   y una aseguradora. La tarjeta es la unidad, y la lista es una `<ul>`.     */
+.app-resultado-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--e3); }
+.app-resultado {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: var(--e4);
+  align-items: start;
+  padding: var(--e5);
+  background: var(--sup-tarjeta);
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-card);
+  box-shadow: var(--sombra-1);
+  transition: border-color var(--mov-rapido) var(--curva), box-shadow var(--mov-medio) var(--curva);
+}
+.app-resultado:hover, .app-resultado:focus-within { border-color: var(--interaccion); box-shadow: var(--sombra-2); }
+.app-resultado__figura {
+  width: 56px; height: 56px; border-radius: var(--r-menu);
+  background: var(--sup-inset); color: var(--petroleo-p);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--f-titulo); font-weight: 600; font-size: 17px; flex: none;
+  box-shadow: inset 0 0 0 1px var(--filete-2);
+}
+.app-resultado__cuerpo { min-width: 0; display: flex; flex-direction: column; gap: var(--e2); }
+.app-resultado__titulo { display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap; }
+.app-resultado__titulo a { font-family: var(--f-titulo); font-weight: 600; font-size: 17px; color: var(--tinta-marca); text-decoration: none; }
+.app-resultado__titulo a:hover { text-decoration: underline; }
+.app-resultado__meta { display: flex; flex-wrap: wrap; gap: var(--e2) var(--e4); color: var(--tinta-2); font-size: 13px; line-height: 18px; }
+.app-resultado__meta > span { display: inline-flex; align-items: center; gap: var(--e1); }
+.app-resultado__sellos { display: flex; flex-wrap: wrap; gap: var(--e2); }
+.app-resultado__lado { display: flex; flex-direction: column; align-items: flex-end; gap: var(--e2); flex: none; text-align: right; }
+.app-resultado__precio { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--tinta); white-space: nowrap; }
+.app-resultado__precio small { display: block; font-weight: 400; font-size: 13px; line-height: 18px; color: var(--tinta-3); }
+
+/* --- Cabecera de perfil público ----------------------------------------- */
+.app-perfil-cabecera {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: var(--e6); align-items: start;
+}
+.app-perfil-cabecera__figura {
+  width: 96px; height: 96px; border-radius: var(--r-card);
+  background: var(--sup-inset); color: var(--petroleo-p);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--f-titulo); font-weight: 600; font-size: 28px; flex: none;
+  box-shadow: inset 0 0 0 1px var(--filete-2);
+}
+.app-perfil-cabecera__texto { min-width: 0; display: flex; flex-direction: column; gap: var(--e3); }
+.app-perfil-cabecera__acciones { margin-left: auto; display: flex; align-items: center; gap: var(--e2); flex: none; }
+.app-perfil-cifras { display: flex; flex-wrap: wrap; gap: var(--e6); }
+.app-perfil-cifras > div { display: flex; flex-direction: column; gap: var(--e1); }
+.app-perfil-cifras dt, .app-perfil-cifras .overline { color: var(--tinta-3); }
+.app-perfil-cifras dd, .app-perfil-cifras strong { margin: 0; font-family: var(--f-titulo); font-weight: 600; font-size: 21px; line-height: 28px; font-variant-numeric: tabular-nums; color: var(--tinta-marca); }
+
+/* --- Declarado vs verificado -------------------------------------------- *
+   `DOC-SOC-005` y `PAC-SOC-002` son la misma regla vista desde los dos lados:
+   el perfil tiene que DIFERENCIAR lo que el profesional declaró de lo que la
+   plataforma verificó. Se resuelve con el filete a la izquierda, no con
+   color: en escala de grises la diferencia se sigue leyendo.               */
+.app-declaracion { display: flex; flex-direction: column; gap: var(--e3); }
+.app-declaracion__item { padding-left: var(--e4); border-left: 3px solid var(--filete); }
+.app-declaracion__item[data-origen="verificado"] { border-left-color: var(--interaccion); }
+.app-declaracion__item dt { font-weight: 600; color: var(--tinta); display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap; }
+.app-declaracion__item dd { margin: var(--e1) 0 0; color: var(--tinta-2); }
+
+/* --- Mapa ---------------------------------------------------------------- *
+   Sin proveedor de mapas: la maqueta dibuja el lienzo y los chinches con SVG
+   propio. `PAC-MED-005` —distancia y ruta— es `NO-ESTRUCTURAL`: depende de un
+   servicio externo, así que acá se muestra el dato pero se rotula como
+   estimado.                                                                 */
+.app-mapa {
+  position: relative; border-radius: var(--r-card); overflow: hidden;
+  background: var(--sup-inset); border: 1px solid var(--filete-2);
+  min-height: 320px; display: block;
+}
+.app-mapa svg { display: block; width: 100%; height: 100%; }
+.app-mapa__nota {
+  position: absolute; left: var(--e4); bottom: var(--e4); right: var(--e4);
+  background: var(--sup-tarjeta); border: 1px solid var(--filete-2); border-radius: var(--r-ctrl);
+  padding: var(--e2) var(--e3); font-size: 13px; line-height: 18px; color: var(--tinta-2);
+  box-shadow: var(--sombra-1);
+}
+
+/* --- Revelación comercial ------------------------------------------------ *
+   Regla 2 del módulo hogar, que acá también manda: cuando hay una relación
+   comercial detrás de un precio o de una posición en la lista, se dice en la
+   pantalla. Va con filete ámbar —el único punto ámbar de estas pantallas— y
+   con la palabra escrita, nunca sólo el color.                              */
+.app-revelacion {
+  display: flex; gap: var(--e3); align-items: flex-start;
+  padding: var(--e3) var(--e4);
+  background: var(--aviso-bg); color: var(--aviso-tinta);
+  border-left: 3px solid var(--ambar); border-radius: var(--r-ctrl);
+  font-size: 13px; line-height: 18px;
+}
+.app-revelacion .icono { flex: none; }
+
+/* --- Cinco breakpoints canónicos, los mismos de §21 --------------------- */
+
+@media (max-width: 1320px) {
+  .app-public-header { padding-inline: var(--e7); }
+  .app-public-pie { padding: var(--e7) var(--e7) var(--e8); }
+}
+
+@media (max-width: 1120px) {
+  .app-public-header__buscador { max-width: 380px; }
+}
+
+@media (max-width: 900px) {
+  .app-public-header { padding-inline: var(--e6); gap: var(--e3); }
+  .app-public-header__buscador { max-width: none; }
+  /* El rótulo de las acciones se va, el control se queda: a 900 px «Crear
+     cuenta» y «Entrar» juntos empujan el buscador por debajo de lo usable. */
+  .app-public-header__acciones [data-solo-ancho] { display: none; }
+  .app-public-pie { padding: var(--e6) var(--e6) var(--e8); gap: var(--e5); }
+  .app-perfil-cabecera { grid-template-columns: 96px minmax(0, 1fr); }
+  /* Las tres acciones de una ficha bajan a su propia fila y envuelven. Medido:
+     sin `wrap`, «Ver sus profesionales · Cómo llegar · Seguir» se desbordaba
+     109 px a 430. Es el ancho intermedio donde ya no hay dos columnas pero
+     todavía no se apilan a ancho completo, y es justo el que no se prueba. */
+  .app-perfil-cabecera__acciones { grid-column: 1 / -1; margin-left: 0; flex-wrap: wrap; }
+  .app-perfil-cabecera__acciones > * { min-width: 0; }
+}
+
+@media (max-width: 640px) {
+  /* El header público pasa a dos filas. Medido: con la marca, el buscador de
+     160 px, el interruptor de tema y las dos acciones de cuenta en una sola
+     fila, a 320 px se desbordaba 90 px. Colapsar el buscador a icono no es
+     salida acá —es el único control de navegación de toda la superficie, y
+     sin sesión no hay nav lateral al que caer—, así que lo que cede es la
+     fila, no el control: marca y acciones arriba, buscador a lo ancho abajo.
+     El alto deja de estar clavado en 64 y pasa a mínimo. */
+  .app-public-header {
+    height: auto; min-height: var(--h-header);
+    flex-wrap: wrap; padding: var(--e2) var(--e5) var(--e3);
+    row-gap: var(--e2);
+  }
+  .app-public-header__marca { order: 1; }
+  .app-public-header__acciones { order: 2; }
+  .app-public-header__buscador { order: 3; flex: 1 0 100%; min-width: 0; max-width: none; }
+  .app-public-header__marca span { display: none; }
+  .app-resultado { grid-template-columns: 44px minmax(0, 1fr); gap: var(--e3); padding: var(--e4); }
+  .app-resultado__figura { width: 44px; height: 44px; font-size: 15px; }
+  /* El precio no se pierde: baja a su propia fila, alineado a la izquierda
+     como el resto de la tarjeta. Ningún dato desaparece sin alternativa. */
+  .app-resultado__lado { grid-column: 1 / -1; align-items: flex-start; text-align: left; flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--e3); }
+  .app-perfil-cabecera { grid-template-columns: 72px minmax(0, 1fr); gap: var(--e4); }
+  .app-perfil-cabecera__figura { width: 72px; height: 72px; font-size: 21px; }
+  .app-perfil-cifras { gap: var(--e5); }
+  .app-mapa { min-height: 260px; }
+  .app-public-pie { flex-direction: column; }
+}
+
+@media (max-width: 400px) {
+  .app-public-header { padding-inline: var(--e3); gap: var(--e2); }
+  .app-public-pie { padding: var(--e5) var(--e4) var(--e7); }
+  .app-perfil-cabecera { grid-template-columns: minmax(0, 1fr); }
+  .app-perfil-cabecera__acciones { flex-direction: column; align-items: stretch; width: 100%; }
+  .app-perfil-cabecera__acciones > * { width: 100%; justify-content: center; }
+  .app-perfil-cifras { gap: var(--e4); }
+}
+
+/* Área táctil de §5.5: el buscador y las acciones del header público son los
+   dos controles que un teléfono toca primero. */
+@media (max-width: 900px) {
+  .app-public-header__acciones [app-button],
+  .app-resultado__titulo a { min-height: 44px; display: inline-flex; align-items: center; }
+}
+
+
+/* --- Puente con la aplicación ------------------------------------------- *
+   Lo único que se agrega a la hoja de la bóveda, y no sale de ella: el fondo
+   que allá llevaba cada archivo en su atributo `style`. */
+
+body {
+  background-image: url("/redsat/imagenes/fondo-vista.svg");
+}

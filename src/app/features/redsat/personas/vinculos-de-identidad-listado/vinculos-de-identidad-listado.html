@@ -1,0 +1,152 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.8 9.5a5.2 5.2 0 0 1 10.4 0v1.8"></path><path d="M9.4 20c-.9-1.9-1.4-3.9-1.4-6a4 4 0 0 1 8 0c0 1.3-.2 2.6-.6 3.8"></path><path d="M12 11.8v3.4c0 1.7.3 3.3.9 4.8"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Personas</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Vínculos de identidad</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Vínculos de identidad</h1></div>
+        <p class="caption">Qué paciente de esta organización es el mismo que el de otra institución, con qué confianza se llegó a esa conclusión y quién la verificó.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/personas/vinculos-de-identidad-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo vínculo de identidad</a>
+      </div>
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Pacientes">
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/pacientes-listado">Pacientes</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Vínculos de identidad</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/resumen-propio-listado">Resumen propio</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/apoderados-de-portal-listado">Apoderados de portal</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/personas-relacionadas-listado">Personas relacionadas</a>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por identificador de origen o por paciente">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-1">Paciente</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-2">Organización de fuente</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-2" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-3">Tipo de vínculo</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-3">
+            <option>Todos</option>
+            <option>Idéntico</option>
+            <option>Probable</option>
+            <option>Posible</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Probable<button type="button" aria-label="Quitar el filtro Probable"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-4">Estado de verificación</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-4">
+            <option>Todos</option>
+            <option>Verificado</option>
+            <option>Pendiente</option>
+            <option>Rechazado</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Verificado<button type="button" aria-label="Quitar el filtro Verificado"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-5">Verificado por</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-5" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Vínculos de identidad — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Paciente</th>
+            <th scope="col">Organización de fuente</th>
+            <th scope="col">Identificador en el origen</th>
+            <th scope="col">URI del sistema de origen</th>
+            <th scope="col">Tipo de vínculo</th>
+            <th scope="col" class="col-num">Puntuación de confianza</th>
+            <th scope="col">Estado de verificación</th>
+            <th scope="col">Verificado por</th>
+            <th scope="col">Fecha de verificación</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">IDL-2026-000318</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Marisol Quispe Ticona</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Hospital San Gabriel</a></td><td class="col-codigo">HSG-4471822</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://fhir.sangabriel.bo/Patient/4471822">https://fhir.sangabriel.bo/Patient/4471822</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.8 9.5a5.2 5.2 0 0 1 10.4 0v1.8"></path><path d="M9.4 20c-.9-1.9-1.4-3.9-1.4-6a4 4 0 0 1 8 0c0 1.3-.2 2.6-.6 3.8"></path><path d="M12 11.8v3.4c0 1.7.3 3.3.9 4.8"></path></svg>Idéntico</span></td><td class="col-num">0,98</td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificado</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Rocío Salazar Vargas</a></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="12/06/2026 10:20">hace 2 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">IDL-2026-000306</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Ariel Mendoza Villarroel</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Laboratorio Illimani</a></td><td class="col-codigo">LI-88214</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://fhir.illimani.bo/Patient/88214">https://fhir.illimani.bo/Patient/88214</span></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.8 9.5a5.2 5.2 0 0 1 10.4 0v1.8"></path><path d="M9.4 20c-.9-1.9-1.4-3.9-1.4-6a4 4 0 0 1 8 0c0 1.3-.2 2.6-.6 3.8"></path><path d="M12 11.8v3.4c0 1.7.3 3.3.9 4.8"></path></svg>Probable</span></td><td class="col-num">0,91</td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificado</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Javier Mamani Quispe</a></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="04/05/2026 16:05">hace 3 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">IDL-2026-000291</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Nayra Condori Mamani</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Farmacorp</a></td><td class="col-codigo">FC-2210934</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://api.farmacorp.bo/fhir/Patient/2210934">https://api.farmacorp.bo/fhir/Patient/2210934</span></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.8 9.5a5.2 5.2 0 0 1 10.4 0v1.8"></path><path d="M9.4 20c-.9-1.9-1.4-3.9-1.4-6a4 4 0 0 1 8 0c0 1.3-.2 2.6-.6 3.8"></path><path d="M12 11.8v3.4c0 1.7.3 3.3.9 4.8"></path></svg>Probable</span></td><td class="col-num">0,84</td><td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Pendiente</span></td><td class="muted" aria-label="Sin dato">—</td><td class="muted" aria-label="Sin dato">—</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">IDL-2026-000287</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Elena Vaca Peredo</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Ciacruz Salud</a></td><td class="col-codigo">CIA-556012</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://fhir.ciacruz.bo/Patient/556012">https://fhir.ciacruz.bo/Patient/556012</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.8 9.5a5.2 5.2 0 0 1 10.4 0v1.8"></path><path d="M9.4 20c-.9-1.9-1.4-3.9-1.4-6a4 4 0 0 1 8 0c0 1.3-.2 2.6-.6 3.8"></path><path d="M12 11.8v3.4c0 1.7.3 3.3.9 4.8"></path></svg>Idéntico</span></td><td class="col-num">0,96</td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificado</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Rocío Salazar Vargas</a></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="18/03/2026 09:40">hace 5 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">IDL-2026-000275</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Rodrigo Ferrufino Áñez</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Hospital San Gabriel</a></td><td class="col-codigo">HSG-4471566</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://fhir.sangabriel.bo/Patient/4471566">https://fhir.sangabriel.bo/Patient/4471566</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.8 9.5a5.2 5.2 0 0 1 10.4 0v1.8"></path><path d="M9.4 20c-.9-1.9-1.4-3.9-1.4-6a4 4 0 0 1 8 0c0 1.3-.2 2.6-.6 3.8"></path><path d="M12 11.8v3.4c0 1.7.3 3.3.9 4.8"></path></svg>Posible</span></td><td class="col-num">0,62</td><td><span class="app-badge" data-tono="error"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Rechazado</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Javier Mamani Quispe</a></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="22/01/2026 11:15">hace 7 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">IDL-2026-000264</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Ignacio Salvatierra Justiniano</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Laboratorio Illimani</a></td><td class="col-codigo">LI-87990</td><td class="muted" aria-label="Sin dato">—</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.8 9.5a5.2 5.2 0 0 1 10.4 0v1.8"></path><path d="M9.4 20c-.9-1.9-1.4-3.9-1.4-6a4 4 0 0 1 8 0c0 1.3-.2 2.6-.6 3.8"></path><path d="M12 11.8v3.4c0 1.7.3 3.3.9 4.8"></path></svg>Posible</span></td><td class="col-num">0,55</td><td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Pendiente</span></td><td class="muted" aria-label="Sin dato">—</td><td class="muted" aria-label="Sin dato">—</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.8 9.5a5.2 5.2 0 0 1 10.4 0v1.8"></path><path d="M9.4 20c-.9-1.9-1.4-3.9-1.4-6a4 4 0 0 1 8 0c0 1.3-.2 2.6-.6 3.8"></path><path d="M12 11.8v3.4c0 1.7.3 3.3.9 4.8"></path></svg></span>
+        <h2>Todavía no hay vínculos de identidad</h2>
+        <p>Un vínculo de identidad dice que el paciente de acá y el paciente de otra institución son la misma persona, con qué puntuación de confianza se llegó a esa conclusión y quién la verificó. Es lo que evita que una historia clínica quede partida en dos.</p>
+        <a app-button="" data-variante="secundario" routerLink="/personas/vinculos-de-identidad-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo vínculo de identidad</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar los vínculos de identidad.</strong>
+            <p>El índice maestro de pacientes no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>
