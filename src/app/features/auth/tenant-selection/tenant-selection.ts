@@ -6,7 +6,6 @@ import { SessionStore } from '../../../core/auth/session.store';
 import { RouterLink } from '@angular/router';
 
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
 
 /**
@@ -23,7 +22,7 @@ import { Link } from '../../../shared/components/atoms/link/link';
  */
 @Component({
   selector: 'app-tenant-selection',
-  imports: [AppButton, Link, RouterLink, AnnounceOnAppear],
+  imports: [Link, RouterLink, AnnounceOnAppear],
   templateUrl: './tenant-selection.html',
   styleUrl: './tenant-selection.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
