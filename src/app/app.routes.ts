@@ -13,7 +13,6 @@ import { ResendVerification } from './features/auth/resend-verification/resend-v
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
-import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
 import { authGuard } from './core/auth/auth.guard';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import {
@@ -382,11 +381,6 @@ function rutasHeredadas(mapa: Readonly<Record<string, string>>): Routes {
 }
 
 export const routes: Routes = [
-  // Las pantallas portadas desde la bóveda, con su propio marco REDSAT. Van
-  // primero y con segmento propio: no compiten con el armazón de abajo, que
-  // vive en `path: ''`, así que ninguna de las dos depende de que el router
-  // retroceda para encontrar a la otra.
-  ...REDSAT_ROUTES,
   {
     // El armazón: header con el usuario, navegación y selector de organización.
     // El guard corre en el padre — S1 del M34: autorizar ANTES de pedir datos —
