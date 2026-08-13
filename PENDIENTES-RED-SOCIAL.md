@@ -3,8 +3,28 @@
 > Qué falta para que la red social (M19 `community`) y su superficie pública (M65 `buscador`)
 > funcionen de punta a punta: backend, workers, infraestructura ya levantada y frontend.
 >
-> **Fecha del relevamiento: 13/08/2026.** Todo lo que dice «hoy» en este documento se midió contra
-> los tres repos y contra los contenedores corriendo ese día, no contra la documentación.
+> **Primer relevamiento: 13/08/2026. Revisado el mismo día, por la tarde.** Todo lo que dice «hoy»
+> se midió contra los tres repos y contra los contenedores corriendo, no contra la documentación.
+>
+> ## ⚠️ Dos de los cinco huecos ya están cerrados
+>
+> Entre el relevamiento de la mañana y esta revisión se fusionaron a `dev` los PR
+> [#62](https://github.com/mdavila-2001/mantra-core-health-api/pull/62) y
+> [#63](https://github.com/mdavila-2001/mantra-core-health-api/pull/63) —**los dos de la misma rama**,
+> `marcelo/m19-community-reads-worker`, uno contra `master` y otro contra `dev`—, obra de Marcelo
+> Dávila. Medido contra `origin/dev`:
+>
+> | Hueco | Estado hoy | Cómo se midió |
+> |---|---|---|
+> | **H1** · cero lecturas | ✅ **cerrado** | **17 `@Get`** en `src/modules/community/controllers/` |
+> | **H3** · sin worker de fan-out | ✅ **cerrado** | `src/worker-community.ts` existe en `dev` |
+> | **H2** · cero superficie pública | ❌ sigue abierto | **0 `@Public()`** en los controladores de `community` |
+> | **H4** · cero integración con la infra | ❌ sigue abierto | 0 archivos mencionan `community` en los **ocho** módulos (`search_platform`, `vector_rag`, `ads`, `geo`, `object_storage`, `messaging`, `telemetry`, `read_models`) |
+> | **H5** · cero frontend | ❌ sigue abierto | 0 archivos con `community` en `src/app` |
+>
+> **Lo que eso cambia en el plan:** F1 y F2 ya no bloquean. El camino crítico pasa a ser
+> **F4 → F6** (superficie pública y buscador) con **F5** en paralelo, y las decisiones **D1** y **D2**
+> siguen sin tomar — y siguen siendo de quien manda en el producto, no de quien programa.
 
 ---
 
@@ -49,9 +69,9 @@ Todo esto está **corriendo hoy** y ningún archivo de `community` lo toca:
 
 | # | Hueco | Evidencia |
 |---|---|---|
-| **H1** | **Cero lecturas.** `grep "@Get(" src/modules/community/controllers/` devuelve **nada**. Se puede escribir un post, un comentario, una reacción y un seguimiento — y no hay forma de leerlos | 17 `@Post`/`@Put`, 0 `@Get` |
+| ~~**H1**~~ | ~~**Cero lecturas.**~~ **Cerrado el 13/08 por la tarde**: hoy hay 17 `@Get` en los controladores de `community` | 17 `@Post`/`@Put`, **17 `@Get`** |
 | **H2** | **Cero superficie pública.** Ningún controlador de `community` lleva `@Public()`. Las 12 pantallas públicas de V65 no tienen endpoint | `@Public()` sólo en `iam-auth`, `public-projections`, webhooks y tracking |
-| **H3** | **Sin worker de fan-out.** El feed no se materializa | No hay `worker-community` |
+| ~~**H3**~~ | ~~**Sin worker de fan-out.**~~ **Cerrado el 13/08 por la tarde**: `src/worker-community.ts` y `src/worker/jobs/community/feed-fanout.job.ts` están en `dev` | `worker-community` existe |
 | **H4** | **Cero integración con la infra levantada.** `grep -rl community` sobre `search_platform`, `vector_rag`, `ads`, `geo`, `object_storage`, `messaging`, `telemetry`, `read_models` → **0 archivos en los ocho** | Medido |
 | **H5** | **Cero frontend.** `grep -rl community src/app/` → **nada**. No hay ruta, ni cliente de datos, ni feature | `core/data-access/` tiene 16 carpetas; ninguna es community |
 
@@ -77,9 +97,12 @@ sin F7 no hay fotos; sin F8 nadie se entera de nada.
 
 ---
 
-## F1 · Backend — las lecturas que no existen
+## F1 · Backend — las lecturas que no existen ✅ HECHO
 
-> Sin esto no hay nada que mostrar. Es el bloqueo raíz.
+> ~~Sin esto no hay nada que mostrar. Es el bloqueo raíz.~~
+>
+> **Cerrado.** Las 17 lecturas están en `dev`. Lo que queda de esta fase es F1.2 (los roles reales
+> de cada endpoint) y F1.3 (lo que el buscador V65 necesita), que dependen de **D1**.
 
 ### F1.1 · Lecturas del grafo social
 
@@ -135,9 +158,12 @@ dice «auth» para 14 de los 17 endpoints, pero eso no está expresado en códig
 
 ---
 
-## F2 · Worker de fan-out del feed
+## F2 · Worker de fan-out del feed ✅ HECHO
 
-> `POST /internal/community/feed/rebuild` existe. El worker que lo ejecuta, no.
+> ~~`POST /internal/community/feed/rebuild` existe. El worker que lo ejecuta, no.~~
+>
+> **Cerrado.** `worker-community` existe con su job de fan-out. Quedan por comprobar en marcha el
+> umbral híbrido (tarea 30) y los jobs 31–34.
 
 | # | Tarea | Archivo |
 |---|---|---|
@@ -346,9 +372,17 @@ Ninguna de estas es una tarea: son bifurcaciones que cambian el trabajo de varia
 | F11 · Pruebas y observabilidad | 7 | — |
 | **Total** | **95 tareas + 7 decisiones** | |
 
-**Lo primero que hay que hacer, en este orden:** resolver **D1** y **D2**, después las 15 lecturas
-de **F1.1**, y en paralelo levantar `worker-community` (**F2.27–F2.29**), que hoy sencillamente no
-existe.
+**Lo primero que hay que hacer, en este orden** (revisado tras el cierre de F1 y F2):
+
+1. **Resolver D1 y D2.** No son tareas: son decisiones de producto, y bloquean F1.2, F1.3, F5 y F8.
+   Nadie puede escribir el decorador de rol de 17 endpoints sin saber si el paciente estrena
+   `PATIENT` o entra como «sesión autenticada».
+2. **F4 · superficie pública** — 0 `@Public()` hoy. Sin esto, las 12 pantallas sin sesión de V65 no
+   tienen a qué llamar, y es además la mayor superficie de ataque del sistema: el rate limit por IP
+   no es opcional.
+3. **F5 y F6 en paralelo** — el frontend sigue en cero: 0 archivos con `community` en `src/app`.
+
+**Lo que ya no bloquea:** F1.1 y F2.27–F2.29.
 
 ---
 
