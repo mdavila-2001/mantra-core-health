@@ -127,6 +127,16 @@
       (cambio)="recargar()"
     />
 
+    <!-- ─── El diagnóstico ───────────────────────────────────────────────
+         Mismo criterio y mismo lugar que la receta: se registra desde el
+         encuentro abierto, y la pestaña de diagnósticos es lectura. Sin lista
+         propia — una condición no tiene acciones que ofrecer por fila. -->
+    <app-diagnosis-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+      (cambio)="recargar()"
+    />
+
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->

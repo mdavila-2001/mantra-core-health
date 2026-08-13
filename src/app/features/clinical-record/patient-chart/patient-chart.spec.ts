@@ -123,13 +123,14 @@ describe('PatientChart', () => {
   });
 
   /**
-   * El bloque de medicación pregunta por su catálogo apenas se crea, y esa
-   * petición aparece en cualquier prueba que llegue a pintar el expediente.
+   * Los bloques de medicación y de diagnóstico preguntan por su catálogo
+   * apenas se crean, y esas peticiones aparecen en cualquier prueba que llegue
+   * a pintar el expediente.
    *
-   * Se responde con el `404` de «sin binding declarado» —el estado real hoy—
-   * para que `verify()` no tropiece con ella. Lo que el bloque hace con esa
-   * respuesta lo fijan sus propias pruebas: acá sólo importa que no se cuele
-   * como una petición huérfana del expediente.
+   * Se responden con el `404` de «sin binding declarado» para que `verify()`
+   * no tropiece con ellas. Lo que cada bloque hace con esa respuesta lo fijan
+   * sus propias pruebas: acá sólo importa que no se cuelen como peticiones
+   * huérfanas del expediente.
    */
   function responderCatalogoDeMedicacion(): void {
     for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
