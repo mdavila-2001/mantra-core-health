@@ -1,0 +1,191 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
+      <div class="app-page-header__texto">
+        <div class="app-page-header__titulo"><h1>Buscá salud cerca tuyo</h1></div>
+        <p class="caption">Profesionales, medicamentos, hospitales, laboratorios y aseguradoras en un solo lugar. No hace falta cuenta para buscar: la cuenta hace falta para pedir turno, seguir a alguien o guardar lo que encontraste.</p>
+      </div>
+
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Qué estás buscando">
+      <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Todo</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/profesionales-listado">Profesionales</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/medicamentos-listado">Medicamentos</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/hospitales-listado">Hospitales y clínicas</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/laboratorios-listado">Laboratorios e imagen</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/aseguradoras-listado">Aseguradoras</a>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá un médico, un remedio, un hospital, un estudio o una aseguradora</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá un médico, un remedio, un hospital, un estudio o una aseguradora">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-ciudad">Dónde</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-ciudad">
+            <option>La Paz</option>
+            <option>El Alto</option>
+            <option>Santa Cruz de la Sierra</option>
+            <option>Cochabamba</option>
+            <option>Sucre</option>
+            <option>Tarija</option>
+            <option>Oruro</option>
+            <option>Potosí</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-distancia">A qué distancia</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-distancia">
+            <option>Hasta 2 km</option>
+            <option>Hasta 5 km</option>
+            <option>Hasta 10 km</option>
+            <option>Toda la ciudad</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-tipo">Qué buscás</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-tipo">
+            <option>Todo</option>
+            <option>Profesionales</option>
+            <option>Medicamentos</option>
+            <option>Hospitales y clínicas</option>
+            <option>Laboratorios e imagen</option>
+            <option>Aseguradoras</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-abierto">Disponibilidad</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-abierto">
+            <option>Cualquiera</option>
+            <option>Abierto ahora</option>
+            <option>Atiende hoy</option>
+            <option>Atiende esta semana</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-orden">Ordenar por</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-orden">
+            <option>Más cerca</option>
+            <option>Mejor calificado</option>
+            <option>Precio más bajo</option>
+            <option>Más disponible</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      </div>
+    </section>
+    <p class="app-revelacion"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"></circle></svg>El orden es por cercanía y calificación. Las fichas pagas van rotuladas «Espacio pagado» y no se mezclan con las demás sin decirlo.</p>
+    <section class="app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <ul class="app-resultado-lista">
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">MQ</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-profesional-detalle">Dra. Marisol Quispe Ticona</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>Profesional</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Sopocachi, La Paz · 1,2 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Clínica Los Olivos</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"></path></svg>4,8 · 312 opiniones</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 12 2 2 4-4"></path></svg>Verificado</span><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Atiende hoy</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="6" width="12" height="12" rx="2.5"></rect><path d="m15 11 6-3.5v9L15 13z"></path></svg>Presencial y virtual</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 250<small>consulta particular</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-profesional-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">FC</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-farmacia-detalle">Farmacia Chávez · Sucursal Miraflores</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M12 8.5v7M8.5 12h7"></path></svg>Farmacia</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Miraflores, La Paz · 0,8 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Abre hasta las 22:00</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Losartán 50 mg disponible</span><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Abierta ahora</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 8 4.3v8.4l-8 4.3-8-4.3V7.8z"></path><path d="m4 7.8 8 4.3 8-4.3"></path><path d="M12 12.1V20.5"></path></svg>Entrega a domicilio</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 34,50<small>caja de 30 comprimidos</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-farmacia-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">LO</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-organizacion-detalle">Clínica Los Olivos</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Hospital</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Sopocachi, La Paz · 1,2 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"></path></svg>4,6 · 1 204 opiniones</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 12 2 2 4-4"></path></svg>Verificado</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>18 especialidades</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Convenio con 4 aseguradoras</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 180<small>consulta desde</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-organizacion-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">LZ</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-laboratorio-detalle">Laboratorio Zamora</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Laboratorio</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>San Miguel, La Paz · 3,4 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Hemograma, perfil lipídico, tiroideo</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Resultados en 24 h</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4 10.5 8-6.5 8 6.5"></path><path d="M6.5 9.5V20h11V9.5"></path></svg>Toma a domicilio</span></p>
+        <p class="app-revelacion"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"></circle></svg>Espacio pagado. La ficha se muestra acá porque el prestador contrató el lugar, no porque el buscador la recomiende.</p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 95<small>hemograma completo</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-laboratorio-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">BC</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-aseguradora-detalle">La Boliviana Ciacruz Seguros</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Aseguradora</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Salud individual, familiar y corporativa</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Cobertura nacional</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 12 2 2 4-4"></path></svg>Verificado</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Red de 96 prestadores</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 420<small>plan familiar desde/mes</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-aseguradora-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">AM</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-profesional-detalle">Dr. Ariel Mendoza Villarroel</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>Profesional</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Calacoto, La Paz · 4,1 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>Pediatría</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"></path></svg>4,9 · 187 opiniones</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 12 2 2 4-4"></path></svg>Verificado</span><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>Próximo turno: jueves</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4 10.5 8-6.5 8 6.5"></path><path d="M6.5 9.5V20h11V9.5"></path></svg>Atiende a domicilio</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 300<small>consulta particular</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-profesional-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      </ul>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">6 de 214 resultados · 25 por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
+        <h2>No encontramos nada con esa búsqueda</h2>
+        <p>Probá con menos palabras, revisá la ortografía del nombre o ampliá la distancia. Si buscabas un medicamento, escribí el principio activo —losartán, metformina— en vez de la marca: así aparecen todas las presentaciones equivalentes.</p>
+        <a app-button="" data-variante="secundario" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Buscando…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos completar la búsqueda de resultados.</strong>
+            <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento; tu búsqueda se mantiene escrita.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

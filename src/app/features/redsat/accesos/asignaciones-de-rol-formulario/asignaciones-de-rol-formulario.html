@@ -1,0 +1,114 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Javier Mamani Quispe</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/accesos/asignaciones-de-rol-listado">Asignaciones de rol</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nueva</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Asignar un rol</h1></div>
+        <p class="caption">Dale a esta persona los permisos de un rol. Acotalo a la sede o al consultorio donde trabaja: es lo que evita que vea pacientes y caja de las otras sedes.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <div class="app-card app-card--inset" app-card="" style="padding:var(--e4);margin-bottom:var(--e6)">
+      <p class="overline">Usuario</p>
+      <p class="num" style="margin-top:var(--e1)">USR-2026-000318</p>
+      <p>Dr. Javier Mamani Quispe <span class="muted">· javier.mamani@losolivos.bo · cuenta activa</span></p>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Rol: esta persona ya tiene una asignación activa de este rol con el mismo alcance.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1">Rol <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-1" type="search" role="combobox" aria-expanded="true" aria-controls="c-1-m" aria-autocomplete="list" aria-describedby="c-1-a" value="enfer" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-1-m" role="listbox" aria-label="Resultados de Rol" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg><span>Enfermería de turno<br><span class="caption muted">NURSE_SHIFT · ámbito sucursal · asignable</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg><span>Personal clínico<br><span class="caption muted">CLINICAL_STAFF · ámbito sucursal · no asignable</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Enfermería de turno <span class="muted">· NURSE_SHIFT</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-1-a">Sólo se ofrecen roles marcados como asignables. Los que existen para que otros hereden de ellos no aparecen acá.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2">Organización</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-2" type="search" aria-describedby="c-2-a" value="los olivos" placeholder="Escribí al menos 3 letras">
+        </span>
+
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Clínica Los Olivos <span class="muted">· clinica-los-olivos</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-2-a">Si el rol es de sistema, la organización decide dónde vale.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3">Sucursal</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-3" type="search" role="combobox" aria-expanded="true" aria-controls="c-3-m" aria-autocomplete="list" aria-describedby="c-3-a" value="sopocachi" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-3-m" role="listbox" aria-label="Resultados de Sucursal" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5S5.5 14.6 5.5 10a6.5 6.5 0 1 1 13 0c0 4.6-6.5 10.5-6.5 10.5z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span>Sede Central Sopocachi<br><span class="caption muted">olivos-central · activa</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5S5.5 14.6 5.5 10a6.5 6.5 0 1 1 13 0c0 4.6-6.5 10.5-6.5 10.5z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span>Sucursal Miraflores<br><span class="caption muted">olivos-miraflores · activa</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5S5.5 14.6 5.5 10a6.5 6.5 0 1 1 13 0c0 4.6-6.5 10.5-6.5 10.5z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span>Sucursal El Alto<br><span class="caption muted">olivos-el-alto · activa</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Sede Central Sopocachi <span class="muted">· olivos-central</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-3-a">Sólo se ofrecen sedes de la organización activa. Vacío hace valer el rol en toda la organización.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-4">Consultorio</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-4" type="search" aria-describedby="c-4-a" value="" placeholder="Escribí al menos 3 letras">
+        </span>
+
+
+        <p class="app-form-field__ayuda" id="c-4-a">Acota todavía más: el rol vale sólo dentro de ese consultorio. Vacío alcanza a toda la sede.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-5">Vigente desde</label>
+        <div style="display:flex;gap:var(--e3);align-items:center;flex-wrap:wrap">
+          <span class="app-date-picker" app-date-picker="">
+            <input class="app-date-picker__input" id="c-5" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" value="12/08/2026" aria-describedby="c-5-a">
+            <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+          </span>
+          <input class="app-input num" app-input="" id="c-5-h" type="time" value="08:00" aria-label="Vigente desde · hora">
+          <span class="caption muted">America/La_Paz · UTC−4</span>
+        </div>
+        <p class="app-form-field__ayuda" id="c-5-a">Vacío arranca al guardar.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-6">Vigente hasta</label>
+        <div style="display:flex;gap:var(--e3);align-items:center;flex-wrap:wrap">
+          <span class="app-date-picker" app-date-picker="">
+            <input class="app-date-picker__input" id="c-6" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" value="" aria-describedby="c-6-a">
+            <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+          </span>
+          <input class="app-input num" app-input="" id="c-6-h" type="time" value="" aria-label="Vigente hasta · hora">
+          <span class="caption muted">America/La_Paz · UTC−4</span>
+        </div>
+        <p class="app-form-field__ayuda" id="c-6-a">Vacío deja la asignación abierta. Poné un fin en los reemplazos y las guardias: se cierran solos.</p>      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/accesos/asignaciones-de-rol-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Asignar el rol</button>
+      </div>
+    </form>

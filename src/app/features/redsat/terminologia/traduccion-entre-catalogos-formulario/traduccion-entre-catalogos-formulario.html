@@ -1,0 +1,84 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 1 0-5.7-5.7L11.5 6.8"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 1 0 11 18.7l1.4-1.4"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Traducción entre catálogos</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Traducción entre catálogos</h1></div>
+        <p class="caption">Establecé la correspondencia entre un concepto de un sistema y otro de otro sistema. Si dejás el destino vacío, la pantalla sólo consulta: devuelve todas las traducciones activas del concepto de origen.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Concepto de destino: ya existe un mapeo entre esos dos conceptos para el mismo contexto y versión.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-106">Concepto de origen <span class="req">· obligatorio</span></label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-106" required="" aria-describedby="c-106-a">
+            <option>Elegí un concepto</option>
+            <option>Presión arterial sistólica · 8480-6 (LOINC)</option>
+            <option>Frecuencia cardíaca · 8867-4 (LOINC)</option>
+            <option>Neumonía, microorganismo no especificado · J18.9 (CIE-10)</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-106-a">Las opciones salen del catálogo de terminología: se guarda el concepto, nunca el texto escrito. Tiene que estar activo.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-107">Concepto de destino</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-107" aria-describedby="c-107-a">
+            <option>Sin destino · sólo consultar</option>
+            <option>Presión sistólica · 271649006 (SNOMED CT)</option>
+            <option>Presión arterial · 85354-9 (LOINC)</option>
+            <option>Neumonía · 233604007 (SNOMED CT)</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-107-a">Si lo dejás sin destino, la llamada no escribe nada y devuelve las traducciones activas del origen.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-108">Equivalencia</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-108" aria-describedby="c-108-a">
+            <option>Elegí una equivalencia</option>
+            <option>Equivalente</option>
+            <option>Más amplio</option>
+            <option>Más específico</option>
+            <option>Inexacto</option>
+            <option>Sin correspondencia</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-108-a">Obligatoria cuando estás curando un mapeo, es decir cuando elegiste un concepto de destino.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-109">Contexto</label>
+        <textarea class="app-textarea" app-textarea="" id="c-109" rows="3" aria-describedby="c-109-a" placeholder="Informe de laboratorio derivado al sistema nacional de vigilancia."></textarea>
+        <p class="app-form-field__ayuda" id="c-109-a">En qué situación vale este mapeo. Hasta 255 caracteres.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-110">Versión</label>
+        <input class="app-input" app-input="" id="c-110" type="text" aria-describedby="c-110-a" value="" placeholder="2026.1">
+        <p class="app-form-field__ayuda" id="c-110-a">Versión del mapeo. Hasta 50 caracteres.</p>
+      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/conceptos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+    </form>

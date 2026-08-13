@@ -35,6 +35,16 @@ export const THEME_STORAGE_KEY = 'mantra-core-health.theme';
 const THEME_ATTRIBUTE = 'data-theme';
 const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)';
 
+/**
+ * Segundo atributo, para la hoja normativa de la bóveda (src/styles/redsat.css).
+ * REDSAT resuelve el tema oscuro SOLO contra un atributo explícito: no tiene
+ * respaldo en `@media (prefers-color-scheme)`. Por eso este atributo se estampa
+ * siempre —incluso en 'system'— con el tema YA RESUELTO, mientras `data-theme`
+ * conserva intacto su contrato de tres estados. Espejo en index.html.
+ */
+const REDSAT_THEME_ATTRIBUTE = 'data-tema';
+const REDSAT_THEME_VALUE: Record<ResolvedTheme, string> = { light: 'claro', dark: 'oscuro' };
+
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly document = inject(DOCUMENT);
@@ -65,6 +75,7 @@ export class ThemeService {
     }
 
     effect(() => this.applyPreference(this.preference()));
+    effect(() => this.applyRedsatTheme(this.resolvedTheme()));
   }
 
   setTheme(mode: ThemeMode): void {
@@ -96,6 +107,21 @@ export class ThemeService {
       root.setAttribute(THEME_ATTRIBUTE, mode);
     }
     this.persistPreference(mode);
+  }
+
+  /**
+   * A diferencia de `data-theme`, este atributo no tiene estado 'system': se
+   * estampa el tema resuelto, porque la hoja de REDSAT no sabe leer la
+   * preferencia del sistema por su cuenta.
+   */
+  private applyRedsatTheme(resolved: ResolvedTheme): void {
+    if (!this.isBrowser) {
+      return;
+    }
+    this.document.documentElement.setAttribute(
+      REDSAT_THEME_ATTRIBUTE,
+      REDSAT_THEME_VALUE[resolved],
+    );
   }
 
   private watchSystemPreference(): void {

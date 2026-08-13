@@ -1,0 +1,186 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 4H6.5a2 2 0 0 0-2 2v4L3 12l1.5 2v4a2 2 0 0 0 2 2H8"></path><path d="M16 4h1.5a2 2 0 0 1 2 2v4l1.5 2-1.5 2v4a2 2 0 0 1-2 2H16"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Sistemas de códigos</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Sistemas de códigos</h1></div>
+        <p class="caption">Los catálogos de códigos que la plataforma reconoce —LOINC, SNOMED CT, CIE-10 y los nomencladores nacionales— con su URL canónica, su OID y el estado de cada uno.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/terminologia/sistemas-de-codigos-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
+      </div>
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Sistemas de códigos">
+    <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Sistemas de códigos</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/terminologia/versiones-de-sistema-listado">Versiones</a>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por código interno o nombre">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-1">Fuente</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-2">Tipo de contenido</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-2">
+            <option>Todas</option>
+            <option>Completo</option>
+            <option>Fragmento</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Completo<button type="button" aria-label="Quitar el filtro Completo"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="f-3-l">Distingue mayúsculas</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="f-3-l">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Sólo los que distinguen</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="f-4-l">Admite composición</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="f-4-l">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Sólo los que la admiten</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-5">Estado</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-5">
+            <option>Todas</option>
+            <option>Activo</option>
+            <option>Borrador</option>
+            <option>Retirado</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Activo<button type="button" aria-label="Quitar el filtro Activo"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Sistemas de códigos — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Fuente</th>
+            <th scope="col">Código interno</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">URL canónica</th>
+            <th scope="col">OID</th>
+            <th scope="col">Tipo de contenido</th>
+            <th scope="col">Distingue mayúsculas</th>
+            <th scope="col">Admite composición</th>
+            <th scope="col">Estado</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">SCO-2026-000112</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Regenstrief Institute</a></td><td class="col-codigo">loinc</td><td>LOINC</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://loinc.org">https://loinc.org</span></td><td class="col-codigo">2.16.840.1.113883.6.1</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Completo</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Sí</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-1" aria-label="Acciones sobre SCO-2026-000112"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-1" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-de-sistema-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar la URL canónica</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">SCO-2026-000108</td><td><a app-link="" aria-disabled="true" data-sin-destino="">SNOMED International</a></td><td class="col-codigo">snomed-ct</td><td>SNOMED CT</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://snomed.info/sct">https://snomed.info/sct</span></td><td class="col-codigo">2.16.840.1.113883.6.96</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Completo</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Sí</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-2" aria-label="Acciones sobre SCO-2026-000108"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-2" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-de-sistema-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar la URL canónica</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">SCO-2026-000097</td><td><a app-link="" aria-disabled="true" data-sin-destino="">OPS/OMS</a></td><td class="col-codigo">cie-10</td><td>CIE-10</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://hl7.org/fhir/sid/icd-10">https://hl7.org/fhir/…/icd-10</span></td><td class="col-codigo">2.16.840.1.113883.6.3</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Completo</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-3" aria-label="Acciones sobre SCO-2026-000097"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-3" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-de-sistema-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar la URL canónica</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">SCO-2026-000085</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Ministerio de Salud y Deportes</a></td><td class="col-codigo">nomenclador-bo</td><td>Nomenclador nacional de prestaciones</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://terminologia.minsalud.gob.bo/CodeSystem/nomenclador">https://terminologia.minsalud…</span></td><td class="muted" aria-label="Sin dato">—</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Fragmento</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-4" aria-label="Acciones sobre SCO-2026-000085"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-4" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-de-sistema-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar la URL canónica</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">SCO-2026-000071</td><td><a app-link="" aria-disabled="true" data-sin-destino="">AGEMED</a></td><td class="col-codigo">lnme-bo</td><td>Lista nacional de medicamentos esenciales</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://terminologia.minsalud.gob.bo/CodeSystem/lnme">https://terminologia.minsalud…</span></td><td class="muted" aria-label="Sin dato">—</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Completo</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Borrador</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-5" aria-label="Acciones sobre SCO-2026-000071"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-5" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-de-sistema-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar la URL canónica</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">SCO-2026-000060</td><td><a app-link="" aria-disabled="true" data-sin-destino="">OPS/OMS</a></td><td class="col-codigo">cie-o-3</td><td>CIE-O-3 · morfología tumoral</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://terminology.hl7.org/CodeSystem/icd-o-3">https://terminology.hl7.org/…</span></td><td class="col-codigo">2.16.840.1.113883.6.43.1</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Fragmento</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4" width="17" height="4" rx="1.5"></rect><path d="M5.5 8v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg>Retirado</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-6" aria-label="Acciones sobre SCO-2026-000060"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-6" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-de-sistema-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar la URL canónica</a>
+          </div>
+        </div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 4H6.5a2 2 0 0 0-2 2v4L3 12l1.5 2v4a2 2 0 0 0 2 2H8"></path><path d="M16 4h1.5a2 2 0 0 1 2 2v4l1.5 2-1.5 2v4a2 2 0 0 1-2 2H16"></path></svg></span>
+        <h2>Todavía no hay sistemas de códigos</h2>
+        <p>Un sistema de códigos es el catálogo del que salen los códigos clínicos: LOINC para los estudios, CIE-10 para los diagnósticos, el nomenclador nacional para las prestaciones. Sin al menos uno cargado, no hay conceptos que expandir ni traducir.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/sistemas-de-codigos-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar los sistemas de códigos.</strong>
+            <p>La organización activa no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

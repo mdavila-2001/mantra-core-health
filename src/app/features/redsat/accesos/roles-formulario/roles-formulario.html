@@ -1,0 +1,183 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/accesos/roles-listado">Roles</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nuevo</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nuevo rol</h1></div>
+        <p class="caption">Componé un rol a partir de otro o desde cero. El rol nace sin permisos: se los asignás después, desde su pestaña.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <div class="app-view-state-host" app-view-state-host="" style="display:flex;flex-direction:column;gap:var(--e7)">
+      <div data-estado="paso1">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>1 · Identidad</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>2 · Herencia y ámbito</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>3 · Comportamiento</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="33" aria-label="Avance del formulario: paso 1 de 3">
+          <span class="app-progress__relleno" style="width:33%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 1 de 3 · <strong>Identidad</strong></span>
+          <span class="caption muted num">33% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de continuar.</strong>
+          <ul>
+            <li>Código: ya existe un rol con este código en la organización.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1">Código <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-1" type="text" required="" value="NURSE_SHIFT" placeholder="NURSE_SHIFT" aria-describedby="c-1-a">
+        <p class="app-form-field__ayuda" id="c-1-a">Hasta 100 caracteres. Mayúsculas y guion bajo. Es único y no se edita después: es lo que el backend compara.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2">Nombre <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-2" type="text" required="" value="Enfermería de turno" placeholder="Enfermería de turno" aria-describedby="c-2-a">
+        <p class="app-form-field__ayuda" id="c-2-a">Hasta 200 caracteres. Nombrá el puesto como se lo nombra en la clínica.</p>      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Nada se guarda hasta el último paso.</p>
+        <a app-button="" data-variante="secundario" routerLink="/accesos/roles-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <a app-button="" data-variante="primario" routerLink="." [queryParams]="{ estado: 'paso2' }">Continuar<svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a>
+          </div>
+        </form>
+      </div>
+      <div data-estado="paso2" hidden="">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>1 · Identidad</span><hr class="app-divider" aria-hidden="true"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>2 · Herencia y ámbito</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>3 · Comportamiento</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="67" aria-label="Avance del formulario: paso 2 de 3">
+          <span class="app-progress__relleno" style="width:67%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 2 de 3 · <strong>Herencia y ámbito</strong></span>
+          <span class="caption muted num">67% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de continuar.</strong>
+          <ul>
+            <li>Código: ya existe un rol con este código en la organización.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3">Organización propietaria</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-3" type="search" role="combobox" aria-expanded="true" aria-controls="c-3-m" aria-autocomplete="list" aria-describedby="c-3-a" value="los olivos" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-3-m" role="listbox" aria-label="Resultados de Organización propietaria" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg><span>Clínica Los Olivos<br><span class="caption muted">clinica-los-olivos · La Paz · activa</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg><span>Hospital San Gabriel<br><span class="caption muted">hospital-san-gabriel · La Paz · activa</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Clínica Los Olivos <span class="muted">· clinica-los-olivos</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-3-a">Dejalo vacío sólo si estás creando un rol de sistema, compartido por toda la plataforma.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-4">Rol padre</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-4" type="search" role="combobox" aria-expanded="true" aria-controls="c-4-m" aria-autocomplete="list" aria-describedby="c-4-a" value="personal" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-4-m" role="listbox" aria-label="Resultados de Rol padre" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg><span>Personal clínico<br><span class="caption muted">CLINICAL_STAFF · ámbito sucursal</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg><span>Recepción<br><span class="caption muted">FRONT_DESK · ámbito sucursal</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Personal clínico <span class="muted">· CLINICAL_STAFF</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-4-a">El rol hereda todo lo que el padre permite. Lo que el padre deniega no se recupera acá: denegar siempre gana.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-5-l">Rol base</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-5-l" aria-describedby="c-5-a">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-5" checked="">Clínico</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-5">Administrativo</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-5">Personal</label>
+        </div>
+        <p class="app-form-field__ayuda" id="c-5-a">Es la familia a la que pertenece. Ordena las pantallas y no cambia lo que el rol puede hacer.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-6-l">Ámbito</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-6-l" aria-describedby="c-6-a">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-6">Propio</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-6" checked="">Sucursal</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-6">Organización</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-6">Global</label>
+        </div>
+        <p class="app-form-field__ayuda" id="c-6-a">Hasta dónde alcanzan sus permisos cuando el permiso no dice otra cosa.</p>      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Nada se guarda hasta el último paso.</p>
+        <a app-button="" data-variante="secundario" routerLink="." [queryParams]="{ estado: 'paso1' }"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Atrás</a>
+        <a app-button="" data-variante="primario" routerLink="." [queryParams]="{ estado: 'paso3' }">Continuar<svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a>
+          </div>
+        </form>
+      </div>
+      <div data-estado="paso3" hidden="">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>1 · Identidad</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>2 · Herencia y ámbito</span><hr class="app-divider" aria-hidden="true"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>3 · Comportamiento</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-label="Avance del formulario: paso 3 de 3">
+          <span class="app-progress__relleno" style="width:100%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 3 de 3 · <strong>Comportamiento</strong></span>
+          <span class="caption muted num">100% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de continuar.</strong>
+          <ul>
+            <li>Código: ya existe un rol con este código en la organización.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-7-l">Rol de sistema</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-7-l" aria-describedby="c-7-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Vale en toda la plataforma, sin organización propietaria</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-7-a">Si lo activás, dejá vacía la organización propietaria: un rol de sistema no pertenece a ninguna.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-8-l">Asignable a usuarios</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-8-l" checked="" aria-describedby="c-8-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Puede asignarse directamente a una persona</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-8-a">Apagalo en los roles que existen sólo para que otros hereden de ellos.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-9">Prioridad</label>
+        <input class="app-input num" app-input="" id="c-9" type="number" value="180" aria-describedby="c-9-a">
+        <p class="app-form-field__ayuda" id="c-9-a">Desempata cuando alguien tiene varios roles. Mayor prioridad manda; denegar sigue prevaleciendo sobre permitir.</p>      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="." [queryParams]="{ estado: 'paso2' }"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Atrás</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Crear el rol</button>
+          </div>
+        </form>
+      </div>
+    </div>

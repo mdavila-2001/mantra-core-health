@@ -1,0 +1,55 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4" width="17" height="4" rx="1.5"></rect><path d="M5.5 8v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/terminologia/conceptos-listado">Conceptos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Retirar</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Retirar un concepto</h1></div>
+        <p class="caption muted num">CPT-2026-017998 · Temperatura corporal · 8310-5</p>
+        <p class="caption">El concepto deja de estar disponible y sale de toda expansión. No se borra: queda retirado, con su fecha de fin y su historial intactos. Retirarlo dos veces no cambia nada.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Conceptos">
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/terminologia/conceptos-listado">Conceptos</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/terminologia/designaciones-listado">Designaciones</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/terminologia/propiedades-listado">Propiedades</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/terminologia/relaciones-listado">Relaciones</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Retiro de conceptos</a>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Concepto que lo sustituye: el concepto elegido está retirado.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-98">Concepto que lo sustituye</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-98" aria-describedby="c-98-a">
+            <option>Sin reemplazo</option>
+            <option>Temperatura corporal · 8310-5 (v2.78)</option>
+            <option>Temperatura timpánica · 8331-1</option>
+            <option>Temperatura axilar · 8328-7</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-98-a">Tiene que estar activo. Si lo dejás en «Sin reemplazo», el concepto se retira sin apuntar a ningún otro.</p>
+      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/conceptos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Retirar el concepto</button>
+      </div>
+    </form>

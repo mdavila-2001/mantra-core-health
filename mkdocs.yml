@@ -139,6 +139,7 @@ nav:
       - Diseño adaptable: design-system/responsive-design.md
       - Movimiento: design-system/motion.md
       - Íconos: design-system/icons.md
+      - Port de las vistas de la bóveda: design-system/port-redsat.md
 
   - Datos y estado:
       - Estado de servidor: data-and-state/server-state.md

@@ -1,0 +1,109 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Consulta de concepto</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Consulta de concepto</h1></div>
+        <p class="caption">Resolvé un código contra su sistema: devuelve el concepto, en qué versión vive y en qué estado está.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Consultar</a>
+      </div>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Parámetros de la consulta">
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-104">Sistema <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="f-104" type="url" required="" value="https://loinc.org" placeholder="https://loinc.org" aria-describedby="f-104-a">
+        <p class="app-form-field__ayuda" id="f-104-a">URL canónica del sistema de códigos.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-105">Código <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="f-105" type="text" required="" value="8867-4" placeholder="8867-4" aria-describedby="f-105-a">
+        <p class="app-form-field__ayuda" id="f-105-a">Código tal como figura dentro de ese sistema.</p>
+      </div>
+      </div>
+      <div class="app-filter-bar__pie">
+        <p class="caption muted">La consulta no corre hasta que los dos campos estén completos.</p>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Consulta de concepto — 2 resultados</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Denominación</th>
+            <th scope="col">Versión del sistema de códigos</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Última actualización</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">CPT-2026-018224</td><td><a app-link="" routerLink="/terminologia/conceptos-listado">Frecuencia cardíaca</a></td><td class="col-codigo">LOINC · 2.78</td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="15/02/2026 08:00">hace 6 meses</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-56" aria-label="Acciones sobre CPT-2026-018224"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-56" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/designaciones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3.5 12h17"></path><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>Ver las designaciones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar el código</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">CPT-2026-017842</td><td><a app-link="" routerLink="/terminologia/conceptos-listado">Frecuencia cardíaca</a></td><td class="col-codigo">LOINC · 2.77</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4" width="17" height="4" rx="1.5"></rect><path d="M5.5 8v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg>Retirado</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="14/02/2026 23:59">hace 6 meses</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-57" aria-label="Acciones sobre CPT-2026-017842"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-57" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/designaciones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3.5 12h17"></path><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>Ver las designaciones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar el código</a>
+          </div>
+        </div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="inicial" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
+        <h2>Empezá por los dos parámetros</h2>
+        <p>Esta consulta resuelve un concepto puntual: cargá la URL canónica del sistema —por ejemplo https://loinc.org— y el código dentro de ese sistema. Hasta entonces no se consulta nada.</p>
+      </div>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
+        <h2>Ningún concepto responde a esos parámetros</h2>
+        <p>Revisá que la URL del sistema sea la canónica y no la de la documentación, y que el código esté escrito tal cual figura en el catálogo. También puede ser que el concepto sólo exista en una versión que todavía no se publicó.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/consulta-de-concepto-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Limpiar los parámetros</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos resolver el concepto.</strong>
+            <p>El servicio de terminología no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>
