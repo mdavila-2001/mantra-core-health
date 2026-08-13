@@ -238,7 +238,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
-    path: 'accounting',
+    path: 'administration/accounting',
     label: 'Contabilidad',
     group: 'Facturación',
     icon: 'billing',
