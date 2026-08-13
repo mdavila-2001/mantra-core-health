@@ -117,7 +117,6 @@ export class SideNav {
    */
   protected readonly rutaActiva = computed<string | null>(() => {
     const url = this.urlActual();
-    // eslint-disable-next-line no-console
     if (url === '') {
       return null;
     }

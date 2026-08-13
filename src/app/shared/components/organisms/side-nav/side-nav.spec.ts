@@ -122,8 +122,7 @@ describe('SideNav', () => {
     it('marca el activo con aria-current="page"', async () => {
       await fixture.whenStable();
 
-      // eslint-disable-next-line no-console
-      const activos = enlaces().filter((link) => link.getAttribute('aria-current') === 'page');
+        const activos = enlaces().filter((link) => link.getAttribute('aria-current') === 'page');
       expect(activos).toHaveLength(1);
       expect(activos[0].getAttribute('href')).toBe('/');
     });

@@ -1,0 +1,82 @@
+/* ============================================================================
+    Ficha de organización — V04-06·L, V04-02·L y V04-07·L.
+
+    Sólo la ficha de ámbito y los dos textos de celda: todo lo demás lo ponen
+    los organismos del banco. Ni un color, ni un radio, ni un espaciado que no
+    salga de los tokens.
+    ========================================================================== */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+/* Ficha compacta del registro cuyo id gobierna las tres pestañas. Fondo inset
+   —no tarjeta blanca— para que se lea como ámbito y no como una sección más. */
+.organizacion__ambito {
+  padding: var(--space-6);
+  background: var(--surface-inset);
+  border: 1px solid var(--hairline-2);
+  border-radius: var(--radius-card);
+}
+
+.organizacion__ambito--error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-5);
+  background: var(--status-error-bg);
+  color: var(--status-error-ink);
+  border-color: transparent;
+}
+
+.organizacion__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-5);
+  margin: 0;
+}
+
+.organizacion__datos dt {
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--ink-3);
+}
+
+.organizacion__datos dd {
+  margin: var(--space-1) 0 0;
+  color: var(--ink-1);
+}
+
+/* Cifras tabulares en todo código: es lo que deja comparar dos filas de un
+   vistazo sin que los dígitos bailen. */
+.organizacion__codigo {
+  font-variant-numeric: tabular-nums;
+}
+
+.organizacion__cargando {
+  color: var(--ink-3);
+}
+
+/* Segunda línea de una celda: el dato que acompaña sin competir. */
+.organizacion__nombre {
+  display: block;
+  font-weight: var(--font-weight-medium);
+}
+
+.organizacion__secundario {
+  display: block;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  color: var(--ink-3);
+}
+
+/* La nota que explica por qué esa tabla no tiene pie de paginación. */
+.organizacion__nota {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  color: var(--ink-3);
+}
