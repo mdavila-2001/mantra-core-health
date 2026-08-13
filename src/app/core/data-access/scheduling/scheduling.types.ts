@@ -201,6 +201,24 @@ export interface BookingCancelled {
   readonly capacityReleased: boolean;
 }
 
+/**
+ * Reprogramación de una cita (UC-41-08): moverla a otro cupo sin cancelarla.
+ *
+ * No es una transición de estado: el backend libera el cupo viejo, ocupa el
+ * nuevo y la cita queda como estaba (confirmada o con llegada). Sólo se
+ * reprograma una cita vigente; lo demás responde 422.
+ */
+export interface BookingReschedule {
+  readonly toSlotId: string;
+  readonly reasonText?: string;
+}
+
+export interface BookingRescheduled {
+  readonly bookingId: string;
+  readonly fromSlotId: string;
+  readonly toSlotId: string;
+}
+
 /** Resultado del check-in (UC-41-10). */
 export interface BookingCheckedIn {
   readonly bookingId: string;

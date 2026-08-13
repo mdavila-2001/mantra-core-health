@@ -71,6 +71,19 @@ const CODIGOS_CANCELABLES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Los códigos de estado en los que el backend acepta **reprogramar** una
+ * reserva. Es una lista propia y más corta que la de cancelar, y la
+ * diferencia no es un descuido: el backend sólo reprograma una cita
+ * *vigente* —confirmada o con llegada—, así que una solicitada o pendiente
+ * de confirmación se puede cancelar pero **no** mover. Verificado contra el
+ * código del endpoint y contra la API viva (2026-08-12).
+ */
+const CODIGOS_REPROGRAMABLES: ReadonlySet<string> = new Set([
+  'BOOKING_CONFIRMED',
+  'BOOKING_CHECKED_IN',
+]);
+
+/**
  * El sufijo del código, sin el prefijo de módulo.
  *
  * El catálogo no es consistente (`BOOKING_CONFIRMED` vs
@@ -184,6 +197,22 @@ export class Appointments {
 
   /** El turno que se está cancelando, para el `[isLoading]` del botón. `null` = ninguno. */
   protected readonly operando = signal<string | null>(null);
+
+  /**
+   * El turno que se está por mover, si hay uno. Mientras no sea `null`, la
+   * grilla de horarios deja de ofrecer «pedir un turno nuevo» y ofrece «mover
+   * acá»: el mismo clic no puede significar dos cosas a la vez.
+   */
+  protected readonly reprogramando = signal<string | null>(null);
+
+  /** El turno origen de la reprogramación, ya resuelto para nombrarlo. */
+  protected readonly turnoEnReprogramacion = computed<TurnoVisible | null>(() => {
+    const id = this.reprogramando();
+    if (id === null) {
+      return null;
+    }
+    return this.turnosListos().find((turno) => turno.id === id) ?? null;
+  });
 
   /* ---- pedir un turno ----------------------------------------------------- */
 
@@ -440,10 +469,126 @@ export class Appointments {
     );
   }
 
-  /** Relee lo que la cancelación cambió: los turnos y los horarios ofrecidos. */
+  /** Relee lo que la operación cambió: los turnos y los horarios ofrecidos. */
   private recargar(): void {
     this.cargarTurnos();
     this.cargarHorarios();
+  }
+
+  /* ---- reprogramar -------------------------------------------------------- */
+
+  /**
+   * Si el turno admite moverse a otro horario.
+   *
+   * Allowlist **propia**, no la de cancelar: el backend sólo reprograma una
+   * cita vigente (confirmada o con llegada). Una solicitada o pendiente se
+   * puede cancelar pero no mover.
+   */
+  protected esReprogramable(turno: TurnoVisible): boolean {
+    return turno.codigo !== '' && CODIGOS_REPROGRAMABLES.has(sufijoDeCodigo(turno.codigo));
+  }
+
+  /**
+   * Entra al modo reprogramación: la grilla de horarios que ya existe pasa a
+   * ofrecer «mover acá» en vez de «pedir este horario».
+   *
+   * Se preselecciona la agenda del turno para que lo primero que se vea sean
+   * sus propios horarios; el selector sigue disponible para mirar otra.
+   */
+  protected iniciarReprogramacion(turno: TurnoVisible): void {
+    if (this.operando() !== null) {
+      return;
+    }
+
+    this.reprogramando.set(turno.id);
+    if (turno.resourceId !== '' && this.recursoElegido() !== turno.resourceId) {
+      this.elegirRecurso(turno.resourceId);
+    }
+  }
+
+  /** Sale del modo reprogramación sin tocar nada. */
+  protected cancelarReprogramacion(): void {
+    this.reprogramando.set(null);
+  }
+
+  /**
+   * Mueve el turno en reprogramación al horario elegido, con confirmación que
+   * nombra origen y destino. Un solo POST: el backend libera el cupo viejo y
+   * ocupa el nuevo en la misma operación; el estado de la cita no cambia.
+   */
+  protected async reprogramarA(horario: HorarioVisible): Promise<void> {
+    const origenId = this.reprogramando();
+    if (origenId === null || this.operando() !== null) {
+      return;
+    }
+
+    const origen = this.turnoEnReprogramacion();
+    const confirmado = await this.dialogs.confirm({
+      title: 'Mover el turno',
+      message: `Vas a mover ${origen === null ? 'este turno' : this.nombreDelTurno(origen)} al ${this.nombreDelHorario(horario)}. El horario anterior queda libre.`,
+      confirmLabel: 'Mover el turno',
+      cancelLabel: 'Volver',
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    this.operando.set(origenId);
+    this.scheduling.rescheduleBooking(origenId, { toSlotId: horario.id }).subscribe({
+      next: () => {
+        this.operando.set(null);
+        this.reprogramando.set(null);
+        this.toast.success('Movimos tu turno al horario nuevo.', 'Turno reprogramado');
+        // El servidor es la verdad: la lista muestra la hora nueva y el cupo
+        // viejo vuelve a ofrecerse releyendo, no restando a mano.
+        this.recargar();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFalloReprogramacion(error);
+      },
+    });
+  }
+
+  /** Cómo nombrar el horario destino en la confirmación. */
+  private nombreDelHorario(horario: HorarioVisible): string {
+    return this.fecha.transform(horario.desde, "EEEE d 'de' MMM 'a las' HH:mm") ?? 'horario elegido';
+  }
+
+  /**
+   * Traduce el fallo de reprogramar a un aviso, con el mismo criterio que la
+   * cancelación: lo esperado no es rojo.
+   *
+   * - **409 `CONFLICT`**: el cupo destino se ocupó mientras se decidía. Se
+   *   avisa y se relee —la grilla estaba vieja—, y el modo queda activo para
+   *   elegir otro horario.
+   * - **422 / precondición**: la cita dejó de estar vigente (p. ej. se canceló
+   *   desde otra sesión). Se avisa, se sale del modo y se relee.
+   * - Cualquier otro fallo sigue el patrón del repo, sin destruir la lista.
+   */
+  private avisarFalloReprogramacion(error: unknown): void {
+    const estado = errorToViewState<null>(error);
+    const codigos =
+      estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
+
+    if (codigos.includes('CONFLICT')) {
+      this.toast.info('Ese horario se acaba de ocupar. Elegí otro de la lista.', 'Turno');
+      this.recargar();
+      return;
+    }
+    if (estado.status === 'validation') {
+      this.toast.info('Este turno ya no se puede reprogramar. Actualizamos tu lista.', 'Turno');
+      this.reprogramando.set(null);
+      this.recargar();
+      return;
+    }
+
+    const detalle =
+      estado.status === 'forbidden' || estado.status === 'error' ? (estado.message ?? '') : '';
+    this.toast.error(
+      detalle === '' ? 'No pudimos mover el turno. Reintentá en un momento.' : detalle,
+      'Turno',
+    );
   }
 
   /**
