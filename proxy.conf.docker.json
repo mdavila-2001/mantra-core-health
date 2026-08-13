@@ -18,6 +18,7 @@
       "/org",
       "/auth-providers",
       "/admin/tenants",
+      "/tenants",
       "/health-context",
       "/geo"
     ],
@@ -26,10 +27,14 @@
     "changeOrigin": true
   },
   {
-    "context": ["/otel"],
+    "context": [
+      "/otel"
+    ],
     "target": "__COLLECTOR_ORIGIN__",
     "secure": false,
     "changeOrigin": true,
-    "pathRewrite": { "^/otel": "" }
+    "pathRewrite": {
+      "^/otel": ""
+    }
   }
 ]

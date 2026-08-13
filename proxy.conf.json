@@ -40,6 +40,7 @@
       "/org",
       "/auth-providers",
       "/admin/tenants",
+      "/tenants",
       "/health-context",
       "/geo"
     ],
@@ -48,10 +49,14 @@
     "changeOrigin": true
   },
   {
-    "context": ["/otel"],
+    "context": [
+      "/otel"
+    ],
     "target": "http://localhost:4318",
     "secure": false,
     "changeOrigin": true,
-    "pathRewrite": { "^/otel": "" }
+    "pathRewrite": {
+      "^/otel": ""
+    }
   }
 ]

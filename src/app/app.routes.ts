@@ -169,6 +169,17 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Ficha de una organización (V04-06·L, V04-02·L y V04-07·L): sus
+    // sucursales, su plantilla y sus sub-organizaciones. Va DESPUÉS de
+    // `/new`, o el literal se comería el parámetro.
+    path: 'administration/organizations/:tenantId',
+    title: `${APP_TITLE} - Ficha de organización`,
+    loadComponent: () =>
+      import('./features/admin/organizations/organization-detail/organization-detail')
+        .then((m) => m.OrganizationDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La reserva de un cupo concreto (V41-09 → V41-05). La franja viaja por
     // query string porque la pantalla relee el cupo para revalidarlo.
     path: 'schedule/book/:slotId',
