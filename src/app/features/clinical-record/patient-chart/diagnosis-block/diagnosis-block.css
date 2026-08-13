@@ -1,0 +1,27 @@
+/* Bloque de diagnóstico: sólo el formulario de alta — la lista ya la pinta la
+   pestaña «Diagnósticos». Mismo reparto que el bloque de medicación, porque son
+   la misma clase de tarjeta: un alta que vive junto al encuentro. */
+
+:host {
+  display: block;
+}
+
+.diagnostico {
+  display: grid;
+  gap: var(--sp-4);
+  /* Cinco campos cortos: a lo ancho de la tabla, la línea del selector quedaría
+     del largo de la pantalla y sería ilegible. */
+  max-inline-size: 68ch;
+}
+
+.diagnostico__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.diagnostico__formulario {
+  display: grid;
+  gap: var(--sp-4);
+}
