@@ -57,6 +57,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/organizations/organization-list/organization-list').then(
       (m) => m.OrganizationList,
     ),
+  'accounting': () => import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),

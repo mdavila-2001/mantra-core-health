@@ -41,6 +41,8 @@
       "/auth-providers",
       "/admin/tenants",
       "/tenants",
+      "/practices",
+      "/accounting",
       "/health-context",
       "/geo"
     ],
