@@ -485,6 +485,9 @@ export class RedsatRuntimeService {
     const boton = this.document.createElement('button');
     boton.type = 'button';
     boton.className = 'app-nav-toggle';
+    /* Es el mismo control que antes traía el header escrito a mano, así que
+       conserva su identificador de prueba: la suite lo busca por ahí. */
+    boton.dataset['testid'] = 'header-menu';
     boton.setAttribute('aria-label', 'Abrir el menú de navegación');
     boton.setAttribute('aria-expanded', 'false');
     boton.setAttribute('aria-controls', nav.id);

@@ -268,6 +268,9 @@ describe('ShellLayout', () => {
 
     it('elegir una la marca, y sólo a ella', () => {
       sesionConDosOrganizaciones();
+      // Elegir organización navega al panel, que en este banco de pruebas no
+      // existe: sin este doble, el router deja una promesa rechazada suelta.
+      vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
       interno<(id: string) => void>('changeTenant')('t-2');
 
       const marcadas = opcionesDeOrganizacion().filter(

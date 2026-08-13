@@ -36,6 +36,24 @@ export default defineConfig({
          * `features/` de 84,6 % a 26,1 % midiendo algo que nadie va a probar.
          */
         'src/app/features/design-system-sample/**',
+        /**
+         * Las pantallas portadas de la bóveda. Son **generadas** por
+         * `scripts/port-vistas-redsat.mjs` a partir de las maquetas: 126 clases
+         * vacías con su plantilla al lado, sin una línea de lógica propia. Lo
+         * que hay que probar de ellas —que la ruta existe, que montan el marco
+         * que su ficha declara y que el contenido llega— se prueba donde de
+         * verdad se puede, contra un navegador: `cypress/e2e/redsat-port.cy.ts`.
+         *
+         * Mismo criterio que la vitrina de arriba: medir cascarón generado no
+         * dice nada del producto, y taparlo con 126 pruebas «se crea» sería
+         * inflar el número sin mirar nada.
+         *
+         * Se excluyen SOLO los generados. `redsat/shell/` está escrito a mano,
+         * tiene lógica y se mide como cualquier otra cosa.
+         */
+        'src/app/features/redsat/*/*/*.ts',
+        'src/app/features/redsat/redsat.routes.ts',
+        'src/app/features/redsat/redsat-nav.data.ts',
       ],
 
       /**

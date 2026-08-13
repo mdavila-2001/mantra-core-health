@@ -143,6 +143,14 @@
               [attr.aria-label]="'Cuenta de ' + persona.displayName"
               >{{ iniciales() }}</button
             >
+            <!-- El marco de la bóveda pone iniciales, no el nombre completo: en
+                 un header de 320 px el nombre no entra. Pero quién tiene la
+                 sesión no puede quedar sólo insinuado por dos letras, así que el
+                 nombre sigue estando —en el `title`, acá para el lector de
+                 pantalla, y entero en el menú de la cuenta. -->
+            <span class="solo-lectores"
+              >Sesión de <span class="app-header__account-name">{{ persona.displayName }}</span></span
+            >
             <div class="app-menu" id="menu-cuenta" role="menu" hidden>
               <!-- Nombre y rol legible: quien atiende necesita saber con qué
                    sombrero está entrando antes de firmar algo. -->
