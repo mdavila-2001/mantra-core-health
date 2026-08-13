@@ -2,7 +2,7 @@
 
 # Inventario de la suite de extremo a extremo (Cypress)
 
-Leído de `cypress/`. 32 archivos de prueba, 153 pruebas, 11 Page Objects y 12 escenarios de API.
+Leído de `cypress/`. 31 archivos de prueba, 148 pruebas, 11 Page Objects y 12 escenarios de API.
 
 La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—
 está en [`cypress/README.md`](../../../cypress/README.md).
@@ -35,7 +35,6 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `recorrido` | Recorrido · administración | 10 | `cypress/e2e/recorrido/03-administracion.cy.ts` |
 | `recorrido` | Recorrido · vitrina de diseño | 3 | `cypress/e2e/recorrido/04-vitrina.cy.ts` |
 | `recorrido` | Recorrido · atención | 5 | `cypress/e2e/recorrido/05-atencion.cy.ts` |
-| `e2e` | Pantallas portadas de la bóveda | 5 | `cypress/e2e/redsat-port.cy.ts` |
 | `regression` | Regresión · accesibilidad | 6 | `cypress/e2e/regression/accesibilidad.cy.ts` |
 | `regression` | Regresión · modales | 6 | `cypress/e2e/regression/modales.cy.ts` |
 | `regression` | Regresión · notificaciones | 5 | `cypress/e2e/regression/notificaciones.cy.ts` |
