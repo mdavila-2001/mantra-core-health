@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -38,7 +38,7 @@ import type { TenantOption } from '../../shared/components/organisms/tenant-swit
  */
 @Component({
   selector: 'app-shell-layout',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, RedsatThemeToggleDirective],
+  imports: [RouterLink, RouterOutlet, RedsatThemeToggleDirective],
   templateUrl: './shell-layout.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -70,13 +70,64 @@ export class ShellLayout {
    */
   protected readonly anuncio = signal('');
 
+  /** La URL de la pantalla, sin parámetros de consulta ni fragmento. */
+  private readonly urlActual = signal('');
+
   constructor() {
+    this.urlActual.set(this.rutaLimpia());
     this.router.events
       .pipe(
         filter((evento) => evento instanceof NavigationEnd),
         takeUntilDestroyed(),
       )
-      .subscribe(() => this.anuncio.set(`${this.navigation.currentSection()?.label ?? 'Pantalla'} cargada`));
+      .subscribe(() => {
+        this.urlActual.set(this.rutaLimpia());
+        this.anuncio.set(
+          `${this.navigation.currentSection()?.label ?? 'Pantalla'} cargada`,
+        );
+      });
+  }
+
+  /**
+   * La entrada del menú que corresponde a la página actual, o `null`.
+   *
+   * ## Por qué no alcanza `routerLinkActive`
+   *
+   * Porque compara **por prefijo**: estando en `/my-account/identity/verify`,
+   * tanto esa entrada como su padre `/my-account` quedan activas, y las dos
+   * marcadas con `aria-current="page"`. Dos «acá estás» a la vez no es un
+   * detalle estético: `aria-current="page"` significa *ésta* es la página, y
+   * quien navega con lector de pantalla oye dos.
+   *
+   * `exact: true` lo rompe por el otro lado: en la ficha de un paciente
+   * —`/administration/patients/<id>`, que no es entrada de menú— no se marcaría
+   * ninguna, y la sección dejaría de decir dónde está uno.
+   *
+   * Se elige la coincidencia **más específica**: la entrada más larga que sea
+   * prefijo de la URL. La hija gana a su padre cuando existe, y el padre sigue
+   * ganando cuando la página no está en el menú. Es la misma regla que traía el
+   * organismo `app-side-nav`, y se porta con ella.
+   */
+  protected readonly rutaActiva = computed<string | null>(() => {
+    const url = this.urlActual();
+    if (url === '') {
+      return null;
+    }
+
+    return this.sections()
+      .flatMap((seccion) => seccion.items)
+      .map((item) => item.route)
+      // Prefijo de ruta, no de texto: `/administration/patients` no puede
+      // ganar con `/administration/patients-archive`.
+      .filter((ruta) => url === ruta || url.startsWith(`${ruta}/`))
+      .reduce<string | null>(
+        (mejor, ruta) => (mejor === null || ruta.length > mejor.length ? ruta : mejor),
+        null,
+      );
+  });
+
+  private rutaLimpia(): string {
+    return this.router.url.split(/[?#]/)[0];
   }
 
   protected readonly user = computed<HeaderUser | null>(() => {

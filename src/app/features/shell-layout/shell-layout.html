@@ -66,8 +66,8 @@
               data-testid="nav-enlace"
               [attr.data-route]="item.route"
               [routerLink]="item.route"
-              routerLinkActive="is-activo"
-              ariaCurrentWhenActive="page"
+              [class.is-activo]="rutaActiva() === item.route"
+              [attr.aria-current]="rutaActiva() === item.route ? 'page' : null"
             >
               <span class="side-nav__label">{{ item.label }}</span>
               @if (item.badge) {

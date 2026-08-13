@@ -45,7 +45,19 @@ describe('ShellLayout', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ShellLayout],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        /* Rutas de mentira con las mismas direcciones que el menú: al armazón
+           sólo le importa la URL, no qué componente hay del otro lado. Sin
+           ellas `navigateByUrl` rechaza y la marca de «acá estás» no se puede
+           comprobar. */
+        provideRouter([
+          { path: 'my-account', children: [] },
+          { path: 'my-account/identity/verify', children: [] },
+          { path: 'my-account/appointments/book/:id', children: [] },
+        ]),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ShellLayout);
@@ -212,6 +224,45 @@ describe('ShellLayout', () => {
       );
       expect(destinos).toContain('/dashboard');
       expect(destinos).toContain('/design-system');
+    });
+
+    /**
+     * `aria-current="page"` significa *ésta* es la página. Marcar dos no es un
+     * detalle estético: quien navega con lector de pantalla oye dos «acá
+     * estás». Es exactamente lo que hace `routerLinkActive`, que compara por
+     * prefijo — y por eso el marco no lo usa.
+     */
+    describe('la marca de «acá estás»', () => {
+      async function ir(url: string) {
+        await router.navigateByUrl(url);
+        fixture.detectChanges();
+      }
+
+      function marcadas(): readonly (string | null)[] {
+        return [...raiz().querySelectorAll('[data-testid="nav-enlace"][aria-current="page"]')].map(
+          (a) => a.getAttribute('data-route'),
+        );
+      }
+
+      it('en una entrada del menú, se marca esa y sólo esa', async () => {
+        await ir('/my-account');
+
+        expect(marcadas()).toEqual(['/my-account']);
+      });
+
+      it('en una hija que también está en el menú, gana la hija sobre su padre', async () => {
+        await ir('/my-account/identity/verify');
+
+        expect(marcadas()).toEqual(['/my-account/identity/verify']);
+      });
+
+      it('en una pantalla que no está en el menú, gana el ancestro más cercano', async () => {
+        // La ficha de un paciente no es entrada de menú: si no se marcara
+        // ninguna, la sección dejaría de decir dónde está uno.
+        await ir('/my-account/appointments/book/turno-1');
+
+        expect(marcadas()).toEqual(['/my-account/appointments']);
+      });
     });
 
     it('el enlace de salto apunta al contenido, que es enfocable por script', () => {
