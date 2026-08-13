@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-158 componentes y 36 servicios inyectables, leídos de `src/`.
+159 componentes y 36 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -71,11 +71,11 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (104)
+## Feature (105)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
-| `app-appointments` | `Appointments` | — | — | — | OnPush | **no** |
+| `app-appointments` | `Appointments` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-organization-list` | `OrganizationList` | — | — | — | OnPush | sí |
@@ -114,6 +114,7 @@
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
 | `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
+| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas` | `cambio` | — | OnPush | sí |
 | `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |
 | `app-dashboard` | `Dashboard` | — | — | — | OnPush | sí |
 | `app-access-request-form` | `AccessRequestForm` | — | — | — | OnPush | sí |
@@ -236,7 +237,6 @@
 ## Componentes sin prueba
 
 - `ToastDevPanel` — `src/app/core/dev/toast-dev-panel/toast-dev-panel.ts`
-- `Appointments` — `src/app/features/account/appointments/appointments.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`

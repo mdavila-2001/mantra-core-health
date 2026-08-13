@@ -43,7 +43,11 @@
           @for (encuentro of encuentrosEnCurso(); track encuentro.id) {
             <li class="expediente__en-curso-item">
               <div class="expediente__en-curso-datos">
-                <app-badge variant="warning" value="En curso" />
+                <!-- El encuentro abierto es un estado, y va con sus tres
+                     canales. Aquí la variante es fija y no sale del catálogo:
+                     «en curso» es un derivado del contrato —el encuentro no
+                     tiene `endAt`—, no un concepto que terminología resuelva. -->
+                <app-status-seal variant="in-review" label="En curso" />
                 <span class="expediente__principal">{{ encuentro.motivo }}</span>
                 <span class="expediente__secundario">
                   {{ encuentro.clase }}
@@ -110,6 +114,19 @@
       }
     </app-card>
 
+    <!-- ─── La receta ────────────────────────────────────────────────────
+         Pegada al encuentro y no dentro de las pestañas: el recorrido es
+         check-in → ficha → recetar ahí mismo, y la pestaña de medicación es
+         lectura. Lo que necesita para escribir baja hecho —la persona, el
+         encuentro abierto y las recetas ya traducidas—; el bloque no vuelve a
+         derivarlo para que no puedan discrepar. -->
+    <app-medication-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+      [recetas]="recetas()"
+      (cambio)="recargar()"
+    />
+
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->
@@ -121,10 +138,10 @@
         la separación es de quién la escribe, no de quién la lee.
       </p>
       <p class="expediente__nota-texto">
-        De todo lo que se puede escribir en una historia clínica, acá sólo se registra el
-        <strong>encuentro</strong> —abrirlo y cerrarlo—, porque es lo único cuyo resultado esta
-        misma pantalla vuelve a mostrar. Diagnosticar, indicar medicación o firmar una nota tienen
-        su flujo propio y no cuelgan de acá.
+        De todo lo que se puede escribir en una historia clínica, acá se registran el
+        <strong>encuentro</strong> —abrirlo y cerrarlo— y la <strong>receta</strong> —prescribirla,
+        firmarla y emitirla—, porque son lo único cuyo resultado esta misma pantalla vuelve a
+        mostrar. Diagnosticar o firmar una nota tienen su flujo propio y no cuelgan de acá.
       </p>
     </app-card>
   </div>

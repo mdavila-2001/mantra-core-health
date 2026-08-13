@@ -197,7 +197,7 @@ describe('Agenda', () => {
         items: [
           {
             conceptId: 'c-confirmada',
-            code: 'CONFIRMED',
+            code: 'BOOKING_CONFIRMED',
             display: 'Confirmada',
             codeSystemVersionId: 'csv-1',
           },
@@ -253,8 +253,25 @@ describe('Agenda', () => {
     await responder();
 
     const fila = citas().data?.[0] as Record<string, unknown>;
-    expect(fila['estado']).toBe('Confirmada');
+    // El estado lleva sus tres canales: la palabra del catálogo y la variante
+    // que le da tono y forma. Nunca el uuid.
+    expect(fila['estado']).toEqual({ variant: 'approved', label: 'Confirmada' });
     expect(fila['recurso']).toBe('Consultorio 1 · Dra. Salas');
+  });
+
+  /**
+   * Un estado que esta versión no sabe pintar no puede romper la agenda del
+   * día: sale en neutro, con la palabra que el catálogo sí resolvió.
+   */
+  it('un estado desconocido cae en neutro sin perder la palabra', async () => {
+    await montar();
+    await responderRecursos();
+    responderResto({ citas: [{ ...CITA, statusConceptId: 'c-nuevo' }] });
+
+    expect(citas().data?.[0]?.['estado']).toEqual({
+      variant: 'unknown',
+      label: 'Sin registrar',
+    });
   });
 
   /**

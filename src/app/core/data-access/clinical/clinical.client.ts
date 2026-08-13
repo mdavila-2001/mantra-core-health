@@ -5,17 +5,27 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
   Allergy,
+  AllergyIntoleranceRegistration,
   CarePlan,
   CarePlanActivity,
   ChartDocument,
   ChartNote,
   ClinicalSummary,
   Condition,
+  ConditionRegistration,
+  DiagnosticReportRegistration,
   Encounter,
   EncounterRegistration,
   MedicationRequest,
+  MedicationRequestRegistration,
+  NewAllergyIntolerance,
+  NewCondition,
+  NewDiagnosticReport,
   NewEncounter,
+  NewMedicationRequest,
+  NewObservation,
   Observation,
+  ObservationRegistration,
   PatientChart,
 } from './clinical.types';
 
@@ -41,15 +51,33 @@ import type {
  * `truncated` cuáles quedaron cortadas. Se reenvía tal cual a la vista: un
  * expediente al que le faltan notas sin avisar es un expediente que miente.
  *
- * ## Las dos escrituras que sí están
+ * ## Las escrituras: el encuentro y los cuatro registros del expediente
  *
- * El check-in y el cierre de un encuentro, y ninguna más. No es una lista
- * arbitraria: son las dos únicas escrituras del módulo cuyo resultado **se
- * vuelve a leer** desde el propio expediente —aparecen en el bloque
- * «Encuentros» de `getSummary`—. Diagnosticar, indicar medicación o firmar una
- * nota se escriben con endpoints que existen, pero el registro no se refleja en
- * ninguna lectura que la pantalla tenga: construirlos sería ofrecer un
- * formulario que traga el dato y no lo muestra.
+ * Fueron dos durante un tiempo —el check-in y el cierre del encuentro— con un
+ * criterio explícito: sólo se ofrece la escritura cuyo resultado la pantalla
+ * **vuelve a leer**, para no construir formularios que traguen el dato y no lo
+ * muestren. El criterio no cambió; cambió que ahora se cumple para cuatro más.
+ * Condiciones, alergias, medicación y observaciones tienen su bloque en
+ * `getSummary`, así que lo que se registra acá aparece releyendo el mismo
+ * expediente.
+ *
+ * ## El ciclo de la receta vive en tres llamadas
+ *
+ * Prescribir deja la receta en **borrador**; firmar y emitir son transiciones
+ * aparte (`/sign`, `/issue`) y no parámetros del alta. Es el contrato, y es
+ * también el acto: una receta emitida es inmutable y compromete a quien la
+ * firma, así que el paso tiene que ser deliberado.
+ *
+ * Emitir sin firmar responde **`422`** cuando la política de firma D-05 rige
+ * para el tenant. No es un fallo del cliente: es una precondición del negocio,
+ * y la pantalla la cuenta como tal.
+ *
+ * ## Este archivo lo comparten dos carriles
+ *
+ * Las seis escrituras nuevas entran juntas —receta, condición, alergia,
+ * observación— aunque las use más de una pantalla. El contrato va primero para
+ * que nadie espere a nadie, y para que el único archivo compartido del plan se
+ * toque una sola vez.
  */
 @Injectable({
   providedIn: 'root',
@@ -150,6 +178,206 @@ export class ClinicalClient {
       .pipe(map(toEncounterRegistration));
   }
 
+  /* -- La receta: prescribir, firmar, emitir ------------------------------- */
+
+  /**
+   * `POST /clinical/medication-requests` — prescribe una medicación
+   * (UC-08-10).
+   *
+   * La receta nace **en borrador**: no surte efecto hasta emitirla. Aparece de
+   * inmediato en el bloque «medicación» de `getSummary`, que es de donde la
+   * pantalla la vuelve a leer.
+   *
+   * @param receta - El medicamento y su indicación. Lo ausente no viaja.
+   * @returns La receta en borrador, con `signedAt` en `null`.
+   */
+  createMedicationRequest(
+    receta: NewMedicationRequest,
+  ): Observable<MedicationRequestRegistration> {
+    return this.http
+      .post<WireMedicationRequestRegistration>(
+        this.url('/clinical/medication-requests'),
+        sinAusentes({
+          ...receta,
+          validFrom: instanteDe(receta.validFrom),
+          validTo: instanteDe(receta.validTo),
+        }),
+      )
+      .pipe(map(toMedicationRequestRegistration));
+  }
+
+  /**
+   * `POST /clinical/medication-requests/:id/sign` — firma el borrador (D-05).
+   *
+   * Sin cuerpo: quién firma sale del token, y ofrecerlo como parámetro
+   * permitiría firmar en nombre de otro. Es aditivo —firmar dos veces no
+   * cambia el instante ya sellado— pero sólo se acepta sobre un borrador: una
+   * receta emitida responde `422`.
+   *
+   * @param medicationRequestId - Receta a firmar.
+   * @returns La receta con su `signedAt`.
+   */
+  signMedicationRequest(medicationRequestId: string): Observable<MedicationRequestRegistration> {
+    return this.http
+      .post<WireMedicationRequestRegistration>(
+        this.url(
+          `/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/sign`,
+        ),
+        {},
+      )
+      .pipe(map(toMedicationRequestRegistration));
+  }
+
+  /**
+   * `POST /clinical/medication-requests/:id/issue` — emite la receta y la
+   * vuelve inmutable.
+   *
+   * ## El `422` no es un fallo, es el contrato
+   *
+   * Con la política de firma D-05 vigente, emitir una receta sin firmar
+   * responde `422 PRECONDITION_FAILED` —la `PreconditionFailedException` del
+   * proyecto es 422, **no** 412—. Quien lo llame tiene que contarlo como un
+   * paso que falta, no como un error: la salida es firmar y reintentar, y está
+   * a un click.
+   *
+   * Sin política aplicable la emisión no se endurece (el backend es fail-safe),
+   * así que el mismo camino puede responder `200` en un tenant sin política.
+   *
+   * @param medicationRequestId - Receta a emitir.
+   * @returns La receta emitida.
+   */
+  issueMedicationRequest(medicationRequestId: string): Observable<MedicationRequestRegistration> {
+    return this.http
+      .post<WireMedicationRequestRegistration>(
+        this.url(
+          `/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/issue`,
+        ),
+        {},
+      )
+      .pipe(map(toMedicationRequestRegistration));
+  }
+
+  /* -- Los tres registros de la ficha -------------------------------------- */
+
+  /**
+   * `POST /clinical/conditions` — registra un diagnóstico o problema
+   * (UC-08-08).
+   *
+   * El estado clínico y el de verificación **no se mandan**: el backend los
+   * fija y los devuelve. Ofrecerlos en el formulario sería pedir un dato que
+   * no se usa.
+   *
+   * @param condicion - El diagnóstico y su contexto.
+   */
+  createCondition(condicion: NewCondition): Observable<ConditionRegistration> {
+    return this.http
+      .post<WireConditionRegistration>(
+        this.url('/clinical/conditions'),
+        sinAusentes({ ...condicion, onsetAt: instanteDe(condicion.onsetAt) }),
+      )
+      .pipe(map(toConditionRegistration));
+  }
+
+  /**
+   * `POST /clinical/allergy-intolerances` — registra una alergia con sus
+   * reacciones (UC-08-09).
+   *
+   * Las reacciones van en la misma llamada y no en una segunda: el backend las
+   * crea dentro de la transacción y devuelve sus identificadores. Partirlo
+   * dejaría alergias sin manifestación cuando la segunda petición falle.
+   *
+   * @param alergia - La sustancia, su criticidad y las reacciones observadas.
+   */
+  createAllergyIntolerance(
+    alergia: NewAllergyIntolerance,
+  ): Observable<AllergyIntoleranceRegistration> {
+    return this.http
+      .post<WireAllergyRegistration>(
+        this.url('/clinical/allergy-intolerances'),
+        sinAusentes({
+          ...alergia,
+          reactions: alergia.reactions?.map((reaccion) => sinAusentes(reaccion)),
+        }),
+      )
+      .pipe(map(toAllergyRegistration));
+  }
+
+  /**
+   * `POST /clinical/observations` — registra una medición u observación
+   * (UC-08-03).
+   *
+   * El valor viaja por **uno** de los seis caminos excluyentes de la familia
+   * (`valueDecimal`, `valueText`, `quantityValue`…): mandar dos no es un
+   * promedio, es una observación ambigua. Quien arme el formulario elige el
+   * camino según el código de la observación.
+   *
+   * @param observacion - Qué se midió, cuánto dio y quién la tomó.
+   */
+  createObservation(observacion: NewObservation): Observable<ObservationRegistration> {
+    return this.http
+      .post<WireObservationRegistration>(
+        this.url('/clinical/observations'),
+        sinAusentes({
+          ...observacion,
+          effectiveStartAt: instanteDe(observacion.effectiveStartAt),
+          issuedAt: instanteDe(observacion.issuedAt),
+          performers: observacion.performers.map((ejecutante) => sinAusentes(ejecutante)),
+          components: observacion.components?.map((componente) => sinAusentes(componente)),
+          referenceRanges: observacion.referenceRanges?.map((rango) => sinAusentes(rango)),
+        }),
+      )
+      .pipe(map(toObservationRegistration));
+  }
+
+  /* -- El informe diagnóstico: contrato sin pantalla ----------------------- */
+
+  /**
+   * `POST /clinical/diagnostic-reports` — emite el informe desde la orden
+   * (UC-08-06).
+   *
+   * **Todavía no lo usa ninguna pantalla**, y no es un olvido: el informe no
+   * aparece en `getSummary` ni en `getChart`, y el backend no expone ningún
+   * `GET` de reportes. Ver {@link NewDiagnosticReport} — el contrato entra
+   * verificado para que, cuando exista la lectura, falte sólo la vista.
+   *
+   * @param informe - El estudio y su contexto.
+   */
+  createDiagnosticReport(
+    informe: NewDiagnosticReport,
+  ): Observable<DiagnosticReportRegistration> {
+    return this.http
+      .post<WireDiagnosticReportRegistration>(
+        this.url('/clinical/diagnostic-reports'),
+        sinAusentes(informe),
+      )
+      .pipe(map(toDiagnosticReportRegistration));
+  }
+
+  /**
+   * `POST /clinical/diagnostic-reports/:id/release` — libera el resultado
+   * (UC-08-07).
+   *
+   * Liberar es lo que hace visible el resultado para la persona, así que es un
+   * acto aparte de emitir: un informe final puede seguir retenido a propósito
+   * mientras se lo comunica en consulta.
+   *
+   * @param diagnosticReportId - Informe a liberar.
+   * @param expectedRowVersion - Versión esperada, para el bloqueo optimista.
+   */
+  releaseDiagnosticReport(
+    diagnosticReportId: string,
+    expectedRowVersion?: number,
+  ): Observable<DiagnosticReportRegistration> {
+    return this.http
+      .post<WireDiagnosticReportRegistration>(
+        this.url(
+          `/clinical/diagnostic-reports/${encodeURIComponent(diagnosticReportId)}/release`,
+        ),
+        expectedRowVersion === undefined ? {} : { expectedRowVersion },
+      )
+      .pipe(map(toDiagnosticReportRegistration));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
@@ -166,6 +394,22 @@ function sinAusentes<T extends object>(valor: T): Partial<T> {
   return Object.fromEntries(
     Object.entries(valor).filter(([, v]) => v !== undefined),
   ) as Partial<T>;
+}
+
+/**
+ * Una fecha como el texto ISO que el contrato pide, o nada.
+ *
+ * Es el camino de ida de `maybeDate`: los DTO declaran estos campos como
+ * `format: 'date-time'` y los validan con `IsDateString`, así que un `Date`
+ * crudo dentro del cuerpo llegaría serializado por `JSON.stringify` —que
+ * casualmente hace lo mismo— pero sin que nadie lo haya decidido. Acá se
+ * decide.
+ *
+ * Devolver `undefined` —y no `null`— es lo que deja que {@link sinAusentes}
+ * borre la clave después.
+ */
+function instanteDe(value: Date | undefined): string | undefined {
+  return value === undefined ? undefined : value.toISOString();
 }
 
 /** El tope como parámetro, o ninguno: la API tiene su propio valor por omisión. */
@@ -241,6 +485,77 @@ type WireEncounterRegistration = Omit<
   readonly endAt: string | null;
   readonly createdAt: string;
 };
+
+/* ---- las cuatro escrituras del registro clínico ---------------------------
+   Las cuatro respuestas comparten forma: identificadores que el servicio
+   proyecta con `?? null` —nunca ausentes— y una `createdAt` obligatoria. Por
+   eso los `null` de acá se conservan como `null` en vez de borrarse la clave:
+   `signedAt: null` **significa** «sin firmar», y es lo que decide si emitir va
+   a responder 200 o 422. */
+
+type WireMedicationRequestRegistration = Omit<
+  MedicationRequestRegistration,
+  'signedAt' | 'createdAt'
+> & {
+  readonly signedAt: string | null;
+  readonly createdAt: string;
+};
+
+type WireConditionRegistration = Omit<ConditionRegistration, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
+type WireAllergyRegistration = Omit<AllergyIntoleranceRegistration, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
+type WireObservationRegistration = Omit<ObservationRegistration, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
+function toMedicationRequestRegistration({
+  signedAt,
+  createdAt,
+  ...resto
+}: WireMedicationRequestRegistration): MedicationRequestRegistration {
+  return {
+    ...resto,
+    signedAt: signedAt === null ? null : new Date(signedAt),
+    createdAt: new Date(createdAt),
+  };
+}
+
+function toConditionRegistration({
+  createdAt,
+  ...resto
+}: WireConditionRegistration): ConditionRegistration {
+  return { ...resto, createdAt: new Date(createdAt) };
+}
+
+function toAllergyRegistration({
+  createdAt,
+  ...resto
+}: WireAllergyRegistration): AllergyIntoleranceRegistration {
+  return { ...resto, createdAt: new Date(createdAt) };
+}
+
+type WireDiagnosticReportRegistration = Omit<DiagnosticReportRegistration, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
+function toDiagnosticReportRegistration({
+  createdAt,
+  ...resto
+}: WireDiagnosticReportRegistration): DiagnosticReportRegistration {
+  return { ...resto, createdAt: new Date(createdAt) };
+}
+
+function toObservationRegistration({
+  createdAt,
+  ...resto
+}: WireObservationRegistration): ObservationRegistration {
+  return { ...resto, createdAt: new Date(createdAt) };
+}
 
 function toEncounterRegistration({
   startAt,

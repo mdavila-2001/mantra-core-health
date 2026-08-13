@@ -22,12 +22,14 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { reservaDelPortalRoute } from './appointments.routes';
+import { toBookingStatusPresentation } from './booking-status';
 
 /**
  * Cuántos días hacia adelante se ofrecen.
@@ -52,6 +54,12 @@ interface TurnoVisible {
   /** El uuid del catálogo. Se conserva para poder reetiquetar cuando llegue. */
   readonly statusConceptId: string;
   readonly estado: string;
+  /** El tono del badge, que sale del mismo código que la palabra. */
+  readonly tono: BadgeVariant;
+  /** La agenda del turno. Se conserva el id para reetiquetar cuando llegue. */
+  readonly resourceId: string;
+  /** Con quién es el turno, en palabras. Vacío mientras no se sepa. */
+  readonly agenda: string;
   readonly motivo: string;
 }
 
@@ -220,6 +228,10 @@ export class Appointments {
       next: (pagina) => {
         this.recursos.set(pagina.items);
         this.sinRecursos.set(pagina.items.length === 0);
+        // Los turnos pueden haberse pintado antes que esto: las dos lecturas
+        // del arranque salen a la vez. Se rehacen para que tomen el nombre de
+        // su agenda, igual que con las etiquetas de estado.
+        this.reetiquetarTurnos();
       },
       // Un fallo acá no se cuenta como «no hay agendas»: eso mandaría a la
       // persona a esperar a que la organización cargue algo que quizá ya tiene.
@@ -301,11 +313,23 @@ export class Appointments {
         this.etiquetas.set(new Map([...this.etiquetas(), ...etiquetas]));
         // La lista ya está pintada con el texto neutro: hay que rehacerla para
         // que tome las etiquetas que acaban de llegar.
-        const estado = this.turnos();
-        if (estado.status === 'ready') {
-          this.turnos.set(ready(estado.data.map((turno) => this.conEtiqueta(turno))));
-        }
+        this.reetiquetarTurnos();
       });
+  }
+
+  /**
+   * Rehace la lista ya pintada con lo que se sepa ahora.
+   *
+   * La pantalla arranca tres lecturas que terminan en cualquier orden —los
+   * turnos, las agendas y el catálogo de estados— y las dos últimas aportan
+   * texto a la primera. En vez de esperar a todas para pintar algo, se pinta lo
+   * que hay y se rehace cuando llega el resto.
+   */
+  private reetiquetarTurnos(): void {
+    const estado = this.turnos();
+    if (estado.status === 'ready') {
+      this.turnos.set(ready(estado.data.map((turno) => this.conEtiqueta(turno))));
+    }
   }
 
   /* ---- destinos ----------------------------------------------------------- */
@@ -329,30 +353,58 @@ export class Appointments {
   /* ---- mapeos ------------------------------------------------------------- */
 
   private aTurnoVisible(cita: Booking): TurnoVisible {
+    const estado = this.presentacionDelEstado(cita.statusConceptId);
+    const resourceId = cita.resourceId ?? '';
     return {
       id: cita.id,
       cuando: cita.startAt ?? null,
       hasta: cita.endAt ?? null,
       statusConceptId: cita.statusConceptId,
-      estado: this.nombreDelEstado(cita.statusConceptId),
+      estado: estado.label,
+      tono: estado.tone,
+      resourceId,
+      agenda: this.nombreDeLaAgenda(resourceId),
       motivo: cita.reasonText ?? '',
     };
   }
 
   /** Reetiqueta un turno con lo que el catálogo haya traído desde entonces. */
   private conEtiqueta(turno: TurnoVisible): TurnoVisible {
-    return { ...turno, estado: this.nombreDelEstado(turno.statusConceptId) };
+    const estado = this.presentacionDelEstado(turno.statusConceptId);
+    return {
+      ...turno,
+      estado: estado.label,
+      tono: estado.tone,
+      agenda: this.nombreDeLaAgenda(turno.resourceId),
+    };
   }
 
   /**
-   * El nombre del estado.
+   * Con quién es el turno.
    *
-   * Mientras la etiqueta no llegue se dice «Sin confirmar el estado», no el
-   * uuid: un identificador en pantalla no le dice nada a nadie, y es
-   * exactamente lo que la regla del M34 pide evitar.
+   * Sale de las agendas que la pantalla ya cargó para el selector, así que no
+   * cuesta una petición más. Devuelve vacío mientras no se sepa —las dos
+   * lecturas del arranque corren en paralelo y los turnos pueden llegar
+   * primero—, y la plantilla omite la línea en vez de mostrar un hueco o, peor,
+   * el identificador del recurso.
    */
-  private nombreDelEstado(conceptId: string): string {
-    return this.etiquetas().get(conceptId)?.display ?? 'Sin confirmar el estado';
+  private nombreDeLaAgenda(resourceId: string): string {
+    if (resourceId === '') {
+      return '';
+    }
+    return this.recursos().find((recurso) => recurso.id === resourceId)?.name ?? '';
+  }
+
+  /**
+   * Cómo se muestra el estado: la palabra y el tono.
+   *
+   * El catálogo resuelve el uuid a un **código**, y el código decide las dos
+   * cosas. Ni el uuid ni el `display` en inglés del catálogo llegan a la
+   * pantalla: el primero no le dice nada a nadie —es justo lo que la regla del
+   * M34 pide evitar— y el segundo es una etiqueta de API en otro idioma.
+   */
+  private presentacionDelEstado(conceptId: string) {
+    return toBookingStatusPresentation(this.etiquetas().get(conceptId));
   }
 
   private aHorarioVisible(cupo: AgendaSlot): HorarioVisible {

@@ -1,6 +1,7 @@
 import { capturar, reiniciarContadores } from '../../support/recorrido/evidencia';
 import { admin, apiViva, crearPaciente, tokenDe, type Actor } from '../../support/real/actores';
 import { entrar, estable, irA } from '../../support/real/sesion';
+import { subirDocumento } from '../../support/real/tramites';
 
 /**
  * **El Acto 3 de la demo, de punta a punta y contra la API viva.**
@@ -67,43 +68,6 @@ describe('Recorrido real · la cola de revisión de identidad', () => {
   beforeEach(() => {
     reiniciarContadores();
   });
-
-  /**
-   * Sube el documento **por la pantalla** y devuelve el código del caso.
-   *
-   * El trámite arranca acá y por eso este paso no se atajó por la API: es el que
-   * la persona hace en la demo, y el único que puede afirmar que el formulario
-   * acepta el archivo, lo manda, y muestra de vuelta algo que sirva.
-   *
-   * El identificador se lee de la propia pantalla —«Código del caso»— y no de
-   * una respuesta de la API. Así el recorrido depende de lo que el titular ve,
-   * que es lo que se está demostrando.
-   *
-   * `force` en `selectFile` porque el `<input type="file">` está oculto detrás de
-   * su zona de arrastre: es lo que hace el componente, no un atajo de la prueba.
-   */
-  function subirDocumento(): Cypress.Chainable<string> {
-    cy.get('input[type=file]').selectFile(
-      {
-        contents: Cypress.Buffer.from('documento de prueba'),
-        fileName: 'documento.pdf',
-        mimeType: 'application/pdf',
-      },
-      { force: true },
-    );
-
-    cy.contains('button', 'Enviar para revisión').click();
-    estable();
-
-    cy.contains('Tu solicitud quedó registrada', { timeout: 20_000 }).should('exist');
-
-    return cy
-      .contains('dt', 'Código del caso')
-      .siblings('dd')
-      .find('code')
-      .invoke('text')
-      .then((texto) => cy.wrap(texto.trim(), { log: false }));
-  }
 
   /**
    * Escribe en el campo que tiene ese rótulo.

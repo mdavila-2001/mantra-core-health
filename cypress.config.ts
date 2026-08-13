@@ -5,7 +5,7 @@ import { defineConfig } from 'cypress';
 import { levantarArnes, esperarSalud, type ArnesEnMarcha } from './cypress/harness/servidor';
 import { reubicarCaptura } from './cypress/harness/evidencia';
 import { tareas } from './cypress/harness/tareas';
-import { configuracion, credenciales, verificarEntornoSeguro } from './cypress/support/config';
+import { configuracion, credenciales, tramos, verificarEntornoSeguro } from './cypress/support/config';
 
 /**
  * Suite de extremo a extremo.
@@ -81,6 +81,9 @@ export default defineConfig({
    */
   expose: {
     ...credenciales(),
+    // Los tramos del guion del viernes que esperan merges ajenos: la suite
+    // real los lee con `tramoActivo()` y la ausencia es «apagado».
+    ...tramos(),
     E2E_RUN_ID: config.runId,
     E2E_PUERTO: config.puerto,
     E2E_ARTEFACTOS: artefactos,

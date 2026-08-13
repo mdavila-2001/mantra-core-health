@@ -72,6 +72,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Con quién es el turno. Va con la tinta principal —no atenuada— porque es lo
+   segundo que se busca al mirar la lista, después de la fecha. */
+.turnos__agenda {
+  color: var(--text-primary);
+}
+
 .turnos__motivo {
   color: var(--text-muted);
   font-size: var(--fs-caption);
