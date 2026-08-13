@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-159 componentes y 36 servicios inyectables, leídos de `src/`.
+160 componentes y 36 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -71,13 +71,14 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (105)
+## Feature (106)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
 | `app-appointments` | `Appointments` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
+| `app-organization-detail` | `OrganizationDetail` | — | — | — | OnPush | **no** |
 | `app-organization-list` | `OrganizationList` | — | — | — | OnPush | sí |
 | `app-organization-new` | `OrganizationNew` | — | — | — | OnPush | sí |
 | `app-patient-detail` | `PatientDetail` | — | — | — | OnPush | sí |
@@ -237,6 +238,7 @@
 ## Componentes sin prueba
 
 - `ToastDevPanel` — `src/app/core/dev/toast-dev-panel/toast-dev-panel.ts`
+- `OrganizationDetail` — `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`

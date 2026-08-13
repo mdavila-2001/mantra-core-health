@@ -190,12 +190,17 @@ con `IDENTITY_VERIFICATION_REQUIRED`, que es el único 403 del contrato que lleg
 a la interfaz **con una salida** en vez de un muro.
 
 
-### `DirectoryClient` — 2 operaciones
+### `DirectoryClient` — 7 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/admin/tenants` | `OrganizationList` (V04-01·L) |
 | `POST` | `/admin/tenants` | `OrganizationNew` (V04-01·F) |
+| `GET` | `/tenants/:tenantId` | `OrganizationDetail` (V04-06·L) |
+| `GET` | `/tenants/:tenantId/branches` | `OrganizationDetail` (V04-02·L) |
+| `GET` | `/tenants/:tenantId/memberships` | `OrganizationDetail` (V04-04·L) |
+| `GET` | `/tenants/:tenantId/memberships/:membershipId/branch-assignments` | `OrganizationDetail` (V04-03·L) |
+| `GET` | `/tenants/:tenantId/child-tenants` | `OrganizationDetail` (V04-07·L) |
 
 **`/admin/tenants` es la cara de plataforma del directorio**: opera fuera del
 contexto RLS de tenant. El listado admite `SECURITY_ADMIN` y `SUPERADMIN`; el
@@ -206,6 +211,25 @@ de otro rol, y el frontend todavía no la llama.
 **El proxy la declara con dos segmentos** (`/admin/tenants`, no `/admin`):
 `/admin` a secas capturaría `/administracion/*`, que es una ruta de la
 aplicación — ya desvió `/administration/patients` una vez.
+
+**`/tenants/{id}/…` es la otra cara, la de la organización**: sus sucursales,
+su plantilla y sus sub-organizaciones. Dos cosas que no son evidentes y que
+costaron un 403 y un falso verde:
+
+- **Declaran el tenant que consultan.** La API rechaza con
+  `FORBIDDEN — La solicitud privilegiada declara tenants propietarios
+  contradictorios` la petición cuyo `X-Tenant-Id` no coincide con el tenant de
+  la ruta. Como estas pantallas miran una organización **distinta** de la
+  activa, el cliente pone la cabecera y el interceptor la respeta en vez de
+  pisarla con la de la sesión.
+- **El proxy las declara con barra final** (`/tenants/`, no `/tenants`): la
+  API no recibe nada en la ruta pelada —el listado de plataforma es
+  `/admin/tenants`— y sin barra capturaría cualquier ruta futura de Angular
+  que empiece por `tenants`. Si falta el contexto, el servidor devuelve el
+  `index.html` **con 200** y la llamada parece pasar sin haber tocado la API.
+
+`listBranches` y `listBranchAssignments` **no paginan**: devuelven todo con su
+`count`, así que la pantalla no puede prometer «Siguientes» sobre eso.
 
 ### `SchedulingClient` — 8 operaciones
 
