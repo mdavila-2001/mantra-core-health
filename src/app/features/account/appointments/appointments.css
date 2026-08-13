@@ -54,6 +54,15 @@
   }
 }
 
+/* El estado y la acción de cancelar, juntos: en móvil apilados bajo la fecha,
+   y en la columna auto cuando hay ancho. */
+.turnos__acciones {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
 .turnos__cuando {
   display: grid;
   gap: var(--sp-2);

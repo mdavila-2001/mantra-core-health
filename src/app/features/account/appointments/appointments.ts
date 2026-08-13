@@ -26,7 +26,9 @@ import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { reservaDelPortalRoute } from './appointments.routes';
 import { toBookingStatusPresentation } from './booking-status';
@@ -46,6 +48,41 @@ const TOPE_DE_HORARIOS = 100;
 /** Tope de turnos propios que se traen. Nadie tiene cien turnos a la vez. */
 const TOPE_DE_TURNOS = 50;
 
+/**
+ * Los códigos de estado en los que el backend acepta cancelar una reserva.
+ *
+ * Allowlist a propósito, no denylist: el catálogo mezcla convenciones
+ * —`BOOKING_CONFIRMED` a secas y `scheduling:BOOKING_REQUESTED` con prefijo— y
+ * «completada» aparece con más de un código (`EV_BOOKING_DONE`), así que
+ * enumerar lo cancelable es más seguro que enumerar lo que no lo es: un estado
+ * nuevo o desconocido no ofrece el botón. El backend sigue siendo la última
+ * palabra —un 409/422 se trata con aviso amable—, pero no se ofrece una acción
+ * que casi seguro va a fallar.
+ *
+ * Verificado contra la API viva (2026-08-12): los reservables presentes en datos
+ * llegan como `BOOKING_CONFIRMED` y `BOOKING_CHECKED_IN`; `REQUESTED` y
+ * `PENDING_CONFIRMATION` existen en el catálogo con prefijo de módulo.
+ */
+const CODIGOS_CANCELABLES: ReadonlySet<string> = new Set([
+  'BOOKING_REQUESTED',
+  'BOOKING_PENDING_CONFIRMATION',
+  'BOOKING_CONFIRMED',
+  'BOOKING_CHECKED_IN',
+]);
+
+/**
+ * El sufijo del código, sin el prefijo de módulo.
+ *
+ * El catálogo no es consistente (`BOOKING_CONFIRMED` vs
+ * `scheduling:BOOKING_REQUESTED`); comparar el segmento posterior al último `:`
+ * funciona con las dos formas. Mismo criterio que `agenda/booking-status.ts`,
+ * replicado local para no acoplar este portal a esa pantalla (una feature no
+ * debería depender de otra por una función de tres líneas).
+ */
+function sufijoDeCodigo(code: string): string {
+  return code.includes(':') ? code.slice(code.lastIndexOf(':') + 1) : code;
+}
+
 /** Un turno propio, ya listo para mostrarse. */
 interface TurnoVisible {
   readonly id: string;
@@ -53,6 +90,8 @@ interface TurnoVisible {
   readonly hasta: Date | null;
   /** El uuid del catálogo. Se conserva para poder reetiquetar cuando llegue. */
   readonly statusConceptId: string;
+  /** El código del catálogo ya resuelto. `''` hasta que terminología llegue. */
+  readonly codigo: string;
   readonly estado: string;
   /** El tono del badge, que sale del mismo código que la palabra. */
   readonly tono: BadgeVariant;
@@ -109,12 +148,18 @@ interface HorarioVisible {
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
+  // `DatePipe` inyectable para nombrar el turno concreto en la confirmación de
+  // cancelación (mismo locale es-BO que la plantilla).
+  providers: [DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Appointments {
   private readonly scheduling = inject(SchedulingClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
+  private readonly dialogs = inject(DialogService);
+  private readonly toast = inject(ToastService);
+  private readonly fecha = inject(DatePipe);
 
   /** Quién es el titular. Sin esto no hay turnos propios que pedir ni mostrar. */
   private readonly perfil = this.auth.patientProfileId();
@@ -136,6 +181,9 @@ export class Appointments {
   /* ---- mis turnos --------------------------------------------------------- */
 
   protected readonly turnos = signal<ViewState<readonly TurnoVisible[]>>(loading());
+
+  /** El turno que se está cancelando, para el `[isLoading]` del botón. `null` = ninguno. */
+  protected readonly operando = signal<string | null>(null);
 
   /* ---- pedir un turno ----------------------------------------------------- */
 
@@ -193,8 +241,11 @@ export class Appointments {
     }
 
     this.turnos.set(loading());
+    // `includeCancelled: true` a propósito: tras cancelar, el turno tiene que
+    // seguir viéndose —como cancelado— y no desaparecer. El backend lo oculta por
+    // omisión; acá se quiere el historial reciente, no solo lo vigente.
     this.scheduling
-      .searchBookings({ patientProfileId: perfil, limit: TOPE_DE_TURNOS })
+      .searchBookings({ patientProfileId: perfil, includeCancelled: true, limit: TOPE_DE_TURNOS })
       .subscribe({
         next: (pagina) => {
           if (pagina.items.length === 0) {
@@ -292,6 +343,109 @@ export class Appointments {
       });
   }
 
+  /* ---- cancelar ----------------------------------------------------------- */
+
+  /**
+   * Si el turno admite cancelarse, por su código de estado.
+   *
+   * Allowlist sobre el sufijo del código (ver {@link CODIGOS_CANCELABLES}): un
+   * estado fuera de la lista —cancelado, atendido, completado o desconocido— no
+   * ofrece el botón. Mientras el código no se resolvió (`''`) tampoco: nunca se
+   * ofrece cancelar sobre un estado que no se conoce.
+   */
+  protected esCancelable(turno: TurnoVisible): boolean {
+    return turno.codigo !== '' && CODIGOS_CANCELABLES.has(sufijoDeCodigo(turno.codigo));
+  }
+
+  /**
+   * Cancela el turno propio, con confirmación previa.
+   *
+   * Es una acción destructiva, así que pide confirmación nombrando el turno. El
+   * tono es calmo, no de alarma: cancelar un turno propio es corriente, no una
+   * baja de la que haya que disuadir.
+   */
+  protected async cancelarTurno(turno: TurnoVisible): Promise<void> {
+    if (this.operando() !== null) {
+      return;
+    }
+
+    const confirmado = await this.dialogs.confirm({
+      title: 'Cancelar el turno',
+      message: `Vas a cancelar ${this.nombreDelTurno(turno)}. El horario queda libre para otra persona.`,
+      confirmLabel: 'Cancelar el turno',
+      cancelLabel: 'Volver',
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    this.operando.set(turno.id);
+    this.scheduling.cancelBooking(turno.id, { cancelledBy: 'PATIENT' }).subscribe({
+      next: () => {
+        this.operando.set(null);
+        this.toast.success('Cancelamos tu turno y liberamos el horario.', 'Turno cancelado');
+        // El servidor es la verdad: se relee en vez de tachar la fila y devolver
+        // el cupo a mano. El turno reaparece como cancelado (por `includeCancelled`)
+        // y el horario vuelve a ofrecerse.
+        this.recargar();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFalloCancelacion(error);
+      },
+    });
+  }
+
+  /** Cómo nombrar el turno en la confirmación: por su fecha, o genérico. */
+  private nombreDelTurno(turno: TurnoVisible): string {
+    if (turno.cuando === null) {
+      return 'este turno';
+    }
+    const cuando = this.fecha.transform(turno.cuando, "EEEE d 'de' MMM 'a las' HH:mm");
+    return cuando === null ? 'este turno' : `el turno del ${cuando}`;
+  }
+
+  /**
+   * Traduce el fallo de cancelar a un aviso, sin pintar de rojo lo que no es un
+   * error del titular.
+   *
+   * - **409 `CONFLICT`** (ya estaba cancelado, p. ej. desde la agenda del médico)
+   *   y **422 / precondición** (la transición ya no está disponible) son estados
+   *   esperados: aviso neutro y se relee, porque el mundo cambió mientras la
+   *   pantalla estaba abierta y la lista tiene que ponerse al día.
+   * - Cualquier otro fallo sigue el patrón del repo y **no** destruye la lista:
+   *   la que se leyó sigue siendo cierta aunque un botón haya fallado.
+   */
+  private avisarFalloCancelacion(error: unknown): void {
+    const estado = errorToViewState<null>(error);
+    const codigos =
+      estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
+
+    if (codigos.includes('CONFLICT')) {
+      this.toast.info('Este turno ya estaba cancelado. Actualizamos tu lista.', 'Turno');
+      this.recargar();
+      return;
+    }
+    if (estado.status === 'validation') {
+      this.toast.info('Este turno ya no se puede cancelar. Actualizamos tu lista.', 'Turno');
+      this.recargar();
+      return;
+    }
+
+    const detalle =
+      estado.status === 'forbidden' || estado.status === 'error' ? (estado.message ?? '') : '';
+    this.toast.error(
+      detalle === '' ? 'No pudimos cancelar el turno. Reintentá en un momento.' : detalle,
+      'Turno',
+    );
+  }
+
+  /** Relee lo que la cancelación cambió: los turnos y los horarios ofrecidos. */
+  private recargar(): void {
+    this.cargarTurnos();
+    this.cargarHorarios();
+  }
+
   /**
    * Pide las etiquetas de los estados que aparecieron.
    *
@@ -360,6 +514,7 @@ export class Appointments {
       cuando: cita.startAt ?? null,
       hasta: cita.endAt ?? null,
       statusConceptId: cita.statusConceptId,
+      codigo: this.codigoDelEstado(cita.statusConceptId),
       estado: estado.label,
       tono: estado.tone,
       resourceId,
@@ -373,10 +528,16 @@ export class Appointments {
     const estado = this.presentacionDelEstado(turno.statusConceptId);
     return {
       ...turno,
+      codigo: this.codigoDelEstado(turno.statusConceptId),
       estado: estado.label,
       tono: estado.tone,
       agenda: this.nombreDeLaAgenda(turno.resourceId),
     };
+  }
+
+  /** El código del estado, o `''` si el catálogo todavía no lo resolvió. */
+  private codigoDelEstado(conceptId: string): string {
+    return this.etiquetas().get(conceptId)?.code ?? '';
   }
 
   /**
