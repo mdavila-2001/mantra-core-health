@@ -77,6 +77,17 @@ export type { ReferenceOption } from './reference-combobox/reference-combobox.ty
 export { SearchField } from './search-field/search-field';
 export { SEARCH_DEBOUNCE_MS } from './search-field/search-field.types';
 
+/* La tarjeta de la superficie pública (V65). Su diseño vive en `redsat.css`
+   §25, no en el componente — ver su `.css`, que está vacío a propósito. */
+export { SearchResult } from './search-result/search-result';
+export { SEARCH_RESULT_TONES } from './search-result/search-result.types';
+export type {
+  SearchResultItem,
+  SearchResultMeta,
+  SearchResultSeal,
+  SearchResultTone,
+} from './search-result/search-result.types';
+
 /* `Tab` es la pestaña individual; sin `Tabs` alrededor no significa nada. */
 export { Tabs } from './tabs/tabs';
 export { Tab } from './tabs/tab/tab';

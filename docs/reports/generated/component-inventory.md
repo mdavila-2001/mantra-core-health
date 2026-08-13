@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-303 componentes y 38 servicios inyectables, leídos de `src/`.
+304 componentes y 38 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -25,7 +25,7 @@
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (21)
+## Molécula (22)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -47,6 +47,7 @@
 | `app-radio` | `Radio` | `value`, `label`, `disabled` | — | — | OnPush | **no** |
 | `app-reference-combobox` | `ReferenceCombobox` | `selected`, `options`, `loading`, `disabled`, `placeholder`, `debounceMs`, `minQueryLength`, `label`, `emptyMessage` | `searched`, `selectionChange` | `value` | OnPush | sí |
 | `app-search-field` | `SearchField` | `placeholder`, `debounceMs`, `loading`, `disabled`, `label` | `searched` | `value` | OnPush | sí |
+| `li[app-search-result]` | `SearchResult` | `resultado` | — | — | OnPush | sí |
 | `app-tab` | `Tab` | `label`, `disabled` | — | — | OnPush | **no** |
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
@@ -224,7 +225,7 @@
 | `app-redsat-buscar-perfil-laboratorio-detalle` | `BuscarPerfilLaboratorioDetalle` | — | — | — | Default | **no** |
 | `app-redsat-buscar-perfil-organizacion-detalle` | `BuscarPerfilOrganizacionDetalle` | — | — | — | Default | **no** |
 | `app-redsat-buscar-perfil-profesional-detalle` | `BuscarPerfilProfesionalDetalle` | — | — | — | Default | **no** |
-| `app-redsat-buscar-profesionales-listado` | `BuscarProfesionalesListado` | — | — | — | Default | **no** |
+| `app-redsat-buscar-profesionales-listado` | `BuscarProfesionalesListado` | — | — | — | OnPush | **no** |
 | `app-redsat-buscar-seguidos-y-guardados-listado` | `BuscarSeguidosYGuardadosListado` | — | — | — | Default | **no** |
 | `app-redsat-datos-compartidos-archivos-eliminar` | `DatosCompartidosArchivosEliminar` | — | — | — | Default | **no** |
 | `app-redsat-datos-compartidos-archivos-formulario` | `DatosCompartidosArchivosFormulario` | — | — | — | Default | **no** |
