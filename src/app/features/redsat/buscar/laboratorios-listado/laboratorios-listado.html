@@ -1,0 +1,182 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg></span>
+      <div class="app-page-header__texto">
+        <div class="app-page-header__titulo"><h1>Laboratorios y centros de imagen</h1></div>
+        <p class="caption">Dónde hacerte el estudio que te pidieron: qué análisis ofrece cada centro, qué requisitos previos tiene —ayuno, orden médica, suspender un medicamento—, cuánto cuesta y en cuánto tiempo entrega el resultado.</p>
+      </div>
+
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Qué estás buscando">
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/buscador-listado">Todo</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/profesionales-listado">Profesionales</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/medicamentos-listado">Medicamentos</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/hospitales-listado">Hospitales y clínicas</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Laboratorios e imagen</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/aseguradoras-listado">Aseguradoras</a>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá por estudio, análisis o nombre del centro</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por estudio, análisis o nombre del centro">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-ciudad">Dónde</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-ciudad">
+            <option>La Paz</option>
+            <option>El Alto</option>
+            <option>Santa Cruz de la Sierra</option>
+            <option>Cochabamba</option>
+            <option>Sucre</option>
+            <option>Tarija</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-tipo">Tipo de centro</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-tipo">
+            <option>Cualquiera</option>
+            <option>Análisis clínicos</option>
+            <option>Imagenología</option>
+            <option>Anatomía patológica</option>
+            <option>Genética</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-estudio">Estudio</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-estudio">
+            <option>Cualquiera</option>
+            <option>Hemograma completo</option>
+            <option>Perfil lipídico</option>
+            <option>Perfil tiroideo</option>
+            <option>Radiografía</option>
+            <option>Ecografía</option>
+            <option>Tomografía</option>
+            <option>Resonancia magnética</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-entrega">Entrega del resultado</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-entrega">
+            <option>Cualquiera</option>
+            <option>El mismo día</option>
+            <option>Hasta 24 h</option>
+            <option>Hasta 48 h</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-seguro">Aseguradora en convenio</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-seguro">
+            <option>Cualquiera</option>
+            <option>La Boliviana Ciacruz</option>
+            <option>Alianza Seguros</option>
+            <option>Nacional Vida</option>
+            <option>Univida</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-domicilio">Toma de muestra</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-domicilio">
+            <option>Cualquiera</option>
+            <option>En el centro</option>
+            <option>A domicilio</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      </div>
+    </section>
+    <section class="app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <ul class="app-resultado-lista">
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">LZ</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-laboratorio-detalle">Laboratorio Zamora</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Laboratorio</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>San Miguel, La Paz · 3,4 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Análisis clínicos · 142 estudios</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Ayuno de 8 h para el perfil lipídico</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"></path></svg>4,7 · 645 opiniones</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Resultados en 24 h</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4 10.5 8-6.5 8 6.5"></path><path d="M6.5 9.5V20h11V9.5"></path></svg>Toma a domicilio</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Convenio BCS y Alianza</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 95<small>hemograma completo</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-laboratorio-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">LI</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-laboratorio-detalle">Laboratorio Illimani</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Laboratorio</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Sopocachi, La Paz · 1,1 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Análisis clínicos · 88 estudios</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Orden médica para estudios especiales</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"></path></svg>4,5 · 298 opiniones</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Resultados en 48 h</span><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Sin orden médica para rutina</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 80<small>hemograma completo</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-laboratorio-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">CK</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-laboratorio-detalle">Centro de Imagenología Kantutani</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Laboratorio</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Obrajes, La Paz · 6,2 km</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Imagen · 34 estudios</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Requiere orden médica</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"></path></svg>4,6 · 187 opiniones</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Tomografía y resonancia</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Informe en 72 h</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 780<small>resonancia sin contraste</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-laboratorio-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      <li class="app-resultado">
+        <span class="app-resultado__figura" aria-hidden="true">DX</span>
+        <div class="app-resultado__cuerpo">
+          <p class="app-resultado__titulo"><a routerLink="/buscar/perfil-laboratorio-detalle">Diagnóstico Santa Cruz</a><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Laboratorio</span></p>
+          <p class="app-resultado__meta"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>Equipetrol, Santa Cruz de la Sierra</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg>Análisis e imagen · 210 estudios</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Ayuno según el estudio</span><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"></path></svg>4,8 · 1 032 opiniones</span></p>
+          <p class="app-resultado__sellos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Resultados el mismo día</span><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4 10.5 8-6.5 8 6.5"></path><path d="M6.5 9.5V20h11V9.5"></path></svg>Toma a domicilio</span></p>
+        </div>
+        <div class="app-resultado__lado"><span class="app-resultado__precio">Bs 110<small>hemograma completo</small></span><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-laboratorio-detalle">Ver ficha<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a></div>
+      </li>
+      </ul>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">4 de 63 centros · 25 por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3.5v6.2L5.2 18a2 2 0 0 0 1.7 3h10.2a2 2 0 0 0 1.7-3L14 9.7V3.5"></path><path d="M8.5 3.5h7"></path><path d="M7.6 14.5h8.8"></path></svg></span>
+        <h2>Ningún centro cercano ofrece ese estudio</h2>
+        <p>Los estudios de alta complejidad —resonancia, medicina nuclear, genética— se concentran en pocos centros y suelen estar solo en las ciudades grandes. Ampliá la distancia, o buscá el nombre exacto del estudio tal como figura en tu orden médica: los nombres comerciales cambian entre centros.</p>
+        <a app-button="" data-variante="secundario" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Buscando…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos completar la búsqueda de centros de diagnóstico.</strong>
+            <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento; tu búsqueda se mantiene escrita.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

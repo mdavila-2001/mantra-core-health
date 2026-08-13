@@ -5,6 +5,72 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión 2026-08-13 · Port del sistema de diseño y las vistas de la bóveda
+
+**Rama:** `pablo/redsat-vistas`, apilada sobre `pablo/contabilidad-frontend`.
+**Por qué apilada y no desde `dev`:** los dos documentos que escribí
+(`docs/design-system/port-redsat.md` y el bloque nuevo de
+`docs/performance/budgets.md`) ya viajaron dentro de `b9ba311`, en la rama de
+contabilidad. Naciendo desde `dev` los tendría duplicados y chocarían al
+mezclar. Apilada, el PR muestra sólo el port y GitHub lo reapunta a `dev` en
+cuanto el #73 entre.
+
+Gracias por `f7a1371` — desacoplar las rutas REDSAT del PR de contabilidad fue
+lo correcto. Las volví a cablear **acá**, que es donde corresponde.
+
+### Qué entra
+
+- **El sistema de diseño de la bóveda pasa a ser el del front.**
+  `src/styles/redsat.css` es generado (`scripts/sync-redsat.mjs`) desde
+  `SALUD/Vistas/HTML/_assets/redsat.css`. Se carga **después** de
+  `src/styles.css`, y conviven: los tokens son disjuntos (castellano vs inglés).
+- **126 pantallas portadas** desde las maquetas de la bóveda a
+  `src/app/features/redsat/`, con sus rutas y sus dos marcos.
+- **El armazón autenticado pasa al marco REDSAT.** `shell-layout.html` dejó de
+  delegar en el organismo `app-shell`.
+
+### Archivos nuevos (no chocan con nada)
+
+`src/styles/`, `src/app/core/redsat/`, `src/app/features/redsat/`,
+`public/redsat/`, `scripts/sync-redsat.mjs`, `scripts/port-vistas-redsat.mjs`,
+`cypress/e2e/redsat-port.cy.ts`.
+
+### Archivos existentes que toco, y por qué
+
+| Archivo | Qué le hago |
+| --- | --- |
+| `angular.json` | agrega `src/styles/redsat.css` a `styles` |
+| `src/index.html` | el script anti-parpadeo estampa también `data-tema` |
+| `src/app/core/tokens/theme.service.ts` | segundo atributo de tema, para la hoja de la bóveda |
+| `src/app/app.ts` | instala el runtime REDSAT y estampa el arquetipo de la ruta |
+| `src/app/app.routes.ts` | `...REDSAT_ROUTES` al principio (6 líneas) |
+| `src/app/features/shell-layout/*` | el marco, ahora REDSAT |
+| `mkdocs.yml` | una entrada de nav |
+
+### Lo que NO toco — es todo tuyo
+
+`src/app/shared/components/organisms/{shell,side-nav,header}/` quedaron
+**intactos**: el organismo `app-shell` sigue existiendo y lo usa la vitrina.
+Tampoco toco `core/navigation/`, `core/auth/`, ni ninguna pantalla de features
+fuera de `shell-layout`.
+
+### Dos cosas que te afectan si tocás rutas
+
+1. **`/directorio`, no `/organizaciones`.** El proxy desvía a la API todo lo que
+   empieza con `/org`: esa ruta la respondía el backend con un 404. Misma trampa
+   que documenta `proxy.conf.json`.
+2. **Los segmentos nuevos** son `/inicio`, `/buscar`, `/accesos`,
+   `/datos-compartidos`, `/terminologia`, `/directorio`, `/personas`.
+
+### Verificación
+
+`yarn test` 1873/1873 · `yarn lint` limpio · `yarn ng build` ok · 6 de 7 checks
+verdes (`check-doc-coverage` sigue rojo por `AccountingClient`, que es
+preexistente y no es mío). Contenedor `mantra-core-health-dev` recreado y
+comprobado sirviendo la hoja, las tipografías y las rutas.
+
+---
+
 ## Sesión 2026-08-08 · Atención (agenda + archivo clínico) y recorrido con usuarios reales
 
 **Rama:** `pablo/combobox-referencia-y-ancla-accion` · **Base:** `22ca1c7`

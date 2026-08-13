@@ -14,15 +14,28 @@
          en styles.css sin JS. Clave espejo de THEME_STORAGE_KEY
          (src/app/core/tokens/theme.service.ts). */
       (function () {
+        var raiz = document.documentElement;
+        var preferencia = null;
         try {
-          var preferencia = localStorage.getItem('mantra-core-health.theme');
-          if (preferencia === 'light' || preferencia === 'dark') {
-            document.documentElement.dataset.theme = preferencia;
-          }
+          preferencia = localStorage.getItem('mantra-core-health.theme');
         } catch (e) {
           /* almacenamiento bloqueado: queda la preferencia del sistema */
           console.error('Error al leer la preferencia del tema:', e);
         }
+        if (preferencia === 'light' || preferencia === 'dark') {
+          raiz.dataset.theme = preferencia;
+        }
+        /* Espejo para la hoja de REDSAT (src/styles/redsat.css), que resuelve el
+           tema oscuro SOLO contra un atributo explícito. Acá se resuelve
+           'system' contra el sistema operativo, así que este atributo lleva
+           siempre un valor —claro u oscuro— y nunca falta. Espejo de
+           REDSAT_THEME_ATTRIBUTE en core/tokens/theme.service.ts. */
+        var oscuro =
+          preferencia === 'dark' ||
+          (preferencia !== 'light' &&
+            typeof matchMedia === 'function' &&
+            matchMedia('(prefers-color-scheme: dark)').matches);
+        raiz.setAttribute('data-tema', oscuro ? 'oscuro' : 'claro');
       })();
     </script>
   </head>

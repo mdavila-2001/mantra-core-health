@@ -1,0 +1,91 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5v15"></path><path d="M6 8h12"></path><path d="m6 8-2.8 5.6h5.6z"></path><path d="m18 8-2.8 5.6h5.6z"></path><path d="M8.5 19.5h7"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Personas</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/personas/autorizaciones-de-jurisdiccion-listado">Autorizaciones de jurisdicción</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nueva</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nueva autorización de jurisdicción</h1></div>
+        <p class="caption">Registrá o renová la licencia con la que un profesional ejerce en un departamento. Se abre desde su ficha: su identificador ya viene de la fila.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        
+      </div>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Número de licencia: ya hay una autorización vigente con ese número en La Paz.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1">Número de licencia <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-1" type="text" required="" aria-describedby="c-1-a" value="" placeholder="12457-LP">
+        <p class="app-form-field__ayuda" id="c-1-a">La matrícula tal como la emitió la autoridad. Hasta 100 caracteres.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2">Jurisdicción</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-2" aria-describedby="c-2-a">
+            <option selected="">Elegí un valor del catálogo</option>
+            <option>La Paz</option>
+            <option>Cochabamba</option>
+            <option>Santa Cruz</option>
+            <option>Oruro</option>
+            <option>Tarija</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-2-a">Sale del catálogo de terminología. Es donde vale la licencia, no donde vive el profesional.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3">Autoridad regulatoria</label>
+        <input class="app-input" app-input="" id="c-3" type="text" aria-describedby="c-3-a" value="" placeholder="Colegio Médico de Bolivia">
+        <p class="app-form-field__ayuda" id="c-3-a">Quién la emitió. Hasta 200 caracteres.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-4">Alcance de práctica</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-4" aria-describedby="c-4-a">
+            <option selected="">Elegí un valor del catálogo</option>
+            <option>Medicina interna</option>
+            <option>Cardiología</option>
+            <option>Pediatría</option>
+            <option>Ginecología y obstetricia</option>
+            <option>Traumatología</option>
+            <option>Enfermería general</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-4-a">Hasta dónde llega lo que puede hacer con esta licencia.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-5">Vigente desde</label>
+        <span class="app-date-picker" app-date-picker="">
+          <input class="app-date-picker__input" id="c-5" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" aria-describedby="c-5-a" value="12/08/2026">
+          <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-5-a">La fecha que dice la resolución, no la de hoy.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-6">Vigente hasta</label>
+        <span class="app-date-picker" app-date-picker="">
+          <input class="app-date-picker__input" id="c-6" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" aria-describedby="c-6-a" value="12/08/2031">
+          <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-6-a">Al vencer, la agenda deja de ofrecer sus turnos hasta que cargues la renovación.</p>
+      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/personas/autorizaciones-de-jurisdiccion-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+    </form>

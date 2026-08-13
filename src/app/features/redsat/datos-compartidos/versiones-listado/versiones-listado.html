@@ -1,0 +1,159 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Datos compartidos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/datos-compartidos/archivos-listado">Archivos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Versiones</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Versiones (archivos)</h1></div>
+        <p class="caption">Cada carga de contenido queda como una versión propia y no se edita ni se borra: para corregir algo, agregá una versión nueva.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/datos-compartidos/versiones-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
+      </div>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por código o nombre">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-26">Archivo</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-26" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-27">Proveedor de almacenamiento</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-27">
+            <option>Todas</option>
+            <option>Almacenamiento S3</option>
+            <option>Almacenamiento GCS</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Almacenamiento S3<button type="button" aria-label="Quitar el filtro Almacenamiento S3"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-28">Región de almacenamiento</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-28">
+            <option>Todas</option>
+            <option>São Paulo</option>
+            <option>Santiago</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Versiones (archivos) — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Archivo</th>
+            <th scope="col" class="col-num">Número de versión</th>
+            <th scope="col">Proveedor de almacenamiento</th>
+            <th scope="col">Región de almacenamiento</th>
+            <th scope="col">Bucket o contenedor</th>
+            <th scope="col">Llave de objeto</th>
+            <th scope="col">Versión de objeto</th>
+            <th scope="col">URI de almacenamiento</th>
+            <th scope="col">URI de origen externo</th>
+            <th scope="col">Tipo MIME</th>
+            <th scope="col" class="col-num">Tamaño</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">VER-2026-011204</td><td><a app-link="" routerLink="/datos-compartidos/contenido-detalle">consentimiento-informado-quiroz.pdf</a></td><td class="col-num">3</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7.5 18.5A4 4 0 0 1 7 10.6a5.5 5.5 0 0 1 10.6 1.2 3.5 3.5 0 0 1-.6 6.7z"></path></svg>Almacenamiento S3</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3.5 12h17"></path><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>São Paulo</span></td><td>salud-clinico-lp</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="2026/08/arc-000481/v3.pdf">2026/08/arc-000481/v3.pdf</span></td><td>3xK9c1</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://s3.sa-east-1.amazonaws.com/salud-clinico-lp/2026/08/arc-000481/v3.pdf">https://s3.sa-east-1…/v3.pdf</span></td><td class="muted" aria-label="Sin dato">—</td><td>application/pdf</td><td class="col-num">1 284 992</td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-15" aria-label="Acciones sobre VER-2026-011204"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-15" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/derivados-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver derivados</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">VER-2026-011198</td><td><a app-link="" routerLink="/datos-compartidos/contenido-detalle">rx-torax-mamani-2026-08-04.dcm</a></td><td class="col-num">1</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7.5 18.5A4 4 0 0 1 7 10.6a5.5 5.5 0 0 1 10.6 1.2 3.5 3.5 0 0 1-.6 6.7z"></path></svg>Almacenamiento S3</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3.5 12h17"></path><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>São Paulo</span></td><td>salud-imagenes-lp</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="2026/08/arc-000478/v1.dcm">2026/08/arc-000478/v1.dcm</span></td><td>1aQ7f4</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://s3.sa-east-1.amazonaws.com/salud-imagenes-lp/2026/08/arc-000478/v1.dcm">https://s3.sa-east-1…/v1.dcm</span></td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="pacs://olivos.local/estudios/est-9912">pacs://olivos/est-9912</span></td><td>application/dicom</td><td class="col-num">24 118 784</td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-16" aria-label="Acciones sobre VER-2026-011198"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-16" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/derivados-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver derivados</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">VER-2026-011185</td><td><a app-link="" routerLink="/datos-compartidos/contenido-detalle">orden-laboratorio-choque.pdf</a></td><td class="col-num">2</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7.5 18.5A4 4 0 0 1 7 10.6a5.5 5.5 0 0 1 10.6 1.2 3.5 3.5 0 0 1-.6 6.7z"></path></svg>Almacenamiento GCS</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3.5 12h17"></path><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>Santiago</span></td><td>salud-clinico-scz</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="2026/07/arc-000470/v2.pdf">2026/07/arc-000470/v2.pdf</span></td><td class="muted" aria-label="Sin dato">—</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://storage.googleapis.com/salud-clinico-scz/2026/07/arc-000470/v2.pdf">https://storage.google…/v2.pdf</span></td><td class="muted" aria-label="Sin dato">—</td><td>application/pdf</td><td class="col-num">312 704</td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-17" aria-label="Acciones sobre VER-2026-011185"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-17" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/derivados-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver derivados</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">VER-2026-011162</td><td><a app-link="" routerLink="/datos-compartidos/contenido-detalle">ecografia-abdominal-vargas.jpg</a></td><td class="col-num">1</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7.5 18.5A4 4 0 0 1 7 10.6a5.5 5.5 0 0 1 10.6 1.2 3.5 3.5 0 0 1-.6 6.7z"></path></svg>Almacenamiento S3</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3.5 12h17"></path><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>São Paulo</span></td><td>salud-imagenes-lp</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="2026/07/arc-000463/v1.jpg">2026/07/arc-000463/v1.jpg</span></td><td>8dR2m0</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://s3.sa-east-1.amazonaws.com/salud-imagenes-lp/2026/07/arc-000463/v1.jpg">https://s3.sa-east-1…/v1.jpg</span></td><td class="muted" aria-label="Sin dato">—</td><td>image/jpeg</td><td class="col-num">4 587 520</td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-18" aria-label="Acciones sobre VER-2026-011162"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-18" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/derivados-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver derivados</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">VER-2026-011140</td><td><a app-link="" routerLink="/datos-compartidos/contenido-detalle">contrato-proveedor-insumos.pdf</a></td><td class="col-num">4</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7.5 18.5A4 4 0 0 1 7 10.6a5.5 5.5 0 0 1 10.6 1.2 3.5 3.5 0 0 1-.6 6.7z"></path></svg>Almacenamiento GCS</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3.5 12h17"></path><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>Santiago</span></td><td>salud-administrativo</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="2026/07/arc-000455/v4.pdf">2026/07/arc-000455/v4.pdf</span></td><td class="muted" aria-label="Sin dato">—</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://storage.googleapis.com/salud-administrativo/2026/07/arc-000455/v4.pdf">https://storage.google…/v4.pdf</span></td><td class="muted" aria-label="Sin dato">—</td><td>application/pdf</td><td class="col-num">845 824</td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-19" aria-label="Acciones sobre VER-2026-011140"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-19" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/derivados-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver derivados</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">VER-2026-011117</td><td><a app-link="" routerLink="/datos-compartidos/contenido-detalle">historia-clinica-sandoval.pdf</a></td><td class="col-num">7</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7.5 18.5A4 4 0 0 1 7 10.6a5.5 5.5 0 0 1 10.6 1.2 3.5 3.5 0 0 1-.6 6.7z"></path></svg>Almacenamiento S3</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3.5 12h17"></path><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>São Paulo</span></td><td>salud-clinico-lp</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="2026/06/arc-000441/v7.pdf">2026/06/arc-000441/v7.pdf</span></td><td>5tY8w3</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://s3.sa-east-1.amazonaws.com/salud-clinico-lp/2026/06/arc-000441/v7.pdf">https://s3.sa-east-1…/v7.pdf</span></td><td class="muted" aria-label="Sin dato">—</td><td>application/pdf</td><td class="col-num">9 216 000</td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-20" aria-label="Acciones sobre VER-2026-011117"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-20" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/derivados-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver derivados</a>
+          </div>
+        </div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg></span>
+        <h2>Este archivo todavía no tiene versiones</h2>
+        <p>Una versión es una carga concreta de contenido: dónde quedó guardada, cuánto pesa y con qué hash. Es la unidad que se descarga y la que se escanea.</p>
+        <a app-button="" data-variante="secundario" routerLink="/datos-compartidos/versiones-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar versiones (archivos).</strong>
+            <p>La organización activa no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>
