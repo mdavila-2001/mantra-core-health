@@ -50,6 +50,7 @@ import {
   CLINICAL_RECORD_ROUTE,
   MOTIVO_QUERY_PARAM,
 } from '../clinical-record.routes';
+import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
@@ -125,14 +126,15 @@ interface Expediente {
  * faltan notas sin avisar es un expediente que miente, y en clínica esa mentira
  * se lee como «no hay antecedentes».
  *
- * ## Lo que se escribe acá: el encuentro y la receta
+ * ## Lo que se escribe acá: el encuentro, la receta y el diagnóstico
  *
  * La pantalla era de consulta pura. Abre y cierra **encuentros**
  * (`POST /clinical/encounters/check-in` y `.../{id}/close`) y, desde el
- * encuentro abierto, **receta** (`app-medication-block`). El criterio para
- * admitir una escritura no cambió y no es de alcance sino de honestidad: se
- * ofrece la que esta misma pantalla **vuelve a leer**. Encuentros y medicación
- * salen los dos de `GET /clinical/patients/:id/summary`, así que lo que se
+ * encuentro abierto, **receta** (`app-medication-block`) y **registra el
+ * diagnóstico** (`app-diagnosis-block`). El criterio para admitir una
+ * escritura no cambió y no es de alcance sino de honestidad: se ofrece la que
+ * esta misma pantalla **vuelve a leer**. Encuentros, medicación y condiciones
+ * salen los tres de `GET /clinical/patients/:id/summary`, así que lo que se
  * registra aparece; firmar una nota tiene endpoint pero no lectura, y sería un
  * formulario que traga el dato.
  *
@@ -156,6 +158,7 @@ interface Expediente {
     Card,
     DataTable,
     DatePipe,
+    DiagnosisBlock,
     FormActions,
     FormField,
     MedicationBlock,
