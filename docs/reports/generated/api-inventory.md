@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-119 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+124 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -32,6 +32,11 @@ Archivo: `src/app/core/data-access/directory/directory.client.ts`
 |---|---|
 | `GET` | `/admin/tenants` |
 | `POST` | `/admin/tenants` |
+| `GET` | `/tenants/:tenantId` |
+| `GET` | `/tenants/:tenantId/branches` |
+| `GET` | `/tenants/:tenantId/child-tenants` |
+| `GET` | `/tenants/:tenantId/memberships` |
+| `GET` | `/tenants/:tenantId/memberships/:membershipId/branch-assignments` |
 
 ## `AuthProvidersClient`
 
