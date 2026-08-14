@@ -62,6 +62,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
+  tutorials: () =>
+    import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
@@ -164,6 +166,35 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/identity-assurance/verification-case-detail/verification-case-detail')
         .then((m) => m.VerificationCaseDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
+    // nunca desde el menú.
+    path: 'my-account/edit',
+    title: `${APP_TITLE} - Configurar tu perfil`,
+    loadComponent: () =>
+      import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
+        .then((m) => m.PractitionerProfileEdit)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La vitrina pública: se configura y se ve en la misma pantalla.
+    path: 'my-account/preview',
+    title: `${APP_TITLE} - Tu perfil público`,
+    loadComponent: () =>
+      import('./features/account/my-profile/public-profile-preview/public-profile-preview')
+        .then((m) => m.PublicProfilePreview)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Publicar, revisar lo publicado y sus comentarios. Cuelga de la vitrina:
+    // sin vitrina, no hay dónde publicar un artículo.
+    path: 'my-account/articles',
+    title: `${APP_TITLE} - Artículos médicos`,
+    loadComponent: () =>
+      import('./features/account/my-profile/medical-articles/medical-articles')
+        .then((m) => m.MedicalArticles)
         .catch(() => chunkFallido()),
   },
   {

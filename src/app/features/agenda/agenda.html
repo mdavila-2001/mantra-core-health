@@ -32,31 +32,53 @@
       </app-alert>
     }
 
+    <!-- Quien atiende y no tiene recurso propio en esta organización: antes se
+         le mostraba la agenda del primer consultorio de la lista —los pacientes
+         y los motivos de consulta de un colega— sin que hubiera pedido nada. -->
+    @if (sinAgendaPropia()) {
+      <app-alert tone="info" title="Todavía no tenés agenda en esta organización">
+        Tu agenda se arma sobre un recurso a tu nombre y esta organización no tiene ninguno cargado
+        todavía. Pedíselo a quien administra la agenda. Mientras tanto no se muestra ninguna: la de
+        otro profesional no es la tuya.
+      </app-alert>
+    }
+
     <!-- ─── Filtros ─────────────────────────────────────────────────────── -->
     <form class="agenda__filtros" (submit)="$event.preventDefault()">
-      <!-- Sin opción «todos»: la agenda de la organización entera no se puede
-           pedir, y ofrecerla sería ofrecer un botón que devuelve un error. -->
-      <!-- Cuál se está mirando importa más cuando la agenda la eligió sola: sin
-           decirlo, quien tiene la suya no sabe si está viendo la propia o la
-           primera de la lista, y las dos se ven igual. -->
-      <app-form-field
-        label="Recurso"
-        class="agenda__filtro"
-        [hint]="
-          mirandoAgendaPropia()
-            ? 'Estás viendo tu agenda. Podés cambiar a la de otro recurso.'
-            : 'Las citas se listan por recurso; el backend no admite pedirlas todas juntas.'
-        "
-      >
-        <app-select
-          [options]="opcionesDeRecurso()"
-          [value]="recursoElegido() ?? ''"
-          [disabled]="sinRecursos()"
-          (valueChange)="elegirRecurso($event)"
-        />
-      </app-form-field>
+      <!-- El selector de recurso existe SÓLO para quien reparte turnos entre
+           consultorios. Para quien atiende, su agenda es la suya y la lista de
+           las ajenas no es una comodidad: es la agenda clínica de pacientes que
+           no atiende, con nombre y motivo de consulta, a un clic de distancia.
 
-      <app-form-field label="Ventana" class="agenda__filtro">
+           Sin opción «todos»: la agenda de la organización entera no se puede
+           pedir, y ofrecerla sería ofrecer un botón que devuelve un error. -->
+      @if (puedeElegirRecurso()) {
+        <app-form-field
+          label="Recurso"
+          class="agenda__filtro"
+          [hint]="
+            mirandoAgendaPropia()
+              ? 'Estás viendo tu agenda. Podés cambiar a la de otro recurso.'
+              : 'Las citas se listan por recurso; el backend no admite pedirlas todas juntas.'
+          "
+        >
+          <app-select
+            [options]="opcionesDeRecurso()"
+            [value]="recursoElegido() ?? ''"
+            [disabled]="sinRecursos()"
+            (valueChange)="elegirRecurso($event)"
+          />
+        </app-form-field>
+      } @else if (hayAgendaQueMirar()) {
+        <!-- El nombre igual se dice: sin él, la pantalla no declara de quién es
+             lo que está mostrando, y ese dato no es decorativo en una agenda. -->
+        <p class="agenda__ambito" appTutorialTarget="agenda-ambito">
+          <span class="agenda__ambito-rotulo">Agenda</span>
+          <span class="agenda__ambito-valor">{{ nombreDelRecurso() }}</span>
+        </p>
+      }
+
+      <app-form-field label="Ventana" class="agenda__filtro" appTutorialTarget="agenda-ventana">
         <app-select
           [options]="opcionesDeVentana()"
           [value]="ventanaElegida()"
@@ -72,7 +94,11 @@
       />
     </form>
 
-    <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="elegirPestana($event)">
+    <app-tabs
+      appTutorialTarget="agenda-pestanas"
+      [selectedIndex]="pestana()"
+      (selectedIndexChange)="elegirPestana($event)"
+    >
       <!-- ─── Citas ─────────────────────────────────────────────────────── -->
       <app-tab [label]="rotuloDeCitas()">
         @if (citasRecortadas()) {
@@ -83,6 +109,7 @@
         }
 
         <app-data-table
+          appTutorialTarget="agenda-tabla-citas"
           [state]="citas()"
           [columns]="columnasDeCitas()"
           [trackBy]="porCita"

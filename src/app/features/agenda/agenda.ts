@@ -55,6 +55,7 @@ import { DataTable } from '../../shared/components/organisms/data-table/data-tab
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { bookingNewRoute } from './agenda.routes';
+import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
  * Las ventanas que se ofrecen, en días.
@@ -115,6 +116,26 @@ const TABLAS_DE_PERFIL_PROFESIONAL = ['practitioner_profiles', 'health_practitio
  * el comodín de su `RolesGuard`.
  */
 const ROLES_QUE_OPERAN_CITAS = ['SCHEDULING_ADMIN', 'SCHEDULING_AGENT', 'SUPERADMIN'];
+
+/**
+ * Roles que pueden mirar la agenda **de otro recurso**.
+ *
+ * Son los mismos que operan citas, y el motivo es que ese es exactamente el
+ * trabajo que necesita ver agendas ajenas: quien atiende el mostrador reparte
+ * turnos entre todos los consultorios, y quien administra la agenda arma la
+ * grilla de la organización. Nadie más.
+ *
+ * **Un profesional no está en la lista, y no es un olvido.** Que quien atiende
+ * pueda desplegar una lista con las agendas de sus colegas y leer los pacientes
+ * y los motivos de consulta de cada uno no es una comodidad: es exponer datos
+ * clínicos de personas que ese profesional no atiende, dentro de una pantalla
+ * que se abre todos los días. La agenda de quien atiende es la suya.
+ *
+ * Esto NO reemplaza a la autorización del backend —el `RolesGuard` sigue siendo
+ * el que decide— pero deja de ofrecer en pantalla algo que no corresponde
+ * ofrecer.
+ */
+const ROLES_QUE_ELIGEN_RECURSO = ROLES_QUE_OPERAN_CITAS;
 
 /** Roles que pueden retener y confirmar un cupo. `PATIENT` reserva para sí. */
 const ROLES_QUE_RESERVAN = [...ROLES_QUE_OPERAN_CITAS, 'PATIENT'];
@@ -221,6 +242,7 @@ export interface CupoVisible {
 @Component({
   selector: 'app-agenda',
   imports: [
+    TutorialTarget,
     Alert,
     AppButton,
     AppButtonLink,
@@ -305,12 +327,29 @@ export class Agenda {
    * selector sería ofrecer un botón que devuelve un error.
    *
    * Sin recurso en la URL manda **la agenda propia**, si la sesión tiene una: a
-   * quien atiende le sirve la suya, no la primera de la organización. Recién si
-   * no la hay se cae al primer recurso — entrar a la agenda y encontrarla vacía
-   * hasta elegir algo es peor que entrar y ver una agenda, y cuál se está
-   * mirando lo dice el selector, que queda marcado.
+   * quien atiende le sirve la suya, no la primera de la organización.
+   *
+   * ## Quien no elige recurso se queda en el suyo, y en ninguno más
+   *
+   * Para una sesión sin rol de agenda (un profesional, un clínico) esto devuelve
+   * **su recurso o `null`**, y nunca el primero de la organización. Antes caía
+   * al primero, y esa caída tenía dos consecuencias feas a la vez: un médico sin
+   * agenda propia en esa institución abría la pantalla y se encontraba mirando
+   * los pacientes y los motivos de consulta de un colega, sin haber pedido nada;
+   * y un enlace con `?recurso=` de otro le abría esa agenda directamente.
+   *
+   * Es mejor no mostrar ninguna agenda y explicar por qué —lo hace
+   * `sinAgendaPropia()`— que mostrar la de otra persona.
    */
   protected readonly recursoElegido = computed(() => {
+    const propia = this.recursoPropio();
+
+    // Sin permiso para elegir, no hay negociación con la URL: la agenda es la
+    // propia. Un enlace que apunte a otra no la abre.
+    if (!this.puedeElegirRecurso()) {
+      return propia;
+    }
+
     const pedido = this.recursoPedido();
     const disponibles = this.recursos();
     if (pedido !== null && disponibles.some((recurso) => recurso.id === pedido)) {
@@ -318,7 +357,6 @@ export class Agenda {
     }
     // La URL manda sobre la agenda propia: un enlace compartido tiene que abrir
     // lo que dice, aunque quien lo abra tenga la suya.
-    const propia = this.recursoPropio();
     if (propia !== null) {
       return propia;
     }
@@ -327,6 +365,18 @@ export class Agenda {
     // daba por imposible el `null` que en tiempo de ejecución sí ocurre —una
     // organización sin recursos—. `.at()` sí declara el `undefined`.
     return disponibles.at(0)?.id ?? null;
+  });
+
+  /**
+   * Si esta sesión puede mirar la agenda de otro recurso.
+   *
+   * De ella dependen tres cosas a la vez —el selector, el filtro de la URL y la
+   * caída al primer recurso— y por eso es una sola bandera y no tres chequeos
+   * sueltos que se puedan desincronizar.
+   */
+  protected readonly puedeElegirRecurso = computed(() => {
+    const roles = this.auth.roles();
+    return ROLES_QUE_ELIGEN_RECURSO.some((rol) => roles.includes(rol));
   });
 
   /**
@@ -369,6 +419,12 @@ export class Agenda {
    * recurso del enlace.
    */
   protected readonly recursoInexistente = computed(() => {
+    if (!this.puedeElegirRecurso()) {
+      // Sin permiso para elegir, el parámetro se ignora por completo: avisar
+      // «ese recurso ya no está» sobre un enlace que de todos modos no se iba a
+      // abrir manda a buscar un problema que no es el que hay.
+      return false;
+    }
     const pedido = this.recursoPedido();
     return (
       pedido !== null &&
@@ -376,6 +432,27 @@ export class Agenda {
       !this.recursos().some((recurso) => recurso.id === pedido)
     );
   });
+
+  /**
+   * Quien atiende no tiene agenda cargada en esta organización.
+   *
+   * Es el caso que antes se resolvía en silencio mostrando la agenda de otro.
+   * Ahora no se muestra ninguna y se dice por qué: el dato que falta es un
+   * recurso de agenda a nombre de esta persona, y eso lo carga la organización,
+   * no ella.
+   *
+   * Se exige `recursosLeidos()` para no acusar el vacío mientras todavía se está
+   * leyendo, y `falloDeRecursos() === null` porque un `403` en la lectura no es
+   * «no tenés agenda»: es «no te dejo ver el catálogo».
+   */
+  protected readonly sinAgendaPropia = computed(
+    () =>
+      !this.puedeElegirRecurso() &&
+      this.recursosLeidos() &&
+      this.falloDeRecursos() === null &&
+      this.recursos().length > 0 &&
+      this.recursoPropio() === null,
+  );
 
   /** Si los recursos ya se leyeron. Sin esto, «no hay» y «todavía no» se mezclan. */
   private readonly recursosLeidos = signal(false);
@@ -424,9 +501,45 @@ export class Agenda {
   /** Sin organización no hay agenda que pedir: `tenantId` es obligatorio. */
   protected readonly sinOrganizacion = computed(() => this.organizacion() === null);
 
-  protected readonly opcionesDeRecurso = computed<readonly SelectOption<string>[]>(() =>
-    this.recursos().map((recurso) => ({ value: recurso.id, label: recurso.name })),
-  );
+  /**
+   * Las agendas que esta sesión puede elegir, en orden y sin dos que se lean
+   * igual.
+   *
+   * ## Por qué hay que desambiguar
+   *
+   * El nombre de un recurso no es único: lo escribe quien lo da de alta, y la
+   * siembra de desarrollo lo arma con el título y el apellido del profesional,
+   * así que dos altas del mismo médico producen dos recursos DISTINTOS con el
+   * mismo texto. En pantalla eso es una lista con la misma línea repetida cinco
+   * veces, donde elegir es adivinar — y el que quedaba marcado parecía un error.
+   *
+   * La solución no es esconder los repetidos: son agendas distintas, con citas
+   * distintas, y ocultar una la vuelve inalcanzable. Se los desempata con el
+   * final de su identificador, que es corto, estable y el único dato que con
+   * seguridad los distingue. El desempate se agrega **sólo a los que repiten**,
+   * para no ensuciar la lista entera por dos filas.
+   *
+   * Se ordena por nombre para que la lista no dependa del orden de inserción,
+   * que es el que traía el backend y no significa nada para quien mira.
+   */
+  protected readonly opcionesDeRecurso = computed<readonly SelectOption<string>[]>(() => {
+    const recursos = [...this.recursos()].sort((a, b) =>
+      a.name.localeCompare(b.name, 'es', { numeric: true }),
+    );
+
+    const repetidos = new Set(
+      recursos
+        .map((recurso) => recurso.name)
+        .filter((nombre, indice, todos) => todos.indexOf(nombre) !== indice),
+    );
+
+    return recursos.map((recurso) => ({
+      value: recurso.id,
+      label: repetidos.has(recurso.name)
+        ? `${recurso.name} · ${discriminante(recurso.id)}`
+        : recurso.name,
+    }));
+  });
 
   protected readonly opcionesDeVentana = computed<readonly SelectOption<string>[]>(() =>
     VENTANAS.map((ventana) => ({ value: ventana.clave, label: ventana.etiqueta })),
@@ -504,6 +617,9 @@ export class Agenda {
       : []),
   ]);
 
+  /** Para el rótulo del bloque cuando no hay selector: cuál agenda se mira. */
+  protected readonly hayAgendaQueMirar = computed(() => this.recursoElegido() !== null);
+
   protected readonly porCita = (fila: CitaVisible): string => fila.id;
   protected readonly porCupo = (fila: CupoVisible): string => fila.id;
 
@@ -533,6 +649,12 @@ export class Agenda {
 
   protected elegirRecurso(recursoId: string | null): void {
     if (recursoId === null || recursoId === '') {
+      return;
+    }
+    // El selector ya no se dibuja sin permiso, pero la guarda va igual: es la
+    // que hace que la regla viva en el componente y no en la plantilla, donde un
+    // `@if` que alguien borre la desactivaría en silencio.
+    if (!this.puedeElegirRecurso()) {
       return;
     }
     this.publicar({ recurso: recursoId });
@@ -742,7 +864,12 @@ export class Agenda {
           : this.recursosLeidos()
             ? empty(
                 { label: 'Volver al panel', route: '/dashboard' },
-                'Esta organización todavía no tiene recursos agendables cargados.',
+                // Dos vacíos distintos con la misma forma: «la organización no
+                // tiene agendas» y «no tenés una vos». Decir el primero cuando
+                // pasa el segundo manda a reportar un problema que no existe.
+                this.sinAgendaPropia()
+                  ? 'Esta organización no tiene ninguna agenda a tu nombre.'
+                  : 'Esta organización todavía no tiene recursos agendables cargados.',
               )
             : loading();
       this.citas.set(espera);
@@ -958,4 +1085,17 @@ function cuenta<T>(estado: ViewState<readonly T[]>): number | null {
  */
 function rotulo(nombre: string, total: number | null): string {
   return total === null ? nombre : `${nombre} (${total})`;
+}
+
+/**
+ * El desempate visible de dos recursos que se llaman igual.
+ *
+ * Los últimos seis caracteres del uuid, en mayúscula. Seis y no el uuid entero
+ * porque lo que hace falta es distinguir dos filas de una lista corta, no
+ * identificar el registro: pegar 36 caracteres en cada opción rompe el
+ * desplegable y no ayuda a leer. En mayúscula porque un uuid en minúscula, al
+ * final de un nombre propio, se lee como parte del nombre.
+ */
+function discriminante(id: string): string {
+  return id.replace(/-/g, '').slice(-6).toUpperCase();
 }

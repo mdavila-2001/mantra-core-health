@@ -285,8 +285,15 @@ describe('Agenda', () => {
     expect((citas().data?.[0] as Record<string, unknown>)['rutaPaciente']).toBeNull();
   });
 
+  /**
+   * Va acompañado de un rol de agenda a propósito: `SECURITY_ADMIN` administra
+   * el padrón, no la grilla, así que por sí solo no abre ninguna agenda —es la
+   * regla que fija «sin rol de agenda no se elige recurso»—. Lo que esta prueba
+   * mira es otra cosa: que teniendo el rol del padrón, el enlace a la ficha
+   * aparezca.
+   */
   it('con SECURITY_ADMIN el enlace apunta a la ficha', async () => {
-    await montar({ roles: ['SECURITY_ADMIN'] });
+    await montar({ roles: ['SECURITY_ADMIN', 'SCHEDULING_AGENT'] });
     await responder();
 
     expect((citas().data?.[0] as Record<string, unknown>)['rutaPaciente']).toBe(
@@ -307,16 +314,75 @@ describe('Agenda', () => {
   /* ---- la agenda propia (claim `hpid`) ----------------------------------- */
 
   /**
-   * Sin el claim, la agenda cae en el primer recurso de la organización — que
-   * con varios consultorios es el de otra persona, y las dos se ven igual.
+   * Quien reparte turnos sí cae en el primero: su trabajo es la grilla de la
+   * organización y no tiene agenda propia que preferir.
    */
-  it('sin `hpid` se abre en el primer recurso, como antes', async () => {
-    await montar({ roles: ['PRACTITIONER'] });
+  it('con rol de agenda y sin `hpid` se abre en el primer recurso', async () => {
+    await montar({ roles: ['SCHEDULING_ADMIN'] });
     await responderRecursos([RECURSO_AJENO, RECURSO]);
     await responderResto();
 
     expect(interno<() => string | null>('recursoElegido')()).toBe('r-0');
     expect(interno<() => boolean>('mirandoAgendaPropia')()).toBe(false);
+  });
+
+  /**
+   * **La regla que reemplaza a la caída al primer recurso.**
+   *
+   * Antes, quien atiende sin agenda propia en esa organización abría la pantalla
+   * y se encontraba mirando el primer consultorio de la lista: los pacientes y
+   * los motivos de consulta de un colega, sin haber pedido nada. Ahora no se
+   * muestra ninguna agenda y la pantalla explica qué falta.
+   */
+  it('quien atiende sin agenda propia no cae en la de otro', async () => {
+    // Sin `hpid`: la sesión no declara perfil profesional, así que ningún
+    // recurso de la organización es suyo.
+    await montar({ roles: ['PRACTITIONER'] });
+    await responderRecursos([RECURSO_AJENO, RECURSO]);
+
+    // Ni citas ni cupos: no hay recurso que pedir, así que no sale ni una lectura.
+    http.verify();
+    expect(interno<() => string | null>('recursoElegido')()).toBeNull();
+    expect(interno<() => boolean>('sinAgendaPropia')()).toBe(true);
+    expect(citas().status).toBe('empty');
+  });
+
+  /** El selector de agendas ajenas no existe para quien atiende. */
+  it('quien atiende no tiene selector de recurso', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderRecursos([RECURSO_AJENO, RECURSO]);
+    await responderResto();
+
+    expect(interno<() => boolean>('puedeElegirRecurso')()).toBe(false);
+  });
+
+  it('quien reparte turnos sí tiene selector', async () => {
+    await montar({ roles: ['SCHEDULING_AGENT'] });
+    await responder();
+
+    expect(interno<() => boolean>('puedeElegirRecurso')()).toBe(true);
+  });
+
+  /**
+   * Dos recursos con el mismo nombre son dos agendas distintas y hay que poder
+   * elegir una: se los desempata con el final del identificador, y **sólo** a
+   * ellos — el que no repite queda con su nombre limpio.
+   */
+  it('desempata los recursos que se llaman igual, y sólo esos', async () => {
+    await montar({ roles: ['SCHEDULING_ADMIN'] });
+    await responderRecursos([
+      { ...RECURSO, id: 'aaaaaaaa-0000-4000-8000-00000000abc123', name: 'Consultorio A' },
+      { ...RECURSO, id: 'bbbbbbbb-0000-4000-8000-00000000def456', name: 'Consultorio A' },
+      { ...RECURSO, id: 'cccccccc-0000-4000-8000-00000000000999', name: 'Consultorio B' },
+    ]);
+    await responderResto();
+
+    const opciones = interno<() => readonly { label: string }[]>('opcionesDeRecurso')();
+    expect(opciones.map((o) => o.label)).toEqual([
+      'Consultorio A · ABC123',
+      'Consultorio A · DEF456',
+      'Consultorio B',
+    ]);
   });
 
   it('con `hpid` se abre en la agenda propia aunque no sea la primera', async () => {
@@ -331,9 +397,14 @@ describe('Agenda', () => {
   /**
    * Un enlace compartido tiene que abrir lo que dice. Si la agenda propia
    * ganara, dos personas no podrían mirar la misma pantalla.
+   *
+   * Vale **para quien puede elegir recurso**, que es el que comparte grillas.
    */
   it('el recurso de la URL manda sobre la agenda propia', async () => {
-    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?recurso=r-0');
+    await montar(
+      { roles: ['SCHEDULING_ADMIN'], hpid: 'hp-1' },
+      '/schedule?recurso=r-0',
+    );
     await responderRecursos([RECURSO_AJENO, RECURSO]);
     await responderResto();
 
@@ -342,16 +413,38 @@ describe('Agenda', () => {
   });
 
   /**
+   * Y el reverso: para quien atiende, el parámetro no abre nada.
+   *
+   * Es el agujero que dejaba la regla anterior — bastaba pegar un `?recurso=`
+   * en la barra para leer la agenda clínica de cualquier colega—, y por eso la
+   * guarda vive en el componente y no en un `@if` de la plantilla.
+   */
+  it('a quien atiende, un `?recurso=` ajeno no le abre esa agenda', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?recurso=r-0');
+    await responderRecursos([RECURSO_AJENO, RECURSO]);
+    await responderResto();
+
+    expect(interno<() => string | null>('recursoElegido')()).toBe('r-1');
+    expect(interno<() => boolean>('mirandoAgendaPropia')()).toBe(true);
+    // Y no se avisa de un recurso «inexistente»: existe, simplemente no es suyo.
+    expect(interno<() => boolean>('recursoInexistente')()).toBe(false);
+  });
+
+  /**
    * El identificador solo no alcanza: dos filas de tablas distintas pueden
    * compartir uuid sin tener nada que ver.
+   *
+   * Con la regla nueva, no reconocer la agenda como propia ya no significa caer
+   * en la de al lado: significa no abrir ninguna.
    */
   it('no toma por propia una agenda que apunta a otra tabla', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     await responderRecursos([RECURSO_DE_OTRA_TABLA, RECURSO_AJENO]);
-    await responderResto();
 
+    http.verify();
     expect(interno<() => boolean>('mirandoAgendaPropia')()).toBe(false);
-    expect(interno<() => string | null>('recursoElegido')()).toBe('r-9');
+    expect(interno<() => string | null>('recursoElegido')()).toBeNull();
+    expect(interno<() => boolean>('sinAgendaPropia')()).toBe(true);
   });
 
   /**
@@ -361,7 +454,7 @@ describe('Agenda', () => {
    * agenda de quien atiende terminaba en un callejón.
    */
   it('con rol clínico el turno enlaza al expediente', async () => {
-    await montar({ roles: ['PRACTITIONER'] });
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     await responder();
 
     const fila = citas().data?.[0] as Record<string, unknown>;
@@ -379,7 +472,7 @@ describe('Agenda', () => {
 
   /** El motivo viaja al expediente para precargar el del encuentro. */
   it('lleva el motivo de la cita para precargar el del encuentro', async () => {
-    await montar({ roles: ['PRACTITIONER'] });
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     await responder();
 
     expect((citas().data?.[0] as Record<string, unknown>)['motivoCrudo']).toBe('Control anual');
@@ -391,7 +484,7 @@ describe('Agenda', () => {
    * violaría la clave foránea del encuentro.
    */
   it('lleva la cita clínica del turno cuando la reserva la tiene', async () => {
-    await montar({ roles: ['PRACTITIONER'] });
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     await responder({ citas: [{ ...CITA, appointmentId: 'ap-1' }] });
 
     const fila = citas().data?.[0] as Record<string, unknown>;
@@ -404,7 +497,7 @@ describe('Agenda', () => {
    * registro posterior— y no puede colarse en la URL como el texto «null».
    */
   it('una reserva sin cita clínica no manda el parámetro', async () => {
-    await montar({ roles: ['PRACTITIONER'] });
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     await responder({ citas: [{ ...CITA, appointmentId: null }] });
 
     const fila = citas().data?.[0] as Record<string, unknown>;
@@ -413,7 +506,7 @@ describe('Agenda', () => {
   });
 
   it('una cita sin motivo no inventa uno para llevar', async () => {
-    await montar({ roles: ['PRACTITIONER'] });
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     const { reasonText: _omitido, ...sinMotivo } = CITA;
     await responder({ citas: [sinMotivo] });
 
@@ -424,7 +517,7 @@ describe('Agenda', () => {
   });
 
   it('una cita sin paciente no enlaza a ningún expediente', async () => {
-    await montar({ roles: ['PRACTITIONER'] });
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     const { patientProfileId: _omitido, ...sinPaciente } = CITA;
     await responder({ citas: [sinPaciente] });
 
@@ -623,7 +716,11 @@ describe('Agenda', () => {
     });
     harness = await RouterTestingHarness.create();
     componente = await harness.navigateByUrl('/schedule', Agenda);
-    await responder();
+    // Sólo los recursos: un paciente no elige agenda ajena ni tiene una propia,
+    // así que no sale ninguna lectura de citas ni de cupos. Las columnas se
+    // derivan de los roles, no de los datos, y es eso lo que se mira acá. Su
+    // pantalla de reservas es `my-account/appointments`, que sí lista agendas.
+    await responderRecursos();
 
     const columnasDeCitas = interno<() => readonly { key: string }[]>('columnasDeCitas')();
     const columnasDeCupos = interno<() => readonly { key: string }[]>('columnasDeCupos')();

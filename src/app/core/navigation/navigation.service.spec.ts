@@ -66,6 +66,10 @@ describe('NavigationService', () => {
       // pantalla, no el menú.
       expect(rutasDelMenu()).toEqual([
         '/dashboard',
+        // El centro de tutoriales no exige roles: cualquiera que pueda entrar
+        // tiene algo que aprender, y el catálogo ya se filtra tutorial por
+        // tutorial.
+        '/tutorials',
         // El glosario tampoco: el cliente lo pidió accesible por cada
         // profesional, no sólo por quien administra.
         '/glossary',

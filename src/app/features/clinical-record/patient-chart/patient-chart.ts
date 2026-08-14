@@ -52,6 +52,7 @@ import {
 } from '../clinical-record.routes';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
+import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { SpecialtyFormBlock } from './specialty-form-block/specialty-form-block';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
@@ -153,6 +154,7 @@ interface Expediente {
 @Component({
   selector: 'app-patient-chart',
   imports: [
+    TutorialTarget,
     Alert,
     AppButton,
     Badge,
@@ -366,17 +368,66 @@ export class PatientChart {
     })),
   );
 
-  /** Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada. */
-  protected readonly bloques = computed(() => [
-    { clave: 'diagnosticos', titulo: 'Diagnósticos', filas: this.diagnosticos() },
-    { clave: 'alergias', titulo: 'Alergias', filas: this.alergias() },
-    { clave: 'medicacion', titulo: 'Medicación', filas: this.medicacion() },
-    { clave: 'observaciones', titulo: 'Observaciones', filas: this.observaciones() },
-    { clave: 'encuentros', titulo: 'Encuentros', filas: this.encuentros() },
-    { clave: 'notas', titulo: 'Notas', filas: this.notas() },
-    { clave: 'planes', titulo: 'Planes de cuidados', filas: this.planes() },
-    { clave: 'documentos', titulo: 'Documentos', filas: this.documentos() },
+  /**
+   * Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada.
+   *
+   * Cada uno trae **sus** columnas y no las de todos: `detalle` significa una
+   * cosa distinta en cada bloque —la criticidad de una alergia, si un encuentro
+   * sigue abierto— y en varios no significa nada. Una columna «Detalle» vacía de
+   * punta a punta no es un dato que falta: es una columna que sobra, y se come
+   * el ancho que la tabla necesita para lo que sí trae.
+   */
+  protected readonly bloques = computed(() =>
+    [
+      { clave: 'diagnosticos', titulo: 'Diagnósticos', filas: this.diagnosticos() },
+      { clave: 'alergias', titulo: 'Alergias', filas: this.alergias() },
+      { clave: 'medicacion', titulo: 'Medicación', filas: this.medicacion() },
+      { clave: 'observaciones', titulo: 'Observaciones', filas: this.observaciones() },
+      { clave: 'encuentros', titulo: 'Encuentros', filas: this.encuentros() },
+      { clave: 'notas', titulo: 'Notas', filas: this.notas() },
+      { clave: 'planes', titulo: 'Planes de cuidados', filas: this.planes() },
+      { clave: 'documentos', titulo: 'Documentos', filas: this.documentos() },
+    ].map((bloque) => ({ ...bloque, columnas: this.columnasPara(bloque.filas) })),
+  );
+
+  /* -- La banda de contexto ------------------------------------------------
+     Lo que hay que saber ANTES de abrir una pestaña. Antes esto no existía y la
+     pantalla abría en «Diagnósticos (2)»: para enterarse de que la persona es
+     alérgica a algo había que acordarse de ir a mirar. */
+
+  /**
+   * Las alergias, arriba y a la vista, no en la segunda pestaña.
+   *
+   * Es el único bloque del expediente que cambia una conducta **antes** de
+   * leerlo: recetar sin haberlas visto es el error que esta banda existe para
+   * evitar. No se filtra por criticidad —la criticidad llega como concepto y
+   * deducirla del texto sería adivinar—: se muestran todas, que son pocas.
+   */
+  protected readonly alergiasDestacadas = this.alergias;
+
+  /** Las cifras del expediente, para dimensionarlo sin abrir pestaña por pestaña. */
+  protected readonly cifras = computed(() => [
+    { clave: 'diagnosticos', rotulo: 'Diagnósticos', valor: this.diagnosticos().length },
+    { clave: 'medicacion', rotulo: 'Medicación', valor: this.medicacion().length },
+    { clave: 'encuentros', rotulo: 'Encuentros', valor: this.encuentros().length },
+    { clave: 'observaciones', rotulo: 'Observaciones', valor: this.observaciones().length },
   ]);
+
+  /**
+   * Cuándo fue la última vez que se la atendió.
+   *
+   * De los encuentros, que es donde consta. `null` mientras no haya ninguno con
+   * fecha: inventar «sin atención previa» a partir de un bloque vacío diría algo
+   * que el expediente no dice.
+   */
+  protected readonly ultimaAtencion = computed<Date | null>(() => {
+    const fechas = this.encuentros()
+      .map((fila) => fila.cuando)
+      .filter((fecha): fecha is Date => fecha !== null);
+    return fechas.length === 0
+      ? null
+      : fechas.reduce((mayor, fecha) => (fecha > mayor ? fecha : mayor));
+  });
 
   /**
    * Aviso de recorte, en palabras.
@@ -531,12 +582,38 @@ export class PatientChart {
     })),
   );
 
-  protected readonly columnas = computed<readonly ColumnDef<FilaClinica>[]>(() => [
-    { key: 'principal', header: 'Registro', priority: 1, cell: this.celdaPrincipal() },
-    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-    { key: 'cuando', header: 'Fecha', priority: 2, cell: this.celdaCuando() },
-    { key: 'detalle', header: 'Detalle', priority: 3 },
-  ]);
+  /**
+   * Los `medicationConceptId` de la medicación ya registrada, sin traducir —
+   * lo que {@link MedicationBlock} necesita para chequear interacciones antes
+   * de prescribir una más. Se incluye toda la registrada y no sólo la
+   * vigente: el contrato de `getSummary` no distingue «activa» de «pasada»
+   * por un campo propio, y advertir de más sobre algo que ya no se toma es un
+   * error mucho más chico que no advertir sobre algo que sí.
+   */
+  protected readonly medicacionActivaConceptIds = computed<readonly string[]>(() =>
+    Array.from(
+      new Set((this.datos()?.resumen.medicationRequests ?? []).map((r) => r.medicationConceptId)),
+    ),
+  );
+
+  /**
+   * Las columnas de un bloque concreto.
+   *
+   * `Detalle` sólo se dibuja si alguna fila la llena. Es la diferencia entre una
+   * columna vacía —que se lee como un dato que no cargó— y una columna que ese
+   * bloque no tiene.
+   */
+  private columnasPara(filas: readonly FilaClinica[]): readonly ColumnDef<FilaClinica>[] {
+    const hayDetalle = filas.some((fila) => fila.detalle !== '' && fila.detalle !== SIN_DATO);
+    return [
+      { key: 'principal', header: 'Registro', priority: 1, cell: this.celdaPrincipal() },
+      { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
+      { key: 'cuando', header: 'Fecha', priority: 2, cell: this.celdaCuando() },
+      ...(hayDetalle
+        ? [{ key: 'detalle', header: 'Detalle', priority: 3 } satisfies ColumnDef<FilaClinica>]
+        : []),
+    ];
+  }
 
   protected readonly porFila = (fila: FilaClinica): string => fila.id;
 

@@ -25,6 +25,7 @@ import {
   CaseStatusCatalog,
   toCaseStatusPresentation,
 } from '../identity-verification/case-status';
+import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
  * Panel de inicio de la aplicación autenticada.
@@ -58,7 +59,8 @@ import {
  */
 @Component({
   selector: 'app-dashboard',
-  imports: [Badge, Card, PageHeader, RouterLink, Skeleton, StatusSeal, ViewStateHost],
+  imports: [
+    TutorialTarget,Badge, Card, PageHeader, RouterLink, Skeleton, StatusSeal, ViewStateHost],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

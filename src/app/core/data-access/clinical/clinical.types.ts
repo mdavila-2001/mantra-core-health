@@ -513,3 +513,37 @@ export interface DiagnosticReportRegistration {
   readonly serviceRequestId: string | null;
   readonly createdAt: Date;
 }
+
+/**
+ * Lo que hace falta para pedir el chequeo de interacciones (UC-18-04).
+ *
+ * `substanceConceptIds` va con **todo** lo activo más el que se está por
+ * agregar — el backend exige al menos dos, porque una interacción es entre
+ * dos sustancias y con una sola no hay nada que comparar.
+ */
+export interface InteractionCheckRequest {
+  readonly patientProfileId: string;
+  readonly substanceConceptIds: readonly string[];
+  readonly encounterId?: string;
+  readonly medicationRequestId?: string;
+}
+
+/**
+ * Una alerta generada por el motor de decisión clínica.
+ *
+ * `alertTypeConceptId` y `severityConceptId` son conceptos de catálogo, no
+ * texto: quien los muestre los resuelve con `TerminologyClient`, igual que
+ * cualquier otro `*ConceptId` de la aplicación.
+ */
+export interface InteractionAlert {
+  readonly id: string;
+  readonly alertTypeConceptId: string;
+  readonly severityConceptId: string;
+  readonly ruleId?: string;
+}
+
+/** Resultado del chequeo: puede no encontrar ninguna. */
+export interface InteractionCheckResult {
+  readonly alerts: readonly InteractionAlert[];
+  readonly count: number;
+}

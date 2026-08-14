@@ -16,6 +16,8 @@ import type {
   DiagnosticReportRegistration,
   Encounter,
   EncounterRegistration,
+  InteractionCheckRequest,
+  InteractionCheckResult,
   MedicationRequest,
   MedicationRequestRegistration,
   NewAllergyIntolerance,
@@ -376,6 +378,25 @@ export class ClinicalClient {
         expectedRowVersion === undefined ? {} : { expectedRowVersion },
       )
       .pipe(map(toDiagnosticReportRegistration));
+  }
+
+  /* -- El chequeo de interacciones: contrato sin pantalla ------------------ */
+
+  /**
+   * `POST /cds/check-interactions` — interacciones entre lo que ya toma la
+   * persona y lo que se está por prescribir (UC-18-04).
+   *
+   * **Todavía no lo usa ninguna pantalla**, mismo motivo que el informe
+   * diagnóstico de arriba: el contrato entra verificado para que, cuando el
+   * bloque de receta lo llame antes de prescribir, falte sólo esa línea.
+   *
+   * @param chequeo - El paciente y las sustancias a comparar (activas + la nueva).
+   */
+  checkInteractions(chequeo: InteractionCheckRequest): Observable<InteractionCheckResult> {
+    return this.http.post<InteractionCheckResult>(
+      this.url('/cds/check-interactions'),
+      sinAusentes(chequeo),
+    );
   }
 
   private url(path: string): string {
