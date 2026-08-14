@@ -1,57 +1,18 @@
-<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()" />
+<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
+  <!-- El PDF sale del bloque `[data-pdf-root]` de abajo, no de la página
+       entera: sin eso el documento se llevaría el menú lateral. -->
+  <app-pdf-export-button
+    page-actions
+    [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
+    [title]="titulo()"
+    [target]="raizExportable()"
+  />
+</app-page-header>
 
 <!-- El anfitrión resuelve los nueve estados del M34 sobre la lectura entera:
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
-  <div class="expediente">
-    <!-- ─── Lo que hay que saber antes de abrir una pestaña ───────────────
-         Las alergias van primero y fuera de las pestañas: son el único bloque
-         que cambia una conducta ANTES de leerlo. Recetar sin haberlas visto es
-         el error que esta banda existe para evitar, y en la segunda pestaña
-         había que acordarse de ir a mirarlas. -->
-    @if (alergiasDestacadas().length > 0) {
-      <app-alert
-        tone="warning"
-        title="Alergias registradas"
-        class="expediente__alergias"
-        appTutorialTarget="expediente-alergias"
-        data-testid="alergias-destacadas"
-      >
-        <ul class="expediente__alergias-lista">
-          @for (alergia of alergiasDestacadas(); track alergia.id) {
-            <li class="expediente__alergias-item">
-              <strong>{{ alergia.principal }}</strong>
-              @if (alergia.detalle) {
-                <span class="expediente__secundario">{{ alergia.detalle }}</span>
-              }
-            </li>
-          }
-        </ul>
-      </app-alert>
-    }
-
-    <!-- Cuánto expediente hay, sin abrir pestaña por pestaña. -->
-    <div class="expediente__contexto" appTutorialTarget="expediente-contexto">
-      <dl class="expediente__cifras">
-        @for (cifra of cifras(); track cifra.clave) {
-          <div class="expediente__cifra">
-            <dt class="expediente__cifra-rotulo">{{ cifra.rotulo }}</dt>
-            <dd class="expediente__cifra-valor">{{ cifra.valor }}</dd>
-          </div>
-        }
-        <div class="expediente__cifra">
-          <dt class="expediente__cifra-rotulo">Última atención</dt>
-          <dd class="expediente__cifra-valor expediente__cifra-valor--fecha">
-            @if (ultimaAtencion(); as fecha) {
-              {{ fecha | date: 'd MMM y' }}
-            } @else {
-              <span class="expediente__secundario">Sin registro</span>
-            }
-          </dd>
-        </div>
-      </dl>
-    </div>
-
+  <div class="expediente" data-pdf-root #raizPdf>
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
       <app-alert tone="warning" title="Expediente recortado" class="expediente__ancho">
@@ -205,7 +166,46 @@
       (cambio)="recargar()"
     />
 
-    <!-- ─── El formulario clínico de la especialidad ──────────────────────
+    <!-- ─── Los adjuntos ─────────────────────────────────────────────────
+         Cuelgan del PACIENTE y no del encuentro: `file_links.owner_type`
+         admite USER/PATIENT/TENANT y no tiene ENCOUNTER. Es el modelo, no
+         una decisión de esta pantalla. -->
+    <app-attachments-block [patientProfileId]="pacienteDeLaFicha()" />
+
+    <!-- ─── Laboratorio e imagenología ───────────────────────────────────
+         Mismo lugar y mismo criterio que los dos de arriba: se pide desde el
+         encuentro abierto. Sin `(cambio)`, y no por olvido: el circuito
+         diagnóstico no sale de `GET /clinical/patients/:id/summary`, así que el
+         bloque lee lo suyo y se relee solo. Avisar acá haría que el expediente
+         recargara cinco bloques que no cambiaron. -->
+    <app-diagnostics-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+    />
+
+    <!-- ─── El histórico de procedimientos ───────────────────────────────
+         Cirugías y odontología (punto 7). Sin `[encounterId]` y sin
+         `(cambio)`, a diferencia de los tres de arriba, y por el mismo motivo
+         en los dos casos: no cuelga del encuentro abierto. Un histórico es de
+         la persona, no de la consulta de hoy —se lee igual sin encuentro—, y
+         lo único que se escribe desde acá, el tratamiento odontológico, no
+         aparece en `GET /clinical/patients/:id/summary`: el bloque relee lo
+         suyo y avisar acá recargaría cinco bloques que no cambiaron. -->
+    <app-procedures-block [patientProfileId]="pacienteDeLaFicha()" />
+
+    <!-- ─── La internación ───────────────────────────────────────────────
+         Punto 8 del reclamo. Va al final de los bloques de escritura y con la
+         lista dentro —no en una pestaña— porque hasta ahora una internación
+         abierta no se veía en ningún lado: quien reabría la ficha no se
+         enteraba de que la persona estaba internada. -->
+    <app-admission-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+      [internaciones]="internaciones()"
+      (cambio)="recargar()"
+    />
+
+    <!-- ─── El formulario clínico de la especialidad ─────────────
          Carril 2 · punto 1. Mismo criterio que el diagnóstico y la receta:
          se completa desde el encuentro abierto, y usa el motor de `forms` en
          vez de una tabla propia — es lo que le da su esquema de campos. -->
@@ -214,7 +214,6 @@
       [encounterId]="encuentroParaRecetar()"
       (cambio)="recargar()"
     />
-
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->

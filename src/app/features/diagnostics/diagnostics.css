@@ -1,0 +1,52 @@
+/* Sección de laboratorio e imagenología: la cola del laboratorio, y una nota
+   que dice dónde está el otro lado del circuito. Mismo reparto que el archivo
+   clínico —tabla arriba, tarjeta de camino alternativo abajo— porque es el
+   mismo problema: una sección cuya lectura principal no sirve para todos los
+   que llegan a ella. */
+
+:host {
+  display: block;
+}
+
+.laboratorio {
+  display: grid;
+  gap: var(--sp-6);
+}
+
+.laboratorio__nota {
+  display: grid;
+  gap: var(--sp-3);
+  /* Texto corrido: a lo ancho de la tabla la línea se vuelve ilegible. */
+  max-inline-size: 68ch;
+}
+
+.laboratorio__nota-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.laboratorio__nota-texto {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* La celda de la orden apila número y prioridad: el número identifica, la
+   prioridad es lo que decide qué se toma primero. */
+.laboratorio__numero {
+  display: block;
+  font-weight: 600;
+}
+
+.laboratorio__prioridad,
+.laboratorio__sin-fecha {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.laboratorio__completada {
+  color: var(--st-success-fg);
+}

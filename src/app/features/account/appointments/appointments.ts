@@ -30,8 +30,9 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { reservaDelPortalRoute } from './appointments.routes';
-import { toBookingStatusPresentation } from './booking-status';
+import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 
 /**
  * Cuántos días hacia adelante se ofrecen.
@@ -82,19 +83,6 @@ const CODIGOS_REPROGRAMABLES: ReadonlySet<string> = new Set([
   'BOOKING_CONFIRMED',
   'BOOKING_CHECKED_IN',
 ]);
-
-/**
- * El sufijo del código, sin el prefijo de módulo.
- *
- * El catálogo no es consistente (`BOOKING_CONFIRMED` vs
- * `scheduling:BOOKING_REQUESTED`); comparar el segmento posterior al último `:`
- * funciona con las dos formas. Mismo criterio que `agenda/booking-status.ts`,
- * replicado local para no acoplar este portal a esa pantalla (una feature no
- * debería depender de otra por una función de tres líneas).
- */
-function sufijoDeCodigo(code: string): string {
-  return code.includes(':') ? code.slice(code.lastIndexOf(':') + 1) : code;
-}
 
 /** Un turno propio, ya listo para mostrarse. */
 interface TurnoVisible {
@@ -184,6 +172,13 @@ export class Appointments {
    * válida y ninguna razón para tener turnos propios acá.
    */
   protected readonly sinPerfilDePaciente = this.perfil === null;
+
+  /**
+   * La salida cuando la cuenta no es de un paciente: la agenda de la
+   * organización, que es a donde el propio aviso manda. Mismo destino que
+   * ofrece `booking-new` en su caso equivalente.
+   */
+  protected readonly rutaDeAgenda = AGENDA_ROUTE;
 
   /** La organización, que `GET /scheduling/resources` exige explícita. */
   protected readonly organizacion = this.auth.activeTenantId;

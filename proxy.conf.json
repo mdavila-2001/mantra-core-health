@@ -34,6 +34,7 @@
       "/forms",
       "/clinical",
       "/authz",
+      "/practitioners",
       "/practitioner-delegates",
       "/access-requests",
       "/delegated-access",
@@ -45,7 +46,9 @@
       "/practices",
       "/accounting",
       "/health-context",
-      "/geo"
+      "/geo",
+      "/procedure-cases",
+      "/dental-procedures"
     ],
     "target": "http://localhost:3000",
     "secure": false,

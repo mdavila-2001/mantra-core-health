@@ -94,11 +94,23 @@
       />
     </form>
 
-    <app-tabs
-      appTutorialTarget="agenda-pestanas"
-      [selectedIndex]="pestana()"
-      (selectedIndexChange)="elegirPestana($event)"
-    >
+    <!-- ─── Dónde se atiende ────────────────────────────────────────────────
+         La agenda decía cuándo y no dónde, y un turno sin dirección obliga a
+         averiguarla por fuera del sistema. Llega resuelta en la misma lectura
+         de recursos: no cuesta una petición más. -->
+    @if (!sinRecursos()) {
+      <p class="agenda__ubicacion" data-testid="agenda-ubicacion">
+        @if (sedeDelRecurso()) {
+          <span class="agenda__ubicacion-rotulo">Se atiende en</span>
+          {{ ubicacionDelRecurso() }}
+        } @else {
+          <span class="agenda__ubicacion-rotulo">Sin consultorio registrado</span>
+          para este recurso. Se carga desde la asignación del profesional a una sede.
+        }
+      </p>
+    }
+
+    <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="elegirPestana($event)">
       <!-- ─── Citas ─────────────────────────────────────────────────────── -->
       <app-tab [label]="rotuloDeCitas()">
         @if (citasRecortadas()) {

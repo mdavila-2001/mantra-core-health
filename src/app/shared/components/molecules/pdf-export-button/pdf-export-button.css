@@ -1,0 +1,11 @@
+:host {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--e1);
+}
+
+.pdf-export__error {
+  margin: 0;
+  color: var(--st-error-fg);
+  font-size: var(--fs-sm);
+}

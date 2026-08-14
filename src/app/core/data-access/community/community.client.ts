@@ -3,180 +3,180 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import { ConNulos, sinNulos } from '../wire';
+import { maybeDate, sinNulos } from '../wire';
 import type {
-  Comment,
-  CommentPage,
+  BlockListItem,
+  BlockPage,
+  BlocksQuery,
+  BookmarkListItem,
+  BookmarkPage,
+  BookmarksQuery,
+  CommentThreadItem,
+  CommentThreadPage,
+  ConversationListItem,
+  ConversationMessagesQuery,
+  ConversationPage,
+  ConversationsQuery,
+  DirectMessage,
+  DirectMessagePage,
+  FeedListItem,
+  FeedPage,
+  FeedQuery,
+  FollowListItem,
+  FollowPage,
+  FollowsQuery,
+  GroupMember,
+  GroupMemberPage,
+  GroupMembersQuery,
+  GroupPage,
+  GroupsQuery,
   NewComment,
+  NewReaction,
   NewPost,
+  NotificationPage,
+  NotificationsQuery,
   OwnPublicProfile,
+  PollDetail,
+  PostCommentsQuery,
   PostDetail,
+  PostListItem,
   PostPage,
-  PublicPost,
+  ProfilePostsQuery,
   PublicProfileDetail,
   ReactionSummary,
+  ReviewsQuery,
+  ServiceReview,
+  ServiceReviewPage,
+  SocialNotification,
   UpsertOwnPublicProfile,
 } from './community.types';
 
 /** El hashtag que distingue un artículo médico del resto de las publicaciones. */
 export const MEDICAL_ARTICLE_HASHTAG = 'articulo-medico';
 
-/** Tope de página por defecto, igual que el resto del contrato. */
-const DEFAULT_LIMIT = 50;
-
-/* ---- lo que de verdad llega por el cable ---------------------------------- */
-
-interface WireOwnProfile {
-  readonly id: string;
-  readonly tenantId: string;
-  readonly targetId: string;
-  readonly slug: string;
-  readonly displayName: string;
-  readonly headline: string | null;
-  readonly biography: string | null;
-  readonly acceptsReviews: boolean | null;
-  readonly verificationStatusConceptId: string | null;
-  readonly statusConceptId: string;
-}
-
-interface WirePublicProfileDetail {
-  readonly id: string;
-  readonly tenantId: string;
-  readonly targetTypeConceptId: string;
-  readonly slug: string;
-  readonly displayName: string;
-  readonly headline: string | null;
-  readonly biography: string | null;
-  readonly avatarFileId: string | null;
-  readonly coverFileId: string | null;
-  readonly verificationStatusConceptId: string | null;
-  readonly acceptsReviews: boolean | null;
-  readonly statusConceptId: string;
-}
-
-interface WirePostListItem {
-  readonly id: string;
-  readonly authorPublicProfileId: string;
-  readonly postTypeConceptId: string;
-  readonly bodyText: string;
-  readonly visibilityConceptId: string | null;
-  readonly commentsEnabled: boolean | null;
-  readonly publishedAt: string | null;
-  readonly editedAt: string | null;
-}
-
-interface WirePostPage {
-  readonly items: readonly WirePostListItem[];
-  readonly count: number;
-  readonly limit: number;
-  readonly nextCursor: string | null;
-}
-
-interface WirePostDetail extends WirePostListItem {
-  readonly media: readonly {
-    readonly id: string;
-    readonly fileId: string;
-    readonly mediaRoleConceptId: string;
-    readonly altText: string | null;
-    readonly ordinal: number | null;
-  }[];
-  readonly hashtags: readonly { readonly id: string; readonly tag: string }[];
-}
-
-interface WireComment {
-  readonly id: string;
-  readonly authorProfileId: string;
-  readonly bodyText: string;
-  readonly parentCommentId: string | null;
-  readonly threadDepth: number | null;
-  readonly replyCount: number | null;
-  readonly createdAt: string;
-  readonly replies: readonly WireComment[];
-}
-
-interface WireCommentPage {
-  readonly items: readonly WireComment[];
-  readonly count: number;
-  readonly limit: number;
-  readonly nextCursor: string | null;
-}
-
 /**
- * Cliente de `community`: la vitrina pública propia, sus publicaciones y los
- * comentarios de cada una.
+ * Cliente de `community` (M19): la red social médica.
  *
- * ## Los artículos médicos no tienen endpoint propio
+ * ## Lecturas primero, y las escrituras llegan con su pantalla
  *
- * El backend no distingue un «artículo» de cualquier otra publicación: los dos
- * son un `post`. Lo que este cliente hace por lo que la pantalla llama
- * «artículo médico» es **etiquetarlo siempre** con `articulo-medico` al
- * publicar, y filtrar por esa etiqueta al listar «Mis artículos». No hay
- * concepto nuevo que sembrar ni ruta nueva que exponer: el contrato ya alcanza.
+ * El módulo tiene 17 escrituras en el backend —publicar, comentar, reaccionar,
+ * seguir, bloquear, reportar, moderar—; la regla sigue siendo agregar cada una
+ * recién cuando existe la pantalla que la dispara, para no adivinar la forma
+ * del formulario. La vitrina propia (`getOwnProfile`/`upsertOwnProfile`) y
+ * publicar/comentar (`publishPost`/`createComment`) ya tienen pantalla —«Mi
+ * perfil» y «Mis artículos médicos»— y por eso están.
+ *
+ * ## Por qué existe antes que las pantallas
+ *
+ * Las 16 lecturas ya están en `dev` (PR #62 y #63). Lo que falta para que la
+ * red social se vea es que sus endpoints sean públicos (`@Public()` + rate
+ * limit por IP) y que haya pantallas. **Ninguna de esas dos cosas cambia la
+ * forma de la llamada**: el decorador cambia el guard del servidor, no el
+ * cuerpo ni la URL.
+ *
+ * Así que este cliente se puede escribir y probar hoy, y el día que la
+ * superficie pública entre no hay que tocarlo. Es lo mismo que se hace al
+ * repartir trabajo entre personas: el contrato va primero para que nadie
+ * espere a nadie.
+ *
+ * ## `actorProfileId` es opcional, y ahí está la superficie pública
+ *
+ * Seis lecturas aceptan «quién mira». Con actor, la respuesta agrega lo que
+ * sólo tiene sentido para esa persona: con qué reaccionaste, qué votaste. Sin
+ * actor, la misma lectura devuelve la vista anónima — que es exactamente la que
+ * necesita un visitante sin sesión.
+ *
+ * **No se manda el propio id de sesión por defecto.** Quien llama decide si la
+ * lectura es personal o pública; hacerlo automático convertiría toda pantalla
+ * pública en una consulta identificada sin que nadie lo pidiera.
+ *
+ * ## Lo que este cliente no hace
+ *
+ * `GET /internal/community/feed/pending` no está: es del worker de fan-out, no
+ * de una pantalla, y exponerlo desde el navegador no tiene sentido.
  */
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class CommunityClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
+  // ─── Vitrina propia ────────────────────────────────────────────────────────
+
   /**
-   * La vitrina pública propia, o `null` si todavía no se creó ninguna.
+   * `GET /community/profiles/me` — la vitrina pública propia, o `null` si
+   * todavía no se creó ninguna.
    *
-   * `null` es un estado normal —el de cualquiera que no publicó nada todavía—,
-   * no un error: la pantalla que llama esto no debe tratarlo como un fallo de
+   * `null` es un estado normal —el de cualquiera que no publicó nada
+   * todavía—, no un error: quien llama no debe tratarlo como un fallo de
    * lectura.
    */
   getOwnProfile(): Observable<OwnPublicProfile | null> {
     return this.http
-      .get<ConNulos<WireOwnProfile> | null>(this.url('/community/profiles/me'))
-      .pipe(map((body) => (body === null ? null : sinNulos<WireOwnProfile>(body))));
+      .get<WireOwnProfile | null>(this.url('/community/profiles/me'))
+      .pipe(map((body) => (body === null ? null : sinNulos(body))));
   }
 
   /**
-   * Crea o actualiza la vitrina propia. Idempotente: no hace falta saber si ya
-   * existía una.
+   * `PUT /community/profiles/me` — crea o actualiza la vitrina propia.
+   * Idempotente: no hace falta saber si ya existía una.
    */
   upsertOwnProfile(datos: UpsertOwnPublicProfile): Observable<OwnPublicProfile> {
     return this.http
-      .put<ConNulos<WireOwnProfile>>(this.url('/community/profiles/me'), datos)
-      .pipe(map((body) => sinNulos<WireOwnProfile>(body)));
+      .put<WireOwnProfile>(this.url('/community/profiles/me'), datos)
+      .pipe(map((body) => sinNulos(body)));
   }
 
-  /** La ficha pública de un perfil, para la vista previa de «así te ven». */
-  getProfile(profileId: string): Observable<PublicProfileDetail> {
+  // ─── Perfil público ────────────────────────────────────────────────────────
+
+  /**
+   * `GET /community/profiles/:profileId` — la ficha pública.
+   *
+   * @param profileId - El perfil público, no el perfil de paciente ni el de
+   *   profesional: son entidades distintas y sólo esta tiene `slug`.
+   * @returns La ficha con sus sellos y su prestigio.
+   */
+  readProfile(profileId: string): Observable<PublicProfileDetail> {
     return this.http
-      .get<ConNulos<WirePublicProfileDetail>>(this.url(`/community/profiles/${profileId}`))
-      .pipe(map((body) => sinNulos<WirePublicProfileDetail>(body)));
+      .get<WireProfile>(
+        this.url(`/community/profiles/${encodeURIComponent(profileId)}`),
+      )
+      .pipe(map(toProfile));
   }
 
   /**
-   * Las publicaciones de un perfil, más recientes primero.
+   * `GET /community/profiles/:profileId/posts` — lo que publicó un perfil.
    *
-   * **No trae hashtags** — es una limitación real del listado, no una omisión
-   * de este cliente: `PostListItemDto` no los incluye, sólo `getPost` (el
-   * detalle) los trae. Distinguir «esto es un artículo médico» a partir de esta
-   * página no es posible sin pedir el detalle de cada fila; la pantalla que
-   * necesita esa distinción lo hace explícitamente con `getPost`.
-   *
-   * @param profileId - El perfil dueño del muro.
-   * @param opciones - `cursor` continúa una página anterior.
+   * @param profileId - De quién son las publicaciones.
+   * @param query - Quién mira, y la paginación.
+   * @returns Una página de publicaciones, de la más reciente hacia atrás.
    */
   listProfilePosts(
     profileId: string,
-    opciones: { cursor?: string; limit?: number } = {},
+    query: ProfilePostsQuery = {},
   ): Observable<PostPage> {
-    let params = new HttpParams().set('limit', String(opciones.limit ?? DEFAULT_LIMIT));
-    if (opciones.cursor !== undefined) {
-      params = params.set('cursor', opciones.cursor);
-    }
     return this.http
-      .get<WirePostPage>(this.url(`/community/profiles/${profileId}/posts`), { params })
-      .pipe(map((pagina) => ({ ...pagina, items: pagina.items.map(desdeItem) })));
+      .get<WirePostPage>(
+        this.url(`/community/profiles/${encodeURIComponent(profileId)}/posts`),
+        { params: this.cursorParams(query, this.actorParams(query)) },
+      )
+      .pipe(map(toPostPage));
   }
 
+  // ─── Publicaciones ─────────────────────────────────────────────────────────
+
   /**
-   * Publica. Si `esArticulo` es verdadero, agrega el hashtag que distingue un
-   * artículo médico del resto — es la única diferencia entre publicar una cosa
-   * u otra.
+   * `POST /community/profiles/:profileId/posts` — publica.
+   *
+   * Si `esArticulo` es verdadero, agrega el hashtag {@link MEDICAL_ARTICLE_HASHTAG}
+   * — es la única diferencia entre publicar un artículo médico y cualquier otra
+   * publicación: el backend no distingue un tipo de contenido nuevo, sólo un
+   * `post` con esa etiqueta.
+   *
+   * @param profileId - La vitrina que publica.
+   * @param datos - El cuerpo y sus opciones.
+   * @param esArticulo - Si se etiqueta como artículo médico.
    */
   publishPost(
     profileId: string,
@@ -187,37 +187,70 @@ export class CommunityClient {
       ? [...new Set([...(datos.hashtags ?? []), MEDICAL_ARTICLE_HASHTAG])]
       : datos.hashtags;
     return this.http.post<{ readonly id: string }>(
-      this.url(`/community/profiles/${profileId}/posts`),
+      this.url(`/community/profiles/${encodeURIComponent(profileId)}/posts`),
       { ...datos, hashtags },
     );
   }
 
-  /** Una publicación con sus adjuntos y etiquetas — la vista de detalle de un artículo. */
-  getPost(postId: string): Observable<PostDetail> {
-    return this.http.get<WirePostDetail>(this.url(`/community/posts/${postId}`)).pipe(
-      map((body) => ({
-        ...desdeItem(body),
-        media: body.media,
-        hashtags: body.hashtags.map((h) => h.tag),
-      })),
+  /**
+   * `GET /community/posts/:postId` — una publicación abierta.
+   *
+   * @param postId - La publicación.
+   * @param query - Quién mira.
+   * @returns La publicación con sus medios, etiquetas y menciones.
+   */
+  readPost(postId: string, query: ProfilePostsQuery = {}): Observable<PostDetail> {
+    return this.http
+      .get<WirePostDetail>(
+        this.url(`/community/posts/${encodeURIComponent(postId)}`),
+        { params: this.actorParams(query) },
+      )
+      .pipe(map(toPostDetail));
+  }
+
+  /**
+   * `GET /community/posts/:postId/comments` — el hilo de comentarios.
+   *
+   * Las respuestas vienen anidadas dentro de cada comentario; la paginación es
+   * de comentarios **de primer nivel**.
+   *
+   * @param postId - La publicación.
+   * @param query - Quién mira, y la paginación.
+   * @returns Una página de hilos.
+   */
+  listComments(
+    postId: string,
+    query: PostCommentsQuery = {},
+  ): Observable<CommentThreadPage> {
+    return this.http
+      .get<WireCommentPage>(
+        this.url(`/community/posts/${encodeURIComponent(postId)}/comments`),
+        { params: this.cursorParams(query, this.actorParams(query)) },
+      )
+      .pipe(map(toCommentPage));
+  }
+
+  /**
+   * `POST /community/comments` — comenta, o responde a un comentario si se
+   * pasa `parentCommentId`.
+   */
+  /**
+   * `PUT /community/reactions` — reacciona a una publicación o comentario.
+   *
+   * Es **upsert**, no alta: reaccionar de nuevo con otro tipo cambia la
+   * reacción en vez de agregar una segunda. Por eso es `PUT` y por eso el
+   * contrato exige `actorProfileId` — es la mitad de la clave, no un dato que
+   * el servidor pueda deducir de la sesión.
+   *
+   * @param reaccion - Quién, a qué y con qué.
+   */
+  react(reaccion: NewReaction): Observable<{ readonly id: string }> {
+    return this.http.put<{ readonly id: string }>(
+      this.url('/community/reactions'),
+      reaccion,
     );
   }
 
-  /** El hilo de comentarios de una publicación. */
-  listPostComments(
-    postId: string,
-    opciones: { cursor?: string; limit?: number } = {},
-  ): Observable<CommentPage> {
-    let params = new HttpParams().set('limit', String(opciones.limit ?? DEFAULT_LIMIT));
-    if (opciones.cursor !== undefined) {
-      params = params.set('cursor', opciones.cursor);
-    }
-    return this.http
-      .get<WireCommentPage>(this.url(`/community/posts/${postId}/comments`), { params })
-      .pipe(map((pagina) => ({ ...pagina, items: pagina.items.map(desdeComentario) })));
-  }
-
-  /** Comenta sobre un post, o responde a un comentario si se pasa `parentCommentId`. */
   createComment(datos: NewComment): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(this.url('/community/comments'), {
       ...datos,
@@ -225,40 +258,650 @@ export class CommunityClient {
     });
   }
 
-  /** Resumen de reacciones de una publicación. */
-  getPostReactions(postId: string): Observable<ReactionSummary> {
+  /**
+   * `GET /community/posts/:postId/reactions` — el resumen de reacciones.
+   *
+   * @param postId - La publicación.
+   * @param query - Quién mira. Con actor viene además cuál puso.
+   * @returns Los conteos por tipo y el total.
+   */
+  readReactions(
+    postId: string,
+    query: ProfilePostsQuery = {},
+  ): Observable<ReactionSummary> {
     return this.http
-      .get<ConNulos<ReactionSummary>>(this.url(`/community/posts/${postId}/reactions`))
-      .pipe(map((body) => sinNulos<ReactionSummary>(body)));
+      .get<WireReactionSummary>(
+        this.url(`/community/posts/${encodeURIComponent(postId)}/reactions`),
+        { params: this.actorParams(query) },
+      )
+      .pipe(map((body) => sinNulos(body)));
   }
+
+  // ─── Seguimientos, marcadores y bloqueos ───────────────────────────────────
+
+  /**
+   * `GET /community/follows` — a quién sigue un perfil.
+   *
+   * @param query - Quién sigue (obligatorio) y la paginación.
+   * @returns Una página de seguimientos.
+   */
+  listFollows(query: FollowsQuery): Observable<FollowPage> {
+    const params = this.cursorParams(
+      query,
+      new HttpParams().set('followerProfileId', query.followerProfileId),
+    );
+
+    return this.http
+      .get<WireFollowPage>(this.url('/community/follows'), { params })
+      .pipe(map(toFollowPage));
+  }
+
+  /**
+   * `GET /community/bookmarks` — lo que un perfil guardó.
+   *
+   * @param query - De quién (obligatorio), colección opcional y paginación.
+   * @returns Una página de marcadores.
+   */
+  listBookmarks(query: BookmarksQuery): Observable<BookmarkPage> {
+    let params = new HttpParams().set('profileId', query.profileId);
+    if (query.collectionName !== undefined) {
+      params = params.set('collectionName', query.collectionName);
+    }
+
+    return this.http
+      .get<WireBookmarkPage>(this.url('/community/bookmarks'), {
+        params: this.cursorParams(query, params),
+      })
+      .pipe(map(toBookmarkPage));
+  }
+
+  /**
+   * `GET /community/blocks` — a quién bloqueó un perfil.
+   *
+   * @param query - De quién (obligatorio) y la paginación.
+   * @returns Una página de bloqueos.
+   */
+  listBlocks(query: BlocksQuery): Observable<BlockPage> {
+    const params = this.cursorParams(
+      query,
+      new HttpParams().set('profileId', query.profileId),
+    );
+
+    return this.http
+      .get<WireBlockPage>(this.url('/community/blocks'), { params })
+      .pipe(map(toBlockPage));
+  }
+
+  // ─── Muro y notificaciones ─────────────────────────────────────────────────
+
+  /**
+   * `GET /community/feed` — el muro de un perfil.
+   *
+   * @param query - De quién es el muro (obligatorio) y la paginación.
+   * @returns Una página del muro, con la publicación resuelta cuando la hay.
+   */
+  listFeed(query: FeedQuery): Observable<FeedPage> {
+    const params = this.cursorParams(
+      query,
+      new HttpParams().set('profileId', query.profileId),
+    );
+
+    return this.http
+      .get<WireFeedPage>(this.url('/community/feed'), { params })
+      .pipe(map(toFeedPage));
+  }
+
+  /**
+   * `GET /community/notifications` — la bandeja de notificaciones sociales.
+   *
+   * @param query - De quién (obligatorio) y la paginación.
+   * @returns Una página de notificaciones, más el total sin leer para la campana.
+   */
+  listNotifications(query: NotificationsQuery): Observable<NotificationPage> {
+    const params = this.cursorParams(
+      query,
+      new HttpParams().set('profileId', query.profileId),
+    );
+
+    return this.http
+      .get<WireNotificationPage>(this.url('/community/notifications'), { params })
+      .pipe(map(toNotificationPage));
+  }
+
+  // ─── Reseñas ───────────────────────────────────────────────────────────────
+
+  /**
+   * `GET /community/profiles/:profileId/reviews` — las reseñas de un perfil.
+   *
+   * @param profileId - A quién reseñaron.
+   * @param query - La paginación.
+   * @returns Una página de reseñas con sus dimensiones y sus respuestas.
+   */
+  listReviews(
+    profileId: string,
+    query: ReviewsQuery = {},
+  ): Observable<ServiceReviewPage> {
+    return this.http
+      .get<WireReviewPage>(
+        this.url(`/community/profiles/${encodeURIComponent(profileId)}/reviews`),
+        { params: this.cursorParams(query, new HttpParams()) },
+      )
+      .pipe(map(toReviewPage));
+  }
+
+  // ─── Grupos ────────────────────────────────────────────────────────────────
+
+  /**
+   * `GET /community/groups` — los grupos de una organización.
+   *
+   * @param query - La organización (obligatoria) y la paginación.
+   * @returns Una página de grupos.
+   */
+  listGroups(query: GroupsQuery): Observable<GroupPage> {
+    const params = this.cursorParams(
+      query,
+      new HttpParams().set('tenantId', query.tenantId),
+    );
+
+    return this.http
+      .get<GroupPage>(this.url('/community/groups'), { params })
+      .pipe(map((body) => ({ ...body, items: body.items.map(sinNulos) })));
+  }
+
+  /**
+   * `GET /community/groups/:groupId/members` — quiénes integran un grupo.
+   *
+   * @param groupId - El grupo.
+   * @param query - Quién mira, y la paginación.
+   * @returns Una página de integrantes.
+   */
+  listGroupMembers(
+    groupId: string,
+    query: GroupMembersQuery = {},
+  ): Observable<GroupMemberPage> {
+    return this.http
+      .get<WireGroupMemberPage>(
+        this.url(`/community/groups/${encodeURIComponent(groupId)}/members`),
+        { params: this.cursorParams(query, this.actorParams(query)) },
+      )
+      .pipe(map(toGroupMemberPage));
+  }
+
+  // ─── Mensajería directa ────────────────────────────────────────────────────
+
+  /**
+   * `GET /community/conversations` — la bandeja de conversaciones.
+   *
+   * **Sin cursor**: el contrato de esta lectura sólo acepta `limit`.
+   *
+   * @param query - De quién es la bandeja (obligatorio) y el tope.
+   * @returns Una página de conversaciones con su último mensaje y sus no leídos.
+   */
+  listConversations(query: ConversationsQuery): Observable<ConversationPage> {
+    let params = new HttpParams().set('profileId', query.profileId);
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+
+    return this.http
+      .get<WireConversationPage>(this.url('/community/conversations'), { params })
+      .pipe(map(toConversationPage));
+  }
+
+  /**
+   * `GET /community/conversations/:conversationId/messages` — los mensajes.
+   *
+   * @param conversationId - La conversación.
+   * @param query - Quién lee (obligatorio: el backend comprueba que participe)
+   *   y la paginación.
+   * @returns Una página de mensajes.
+   */
+  listMessages(
+    conversationId: string,
+    query: ConversationMessagesQuery,
+  ): Observable<DirectMessagePage> {
+    const params = this.cursorParams(
+      query,
+      new HttpParams().set('profileId', query.profileId),
+    );
+
+    return this.http
+      .get<WireMessagePage>(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}/messages`,
+        ),
+        { params },
+      )
+      .pipe(map(toMessagePage));
+  }
+
+  // ─── Encuestas ─────────────────────────────────────────────────────────────
+
+  /**
+   * `GET /community/polls/:pollId` — una encuesta con sus resultados.
+   *
+   * @param pollId - La encuesta.
+   * @param query - Quién mira. Con actor viene además qué votó.
+   * @returns La encuesta con el conteo por opción.
+   */
+  readPoll(pollId: string, query: ProfilePostsQuery = {}): Observable<PollDetail> {
+    return this.http
+      .get<WirePoll>(this.url(`/community/polls/${encodeURIComponent(pollId)}`), {
+        params: this.actorParams(query),
+      })
+      .pipe(map(toPoll));
+  }
+
+  // ─── Interno ───────────────────────────────────────────────────────────────
 
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+
+  /**
+   * Agrega `cursor` y `limit` **sólo si vinieron**.
+   *
+   * Parámetro a parámetro y nunca con un objeto: el backend valida con
+   * `forbidNonWhitelisted`, y un opcional en `undefined` viaja como clave
+   * declarada y vuelve 400.
+   */
+  private cursorParams(
+    query: { readonly cursor?: string; readonly limit?: number },
+    base: HttpParams,
+  ): HttpParams {
+    let params = base;
+    if (query.cursor !== undefined) {
+      params = params.set('cursor', query.cursor);
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+    return params;
+  }
+
+  /** Agrega `actorProfileId` sólo si vino. Sin él la lectura es la anónima. */
+  private actorParams(query: { readonly actorProfileId?: string }): HttpParams {
+    return query.actorProfileId === undefined
+      ? new HttpParams()
+      : new HttpParams().set('actorProfileId', query.actorProfileId);
+  }
 }
 
-function desdeItem(item: WirePostListItem): PublicPost {
+/* ============================================================================
+    La forma del transporte.
+
+    Un `Wire*` es el cuerpo **tal como viaja**: fechas en texto ISO y opcionales
+    que pueden llegar en `null`. Los `to*` son la frontera donde eso se
+    convierte en el tipo de la vista — ver `wire.ts`.
+    ========================================================================== */
+
+type ConNulos<T> = { readonly [K in keyof T]: T[K] | null };
+
+type WireOwnProfile = ConNulos<OwnPublicProfile>;
+
+type WireBadge = Omit<
+  ConNulos<PublicProfileDetail['badges'][number]>,
+  'validFrom' | 'validTo'
+> & {
+  readonly validFrom: string | null;
+  readonly validTo: string | null;
+};
+
+type WirePrestige = Omit<ConNulos<PrestigeLike>, 'calculatedAt'> & {
+  readonly calculatedAt: string | null;
+};
+
+type PrestigeLike = NonNullable<PublicProfileDetail['prestige']>;
+
+type WireProfile = Omit<ConNulos<PublicProfileDetail>, 'badges' | 'prestige'> & {
+  readonly badges: readonly WireBadge[];
+  readonly prestige: WirePrestige | null;
+};
+
+type WirePost = Omit<ConNulos<PostListItem>, 'publishedAt' | 'editedAt'> & {
+  readonly publishedAt: string | null;
+  readonly editedAt: string | null;
+};
+
+type WirePostDetail = WirePost & {
+  readonly media: readonly ConNulos<PostDetail['media'][number]>[];
+  readonly hashtags: readonly PostDetail['hashtags'][number][];
+  readonly mentions: readonly ConNulos<PostDetail['mentions'][number]>[];
+};
+
+interface WirePostPage extends Omit<PostPage, 'items'> {
+  readonly items: readonly WirePost[];
+}
+
+type WireComment = Omit<
+  ConNulos<CommentThreadItem>,
+  'createdAt' | 'replies'
+> & {
+  readonly createdAt: string;
+  readonly replies: readonly WireComment[];
+};
+
+interface WireCommentPage extends Omit<CommentThreadPage, 'items'> {
+  readonly items: readonly WireComment[];
+}
+
+type WireReactionSummary = ConNulos<ReactionSummary> & {
+  readonly tallies: ReactionSummary['tallies'];
+  readonly total: number;
+};
+
+type WireFollow = Omit<ConNulos<FollowListItem>, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
+interface WireFollowPage extends Omit<FollowPage, 'items'> {
+  readonly items: readonly WireFollow[];
+}
+
+type WireBookmark = Omit<ConNulos<BookmarkListItem>, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
+interface WireBookmarkPage extends Omit<BookmarkPage, 'items'> {
+  readonly items: readonly WireBookmark[];
+}
+
+type WireBlock = Omit<ConNulos<BlockListItem>, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
+interface WireBlockPage extends Omit<BlockPage, 'items'> {
+  readonly items: readonly WireBlock[];
+}
+
+type WireFeedItem = Omit<ConNulos<FeedListItem>, 'createdAt' | 'post'> & {
+  readonly createdAt: string;
+  readonly post: WirePost | null;
+};
+
+interface WireFeedPage extends Omit<FeedPage, 'items'> {
+  readonly items: readonly WireFeedItem[];
+}
+
+type WireNotification = Omit<
+  ConNulos<SocialNotification>,
+  'createdAt' | 'readAt' | 'isRead'
+> & {
+  readonly createdAt: string;
+  readonly readAt: string | null;
+  readonly isRead: boolean;
+};
+
+interface WireNotificationPage extends Omit<NotificationPage, 'items'> {
+  readonly items: readonly WireNotification[];
+}
+
+type WireReview = Omit<
+  ConNulos<ServiceReview>,
+  'publishedAt' | 'editedAt' | 'dimensionScores' | 'responses'
+> & {
+  readonly publishedAt: string | null;
+  readonly editedAt: string | null;
+  readonly dimensionScores: ServiceReview['dimensionScores'];
+  readonly responses: readonly (Omit<
+    ConNulos<ReviewResponseLike>,
+    'publishedAt'
+  > & {
+    readonly publishedAt: string | null;
+  })[];
+};
+
+type ReviewResponseLike = ServiceReview['responses'][number];
+
+interface WireReviewPage extends Omit<ServiceReviewPage, 'items'> {
+  readonly items: readonly WireReview[];
+}
+
+type WireGroupMember = Omit<ConNulos<GroupMember>, 'joinedAt'> & {
+  readonly joinedAt: string | null;
+};
+
+interface WireGroupMemberPage extends Omit<GroupMemberPage, 'items'> {
+  readonly items: readonly WireGroupMember[];
+}
+
+type WireConversation = Omit<
+  ConNulos<ConversationListItem>,
+  'lastMessageAt' | 'lastMessage' | 'unreadCount'
+> & {
+  readonly lastMessageAt: string | null;
+  readonly unreadCount: number;
+  readonly lastMessage:
+    | (Omit<ConNulos<PreviewLike>, 'sentAt'> & { readonly sentAt: string | null })
+    | null;
+};
+
+type PreviewLike = NonNullable<ConversationListItem['lastMessage']>;
+
+interface WireConversationPage extends Omit<ConversationPage, 'items'> {
+  readonly items: readonly WireConversation[];
+}
+
+type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt'> & {
+  readonly sentAt: string | null;
+};
+
+interface WireMessagePage extends Omit<DirectMessagePage, 'items'> {
+  readonly items: readonly WireMessage[];
+}
+
+type WirePoll = Omit<ConNulos<PollDetail>, 'closesAt' | 'options'> & {
+  readonly closesAt: string | null;
+  readonly options: PollDetail['options'];
+};
+
+function toProfile({ badges, prestige, ...resto }: WireProfile): PublicProfileDetail {
   return {
-    id: item.id,
-    authorPublicProfileId: item.authorPublicProfileId,
-    postTypeConceptId: item.postTypeConceptId,
-    bodyText: item.bodyText,
-    visibilityConceptId: item.visibilityConceptId,
-    commentsEnabled: item.commentsEnabled,
-    publishedAt: item.publishedAt === null ? null : new Date(item.publishedAt),
-    editedAt: item.editedAt === null ? null : new Date(item.editedAt),
+    ...sinNulos(resto),
+    badges: badges.map(({ validFrom, validTo, ...badge }) => ({
+      ...sinNulos(badge),
+      ...fecha('validFrom', validFrom),
+      ...fecha('validTo', validTo),
+    })),
+    ...(prestige === null
+      ? {}
+      : {
+          prestige: {
+            ...sinNulos(omitir(prestige, 'calculatedAt')),
+            ...fecha('calculatedAt', prestige.calculatedAt),
+          },
+        }),
   };
 }
 
-function desdeComentario(comentario: WireComment): Comment {
+function toPost({ publishedAt, editedAt, ...resto }: WirePost): PostListItem {
   return {
-    id: comentario.id,
-    authorProfileId: comentario.authorProfileId,
-    bodyText: comentario.bodyText,
-    parentCommentId: comentario.parentCommentId,
-    threadDepth: comentario.threadDepth,
-    replyCount: comentario.replyCount,
-    createdAt: new Date(comentario.createdAt),
-    replies: comentario.replies.map(desdeComentario),
+    ...sinNulos(resto),
+    ...fecha('publishedAt', publishedAt),
+    ...fecha('editedAt', editedAt),
   };
+}
+
+function toPostDetail({
+  media,
+  hashtags,
+  mentions,
+  ...resto
+}: WirePostDetail): PostDetail {
+  return {
+    ...toPost(resto),
+    media: media.map(sinNulos),
+    hashtags: [...hashtags],
+    mentions: mentions.map(sinNulos),
+  };
+}
+
+function toPostPage(body: WirePostPage): PostPage {
+  return { ...body, items: body.items.map(toPost) };
+}
+
+/**
+ * Un comentario y sus respuestas.
+ *
+ * Recursiva porque el hilo lo es. La profundidad la acota el backend, no acá:
+ * poner un tope de recursión del lado del cliente escondería un hilo que el
+ * servidor sí devolvió.
+ */
+function toComment({ createdAt, replies, ...resto }: WireComment): CommentThreadItem {
+  return {
+    ...sinNulos(resto),
+    createdAt: new Date(createdAt),
+    replies: replies.map(toComment),
+  };
+}
+
+function toCommentPage(body: WireCommentPage): CommentThreadPage {
+  return { ...body, items: body.items.map(toComment) };
+}
+
+function toFollow({ createdAt, ...resto }: WireFollow): FollowListItem {
+  return { ...sinNulos(resto), createdAt: new Date(createdAt) };
+}
+
+function toFollowPage(body: WireFollowPage): FollowPage {
+  return { ...body, items: body.items.map(toFollow) };
+}
+
+function toBookmark({ createdAt, ...resto }: WireBookmark): BookmarkListItem {
+  return { ...sinNulos(resto), createdAt: new Date(createdAt) };
+}
+
+function toBookmarkPage(body: WireBookmarkPage): BookmarkPage {
+  return { ...body, items: body.items.map(toBookmark) };
+}
+
+function toBlock({ createdAt, ...resto }: WireBlock): BlockListItem {
+  return { ...sinNulos(resto), createdAt: new Date(createdAt) };
+}
+
+function toBlockPage(body: WireBlockPage): BlockPage {
+  return { ...body, items: body.items.map(toBlock) };
+}
+
+function toFeedItem({ createdAt, post, ...resto }: WireFeedItem): FeedListItem {
+  return {
+    ...sinNulos(resto),
+    createdAt: new Date(createdAt),
+    ...(post === null ? {} : { post: toPost(post) }),
+  };
+}
+
+function toFeedPage(body: WireFeedPage): FeedPage {
+  return { ...body, items: body.items.map(toFeedItem) };
+}
+
+function toNotification({
+  createdAt,
+  readAt,
+  isRead,
+  ...resto
+}: WireNotification): SocialNotification {
+  return {
+    ...sinNulos(resto),
+    isRead,
+    createdAt: new Date(createdAt),
+    ...fecha('readAt', readAt),
+  };
+}
+
+function toNotificationPage(body: WireNotificationPage): NotificationPage {
+  return { ...body, items: body.items.map(toNotification) };
+}
+
+function toReview({
+  publishedAt,
+  editedAt,
+  dimensionScores,
+  responses,
+  ...resto
+}: WireReview): ServiceReview {
+  return {
+    ...sinNulos(resto),
+    ...fecha('publishedAt', publishedAt),
+    ...fecha('editedAt', editedAt),
+    dimensionScores: [...dimensionScores],
+    responses: responses.map(({ publishedAt: respuesta, ...item }) => ({
+      ...sinNulos(item),
+      ...fecha('publishedAt', respuesta),
+    })),
+  };
+}
+
+function toReviewPage(body: WireReviewPage): ServiceReviewPage {
+  return { ...body, items: body.items.map(toReview) };
+}
+
+function toGroupMember({ joinedAt, ...resto }: WireGroupMember): GroupMember {
+  return { ...sinNulos(resto), ...fecha('joinedAt', joinedAt) };
+}
+
+function toGroupMemberPage(body: WireGroupMemberPage): GroupMemberPage {
+  return { ...body, items: body.items.map(toGroupMember) };
+}
+
+function toConversation({
+  lastMessageAt,
+  lastMessage,
+  unreadCount,
+  ...resto
+}: WireConversation): ConversationListItem {
+  return {
+    ...sinNulos(resto),
+    unreadCount,
+    ...fecha('lastMessageAt', lastMessageAt),
+    ...(lastMessage === null
+      ? {}
+      : {
+          lastMessage: {
+            ...sinNulos(omitir(lastMessage, 'sentAt')),
+            ...fecha('sentAt', lastMessage.sentAt),
+          },
+        }),
+  };
+}
+
+function toConversationPage(body: WireConversationPage): ConversationPage {
+  return { ...body, items: body.items.map(toConversation) };
+}
+
+function toMessage({ sentAt, ...resto }: WireMessage): DirectMessage {
+  return { ...sinNulos(resto), ...fecha('sentAt', sentAt) };
+}
+
+function toMessagePage(body: WireMessagePage): DirectMessagePage {
+  return { ...body, items: body.items.map(toMessage) };
+}
+
+function toPoll({ closesAt, options, ...resto }: WirePoll): PollDetail {
+  return {
+    ...sinNulos(resto),
+    options: [...options],
+    ...fecha('closesAt', closesAt),
+  };
+}
+
+/**
+ * Una fecha opcional, como clave presente o **ausente**.
+ *
+ * Devuelve `{}` cuando no vino, no `{ clave: undefined }`: es la misma razón
+ * por la que `sinNulos` elimina la clave en vez de ponerla en `undefined` —
+ * que `'x' in objeto` y `Object.keys()` digan lo mismo que el tipo.
+ */
+function fecha<K extends string>(
+  clave: K,
+  valor: string | null,
+): Record<K, Date> | Record<string, never> {
+  const convertida = maybeDate(valor);
+  return convertida === undefined ? {} : ({ [clave]: convertida } as Record<K, Date>);
+}
+
+/** Copia sin una clave, para poder tratarla aparte sin mutar el original. */
+function omitir<T extends object, K extends keyof T>(objeto: T, clave: K): Omit<T, K> {
+  const { [clave]: _descartada, ...resto } = objeto;
+  return resto;
 }

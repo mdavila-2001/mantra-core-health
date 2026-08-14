@@ -2,6 +2,10 @@
     API pública de los organisms — secciones funcionales completas.
     ========================================================================== */
 
+/* Subida genérica de adjuntos: la usan la ficha clínica y, más adelante,
+   presupuestos, procedimientos y laboratorios. No sabe de dominio. */
+export { AttachmentUploader } from './attachment-uploader/attachment-uploader';
+
 export { AuthLayout } from './auth-layout/auth-layout';
 
 export { DataTable } from './data-table/data-table';

@@ -1,10 +1,19 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { map, type Observable } from 'rxjs';
 
 import { fileAttributes } from '../../observability/business/file-tracing';
 import { TracingService } from '../../observability/tracing/tracing.service';
 import { API_BASE_URL, apiUrl } from '../api';
+import { sinNulos } from '../wire';
+import type {
+  DownloadUrl,
+  FileLink,
+  LinkedFile,
+  LinkedFilePage,
+  LinkedFilesQuery,
+  NewFileLink,
+} from './files.types';
 
 /** Los dos únicos valores que admite el backend. */
 export type FileCategory = 'DOCUMENT' | 'IMAGE';
@@ -73,4 +82,123 @@ export class FilesClient {
       () => this.http.post<UploadedFile>(apiUrl(this.baseUrl, '/common/files/upload'), form),
     );
   }
+
+  /**
+   * `GET /common/files/links` — los adjuntos de un recurso.
+   *
+   * Los borrados lógicamente no vienen: el vínculo sobrevive al archivo, así
+   * que el backend los filtra. Una lista que los incluyera ofrecería descargas
+   * que terminan en 404.
+   *
+   * @param query - De qué recurso. Los dos campos obligatorios.
+   * @returns Los adjuntos vigentes, del más reciente al más antiguo.
+   */
+  listLinked(query: LinkedFilesQuery): Observable<LinkedFilePage> {
+    // Parámetro a parámetro: el backend valida con `forbidNonWhitelisted`.
+    const params = new HttpParams()
+      .set('ownerType', query.ownerType)
+      .set('ownerId', query.ownerId);
+
+    return this.http
+      .get<WireLinkedFilePage>(apiUrl(this.baseUrl, '/common/files/links'), {
+        params,
+      })
+      .pipe(map(toLinkedFilePage));
+  }
+
+  /**
+   * `POST /common/files/:id/links` — adjunta un archivo ya subido.
+   *
+   * Es el **segundo** paso: primero `upload()` deja el archivo en el sistema,
+   * después esto lo cuelga de un recurso. Están separados en el backend y acá
+   * también, porque el mismo archivo puede adjuntarse en más de un lado.
+   *
+   * @param fileId - El archivo que devolvió `upload()`.
+   * @param link - A qué recurso se adjunta.
+   */
+  link(fileId: string, link: NewFileLink): Observable<FileLink> {
+    return this.http
+      .post<WireFileLink>(
+        apiUrl(this.baseUrl, `/common/files/${encodeURIComponent(fileId)}/links`),
+        link,
+      )
+      .pipe(map(({ createdAt, ...resto }) => ({ ...resto, createdAt: new Date(createdAt) })));
+  }
+
+  /**
+   * `POST /common/files/:id/download-url` — una URL firmada de vida corta.
+   *
+   * **Se pide al momento de descargar, no al pintar la lista.** La URL vence, y
+   * emitir veinte al abrir una ficha deja veinte enlaces vivos a datos clínicos
+   * de los que diecinueve nadie usó.
+   *
+   * @param fileId - El archivo a descargar.
+   */
+  downloadUrl(fileId: string): Observable<DownloadUrl> {
+    return this.http
+      .post<WireDownloadUrl>(
+        apiUrl(this.baseUrl, `/common/files/${encodeURIComponent(fileId)}/download-url`),
+        {},
+      )
+      .pipe(map(({ url, expiresAt }) => ({ url, expiresAt: new Date(expiresAt) })));
+  }
+
+  /**
+   * `DELETE /common/files/:id` — borrado **lógico** del archivo.
+   *
+   * Ojo con la semántica: borra el archivo, no el vínculo. Un archivo borrado
+   * desaparece de todas las fichas donde estuviera adjunto, no sólo de ésta.
+   *
+   * @param fileId - El archivo a borrar.
+   */
+  softDelete(fileId: string): Observable<void> {
+    return this.http
+      .delete<unknown>(apiUrl(this.baseUrl, `/common/files/${encodeURIComponent(fileId)}`))
+      .pipe(map(() => undefined));
+  }
+}
+
+/* ============================================================================
+    La forma del transporte: fechas en texto, opcionales que pueden ser `null`.
+    Ver `wire.ts` para el porqué de normalizarlos en la frontera.
+    ========================================================================== */
+
+type WireStoredFile = Omit<LinkedFile['file'], 'createdAt'> & {
+  readonly createdAt: string;
+  readonly currentVersionId: string | null;
+  readonly originalName: string | null;
+};
+
+type WireLinkedFile = Omit<LinkedFile, 'linkedAt' | 'file'> & {
+  readonly linkedAt: string;
+  readonly file: WireStoredFile;
+};
+
+interface WireLinkedFilePage {
+  readonly items: readonly WireLinkedFile[];
+  readonly count: number;
+}
+
+type WireFileLink = Omit<FileLink, 'createdAt'> & { readonly createdAt: string };
+
+interface WireDownloadUrl {
+  readonly url: string;
+  readonly expiresAt: string;
+}
+
+function toLinkedFilePage(body: WireLinkedFilePage): LinkedFilePage {
+  return {
+    count: body.count,
+    items: body.items.map(({ linkedAt, file, ...resto }) => ({
+      ...resto,
+      linkedAt: new Date(linkedAt),
+      file: {
+        ...sinNulos({
+          ...file,
+          createdAt: undefined as never,
+        }),
+        createdAt: new Date(file.createdAt),
+      },
+    })),
+  };
 }

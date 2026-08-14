@@ -24,7 +24,6 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 import type { StatusSealVariant } from '../../../../shared/components/organisms/status-seal/status-seal.types';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { TutorialTarget } from '../../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
 const SIN_DATO = 'Sin registrar';
@@ -121,7 +120,6 @@ export interface IdiomaVisible {
 @Component({
   selector: 'app-practitioner-profile',
   imports: [
-    TutorialTarget,
     Avatar,
     Badge,
     AppButtonLink,

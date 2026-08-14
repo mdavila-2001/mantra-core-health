@@ -6,6 +6,8 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   Allergy,
   AllergyIntoleranceRegistration,
+  CareEpisode,
+  CareEpisodeRegistration,
   CarePlan,
   CarePlanActivity,
   ChartDocument,
@@ -21,6 +23,7 @@ import type {
   MedicationRequest,
   MedicationRequestRegistration,
   NewAllergyIntolerance,
+  NewCareEpisode,
   NewCondition,
   NewDiagnosticReport,
   NewEncounter,
@@ -109,8 +112,44 @@ export class ClinicalClient {
           medicationRequests: body.medicationRequests.map(toMedicationRequest),
           observations: body.observations.map(toObservation),
           encounters: body.encounters.map(toEncounter),
+          // El único bloque que se lee con `?? []`, y no por descuido: es
+          // aditivo al contrato, y frontend y API se despliegan por separado.
+          // Contra una API que todavía no lo publica, el expediente entero
+          // reventaría por un bloque que esa versión no tiene. El resto de los
+          // bloques existen desde el primer día de la lectura y no necesitan
+          // esa cortesía.
+          careEpisodes: (body.careEpisodes ?? []).map(toCareEpisode),
         })),
       );
+  }
+
+  /**
+   * `POST /clinical/care-episodes` — da de alta una internación (UC-08-01).
+   *
+   * ## Por qué esta escritura sí entra
+   *
+   * El criterio del cliente no cambió: sólo se ofrece la escritura cuyo
+   * resultado la pantalla **vuelve a leer**. Hasta ahora el episodio no salía en
+   * ninguna lectura, así que abrir una internación desde acá habría sido un
+   * formulario que traga el dato. Desde que `getSummary` devuelve
+   * `careEpisodes`, lo que se abre aparece releyendo el mismo expediente.
+   *
+   * ## El `409` es la regla, no un fallo
+   *
+   * El backend rechaza abrir un segundo episodio activo para el mismo paciente
+   * en la misma organización. No es un error del sistema: es que la persona ya
+   * está internada, y la salida —el episodio existente— ya está en pantalla.
+   *
+   * @param episodio - Paciente, organización y lo opcional que se haya cargado.
+   * @returns El episodio abierto, con su estado y su inicio.
+   */
+  createCareEpisode(episodio: NewCareEpisode): Observable<CareEpisodeRegistration> {
+    return this.http
+      .post<WireCareEpisodeRegistration>(
+        this.url('/clinical/care-episodes'),
+        sinAusentes({ ...episodio, startAt: instanteDe(episodio.startAt) }),
+      )
+      .pipe(map(toCareEpisodeRegistration));
   }
 
   /**
@@ -461,15 +500,26 @@ type WireObservation = Fechas<Observation, 'effectiveStartAt'>;
 
 type WireEncounter = Fechas<Encounter, 'startAt' | 'endAt'>;
 
+type WireCareEpisode = Omit<Fechas<CareEpisode, 'startAt' | 'endAt'>, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
 interface WireSummary extends Omit<
   ClinicalSummary,
-  'conditions' | 'allergies' | 'medicationRequests' | 'observations' | 'encounters'
+  | 'conditions'
+  | 'allergies'
+  | 'medicationRequests'
+  | 'observations'
+  | 'encounters'
+  | 'careEpisodes'
 > {
   readonly conditions: readonly WireCondition[];
   readonly allergies: readonly WireAllergy[];
   readonly medicationRequests: readonly WireMedicationRequest[];
   readonly observations: readonly WireObservation[];
   readonly encounters: readonly WireEncounter[];
+  /** Opcional acá y sólo acá: ver el `?? []` de `getSummary`. */
+  readonly careEpisodes?: readonly WireCareEpisode[];
 }
 
 type WireNote = Omit<Fechas<ChartNote, 'signedAt'>, 'createdAt'> & { readonly createdAt: string };
@@ -629,6 +679,42 @@ function toObservation({ effectiveStartAt, ...resto }: WireObservation): Observa
 
 function toEncounter({ startAt, endAt, ...resto }: WireEncounter): Encounter {
   return { ...resto, ...fecha('startAt', startAt), ...fecha('endAt', endAt) };
+}
+
+function toCareEpisode({ startAt, endAt, createdAt, ...resto }: WireCareEpisode): CareEpisode {
+  return {
+    ...resto,
+    ...fecha('startAt', startAt),
+    ...fecha('endAt', endAt),
+    createdAt: new Date(createdAt),
+  };
+}
+
+/**
+ * El episodio tal como vuelve del alta.
+ *
+ * `startAt` es `nullable` —no ausente— en el contrato, igual que en el
+ * encuentro: se conserva el `null` en vez de borrarlo porque significa «el
+ * backend no fijó el inicio», que no es lo mismo que «no vino el campo».
+ */
+type WireCareEpisodeRegistration = Omit<
+  CareEpisodeRegistration,
+  'startAt' | 'createdAt'
+> & {
+  readonly startAt: string | null;
+  readonly createdAt: string;
+};
+
+function toCareEpisodeRegistration({
+  startAt,
+  createdAt,
+  ...resto
+}: WireCareEpisodeRegistration): CareEpisodeRegistration {
+  return {
+    ...resto,
+    startAt: startAt === null ? null : new Date(startAt),
+    createdAt: new Date(createdAt),
+  };
 }
 
 function toNote({ signedAt, createdAt, ...resto }: WireNote): ChartNote {

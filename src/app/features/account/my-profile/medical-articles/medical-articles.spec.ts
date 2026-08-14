@@ -51,6 +51,7 @@ function postDetail(id: string, esArticulo: boolean, bodyText?: string) {
     bodyText: bodyText ?? `Cuerpo de ${id}`,
     media: [],
     hashtags: esArticulo ? [{ id: `h-${id}`, tag: 'articulo-medico' }] : [],
+    mentions: [],
   };
 }
 

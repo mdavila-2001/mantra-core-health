@@ -10,6 +10,9 @@
     Tu cuenta no tiene un perfil de paciente. Si atendés turnos, entrá por la agenda de la
     organización.
   </app-alert>
+  <!-- La salida, no solo la explicación: el mismo destino que el aviso nombra.
+       Es el par del «Ir a la agenda» de la reserva (`booking-new`). -->
+  <a app-button variant="primary" [routerLink]="rutaDeAgenda">Ir a la agenda</a>
 } @else {
   <section class="turnos__bloque" aria-labelledby="turnos-propios">
     <h2 id="turnos-propios" class="turnos__titulo">Tus turnos</h2>
@@ -122,7 +125,10 @@
 
     @if (organizacion() === null) {
       <app-alert tone="warning" title="Elegí una organización">
-        Para ver horarios hace falta saber en qué organización te querés atender.
+        <!-- El selector vive en el encabezado: decir sólo «elegí una» sin decir
+             dónde dejaba a la persona buscando un control que acá no está. -->
+        Elegí una organización desde el selector del encabezado para ver los horarios
+        disponibles.
       </app-alert>
     } @else if (sinRecursos()) {
       <app-alert tone="info" title="Todavía no hay agendas publicadas">

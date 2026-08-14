@@ -61,6 +61,20 @@
   font-size: var(--fs-caption);
 }
 
+/* Dónde se atiende. Va debajo de los filtros y encima de las pestañas: es
+   contexto de todo lo que sigue —citas y cupos son del mismo lugar— y no de una
+   de las dos. */
+.agenda__ubicacion {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.agenda__ubicacion-rotulo {
+  font-weight: 600;
+  color: var(--text-default);
+}
+
 /* Momento arriba y duración debajo, dentro de la misma celda: la hora de fin es
    contexto de la de inicio, no una columna aparte. */
 .agenda__cuando {

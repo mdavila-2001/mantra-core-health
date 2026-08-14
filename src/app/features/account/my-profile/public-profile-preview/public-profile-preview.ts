@@ -10,7 +10,6 @@ import { NavigationService } from '../../../../core/navigation/navigation.servic
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
-import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
@@ -53,7 +52,6 @@ const SLUG_VALIDO = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   selector: 'app-public-profile-preview',
   imports: [
     Alert,
-    AppButtonLink,
     Avatar,
     Card,
     FormActions,

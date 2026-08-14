@@ -130,9 +130,7 @@ describe('ShellLayout', () => {
     // armazón porque no es una sección del producto.
     expect(rutasDelMenu()).toEqual([
       '/dashboard',
-      // El centro de tutoriales no exige roles: el catálogo ya se filtra
-      // tutorial por tutorial.
-      '/tutorials',
+      '/feed',
       // El glosario tampoco: accesible por cada profesional, no sólo por
       // quien administra.
       '/glossary',

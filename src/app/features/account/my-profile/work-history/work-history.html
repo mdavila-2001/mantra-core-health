@@ -1,0 +1,127 @@
+<!-- El bloque entero sólo existe para un profesional. Para una cuenta de
+     paciente la pregunta «¿dónde trabajaste?» no aplica, y mostrarla vacía —o
+     peor, con el 403 en rojo— sería contarle un problema que no tiene. -->
+@if (esProfesional()) {
+  <app-card class="historial" variant="outlined" padding="lg">
+    <h2 class="historial__titulo">Historial laboral</h2>
+    <p class="historial__intro">
+      Los hospitales y entidades médicas donde ejerciste. Lo administrás vos: es tu
+      trayectoria, no un dato que cargue la organización.
+    </p>
+
+    @if (avisoDeDuplicado(); as aviso) {
+      <app-alert tone="warning" title="Ya estaba registrado" data-testid="afiliacion-duplicada">
+        {{ aviso }}
+      </app-alert>
+    }
+
+    @if (errorDelRegistro(); as mensaje) {
+      <app-alert tone="error" data-testid="afiliacion-error">{{ mensaje }}</app-alert>
+    }
+
+    <!-- ─── La línea de tiempo ──────────────────────────────────────────────
+         Mismo reparto visual que el historial de verificaciones de arriba: una
+         lista con su sello a la izquierda y el período a la derecha. -->
+    @if (afiliaciones().length > 0) {
+      <ul class="historial__lista">
+        @for (afiliacion of afiliaciones(); track afiliacion.id) {
+          <li class="historial__item">
+            <div class="historial__institucion">
+              <strong>{{ afiliacion.organizationName }}</strong>
+              <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
+              @if (afiliacion.departmentText) {
+                <span class="historial__area">{{ afiliacion.departmentText }}</span>
+              }
+              @if (nombreDeSede(afiliacion); as sede) {
+                <span class="historial__sede">Consultorio: {{ sede }}</span>
+              }
+            </div>
+
+            <div class="historial__periodo">
+              <span class="historial__fechas">
+                {{ afiliacion.startDate | date: 'MM/yyyy' }} —
+                @if (afiliacion.endDate) {
+                  {{ afiliacion.endDate | date: 'MM/yyyy' }}
+                } @else {
+                  actualidad
+                }
+              </span>
+              <span class="historial__estado">{{ periodo(afiliacion) }}</span>
+            </div>
+          </li>
+        }
+      </ul>
+    } @else if (historial().status === 'ready') {
+      <p class="historial__vacio">
+        Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente
+        dónde ejerciste antes de llegar acá.
+      </p>
+    } @else if (historial().status !== 'loading') {
+      <!-- El fallo de la lectura no tumba el formulario: cargar un vínculo
+           nuevo sigue siendo posible aunque no se hayan podido leer los viejos. -->
+      <p class="historial__vacio">
+        No pudimos leer tu historial.
+        <button type="button" class="historial__reintento" (click)="recargar()">
+          Reintentar
+        </button>
+      </p>
+    }
+
+    <!-- ─── Agregar ─────────────────────────────────────────────────────── -->
+    <form class="historial__formulario" (submit)="$event.preventDefault()">
+      <h3 class="historial__subtitulo">Agregar un vínculo</h3>
+
+      <app-form-field
+        label="Institución"
+        hint="El hospital o la entidad, como se llama. No hace falta que esté en la plataforma."
+        [required]="true"
+      >
+        <app-input [(value)]="institucion" placeholder="Hospital Obrero N.º 1" />
+      </app-form-field>
+
+      <app-form-field label="Cargo" hint="El puesto que ejerciste ahí." [required]="true">
+        <app-input [(value)]="cargo" placeholder="Médico de planta" />
+      </app-form-field>
+
+      <app-form-field label="Servicio o área" hint="Opcional. Si el cargo no lo dice solo.">
+        <app-input [(value)]="area" placeholder="Cardiología" />
+      </app-form-field>
+
+      <!-- El desplegable sólo aparece si hay consultorios que ofrecer: un
+           selector vacío es una pregunta sin respuestas posibles. -->
+      @if (opcionesDeSede().length > 0) {
+        <app-form-field
+          label="Consultorio de la plataforma"
+          hint="Opcional. Si la institución es una de las sedes donde ya atendés, atalo acá."
+        >
+          <app-select
+            [(value)]="sede"
+            [options]="opcionesDeSede()"
+            placeholder="Sin atar a un consultorio"
+          />
+        </app-form-field>
+      }
+
+      <app-form-field label="Desde" hint="Cuándo empezaste." [required]="true">
+        <app-date-picker [(value)]="desde" />
+      </app-form-field>
+
+      <!-- El período invertido se marca en el propio campo y no como aviso
+           suelto: el error está ahí y ahí hay que corregirlo. -->
+      <app-form-field
+        label="Hasta"
+        hint="Dejalo vacío si seguís ejerciendo ahí."
+        [errorMessage]="periodoInvertido() ? 'El fin no puede ser anterior al inicio.' : ''"
+      >
+        <app-date-picker [(value)]="hasta" [hasError]="periodoInvertido()" />
+      </app-form-field>
+
+      <app-form-actions
+        submitLabel="Agregar al historial"
+        [pending]="registrando()"
+        [disabled]="!puedeRegistrar()"
+        (submitted)="registrar()"
+      />
+    </form>
+  </app-card>
+}

@@ -5,7 +5,10 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
-import type { Comment, PostDetail } from '../../../../core/data-access/community/community.types';
+import type {
+  CommentThreadItem,
+  PostDetail,
+} from '../../../../core/data-access/community/community.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -107,7 +110,7 @@ export class MedicalArticles {
      para leer los comentarios de un artículo. */
 
   protected readonly abierto = signal<string | null>(null);
-  protected readonly comentarios = signal<ViewState<readonly Comment[]>>(loading());
+  protected readonly comentarios = signal<ViewState<readonly CommentThreadItem[]>>(loading());
   protected readonly nuevoComentario = signal('');
   protected readonly comentando = signal(false);
 
@@ -141,7 +144,7 @@ export class MedicalArticles {
           }
           // Una lectura por publicación de la página: ver la nota de clase
           // sobre por qué es aceptable acá.
-          return forkJoin(pagina.items.map((item) => this.community.getPost(item.id)));
+          return forkJoin(pagina.items.map((item) => this.community.readPost(item.id)));
         }),
       )
       .subscribe({
@@ -152,7 +155,7 @@ export class MedicalArticles {
             return;
           }
           const soloArticulos = detalles
-            .filter((post) => post.hashtags.includes('articulo-medico'))
+            .filter((post) => post.hashtags.some((h) => h.tag === 'articulo-medico'))
             .map(aVisible);
           this.articulos.set(ready(soloArticulos));
         },
@@ -193,8 +196,10 @@ export class MedicalArticles {
     this.nuevoComentario.set('');
     this.comentarios.set(loading());
     this.community
-      .listPostComments(postId)
-      .pipe(catchError((error: unknown) => of(errorToViewState<readonly Comment[]>(error))))
+      .listComments(postId)
+      .pipe(
+        catchError((error: unknown) => of(errorToViewState<readonly CommentThreadItem[]>(error))),
+      )
       .subscribe((resultado) => {
         // Un hilo vacío se resuelve `ready([])` y no `empty(...)`: no hay una
         // acción de salida sensata para «todavía no hay comentarios en ESTE

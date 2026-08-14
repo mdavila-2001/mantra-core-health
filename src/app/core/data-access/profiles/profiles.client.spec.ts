@@ -586,4 +586,91 @@ describe('ProfilesClient', () => {
       validFrom: '2026-07-31T12:00:00.000Z',
     });
   });
+
+  /* -- historial laboral del profesional (UC-05-16) ----------------------- */
+
+  /** Una afiliación tal como llega por el cable. */
+  const afiliacionEnCable = (over: Record<string, unknown> = {}) => ({
+    id: 'af-1',
+    practitionerProfileId: 'pp-1',
+    organizationName: 'Hospital Obrero N.º 1',
+    roleTitle: 'Médico de planta',
+    departmentText: 'Cardiología',
+    practiceSiteId: null,
+    affiliationTypeConceptId: 'c-1',
+    startDate: '2020-03-01',
+    endDate: null,
+    current: true,
+    status: 'c-activo',
+    createdAt: '2026-08-14T12:00:00.000Z',
+    ...over,
+  });
+
+  it('listAffiliations pide el propio y no admite pasar otro perfil', () => {
+    client.listAffiliations().subscribe();
+
+    const req = http.expectOne('/profiles/practitioners/me/affiliations');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys()).toEqual([]);
+
+    req.flush({ items: [], count: 0 });
+  });
+
+  /**
+   * `startDate` es `format: 'date'`: pasarla por `new Date()` la anclaría a
+   * medianoche UTC y en cualquier huso al oeste de Greenwich retrocedería un
+   * día. Un vínculo que empieza el 1 de marzo no puede leerse como del 28 de
+   * febrero.
+   */
+  it('listAffiliations ancla las fechas sin hora a medianoche local', () => {
+    let items: readonly { startDate: Date; endDate: Date | null }[] = [];
+    client.listAffiliations().subscribe((p) => (items = p.items));
+
+    http.expectOne('/profiles/practitioners/me/affiliations').flush({
+      items: [afiliacionEnCable()],
+      count: 1,
+    });
+
+    expect(items[0].startDate.getFullYear()).toBe(2020);
+    expect(items[0].startDate.getMonth()).toBe(2);
+    expect(items[0].startDate.getDate()).toBe(1);
+  });
+
+  /** Sin fin declarado el vínculo sigue vigente; `null` lo dice y no se pierde. */
+  it('listAffiliations conserva el fin ausente como null', () => {
+    let items: readonly { endDate: Date | null; current: boolean }[] = [];
+    client.listAffiliations().subscribe((p) => (items = p.items));
+
+    http.expectOne('/profiles/practitioners/me/affiliations').flush({
+      items: [afiliacionEnCable(), afiliacionEnCable({ id: 'af-2', endDate: '2023-12-31', current: false })],
+      count: 2,
+    });
+
+    expect(items[0].endDate).toBeNull();
+    expect(items[0].current).toBe(true);
+    expect(items[1].endDate).toBeInstanceOf(Date);
+    expect(items[1].current).toBe(false);
+  });
+
+  it('addAffiliation no manda las claves opcionales ausentes', () => {
+    client
+      .addAffiliation({
+        organizationName: 'Hospital Obrero N.º 1',
+        roleTitle: 'Médico de planta',
+        startDate: '2020-03-01',
+      })
+      .subscribe();
+
+    const req = http.expectOne('/profiles/practitioners/me/affiliations');
+    expect(req.request.method).toBe('POST');
+    // El backend valida con `forbidNonWhitelisted`: un opcional en `undefined`
+    // viajaría como clave declarada y volvería 400.
+    expect(req.request.body).toEqual({
+      organizationName: 'Hospital Obrero N.º 1',
+      roleTitle: 'Médico de planta',
+      startDate: '2020-03-01',
+    });
+
+    req.flush(afiliacionEnCable());
+  });
 });
