@@ -130,6 +130,8 @@ describe('ShellLayout', () => {
     // armazón porque no es una sección del producto.
     expect(rutasDelMenu()).toEqual([
       '/dashboard',
+      // Los tutoriales tampoco exigen rol.
+      '/tutorials',
       '/feed',
       // El glosario tampoco: accesible por cada profesional, no sólo por
       // quien administra.

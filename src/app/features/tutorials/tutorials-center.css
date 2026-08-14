@@ -1,0 +1,168 @@
+/* Centro de tutoriales. Avance arriba, recomendados, filtros y catálogo. Sólo
+   distribución — ni un color ni una tipografía que el sistema no tenga ya. */
+
+:host {
+  display: block;
+}
+
+.tutoriales {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-6);
+}
+
+.tutoriales__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.tutoriales__nota {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.tutoriales__problemas {
+  margin: var(--sp-2) 0 0;
+  padding-inline-start: var(--sp-5);
+  display: grid;
+  gap: var(--sp-1);
+}
+
+/* ── Avance ────────────────────────────────────────────────────────────────*/
+
+.tutoriales__avance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+/* Sin esto, un texto largo estira la fila y empuja el porcentaje fuera. */
+.tutoriales__avance-texto {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+/* Tabular: el porcentaje cambia al completar un tutorial y sin esto los dígitos
+   bailan de ancho al pasar de 9 a 10. */
+.tutoriales__porcentaje {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tutoriales__barra {
+  block-size: 8px;
+  margin-block-start: var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.tutoriales__barra-relleno {
+  block-size: 100%;
+  background: var(--brand-primary);
+  transition: width var(--dur-base) var(--ease-standard);
+}
+
+/* ── Filtros ───────────────────────────────────────────────────────────────*/
+
+.tutoriales__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-4);
+}
+
+.tutoriales__filtro {
+  flex: 1 1 14rem;
+  /* Un buscador de mil píxeles no ayuda a buscar. */
+  max-inline-size: 22rem;
+}
+
+/* ── Catálogo ──────────────────────────────────────────────────────────────*/
+
+.tutoriales__seccion {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* `auto-fill` y no `auto-fit`: con `auto-fit`, una sola tarjeta se estira a todo
+   el ancho de la pantalla y se lee como otra cosa que las demás. */
+.tutoriales__rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Alto completo para que las tarjetas de una fila terminen parejas aunque sus
+   descripciones tengan distinto largo. */
+.tutoriales__tarjeta {
+  display: grid;
+  gap: var(--sp-3);
+  block-size: 100%;
+  align-content: start;
+}
+
+.tutoriales__tarjeta-encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.tutoriales__tarjeta-titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+.tutoriales__tarjeta-texto {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.tutoriales__tarjeta-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* Los requisitos avisan y no bloquean, así que se leen como una nota y no como
+   un error: un tono de error acá diría «no podés», que es falso. */
+.tutoriales__requisitos {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.tutoriales__tarjeta-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  /* Pegadas abajo: con descripciones de distinto largo, los botones de una fila
+     quedaban a distinta altura y la fila se leía torcida. */
+  margin-block-start: auto;
+}
+
+.tutoriales__vacio {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-3);
+  padding: var(--sp-6);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-md);
+}

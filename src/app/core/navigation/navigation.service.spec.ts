@@ -70,6 +70,9 @@ describe('NavigationService', () => {
       // sólo se sabe preguntándole al backend. Un rol no puede expresarlo.
       expect(rutasDelMenu()).toEqual([
         '/dashboard',
+        // Los tutoriales tampoco exigen rol: son la guía de cómo usar lo que
+        // cada cuenta ya puede ver.
+        '/tutorials',
         '/feed',
         // El glosario tampoco: el cliente lo pidió accesible por cada
         // profesional, no sólo por quien administra.

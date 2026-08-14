@@ -51,6 +51,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Tu punto de partida: la sesión activa y el estado del sistema.',
     module: 'M30 read_models',
   },
+  {
+    // El centro de tutoriales. Va en «General» y no en una sección de ayuda
+    // aparte por una razón concreta: un desplegable de ayuda es donde van a
+    // morir los tutoriales —se abre por accidente, no se comparte por enlace y
+    // no tiene dónde decir cuánto llevás hecho—. Como sección tiene URL propia y
+    // entra en el menú con las mismas reglas que el resto.
+    //
+    // Sin `roles` a propósito: cualquiera que pueda entrar tiene algo que
+    // aprender, y el catálogo ya se filtra por rol tutorial por tutorial. Poner
+    // roles acá escondería el centro entero a quien tiene pocos.
+    path: 'tutorials',
+    label: 'Tutoriales',
+    group: 'General',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
+    module: '—  ayuda en producto',
+  },
 
   {
     path: 'feed',

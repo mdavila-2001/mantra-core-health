@@ -1,6 +1,10 @@
 <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
      acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
-<app-page-header title="Panel" subtitle="Tu organización, tus accesos y el estado del sistema." />
+<app-page-header
+  title="Panel"
+  subtitle="Tu organización, tus accesos y el estado del sistema."
+  appTutorialTarget="panel-titulo"
+/>
 
 <!-- ─── Cifras ──────────────────────────────────────────────────────────────
      Cuatro tarjetas angostas en una fila propia. Van arriba porque son la
@@ -71,7 +75,7 @@
       construcción se muestran para que sepas qué viene, no para entrar.
     </p>
 
-    <ul class="panel__accesos">
+    <ul class="panel__accesos" appTutorialTarget="panel-accesos">
       @for (seccion of seccionesDisponibles(); track seccion.path) {
         <li>
           <a class="panel__acceso" [routerLink]="'/' + seccion.path">
