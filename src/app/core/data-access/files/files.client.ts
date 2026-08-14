@@ -181,7 +181,10 @@ interface WireLinkedFilePage {
 
 type WireFileLink = Omit<FileLink, 'createdAt'> & { readonly createdAt: string };
 
-type WireDownloadUrl = { readonly url: string; readonly expiresAt: string };
+interface WireDownloadUrl {
+  readonly url: string;
+  readonly expiresAt: string;
+}
 
 function toLinkedFilePage(body: WireLinkedFilePage): LinkedFilePage {
   return {
