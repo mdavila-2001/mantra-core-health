@@ -1,6 +1,6 @@
 # API de backend
 
-Las 145 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 159 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -554,11 +554,35 @@ contrasta con la cabecera `X-Tenant-Id` y responde **403** si difieren. En el
 sujeto conviene omitirlo y dejar que lo resuelva el interceptor; en la geocerca
 tiene que ser el tenant activo de la sesión.
 
-### `FilesClient` — 1 operación
+### `FilesClient` — 5 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) |
+| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) · `AttachmentUploader` |
+| `GET` | `/common/files/links` | `AttachmentsBlock` (adjuntos de la ficha) |
+| `POST` | `/common/files/:fileId/links` | `AttachmentUploader` |
+| `POST` | `/common/files/:fileId/download-url` | `AttachmentsBlock` |
+| `DELETE` | `/common/files/:fileId` | — (borrado lógico, sin pantalla todavía) |
+
+#### Adjuntar son dos operaciones, no una
+
+`upload` deja el archivo en el sistema; `:fileId/links` lo cuelga de un recurso.
+Están separadas en el backend porque **el mismo archivo puede adjuntarse en más
+de un lado**, y acá se respetan como dos llamadas.
+
+Importa para el mensaje de error: si la segunda falla, el archivo **ya existe**.
+Decir «no se pudo subir» llevaría a reintentar y dejar dos copias.
+
+#### Los adjuntos cuelgan del paciente, no del encuentro
+
+`file_links.owner_type` admite `USER`, `PATIENT` y `TENANT` — **no hay
+`ENCOUNTER`**. Es una restricción del modelo: quien quiera adjuntos por episodio
+tiene que promoverlo al `.puml` primero.
+
+#### La URL de descarga se pide al hacer clic
+
+Es firmada y vence. Emitir una por adjunto al pintar la lista dejaría veinte
+enlaces vivos a datos clínicos de los que diecinueve nadie abrió.
 
 ### `CommunityClient` — 20 operaciones
 

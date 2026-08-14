@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-309 componentes y 40 servicios inyectables, leídos de `src/`.
+311 componentes y 40 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -52,10 +52,11 @@
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
 
-## Organismo (15)
+## Organismo (16)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
+| `app-attachment-uploader` | `AttachmentUploader` | `ownerType`, `ownerId` | `attached` | — | OnPush | sí |
 | `app-auth-layout` | `AuthLayout` | `title`, `subtitle`, `showBrand` | — | — | OnPush | sí |
 | `app-auth-split` | `AuthSplit` | `claim`, `tagline` | — | — | OnPush | sí |
 | `app-data-table` | `DataTable` | `state`, `columns`, `trackBy`, `caption`, `selectable`, `sort`, `cursor` | `sortChanged`, `cursorChanged`, `selectionChanged`, `retry`, `refresh` | — | OnPush | sí |
@@ -72,7 +73,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (254)
+## Feature (255)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -122,6 +123,7 @@
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
 | `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
+| `app-attachments-block` | `AttachmentsBlock` | `patientProfileId` | — | — | OnPush | sí |
 | `app-diagnosis-block` | `DiagnosisBlock` | `patientProfileId`, `encounterId` | `cambio` | — | OnPush | sí |
 | `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas` | `cambio` | — | OnPush | sí |
 | `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |

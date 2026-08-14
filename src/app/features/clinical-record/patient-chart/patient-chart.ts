@@ -50,6 +50,7 @@ import {
   CLINICAL_RECORD_ROUTE,
   MOTIVO_QUERY_PARAM,
 } from '../clinical-record.routes';
+import { AttachmentsBlock } from './attachments-block/attachments-block';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
 
@@ -158,6 +159,7 @@ interface Expediente {
     Card,
     DataTable,
     DatePipe,
+    AttachmentsBlock,
     DiagnosisBlock,
     FormActions,
     FormField,

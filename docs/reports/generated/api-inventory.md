@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-157 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+161 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -113,6 +113,10 @@ Archivo: `src/app/core/data-access/files/files.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `DELETE` | `/common/files/:fileId` |
+| `POST` | `/common/files/:fileId/download-url` |
+| `POST` | `/common/files/:fileId/links` |
+| `GET` | `/common/files/links` |
 | `POST` | `/common/files/upload` |
 
 ## `CommunityClient`
