@@ -4,6 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { PdfExportButton } from './pdf-export-button';
 import { PdfExportService } from './pdf-export.service';
 
+
 /**
  * Lo que estas pruebas fijan.
  *
@@ -39,13 +40,18 @@ class PdfFalso {
   title = '';
   fallar = false;
 
-  export(element: HTMLElement, filename: string, options: { title?: string } = {}): void {
+  export(
+    element: HTMLElement,
+    filename: string,
+    options: { title?: string } = {},
+  ): Promise<void> {
     if (this.fallar) {
-      throw new Error('sin memoria');
+      return Promise.reject(new Error('sin memoria'));
     }
     this.element = element;
     this.filename = filename;
     this.title = options.title ?? '';
+    return Promise.resolve();
   }
 }
 
@@ -106,10 +112,13 @@ describe('PdfExportButton', () => {
    * «la aplicación está rota» y termina en un reporte que nadie puede
    * reproducir.
    */
-  it('si la exportación falla lo dice en pantalla', () => {
+  it('si la exportación falla lo dice en pantalla', async () => {
     pdf.fallar = true;
 
     pulsar();
+    // El motor se carga al usarlo, así que el fallo llega en un microtask.
+    await Promise.resolve();
+    fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('No pudimos generar el PDF');
   });

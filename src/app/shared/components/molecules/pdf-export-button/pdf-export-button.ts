@@ -87,11 +87,12 @@ export class PdfExportButton {
     }
 
     this.error.set('');
-    try {
-      this.pdf.export(elemento, this.filename(), { title: this.title() });
-    } catch {
-      this.error.set('No pudimos generar el PDF. Reintentá.');
-    }
+    // La exportación es asíncrona porque el motor se carga al usarlo — ver el
+    // porqué en `PdfExportService`. Un fallo se dice: un botón que no hace nada
+    // se lee como «la aplicación está rota».
+    void this.pdf
+      .export(elemento, this.filename(), { title: this.title() })
+      .catch(() => this.error.set('No pudimos generar el PDF. Reintentá.'));
   }
 
   /**
