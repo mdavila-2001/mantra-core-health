@@ -2,7 +2,11 @@
   title="Agenda"
   subtitle="Las citas comprometidas y los cupos que quedan por ofrecer."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  @if (puedeCrearAgenda()) {
+    <a app-button page-actions variant="primary" [routerLink]="rutaCrearAgenda">Crear agenda</a>
+  }
+</app-page-header>
 
 <div class="agenda">
   <!-- ─── Sin organización ────────────────────────────────────────────────

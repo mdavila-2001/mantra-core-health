@@ -5,11 +5,13 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AgendaResource,
+  AgendaResourceCreated,
   AgendaResourcePage,
   AgendaResourceQuery,
   AgendaSlot,
   AgendaSlotPage,
   AgendaSlotQuery,
+  AvailabilityExceptionCreated,
   Booking,
   BookingCancellation,
   BookingCancelled,
@@ -17,11 +19,19 @@ import type {
   BookingConfirmation,
   BookingConfirmed,
   BookingPage,
+  BookingPolicyCreated,
   BookingQuery,
   BookingReschedule,
   BookingRescheduled,
+  GenerateSlotsRequest,
+  NewAgendaResource,
+  NewAvailabilityException,
+  NewBookingPolicy,
   NewHold,
+  NewScheduleTemplate,
+  ScheduleTemplateCreated,
   SlotHold,
+  SlotsGenerated,
 } from './scheduling.types';
 
 /**
@@ -149,6 +159,118 @@ export class SchedulingClient {
     return this.http
       .get<WireBooking>(this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}`))
       .pipe(map(toBooking));
+  }
+
+  /* -- Construcción de agenda (UC-41-01 → UC-41-04) ------------------------
+     Las cinco fases del alta. Los cuerpos se arman campo a campo: un opcional
+     en `undefined` viaja como clave declarada y el backend lo rechaza con 400
+     (`forbidNonWhitelisted`). Cada respuesta trae el id que consume la fase
+     siguiente. */
+
+  /**
+   * `POST /scheduling/resources` — da de alta un recurso agendable (UC-41-01).
+   *
+   * Es la primera fase: sin recurso no hay dónde colgar la plantilla ni las
+   * excepciones. Devuelve el `id` que las dos usan en su ruta.
+   */
+  createResource(resource: NewAgendaResource): Observable<AgendaResourceCreated> {
+    return this.http.post<AgendaResourceCreated>(this.url('/scheduling/resources'), {
+      tenantId: resource.tenantId,
+      resourceType: resource.resourceType,
+      resourceRefType: resource.resourceRefType,
+      resourceRefId: resource.resourceRefId,
+      name: resource.name,
+      ...(resource.practiceId === undefined ? {} : { practiceId: resource.practiceId }),
+      ...(resource.timeZone === undefined ? {} : { timeZone: resource.timeZone }),
+      ...(resource.capacity === undefined ? {} : { capacity: resource.capacity }),
+    });
+  }
+
+  /**
+   * `POST /scheduling/booking-policies` — define una política de reserva
+   * (UC-41-01). Su `id` es opcional aguas abajo: la plantilla puede referirla
+   * en `bookingPolicyId`.
+   */
+  createPolicy(policy: NewBookingPolicy): Observable<BookingPolicyCreated> {
+    return this.http.post<BookingPolicyCreated>(this.url('/scheduling/booking-policies'), {
+      tenantId: policy.tenantId,
+      code: policy.code,
+      name: policy.name,
+      ...(policy.practiceId === undefined ? {} : { practiceId: policy.practiceId }),
+      ...(policy.minNoticeMinutes === undefined ? {} : { minNoticeMinutes: policy.minNoticeMinutes }),
+      ...(policy.maxAdvanceDays === undefined ? {} : { maxAdvanceDays: policy.maxAdvanceDays }),
+      ...(policy.cancellationWindowMinutes === undefined
+        ? {}
+        : { cancellationWindowMinutes: policy.cancellationWindowMinutes }),
+      ...(policy.noShowFeeAmount === undefined ? {} : { noShowFeeAmount: policy.noShowFeeAmount }),
+      ...(policy.maxActivePerPatient === undefined
+        ? {}
+        : { maxActivePerPatient: policy.maxActivePerPatient }),
+      ...(policy.holdTtlSeconds === undefined ? {} : { holdTtlSeconds: policy.holdTtlSeconds }),
+    });
+  }
+
+  /**
+   * `POST /scheduling/resources/:id/templates` — publica una plantilla con sus
+   * franjas semanales (UC-41-02). Cada franja se arma campo a campo por la
+   * misma razón que el cuerpo: sus opcionales no pueden viajar en `undefined`.
+   */
+  createTemplate(
+    resourceId: string,
+    template: NewScheduleTemplate,
+  ): Observable<ScheduleTemplateCreated> {
+    return this.http.post<ScheduleTemplateCreated>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
+      {
+        name: template.name,
+        rules: template.rules.map((rule) => ({
+          dayOfWeek: rule.dayOfWeek,
+          startTime: rule.startTime,
+          endTime: rule.endTime,
+          ...(rule.slotMinutes === undefined ? {} : { slotMinutes: rule.slotMinutes }),
+          ...(rule.capacityPerSlot === undefined ? {} : { capacityPerSlot: rule.capacityPerSlot }),
+        })),
+        ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
+        ...(template.bookingPolicyId === undefined
+          ? {}
+          : { bookingPolicyId: template.bookingPolicyId }),
+        ...(template.validFrom === undefined ? {} : { validFrom: template.validFrom }),
+        ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
+      },
+    );
+  }
+
+  /**
+   * `POST /scheduling/templates/:id/generate-slots` — materializa los slots de
+   * la plantilla en una ventana (UC-41-03). Idempotente: reejecutar no duplica,
+   * los ya existentes vuelven como `skipped`.
+   */
+  generateSlots(templateId: string, window: GenerateSlotsRequest): Observable<SlotsGenerated> {
+    return this.http.post<SlotsGenerated>(
+      this.url(`/scheduling/templates/${encodeURIComponent(templateId)}/generate-slots`),
+      { from: window.from, to: window.to },
+    );
+  }
+
+  /**
+   * `POST /scheduling/resources/:id/exceptions` — registra una excepción de
+   * disponibilidad (UC-41-04). Bloquea los slots libres que se solapan; las
+   * citas ya reservadas no se tocan.
+   */
+  createException(
+    resourceId: string,
+    exception: NewAvailabilityException,
+  ): Observable<AvailabilityExceptionCreated> {
+    return this.http.post<AvailabilityExceptionCreated>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/exceptions`),
+      {
+        exceptionType: exception.exceptionType,
+        startAt: exception.startAt,
+        endAt: exception.endAt,
+        ...(exception.reason === undefined ? {} : { reason: exception.reason }),
+        ...(exception.isAvailable === undefined ? {} : { isAvailable: exception.isAvailable }),
+      },
+    );
   }
 
   /**
