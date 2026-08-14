@@ -21,6 +21,47 @@
       </app-alert>
     }
 
+    <!-- ─── La banda de contexto ──────────────────────────────────────────
+         Las alergias, arriba y fuera de las pestañas: es el único bloque que
+         cambia una conducta antes de leerlo. Debajo, las cifras que dimensionan
+         el expediente sin abrir pestaña por pestaña. -->
+    @if (alergiasDestacadas().length > 0) {
+      <app-alert
+        tone="warning"
+        title="Alergias"
+        class="expediente__alergias"
+        appTutorialTarget="expediente-alergias"
+      >
+        <ul class="expediente__alergias-lista">
+          @for (alergia of alergiasDestacadas(); track alergia.id) {
+            <li class="expediente__alergias-item">
+              <span>{{ alergia.principal }}</span>
+              @if (alergia.detalle !== '') {
+                <app-badge variant="warning">{{ alergia.detalle }}</app-badge>
+              }
+            </li>
+          }
+        </ul>
+      </app-alert>
+    }
+
+    <div class="expediente__contexto" appTutorialTarget="expediente-contexto">
+      <ul class="expediente__cifras">
+        @for (cifra of cifras(); track cifra.clave) {
+          <li>
+            <p class="expediente__cifra-rotulo">{{ cifra.rotulo }}</p>
+            <p class="expediente__cifra-valor">{{ cifra.valor }}</p>
+          </li>
+        }
+        <li>
+          <p class="expediente__cifra-rotulo">Última atención</p>
+          <p class="expediente__cifra-valor expediente__cifra-valor--fecha">
+            {{ ultimaAtencion() ? (ultimaAtencion() | date: "d MMM y") : 'Sin atención previa' }}
+          </p>
+        </li>
+      </ul>
+    </div>
+
     <!-- ─── La historia, en su columna ────────────────────────────────────
          Es lo que se lee, y por eso se lleva el ancho: en pantallas grandes la
          tabla ocupaba media pantalla y la otra media quedaba en blanco. -->

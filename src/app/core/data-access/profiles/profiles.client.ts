@@ -391,45 +391,6 @@ export class ProfilesClient {
   }
 
   /**
-   * `POST /profiles/practitioners/:profileId/specialties` (UC-05-06) — agrega
-   * una especialidad al perfil profesional propio.
-   *
-   * No hay «editar» una especialidad ya cargada: una especialidad verificada es
-   * un hecho comprobado contra una credencial, y corregirlo sin volver a
-   * verificarlo vaciaría de sentido la verificación. Lo que se puede hacer es
-   * agregar una nueva — vigente y sin tocar las anteriores, que siguen contando
-   * como trayectoria.
-   */
-  addSpecialty(
-    profileId: string,
-    especialidad: NewSpecialty,
-  ): Observable<{ readonly id: string }> {
-    return this.http.post<{ readonly id: string }>(
-      this.url(`/profiles/practitioners/${profileId}/specialties`),
-      stripUndefined(especialidad),
-    );
-  }
-
-  /**
-   * `POST /profiles/practitioners/:profileId/jurisdiction-authorizations`
-   * (UC-05-04) — agrega una matrícula al perfil profesional propio.
-   *
-   * Mismo criterio que la especialidad: se agrega, no se edita. Una matrícula es
-   * una autorización de un tercero —el colegio o consejo que la emite— y
-   * dejarla editable convertiría el registro en una declaración propia de estar
-   * habilitado, que es exactamente lo que la matrícula existe para comprobar.
-   */
-  addJurisdictionAuthorization(
-    profileId: string,
-    matricula: NewJurisdictionAuthorization,
-  ): Observable<{ readonly id: string }> {
-    return this.http.post<{ readonly id: string }>(
-      this.url(`/profiles/practitioners/${profileId}/jurisdiction-authorizations`),
-      stripUndefined(matricula),
-    );
-  }
-
-  /**
    * `POST /profiles/persons/:personId/account-links`. Ata una cuenta de acceso
    * a una persona ya registrada.
    */

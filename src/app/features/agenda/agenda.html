@@ -110,7 +110,11 @@
       </p>
     }
 
-    <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="elegirPestana($event)">
+    <app-tabs
+      [selectedIndex]="pestana()"
+      (selectedIndexChange)="elegirPestana($event)"
+      appTutorialTarget="agenda-pestanas"
+    >
       <!-- ─── Citas ─────────────────────────────────────────────────────── -->
       <app-tab [label]="rotuloDeCitas()">
         @if (citasRecortadas()) {
