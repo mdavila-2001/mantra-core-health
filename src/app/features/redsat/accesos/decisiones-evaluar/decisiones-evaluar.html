@@ -1,0 +1,25 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 5A2.5 2.5 0 0 0 7 7.5 2.5 2.5 0 0 0 5 10a2.5 2.5 0 0 0 1.2 2.1A2.5 2.5 0 0 0 7 16a2.5 2.5 0 0 0 2.5 2.5V5z"></path><path d="M14.5 5A2.5 2.5 0 0 1 17 7.5 2.5 2.5 0 0 1 19 10a2.5 2.5 0 0 1-1.2 2.1A2.5 2.5 0 0 1 17 16a2.5 2.5 0 0 1-2.5 2.5V5z"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Decisiones</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><p class="titulo-h1">Decisiones</p></div>
+        <p class="caption">Preguntale al motor de decisión qué respondería ante un acceso concreto, sin esperar a que alguien lo intente. Devuelve permitido o denegado y la regla que lo decidió.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/accesos/decisiones-evaluar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 5A2.5 2.5 0 0 0 7 7.5 2.5 2.5 0 0 0 5 10a2.5 2.5 0 0 0 1.2 2.1A2.5 2.5 0 0 0 7 16a2.5 2.5 0 0 0 2.5 2.5V5z"></path><path d="M14.5 5A2.5 2.5 0 0 1 17 7.5 2.5 2.5 0 0 1 19 10a2.5 2.5 0 0 1-1.2 2.1A2.5 2.5 0 0 1 17 16a2.5 2.5 0 0 1-2.5 2.5V5z"></path></svg>Evaluar una decisión</a>
+      </div>
+    </div>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 5A2.5 2.5 0 0 0 7 7.5 2.5 2.5 0 0 0 5 10a2.5 2.5 0 0 0 1.2 2.1A2.5 2.5 0 0 0 7 16a2.5 2.5 0 0 0 2.5 2.5V5z"></path><path d="M14.5 5A2.5 2.5 0 0 1 17 7.5 2.5 2.5 0 0 1 19 10a2.5 2.5 0 0 1-1.2 2.1A2.5 2.5 0 0 1 17 16a2.5 2.5 0 0 1-2.5 2.5V5z"></path></svg></span>
+        <h2>Todavía no evaluaste ninguna decisión</h2>
+        <p>El motor de decisión resuelve cada acceso combinando el rol, sus permisos heredados, las excepciones del usuario, las políticas de la organización y la relación de cuidado con el paciente. Acá podés simular una consulta antes de que ocurra: elegís usuario, acción y recurso, y te devuelve la respuesta con la regla que la decidió. Denegar siempre prevalece sobre permitir.</p>
+        <a app-button="" data-variante="secundario" routerLink="/accesos/decisiones-evaluar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 5A2.5 2.5 0 0 0 7 7.5 2.5 2.5 0 0 0 5 10a2.5 2.5 0 0 0 1.2 2.1A2.5 2.5 0 0 0 7 16a2.5 2.5 0 0 0 2.5 2.5V5z"></path><path d="M14.5 5A2.5 2.5 0 0 1 17 7.5 2.5 2.5 0 0 1 19 10a2.5 2.5 0 0 1-1.2 2.1A2.5 2.5 0 0 1 17 16a2.5 2.5 0 0 1-2.5 2.5V5z"></path></svg>Evaluar una decisión</a>
+      </div>
+      </div>
+    </section>

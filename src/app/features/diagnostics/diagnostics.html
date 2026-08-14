@@ -1,0 +1,57 @@
+<app-page-header
+  title="Laboratorio e imagenología"
+  subtitle="La cola de trabajo del laboratorio: qué hay pendiente y en qué estado."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="laboratorio">
+  <app-data-table
+    [state]="cola()"
+    [columns]="columnas()"
+    [trackBy]="porOrden"
+    caption="Órdenes de trabajo del laboratorio"
+    (retry)="recargar()"
+  />
+
+  <!-- ─── Dónde está el otro lado del circuito ─────────────────────────────
+       Esta pantalla es la del laboratorio. Quien **pide** un estudio y quien
+       espera su resultado no entra por acá: entra por la ficha de la persona,
+       porque las dos lecturas que lo contestan piden el paciente en la ruta.
+       Decirlo es lo que evita que alguien busque en esta cola un pedido que
+       nunca va a estar acá con nombre y apellido. -->
+  <app-card variant="outlined" padding="lg" class="laboratorio__nota">
+    <h2 class="laboratorio__nota-titulo">¿Buscás los estudios de un paciente?</h2>
+    <p class="laboratorio__nota-texto">
+      Esta cola es la del laboratorio y se recorre por número de orden: las órdenes de trabajo
+      cuelgan de una acesión de especímenes, no de una persona.
+    </p>
+    <app-alert tone="info" title="El pedido y su resultado están en la ficha">
+      Se pide un laboratorio o una imagen desde el expediente de la persona, dentro de la consulta
+      que lo motivó, y el resultado aparece en ese mismo lugar cuando se libera.
+    </app-alert>
+  </app-card>
+</div>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #celdaOrden let-orden>
+  <span class="laboratorio__numero">{{ orden.workOrderNumber }}</span>
+  <span class="laboratorio__prioridad">{{ etiquetaDe(orden.priorityConceptId) }}</span>
+</ng-template>
+
+<ng-template #celdaEstado let-orden>
+  {{ etiquetaDe(orden.statusConceptId) }}
+</ng-template>
+
+<ng-template #celdaCuando let-orden>
+  <!-- Programada y completada en la misma celda: son el antes y el después de
+       la misma fila, y separarlas en dos columnas dejaría las dos medio vacías. -->
+  @if (orden.completedAt) {
+    <span class="laboratorio__completada">
+      Completada el {{ orden.completedAt | date: 'short' }}
+    </span>
+  } @else if (orden.scheduledAt) {
+    {{ orden.scheduledAt | date: 'short' }}
+  } @else {
+    <span class="laboratorio__sin-fecha">Sin programar</span>
+  }
+</ng-template>

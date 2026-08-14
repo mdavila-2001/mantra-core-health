@@ -1,0 +1,83 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 4H6.5a2 2 0 0 0-2 2v4L3 12l1.5 2v4a2 2 0 0 0 2 2H8"></path><path d="M16 4h1.5a2 2 0 0 1 2 2v4l1.5 2-1.5 2v4a2 2 0 0 1-2 2H16"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/terminologia/conceptos-listado">Conceptos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/terminologia/propiedades-listado">Propiedades</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nuevas</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Propiedades del concepto</h1></div>
+        <p class="caption muted num">CPT-2026-018224 · Frecuencia cardíaca · 8867-4</p>
+        <p class="caption">Cargá una fila por propiedad. Si reenviás un código que el concepto ya tiene, se actualiza su valor en vez de agregarse una segunda fila.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Propiedad 2 · Valor: el JSON no cierra la llave.</li>
+          </ul>
+        </div>
+      </div>
+      <fieldset class="app-form-section" app-form-section="">
+        <legend class="app-form-section__legend"><span class="overline">Propiedades del concepto</span></legend>
+        <p class="app-form-section__desc">Al menos una fila. La validación por fila corre antes de habilitar el guardado.</p>
+        <div style="display:flex;flex-direction:column;gap:var(--e4)">
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Propiedad 1</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-86">Código de la propiedad <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-86" type="text" required="" value="unidad" placeholder="unidad">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-87">Valor <span class="req">· obligatorio</span></label>
+        <textarea class="app-textarea app-textarea--mono" app-textarea="" id="c-87" rows="3" required="" aria-describedby="c-87-a" placeholder="">{ "valor": "lpm" }</textarea>
+        <p class="app-form-field__ayuda" id="c-87-a">JSON. Reenviar el mismo código de propiedad actualiza su valor en vez de agregar una segunda fila.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-88">Tipo de dato</label>
+        <input class="app-input" app-input="" id="c-88" type="text" value="string" placeholder="string">
+      </div>
+          </div>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Propiedad 2</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-89">Código de la propiedad <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-89" type="text" required="" value="rango-normal" placeholder="unidad">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-90">Valor <span class="req">· obligatorio</span></label>
+        <textarea class="app-textarea app-textarea--mono" app-textarea="" id="c-90" rows="3" required="" aria-describedby="c-90-a" placeholder="">{ "min": 60, "max": 100 }</textarea>
+        <p class="app-form-field__ayuda" id="c-90-a">JSON. Reenviar el mismo código de propiedad actualiza su valor en vez de agregar una segunda fila.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-91">Tipo de dato</label>
+        <input class="app-input" app-input="" id="c-91" type="text" value="object" placeholder="string">
+      </div>
+          </div>
+        </div>
+          <div><button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Agregar otra propiedad</button></div>
+        </div>
+      </fieldset>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/propiedades-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+    </form>

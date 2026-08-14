@@ -1,0 +1,135 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Personas</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Apoderados de portal</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Apoderados de portal</h1></div>
+        <p class="caption">Quién entra al portal en nombre de un paciente, con qué alcance, respaldado por qué registro de base legal y hasta cuándo.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/personas/apoderados-de-portal-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo apoderado de portal</a>
+      </div>
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Pacientes">
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/pacientes-listado">Pacientes</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/vinculos-de-identidad-listado">Vínculos de identidad</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/resumen-propio-listado">Resumen propio</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Apoderados de portal</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/personas-relacionadas-listado">Personas relacionadas</a>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por paciente o por apoderado">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-1">Paciente</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-2">Usuario de apoderado</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-2" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-3">Persona relacionada</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-3" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-4">Conjunto de valor de alcance</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-4" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-5">Registro de base legal</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-5" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Apoderados de portal — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Paciente</th>
+            <th scope="col">Usuario de apoderado</th>
+            <th scope="col">Persona relacionada</th>
+            <th scope="col">Conjunto de valor de alcance</th>
+            <th scope="col">Registro de base legal</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Vigente desde</th>
+            <th scope="col">Vigente hasta</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">APO-2026-000151</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Marisol Quispe Ticona</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Julio Quispe Colque</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Julio Quispe Colque</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Alcance clínico básico</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">CONS-2026-000904</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="02/07/2026 08:30">hace 1 mes</span></td><td class="muted" aria-label="Sin dato">—</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">APO-2026-000142</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Nayra Condori Mamani</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Rosa Mamani Condori</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Rosa Mamani Condori</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Alcance de tutela de menor</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">CONS-2026-000871</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="01/03/2026 09:00">hace 5 meses</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="30/01/2032 00:00">en 6 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">APO-2026-000138</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Ignacio Salvatierra Justiniano</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Verónica Justiniano Áñez</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Verónica Justiniano Áñez</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Alcance clínico básico</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">CONS-2026-000862</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="12/02/2026 10:10">hace 6 meses</span></td><td class="muted" aria-label="Sin dato">—</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">APO-2026-000129</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Elena Vaca Peredo</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Mauricio Peredo Suárez</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Mauricio Peredo Suárez</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Alcance de acompañamiento</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">CONS-2026-000840</a></td><td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Suspendido</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="14/11/2025 16:20">hace 9 meses</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="28/07/2026 06:40">hace 2 semanas</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">APO-2026-000117</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Ariel Mendoza Villarroel</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Carla Villarroel Rocha</a></td><td class="muted" aria-label="Sin dato">—</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Alcance clínico básico</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">CONS-2026-000818</a></td><td><span class="app-badge" data-tono="error"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Revocado</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="03/06/2025 11:00">hace 1 año</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="09/05/2026 12:00">hace 3 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">APO-2026-000105</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Rodrigo Ferrufino Áñez</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Lucía Áñez Montaño</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Lucía Áñez Montaño</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Alcance de tutela de menor</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">CONS-2026-000795</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Vencido</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="20/04/2024 09:30">hace 2 años</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="20/04/2026 09:30">hace 4 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg></span>
+        <h2>Todavía no hay apoderados de portal</h2>
+        <p>Un apoderado es alguien que entra al portal en nombre del paciente: la madre de un menor, el hijo de una persona mayor. Se le delega un alcance acotado, respaldado por un registro de base legal, y con fecha de fin: el poder no es para siempre.</p>
+        <a app-button="" data-variante="secundario" routerLink="/personas/apoderados-de-portal-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo apoderado de portal</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar los apoderados de portal.</strong>
+            <p>El servicio de consentimientos no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

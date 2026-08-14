@@ -1,0 +1,61 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19.5 11.5 12.3 18.7a4.5 4.5 0 0 1-6.4-6.4l8-8a3 3 0 1 1 4.3 4.3l-8 8a1.5 1.5 0 0 1-2.2-2.2l7.3-7.3"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Datos compartidos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/datos-compartidos/archivos-listado">Archivos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/datos-compartidos/vinculos-listado">Vínculos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nuevo</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nuevo vínculo</h1></div>
+        <p class="caption">Vinculás consentimiento-informado-quiroz.pdf (ARC-2026-000481) con el registro que lo tiene como adjunto.</p>
+      </div>
+
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-11-l">Tipo de titular <span class="req">· obligatorio</span></span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-11-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-11">Usuario</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-11" checked="">Paciente</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-11">Organización</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-12">Titular de la cuenta <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-12" type="search" role="combobox" aria-expanded="true" aria-controls="c-12-m" aria-autocomplete="list" aria-describedby="c-12-a" value="quiroz" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-12-m" role="listbox" aria-label="Resultados de Titular de la cuenta" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5s-7-4.4-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.1-7 9.5-7 9.5z"></path></svg><span>Marcelo Quiroz Ledezma<br><span class="caption muted">Paciente · HC 20-14882</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5s-7-4.4-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.1-7 9.5-7 9.5z"></path></svg><span>Rosa Mamani Choque<br><span class="caption muted">Paciente · HC 20-15104</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg><span>Dra. Elena Vargas Rocha<br><span class="caption muted">Usuaria · Cardiología</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Marcelo Quiroz Ledezma <span class="muted">· Paciente · HC 20-14882</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-12-a">Escribí al menos 3 letras del nombre. Guardamos la referencia interna, nunca la mostramos.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-13-l">Rol de vínculo</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-13-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-13" checked="">Adjunto</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-14-l">Visibilidad</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-14-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-14" checked="">Interno</label>
+        </div>
+      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/datos-compartidos/vinculos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+    </form>

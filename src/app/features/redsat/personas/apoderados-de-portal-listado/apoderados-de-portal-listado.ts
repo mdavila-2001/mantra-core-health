@@ -1,0 +1,14 @@
+/* V05-04·L · Apoderados de portal
+   Portada de V05-profiles/security-admin/V05-04-apoderados-de-portal-listado.html en la bóveda. El marcado lo
+   genera scripts/port-vistas-redsat.mjs; la lógica va acá, no en el generador. */
+
+import { Component } from '@angular/core';
+
+import { RouterLink } from '@angular/router';
+
+@Component({
+  selector: 'app-redsat-personas-apoderados-de-portal-listado',
+  imports: [RouterLink],
+  templateUrl: './apoderados-de-portal-listado.html',
+})
+export class PersonasApoderadosDePortalListado {}

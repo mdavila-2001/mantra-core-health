@@ -1,0 +1,140 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 4H6.5a2 2 0 0 0-2 2v4L3 12l1.5 2v4a2 2 0 0 0 2 2H8"></path><path d="M16 4h1.5a2 2 0 0 1 2 2v4l1.5 2-1.5 2v4a2 2 0 0 1-2 2H16"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/terminologia/conceptos-listado">Conceptos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Propiedades</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Propiedades</h1></div>
+        <p class="caption">Los datos técnicos que cuelgan de cada concepto: la unidad de medida, el rango normal, si el diagnóstico es de notificación obligatoria.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/terminologia/propiedades-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
+      </div>
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Conceptos">
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/terminologia/conceptos-listado">Conceptos</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/terminologia/designaciones-listado">Designaciones</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Propiedades</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/terminologia/relaciones-listado">Relaciones</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/terminologia/deprecacion-de-concepto-formulario">Retiro de conceptos</a>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por código de propiedad">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-85">Concepto</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-85" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Propiedades — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Concepto</th>
+            <th scope="col">Propiedad</th>
+            <th scope="col">Tipo de dato</th>
+            <th scope="col">Valor</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">PRP-2026-002218</td><td><a app-link="" routerLink="/terminologia/conceptos-listado">Frecuencia cardíaca · 8867-4</a></td><td class="col-codigo">unidad</td><td class="col-codigo">string</td><td><span class="app-tooltip-panel" app-tooltip-panel="" title="{ &quot;valor&quot;: &quot;lpm&quot; }"><button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver el JSON</button></span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-37" aria-label="Acciones sobre PRP-2026-002218"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-37" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/conceptos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg>Ver el concepto</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar el valor</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">PRP-2026-002214</td><td><a app-link="" routerLink="/terminologia/conceptos-listado">Frecuencia cardíaca · 8867-4</a></td><td class="col-codigo">rango-normal</td><td class="col-codigo">object</td><td><span class="app-tooltip-panel" app-tooltip-panel="" title="{ &quot;min&quot;: 60, &quot;max&quot;: 100 }"><button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver el JSON</button></span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-38" aria-label="Acciones sobre PRP-2026-002214"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-38" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/conceptos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg>Ver el concepto</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar el valor</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">PRP-2026-002209</td><td><a app-link="" routerLink="/terminologia/conceptos-listado">Presión arterial sistólica · 8480-6</a></td><td class="col-codigo">unidad</td><td class="col-codigo">string</td><td><span class="app-tooltip-panel" app-tooltip-panel="" title="{ &quot;valor&quot;: &quot;mmHg&quot; }"><button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver el JSON</button></span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-39" aria-label="Acciones sobre PRP-2026-002209"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-39" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/conceptos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg>Ver el concepto</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar el valor</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">PRP-2026-002203</td><td><a app-link="" routerLink="/terminologia/conceptos-listado">Presión arterial sistólica · 8480-6</a></td><td class="col-codigo">escala</td><td class="col-codigo">string</td><td><span class="app-tooltip-panel" app-tooltip-panel="" title="{ &quot;valor&quot;: &quot;cuantitativa&quot; }"><button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver el JSON</button></span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-40" aria-label="Acciones sobre PRP-2026-002203"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-40" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/conceptos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg>Ver el concepto</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar el valor</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">PRP-2026-002198</td><td><a app-link="" routerLink="/terminologia/conceptos-listado">Diabetes mellitus tipo 2 · E11.9</a></td><td class="col-codigo">notificable</td><td class="col-codigo">boolean</td><td><span class="app-tooltip-panel" app-tooltip-panel="" title="{ &quot;valor&quot;: false }"><button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver el JSON</button></span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-41" aria-label="Acciones sobre PRP-2026-002198"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-41" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/conceptos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg>Ver el concepto</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar el valor</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">PRP-2026-002190</td><td><a app-link="" routerLink="/terminologia/conceptos-listado">Neumonía · J18.9</a></td><td class="col-codigo">notificable</td><td class="col-codigo">boolean</td><td><span class="app-tooltip-panel" app-tooltip-panel="" title="{ &quot;valor&quot;: true }"><button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver el JSON</button></span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-42" aria-label="Acciones sobre PRP-2026-002190"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-42" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/conceptos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg>Ver el concepto</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect><path d="M15.5 5.5H6a2.5 2.5 0 0 0-2.5 2.5v9.5"></path></svg>Copiar el valor</a>
+          </div>
+        </div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 4H6.5a2 2 0 0 0-2 2v4L3 12l1.5 2v4a2 2 0 0 0 2 2H8"></path><path d="M16 4h1.5a2 2 0 0 1 2 2v4l1.5 2-1.5 2v4a2 2 0 0 1-2 2H16"></path></svg></span>
+        <h2>Este concepto todavía no tiene propiedades</h2>
+        <p>Una propiedad guarda lo que el código por sí solo no dice: en qué unidad se mide, entre qué valores es normal, si hay que notificarlo. Se guarda como JSON y se actualiza reenviando el mismo código.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/propiedades-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar las propiedades.</strong>
+            <p>La organización activa no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

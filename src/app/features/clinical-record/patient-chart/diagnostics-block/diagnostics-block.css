@@ -1,0 +1,102 @@
+/* Bloque de laboratorio e imagenología: el pedido **y** su histórico, a
+   diferencia del de diagnóstico, que es sólo el alta. La razón está en el
+   componente: acá la espera es el dato, y la pregunta que se hace no es «¿qué
+   pedí?» sino «¿ya está?». */
+
+:host {
+  display: block;
+}
+
+.estudios {
+  display: grid;
+  gap: var(--sp-4);
+  /* Tres campos cortos y una lista de líneas breves: a lo ancho de la tabla, la
+     línea del selector quedaría del largo de la pantalla y sería ilegible.
+     Mismo tope que el bloque de diagnóstico, porque son la misma clase de
+     tarjeta. */
+  max-inline-size: 68ch;
+}
+
+.estudios__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.estudios__formulario {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.estudios__historico {
+  display: grid;
+  gap: var(--sp-3);
+  /* Separado del formulario por una línea y no sólo por espacio: son dos
+     momentos distintos —pedir y consultar— dentro de la misma tarjeta. */
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.estudios__subtitulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.estudios__vacio {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.estudios__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.estudios__fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: baseline;
+  justify-content: space-between;
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.estudios__fila:last-child {
+  border-block-end: none;
+}
+
+.estudios__principal,
+.estudios__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  align-items: baseline;
+}
+
+.estudios__nombre {
+  font-weight: 600;
+}
+
+.estudios__categoria,
+.estudios__estado,
+.estudios__resultado {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* El único acento de color de la tarjeta, y va donde está la respuesta a la
+   pregunta que trajo a la persona hasta acá: si el resultado ya está. */
+.estudios__resultado--listo {
+  color: var(--st-success-fg);
+  font-weight: 600;
+}

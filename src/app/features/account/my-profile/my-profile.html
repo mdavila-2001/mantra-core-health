@@ -1,58 +1,71 @@
 <app-page-header
   title="Mi perfil"
-  subtitle="Tus datos, tu verificación de identidad y con qué credenciales estás entrando."
+  [subtitle]="
+    esProfesional()
+      ? 'Tu trayectoria profesional, tu actividad y con qué credenciales estás entrando.'
+      : 'Tus datos, tu verificación de identidad y con qué credenciales estás entrando.'
+  "
   [breadcrumbs]="breadcrumbs()"
 />
 
 <div class="mi-perfil">
-  <!-- ─── Datos personales ──────────────────────────────────────────────────
-       El host de estados envuelve **sólo** esta tarjeta: es la única que
-       depende del resumen, y cuando ese resumen falla con el 403 que pide
-       verificar la identidad, las otras dos siguen en pie. Justamente ahí es
-       cuando el historial de verificación tiene algo que decir. -->
-  <app-card class="mi-perfil__bloque" variant="outlined" padding="lg">
-    <h2 class="mi-perfil__titulo">Tus datos</h2>
+  <!-- ─── El perfil, según quién entró ──────────────────────────────────────
+       Con perfil profesional se muestra la trayectoria; si no, el resumen de
+       paciente. No es una preferencia de presentación: son dos endpoints
+       distintos, y pedirle el de pacientes a un profesional devuelve 404 —o 403
+       si además no verificó su identidad—, que es exactamente lo que dejaba
+       esta pantalla sin nada que mostrar para un médico. -->
+  @if (esProfesional()) {
+    <app-practitioner-profile />
+  } @else {
+    <!-- El host de estados envuelve **sólo** esta tarjeta: es la única que
+         depende del resumen, y cuando ese resumen falla con el 403 que pide
+         verificar la identidad, las otras dos siguen en pie. Justamente ahí es
+         cuando el historial de verificación tiene algo que decir. -->
+    <app-card class="mi-perfil__bloque" variant="outlined" padding="lg">
+      <h2 class="mi-perfil__titulo">Tus datos</h2>
 
-    <app-view-state-host [state]="resumen()" (retry)="recargar()">
-      @if (datos(); as resumen) {
-        <dl class="mi-perfil__datos">
-          <div class="mi-perfil__dato">
-            <dt>Nombre</dt>
-            <dd>{{ resumen.displayName ?? 'Sin registrar' }}</dd>
-          </div>
+      <app-view-state-host [state]="resumen()" (retry)="recargar()">
+        @if (datos(); as resumen) {
+          <dl class="mi-perfil__datos">
+            <div class="mi-perfil__dato">
+              <dt>Nombre</dt>
+              <dd>{{ resumen.displayName ?? 'Sin registrar' }}</dd>
+            </div>
 
-          <div class="mi-perfil__dato">
-            <dt>Código de paciente</dt>
-            <dd class="mi-perfil__cifra">{{ resumen.patientCode }}</dd>
-          </div>
+            <div class="mi-perfil__dato">
+              <dt>Código de paciente</dt>
+              <dd class="mi-perfil__cifra">{{ resumen.patientCode }}</dd>
+            </div>
 
-          <div class="mi-perfil__dato">
-            <dt>Fecha de nacimiento</dt>
-            <dd class="mi-perfil__cifra">
-              @if (resumen.birthDate) {
-                {{ resumen.birthDate | date: 'dd/MM/yyyy' }}
-              } @else {
-                Sin registrar
-              }
-            </dd>
-          </div>
+            <div class="mi-perfil__dato">
+              <dt>Fecha de nacimiento</dt>
+              <dd class="mi-perfil__cifra">
+                @if (resumen.birthDate) {
+                  {{ resumen.birthDate | date: 'dd/MM/yyyy' }}
+                } @else {
+                  Sin registrar
+                }
+              </dd>
+            </div>
 
-          <div class="mi-perfil__dato">
-            <dt>Estado</dt>
-            <dd>{{ estado() }}</dd>
-          </div>
-        </dl>
+            <div class="mi-perfil__dato">
+              <dt>Estado</dt>
+              <dd>{{ estado() }}</dd>
+            </div>
+          </dl>
 
-        <!-- Los identificadores van visibles y al final: no le dicen nada a la
+          <!-- Los identificadores van visibles y al final: no le dicen nada a la
              persona hasta que tiene que reportar un problema, y entonces son lo
              único que sirve. -->
-        <p class="mi-perfil__ids">
-          Perfil <span class="mi-perfil__cifra">{{ resumen.patientProfileId }}</span>
-          · Persona <span class="mi-perfil__cifra">{{ resumen.personId }}</span>
-        </p>
-      }
-    </app-view-state-host>
-  </app-card>
+          <p class="mi-perfil__ids">
+            Perfil <span class="mi-perfil__cifra">{{ resumen.patientProfileId }}</span> · Persona
+            <span class="mi-perfil__cifra">{{ resumen.personId }}</span>
+          </p>
+        }
+      </app-view-state-host>
+    </app-card>
+  }
 
   <!-- ─── Verificación de identidad ─────────────────────────────────────────
        `GET /identity/me/verification-cases`. El backend lo publica desde
@@ -94,8 +107,8 @@
       <!-- Sin casos no hay historial que mostrar, y lo que hace falta no es un
            cartel de vacío sino la salida: el trámite todavía no empezó. -->
       <p class="mi-perfil__nota">
-        Todavía no iniciaste ninguna verificación. Es lo que habilita el acceso a
-        tus datos clínicos.
+        Todavía no iniciaste ninguna verificación. Es lo que habilita el acceso a tus datos
+        clínicos.
       </p>
       <p class="mi-perfil__nota">
         <a routerLink="/my-account/identity/verify">Verificar mi identidad</a>
@@ -128,8 +141,14 @@
     </dl>
 
     <p class="mi-perfil__nota">
-      Los roles deciden qué secciones ves. Salen de tu token de acceso; para
-      cambiarlos, pedíselo a quien administra la organización.
+      Los roles deciden qué secciones ves. Salen de tu token de acceso; para cambiarlos, pedíselo a
+      quien administra la organización.
     </p>
   </app-card>
+
+  <!-- ─── Historial laboral ─────────────────────────────────────────────────
+       Punto 9 del reclamo: los hospitales y entidades donde ejerció. El bloque
+       decide por sí mismo si corresponde dibujarse — para una cuenta sin perfil
+       profesional no renderiza nada. -->
+  <app-work-history class="mi-perfil__bloque" />
 </div>

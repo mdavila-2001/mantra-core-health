@@ -1,0 +1,194 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="14" r="3.5"></circle><path d="m10.6 11.5 7.4-7.4"></path><path d="m15.5 6.6 2 2"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/accesos/permisos-listado">Permisos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nuevo</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nuevo permiso</h1></div>
+        <p class="caption">Sumá una entrada al catálogo global. El código y el recurso son la clave con que el motor de decisión lo encuentra: escribilos como los va a mandar el backend.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <div class="app-view-state-host" app-view-state-host="" style="display:flex;flex-direction:column;gap:var(--e7)">
+      <div data-estado="paso1">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>1 · Identidad</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>2 · Alcance</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>3 · Restricciones</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="33" aria-label="Avance del formulario: paso 1 de 3">
+          <span class="app-progress__relleno" style="width:33%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 1 de 3 · <strong>Identidad</strong></span>
+          <span class="caption muted num">33% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de continuar.</strong>
+          <ul>
+            <li>Código: ya existe un permiso con este código en el catálogo.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1">Código <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-1" type="text" required="" value="diagnostics.study.read" placeholder="diagnostics.study.read" aria-describedby="c-1-a">
+        <p class="app-form-field__ayuda" id="c-1-a">Hasta 150 caracteres. Convención del catálogo: categoría.recurso.acción en minúsculas. Es único y no se edita después.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2">Nombre <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-2" type="text" required="" value="Ver estudios de imagen" placeholder="Ver estudios de imagen" aria-describedby="c-2-a">
+        <p class="app-form-field__ayuda" id="c-2-a">Hasta 200 caracteres. Es lo que lee quien arma el rol: nombrá el hecho, no la tabla.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3">Recurso protegido <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-3" type="text" required="" value="diagnostic.study" placeholder="diagnostic.study" aria-describedby="c-3-a">
+        <p class="app-form-field__ayuda" id="c-3-a">Hasta 150 caracteres. Tiene que coincidir exactamente con el recurso que manda el backend al evaluar; si no coincide, el permiso nunca se aplica.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-4">Acción <span class="req">· obligatorio</span></label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-4" required="">
+            <option selected="">Leer</option>
+            <option>Escribir</option>
+            <option>Crear</option>
+            <option>Eliminar</option>
+            <option>Ejecutar</option>
+            <option>Aprobar</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Nada se guarda hasta el último paso.</p>
+        <a app-button="" data-variante="secundario" routerLink="/accesos/permisos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <a app-button="" data-variante="primario" routerLink="." [queryParams]="{ estado: 'paso2' }">Continuar<svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a>
+          </div>
+        </form>
+      </div>
+      <div data-estado="paso2" hidden="">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>1 · Identidad</span><hr class="app-divider" aria-hidden="true"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>2 · Alcance</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>3 · Restricciones</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="67" aria-label="Avance del formulario: paso 2 de 3">
+          <span class="app-progress__relleno" style="width:67%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 2 de 3 · <strong>Alcance</strong></span>
+          <span class="caption muted num">67% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de continuar.</strong>
+          <ul>
+            <li>Código: ya existe un permiso con este código en el catálogo.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-5">Categoría</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-5" type="search" role="combobox" aria-expanded="true" aria-controls="c-5-m" aria-autocomplete="list" aria-describedby="c-5-a" value="diagn" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-5-m" role="listbox" aria-label="Resultados de Categoría" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 11V5.5A1.5 1.5 0 0 1 5.5 4H11l8.5 8.5a1.5 1.5 0 0 1 0 2.1l-5 5a1.5 1.5 0 0 1-2.1 0z"></path><circle cx="8" cy="8" r="1.2"></circle></svg><span>Diagnóstico por imágenes<br><span class="caption muted">DIAGNOSTICS · orden 70</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 11V5.5A1.5 1.5 0 0 1 5.5 4H11l8.5 8.5a1.5 1.5 0 0 1 0 2.1l-5 5a1.5 1.5 0 0 1-2.1 0z"></path><circle cx="8" cy="8" r="1.2"></circle></svg><span>Historia clínica<br><span class="caption muted">CLINICAL_RECORD · orden 10</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Diagnóstico por imágenes <span class="muted">· DIAGNOSTICS</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-5-a">Opcional. Sin categoría el permiso aparece suelto al final de la lista.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-6-l">Ámbito por defecto</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-6-l" aria-describedby="c-6-a">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-6">Propio</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-6" checked="">Sucursal</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-6">Organización</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-6">Global</label>
+        </div>
+        <p class="app-form-field__ayuda" id="c-6-a">Hasta dónde llega el permiso cuando el rol no dice otra cosa. Propio es sólo sobre los datos de la persona; global cruza organizaciones.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-7-l">Permiso a nivel de campo</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-7-l" aria-describedby="c-7-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Se aplica sobre columnas concretas, no sobre el registro entero</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-7-a">Activalo si este permiso va a usarse para enmascarar campos sueltos desde los permisos de campo del rol.</p>      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Nada se guarda hasta el último paso.</p>
+        <a app-button="" data-variante="secundario" routerLink="." [queryParams]="{ estado: 'paso1' }"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Atrás</a>
+        <a app-button="" data-variante="primario" routerLink="." [queryParams]="{ estado: 'paso3' }">Continuar<svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a>
+          </div>
+        </form>
+      </div>
+      <div data-estado="paso3" hidden="">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>1 · Identidad</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>2 · Alcance</span><hr class="app-divider" aria-hidden="true"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>3 · Restricciones</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-label="Avance del formulario: paso 3 de 3">
+          <span class="app-progress__relleno" style="width:100%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 3 de 3 · <strong>Restricciones</strong></span>
+          <span class="caption muted num">100% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de continuar.</strong>
+          <ul>
+            <li>Código: ya existe un permiso con este código en el catálogo.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-8-l">Permiso peligroso</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-8-l" aria-describedby="c-8-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Exige la aprobación de un segundo administrador</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-8-a">Marcá acá lo que no se puede deshacer: anular, suspender, eliminar. Al asignarlo hará falta una segunda firma.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-9-l">Restringido a un rol</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-9-l">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Sólo puede otorgarse a un rol concreto</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-10">Código del rol requerido</label>
+        <input class="app-input" app-input="" id="c-10" type="text" value="" placeholder="CLINICAL_APPROVER" aria-describedby="c-10-a">
+        <p class="app-form-field__ayuda" id="c-10-a">Hasta 100 caracteres. Sólo se usa si el permiso está restringido a un rol.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-11-l">Concesión directa a un usuario</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-11-l" checked="" aria-describedby="c-11-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Puede otorgarse como excepción, sin pasar por un rol</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-11-a">Si lo apagás, el permiso sólo llega por rol: nadie podrá dárselo suelto a una persona desde las concesiones de permiso.</p>      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="." [queryParams]="{ estado: 'paso2' }"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Atrás</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Crear el permiso</button>
+          </div>
+        </form>
+      </div>
+    </div>

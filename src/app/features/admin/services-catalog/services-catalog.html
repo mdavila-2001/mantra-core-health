@@ -1,0 +1,126 @@
+<app-page-header
+  title="Catálogo de servicios"
+  subtitle="La lista fija de servicios sobre la que cada doctor arma su presupuesto."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <button
+    app-button
+    page-actions
+    variant="primary"
+    type="button"
+    data-testid="catalogo-servicios-nuevo"
+    (clicked)="abrirAlta()"
+  >
+    Nuevo servicio
+  </button>
+</app-page-header>
+
+<div class="catalogo">
+  <app-form-field label="Práctica" hint="El catálogo es propio de cada práctica.">
+    <app-select
+      [value]="practicaElegida()"
+      (valueChange)="cambiarPractica($event)"
+      [options]="opcionesDePractica()"
+      placeholder="Elegí una práctica"
+    />
+  </app-form-field>
+
+  @if (mostrarAlta()) {
+    <form
+      [formGroup]="formAlta"
+      (ngSubmit)="enviarAlta()"
+      novalidate
+      data-testid="catalogo-servicios-alta-form"
+    >
+      @if (errorAlta(); as mensaje) {
+        <app-alert appAnuncio tone="error" data-testid="catalogo-servicios-alta-error">{{
+          mensaje
+        }}</app-alert>
+      }
+
+      <app-form-section
+        legend="Nuevo servicio"
+        description="El precio de referencia es sólo eso: cada doctor cotiza el propio al armar el presupuesto."
+      >
+        <app-form-field
+          label="Código"
+          [required]="true"
+          [errorMessage]="
+            codigoEnConflicto()
+              ? 'Ya existe un servicio con este código en el catálogo. Probá con otro.'
+              : formAlta.controls.code.touched && formAlta.controls.code.invalid
+                ? 'Escribí el código del servicio.'
+                : ''
+          "
+        >
+          <app-input formControlName="code" type="text" testId="catalogo-servicios-codigo" />
+        </app-form-field>
+
+        <app-form-field
+          label="Nombre"
+          [required]="true"
+          [errorMessage]="
+            formAlta.controls.name.touched && formAlta.controls.name.invalid
+              ? 'Escribí el nombre del servicio (hasta 200 caracteres).'
+              : ''
+          "
+        >
+          <app-input formControlName="name" type="text" testId="catalogo-servicios-nombre" />
+        </app-form-field>
+
+        <app-form-field
+          label="Precio de referencia"
+          hint="Cada doctor puede cotizar un precio distinto al armar el presupuesto."
+          [required]="true"
+          [errorMessage]="
+            formAlta.controls.defaultPrice.touched && formAlta.controls.defaultPrice.invalid
+              ? 'Escribí un precio válido, por ejemplo 100.00.'
+              : ''
+          "
+        >
+          <app-input formControlName="defaultPrice" type="text" testId="catalogo-servicios-precio" />
+        </app-form-field>
+      </app-form-section>
+
+      <app-form-actions
+        submitLabel="Guardar servicio"
+        cancelLabel="Cancelar"
+        [pending]="enviandoAlta()"
+        (submitted)="enviarAlta()"
+        (cancelled)="cancelarAlta()"
+      />
+    </form>
+  }
+
+  <app-search-field
+    class="catalogo__buscador"
+    label="Buscar en el catálogo"
+    placeholder="Código o nombre del servicio"
+    [value]="busqueda()"
+    [loading]="cargando()"
+    (searched)="buscar($event)"
+  />
+
+  <app-data-table
+    [state]="resultados()"
+    [columns]="columnas()"
+    [trackBy]="porId"
+    caption="Servicios del catálogo maestro"
+    [cursor]="cursor()"
+    (cursorChanged)="mover($event)"
+    (retry)="recargar()"
+  />
+</div>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #celdaPrecio let-servicio>
+  <span class="catalogo__precio">{{ servicio.defaultPrice }}</span>
+</ng-template>
+
+<ng-template #celdaEstado let-servicio>
+  @if (servicio.isActive) {
+    <app-badge variant="success" value="Activo" />
+  } @else {
+    <app-badge variant="secondary" value="Inactivo" />
+  }
+</ng-template>

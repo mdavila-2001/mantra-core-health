@@ -1,0 +1,138 @@
+<app-card variant="outlined" padding="lg" class="estudios">
+  <h2 class="estudios__titulo">Laboratorio e imagenología</h2>
+
+  @if (errorDelPedido(); as mensaje) {
+    <app-alert tone="error" data-testid="estudios-error">{{ mensaje }}</app-alert>
+  }
+
+  <!-- ─── Pedir ────────────────────────────────────────────────────────
+       Tres condiciones antes del formulario, y cada una se dice con su propia
+       explicación: «no se puede» sin decir qué falta obliga a adivinar. -->
+  @if (sinOrganizacion()) {
+    <app-alert tone="info" title="Elegí una organización">
+      El pedido queda bajo la custodia de una organización. Elegí una en el selector del
+      encabezado para poder solicitarlo.
+    </app-alert>
+  } @else if (!hayEncuentro()) {
+    <app-alert tone="info" title="Abrí el encuentro para pedir">
+      El estudio se pide dentro de la consulta que lo motivó. Registrá el encuentro acá arriba y
+      el formulario aparece. El histórico de abajo se ve igual.
+    </app-alert>
+  } @else if (catalogoListo() === false) {
+    <!-- El selector no cae a texto libre por diseño: un uuid tecleado a mano es
+         un dato inválido o, peor, uno válido de otro conjunto. Así que cuando el
+         catálogo no está, lo honesto es no ofrecer el formulario y decir por qué. -->
+    <app-alert tone="warning" title="El catálogo de estudios no está publicado">
+      El estudio se elige del catálogo y esa columna todavía no tiene un conjunto de valores
+      declarado, así que no se puede pedir desde acá. No es algo que puedas resolver en esta
+      pantalla: hay que declarar el catálogo del lado del servidor.
+    </app-alert>
+  } @else {
+    <form class="estudios__formulario" (submit)="$event.preventDefault()">
+      <app-form-field
+        label="Estudio"
+        hint="Del catálogo de terminología. Qué análisis o qué imagen se pide."
+        [required]="true"
+      >
+        <app-concept-select
+          [target]="targetEstudio"
+          [(value)]="estudio"
+          placeholder="Elegí un estudio"
+        />
+      </app-form-field>
+
+      <!-- Obligatoria acá aunque el contrato la deje opcional: es lo que hace
+           que el pedido vuelva a aparecer en el histórico de abajo. -->
+      <app-form-field
+        label="Tipo"
+        hint="Laboratorio o imagenología. Es lo que hace que el pedido aparezca en el histórico."
+        [required]="true"
+      >
+        <app-concept-select
+          [target]="targetCategoria"
+          [(value)]="categoria"
+          [labels]="etiquetasDeCategoria"
+          placeholder="Elegí el tipo"
+        />
+      </app-form-field>
+
+      <app-form-field label="Prioridad" hint="Opcional. Según tu criterio clínico.">
+        <app-concept-select
+          [target]="targetPrioridad"
+          [(value)]="prioridad"
+          [labels]="etiquetasDePrioridad"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-actions
+        submitLabel="Pedir estudio"
+        [pending]="pidiendo()"
+        [disabled]="!puedePedir()"
+        (submitted)="pedir()"
+      />
+    </form>
+  }
+
+  <!-- ─── El histórico ─────────────────────────────────────────────────
+       Se ve siempre, con encuentro o sin él: mirar qué se pidió antes no
+       requiere estar atendiendo. Es la mitad que faltaba — el backend tenía
+       veinte endpoints de diagnóstico y ninguna lectura por paciente. -->
+  <section class="estudios__historico">
+    <h3 class="estudios__subtitulo">Estudios pedidos</h3>
+
+    @if (errorDelHistorico(); as mensaje) {
+      <app-alert tone="error" data-testid="estudios-historico-error">{{ mensaje }}</app-alert>
+    } @else if (cargando()) {
+      <p class="estudios__vacio">Buscando los estudios de esta persona…</p>
+    } @else if (estudios().length === 0 && informesSueltos().length === 0) {
+      <p class="estudios__vacio" data-testid="estudios-vacio">
+        Todavía no se le pidió ningún laboratorio ni estudio de imagen.
+      </p>
+    } @else {
+      <ul class="estudios__lista" data-testid="estudios-lista">
+        @for (estudio of estudios(); track estudio.id) {
+          <li class="estudios__fila">
+            <div class="estudios__principal">
+              <span class="estudios__nombre">{{ estudio.estudio }}</span>
+              <span class="estudios__categoria">{{ estudio.categoria }}</span>
+            </div>
+            <div class="estudios__meta">
+              <span class="estudios__estado">{{ estudio.estado }}</span>
+              <!-- «Con resultado» quiere decir liberado, no redactado: un
+                   informe con versión vigente pero sin liberar es un borrador. -->
+              @if (estudio.conResultado) {
+                <span class="estudios__resultado estudios__resultado--listo">Resultado listo</span>
+              } @else {
+                <span class="estudios__resultado">Sin resultado todavía</span>
+              }
+            </div>
+          </li>
+        }
+
+        <!-- Los informes que no cuelgan de ninguna orden: papel que llega de un
+             laboratorio externo. Esconderlos porque no tienen orden sería perder
+             el dato clínico para preservar la prolijidad del modelo. -->
+        @for (informe of informesSueltos(); track informe.id) {
+          <li class="estudios__fila">
+            <div class="estudios__principal">
+              <span class="estudios__nombre">{{ etiquetaDe(informe.codeConceptId) }}</span>
+              <span class="estudios__categoria">Informe sin orden registrada</span>
+            </div>
+            <div class="estudios__meta">
+              <span class="estudios__estado">
+                {{ etiquetaDe(informe.lifecycleStatusConceptId) }}
+              </span>
+            </div>
+          </li>
+        }
+      </ul>
+
+      @if (recortado()) {
+        <p class="estudios__vacio" data-testid="estudios-recortado">
+          Se muestran los más recientes. Hay más estudios de los que entran acá.
+        </p>
+      }
+    }
+  </section>
+</app-card>

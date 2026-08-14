@@ -1,0 +1,883 @@
+<!-- Avance de lectura. Decorativo: no anuncia nada que el contenido no diga. -->
+<div class="landing-progreso" aria-hidden="true"><div class="landing-progreso__linea"></div></div>
+
+<header class="landing-nav">
+  <a class="landing-marca" href="#inicio">
+    <img src="/redsat/imagenes/alovida-logo.svg" alt="" width="32">
+    <span>AloVida</span>
+  </a>
+
+  <nav class="landing-nav__enlaces" aria-label="Secciones de la portada">
+    <a class="landing-nav__enlace" href="#historia">La historia</a>
+    <a class="landing-nav__enlace" href="#plataforma">Plataforma</a>
+    <a class="landing-nav__enlace" href="#como-funciona">Cómo funciona</a>
+    <a class="landing-nav__enlace" href="#en-el-telefono">En el teléfono</a>
+    <a class="landing-nav__enlace" href="#confianza">Confianza</a>
+    <a class="landing-nav__enlace" href="#preguntas">Preguntas</a>
+  </nav>
+
+  <div class="landing-nav__acciones">
+    <button class="app-theme-toggle" app-theme-toggle="">
+      <span class="app-theme-toggle__pista">
+        <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
+        <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
+        <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
+      </span>
+    </button>
+    <a app-button="" data-variante="primario" href="#solicitar">Solicitar acceso</a>
+  </div>
+</header>
+
+<main class="landing">
+
+  <!-- ═══════════ 1 · Portada ═══════════ -->
+  <section class="landing-hero" id="inicio">
+    <div class="landing-ambiente" aria-hidden="true"><span></span><span></span></div>
+    <div class="landing-reticula" aria-hidden="true"></div>
+
+    <div class="landing-hero__texto" data-escalonar="100">
+      <a class="landing-eyebrow" href="#solicitar" data-aparece="sube">
+        <span class="landing-punto" aria-hidden="true"></span>
+        <b>Infraestructura clínica</b> multi-institución
+      </a>
+
+      <h1 class="landing-display" data-aparece="sube">
+        Toda la operación de tu
+        <span class="landing-rotador" aria-hidden="true"><span>red de salud</span><span>hospital</span><span>clínica</span><span>aseguradora</span></span>
+        <span class="solo-lectores">red de salud, hospital, clínica o aseguradora,</span>
+        en <em>una sola historia</em>.
+      </h1>
+
+      <p class="landing-lead" data-aparece="sube">
+        Personas, agenda, historia clínica, permisos y auditoría sobre un mismo expediente. Las
+        mismas reglas en todas tus sedes, y el registro de quién vio qué.
+      </p>
+
+      <div class="landing-acciones" data-aparece="sube">
+        <a app-button="" data-variante="primario" data-tam="lg" href="#solicitar">Solicitar acceso</a>
+        <a class="landing-enlace-baja" href="#historia">
+          Ver cómo funciona
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v13M7 13l5 5 5-5"></path></svg>
+        </a>
+      </div>
+
+      <div class="landing-prueba" data-aparece="sube">
+        <div class="landing-caras" aria-hidden="true"><span>MQ</span><span>JV</span><span>RC</span><span>AT</span></div>
+        <p class="caption">
+          <strong>63 procesos</strong> y <strong>693 pantallas</strong> especificados antes de
+          escribir la primera línea de código.
+        </p>
+      </div>
+    </div>
+
+    <div class="landing-lienzo" data-aparece="der">
+    <div class="landing-ventana">
+      <div class="landing-ventana__barra">
+        <i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i>
+        <b>alovida.app · Agenda del día — Consultorio 3</b>
+      </div>
+      <div class="landing-ventana__cuerpo">
+        <nav class="landing-ventana__nav" aria-label="Navegación de ejemplo del producto">
+          <span data-activo=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15" rx="2.5"></rect><path d="M8 3v4M16 3v4M3.5 10h17"></path></svg>Agenda</span>
+          <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>Pacientes</span>
+          <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v18H6.5A2.5 2.5 0 0 1 4 18.5z"></path><path d="M8 7h7M8 11h7"></path></svg>Historia</span>
+          <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="8.5" width="18" height="7" rx="3.5"></rect><path d="M12 8.5v7"></path></svg>Farmacia</span>
+          <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Auditoría</span>
+        </nav>
+
+        <div class="landing-ventana__vista">
+          <div class="landing-ventana__cabecera">
+            <b>Jornada de hoy</b>
+            <small>12/08/2026</small>
+          </div>
+
+          <div class="landing-tiles">
+            <div><small>Turnos</small><b>148</b></div>
+            <div><small>Ocupación</small><b>82 %</b></div>
+            <div><small>Espera</small><b>6 min</b></div>
+          </div>
+
+          <svg class="landing-pulso" viewBox="0 0 400 56" preserveAspectRatio="none" style="height:56px" role="img" aria-label="Ritmo de atención de la jornada">
+            <path class="landing-pulso__guia" d="M0 34h104l9-20 11 36 11-24 9 8h82l9-20 11 36 11-24 9 8h134"></path>
+            <path d="M0 34h104l9-20 11 36 11-24 9 8h82l9-20 11 36 11-24 9 8h134"></path>
+          </svg>
+
+          <div class="landing-tabla">
+            <div class="landing-tabla__fila">
+              <time>08:30</time><span>Marisol Quispe Álvarez</span>
+              <span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"></path></svg>Atendida</span>
+            </div>
+            <!-- Los dos estados de esta fila están escritos: el badge no cambia
+                 de texto por JavaScript, se alterna cuál de los dos se muestra.
+                 Así el color, la silueta del icono y la palabra siguen siendo
+                 los tres canales del banco en los dos momentos. -->
+            <div class="landing-tabla__fila" data-cambia="">
+              <time>09:00</time><span>Julio Vargas Camacho</span>
+              <span class="app-badge" data-tono="info" data-estado="antes"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>En sala</span>
+              <span class="app-badge" data-tono="ok" data-estado="despues" hidden=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"></path></svg>Atendida</span>
+            </div>
+            <div class="landing-tabla__fila">
+              <time>09:30</time><span>Rosa Condori Mamani</span>
+              <span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8"></circle></svg>Citada</span>
+            </div>
+            <div class="landing-tabla__fila">
+              <time>10:00</time><span>Ariel Terceros Ríos</span>
+              <span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8"></circle></svg>Citada</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <!-- Cola de avisos: el sistema recibe lo que pasa en la institución.
+           Vive fuera de la ventana porque sobresale de su borde inferior. -->
+      <div class="landing-cola" data-cola="" aria-hidden="true">
+        <div class="landing-cola__aviso esta-visible" data-tono="ok">
+          <span class="landing-cola__icono"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4 10-10"></path></svg></span>
+          <span><b>Turno confirmado</b><small>Ariel Terceros · 10:00</small></span>
+        </div>
+        <div class="landing-cola__aviso" data-tono="info">
+          <span class="landing-cola__icono"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v18H6.5A2.5 2.5 0 0 1 4 18.5z"></path><path d="M8 7h7"></path></svg></span>
+          <span><b>Resultado de laboratorio listo</b><small>Hemograma · R. Condori</small></span>
+        </div>
+        <div class="landing-cola__aviso" data-tono="ok">
+          <span class="landing-cola__icono"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8.5" width="18" height="7" rx="3.5"></rect><path d="M12 8.5v7"></path></svg></span>
+          <span><b>Receta emitida</b><small>Dra. Quiroga · 09:12</small></span>
+        </div>
+        <div class="landing-cola__aviso" data-tono="info">
+          <span class="landing-cola__icono"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg></span>
+          <span><b>Acceso clínico registrado</b><small>Dr. Áñez · motivo: interconsulta</small></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 2 · Para quiénes ═══════════ -->
+  <section class="landing-seccion landing-seccion--apretada" aria-label="Instituciones para las que está pensada" style="padding-block:var(--ritmo-int)">
+    <div class="landing-ancho">
+      <p class="landing-overline" style="justify-content:center;display:flex;margin-bottom:var(--e5)" data-aparece="sube">Pensada para el mapa real de la salud</p>
+      <div class="landing-marquesina">
+        <div class="landing-marquesina__pista">
+          <div class="landing-marquesina__grupo">
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 21V6l7-3 7 3v15"></path><path d="M9 21v-5h6v5"></path></svg>Hospitales de tercer nivel</span>
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Seguros de corto plazo</span>
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z"></path></svg>Redes municipales</span>
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12h4l2-6 4 12 2-6h6"></path></svg>Clínicas privadas</span>
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="8.5" width="18" height="7" rx="3.5"></rect><path d="M12 8.5v7"></path></svg>Farmacias y laboratorios</span>
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>Centros de primer nivel</span>
+          </div>
+          <div class="landing-marquesina__grupo" aria-hidden="true">
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V6l7-3 7 3v15"></path><path d="M9 21v-5h6v5"></path></svg>Hospitales de tercer nivel</span>
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Seguros de corto plazo</span>
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z"></path></svg>Redes municipales</span>
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"></path></svg>Clínicas privadas</span>
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8.5" width="18" height="7" rx="3.5"></rect><path d="M12 8.5v7"></path></svg>Farmacias y laboratorios</span>
+            <span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>Centros de primer nivel</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 3 · El hilo: una sola historia ═══════════ -->
+  <section class="landing-seccion" id="historia">
+    <div class="landing-ancho">
+      <div class="landing-rotulo landing-rotulo--centro" data-aparece="sube">
+        <p class="landing-overline">Una sola historia</p>
+        <h2 class="landing-h2">Siete momentos, un mismo hilo</h2>
+        <p>Así atraviesa tu institución la historia de una persona. En la mayoría de los sistemas, cada paso vive en un lugar distinto y alguien tiene que copiarlo al siguiente. Acá no hay ese alguien.</p>
+      </div>
+
+      <div class="landing-hilo">
+        <div class="landing-hilo__pista" data-hilo="">
+        <div class="landing-rail landing-hilo__rail" aria-hidden="true"><i></i></div>
+        <ol class="landing-hilo__hitos">
+          <li class="landing-hito" data-hito="">
+            <span class="landing-hito__nodo" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg></span>
+            <div><b>Paciente</b><small>Una persona, un expediente</small></div>
+          </li>
+          <li class="landing-hito" data-hito="">
+            <span class="landing-hito__nodo" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"></rect><path d="M8 3v4M16 3v4M3.5 10h17"></path></svg></span>
+            <div><b>Consulta</b><small>Lo que pasa queda escrito</small></div>
+          </li>
+          <li class="landing-hito" data-hito="">
+            <span class="landing-hito__nodo" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v18H6.5A2.5 2.5 0 0 1 4 18.5z"></path><path d="M8 7h7M8 11h7"></path></svg></span>
+            <div><b>Historia</b><small>Todo converge en un lugar</small></div>
+          </li>
+          <li class="landing-hito" data-hito="">
+            <span class="landing-hito__nodo" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6.2L4.6 17A2 2 0 0 0 6.3 20h11.4a2 2 0 0 0 1.7-3L15 9.2V3"></path><path d="M8 3h8M7.5 14h9"></path></svg></span>
+            <div><b>Laboratorio</b><small>El resultado se adjunta solo</small></div>
+          </li>
+          <li class="landing-hito" data-hito="">
+            <span class="landing-hito__nodo" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8.5" width="18" height="7" rx="3.5"></rect><path d="M12 8.5v7"></path></svg></span>
+            <div><b>Receta</b><small>Sale con su indicación</small></div>
+          </li>
+          <li class="landing-hito" data-hito="">
+            <span class="landing-hito__nodo" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"></path></svg></span>
+            <div><b>Seguimiento</b><small>El control siguiente ya sabe</small></div>
+          </li>
+          <li class="landing-hito landing-hito--cierre" data-hito="">
+            <span class="landing-hito__nodo" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z"></path></svg></span>
+            <div><b>Red de salud</b><small>Otra sede lo abre igual</small></div>
+          </li>
+        </ol>
+        </div>
+
+        <div class="landing-hilo__cierre" data-aparece="sube">
+          <p>
+            Ninguno de estos pasos vive en un sistema aparte. <strong>Es el mismo hilo</strong>: por
+            eso quien atiende en la segunda sede no vuelve a preguntar lo que ya se preguntó, y por
+            eso el estudio que pidió una médica lo ve la que hace el control seis meses después.
+          </p>
+          <a class="landing-enlace-baja" href="#plataforma">
+            Qué lo hace posible
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v13M7 13l5 5 5-5"></path></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 4 · Capacidad ═══════════ -->
+  <section class="landing-seccion landing-seccion--apretada" id="capacidad" style="padding-block:var(--ritmo-int)">
+    <div class="landing-ancho">
+      <div class="landing-rotulo" data-aparece="sube">
+        <p class="landing-overline">Lo que ya está resuelto</p>
+        <h2 class="landing-h2">No empezamos por la pantalla: empezamos por el modelo</h2>
+      </div>
+
+      <div class="landing-metricas" data-escalonar="90">
+        <div class="landing-metrica" data-aparece="sube">
+          <b data-hasta="63">63</b>
+          <strong>procesos cubiertos</strong>
+          <span>De identidad y acceso a farmacia y facturación: el modelo contempla la operación entera, no un pedazo.</span>
+        </div>
+        <div class="landing-metrica" data-aparece="sube">
+          <b data-hasta="693">693</b>
+          <strong>flujos y pantallas diseñados</strong>
+          <span>Cada pantalla con sus campos, filtros, acciones y estados escritos antes de programarla.</span>
+        </div>
+        <div class="landing-metrica" data-aparece="sube">
+          <b data-hasta="51">51</b>
+          <strong>componentes consistentes</strong>
+          <span>Quien aprende una pantalla aprende las demás. La capacitación se hace una vez, no por módulo.</span>
+        </div>
+        <div class="landing-metrica" data-aparece="sube">
+          <b data-hasta="100" data-despues=" %">100 %</b>
+          <strong>de accesos clínicos trazables</strong>
+          <span>Cada lectura de una historia queda registrada con quién, cuándo y con qué motivo.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 5 · La plataforma como arquitectura ═══════════ -->
+  <section class="landing-seccion" id="plataforma">
+    <div class="landing-ambiente" aria-hidden="true"><span></span><span></span></div>
+    <div class="landing-ancho landing-arquitectura">
+      <div class="landing-pegado">
+        <div class="landing-rotulo" data-aparece="izq">
+          <p class="landing-overline">La plataforma</p>
+          <h2 class="landing-h2">Seis cimientos sobre los que se apoya todo lo demás</h2>
+          <p>
+            No son seis funciones sueltas que elegís por separado: son las seis capas que hacen
+            posible que el hilo exista. Sacá una y el resto se cae.
+          </p>
+        </div>
+        <div data-aparece="izq">
+          <a app-button="" data-variante="secundario" routerLink="/inicio">
+            Recorrer las maquetas
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="landing-capas" data-capas="">
+        <div class="landing-rail landing-capas__rail" aria-hidden="true"><i></i></div>
+
+        <div class="landing-capa" data-capa="" data-aparece="sube">
+          <span class="landing-capa__numero" aria-hidden="true">01</span>
+          <div class="landing-capa__titulo"><h3>Identidad y acceso</h3></div>
+          <p>Una sola cuenta por persona, sesiones que se revocan en un clic y un registro de cada ingreso. Nadie comparte usuario «porque es más rápido».</p>
+          <div class="landing-capa__piezas"><span>Cuentas</span><span>Sesiones</span><span>Revocación</span></div>
+        </div>
+
+        <a class="landing-capa" data-capa="" data-aparece="sube" routerLink="/directorio/organizaciones-listado">
+          <span class="landing-capa__numero" aria-hidden="true">02</span>
+          <div class="landing-capa__titulo">
+            <h3>Organizaciones y sucursales</h3>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
+          </div>
+          <p>Cada institución con su estructura, sus sedes y su gente. Los datos de una nunca alcanzan a la otra, aunque compartan la misma plataforma.</p>
+          <div class="landing-capa__piezas"><span>Organización</span><span>Sedes</span><span>Membresías</span></div>
+        </a>
+
+        <a class="landing-capa" data-capa="" data-aparece="sube" routerLink="/personas/pacientes-formulario">
+          <span class="landing-capa__numero" aria-hidden="true">03</span>
+          <div class="landing-capa__titulo">
+            <h3>Personas, pacientes y personal</h3>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
+          </div>
+          <p>Un padrón único: la persona es una sola, y sobre ella se apoyan su ficha de paciente y su credencial profesional. Se acabó el duplicado con un dígito distinto.</p>
+          <div class="landing-capa__piezas"><span>Padrón único</span><span>Ficha de paciente</span><span>Credencial</span></div>
+        </a>
+
+        <a class="landing-capa" data-capa="" data-aparece="sube" routerLink="/terminologia/versiones-importar">
+          <span class="landing-capa__numero" aria-hidden="true">04</span>
+          <div class="landing-capa__titulo">
+            <h3>Terminología clínica</h3>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
+          </div>
+          <p>Un diagnóstico se escribe una vez y se entiende igual en la sala, en el laboratorio y en el reporte. Es lo que permite que dos sedes hablen del mismo cuadro.</p>
+          <div class="landing-capa__piezas"><span>Códigos</span><span>Conceptos</span><span>Conjuntos de valor</span><span>Mapeos</span></div>
+        </a>
+
+        <a class="landing-capa" data-capa="" data-aparece="sube" routerLink="/accesos/acceso-de-emergencia-formulario">
+          <span class="landing-capa__numero" aria-hidden="true">05</span>
+          <div class="landing-capa__titulo">
+            <h3>Permisos y consentimiento</h3>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
+          </div>
+          <p>Quien atiende ve lo que necesita para atender, y nada más. El paciente sabe quién abrió su historia y puede cortar el acceso cuando quiera.</p>
+          <div class="landing-capa__piezas"><span>Roles</span><span>Políticas</span><span>Relaciones de cuidado</span></div>
+        </a>
+
+        <a class="landing-capa" data-capa="" data-aparece="sube" routerLink="/datos-compartidos/versiones-internas-escanear">
+          <span class="landing-capa__numero" aria-hidden="true">06</span>
+          <div class="landing-capa__titulo">
+            <h3>Documentos y contactos</h3>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
+          </div>
+          <p>Identificadores, direcciones, teléfonos y archivos con las mismas reglas en todo el sistema. Un estudio subido en urgencias se abre igual en consulta externa.</p>
+          <div class="landing-capa__piezas"><span>Identificadores</span><span>Direcciones</span><span>Archivos</span></div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 6 · Cómo funciona ═══════════ -->
+  <section class="landing-seccion" id="como-funciona">
+    <div class="landing-ancho">
+      <div class="landing-rotulo" data-aparece="sube">
+        <p class="landing-overline">Cómo se pone en marcha</p>
+        <h2 class="landing-h2">Cuatro etapas, con la operación andando</h2>
+        <p>No hay migración de fin de semana ni un lunes apagando incendios. Se entra por partes, y cada parte queda funcionando antes de empezar la siguiente.</p>
+      </div>
+
+      <div class="landing-etapas">
+        <!-- 01 -->
+        <article class="landing-etapa">
+          <div class="landing-etapa__texto" data-aparece="izq">
+            <p class="landing-etapa__numero">01</p>
+            <h3>AloVida entiende tu institución</h3>
+            <p>Cargamos la organización, sus sedes, sus servicios y su gente, con la estructura que ya tiene: no la que le convendría al software. En un día cada persona entra con su cuenta propia.</p>
+          </div>
+          <div class="landing-fragmento" data-aparece="der">
+            <div class="landing-fragmento__rotulo"><span>Directorio</span><span>3 sedes</span></div>
+            <div class="landing-org">
+              <span class="landing-org__nodo">
+                <svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 21V6l7-3 7 3v15"></path><path d="M9 21v-5h6v5"></path></svg>
+                Red Salud Altiplano
+              </span>
+              <span class="landing-org__linea" aria-hidden="true"></span>
+              <div class="landing-org__hijos">
+                <span>Sede Central<small>84 personas</small></span>
+                <span>Sede Norte<small>31 personas</small></span>
+                <span>Sede El Alto<small>27 personas</small></span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 02 -->
+        <article class="landing-etapa">
+          <div class="landing-etapa__texto" data-aparece="der">
+            <p class="landing-etapa__numero">02</p>
+            <h3>Integra tu historia</h3>
+            <p>Importamos el padrón y los catálogos que ya usás, mapeados contra la terminología del sistema. Los duplicados se detectan al entrar, no seis meses después en una auditoría.</p>
+          </div>
+          <div class="landing-fragmento" data-aparece="izq">
+            <div class="landing-fragmento__rotulo"><span>Importación del padrón</span><span>12 480 personas</span></div>
+            <div class="landing-mini-lista">
+              <div><i aria-hidden="true">MQ</i><b>Marisol Quispe Álvarez</b><small>CI 6 482 913 LP</small></div>
+              <div><i aria-hidden="true">JV</i><b>Julio Vargas Camacho</b><small>CI 3 117 806 CB</small></div>
+              <div><i aria-hidden="true">RC</i><b>Rosa Condori Mamani</b><small>CI 4 903 552 OR</small></div>
+            </div>
+            <p class="caption muted">37 duplicados detectados y unificados en la carga.</p>
+          </div>
+        </article>
+
+        <!-- 03 -->
+        <article class="landing-etapa">
+          <div class="landing-etapa__texto" data-aparece="izq">
+            <p class="landing-etapa__numero">03</p>
+            <h3>Organiza roles y accesos</h3>
+            <p>Cada rol entra cuando su pantalla está lista y su gente capacitada: primero admisión y agenda, después la historia clínica, al final farmacia y facturación.</p>
+          </div>
+          <div class="landing-fragmento" data-aparece="der">
+            <div class="landing-fragmento__rotulo"><span>Roles y alcance</span><span>Sede Central</span></div>
+            <div class="landing-permisos">
+              <div>
+                <div><b>Admisión</b><small>Agenda y padrón</small></div>
+                <span class="landing-permisos__estado"><small>Activo</small><span class="landing-switch" data-si="" aria-hidden="true"></span></span>
+              </div>
+              <div>
+                <div><b>Clínico</b><small>Historia del paciente a cargo</small></div>
+                <span class="landing-permisos__estado"><small>Activo</small><span class="landing-switch" data-si="" aria-hidden="true"></span></span>
+              </div>
+              <div>
+                <div><b>Farmacia</b><small>Dispensación y stock</small></div>
+                <span class="landing-permisos__estado"><small>En etapa 3</small><span class="landing-switch" aria-hidden="true"></span></span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 04 -->
+        <article class="landing-etapa">
+          <div class="landing-etapa__texto" data-aparece="der">
+            <p class="landing-etapa__numero">04</p>
+            <h3>Empieza la operación</h3>
+            <p>Acompañamiento en sala las primeras dos semanas, soporte en tu horario y un tablero de auditoría que podés abrir cuando quieras. Sin cajas negras.</p>
+          </div>
+          <div class="landing-fragmento" data-aparece="izq">
+            <div class="landing-fragmento__rotulo"><span>Primera jornada en producción</span><span>08:00 – 12:00</span></div>
+            <div class="landing-operacion">
+              <div>
+                <time>08:30</time><span>Marisol Quispe Álvarez</span>
+                <span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"></path></svg>Atendida</span>
+              </div>
+              <div>
+                <time>09:00</time><span>Julio Vargas Camacho</span>
+                <span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>En sala</span>
+              </div>
+              <div>
+                <time>09:30</time><span>Rosa Condori Mamani</span>
+                <span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8"></circle></svg>Citada</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 7 · En el teléfono ═══════════ -->
+  <section class="landing-seccion" id="en-el-telefono">
+    <div class="landing-ambiente" aria-hidden="true"><span></span><span></span></div>
+    <div class="landing-ancho landing-movil">
+      <div class="landing-movil__texto">
+        <div class="landing-rotulo" data-aparece="izq">
+          <p class="landing-overline">En el bolsillo del equipo</p>
+          <h2 class="landing-h2">El hilo también entra en la palma de la mano</h2>
+          <p>
+            Quien atiende no está sentado frente a un monitor: está en la sala, en el pasillo, en la
+            visita domiciliaria. Estos tres pasos ocurren en el teléfono, con los mismos permisos y
+            el mismo registro de auditoría.
+          </p>
+        </div>
+
+        <div class="landing-secuencia" role="tablist" aria-label="Recorrido de un resultado de laboratorio" data-secuencia="" data-aparece="izq">
+          <button class="landing-secuencia__paso" type="button" role="tab" id="paso-aviso" aria-controls="pantalla-aviso" aria-selected="true">
+            <span class="landing-secuencia__marca" aria-hidden="true"><i></i></span>
+            <span class="landing-secuencia__texto">
+              <b>Llega el resultado</b>
+              <small>El laboratorio carga el estudio y el sistema avisa a quien pidió la orden.</small>
+            </span>
+          </button>
+          <button class="landing-secuencia__paso" type="button" role="tab" id="paso-abre" aria-controls="pantalla-abre" aria-selected="false" tabindex="-1">
+            <span class="landing-secuencia__marca" aria-hidden="true"><i></i></span>
+            <span class="landing-secuencia__texto">
+              <b>El profesional lo abre</b>
+              <small>Entra desde el aviso a la ficha de la paciente, sin buscar el nombre ni el número de orden.</small>
+            </span>
+          </button>
+          <button class="landing-secuencia__paso" type="button" role="tab" id="paso-historia" aria-controls="pantalla-historia" aria-selected="false" tabindex="-1">
+            <span class="landing-secuencia__marca" aria-hidden="true"><i></i></span>
+            <span class="landing-secuencia__texto">
+              <b>Queda en la historia</b>
+              <small>El estudio se adjunta al episodio. La consulta de dentro de seis meses ya lo tiene.</small>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div class="landing-telefono" data-aparece="der">
+        <div class="landing-telefono__isla" aria-hidden="true"></div>
+        <div class="landing-telefono__pantalla">
+          <div class="landing-telefono__estado" aria-hidden="true">
+            <span>09:41</span>
+            <span>
+              <svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a12 12 0 0 1 16 0M7.5 16.5a7 7 0 0 1 9 0M11 19.5h2"></path></svg>
+              <svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="15" height="9" rx="2"></rect><path d="M20 11v3"></path></svg>
+            </span>
+          </div>
+
+          <div class="landing-telefono__barra">
+            <img src="/redsat/imagenes/alovida-logo-blanco.svg" alt="" width="20">
+            <b>AloVida</b>
+            <span class="landing-telefono__ruta" data-ruta-movil="">Agenda</span>
+          </div>
+
+          <div class="landing-telefono__cuerpo">
+            <!-- Aviso del sistema: sólo en el primer paso de la secuencia. -->
+            <div class="landing-empuje" data-empuje="" aria-hidden="true">
+              <span class="landing-cola__icono"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6.2L4.6 17A2 2 0 0 0 6.3 20h11.4a2 2 0 0 0 1.7-3L15 9.2V3"></path><path d="M8 3h8"></path></svg></span>
+              <span><b>Resultado de laboratorio listo</b><small>Hemograma · Rosa Condori · 09:38</small></span>
+            </div>
+
+            <div class="landing-pantalla esta-activa" id="pantalla-aviso" role="tabpanel" aria-labelledby="paso-aviso">
+              <p class="landing-pantalla__titulo">Martes 12 · Consultorio 3</p>
+              <div class="landing-fila-movil">
+                <span class="landing-fila-movil__inicial" aria-hidden="true">MQ</span>
+                <span class="landing-fila-movil__texto"><b>Marisol Quispe Álvarez</b><small>08:30 · Control prenatal</small></span>
+                <span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"></path></svg>Atendida</span>
+              </div>
+              <div class="landing-fila-movil">
+                <span class="landing-fila-movil__inicial" aria-hidden="true">JV</span>
+                <span class="landing-fila-movil__texto"><b>Julio Vargas Camacho</b><small>09:00 · Cardiología</small></span>
+                <span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>En sala</span>
+              </div>
+              <div class="landing-fila-movil landing-fila-movil--destacada">
+                <span class="landing-fila-movil__inicial" aria-hidden="true">RC</span>
+                <span class="landing-fila-movil__texto"><b>Rosa Condori Mamani</b><small>09:30 · Control de diabetes</small></span>
+                <span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 8v5M12 16h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>Estudio nuevo</span>
+              </div>
+              <div class="landing-fila-movil">
+                <span class="landing-fila-movil__inicial" aria-hidden="true">AT</span>
+                <span class="landing-fila-movil__texto"><b>Ariel Terceros Ríos</b><small>10:00 · Primera consulta</small></span>
+                <span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8"></circle></svg>Citada</span>
+              </div>
+            </div>
+
+            <div class="landing-pantalla" id="pantalla-abre" role="tabpanel" aria-labelledby="paso-abre" hidden="">
+              <p class="landing-pantalla__titulo">Hemograma completo</p>
+              <p class="caption muted">Rosa Condori Mamani · 54 años · Orden 2026-0841</p>
+              <div class="landing-fila-movil">
+                <span class="landing-fila-movil__texto"><b>Hemoglobina</b><small>10,2 g/dL · ref. 12,0 – 15,5</small></span>
+                <span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 8v5M12 16h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>Bajo</span>
+              </div>
+              <div class="landing-fila-movil">
+                <span class="landing-fila-movil__texto"><b>Hematocrito</b><small>32 % · ref. 36 – 46</small></span>
+                <span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 8v5M12 16h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>Bajo</span>
+              </div>
+              <div class="landing-fila-movil">
+                <span class="landing-fila-movil__texto"><b>Leucocitos</b><small>6 800 /µL · ref. 4 – 11 mil</small></span>
+                <span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"></path></svg>Normal</span>
+              </div>
+              <div class="landing-fila-movil">
+                <span class="landing-fila-movil__texto"><b>Plaquetas</b><small>245 mil /µL · ref. 150 – 400 mil</small></span>
+                <span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"></path></svg>Normal</span>
+              </div>
+            </div>
+
+            <div class="landing-pantalla" id="pantalla-historia" role="tabpanel" aria-labelledby="paso-historia" hidden="">
+              <p class="landing-pantalla__titulo">Historia · Rosa Condori Mamani</p>
+              <p class="caption muted">Episodio abierto · Control de diabetes</p>
+              <div class="landing-fila-movil landing-fila-movil--destacada">
+                <span class="landing-fila-movil__inicial" aria-hidden="true">LB</span>
+                <span class="landing-fila-movil__texto"><b>Hemograma completo</b><small>12/08/2026 · adjuntado al episodio</small></span>
+                <span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"></path></svg>Nuevo</span>
+              </div>
+              <div class="landing-fila-movil">
+                <span class="landing-fila-movil__inicial" aria-hidden="true">RX</span>
+                <span class="landing-fila-movil__texto"><b>Metformina 850 mg</b><small>02/06/2026 · cada 12 h</small></span>
+              </div>
+              <div class="landing-fila-movil">
+                <span class="landing-fila-movil__inicial" aria-hidden="true">CT</span>
+                <span class="landing-fila-movil__texto"><b>Control de diabetes</b><small>02/06/2026 · Sede Norte</small></span>
+              </div>
+              <div class="landing-fila-movil">
+                <span class="landing-fila-movil__inicial" aria-hidden="true">DX</span>
+                <span class="landing-fila-movil__texto"><b>Diabetes tipo 2</b><small>Diagnóstico activo desde 2021</small></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="landing-telefono__pie" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="landing-telefono__asa" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 8 · Confianza (bloque oscuro) ═══════════ -->
+  <section class="landing-seccion landing-oscuro" id="confianza">
+    <div class="landing-ancho">
+      <div class="landing-rotulo" data-aparece="sube">
+        <p class="landing-overline">Confianza</p>
+        <h2 class="landing-h2">Una historia clínica es lo más íntimo que alguien te confía</h2>
+        <p>Por eso la protección no es una función que se activa: es cómo está construida la plataforma. Estas tres capacidades existen en el modelo, no en una configuración que alguien puede olvidarse de aplicar.</p>
+      </div>
+
+      <div class="landing-garantias" data-escalonar="100">
+        <div class="landing-garantia" data-aparece="sube">
+          <span class="landing-garantia__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9.5 12 1.8 1.8 3.5-3.6"></path></svg></span>
+          <b>Cada acceso queda registrado</b>
+          <p>Quién abrió qué historia, cuándo y con qué motivo. El registro es de sólo escritura: no se edita ni se borra, tampoco desde una cuenta de administración.</p>
+        </div>
+        <div class="landing-garantia" data-aparece="sube">
+          <span class="landing-garantia__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10" width="15" height="10" rx="2.5"></rect><path d="M8 10V7.5a4 4 0 0 1 8 0V10"></path></svg></span>
+          <b>Cada institución, en su compartimento</b>
+          <p>La plataforma es multi-institución, pero los datos no se mezclan: el aislamiento está en el modelo de datos, no en un filtro que una consulta mal escrita puede saltarse.</p>
+        </div>
+        <div class="landing-garantia" data-aparece="sube">
+          <span class="landing-garantia__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.2A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.8C19 15.6 12 20 12 20z"></path></svg></span>
+          <b>El consentimiento es del paciente</b>
+          <p>La relación de cuidado se declara, tiene fecha de inicio y de fin, y el paciente —o su representante legal— la revoca cuando quiere. Sin ella no hay lectura posible.</p>
+        </div>
+      </div>
+
+      <!-- La trazabilidad no se afirma: se muestra. -->
+      <div class="landing-registro" data-aparece="sube">
+        <div class="landing-registro__cabecera">
+          <span class="landing-punto" aria-hidden="true"></span>
+          Registro de acceso clínico · así se ve en el producto
+        </div>
+        <table class="landing-registro__tabla">
+          <caption class="solo-lectores">Ejemplo del registro de auditoría: quién accedió a qué historia, cuándo y con qué motivo.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Quién</th>
+              <th scope="col">Qué abrió</th>
+              <th scope="col">Motivo</th>
+              <th scope="col">Cuándo</th>
+              <th scope="col">Resultado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Dra. V. Salazar</td>
+              <td>Historia · R. Condori</td>
+              <td>Consulta programada</td>
+              <td class="num">12/08/2026 09:41</td>
+              <td><span class="app-badge"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"></path></svg>Permitido</span></td>
+            </tr>
+            <tr>
+              <td>Dr. M. Áñez</td>
+              <td>Historia · J. Vargas</td>
+              <td>Interconsulta</td>
+              <td class="num">12/08/2026 09:12</td>
+              <td><span class="app-badge"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"></path></svg>Permitido</span></td>
+            </tr>
+            <tr>
+              <td>P. Loayza · Admisión</td>
+              <td>Historia · M. Quispe</td>
+              <td>Sin relación de cuidado</td>
+              <td class="num">12/08/2026 08:55</td>
+              <td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 8v5M12 16h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>Bloqueado</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="landing-registro__pie">
+          El intento bloqueado también queda escrito. Un registro que sólo guarda los accesos
+          exitosos no sirve para auditar nada.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 9 · Voces ═══════════ -->
+  <section class="landing-seccion" aria-label="Voces del piloto interno">
+    <div class="landing-ancho">
+      <div class="landing-rotulo" data-aparece="sube">
+        <p class="landing-overline">Voces del piloto interno</p>
+        <h2 class="landing-h2">Lo que cambia cuando el sistema deja de estorbar</h2>
+        <p class="caption muted">Testimonios de ejemplo del piloto interno. Todavía no son referencias públicas de instituciones cliente, y no se presentan como tales.</p>
+      </div>
+
+      <div class="landing-voces" data-escalonar="110">
+        <figure class="landing-voz" data-aparece="sube">
+          <blockquote>Antes abría tres sistemas para ver una historia completa. Ahora abro uno, y lo que veo está al día.</blockquote>
+          <figcaption>
+            <span class="landing-voz__inicial" aria-hidden="true">VS</span>
+            <span><b>Medicina interna</b><small>Piloto · sede central</small></span>
+          </figcaption>
+        </figure>
+        <figure class="landing-voz" data-aparece="sube">
+          <blockquote>Lo que más tranquilidad me da no es lo que el sistema hace, es lo que deja anotado. Si alguien pregunta quién vio una historia, tengo la respuesta.</blockquote>
+          <figcaption>
+            <span class="landing-voz__inicial" aria-hidden="true">SI</span>
+            <span><b>Seguridad de la información</b><small>Piloto · área técnica</small></span>
+          </figcaption>
+        </figure>
+        <figure class="landing-voz" data-aparece="sube">
+          <blockquote>Las pantallas se parecen entre sí, así que quien aprende una aprende las demás. Capacitamos a treinta personas en una tarde.</blockquote>
+          <figcaption>
+            <span class="landing-voz__inicial" aria-hidden="true">AD</span>
+            <span><b>Jefatura de admisión</b><small>Piloto · sede norte</small></span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 10 · Convocatoria ═══════════ -->
+  <section class="landing-seccion" id="solicitar">
+    <div class="landing-ancho">
+      <div class="landing-convocatoria" data-aparece="sube">
+        <div class="landing-convocatoria__texto">
+          <p class="landing-overline">Convocatoria · Segunda tanda</p>
+          <h2 class="landing-h2">Cincuenta instituciones entran acompañadas</h2>
+          <p>
+            Las que se incorporan en esta tanda arrancan con la implantación asistida, el mapeo de su
+            terminología incluido y la primera sede en producción dentro del trimestre. Cerrada la
+            fecha, las solicitudes pasan a la tanda siguiente.
+          </p>
+
+          <div class="landing-cupo">
+            <div class="landing-cupo__barra" data-cupo="0.68" role="img" aria-label="34 de 50 cupos tomados, el 68 por ciento"><i></i></div>
+            <small><span>34 de 50 cupos tomados</span><span class="num">68 %</span></small>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:var(--e5)">
+          <div>
+            <p class="landing-overline" style="margin-bottom:var(--e3)">Cierra el 17/08/2026, 18:00</p>
+            <div class="landing-reloj" role="group" aria-label="Tiempo restante de la convocatoria">
+              <div class="landing-reloj__casilla"><span class="landing-reloj__valor" data-unidad="dias">05</span><span class="landing-reloj__rotulo">Días</span></div>
+              <div class="landing-reloj__casilla"><span class="landing-reloj__valor" data-unidad="horas">00</span><span class="landing-reloj__rotulo">Horas</span></div>
+              <div class="landing-reloj__casilla"><span class="landing-reloj__valor" data-unidad="min">00</span><span class="landing-reloj__rotulo">Min</span></div>
+              <div class="landing-reloj__casilla"><span class="landing-reloj__valor" data-unidad="seg">00</span><span class="landing-reloj__rotulo">Seg</span></div>
+              <p class="solo-lectores" data-cuenta-viva="" role="status" aria-live="polite">Faltan 5 días para el cierre de la convocatoria.</p>
+            </div>
+          </div>
+
+          <form class="landing-formulario" data-convocatoria="" novalidate="">
+            <label class="app-form-field__label" for="correo-convocatoria">Tu correo institucional</label>
+            <div class="landing-formulario__fila">
+              <input class="app-input" id="correo-convocatoria" type="email" name="correo" placeholder="nombre@institucion.bo" autocomplete="email" aria-describedby="ayuda-convocatoria" required="">
+              <button app-button="" data-variante="primario" data-tam="lg" type="submit">Solicitar acceso</button>
+            </div>
+            <p class="caption" id="ayuda-convocatoria">Sin tarjeta y sin permanencia. Te escribimos una vez, con una fecha concreta.</p>
+          </form>
+
+          <div class="app-alert" data-convocatoria-aviso="" data-tono="ok" role="status" aria-live="polite" hidden=""></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 11 · Preguntas ═══════════ -->
+  <section class="landing-seccion" id="preguntas">
+    <div class="landing-ancho landing-ancho--angosto">
+      <div class="landing-rotulo" data-aparece="sube">
+        <p class="landing-overline">Antes de que preguntes</p>
+        <h2 class="landing-h2">Las ocho que siempre aparecen</h2>
+      </div>
+
+      <div class="landing-preguntas" data-escalonar="60">
+        <details class="landing-pregunta" data-aparece="sube">
+          <summary>¿Tengo que dejar el sistema que uso hoy?</summary>
+          <p class="landing-pregunta__cuerpo">No de entrada. Se entra por módulos: podés empezar por admisión y agenda y dejar la facturación donde está. Lo que sí se unifica desde el primer día es el padrón de pacientes, porque es lo que evita el duplicado y lo que hace posible el resto.</p>
+        </details>
+
+        <details class="landing-pregunta" data-aparece="sube">
+          <summary>¿Y si mi institución tiene varias sedes?</summary>
+          <p class="landing-pregunta__cuerpo">Es el caso para el que está hecha. La organización tiene sus sucursales, cada persona su membresía en la que corresponde, y la historia del paciente lo sigue de una sede a otra sin que nadie tenga que reescribirla ni pedirla por teléfono.</p>
+        </details>
+
+        <details class="landing-pregunta" data-aparece="sube">
+          <summary>¿Quién puede ver la historia de un paciente?</summary>
+          <p class="landing-pregunta__cuerpo">Sólo quien tiene una relación de cuidado vigente con esa persona, y dentro del alcance que le da su rol. Todo acceso queda registrado con motivo, incluidos los intentos bloqueados. El paciente puede pedir el listado de quién abrió su historia y revocar el acceso.</p>
+        </details>
+
+        <details class="landing-pregunta" data-aparece="sube">
+          <summary>¿Dónde viven los datos?</summary>
+          <p class="landing-pregunta__cuerpo">Donde tu institución decida: en infraestructura administrada por nosotros o en la propia. En los dos casos el aislamiento entre instituciones y el registro de auditoría son idénticos, porque están en el modelo de datos y no en la configuración del despliegue.</p>
+        </details>
+
+        <details class="landing-pregunta" data-aparece="sube">
+          <summary>¿Funciona con mala conexión?</summary>
+          <p class="landing-pregunta__cuerpo">Las pantallas están hechas para pesar poco y responden de 320 a 2560 píxeles. En un centro de primer nivel eso no es un lujo: es la condición para que el sistema sirva el día que el enlace anda mal.</p>
+        </details>
+
+        <details class="landing-pregunta" data-aparece="sube">
+          <summary>¿Cuánto demora la implantación?</summary>
+          <p class="landing-pregunta__cuerpo">La estructura y las cuentas, un día. El padrón importado y la terminología mapeada, entre dos y cuatro semanas según el estado de los datos. El primer servicio en producción, antes del mes. No prometemos plazos que no hayamos sostenido en el piloto.</p>
+        </details>
+
+        <details class="landing-pregunta" data-aparece="sube">
+          <summary>¿Cómo se capacita al equipo?</summary>
+          <p class="landing-pregunta__cuerpo">Por rol y sobre el sistema andando, no en un aula. Las 693 pantallas se componen con los mismos 51 componentes, así que quien aprende una pantalla ya sabe leer las demás: la capacitación se hace una vez y no se repite con cada módulo nuevo.</p>
+        </details>
+
+        <details class="landing-pregunta" data-aparece="sube">
+          <summary>¿Cómo se cobra?</summary>
+          <p class="landing-pregunta__cuerpo">Por institución y por módulos activos, con la implantación de la convocatoria incluida. El detalle depende del tamaño de tu red y de los servicios que abras: es parte de la primera conversación, no una tabla de precios que no te representa.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 12 · Cierre ═══════════ -->
+  <section class="landing-seccion landing-oscuro" aria-label="Siguiente paso">
+    <div class="landing-ancho landing-cierre">
+      <svg class="landing-pulso" viewBox="0 0 320 40" preserveAspectRatio="none" style="height:40px" aria-hidden="true" data-aparece="sube">
+        <path class="landing-pulso__guia" d="M0 22h96l8-16 10 30 10-20 8 6h188"></path>
+        <path d="M0 22h96l8-16 10 30 10-20 8 6h188"></path>
+      </svg>
+      <h2 class="landing-display" data-aparece="sube">Nadie debería perder una historia clínica.</h2>
+      <p class="landing-lead" data-aparece="sube">
+        Ni por un papel traspapelado, ni por dos sistemas que no se hablaban. Dejanos tu correo
+        institucional y te escribimos con una fecha concreta para conocer AloVida.
+      </p>
+      <div class="landing-acciones" style="justify-content:center" data-aparece="sube">
+        <a app-button="" data-variante="primario" data-tam="lg" href="#solicitar">Solicitar acceso</a>
+        <a app-button="" data-variante="secundario" data-tam="lg" routerLink="/inicio">Recorrer las maquetas</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="landing-pie">
+  <div class="landing-ancho">
+    <div class="landing-pie__grilla">
+      <div>
+        <a class="landing-marca" href="#inicio" style="margin-bottom:var(--e4)">
+          <img src="/redsat/imagenes/alovida-logo.svg" alt="" width="32">
+          <span>AloVida</span>
+        </a>
+        <p class="caption" style="max-width:36ch">
+          La plataforma de operaciones de salud de <strong>Mantra Core</strong>. Multi-institución,
+          interoperable y auditable de punta a punta.
+        </p>
+      </div>
+
+      <div>
+        <h3>Producto</h3>
+        <ul>
+          <li><a href="#historia">Una sola historia</a></li>
+          <li><a href="#plataforma">Los seis cimientos</a></li>
+          <li><a href="#como-funciona">Cómo funciona</a></li>
+          <li><a href="#en-el-telefono">En el teléfono</a></li>
+          <li><a href="#confianza">Confianza y auditoría</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Maquetas</h3>
+        <ul>
+          <li><a routerLink="/inicio">Índice general</a></li>
+          <li><a routerLink="/terminologia/versiones-importar">Terminología</a></li>
+          <li><a routerLink="/personas/pacientes-formulario">Perfiles</a></li>
+          <li><a routerLink="/accesos/acceso-de-emergencia-formulario">Permisos</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Hablemos</h3>
+        <ul>
+          <li><a href="#solicitar">Solicitar acceso</a></li>
+          <li><a href="#preguntas">Preguntas frecuentes</a></li>
+          <li><a href="mailto:hola@mantracore.bo">hola@mantracore.bo</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="landing-pie__legal">
+      <span>© 2026 Mantra Core · AloVida.</span>
+      <span>Maqueta de portada: las voces del piloto, los cupos y las cifras de adopción son contenido de ejemplo del vault de especificación.</span>
+    </div>
+  </div>
+</footer>

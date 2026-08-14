@@ -10,6 +10,9 @@
     Tu cuenta no tiene un perfil de paciente. Si atendés turnos, entrá por la agenda de la
     organización.
   </app-alert>
+  <!-- La salida, no solo la explicación: el mismo destino que el aviso nombra.
+       Es el par del «Ir a la agenda» de la reserva (`booking-new`). -->
+  <a app-button variant="primary" [routerLink]="rutaDeAgenda">Ir a la agenda</a>
 } @else {
   <section class="turnos__bloque" aria-labelledby="turnos-propios">
     <h2 id="turnos-propios" class="turnos__titulo">Tus turnos</h2>
@@ -47,6 +50,18 @@
               </div>
               <div class="turnos__acciones">
                 <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
+                @if (esReprogramable(turno)) {
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    class="turnos__reprogramar"
+                    [isLoading]="operando() === turno.id"
+                    (clicked)="iniciarReprogramacion(turno)"
+                  >
+                    Reprogramar
+                  </button>
+                }
                 @if (esCancelable(turno)) {
                   <button
                     app-button
@@ -84,9 +99,36 @@
   <section class="turnos__bloque" aria-labelledby="pedir-turno">
     <h2 id="pedir-turno" class="turnos__titulo">Pedir un turno</h2>
 
+    @if (turnoEnReprogramacion(); as origen) {
+      <!-- Modo reprogramación: la misma grilla de abajo pasa a mover este
+           turno. El aviso dice cuál, y la salida no toca nada. -->
+      <div class="turnos__reprogramando">
+        <app-alert tone="info" title="Estás moviendo un turno" data-testid="turnos-reprogramando">
+          @if (origen.cuando !== null) {
+            Elegí el horario nuevo para el turno del
+            {{ origen.cuando | date: "EEEE d 'de' MMM 'a las' HH:mm" }}.
+          } @else {
+            Elegí el horario nuevo para este turno.
+          }
+        </app-alert>
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          class="turnos__volver"
+          (clicked)="cancelarReprogramacion()"
+        >
+          Volver sin mover el turno
+        </button>
+      </div>
+    }
+
     @if (organizacion() === null) {
       <app-alert tone="warning" title="Elegí una organización">
-        Para ver horarios hace falta saber en qué organización te querés atender.
+        <!-- El selector vive en el encabezado: decir sólo «elegí una» sin decir
+             dónde dejaba a la persona buscando un control que acá no está. -->
+        Elegí una organización desde el selector del encabezado para ver los horarios
+        disponibles.
       </app-alert>
     } @else if (sinRecursos()) {
       <app-alert tone="info" title="Todavía no hay agendas publicadas">
@@ -116,15 +158,30 @@
                     {{ horario.desde | date: 'HH:mm' }} – {{ horario.hasta | date: 'HH:mm' }}
                   </span>
                 </div>
-                <a
-                  app-button
-                  variant="primary"
-                  size="sm"
-                  [routerLink]="rutaDeReserva(horario)"
-                  [queryParams]="paramsDeReserva(horario)"
-                >
-                  Pedir este horario
-                </a>
+                @if (reprogramando() === null) {
+                  <a
+                    app-button
+                    variant="primary"
+                    size="sm"
+                    [routerLink]="rutaDeReserva(horario)"
+                    [queryParams]="paramsDeReserva(horario)"
+                  >
+                    Pedir este horario
+                  </a>
+                } @else {
+                  <!-- En modo reprogramación el mismo hueco mueve el turno en
+                       vez de pedir uno nuevo: no se navega a la reserva. -->
+                  <button
+                    app-button
+                    variant="primary"
+                    size="sm"
+                    class="turnos__mover"
+                    [isLoading]="operando() !== null"
+                    (clicked)="reprogramarA(horario)"
+                  >
+                    Mover acá
+                  </button>
+                }
               </li>
             }
           </ul>

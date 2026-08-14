@@ -8,7 +8,22 @@ export interface BookingStatusPresentation {
 }
 
 /**
- * Cómo se ve cada estado de un turno, por **código de catálogo**.
+ * El sufijo del código, sin el prefijo de módulo.
+ *
+ * El catálogo no es consistente —`BOOKING_CONFIRMED` a secas y
+ * `scheduling:BOOKING_REQUESTED` con prefijo, verificado contra la API viva—;
+ * comparar el segmento posterior al último `:` funciona con las dos formas.
+ * Lo usan tanto la presentación de abajo como las allowlists de acciones del
+ * portal: un solo normalizador, para que la etiqueta y el botón no puedan
+ * discrepar sobre qué estado es.
+ */
+export function sufijoDeCodigo(code: string): string {
+  return code.includes(':') ? code.slice(code.lastIndexOf(':') + 1) : code;
+}
+
+/**
+ * Cómo se ve cada estado de un turno, por **código de catálogo** (ya sin el
+ * prefijo de módulo: la clave es el sufijo que devuelve {@link sufijoDeCodigo}).
  *
  * ## Por qué la etiqueta no sale del catálogo
  *
@@ -17,7 +32,7 @@ export interface BookingStatusPresentation {
  * producto. Mostrarlo tal cual le pone al paciente una etiqueta de API en otro
  * idioma en la pantalla de sus turnos, que es exactamente lo que las
  * convenciones de UI prohíben: *«Never display a UUID, a raw column name or an
- * English API label: show the human Spanish label»*. Estas cuatro frases son la
+ * English API label: show the human Spanish label»*. Estas frases son la
  * decisión de la interfaz; el `code` es la identidad semántica que las ancla.
  *
  * ## Por qué el código y no el identificador
@@ -28,8 +43,15 @@ export interface BookingStatusPresentation {
  */
 const PRESENTACION_POR_CODIGO: Readonly<Record<string, BookingStatusPresentation>> =
   Object.freeze({
+    BOOKING_REQUESTED: { tone: 'info', label: 'Pedido' },
+    BOOKING_PENDING_CONFIRMATION: { tone: 'warning', label: 'Por confirmar' },
     BOOKING_CONFIRMED: { tone: 'success', label: 'Confirmado' },
     BOOKING_CHECKED_IN: { tone: 'info', label: 'Ya llegaste' },
+    // «Atendido» tiene dos códigos en el catálogo vivo: el estado de la cita y
+    // el evento con que el flujo la dio por hecha. Para el titular son lo mismo.
+    BOOKING_COMPLETED: { tone: 'secondary', label: 'Atendido' },
+    EV_BOOKING_DONE: { tone: 'secondary', label: 'Atendido' },
+    BOOKING_NO_SHOW: { tone: 'warning', label: 'No asististe' },
     BOOKING_CANCELLED: { tone: 'error', label: 'Cancelado' },
     BOOKING_RESCHEDULED: { tone: 'warning', label: 'Reprogramado' },
   });
@@ -64,5 +86,5 @@ export function toBookingStatusPresentation(
   if (concepto === undefined) {
     return SIN_RESOLVER;
   }
-  return PRESENTACION_POR_CODIGO[concepto.code] ?? SIN_RESOLVER;
+  return PRESENTACION_POR_CODIGO[sufijoDeCodigo(concepto.code)] ?? SIN_RESOLVER;
 }

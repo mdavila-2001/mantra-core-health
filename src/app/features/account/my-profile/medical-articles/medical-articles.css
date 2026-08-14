@@ -1,0 +1,97 @@
+/* Artículos médicos: publicar arriba, lo ya publicado debajo con sus
+   comentarios plegados. Sólo distribución. */
+
+:host {
+  display: block;
+}
+
+.articulos {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-6);
+}
+
+.articulos__titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.articulos__publicar form {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.articulos__lista {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.articulos__tarjeta {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.articulos__cuerpo {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--text-primary);
+}
+
+.articulos__fecha {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.articulos__comentarios {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.articulos__hilo {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.articulos__comentario {
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-inset);
+  border-radius: var(--r-sm);
+}
+
+.articulos__comentario-cuerpo {
+  margin: 0;
+}
+
+.articulos__comentario-fecha {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.articulos__responder {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.articulos__vacio {
+  margin: 0;
+  padding: var(--sp-5);
+  color: var(--text-secondary);
+  text-align: center;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.articulos__ir {
+  margin: 0;
+}

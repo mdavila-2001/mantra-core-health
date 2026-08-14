@@ -1,0 +1,83 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Datos compartidos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/datos-compartidos/identificadores-listado">Identificadores</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nuevo</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nuevo identificador</h1></div>
+        <p class="caption">Registrá el número oficial con el que se reconoce al titular fuera del sistema.</p>
+      </div>
+
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Valor: Ya existe un identificador de ese tipo con ese valor.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-33-l">Tipo de titular <span class="req">· obligatorio</span></span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-33-l" aria-describedby="c-33-a">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-33">Usuario</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-33" checked="">Paciente</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-33">Organización</label>
+        </div>
+        <p class="app-form-field__ayuda" id="c-33-a">A qué clase de registro pertenece el identificador.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-34">Titular de la cuenta <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-34" type="search" role="combobox" aria-expanded="true" aria-controls="c-34-m" aria-autocomplete="list" aria-describedby="c-34-a" value="quiroz" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-34-m" role="listbox" aria-label="Resultados de Titular de la cuenta" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5s-7-4.4-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.1-7 9.5-7 9.5z"></path></svg><span>Marcelo Quiroz Ledezma<br><span class="caption muted">Paciente · HC 20-14882</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5s-7-4.4-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.1-7 9.5-7 9.5z"></path></svg><span>Rosa Mamani Choque<br><span class="caption muted">Paciente · HC 20-15104</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg><span>Dra. Elena Vargas Rocha<br><span class="caption muted">Usuaria · Cardiología</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Marcelo Quiroz Ledezma <span class="muted">· Paciente · HC 20-14882</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-34-a">Escribí al menos 3 letras del nombre.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-35-l">Tipo <span class="req">· obligatorio</span></span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-35-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-35" checked="">Documento de identidad</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-35">Historia clínica</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-35">Pasaporte</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-36">Sistema</label>
+        <input class="app-input" app-input="" id="c-36" type="text" aria-describedby="c-36-a" value="" placeholder="urn:bo:segip:cedula-de-identidad">
+        <p class="app-form-field__ayuda" id="c-36-a">URI u OID del sistema que emitió el número. Opcional.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-37">Valor <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-37" type="text" required="" aria-invalid="true" value="" placeholder="6845123 LP">
+        <p class="app-form-field__error" data-solo-estado="error" hidden=""><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Ya existe un identificador de ese tipo con ese valor.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-38-l">Uso</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-38-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-38" checked="">Oficial</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-38">Secundario</label>
+        </div>
+      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/datos-compartidos/identificadores-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+    </form>

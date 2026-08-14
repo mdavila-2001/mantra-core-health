@@ -1,0 +1,128 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/terminologia/conjuntos-de-valor-listado">Conjuntos de valor</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nuevo</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nuevo conjunto de valores</h1></div>
+        <p class="caption">Se crean juntos el conjunto, su primera versión en borrador y las reglas de composición. Para que devuelva miembros hay que expandirlo después.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Código interno: ya existe un conjunto de valores con ese código.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-36">Código interno <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-36" type="text" required="" aria-invalid="true" aria-describedby="c-36-a" value="" placeholder="motivos-de-consulta">
+        <p class="app-form-field__error" data-solo-estado="error" hidden=""><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Ya existe un conjunto de valores con ese código.</p>
+        <p class="app-form-field__ayuda" id="c-36-a">Identificador corto y único. Hasta 255 caracteres.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-37">Nombre <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-37" type="text" required="" value="" placeholder="Motivos de consulta ambulatoria">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-38">URL canónica <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-38" type="url" required="" aria-describedby="c-38-a" value="" placeholder="https://terminologia.alovida.bo/ValueSet/motivos-de-consulta">
+        <p class="app-form-field__ayuda" id="c-38-a">URL canónica FHIR del conjunto. Tiene que empezar por https.</p>
+      </div>
+      </div>
+      <fieldset class="app-form-section" app-form-section="">
+        <legend class="app-form-section__legend"><span class="overline">Reglas de composición</span></legend>
+        <p class="app-form-section__desc">Cada regla suma o resta códigos de un sistema. Una regla cuyo sistema no tenga versión vigente se ignora al expandir y queda anotada en el registro.</p>
+        <div style="display:flex;flex-direction:column;gap:var(--e4)">
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Regla 1</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-39">Sistema de códigos <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-39" type="text" required="" value="SCO-2026-000097" placeholder="SCO-2026-000112">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-40-l">Operador</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-40-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-40">Está en la lista</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-40" checked="">Es un · incluye descendientes</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-41">Propiedad</label>
+        <input class="app-input" app-input="" id="c-41" type="text" value="capitulo" placeholder="capitulo">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-42">Valor</label>
+        <input class="app-input" app-input="" id="c-42" type="text" value="J00-J99" placeholder="J00-J99">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-43-l">Incluye</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-43-l" checked="" aria-describedby="c-43-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>La regla suma códigos al conjunto</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-43-a">Las reglas que restan se aplican al final, así el resultado no depende del orden de alta.</p>
+      </div>
+          </div>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Regla 2</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-44">Sistema de códigos <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-44" type="text" required="" value="SCO-2026-000097" placeholder="SCO-2026-000112">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-45-l">Operador</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-45-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-45" checked="">Está en la lista</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-45">Es un · incluye descendientes</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-46">Propiedad</label>
+        <input class="app-input" app-input="" id="c-46" type="text" value="" placeholder="capitulo">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-47">Valor</label>
+        <input class="app-input" app-input="" id="c-47" type="text" value="J18.0" placeholder="J00-J99">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-48-l">Incluye</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-48-l" aria-describedby="c-48-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>La regla resta códigos del conjunto</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-48-a">Las reglas que restan se aplican al final, así el resultado no depende del orden de alta.</p>
+      </div>
+          </div>
+        </div>
+          <div><button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Agregar otra regla</button></div>
+        </div>
+      </fieldset>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/conjuntos-de-valor-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+    </form>

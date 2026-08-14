@@ -1,0 +1,197 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/accesos/roles-listado">Roles</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/accesos/permisos-del-rol-listado">Permisos del rol</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Asignar</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Asignar permisos al rol</h1></div>
+        <p class="caption">Lo que dejes acá es lo que el rol va a tener: la lista reemplaza a la anterior por completo. Un permiso que saques deja de estar, aunque nadie lo haya tocado.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <div class="app-card app-card--inset" app-card="" style="padding:var(--e4);margin-bottom:var(--e6)">
+      <p class="overline">Rol</p>
+      <p class="num" style="margin-top:var(--e1)">ROL-2026-000015</p>
+      <p>Médico tratante <span class="muted">· CLINICIAN · hereda de Personal clínico</span></p>
+      <p style="margin-top:var(--e2)"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></p>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Permiso 2: este permiso no admite concesión directa y ya lo hereda del rol padre.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <fieldset class="app-form-section" app-form-section="">
+        <legend class="app-form-section__legend"><span class="overline">Permisos del rol</span></legend>
+        <p class="app-form-section__desc">Agregá una fila por permiso. La lista reemplaza a la que el rol tenga hoy: lo que no esté acá, se quita.</p>        <div style="display:flex;flex-direction:column;gap:var(--e5)">
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Permiso 1</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1-1">Permiso <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-1-1" type="search" aria-describedby="c-1-1-a" value="Leer la historia clínica" placeholder="Escribí al menos 3 letras">
+        </span>
+
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Leer la historia clínica <span class="muted">· clinical.record.read</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-1-1-a">Escribí al menos 3 letras del código o del nombre. Sólo se ofrecen permisos activos del catálogo.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-1-2-l">Efecto <span class="req">· obligatorio</span></span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-1-2-l" aria-describedby="c-1-2-a">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-1-2" checked="">Permitir</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-1-2">Denegar</label>
+        </div>
+        <p class="app-form-field__ayuda" id="c-1-2-a">Denegar prevalece siempre: si el rol padre permite y acá denegás, queda denegado.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-1-3-l">Ámbito</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-1-3-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-1-3">Propio</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-1-3" checked="">Sucursal</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-1-3">Organización</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-1-3">Global</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1-4">Restricción ABAC</label>
+        <textarea class="app-textarea app-textarea--mono" app-textarea="" id="c-1-4" rows="3" aria-describedby="c-1-4-a">{ "branchId": "$user.branchId" }</textarea>
+        <p class="app-form-field__ayuda" id="c-1-4-a">Opcional. JSON con las condiciones que además tienen que cumplirse. Si está mal escrito, el error se marca en el borde.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1-5">Conjunto de campos permitidos</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-1-5" type="search" value="" placeholder="Escribí al menos 3 letras">
+        </span>
+
+
+      </div>
+          </div>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Permiso 2</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2-1">Permiso <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-2-1" type="search" value="Cargar evoluciones" placeholder="Escribí al menos 3 letras">
+        </span>
+
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Cargar evoluciones <span class="muted">· clinical.record.write</span></p>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-2-2-l">Efecto <span class="req">· obligatorio</span></span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-2-2-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2-2" checked="">Permitir</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2-2">Denegar</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-2-3-l">Ámbito</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-2-3-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2-3">Propio</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2-3" checked="">Sucursal</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2-3">Organización</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2-3">Global</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2-4">Restricción ABAC</label>
+        <textarea class="app-textarea app-textarea--mono" app-textarea="" id="c-2-4" rows="3" aria-describedby="c-2-4-a"></textarea>
+        <p class="app-form-field__ayuda" id="c-2-4-a">Opcional. JSON con las condiciones que además tienen que cumplirse. Si está mal escrito, el error se marca en el borde.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2-5">Conjunto de campos permitidos</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-2-5" type="search" value="Campos de evolución" placeholder="Escribí al menos 3 letras">
+        </span>
+
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Campos de evolución <span class="muted">· vs-evolucion-basica</span></p>
+        </div>
+      </div>
+          </div>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Permiso 3</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3-1">Permiso <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-3-1" type="search" value="Leer las notas de salud mental" placeholder="Escribí al menos 3 letras">
+        </span>
+
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Leer las notas de salud mental <span class="muted">· clinical.note.psych.read</span></p>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-3-2-l">Efecto <span class="req">· obligatorio</span></span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-3-2-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3-2">Permitir</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3-2" checked="">Denegar</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-3-3-l">Ámbito</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-3-3-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3-3" checked="">Propio</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3-3">Sucursal</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3-3">Organización</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3-3">Global</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3-4">Restricción ABAC</label>
+        <textarea class="app-textarea app-textarea--mono" app-textarea="" id="c-3-4" rows="3" aria-describedby="c-3-4-a"></textarea>
+        <p class="app-form-field__ayuda" id="c-3-4-a">Opcional. JSON con las condiciones que además tienen que cumplirse. Si está mal escrito, el error se marca en el borde.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3-5">Conjunto de campos permitidos</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-3-5" type="search" value="" placeholder="Escribí al menos 3 letras">
+        </span>
+
+
+      </div>
+          </div>
+        </div>
+        <div><button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Agregar un permiso</button></div>
+        </div>
+      </fieldset>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora, y reemplaza los permisos activos del rol.</p>
+        <a app-button="" data-variante="secundario" routerLink="/accesos/permisos-del-rol-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar los permisos</button>
+      </div>
+    </form>
