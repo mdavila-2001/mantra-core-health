@@ -52,6 +52,7 @@ import {
 } from '../clinical-record.routes';
 import { AttachmentsBlock } from './attachments-block/attachments-block';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
+import { DiagnosticsBlock } from './diagnostics-block/diagnostics-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
@@ -161,6 +162,7 @@ interface Expediente {
     DatePipe,
     AttachmentsBlock,
     DiagnosisBlock,
+    DiagnosticsBlock,
     FormActions,
     FormField,
     MedicationBlock,

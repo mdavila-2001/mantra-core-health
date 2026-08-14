@@ -155,8 +155,32 @@ describe('PatientChart', () => {
     }
   }
 
+  /**
+   * El bloque de laboratorio e imagenología lee **lo suyo**, a diferencia del de
+   * medicación, al que el expediente le baja las recetas ya hechas.
+   *
+   * Y es a propósito: el circuito diagnóstico no sale de
+   * `GET /clinical/patients/:id/summary` —es otro módulo y otra lectura—, así
+   * que el bloque la hace suya y el expediente no cambia por eso. El precio es
+   * esta petición, que aparece en cualquier prueba que llegue a pintar la ficha
+   * y que acá sólo hay que drenar: lo que el bloque hace con la respuesta lo
+   * fijan sus propias pruebas.
+   */
+  function responderCircuitoDiagnostico(): void {
+    for (const req of http.match((r) => r.url.startsWith('/diagnostics/patients/'))) {
+      req.flush({
+        patientProfileId: 'p-1',
+        orders: [],
+        reports: [],
+        limit: 25,
+        truncated: [],
+      });
+    }
+  }
+
   afterEach(() => {
     responderCatalogoDeMedicacion();
+    responderCircuitoDiagnostico();
     http.verify();
   });
 

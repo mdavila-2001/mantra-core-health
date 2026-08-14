@@ -92,6 +92,79 @@ sin reabrir esta.
 `accounting.client.ts` (leo `GET /practices` directo desde mi propio cliente para el selector de
 práctica, no importo el cliente de contabilidad — son dos dominios distintos aunque el endpoint
 sea el mismo), y todo `redsat/`.
+---
+
+## Sesión 2026-08-14 · Carril 4 — punto 10, laboratorios e imagenología
+
+**Rama:** `carril-4/laboratorios-imagenologia` (los dos repos) · **Base:** `dev` en frontend,
+`master` en backend (`src/modules/diagnostics/` y `src/modules/clinical/` son idénticos entre
+`master` y `origin/dev`, así que la base no cambia nada de lo que toco) ·
+**Plan:** `CARRIL-4-laboratorios-imagenologia.md` · `CARRILES-2026-08-14-README.md`
+
+### Tres correcciones al plan del carril, encontradas al leer el código
+
+1. **El carril no era «casi enteramente frontend».** El plan decía que los 20 endpoints ya
+   construidos probablemente alcanzaban. No alcanzaban: `diagnostics` **no tenía ninguna
+   lectura por paciente**. Se podía abrir una orden de trabajo, acesionar un espécimen, ingerir
+   el mensaje del analizador y liberar el informe, y nadie podía preguntar qué se le pidió a una
+   persona ni qué volvió. Es el mismo defecto que ya había tenido `scheduling` —lo dice su
+   propia fila en `navigation.map.ts`— y que `ClinicalReadService` nombra para `clinical`.
+2. **El alta de la orden ya existía, pero en otro módulo.** No hay que extender
+   `diagnostics-lab`/`diagnostics-imaging`: una orden diagnóstica **es** una orden de servicio
+   con categoría, y se crea con `POST /clinical/service-requests`, que ya acepta
+   `patientProfileId` + `encounterId` + `codeConceptId`. Un alta propia en `diagnostics` habría
+   sido una segunda puerta a la misma tabla.
+3. **No hace falta ninguna columna nueva, así que el bloqueador de `SQL/` no aplica.**
+   `clinical.service_requests` ya tiene `patient_profile_id`, `encounter_id` y
+   `category_concept_id`; `clinical.diagnostic_reports` ya tiene `patient_profile_id` y
+   `service_request_id`. Lo único que faltaba era el **concepto** de categoría «imagenología»
+   (existía sólo `SR_LAB`), y eso se declara en `diagnostics.concepts.ts` — que es exactamente
+   para lo que `defineModuleConcepts` espacia las claves por módulo, sin tocar ningún archivo
+   compartido ni ningún patch.
+
+### Qué creo (no choca con nada)
+
+**Backend** — todo dentro de `src/modules/diagnostics/`: `dto/orders.dto.ts`,
+`repositories/diagnostic-orders.repository.ts`, `services/diagnostics-orders.service.ts`,
+`controllers/diagnostics-orders.controller.ts` (+ sus dos `.spec.ts`).
+Endpoint nuevo: `GET /diagnostics/patients/:patientProfileId/orders`.
+
+**Frontend** — `core/data-access/diagnostics/` (client + types + spec),
+`features/diagnostics/` (la cola del laboratorio) y
+`features/clinical-record/patient-chart/diagnostics-block/`.
+
+### Qué toco de la tabla de archivos compartidos, y por qué
+
+| Archivo | Qué le agrego |
+|---|---|
+| `navigation.map.ts` | una fila `diagnostics`, grupo **Atención**, al final del grupo. Roles `CLINICIAN`/`PRACTITIONER`, que son los `@Roles` reales de los 4 controladores de M20 y del de órdenes de M08 |
+| `app.routes.ts` | una entrada en `PANTALLAS_DIFERIDAS` |
+| `patient-chart.ts` (+ `.html`) | import de `DiagnosticsBlock` + una entrada en el ensamblado y un bloque en la plantilla, al final. **No** toco `registrarEncuentro`/`cerrarEncuentro` |
+| `patient-chart.spec.ts` | un `responderCircuitoDiagnostico()` en el `afterEach`. Hizo falta porque mi bloque **lee lo suyo** (el circuito diagnóstico no sale de `GET /clinical/patients/:id/summary`), y esa petición aparece en toda prueba que pinte la ficha |
+| `diagnostics.concepts.ts` | `SERVICE_REQUEST_CATEGORY_IMAGING`. Es de mi módulo, no compartido |
+
+### Aviso para el Carril 3 (nos cruzamos en el mismo working tree)
+
+A mitad de sesión, `patient-chart.spec.ts` quedó en rojo por `<app-procedures-block>`, que
+dejaba tres peticiones abiertas que el `afterEach` del expediente no drenaba
+(`GET /procedure-cases`, `GET /dental-procedures`, `GET /dental-procedures/catalog`). **No las
+toqué** —son de tu carril— y las resolviste vos mismo mientras tanto, con
+`responderHistoricoDeProcedimientos()`. Queda anotado porque las dos adiciones viven en el
+**mismo `afterEach`**: si hay conflicto al mezclar es de dos bloques contiguos y se aceptan los
+dos. Con las dos puestas, la suite entera queda verde (213 archivos, 2013 pruebas).
+
+Mi commit **no incluye** tu mitad: los archivos compartidos se pusieron en el índice con sólo
+mis líneas (`git hash-object` + `git update-index`), porque el working tree tenía las dos
+adiciones entremezcladas y `git add` del archivo entero se habría llevado tu trabajo a medio
+cablear dentro de mi rama.
+
+### Lo que NO toco
+
+`agenda.ts`/`booking-new.ts` (los leí como referencia) · `medication-block/` ·
+`diagnosis-block/` (distinto de mi `diagnostics-block/`: otro dominio y otro archivo) ·
+`procedures-block/` (carril 3) · `specialty-form-block/` (carril 2) · `budget-block/` (carril 1) ·
+todo `redsat/` · `package.json` (ninguno de los dos repos) ·
+`src/modules/clinical/` en el backend (leo sus entidades y sus conceptos, no los edito) · `SQL/`.
 
 ---
 

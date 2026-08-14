@@ -143,6 +143,17 @@
          una decisión de esta pantalla. -->
     <app-attachments-block [patientProfileId]="pacienteDeLaFicha()" />
 
+    <!-- ─── Laboratorio e imagenología ───────────────────────────────────
+         Mismo lugar y mismo criterio que los dos de arriba: se pide desde el
+         encuentro abierto. Sin `(cambio)`, y no por olvido: el circuito
+         diagnóstico no sale de `GET /clinical/patients/:id/summary`, así que el
+         bloque lee lo suyo y se relee solo. Avisar acá haría que el expediente
+         recargara cinco bloques que no cambiaron. -->
+    <app-diagnostics-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+    />
+
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->
