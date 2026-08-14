@@ -5,6 +5,97 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión en curso · Carril R2-6 — el glosario con etiquetas, en castellano
+
+**Empezó:** 2026-08-14 · **Ramas:** `carril-r2-6/glosario-etiquetas` en los dos repos ·
+**Base:** `dev` en frontend, `dev` en backend (el working tree del backend está en `dev`, no en
+`master`; lo único sin commitear ahí es `yarn.lock`, ajeno a este carril) ·
+**Plan:** `CARRIL-R2-6-glosario-etiquetas.md` · `CARRILES-R2-2026-08-14-README.md`
+
+### 🟡 Aviso obligatorio: toco `GET /terminology/concepts`, que consume medio frontend
+
+Es la lectura que usan `readConceptLabels` (agenda, perfil profesional, diagnósticos, ficha
+clínica) y `searchConcepts` (catálogo de administración). **El cambio es aditivo y
+retrocompatible por construcción:** dos parámetros nuevos y opcionales (`lang`,
+`includeValueSets`) y dos campos nuevos y opcionales en cada ítem (`translated`, `valueSets`).
+**Sin `lang`, la respuesta es byte a byte la de hoy** — hay una prueba que lo fija, no es una
+promesa. Ninguna pantalla existente manda esos parámetros y ninguna cambia de comportamiento.
+
+`src/modules/terminology/**` es exclusivo de este carril esta ronda, así que no hay con quién
+chocar dentro del módulo.
+
+### Tres correcciones al plan del carril, encontradas al leer el código
+
+El documento del carril daba por incierto lo que el repo sí sostiene. Las tres cambian qué hay
+que escribir, así que quedan acá antes que en el commit:
+
+1. **Las etiquetas ya están sembradas y ya están en castellano.** El plan temía que no hubiera de
+   dónde sacar la lista. Hay 52 conjuntos de valores, con nombre y descripción en castellano,
+   materializados por `DynamicEnumSeedService` desde `dynamic-enum-catalog.ts` («Género
+   administrativo», «Diagnóstico», «Severidad», «Lateralidad»…). El listado que faltaba era el del
+   **cliente del frontend**, no el del backend.
+2. **El inverso concepto → conjuntos de valores no hace falta pedirlo como bloqueador: lo
+   implemento acá.** El plan lo dejaba como «salida 2, se pide si el cliente lo quiere». Como el
+   módulo `terminology` es exclusivo de este carril, sale más barato hacerlo bien que declararlo
+   pendiente: `GET /terminology/concepts?includeValueSets=true` resuelve la pertenencia de los
+   ≤50 conceptos devueltos **en una sola consulta** sobre `value_set_members`, no en cientos de
+   `$expand` desde el navegador —que es lo que el plan prohíbe explícitamente, y con razón—. Con
+   eso, la definición de hecho «cada término muestra sus etiquetas» se cumple también en el
+   resultado de una búsqueda por texto, no sólo al navegar por categoría.
+3. **El problema del castellano era peor de lo que decía el plan, y en un sitio distinto.** No es
+   sólo que el `display` venga en inglés: **`catalog_concepts.definition` está vacía para todo el
+   catálogo sembrado** (`TerminologySeedService` nunca la escribe). O sea que la segunda columna
+   de la tabla que rebotó —«Qué significa»— estaba en blanco para *todos* los términos. Un
+   glosario sin definiciones no es un glosario aunque los nombres estén traducidos, así que este
+   carril siembra **las dos cosas**: la designación `ES` (el nombre) y la definición en castellano.
+
+### Dónde va la definición en castellano, y por qué no en `catalog_concepts.definition`
+
+`concept_designations` guarda **un texto por idioma** (`value`), y no tiene columna de definición:
+sirve para el nombre, no para la explicación. Escribir la definición castellana en
+`catalog_concepts.definition` la dejaría sin idioma declarado en una tabla que es multilingüe por
+diseño — y el día que haya una segunda lengua no habría dónde ponerla.
+
+Va en `concept_properties` con `property_code = 'definition-es'`, que es exactamente para lo que
+esa tabla existe, y que ya tiene lectura en lote (`findPropertyForConcepts`): una consulta para
+los ≤50 conceptos de la página, sin N+1. `catalog_concepts.definition` **no se toca**.
+
+### Archivos nuevos (no chocan con nada)
+
+```text
+backend  src/common/seed/terminology-designations.es.ts   (+ .spec.ts)
+frontend src/app/features/glossary/glossary-term.{ts,html,css,spec.ts}
+```
+
+### Archivos existentes que toco, y qué le hago a cada uno
+
+| Repo | Archivo | Qué le hago |
+|---|---|---|
+| backend | `terminology/dto/search-concepts.dto.ts` | `lang`/`includeValueSets` en la petición; `translated` y `valueSets[]` **opcionales** al final del ítem; `ConceptDetailDto` nuevo |
+| backend | `terminology/dto/search-value-sets.dto.ts` | `memberCount` opcional al final del ítem — es el conteo que el cliente pidió ver en cada etiqueta |
+| backend | `terminology/controllers/terminology-concepts.controller.ts` | dos `@Query` nuevos en el `@Get()` existente, y un `@Get(':conceptId')` nuevo al final |
+| backend | `terminology/services/concepts.service.ts` | `searchConcepts` resuelve idioma y etiquetas; `readConcept` nuevo |
+| backend | `terminology/services/value-sets.service.ts` | `searchValueSets` suma el conteo de miembros (una consulta agrupada) |
+| backend | `terminology/repositories/{concept-designations,value-sets}.repository.ts` | tres lecturas en lote nuevas, al final |
+| backend | **`src/common/seed/terminology-seed.service.ts`** | **compartido con R2-3 y R2-5**: un nivel nuevo (designaciones `ES` + definiciones), **después** de los conceptos. No toco los cinco niveles existentes ni el orden de los flush |
+| frontend | `core/data-access/terminology/terminology.client.ts` · `.types.ts` | **sólo adiciones al final**. `searchConcepts`, `readExpansion`, `readAllOptions` y `readConceptLabels` quedan **intactos**, y `ValueSetOption` tampoco se toca |
+| frontend | `features/glossary/glossary.{ts,html,css,spec.ts}` | rehecha: se va `app-data-table`, entra la navegación por etiquetas |
+| frontend | `src/app/app.routes.ts` | una entrada nueva al final de `PANTALLAS_HIJAS`: `glossary/:conceptId` |
+
+**`src/common/seed/module-concepts.ts` no hace falta tocarlo** —el README de la ronda me autorizaba
+a hacerlo—: este carril no declara conceptos nuevos, sólo designaciones y propiedades de los que
+ya existen. Queda dicho para que R2-3 y R2-5 sepan que ese archivo sigue libre.
+
+### Lo que NO toco
+
+`features/admin/terminology/terminology-catalog.ts` (es la pantalla del admin) ·
+`readExpansion`/`searchConcepts`/`readConceptLabels` · `ValueSetOption` ·
+`navigation.map.ts` (la sección `glossary` ya está donde tiene que estar) · `package.json` ·
+`proxy.conf*.json` (el prefijo `/terminology` ya está) · todo `features/redsat/` ·
+`catalog_concepts.definition` · `SQL/` (este carril no necesita ni una columna nueva).
+
+---
+
 ## Sesión en curso · Carril 1 — catálogo de servicios, presupuestos y PDF
 
 **Empezó:** 2026-08-14 · **Ramas:** `carril-1/catalogo-presupuestos-pdf` en los dos repos,
@@ -1079,3 +1170,107 @@ servicio ya pide tres). Es trabajo a medio camino de otra sesión, no de este ca
 `yarn lint` · `yarn typecheck` · `yarn test` · `yarn build` en este repo.
 `yarn lint` · `yarn typecheck` · `yarn test` en el backend.
 
+---
+
+## Sesión en curso · Carril R2-5 — formularios estándar por especialidad, catalogados
+
+**Empezó:** 2026-08-14 · **Ramas:** `carril-r2-5/formularios-estandar` en los dos repos, desde
+`dev` en cada uno (el backend está hoy en `dev`, no en `master`).
+Plan completo en `CARRIL-R2-5-formularios-estandar.md`; índice de la ronda en
+`CARRILES-R2-2026-08-14-README.md`.
+
+Punto 5 del reclamo: «NO ESTAN LOS FORMULARIOS: DESCARGAR DE INTERNET LA VERSION GENERAL BASE DE
+CADA FORMULARIO ESTANDAR POR ESPECIALIDAD Y DEBE ESTAR CATALOGADO.» La ronda anterior entregó el
+motor (armar plantillas a mano); **este carril carga el contenido y lo cataloga**. El motor no se
+reescribe.
+
+### 🔴 Bloqueador: `chart.specialty_chart_templates` no tiene dónde guardar la procedencia
+
+El cliente pide que cada formulario esté **catalogado**, y el carril exige que cada uno guarde de
+dónde salió —organismo, URL, licencia, versión de origen, fecha de descarga— como **campo del
+catálogo, no como nota suelta**. La entidad no tiene ninguna de esas columnas:
+
+`mantra-core-health-api/src/modules/chart/entities/specialty_chart_templates.entity.ts` declara
+exactamente `id`, `specialty_concept_id`, `tenant_id`, `code`, `name`, `section_id`, `version`,
+`status_concept_id` y las cuatro de auditoría. **Ni una columna de procedencia.** Tampoco la
+sección que aloja el esquema (`forms.dynamic_field_sections`): `code`, `name`,
+`parent_section_id`, `ordinal`, `state_concept_id` y auditoría, sin ningún `jsonb`.
+
+**No se agregó la columna a mano** — `SQL/` no vive en ninguno de los dos repos y el pipeline es
+`.puml` → `gen_ddl.py` → `SQL/patches/` → base (advertencia de `CARRILES-R2-2026-08-14-README.md`
+y P14 de `PENDIENTES-BACKEND.md`). Lo que haría falta, para quien tenga acceso al modelo:
+
+| Tabla | Columna | Tipo | Por qué |
+|---|---|---|---|
+| `chart.specialty_chart_templates` | `source_organization` | `varchar` | Organismo que publica el formulario |
+| `chart.specialty_chart_templates` | `source_url` | `text` | De dónde se bajó |
+| `chart.specialty_chart_templates` | `source_license` | `varchar` | Licencia bajo la que se puede usar |
+| `chart.specialty_chart_templates` | `source_version` | `varchar` | Versión/edición del formulario original |
+| `chart.specialty_chart_templates` | `source_retrieved_at` | `date` | Cuándo se descargó |
+
+**Mientras tanto (y esto va explícito en el PR, no implícito):** la procedencia viaja **dentro del
+propio esquema de la plantilla, en una clave reservada** — un `forms.dynamic_field_definitions`
+de código `__catalog__` cuyo `default_value_json` (jsonb, ya existente) guarda la ficha entera.
+`ChartTemplatesService.resolveFields` lo **saca de `fields`** y lo publica como `provenance` en
+`ChartTemplateResponseDto`, así que ningún consumidor lo ve como campo a completar —
+`specialty-form-block` incluido, que no se tocó. El día que existan las columnas, el seed escribe
+ahí y la clave reservada se retira sin cambiar el contrato del frontend.
+
+### Especialidades: no existían como conceptos
+
+`terminology` sólo tenía `profiles:SPECIALTY_GENERAL` (`dynamic-enum-catalog.ts:338-343`). Sin
+concepto no hay `specialty_concept_id` al que colgar una plantilla, así que **las siembra este
+mismo carril**, en su propio servicio, como pide el plan. **No toqué `terminology-seed.service.ts`
+ni `module-concepts.ts`** — son de R2-6 en esta ronda.
+
+### Archivos nuevos (no chocan con nada)
+
+**Backend (`mantra-core-health-api`)**
+
+```text
+src/common/seed/clinical-forms-seed.service.ts            + .spec.ts
+src/common/seed/data/clinical-forms/catalog.ts            barrel tipado de las definiciones
+src/common/seed/data/clinical-forms/<especialidad>/*.json 16 formularios estándar
+```
+
+**Frontend (`mantra-core-health`)**
+
+```text
+src/app/features/admin/clinical-forms/forms-catalog.ts + .html + .css + .spec.ts
+```
+
+### Archivos existentes que toco
+
+| Repo | Archivo | Qué le hago |
+|---|---|---|
+| api | `src/common/seed/seed.module.ts` | Una línea al final de `providers` y otra de `exports`, más las entidades del seed en `forReference`. **Nada existente se reordena** — es el patrón que el README de carriles pide para `src/common/seed/` compartido con R2-3 y R2-6 |
+| api | `src/common/seed/seed-bootstrap.service.ts` | Una llamada `runDependent` **al final**, antes del admin de arranque. Sin esto el seed queda registrado pero no corre |
+| api | `src/modules/chart/services/chart-templates.service.ts` | `resolveFields` filtra la clave reservada y `toResponse` publica `provenance`. **Aditivo**: una plantilla sin procedencia responde exactamente lo mismo que hoy |
+| api | `src/modules/chart/dto/templates.dto.ts` | `ChartTemplateProvenanceDto` + el campo opcional `provenance` en la respuesta. Nada existente cambia de forma |
+| api | `src/modules/chart/repositories/chart-templates.repository.ts` | `CreateTemplateFieldData` acepta `defaultValueJson?` opcional. Aditivo |
+| api | `tsconfig.json` | `"resolveJsonModule": true`. Hace falta para que las definiciones vivan en `.json` versionado, como pide el carril, en vez de tipeadas dentro de un `.ts`. Verificado que `tsc` copia los `.json` a `dist/` y que jest los resuelve |
+| front | `src/app/features/admin/clinical-forms/clinical-forms.{ts,html}` | Import del catálogo + una sección **al final** de la plantilla. La pantalla de armado no se reescribe |
+| front | `src/app/core/data-access/chart-templates/chart-templates.types.ts` | `ChartTemplateProvenance` y el campo opcional `provenance`. **Sólo tipos nuevos**; el cliente no cambia |
+
+**No toco `navigation.map.ts` ni `app.routes.ts`**: la sección «Formularios clínicos» ya existe y
+el catálogo va adentro de esa pantalla, no en una ruta nueva. Ni `forms.client.ts`,
+`patient-chart.ts`, `specialty-form-block/`, ni el módulo `forms` del backend.
+
+### 🟡 Formularios que quedaron afuera por licencia
+
+Van listados con su reemplazo libre en el PR y en el README del directorio de datos
+(`src/common/seed/data/clinical-forms/README.md`). Resumen: los instrumentos propietarios de
+sociedades científicas y editoriales (MMSE, Beck, AUDIT en su versión editorial, escalas de
+sociedades de cardiología) **no se cargaron**. Se cargó únicamente material de dominio público o
+con licencia abierta —OMS/OPS, CDC, ministerios de salud— y cada archivo guarda su URL y su
+licencia. No se omitió nada en silencio.
+
+### ⚠️ Del otro repo: `yarn.lock` del backend llegó ya modificado
+
+Al arrancar, `mantra-core-health-api` tenía `yarn.lock` con una entrada borrada
+(`@aws-sdk/s3-request-presigner`) sin commitear, de otra sesión. **No lo toqué ni lo restauré.**
+
+### Verificación
+
+`yarn lint` · `yarn typecheck` · `yarn test` · `yarn build` en el frontend.
+`yarn lint` · `yarn typecheck` · `yarn test` · `yarn test:integration` en el backend.
