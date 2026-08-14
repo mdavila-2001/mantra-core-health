@@ -130,6 +130,7 @@ describe('ShellLayout', () => {
     // armazón porque no es una sección del producto.
     expect(rutasDelMenu()).toEqual([
       '/dashboard',
+      '/feed',
       '/my-account',
       '/my-account/appointments',
       '/my-account/identity/verify',

@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-719 archivos TypeScript bajo `src/` y 2731 importaciones internas.
+723 archivos TypeScript bajo `src/` y 2746 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -168,18 +168,18 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 |---|---:|
 | `src/app/core/view-state/view-state.types.ts` | 122 |
 | `src/app/core/view-state/view-state.ts` | 107 |
-| `src/app/shared/components/atoms/button/button.ts` | 105 |
+| `src/app/shared/components/atoms/button/button.ts` | 107 |
 | `src/app/core/http/error-to-view-state.ts` | 101 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 99 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 98 |
 | `src/app/shared/components/molecules/form-field/form-field.ts` | 98 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 98 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 97 |
 | `src/app/core/navigation/navigation.service.ts` | 92 |
 | `src/app/shared/components/atoms/input/input.ts` | 87 |
 | `src/app/shared/a11y/announce-on-appear.ts` | 77 |
 | `src/app/shared/components/organisms/form-actions/form-actions.ts` | 76 |
 | `src/app/shared/components/organisms/form-section/form-section.ts` | 67 |
 | `src/app/shared/forms/form-support.ts` | 61 |
-| `src/app/shared/components/molecules/card/card.ts` | 37 |
+| `src/app/shared/components/molecules/card/card.ts` | 38 |
 | `src/app/shared/components/atoms/textarea/textarea.ts` | 35 |
 | `src/app/shared/components/molecules/radio-group/radio-group.ts` | 32 |
 | `src/app/shared/components/molecules/radio/radio.ts` | 31 |
@@ -191,9 +191,9 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 659 |
-| `@angular/common` | 341 |
-| `@angular/router` | 329 |
+| `@angular/core` | 663 |
+| `@angular/common` | 346 |
+| `@angular/router` | 330 |
 | `@angular/forms` | 88 |
 | `rxjs` | 66 |
 | `node:fs` | 13 |

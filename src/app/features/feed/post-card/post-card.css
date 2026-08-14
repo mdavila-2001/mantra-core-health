@@ -1,0 +1,52 @@
+.publicacion__cabecera {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.publicacion__autor {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.publicacion__fecha {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.publicacion__cuerpo {
+  margin: var(--e3) 0 0;
+  color: var(--text-primary);
+  /* El cuerpo de una publicación puede traer saltos de línea escritos por su
+     autor: respetarlos es la diferencia entre una lista y un párrafo pegado. */
+  white-space: pre-wrap;
+}
+
+.publicacion__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin-top: var(--e3);
+  flex-wrap: wrap;
+}
+
+.publicacion__sin-perfil,
+.publicacion__conteo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.publicacion__conteo {
+  /* Cifras tabulares: una columna de conteos que no baila al cambiar. */
+  font-variant-numeric: tabular-nums;
+}
+
+.publicacion__error {
+  margin: var(--e2) 0 0;
+  color: var(--st-error-fg);
+  font-size: var(--fs-sm);
+}
