@@ -98,6 +98,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Consultá la historia clínica de los pacientes que atendés.',
     module: 'M08 clinical · M15 chart',
   },
+  {
+    path: 'diagnostics',
+    label: 'Laboratorio e imagen',
+    group: 'Atención',
+    icon: 'results',
+    // Los mismos dos roles que declaran los cuatro controladores de M20 y el de
+    // órdenes clínicas de M08: es PHI y la escribe y la lee quien atiende.
+    roles: ['CLINICIAN', 'PRACTITIONER'],
+    // Encendida con `GET /diagnostics/work-orders` —que ya existía— y con la
+    // slice de lectura por paciente `GET /diagnostics/patients/:id/orders`, que
+    // no. El módulo repetía exactamente el defecto que había tenido agenda:
+    // veinte endpoints construidos, ninguna lectura que dijera qué se le pidió a
+    // una persona ni qué volvió. Se pedía un laboratorio y el pedido dejaba de
+    // existir para la pantalla apenas se enviaba.
+    availability: 'disponible',
+    summary: 'Seguí la cola del laboratorio y los estudios que pediste.',
+    module: 'M20 diagnostics · M08 clinical',
+  },
 
   /* -- Administración · fase 0, la fundación ------------------------------- */
 

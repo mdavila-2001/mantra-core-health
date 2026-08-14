@@ -1,6 +1,6 @@
 # API de backend
 
-Las 156 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 169 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 156 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` `/procedure-cases` `/dental-procedures` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -554,11 +554,64 @@ contrasta con la cabecera `X-Tenant-Id` y responde **403** si difieren. En el
 sujeto conviene omitirlo y dejar que lo resuelva el interceptor; en la geocerca
 tiene que ser el tenant activo de la sesión.
 
-### `FilesClient` — 1 operación
+### `ProceduresClient` — 4 operaciones · carril 3
+
+El histórico de procedimientos quirúrgicos y odontológicos (M53).
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) |
+| `GET` | `/procedure-cases` | `ProceduresBlock` (ficha del paciente) |
+| `GET` | `/procedure-cases/:caseId` | `ProceduresBlock` |
+| `GET` | `/dental-procedures` | `ProceduresBlock` |
+| `GET` | `/dental-procedures/catalog` | `ProceduresBlock` |
+| `POST` | `/dental-procedures` | `ProceduresBlock` |
+
+### `DiagnosticsClient` — 4 operaciones · carril 4
+
+Laboratorios e imagenología (M52).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostics/patients/:patientProfileId/orders` | `DiagnosticsBlock` · `Diagnostics` |
+| `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` | `DiagnosticsBlock` · `Diagnostics` |
+| `GET` | `/diagnostics/work-orders` | `Diagnostics` |
+| `POST` | `/clinical/service-requests` | `Diagnostics` (pedir un estudio) |
+
+> **Declaradas acá al resolver el conflicto del carril 15, no por sus autores.**
+> Los carriles 3 y 4 entraron a `dev` sin pasar por esta página, y eso dejó el
+> job `verificar` en rojo para todo el mundo: `check-api-contract-drift` no
+> distingue «lo agregó otro» de «lo agregué yo». Si algún consumidor de arriba
+> quedó mal atribuido, corregilo — se dedujo de quién importa cada cliente.
+
+### `FilesClient` — 5 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) · `AttachmentUploader` |
+| `GET` | `/common/files/links` | `AttachmentsBlock` (adjuntos de la ficha) |
+| `POST` | `/common/files/:fileId/links` | `AttachmentUploader` |
+| `POST` | `/common/files/:fileId/download-url` | `AttachmentsBlock` |
+| `DELETE` | `/common/files/:fileId` | — (borrado lógico, sin pantalla todavía) |
+
+#### Adjuntar son dos operaciones, no una
+
+`upload` deja el archivo en el sistema; `:fileId/links` lo cuelga de un recurso.
+Están separadas en el backend porque **el mismo archivo puede adjuntarse en más
+de un lado**, y acá se respetan como dos llamadas.
+
+Importa para el mensaje de error: si la segunda falla, el archivo **ya existe**.
+Decir «no se pudo subir» llevaría a reintentar y dejar dos copias.
+
+#### Los adjuntos cuelgan del paciente, no del encuentro
+
+`file_links.owner_type` admite `USER`, `PATIENT` y `TENANT` — **no hay
+`ENCOUNTER`**. Es una restricción del modelo: quien quiera adjuntos por episodio
+tiene que promoverlo al `.puml` primero.
+
+#### La URL de descarga se pide al hacer clic
+
+Es firmada y vence. Emitir una por adjunto al pintar la lista dejaría veinte
+enlaces vivos a datos clínicos de los que diecinueve nadie abrió.
 
 ### `CommunityClient` — 20 operaciones
 
