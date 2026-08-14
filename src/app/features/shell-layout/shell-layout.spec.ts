@@ -130,6 +130,9 @@ describe('ShellLayout', () => {
     // armazón porque no es una sección del producto.
     expect(rutasDelMenu()).toEqual([
       '/dashboard',
+      // El glosario tampoco: accesible por cada profesional, no sólo por
+      // quien administra.
+      '/glossary',
       '/my-account',
       '/my-account/appointments',
       '/my-account/identity/verify',

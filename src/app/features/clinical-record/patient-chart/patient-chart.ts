@@ -52,6 +52,7 @@ import {
 } from '../clinical-record.routes';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
+import { SpecialtyFormBlock } from './specialty-form-block/specialty-form-block';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -163,6 +164,7 @@ interface Expediente {
     FormField,
     MedicationBlock,
     PageHeader,
+    SpecialtyFormBlock,
     StatusSeal,
     Tab,
     Tabs,

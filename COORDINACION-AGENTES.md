@@ -5,6 +5,81 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión en curso · Carril 2 — formularios clínicos por especialidad y glosario accesible
+
+**Empezó:** 2026-08-14 · **Rama:** `carril-2/formularios-glosario` (frontend y backend) ·
+**Base:** `dev` al día en frontend, `pablo/contabilidad-visible` en backend (ver nota abajo).
+**Spec:** `CARRIL-2-formularios-glosario.md`.
+
+### Nota sobre la base en el backend
+
+`master` no está checked out — el working tree del backend está en
+`pablo/contabilidad-visible` con cambios sin commitear de `profiles`/`community` (ajenos a este
+carril). Creo `carril-2/formularios-glosario` desde ahí porque es el HEAD real disponible; no
+toco ninguno de esos archivos de `profiles`/`community`.
+
+### Encontré trabajo ajeno sin commitear en el working tree del frontend, y no lo toco
+
+Al entrar, `dev` ya tenía sin commitear: el centro de tutoriales (`navigation.map.ts`,
+`app.routes.ts`), la banda de alergias/cifras y el rediseño en dos columnas de
+`patient-chart.ts`/`.html`, y las pantallas de perfil público/artículos médicos. Nada de eso es
+mío — lo dejo intacto y agrego mis filas/entradas **después** de las suyas, nunca reordenando.
+
+### Archivos nuevos (no chocan con nada)
+
+```text
+Frontend:
+src/app/core/data-access/forms/forms.client.ts (+ .types.ts, .spec.ts)
+src/app/core/data-access/chart-templates/chart-templates.client.ts (+ .types.ts, .spec.ts)
+src/app/features/admin/clinical-forms/clinical-forms.{ts,html,css,spec.ts}
+src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.{ts,html,css,spec.ts}
+src/app/features/glossary/glossary.{ts,html,css,spec.ts}
+
+Backend:
+src/modules/chart/dto/ (DTOs de creación/lectura de plantillas, agregados a templates.dto.ts)
+```
+
+### Archivos existentes que toco
+
+| Archivo | Qué agrego |
+|---|---|
+| `navigation.map.ts` | Dos filas nuevas, al final: `administration/clinical-forms` (grupo Administración) y `glossary` (grupo Atención, sin roles) |
+| `app.routes.ts` | Dos entradas nuevas en `PANTALLAS_DIFERIDAS`, al final del bloque que corresponda |
+| `patient-chart.ts` / `.html` | Import de `specialty-form-block` + una entrada al final del ensamblado de bloques (ver nota arriba: sobre la versión ya modificada por el trabajo de tutoriales/alergias, no la de `dev` limpio) |
+| `chart-templates.controller.ts` / `.service.ts` / `chart-templates.repository.ts` (backend) | `POST /charts/templates`, `GET /charts/templates`, `GET /charts/templates/:id` — extienden, no reescriben `assignTemplate` |
+
+### Lo que NO toco
+
+`terminology-catalog.ts`, `terminology.client.ts`, `medication-block/`, `diagnosis-block/`,
+`registrarEncuentro()`/`cerrarEncuentro()`, `redsat/` completo, ni nada de `profiles`/`community`
+en el backend.
+
+### Cerrada · 2026-08-14
+
+Los tres endpoints nuevos (`POST`/`GET`/`GET :id` de `/charts/templates`) y las cinco pantallas
+del frontend quedaron. Dos ajustes sobre lo previsto en el plan original:
+
+- **`proxy.conf.json` y `proxy.conf.docker.json`** ganaron `/forms`, que no estaba en la tabla de
+  archivos compartidos del README de carriles porque `forms.client.ts` no existía todavía cuando
+  se escribió. Sin el prefijo, la app en desarrollo no llega a `/forms/instances`.
+- **`specialty-form-block` no resuelve la especialidad del encuentro activo** — el frontend no
+  tiene de dónde leerla hoy (el encuentro no la trae, no hay binding declarado). Ofrece un
+  selector de plantillas en su lugar, que se preselecciona solo si hay una sola. Documentado en el
+  propio componente; no es un faltante silencioso.
+- **`navigation.service.spec.ts`, `shell-layout.spec.ts` y `patient-chart.spec.ts`** necesitaron un
+  ajuste — son los mismos "inventarios" que W2 ya había tocado por el mismo motivo: una sección o
+  un bloque nuevo mueve una lista que las pruebas fijan a mano. `cypress/e2e/navigation/navegacion.cy.ts`
+  tiene el mismo problema (le falta hasta `/tutorials`, de la sesión de tutoriales) pero es e2e, no
+  entra en la verificación mínima del carril, y arreglarlo es de quien lo dejó así.
+
+`yarn lint` · `yarn typecheck` · `yarn test` (2102/2102) · `yarn build` · `check-route-prefixes.mjs`
+en el frontend; `yarn lint` · `yarn typecheck` · `yarn test` (4703/4704, 1 skipped) en el backend.
+`yarn test:integration` tiene 3 suites rojas ajenas a este carril (`vademecum` por un `.sql` que
+falta en el filesystem, `identity-verification-cycle` y `audit-worm`, ninguna toca `chart` ni
+`forms`) — no se tocaron.
+
+---
+
 ## Sesión 2026-08-13 · Port del sistema de diseño y las vistas de la bóveda
 
 **Rama:** `pablo/redsat-vistas`, apilada sobre `pablo/contabilidad-frontend`.

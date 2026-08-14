@@ -1,0 +1,39 @@
+/* Glosario. Una columna: el buscador manda sobre la tabla. Sólo distribución —
+   ni un color ni una tipografía que el sistema no tenga ya. */
+
+:host {
+  display: block;
+}
+
+.glosario {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+.glosario__buscador {
+  display: block;
+  /* El buscador no se estira a todo el ancho de la tabla: un campo de texto de
+     mil píxeles no ayuda a escribir «hipertensión». */
+  max-inline-size: 32rem;
+}
+
+.glosario__aviso {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.glosario__termino {
+  font-weight: 500;
+}
+
+.glosario__ayuda {
+  display: block;
+  max-inline-size: 68ch;
+}
+
+.glosario__ayuda-texto {
+  margin: 0;
+  color: var(--text-secondary);
+}

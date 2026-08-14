@@ -141,8 +141,21 @@ describe('PatientChart', () => {
     }
   }
 
+  /**
+   * `specialty-form-block` pregunta por las plantillas de chart apenas se
+   * crea, igual que medicación pregunta por su catálogo. Se responde vacío
+   * —«sin plantillas todavía»— para que `verify()` no tropiece con ella; lo
+   * que el bloque hace con esa respuesta lo fija su propia prueba.
+   */
+  function responderPlantillasDeEspecialidad(): void {
+    for (const req of http.match((r) => r.url === '/charts/templates')) {
+      req.flush([]);
+    }
+  }
+
   afterEach(() => {
     responderCatalogoDeMedicacion();
+    responderPlantillasDeEspecialidad();
     http.verify();
   });
 

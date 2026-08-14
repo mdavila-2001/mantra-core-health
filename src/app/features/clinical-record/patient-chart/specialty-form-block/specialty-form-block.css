@@ -1,0 +1,19 @@
+/* Formulario clínico por especialidad. Mismo molde que diagnosis-block y
+   medication-block: tarjeta con título propio, formulario en una columna. */
+
+:host {
+  display: block;
+}
+
+.formulario-especialidad__titulo {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.formulario-especialidad__formulario {
+  display: grid;
+  gap: var(--sp-4);
+  max-inline-size: 40rem;
+}
