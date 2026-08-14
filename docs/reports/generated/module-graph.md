@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-736 archivos TypeScript bajo `src/` y 2806 importaciones internas.
+739 archivos TypeScript bajo `src/` y 2815 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -168,7 +168,7 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 |---|---:|
 | `src/app/core/view-state/view-state.types.ts` | 125 |
 | `src/app/core/view-state/view-state.ts` | 110 |
-| `src/app/shared/components/atoms/button/button.ts` | 107 |
+| `src/app/shared/components/atoms/button/button.ts` | 108 |
 | `src/app/core/http/error-to-view-state.ts` | 104 |
 | `src/app/shared/components/organisms/page-header/page-header.ts` | 101 |
 | `src/app/shared/components/molecules/alert/alert.ts` | 100 |
@@ -191,7 +191,7 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 675 |
+| `@angular/core` | 679 |
 | `@angular/common` | 360 |
 | `@angular/router` | 335 |
 | `@angular/forms` | 88 |

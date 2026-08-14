@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-319 componentes y 44 servicios inyectables, leídos de `src/`.
+320 componentes y 45 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -25,7 +25,7 @@
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (22)
+## Molécula (23)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -43,6 +43,7 @@
 | `app-menu-item` | `MenuItem` | `disabled`, `destructive` | `selected` | — | OnPush | **no** |
 | `app-menu` | `Menu` | — | `closed` | — | OnPush | sí |
 | `app-pagination` | `Pagination` | `totalItems`, `pageSizeOptions`, `showPageSize` | — | `page`, `pageSize` | OnPush | sí |
+| `app-pdf-export-button` | `PdfExportButton` | `filename`, `title`, `target`, `label`, `variant` | — | — | OnPush | sí |
 | `app-radio-group` | `RadioGroup` | `disabled`, `hasError`, `name` | — | `value` | OnPush | sí |
 | `app-radio` | `Radio` | `value`, `label`, `disabled` | — | — | OnPush | **no** |
 | `app-reference-combobox` | `ReferenceCombobox` | `selected`, `options`, `loading`, `disabled`, `placeholder`, `debounceMs`, `minQueryLength`, `label`, `emptyMessage` | `searched`, `selectionChange` | `value` | OnPush | sí |
@@ -353,7 +354,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (44)
+## Servicios (45)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -399,6 +400,7 @@
 | `ThemeService` | `src/app/core/tokens/theme.service.ts` | root | sí |
 | `CaseStatusCatalog` | `src/app/features/identity-verification/case-status.ts` | root | sí |
 | `DialogService` | `src/app/shared/components/molecules/dialog/dialog-service.ts` | root | **no** |
+| `PdfExportService` | `src/app/shared/components/molecules/pdf-export-button/pdf-export.service.ts` | root | **no** |
 | `ToastService` | `src/app/shared/components/molecules/toast/toast.service.ts` | root | sí |
 | `ShellService` | `src/app/shared/components/organisms/shell/shell-service.ts` | root | **no** |
 
