@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-327 componentes y 49 servicios inyectables, leídos de `src/`.
+329 componentes y 49 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -25,7 +25,7 @@
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (23)
+## Molécula (24)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -49,6 +49,7 @@
 | `app-reference-combobox` | `ReferenceCombobox` | `selected`, `options`, `loading`, `disabled`, `placeholder`, `debounceMs`, `minQueryLength`, `label`, `emptyMessage` | `searched`, `selectionChange` | `value` | OnPush | sí |
 | `app-search-field` | `SearchField` | `placeholder`, `debounceMs`, `loading`, `disabled`, `label` | `searched` | `value` | OnPush | sí |
 | `li[app-search-result]` | `SearchResult` | `resultado` | — | — | OnPush | sí |
+| `app-stepper` | `Stepper` | `steps`, `label` | — | — | OnPush | sí |
 | `app-tab` | `Tab` | `label`, `disabled` | — | — | OnPush | **no** |
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
@@ -75,7 +76,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (269)
+## Feature (270)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -101,6 +102,7 @@
 | `app-services-catalog` | `ServicesCatalog` | — | — | — | OnPush | sí |
 | `app-terminology-catalog` | `TerminologyCatalog` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
+| `app-agenda-create` | `AgendaCreate` | — | — | — | OnPush | sí |
 | `app-agenda` | `Agenda` | — | — | — | OnPush | sí |
 | `app-booking-new` | `BookingNew` | — | — | — | OnPush | sí |
 | `app-account-link-complete-form` | `AccountLinkCompleteForm` | — | — | — | OnPush | sí |
