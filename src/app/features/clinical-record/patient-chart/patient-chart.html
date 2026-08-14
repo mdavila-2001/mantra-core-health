@@ -146,6 +146,33 @@
       (cambio)="recargar()"
     />
 
+    <!-- ─── Los adjuntos ─────────────────────────────────────────────────
+         Cuelgan del PACIENTE y no del encuentro: `file_links.owner_type`
+         admite USER/PATIENT/TENANT y no tiene ENCOUNTER. Es el modelo, no
+         una decisión de esta pantalla. -->
+    <app-attachments-block [patientProfileId]="pacienteDeLaFicha()" />
+
+    <!-- ─── Laboratorio e imagenología ───────────────────────────────────
+         Mismo lugar y mismo criterio que los dos de arriba: se pide desde el
+         encuentro abierto. Sin `(cambio)`, y no por olvido: el circuito
+         diagnóstico no sale de `GET /clinical/patients/:id/summary`, así que el
+         bloque lee lo suyo y se relee solo. Avisar acá haría que el expediente
+         recargara cinco bloques que no cambiaron. -->
+    <app-diagnostics-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+    />
+
+    <!-- ─── El histórico de procedimientos ───────────────────────────────
+         Cirugías y odontología (punto 7). Sin `[encounterId]` y sin
+         `(cambio)`, a diferencia de los tres de arriba, y por el mismo motivo
+         en los dos casos: no cuelga del encuentro abierto. Un histórico es de
+         la persona, no de la consulta de hoy —se lee igual sin encuentro—, y
+         lo único que se escribe desde acá, el tratamiento odontológico, no
+         aparece en `GET /clinical/patients/:id/summary`: el bloque relee lo
+         suyo y avisar acá recargaría cinco bloques que no cambiaron. -->
+    <app-procedures-block [patientProfileId]="pacienteDeLaFicha()" />
+
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->

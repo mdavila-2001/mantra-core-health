@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-157 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+170 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -107,12 +107,27 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `POST` | `/clinical/observations` |
 | `GET` | `/clinical/patients/:patientProfileId/summary` |
 
+## `DiagnosticsClient`
+
+Archivo: `src/app/core/data-access/diagnostics/diagnostics.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/clinical/service-requests` |
+| `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` |
+| `GET` | `/diagnostics/patients/:patientProfileId/orders` |
+| `GET` | `/diagnostics/work-orders` |
+
 ## `FilesClient`
 
 Archivo: `src/app/core/data-access/files/files.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `DELETE` | `/common/files/:fileId` |
+| `POST` | `/common/files/:fileId/download-url` |
+| `POST` | `/common/files/:fileId/links` |
+| `GET` | `/common/files/links` |
 | `POST` | `/common/files/upload` |
 
 ## `CommunityClient`
@@ -141,6 +156,18 @@ Archivo: `src/app/core/data-access/community/community.client.ts`
 | `GET` | `/community/profiles/:profileId/reviews` |
 | `GET` | `/community/profiles/me` |
 | `PUT` | `/community/profiles/me` |
+
+## `ProceduresClient`
+
+Archivo: `src/app/core/data-access/procedures/procedures.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/dental-procedures` |
+| `POST` | `/dental-procedures` |
+| `GET` | `/dental-procedures/catalog` |
+| `GET` | `/procedure-cases` |
+| `GET` | `/procedure-cases/:caseId` |
 
 ## `GeoClient`
 
