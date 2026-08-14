@@ -1,0 +1,119 @@
+<app-page-header
+  title="Artículos médicos"
+  subtitle="Publicá, revisá lo que ya publicaste y respondé los comentarios."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="articulos">
+  @if (sinVitrinaTodavia()) {
+    <app-alert tone="info" title="Necesitás tu vitrina pública primero">
+      Los artículos se publican en tu vitrina pública, y todavía no configuraste una.
+    </app-alert>
+    <p class="articulos__ir">
+      <a routerLink="/my-account/preview">Configurar mi vitrina pública</a>
+    </p>
+  } @else {
+    <!-- ─── Publicar ────────────────────────────────────────────────────── -->
+    <app-card variant="outlined" padding="lg" class="articulos__publicar">
+      <h2 class="articulos__titulo">Publicar un artículo</h2>
+
+      <form (submit)="$event.preventDefault()">
+        <app-form-field
+          label="Contenido"
+          hint="Se publica en tu vitrina pública, con tu firma."
+        >
+          <app-textarea
+            [(value)]="nuevoCuerpo"
+            [rows]="8"
+            [maxLength]="cuerpoMaximo"
+            [autoResize]="true"
+            placeholder="Escribí tu artículo médico…"
+          />
+        </app-form-field>
+
+        <app-form-actions
+          submitLabel="Publicar artículo"
+          [pending]="publicando()"
+          [disabled]="!puedePublicar()"
+          (submitted)="publicar()"
+        />
+      </form>
+    </app-card>
+
+    <!-- ─── Lo ya publicado ────────────────────────────────────────────── -->
+    <section class="articulos__lista" aria-label="Tus artículos publicados">
+      <h2 class="articulos__titulo">Tus artículos</h2>
+
+      <app-view-state-host [state]="articulos()" (retry)="recargar()">
+        @if (articulos(); as estado) {
+          @if (estado.status === 'ready') {
+            @for (articulo of estado.data; track articulo.post.id) {
+            <app-card variant="outlined" padding="lg" class="articulos__tarjeta">
+              <p class="articulos__cuerpo">{{ articulo.resumen }}</p>
+
+              <p class="articulos__fecha">
+                @if (articulo.post.publishedAt) {
+                  Publicado el {{ articulo.post.publishedAt | date: 'dd/MM/yyyy' }}
+                }
+              </p>
+
+              <button
+                app-button
+                variant="ghost"
+                type="button"
+                (clicked)="alternarComentarios(articulo.post.id)"
+              >
+                {{ abierto() === articulo.post.id ? 'Ocultar comentarios' : 'Ver comentarios' }}
+              </button>
+
+              @if (abierto() === articulo.post.id) {
+                <div class="articulos__comentarios">
+                  <app-view-state-host [state]="comentarios()">
+                    @if (comentarios(); as estadoComentarios) {
+                      @if (estadoComentarios.status === 'ready') {
+                        @if (estadoComentarios.data.length > 0) {
+                          <ul class="articulos__hilo">
+                            @for (comentario of estadoComentarios.data; track comentario.id) {
+                              <li class="articulos__comentario">
+                                <p class="articulos__comentario-cuerpo">{{ comentario.bodyText }}</p>
+                                <p class="articulos__comentario-fecha">
+                                  {{ comentario.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                                </p>
+                              </li>
+                            }
+                          </ul>
+                        } @else {
+                          <p class="articulos__vacio">Todavía no hay comentarios en este artículo.</p>
+                        }
+                      }
+                    }
+                  </app-view-state-host>
+
+                  <form class="articulos__responder" (submit)="$event.preventDefault()">
+                    <app-form-field label="Responder">
+                      <app-textarea
+                        [(value)]="nuevoComentario"
+                        [rows]="2"
+                        [autoResize]="true"
+                        placeholder="Escribí un comentario…"
+                      />
+                    </app-form-field>
+                    <app-form-actions
+                      submitLabel="Comentar"
+                      [pending]="comentando()"
+                      [disabled]="nuevoComentario().trim() === ''"
+                      (submitted)="comentar()"
+                    />
+                  </form>
+                </div>
+              }
+            </app-card>
+            } @empty {
+              <p class="articulos__vacio">Todavía no publicaste ningún artículo médico.</p>
+            }
+          }
+        }
+      </app-view-state-host>
+    </section>
+  }
+</div>

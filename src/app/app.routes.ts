@@ -166,6 +166,35 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
+    // nunca desde el menú.
+    path: 'my-account/edit',
+    title: `${APP_TITLE} - Configurar tu perfil`,
+    loadComponent: () =>
+      import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
+        .then((m) => m.PractitionerProfileEdit)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La vitrina pública: se configura y se ve en la misma pantalla.
+    path: 'my-account/preview',
+    title: `${APP_TITLE} - Tu perfil público`,
+    loadComponent: () =>
+      import('./features/account/my-profile/public-profile-preview/public-profile-preview')
+        .then((m) => m.PublicProfilePreview)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Publicar, revisar lo publicado y sus comentarios. Cuelga de la vitrina:
+    // sin vitrina, no hay dónde publicar un artículo.
+    path: 'my-account/articles',
+    title: `${APP_TITLE} - Artículos médicos`,
+    loadComponent: () =>
+      import('./features/account/my-profile/medical-articles/medical-articles')
+        .then((m) => m.MedicalArticles)
+        .catch(() => chunkFallido()),
+  },
+  {
     path: 'administration/organizations/new',
     title: `${APP_TITLE} - Nueva organización`,
     loadComponent: () =>
