@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-304 componentes y 38 servicios inyectables, leídos de `src/`.
+304 componentes y 39 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -338,7 +338,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (38)
+## Servicios (39)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -350,6 +350,7 @@
 | `AuthProvidersClient` | `src/app/core/data-access/auth-providers/auth-providers.client.ts` | root | sí |
 | `AuthzClient` | `src/app/core/data-access/authz/authz.client.ts` | root | sí |
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
+| `CommunityClient` | `src/app/core/data-access/community/community.client.ts` | root | sí |
 | `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |
 | `DirectoryClient` | `src/app/core/data-access/directory/directory.client.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
