@@ -136,6 +136,22 @@ describe('FilesClient', () => {
     expect(vence).toEqual(new Date('2026-08-14T10:15:00.000Z'));
   });
 
+  /**
+   * Restaurada del spec original: la escribió quien construyó `upload()` y fija
+   * un defecto real de multipart. Si alguien pone el `Content-Type` a mano, la
+   * petición viaja **sin boundary** y el servidor la rechaza sin decir por qué.
+   */
+  it('no fija el Content-Type: el navegador debe poner el boundary', () => {
+    client
+      .upload(new File(['x'], 'informe.pdf', { type: 'application/pdf' }), 'DOCUMENT', 'NORMAL')
+      .subscribe();
+
+    const req = http.expectOne('/common/files/upload');
+    expect(req.request.headers.has('Content-Type')).toBe(false);
+
+    req.flush({ id: 'f-2' });
+  });
+
   it('upload manda el archivo como multipart con categoría y sensibilidad', () => {
     const archivo = new File(['contenido'], 'estudio.pdf', {
       type: 'application/pdf',
