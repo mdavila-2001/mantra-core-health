@@ -93,6 +93,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/geo/geo-home/geo-home').then((m) => m.GeoHome),
   'administration/services-catalog': () =>
     import('./features/admin/services-catalog/services-catalog').then((m) => m.ServicesCatalog),
+  'administration/clinical-forms': () =>
+    import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
+  glossary: () => import('./features/glossary/glossary').then((m) => m.Glossary),
 };
 
 /**

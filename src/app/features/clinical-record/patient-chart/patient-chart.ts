@@ -7,6 +7,7 @@ import {
   signal,
   untracked,
   viewChild,
+  ElementRef,
   type TemplateRef,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -51,11 +52,13 @@ import {
   MOTIVO_QUERY_PARAM,
 } from '../clinical-record.routes';
 import { AdmissionBlock, type InternacionEnFicha } from './admission-block/admission-block';
+import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 import { AttachmentsBlock } from './attachments-block/attachments-block';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import { DiagnosticsBlock } from './diagnostics-block/diagnostics-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
 import { ProceduresBlock } from './procedures-block/procedures-block';
+import { SpecialtyFormBlock } from './specialty-form-block/specialty-form-block';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -167,11 +170,13 @@ interface Expediente {
     AttachmentsBlock,
     DiagnosisBlock,
     DiagnosticsBlock,
+    PdfExportButton,
     FormActions,
     FormField,
     MedicationBlock,
     PageHeader,
     ProceduresBlock,
+    SpecialtyFormBlock,
     StatusSeal,
     Tab,
     Tabs,
@@ -183,6 +188,20 @@ interface Expediente {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PatientChart {
+  /**
+   * El bloque que se exporta a PDF.
+   *
+   * Se toma por referencia y no dejando que el botón busque su contenedor,
+   * porque el botón vive en la cabecera de la página: su contenedor sería la
+   * cabecera, y el PDF saldría con el título y nada más.
+   */
+  protected readonly raizPdf = viewChild<ElementRef<HTMLElement>>('raizPdf');
+
+  /** El elemento exportable, o `null` mientras el expediente no se pintó. */
+  protected raizExportable(): HTMLElement | null {
+    return this.raizPdf()?.nativeElement ?? null;
+  }
+
   private readonly clinical = inject(ClinicalClient);
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);

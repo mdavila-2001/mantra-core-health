@@ -1,0 +1,48 @@
+<app-page-header
+  title="Glosario"
+  subtitle="Buscá un término médico y su significado en lenguaje llano."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="glosario">
+  <!-- El campo se nombra solo (publica su propio contexto de control): no va
+       dentro de un app-form-field, o quedarían dos nombres accesibles. -->
+  <app-search-field
+    class="glosario__buscador"
+    label="Buscar un término"
+    placeholder="Por ejemplo «hipertensión» o «alergia»"
+    [value]="busqueda()"
+    [loading]="cargando()"
+    (searched)="buscar($event)"
+  />
+
+  <!-- Un recorte silencioso haría creer que el glosario tiene exactamente
+       cincuenta términos. La API no publica cursor para esta búsqueda, así que
+       lo único honesto es decirlo y sugerir afinar. -->
+  @if (recortado()) {
+    <p class="glosario__aviso" role="status">
+      Se muestran los primeros {{ tope }} de {{ totalDeclarado() }} términos. Afiná el texto para
+      acotar la búsqueda.
+    </p>
+  }
+
+  <app-data-table
+    [state]="resultados()"
+    [columns]="columnas()"
+    [trackBy]="porConcepto"
+    caption="Términos del glosario"
+    (retry)="recargar()"
+  />
+
+  <app-card variant="outlined" padding="lg" class="glosario__ayuda">
+    <p class="glosario__ayuda-texto">
+      El glosario reúne los mismos términos que usa el sistema en el resto de la ficha clínica —
+      diagnósticos, alergias, medicación— explicados sin abreviaturas ni identificadores técnicos.
+    </p>
+  </app-card>
+</div>
+
+<!-- Plantilla de celda: el organismo la recibe por `ColumnDef.cell`. -->
+<ng-template #celdaTermino let-termino>
+  <span class="glosario__termino">{{ termino.display }}</span>
+</ng-template>

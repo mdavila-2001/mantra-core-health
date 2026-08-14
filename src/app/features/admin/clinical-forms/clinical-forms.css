@@ -1,0 +1,53 @@
+/* Formularios clínicos por especialidad. Alta arriba, listado abajo — el
+   mismo orden en que se usa: primero se arma la plantilla, después se
+   comprueba que quedó. */
+
+:host {
+  display: block;
+}
+
+.formularios {
+  display: grid;
+  gap: var(--sp-6);
+  margin-block-start: var(--sp-6);
+}
+
+.formularios__titulo {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.formularios__formulario {
+  display: grid;
+  gap: var(--sp-4);
+  /* La medida de un formulario, no el ancho entero de la tarjeta: un campo de
+     texto de mil píxeles no ayuda a escribir un código de plantilla. */
+  max-inline-size: 40rem;
+}
+
+.formularios__campos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.formularios__campo {
+  display: grid;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.formularios__campo:last-of-type {
+  padding-block-end: 0;
+  border-block-end: none;
+}
+
+.formularios__listado {
+  display: block;
+}

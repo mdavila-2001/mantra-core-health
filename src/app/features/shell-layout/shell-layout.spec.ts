@@ -131,6 +131,9 @@ describe('ShellLayout', () => {
     expect(rutasDelMenu()).toEqual([
       '/dashboard',
       '/feed',
+      // El glosario tampoco: accesible por cada profesional, no sólo por
+      // quien administra.
+      '/glossary',
       '/my-account',
       '/my-account/appointments',
       '/my-account/identity/verify',

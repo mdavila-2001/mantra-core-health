@@ -50,6 +50,12 @@ export { MenuTrigger } from './menu/menu-trigger/menu-trigger';
 export { MENU_GAP_PX, MENU_PARENT } from './menu/menu.types';
 export type { MenuHost } from './menu/menu.types';
 
+/* Exportar a PDF desde cualquier pantalla. El servicio va aparte para que se
+   pueda sustituir en pruebas: `exportElementToPdf` es función de módulo y el
+   espacio de nombres de un módulo ES está congelado. */
+export { PdfExportButton } from './pdf-export-button/pdf-export-button';
+export { PdfExportService } from './pdf-export-button/pdf-export.service';
+
 export { Pagination } from './pagination/pagination';
 export {
   DEFAULT_PAGE_SIZE,

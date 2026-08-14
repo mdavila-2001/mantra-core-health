@@ -1,9 +1,18 @@
-<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()" />
+<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
+  <!-- El PDF sale del bloque `[data-pdf-root]` de abajo, no de la página
+       entera: sin eso el documento se llevaría el menú lateral. -->
+  <app-pdf-export-button
+    page-actions
+    [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
+    [title]="titulo()"
+    [target]="raizExportable()"
+  />
+</app-page-header>
 
 <!-- El anfitrión resuelve los nueve estados del M34 sobre la lectura entera:
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
-  <div class="expediente">
+  <div class="expediente" data-pdf-root #raizPdf>
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
       <app-alert tone="warning" title="Expediente recortado">
@@ -176,6 +185,15 @@
       (cambio)="recargar()"
     />
 
+    <!-- ─── El formulario clínico de la especialidad ─────────────
+         Carril 2 · punto 1. Mismo criterio que el diagnóstico y la receta:
+         se completa desde el encuentro abierto, y usa el motor de `forms` en
+         vez de una tabla propia — es lo que le da su esquema de campos. -->
+    <app-specialty-form-block
+      class="expediente__ancho"
+      [encounterId]="encuentroParaRecetar()"
+      (cambio)="recargar()"
+    />
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->

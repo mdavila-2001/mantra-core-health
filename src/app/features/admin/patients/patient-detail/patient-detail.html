@@ -6,6 +6,12 @@
       <app-badge variant="warning" value="Persona fallecida" />
     </span>
   }
+  <app-pdf-export-button
+    page-actions
+    [filename]="'ficha-' + nombreVisible()"
+    [title]="nombreVisible()"
+    [target]="raizExportable()"
+  />
 </app-page-header>
 
 <app-view-state-host [state]="ficha()" (retry)="recargar()">
@@ -15,7 +21,7 @@
          Pacientes, no una entrada de menú propia». -->
     <app-tabs [(selectedIndex)]="pestana">
       <app-tab label="Filiación">
-        <div class="ficha">
+        <div class="ficha" data-pdf-root #raizPdf>
       <app-card class="ficha__bloque">
         <h2 class="ficha__titulo">Identificación</h2>
         <dl class="ficha__datos">

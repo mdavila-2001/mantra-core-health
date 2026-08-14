@@ -1,0 +1,110 @@
+<app-page-header
+  title="Formularios clínicos"
+  subtitle="Armá la plantilla de campos propios de tu especialidad."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="formularios">
+  <app-card variant="outlined" padding="lg" class="formularios__alta">
+    <h2 class="formularios__titulo">Nueva plantilla</h2>
+
+    @if (errorDeCreacion(); as mensaje) {
+      <app-alert tone="error" data-testid="plantilla-error">{{ mensaje }}</app-alert>
+    }
+
+    <form class="formularios__formulario" (submit)="$event.preventDefault()">
+      <app-form-field label="Especialidad" hint="De qué especialidad es esta plantilla." [required]="true">
+        <app-reference-combobox
+          [(value)]="especialidad"
+          [options]="opcionesDeEspecialidad()"
+          [loading]="buscandoEspecialidad()"
+          placeholder="Buscá una especialidad"
+          (searched)="buscarEspecialidad($event)"
+          (selectionChange)="onEspecialidadElegida()"
+        />
+      </app-form-field>
+
+      <app-form-field label="Código" hint="Identificador único de la plantilla." [required]="true">
+        <app-input [(value)]="codigo" placeholder="CARDIO_INTAKE" />
+      </app-form-field>
+
+      <app-form-field label="Nombre" hint="Cómo la va a ver quien la complete." [required]="true">
+        <app-input [(value)]="nombre" placeholder="Ficha de cardiología" />
+      </app-form-field>
+
+      <!-- ─── Los campos de la plantilla ─────────────────────────────────
+           Al menos uno se envía: una plantilla sin campos no es un
+           formulario, es un nombre suelto. -->
+      <fieldset class="formularios__campos">
+        <legend>Campos de la plantilla</legend>
+
+        @for (campo of campos(); track campo.clave) {
+          <div class="formularios__campo" data-testid="fila-campo">
+            <app-form-field label="Código del campo">
+              <app-input
+                [value]="campo.code"
+                (valueChange)="actualizarCampo(campo.clave, { code: comoTexto($event) })"
+                placeholder="ejercicio_tolerancia"
+              />
+            </app-form-field>
+
+            <app-form-field label="Nombre del campo">
+              <app-input
+                [value]="campo.name"
+                (valueChange)="actualizarCampo(campo.clave, { name: comoTexto($event) })"
+                placeholder="Tolerancia al ejercicio"
+              />
+            </app-form-field>
+
+            <app-form-field label="Tipo de dato">
+              <app-select
+                [options]="tiposDeDato"
+                [value]="campo.dataType"
+                (valueChange)="actualizarCampo(campo.clave, { dataType: $event ?? 'string' })"
+              />
+            </app-form-field>
+
+            <app-checkbox
+              [checked]="campo.required"
+              (checkedChange)="actualizarCampo(campo.clave, { required: $event })"
+              label="Obligatorio"
+            />
+
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              [disabled]="campos().length <= 1"
+              (clicked)="quitarCampo(campo.clave)"
+            >
+              Quitar campo
+            </button>
+          </div>
+        }
+
+        <button app-button type="button" variant="secondary" (clicked)="agregarCampo()">
+          Agregar campo
+        </button>
+      </fieldset>
+
+      <app-form-actions
+        submitLabel="Crear plantilla"
+        [pending]="creando()"
+        [disabled]="!puedeCrear()"
+        (submitted)="crear()"
+      />
+    </form>
+  </app-card>
+
+  <section class="formularios__listado">
+    <h2 class="formularios__titulo">Plantillas existentes</h2>
+    <app-data-table
+      [state]="plantillas()"
+      [columns]="columnas"
+      [trackBy]="porPlantilla"
+      caption="Plantillas de chart por especialidad"
+      (retry)="recargarPlantillas()"
+    />
+  </section>
+</div>

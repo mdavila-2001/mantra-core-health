@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-175 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+177 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -96,7 +96,6 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 |---|---|
 | `GET` | `/charts/patients/:patientProfileId/chart` |
 | `POST` | `/clinical/allergy-intolerances` |
-| `POST` | `/clinical/care-episodes` |
 | `POST` | `/clinical/conditions` |
 | `POST` | `/clinical/diagnostic-reports` |
 | `POST` | `/clinical/diagnostic-reports/:diagnosticReportId/release` |
@@ -107,6 +106,16 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `POST` | `/clinical/medication-requests/:medicationRequestId/sign` |
 | `POST` | `/clinical/observations` |
 | `GET` | `/clinical/patients/:patientProfileId/summary` |
+
+## `ChartTemplatesClient`
+
+Archivo: `src/app/core/data-access/chart-templates/chart-templates.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/charts/templates` |
+| `POST` | `/charts/templates` |
+| `GET` | `/charts/templates/:id` |
 
 ## `DiagnosticsClient`
 
@@ -170,6 +179,16 @@ Archivo: `src/app/core/data-access/procedures/procedures.client.ts`
 | `GET` | `/dental-procedures/catalog` |
 | `GET` | `/procedure-cases` |
 | `GET` | `/procedure-cases/:caseId` |
+
+## `FormsClient`
+
+Archivo: `src/app/core/data-access/forms/forms.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/forms/instances` |
+| `POST` | `/forms/instances/:instanceId/close` |
+| `POST` | `/forms/instances/:instanceId/values` |
 
 ## `GeoClient`
 
@@ -262,14 +281,6 @@ Archivo: `src/app/core/data-access/identity/identity.client.ts`
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
-## `PracticeSitesClient`
-
-Archivo: `src/app/core/data-access/practice-sites/practice-sites.client.ts`
-
-| Método | Ruta |
-|---|---|
-| `GET` | `/practitioners/:practitionerProfileId/sites` |
-
 ## `ProfilesClient`
 
 Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
@@ -289,8 +300,6 @@ Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
 | `POST` | `/profiles/practitioners/:profileId/jurisdiction-authorizations` |
 | `POST` | `/profiles/practitioners/:profileId/specialties` |
 | `PATCH` | `/profiles/practitioners/me` |
-| `GET` | `/profiles/practitioners/me/affiliations` |
-| `POST` | `/profiles/practitioners/me/affiliations` |
 | `GET` | `/profiles/practitioners/me/summary` |
 
 ## `PublicClient`
