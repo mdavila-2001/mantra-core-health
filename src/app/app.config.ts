@@ -9,7 +9,7 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
@@ -56,7 +56,11 @@ export const appConfig: ApplicationConfig = {
     // defecto de Angular, que escribe en consola y nada más: una excepción de
     // render dejaba la pantalla en blanco y nadie se enteraba.
     { provide: ErrorHandler, useClass: AppErrorHandler },
-    provideRouter(routes),
+    // `anchorScrolling` hace funcionar los enlaces con `fragment` — el primero
+    // es «Trayectoria laboral» en la portada del perfil profesional (R2-4),
+    // que baja hasta el bloque dentro de la misma pantalla. Sin esto el
+    // fragmento cambia en la URL y la página no se mueve.
+    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled' })),
     provideClientHydration(withEventReplay()),
     // `withFetch` no es opcional bajo SSR: sin él el cliente usa XHR, que en el
     // servidor obliga a un reemplazo y rompe la transferencia de estado.

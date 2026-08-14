@@ -1,0 +1,252 @@
+<div class="profesional">
+  <!-- ─── Quién es ─────────────────────────────────────────────────────────
+       La única tarjeta con elevación de la pantalla: la identidad pesa más
+       que los bloques. Foto si existe; si no, el avatar de iniciales — que es
+       el caso vacío correcto, no un defecto. -->
+  <app-card
+    class="profesional__portada"
+    variant="elevated"
+    padding="lg"
+    appTutorialTarget="perfil-portada"
+  >
+    <div class="profesional__identidad">
+      <app-avatar
+        size="xl"
+        [src]="perfil().fotoUrl"
+        [name]="perfil().nombre"
+        [alt]="'Foto de ' + perfil().nombre"
+      />
+
+      <div class="profesional__identidad-texto">
+        <h2 class="profesional__nombre">{{ perfil().nombre }}</h2>
+
+        @if (perfil().titulo) {
+          <p class="profesional__titulo">{{ perfil().titulo }}</p>
+        }
+
+        @if (perfil().especialidadPrincipal) {
+          <p class="profesional__especialidad">{{ perfil().especialidadPrincipal }}</p>
+        }
+
+        <p class="profesional__codigo">
+          Código profesional
+          <span class="profesional__cifra">{{ perfil().codigo }}</span>
+        </p>
+      </div>
+
+      <!-- El estado de habilitación va en la portada porque es lo que decide
+           si puede ejercer, no un detalle administrativo. -->
+      @if (perfil().verificacion; as estado) {
+        <div class="profesional__sello">
+          <app-status-seal [variant]="estado.variant" [label]="estado.label" />
+          <span class="profesional__sello-pie">{{ perfil().estadoDePractica }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- Disponibilidad: cambia qué se le puede ofrecer a quien busca, así que
+         se dice con palabras y no sólo con un color. El texto va PROYECTADO:
+         el `label` del chip es sólo el nombre accesible, y pasarlo como input
+         dibujaba píldoras de color vacías — defecto real de la pantalla
+         anterior, encontrado por el spec de esta vista (R2-4). -->
+    <div class="profesional__disponibilidad">
+      <app-chip [variant]="perfil().aceptaPacientesNuevos ? 'success' : 'neutral'">
+        {{ perfil().aceptaPacientesNuevos ? 'Acepta pacientes nuevos' : 'No toma pacientes nuevos' }}
+      </app-chip>
+      @if (perfil().telemedicina) {
+        <app-chip variant="info">Atiende por telemedicina</app-chip>
+      }
+      @for (idioma of perfil().idiomas; track idioma.id) {
+        <app-chip variant="neutral">
+          {{ idioma.interpreta ? idioma.nombre + ' · interpreta en consulta' : idioma.nombre }}
+        </app-chip>
+      }
+    </div>
+
+    @if (esPropio()) {
+      <!-- Las cinco pantallas del perfil, navegables DESDE el perfil: antes
+           eran dos botones sueltos y tres pantallas que nadie sabía que
+           existían (carril R2-4). -->
+      <div class="profesional__acciones">
+        <a app-button variant="primary" routerLink="/my-account/edit"> Configurar mi perfil </a>
+        <a app-button variant="outline" routerLink="/my-account/preview">
+          Ver mi perfil público
+        </a>
+        <a app-button variant="outline" routerLink="/my-account/articles"> Mis artículos </a>
+        <a app-button variant="ghost" routerLink="/my-account" fragment="trayectoria-laboral">
+          Trayectoria laboral
+        </a>
+      </div>
+    }
+  </app-card>
+
+  <!-- ─── Cómo se presenta ─────────────────────────────────────────────── -->
+  @if (perfil().bio) {
+    <app-card class="profesional__bloque" variant="outlined" padding="lg">
+      <h2 class="profesional__bloque-titulo">Presentación</h2>
+      <p class="profesional__bio">{{ perfil().bio }}</p>
+    </app-card>
+  }
+
+  <!-- ─── Qué lleva hecho acá ───────────────────────────────────────────
+       Cuentas de actividad. No hay nada comparativo: no es un ranking, y el
+       detalle de cada registro vive en el expediente de la persona atendida,
+       con sus permisos. -->
+  <app-card class="profesional__bloque" variant="outlined" padding="lg">
+    <h2 class="profesional__bloque-titulo" appTutorialTarget="perfil-actividad">
+      {{ esPropio() ? 'Tu actividad en la plataforma' : 'Actividad en la plataforma' }}
+    </h2>
+
+    <dl class="profesional__cifras">
+      @for (dato of perfil().actividad; track dato.clave) {
+        <div class="profesional__cifra-bloque">
+          <dt class="profesional__cifra-rotulo">{{ dato.rotulo }}</dt>
+          <dd class="profesional__cifra-valor">{{ dato.valor }}</dd>
+        </div>
+      }
+    </dl>
+
+    <p class="profesional__nota">
+      {{
+        esPropio()
+          ? 'Son los registros que dejaste asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida.'
+          : 'Son los registros asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida.'
+      }}
+    </p>
+  </app-card>
+
+  <!-- ─── Qué lo habilita ─────────────────────────────────────────────────
+       Especialidades, formación y matrículas son la misma pregunta contada
+       tres veces, así que van juntas en pestañas y no como tres tarjetas
+       apiladas (carril R2-4). La pestaña inactiva no se renderiza — es el
+       comportamiento del componente, no una pérdida de contenido. -->
+  <app-card class="profesional__bloque" variant="outlined" padding="lg">
+    <h2 class="profesional__bloque-titulo">Credenciales y habilitación</h2>
+
+    <app-tabs>
+      <app-tab [label]="'Especialidades (' + perfil().especialidades.length + ')'">
+        @if (perfil().especialidades.length > 0) {
+          <ul class="profesional__lista">
+            @for (especialidad of perfil().especialidades; track especialidad.id) {
+              <li class="profesional__item" [class.profesional__item--pasado]="especialidad.hasta">
+                <div class="profesional__item-encabezado">
+                  <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
+                  @if (especialidad.principal) {
+                    <app-badge variant="primary" value="Principal" />
+                  }
+                  @if (especialidad.certificada) {
+                    <app-badge variant="success" value="Certificada" />
+                  }
+                </div>
+
+                @if (especialidad.alcance) {
+                  <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
+                }
+
+                <p class="profesional__item-fechas">
+                  @if (especialidad.desde) {
+                    Desde {{ especialidad.desde | date: 'MMM y' }}
+                  }
+                  @if (especialidad.hasta) {
+                    · hasta {{ especialidad.hasta | date: 'MMM y' }}
+                  } @else if (especialidad.desde) {
+                    · en ejercicio
+                  }
+                  · {{ especialidad.estado }}
+                </p>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="profesional__nota">
+            Todavía no hay especialidades registradas. Las carga quien administra la organización
+            junto con la credencial que las respalda.
+          </p>
+        }
+      </app-tab>
+
+      <app-tab [label]="'Formación (' + perfil().formacion.length + ')'">
+        <!-- Línea de tiempo. Lo vencido se muestra igual: una certificación
+             que caducó sigue siendo formación cursada, y esconderla dejaría
+             huecos inexplicables. Lo que cambia es el sello, no la
+             presencia. -->
+        @if (perfil().formacion.length > 0) {
+          <ol class="profesional__linea" appTutorialTarget="perfil-formacion">
+            @for (estudio of perfil().formacion; track estudio.id) {
+              <li class="profesional__hito" [class.profesional__hito--vencido]="estudio.vencida">
+                <div class="profesional__hito-marca" aria-hidden="true"></div>
+
+                <div class="profesional__hito-cuerpo">
+                  <div class="profesional__item-encabezado">
+                    <span class="profesional__item-titulo">{{ estudio.tipo }}</span>
+                    <app-status-seal [variant]="estudio.sello" [label]="estudio.estado" />
+                  </div>
+
+                  @if (estudio.institucion) {
+                    <p class="profesional__item-texto">{{ estudio.institucion }}</p>
+                  }
+
+                  <p class="profesional__item-fechas">
+                    Nº <span class="profesional__cifra">{{ estudio.numero }}</span>
+                    @if (estudio.desde) {
+                      · {{ estudio.desde | date: 'MMM y' }}
+                    }
+                    @if (estudio.hasta) {
+                      · {{ estudio.vencida ? 'venció' : 'vence' }}
+                      {{ estudio.hasta | date: 'MMM y' }}
+                    }
+                  </p>
+                </div>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="profesional__nota">
+            Todavía no hay credenciales cargadas. Son las que habilitan a ejercer, así que sin
+            ninguna verificada el perfil queda pendiente.
+          </p>
+        }
+      </app-tab>
+
+      <app-tab [label]="'Matrículas (' + perfil().matriculas.length + ')'">
+        @if (perfil().matriculas.length > 0) {
+          <ul class="profesional__lista" appTutorialTarget="perfil-matriculas">
+            @for (matricula of perfil().matriculas; track matricula.id) {
+              <li class="profesional__item">
+                <div class="profesional__item-encabezado">
+                  <span class="profesional__item-titulo">{{ matricula.jurisdiccion }}</span>
+                  <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
+                </div>
+
+                <p class="profesional__item-fechas">
+                  Matrícula <span class="profesional__cifra">{{ matricula.numero }}</span>
+                  @if (matricula.autoridad) {
+                    · {{ matricula.autoridad }}
+                  }
+                  @if (matricula.hasta) {
+                    · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
+                  }
+                </p>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="profesional__nota">
+            No hay matrículas registradas. Es lo que declara en qué jurisdicción está habilitado el
+            ejercicio.
+          </p>
+        }
+      </app-tab>
+    </app-tabs>
+  </app-card>
+
+  <!-- Los identificadores al final: no le dicen nada a la persona hasta que
+       tiene que reportar un problema, y entonces son lo único que sirve. -->
+  <p class="profesional__ids">
+    Perfil <span class="profesional__cifra">{{ perfil().perfilId }}</span> · Persona
+    <span class="profesional__cifra">{{ perfil().personaId }}</span>
+    @if (perfil().desde) {
+      · En la plataforma desde {{ perfil().desde | date: 'MMMM y' }}
+    }
+  </p>
+</div>

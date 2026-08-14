@@ -1,6 +1,6 @@
 /* ============================================================================
-    El contenedor de «Mi perfil» ya no dibuja: carga, resuelve y delega en
-    practitioner-profile-view (carril R2-4). Todo el CSS del perfil vive allá.
+    La ficha de la guía sólo carga y delega: todo el CSS del perfil vive en
+    `practitioner-profile-view`.
     ========================================================================== */
 
 :host {

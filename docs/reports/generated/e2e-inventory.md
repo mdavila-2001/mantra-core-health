@@ -2,7 +2,7 @@
 
 # Inventario de la suite de extremo a extremo (Cypress)
 
-Leído de `cypress/`. 32 archivos de prueba, 153 pruebas, 11 Page Objects y 12 escenarios de API.
+Leído de `cypress/`. 33 archivos de prueba, 164 pruebas, 11 Page Objects y 12 escenarios de API.
 
 La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—
 está en [`cypress/README.md`](../../../cypress/README.md).
@@ -43,6 +43,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `regression` | Regresión · tabla de datos | 6 | `cypress/e2e/regression/tabla.cy.ts` |
 | `responsive` | Responsive · escritorio · Responsive · tableta · Responsive · móvil | 6 | `cypress/e2e/responsive/responsive.cy.ts` |
 | `smoke` | Humo | 10 | `cypress/e2e/smoke/aplicacion.cy.ts` |
+| `tutorials` | Centro de tutoriales | 11 | `cypress/e2e/tutorials/centro-de-tutoriales.cy.ts` |
 
 ## Page Objects
 

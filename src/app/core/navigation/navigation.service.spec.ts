@@ -73,7 +73,7 @@ describe('NavigationService', () => {
         // Los tutoriales tampoco exigen rol: son la guía de cómo usar lo que
         // cada cuenta ya puede ver.
         '/tutorials',
-        '/feed',
+        '/directory',
         // El glosario tampoco: el cliente lo pidió accesible por cada
         // profesional, no sólo por quien administra.
         '/glossary',
