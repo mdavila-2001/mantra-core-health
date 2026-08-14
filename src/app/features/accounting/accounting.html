@@ -1,0 +1,69 @@
+<app-page-header
+  title="Contabilidad"
+  subtitle="Balance de sumas y saldos y libro diario de la práctica"
+/>
+
+<!-- La práctica manda: ninguna lectura del mayor responde sin ella. -->
+<app-form-field label="Práctica" hint="Los libros que se muestran son los de esta práctica">
+  <app-select
+    [options]="opcionesDePractica()"
+    [(value)]="practicaElegida"
+    placeholder="Elegí una práctica"
+  />
+</app-form-field>
+
+@if (resumen(); as balance) {
+  <app-card>
+    <!-- El cuadre va arriba y como sello —color, forma y texto—: si no cuadra,
+         nada de lo que hay debajo significa lo que parece. -->
+    <div class="cuadre" appAnnounceOnAppear>
+      @if (selloDelCuadre(); as sello) {
+        <app-status-seal [variant]="sello.variant" [label]="sello.label" />
+      }
+      <dl class="totales">
+        <div>
+          <dt>Total debe</dt>
+          <dd>{{ balance.totalDebit }}</dd>
+        </div>
+        <div>
+          <dt>Total haber</dt>
+          <dd>{{ balance.totalCredit }}</dd>
+        </div>
+        <div>
+          <dt>Asientos posteados</dt>
+          <dd>{{ balance.transactionsIncluded }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    @if (balance.truncated) {
+      <!-- Un balance recortado en silencio es un balance que miente. -->
+      <app-alert tone="warning">
+        El balance alcanzó su tope de filas y está <strong>incompleto</strong>:
+        acotá la ventana de fechas o el período fiscal para verlo entero.
+      </app-alert>
+    }
+
+    <p class="nota">
+      Agrega sólo los asientos <strong>posteados</strong>: un borrador todavía no
+      es un hecho contable. Los saldos llevan el signo de la naturaleza de la
+      cuenta, así que un pasivo correcto sale positivo.
+    </p>
+  </app-card>
+}
+
+<h2 class="titulo-de-seccion">Balance de sumas y saldos</h2>
+<app-data-table
+  [state]="filasDelBalance()"
+  [columns]="columnasDelBalance"
+  [trackBy]="claveDeFila"
+  caption="Saldos por cuenta del plan contable"
+/>
+
+<h2 class="titulo-de-seccion">Libro diario</h2>
+<app-data-table
+  [state]="diario()"
+  [columns]="columnasDelDiario"
+  [trackBy]="claveDeAsiento"
+  caption="Asientos de la práctica, del más reciente al más antiguo"
+/>

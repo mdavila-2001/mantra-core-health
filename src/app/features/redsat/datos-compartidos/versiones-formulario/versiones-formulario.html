@@ -1,0 +1,52 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Datos compartidos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/datos-compartidos/archivos-listado">Archivos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/datos-compartidos/versiones-listado">Versiones</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nueva</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nueva versión</h1></div>
+        <p class="caption">Agregás una versión a consentimiento-informado-quiroz.pdf (ARC-2026-000481). Las versiones no se editan ni se borran: una corrección es siempre una versión nueva.</p>
+      </div>
+
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Hash del contenido: Ya existe una versión de este archivo con ese hash.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-15">Tipo MIME <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-15" type="text" required="" value="" placeholder="application/pdf">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-16">Tamaño en bytes <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-16" type="number" min="0" data-num="1" required="" aria-describedby="c-16-a" value="">
+        <p class="app-form-field__ayuda" id="c-16-a">Mínimo 0. Tiene que coincidir con el contenido que se suba.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-17">Hash del contenido <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-17" type="text" required="" aria-invalid="true" value="" placeholder="sha256:…">
+        <p class="app-form-field__error" data-solo-estado="error" hidden=""><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Ya existe una versión de este archivo con ese hash.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-18">URI de almacenamiento <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-18" type="url" required="" aria-describedby="c-18-a" value="" placeholder="https://…">
+        <p class="app-form-field__ayuda" id="c-18-a">Tiene que empezar con https.</p>
+      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/datos-compartidos/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+    </form>

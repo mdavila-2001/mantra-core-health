@@ -1,0 +1,14 @@
+/* V06-04·A · Evaluar una decisión de autorización
+   Portada de V06-authz/security-admin/V06-04-decisiones-evaluar.html en la bóveda. El marcado lo
+   genera scripts/port-vistas-redsat.mjs; la lógica va acá, no en el generador. */
+
+import { Component } from '@angular/core';
+
+import { RouterLink } from '@angular/router';
+
+@Component({
+  selector: 'app-redsat-accesos-decisiones-evaluar',
+  imports: [RouterLink],
+  templateUrl: './decisiones-evaluar.html',
+})
+export class AccesosDecisionesEvaluar {}

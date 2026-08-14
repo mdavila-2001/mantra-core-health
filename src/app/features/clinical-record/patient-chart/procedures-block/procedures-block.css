@@ -1,0 +1,114 @@
+/* Histórico de procedimientos. Dos tarjetas en columna —cirugías y
+   odontología— con una línea de tiempo cada una. Sólo distribución. */
+
+:host {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.procedimientos {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.procedimientos__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.procedimientos__subtitulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+/* ── La línea de tiempo ────────────────────────────────────────────────────*/
+
+.procedimientos__linea {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.procedimientos__caso {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  /* Sin esto, una nota larga estira la tarjeta en vez de partirse. */
+  min-inline-size: 0;
+}
+
+/* Número, estado y fecha en fila cuando entran; apilados cuando no. */
+.procedimientos__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.procedimientos__principal {
+  font-weight: 500;
+}
+
+.procedimientos__secundario {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.procedimientos__rotulo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.procedimientos__detalle {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.procedimientos__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  /* Es texto corrido: la medida de lectura manda sobre el ancho de la tarjeta. */
+  max-inline-size: 68ch;
+}
+
+.procedimientos__fecha {
+  font-variant-numeric: tabular-nums;
+  /* Los meses abreviados llegan en minúscula del pipe de fecha. */
+  text-transform: capitalize;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.procedimientos__vacio {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* ── El alta ───────────────────────────────────────────────────────────────*/
+
+.procedimientos__alta {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.procedimientos__formulario {
+  display: grid;
+  gap: var(--sp-4);
+  /* Es un formulario de cuatro preguntas cortas: a lo ancho de la tarjeta, la
+     nota quedaría del largo de una pantalla y la línea sería ilegible. */
+  max-inline-size: 68ch;
+}

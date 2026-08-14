@@ -13,6 +13,7 @@ import { ResendVerification } from './features/auth/resend-verification/resend-v
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
+import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
 import { authGuard } from './core/auth/auth.guard';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import {
@@ -46,7 +47,11 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
+  // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
+  // de publicación con sus reacciones.
+  feed: () => import('./features/feed/feed').then((m) => m.Feed),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
+  diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   'medical-records': () =>
     import('./features/clinical-record/clinical-record').then((m) => m.ClinicalRecord),
   'administration/users': () =>
@@ -57,6 +62,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/organizations/organization-list/organization-list').then(
       (m) => m.OrganizationList,
     ),
+  'administration/accounting': () =>
+    import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
@@ -84,6 +91,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/geolocation': () =>
     import('./features/geo/geo-home/geo-home').then((m) => m.GeoHome),
+  'administration/services-catalog': () =>
+    import('./features/admin/services-catalog/services-catalog').then((m) => m.ServicesCatalog),
+  'administration/clinical-forms': () =>
+    import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
+  glossary: () => import('./features/glossary/glossary').then((m) => m.Glossary),
 };
 
 /**
@@ -158,6 +170,35 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/identity-assurance/verification-case-detail/verification-case-detail')
         .then((m) => m.VerificationCaseDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
+    // nunca desde el menú.
+    path: 'my-account/edit',
+    title: `${APP_TITLE} - Configurar tu perfil`,
+    loadComponent: () =>
+      import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
+        .then((m) => m.PractitionerProfileEdit)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La vitrina pública: se configura y se ve en la misma pantalla.
+    path: 'my-account/preview',
+    title: `${APP_TITLE} - Tu perfil público`,
+    loadComponent: () =>
+      import('./features/account/my-profile/public-profile-preview/public-profile-preview')
+        .then((m) => m.PublicProfilePreview)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Publicar, revisar lo publicado y sus comentarios. Cuelga de la vitrina:
+    // sin vitrina, no hay dónde publicar un artículo.
+    path: 'my-account/articles',
+    title: `${APP_TITLE} - Artículos médicos`,
+    loadComponent: () =>
+      import('./features/account/my-profile/medical-articles/medical-articles')
+        .then((m) => m.MedicalArticles)
         .catch(() => chunkFallido()),
   },
   {
@@ -340,6 +381,7 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   agenda: '/schedule',
   clinico: '/medical-records',
   facturacion: '/billing',
+  contabilidad: '/administration/accounting',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
   'identidad/verificar': '/my-account/identity/verify',
@@ -378,6 +420,11 @@ function rutasHeredadas(mapa: Readonly<Record<string, string>>): Routes {
 }
 
 export const routes: Routes = [
+  // Las pantallas portadas desde la bóveda, con su propio marco REDSAT. Van
+  // primero y con segmento propio: no compiten con el armazón de abajo, que
+  // vive en `path: ''`, así que ninguna de las dos depende de que el router
+  // retroceda para encontrar a la otra.
+  ...REDSAT_ROUTES,
   {
     // El armazón: header con el usuario, navegación y selector de organización.
     // El guard corre en el padre — S1 del M34: autorizar ANTES de pedir datos —

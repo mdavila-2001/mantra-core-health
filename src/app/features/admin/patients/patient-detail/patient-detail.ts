@@ -7,6 +7,8 @@ import {
   inject,
   signal,
   untracked,
+  viewChild,
+  ElementRef,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -29,6 +31,7 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { PdfExportButton } from '../../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { RelatedPersonForm } from '../related-person-form/related-person-form';
@@ -104,6 +107,7 @@ const SIN_DATO = 'Sin registrar';
 @Component({
   selector: 'app-patient-detail',
   imports: [
+    PdfExportButton,
     AppButton,
     Badge,
     Card,
@@ -119,6 +123,19 @@ const SIN_DATO = 'Sin registrar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PatientDetail {
+  /**
+   * El bloque que se exporta a PDF.
+   *
+   * Por referencia y no por contenedor: el botón vive en la cabecera, así que
+   * su contenedor sería la cabecera y el PDF saldría con el título y nada más.
+   */
+  protected readonly raizPdf = viewChild<ElementRef<HTMLElement>>('raizPdf');
+
+  /** El elemento exportable, o `null` mientras la ficha no se pintó. */
+  protected raizExportable(): HTMLElement | null {
+    return this.raizPdf()?.nativeElement ?? null;
+  }
+
   private readonly profiles = inject(ProfilesClient);
   private readonly authz = inject(AuthzClient);
   private readonly auth = inject(AuthService);

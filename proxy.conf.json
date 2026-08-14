@@ -31,6 +31,7 @@
       "/common",
       "/scheduling",
       "/charts",
+      "/forms",
       "/clinical",
       "/authz",
       "/practitioner-delegates",
@@ -41,8 +42,12 @@
       "/auth-providers",
       "/admin/tenants",
       "/tenants",
+      "/practices",
+      "/accounting",
       "/health-context",
-      "/geo"
+      "/geo",
+      "/procedure-cases",
+      "/dental-procedures"
     ],
     "target": "http://localhost:3000",
     "secure": false,

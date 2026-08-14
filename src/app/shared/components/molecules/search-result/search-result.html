@@ -1,0 +1,38 @@
+@if (resultado(); as r) {
+  <span class="app-resultado__figura" aria-hidden="true">
+    @if (r.figureImageUrl) {
+      <img [src]="r.figureImageUrl" alt="" />
+    } @else {
+      {{ r.figureText }}
+    }
+  </span>
+
+  <div class="app-resultado__cuerpo">
+    <p class="app-resultado__titulo">
+      <a [routerLink]="r.link">{{ r.title }}</a>
+      @if (r.kind; as tipo) {
+        <span class="app-badge" [attr.data-tono]="tipo.tone">{{ tipo.label }}</span>
+      }
+    </p>
+
+    @if (r.meta?.length) {
+      <p class="app-resultado__meta">
+        @for (linea of r.meta; track linea.text) {
+          <span>{{ linea.text }}</span>
+        }
+      </p>
+    }
+
+    @if (r.seals?.length) {
+      <p class="app-resultado__sellos">
+        @for (sello of r.seals; track sello.label) {
+          <span class="app-badge" [attr.data-tono]="sello.tone">{{ sello.label }}</span>
+        }
+      </p>
+    }
+  </div>
+
+  <!-- La tercera columna del grid: `.app-resultado__lado`, que la escribe quien
+       usa la tarjeta. Ver el porqué en el JSDoc del componente. -->
+  <ng-content />
+}

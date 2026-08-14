@@ -31,7 +31,8 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles.css",
+              "src/styles/redsat.css"
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",

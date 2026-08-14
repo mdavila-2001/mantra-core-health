@@ -1,9 +1,18 @@
-<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()" />
+<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
+  <!-- El PDF sale del bloque `[data-pdf-root]` de abajo, no de la página
+       entera: sin eso el documento se llevaría el menú lateral. -->
+  <app-pdf-export-button
+    page-actions
+    [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
+    [title]="titulo()"
+    [target]="raizExportable()"
+  />
+</app-page-header>
 
 <!-- El anfitrión resuelve los nueve estados del M34 sobre la lectura entera:
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
-  <div class="expediente">
+  <div class="expediente" data-pdf-root #raizPdf>
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
       <app-alert tone="warning" title="Expediente recortado">
@@ -137,6 +146,42 @@
       (cambio)="recargar()"
     />
 
+    <!-- ─── Los adjuntos ─────────────────────────────────────────────────
+         Cuelgan del PACIENTE y no del encuentro: `file_links.owner_type`
+         admite USER/PATIENT/TENANT y no tiene ENCOUNTER. Es el modelo, no
+         una decisión de esta pantalla. -->
+    <app-attachments-block [patientProfileId]="pacienteDeLaFicha()" />
+
+    <!-- ─── Laboratorio e imagenología ───────────────────────────────────
+         Mismo lugar y mismo criterio que los dos de arriba: se pide desde el
+         encuentro abierto. Sin `(cambio)`, y no por olvido: el circuito
+         diagnóstico no sale de `GET /clinical/patients/:id/summary`, así que el
+         bloque lee lo suyo y se relee solo. Avisar acá haría que el expediente
+         recargara cinco bloques que no cambiaron. -->
+    <app-diagnostics-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+    />
+
+    <!-- ─── El histórico de procedimientos ───────────────────────────────
+         Cirugías y odontología (punto 7). Sin `[encounterId]` y sin
+         `(cambio)`, a diferencia de los tres de arriba, y por el mismo motivo
+         en los dos casos: no cuelga del encuentro abierto. Un histórico es de
+         la persona, no de la consulta de hoy —se lee igual sin encuentro—, y
+         lo único que se escribe desde acá, el tratamiento odontológico, no
+         aparece en `GET /clinical/patients/:id/summary`: el bloque relee lo
+         suyo y avisar acá recargaría cinco bloques que no cambiaron. -->
+    <app-procedures-block [patientProfileId]="pacienteDeLaFicha()" />
+
+    <!-- ─── El formulario clínico de la especialidad ─────────────
+         Carril 2 · punto 1. Mismo criterio que el diagnóstico y la receta:
+         se completa desde el encuentro abierto, y usa el motor de `forms` en
+         vez de una tabla propia — es lo que le da su esquema de campos. -->
+    <app-specialty-form-block
+      class="expediente__ancho"
+      [encounterId]="encuentroParaRecetar()"
+      (cambio)="recargar()"
+    />
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->

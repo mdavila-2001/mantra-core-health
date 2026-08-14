@@ -25,9 +25,17 @@ export const Header = {
     cy.porTestId('header-cerrar-sesion').click();
   },
 
-  /** Afirma si el botón de navegación en cajón está a la vista (pantalla angosta). */
+  /**
+   * Afirma si el botón de navegación en cajón está a la vista (pantalla angosta).
+   *
+   * Se comprueba **visibilidad** y no existencia. Con el marco REDSAT el botón
+   * se inyecta una sola vez y es la hoja la que decide en qué ancho se muestra,
+   * por `@media`: en escritorio el elemento está en el DOM pero no se ve. Y es
+   * la pregunta correcta de todos modos — lo que importa es si alguien puede
+   * usarlo, no si el nodo existe.
+   */
   esperarBotonDeMenu(hayBoton: boolean): void {
-    cy.porTestId('header-menu').should(hayBoton ? 'exist' : 'not.exist');
+    cy.porTestId('header-menu').should(hayBoton ? 'be.visible' : 'not.be.visible');
   },
 
   abrirNavegacion(): void {

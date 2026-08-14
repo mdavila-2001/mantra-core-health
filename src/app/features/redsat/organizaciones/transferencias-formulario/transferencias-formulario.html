@@ -1,0 +1,80 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8.5h13l-3.5-3.5"></path><path d="M20 15.5H7l3.5 3.5"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Organizaciones</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/organizaciones/membresias-listado">Membresías</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Transferencias</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Transferir la membresía entre sucursales</h1></div>
+        <p class="caption">Cerrá la asignación en una sede y abrila en otra, en una sola operación. Las dos sucursales tienen que ser de Clínica Los Olivos.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Membresías">
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/organizaciones/membresias-listado">Membresías</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/organizaciones/asignaciones-de-sucursal-formulario">Asignaciones de sucursal</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/organizaciones/roles-formulario">Roles</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Transferencias</a>
+    </div>
+    <div class="app-card app-card--inset" app-card="" style="padding:var(--e4);margin-bottom:var(--e6)">
+      <p class="overline">Membresía</p>
+      <p class="num" style="margin-top:var(--e1)">MEM-2026-001031</p>
+      <p>Andrea Terceros Rojas <span class="muted">· Clínica Los Olivos · Sucursal Miraflores</span></p>
+      <p style="margin-top:var(--e2)"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span> <span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>Equipo</span> <span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 12s3.4-6 8.5-6 8.5 6 8.5 6-3.4 6-8.5 6-8.5-6-8.5-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Sólo su sucursal</span></p>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Sucursal de origen: la membresía no tiene una asignación activa en esa sede.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1">Sucursal de origen <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-1" type="search" role="combobox" aria-expanded="true" aria-controls="c-1-m" aria-autocomplete="list" aria-describedby="c-1-a" value="mirafl" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-1-m" role="listbox" aria-label="Resultados de Sucursal de origen" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5S5.5 14.6 5.5 10a6.5 6.5 0 1 1 13 0c0 4.6-6.5 10.5-6.5 10.5z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span>Sucursal Miraflores<br><span class="caption muted">olivos-miraflores · asignación activa</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5S5.5 14.6 5.5 10a6.5 6.5 0 1 1 13 0c0 4.6-6.5 10.5-6.5 10.5z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span>Sede Central Sopocachi<br><span class="caption muted">olivos-central · activa</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5S5.5 14.6 5.5 10a6.5 6.5 0 1 1 13 0c0 4.6-6.5 10.5-6.5 10.5z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span>Sucursal El Alto<br><span class="caption muted">olivos-el-alto · activa</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Sucursal Miraflores <span class="muted">· olivos-miraflores</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-1-a">La sede que deja de atender. Su asignación queda cerrada con la fecha de hoy.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2">Sucursal de destino <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-2" type="search" role="combobox" aria-expanded="true" aria-controls="c-2-m" aria-autocomplete="list" aria-describedby="c-2-a" value="sopoca" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-2-m" role="listbox" aria-label="Resultados de Sucursal de destino" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5S5.5 14.6 5.5 10a6.5 6.5 0 1 1 13 0c0 4.6-6.5 10.5-6.5 10.5z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span>Sede Central Sopocachi<br><span class="caption muted">olivos-central · activa</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5S5.5 14.6 5.5 10a6.5 6.5 0 1 1 13 0c0 4.6-6.5 10.5-6.5 10.5z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span>Sucursal El Alto<br><span class="caption muted">olivos-el-alto · activa</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5S5.5 14.6 5.5 10a6.5 6.5 0 1 1 13 0c0 4.6-6.5 10.5-6.5 10.5z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span>Sucursal Achumani<br><span class="caption muted">olivos-achumani · activa</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Sede Central Sopocachi <span class="muted">· olivos-central</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-2-a">La sede a la que pasa. Su asignación nace activa hoy mismo.</p>
+      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/organizaciones/membresias-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8.5h13l-3.5-3.5"></path><path d="M20 15.5H7l3.5 3.5"></path></svg>Transferir</button>
+      </div>
+    </form>

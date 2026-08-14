@@ -17,6 +17,7 @@ import { dataOf, empty, loading, ready, stale } from '../../core/view-state/view
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
+import { StaggerList } from '../../shared/motion/stagger-list.directive';
 import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
@@ -58,7 +59,16 @@ import {
  */
 @Component({
   selector: 'app-dashboard',
-  imports: [Badge, Card, PageHeader, RouterLink, Skeleton, StatusSeal, ViewStateHost],
+  imports: [
+    Badge,
+    Card,
+    PageHeader,
+    RouterLink,
+    Skeleton,
+    StaggerList,
+    StatusSeal,
+    ViewStateHost,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
