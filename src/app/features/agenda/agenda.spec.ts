@@ -48,7 +48,20 @@ const RECURSO = {
   timeZone: 'America/La_Paz',
   capacity: 1,
   stateConceptId: 'st-activo',
+  // Dónde se atiende. Llega resuelto en la misma lectura de recursos: el
+  // backend lo deriva de la asignación de rol vigente del profesional, así que
+  // la agenda no encadena una petición por recurso.
+  site: {
+    id: 'site-1',
+    name: 'Consultorio Central',
+    code: 'CC',
+    addressText: 'Av. Brasil 1234, La Paz',
+    timeZone: 'America/La_Paz',
+  },
 };
+
+/** El mismo recurso sin sede: un estado corriente, no un fallo. */
+const RECURSO_SIN_SEDE = { ...RECURSO, id: 'r-2', name: 'Box 3', site: null };
 
 const CITA = {
   id: 'b-1',
@@ -107,7 +120,7 @@ describe('Agenda', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'agenda', component: Agenda }]),
+        provideRouter([{ path: 'schedule', component: Agenda }]),
       ],
     });
 
@@ -123,7 +136,7 @@ describe('Agenda', () => {
    */
   async function montar(
     claims: Record<string, unknown> = {},
-    url = '/agenda',
+    url = '/schedule',
   ): Promise<void> {
     session.start({
       accessToken: jwt({
@@ -197,7 +210,7 @@ describe('Agenda', () => {
         items: [
           {
             conceptId: 'c-confirmada',
-            code: 'CONFIRMED',
+            code: 'BOOKING_CONFIRMED',
             display: 'Confirmada',
             codeSystemVersionId: 'csv-1',
           },
@@ -253,8 +266,25 @@ describe('Agenda', () => {
     await responder();
 
     const fila = citas().data?.[0] as Record<string, unknown>;
-    expect(fila['estado']).toBe('Confirmada');
+    // El estado lleva sus tres canales: la palabra del catálogo y la variante
+    // que le da tono y forma. Nunca el uuid.
+    expect(fila['estado']).toEqual({ variant: 'approved', label: 'Confirmada' });
     expect(fila['recurso']).toBe('Consultorio 1 · Dra. Salas');
+  });
+
+  /**
+   * Un estado que esta versión no sabe pintar no puede romper la agenda del
+   * día: sale en neutro, con la palabra que el catálogo sí resolvió.
+   */
+  it('un estado desconocido cae en neutro sin perder la palabra', async () => {
+    await montar();
+    await responderRecursos();
+    responderResto({ citas: [{ ...CITA, statusConceptId: 'c-nuevo' }] });
+
+    expect(citas().data?.[0]?.['estado']).toEqual({
+      variant: 'unknown',
+      label: 'Sin registrar',
+    });
   });
 
   /**
@@ -273,7 +303,7 @@ describe('Agenda', () => {
     await responder();
 
     expect((citas().data?.[0] as Record<string, unknown>)['rutaPaciente']).toBe(
-      '/administracion/pacientes/p-1',
+      '/administration/patients/p-1',
     );
   });
 
@@ -283,7 +313,7 @@ describe('Agenda', () => {
     await responder();
 
     expect((citas().data?.[0] as Record<string, unknown>)['rutaPaciente']).toBe(
-      '/administracion/pacientes/p-1',
+      '/administration/patients/p-1',
     );
   });
 
@@ -316,7 +346,7 @@ describe('Agenda', () => {
    * ganara, dos personas no podrían mirar la misma pantalla.
    */
   it('el recurso de la URL manda sobre la agenda propia', async () => {
-    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/agenda?recurso=r-0');
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?recurso=r-0');
     await responderRecursos([RECURSO_AJENO, RECURSO]);
     await responderResto();
 
@@ -348,7 +378,7 @@ describe('Agenda', () => {
     await responder();
 
     const fila = citas().data?.[0] as Record<string, unknown>;
-    expect(fila['rutaExpediente']).toBe('/clinico/p-1');
+    expect(fila['rutaExpediente']).toBe('/medical-records/p-1');
     // Y no la ficha de filiación, que su rol no puede abrir.
     expect(fila['rutaPaciente']).toBeNull();
   });
@@ -478,7 +508,7 @@ describe('Agenda', () => {
       refreshToken: 'r-1',
     });
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/agenda?recurso=r-borrado', Agenda);
+    componente = await harness.navigateByUrl('/schedule?recurso=r-borrado', Agenda);
 
     await responder();
 
@@ -513,7 +543,7 @@ describe('Agenda', () => {
       refreshToken: 'r-1',
     });
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/agenda', Agenda);
+    componente = await harness.navigateByUrl('/schedule', Agenda);
 
     http.verify();
     expect(interno<() => boolean>('sinOrganizacion')()).toBe(true);
@@ -605,7 +635,7 @@ describe('Agenda', () => {
       refreshToken: 'r-1',
     });
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/agenda', Agenda);
+    componente = await harness.navigateByUrl('/schedule', Agenda);
     await responder();
 
     const columnasDeCitas = interno<() => readonly { key: string }[]>('columnasDeCitas')();
@@ -613,5 +643,38 @@ describe('Agenda', () => {
 
     expect(columnasDeCitas.some((columna) => columna.key === 'acciones')).toBe(false);
     expect(columnasDeCupos.some((columna) => columna.key === 'reservar')).toBe(true);
+  });
+
+  /* ---- dónde atiende el recurso ------------------------------------------- */
+
+  /**
+   * La agenda sabía *cuándo* y no *dónde*, y un turno sin dirección obliga a
+   * averiguarla por fuera del sistema. Llega en la misma lectura de recursos,
+   * así que no cuesta una petición más ni una por recurso.
+   */
+  it('dice dónde se atiende con el recurso elegido', async () => {
+    await montar();
+    await responder();
+
+    harness.detectChanges();
+
+    expect(interno<() => string>('ubicacionDelRecurso')()).toBe(
+      'Consultorio Central · Av. Brasil 1234, La Paz',
+    );
+    expect(harness.routeNativeElement?.textContent).toContain('Av. Brasil 1234, La Paz');
+  });
+
+  /**
+   * Sin sede vigente el renglón lo dice con esas palabras. Dejar el hueco se
+   * leería como un dato que no cargó, que es otra cosa.
+   */
+  it('cuando el recurso no tiene sede lo dice, en vez de dejar el hueco', async () => {
+    await montar();
+    await responderRecursos([RECURSO_SIN_SEDE]);
+    responderResto();
+    harness.detectChanges();
+
+    expect(interno<() => unknown>('sedeDelRecurso')()).toBeNull();
+    expect(harness.routeNativeElement?.textContent).toContain('Sin consultorio registrado');
   });
 });

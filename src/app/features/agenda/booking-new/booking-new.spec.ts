@@ -41,8 +41,34 @@ const CUPO = {
 
 const PACIENTE: ReferenceOption = { value: 'pp-1', label: 'Ana Salas', hint: 'PAC-1' };
 
+/**
+ * El recurso del cupo, con su sede resuelta.
+ *
+ * `site` llega en la misma lectura de recursos: el backend lo deriva de la
+ * asignación de rol vigente del profesional, así que no hay columna nueva ni
+ * una petición por recurso.
+ */
+const RECURSO = {
+  id: 'r-1',
+  name: 'Dra. Quispe',
+  resourceTypeConceptId: 'c-prof',
+  resourceRefType: 'health_practitioner_profiles',
+  resourceRefId: 'prac-1',
+  practiceId: 'pr-1',
+  timeZone: 'America/La_Paz',
+  capacity: 1,
+  stateConceptId: 'c-activo',
+  site: {
+    id: 'site-1',
+    name: 'Consultorio Central',
+    code: 'CC',
+    addressText: 'Av. Brasil 1234, La Paz',
+    timeZone: 'America/La_Paz',
+  },
+};
+
 const RUTA =
-  '/agenda/reservar/s-1?recurso=r-1&desde=2026-08-12T13:00:00.000Z&hasta=2026-08-12T13:30:00.000Z';
+  '/schedule/book/s-1?recurso=r-1&desde=2026-08-12T13:00:00.000Z&hasta=2026-08-12T13:30:00.000Z';
 
 describe('BookingNew', () => {
   let harness: RouterTestingHarness;
@@ -56,7 +82,7 @@ describe('BookingNew', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([
-          { path: 'agenda/reservar/:slotId', component: BookingNew },
+          { path: 'schedule/book/:slotId', component: BookingNew },
           { path: '**', children: [] },
         ]),
       ],
@@ -72,9 +98,17 @@ describe('BookingNew', () => {
 
   afterEach(() => http.verify());
 
-  async function montar(url: string = RUTA): Promise<void> {
+  async function montar(url: string = RUTA, recurso: unknown = RECURSO): Promise<void> {
     harness = await RouterTestingHarness.create();
     componente = await harness.navigateByUrl(url, BookingNew);
+    // La sede del recurso se pide en el constructor, en paralelo al cupo: es
+    // contexto del turno y no una precondición para reservarlo, así que va por
+    // su lado y su fallo no se muestra.
+    const items = recurso === null ? [] : [recurso];
+    http
+      .match((r) => r.url === '/scheduling/resources')
+      .forEach((req) => req.flush({ items, count: items.length }));
+    harness.detectChanges();
   }
 
   function interno<T>(nombre: string): T {
@@ -108,7 +142,7 @@ describe('BookingNew', () => {
   });
 
   it('sin franja en la URL no pide nada: se entra desde la agenda', async () => {
-    await montar('/agenda/reservar/s-1');
+    await montar('/schedule/book/s-1');
 
     // El `http.verify()` del afterEach falla si algo salió a la red.
     expect(crudo<boolean>('sinContexto')).toBe(true);
@@ -188,7 +222,7 @@ describe('BookingNew', () => {
     });
 
     // Vuelve a la agenda del recurso: es donde la cita recién confirmada se ve.
-    expect(navegado).toEqual([[['/agenda'], { recurso: 'r-1' }]]);
+    expect(navegado).toEqual([[['/schedule'], { recurso: 'r-1' }]]);
   });
 
   /**
@@ -250,5 +284,30 @@ describe('BookingNew', () => {
     expect(interno<() => readonly ReferenceOption[]>('candidatos')()).toEqual([
       { value: 'pp-1', label: 'Ana Salas', hint: 'PAC-1' },
     ]);
+  });
+
+  /* ---- dónde es el turno -------------------------------------------------- */
+
+  it('muestra dónde se atiende, con nombre y dirección de la sede', async () => {
+    await montar();
+    responderCupo();
+
+    expect(interno<() => string>('ubicacion')()).toBe(
+      'Consultorio Central · Av. Brasil 1234, La Paz',
+    );
+    expect(harness.routeNativeElement?.textContent).toContain('Av. Brasil 1234, La Paz');
+  });
+
+  /**
+   * La dirección es contexto del turno, no una precondición para reservarlo:
+   * perder la reserva porque no se pudo leer dónde queda el consultorio sería
+   * cambiar una comodidad por una funcionalidad.
+   */
+  it('reserva igual cuando el recurso no tiene sede', async () => {
+    await montar(RUTA, null);
+    responderCupo();
+
+    expect(interno<() => unknown>('sede')()).toBeNull();
+    expect(interno<() => { status: string }>('cupo')().status).toBe('ready');
   });
 });

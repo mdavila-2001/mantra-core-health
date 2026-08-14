@@ -139,6 +139,7 @@ nav:
       - Diseño adaptable: design-system/responsive-design.md
       - Movimiento: design-system/motion.md
       - Íconos: design-system/icons.md
+      - Port de las vistas de la bóveda: design-system/port-redsat.md
 
   - Datos y estado:
       - Estado de servidor: data-and-state/server-state.md
@@ -207,6 +208,7 @@ nav:
       - De componente: testing/component-tests.md
       - De integración: testing/integration-tests.md
       - Extremo a extremo: testing/e2e-tests.md
+      - Credenciales locales: testing/credenciales-locales.md
       - Regresión visual: testing/visual-regression.md
       - Recorrido visual: testing/recorrido-visual.md
       - Recorrido con usuarios reales: testing/recorrido-con-usuarios-reales.md

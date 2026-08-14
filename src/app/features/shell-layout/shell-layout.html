@@ -1,11 +1,185 @@
-<!-- El `<router-outlet />` de las rutas hijas está adentro de `app-shell`, en su `<main>`: así el
-     enlace de salto, el anuncio de ruta y el foco quedan resueltos para todas las pantallas. -->
-<app-shell
-  [user]="user()"
-  [sections]="sections()"
-  [tenants]="tenants()"
-  [activeTenantId]="activeTenantId()"
-  [drawerMode]="isDrawer()"
-  (logoutRequested)="logout()"
-  (tenantChanged)="changeTenant($event)"
-/>
+<!-- El armazón de todo lo autenticado, con el marco REDSAT de la bóveda.
+
+     Antes esto delegaba en el organismo `app-shell`, que tenía su propia
+     geometría: header a lo ancho arriba, y debajo nav y contenido. REDSAT
+     compone al revés —el nav es una columna de altura completa y el header
+     vive DENTRO de la columna de contenido— y esa diferencia no se arregla con
+     CSS: hay que cambiar el orden del marcado. Por eso el marco se escribe
+     acá, contra las mismas señales que ya alimentaban al organismo.
+
+     `app-shell` sigue existiendo y no se tocó: lo usa la vitrina del sistema
+     de diseño para mostrar el organismo aislado. -->
+
+<a class="shell__skip-link" href="#contenido-principal" (click)="saltarAlContenido($event)">
+  Saltar al contenido
+</a>
+
+<!-- Cambiar de ruta sin recargar no dispara ningún anuncio del navegador: lo
+     hace esta región. `<output>` ya es una región viva por sí misma. -->
+<output class="solo-lectores" aria-live="polite">{{ anuncio() }}</output>
+
+<div class="app-shell" app-shell>
+  <nav class="app-side-nav" aria-label="Navegación principal">
+    <div class="app-side-nav__fondo" aria-hidden="true">
+      <svg class="app-side-nav__textura" viewBox="0 0 264 1024" preserveAspectRatio="xMidYMid slice" fill="none">
+        <defs>
+          <linearGradient id="shell-nav-profundidad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0E6690" stop-opacity=".55"></stop>
+            <stop offset="55%" stop-color="#072F45" stop-opacity=".35"></stop>
+            <stop offset="100%" stop-color="#052232" stop-opacity=".75"></stop>
+          </linearGradient>
+          <pattern id="shell-nav-trama" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="10" stroke="#FFFFFF" stroke-opacity=".05" stroke-width="1"></line>
+          </pattern>
+          <pattern id="shell-nav-puntos" width="24" height="24" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1" fill="#9FD8D0" fill-opacity=".08"></circle>
+          </pattern>
+        </defs>
+        <rect width="264" height="1024" fill="url(#shell-nav-profundidad)"></rect>
+        <rect width="264" height="1024" fill="url(#shell-nav-trama)"></rect>
+        <rect width="264" height="1024" fill="url(#shell-nav-puntos)"></rect>
+        <path d="M-20 812h70l26-64 38 116 30-78 18 26h122" stroke="#9FD8D0" stroke-opacity=".14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M-20 940h64l22-52 32 96 26-64 15 20h125" stroke="#4FB3A9" stroke-opacity=".10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <span class="app-side-nav__brillo"></span>
+    </div>
+
+    <p class="app-side-nav__marca">
+      <img src="/redsat/imagenes/alovida-logo-blanco.svg" alt="" width="34" height="25" />
+      <span>AloVida</span>
+    </p>
+
+    <!-- Los grupos y sus ítems siguen saliendo del registro de secciones: lo
+         que cambia es cómo se pintan, no de dónde vienen. -->
+    @for (grupo of sections(); track grupo.label) {
+      <div class="app-side-nav__group">
+        <p class="app-side-nav__eyebrow">{{ grupo.label }}</p>
+        @for (item of grupo.items; track item.route) {
+          @if (item.disabled) {
+            <!-- Deshabilitado: ni ancla ni foco. Sigue anunciándose como tal. -->
+            <span class="app-side-nav__item is-disabled" aria-disabled="true">
+              <span class="side-nav__label">{{ item.label }}</span>
+            </span>
+          } @else {
+            <a
+              class="app-side-nav__item side-nav__link"
+              data-testid="nav-enlace"
+              [attr.data-route]="item.route"
+              [routerLink]="item.route"
+              [class.is-activo]="rutaActiva() === item.route"
+              [attr.aria-current]="rutaActiva() === item.route ? 'page' : null"
+            >
+              <span class="side-nav__label">{{ item.label }}</span>
+              @if (item.badge) {
+                <span class="app-badge" data-tono="info">{{ item.badge }}</span>
+              }
+            </a>
+          }
+        }
+      </div>
+    }
+  </nav>
+
+  <div class="app-main">
+    <header class="app-header" app-header>
+      <label class="app-search-field app-header__buscador">
+        <span class="solo-lectores">Buscá en toda la organización</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" type="search" placeholder="Buscá en toda la organización" />
+      </label>
+
+      <div class="app-header__derecha">
+        @if (tenants().length > 1) {
+          <div class="menu-anclaje">
+            <button
+              class="app-tenant-switcher"
+              type="button"
+              app-tenant-switcher
+              data-testid="header-organizacion"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="menu-organizaciones"
+              [attr.aria-label]="'Organización activa: ' + organizacionActiva()"
+            >
+              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>
+              <span>{{ organizacionActiva() }}</span>
+              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+            <div class="app-menu" id="menu-organizaciones" role="menu" hidden>
+              @for (organizacion of tenants(); track organizacion.id) {
+                <button
+                  class="app-menu-item"
+                  type="button"
+                  role="menuitem"
+                  [attr.aria-current]="organizacion.id === activeTenantId() ? 'true' : null"
+                  (click)="changeTenant(organizacion.id)"
+                >
+                  {{ organizacion.name }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <button class="app-theme-toggle" app-theme-toggle>
+          <span class="app-theme-toggle__pista">
+            <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
+            <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
+            <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
+          </span>
+        </button>
+
+        @if (user(); as persona) {
+          <div class="menu-anclaje">
+            <button
+              class="app-avatar app-header__account"
+              type="button"
+              app-avatar
+              data-testid="header-cuenta"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="menu-cuenta"
+              [title]="persona.displayName"
+              [attr.aria-label]="'Cuenta de ' + persona.displayName"
+              >{{ iniciales() }}</button
+            >
+            <!-- El marco de la bóveda pone iniciales, no el nombre completo: en
+                 un header de 320 px el nombre no entra. Pero quién tiene la
+                 sesión no puede quedar sólo insinuado por dos letras, así que el
+                 nombre sigue estando —en el `title`, acá para el lector de
+                 pantalla, y entero en el menú de la cuenta. -->
+            <span class="solo-lectores"
+              >Sesión de <span class="app-header__account-name">{{ persona.displayName }}</span></span
+            >
+            <div class="app-menu" id="menu-cuenta" role="menu" hidden>
+              <!-- Nombre y rol legible: quien atiende necesita saber con qué
+                   sombrero está entrando antes de firmar algo. -->
+              <p class="app-menu-item app-header__account-summary" role="presentation">
+                <strong>{{ persona.displayName }}</strong>
+                @if (rolesLegibles()) {
+                  <span class="caption">{{ rolesLegibles() }}</span>
+                }
+              </p>
+              <button
+                class="app-menu-item"
+                type="button"
+                role="menuitem"
+                data-testid="header-cerrar-sesion"
+                data-destructivo
+                (click)="logout()"
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </header>
+
+    <!-- El índice negativo lo hace enfocable por script tras navegar sin
+         meterlo en el orden de tabulación. -->
+    <main class="app-main__inner" id="contenido-principal" tabindex="-1">
+      <router-outlet />
+    </main>
+  </div>
+</div>

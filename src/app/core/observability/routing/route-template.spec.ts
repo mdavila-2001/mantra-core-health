@@ -13,9 +13,9 @@ import { routeTemplate } from './route-template';
  * la URL real lleva además un token de un solo uso.
  */
 const RUTAS: Routes = [
-  { path: '', children: [{ path: 'panel', component: class {} }] },
+  { path: '', children: [{ path: 'dashboard', component: class {} }] },
   { path: 'auth', component: class {} },
-  { path: 'auth/verificar', component: class {} },
+  { path: 'auth/verify-email', component: class {} },
   { path: 'pacientes/:pacienteId', component: class {} },
   { path: 'pacientes/:pacienteId/estudios/:estudioId', component: class {} },
   { path: 'informes', loadChildren: () => Promise.resolve([]) },
@@ -47,8 +47,8 @@ describe('routeTemplate', () => {
   });
 
   it('descarta el query string, que es donde viaja el token del correo', () => {
-    expect(routeTemplate(router, '/auth/verificar?token=eyJhbGciOi.abc.def')).toBe(
-      '/auth/verificar',
+    expect(routeTemplate(router, '/auth/verify-email?token=eyJhbGciOi.abc.def')).toBe(
+      '/auth/verify-email',
     );
   });
 
@@ -57,7 +57,7 @@ describe('routeTemplate', () => {
   });
 
   it('resuelve una ruta hija', () => {
-    expect(routeTemplate(router, '/panel')).toBe('/panel');
+    expect(routeTemplate(router, '/dashboard')).toBe('/dashboard');
   });
 
   it('conserva la ruta saneada cuando ninguna rama encaja, en vez de inventar', () => {

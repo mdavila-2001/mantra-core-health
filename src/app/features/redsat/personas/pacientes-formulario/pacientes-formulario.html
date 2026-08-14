@@ -1,0 +1,84 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5s-7-4.4-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.1-7 9.5-7 9.5z"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Personas</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/personas/pacientes-listado">Pacientes</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nuevo</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nuevo paciente</h1></div>
+        <p class="caption">Abrí la ficha de identidad de una persona que se va a atender acá. Si la persona todavía no existe en el registro maestro, se crea junto con el perfil.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        
+      </div>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Código único de paciente: ya hay un paciente con ese código en la plataforma.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1">Código único de paciente <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-1" type="text" required="" aria-describedby="c-1-a" value="" placeholder="PAC-2026-004190">
+        <p class="app-form-field__ayuda" id="c-1-a">Es el código con el que la clínica lo llama en la sala y en la orden de laboratorio. Único en toda la plataforma, hasta 100 caracteres.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2">Nombre visible</label>
+        <input class="app-input" app-input="" id="c-2" type="text" aria-describedby="c-2-a" value="" placeholder="Marisol Quispe Ticona">
+        <p class="app-form-field__ayuda" id="c-2-a">Como se lo nombra en pantalla. Si la persona ya existe en el registro maestro, se toma el nombre de ahí.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3">Fecha de nacimiento</label>
+        <span class="app-date-picker" app-date-picker="">
+          <input class="app-date-picker__input" id="c-3" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" aria-describedby="c-3-a" value="">
+          <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-3-a">Con ella se calcula la edad en cada consulta y se disparan las alertas pediátricas y geriátricas.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-4">Género administrativo</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-4" aria-describedby="c-4-a">
+            <option selected="">Elegí un valor del catálogo</option>
+            <option>Femenino</option>
+            <option>Masculino</option>
+            <option>No binario</option>
+            <option>Sin declarar</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-4-a">Sale del catálogo de terminología: elegís la etiqueta y se guarda el concepto. Es el dato administrativo, el que va en los papeles.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-5">Sexo al nacer</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-5" aria-describedby="c-5-a">
+            <option selected="">Elegí un valor del catálogo</option>
+            <option>Femenino</option>
+            <option>Masculino</option>
+            <option>Indeterminado</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-5-a">Dato clínico, distinto del género administrativo: manda en los valores de referencia del laboratorio.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-6">Código MPI maestro</label>
+        <input class="app-input" app-input="" id="c-6" type="text" aria-describedby="c-6-a" value="" placeholder="BO-MPI-0041830">
+        <p class="app-form-field__ayuda" id="c-6-a">El código del índice maestro nacional, si la persona ya lo tiene. Único, hasta 100 caracteres.</p>
+      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/personas/pacientes-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+    </form>

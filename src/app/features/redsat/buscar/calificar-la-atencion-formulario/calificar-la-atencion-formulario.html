@@ -1,0 +1,85 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"></path></svg></span>
+      <div class="app-page-header__texto">
+        <div class="app-page-header__titulo"><h1>Calificar la atención</h1></div>
+        <p class="caption">Cinco campos: sale en un minuto. Sólo podés calificar una atención que efectivamente tuviste, y una sola vez —así la calificación de un profesional significa algo.</p>
+      </div>
+
+    </div>
+    <div class="app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+    <form class="app-card formulario-columna">
+      <fieldset class="app-form-section">
+        <legend class="app-form-section__legend">Qué atención estás calificando</legend>
+        <p class="app-form-section__desc">Sólo aparecen las atenciones que quedaron registradas a tu nombre. Si la tuya no está, es que todavía no la cerraron en el sistema: esperá un día.</p>
+        <div class="app-form-field" app-form-field="">
+          <label class="app-form-field__label" for="f-atencion">Atención <span aria-hidden="true">*</span><span class="solo-lectores">(obligatorio)</span></label>
+          <span class="app-select-envoltorio">
+            <select class="app-select" app-select="" id="f-atencion">
+              <option>02/08/2026 · Dra. Marisol Quispe Ticona · consulta presencial</option>
+              <option>19/07/2026 · Laboratorio Zamora · perfil lipídico</option>
+              <option>28/06/2026 · Clínica Los Olivos · emergencias</option>
+            </select>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+          </span>
+          <p class="app-form-field__ayuda" id="f-atencion-ayuda">Sólo se puede calificar una atención por vez, y una sola vez cada una.</p>
+        </div>
+        <div class="app-form-field" app-form-field="">
+          <label class="app-form-field__label" for="f-modalidad">Modalidad</label>
+          <span class="app-select-envoltorio">
+            <select class="app-select" app-select="" id="f-modalidad">
+              <option>Presencial</option>
+              <option>Virtual</option>
+              <option>A domicilio</option>
+            </select>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+          </span>
+          <p class="app-form-field__ayuda" id="f-modalidad-ayuda">Viene de la atención elegida; corregila si no coincide.</p>
+        </div>
+      </fieldset>
+      <fieldset class="app-form-section">
+        <legend class="app-form-section__legend">Tu experiencia</legend>
+        <p class="app-form-section__desc">Tu nombre no se publica: la opinión sale con tus iniciales. El profesional no puede borrarla, y vos podés editarla o retirarla cuando quieras.</p>
+        <div class="app-form-field" app-form-field="">
+          <span class="app-form-field__label" id="cal-label">Calificación general <span aria-hidden="true">*</span><span class="solo-lectores">(obligatorio)</span></span>
+          <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="cal-label">
+            <label class="app-radio"><input type="radio" name="calificacion" value="1"><span>1</span></label><label class="app-radio"><input type="radio" name="calificacion" value="2"><span>2</span></label><label class="app-radio"><input type="radio" name="calificacion" value="3"><span>3</span></label><label class="app-radio"><input type="radio" name="calificacion" value="4"><span>4</span></label><label class="app-radio"><input type="radio" name="calificacion" value="5" checked=""><span>5</span></label>
+          </div>
+          <p class="app-form-field__ayuda">1 es muy mala y 5 es excelente.</p>
+        </div>
+        <div class="app-form-field" app-form-field="">
+          <label class="app-form-field__label" for="f-comentario">Qué querés contar</label>
+          <textarea class="app-textarea" app-textarea="" id="f-comentario" rows="5" maxlength="1000" placeholder="Contá cómo fue la atención: si te explicaron con claridad, si esperaste mucho, si volverías."></textarea>
+          <p class="app-form-field__ayuda" id="f-comentario-ayuda">Hasta 1 000 caracteres. No incluyas datos de tu diagnóstico ni de otras personas: la opinión es pública.</p>
+        </div>
+        <div class="app-form-field" app-form-field="">
+          <label class="app-form-field__label" for="f-recomendar">¿Lo recomendarías?</label>
+          <span class="app-select-envoltorio">
+            <select class="app-select" app-select="" id="f-recomendar">
+              <option>Sí, lo recomendaría</option>
+              <option>Con reservas</option>
+              <option>No lo recomendaría</option>
+            </select>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+          </span>
+        </div>
+      </fieldset>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"></circle></svg> Tu opinión se publica en el perfil del profesional apenas la enviás. Se puede reportar y la revisa moderación, pero no se borra a pedido de quien la recibió.</p>
+        <a app-button="" data-variante="secundario" routerLink="/buscar/seguidos-y-guardados-listado">Cancelar</a>
+        <button app-button="" data-variante="primario" type="submit"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"></path></svg>Publicar la opinión</button>
+      </div>
+    </form>
+      </div>
+      <div data-estado="error" hidden="">
+        <section class="app-card">
+          <div class="app-alert" app-alert="" data-tono="error" role="alert">
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+            <div class="app-alert__cuerpo">
+              <strong>Esta atención ya tiene una opinión tuya.</strong>
+              <p>Cada atención se califica una sola vez. Podés editar la que ya publicaste desde el perfil del profesional.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>

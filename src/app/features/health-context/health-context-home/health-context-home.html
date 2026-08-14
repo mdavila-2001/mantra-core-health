@@ -1,0 +1,32 @@
+<app-page-header
+  title="Contexto sanitario"
+  subtitle="Recolectá y publicá el contexto sanitario de cada país, con su evidencia."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-alert tone="info" class="portada__alert">
+  El módulo todavía no expone listados: estas pantallas operan pegando el
+  identificador del registro. La única consulta disponible es la resolución del
+  contexto vigente, que pide país, dominio y clave.
+</app-alert>
+
+<div class="portada__areas">
+  @for (area of areas; track area.titulo) {
+    <app-card variant="outlined" padding="lg">
+      <h2 class="portada__titulo">{{ area.titulo }}</h2>
+      <p class="portada__texto">{{ area.descripcion }}</p>
+
+      <ul class="portada__operaciones">
+        @for (operacion of area.operaciones; track operacion.label) {
+          <li>
+            @if (operacion.route) {
+              <a app-link [routerLink]="operacion.route">{{ operacion.label }}</a>
+            } @else {
+              <span class="portada__pendiente">{{ operacion.label }} — en preparación</span>
+            }
+          </li>
+        }
+      </ul>
+    </app-card>
+  }
+</div>

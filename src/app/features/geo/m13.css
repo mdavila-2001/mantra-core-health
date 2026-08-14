@@ -1,0 +1,65 @@
+/* Estilos comunes de las pantallas del M13. Cada componente los compila
+   scoped, así que compartir el archivo no filtra estilos entre pantallas.
+   Mismo criterio que `m29.css` del acceso delegado. */
+
+.m13__seccion {
+    display: block;
+    margin-top: var(--sp-6);
+}
+
+.m13__titulo {
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    margin-bottom: var(--sp-4);
+}
+
+.m13__texto {
+    color: var(--text-secondary);
+    margin: 0 0 var(--sp-5);
+    max-width: 68ch;
+}
+
+.m13__alert {
+    display: block;
+    margin-bottom: var(--sp-4);
+}
+
+.m13__datos {
+    display: grid;
+    gap: var(--sp-3);
+    margin: 0;
+}
+
+/* Mobile-first: una columna; con lugar, dos. */
+@media (min-width: 720px) {
+    .m13__datos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.m13__datos dt {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.m13__datos dd {
+    margin: 0;
+}
+
+/**
+ * Las coordenadas son cifras que se comparan entre sí de un vistazo: con
+ * figuras tabulares las unidades quedan alineadas en columna. Y son texto que
+ * viene del backend sin convertir, así que se muestran enteras.
+ */
+.m13__cifra {
+    font-variant-numeric: tabular-nums;
+}
+
+.m13__datos code {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-xs);
+    padding: 0 var(--sp-1);
+    background: var(--bg-inset);
+    /* Es un dato para copiar entero: un click, todo seleccionado. */
+    user-select: all;
+}

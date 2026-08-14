@@ -37,7 +37,7 @@ una expulsión repetida.
 ### 1 · ¿Es una expulsión, o una selección de organización?
 
 **El caso más confundido.** Si el token trae **más de una** organización, el
-guard manda a `/auth/organizacion`, no a `/auth`:
+guard manda a `/auth/organization`, no a `/auth`:
 
 ```ts
 if (session.needsTenantSelection()) {
@@ -52,7 +52,7 @@ fricción conocida, no un fallo. Ver
 | A dónde va | Qué es |
 |---|---|
 | `/auth` | Expulsión real → seguir |
-| `/auth/organizacion` | Falta elegir organización → **no es este runbook** |
+| `/auth/organization` | Falta elegir organización → **no es este runbook** |
 
 ### 2 · ¿Se guardó el refresh token?
 
@@ -117,7 +117,7 @@ Un token sin `sub` sí. Eso apunta al backend.
 
 ## Evidencia
 
-- [ ] ¿A `/auth` o a `/auth/organizacion`?
+- [ ] ¿A `/auth` o a `/auth/organization`?
 - [ ] ¿Existe `mantra.refresh-token`?
 - [ ] Respuesta del `POST /iam/auth/token/refresh`
 - [ ] Navegador y modo (privado o no)

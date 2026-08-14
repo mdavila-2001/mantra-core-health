@@ -1,6 +1,6 @@
 # API de backend
 
-Las 87 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 169 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 87 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` `/procedure-cases` `/dental-procedures` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -140,7 +140,7 @@ publique los `GET` que faltan.
 **`checks:plan` lleva los dos puntos en la URL de verdad**: el backend declara
 el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 
-### `ProfilesClient` — 9 operaciones
+### `ProfilesClient` — 13 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -154,6 +154,10 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 | `POST` | `/profiles/patients/:profileId/related-persons` | `RelatedPersonForm` (V05-05, UC-05-10) |
 | `POST` | `/profiles/practitioners` | — |
 | `POST` | `/profiles/persons/:personId/account-links` | — |
+| `GET` | `/profiles/practitioners/me/summary` | `MyProfile` · `PractitionerProfile` |
+| `PATCH` | `/profiles/practitioners/me` | `PractitionerProfileEdit` |
+| `POST` | `/profiles/practitioners/:profileId/specialties` | — (UC-05-06) |
+| `POST` | `/profiles/practitioners/:profileId/jurisdiction-authorizations` | — |
 
 > **V05-05 no necesitó ningún `GET` nuevo.** El vault la marcaba «Listado pendiente», pero los
 > contactos llegan **embebidos** en la respuesta de `GET /profiles/patients/:profileId`
@@ -190,12 +194,17 @@ con `IDENTITY_VERIFICATION_REQUIRED`, que es el único 403 del contrato que lleg
 a la interfaz **con una salida** en vez de un muro.
 
 
-### `DirectoryClient` — 2 operaciones
+### `DirectoryClient` — 7 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/admin/tenants` | `OrganizationList` (V04-01·L) |
 | `POST` | `/admin/tenants` | `OrganizationNew` (V04-01·F) |
+| `GET` | `/tenants/:tenantId` | `OrganizationDetail` (V04-06·L) |
+| `GET` | `/tenants/:tenantId/branches` | `OrganizationDetail` (V04-02·L) |
+| `GET` | `/tenants/:tenantId/memberships` | `OrganizationDetail` (V04-04·L) |
+| `GET` | `/tenants/:tenantId/memberships/:membershipId/branch-assignments` | `OrganizationDetail` (V04-03·L) |
+| `GET` | `/tenants/:tenantId/child-tenants` | `OrganizationDetail` (V04-07·L) |
 
 **`/admin/tenants` es la cara de plataforma del directorio**: opera fuera del
 contexto RLS de tenant. El listado admite `SECURITY_ADMIN` y `SUPERADMIN`; el
@@ -205,9 +214,67 @@ de otro rol, y el frontend todavía no la llama.
 
 **El proxy la declara con dos segmentos** (`/admin/tenants`, no `/admin`):
 `/admin` a secas capturaría `/administracion/*`, que es una ruta de la
-aplicación — ya desvió `/administracion/pacientes` una vez.
+aplicación — ya desvió `/administration/patients` una vez.
 
-### `SchedulingClient` — 8 operaciones
+**`/tenants/{id}/…` es la otra cara, la de la organización**: sus sucursales,
+su plantilla y sus sub-organizaciones. Dos cosas que no son evidentes y que
+costaron un 403 y un falso verde:
+
+- **Declaran el tenant que consultan.** La API rechaza con
+  `FORBIDDEN — La solicitud privilegiada declara tenants propietarios
+  contradictorios` la petición cuyo `X-Tenant-Id` no coincide con el tenant de
+  la ruta. Como estas pantallas miran una organización **distinta** de la
+  activa, el cliente pone la cabecera y el interceptor la respeta en vez de
+  pisarla con la de la sesión.
+- **El proxy las declara con barra final** (`/tenants/`, no `/tenants`): la
+  API no recibe nada en la ruta pelada —el listado de plataforma es
+  `/admin/tenants`— y sin barra capturaría cualquier ruta futura de Angular
+  que empiece por `tenants`. Si falta el contexto, el servidor devuelve el
+  `index.html` **con 200** y la llamada parece pasar sin haber tocado la API.
+
+`listBranches` y `listBranchAssignments` **no paginan**: devuelven todo con su
+`count`, así que la pantalla no puede prometer «Siguientes» sobre eso.
+
+### `AccountingClient` — 5 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practices` | `Accounting` (elige de qué práctica son los libros) |
+| `GET` | `/accounting/accounts` | `Accounting` (plan de cuentas, UC-16-01·L) |
+| `GET` | `/accounting/trial-balance` | `Accounting` (sumas y saldos, UC-16-06) |
+| `GET` | `/accounting/journal-transactions` | `Accounting` (libro diario, UC-16-01·L) |
+| `GET` | `/accounting/journal-transactions/:transactionId` | `Accounting` (el asiento con sus líneas, UC-16-01·D) |
+
+**Todo cuelga de un `practiceId`** y no existe «la práctica del usuario»: una
+organización puede tener varias. Por eso `/practices` va primero; sin esa lista
+la pantalla no tiene qué pedir. La API lo acota por el tenant del contexto, no
+por un parámetro.
+
+**Los importes viajan como texto decimal** (`"1250.00"`), y así se quedan. Pasarlos
+a `number` sería el error clásico: `0.1 + 0.2` no da `0.3` en coma flotante y un
+balance descuadrado por un céntimo no se distingue de uno con un error contable
+real. Los totales los calcula la API con enteros; el navegador no suma dinero.
+
+**`balanced` y `truncated` se leen, no se deducen.** El primero es la
+comprobación de la que depende que el resto del informe signifique algo; el
+segundo avisa de que la agregación tocó su tope — un balance recortado en
+silencio es un balance que miente.
+
+**Las cuatro lecturas del mayor responden 403** si el `practiceId` pertenece a
+otra organización. Es lo que hace seguro que las pueda pedir un `PRACTITIONER`
+y no sólo un `SECURITY_ADMIN`.
+
+### `ServicesCatalogClient` — 2 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/billing/service-catalog` | `ServicesCatalog` (carril 1) |
+| `POST` | `/billing/service-catalog` | `ServicesCatalog` (alta de un servicio) |
+
+Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
+catálogo — mismo motivo: no existe «la práctica del usuario».
+
+### `SchedulingClient` — 9 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -219,6 +286,7 @@ aplicación — ya desvió `/administracion/pacientes` una vez.
 | `POST` | `/scheduling/holds/:holdToken/confirm` | `BookingNew` (V41-05, UC-41-06) |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` | `Agenda` (V41-02·A, UC-41-09) |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` | `Agenda` (V41-02·A, UC-41-10) |
+| `POST` | `/scheduling/bookings/:bookingId/reschedule` | `Appointments` (mi cuenta: mover el turno a otro cupo) |
 
 **El ciclo de reserva es de dos pasos y el token viaja entre ellos.** El hold
 retiene el cupo con anti-double-booking y un TTL (300 s por defecto, de la
@@ -243,7 +311,7 @@ botón que devuelve un error, y elige el primer recurso cuando la URL no trae un
 pide nada: un `400` ahí se leería como «la agenda falló» y lo que falta es un
 paso previo.
 
-### `ClinicalClient` — 4 operaciones
+### `ClinicalClient` — 10 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -251,6 +319,30 @@ paso previo.
 | `GET` | `/charts/patients/:patientProfileId/chart` | `PatientChart` (UC-40-14) |
 | `POST` | `/clinical/encounters/check-in` | `PatientChart` (UC-08-02) |
 | `POST` | `/clinical/encounters/:encounterId/close` | `PatientChart` (UC-08-14) |
+| `POST` | `/clinical/conditions` | `PatientChart` — diagnóstico |
+| `POST` | `/clinical/allergy-intolerances` | `PatientChart` — alergia |
+| `POST` | `/clinical/observations` | `PatientChart` — observación |
+| `POST` | `/clinical/medication-requests` | `PatientChart` — prescripción |
+| `POST` | `/clinical/medication-requests/:medicationRequestId/sign` | `PatientChart` — firma |
+| `POST` | `/clinical/medication-requests/:medicationRequestId/issue` | `PatientChart` — emisión |
+| `POST` | `/clinical/diagnostic-reports` | `ClinicalClient` — informe diagnóstico (UC-08-06) |
+| `POST` | `/clinical/diagnostic-reports/:diagnosticReportId/release` | `ClinicalClient` — liberación (UC-08-07) |
+
+Las seis escrituras clínicas **no estaban declaradas**: entraron con el registro
+del expediente y el contrato quedó atrás, así que la comprobación de deriva
+—que compara lo que el código llama contra lo que este archivo declara— venía
+fallando en `dev` para todo el mundo. Se declaran acá.
+
+Las dos últimas —el informe diagnóstico— son las únicas de la tabla que
+**ninguna pantalla usa todavía**, y la columna «Consumidor» lo dice nombrando al
+cliente en vez de a una vista. No es un olvido: el informe no aparece en
+`getSummary` ni en `getChart`, y el backend no expone ningún `GET` de reportes,
+así que el formulario se tragaría el dato sin poder mostrarlo. El contrato entra
+verificado para que, cuando exista la lectura, falte sólo la vista.
+
+La prescripción son **tres pasos y no uno**: crear, firmar y emitir. El modelo
+los separa porque firmar es un acto del profesional y emitir es lo que la vuelve
+utilizable en una farmacia; colapsarlos escondería quién hizo qué.
 
 **El encuentro se abre y se cierra desde el expediente**, que es donde está
 quien atiende. Abrirlo no exige un episodio de cuidado previo (`episodeId` es
@@ -362,11 +454,245 @@ devuelve `*ConceptId` en uuid y ninguna pantalla puede mostrar un uuid. Se piden
 todos los de una pantalla en una sola llamada, no uno por campo, y su fallo
 degrada esos campos a «Sin registrar» sin tumbar la pantalla.
 
-### `FilesClient` — 1 operación
+### `SystemContextClient` — 1 operación
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) |
+| `GET` | `/system-context/dynamic-enums` | `ConceptSelect` (alta de paciente) |
+
+**Es lo que convierte un `*_concept_id` en un selector.** La regla del modelo es
+que ningún campo de catálogo se escribe a mano, pero para poblarlo hay que saber
+**qué conjunto de valores gobierna esa columna** — y eso no estaba en ninguna
+parte legible: el `$expand` de terminología exige el uuid del conjunto, y los
+uuid no eran constantes publicadas. Por eso el alta de paciente salió sin género
+ni sexo al nacer.
+
+Se pide por `?target=esquema.tabla.columna`: por **el campo que se va a llenar**,
+no por el catálogo que lo llena. Es la diferencia entre lo que un formulario sabe
+y lo que no tiene por qué averiguar.
+
+**Se memoiza por target, y eso es parte del contrato, no una optimización:** los
+identificadores son UUIDv5 deterministas y la respuesta trae `cacheToken`, la
+huella de la versión publicada. Un fallo **no** se memoiza — un corte de red no
+puede dejar un campo marcado como «sin opciones» por el resto de la sesión.
+
+Las etiquetas del catálogo vienen en inglés técnico («Administrative gender
+female») porque son terminología, no copy de producto: `ConceptSelect` las
+traduce por **código** —`GENDER_FEMALE`—, que es la identidad semántica estable
+del concepto, igual que hace `case-status.ts` con los estados de un trámite.
+
+### `HealthContextClient` — 12 operaciones · 11 comandos y una lectura
+
+El M44 completo salvo la operación de sistema. Recolección gobernada del
+contexto sanitario de un país: agentes, fuentes con su licencia y su nivel de
+confianza, programaciones, corridas idempotentes, observaciones inmutables y
+contextos versionados con hechos trazables a su evidencia.
+
+La única lectura, `contexts/resolve`, **no es un listado**: exige país, dominio y
+clave, y los dos primeros pasan por `ParseUUIDPipe`. No existe `GET` de colección
+de nada, así que el resto de las pantallas son formularios con identificadores
+pegados.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/health-context/contexts/resolve` | `ContextResolve` (V44-03·L) |
+| `POST` | `/health-context/agents` | `AgentForm` (V44-07) |
+| `POST` | `/health-context/sources` | `SourceForm` (V44-09) |
+| `POST` | `/health-context/schedules` | `ScheduleForm` (V44-08) |
+| `POST` | `/health-context/contexts` | `ContextForm` (V44-03·F) |
+| `POST` | `/health-context/contexts/:contextId/versions` | `VersionForm` (V44-04) |
+| `POST` | `/health-context/versions/:versionId/quality-reviews` | `QualityReviewForm` (V44-06) |
+| `POST` | `/health-context/versions/:versionId/publish` | `VersionPublish` (V44-05·A) |
+| `POST` | `/health-context/versions/:versionId/supersede` | `VersionSupersede` (V44-05·A) |
+| `POST` | `/health-context/collection-runs` | `CollectionRunForm` (V44-01) |
+| `POST` | `/health-context/collection-runs/:collectionRunId/observations` | `ObservationForm` (V44-02) |
+| `POST` | `/health-context/collection-runs/:collectionRunId/finish` | `CollectionRunFinish` (V44-01·A) |
+
+**`POST /health-context/internal/schedules/run-due` no está en el cliente.** Es
+`@Roles('SYSTEM')`: ninguna persona lo puede ejecutar, así que un método que
+siempre responde 403 sería código muerto. El vault lo cataloga aparte, en su
+tabla de operaciones internas (V44-10).
+
+### `GeoClient` — 11 operaciones · 10 comandos y una lectura
+
+El M13 completo (`SECURITY_ADMIN` en los cuatro controllers): sujetos rastreados
+con su consentimiento, sesiones, pings de alta frecuencia, viajes y geocercas con
+sus cruces.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/geo/tracked-subjects/:trackedSubjectId/last-position` | `LastPosition` (V13-02) |
+| `POST` | `/geo/tracked-subjects` | `TrackedSubjectForm` (V13-01) |
+| `POST` | `/geo/tracked-subjects/:trackedSubjectId/pings` | `PingIngest` (V13-03) |
+| `POST` | `/geo/tracked-subjects/:trackedSubjectId/revoke-consent` | `ConsentRevocation` (V13-01·A) |
+| `POST` | `/geo/tracking-sessions` | `TrackingSessionForm` (V13-04) |
+| `POST` | `/geo/tracking-sessions/:sessionId/close` | `TrackingSessionClose` (V13-04·A) |
+| `POST` | `/geo/trips` | `TripForm` (V13-05) |
+| `POST` | `/geo/trips/:tripId/close` | `TripClose` (V13-05·A) |
+| `POST` | `/geo/geofences` | `GeofenceForm` (V13-07) |
+| `POST` | `/geo/geofence-events` | `GeofenceEventForm` (V13-06) |
+
+#### Dos asimetrías del contrato que el cliente respeta
+
+**Las coordenadas entran como número y salen como texto.** El `POST` de pings las
+valida con `@IsLatitude`/`@IsLongitude` sobre `number`; la lectura las devuelve
+`string` porque son `numeric` de Postgres. Convertirlas al leer perdería
+decimales y ceros significativos, así que `LastPosition.latitude` es `string` y
+hay un assert dedicado a impedir que alguien lo «arregle». Lo mismo vale para
+`Trip.distanceM` y para los tres contadores de `RunFinished`, que son `bigint`.
+
+**`state`, `status`, `subjectType`, `shapeType` y `eventType` de las respuestas
+son uuid de concepto**, no las palabras que se mandan al crear. Para mostrarlos
+hay que resolverlos contra terminología; si eso falla, se muestra el uuid, nunca
+una etiqueta inventada.
+
+#### `tenantId` es un campo de propiedad, no un dato más
+
+`NewTrackedSubject.tenantId` (opcional) y `NewGeofence.tenantId` (obligatorio)
+están en la lista `OWNERSHIP_FIELDS` del backend: su interceptor de tenant los
+contrasta con la cabecera `X-Tenant-Id` y responde **403** si difieren. En el
+sujeto conviene omitirlo y dejar que lo resuelva el interceptor; en la geocerca
+tiene que ser el tenant activo de la sesión.
+
+### `ProceduresClient` — 4 operaciones · carril 3
+
+El histórico de procedimientos quirúrgicos y odontológicos (M53).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/procedure-cases` | `ProceduresBlock` (ficha del paciente) |
+| `GET` | `/procedure-cases/:caseId` | `ProceduresBlock` |
+| `GET` | `/dental-procedures` | `ProceduresBlock` |
+| `GET` | `/dental-procedures/catalog` | `ProceduresBlock` |
+| `POST` | `/dental-procedures` | `ProceduresBlock` |
+
+### `DiagnosticsClient` — 4 operaciones · carril 4
+
+Laboratorios e imagenología (M52).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostics/patients/:patientProfileId/orders` | `DiagnosticsBlock` · `Diagnostics` |
+| `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` | `DiagnosticsBlock` · `Diagnostics` |
+| `GET` | `/diagnostics/work-orders` | `Diagnostics` |
+| `POST` | `/clinical/service-requests` | `Diagnostics` (pedir un estudio) |
+
+> **Declaradas acá al resolver el conflicto del carril 15, no por sus autores.**
+> Los carriles 3 y 4 entraron a `dev` sin pasar por esta página, y eso dejó el
+> job `verificar` en rojo para todo el mundo: `check-api-contract-drift` no
+> distingue «lo agregó otro» de «lo agregué yo». Si algún consumidor de arriba
+> quedó mal atribuido, corregilo — se dedujo de quién importa cada cliente.
+
+### `FilesClient` — 5 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) · `AttachmentUploader` |
+| `GET` | `/common/files/links` | `AttachmentsBlock` (adjuntos de la ficha) |
+| `POST` | `/common/files/:fileId/links` | `AttachmentUploader` |
+| `POST` | `/common/files/:fileId/download-url` | `AttachmentsBlock` |
+| `DELETE` | `/common/files/:fileId` | — (borrado lógico, sin pantalla todavía) |
+
+#### Adjuntar son dos operaciones, no una
+
+`upload` deja el archivo en el sistema; `:fileId/links` lo cuelga de un recurso.
+Están separadas en el backend porque **el mismo archivo puede adjuntarse en más
+de un lado**, y acá se respetan como dos llamadas.
+
+Importa para el mensaje de error: si la segunda falla, el archivo **ya existe**.
+Decir «no se pudo subir» llevaría a reintentar y dejar dos copias.
+
+#### Los adjuntos cuelgan del paciente, no del encuentro
+
+`file_links.owner_type` admite `USER`, `PATIENT` y `TENANT` — **no hay
+`ENCOUNTER`**. Es una restricción del modelo: quien quiera adjuntos por episodio
+tiene que promoverlo al `.puml` primero.
+
+#### La URL de descarga se pide al hacer clic
+
+Es firmada y vence. Emitir una por adjunto al pintar la lista dejaría veinte
+enlaces vivos a datos clínicos de los que diecinueve nadie abrió.
+
+### `CommunityClient` — 20 operaciones
+
+La red social médica (M19). Las 16 lecturas entraron primero, antes que
+cualquier pantalla — ver la nota de abajo. Las 4 escrituras que siguen
+entraron recién con «Mi perfil», «Vitrina pública» y «Mis artículos médicos»,
+que son sus primeros consumidores.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/community/profiles/:profileId` | — (ficha pública, V65-07…11) |
+| `GET` | `/community/profiles/:profileId/posts` | `MedicalArticles` |
+| `GET` | `/community/profiles/:profileId/reviews` | — (V65-14) |
+| `GET` | `/community/posts/:postId` | `MedicalArticles` |
+| `GET` | `/community/posts/:postId/comments` | `MedicalArticles` |
+| `GET` | `/community/posts/:postId/reactions` | — |
+| `GET` | `/community/feed` | — (V19-13 muro) |
+| `GET` | `/community/notifications` | — |
+| `GET` | `/community/follows` | — (V65-13) |
+| `GET` | `/community/bookmarks` | — |
+| `GET` | `/community/blocks` | — |
+| `GET` | `/community/groups` | — (V19-07) |
+| `GET` | `/community/groups/:groupId/members` | — (V19-08) |
+| `GET` | `/community/conversations` | — (V19-01) |
+| `GET` | `/community/conversations/:conversationId/messages` | — (V19-02) |
+| `GET` | `/community/polls/:pollId` | — |
+| `GET` | `/community/profiles/me` | `PublicProfilePreview` · `MedicalArticles` |
+| `PUT` | `/community/profiles/me` | `PublicProfilePreview` |
+| `POST` | `/community/profiles/:profileId/posts` | `MedicalArticles` |
+| `POST` | `/community/comments` | `MedicalArticles` |
+| `PUT` | `/community/reactions` | `PostCard` (muro) |
+
+#### Reaccionar es `PUT` y es *upsert*
+
+Reaccionar de nuevo con otro tipo **cambia** la reacción, no agrega una segunda.
+Por eso el contrato exige `actorProfileId` en el cuerpo: es la mitad de la clave
+`(actor, objeto)`, no un dato que el servidor deduzca de la sesión.
+
+Y ahí hay una asimetría real del backend que conviene no confundir: **se escribe
+con la palabra** (`LIKE`, `INSIGHTFUL`…) y **se lee con el uuid**
+(`reactionTypeConceptId`). Los tipos de reacción son un enum cerrado del
+contrato, no conceptos de terminología.
+
+**La vitrina propia es un `PUT` idempotente**, igual razón que
+`upsertOwnProfile` del resto del repo: crea si no existía, actualiza si sí, y
+la pantalla que la edita no necesita saber cuál de las dos está haciendo.
+
+**Publicar siempre pasa por `CommunityClient.publishPost`**, que agrega el
+hashtag `articulo-medico` cuando `esArticulo` es verdadero — el backend no
+distingue un artículo de cualquier otra publicación, sólo la etiqueta.
+
+#### Por qué el cliente existe antes que las pantallas
+
+Las 16 lecturas ya están en el backend. Lo que falta para que la red social se
+vea son dos cosas distintas: que sus endpoints sean **públicos** (`@Public()` +
+límite por IP) y que haya **pantallas**. Ninguna de las dos cambia la forma de
+la llamada — el decorador cambia el guard del servidor, no la URL ni el cuerpo.
+
+Así que este cliente se escribe y se prueba hoy, y el día que la superficie
+pública entre no hay que tocarlo. Es la misma razón por la que el contrato va
+primero al repartir trabajo entre personas: para que nadie espere a nadie.
+
+#### `actorProfileId` es opcional, y ahí está la superficie pública
+
+Seis lecturas aceptan «quién mira». Con actor, la respuesta agrega lo que sólo
+tiene sentido para esa persona —con qué reaccionaste, qué votaste—; sin actor,
+la misma lectura devuelve la vista anónima, que es exactamente la que necesita
+un visitante sin sesión.
+
+**El cliente no manda el id de sesión por defecto.** Quien llama decide si la
+lectura es personal o pública: hacerlo automático convertiría toda pantalla
+pública en una consulta identificada sin que nadie lo pidiera.
+
+#### Dos cosas que el contrato declara y conviene no confundir
+
+- **`GET /community/notifications` trae `unreadCount`**, que **no** es el total
+  de la página: es cuántas sin leer tiene la persona en total. Es lo que va en
+  la campana.
+- **`GET /community/conversations` no acepta `cursor`**, sólo `limit`. Devuelve
+  `nextCursor` igual, pero hoy no hay forma de pedir la página siguiente. Está
+  anotado, no inventado.
 
 **Cinco operaciones sin pantalla que las llame** — las dos altas restantes de
 `ProfilesClient`, la reserva puntual de `SchedulingClient`, las bases legítimas

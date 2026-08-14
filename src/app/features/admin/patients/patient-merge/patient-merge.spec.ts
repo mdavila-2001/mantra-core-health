@@ -304,6 +304,6 @@ describe('PatientMerge', () => {
 
     interno<() => void>('verSobreviviente')();
 
-    expect(navegado).toEqual(['/administracion/pacientes/pp-A']);
+    expect(navegado).toEqual(['/administration/patients/pp-A']);
   });
 });

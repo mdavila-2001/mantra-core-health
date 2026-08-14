@@ -1,0 +1,138 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5h16l-6.2 7v6l-3.6 2v-8z"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Alcance de recurso</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Concesiones de alcance de recurso</h1></div>
+        <p class="caption">Permisos que valen sobre un registro y no sobre todo un tipo: este expediente, este encuentro, este documento. Sirven para la excepción puntual sin tocar el rol.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/accesos/alcance-de-recurso-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva concesión de alcance</a>
+      </div>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por identificador, sujeto o recurso">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-1">Tipo de sujeto</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-1">
+            <option>Todos</option>
+            <option>Usuario</option>
+            <option>Rol</option>
+            <option>Servicio</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Usuario<button type="button" aria-label="Quitar el filtro Usuario"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-2">Tipo de recurso</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-2">
+            <option>Todos</option>
+            <option>Paciente</option>
+            <option>Encuentro</option>
+            <option>Documento</option>
+            <option>Registro</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Paciente<button type="button" aria-label="Quitar el filtro Paciente"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-3">Vigente desde</label>
+        <span class="app-date-picker" app-date-picker="">
+          <input class="app-date-picker__input" id="f-3" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" value="01/01/2026">
+          <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-4">Vigente hasta</label>
+        <span class="app-date-picker" app-date-picker="">
+          <input class="app-date-picker__input" id="f-4" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" value="">
+          <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+        </span>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Concesiones de alcance de recurso — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Tipo de sujeto</th>
+            <th scope="col">Sujeto</th>
+            <th scope="col">Permiso</th>
+            <th scope="col">Tipo de recurso</th>
+            <th scope="col">Recurso</th>
+            <th scope="col">Efecto</th>
+            <th scope="col">Vigente desde</th>
+            <th scope="col">Vigente hasta</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">RSG-2026-000122</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>Usuario</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dra. Andrea Terceros Rojas</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Leer la historia clínica</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5s-7-4.4-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.1-7 9.5-7 9.5z"></path></svg>Paciente</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Marisol Quispe Ticona</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Permitir</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="08/08/2026 09:25">hace 3 días</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="29/08/2026 23:59">en 18 días</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">RSG-2026-000118</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>Usuario</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Gabriela Ríos Ledezma</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Ver estudios de imagen</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>Encuentro</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">ENC-2026-018342</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Permitir</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="05/08/2026 11:50">hace 6 días</span></td><td class="muted" aria-label="Sin dato">—</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">RSG-2026-000109</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Rol</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Recepción</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Leer las notas de salud mental</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5s-7-4.4-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.1-7 9.5-7 9.5z"></path></svg>Paciente</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Elena Chambi Mamani</a></td><td><span class="app-badge" data-tono="error"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Denegar</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="06/07/2026 08:15">hace 1 mes</span></td><td class="muted" aria-label="Sin dato">—</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">RSG-2026-000097</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><ellipse cx="12" cy="6.5" rx="7.5" ry="3"></ellipse><path d="M4.5 6.5v11c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-11"></path><path d="M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"></path></svg>Servicio</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Integración de laboratorio</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Cargar evoluciones</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Documento</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">DOC-2026-041188</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Permitir</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="11/06/2026 07:00">hace 2 meses</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="11/12/2026 23:59">en 4 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">RSG-2026-000085</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg>Usuario</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dr. Gonzalo Aramayo Peña</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Leer la historia clínica</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5s-7-4.4-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.1-7 9.5-7 9.5z"></path></svg>Paciente</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Alberto Nina Colque</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Permitir</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="02/04/2026 14:40">hace 4 meses</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="02/06/2026 23:59">hace 2 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">RSG-2026-000071</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Rol</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Facturación · temporal</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Anular una factura</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Documento</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">FAC-2026-009920</a></td><td><span class="app-badge" data-tono="error"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Denegar</span></td><td class="muted" aria-label="Sin dato">—</td><td class="muted" aria-label="Sin dato">—</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5h16l-6.2 7v6l-3.6 2v-8z"></path></svg></span>
+        <h2>No hay concesiones de alcance de recurso</h2>
+        <p>Sirven para la excepción de un solo registro: abrirle a una persona este expediente y ninguno más, o cerrarle este documento sin tocarle el rol. Como todo grant, se puede dar a un usuario, a un rol o a un servicio, y denegar siempre prevalece.</p>
+        <a app-button="" data-variante="secundario" routerLink="/accesos/alcance-de-recurso-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva concesión de alcance</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar las concesiones de alcance.</strong>
+            <p>El servicio de autorización no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

@@ -1,13 +1,13 @@
 import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenarios';
 
 /**
- * Elección de organización (`/auth/organizacion`).
+ * Elección de organización (`/auth/organization`).
  *
  * Es una pantalla propia y no un paso del login porque **cambia qué datos se
  * ven**: mezclarla con las credenciales invita a pasarla por alto.
  */
 export const TenantSelectionPage = {
-  ruta: '/auth/organizacion',
+  ruta: '/auth/organization',
 
   abrir(escenario: NombreEscenario = ESCENARIO_POR_DEFECTO): void {
     cy.abrirEscenario(escenario, TenantSelectionPage.ruta);

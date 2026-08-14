@@ -38,7 +38,7 @@ npx lighthouse http://localhost:4000/auth --view
 |---|---|
 | **No requiere instalar nada permanente** | Mide una máquina, no usuarios |
 | Da LCP, FCP y CLS | **No da INP** |
-| Reproducible entre commits | Solo las 4 rutas públicas: `/panel` necesita sesión |
+| Reproducible entre commits | Solo las 4 rutas públicas: `/dashboard` necesita sesión |
 | Ninguna decisión de privacidad | |
 
 **Es el primer paso obvio**, y el único sin discusión previa.

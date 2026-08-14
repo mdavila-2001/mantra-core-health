@@ -105,7 +105,7 @@ Las tres afectan a las mismas pantallas:
 | Verificar correo | La transición de «verificando» a «verificado» |
 | Elegir organización | El estado vacío no se anuncia |
 
-**El caso más grave es `/auth/recuperar`**: el acuse *es* la respuesta completa, y
+**El caso más grave es `/auth/forgot-password`**: el acuse *es* la respuesta completa, y
 quien use lector de pantalla puede quedarse esperando algo que ya pasó.
 
 ### Por qué no se corrige acá

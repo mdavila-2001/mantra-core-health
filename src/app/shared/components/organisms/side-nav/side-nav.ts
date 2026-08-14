@@ -11,7 +11,9 @@ import {
   viewChildren,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs/operators';
 
 import { Badge } from '../../atoms/badge/badge';
 import { Tooltip } from '../../atoms/tooltip/tooltip';
@@ -37,7 +39,7 @@ import type { NavItem, NavSection } from './side-nav.types';
  */
 @Component({
   selector: 'app-side-nav',
-  imports: [Badge, RouterLink, RouterLinkActive, Tooltip],
+  imports: [Badge, RouterLink, Tooltip],
   templateUrl: './side-nav.html',
   styleUrl: './side-nav.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +54,34 @@ export class SideNav {
 
   private readonly links = viewChildren<ElementRef<HTMLAnchorElement>>('navLink');
 
+  private readonly router = inject(Router);
+
+  /**
+   * La URL actual **sin** query ni fragmento: el menú navega por ruta, y un
+   * filtro en la dirección no cambia en qué sección está uno.
+   */
+  /** La última navegación terminada, o `null` si todavía no hubo ninguna. */
+  private readonly ultimaNavegacion = toSignal(
+    this.router.events.pipe(
+      filter((evento): evento is NavigationEnd => evento instanceof NavigationEnd),
+      map((evento): string | null => evento.urlAfterRedirects),
+    ),
+    { initialValue: null },
+  );
+
+  /**
+   * La URL actual **sin** query ni fragmento: el menú navega por ruta, y un
+   * filtro en la dirección no cambia en qué sección está uno.
+   *
+   * Cae a `router.url` mientras no haya ocurrido ninguna navegación —el primer
+   * render, y también un arnés de prueba que monta el componente antes de
+   * navegar—. Sin esa reserva el menú no marcaría nada hasta el primer clic.
+   */
+  private readonly urlActual = computed(() => {
+    const url = this.ultimaNavegacion() ?? this.router.url;
+    return url.split('?')[0]?.split('#')[0] ?? '';
+  });
+
   readonly sections = input<readonly NavSection[]>([]);
 
   /** Colapsado a íconos. Solo aplica al nav fijo, nunca al cajón. */
@@ -65,6 +95,47 @@ export class SideNav {
 
   /** El cajón pide cerrarse: Escape, click en el overlay o elegir un destino. */
   readonly closeRequested = output<void>();
+
+  /**
+   * La ruta del menú que corresponde a la página actual, o `null`.
+   *
+   * ## Por qué no alcanza `routerLinkActive`
+   *
+   * Porque compara **por prefijo**: estando en `/my-account/identity/verify`,
+   * tanto esa entrada como su padre `/my-account` quedaban activas, y las dos
+   * marcadas con `aria-current="page"`. Dos «acá estás» a la vez no es un
+   * detalle estético: `aria-current="page"` significa *ésta* es la página, y
+   * quien navega con lector de pantalla oía dos.
+   *
+   * Poner `exact: true` lo habría roto por el otro lado: en la ficha de un
+   * paciente —`/administration/patients/<id>`, que no es entrada de menú— no se
+   * marcaría ninguna, y la sección dejaría de decir dónde está uno.
+   *
+   * Se elige la coincidencia **más específica**: la entrada más larga que sea
+   * prefijo de la URL actual. Con eso la hija gana a su padre cuando existe, y
+   * el padre sigue ganando cuando la página no está en el menú.
+   */
+  protected readonly rutaActiva = computed<string | null>(() => {
+    const url = this.urlActual();
+    if (url === '') {
+      return null;
+    }
+
+    const rutas = this.sections()
+      .flatMap((seccion) => seccion.items)
+      .map((item) => item.route);
+
+    return (
+      rutas
+        // Prefijo de ruta, no de texto: `/administration/patients` no puede
+        // ganar con `/administration/patients-archive`.
+        .filter((ruta) => url === ruta || url.startsWith(`${ruta}/`))
+        .reduce<string | null>(
+          (mejor, ruta) => (mejor === null || ruta.length > mejor.length ? ruta : mejor),
+          null,
+        )
+    );
+  });
 
   protected readonly isDrawerOpen = computed(() => this.drawer() && this.open());
 

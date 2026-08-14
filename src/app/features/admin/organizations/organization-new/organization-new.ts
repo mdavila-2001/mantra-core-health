@@ -56,9 +56,21 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
  *
  * ## El selector de tipo usa los códigos del DTO
  *
- * TODO(IT3): poblarlo desde el servicio de `dynamic-enums` cuando exista en
- * el front. Hoy los códigos vienen de `CreateTenantDto` (`@IsIn(...)`), que
- * es el único contrato legible; el backend los resuelve al concept id.
+ * Y **se quedan**, ahora que `dynamic-enums` existe. Se comparó (2026-08-11,
+ * contra la API viva) `directory.tenants.tenant_type_concept_id` con la lista
+ * de `CreateTenantDto`: **los diez códigos coinciden, en los dos sentidos**.
+ *
+ * Reemplazarla por una lectura habría cambiado una lista tipada por una obtenida
+ * en tiempo de ejecución, y esa lista **no es sólo un selector**: alimenta
+ * `TERRITORIAL_TENANT_TYPES`, la regla que decide si país y jurisdicción son
+ * obligatorios. Con `TenantTypeCode` el compilador garantiza que las dos hablan
+ * de lo mismo; con códigos traídos de la red, un valor nuevo entraría al
+ * desplegable y saldría de la regla **en silencio**, y el alta fallaría con un
+ * 422 que nadie relacionaría con esto.
+ *
+ * Además el endpoint recibe el **código**, no el concept id: la lectura no
+ * ahorraría ninguna traducción. Se documenta la comparación en vez de hacer el
+ * cambio.
  *
  * ## País y jurisdicción se ofrecen porque sin ellos no hay alta
  *
@@ -66,8 +78,11 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
  * responde `422 · «exige país y jurisdicción»`. Se resuelven con un buscador
  * sobre la búsqueda de conceptos de `terminology` — el mismo trato que
  * cualquier referencia: se elige una etiqueta, se guarda un uuid.
- * TODO(IT3): acotar la búsqueda al value set que el modelo liga a cada
- * columna; hoy busca sobre el catálogo entero, con el código como pista.
+ * **Sigue sin poder acotarse, y está comprobado** (2026-08-11, contra la API
+ * viva): `directory.tenants.country_concept_id` y `…jurisdiction_concept_id`
+ * responden **404** en `dynamic-enums` — no tienen binding declarado, a
+ * diferencia del tipo de organización, que sí lo tiene. Hasta que lo tengan, la
+ * búsqueda es sobre el catálogo entero y el código es la pista.
  *
  * ## Los `*ConceptId` opcionales siguen afuera
  *
@@ -208,8 +223,9 @@ export class OrganizationNew {
 
   /**
    * Busca conceptos y los traduce a opciones, con el **código como pista**:
-   * la búsqueda es sobre el catálogo entero (TODO(IT3): acotarla al value
-   * set), así que «Bolivia» también trae la moneda — el código `JUR_BO`
+   * la búsqueda es sobre el catálogo entero —estas dos columnas no tienen
+   * binding en `dynamic-enums`, comprobado— así que «Bolivia» también trae la
+   * moneda: el código `JUR_BO`
    * contra `BOB` es lo que permite elegir el correcto.
    */
   private buscarConcepto(

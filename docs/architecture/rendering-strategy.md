@@ -26,13 +26,13 @@ reemplazaría por el real. Eso es un parpadeo en el mejor caso, y en el peor un
 | Ruta | Modo | Motivo |
 |---|---|---|
 | `/auth` | **Prerender** | Se ve igual para todo el mundo |
-| `/auth/registro` | **Prerender** | Ídem |
-| `/auth/recuperar` | **Prerender** | Ídem |
+| `/auth/register` | **Prerender** | Ídem |
+| `/auth/forgot-password` | **Prerender** | Ídem |
 | `/design-system` | **Prerender** | La vitrina no depende de nada |
-| `/auth/verificar` | Cliente | Lee `?token=` del query string, que en el build no existe |
-| `/auth/nueva-clave` | Cliente | Ídem |
-| `/auth/organizacion` | Cliente | La lista de organizaciones sale del token de sesión |
-| `**` (todo lo demás: `/`, `/panel`) | Cliente | Tiene sesión |
+| `/auth/verify-email` | Cliente | Lee `?token=` del query string, que en el build no existe |
+| `/auth/reset-password` | Cliente | Ídem |
+| `/auth/organization` | Cliente | La lista de organizaciones sale del token de sesión |
+| `**` (todo lo demás: `/`, `/dashboard`) | Cliente | Tiene sesión |
 
 El build lo confirma:
 

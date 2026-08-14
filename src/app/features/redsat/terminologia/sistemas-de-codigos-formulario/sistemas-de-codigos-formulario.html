@@ -1,0 +1,59 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 4H6.5a2 2 0 0 0-2 2v4L3 12l1.5 2v4a2 2 0 0 0 2 2H8"></path><path d="M16 4h1.5a2 2 0 0 1 2 2v4l1.5 2-1.5 2v4a2 2 0 0 1-2 2H16"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/terminologia/sistemas-de-codigos-listado">Sistemas de códigos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nuevo</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nuevo sistema de códigos</h1></div>
+        <p class="caption">Registrá el catálogo y la fuente que lo publica. Después vas a poder crearle versiones e importarle conceptos.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Código interno: ya existe un sistema de códigos con ese código.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-6">Código interno <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-6" type="text" required="" aria-invalid="true" aria-describedby="c-6-a" value="" placeholder="loinc">
+        <p class="app-form-field__error" data-solo-estado="error" hidden=""><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Ya existe un sistema de códigos con ese código.</p>
+        <p class="app-form-field__ayuda" id="c-6-a">Identificador corto y único con el que la plataforma nombra el sistema. Hasta 255 caracteres.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-7">Nombre <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-7" type="text" required="" aria-describedby="c-7-a" value="" placeholder="LOINC">
+        <p class="app-form-field__ayuda" id="c-7-a">Nombre legible, el que se ve en los listados.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-8">URL canónica <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-8" type="url" required="" aria-describedby="c-8-a" value="" placeholder="https://loinc.org">
+        <p class="app-form-field__ayuda" id="c-8-a">URL canónica FHIR del sistema. Tiene que empezar por https.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-9">Código de la fuente <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-9" type="text" required="" aria-describedby="c-9-a" value="" placeholder="regenstrief">
+        <p class="app-form-field__ayuda" id="c-9-a">Código de negocio de la organización que publica el sistema.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-10">Nombre de la fuente <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-10" type="text" required="" value="" placeholder="Regenstrief Institute">
+      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/sistemas-de-codigos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+    </form>

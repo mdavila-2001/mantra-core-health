@@ -22,6 +22,7 @@ import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Link } from '../../shared/components/atoms/link/link';
+import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../shared/components/molecules/search-field/search-field';
@@ -51,14 +52,24 @@ const TOPE = 25;
  * llega con el identificador desde su agenda y a quien el buscador le
  * respondería `403`.
  *
- * Si el buscador queda prohibido, la pantalla **no se cae**: el estado S5 se
- * pinta en su tabla y el campo de identificador sigue ahí. Un archivo clínico
- * que se vuelve inútil para el rol clínico —el único que puede leerlo— sería
- * exactamente el error opuesto al que se quiso evitar.
+ * Si el buscador queda prohibido, la pantalla **no se cae** y tampoco se
+ * disculpa: el buscador desaparece y queda el camino que sí es suyo.
+ *
+ * Antes se pintaba el S5 de la tabla, y ese estado dice «No tenés acceso a esta
+ * sección» — un texto escrito para una sección entera. El médico leía que el
+ * archivo clínico no era suyo cuando **sí lo es y funciona**: sólo el listado
+ * del padrón es de administración. Un rojo en el lugar más visible de la
+ * pantalla, para una condición que en su rol es la normal, no informa: asusta.
+ *
+ * El estado S5 sigue siendo el correcto para un 403 **inesperado**; éste no lo
+ * es. La diferencia entre «falló algo» y «este camino no es el tuyo» es
+ * justamente lo que el M34 separa, y acá se estaba usando el de la izquierda
+ * para lo de la derecha.
  */
 @Component({
   selector: 'app-clinical-record',
   imports: [
+    Alert,
     AppButton,
     Card,
     DataTable,
@@ -180,7 +191,7 @@ export class ClinicalRecord {
           this.resultados.set(
             texto === ''
               ? empty(
-                  { label: 'Ir a Pacientes', route: '/administracion/pacientes' },
+                  { label: 'Ir a Pacientes', route: '/administration/patients' },
                   'Todavía no hay pacientes registrados en esta organización.',
                 )
               : empty(

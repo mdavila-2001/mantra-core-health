@@ -10,32 +10,81 @@ import type { Vigilante } from './vigilante';
  */
 
 /**
+ * Escribe en un campo y **comprueba que llegó entero**.
+ *
+ * ## Por qué no alcanza con `type`
+ *
+ * La aplicación se sirve con render del servidor: el formulario existe en el
+ * HTML antes de que Angular lo hidrate, y las teclas que se pulsan en esa
+ * ventana se escriben sobre un campo que después se reemplaza. El resultado es
+ * un valor al que le faltan los **primeros** caracteres —se midieron pérdidas
+ * de uno y de tres en dos corridas seguidas, así que no es un `maxlength` ni
+ * una máscara: es una carrera— y un ingreso que responde `401` con las
+ * credenciales correctas, que es la peor forma de fallar porque acusa al dato.
+ *
+ * `esperarAplicacionLista()` no la cubre: comprueba que la aplicación pintó, no
+ * que este campo ya escuche. Así que se escribe, se lee lo que quedó, y si no
+ * coincide se vuelve a escribir una vez. La aserción final deja el fallo a la
+ * vista si el problema fuera otro, en vez de reintentar para siempre.
+ */
+function escribir(testId: string, texto: string, opciones?: { readonly log: boolean }): void {
+  cy.porTestId(testId).clear().type(texto, opciones);
+  cy.porTestId(testId).then(($campo) => {
+    if ($campo.val() !== texto) {
+      cy.porTestId(testId).clear().type(texto, opciones);
+    }
+  });
+  cy.porTestId(testId).should('have.value', texto);
+}
+
+/**
  * Entra por la pantalla de ingreso, como una persona.
  *
  * La contraseña se localiza por su identificador de prueba y no por su etiqueta:
  * el campo lleva dentro un botón de mostrar/ocultar cuyo nombre accesible
  * también dice «contraseña», así que buscar por etiqueta devuelve dos elementos.
  */
+/** Completa las credenciales y envía. */
+function completarYEnviar(actor: Actor): void {
+  escribir('login-identifier', actor.identificador);
+  escribir('login-password', actor.clave, { log: false });
+  cy.porTestId('login-submit').click();
+}
+
 export function entrar(actor: Actor): void {
   cy.visit('/auth');
   cy.esperarAplicacionLista();
 
-  cy.porTestId('login-identifier').clear().type(actor.identificador);
-  cy.porTestId('login-password').clear().type(actor.clave, { log: false });
-  cy.porTestId('login-submit').click();
+  completarYEnviar(actor);
+
+  // Segundo síntoma de la misma carrera, y peor que el de las teclas: cuando el
+  // clic llega antes de que Angular hidrate, **el navegador envía el formulario
+  // por su cuenta**. La página recarga, la dirección gana un `?`, los campos
+  // vuelven vacíos y no se pidió nada al backend, así que el ingreso se queda
+  // en `/auth` sin un solo mensaje de error que explique por qué.
+  //
+  // Se reconoce por el campo vacío —después de un envío nativo no queda nada— y
+  // se rehace una vez. Se busca dentro del `body` en lugar de con `porTestId`
+  // para que un ingreso exitoso, donde el formulario ya no existe, no falle acá.
+  cy.get('body').then(($cuerpo) => {
+    const campo = $cuerpo.find('[data-testid="login-identifier"]');
+    if (campo.length === 1 && campo.val() === '') {
+      completarYEnviar(actor);
+    }
+  });
 
   // Dos destinos legítimos: el panel, o la elección de organización cuando la
   // sesión pertenece a más de una. Esperar sólo el panel dejaría la suite roja
   // para cualquiera con dos organizaciones, que es normal.
-  cy.location('pathname', { timeout: 30_000 }).should('match', /^\/(panel|auth\/organizacion)/);
+  cy.location('pathname', { timeout: 30_000 }).should('match', /^\/(dashboard|auth\/organization)/);
 
   cy.location('pathname').then((ruta) => {
-    if (!ruta.includes('/auth/organizacion')) {
+    if (!ruta.includes('/auth/organization')) {
       return;
     }
     capturar({ carpeta: 'sesion', titulo: 'Elegir organización' }, 'elegir-organizacion');
     cy.porTestId('tenant-opcion').first().click();
-    cy.location('pathname', { timeout: 30_000 }).should('match', /\/panel/);
+    cy.location('pathname', { timeout: 30_000 }).should('match', /\/dashboard/);
   });
 }
 

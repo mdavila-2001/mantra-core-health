@@ -1,0 +1,118 @@
+<app-page-header
+  title="Iniciar corrida de recolección"
+  subtitle="Arranca una corrida idempotente: la misma clave no recolecta dos veces."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (started(); as corrida) {
+  <div class="m44__seccion">
+    <h2 appAnuncio [asertivo]="false" class="m44__titulo">
+      @if (corrida.duplicate) {
+        La corrida ya existía
+      } @else {
+        La corrida quedó iniciada
+      }
+    </h2>
+
+    @if (corrida.duplicate) {
+      <app-alert tone="info" class="m44__alert">
+        La clave de idempotencia ya estaba usada: no se creó nada nuevo. Es la
+        protección contra la doble recolección funcionando, no un error.
+      </app-alert>
+    }
+
+    <dl class="m44__datos">
+      <div>
+        <dt>Corrida</dt>
+        <dd><code>{{ corrida.id }}</code></dd>
+      </div>
+    </dl>
+
+    <p class="m44__texto">
+      Guardá el identificador: lo piden el registro de observaciones, la
+      redacción de versiones y el cierre.
+    </p>
+
+    <button app-button variant="primary" (clicked)="otraCorrida()">Iniciar otra</button>
+  </div>
+} @else {
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-section
+      legend="Identidad de la corrida"
+      description="La clave hace la corrida idempotente: reintentar con la misma clave no duplica nada."
+    >
+      <app-form-field
+        label="Clave de idempotencia"
+        [required]="true"
+        hint="Única por marca de recolección, como msal-2026-08-11. Máx. 200 caracteres."
+        [errorMessage]="
+          form.controls.idempotencyKey.touched && form.controls.idempotencyKey.invalid
+            ? 'Escribí la clave de idempotencia (máx. 200 caracteres).'
+            : ''
+        "
+      >
+        <app-input formControlName="idempotencyKey" type="text" />
+      </app-form-field>
+
+      <app-form-field label="Qué la dispara" [required]="true">
+        <app-radio-group [value]="trigger()" (valueChange)="elegirDisparador($event)">
+          <app-radio value="MANUAL" label="Manual: alguien la pide ahora" />
+          <app-radio value="SCHEDULED" label="Programada: la trae una agenda" />
+        </app-radio-group>
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-section
+      legend="De dónde sale"
+      description="O viene de una agenda, o se declara el agente y el país: deducirlos sería inventarlos."
+    >
+      @if (faltaOrigen()) {
+        <app-alert tone="warning" class="m44__alert">
+          Indicá la agenda, o el agente y el país juntos.
+        </app-alert>
+      }
+
+      <app-form-field
+        label="Agenda"
+        hint="Si la corrida sale de una programación, su identificador (UUID)."
+        [errorMessage]="
+          form.controls.scheduleId.touched && form.controls.scheduleId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="scheduleId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Agente"
+        [hint]="uuidHint"
+        [errorMessage]="
+          form.controls.agentId.touched && form.controls.agentId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="agentId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="País"
+        hint="Identificador del concepto de país (UUID)."
+        [errorMessage]="
+          form.controls.countryConceptId.touched && form.controls.countryConceptId.invalid
+            ? uuidError
+            : ''
+        "
+      >
+        <app-input formControlName="countryConceptId" type="text" />
+      </app-form-field>
+    </app-form-section>
+
+    <app-form-actions
+      submitLabel="Iniciar corrida"
+      [pending]="isSubmitting()"
+      (submitted)="submit()"
+    />
+  </form>
+}

@@ -1,6 +1,7 @@
 import { capturar, reiniciarContadores } from '../../support/recorrido/evidencia';
 import { apiViva, crearPaciente, type Actor } from '../../support/real/actores';
 import { entrar, estable, irA, recorrer } from '../../support/real/sesion';
+import { subirDocumento } from '../../support/real/tramites';
 import { describirHallazgos, Vigilante } from '../../support/real/vigilante';
 
 /**
@@ -42,7 +43,7 @@ describe('Recorrido real · paciente', () => {
     /* -- Las dos pantallas públicas --------------------------------------- */
 
     vigilante.en('Crear cuenta');
-    cy.visit('/auth/registro');
+    cy.visit('/auth/register');
     estable();
     capturar({ carpeta: 'pac-01-registro', titulo: 'Crear cuenta' }, 'formulario');
     cy.get('h1').first().invoke('text').should('match', /\S/);
@@ -57,12 +58,12 @@ describe('Recorrido real · paciente', () => {
     cy.then(() => entrar(paciente));
     estable();
     capturar({ carpeta: 'pac-03-panel', titulo: 'Panel del paciente' }, 'al-entrar');
-    cy.location('pathname').should('contain', '/panel');
+    cy.location('pathname').should('contain', '/dashboard');
 
     /* -- La puerta: 403 por identidad, con salida -------------------------- */
 
     recorrer(vigilante, {
-      ruta: '/mi-cuenta',
+      ruta: '/my-account',
       carpeta: 'pac-04-mi-perfil',
       titulo: 'Mi perfil',
     });
@@ -79,15 +80,45 @@ describe('Recorrido real · paciente', () => {
     );
 
     recorrer(vigilante, {
-      ruta: '/identidad/verificar',
+      ruta: '/my-account/identity/verify',
       carpeta: 'pac-06-identidad',
       titulo: 'Verificar identidad',
     });
 
+    /* -- Y hace el trámite: sube su documento ------------------------------ */
+
+    // Es el gesto que abre el caso que después se revisa, y hasta acá el
+    // recorrido del paciente llegaba a la pantalla y se iba sin tocarla: quien
+    // lo leyera podía creer que el trámite estaba cubierto, y sólo lo ejercitaba
+    // la prueba del revisor.
+    vigilante.en('Verificar identidad · trámite');
+    subirDocumento().then((caseId) => {
+      expect(caseId, 'la pantalla tiene que devolverle el código de su caso').to.match(
+        /^[0-9a-f-]{36}$/,
+      );
+    });
+    capturar(
+      { carpeta: 'pac-06b-solicitud', titulo: 'Verificar identidad · la solicitud registrada' },
+      'enviada',
+    );
+
+    // El estado se dice en palabras. «Desconocido» es el neutro con que degrada
+    // la pantalla si el catálogo no resuelve, así que su ausencia es lo que
+    // prueba que resolvió; y el sello nunca puede ser el uuid del concepto.
+    cy.get('app-status-seal').should('contain.text', 'En revisión');
+    cy.contains(/desconocido/i).should('not.exist');
+
+    /* -- Y lo ve después en su lista de trámites --------------------------- */
+
+    irA('/my-account/identity/cases');
+    estable();
+    capturar({ carpeta: 'pac-06c-casos', titulo: 'Mis verificaciones' }, 'con-el-tramite');
+    cy.get('app-badge').should('contain.text', 'En revisión');
+
     /* -- Lo que su rol no alcanza ------------------------------------------ */
 
     vigilante.en('Menú del paciente');
-    irA('/panel');
+    irA('/dashboard');
     estable();
     capturar({ carpeta: 'pac-07-menu', titulo: 'Menú del paciente' }, 'navegacion-completa');
 
@@ -101,8 +132,8 @@ describe('Recorrido real · paciente', () => {
     // la sección— y no una en blanco ni una excepción. Los `403` de esas lecturas
     // están en la lista de esperados: lo que se juzga es que se sepan contar.
     for (const [ruta, carpeta, titulo] of [
-      ['/administracion/pacientes', 'pac-08-padron-denegado', 'Pacientes · sin permiso'],
-      ['/clinico', 'pac-09-clinico-denegado', 'Archivo clínico · sin permiso'],
+      ['/administration/patients', 'pac-08-padron-denegado', 'Pacientes · sin permiso'],
+      ['/medical-records', 'pac-09-clinico-denegado', 'Archivo clínico · sin permiso'],
     ] as const) {
       vigilante.en(titulo);
       irA(ruta);

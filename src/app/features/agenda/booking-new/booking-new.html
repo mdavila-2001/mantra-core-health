@@ -62,6 +62,16 @@
             <dt>Disponibilidad</dt>
             <dd>{{ cupo.remainingCapacity }} de {{ cupo.capacity }} sin ocupar</dd>
           </div>
+
+          <!-- Dónde es el turno. El renglón aparece sólo si el recurso tiene
+               sede: uno vacío se leería como un dato que no cargó, y quien
+               reserva por el portal no tiene a quién preguntarle. -->
+          @if (sede()) {
+            <div class="reserva__dato" data-testid="reserva-ubicacion">
+              <dt>Dónde</dt>
+              <dd>{{ ubicacion() }}</dd>
+            </div>
+          }
         </dl>
 
         @if (retencion(); as retencion) {
@@ -87,7 +97,12 @@
           />
         } @else {
           <!-- Paso 1: para quién es el turno. Por el portal ya se sabe. -->
-          <form (ngSubmit)="retener()" novalidate data-testid="reserva-form">
+          <form
+            [formGroup]="formulario"
+            (ngSubmit)="retener()"
+            novalidate
+            data-testid="reserva-form"
+          >
             @if (!esAutoservicio) {
               <app-form-section
                 legend="Paciente"
@@ -121,7 +136,7 @@
                     : ''
                 "
               >
-                <app-textarea [formControl]="motivo" [maxLength]="maxMotivo" [rows]="3" />
+                <app-textarea formControlName="motivo" [maxLength]="maxMotivo" [rows]="3" />
               </app-form-field>
             </app-form-section>
 

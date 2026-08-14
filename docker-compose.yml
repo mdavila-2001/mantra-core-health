@@ -5,12 +5,41 @@ services:
       dockerfile: Dockerfile.dev
     container_name: mantra-core-health-dev
 
-    # Compose lee `.env` de esta carpeta solo. Los `:-` son el valor por defecto:
-    # sin `.env`, todo funciona igual. Ver `.env.example`.
-    ports:
-      - '${FRONTEND_PORT:-4200}:4200'
+    # Se levanta solo si muere. Sin esto el contenedor no tenía política ninguna
+    # (`RestartPolicy=no`): dos veces quedó `Exited (129)` —un SIGHUP, típico de
+    # que Docker Desktop se reinicie o el proceso padre desaparezca— y la página
+    # dejó de cargar sin que nadie se enterara hasta abrirla.
+    #
+    # `unless-stopped` y no `always` a propósito: si alguien lo para a mano
+    # —para liberar memoria antes de una demo, por ejemplo— tiene que quedarse
+    # parado, no resucitar solo.
+    restart: unless-stopped
+
+    # Techo de memoria del servidor de desarrollo.
+    #
+    # No es para proteger al contenedor: es para proteger **al resto**. Sin
+    # límite, `ng serve` en modo watch crece sin techo hasta dejar la máquina sin
+    # RAM, y quien muere primero no es él sino PostgreSQL — que se cayó y entró
+    # en recuperación con la demo a un día. Con un tope, el que se queda sin aire
+    # es el que lo gasta, y se reinicia solo.
+    #
+    # 3 GB es holgado para compilar esta aplicación (el build de producción cabe
+    # en menos de 2) y deja sitio para la API y la base en una máquina de 16 GB.
+    mem_limit: 3g
 
     environment:
+      # El heap de Node, por debajo del techo del contenedor: así el recolector
+      # empieza a trabajar **antes** de que el kernel mate el proceso. Al revés
+      # —heap por encima del límite— el contenedor muere sin que Node llegue a
+      # intentar liberar nada.
+      #
+      # 2 GB y no más porque el heap no es lo único que vive aquí dentro: medido
+      # en marcha son ~1,3 GB de `ng serve` + ~0,4 GB de esbuild + ~0,14 GB del
+      # `yarn` que hace de PID 1. Dejar el heap en 2,5 GB sumaba por encima del
+      # techo de 3 GB y el kernel habría matado el contenedor — justo lo que se
+      # intenta evitar.
+      NODE_OPTIONS: --max-old-space-size=2048
+
       # A dónde reenvía el proxy las rutas de la API. El contenedor lo sustituye
       # en la plantilla `proxy.conf.docker.json` al arrancar.
       BACKEND_ORIGIN: ${BACKEND_ORIGIN:-http://host.docker.internal:3000}
@@ -20,6 +49,28 @@ services:
       # contenedor sobre el bind mount de ./src coincida con el del host y no se
       # pisen entre sí. Vacío = rutas relativas (lo normal: resuelve el proxy).
       PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-}
+
+    # Compose lee `.env` de esta carpeta solo. Los `:-` son el valor por defecto:
+    # sin `.env`, todo funciona igual. Ver `.env.example`.
+    ports:
+      - '${FRONTEND_PORT:-4200}:4200'
+
+    # Comprobación real: que el servidor responda, no que el proceso exista.
+    # Un `ng serve` que se quedó sin memoria puede seguir vivo y no atender —
+    # que es justo el modo de fallo que nadie ve hasta abrir el navegador.
+    healthcheck:
+      # En bloque y no en línea: el script lleva comillas de los dos tipos y en
+      # una sola línea el YAML deja de ser válido.
+      test:
+        - CMD-SHELL
+        - >-
+          node -e "fetch('http://localhost:4200/').then(r =>
+          process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 3
+
     volumes:
       # Se montan SOLO las fuentes y la configuración, nunca la raíz del
       # proyecto: montar `.` taparía el .pnp.cjs y el .yarn/unplugged de linux

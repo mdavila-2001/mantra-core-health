@@ -9,7 +9,7 @@ import { AnnounceOnAppear } from './announce-on-appear';
  * anunciarlos**, porque no usan `ViewStateHost` —que sí lo hace— sino un
  * `app-alert` propio.
  *
- * El caso más grave era el acuse de `/auth/recuperar`, que **es toda la
+ * El caso más grave era el acuse de `/auth/forgot-password`, que **es toda la
  * respuesta** que recibe la persona: aparecía en pantalla y un lector de
  * pantalla no decía nada.
  */

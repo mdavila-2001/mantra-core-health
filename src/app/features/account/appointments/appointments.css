@@ -54,6 +54,23 @@
   }
 }
 
+/* El estado y las acciones de la fila, juntos: en móvil apilados bajo la
+   fecha, y en la columna auto cuando hay ancho. */
+.turnos__acciones {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* El aviso del modo reprogramación: qué turno se está moviendo y la salida. */
+.turnos__reprogramando {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  margin-block-end: var(--sp-4);
+}
+
 .turnos__cuando {
   display: grid;
   gap: var(--sp-2);
@@ -70,6 +87,12 @@
   font-size: var(--fs-caption);
   /* Cifras de ancho fijo: una columna de horas que no baila al leerla. */
   font-variant-numeric: tabular-nums;
+}
+
+/* Con quién es el turno. Va con la tinta principal —no atenuada— porque es lo
+   segundo que se busca al mirar la lista, después de la fecha. */
+.turnos__agenda {
+  color: var(--text-primary);
 }
 
 .turnos__motivo {

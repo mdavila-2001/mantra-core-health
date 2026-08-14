@@ -22,12 +22,17 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { reservaDelPortalRoute } from './appointments.routes';
+import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 
 /**
  * Cuántos días hacia adelante se ofrecen.
@@ -44,6 +49,41 @@ const TOPE_DE_HORARIOS = 100;
 /** Tope de turnos propios que se traen. Nadie tiene cien turnos a la vez. */
 const TOPE_DE_TURNOS = 50;
 
+/**
+ * Los códigos de estado en los que el backend acepta cancelar una reserva.
+ *
+ * Allowlist a propósito, no denylist: el catálogo mezcla convenciones
+ * —`BOOKING_CONFIRMED` a secas y `scheduling:BOOKING_REQUESTED` con prefijo— y
+ * «completada» aparece con más de un código (`EV_BOOKING_DONE`), así que
+ * enumerar lo cancelable es más seguro que enumerar lo que no lo es: un estado
+ * nuevo o desconocido no ofrece el botón. El backend sigue siendo la última
+ * palabra —un 409/422 se trata con aviso amable—, pero no se ofrece una acción
+ * que casi seguro va a fallar.
+ *
+ * Verificado contra la API viva (2026-08-12): los reservables presentes en datos
+ * llegan como `BOOKING_CONFIRMED` y `BOOKING_CHECKED_IN`; `REQUESTED` y
+ * `PENDING_CONFIRMATION` existen en el catálogo con prefijo de módulo.
+ */
+const CODIGOS_CANCELABLES: ReadonlySet<string> = new Set([
+  'BOOKING_REQUESTED',
+  'BOOKING_PENDING_CONFIRMATION',
+  'BOOKING_CONFIRMED',
+  'BOOKING_CHECKED_IN',
+]);
+
+/**
+ * Los códigos de estado en los que el backend acepta **reprogramar** una
+ * reserva. Es una lista propia y más corta que la de cancelar, y la
+ * diferencia no es un descuido: el backend sólo reprograma una cita
+ * *vigente* —confirmada o con llegada—, así que una solicitada o pendiente
+ * de confirmación se puede cancelar pero **no** mover. Verificado contra el
+ * código del endpoint y contra la API viva (2026-08-12).
+ */
+const CODIGOS_REPROGRAMABLES: ReadonlySet<string> = new Set([
+  'BOOKING_CONFIRMED',
+  'BOOKING_CHECKED_IN',
+]);
+
 /** Un turno propio, ya listo para mostrarse. */
 interface TurnoVisible {
   readonly id: string;
@@ -51,7 +91,15 @@ interface TurnoVisible {
   readonly hasta: Date | null;
   /** El uuid del catálogo. Se conserva para poder reetiquetar cuando llegue. */
   readonly statusConceptId: string;
+  /** El código del catálogo ya resuelto. `''` hasta que terminología llegue. */
+  readonly codigo: string;
   readonly estado: string;
+  /** El tono del badge, que sale del mismo código que la palabra. */
+  readonly tono: BadgeVariant;
+  /** La agenda del turno. Se conserva el id para reetiquetar cuando llegue. */
+  readonly resourceId: string;
+  /** Con quién es el turno, en palabras. Vacío mientras no se sepa. */
+  readonly agenda: string;
   readonly motivo: string;
 }
 
@@ -101,12 +149,18 @@ interface HorarioVisible {
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
+  // `DatePipe` inyectable para nombrar el turno concreto en la confirmación de
+  // cancelación (mismo locale es-BO que la plantilla).
+  providers: [DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Appointments {
   private readonly scheduling = inject(SchedulingClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
+  private readonly dialogs = inject(DialogService);
+  private readonly toast = inject(ToastService);
+  private readonly fecha = inject(DatePipe);
 
   /** Quién es el titular. Sin esto no hay turnos propios que pedir ni mostrar. */
   private readonly perfil = this.auth.patientProfileId();
@@ -119,6 +173,13 @@ export class Appointments {
    */
   protected readonly sinPerfilDePaciente = this.perfil === null;
 
+  /**
+   * La salida cuando la cuenta no es de un paciente: la agenda de la
+   * organización, que es a donde el propio aviso manda. Mismo destino que
+   * ofrece `booking-new` en su caso equivalente.
+   */
+  protected readonly rutaDeAgenda = AGENDA_ROUTE;
+
   /** La organización, que `GET /scheduling/resources` exige explícita. */
   protected readonly organizacion = this.auth.activeTenantId;
 
@@ -128,6 +189,25 @@ export class Appointments {
   /* ---- mis turnos --------------------------------------------------------- */
 
   protected readonly turnos = signal<ViewState<readonly TurnoVisible[]>>(loading());
+
+  /** El turno que se está cancelando, para el `[isLoading]` del botón. `null` = ninguno. */
+  protected readonly operando = signal<string | null>(null);
+
+  /**
+   * El turno que se está por mover, si hay uno. Mientras no sea `null`, la
+   * grilla de horarios deja de ofrecer «pedir un turno nuevo» y ofrece «mover
+   * acá»: el mismo clic no puede significar dos cosas a la vez.
+   */
+  protected readonly reprogramando = signal<string | null>(null);
+
+  /** El turno origen de la reprogramación, ya resuelto para nombrarlo. */
+  protected readonly turnoEnReprogramacion = computed<TurnoVisible | null>(() => {
+    const id = this.reprogramando();
+    if (id === null) {
+      return null;
+    }
+    return this.turnosListos().find((turno) => turno.id === id) ?? null;
+  });
 
   /* ---- pedir un turno ----------------------------------------------------- */
 
@@ -185,8 +265,11 @@ export class Appointments {
     }
 
     this.turnos.set(loading());
+    // `includeCancelled: true` a propósito: tras cancelar, el turno tiene que
+    // seguir viéndose —como cancelado— y no desaparecer. El backend lo oculta por
+    // omisión; acá se quiere el historial reciente, no solo lo vigente.
     this.scheduling
-      .searchBookings({ patientProfileId: perfil, limit: TOPE_DE_TURNOS })
+      .searchBookings({ patientProfileId: perfil, includeCancelled: true, limit: TOPE_DE_TURNOS })
       .subscribe({
         next: (pagina) => {
           if (pagina.items.length === 0) {
@@ -220,6 +303,10 @@ export class Appointments {
       next: (pagina) => {
         this.recursos.set(pagina.items);
         this.sinRecursos.set(pagina.items.length === 0);
+        // Los turnos pueden haberse pintado antes que esto: las dos lecturas
+        // del arranque salen a la vez. Se rehacen para que tomen el nombre de
+        // su agenda, igual que con las etiquetas de estado.
+        this.reetiquetarTurnos();
       },
       // Un fallo acá no se cuenta como «no hay agendas»: eso mandaría a la
       // persona a esperar a que la organización cargue algo que quizá ya tiene.
@@ -280,6 +367,225 @@ export class Appointments {
       });
   }
 
+  /* ---- cancelar ----------------------------------------------------------- */
+
+  /**
+   * Si el turno admite cancelarse, por su código de estado.
+   *
+   * Allowlist sobre el sufijo del código (ver {@link CODIGOS_CANCELABLES}): un
+   * estado fuera de la lista —cancelado, atendido, completado o desconocido— no
+   * ofrece el botón. Mientras el código no se resolvió (`''`) tampoco: nunca se
+   * ofrece cancelar sobre un estado que no se conoce.
+   */
+  protected esCancelable(turno: TurnoVisible): boolean {
+    return turno.codigo !== '' && CODIGOS_CANCELABLES.has(sufijoDeCodigo(turno.codigo));
+  }
+
+  /**
+   * Cancela el turno propio, con confirmación previa.
+   *
+   * Es una acción destructiva, así que pide confirmación nombrando el turno. El
+   * tono es calmo, no de alarma: cancelar un turno propio es corriente, no una
+   * baja de la que haya que disuadir.
+   */
+  protected async cancelarTurno(turno: TurnoVisible): Promise<void> {
+    if (this.operando() !== null) {
+      return;
+    }
+
+    const confirmado = await this.dialogs.confirm({
+      title: 'Cancelar el turno',
+      message: `Vas a cancelar ${this.nombreDelTurno(turno)}. El horario queda libre para otra persona.`,
+      confirmLabel: 'Cancelar el turno',
+      cancelLabel: 'Volver',
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    this.operando.set(turno.id);
+    this.scheduling.cancelBooking(turno.id, { cancelledBy: 'PATIENT' }).subscribe({
+      next: () => {
+        this.operando.set(null);
+        this.toast.success('Cancelamos tu turno y liberamos el horario.', 'Turno cancelado');
+        // El servidor es la verdad: se relee en vez de tachar la fila y devolver
+        // el cupo a mano. El turno reaparece como cancelado (por `includeCancelled`)
+        // y el horario vuelve a ofrecerse.
+        this.recargar();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFalloCancelacion(error);
+      },
+    });
+  }
+
+  /** Cómo nombrar el turno en la confirmación: por su fecha, o genérico. */
+  private nombreDelTurno(turno: TurnoVisible): string {
+    if (turno.cuando === null) {
+      return 'este turno';
+    }
+    const cuando = this.fecha.transform(turno.cuando, "EEEE d 'de' MMM 'a las' HH:mm");
+    return cuando === null ? 'este turno' : `el turno del ${cuando}`;
+  }
+
+  /**
+   * Traduce el fallo de cancelar a un aviso, sin pintar de rojo lo que no es un
+   * error del titular.
+   *
+   * - **409 `CONFLICT`** (ya estaba cancelado, p. ej. desde la agenda del médico)
+   *   y **422 / precondición** (la transición ya no está disponible) son estados
+   *   esperados: aviso neutro y se relee, porque el mundo cambió mientras la
+   *   pantalla estaba abierta y la lista tiene que ponerse al día.
+   * - Cualquier otro fallo sigue el patrón del repo y **no** destruye la lista:
+   *   la que se leyó sigue siendo cierta aunque un botón haya fallado.
+   */
+  private avisarFalloCancelacion(error: unknown): void {
+    const estado = errorToViewState<null>(error);
+    const codigos =
+      estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
+
+    if (codigos.includes('CONFLICT')) {
+      this.toast.info('Este turno ya estaba cancelado. Actualizamos tu lista.', 'Turno');
+      this.recargar();
+      return;
+    }
+    if (estado.status === 'validation') {
+      this.toast.info('Este turno ya no se puede cancelar. Actualizamos tu lista.', 'Turno');
+      this.recargar();
+      return;
+    }
+
+    const detalle =
+      estado.status === 'forbidden' || estado.status === 'error' ? (estado.message ?? '') : '';
+    this.toast.error(
+      detalle === '' ? 'No pudimos cancelar el turno. Reintentá en un momento.' : detalle,
+      'Turno',
+    );
+  }
+
+  /** Relee lo que la operación cambió: los turnos y los horarios ofrecidos. */
+  private recargar(): void {
+    this.cargarTurnos();
+    this.cargarHorarios();
+  }
+
+  /* ---- reprogramar -------------------------------------------------------- */
+
+  /**
+   * Si el turno admite moverse a otro horario.
+   *
+   * Allowlist **propia**, no la de cancelar: el backend sólo reprograma una
+   * cita vigente (confirmada o con llegada). Una solicitada o pendiente se
+   * puede cancelar pero no mover.
+   */
+  protected esReprogramable(turno: TurnoVisible): boolean {
+    return turno.codigo !== '' && CODIGOS_REPROGRAMABLES.has(sufijoDeCodigo(turno.codigo));
+  }
+
+  /**
+   * Entra al modo reprogramación: la grilla de horarios que ya existe pasa a
+   * ofrecer «mover acá» en vez de «pedir este horario».
+   *
+   * Se preselecciona la agenda del turno para que lo primero que se vea sean
+   * sus propios horarios; el selector sigue disponible para mirar otra.
+   */
+  protected iniciarReprogramacion(turno: TurnoVisible): void {
+    if (this.operando() !== null) {
+      return;
+    }
+
+    this.reprogramando.set(turno.id);
+    if (turno.resourceId !== '' && this.recursoElegido() !== turno.resourceId) {
+      this.elegirRecurso(turno.resourceId);
+    }
+  }
+
+  /** Sale del modo reprogramación sin tocar nada. */
+  protected cancelarReprogramacion(): void {
+    this.reprogramando.set(null);
+  }
+
+  /**
+   * Mueve el turno en reprogramación al horario elegido, con confirmación que
+   * nombra origen y destino. Un solo POST: el backend libera el cupo viejo y
+   * ocupa el nuevo en la misma operación; el estado de la cita no cambia.
+   */
+  protected async reprogramarA(horario: HorarioVisible): Promise<void> {
+    const origenId = this.reprogramando();
+    if (origenId === null || this.operando() !== null) {
+      return;
+    }
+
+    const origen = this.turnoEnReprogramacion();
+    const confirmado = await this.dialogs.confirm({
+      title: 'Mover el turno',
+      message: `Vas a mover ${origen === null ? 'este turno' : this.nombreDelTurno(origen)} al ${this.nombreDelHorario(horario)}. El horario anterior queda libre.`,
+      confirmLabel: 'Mover el turno',
+      cancelLabel: 'Volver',
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    this.operando.set(origenId);
+    this.scheduling.rescheduleBooking(origenId, { toSlotId: horario.id }).subscribe({
+      next: () => {
+        this.operando.set(null);
+        this.reprogramando.set(null);
+        this.toast.success('Movimos tu turno al horario nuevo.', 'Turno reprogramado');
+        // El servidor es la verdad: la lista muestra la hora nueva y el cupo
+        // viejo vuelve a ofrecerse releyendo, no restando a mano.
+        this.recargar();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFalloReprogramacion(error);
+      },
+    });
+  }
+
+  /** Cómo nombrar el horario destino en la confirmación. */
+  private nombreDelHorario(horario: HorarioVisible): string {
+    return this.fecha.transform(horario.desde, "EEEE d 'de' MMM 'a las' HH:mm") ?? 'horario elegido';
+  }
+
+  /**
+   * Traduce el fallo de reprogramar a un aviso, con el mismo criterio que la
+   * cancelación: lo esperado no es rojo.
+   *
+   * - **409 `CONFLICT`**: el cupo destino se ocupó mientras se decidía. Se
+   *   avisa y se relee —la grilla estaba vieja—, y el modo queda activo para
+   *   elegir otro horario.
+   * - **422 / precondición**: la cita dejó de estar vigente (p. ej. se canceló
+   *   desde otra sesión). Se avisa, se sale del modo y se relee.
+   * - Cualquier otro fallo sigue el patrón del repo, sin destruir la lista.
+   */
+  private avisarFalloReprogramacion(error: unknown): void {
+    const estado = errorToViewState<null>(error);
+    const codigos =
+      estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
+
+    if (codigos.includes('CONFLICT')) {
+      this.toast.info('Ese horario se acaba de ocupar. Elegí otro de la lista.', 'Turno');
+      this.recargar();
+      return;
+    }
+    if (estado.status === 'validation') {
+      this.toast.info('Este turno ya no se puede reprogramar. Actualizamos tu lista.', 'Turno');
+      this.reprogramando.set(null);
+      this.recargar();
+      return;
+    }
+
+    const detalle =
+      estado.status === 'forbidden' || estado.status === 'error' ? (estado.message ?? '') : '';
+    this.toast.error(
+      detalle === '' ? 'No pudimos mover el turno. Reintentá en un momento.' : detalle,
+      'Turno',
+    );
+  }
+
   /**
    * Pide las etiquetas de los estados que aparecieron.
    *
@@ -301,11 +607,23 @@ export class Appointments {
         this.etiquetas.set(new Map([...this.etiquetas(), ...etiquetas]));
         // La lista ya está pintada con el texto neutro: hay que rehacerla para
         // que tome las etiquetas que acaban de llegar.
-        const estado = this.turnos();
-        if (estado.status === 'ready') {
-          this.turnos.set(ready(estado.data.map((turno) => this.conEtiqueta(turno))));
-        }
+        this.reetiquetarTurnos();
       });
+  }
+
+  /**
+   * Rehace la lista ya pintada con lo que se sepa ahora.
+   *
+   * La pantalla arranca tres lecturas que terminan en cualquier orden —los
+   * turnos, las agendas y el catálogo de estados— y las dos últimas aportan
+   * texto a la primera. En vez de esperar a todas para pintar algo, se pinta lo
+   * que hay y se rehace cuando llega el resto.
+   */
+  private reetiquetarTurnos(): void {
+    const estado = this.turnos();
+    if (estado.status === 'ready') {
+      this.turnos.set(ready(estado.data.map((turno) => this.conEtiqueta(turno))));
+    }
   }
 
   /* ---- destinos ----------------------------------------------------------- */
@@ -329,30 +647,65 @@ export class Appointments {
   /* ---- mapeos ------------------------------------------------------------- */
 
   private aTurnoVisible(cita: Booking): TurnoVisible {
+    const estado = this.presentacionDelEstado(cita.statusConceptId);
+    const resourceId = cita.resourceId ?? '';
     return {
       id: cita.id,
       cuando: cita.startAt ?? null,
       hasta: cita.endAt ?? null,
       statusConceptId: cita.statusConceptId,
-      estado: this.nombreDelEstado(cita.statusConceptId),
+      codigo: this.codigoDelEstado(cita.statusConceptId),
+      estado: estado.label,
+      tono: estado.tone,
+      resourceId,
+      agenda: this.nombreDeLaAgenda(resourceId),
       motivo: cita.reasonText ?? '',
     };
   }
 
   /** Reetiqueta un turno con lo que el catálogo haya traído desde entonces. */
   private conEtiqueta(turno: TurnoVisible): TurnoVisible {
-    return { ...turno, estado: this.nombreDelEstado(turno.statusConceptId) };
+    const estado = this.presentacionDelEstado(turno.statusConceptId);
+    return {
+      ...turno,
+      codigo: this.codigoDelEstado(turno.statusConceptId),
+      estado: estado.label,
+      tono: estado.tone,
+      agenda: this.nombreDeLaAgenda(turno.resourceId),
+    };
+  }
+
+  /** El código del estado, o `''` si el catálogo todavía no lo resolvió. */
+  private codigoDelEstado(conceptId: string): string {
+    return this.etiquetas().get(conceptId)?.code ?? '';
   }
 
   /**
-   * El nombre del estado.
+   * Con quién es el turno.
    *
-   * Mientras la etiqueta no llegue se dice «Sin confirmar el estado», no el
-   * uuid: un identificador en pantalla no le dice nada a nadie, y es
-   * exactamente lo que la regla del M34 pide evitar.
+   * Sale de las agendas que la pantalla ya cargó para el selector, así que no
+   * cuesta una petición más. Devuelve vacío mientras no se sepa —las dos
+   * lecturas del arranque corren en paralelo y los turnos pueden llegar
+   * primero—, y la plantilla omite la línea en vez de mostrar un hueco o, peor,
+   * el identificador del recurso.
    */
-  private nombreDelEstado(conceptId: string): string {
-    return this.etiquetas().get(conceptId)?.display ?? 'Sin confirmar el estado';
+  private nombreDeLaAgenda(resourceId: string): string {
+    if (resourceId === '') {
+      return '';
+    }
+    return this.recursos().find((recurso) => recurso.id === resourceId)?.name ?? '';
+  }
+
+  /**
+   * Cómo se muestra el estado: la palabra y el tono.
+   *
+   * El catálogo resuelve el uuid a un **código**, y el código decide las dos
+   * cosas. Ni el uuid ni el `display` en inglés del catálogo llegan a la
+   * pantalla: el primero no le dice nada a nadie —es justo lo que la regla del
+   * M34 pide evitar— y el segundo es una etiqueta de API en otro idioma.
+   */
+  private presentacionDelEstado(conceptId: string) {
+    return toBookingStatusPresentation(this.etiquetas().get(conceptId));
   }
 
   private aHorarioVisible(cupo: AgendaSlot): HorarioVisible {

@@ -128,6 +128,6 @@ export const LoginPage = {
 
   /** Espera a haber salido del login: la señal de que la sesión se abrió. */
   esperarSalidaDelLogin(): void {
-    cy.location('pathname').should('match', /^\/(panel|auth\/organizacion)$/);
+    cy.location('pathname').should('match', /^\/(dashboard|auth\/organization)$/);
   },
 };

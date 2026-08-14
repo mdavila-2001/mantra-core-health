@@ -1,0 +1,166 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Conjuntos de valor</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Conjuntos de valor</h1></div>
+        <p class="caption">Las listas cerradas que la plataforma ofrece en cada campo de selección: motivos de consulta, vías de administración, diagnósticos de egreso. Se arman con reglas sobre uno o más sistemas de códigos.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/terminologia/conjuntos-de-valor-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
+      </div>
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Conjuntos de valor">
+    <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Conjuntos de valor</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/terminologia/expansion-de-conjunto-de-valores-detalle">Expansión</a>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por código interno o nombre">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-34">Jurisdicción</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-34">
+            <option>Todas</option>
+            <option>Bolivia</option>
+            <option>Universal</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Bolivia<button type="button" aria-label="Quitar el filtro Bolivia"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-35">Estado</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-35">
+            <option>Todas</option>
+            <option>Activo</option>
+            <option>Borrador</option>
+            <option>Retirado</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Activo<button type="button" aria-label="Quitar el filtro Activo"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Conjuntos de valor — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Código interno</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">URL canónica</th>
+            <th scope="col">Descripción</th>
+            <th scope="col">Jurisdicción</th>
+            <th scope="col">Estado</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">CVA-2026-000341</td><td class="col-codigo">motivos-de-consulta</td><td>Motivos de consulta ambulatoria</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://terminologia.alovida.bo/ValueSet/motivos-de-consulta">https://terminologia.alovida…</span></td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="Motivos por los que un paciente pide atención en consulta externa.">Motivos por los que un paciente pide atenció…</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 20.5V4"></path><path d="M5 5h11l-2 3.5L16 12H5"></path></svg>Bolivia</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-19" aria-label="Acciones sobre CVA-2026-000341"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-19" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/expansion-de-conjunto-de-valores-detalle"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver la expansión</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/politicas-de-catalogo-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Editar la política de catálogo</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">CVA-2026-000338</td><td class="col-codigo">diagnosticos-egreso</td><td>Diagnósticos de egreso</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://terminologia.alovida.bo/ValueSet/diagnosticos-egreso">https://terminologia.alovida…</span></td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="Subconjunto de CIE-10 admitido al cerrar una internación.">Subconjunto de CIE-10 admitido al cerrar una…</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 20.5V4"></path><path d="M5 5h11l-2 3.5L16 12H5"></path></svg>Bolivia</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-20" aria-label="Acciones sobre CVA-2026-000338"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-20" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/expansion-de-conjunto-de-valores-detalle"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver la expansión</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/politicas-de-catalogo-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Editar la política de catálogo</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">CVA-2026-000330</td><td class="col-codigo">via-de-administracion</td><td>Vía de administración</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://terminologia.alovida.bo/ValueSet/via-de-administracion">https://terminologia.alovida…</span></td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="Vías admitidas al prescribir un medicamento.">Vías admitidas al prescribir un medicamento.</span></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3.5 12h17"></path><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>Universal</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-21" aria-label="Acciones sobre CVA-2026-000330"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-21" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/expansion-de-conjunto-de-valores-detalle"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver la expansión</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/politicas-de-catalogo-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Editar la política de catálogo</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">CVA-2026-000322</td><td class="col-codigo">tipo-de-documento</td><td>Tipo de documento de identidad</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://terminologia.alovida.bo/ValueSet/tipo-de-documento">https://terminologia.alovida…</span></td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="Documentos con los que se identifica a un paciente en Bolivia.">Documentos con los que se identifica a un pa…</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 20.5V4"></path><path d="M5 5h11l-2 3.5L16 12H5"></path></svg>Bolivia</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-22" aria-label="Acciones sobre CVA-2026-000322"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-22" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/expansion-de-conjunto-de-valores-detalle"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver la expansión</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/politicas-de-catalogo-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Editar la política de catálogo</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">CVA-2026-000315</td><td class="col-codigo">especialidades-medicas</td><td>Especialidades médicas</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://terminologia.alovida.bo/ValueSet/especialidades-medicas">https://terminologia.alovida…</span></td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="Especialidades habilitadas para la agenda y la derivación.">Especialidades habilitadas para la agenda y …</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 20.5V4"></path><path d="M5 5h11l-2 3.5L16 12H5"></path></svg>Bolivia</span></td><td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Borrador</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-23" aria-label="Acciones sobre CVA-2026-000315"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-23" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/expansion-de-conjunto-de-valores-detalle"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver la expansión</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/politicas-de-catalogo-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Editar la política de catálogo</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">CVA-2026-000307</td><td class="col-codigo">resultados-criticos</td><td>Resultados críticos de laboratorio</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://terminologia.alovida.bo/ValueSet/resultados-criticos">https://terminologia.alovida…</span></td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="Analitos cuyo resultado dispara aviso inmediato al médico tratante.">Analitos cuyo resultado dispara aviso inmedi…</span></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M3.5 12h17"></path><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>Universal</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4" width="17" height="4" rx="1.5"></rect><path d="M5.5 8v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg>Retirado</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-24" aria-label="Acciones sobre CVA-2026-000307"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-24" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/expansion-de-conjunto-de-valores-detalle"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>Ver la expansión</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg>Ver las versiones</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/terminologia/politicas-de-catalogo-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Editar la política de catálogo</a>
+          </div>
+        </div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg></span>
+        <h2>Todavía no hay conjuntos de valor</h2>
+        <p>Un conjunto de valores es la lista que ve el usuario cuando elige un motivo de consulta o una vía de administración. Se define con reglas sobre los sistemas de códigos y se materializa al expandirlo.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/conjuntos-de-valor-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar los conjuntos de valor.</strong>
+            <p>La organización activa no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

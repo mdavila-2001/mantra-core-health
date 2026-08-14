@@ -9,7 +9,7 @@
  * ## Lo que NO se puede usar acá, y por qué
  *
  * **Nonce por petición, no.** Cuatro rutas se prerenderizan en el build
- * (`/auth`, `/auth/registro`, `/auth/recuperar`, `/design-system`): su HTML se
+ * (`/auth`, `/auth/register`, `/auth/forgot-password`, `/design-system`): su HTML se
  * genera cuando todavía no existe ninguna petición que numerar. Un nonce las
  * dejaría con un valor muerto y sus scripts bloqueados.
  *

@@ -187,11 +187,11 @@ export class TerminologyCatalog {
         // backend, no esta pantalla. La salida es irse, y decirlo es más honesto
         // que ofrecer una acción que no existe.
         empty(
-          { label: 'Volver al panel', route: '/panel' },
+          { label: 'Volver al panel', route: '/dashboard' },
           'El catálogo de esta organización todavía no tiene conceptos cargados.',
         )
       : empty(
-          { label: 'Ver todo el catálogo', route: '/administracion/terminologia' },
+          { label: 'Ver todo el catálogo', route: '/administration/terminology' },
           `Ningún concepto coincide con «${this.busqueda()}».`,
         );
   }

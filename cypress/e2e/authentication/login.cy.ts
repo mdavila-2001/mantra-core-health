@@ -17,7 +17,7 @@ describe('Autenticación · inicio de sesión', () => {
 
     LoginPage.entrar(paciente());
 
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
     DashboardPage.esperarTitulo('Panel');
   });
 
@@ -28,7 +28,7 @@ describe('Autenticación · inicio de sesión', () => {
     // correo mal formado, el backend respondería 400 y no habría sesión.
     LoginPage.entrar(pacienteConDocumento());
 
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
   });
 
   it('con varias organizaciones hay que elegir antes de entrar', () => {
@@ -45,7 +45,7 @@ describe('Autenticación · inicio de sesión', () => {
     ]);
 
     TenantSelectionPage.elegir('Centro Sur');
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
   });
 
   it('credenciales inválidas muestran un mensaje accionable, no uno genérico', () => {
@@ -101,6 +101,6 @@ describe('Autenticación · inicio de sesión', () => {
     LoginPage.esperarEnviando();
 
     LoginPage.esperarSalidaDelLogin();
-    cy.location('pathname').should('match', /\/panel$/);
+    cy.location('pathname').should('match', /\/dashboard$/);
   });
 });

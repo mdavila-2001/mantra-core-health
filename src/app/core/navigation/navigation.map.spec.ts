@@ -58,7 +58,7 @@ describe('APP_SECTIONS', () => {
   });
 
   it('el panel es la primera sección: el breadcrumb lo usa como raíz', () => {
-    expect(APP_SECTIONS[0]?.path).toBe('panel');
+    expect(APP_SECTIONS[0]?.path).toBe('dashboard');
   });
 
   it('el panel lo ve cualquier sesión, sin importar los roles', () => {

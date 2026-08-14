@@ -43,7 +43,32 @@ describe('PatientNew', () => {
     http = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
     fixture.detectChanges();
+
+    // Los dos selectores de catálogo —género y sexo al nacer— piden sus opciones
+    // al construirse. Se responden acá para que cada prueba hable del alta, que
+    // es lo suyo; la que mira los conceptos los sobrescribe por su cuenta.
+    responderCatalogos();
   });
+
+  /**
+   * Responde las lecturas de `dynamic-enums` que disparan los selectores.
+   *
+   * Con `match` y no `expectOne`: el cliente memoiza por target, así que a
+   * partir de la segunda construcción del componente ya no hay petición que
+   * responder y `expectOne` haría depender el resultado del orden.
+   */
+  function responderCatalogos(opciones: unknown[] = []): void {
+    for (const peticion of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+      peticion.flush({
+        code: 'x',
+        name: 'x',
+        definitionId: 'd',
+        valueSetId: 'vs',
+        allowCustomValue: false,
+        options: opciones,
+      });
+    }
+  }
 
   afterEach(() => http.verify());
 
@@ -96,6 +121,58 @@ describe('PatientNew', () => {
     req.flush(RESPUESTA);
   });
 
+  /* ---- los dos campos de catálogo (IT3) ---------------------------------- */
+
+  /**
+   * Estuvieron ausentes mientras no hubo forma de saber qué conjunto de valores
+   * gobierna cada columna. Lo que viaja es el **`conceptId`**, nunca la etiqueta
+   * ni el código: es una clave foránea hacia terminología.
+   */
+  it('el género elegido viaja como concepto', () => {
+    crudo<{ set: (v: string | null) => void }>('generoAdministrativo').set('c-femenino');
+    completar({});
+    enviar();
+
+    const req = http.expectOne('/profiles/patients');
+    expect(req.request.body).toEqual({
+      patientCode: 'PAC-9',
+      administrativeGenderConceptId: 'c-femenino',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  it('los dos conceptos viajan juntos cuando se eligen los dos', () => {
+    crudo<{ set: (v: string | null) => void }>('generoAdministrativo').set('c-otro');
+    crudo<{ set: (v: string | null) => void }>('sexoAlNacer').set('c-intersex');
+    completar({});
+    enviar();
+
+    const req = http.expectOne('/profiles/patients');
+    expect(req.request.body).toEqual({
+      patientCode: 'PAC-9',
+      administrativeGenderConceptId: 'c-otro',
+      sexAtBirthConceptId: 'c-intersex',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * Sin elección la clave no viaja. `null` **no** es «sin especificar»: para eso
+   * el propio catálogo tiene su concepto, y son cosas distintas.
+   */
+  it('sin elegir concepto, la clave no se manda', () => {
+    completar({});
+    enviar();
+
+    const req = http.expectOne('/profiles/patients');
+    expect(req.request.body).not.toHaveProperty('administrativeGenderConceptId');
+    expect(req.request.body).not.toHaveProperty('sexAtBirthConceptId');
+
+    req.flush(RESPUESTA);
+  });
+
   it('recorta los espacios de lo que se escribe', () => {
     completar({ patientCode: '  PAC-9  ', displayName: '  Ana Salas  ' });
     enviar();
@@ -134,7 +211,7 @@ describe('PatientNew', () => {
     enviar();
     http.expectOne('/profiles/patients').flush(RESPUESTA);
 
-    expect(navegado).toEqual(['/administracion/pacientes/pp-9']);
+    expect(navegado).toEqual(['/administration/patients/pp-9']);
   });
 
   /**

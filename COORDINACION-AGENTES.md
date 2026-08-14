@@ -5,6 +5,313 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión en curso · Carril 1 — catálogo de servicios, presupuestos y PDF
+
+**Empezó:** 2026-08-14 · **Ramas:** `carril-1/catalogo-presupuestos-pdf` en los dos repos,
+cada una en su propio `git worktree` (`../mantra-core-health-carril1` y
+`../mantra-core-health-redesa-api-carril1`) para no pisar el trabajo sin commitear que ya
+había en ambos working trees (contabilidad en el backend, tutoriales/perfil público acá).
+**Base:** `origin/dev` acá, `origin/master` en el backend.
+
+Ver `CARRIL-1-catalogo-presupuestos-pdf.md` y `CARRILES-2026-08-14-README.md` para el plan
+completo. Este bloque documenta un bloqueador real que ese plan ya anticipaba y cambia el
+alcance de lo que este carril entrega hoy.
+
+### 🔴 Bloqueador: `billing.budgets`/`billing.budget_lines` no sirven para presupuestos por paciente
+
+El punto 5 del reclamo (presupuesto/cotización por paciente y procedimiento, precio libre por
+doctor sobre el catálogo fijo) iba a apoyarse en `billing.budgets`/`billing.budget_lines`. Al
+auditar las entidades (`mantra-core-health-redesa-api/src/modules/billing/entities/budgets.entity.ts`
+y `budget_lines.entity.ts`) resultó que **están modeladas como presupuesto fiscal por centro de
+costo**, no como presupuesto/cotización clínica:
+
+- `budgets`: `practiceId`, `fiscalYearId`, `name`, `statusConceptId` — **sin `patientId` en
+  ningún lado**.
+- `budget_lines`: `budgetId`, `accountId`, `costCenterId`, `fiscalPeriodId`, `amount` — **sin
+  referencia a `service_catalog`**, sin `quantity` ni `unitPrice` propios.
+
+Confirmado que no hay otra entidad de respaldo: `grep` de `patientId`/`patient_id` en todo
+`src/modules/billing/entities/*.entity.ts` no da resultados, y una búsqueda de
+`quote`/`cotizacion`/`presupuesto` en el resto del backend tampoco encuentra nada relevante (solo
+falsos positivos de otros dominios — ads, marketing). La forma que el punto 5 necesita ya existe,
+pero en otro lado: `billing.invoices` (`patientProfileId`) + `billing.invoice_lines`
+(`serviceId`, `quantity`, `unitPrice`, `description`) — repurposar esa tabla para cotizaciones
+borrador se descartó porque `ledger.service.ts`, `dunning.service.ts`,
+`patient-statements.service.ts` y `kpi-snapshots.service.ts` ya asumen que todo lo que hay en
+`invoices` es contabilizable de verdad.
+
+**Decisión (con el usuario, 2026-08-14):** extender `budgets`/`budget_lines` — agregar
+`patient_profile_id` (uuid, FK a `profiles.patient_profiles`) a `budgets`, y a `budget_lines`
+`service_catalog_id` (uuid, FK a `billing.service_catalog`), `quantity` (numeric),
+`unit_price` (numeric, el precio que puso el doctor — nunca `service_catalog.default_price` a
+ciegas) y `description` (varchar, opcional) — vía el pipeline `.puml` → `gen_ddl.py` →
+`SQL/patches/`, que no vive en ninguno de los dos repos git (ver la advertencia de
+`CARRILES-2026-08-14-README.md`). No se tocó ningún patch a mano.
+
+**Queda pendiente para quien tenga acceso a ese pipeline.** En cuanto las columnas existan,
+completo `BillingBudgetsController`/`BillingBudgetsService` (backend) y `budget-block` +
+`budgets.client.ts` (frontend) exactamente como los describe `CARRIL-1-catalogo-presupuestos-pdf.md`.
+
+### Qué entra en esta entrega, entonces
+
+- **Backend:** `GET|POST /billing/service-catalog` completo (punto 3). Commit
+  `4c2b36cc` en `mantra-core-health-redesa-api`. `yarn test` (4686/4687), `yarn typecheck` y
+  `yarn lint` limpios sobre mis archivos; `yarn test:integration` corrido contra el stack local
+  (15/18 suites OK — los 3 rojos son preexistentes y ajenos a este carril: P14
+  (`identity-verification-cycle`, ya documentado y fuera de alcance de todos los carriles),
+  `vademecum` (falta `SQL/patches/2026-07-30_vademecum_dev_seed.sql`, que no existe en esta
+  máquina) y `audit-worm`).
+- **Frontend:** cliente + pantalla admin del catálogo de servicios (`administration/services-catalog`),
+  y `pdf-export.ts` como utilidad genérica reusable — ver detalle abajo, en curso.
+- **Lo que NO entra:** `budget-block` (patient-chart), `budgets.client.ts`, y el backend de
+  `billing-budgets`. Bloqueados por lo de arriba.
+
+### Archivos nuevos (no chocan con nada)
+
+```
+src/app/core/data-access/services-catalog/services-catalog.client.ts  + .types.ts + .spec.ts
+src/app/features/admin/services-catalog/services-catalog.ts           + .html + .css + .spec.ts
+src/app/shared/utils/pdf-export/pdf-export.ts                         + .spec.ts
+```
+
+### Archivos existentes que toco (de la tabla de compartidos)
+
+| Archivo | Qué le hago | Cuándo |
+|---|---|---|
+| `package.json` | Agrego `jspdf` | Último commit de la rama |
+| `src/app/core/navigation/navigation.map.ts` | Una fila nueva al final del grupo **Administración**: `administration/services-catalog` | Último commit de la rama |
+| `src/app/app.routes.ts` | Entrada en `PANTALLAS_DIFERIDAS` para esa sección | Último commit de la rama |
+
+**No toco** `patient-chart.ts`/`.html` en esta entrega — el `budget-block` que iba a colgar ahí
+está bloqueado (ver arriba). Cuando el schema exista, esa fila se agrega en una rama/PR aparte
+sin reabrir esta.
+
+### Lo que NO toco
+
+`medication-block/`, `diagnosis-block/`, `registrarEncuentro()`/`cerrarEncuentro()`,
+`accounting.client.ts` (leo `GET /practices` directo desde mi propio cliente para el selector de
+práctica, no importo el cliente de contabilidad — son dos dominios distintos aunque el endpoint
+sea el mismo), y todo `redsat/`.
+---
+
+## Sesión 2026-08-14 · Carril 4 — punto 10, laboratorios e imagenología
+
+**Rama:** `carril-4/laboratorios-imagenologia` (los dos repos) · **Base:** `dev` en frontend,
+`master` en backend (`src/modules/diagnostics/` y `src/modules/clinical/` son idénticos entre
+`master` y `origin/dev`, así que la base no cambia nada de lo que toco) ·
+**Plan:** `CARRIL-4-laboratorios-imagenologia.md` · `CARRILES-2026-08-14-README.md`
+
+### Tres correcciones al plan del carril, encontradas al leer el código
+
+1. **El carril no era «casi enteramente frontend».** El plan decía que los 20 endpoints ya
+   construidos probablemente alcanzaban. No alcanzaban: `diagnostics` **no tenía ninguna
+   lectura por paciente**. Se podía abrir una orden de trabajo, acesionar un espécimen, ingerir
+   el mensaje del analizador y liberar el informe, y nadie podía preguntar qué se le pidió a una
+   persona ni qué volvió. Es el mismo defecto que ya había tenido `scheduling` —lo dice su
+   propia fila en `navigation.map.ts`— y que `ClinicalReadService` nombra para `clinical`.
+2. **El alta de la orden ya existía, pero en otro módulo.** No hay que extender
+   `diagnostics-lab`/`diagnostics-imaging`: una orden diagnóstica **es** una orden de servicio
+   con categoría, y se crea con `POST /clinical/service-requests`, que ya acepta
+   `patientProfileId` + `encounterId` + `codeConceptId`. Un alta propia en `diagnostics` habría
+   sido una segunda puerta a la misma tabla.
+3. **No hace falta ninguna columna nueva, así que el bloqueador de `SQL/` no aplica.**
+   `clinical.service_requests` ya tiene `patient_profile_id`, `encounter_id` y
+   `category_concept_id`; `clinical.diagnostic_reports` ya tiene `patient_profile_id` y
+   `service_request_id`. Lo único que faltaba era el **concepto** de categoría «imagenología»
+   (existía sólo `SR_LAB`), y eso se declara en `diagnostics.concepts.ts` — que es exactamente
+   para lo que `defineModuleConcepts` espacia las claves por módulo, sin tocar ningún archivo
+   compartido ni ningún patch.
+
+### Qué creo (no choca con nada)
+
+**Backend** — todo dentro de `src/modules/diagnostics/`: `dto/orders.dto.ts`,
+`repositories/diagnostic-orders.repository.ts`, `services/diagnostics-orders.service.ts`,
+`controllers/diagnostics-orders.controller.ts` (+ sus dos `.spec.ts`).
+Endpoint nuevo: `GET /diagnostics/patients/:patientProfileId/orders`.
+
+**Frontend** — `core/data-access/diagnostics/` (client + types + spec),
+`features/diagnostics/` (la cola del laboratorio) y
+`features/clinical-record/patient-chart/diagnostics-block/`.
+
+### Qué toco de la tabla de archivos compartidos, y por qué
+
+| Archivo | Qué le agrego |
+|---|---|
+| `navigation.map.ts` | una fila `diagnostics`, grupo **Atención**, al final del grupo. Roles `CLINICIAN`/`PRACTITIONER`, que son los `@Roles` reales de los 4 controladores de M20 y del de órdenes de M08 |
+| `app.routes.ts` | una entrada en `PANTALLAS_DIFERIDAS` |
+| `patient-chart.ts` (+ `.html`) | import de `DiagnosticsBlock` + una entrada en el ensamblado y un bloque en la plantilla, al final. **No** toco `registrarEncuentro`/`cerrarEncuentro` |
+| `patient-chart.spec.ts` | un `responderCircuitoDiagnostico()` en el `afterEach`. Hizo falta porque mi bloque **lee lo suyo** (el circuito diagnóstico no sale de `GET /clinical/patients/:id/summary`), y esa petición aparece en toda prueba que pinte la ficha |
+| `diagnostics.concepts.ts` | `SERVICE_REQUEST_CATEGORY_IMAGING`. Es de mi módulo, no compartido |
+
+### Aviso para el Carril 3 (nos cruzamos en el mismo working tree)
+
+A mitad de sesión, `patient-chart.spec.ts` quedó en rojo por `<app-procedures-block>`, que
+dejaba tres peticiones abiertas que el `afterEach` del expediente no drenaba
+(`GET /procedure-cases`, `GET /dental-procedures`, `GET /dental-procedures/catalog`). **No las
+toqué** —son de tu carril— y las resolviste vos mismo mientras tanto, con
+`responderHistoricoDeProcedimientos()`. Queda anotado porque las dos adiciones viven en el
+**mismo `afterEach`**: si hay conflicto al mezclar es de dos bloques contiguos y se aceptan los
+dos. Con las dos puestas, la suite entera queda verde (213 archivos, 2013 pruebas).
+
+Mi commit **no incluye** tu mitad: los archivos compartidos se pusieron en el índice con sólo
+mis líneas (`git hash-object` + `git update-index`), porque el working tree tenía las dos
+adiciones entremezcladas y `git add` del archivo entero se habría llevado tu trabajo a medio
+cablear dentro de mi rama.
+
+### Lo que NO toco
+
+`agenda.ts`/`booking-new.ts` (los leí como referencia) · `medication-block/` ·
+`diagnosis-block/` (distinto de mi `diagnostics-block/`: otro dominio y otro archivo) ·
+`procedures-block/` (carril 3) · `specialty-form-block/` (carril 2) · `budget-block/` (carril 1) ·
+todo `redsat/` · `package.json` (ninguno de los dos repos) ·
+`src/modules/clinical/` en el backend (leo sus entidades y sus conceptos, no los edito) · `SQL/`.
+
+---
+
+## Sesión 2026-08-14 · Carril 3 — punto 7, histórico de procedimientos (cirugía y odontología)
+
+**Rama:** `carril-3/procedimientos-quirurgicos` (los dos repos) · **Base:** `dev` en frontend,
+`master` en backend · **Plan:** `CARRIL-3-procedimientos-quirurgicos.md` ·
+`CARRILES-2026-08-14-README.md`
+
+### Dos correcciones al plan del carril, encontradas al leer el código
+
+El documento del carril daba por buenas dos cosas que el repo no sostiene. Las dos cambian
+qué hay que escribir, así que quedan acá antes que en el commit:
+
+1. **La parte quirúrgica *sí* necesita backend.** El plan decía que alcanzaba con confirmar
+   los 28 endpoints y, como mucho, agregar el filtro por paciente. El filtro **ya existe**
+   (`ListCasesQueryDto.patientProfileId`, `periop.dto.ts:531`). Lo que no existe es la
+   **lectura de hallazgos, implantes y pasos operatorios**: se escriben por `POST` y
+   `GET /procedure-cases/:id` no los devuelve (`CaseDetailDto` trae equipo, diagnósticos,
+   órdenes, plan e informes, y nada más). Sin eso, la definición de hecho del carril —«se ve
+   su histórico con equipo, hallazgos e implantes»— es inalcanzable desde el frontend. Es el
+   mismo defecto que `clinical.client.ts` ya nombra: escrituras que la pantalla no puede
+   volver a leer.
+2. **Odontología no necesita tabla nueva, así que el bloqueador de `SQL/` no aplica.**
+   `clinical.procedures` es una tabla de procedimientos **general** (paciente, código,
+   profesional, fecha, `note_text`, categoría) y `procedures_perioperative.procedure_body_sites`
+   cuelga de ella con `body_site_concept_id` + `laterality_concept_id`: pieza y cuadrante. Los
+   conceptos se siembran **desde TypeScript** (`defineModuleConcepts`, UUIDv5 determinista), no
+   desde `SQL/`. El histórico odontológico entra entero en tablas que ya existen. **No hay
+   patch de DDL en este carril y no hay que coordinar con quien tenga el modelo.**
+
+### Archivos nuevos (no chocan con nada)
+
+```text
+backend  src/modules/procedures_perioperative/procedures_perioperative.concepts.ts
+backend  src/modules/procedures_perioperative/repositories/periop-dental.repository.ts
+backend  src/modules/procedures_perioperative/services/periop-dental.service.ts (+ .spec.ts)
+backend  src/modules/procedures_perioperative/controllers/dental.controller.ts (+ .spec.ts)
+backend  test/integration/dental-procedures.int-spec.ts
+frontend src/app/core/data-access/procedures/procedures.client.ts (+ .types.ts + .spec.ts)
+frontend src/app/features/clinical-record/patient-chart/procedures-block/ (ts+html+css+spec)
+```
+
+### Archivos existentes que toco, y por qué
+
+| Repo | Archivo | Qué le hago |
+|---|---|---|
+| backend | `procedures_perioperative/dto/periop.dto.ts` | tres arrays nuevos **al final** de `CaseDetailDto` (`operativeSteps`, `findings`, `implants`) |
+| backend | `procedures_perioperative/services/periop-cases.service.ts` | `getCaseDetail` suma tres lecturas al `Promise.all` |
+| backend | `procedures_perioperative/repositories/periop-intraop.repository.ts` | tres `find*ByCase` nuevos, al final |
+| backend | `procedures_perioperative/procedures_perioperative.module.ts` | registra el controller/service/repo odontológicos |
+| backend | **`src/common/seed/module-concepts.ts`** | **compartido**: un `import` y un `...SPREAD` al final del arreglo. Ningún otro carril declaró conceptos todavía; si otro lo hace, son dos adiciones en líneas distintas |
+| frontend | `patient-chart.ts` (+ `.html`) | import de `procedures-block` + una entrada en el ensamblado, **en el último commit** |
+| frontend | `patient-chart.spec.ts` | un `responderHistoricoDeProcedimientos()` en el `afterEach`, al lado del del carril 4 — mis tres lecturas aparecen en toda prueba que pinte la ficha |
+| frontend | **`proxy.conf.json`, `proxy.conf.docker.json`, `deploy/nginx.conf`** | **compartidos**: el prefijo `/procedure-cases`, al final de cada lista. Los tres o ninguno — `yarn check:prefijos` (`scripts/check-api-prefixes.mjs`) falla si se olvida uno, y el modo de fallo es el peor: anda en desarrollo y devuelve `index.html` en producción |
+
+**Corrección a este mismo bloque, ya escrito:** al empezar leí la ficha contra `master`, donde
+`medication-block/` y `diagnosis-block/` no existen, y anoté acá que el molde del plan era
+imaginario. **Es al revés:** sobre `dev` los dos bloques están, y el molde del plan es exacto.
+`procedures-block` sigue ese molde —`input.required<string>()` llamado `patientProfileId`, una
+etiqueta en la plantilla al final del ensamblado— y no toca el arreglo `bloques()`, que es de
+filas de una misma tabla. Quien venga de los carriles 1, 2 o 5: **arranquen de `dev`**, no de
+`master`.
+
+**Respuesta al aviso del carril 4:** drenadas. `patient-chart.spec.ts` tiene ahora un
+`responderHistoricoDeProcedimientos()` al lado de tu `responderCircuitoDiagnostico()`, en el
+mismo `afterEach` y con el mismo patrón. Las 75 pruebas de `patient-chart/**` pasan con los dos
+bloques montados. Si hay conflicto al mezclar es de dos líneas contiguas: se aceptan las dos.
+
+**Mi bloque no toma `[encounterId]`,** a diferencia de los tuyos y de los otros dos: un
+histórico es de la persona, no de la consulta de hoy, y se lee igual sin encuentro abierto.
+Tampoco emite `(cambio)` — mismo criterio que vos usaste para `diagnostics-block`.
+
+### Lo que NO toco
+
+`navigation.map.ts` · `app.routes.ts` · `package.json` (ninguno de los dos repos) ·
+`registrarEncuentro()`/`cerrarEncuentro()` · `medication`/`diagnosis`/`specialty-form`/`budget` ·
+todo `redsat/` · `src/modules/clinical/` (leo sus entidades, no las edito) · `SQL/`.
+
+---
+
+## Sesión 2026-08-13 · Port del sistema de diseño y las vistas de la bóveda
+
+**Rama:** `pablo/redsat-vistas`, apilada sobre `pablo/contabilidad-frontend`.
+**Por qué apilada y no desde `dev`:** los dos documentos que escribí
+(`docs/design-system/port-redsat.md` y el bloque nuevo de
+`docs/performance/budgets.md`) ya viajaron dentro de `b9ba311`, en la rama de
+contabilidad. Naciendo desde `dev` los tendría duplicados y chocarían al
+mezclar. Apilada, el PR muestra sólo el port y GitHub lo reapunta a `dev` en
+cuanto el #73 entre.
+
+Gracias por `f7a1371` — desacoplar las rutas REDSAT del PR de contabilidad fue
+lo correcto. Las volví a cablear **acá**, que es donde corresponde.
+
+### Qué entra
+
+- **El sistema de diseño de la bóveda pasa a ser el del front.**
+  `src/styles/redsat.css` es generado (`scripts/sync-redsat.mjs`) desde
+  `SALUD/Vistas/HTML/_assets/redsat.css`. Se carga **después** de
+  `src/styles.css`, y conviven: los tokens son disjuntos (castellano vs inglés).
+- **126 pantallas portadas** desde las maquetas de la bóveda a
+  `src/app/features/redsat/`, con sus rutas y sus dos marcos.
+- **El armazón autenticado pasa al marco REDSAT.** `shell-layout.html` dejó de
+  delegar en el organismo `app-shell`.
+
+### Archivos nuevos (no chocan con nada)
+
+`src/styles/`, `src/app/core/redsat/`, `src/app/features/redsat/`,
+`public/redsat/`, `scripts/sync-redsat.mjs`, `scripts/port-vistas-redsat.mjs`,
+`cypress/e2e/redsat-port.cy.ts`.
+
+### Archivos existentes que toco, y por qué
+
+| Archivo | Qué le hago |
+| --- | --- |
+| `angular.json` | agrega `src/styles/redsat.css` a `styles` |
+| `src/index.html` | el script anti-parpadeo estampa también `data-tema` |
+| `src/app/core/tokens/theme.service.ts` | segundo atributo de tema, para la hoja de la bóveda |
+| `src/app/app.ts` | instala el runtime REDSAT y estampa el arquetipo de la ruta |
+| `src/app/app.routes.ts` | `...REDSAT_ROUTES` al principio (6 líneas) |
+| `src/app/features/shell-layout/*` | el marco, ahora REDSAT |
+| `mkdocs.yml` | una entrada de nav |
+
+### Lo que NO toco — es todo tuyo
+
+`src/app/shared/components/organisms/{shell,side-nav,header}/` quedaron
+**intactos**: el organismo `app-shell` sigue existiendo y lo usa la vitrina.
+Tampoco toco `core/navigation/`, `core/auth/`, ni ninguna pantalla de features
+fuera de `shell-layout`.
+
+### Dos cosas que te afectan si tocás rutas
+
+1. **`/directorio`, no `/organizaciones`.** El proxy desvía a la API todo lo que
+   empieza con `/org`: esa ruta la respondía el backend con un 404. Misma trampa
+   que documenta `proxy.conf.json`.
+2. **Los segmentos nuevos** son `/inicio`, `/buscar`, `/accesos`,
+   `/datos-compartidos`, `/terminologia`, `/directorio`, `/personas`.
+
+### Verificación
+
+`yarn test` 1873/1873 · `yarn lint` limpio · `yarn ng build` ok · 6 de 7 checks
+verdes (`check-doc-coverage` sigue rojo por `AccountingClient`, que es
+preexistente y no es mío). Contenedor `mantra-core-health-dev` recreado y
+comprobado sirviendo la hoja, las tipografías y las rutas.
+
+---
+
 ## Sesión 2026-08-08 · Atención (agenda + archivo clínico) y recorrido con usuarios reales
 
 **Rama:** `pablo/combobox-referencia-y-ancla-accion` · **Base:** `22ca1c7`
@@ -496,3 +803,204 @@ Material. Color y tipografía salen **exclusivamente** de los tokens REDSAT de
 
 - Ningún `.ts` / `.spec.ts`, ni rutas, ni `e2e/**`, ni `.github/**`.
 - `src/styles.css`, `core/**`, y el resto de `shared/components/**`.
+
+---
+
+## Sesión en curso · IT2 · el Acto 3 recorrido en un navegador
+
+**Empezó:** 2026-08-11 · **Rama:** `itzan/it2-recorrido-acto3-navegador` · **Base:** `85463fe`
+
+Último tramo de IT2. Las tres entregas anteriores —el refresco del historial, la
+cola de admin y su endpoint— ya están en `dev` (PR #47 y #49 acá, #45 en la API).
+Falta lo que la tarjeta pide para darla por terminada: **el ciclo corrido dos
+veces seguidas, con capturas**.
+
+### Archivos tocados (solo estos dos)
+
+| Archivo | Qué |
+|---|---|
+| `cypress/e2e/real/07-cola-de-revision.cy.ts` | Nuevo. Los cuatro pasos del Acto 3, **todos por pantalla**: el paciente sube su documento en `/identidad/verificar`, el caso aparece en la cola, el revisor lo escala y lo aprueba con los formularios de M27, y el titular lo ve aprobado |
+| `cypress/support/real/sesion.ts` | Arregla una carrera de hidratación en `entrar()` que rompía **cualquier** ingreso de la suite `real` |
+
+Sólo dos transiciones quedan fuera de la interfaz —ninguna del guion— porque no
+tienen pantalla propia: la consulta del catálogo que resuelve el motivo de la
+revisión, y la lectura que comprueba que un caso escalado sigue en la cola.
+
+### Cómo se corre contra la API viva — leé esto antes de tocar `cypress/e2e/real/`
+
+La suite `real` **no llega al backend con su invocación por defecto**: el arnés
+sirve la aplicación con `PUBLIC_API_BASE_URL` vacío y una API simulada delante,
+así que todo `/identity` vuelve `404`. Para recorrer de verdad hacen falta las
+dos variables, y por motivos distintos:
+
+```
+corepack yarn start                       # ng serve usa proxy.conf.json → API real en :3000
+E2E_SUITE=real E2E_BASE_URL=http://localhost:4200 corepack yarn test:e2e --spec "<ruta>"
+```
+
+- `E2E_BASE_URL` puesta ⇒ `levantarServidor: false` ⇒ **el arnés no se levanta**.
+- `E2E_SUITE=real` ⇒ saca `cypress/e2e/real/**` del `excludeSpecPattern`. Sin
+  ella el mensaje es «no spec files were found», que no menciona la exclusión.
+
+### La carrera de hidratación, para quien la herede
+
+La aplicación se sirve con render del servidor: el formulario existe en el HTML
+antes de que Angular lo hidrate, y las teclas pulsadas en esa ventana se pierden.
+Medido en dos corridas seguidas: se tecleó `CI-E2E-…` y quedó `E2E-…` (tres
+caracteres) y después `I-E2E-…` (uno). Número variable ⇒ carrera, no `maxlength`.
+
+El síntoma engaña: `POST /iam/auth/login` responde **401 con las credenciales
+correctas**, y la culpa parece del dato. `esperarAplicacionLista()` no lo cubre —
+comprueba que la aplicación pintó, no que el campo escuche.
+
+### Lo que NO estoy tocando
+
+- `src/**` entero: esta entrega no cambia una línea de la aplicación.
+- `cypress/harness/**` (el arnés y su API simulada), `cypress/e2e/` fuera de
+  `real/07-…`, rutas, `navigation.map.ts`, `app.routes.ts`, `.github/**`.
+
+---
+
+## Sesión cerrada · IT2 · estados de caso con datos reales (el sello del titular)
+
+**Empezó:** 2026-08-12 (nocturna) · **Rama:** `itzan/it2-estados-caso-sello` · **Base:** `c6081bb` (dev)
+**Cerrada:** mergeada como #57 el 2026-08-12 por la mañana.
+
+El delta que le falta a IT2 sobre el 07 ya mergeado: asertar el **sello del titular
+ANTES** (En revisión) y **DESPUÉS** (Aprobado/Rechazado) en `/identidad/casos` y en el
+detalle `/identidad/casos/:caseId`, con captura de cada estado. Contexto del P14,
+medido contra la API viva: el 500 del registro solo salta cuando el payload lleva el
+nombre en **4 partes** (lo que manda la pantalla del front — eso sigue roto y es del
+carril backend, PR #56); el contrato viejo de `actores.ts` registra **201**, así que
+esta suite crea sus actores igual que el 06 y el 07, sin ningún fallback.
+
+---
+
+## Sesión en curso · IT1 · los dos recorridos del viernes (rev. 2)
+
+**Empezó:** 2026-08-12 · **Rama:** `itzan/it1-recorridos-viernes` · **Base:** `c6081bb`,
+con `origin/dev` (`2b359b9`, incluye #57/#58/#59) mergeado el 2026-08-12 por la tarde.
+
+Estructura de los dos caminos que se recorren el viernes con el cliente, al
+estilo del 07: los tramos que ya están en `dev` corren y quedan verdes; los que
+esperan merges ajenos (cancelar turno, formularios clínicos, receta) quedan
+detrás de flags `TRAMO_*` apagados. Rev. 2 del plan: se suman los arreglos del
+arnés H-08/H-09 del informe de Marcelo y el tramo «acceso habilitado» (N4)
+detrás de flag. **Con `dev` verde tras #58/#59, esta rama sí termina en PR.**
+
+### Archivos de esta rama
+
+| Archivo | Qué |
+|---|---|
+| `cypress/support/real/rutas.ts` | Nuevo. Mapa central de rutas: los specs 09/10 no escriben una ruta suelta. Es la mitigación del PR #55 (rutas en inglés, sin decidir): si se mergea, el renombre cuesta este archivo y una re-corrida |
+| `cypress/support/real/tramos.ts` | Nuevo. Los flags `TRAMO_REGISTRO` / `TRAMO_E1_CANCELAR` / `TRAMO_M1_CLINICA` / `TRAMO_P1_RECETA`; la ausencia de la variable es «apagado» |
+| `cypress/support/config.ts` | `tramos()`: los flags viajan al navegador por el bloque `expose`, como el resto de la configuración |
+| `cypress.config.ts` | `...tramos()` en `expose` |
+| `cypress/e2e/real/09-camino-consumidor.cy.ts` | Nuevo. La hoja del consumidor: entrar por documento → panel → pedir y **confirmar** un turno → subir evidencia → verla en «Mis verificaciones» |
+| `cypress/e2e/real/10-camino-medico.cy.ts` | Nuevo. La hoja del médico: agenda de hoy → registrar llegada → expediente → encuentro |
+| `cypress/support/real/sesion.ts` | **Media-migración del #55**: la aserción del login seguía esperando `/panel\|/auth/organizacion` y el login aterriza en `/dashboard` desde el merge — toda la suite real moría ahí. Migrada a `/dashboard\|/auth/organization` |
+| `cypress/e2e/navigation/navegacion.cy.ts` | **Media-migración del #55**: 3 aserciones con rutas viejas (`/identidad/verificar`, `/auth/registro`) — eran 3 de los 4 fallos del **CI ROJO de `dev`** (run 31599344925). Migradas. El 4.º fallo es regresión de producto (aria-current doble), NO se toca acá — ver HALLAZGOS-IT1 |
+| `cypress/e2e/responsive/responsive.cy.ts` | Ídem: `/panel$` → `/dashboard$` |
+| `scripts/run-recorrido-real.mjs` | **H-09**: el lanzador corre con `electron` (chrome se colgaba indefinidamente); **H-08**: el preflight instruye levantar la API con `RATE_LIMIT_DISABLED=true` |
+| `cypress/support/real/tramos.ts` | Flag nuevo `TRAMO_N4_ACCESO`: el desenlace «acceso habilitado» espera el merge del PR #54 de la API |
+| `cypress/e2e/real/08-sello-del-titular.cy.ts` | Extensión N4 detrás del flag: aprobar → el sello pasa a Aprobado **y el titular deja de estar bloqueado** |
+| `cypress/e2e/real/09-camino-consumidor.cy.ts` | Tramo 5-6 «acceso habilitado» detrás del mismo flag |
+| `docs/reports/generated/e2e-inventory.md` | Regenerado al final |
+
+### Lo que NO estoy tocando
+
+- `src/**` entero, `cypress/harness/**`, `cypress/e2e/` fuera de `real/08`, `real/09` y
+  `real/10`, `.github/**`, y el contrato de `actores.ts` (lo usan 02/05 tal cual).
+
+---
+
+## Sesión 2026-08-14 · Carril 5 — historial laboral, consultorios y alta de internación
+
+**Rama:** `dev` · **Base:** `3459d0c` · **Puntos del reclamo:** 8, 9 y 11.
+**Los dos repos**: acá y `mantra-core-health-api`.
+
+### 🔴 Bloqueador declarado desde el primer día: una tabla nueva sin materializar
+
+El punto 9 necesita **`profiles.practitioner_affiliations`**, que no existe. Por
+[ADR-0021](../mantra-core-health-api/docs/adr/ADR-0021-fuente-unica-de-ddl.md) el esquema se
+declara en los `.puml` del modelo canónico y lo materializa `gen_ddl.py`: **no se escribe un
+`CREATE TABLE` a mano**, y `check_ddl_sources.py` corre como paso 0/4 de `rebuild_stack.py` para
+que no se pueda. El workspace con `SQL/` y `salud-db/` no está en este checkout, así que la
+tabla **queda declarada y sin materializar**.
+
+Lo que eso significa, en concreto:
+
+```
+GET  /profiles/practitioners/me/affiliations   → 500 hasta que exista la tabla
+POST /profiles/practitioners/me/affiliations   → 500 hasta que exista la tabla
+```
+
+Todo lo demás de este carril funciona contra la API tal como está hoy.
+
+La tabla, sus dos índices y los pasos que faltan están escritos en el vault:
+`SALUD/Entidades/E profiles.practitioner_affiliations.md` y
+`SALUD/🧩 Patch v4.1.0 — Historial laboral, consultorios e internación.md`. **Quien tenga el
+workspace completo puede cerrarlo en cinco pasos** — están enumerados en el patch.
+
+El frontend está construido para ese estado: el bloque de historial laboral trata el fallo de la
+lectura como «no pudimos leer tu historial» con reintento y **sigue mostrando el formulario**. No
+tumba «Mi perfil».
+
+### 🟡 Los otros dos puntos no tocaron el esquema, y eso fue una decisión
+
+- **Punto 11 (consultorios).** La lectura obvia era colgarle un `site_id` a
+  `scheduling.schedulable_resources`. No hizo falta: el recurso ya declara a qué apunta
+  (`resource_ref_type`/`resource_ref_id`) y `practice.practitioner_role_assignments` guarda
+  `practice_site_id` desde siempre. La sede se **deriva**. Una columna nueva sería un segundo
+  lugar donde guardar el mismo hecho.
+- **Punto 8 (internación).** `POST /clinical/care-episodes` existía desde siempre. Lo que
+  faltaba era **leer** los episodios: la ficha sólo veía el `episodeId` colgado de un encuentro.
+
+### Archivos nuevos (no chocan con nada)
+
+```text
+src/app/core/data-access/practice-sites/         cliente de consultorios (+ tipos y spec)
+src/app/features/account/my-profile/work-history/            historial laboral (+ .html/.css/.spec)
+src/app/features/clinical-record/patient-chart/admission-block/   alta de internación (+ .html/.css/.spec)
+```
+
+### Archivos existentes que toqué
+
+| Archivo | Qué |
+|---|---|
+| `core/data-access/profiles/profiles.client.ts` · `.types.ts` (+ spec) | `listAffiliations()` / `addAffiliation()` y `PractitionerAffiliation`. **Sólo métodos y tipos nuevos** |
+| `core/data-access/scheduling/scheduling.types.ts` | `AgendaResourceSite` y el campo `site` en `AgendaResource`. El cliente no cambió: su `WireResource` es identidad |
+| `core/data-access/clinical/clinical.client.ts` · `.types.ts` (+ spec) | `createCareEpisode()`, el bloque `careEpisodes` de `getSummary` y sus tipos. **No toqué `getChart`/`checkInEncounter`/las seis escrituras existentes** |
+| `features/account/my-profile/my-profile.{ts,html}` | Import del bloque nuevo + una tarjeta al final |
+| `features/agenda/agenda.{ts,html,css}` (+ spec) | Renglón «Se atiende en», debajo de los filtros |
+| `features/agenda/booking-new/booking-new.{ts,html}` (+ spec) | Renglón «Dónde» en el resumen de la reserva |
+| `features/clinical-record/patient-chart/patient-chart.{ts,html}` | Import de `admission-block` + una entrada al final del ensamblado, y `internaciones()` |
+| `proxy.conf.json` · `proxy.conf.docker.json` | `/practitioners`. **No es prefijo de ninguna ruta de `APP_SECTIONS`** — comprobado contra `navigation.map.ts` antes de agregarlo, que es la regla que ya mordió una vez con `/admin` |
+
+**No toqué `app.routes.ts` ni `navigation.map.ts`**: ninguno de los tres puntos abre una sección
+nueva de menú. Son extensiones de pantallas que ya existen.
+
+### Lo que NO toqué — es de otros
+
+`community.client.ts` y todo lo de la red social (tiene su propio plan en
+`PENDIENTES-RED-SOCIAL.md`), `medication-block/`, `diagnosis-block/`, `budget-block/`,
+`procedures-block/`, `specialty-form-block/`, y todo `redsat/`.
+
+**Aviso para quien esté en carriles 1, 2 y 3:** `patient-chart.{ts,html}` recibió el import de
+`admission-block` y **una** entrada al final del ensamblado de bloques. Es lo último que toqué
+del archivo, a propósito, para que los otros bloques entren encima sin conflicto.
+
+### ⚠️ Del otro repo: hay otra sesión escribiendo `community` ahora mismo
+
+Mientras trabajaba, `mantra-core-health-api` cambió de rama a `pablo/m19-red-social-backend` y
+aparecieron cambios sin commitear en `community-social-read.service.ts`,
+`community-visibility.service.ts` y `community.concepts.ts`. **No los toqué** y no comparten
+ningún archivo con este carril, pero el `yarn typecheck` del backend arrastra un error de esa
+superficie (`community-social.controller.ts` llama a `listFollows` con dos argumentos y el
+servicio ya pide tres). Es trabajo a medio camino de otra sesión, no de este carril.
+
+### Verificación
+
+`yarn lint` · `yarn typecheck` · `yarn test` · `yarn build` en este repo.
+`yarn lint` · `yarn typecheck` · `yarn test` en el backend.
+

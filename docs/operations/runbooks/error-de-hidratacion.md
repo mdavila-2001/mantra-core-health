@@ -91,7 +91,7 @@ El mensaje **indica el componente**.
 | Ruta | Nota |
 |---|---|
 | Una de las 4 prerenderizadas | El HTML es del **build**: puede estar desfasado del código desplegado |
-| `/panel`, `/` | Cliente: hidrata sobre el cascarón |
+| `/dashboard`, `/` | Cliente: hidrata sobre el cascarón |
 
 **Si es prerenderizada, la primera sospecha es un despliegue parcial**: se
 desplegó JavaScript nuevo con HTML viejo.

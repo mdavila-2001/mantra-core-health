@@ -16,6 +16,11 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
+import {
+  toBookingStatusPresentation,
+  type BookingStatusPresentation,
+} from './booking-status';
 import {
   CITA_QUERY_PARAM,
   MOTIVO_QUERY_PARAM,
@@ -120,7 +125,15 @@ export interface CitaVisible {
   readonly cuando: Date | null;
   readonly hasta: Date | null;
   readonly recurso: string;
-  readonly estado: string;
+  /**
+   * El estado con su sello: tono, forma y palabra.
+   *
+   * No es un `string` como en los cupos, y la diferencia es de la identidad:
+   * el estado de una cita es información de estado, y el sistema de diseño
+   * exige codificarla en **tres canales** —el color solo no alcanza para quien
+   * no lo distingue—.
+   */
+  readonly estado: BookingStatusPresentation;
   readonly motivo: string;
   readonly patientProfileId: string | null;
   readonly rutaPaciente: string | null;
@@ -212,6 +225,7 @@ export interface CupoVisible {
     AppButton,
     AppButtonLink,
     Badge,
+    StatusSeal,
     DataTable,
     DatePipe,
     FormField,
@@ -389,6 +403,37 @@ export class Agenda {
   protected readonly nombreDelRecurso = computed(() => {
     const id = this.recursoElegido();
     return id === null ? '' : (this.recursos().find((r) => r.id === id)?.name ?? '');
+  });
+
+  /**
+   * **Dónde** atiende el recurso que se está mirando.
+   *
+   * La agenda sabía *cuándo* desde el principio y no sabía *dónde*: un turno
+   * sin dirección obliga a averiguarla por fuera del sistema. Llega resuelto en
+   * el propio `GET /scheduling/resources`, así que no cuesta una petición más
+   * ni una por recurso.
+   *
+   * `null` cuando el recurso no tiene sede vigente. Es corriente, y la pantalla
+   * lo dice con esas palabras en vez de dejar el hueco: un renglón vacío se lee
+   * como un dato que no cargó.
+   */
+  protected readonly sedeDelRecurso = computed(() => {
+    const id = this.recursoElegido();
+    return id === null ? null : (this.recursos().find((r) => r.id === id)?.site ?? null);
+  });
+
+  /**
+   * La ubicación en una línea, tal como se muestra.
+   *
+   * Nombre y dirección juntos, y la dirección sólo si la sede la tiene: repetir
+   * el nombre como si fuera la dirección sería peor que no ponerla.
+   */
+  protected readonly ubicacionDelRecurso = computed(() => {
+    const sede = this.sedeDelRecurso();
+    if (sede === null) {
+      return '';
+    }
+    return sede.addressText === null ? sede.name : `${sede.name} · ${sede.addressText}`;
   });
 
   protected readonly ventanaElegida = computed<VentanaClave>(() => {
@@ -727,7 +772,7 @@ export class Agenda {
             errorToViewState<never[]>(fallo)
           : this.recursosLeidos()
             ? empty(
-                { label: 'Volver al panel', route: '/panel' },
+                { label: 'Volver al panel', route: '/dashboard' },
                 'Esta organización todavía no tiene recursos agendables cargados.',
               )
             : loading();
@@ -787,7 +832,7 @@ export class Agenda {
     if (resultado.items.length === 0) {
       this.citas.set(
         empty(
-          { label: 'Ver los cupos libres', route: '/agenda' },
+          { label: 'Ver los cupos libres', route: '/schedule' },
           `No hay citas ${this.resumenDeVentana()} con los filtros puestos.`,
         ),
       );
@@ -810,7 +855,7 @@ export class Agenda {
     if (resultado.items.length === 0) {
       this.cupos.set(
         empty(
-          { label: 'Ampliar a 30 días', route: '/agenda' },
+          { label: 'Ampliar a 30 días', route: '/schedule' },
           `No hay cupos generados ${this.resumenDeVentana()} para lo que estás mirando.`,
         ),
       );
@@ -829,11 +874,16 @@ export class Agenda {
       cuando: cita.startAt ?? null,
       hasta: cita.endAt ?? null,
       recurso: this.nombreDeRecurso(cita.resourceId),
-      estado: this.label(cita.statusConceptId),
+      estado: toBookingStatusPresentation(
+        cita.statusConceptId === undefined
+          ? undefined
+          : this.etiquetas().get(cita.statusConceptId),
+        SIN_DATO,
+      ),
       motivo: cita.reasonText ?? SIN_DATO,
       patientProfileId: paciente,
       rutaPaciente:
-        paciente !== null && this.puedeVerFichas() ? `/administracion/pacientes/${paciente}` : null,
+        paciente !== null && this.puedeVerFichas() ? `/administration/patients/${paciente}` : null,
       rutaExpediente:
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,

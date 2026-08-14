@@ -18,6 +18,8 @@ import type {
   BookingConfirmed,
   BookingPage,
   BookingQuery,
+  BookingReschedule,
+  BookingRescheduled,
   NewHold,
   SlotHold,
 } from './scheduling.types';
@@ -42,8 +44,8 @@ import type {
  *
  * ## Lo que este cliente sigue sin hacer
  *
- * Reprogramar (`/reschedule`), recordatorios, lista de espera: existen en el
- * backend y entrarán con las pantallas que los pidan.
+ * Recordatorios y lista de espera: existen en el backend y entrarán con las
+ * pantallas que los pidan.
  */
 @Injectable({
   providedIn: 'root',
@@ -195,6 +197,27 @@ export class SchedulingClient {
       {
         cancelledBy: cancellation.cancelledBy,
         ...(cancellation.isNoShow === undefined ? {} : { isNoShow: cancellation.isNoShow }),
+      },
+    );
+  }
+
+  /**
+   * `POST /scheduling/bookings/:id/reschedule` — mueve la cita a otro cupo
+   * (UC-41-08). Libera el cupo viejo y ocupa el nuevo en la misma operación;
+   * el estado de la cita **no cambia**. Sólo se reprograma una cita vigente
+   * —confirmada o con llegada—: lo demás responde 422.
+   */
+  rescheduleBooking(
+    bookingId: string,
+    reschedule: BookingReschedule,
+  ): Observable<BookingRescheduled> {
+    return this.http.post<BookingRescheduled>(
+      this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/reschedule`),
+      {
+        toSlotId: reschedule.toSlotId,
+        // Construimos el body campo a campo para no enviar propiedades opcionales
+        // cuando no fueron proporcionadas.
+        ...(reschedule.reasonText === undefined ? {} : { reasonText: reschedule.reasonText }),
       },
     );
   }

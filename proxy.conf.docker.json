@@ -11,23 +11,35 @@
       "/charts",
       "/clinical",
       "/authz",
+      "/practitioners",
       "/practitioner-delegates",
       "/access-requests",
       "/delegated-access",
       "/delegated-permission-sets",
       "/org",
       "/auth-providers",
-      "/admin/tenants"
+      "/admin/tenants",
+      "/tenants",
+      "/practices",
+      "/accounting",
+      "/health-context",
+      "/geo",
+      "/procedure-cases",
+      "/dental-procedures"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,
     "changeOrigin": true
   },
   {
-    "context": ["/otel"],
+    "context": [
+      "/otel"
+    ],
     "target": "__COLLECTOR_ORIGIN__",
     "secure": false,
     "changeOrigin": true,
-    "pathRewrite": { "^/otel": "" }
+    "pathRewrite": {
+      "^/otel": ""
+    }
   }
 ]

@@ -1,0 +1,55 @@
+/* Bloque de internación: lo que ya hay arriba y el alta debajo. A diferencia
+   del diagnóstico —que es sólo formulario porque su lista ya vive en una
+   pestaña— acá la lista tiene que estar en el bloque: es lo único que hace que
+   dar de alta una internación tenga consecuencias visibles. */
+
+:host {
+  display: block;
+}
+
+.internacion {
+  display: grid;
+  gap: var(--sp-4);
+  max-inline-size: 68ch;
+}
+
+.internacion__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.internacion__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.internacion__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: baseline;
+}
+
+.internacion__estado {
+  font-weight: 600;
+}
+
+.internacion__fechas,
+.internacion__nota {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.internacion__nota {
+  margin: 0;
+}
+
+.internacion__formulario {
+  display: grid;
+  gap: var(--sp-4);
+}

@@ -98,8 +98,8 @@ Tres modos conviven, y la instrumentación tiene que distinguirlos:
 
 | Ruta | Modo | Qué implica para las trazas |
 |---|---|---|
-| `/auth`, `/auth/registro`, `/auth/recuperar`, `/design-system` | **Prerender** | El HTML sale del build. No hay petición que trazar en el servidor; la traza empieza en el navegador. |
-| `/auth/verificar`, `/auth/nueva-clave`, `/auth/organizacion`, `/**` | **Client** | El servidor manda el cascarón; la traza del servidor es corta y la del navegador es la interesante. |
+| `/auth`, `/auth/register`, `/auth/forgot-password`, `/design-system` | **Prerender** | El HTML sale del build. No hay petición que trazar en el servidor; la traza empieza en el navegador. |
+| `/auth/verify-email`, `/auth/reset-password`, `/auth/organization`, `/**` | **Client** | El servidor manda el cascarón; la traza del servidor es corta y la del navegador es la interesante. |
 | Estáticos | Express | Los sirve `express.static`, no el motor de Angular. |
 
 `angular.rendering.mode` no puede ser un valor fijo del artefacto: se resuelve
@@ -145,7 +145,7 @@ crear un manejador nuevo; hay que conectar el que hay.
 3. **Refresco reactivo ante 401** — interceptor → `TokenRefreshService` → reintento único.
 4. **Registro de paciente** — formulario largo con validación → `POST /iam/auth/register-patient`.
 5. **Fragmento diferido caído** — `design-system` con `catch` → `ErrorRecovery`.
-6. **Selección de organización** — guard redirige a `/auth/organizacion`.
+6. **Selección de organización** — guard redirige a `/auth/organization`.
 
 ---
 
@@ -163,7 +163,7 @@ código y **no puede** viajar en un span.
 | Claims del JWT (`sub`, `sid`, tenants) | `SessionStore.claims()` | Atributos de usuario |
 | `X-Tenant-Id` | Cabecera de cada petición | Identifica la organización |
 | Correo, documento de identidad | Formularios de login y registro | Captura de campos |
-| Token de verificación / de nueva clave | **Query string** de `/auth/verificar?token=…` y `/auth/nueva-clave?token=…` | **Captura de URL** |
+| Token de verificación / de nueva clave | **Query string** de `/auth/verify-email?token=…` y `/auth/reset-password?token=…` | **Captura de URL** |
 | Archivos marcados `PHI` | `files.client.ts` (`sensitivity: 'PHI'`) | Nombre de archivo, contenido |
 | Ruta visitada | Router | La sección visitada **ya es información de salud** |
 

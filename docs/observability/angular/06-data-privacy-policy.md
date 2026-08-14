@@ -18,7 +18,7 @@ cerrada**, **un número**, o **una plantilla de ruta**.
 |---|---|---|
 | Identidad del artefacto | `service.name`, `service.version`, `app.build.id` | Describe el código, no a nadie |
 | Entorno | `deployment.environment.name`, `angular.rendering.mode` | Ídem |
-| Plantilla de ruta | `/auth/verificar`, `/pacientes/:pacienteId` | Sin query, sin identificadores |
+| Plantilla de ruta | `/auth/verify-email`, `/pacientes/:pacienteId` | Sin query, sin identificadores |
 | Método y estado HTTP | `GET`, `200`, `500` | No describe contenido |
 | Clase de error | `TypeError`, `ChunkLoadError`, `network_error` | Agrupa sin identificar |
 | Resultado | `success`, `error`, `cancelled`, `denied` | Lista cerrada |

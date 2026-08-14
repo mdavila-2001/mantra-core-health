@@ -1,0 +1,154 @@
+<app-page-header
+  title="Contexto vigente"
+  subtitle="La versión publicada del contexto sanitario de un país, con los hechos que la componen."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<form [formGroup]="form" (ngSubmit)="consultar()" novalidate>
+  <app-form-section
+    legend="Qué contexto"
+    description="Los tres datos son obligatorios: la resolución es puntual, no un listado."
+  >
+    <!-- La escotilla existe porque hoy `system_context` no tiene bindings
+         sembrados para el esquema `health_context`, y porque esto es una
+         consulta: un uuid equivocado da 404 y no persiste nada. En un
+         formulario que escribe, esta casilla NO va. -->
+    <app-checkbox
+      class="m44__escotilla"
+      label="El catálogo no ofrece los valores: pegar los identificadores"
+      [(checked)]="pegarIdentificadores"
+    />
+
+    @if (pegarIdentificadores()) {
+      <app-form-field
+        label="Concepto de país"
+        [required]="true"
+        hint="Identificador del concepto (UUID)."
+        [errorMessage]="
+          form.controls.countryId.touched && form.controls.countryId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="countryId" type="text" />
+      </app-form-field>
+
+      <app-form-field
+        label="Concepto de dominio del contexto"
+        [required]="true"
+        hint="Identificador del concepto (UUID)."
+        [errorMessage]="
+          form.controls.domainId.touched && form.controls.domainId.invalid ? uuidError : ''
+        "
+      >
+        <app-input formControlName="domainId" type="text" />
+      </app-form-field>
+    } @else {
+      <app-form-field label="País" [required]="true">
+        <app-concept-select [target]="targetPais" [(value)]="country" />
+      </app-form-field>
+
+      <app-form-field label="Dominio del contexto" [required]="true">
+        <app-concept-select [target]="targetDominio" [(value)]="domain" />
+      </app-form-field>
+    }
+
+    <app-form-field
+      label="Clave del contexto"
+      [required]="true"
+      hint="La clave dentro del dominio, tal como se registró. Máx. 200 caracteres."
+      [errorMessage]="
+        form.controls.key.touched && form.controls.key.invalid
+          ? 'Escribí la clave del contexto (máx. 200 caracteres).'
+          : ''
+      "
+    >
+      <app-input formControlName="key" type="text" />
+    </app-form-field>
+  </app-form-section>
+
+  <!-- Sin `cancelLabel`: no hay nada que cancelar en una consulta. -->
+  <app-form-actions
+    submitLabel="Resolver"
+    [pending]="state().status === 'loading'"
+    (submitted)="consultar()"
+  />
+</form>
+
+<app-view-state-host [state]="state()" (retry)="consultar()" (refresh)="consultar()">
+  <div vsh-skeleton>
+    <app-skeleton variant="text" [lines]="6" />
+  </div>
+
+  @if (contexto(); as c) {
+    <app-card variant="outlined" padding="lg" class="m44__seccion">
+      <h2 class="m44__titulo">
+        Versión {{ c.versionNumber }}
+        @if (c.stale) {
+          <app-badge variant="warning" text="Caducada" />
+        } @else {
+          <app-badge variant="success" text="Vigente" />
+        }
+      </h2>
+
+      <dl class="m44__datos">
+        <div>
+          <dt>Observada</dt>
+          <dd>
+            @if (c.observedAt; as observada) {
+              <time [attr.datetime]="observada.toISOString()" [title]="observada.toISOString()">
+                {{ observada | date: 'medium' }}
+              </time>
+            } @else {
+              Sin dato
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Caduca</dt>
+          <dd>
+            @if (c.expiresAt; as caduca) {
+              <time [attr.datetime]="caduca.toISOString()" [title]="caduca.toISOString()">
+                {{ caduca | date: 'medium' }}
+              </time>
+            } @else {
+              No caduca
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Contexto</dt>
+          <dd><code>{{ c.contextId }}</code></dd>
+        </div>
+        <div>
+          <dt>Versión</dt>
+          <dd><code>{{ c.versionId }}</code></dd>
+        </div>
+      </dl>
+    </app-card>
+
+    <app-card variant="outlined" padding="lg" class="m44__seccion">
+      <h2 class="m44__titulo">Contenido de la versión</h2>
+      <p class="m44__texto">
+        El contenido lo define cada país y no tiene una forma fija, así que se
+        muestra tal como llegó.
+      </p>
+      <pre class="m44__payload"><code>{{ c.contextPayloadJson | json }}</code></pre>
+    </app-card>
+
+    <section class="m44__seccion">
+      <h2 class="m44__titulo">Hechos y su evidencia</h2>
+      <p class="m44__texto">
+        Cada hecho tiene que apuntar a observaciones aceptadas de la misma
+        corrida: un hecho sin respaldo no se publica.
+      </p>
+
+      <app-data-table
+        [state]="hechos()"
+        [columns]="columnas"
+        [trackBy]="identidadDeFila"
+        caption="Hechos de la versión vigente, con la cantidad de observaciones que respaldan cada uno."
+        (retry)="consultar()"
+        (refresh)="consultar()"
+      />
+    </section>
+  }
+</app-view-state-host>

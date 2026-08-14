@@ -1,0 +1,101 @@
+<app-card variant="outlined" padding="lg" class="diagnostico">
+  <h2 class="diagnostico__titulo">Diagnóstico</h2>
+
+  <!-- El aviso del duplicado va primero y en ámbar: no es un fallo, es la
+       historia negándose a decir dos veces lo mismo, y el registro que ya
+       existe está en la pestaña de abajo. -->
+  @if (avisoDeDuplicado(); as aviso) {
+    <app-alert tone="warning" title="Ya estaba registrado" data-testid="diagnostico-duplicado">
+      {{ aviso }}
+    </app-alert>
+  }
+
+  @if (errorDelDiagnostico(); as mensaje) {
+    <app-alert tone="error" data-testid="diagnostico-error">{{ mensaje }}</app-alert>
+  }
+
+  <!-- ─── Registrar ────────────────────────────────────────────────────
+       Tres condiciones antes del formulario, y cada una se dice con su propia
+       explicación: «no se puede» sin decir qué falta obliga a adivinar. -->
+  @if (sinOrganizacion()) {
+    <app-alert tone="info" title="Elegí una organización">
+      Un diagnóstico queda bajo la custodia de una organización. Elegí una en el selector del
+      encabezado para poder registrarlo.
+    </app-alert>
+  } @else if (!hayEncuentro()) {
+    <app-alert tone="info" title="Abrí el encuentro para registrar">
+      El diagnóstico se registra dentro de la consulta que lo motivó. Registrá el encuentro acá
+      arriba y el formulario aparece.
+    </app-alert>
+  } @else if (catalogoListo() === false) {
+    <!-- El selector no cae a texto libre por diseño: un uuid tecleado a mano es
+         un dato inválido o, peor, uno válido de otro conjunto. Así que cuando el
+         catálogo no está, lo honesto es no ofrecer el formulario y decir por qué. -->
+    <app-alert tone="warning" title="El catálogo de diagnósticos no está publicado">
+      El diagnóstico se elige del catálogo y esa columna todavía no tiene un conjunto de valores
+      declarado, así que no se puede registrar desde acá. No es algo que puedas resolver en esta
+      pantalla: hay que declarar el catálogo del lado del servidor.
+    </app-alert>
+  } @else {
+    <form class="diagnostico__formulario" (submit)="$event.preventDefault()">
+      <app-form-field
+        label="Diagnóstico"
+        hint="Del catálogo de terminología (CIE-10). Es lo único obligatorio."
+        [required]="true"
+      >
+        <app-concept-select
+          [target]="targetDiagnostico"
+          [(value)]="diagnostico"
+          placeholder="Elegí un diagnóstico"
+        />
+      </app-form-field>
+
+      <!-- Los tres catálogos opcionales del contrato: si su binding no
+           estuviera, el selector queda deshabilitado, el valor sigue en `null`
+           y la clave se omite. -->
+      <app-form-field
+        label="Categoría"
+        hint="Opcional. Si es un diagnóstico del encuentro o un problema de la lista."
+      >
+        <app-concept-select
+          [target]="targetCategoria"
+          [(value)]="categoria"
+          [labels]="etiquetasDeCategoria"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field label="Severidad" hint="Opcional. Según tu criterio clínico.">
+        <app-concept-select
+          [target]="targetSeveridad"
+          [(value)]="severidad"
+          [labels]="etiquetasDeSeveridad"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field label="Lateralidad" hint="Opcional. El lado afectado, cuando aplica.">
+        <app-concept-select
+          [target]="targetLateralidad"
+          [(value)]="lateralidad"
+          [labels]="etiquetasDeLateralidad"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Inicio de la condición"
+        hint="Opcional. Desde cuándo la persona la presenta."
+      >
+        <app-date-picker [(value)]="inicio" />
+      </app-form-field>
+
+      <app-form-actions
+        submitLabel="Registrar diagnóstico"
+        [pending]="registrando()"
+        [disabled]="!puedeRegistrar()"
+        (submitted)="registrar()"
+      />
+    </form>
+  }
+</app-card>

@@ -65,7 +65,7 @@ export function recordDocumentLoadSpan(): void {
       /**
        * La ruta, sin query. Es la única forma en que puede viajar: dos de las
        * rutas de esta aplicación llevan un token de un solo uso en el query
-       * string (`/auth/verificar?token=…`).
+       * string (`/auth/verify-email?token=…`).
        */
       [ATTR.routeTemplate]: sanitizeUrl(location.pathname),
 

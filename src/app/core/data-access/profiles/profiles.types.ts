@@ -40,6 +40,35 @@ export interface NewPractitionerProfile {
   readonly regulatoryAuthority?: string;
 }
 
+/**
+ * Una especialidad nueva a agregar al perfil propio.
+ *
+ * No hay «editar»: una especialidad verificada es un hecho comprobado contra
+ * una credencial, y sólo se agrega — vigente, sin tocar las anteriores.
+ */
+export interface NewSpecialty {
+  readonly specialtyConceptId?: string;
+  readonly supportingCredentialId?: string;
+  readonly isPrimary?: boolean;
+  readonly boardCertified?: boolean;
+}
+
+/**
+ * Una matrícula nueva a agregar al perfil propio.
+ *
+ * Mismo criterio: es una autorización de un tercero, y se agrega — no se
+ * edita una ya cargada.
+ */
+export interface NewJurisdictionAuthorization {
+  readonly licenseNumber: string;
+  readonly jurisdictionConceptId?: string;
+  readonly regulatoryAuthority?: string;
+  readonly practiceScopeConceptId?: string;
+  /** ISO `YYYY-MM-DD`. */
+  readonly validFrom?: string;
+  readonly validTo?: string;
+}
+
 export interface PractitionerProfile {
   readonly profileId: string;
   readonly personId: string;
@@ -48,6 +77,110 @@ export interface PractitionerProfile {
   readonly practiceStatus: string;
   readonly licenseId: string;
   readonly credentialId: string;
+  readonly createdAt: Date;
+}
+
+/* ============================================================================
+    El perfil profesional propio — `GET /profiles/practitioners/me/summary`.
+
+    Es la lectura que le faltaba al módulo. Hasta que existió, la pantalla «Mi
+    perfil» llamaba a `GET /profiles/patients/me/summary` para todo el mundo, y
+    a un profesional eso le responde 404 —no tiene perfil de paciente— o 403 si
+    además no verificó su identidad: la pantalla no funcionaba, y no por un
+    defecto de la pantalla.
+
+    Todos los `*ConceptId` viajan como uuid y los traduce quien los muestra.
+    ========================================================================== */
+
+/**
+ * Una especialidad. Se reciben las vigentes y las pasadas: `validTo` distingue
+ * «ya no la ejerce» de «nunca la tuvo», y sin ese dato el perfil no puede decir
+ * ninguna de las dos cosas.
+ */
+export interface PractitionerSpecialty {
+  readonly id: string;
+  readonly specialtyConceptId: string;
+  /** La especialidad con la que se presenta. Hay una sola vigente. */
+  readonly isPrimary: boolean;
+  /** Certificación del colegio o consejo. */
+  readonly boardCertified: boolean;
+  readonly practiceScopeText?: string;
+  readonly verificationStatusConceptId: string;
+  readonly validFrom?: Date;
+  /** Presente sólo si dejó de ejercerla. */
+  readonly validTo?: Date;
+}
+
+/** Una credencial: título, posgrado o certificación. Es la formación. */
+export interface PractitionerCredential {
+  readonly id: string;
+  readonly credentialTypeConceptId: string;
+  readonly number: string;
+  /** Dónde se cursó. Texto libre: la institución no siempre es una organización. */
+  readonly issuingInstitutionText?: string;
+  readonly issueDate?: Date;
+  readonly expiryDate?: Date;
+  readonly stateConceptId: string;
+  /** Ausente = «sin verificar todavía», que no es «rechazada». */
+  readonly verifiedAt?: Date;
+}
+
+/** Una matrícula: dónde está habilitado a ejercer y con qué número. */
+export interface PractitionerLicense {
+  readonly id: string;
+  readonly jurisdictionConceptId: string;
+  readonly licenseNumber: string;
+  readonly regulatoryAuthority?: string;
+  readonly stateConceptId: string;
+  readonly validFrom?: Date;
+  readonly validTo?: Date;
+}
+
+/**
+ * Un idioma en el que atiende. `clinicalInterpretationAllowed` distingue «lo
+ * habla» de «puede sostener una consulta clínica en ese idioma».
+ */
+export interface PractitionerLanguage {
+  readonly languageConceptId: string;
+  readonly proficiencyConceptId?: string;
+  readonly clinicalInterpretationAllowed: boolean;
+}
+
+/**
+ * Lo que dejó asentado en la plataforma.
+ *
+ * Son cuentas de su propia actividad, no un ranking: no hay nada comparativo, y
+ * el detalle de cada registro vive en el expediente de la persona atendida, con
+ * sus permisos.
+ */
+export interface PractitionerActivity {
+  readonly encounters: number;
+  readonly medicationRequests: number;
+  readonly clinicalNotes: number;
+  readonly documents: number;
+}
+
+/** El perfil profesional que la persona ve de sí misma. */
+export interface OwnPractitionerProfile {
+  readonly profileId: string;
+  readonly personId: string;
+  readonly practitionerCode: string;
+  readonly displayName?: string;
+  /** «Médica cardióloga», «Kinesiólogo». */
+  readonly professionalTitle?: string;
+  /** Presentación en prosa: lo que hace que un perfil se lea como una persona. */
+  readonly professionalBio?: string;
+  readonly photoFileId?: string;
+  readonly practitionerCategoryConceptId: string;
+  readonly verificationStatusConceptId: string;
+  readonly practiceStatusConceptId: string;
+  readonly acceptsNewPatients: boolean;
+  readonly telehealthAvailable: boolean;
+  readonly specialties: readonly PractitionerSpecialty[];
+  readonly credentials: readonly PractitionerCredential[];
+  readonly licenses: readonly PractitionerLicense[];
+  readonly languages: readonly PractitionerLanguage[];
+  readonly activity: PractitionerActivity;
   readonly createdAt: Date;
 }
 
@@ -146,6 +279,77 @@ export interface PatientDetail {
   readonly relatedPersons: readonly RelatedPerson[];
   readonly createdAt: Date;
   readonly updatedAt: Date;
+}
+
+/* ---- historial laboral del profesional (UC-05-16) ------------------------ */
+
+/**
+ * Un vínculo laboral del profesional: dónde trabajó, con qué cargo y cuándo.
+ *
+ * ## Lo que el perfil no sabía decir
+ *
+ * `credentials` dice dónde se **formó**, `licenses` qué puede **ejercer** y
+ * `specialties` en qué. Ninguno dice dónde **trabajó**, que es lo que el
+ * cliente pidió por nombre: «hospitales o entidades médicas».
+ *
+ * ## La institución es texto
+ *
+ * `organizationName` es una cadena, no un identificador. La mayoría de los
+ * hospitales donde alguien trabajó no están en la plataforma, y exigir que
+ * existan para poder mencionarlos convertiría un dato de currículum en un alta
+ * de organizaciones. Cuando la institución sí está dentro, `practiceSiteId` la
+ * ata.
+ *
+ * ## `current` viene derivado
+ *
+ * Lo calcula el backend a partir de `endDate`, para que quien lo muestre no
+ * tenga que decidir qué significa una fecha ausente.
+ */
+export interface PractitionerAffiliation {
+  readonly id: string;
+  readonly practitionerProfileId: string;
+  /** Hospital o entidad médica, tal como la declaró el profesional. */
+  readonly organizationName: string;
+  readonly roleTitle: string;
+  readonly departmentText: string | null;
+  /** Sede de la plataforma, cuando la institución está dentro. */
+  readonly practiceSiteId: string | null;
+  /** Tipo de vínculo; se resuelve contra `terminology`. */
+  readonly affiliationTypeConceptId: string | null;
+  readonly startDate: Date;
+  /** `null` mientras siga ejerciendo ahí. */
+  readonly endDate: Date | null;
+  /** Derivado de `endDate` por el backend: sin fin declarado, sigue vigente. */
+  readonly current: boolean;
+  /** Concepto del estado del registro, no del vínculo laboral. */
+  readonly status: string;
+  readonly createdAt: Date;
+}
+
+/** El historial laboral completo, del vínculo más reciente al más antiguo. */
+export interface PractitionerAffiliationPage {
+  readonly items: readonly PractitionerAffiliation[];
+  readonly count: number;
+}
+
+/**
+ * Alta de un vínculo laboral.
+ *
+ * **No lleva el profesional**: el backend lo resuelve desde la sesión, así que
+ * no hay forma de escribir el historial de otro. Las fechas viajan como
+ * `YYYY-MM-DD` porque el contrato las declara `date`, no `date-time`: el día en
+ * que alguien entró a un hospital no tiene hora.
+ */
+export interface NewPractitionerAffiliation {
+  readonly organizationName: string;
+  readonly roleTitle: string;
+  readonly departmentText?: string;
+  readonly practiceSiteId?: string;
+  readonly affiliationTypeConceptId?: string;
+  /** ISO `YYYY-MM-DD`. */
+  readonly startDate: string;
+  /** ISO `YYYY-MM-DD`. Se omite si sigue ejerciendo ahí. */
+  readonly endDate?: string;
 }
 
 /* ---- personas relacionadas / contactos (UC-05-10) ----------------------- */

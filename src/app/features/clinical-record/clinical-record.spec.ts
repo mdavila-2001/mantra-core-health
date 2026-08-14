@@ -49,17 +49,17 @@ describe('ClinicalRecord', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([
-          { path: 'clinico', component: ClinicalRecord },
+          { path: 'medical-records', component: ClinicalRecord },
           // El expediente cuelga de acá. Se declara para que la prueba del
           // acceso directo navegue de verdad y no contra una ruta inexistente.
-          { path: 'clinico/:profileId', component: ExpedienteDoble },
+          { path: 'medical-records/:profileId', component: ExpedienteDoble },
         ]),
       ],
     });
 
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/clinico', ClinicalRecord);
+    componente = await harness.navigateByUrl('/medical-records', ClinicalRecord);
   });
 
   afterEach(() => http.verify());
@@ -101,7 +101,7 @@ describe('ClinicalRecord', () => {
    * El caso que justifica que el campo de identificador exista: para el rol
    * clínico esta es la respuesta normal, no una excepción.
    */
-  it('un 403 del padrón deja la pantalla en S5 y enciende la ayuda del acceso directo', () => {
+  it('un 403 del padrón enciende el acceso directo, que es el camino del rol clínico', () => {
     peticion().flush(
       { code: 'FORBIDDEN', message: 'Rol insuficiente', timestamp: '', path: '' },
       { status: 403, statusText: 'Forbidden' },
@@ -109,6 +109,41 @@ describe('ClinicalRecord', () => {
 
     expect(estado().status).toBe('forbidden');
     expect(interno<() => boolean>('buscadorProhibido')()).toBe(true);
+  });
+
+  /**
+   * **El defecto que esto fija.** La tabla delega sus estados en
+   * `ViewStateHost`, y su S5 dice «No tenés acceso a esta sección» — un texto
+   * escrito para una sección entera. El médico entraba al archivo clínico y leía
+   * que no era suyo, cuando **sí lo es y funciona**: sólo el listado del padrón
+   * es de administración, y para su rol ese 403 es la respuesta normal.
+   *
+   * Un rojo en el lugar más visible de la pantalla, para una condición
+   * esperada, no informa: asusta y hace creer que la sección está rota.
+   */
+  it('con el padrón prohibido no se pinta ningún error: ni la tabla ni el buscador', async () => {
+    peticion().flush(
+      { code: 'FORBIDDEN', message: 'Rol insuficiente', timestamp: '', path: '' },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    await harness.fixture.whenStable();
+
+    const html = harness.fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('app-data-table')).toBeNull();
+    expect(html.querySelector('app-search-field')).toBeNull();
+    expect(html.textContent).not.toContain('No tenés acceso a esta sección');
+    // Y el camino que sí es suyo sigue ahí, que es lo que no puede perderse.
+    expect(html.textContent).toContain('Abrir por identificador');
+  });
+
+  /** Con permiso, el buscador se ofrece: no se le quita a quien sí puede usarlo. */
+  it('con el padrón permitido, el buscador y la tabla se ofrecen', async () => {
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+    await harness.fixture.whenStable();
+
+    const html = harness.fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('app-search-field')).not.toBeNull();
+    expect(html.querySelector('app-data-table')).not.toBeNull();
   });
 
   it('abrir por identificador navega al expediente de esa persona', async () => {
@@ -121,7 +156,7 @@ describe('ClinicalRecord', () => {
 
     // El identificador se recorta antes de navegar: un espacio pegado de más no
     // debería producir una ruta distinta.
-    expect(router.url).toBe('/clinico/p-001');
+    expect(router.url).toBe('/medical-records/p-001');
   });
 
   it('abrir por identificador con el campo vacío no navega', async () => {
@@ -131,7 +166,7 @@ describe('ClinicalRecord', () => {
     interno<() => void>('abrirPorIdentificador')();
     await harness.fixture.whenStable();
 
-    expect(router.url).toBe('/clinico');
+    expect(router.url).toBe('/medical-records');
   });
 
   it('sin filtro, el vacío dice que no hay pacientes registrados', () => {

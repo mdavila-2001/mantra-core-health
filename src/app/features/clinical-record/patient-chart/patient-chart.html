@@ -43,7 +43,11 @@
           @for (encuentro of encuentrosEnCurso(); track encuentro.id) {
             <li class="expediente__en-curso-item">
               <div class="expediente__en-curso-datos">
-                <app-badge variant="warning" value="En curso" />
+                <!-- El encuentro abierto es un estado, y va con sus tres
+                     canales. Aquí la variante es fija y no sale del catálogo:
+                     «en curso» es un derivado del contrato —el encuentro no
+                     tiene `endAt`—, no un concepto que terminología resuelva. -->
+                <app-status-seal variant="in-review" label="En curso" />
                 <span class="expediente__principal">{{ encuentro.motivo }}</span>
                 <span class="expediente__secundario">
                   {{ encuentro.clase }}
@@ -110,6 +114,68 @@
       }
     </app-card>
 
+    <!-- ─── La receta ────────────────────────────────────────────────────
+         Pegada al encuentro y no dentro de las pestañas: el recorrido es
+         check-in → ficha → recetar ahí mismo, y la pestaña de medicación es
+         lectura. Lo que necesita para escribir baja hecho —la persona, el
+         encuentro abierto y las recetas ya traducidas—; el bloque no vuelve a
+         derivarlo para que no puedan discrepar. -->
+    <app-medication-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+      [recetas]="recetas()"
+      (cambio)="recargar()"
+    />
+
+    <!-- ─── El diagnóstico ───────────────────────────────────────────────
+         Mismo criterio y mismo lugar que la receta: se registra desde el
+         encuentro abierto, y la pestaña de diagnósticos es lectura. Sin lista
+         propia — una condición no tiene acciones que ofrecer por fila. -->
+    <app-diagnosis-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+      (cambio)="recargar()"
+    />
+
+    <!-- ─── Los adjuntos ─────────────────────────────────────────────────
+         Cuelgan del PACIENTE y no del encuentro: `file_links.owner_type`
+         admite USER/PATIENT/TENANT y no tiene ENCOUNTER. Es el modelo, no
+         una decisión de esta pantalla. -->
+    <app-attachments-block [patientProfileId]="pacienteDeLaFicha()" />
+
+    <!-- ─── Laboratorio e imagenología ───────────────────────────────────
+         Mismo lugar y mismo criterio que los dos de arriba: se pide desde el
+         encuentro abierto. Sin `(cambio)`, y no por olvido: el circuito
+         diagnóstico no sale de `GET /clinical/patients/:id/summary`, así que el
+         bloque lee lo suyo y se relee solo. Avisar acá haría que el expediente
+         recargara cinco bloques que no cambiaron. -->
+    <app-diagnostics-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+    />
+
+    <!-- ─── El histórico de procedimientos ───────────────────────────────
+         Cirugías y odontología (punto 7). Sin `[encounterId]` y sin
+         `(cambio)`, a diferencia de los tres de arriba, y por el mismo motivo
+         en los dos casos: no cuelga del encuentro abierto. Un histórico es de
+         la persona, no de la consulta de hoy —se lee igual sin encuentro—, y
+         lo único que se escribe desde acá, el tratamiento odontológico, no
+         aparece en `GET /clinical/patients/:id/summary`: el bloque relee lo
+         suyo y avisar acá recargaría cinco bloques que no cambiaron. -->
+    <app-procedures-block [patientProfileId]="pacienteDeLaFicha()" />
+
+    <!-- ─── La internación ───────────────────────────────────────────────
+         Punto 8 del reclamo. Va al final de los bloques de escritura y con la
+         lista dentro —no en una pestaña— porque hasta ahora una internación
+         abierta no se veía en ningún lado: quien reabría la ficha no se
+         enteraba de que la persona estaba internada. -->
+    <app-admission-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+      [internaciones]="internaciones()"
+      (cambio)="recargar()"
+    />
+
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->
@@ -121,10 +187,10 @@
         la separación es de quién la escribe, no de quién la lee.
       </p>
       <p class="expediente__nota-texto">
-        De todo lo que se puede escribir en una historia clínica, acá sólo se registra el
-        <strong>encuentro</strong> —abrirlo y cerrarlo—, porque es lo único cuyo resultado esta
-        misma pantalla vuelve a mostrar. Diagnosticar, indicar medicación o firmar una nota tienen
-        su flujo propio y no cuelgan de acá.
+        De todo lo que se puede escribir en una historia clínica, acá se registran el
+        <strong>encuentro</strong> —abrirlo y cerrarlo— y la <strong>receta</strong> —prescribirla,
+        firmarla y emitirla—, porque son lo único cuyo resultado esta misma pantalla vuelve a
+        mostrar. Diagnosticar o firmar una nota tienen su flujo propio y no cuelgan de acá.
       </p>
     </app-card>
   </div>

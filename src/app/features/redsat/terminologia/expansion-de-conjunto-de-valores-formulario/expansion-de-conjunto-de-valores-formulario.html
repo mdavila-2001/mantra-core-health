@@ -1,0 +1,68 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Expansión de conjunto de valores</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Expandir un conjunto de valores</h1></div>
+        <p class="caption">Materializá los miembros de una versión. La expansión reemplaza los miembros anteriores, nunca los suma; las reglas que excluyen se aplican al final.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Versión del conjunto de valores: la versión elegida ya está retirada.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-71">Versión del conjunto de valores <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-71" type="search" role="combobox" aria-expanded="true" aria-controls="c-71-m" aria-autocomplete="list" aria-describedby="c-71-a" value="motivos" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-71-m" role="listbox" aria-label="Resultados de Versión del conjunto de valores" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg><span>Motivos de consulta ambulatoria · 2026.2<br><span class="caption muted">VSV-2026-000418 · activa · predeterminada</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg><span>Motivos de consulta ambulatoria · 2026.1<br><span class="caption muted">VSV-2026-000412 · retirada</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg><span>Diagnósticos de egreso · 2026.1<br><span class="caption muted">VSV-2026-000407 · activa</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Motivos de consulta ambulatoria · 2026.2 <span class="muted">· VSV-2026-000418 · activa</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-71-a">Escribí al menos 3 letras del conjunto. Se guarda la versión, no el conjunto.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-72-l">Activar al expandir</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-72-l" aria-describedby="c-72-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Pasar la versión de borrador a activa</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-72-a">Una versión activa queda inmutable: ya no admite importar conceptos.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-73-l">Marcar como predeterminada</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-73-l" checked="" aria-describedby="c-73-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Dejarla como la versión vigente del conjunto</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-73-a">Sólo una versión por conjunto puede serlo: marcar ésta degrada la anterior.</p>
+      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/expansion-de-conjunto-de-valores-detalle"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Expandir</button>
+      </div>
+    </form>

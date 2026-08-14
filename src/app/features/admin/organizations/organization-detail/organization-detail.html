@@ -1,0 +1,182 @@
+@let ficha = organizacion();
+
+<app-page-header
+  [title]="ficha.status === 'ready' ? ficha.data.legalName : 'Organización'"
+  subtitle="Sus sucursales, su plantilla y las sub-organizaciones que dependen de ella."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <a app-button page-actions variant="secondary" [routerLink]="rutaDelListado">
+    Volver al listado
+  </a>
+</app-page-header>
+
+<!-- Ficha de ámbito: el `tenantId` es obligatorio en los tres endpoints, así
+     que es el asunto de la pantalla y no un filtro. Va arriba, una sola vez, y
+     no se repite como columna en ninguna de las tres tablas. -->
+@switch (ficha.status) {
+  @case ('ready') {
+    <section class="organizacion__ambito" aria-label="Organización">
+      <dl class="organizacion__datos">
+        <div>
+          <dt>Código</dt>
+          <dd class="organizacion__codigo">{{ ficha.data.code }}</dd>
+        </div>
+        @if (ficha.data.tradeName) {
+          <div>
+            <dt>Nombre comercial</dt>
+            <dd>{{ ficha.data.tradeName }}</dd>
+          </div>
+        }
+        <div>
+          <dt>Tipo</dt>
+          <dd>{{ etiquetaDe(ficha.data.tenantTypeConceptId)?.display ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>
+            <app-badge [variant]="varianteDe(ficha.data.statusConceptId)">
+              {{ etiquetaDe(ficha.data.statusConceptId)?.display ?? '—' }}
+            </app-badge>
+          </dd>
+        </div>
+        <div>
+          <dt>Verificación</dt>
+          <dd>
+            <app-badge [variant]="varianteDe(ficha.data.verificationStatusConceptId)">
+              {{ etiquetaDe(ficha.data.verificationStatusConceptId)?.display ?? '—' }}
+            </app-badge>
+          </dd>
+        </div>
+        <div>
+          <dt>Alta</dt>
+          <dd>{{ ficha.data.createdAt | date: 'dd/MM/yyyy' }}</dd>
+        </div>
+      </dl>
+    </section>
+  }
+  @case ('error') {
+    <!-- Un 403 acá significa «no pertenecés a esta organización» y un 404,
+         «no existe». El backend los distingue a propósito para que el código de
+         error no sirva de sonda; la pantalla los muestra tal cual llegan. -->
+    <section class="organizacion__ambito organizacion__ambito--error" role="alert">
+      <p>{{ ficha.message }}</p>
+      <button app-button variant="secondary" type="button" (click)="recargar()">
+        Reintentar
+      </button>
+    </section>
+  }
+  @default {
+    <section class="organizacion__ambito" aria-busy="true">
+      <p class="organizacion__cargando">Cargando la organización…</p>
+    </section>
+  }
+}
+
+<app-tabs>
+  <app-tab label="Sucursales">
+    <app-data-table
+      [state]="sucursales()"
+      [columns]="columnasDeSucursal()"
+      [trackBy]="porId"
+      caption="Sucursales de la organización"
+      (retry)="recargar()"
+    />
+    <!-- Sin pie de paginación a propósito: `GET /tenants/{id}/branches`
+         devuelve todas en una respuesta. Prometer «Siguientes» sobre un
+         endpoint que no lo hace sería mentir. -->
+    <p class="organizacion__nota">
+      El endpoint devuelve las sucursales de esta organización en una sola
+      respuesta: no pagina.
+    </p>
+  </app-tab>
+
+  <app-tab label="Plantilla">
+    <app-data-table
+      [state]="membresias()"
+      [columns]="columnasDeMembresia()"
+      [trackBy]="porId"
+      caption="Personas con membresía en la organización"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Sub-organizaciones">
+    <app-data-table
+      [state]="hijas()"
+      [columns]="columnasDeHija()"
+      [trackBy]="porId"
+      caption="Organizaciones que dependen de esta"
+      (retry)="recargar()"
+    />
+  </app-tab>
+</app-tabs>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+
+<ng-template #celdaSucursal let-sucursal>
+  <span class="organizacion__nombre">{{ sucursal.name }}</span>
+  @if (sucursal.timeZone) {
+    <span class="organizacion__secundario">{{ sucursal.timeZone }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaTipoSucursal let-sucursal>
+  {{ etiquetaDe(sucursal.branchTypeConceptId)?.display ?? '—' }}
+</ng-template>
+
+<ng-template #celdaEstadoSucursal let-sucursal>
+  <app-badge [variant]="varianteDe(sucursal.statusConceptId)">
+    {{ etiquetaDe(sucursal.statusConceptId)?.display ?? '—' }}
+  </app-badge>
+</ng-template>
+
+<ng-template #celdaAltaSucursal let-sucursal>
+  {{ sucursal.createdAt | date: 'dd/MM/yyyy' }}
+</ng-template>
+
+<ng-template #celdaRol let-membresia>
+  <span class="organizacion__nombre">
+    {{ etiquetaDe(membresia.tenantRoleConceptId)?.display ?? '—' }}
+  </span>
+  @if (etiquetaDe(membresia.accessScopeConceptId); as alcance) {
+    <span class="organizacion__secundario">Alcance: {{ alcance.display }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstadoMembresia let-membresia>
+  <app-badge [variant]="varianteDe(membresia.statusConceptId)">
+    {{ etiquetaDe(membresia.statusConceptId)?.display ?? '—' }}
+  </app-badge>
+</ng-template>
+
+<!-- El contrato devuelve `primaryBranchId` crudo; el nombre legible lo resuelve
+     la pantalla contra las sucursales que ya cargó. El uuid no se muestra. -->
+<ng-template #celdaSede let-membresia>
+  {{ sucursalDe(membresia.primaryBranchId) ?? '—' }}
+</ng-template>
+
+<ng-template #celdaVigencia let-membresia>
+  @if (membresia.startDate) {
+    {{ membresia.startDate | date: 'dd/MM/yyyy' }}
+    @if (membresia.endDate) {
+      — {{ membresia.endDate | date: 'dd/MM/yyyy' }}
+    } @else {
+      <span class="organizacion__secundario">sin fecha de fin</span>
+    }
+  } @else {
+    —
+  }
+</ng-template>
+
+<ng-template #celdaHija let-hija>
+  <span class="organizacion__nombre">{{ hija.legalName }}</span>
+  @if (hija.tradeName) {
+    <span class="organizacion__secundario">{{ hija.tradeName }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstadoHija let-hija>
+  <app-badge [variant]="varianteDe(hija.statusConceptId)">
+    {{ etiquetaDe(hija.statusConceptId)?.display ?? '—' }}
+  </app-badge>
+</ng-template>

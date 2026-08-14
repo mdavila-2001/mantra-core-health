@@ -14,7 +14,7 @@
  *
  * **Solo en Node**: lo importan `cypress.config.ts` y el arnés. Dentro del
  * navegador no hay `process.env`, así que lo que las pruebas necesitan saber
- * viaja por `config.env` de Cypress y se lee con `Cypress.env()`.
+ * viaja por el bloque `expose` de Cypress y se lee con `Cypress.expose()`.
  */
 
 import { VIEWPORTS, type Viewport } from './viewports';
@@ -143,6 +143,24 @@ export function verificarEntornoSeguro(config: ConfiguracionE2e = configuracion(
     `E2E_BASE_URL apunta fuera de la máquina local (${config.baseUrl}). ` +
       'Si es un entorno de ensayo y sabés lo que hacés, exportá E2E_ALLOW_REMOTE=true.',
   );
+}
+
+/**
+ * Flags de los tramos de los recorridos del viernes (`e2e/real/09` y `10`).
+ *
+ * Cada uno cubre un pedazo del guion que espera un merge ajeno; la ausencia de
+ * la variable es «apagado». Se leen acá —el único lugar que toca
+ * `process.env`— y viajan al navegador por el bloque `expose`, donde
+ * `cypress/support/real/tramos.ts` los interpreta.
+ */
+export function tramos(): Record<string, string> {
+  return {
+    TRAMO_REGISTRO: texto('TRAMO_REGISTRO', ''),
+    TRAMO_E1_CANCELAR: texto('TRAMO_E1_CANCELAR', ''),
+    TRAMO_M1_CLINICA: texto('TRAMO_M1_CLINICA', ''),
+    TRAMO_P1_RECETA: texto('TRAMO_P1_RECETA', ''),
+    TRAMO_N4_ACCESO: texto('TRAMO_N4_ACCESO', ''),
+  };
 }
 
 /**

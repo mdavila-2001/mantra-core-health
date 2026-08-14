@@ -129,7 +129,7 @@ export class AuthService {
    *   navegación al login ocurriera antes de la respuesta —que es lo normal,
    *   porque es local e instantánea— para que el borrado nunca corriera y la
    *   sesión volviera sola en la siguiente recarga. Lo destapó la prueba de
-   *   extremo a extremo, entrando de nuevo a `/panel` después de salir.
+   *   extremo a extremo, entrando de nuevo a `/dashboard` después de salir.
    *
    * Usa `logout` y no `logout-all` a propósito: esa otra ruta cierra las
    * sesiones de **todos** sus dispositivos, que es otra intención.

@@ -57,6 +57,13 @@ export const SURFACE = {
   surface: '--bg-surface',
   surfaceAlt: '--bg-surface-alt',
   inset: '--bg-inset',
+  /**
+   * Realce por puntero y por pulsación. Son VELOS translúcidos, no colores
+   * opacos: un color opaco encima de una tarjeta oscura la blanquea y se lleva
+   * puesto el texto claro que tenía.
+   */
+  hover: '--bg-hover',
+  active: '--bg-active',
 } as const;
 export type SurfaceToken = (typeof SURFACE)[keyof typeof SURFACE];
 
@@ -172,6 +179,12 @@ export const FONT_FAMILY = {
   display: '--font-display',
   /** Inter Variable — UI y datos. */
   body: '--font-body',
+  /**
+   * Sólo para identificadores opacos —uuid, códigos, hashes—, donde el ancho
+   * fijo es lo que deja comparar dos valores de un vistazo. Nunca para prosa ni
+   * para cifras clínicas: esas van con `.tabular-nums`, que conserva la Inter.
+   */
+  mono: '--font-mono',
 } as const;
 export type FontFamilyToken = (typeof FONT_FAMILY)[keyof typeof FONT_FAMILY];
 

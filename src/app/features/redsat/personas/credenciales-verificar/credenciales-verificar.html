@@ -1,0 +1,113 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="11" rx="2"></rect><path d="M7 8.5h6M7 11.5h4"></path><path d="M16.5 19.5v-3.2l1.75 1.1 1.75-1.1v3.2l-1.75-1.1z"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Personas</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Credenciales</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><p class="titulo-h1">Credenciales</p></div>
+        <p class="caption">El papel que respalda que un profesional puede ejercer: matrícula, especialidad, quién la emitió, hasta cuándo vale y contra qué registro se comprobó.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.5v10"></path><path d="m8.5 10 3.5 3.5 3.5-3.5"></path><path d="M4.5 15.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"></path></svg>Exportar</button>
+      </div>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por número de matrícula, profesional o institución">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-1">Profesional</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-2">Tipo de credencial</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-2">
+            <option>Todos</option>
+            <option>Matrícula profesional</option>
+            <option>Especialidad</option>
+            <option>Certificación</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Matrícula profesional<button type="button" aria-label="Quitar el filtro Matrícula profesional"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-3">Autoridad emisora</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-3" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-4">País emisor</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-4">
+            <option>Todos</option>
+            <option>Bolivia</option>
+            <option>Perú</option>
+            <option>Argentina</option>
+            <option>México</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Bolivia<button type="button" aria-label="Quitar el filtro Bolivia"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-5">Emitidas desde</label>
+        <span class="app-date-picker" app-date-picker="">
+          <input class="app-date-picker__input" id="f-5" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" value="01/01/2009">
+          <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+        </span>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano" app-card="">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Credenciales — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Profesional</th>
+            <th scope="col">Tipo de credencial</th>
+            <th scope="col">Número</th>
+            <th scope="col">Autoridad emisora</th>
+            <th scope="col">Institución emisora</th>
+            <th scope="col">País emisor</th>
+            <th scope="col">Fecha de emisión</th>
+            <th scope="col">Fecha de vencimiento</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Archivo</th>
+            <th scope="col">URI de verificación</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">CRE-2026-000318</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dra. Carla Nogales Suárez</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="11" rx="2"></rect><path d="M7 8.5h6M7 11.5h4"></path><path d="M16.5 19.5v-3.2l1.75 1.1 1.75-1.1v3.2l-1.75-1.1z"></path></svg>Matrícula profesional</span></td><td class="col-codigo">12457-LP</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Colegio Médico de Bolivia</a></td><td>Universidad Mayor de San Andrés</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td class="col-fecha">12/03/2014</td><td class="col-fecha">12/03/2029</td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificada</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">matricula-nogales.pdf</a></td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://consulta.colmed.bo/matricula/12457-LP">https://consulta.colmed.bo/matricula/12457-LP</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">CRE-2026-000306</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dr. Óscar Herbas Callisaya</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="11" rx="2"></rect><path d="M7 8.5h6M7 11.5h4"></path><path d="M16.5 19.5v-3.2l1.75 1.1 1.75-1.1v3.2l-1.75-1.1z"></path></svg>Especialidad</span></td><td class="col-codigo">ESP-2211-CB</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Sociedad Boliviana de Cardiología</a></td><td>Universidad Mayor de San Simón</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td class="col-fecha">04/08/2011</td><td class="col-fecha">04/08/2031</td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificada</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">especialidad-herbas.pdf</a></td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://registro.sbc.org.bo/especialistas/2211">https://registro.sbc.org.bo/especialistas/2211</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">CRE-2026-000294</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Lic. Miriam Yujra Poma</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="11" rx="2"></rect><path d="M7 8.5h6M7 11.5h4"></path><path d="M16.5 19.5v-3.2l1.75 1.1 1.75-1.1v3.2l-1.75-1.1z"></path></svg>Matrícula profesional</span></td><td class="col-codigo">ENF-8842-LP</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Colegio de Enfermeras de Bolivia</a></td><td>Universidad Pública de El Alto</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td class="col-fecha">17/09/2019</td><td class="col-fecha">17/09/2027</td><td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Pendiente</span></td><td class="muted" aria-label="Sin dato">—</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://consulta.cebol.bo/matricula/ENF-8842-LP">https://consulta.cebol.bo/matricula/ENF-8842-LP</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">CRE-2026-000281</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dr. Sebastián Urquidi Bleichner</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="11" rx="2"></rect><path d="M7 8.5h6M7 11.5h4"></path><path d="M16.5 19.5v-3.2l1.75 1.1 1.75-1.1v3.2l-1.75-1.1z"></path></svg>Matrícula profesional</span></td><td class="col-codigo">10932-SC</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Colegio Médico de Bolivia</a></td><td>Universidad Católica Boliviana</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td class="col-fecha">22/02/2009</td><td class="col-fecha">22/02/2026</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Vencida</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">matricula-urquidi.pdf</a></td><td class="muted" aria-label="Sin dato">—</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">CRE-2026-000270</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dra. Patricia Zeballos Rivas</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="11" rx="2"></rect><path d="M7 8.5h6M7 11.5h4"></path><path d="M16.5 19.5v-3.2l1.75 1.1 1.75-1.1v3.2l-1.75-1.1z"></path></svg>Especialidad</span></td><td class="col-codigo">ESP-1780-LP</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Sociedad Boliviana de Ginecología</a></td><td>Universidad Andina Simón Bolívar</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td class="col-fecha">30/06/2016</td><td class="col-fecha">30/06/2031</td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificada</span></td><td><a app-link="" aria-disabled="true" data-sin-destino="">especialidad-zeballos.pdf</a></td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://registro.sbgo.org.bo/especialistas/1780">https://registro.sbgo.org.bo/especialistas/1780</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">CRE-2026-000258</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dr. Hugo Callaú Montero</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="11" rx="2"></rect><path d="M7 8.5h6M7 11.5h4"></path><path d="M16.5 19.5v-3.2l1.75 1.1 1.75-1.1v3.2l-1.75-1.1z"></path></svg>Matrícula profesional</span></td><td class="col-codigo">MX-44219</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Consejo Mexicano de Traumatología</a></td><td>Universidad Nacional Autónoma de México</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>México</span></td><td class="col-fecha">11/11/2012</td><td class="muted" aria-label="Sin dato">—</td><td><span class="app-badge" data-tono="error"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Rechazada</span></td><td class="muted" aria-label="Sin dato">—</td><td><span class="celda-truncada app-tooltip-panel" app-tooltip-panel="" title="https://cmt.org.mx/verificacion/44219">https://cmt.org.mx/verificacion/44219</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+    </section>

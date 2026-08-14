@@ -113,16 +113,99 @@ describe('PatientChart', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'clinico/:profileId', component: PatientChart }]),
+        provideRouter([{ path: 'medical-records/:profileId', component: PatientChart }]),
       ],
     });
 
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
-    componente = await harness.navigateByUrl('/clinico/p-1', PatientChart);
+    componente = await harness.navigateByUrl('/medical-records/p-1', PatientChart);
   });
 
-  afterEach(() => http.verify());
+  /**
+   * Los bloques de medicación y de diagnóstico preguntan por su catálogo
+   * apenas se crean, y esas peticiones aparecen en cualquier prueba que llegue
+   * a pintar el expediente.
+   *
+   * Se responden con el `404` de «sin binding declarado» para que `verify()`
+   * no tropiece con ellas. Lo que cada bloque hace con esa respuesta lo fijan
+   * sus propias pruebas: acá sólo importa que no se cuelen como peticiones
+   * huérfanas del expediente.
+   */
+  function responderCatalogoDeMedicacion(): void {
+    for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+      req.flush(
+        { code: 'NOT_FOUND', message: 'Enumeración no encontrada', timestamp: '', path: '' },
+        { status: 404, statusText: 'Not Found' },
+      );
+    }
+    responderAdjuntos();
+  }
+
+  /**
+   * El bloque de adjuntos pide su lista apenas se crea, igual que los otros dos.
+   *
+   * Se responde vacío: qué hace con la lista lo fijan sus propias pruebas
+   * (`attachments-block.spec.ts`). Acá sólo importa que no quede como petición
+   * huérfana del expediente.
+   */
+  function responderAdjuntos(): void {
+    for (const req of http.match((r) => r.url === '/common/files/links')) {
+      req.flush({ items: [], count: 0 });
+    }
+  }
+
+  /**
+   * El bloque de laboratorio e imagenología lee **lo suyo**, a diferencia del de
+   * medicación, al que el expediente le baja las recetas ya hechas.
+   *
+   * Y es a propósito: el circuito diagnóstico no sale de
+   * `GET /clinical/patients/:id/summary` —es otro módulo y otra lectura—, así
+   * que el bloque la hace suya y el expediente no cambia por eso. El precio es
+   * esta petición, que aparece en cualquier prueba que llegue a pintar la ficha
+   * y que acá sólo hay que drenar: lo que el bloque hace con la respuesta lo
+   * fijan sus propias pruebas.
+   */
+  function responderCircuitoDiagnostico(): void {
+    for (const req of http.match((r) => r.url.startsWith('/diagnostics/patients/'))) {
+      req.flush({
+        patientProfileId: 'p-1',
+        orders: [],
+        reports: [],
+        limit: 25,
+        truncated: [],
+      });
+    }
+  }
+
+  /**
+   * El histórico de procedimientos lee lo suyo, por el mismo motivo que el
+   * circuito diagnóstico: cirugías y odontología son otro módulo y no salen de
+   * `GET /clinical/patients/:id/summary`.
+   *
+   * Son tres peticiones y no una porque las dos mitades del bloque tienen
+   * permisos distintos —de ahí que no vayan en un `forkJoin`— y el catálogo
+   * odontológico es una lectura aparte. Acá sólo se drenan: lo que el bloque
+   * hace con cada respuesta lo fijan sus propias pruebas.
+   */
+  function responderHistoricoDeProcedimientos(): void {
+    for (const req of http.match((r) => r.url === '/procedure-cases')) {
+      req.flush({ items: [], total: 0 });
+    }
+    for (const req of http.match((r) => r.url === '/dental-procedures')) {
+      req.flush({ items: [], total: 0 });
+    }
+    for (const req of http.match((r) => r.url === '/dental-procedures/catalog')) {
+      req.flush({ procedureCodes: [], teeth: [], quadrants: [] });
+    }
+  }
+
+  afterEach(() => {
+    responderCatalogoDeMedicacion();
+    responderCircuitoDiagnostico();
+    responderHistoricoDeProcedimientos();
+    http.verify();
+  });
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
@@ -366,7 +449,7 @@ describe('PatientChart', () => {
 
     // Se llega con el turno puesto, como hace el enlace de la agenda. Mismo
     // paciente, así que el expediente no se relee: sólo cambian los parámetros.
-    await harness.navigateByUrl('/clinico/p-1?cita=ap-1&motivo=Control');
+    await harness.navigateByUrl('/medical-records/p-1?cita=ap-1&motivo=Control');
 
     interno<() => void>('registrarEncuentro')();
 
@@ -490,5 +573,68 @@ describe('PatientChart', () => {
     );
 
     expect(interno<() => string | null>('errorDelRegistro')()).toContain('Recargá el expediente');
+  });
+
+  /* ---- lo que baja al bloque de medicación -------------------------------- */
+
+  /**
+   * «Firmada» y «emitida» salen de `signedAt` e `issuedAt`, no del estado: el
+   * estado es un uuid de concepto, y ramificar por su valor ataría la pantalla
+   * a un identificador de catálogo.
+   */
+  it('resuelve el ciclo de cada receta por sus instantes, no por su estado', () => {
+    abrirSesion();
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        medicationRequests: [
+          {
+            id: 'rx-1',
+            medicationConceptId: 'con-diabetes',
+            statusConceptId: 'st-activa',
+            doseText: '500 mg',
+            frequencyText: 'cada 8 horas',
+            createdAt: HACE_UNA_HORA,
+          },
+          {
+            id: 'rx-2',
+            medicationConceptId: 'con-diabetes',
+            statusConceptId: 'st-activa',
+            signedAt: HACE_UNA_HORA,
+            issuedAt: HACE_UNA_HORA,
+            createdAt: HACE_UNA_HORA,
+          },
+        ],
+      },
+    });
+
+    const recetas = interno<() => readonly Record<string, unknown>[]>('recetas')();
+    expect(recetas[0]['firmada']).toBe(false);
+    expect(recetas[0]['emitida']).toBe(false);
+    // Y traducida: ningún uuid baja al bloque.
+    expect(recetas[0]['medicamento']).toBe('Diabetes tipo 2');
+    expect(recetas[0]['indicacion']).toBe('500 mg · cada 8 horas');
+    expect(recetas[1]['firmada']).toBe(true);
+    expect(recetas[1]['emitida']).toBe(true);
+  });
+
+  it('sin encuentro abierto no baja ninguno: la receta vive dentro de la consulta', () => {
+    abrirSesion();
+    responderNombre();
+    responderExpediente();
+
+    expect(interno<() => string | null>('encuentroParaRecetar')()).toBeNull();
+  });
+
+  it('con un encuentro en curso, es ese el que recibe la receta', () => {
+    abrirSesion();
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        encounters: [{ id: 'e-1', statusConceptId: 'st-activa', startAt: HACE_UNA_HORA }],
+      },
+    });
+
+    expect(interno<() => string | null>('encuentroParaRecetar')()).toBe('e-1');
   });
 });

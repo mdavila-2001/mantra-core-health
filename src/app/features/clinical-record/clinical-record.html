@@ -5,24 +5,39 @@
 />
 
 <div class="archivo">
-  <!-- El campo se nombra solo (publica su propio contexto de control): no va
-       dentro de un app-form-field, o quedarían dos nombres accesibles. -->
-  <app-search-field
-    class="archivo__buscador"
-    label="Buscar pacientes"
-    placeholder="Nombre, código o documento"
-    [value]="busqueda()"
-    [loading]="cargando()"
-    (searched)="buscar($event)"
-  />
+  <!-- ─── El buscador, sólo para quien puede usarlo ────────────────────────
+       Para un rol clínico `GET /profiles/patients` responde 403 **por diseño**:
+       el padrón es de administración. Eso no es un fallo de la sesión, es que
+       ese camino no es el suyo — y pintarlo como error rojo le decía «no tenés
+       acceso a esta sección» cuando la sección sí es suya y funciona.
+       Se ofrece el control sólo a quien puede usarlo; al resto se le da el
+       camino que sí tiene, sin alarma. -->
+  @if (!buscadorProhibido()) {
+    <!-- El campo se nombra solo (publica su propio contexto de control): no va
+         dentro de un app-form-field, o quedarían dos nombres accesibles. -->
+    <app-search-field
+      class="archivo__buscador"
+      label="Buscar pacientes"
+      placeholder="Nombre, código o documento"
+      [value]="busqueda()"
+      [loading]="cargando()"
+      (searched)="buscar($event)"
+    />
 
-  <app-data-table
-    [state]="resultados()"
-    [columns]="columnas()"
-    [trackBy]="porPaciente"
-    caption="Pacientes de la organización"
-    (retry)="recargar()"
-  />
+    <app-data-table
+      [state]="resultados()"
+      [columns]="columnas()"
+      [trackBy]="porPaciente"
+      caption="Pacientes de la organización"
+      (retry)="recargar()"
+    />
+  } @else {
+    <app-alert tone="info" title="Entrás por el identificador, no por el padrón">
+      Listar el padrón de pacientes es una función de administración. Tu sesión abre el expediente
+      de quien atendés, que es lo que hace falta para tu consulta: la cita de tu agenda trae el
+      identificador y el enlace te deja acá abajo.
+    </app-alert>
+  }
 
   <!-- ─── Abrir por identificador ──────────────────────────────────────────
        No es un atajo para expertos: es el único camino que le queda a quien
@@ -33,8 +48,7 @@
     <h2 class="archivo__directo-titulo">Abrir por identificador</h2>
     <p class="archivo__directo-texto">
       @if (buscadorProhibido()) {
-        Tu sesión no puede listar el padrón de pacientes, pero sí consultar el expediente de quien
-        atendés. Pegá el identificador de perfil que trae la cita en tu agenda.
+        Pegá el identificador de perfil que trae la cita en tu agenda.
       } @else {
         Si ya tenés el identificador de perfil del paciente —lo trae cada cita de la agenda— podés
         ir directo al expediente.

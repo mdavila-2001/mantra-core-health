@@ -34,14 +34,14 @@
 export const CLAVE = 'S3cret-passw0rd';
 
 function api(): string {
-  const url = Cypress.env('E2E_API_URL') as unknown;
+  const url = Cypress.expose('E2E_API_URL') as unknown;
   return typeof url === 'string' && url !== '' ? url : 'http://localhost:3000';
 }
 
 /** Credenciales de la cuenta sembrada por `BOOTSTRAP_ADMIN_*` al arrancar la API. */
 export function admin(): { identificador: string; clave: string } {
-  const correo = Cypress.env('E2E_ADMIN_EMAIL') as unknown;
-  const clave = Cypress.env('E2E_ADMIN_PASSWORD') as unknown;
+  const correo = Cypress.expose('E2E_ADMIN_EMAIL') as unknown;
+  const clave = Cypress.expose('E2E_ADMIN_PASSWORD') as unknown;
   return {
     identificador: typeof correo === 'string' && correo !== '' ? correo : 'admin@redesa.test',
     clave: typeof clave === 'string' && clave !== '' ? clave : CLAVE,
@@ -51,14 +51,32 @@ export function admin(): { identificador: string; clave: string } {
 /**
  * Sufijo único de esta corrida. Va en cada identificador que se crea.
  *
- * Sale del identificador de la corrida que publica `cypress.config.ts`, así que
+ * Sale del identificador de la corrida que publica `cypress.config.ts` en su
+ * bloque `expose`, así que
  * todas las specs de una misma ejecución comparten sufijo y dos ejecuciones
  * distintas nunca lo comparten.
  */
 function corrida(): string {
-  const runId = Cypress.env('E2E_RUN_ID') as unknown;
+  const runId = Cypress.expose('E2E_RUN_ID') as unknown;
   const crudo = typeof runId === 'string' && runId !== '' ? runId : String(Date.now());
   return crudo.replace(/[^0-9a-z]/gi, '').slice(-12);
+}
+
+let secuenciaDeAltas = 0;
+
+/**
+ * Sufijo único de **un alta**, no de la corrida entera.
+ *
+ * El documento, la matrícula y el correo son únicos en el backend: dos altas
+ * del mismo tipo con el sufijo de la corrida chocan con `409` en la segunda
+ * (medido: solo la primera spec que registraba sobrevivía, y la suite entera
+ * de un tirón —el objetivo de H-08— era imposible). El reloj distingue specs
+ * de la misma ejecución (cada una recarga este módulo) y la secuencia
+ * distingue altas dentro de una misma spec.
+ */
+function sufijoDeAlta(): string {
+  secuenciaDeAltas += 1;
+  return `${corrida().slice(-6)}${String(Date.now()).slice(-6)}${secuenciaDeAltas}`;
 }
 
 /** Un actor listo para entrar por la pantalla de ingreso. */
@@ -90,28 +108,82 @@ export function apiViva(): Cypress.Chainable<boolean> {
     .then((respuesta) => respuesta.status >= 200 && respuesta.status < 300);
 }
 
-/** Inicia sesión contra la API y devuelve el access token. */
+/**
+ * Inicia sesión contra la API y devuelve el access token.
+ *
+ * El `401` se atrapa a propósito para explicarlo. Sin esto, el fallo es el
+ * volcado crudo de `cy.request` —«401: Unauthorized», el cuerpo, las cabeceras—
+ * y no dice lo único que hace falta saber: que **la cuenta de administración de
+ * este entorno no es la que la suite tiene por defecto**. Los valores por
+ * defecto vienen de la configuración de arranque de la API, y una base sembrada
+ * de otra forma no los tiene.
+ */
 export function tokenDe(identificador: string, clave: string): Cypress.Chainable<string> {
   return cy
     .request({
       method: 'POST',
       url: `${api()}/iam/auth/login`,
+      failOnStatusCode: false,
       body: {
         ...(identificador.includes('@') ? { email: identificador } : { nationalId: identificador }),
         password: clave,
       },
     })
-    .then((respuesta) => campo(respuesta.body as Record<string, unknown>, 'accessToken'));
+    .then((respuesta) => {
+      if (respuesta.status === 401) {
+        throw new Error(
+          `La API rechazó las credenciales de «${identificador}».\n` +
+            'Esta suite necesita una cuenta con permisos de administración, y la que trae por ' +
+            'defecto no existe en esta base. Exportá E2E_ADMIN_EMAIL y E2E_ADMIN_PASSWORD con ' +
+            'las de tu entorno (o declaralas en `.env.e2e`) antes de correrla.',
+        );
+      }
+      if (respuesta.status >= 400) {
+        throw new Error(`POST /iam/auth/login respondió ${respuesta.status}.`);
+      }
+      return campo(respuesta.body as Record<string, unknown>, 'accessToken');
+    });
 }
+
+/**
+ * El nombre del paciente, en las cuatro partes que manda el formulario.
+ *
+ * Se declara acá y no dentro del alta porque el `displayName` que devuelve la
+ * API es la composición de estas cuatro, y el rótulo del actor tiene que decir
+ * lo mismo que la pantalla va a mostrar.
+ */
+const NOMBRE_PACIENTE = Object.freeze({
+  name: 'Ana',
+  middleName: 'Lucía',
+  lastName: 'Quispe',
+  motherLastName: 'Mamani',
+});
 
 /**
  * **Paciente** — se da de alta solo, sin admin ni token.
  *
  * Entra con su **documento**, no con su correo: es el camino que la pantalla de
  * ingreso resuelve por la ausencia de `@`, y el que ninguna otra prueba recorre.
+ *
+ * ## Por qué las cuatro partes del nombre y no `displayName`
+ *
+ * `displayName` está **deprecado** en `RegisterPatientDto`: la pantalla de
+ * registro manda `name`, `middleName`, `lastName` y `motherLastName` desde que
+ * el modelo los declara, y el backend compone el nombre para mostrar. Un actor
+ * dado de alta por el campo viejo recorría la aplicación con datos que ninguna
+ * persona real produce, así que la composición del nombre —lo que se ve en el
+ * encabezado y en la reserva del portal— no la ejercitaba nadie.
  */
 export function crearPaciente(): Cypress.Chainable<Actor> {
-  const nationalId = `CI-E2E-${corrida()}`;
+  const sufijo = sufijoDeAlta();
+  const nationalId = `CI-E2E-${sufijo}`;
+  const nombre = [
+    NOMBRE_PACIENTE.name,
+    NOMBRE_PACIENTE.middleName,
+    NOMBRE_PACIENTE.lastName,
+    NOMBRE_PACIENTE.motherLastName,
+  ].join(' ');
+
   return cy
     .request({
       method: 'POST',
@@ -119,11 +191,11 @@ export function crearPaciente(): Cypress.Chainable<Actor> {
       body: {
         nationalId,
         password: CLAVE,
-        displayName: 'Paciente de recorrido',
-        email: `paciente-${corrida()}@example.test`,
+        ...NOMBRE_PACIENTE,
+        email: `paciente-${sufijo}@example.test`,
         phone: '+591 70055555',
-        gender: 'MALE',
-        sexAtBirth: 'MALE',
+        gender: 'FEMALE',
+        sexAtBirth: 'FEMALE',
       },
     })
     .then((respuesta): Actor => {
@@ -131,7 +203,7 @@ export function crearPaciente(): Cypress.Chainable<Actor> {
       return {
         identificador: nationalId,
         clave: CLAVE,
-        nombre: 'Paciente de recorrido',
+        nombre,
         datos: {
           userId: campo(cuerpo, 'userId'),
           personId: campo(cuerpo, 'personId'),
@@ -148,7 +220,8 @@ export function crearPaciente(): Cypress.Chainable<Actor> {
  * tiene que poder mostrar qué ve alguien en ese estado.
  */
 export function crearMedico(): Cypress.Chainable<Actor> {
-  const email = `medico-${corrida()}@example.test`;
+  const sufijo = sufijoDeAlta();
+  const email = `medico-${sufijo}@example.test`;
   return cy
     .request({
       method: 'POST',
@@ -157,8 +230,8 @@ export function crearMedico(): Cypress.Chainable<Actor> {
         email,
         password: CLAVE,
         displayName: 'Dra. Recorrido',
-        licenseNumber: `MP-${corrida()}`,
-        credentialNumber: `TIT-${corrida()}`,
+        licenseNumber: `MP-${sufijo}`,
+        credentialNumber: `TIT-${sufijo}`,
         phone: '+591 70012345',
         gender: 'FEMALE',
         sexAtBirth: 'FEMALE',
@@ -205,15 +278,16 @@ export function crearOrganizacion(tokenAdmin: string): Cypress.Chainable<Actor> 
         );
       }
 
-      const email = `owner-${corrida()}@example.test`;
+      const sufijo = sufijoDeAlta();
+      const email = `owner-${sufijo}@example.test`;
       return cy
         .request({
           method: 'POST',
           url: `${api()}/iam/auth/register-organization`,
           body: {
             organization: {
-              code: `ORG-E2E-${corrida()}`,
-              legalName: `Organización de recorrido ${corrida()}`,
+              code: `ORG-E2E-${sufijo}`,
+              legalName: `Organización de recorrido ${sufijo}`,
               tenantType: 'HOSPITAL',
               countryConceptId: conceptId,
               jurisdictionConceptId: conceptId,

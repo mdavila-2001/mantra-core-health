@@ -6,6 +6,7 @@
     "env:generate": "node scripts/generate-env.mjs",
     "config:env": "yarn env:generate",
     "start": "yarn env:generate && ng serve",
+    "start:lan": "yarn env:generate && ng serve --host 0.0.0.0",
     "build": "yarn env:generate && ng build",
     "watch": "yarn env:generate && ng build --watch --configuration development",
     "test": "yarn env:generate && ng test",
@@ -46,6 +47,7 @@
     "@opentelemetry/sdk-trace-web": "2.10.0",
     "@opentelemetry/semantic-conventions": "1.43.0",
     "express": "^5.1.0",
+    "jspdf": "^4.2.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -66,5 +68,10 @@
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.65.0",
     "vitest": "^4.0.8"
+  },
+  "dependenciesMeta": {
+    "cypress": {
+      "built": true
+    }
   }
 }
