@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-177 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+184 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -94,8 +94,10 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `POST` | `/cds/check-interactions` |
 | `GET` | `/charts/patients/:patientProfileId/chart` |
 | `POST` | `/clinical/allergy-intolerances` |
+| `POST` | `/clinical/care-episodes` |
 | `POST` | `/clinical/conditions` |
 | `POST` | `/clinical/diagnostic-reports` |
 | `POST` | `/clinical/diagnostic-reports/:diagnosticReportId/release` |
@@ -281,6 +283,14 @@ Archivo: `src/app/core/data-access/identity/identity.client.ts`
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
+## `PracticeSitesClient`
+
+Archivo: `src/app/core/data-access/practice-sites/practice-sites.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/practitioners/:practitionerProfileId/sites` |
+
 ## `ProfilesClient`
 
 Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
@@ -296,10 +306,14 @@ Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
 | `GET` | `/profiles/patients/merge-events` |
 | `POST` | `/profiles/patients/merge/:eventId/reverse` |
 | `POST` | `/profiles/persons/:personId/account-links` |
+| `GET` | `/profiles/practitioners` |
 | `POST` | `/profiles/practitioners` |
 | `POST` | `/profiles/practitioners/:profileId/jurisdiction-authorizations` |
 | `POST` | `/profiles/practitioners/:profileId/specialties` |
+| `GET` | `/profiles/practitioners/:profileId/summary` |
 | `PATCH` | `/profiles/practitioners/me` |
+| `GET` | `/profiles/practitioners/me/affiliations` |
+| `POST` | `/profiles/practitioners/me/affiliations` |
 | `GET` | `/profiles/practitioners/me/summary` |
 
 ## `PublicClient`

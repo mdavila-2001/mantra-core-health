@@ -37,6 +37,22 @@ vista pública, artículos, trayectoria) y el rótulo «Tu actividad»; con `fal
 detalle de la guía — ni botones ni tuteo. R2-1 **no** re-resuelve etiquetas: su contenedor
 copia el patrón del contenedor propio (forkJoin perfil + readConceptLabels).
 
+### 🔴 Bloqueador de modelo: no hay teléfono profesional publicable (R2-1)
+
+El punto 1 pide una **guía telefónica**. La guía se entrega completa —nombre, título, foto,
+especialidad, disponibilidad, ficha completa al hacer clic— **menos la columna teléfono**.
+
+El modelo no declara un teléfono profesional con marca de visibilidad. Existen los datos de
+contacto de la **persona**, pero publicarlos en una guía visible para cualquier sesión sería
+publicar un dato personal por una vía que nadie declaró pública. No se inventó la columna ni
+se derivó de otra tabla (regla del repo: `SQL/` no se edita a mano; el pipeline es `.puml` →
+`gen_ddl.py` → `SQL/patches/`).
+
+**Lo que hace falta:** una columna de contacto profesional en `health_practitioner_profiles`
+—o una marca de publicable sobre el contacto existente— y su exposición en
+`GET /profiles/practitioners`. Queda para quien tenga acceso al modelo. Está dicho también en
+el PR, no en silencio.
+
 **Qué NO toco en R2-4:** `work-history/`, `medical-articles/`, `public-profile-preview/` y
 `practitioner-profile-edit/` por dentro; `profiles.client.ts`; `navigation.map.ts`;
 `app.routes.ts`; el backend. En R2-1: la fila `feed` de `navigation.map.ts` (la excepción

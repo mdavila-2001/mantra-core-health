@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-320 componentes y 45 servicios inyectables, leídos de `src/`.
+327 componentes y 49 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -53,7 +53,7 @@
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
 
-## Organismo (16)
+## Organismo (17)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -72,9 +72,10 @@
 | `app-status-seal` | `StatusSeal` | `variant`, `label` | — | — | OnPush | sí |
 | `app-tenant-switcher` | `TenantSwitcher` | `tenants`, `activeTenantId`, `variant` | `tenantChanged` | — | OnPush | sí |
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
+| `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (263)
+## Feature (269)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -82,8 +83,10 @@
 | `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-practitioner-profile-edit` | `PractitionerProfileEdit` | — | — | — | OnPush | sí |
+| `app-practitioner-profile-view` | `PractitionerProfileView` | `perfil`, `esPropio` | — | — | OnPush | sí |
 | `app-practitioner-profile` | `PractitionerProfile` | — | — | — | OnPush | sí |
 | `app-public-profile-preview` | `PublicProfilePreview` | — | — | — | OnPush | sí |
+| `app-work-history` | `WorkHistory` | — | — | — | OnPush | sí |
 | `app-accounting` | `Accounting` | — | — | — | OnPush | **no** |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-clinical-forms` | `ClinicalForms` | — | — | — | OnPush | sí |
@@ -125,10 +128,11 @@
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
 | `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
+| `app-admission-block` | `AdmissionBlock` | `patientProfileId`, `encounterId`, `internaciones` | `cambio` | — | OnPush | sí |
 | `app-attachments-block` | `AttachmentsBlock` | `patientProfileId` | — | — | OnPush | sí |
 | `app-diagnosis-block` | `DiagnosisBlock` | `patientProfileId`, `encounterId` | `cambio` | — | OnPush | sí |
 | `app-diagnostics-block` | `DiagnosticsBlock` | `patientProfileId`, `encounterId` | — | — | OnPush | sí |
-| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas` | `cambio` | — | OnPush | sí |
+| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas`, `medicacionActivaConceptIds` | `cambio` | — | OnPush | sí |
 | `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |
 | `app-procedures-block` | `ProceduresBlock` | `patientProfileId` | — | — | OnPush | sí |
 | `app-specialty-form-block` | `SpecialtyFormBlock` | `encounterId` | `cambio` | — | OnPush | sí |
@@ -150,6 +154,8 @@
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
 | `app-diagnostics` | `Diagnostics` | — | — | — | OnPush | sí |
+| `app-practitioner-detail` | `PractitionerDetail` | — | — | — | OnPush | sí |
+| `app-practitioners-directory` | `PractitionersDirectory` | — | — | — | OnPush | sí |
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
 | `app-feed` | `Feed` | — | — | — | OnPush | sí |
 | `app-post-card` | `PostCard` | `post`, `actorProfileId` | `reacted` | — | OnPush | sí |
@@ -341,6 +347,7 @@
 | `app-redsat-terminologia-versiones-publicar` | `TerminologiaVersionesPublicar` | — | — | — | Default | **no** |
 | `app-section-placeholder` | `SectionPlaceholder` | — | — | — | OnPush | sí |
 | `app-shell-layout` | `ShellLayout` | — | — | — | OnPush | sí |
+| `app-tutorials-center` | `TutorialsCenter` | — | — | — | OnPush | sí |
 
 ## Core (1)
 
@@ -354,7 +361,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (45)
+## Servicios (49)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -378,6 +385,7 @@
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |
 | `IdentityAdminClient` | `src/app/core/data-access/identity/identity-admin.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
+| `PracticeSitesClient` | `src/app/core/data-access/practice-sites/practice-sites.client.ts` | root | sí |
 | `ProceduresClient` | `src/app/core/data-access/procedures/procedures.client.ts` | root | sí |
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |
 | `PublicClient` | `src/app/core/data-access/public/public.client.ts` | root | **no** |
@@ -398,6 +406,9 @@
 | `TracingService` | `src/app/core/observability/tracing/tracing.service.ts` | root | sí |
 | `RedsatRuntimeService` | `src/app/core/redsat/redsat-runtime.service.ts` | root | sí |
 | `ThemeService` | `src/app/core/tokens/theme.service.ts` | root | sí |
+| `TutorialProgressStore` | `src/app/core/tutorials/tutorial-progress.store.ts` | root | sí |
+| `TutorialEngine` | `src/app/core/tutorials/tutorial.engine.ts` | root | sí |
+| `TutorialRegistry` | `src/app/core/tutorials/tutorial.registry.ts` | root | sí |
 | `CaseStatusCatalog` | `src/app/features/identity-verification/case-status.ts` | root | sí |
 | `DialogService` | `src/app/shared/components/molecules/dialog/dialog-service.ts` | root | **no** |
 | `PdfExportService` | `src/app/shared/components/molecules/pdf-export-button/pdf-export.service.ts` | root | **no** |

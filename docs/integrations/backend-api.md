@@ -1,6 +1,6 @@
 # API de backend
 
-Las 169 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 182 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -140,7 +140,7 @@ publique los `GET` que faltan.
 **`checks:plan` lleva los dos puntos en la URL de verdad**: el backend declara
 el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 
-### `ProfilesClient` — 13 operaciones
+### `ProfilesClient` — 20 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -158,6 +158,20 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 | `PATCH` | `/profiles/practitioners/me` | `PractitionerProfileEdit` |
 | `POST` | `/profiles/practitioners/:profileId/specialties` | — (UC-05-06) |
 | `POST` | `/profiles/practitioners/:profileId/jurisdiction-authorizations` | — |
+| `GET` | `/profiles/practitioners` | `PractitionersDirectory` (guía, carril R2-1) |
+| `GET` | `/profiles/practitioners/:profileId/summary` | `PractitionerDetail` (ficha de la guía, R2-1) |
+| `GET` | `/profiles/practitioners/me/affiliations` | `WorkHistory` (carril 5) |
+| `POST` | `/profiles/practitioners/me/affiliations` | `WorkHistory` (carril 5) |
+| `GET` | `/practitioners/:practitionerProfileId/sites` | `PracticeSitesClient` (carril 5) |
+| `POST` | `/clinical/care-episodes` | `admission-block` (carril 5) |
+| `POST` | `/cds/check-interactions` | receta y medicación (Pablo) |
+
+> **Las cinco últimas no son de `ProfilesClient` y están declaradas acá al resolver el
+> carril R2-1, no por sus autores.** Vienen de los carriles 3, 4 y 5 y de la medicación, que
+> agregaron operaciones sin declararlas. `check-api-contract-drift` no distingue «lo agregó
+> otro» de «lo agregué yo»: mientras estén sin declarar, **toda** rama que mezcle `dev`
+> hereda el rojo. Si su autor prefiere moverlas a una sección propia, mejor — lo que no puede
+> quedar es sin declarar.
 
 > **V05-05 no necesitó ningún `GET` nuevo.** El vault la marcaba «Listado pendiente», pero los
 > contactos llegan **embebidos** en la respuesta de `GET /profiles/patients/:profileId`

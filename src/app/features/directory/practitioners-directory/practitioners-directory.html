@@ -1,0 +1,58 @@
+<app-page-header
+  title="Guía de profesionales"
+  subtitle="Todos los profesionales de la plataforma, agrupados por especialidad."
+/>
+
+<!-- El buscador va ENCIMA de la guía, no en su lugar: filtra lo que ya está en
+     pantalla. Si al abrir hubiera que escribir para ver a alguien, esto sería
+     un buscador y no una guía. -->
+<app-search-field
+  class="guia__filtro"
+  [(value)]="filtro"
+  label="Buscar en la guía"
+  placeholder="Nombre, especialidad o código"
+/>
+
+<app-view-state-host [state]="estado()" (retry)="recargar()">
+  @if (recortada()) {
+    <p class="guia__aviso">
+      Se muestran los primeros profesionales de la guía. Usá el buscador para encontrar a alguien
+      que no aparezca en la lista.
+    </p>
+  }
+
+  @if (sinCoincidencias()) {
+    <!-- Hay guía, pero el filtro no dejó a nadie: es distinto de no haber
+         guía, y el estado vacío tiene que decir cuál de los dos es. -->
+    <p class="guia__vacio">
+      Ningún profesional coincide con «{{ filtro() }}». Probá con otro nombre o con la
+      especialidad.
+    </p>
+  } @else {
+    <p class="guia__cuenta">
+      {{ total() }}
+      {{ total() === 1 ? 'profesional' : 'profesionales' }} en
+      {{ grupos().length }}
+      {{ grupos().length === 1 ? 'especialidad' : 'especialidades' }}
+    </p>
+
+    @for (grupo of grupos(); track grupo.conceptId) {
+      <!-- La especialidad es el ENCABEZADO de la sección, no un filtro
+           opcional: es lo que hace que la guía se hojee. -->
+      <section class="guia__grupo" [attr.aria-labelledby]="'esp-' + grupo.conceptId">
+        <h2 class="guia__especialidad" [id]="'esp-' + grupo.conceptId">
+          {{ grupo.nombre }}
+          <span class="guia__cantidad">{{ grupo.profesionales.length }}</span>
+        </h2>
+
+        <!-- `app-search-result` es un selector de atributo sobre el `<li>`: la
+             tarjeta ES el ítem de la lista, no algo dentro de él. -->
+        <ul class="guia__lista">
+          @for (profesional of grupo.profesionales; track profesional.id) {
+            <li app-search-result [resultado]="profesional"></li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</app-view-state-host>

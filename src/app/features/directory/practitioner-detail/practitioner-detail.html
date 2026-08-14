@@ -1,0 +1,17 @@
+<app-page-header
+  [title]="titulo()"
+  subtitle="Perfil profesional"
+  [breadcrumbs]="[
+    { label: 'Guía de profesionales', routerLink: '/directory' },
+    { label: titulo() },
+  ]"
+/>
+
+<!-- El dibujo es `practitioner-profile-view`, el mismo con el que un doctor ve
+     su propio perfil (carril R2-4). `esPropio` en false: es la ficha de un
+     colega, así que no hay acciones de dueño ni se tutea. -->
+<app-view-state-host [state]="estado()" (retry)="recargar()">
+  @if (visible(); as perfil) {
+    <app-practitioner-profile-view [perfil]="perfil" [esPropio]="false" />
+  }
+</app-view-state-host>
