@@ -1,6 +1,6 @@
 # API de backend
 
-Las 87 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 145 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 87 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -545,6 +545,61 @@ tiene que ser el tenant activo de la sesión.
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) |
+
+### `CommunityClient` — 16 operaciones · sólo lectura
+
+La red social médica (M19). **Ninguna tiene pantalla todavía**: el cliente entra
+antes que la interfaz a propósito — ver la nota de abajo.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/community/profiles/:profileId` | — (ficha pública, V65-07…11) |
+| `GET` | `/community/profiles/:profileId/posts` | — |
+| `GET` | `/community/profiles/:profileId/reviews` | — (V65-14) |
+| `GET` | `/community/posts/:postId` | — |
+| `GET` | `/community/posts/:postId/comments` | — |
+| `GET` | `/community/posts/:postId/reactions` | — |
+| `GET` | `/community/feed` | — (V19-13 muro) |
+| `GET` | `/community/notifications` | — |
+| `GET` | `/community/follows` | — (V65-13) |
+| `GET` | `/community/bookmarks` | — |
+| `GET` | `/community/blocks` | — |
+| `GET` | `/community/groups` | — (V19-07) |
+| `GET` | `/community/groups/:groupId/members` | — (V19-08) |
+| `GET` | `/community/conversations` | — (V19-01) |
+| `GET` | `/community/conversations/:conversationId/messages` | — (V19-02) |
+| `GET` | `/community/polls/:pollId` | — |
+
+#### Por qué el cliente existe antes que las pantallas
+
+Las 16 lecturas ya están en el backend. Lo que falta para que la red social se
+vea son dos cosas distintas: que sus endpoints sean **públicos** (`@Public()` +
+límite por IP) y que haya **pantallas**. Ninguna de las dos cambia la forma de
+la llamada — el decorador cambia el guard del servidor, no la URL ni el cuerpo.
+
+Así que este cliente se escribe y se prueba hoy, y el día que la superficie
+pública entre no hay que tocarlo. Es la misma razón por la que el contrato va
+primero al repartir trabajo entre personas: para que nadie espere a nadie.
+
+#### `actorProfileId` es opcional, y ahí está la superficie pública
+
+Seis lecturas aceptan «quién mira». Con actor, la respuesta agrega lo que sólo
+tiene sentido para esa persona —con qué reaccionaste, qué votaste—; sin actor,
+la misma lectura devuelve la vista anónima, que es exactamente la que necesita
+un visitante sin sesión.
+
+**El cliente no manda el id de sesión por defecto.** Quien llama decide si la
+lectura es personal o pública: hacerlo automático convertiría toda pantalla
+pública en una consulta identificada sin que nadie lo pidiera.
+
+#### Dos cosas que el contrato declara y conviene no confundir
+
+- **`GET /community/notifications` trae `unreadCount`**, que **no** es el total
+  de la página: es cuántas sin leer tiene la persona en total. Es lo que va en
+  la campana.
+- **`GET /community/conversations` no acepta `cursor`**, sólo `limit`. Devuelve
+  `nextCursor` igual, pero hoy no hay forma de pedir la página siguiente. Está
+  anotado, no inventado.
 
 **Cinco operaciones sin pantalla que las llame** — las dos altas restantes de
 `ProfilesClient`, la reserva puntual de `SchedulingClient`, las bases legítimas

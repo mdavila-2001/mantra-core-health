@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-130 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+146 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -104,6 +104,29 @@ Archivo: `src/app/core/data-access/files/files.client.ts`
 | Método | Ruta |
 |---|---|
 | `POST` | `/common/files/upload` |
+
+## `CommunityClient`
+
+Archivo: `src/app/core/data-access/community/community.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/community/blocks` |
+| `GET` | `/community/bookmarks` |
+| `GET` | `/community/conversations` |
+| `GET` | `/community/conversations/:conversationId/messages` |
+| `GET` | `/community/feed` |
+| `GET` | `/community/follows` |
+| `GET` | `/community/groups` |
+| `GET` | `/community/groups/:groupId/members` |
+| `GET` | `/community/notifications` |
+| `GET` | `/community/polls/:pollId` |
+| `GET` | `/community/posts/:postId` |
+| `GET` | `/community/posts/:postId/comments` |
+| `GET` | `/community/posts/:postId/reactions` |
+| `GET` | `/community/profiles/:profileId` |
+| `GET` | `/community/profiles/:profileId/posts` |
+| `GET` | `/community/profiles/:profileId/reviews` |
 
 ## `GeoClient`
 
