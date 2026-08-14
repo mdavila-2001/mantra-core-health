@@ -173,6 +173,15 @@
          suyo y avisar acá recargaría cinco bloques que no cambiaron. -->
     <app-procedures-block [patientProfileId]="pacienteDeLaFicha()" />
 
+    <!-- ─── El formulario clínico de la especialidad ─────────────
+         Carril 2 · punto 1. Mismo criterio que el diagnóstico y la receta:
+         se completa desde el encuentro abierto, y usa el motor de `forms` en
+         vez de una tabla propia — es lo que le da su esquema de campos. -->
+    <app-specialty-form-block
+      class="expediente__ancho"
+      [encounterId]="encuentroParaRecetar()"
+      (cambio)="recargar()"
+    />
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->

@@ -369,6 +369,29 @@ separado y la respuesta declara en `truncated` cuáles quedaron cortadas. Se
 reenvía tal cual a la vista: un expediente al que le faltan notas sin avisar se
 lee como «no hay antecedentes».
 
+### `ChartTemplatesClient` — 3 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/charts/templates` | `ClinicalForms` (listado por especialidad) |
+| `GET` | `/charts/templates/:id` | `ClinicalForms` · `SpecialtyFormBlock` (esquema de campos) |
+| `POST` | `/charts/templates` | `ClinicalForms` (alta) |
+
+Completa el CRUD que antes sólo tenía `assignTemplate` — crear, listar y leer
+el esquema de una plantilla por especialidad, no sólo asignarla.
+
+### `FormsClient` — 3 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/forms/instances` | `SpecialtyFormBlock` (abre una instancia) |
+| `POST` | `/forms/instances/:instanceId/values` | `SpecialtyFormBlock` (captura valores) |
+| `POST` | `/forms/instances/:instanceId/close` | `SpecialtyFormBlock` (cierra la instancia) |
+
+Cubre sólo el ciclo de vida que `specialty-form-block` necesita —abrir, capturar,
+cerrar—; el motor de `forms` tiene mucho más (sets versionados, migraciones)
+y queda sin cliente hasta que una pantalla lo necesite de verdad.
+
 ### `AuthzClient` — 2 operaciones · sólo lectura
 
 | Método | Ruta | Consumidor |

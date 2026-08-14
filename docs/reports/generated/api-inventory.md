@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-171 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+177 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -107,6 +107,16 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `POST` | `/clinical/observations` |
 | `GET` | `/clinical/patients/:patientProfileId/summary` |
 
+## `ChartTemplatesClient`
+
+Archivo: `src/app/core/data-access/chart-templates/chart-templates.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/charts/templates` |
+| `POST` | `/charts/templates` |
+| `GET` | `/charts/templates/:id` |
+
 ## `DiagnosticsClient`
 
 Archivo: `src/app/core/data-access/diagnostics/diagnostics.client.ts`
@@ -169,6 +179,16 @@ Archivo: `src/app/core/data-access/procedures/procedures.client.ts`
 | `GET` | `/dental-procedures/catalog` |
 | `GET` | `/procedure-cases` |
 | `GET` | `/procedure-cases/:caseId` |
+
+## `FormsClient`
+
+Archivo: `src/app/core/data-access/forms/forms.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/forms/instances` |
+| `POST` | `/forms/instances/:instanceId/close` |
+| `POST` | `/forms/instances/:instanceId/values` |
 
 ## `GeoClient`
 
