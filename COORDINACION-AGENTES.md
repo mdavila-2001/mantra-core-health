@@ -1270,7 +1270,72 @@ licencia. No se omitió nada en silencio.
 Al arrancar, `mantra-core-health-api` tenía `yarn.lock` con una entrada borrada
 (`@aws-sdk/s3-request-presigner`) sin commitear, de otra sesión. **No lo toqué ni lo restauré.**
 
-### Verificación
+### Verificación, ya corrida
 
-`yarn lint` · `yarn typecheck` · `yarn test` · `yarn build` en el frontend.
-`yarn lint` · `yarn typecheck` · `yarn test` · `yarn test:integration` en el backend.
+Los dos repos se verificaron en un `git worktree` aparte, contra el commit de la rama y **no**
+contra el working tree compartido: mientras duró este carril, la sesión de R2-6 estaba editando
+`glossary.{ts,html}` y todo `src/modules/terminology/**`, y su estado intermedio rompía la
+compilación de plantillas de Angular. Ninguno de esos archivos es de R2-5.
+
+| Repo | Comando | Resultado |
+|---|---|---|
+| front | `yarn typecheck` · `yarn test` · `yarn build` | limpio · **2281/2281** · limpio |
+| front | `yarn lint` | 1 error **preexistente y ajeno**: `dashboard.ts:29` importa `TutorialTarget` sin usarlo. Viene de `dev`, no lo toqué |
+| api | `yarn lint` · `yarn typecheck` · `yarn build` | limpios. El build copia los 15 `.json` a `dist/src/common/seed/data/` — comprobado |
+| api | `yarn test` | **4772 pasan**, 1 saltada |
+| api | `yarn test:integration` | **no corrida**: necesita el stack levantado y `postgres-init` falla en esta máquina porque `SQL/` está vacío (ver abajo) |
+
+### Y se corrió de verdad, que es donde apareció el único bug
+
+Se construyó `mantra-redesa-api:r2-5` desde el worktree de la rama —**no** se pisó
+`mantra-redesa-api:local`, que la sesión de R2-6 había reconstruido desde la suya— y se levantó el
+servicio `api` en el puerto **3005** (el 3000 lo tenía tomado la API que corre esa otra sesión).
+
+Contra la base de desarrollo, tras el arranque:
+
+```text
+plantillas: 15   especialidades: 10   campos: 245  (230 visibles + 15 fichas de procedencia)
+```
+
+Repartidas: 4 transversales, 2 cardiología, 2 pediatría, y 1 de ginecología y obstetricia,
+traumatología, oftalmología, odontología, psiquiatría, dermatología y medicina interna.
+**Reiniciado el contenedor, los tres números no se mueven** — la idempotencia del punto 4 de la
+definición de hecho está comprobada contra base, no sólo contra mocks.
+
+**El bug que sólo aparece corriéndolo** (commit `3d8506ab`): la sección y la plantilla se creaban
+en el mismo flush, y `specialty_chart_templates.section_id` es una columna `uuid` plana con FK, no
+una relación del ORM. MikroORM ordena los inserts por tabla, así que la plantilla entraba antes que
+su sección y la base rechazaba el lote entero con
+`fk_specialty_chart_templates_section_id`. El seed quedaba como «Seed dependiente omitido» en el
+arranque y el catálogo, vacío — exactamente el síntoma del que salió este carril. Es el mismo
+motivo por el que `TerminologySeedService` flushea por niveles. La prueba nueva anota los `flush`
+en la misma bitácora que los `create` y afirma el orden.
+
+### 🟡 Dos cosas ajenas que encontré por el camino
+
+- **`yarn.lock` del backend no instala con `--immutable`.** El `Dockerfile` hace
+  `yarn install --immutable` y falla: el lockfile commiteado en `dev` arrastra una entrada huérfana
+  de `@aws-sdk/s3-request-presigner@3.1094.0` que `package.json` ya no pide (sólo declara
+  `@aws-sdk/client-s3`). Yarn quiere podarla y `--immutable` lo prohíbe. **No es de este carril y no
+  lo commiteé**: el `yarn.lock` ya podado estaba sin commitear en el working tree compartido cuando
+  llegué. Para construir la imagen lo copié al worktree como entrada de build, nada más. Quien
+  mergee primero debería llevarse esa poda.
+- **`postgres-init` falla en esta máquina.** Busca `/init/SQL/apply_all.sql` y
+  `/init/NoSQL/58_time_series_timescaledb/…`, y `alovida/SQL/` está vacío — el pipeline `.puml` →
+  `gen_ddl.py` → `SQL/patches/` no vive en ningún repo git. El esquema ya estaba aplicado
+  (`apply_all: iam.users ya existe — skip`), así que el `api` se levantó con `--no-deps`. Es la
+  advertencia de siempre del README de carriles, no una regresión.
+
+### Ramas y PR
+
+Pusheadas las dos: `carril-r2-5/formularios-estandar` en ambos repos. **Los PR quedan por abrir a
+mano**: `gh` no está instalado en esta máquina y no hay token de GitHub en el entorno (el push va
+por Git Credential Manager).
+
+- Backend: <https://github.com/mdavila-2001/mantra-core-health-api/pull/new/carril-r2-5/formularios-estandar>
+- Frontend: <https://github.com/mdavila-2001/mantra-core-health/pull/new/carril-r2-5/formularios-estandar>
+
+En el cuerpo del PR van, sí o sí, las dos cosas que este carril no puede dejar implícitas: el
+**bloqueador de las columnas de procedencia** (arriba) y la **lista de formularios que quedaron
+afuera por licencia**, con su reemplazo libre, que está en
+`src/common/seed/data/clinical-forms/README.md`.
