@@ -132,7 +132,7 @@ describe('ShellLayout', () => {
       '/dashboard',
       // Los tutoriales tampoco exigen rol.
       '/tutorials',
-      '/feed',
+      '/directory',
       // El glosario tampoco: accesible por cada profesional, no sólo por
       // quien administra.
       '/glossary',

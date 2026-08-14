@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-739 archivos TypeScript bajo `src/` y 2815 importaciones internas.
+767 archivos TypeScript bajo `src/` y 2954 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -166,37 +166,37 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/core/view-state/view-state.types.ts` | 125 |
-| `src/app/core/view-state/view-state.ts` | 110 |
-| `src/app/shared/components/atoms/button/button.ts` | 108 |
-| `src/app/core/http/error-to-view-state.ts` | 104 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 101 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 100 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 100 |
-| `src/app/core/navigation/navigation.service.ts` | 94 |
-| `src/app/shared/components/atoms/input/input.ts` | 89 |
-| `src/app/shared/components/organisms/form-actions/form-actions.ts` | 78 |
+| `src/app/core/view-state/view-state.types.ts` | 129 |
+| `src/app/core/view-state/view-state.ts` | 114 |
+| `src/app/shared/components/atoms/button/button.ts` | 110 |
+| `src/app/core/http/error-to-view-state.ts` | 108 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 104 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 103 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 103 |
+| `src/app/core/navigation/navigation.service.ts` | 95 |
+| `src/app/shared/components/atoms/input/input.ts` | 90 |
+| `src/app/shared/components/organisms/form-actions/form-actions.ts` | 80 |
 | `src/app/shared/a11y/announce-on-appear.ts` | 77 |
 | `src/app/shared/components/organisms/form-section/form-section.ts` | 67 |
 | `src/app/shared/forms/form-support.ts` | 61 |
-| `src/app/shared/components/molecules/card/card.ts` | 41 |
+| `src/app/shared/components/molecules/card/card.ts` | 44 |
 | `src/app/shared/components/atoms/textarea/textarea.ts` | 35 |
+| `src/app/core/auth/session.store.ts` | 34 |
 | `src/app/shared/components/molecules/radio-group/radio-group.ts` | 32 |
 | `src/app/shared/components/molecules/radio/radio.ts` | 31 |
-| `src/app/core/auth/session.store.ts` | 30 |
 | `src/app/shared/components/atoms/link/link.ts` | 28 |
-| `src/app/core/data-access/api.ts` | 25 |
+| `src/app/core/auth/auth.service.ts` | 27 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 679 |
-| `@angular/common` | 360 |
-| `@angular/router` | 335 |
+| `@angular/core` | 708 |
+| `@angular/common` | 374 |
+| `@angular/router` | 343 |
 | `@angular/forms` | 88 |
-| `rxjs` | 70 |
-| `node:fs` | 13 |
+| `rxjs` | 75 |
+| `node:fs` | 14 |
 | `@opentelemetry/api` | 12 |
 | `@opentelemetry/sdk-trace-web` | 9 |
 | `@opentelemetry/semantic-conventions` | 7 |
@@ -204,9 +204,9 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | `@angular/ssr` | 3 |
 | `@opentelemetry/core` | 3 |
 | `express` | 3 |
+| `node:path` | 3 |
 | `@opentelemetry/exporter-trace-otlp-http` | 2 |
 | `@opentelemetry/resources` | 2 |
-| `node:path` | 2 |
 | `@opentelemetry/sdk-trace-node` | 1 |
 | `axe-core` | 1 |
 | `jspdf` | 1 |
