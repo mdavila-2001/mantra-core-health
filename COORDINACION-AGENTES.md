@@ -113,6 +113,62 @@ ya existen. Queda dicho para que R2-3 y R2-5 sepan que ese archivo sigue libre.
 
 ---
 
+## Sesión en curso · Carriles R2-4 y R2-1 — perfil del doctor y guía de profesionales
+
+**Empezó:** 2026-08-14 · **Quién:** Justin · **Ramas:** `carril-r2-4/perfil-del-doctor` (front),
+después `carril-r2-1/guia-de-doctores` (front + backend). **Base:** `origin/dev`.
+
+**Estado (2026-08-14):** los dos **mergeados en `dev`** (PR #99 y #101). El bloque queda como registro del contrato que dejó, no como trabajo en curso.
+
+**Orden:** R2-4 primero, R2-1 encima — es el orden obligatorio del README R2.
+
+### Contrato del `input()` de `practitioner-profile-view` (lo que R2-1 va a consumir)
+
+`PerfilProfesionalVisible` — todo YA resuelto contra terminología, cero clientes adentro:
+
+```ts
+interface PerfilProfesionalVisible {
+  nombre: string; titulo: string; especialidadPrincipal: string; codigo: string;
+  fotoUrl: string | null;               // resuelta por el contenedor (FilesClient), no un fileId
+  verificacion: { label: string; variant: StatusSealVariant } | null;
+  estadoDePractica: string; aceptaPacientesNuevos: boolean; telemedicina: boolean;
+  bio: string;
+  actividad: readonly { clave: string; rotulo: string; valor: number }[];
+  especialidades: readonly EspecialidadVisible[];   // los *Visible se mudan a
+  formacion: readonly FormacionVisible[];           // practitioner-profile-view.types.ts
+  matriculas: readonly MatriculaVisible[];
+  idiomas: readonly IdiomaVisible[];
+  perfilId: string; personaId: string; desde: Date | null;
+}
+```
+
+Más `esPropio = input(false)`: con `true` la vista muestra las acciones de dueño (configurar,
+vista pública, artículos, trayectoria) y el rótulo «Tu actividad»; con `false` — el caso del
+detalle de la guía — ni botones ni tuteo. R2-1 **no** re-resuelve etiquetas: su contenedor
+copia el patrón del contenedor propio (forkJoin perfil + readConceptLabels).
+
+### 🔴 Bloqueador de modelo: no hay teléfono profesional publicable (R2-1)
+
+El punto 1 pide una **guía telefónica**. La guía se entrega completa —nombre, título, foto,
+especialidad, disponibilidad, ficha completa al hacer clic— **menos la columna teléfono**.
+
+El modelo no declara un teléfono profesional con marca de visibilidad. Existen los datos de
+contacto de la **persona**, pero publicarlos en una guía visible para cualquier sesión sería
+publicar un dato personal por una vía que nadie declaró pública. No se inventó la columna ni
+se derivó de otra tabla (regla del repo: `SQL/` no se edita a mano; el pipeline es `.puml` →
+`gen_ddl.py` → `SQL/patches/`).
+
+**Lo que hace falta:** una columna de contacto profesional en `health_practitioner_profiles`
+—o una marca de publicable sobre el contacto existente— y su exposición en
+`GET /profiles/practitioners`. Queda para quien tenga acceso al modelo. Está dicho también en
+el PR, no en silencio.
+
+**Qué NO toco en R2-4:** `work-history/`, `medical-articles/`, `public-profile-preview/` y
+`practitioner-profile-edit/` por dentro; `profiles.client.ts`; `navigation.map.ts`;
+`app.routes.ts`; el backend. En R2-1: la fila `feed` de `navigation.map.ts` (la excepción
+autorizada), `app.routes.ts` (repunte + detalle), módulo `profiles` del backend (exclusivo).
+
+
 ## Sesión en curso · Carril 1 — catálogo de servicios, presupuestos y PDF
 
 **Empezó:** 2026-08-14 · **Ramas:** `carril-1/catalogo-presupuestos-pdf` en los dos repos,

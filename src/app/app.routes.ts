@@ -49,7 +49,16 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
   // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
   // de publicación con sus reacciones.
+  //
+  // Sigue existiendo aunque el menú ya no la ofrezca (carril R2-1): quien tenga
+  // el enlace guardado llega igual. Borrarla es una decisión de producto que el
+  // cliente no pidió — dijo «sacar del perfil de paciente», no «eliminar».
   feed: () => import('./features/feed/feed').then((m) => m.Feed),
+  // La guía que ocupó su lugar en el menú.
+  directory: () =>
+    import('./features/directory/practitioners-directory/practitioners-directory').then(
+      (m) => m.PractitionersDirectory,
+    ),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   'medical-records': () =>
@@ -172,6 +181,16 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/identity-assurance/verification-case-detail/verification-case-detail')
         .then((m) => m.VerificationCaseDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La ficha de un profesional: el destino del clic en la guía (R2-1). No va
+    // en el menú — se llega desde la guía, nunca desde el shell.
+    path: 'directory/:profileId',
+    title: `${APP_TITLE} - Perfil profesional`,
+    loadComponent: () =>
+      import('./features/directory/practitioner-detail/practitioner-detail')
+        .then((m) => m.PractitionerDetail)
         .catch(() => chunkFallido()),
   },
   {

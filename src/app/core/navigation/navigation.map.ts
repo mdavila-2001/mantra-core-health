@@ -71,16 +71,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
-    path: 'feed',
-    label: 'Muro profesional',
+    // Carril R2-1 · punto 1 del reclamo. Acá estaba el **muro profesional**, y
+    // el cliente pidió sacarlo del menú del paciente: «o cambiarle su enfoque:
+    // debe mostrar una especie de guía telefónica de todos los doctores
+    // agrupados por especialidad». Esta es esa guía.
+    //
+    // El muro NO se borró: `features/feed/` sigue en pie y su ruta también. Lo
+    // único que se le sacó es la entrada del menú — borrarlo es una decisión
+    // de producto que el cliente no pidió.
+    //
+    // Sin `roles`, ahora por una razón más simple que antes: una guía de
+    // profesionales la usa sobre todo quien busca médico, o sea el paciente.
+    path: 'directory',
+    label: 'Guía de profesionales',
     group: 'General',
     icon: 'home',
-    // Sin `roles`: cualquier sesión con perfil público puede tener muro. El
-    // perfil público NO es el `pid` de la sesión —es una entidad de M19— así
-    // que la puerta la pone la propia pantalla, no una guarda de rol.
     availability: 'disponible',
-    summary: 'Lo que publican los perfiles que seguís.',
-    module: 'M19 community',
+    summary: 'Todos los profesionales, agrupados por especialidad.',
+    module: 'M05 profiles',
   },
 
   /* -- Atención · fase 1 del orden de trabajo ------------------------------ */
