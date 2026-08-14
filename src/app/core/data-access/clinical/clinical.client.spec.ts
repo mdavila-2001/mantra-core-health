@@ -562,4 +562,92 @@ describe('ClinicalClient', () => {
     expect(conVersion.request.body).toEqual({ expectedRowVersion: 2 });
     conVersion.flush({ ...INFORME_EMITIDO, resultReleaseStatus: 'st-liberado' });
   });
+
+  /* -- la internación (UC-08-01) ------------------------------------------ */
+
+  it('getSummary trae las internaciones con sus instantes convertidos', () => {
+    let resumen: { careEpisodes: readonly { startAt?: Date; endAt?: Date }[] } | undefined;
+    client.getSummary('p-1').subscribe((r) => (resumen = r));
+
+    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush({
+      ...RESUMEN_VACIO,
+      careEpisodes: [
+        {
+          id: 'ce-1',
+          tenantId: 't-1',
+          statusConceptId: 'c-activo',
+          startAt: '2026-08-13T10:00:00.000Z',
+          endAt: null,
+          createdAt: '2026-08-13T10:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(resumen?.careEpisodes[0].startAt).toBeInstanceOf(Date);
+    // Sin fin, la internación sigue abierta. La clave queda **ausente** y no en
+    // `undefined`, que es lo que deja que `endAt === undefined` signifique eso.
+    expect(resumen?.careEpisodes[0].endAt).toBeUndefined();
+  });
+
+  /**
+   * El bloque es aditivo al contrato y frontend y API se despliegan por
+   * separado: contra una API que todavía no lo publica, el expediente entero
+   * reventaría por un bloque que esa versión no tiene.
+   */
+  it('getSummary tolera una API que todavía no publica las internaciones', () => {
+    let resumen: { careEpisodes: readonly unknown[] } | undefined;
+    client.getSummary('p-1').subscribe((r) => (resumen = r));
+
+    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush(RESUMEN_VACIO);
+
+    expect(resumen?.careEpisodes).toEqual([]);
+  });
+
+  it('createCareEpisode omite lo opcional y manda el inicio como instante ISO', () => {
+    client
+      .createCareEpisode({ patientProfileId: 'pp-1', tenantId: 't-1' })
+      .subscribe();
+
+    const sinOpcionales = http.expectOne('/clinical/care-episodes');
+    expect(sinOpcionales.request.method).toBe('POST');
+    // El backend valida con `forbidNonWhitelisted`: una clave en `undefined`
+    // viajaría declarada y volvería 400.
+    expect(sinOpcionales.request.body).toEqual({
+      patientProfileId: 'pp-1',
+      tenantId: 't-1',
+    });
+    sinOpcionales.flush({
+      id: 'ce-1',
+      patientProfileId: 'pp-1',
+      tenantId: 't-1',
+      status: 'c-activo',
+      startAt: '2026-08-13T10:00:00.000Z',
+      createdAt: '2026-08-13T10:00:00.000Z',
+    });
+
+    client
+      .createCareEpisode({
+        patientProfileId: 'pp-1',
+        tenantId: 't-1',
+        responsiblePractitionerId: 'prac-1',
+        startAt: new Date('2026-08-13T10:00:00.000Z'),
+      })
+      .subscribe();
+
+    const completo = http.expectOne('/clinical/care-episodes');
+    expect(completo.request.body).toEqual({
+      patientProfileId: 'pp-1',
+      tenantId: 't-1',
+      responsiblePractitionerId: 'prac-1',
+      startAt: '2026-08-13T10:00:00.000Z',
+    });
+    completo.flush({
+      id: 'ce-2',
+      patientProfileId: 'pp-1',
+      tenantId: 't-1',
+      status: 'c-activo',
+      startAt: null,
+      createdAt: '2026-08-13T10:00:00.000Z',
+    });
+  });
 });

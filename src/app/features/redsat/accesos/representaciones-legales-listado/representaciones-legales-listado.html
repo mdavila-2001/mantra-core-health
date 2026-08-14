@@ -1,0 +1,161 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v16"></path><path d="M6 8h12"></path><path d="m6 8-3 6h6z"></path><path d="m18 8-3 6h6z"></path><path d="M8.5 20h7"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Nayra Quispe Chino</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Representaciones legales</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Representaciones legales</h1></div>
+        <p class="caption">Quién puede actuar en nombre de Nayra Quispe Chino mientras ella no pueda hacerlo sola: su madre, un tutor designado, un apoderado.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/accesos/representaciones-legales-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva representación legal</a>
+      </div>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por identificador, paciente o representante">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-1">Paciente <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-1" type="search" value="Nayra Quispe Chino" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-2">Representante</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-2" type="search" value="" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-3">Tipo de representación</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-3">
+            <option>Todos</option>
+            <option>Tutor legal</option>
+            <option>Madre o padre</option>
+            <option>Apoderado</option>
+            <option>Curador</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-4">Estado</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-4">
+            <option>Todos</option>
+            <option>Vigente</option>
+            <option>Revocada</option>
+            <option>Expirada</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Representaciones legales de Nayra Quispe Chino — 6 registros</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Representante</th>
+            <th scope="col">Tipo de representación</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Vigente desde</th>
+            <th scope="col">Vigente hasta</th>
+            <th scope="col">Referencia documental</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">REP-2026-000087</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Marisol Quispe Ticona</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5s-7-4.4-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.1-7 9.5-7 9.5z"></path></svg>Madre o padre</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="12/02/2026 10:15">hace 6 meses</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="04/03/2036 23:59">en 10 años</span></td><td><span class="app-tooltip-panel celda-truncada" app-tooltip-panel="" title="Certificado de nacimiento SERECÍ 2018-004192 · La Paz">Certificado de nacimiento SERECÍ 2018-004192</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-1" aria-label="Acciones sobre la fila 1"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-1" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/accesos/representaciones-legales-revocar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Revocar la representación</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">REP-2026-000086</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Édgar Chino Villca</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20.5s-7-4.4-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.1-7 9.5-7 9.5z"></path></svg>Madre o padre</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="12/02/2026 10:22">hace 6 meses</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="04/03/2036 23:59">en 10 años</span></td><td><span class="app-tooltip-panel celda-truncada" app-tooltip-panel="" title="Certificado de nacimiento SERECÍ 2018-004192 · La Paz">Certificado de nacimiento SERECÍ 2018-004192</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-2" aria-label="Acciones sobre la fila 2"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-2" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/accesos/representaciones-legales-revocar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Revocar la representación</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">REP-2026-000079</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Verónica Chino Apaza</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v16"></path><path d="M6 8h12"></path><path d="m6 8-3 6h6z"></path><path d="m18 8-3 6h6z"></path><path d="M8.5 20h7"></path></svg>Tutor legal</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="06/05/2026 16:30">hace 3 meses</span></td><td class="muted" aria-label="Sin dato">—</td><td><span class="app-tooltip-panel celda-truncada" app-tooltip-panel="" title="Sentencia de tutela 348/2026 · Juzgado Familiar 4.º de La Paz">Sentencia de tutela 348/2026</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-3" aria-label="Acciones sobre la fila 3"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-3" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/accesos/representaciones-legales-revocar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Revocar la representación</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">REP-2026-000072</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Rubén Chambi Layme</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Apoderado</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="23/07/2026 09:40">hace 20 días</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="23/12/2026 23:59">en 4 meses</span></td><td><span class="app-tooltip-panel celda-truncada" app-tooltip-panel="" title="Poder notarial 1.204/2026 · Notaría de Fe Pública 18 · sólo para la cirugía programada">Poder notarial 1.204/2026</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-4" aria-label="Acciones sobre la fila 4"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-4" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/accesos/representaciones-legales-revocar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Revocar la representación</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">REP-2026-000064</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Camila Rocha Michel</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v16"></path><path d="M6 8h12"></path><path d="m6 8-3 6h6z"></path><path d="m18 8-3 6h6z"></path><path d="M8.5 20h7"></path></svg>Curador</span></td><td><span class="app-badge" data-tono="error"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Revocada</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="14/01/2024 11:20">hace 2 años</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="02/03/2026 18:00">hace 5 meses</span></td><td><span class="app-tooltip-panel celda-truncada" app-tooltip-panel="" title="Sentencia de curatela 96/2024 · Juzgado Familiar 2.º de La Paz">Sentencia de curatela 96/2024</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-5" aria-label="Acciones sobre la fila 5"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-5" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/accesos/representaciones-legales-revocar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Revocar la representación</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">REP-2026-000051</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Gabriel Terceros Loza</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Apoderado</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Expirada</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="09/09/2024 14:10">hace 2 años</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="09/09/2025 23:59">hace 11 meses</span></td><td><span class="app-tooltip-panel celda-truncada" app-tooltip-panel="" title="Poder notarial 812/2024 · Notaría de Fe Pública 5">Poder notarial 812/2024</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-6" aria-label="Acciones sobre la fila 6"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-6" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/accesos/representaciones-legales-revocar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Revocar la representación</a>
+          </div>
+        </div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">El endpoint devuelve las representaciones de este paciente en una sola respuesta: no pagina.</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v16"></path><path d="M6 8h12"></path><path d="m6 8-3 6h6z"></path><path d="m18 8-3 6h6z"></path><path d="M8.5 20h7"></path></svg></span>
+        <h2>Este paciente todavía no tiene representantes</h2>
+        <p>Una representación legal es lo que deja a otra persona pedir turnos, ver resultados y firmar consentimientos en nombre del paciente. Mientras no exista una vigente, el portal sólo responde al propio paciente, y un menor de edad no puede operar solo.</p>
+        <a app-button="" data-variante="secundario" routerLink="/accesos/representaciones-legales-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva representación legal</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar las representaciones legales.</strong>
+            <p>El servicio de autorización no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

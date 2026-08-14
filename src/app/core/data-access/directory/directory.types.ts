@@ -158,3 +158,88 @@ export interface TenantCreated {
   readonly parentTenantId?: string;
   readonly createdAt: Date;
 }
+
+/* ---- lecturas dentro de una organización ----------------------------------
+   Cuelgan de `/tenants/{id}`, no de `/admin/tenants`, y **no piden rol
+   global**: basta pertenecer a la organización. Quien no pertenece recibe
+   `403`, y una organización inexistente responde `404` —no `403`— para que el
+   código de error no sirva para sondear qué identificadores existen. */
+
+/**
+ * Una sucursal (`GET /tenants/{id}/branches`).
+ *
+ * El endpoint **no pagina**: devuelve las sucursales de la organización en una
+ * sola respuesta, con su `count`. La pantalla no promete «Siguientes».
+ */
+export interface BranchListItem {
+  readonly id: string;
+  /** Código dentro de la organización. Es sobre lo que ordena el backend. */
+  readonly code: string;
+  readonly name: string;
+  readonly branchTypeConceptId?: string;
+  readonly statusConceptId: string;
+  readonly timeZone?: string;
+  readonly createdAt: Date;
+}
+
+/** Respuesta plana de sucursales: sin cursor, con recuento. */
+export interface BranchList {
+  readonly items: readonly BranchListItem[];
+  readonly count: number;
+}
+
+/**
+ * Una membresía (`GET /tenants/{id}/memberships`).
+ *
+ * `primaryBranchId`, `startDate` y `endDate` llegan como `null` explícito
+ * cuando no hay dato: son nulos del contrato, no ausencias, y se normalizan a
+ * `undefined` en la frontera como manda `wire.ts`.
+ */
+export interface MembershipListItem {
+  readonly id: string;
+  readonly userId: string;
+  readonly tenantRoleConceptId: string;
+  readonly statusConceptId: string;
+  readonly accessScopeConceptId?: string;
+  readonly primaryBranchId?: string;
+  readonly startDate?: Date;
+  readonly endDate?: Date;
+  readonly createdAt: Date;
+}
+
+/** Página de membresías. Por cursor, como el listado de organizaciones. */
+export interface MembershipPage {
+  readonly items: readonly MembershipListItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Filtros de `GET /tenants/{id}/memberships`. */
+export interface MembershipQuery {
+  /** Concepto de estado al que acotar. Es un uuid, no un código. */
+  readonly statusConceptId?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/**
+ * Una sucursal asignada a una membresía
+ * (`GET /tenants/{id}/memberships/{mid}/branch-assignments`).
+ *
+ * Devuelve `branchId` crudo: resolver el nombre legible de la sucursal es
+ * trabajo del frontend, que ya tiene el listado de sucursales cargado.
+ */
+export interface BranchAssignmentListItem {
+  readonly id: string;
+  readonly branchId: string;
+  readonly localRoleConceptId?: string;
+  readonly statusConceptId: string;
+  readonly createdAt: Date;
+}
+
+/** Respuesta plana de asignaciones: tampoco pagina. */
+export interface BranchAssignmentList {
+  readonly items: readonly BranchAssignmentListItem[];
+  readonly count: number;
+}

@@ -1,0 +1,148 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 7.5a2 2 0 0 1 2-2h3.6l2 2.5h7.4a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Datos compartidos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/datos-compartidos/archivos-listado">Archivos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nuevo</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nuevo archivo</h1></div>
+        <p class="caption">Registrá el archivo y su versión inicial. El contenido se sube después, desde la acción «Subir» de la fila.</p>
+      </div>
+
+    </div>
+        <div class="app-view-state-host" app-view-state-host="" style="display:flex;flex-direction:column;gap:var(--e7)">
+      <div data-estado="paso1">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>1 · Identificación</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>2 · Clasificación</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>3 · Almacenamiento</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="33" aria-label="Avance del formulario: paso 1 de 3">
+          <span class="app-progress__relleno" style="width:33%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 1 de 3 · <strong>Identificación</strong></span>
+          <span class="caption muted num">33% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá 2 campos antes de guardar.</strong>
+          <ul>
+            <li>Tipo MIME: Escribí un tipo MIME válido, con la forma tipo/subtipo.</li>
+            <li>URI de almacenamiento: La URI tiene que empezar con https.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1">Nombre original <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-1" type="text" required="" value="" placeholder="consentimiento-informado-quiroz.pdf">
+      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Nada se guarda hasta el último paso.</p>
+        <a app-button="" data-variante="secundario" routerLink="/datos-compartidos/archivos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <a app-button="" data-variante="primario" routerLink="." [queryParams]="{ estado: 'paso2' }">Continuar<svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a>
+          </div>
+        </form>
+      </div>
+      <div data-estado="paso2" hidden="">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>1 · Identificación</span><hr class="app-divider" aria-hidden="true"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>2 · Clasificación</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>3 · Almacenamiento</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="67" aria-label="Avance del formulario: paso 2 de 3">
+          <span class="app-progress__relleno" style="width:67%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 2 de 3 · <strong>Clasificación</strong></span>
+          <span class="caption muted num">67% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá 2 campos antes de guardar.</strong>
+          <ul>
+            <li>Tipo MIME: Escribí un tipo MIME válido, con la forma tipo/subtipo.</li>
+            <li>URI de almacenamiento: La URI tiene que empezar con https.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-2-l">Categoría <span class="req">· obligatorio</span></span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-2-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2" checked="">Documento</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2">Imagen</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-3-l">Sensibilidad <span class="req">· obligatorio</span></span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-3-l" aria-describedby="c-3-a">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3" checked="">Normal</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3">PHI</label>
+        </div>
+        <p class="app-form-field__ayuda" id="c-3-a">Marcá PHI si el archivo contiene datos de salud identificables.</p>
+      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Nada se guarda hasta el último paso.</p>
+        <a app-button="" data-variante="secundario" routerLink="." [queryParams]="{ estado: 'paso1' }"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Atrás</a>
+        <a app-button="" data-variante="primario" routerLink="." [queryParams]="{ estado: 'paso3' }">Continuar<svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a>
+          </div>
+        </form>
+      </div>
+      <div data-estado="paso3" hidden="">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>1 · Identificación</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>2 · Clasificación</span><hr class="app-divider" aria-hidden="true"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>3 · Almacenamiento</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-label="Avance del formulario: paso 3 de 3">
+          <span class="app-progress__relleno" style="width:100%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 3 de 3 · <strong>Almacenamiento</strong></span>
+          <span class="caption muted num">100% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá 2 campos antes de guardar.</strong>
+          <ul>
+            <li>Tipo MIME: Escribí un tipo MIME válido, con la forma tipo/subtipo.</li>
+            <li>URI de almacenamiento: La URI tiene que empezar con https.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-4">Tipo MIME <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-4" type="text" required="" aria-invalid="true" value="" placeholder="application/pdf">
+        <p class="app-form-field__error" data-solo-estado="error" hidden=""><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Escribí un tipo MIME válido, con la forma tipo/subtipo.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-5">Tamaño en bytes <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-5" type="number" min="0" data-num="1" required="" aria-describedby="c-5-a" value="">
+        <p class="app-form-field__ayuda" id="c-5-a">Tamaño del contenido que vas a subir. Mínimo 0.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-6">Hash del contenido <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-6" type="text" required="" aria-describedby="c-6-a" value="" placeholder="sha256:…">
+        <p class="app-form-field__ayuda" id="c-6-a">Sirve para detectar que el contenido subido es el que declaraste.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-7">URI de almacenamiento <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-7" type="url" required="" aria-invalid="true" value="" placeholder="https://…">
+        <p class="app-form-field__error" data-solo-estado="error" hidden=""><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>La URI tiene que empezar con https.</p>
+      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="." [queryParams]="{ estado: 'paso2' }"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Atrás</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Registrar el archivo</button>
+          </div>
+        </form>
+      </div>
+    </div>

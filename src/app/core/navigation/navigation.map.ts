@@ -51,6 +51,37 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Tu punto de partida: la sesión activa y el estado del sistema.',
     module: 'M30 read_models',
   },
+  {
+    // El centro de tutoriales. Va en «General» y no en una sección de ayuda
+    // aparte por una razón concreta: un desplegable de ayuda es donde van a
+    // morir los tutoriales —se abre por accidente, no se comparte por enlace y
+    // no tiene dónde decir cuánto llevás hecho—. Como sección tiene URL propia y
+    // entra en el menú con las mismas reglas que el resto.
+    //
+    // Sin `roles` a propósito: cualquiera que pueda entrar tiene algo que
+    // aprender, y el catálogo ya se filtra por rol tutorial por tutorial. Poner
+    // roles acá escondería el centro entero a quien tiene pocos.
+    path: 'tutorials',
+    label: 'Tutoriales',
+    group: 'General',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
+    module: '—  ayuda en producto',
+  },
+
+  {
+    path: 'feed',
+    label: 'Muro profesional',
+    group: 'General',
+    icon: 'home',
+    // Sin `roles`: cualquier sesión con perfil público puede tener muro. El
+    // perfil público NO es el `pid` de la sesión —es una entidad de M19— así
+    // que la puerta la pone la propia pantalla, no una guarda de rol.
+    availability: 'disponible',
+    summary: 'Lo que publican los perfiles que seguís.',
+    module: 'M19 community',
+  },
 
   /* -- Atención · fase 1 del orden de trabajo ------------------------------ */
 
@@ -84,6 +115,42 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Consultá la historia clínica de los pacientes que atendés.',
     module: 'M08 clinical · M15 chart',
+  },
+  {
+    path: 'diagnostics',
+    label: 'Laboratorio e imagen',
+    group: 'Atención',
+    icon: 'results',
+    // Los mismos dos roles que declaran los cuatro controladores de M20 y el de
+    // órdenes clínicas de M08: es PHI y la escribe y la lee quien atiende.
+    roles: ['CLINICIAN', 'PRACTITIONER'],
+    // Encendida con `GET /diagnostics/work-orders` —que ya existía— y con la
+    // slice de lectura por paciente `GET /diagnostics/patients/:id/orders`, que
+    // no. El módulo repetía exactamente el defecto que había tenido agenda:
+    // veinte endpoints construidos, ninguna lectura que dijera qué se le pidió a
+    // una persona ni qué volvió. Se pedía un laboratorio y el pedido dejaba de
+    // existir para la pantalla apenas se enviaba.
+    availability: 'disponible',
+    summary: 'Seguí la cola del laboratorio y los estudios que pediste.',
+    module: 'M20 diagnostics · M08 clinical',
+  },
+  {
+    // Carril 2 · punto 4 del reclamo. `TerminologyCatalog` ya resolvía el
+    // mismo `GET /terminology/concepts?q=` con rol `SECURITY_ADMIN`: es un
+    // buscador técnico de `conceptId` para configuración, no un glosario para
+    // consulta clínica. Esta es la puerta que el cliente pidió — "cada
+    // profesional", no sólo quien administra —, con una pantalla propia que no
+    // expone el identificador.
+    //
+    // Sin `roles` a propósito: el pedido fue explícito, y la lectura del
+    // catálogo tampoco los exige (UC-03-13).
+    path: 'glossary',
+    label: 'Glosario',
+    group: 'Atención',
+    icon: 'orders',
+    availability: 'disponible',
+    summary: 'Buscá un término médico y su significado en lenguaje llano.',
+    module: 'M03 terminology',
   },
 
   /* -- Administración · fase 0, la fundación ------------------------------- */
@@ -223,6 +290,37 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Seguí sujetos rastreados, sus recorridos y las geocercas de la organización.',
     module: 'M13 geo',
   },
+  {
+    // Carril 1 (punto 3 del reclamo). `GET /billing/service-catalog` no exige
+    // rol —cualquier profesional que cotice necesita leerlo—, pero la sección
+    // en sí queda en Administración: mantener la lista fija es una tarea de
+    // configuración, no de atención. El alta (`POST`) sí exige `SECURITY_ADMIN`,
+    // como el resto de `billing`.
+    path: 'administration/services-catalog',
+    label: 'Catálogo de servicios',
+    group: 'Administración',
+    icon: 'billing',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Mantené la lista fija de servicios sobre la que se arman los presupuestos.',
+    module: 'M17 billing',
+  },
+  {
+    // Carril 2 · punto 1 del reclamo. `chart.specialty_chart_templates` sólo
+    // tenía asignación (`POST /charts/templates/:id/assignments`, UC-15-12);
+    // con el alta, el listado y la lectura de esquema ya del lado del
+    // backend, esta es la puerta de administración que arma la plantilla que
+    // `specialty-form-block` completa dentro del encuentro.
+    path: 'administration/clinical-forms',
+    label: 'Formularios clínicos',
+    group: 'Administración',
+    icon: 'orders',
+    // Mismo rol que exige el backend en `ChartTemplatesController`.
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Armá las plantillas de campos propios de cada especialidad.',
+    module: 'M15 chart · M09 forms',
+  },
 
   /* -- Facturación · fase 2 ------------------------------------------------ */
 
@@ -235,6 +333,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'planificada',
     summary: 'Emití comprobantes y seguí los cobros de la organización.',
     module: 'M26 billing · M42 payments',
+  },
+
+  {
+    path: 'administration/accounting',
+    label: 'Contabilidad',
+    group: 'Facturación',
+    icon: 'billing',
+    // `PRACTITIONER` a propósito: los libros son de la práctica y quien la
+    // ejerce tiene que poder verlos. El control de que la práctica consultada
+    // es la suya lo hace la API, que responde 403 ante la de otra organización.
+    roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary:
+      'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
+    module: 'M16 accounting',
   },
 
   /* -- Mi cuenta · autoservicio, con navegación propia --------------------

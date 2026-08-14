@@ -7,6 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
@@ -163,6 +164,17 @@ export class MedicationBlock {
 
   /** Las recetas de la persona, ya traducidas por el expediente. */
   readonly recetas = input.required<readonly RecetaEnFicha[]>();
+
+  /**
+   * Los `medicationConceptId` de la medicación ya registrada, sin traducir.
+   *
+   * Es lo que {@link recetar} manda junto con el nuevo medicamento a
+   * `POST /cds/check-interactions`: el motor compara sustancias, no texto, así
+   * que necesita el uuid del concepto y no el `medicamento` en palabras que
+   * usa {@link recetas}. Por defecto vacío — sin medicación previa no hay
+   * contra qué comparar, y el chequeo se salta.
+   */
+  readonly medicacionActivaConceptIds = input<readonly string[]>([]);
 
   /**
    * Algo se escribió y el expediente tiene que releerse.
@@ -328,10 +340,14 @@ export class MedicationBlock {
   /**
    * Prescribe la medicación (UC-08-10) — la receta queda en borrador.
    *
-   * Sin confirmación previa: un borrador no compromete a nadie y se firma o se
-   * descarta después. El diálogo se reserva para emitir, que sí es sin vuelta.
+   * Sin confirmación previa por sí sola: un borrador no compromete a nadie y
+   * se firma o se descarta después. El diálogo se reserva para emitir, que sí
+   * es sin vuelta — **salvo que el chequeo de interacciones encuentre algo**,
+   * en cuyo caso sí se confirma, porque ahí lo que se pide no es prudencia
+   * genérica sino que quien prescribe mire una alerta concreta antes de
+   * seguir.
    */
-  protected recetar(): void {
+  protected async recetar(): Promise<void> {
     const patientProfileId = this.patientProfileId();
     const custodianTenantId = this.organizacion();
     const medicationConceptId = this.medicamento();
@@ -343,6 +359,10 @@ export class MedicationBlock {
       encounterId === null ||
       this.registrando()
     ) {
+      return;
+    }
+
+    if (!(await this.sinInteraccionesOConfirmadas(patientProfileId, medicationConceptId, encounterId))) {
       return;
     }
 
@@ -463,6 +483,65 @@ export class MedicationBlock {
           this.recetaSinFirma.set(receta);
         }
       },
+    });
+  }
+
+  /**
+   * Corre el chequeo de interacciones y, si encuentra algo, lo confirma antes
+   * de dejar seguir. Devuelve `true` cuando no hay nada que confirmar —sin
+   * medicación previa, sin interacción encontrada, o el chequeo mismo no pudo
+   * correr— o cuando quien prescribe decidió seguir igual.
+   *
+   * ## Por qué falla abierto
+   *
+   * Si `POST /cds/check-interactions` no responde, bloquear una receta que
+   * por lo demás es válida por una falla de una alerta *aparte* sería peor
+   * que prescribir sin ella: hoy la ausencia total de este chequeo es el
+   * estado normal, y una caída puntual no puede ser más restrictiva que eso.
+   *
+   * ## Por qué el tope de dos sustancias
+   *
+   * El contrato exige al menos dos (`ArrayMinSize(2)`): una interacción es
+   * entre sustancias, y con una sola —sin medicación previa registrada, o
+   * prescribiendo lo mismo que ya está activo— no hay nada que comparar.
+   */
+  private async sinInteraccionesOConfirmadas(
+    patientProfileId: string,
+    medicationConceptId: string,
+    encounterId: string,
+  ): Promise<boolean> {
+    const sustancias = Array.from(
+      new Set([...this.medicacionActivaConceptIds(), medicationConceptId]),
+    );
+    if (sustancias.length < 2) {
+      return true;
+    }
+
+    let chequeo;
+    try {
+      chequeo = await firstValueFrom(
+        this.clinical.checkInteractions({
+          patientProfileId,
+          substanceConceptIds: sustancias,
+          encounterId,
+        }),
+      );
+    } catch {
+      return true;
+    }
+
+    if (chequeo.count === 0) {
+      return true;
+    }
+
+    return this.dialogs.confirm({
+      title:
+        chequeo.count === 1
+          ? 'Se detectó una interacción'
+          : `Se detectaron ${chequeo.count} interacciones`,
+      message:
+        'El motor de decisión clínica encontró interacción entre este medicamento y la medicación activa de la persona. Revisala antes de seguir.',
+      confirmLabel: 'Prescribir de todas formas',
     });
   }
 

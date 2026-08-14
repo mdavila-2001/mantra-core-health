@@ -1,0 +1,209 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 3.5v5.2a4.5 4.5 0 0 0 9 0V3.5"></path><path d="M11 13.2v1.9a4 4 0 0 0 8 0v-1.6"></path><circle cx="19" cy="11" r="2"></circle></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Personas</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/personas/profesionales-listado">Profesionales</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nuevo</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nuevo profesional</h1></div>
+        <p class="caption">Un alta que resuelve todo junto: la persona, el perfil profesional, su primera licencia jurisdiccional, la credencial que la respalda y el idioma en el que atiende.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        
+      </div>
+    </div>
+        <div class="app-view-state-host" app-view-state-host="" style="display:flex;flex-direction:column;gap:var(--e7)">
+      <div data-estado="paso1">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>1 · Quién es</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>2 · Su matrícula</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>3 · Su credencial</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="33" aria-label="Avance del formulario: paso 1 de 3">
+          <span class="app-progress__relleno" style="width:33%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 1 de 3 · <strong>Quién es</strong></span>
+          <span class="caption muted num">33% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Código único de profesional: ya hay un profesional con ese código en la plataforma.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1">Código único de profesional <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-1" type="text" required="" aria-describedby="c-1-a" value="" placeholder="PRO-2026-000318">
+        <p class="app-form-field__ayuda" id="c-1-a">El código con el que se lo identifica en la agenda y en la receta. Único en toda la plataforma, hasta 100 caracteres.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2">Persona</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-2" type="search" role="combobox" aria-expanded="true" aria-controls="c-2-m" aria-autocomplete="list" aria-describedby="c-2-a" value="" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-2-m" role="listbox" aria-label="Resultados de Persona" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg><span>Rosa Mamani Condori<br><span class="caption muted">PER-2026-006399 · activa</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg><span>Rosario Mamani Ticona<br><span class="caption muted">PER-2026-006301 · activa</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg><span>Rosalía Mamani Poma<br><span class="caption muted">PER-2026-006288 · activa</span></span></button>
+        </div>
+        <p class="app-form-field__ayuda" id="c-2-a">Si la persona ya existe en el registro maestro —porque además es paciente acá—, elegila y no se duplica. Si la dejás vacía, se crea una nueva.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3">Nombre visible</label>
+        <input class="app-input" app-input="" id="c-3" type="text" aria-describedby="c-3-a" value="" placeholder="Carla Nogales Suárez">
+        <p class="app-form-field__ayuda" id="c-3-a">Sólo hace falta si estás creando una persona nueva.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-4">Categoría de profesional</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-4" aria-describedby="c-4-a">
+            <option selected="">Elegí un valor del catálogo</option>
+            <option>Médico</option>
+            <option>Enfermería</option>
+            <option>Odontología</option>
+            <option>Bioquímica</option>
+            <option>Psicología</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-4-a">Sale del catálogo de terminología. Define qué puede firmar: una receta no la firma cualquiera.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-5">Título profesional</label>
+        <input class="app-input" app-input="" id="c-5" type="text" aria-describedby="c-5-a" value="" placeholder="Médica internista">
+        <p class="app-form-field__ayuda" id="c-5-a">Como se imprime en la receta y en el informe. Hasta 200 caracteres.</p>
+      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Nada se guarda hasta el último paso.</p>
+        <a app-button="" data-variante="secundario" routerLink="/personas/profesionales-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <a app-button="" data-variante="primario" routerLink="." [queryParams]="{ estado: 'paso2' }">Continuar<svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a>
+          </div>
+        </form>
+      </div>
+      <div data-estado="paso2" hidden="">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>1 · Quién es</span><hr class="app-divider" aria-hidden="true"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>2 · Su matrícula</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>3 · Su credencial</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="67" aria-label="Avance del formulario: paso 2 de 3">
+          <span class="app-progress__relleno" style="width:67%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 2 de 3 · <strong>Su matrícula</strong></span>
+          <span class="caption muted num">67% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Código único de profesional: ya hay un profesional con ese código en la plataforma.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-6">Número de licencia <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-6" type="text" required="" aria-describedby="c-6-a" value="" placeholder="12457-LP">
+        <p class="app-form-field__ayuda" id="c-6-a">La matrícula con la que ejerce en su jurisdicción. Hasta 100 caracteres.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-7">Jurisdicción</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-7" aria-describedby="c-7-a">
+            <option selected="">Elegí un valor del catálogo</option>
+            <option>La Paz</option>
+            <option>Cochabamba</option>
+            <option>Santa Cruz</option>
+            <option>Oruro</option>
+            <option>Tarija</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-7-a">La licencia vale donde la emitieron: fuera de esa jurisdicción la agenda no lo ofrece.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-8">Autoridad regulatoria</label>
+        <input class="app-input" app-input="" id="c-8" type="text" aria-describedby="c-8-a" value="" placeholder="Colegio Médico de Bolivia">
+        <p class="app-form-field__ayuda" id="c-8-a">Quién emitió la licencia. Hasta 200 caracteres.</p>
+      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Nada se guarda hasta el último paso.</p>
+        <a app-button="" data-variante="secundario" routerLink="." [queryParams]="{ estado: 'paso1' }"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Atrás</a>
+        <a app-button="" data-variante="primario" routerLink="." [queryParams]="{ estado: 'paso3' }">Continuar<svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></a>
+          </div>
+        </form>
+      </div>
+      <div data-estado="paso3" hidden="">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>1 · Quién es</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>2 · Su matrícula</span><hr class="app-divider" aria-hidden="true"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>3 · Su credencial</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-label="Avance del formulario: paso 3 de 3">
+          <span class="app-progress__relleno" style="width:100%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 3 de 3 · <strong>Su credencial</strong></span>
+          <span class="caption muted num">100% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Código único de profesional: ya hay un profesional con ese código en la plataforma.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-9">Número de credencial <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-9" type="text" required="" aria-describedby="c-9-a" value="" placeholder="12457-LP">
+        <p class="app-form-field__ayuda" id="c-9-a">El número del papel que respalda la licencia. Hasta 100 caracteres.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-10">Tipo de credencial</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-10" aria-describedby="c-10-a">
+            <option selected="">Elegí un valor del catálogo</option>
+            <option>Matrícula profesional</option>
+            <option>Especialidad</option>
+            <option>Certificación</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-10-a">Sale del catálogo de terminología. La credencial nace pendiente: se verifica desde Credenciales.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-11">Idioma clínico</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-11" aria-describedby="c-11-a">
+            <option selected="">Elegí un valor del catálogo</option>
+            <option>Español</option>
+            <option>Aymara</option>
+            <option>Quechua</option>
+            <option>Guaraní</option>
+            <option>Inglés</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <p class="app-form-field__ayuda" id="c-11-a">El idioma en el que puede atender una consulta. Después se le agregan más desde su ficha.</p>
+      </div>
+          </div>
+          <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="." [queryParams]="{ estado: 'paso2' }"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Atrás</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Registrar al profesional</button>
+          </div>
+        </form>
+      </div>
+    </div>

@@ -7,6 +7,7 @@ import {
   signal,
   untracked,
   viewChild,
+  ElementRef,
   type TemplateRef,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -50,7 +51,14 @@ import {
   CLINICAL_RECORD_ROUTE,
   MOTIVO_QUERY_PARAM,
 } from '../clinical-record.routes';
+import { AdmissionBlock, type InternacionEnFicha } from './admission-block/admission-block';
+import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
+import { AttachmentsBlock } from './attachments-block/attachments-block';
+import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
+import { DiagnosticsBlock } from './diagnostics-block/diagnostics-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
+import { ProceduresBlock } from './procedures-block/procedures-block';
+import { SpecialtyFormBlock } from './specialty-form-block/specialty-form-block';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -65,6 +73,7 @@ const NOMBRE_DE_BLOQUE: Readonly<Record<string, string>> = {
   medicationRequests: 'medicación',
   observations: 'observaciones',
   encounters: 'encuentros',
+  careEpisodes: 'internaciones',
   notes: 'notas',
   carePlans: 'planes de cuidados',
   documents: 'documentos',
@@ -125,14 +134,15 @@ interface Expediente {
  * faltan notas sin avisar es un expediente que miente, y en clínica esa mentira
  * se lee como «no hay antecedentes».
  *
- * ## Lo que se escribe acá: el encuentro y la receta
+ * ## Lo que se escribe acá: el encuentro, la receta y el diagnóstico
  *
  * La pantalla era de consulta pura. Abre y cierra **encuentros**
  * (`POST /clinical/encounters/check-in` y `.../{id}/close`) y, desde el
- * encuentro abierto, **receta** (`app-medication-block`). El criterio para
- * admitir una escritura no cambió y no es de alcance sino de honestidad: se
- * ofrece la que esta misma pantalla **vuelve a leer**. Encuentros y medicación
- * salen los dos de `GET /clinical/patients/:id/summary`, así que lo que se
+ * encuentro abierto, **receta** (`app-medication-block`) y **registra el
+ * diagnóstico** (`app-diagnosis-block`). El criterio para admitir una
+ * escritura no cambió y no es de alcance sino de honestidad: se ofrece la que
+ * esta misma pantalla **vuelve a leer**. Encuentros, medicación y condiciones
+ * salen los tres de `GET /clinical/patients/:id/summary`, así que lo que se
  * registra aparece; firmar una nota tiene endpoint pero no lectura, y sería un
  * formulario que traga el dato.
  *
@@ -150,16 +160,23 @@ interface Expediente {
 @Component({
   selector: 'app-patient-chart',
   imports: [
+    AdmissionBlock,
     Alert,
     AppButton,
     Badge,
     Card,
     DataTable,
     DatePipe,
+    AttachmentsBlock,
+    DiagnosisBlock,
+    DiagnosticsBlock,
+    PdfExportButton,
     FormActions,
     FormField,
     MedicationBlock,
     PageHeader,
+    ProceduresBlock,
+    SpecialtyFormBlock,
     StatusSeal,
     Tab,
     Tabs,
@@ -171,6 +188,20 @@ interface Expediente {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PatientChart {
+  /**
+   * El bloque que se exporta a PDF.
+   *
+   * Se toma por referencia y no dejando que el botón busque su contenedor,
+   * porque el botón vive en la cabecera de la página: su contenedor sería la
+   * cabecera, y el PDF saldría con el título y nada más.
+   */
+  protected readonly raizPdf = viewChild<ElementRef<HTMLElement>>('raizPdf');
+
+  /** El elemento exportable, o `null` mientras el expediente no se pintó. */
+  protected raizExportable(): HTMLElement | null {
+    return this.raizPdf()?.nativeElement ?? null;
+  }
+
   private readonly clinical = inject(ClinicalClient);
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
@@ -361,17 +392,66 @@ export class PatientChart {
     })),
   );
 
-  /** Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada. */
-  protected readonly bloques = computed(() => [
-    { clave: 'diagnosticos', titulo: 'Diagnósticos', filas: this.diagnosticos() },
-    { clave: 'alergias', titulo: 'Alergias', filas: this.alergias() },
-    { clave: 'medicacion', titulo: 'Medicación', filas: this.medicacion() },
-    { clave: 'observaciones', titulo: 'Observaciones', filas: this.observaciones() },
-    { clave: 'encuentros', titulo: 'Encuentros', filas: this.encuentros() },
-    { clave: 'notas', titulo: 'Notas', filas: this.notas() },
-    { clave: 'planes', titulo: 'Planes de cuidados', filas: this.planes() },
-    { clave: 'documentos', titulo: 'Documentos', filas: this.documentos() },
+  /**
+   * Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada.
+   *
+   * Cada uno trae **sus** columnas y no las de todos: `detalle` significa una
+   * cosa distinta en cada bloque —la criticidad de una alergia, si un encuentro
+   * sigue abierto— y en varios no significa nada. Una columna «Detalle» vacía de
+   * punta a punta no es un dato que falta: es una columna que sobra, y se come
+   * el ancho que la tabla necesita para lo que sí trae.
+   */
+  protected readonly bloques = computed(() =>
+    [
+      { clave: 'diagnosticos', titulo: 'Diagnósticos', filas: this.diagnosticos() },
+      { clave: 'alergias', titulo: 'Alergias', filas: this.alergias() },
+      { clave: 'medicacion', titulo: 'Medicación', filas: this.medicacion() },
+      { clave: 'observaciones', titulo: 'Observaciones', filas: this.observaciones() },
+      { clave: 'encuentros', titulo: 'Encuentros', filas: this.encuentros() },
+      { clave: 'notas', titulo: 'Notas', filas: this.notas() },
+      { clave: 'planes', titulo: 'Planes de cuidados', filas: this.planes() },
+      { clave: 'documentos', titulo: 'Documentos', filas: this.documentos() },
+    ].map((bloque) => ({ ...bloque, columnas: this.columnasPara(bloque.filas) })),
+  );
+
+  /* -- La banda de contexto ------------------------------------------------
+     Lo que hay que saber ANTES de abrir una pestaña. Antes esto no existía y la
+     pantalla abría en «Diagnósticos (2)»: para enterarse de que la persona es
+     alérgica a algo había que acordarse de ir a mirar. */
+
+  /**
+   * Las alergias, arriba y a la vista, no en la segunda pestaña.
+   *
+   * Es el único bloque del expediente que cambia una conducta **antes** de
+   * leerlo: recetar sin haberlas visto es el error que esta banda existe para
+   * evitar. No se filtra por criticidad —la criticidad llega como concepto y
+   * deducirla del texto sería adivinar—: se muestran todas, que son pocas.
+   */
+  protected readonly alergiasDestacadas = this.alergias;
+
+  /** Las cifras del expediente, para dimensionarlo sin abrir pestaña por pestaña. */
+  protected readonly cifras = computed(() => [
+    { clave: 'diagnosticos', rotulo: 'Diagnósticos', valor: this.diagnosticos().length },
+    { clave: 'medicacion', rotulo: 'Medicación', valor: this.medicacion().length },
+    { clave: 'encuentros', rotulo: 'Encuentros', valor: this.encuentros().length },
+    { clave: 'observaciones', rotulo: 'Observaciones', valor: this.observaciones().length },
   ]);
+
+  /**
+   * Cuándo fue la última vez que se la atendió.
+   *
+   * De los encuentros, que es donde consta. `null` mientras no haya ninguno con
+   * fecha: inventar «sin atención previa» a partir de un bloque vacío diría algo
+   * que el expediente no dice.
+   */
+  protected readonly ultimaAtencion = computed<Date | null>(() => {
+    const fechas = this.encuentros()
+      .map((fila) => fila.cuando)
+      .filter((fecha): fecha is Date => fecha !== null);
+    return fechas.length === 0
+      ? null
+      : fechas.reduce((mayor, fecha) => (fecha > mayor ? fecha : mayor));
+  });
 
   /**
    * Aviso de recorte, en palabras.
@@ -515,6 +595,28 @@ export class PatientChart {
    * a un identificador de catálogo. Es el mismo criterio con el que el bloque
    * de encuentros deriva «en curso» de `endAt`.
    */
+  /* -- La internación, que se abre desde el encuentro --------------------- */
+
+  /**
+   * Las internaciones de esta persona, con su «sigue abierta» ya resuelto.
+   *
+   * «Abierta» se deriva de `endAt` y no del estado, por lo mismo que en los
+   * encuentros: el estado es un uuid de concepto y ramificar por su valor ataría
+   * la pantalla a un identificador de catálogo.
+   *
+   * Salen de `GET /clinical/patients/:id/summary`, que empezó a devolverlas con
+   * este carril: antes el expediente sólo veía el `episodeId` colgado de un
+   * encuentro, y un uuid sin fila detrás no dice ni cuándo empezó ni si sigue.
+   */
+  protected readonly internaciones = computed<readonly InternacionEnFicha[]>(() =>
+    (this.datos()?.resumen.careEpisodes ?? []).map((episodio) => ({
+      id: episodio.id,
+      abierta: episodio.endAt === undefined,
+      desde: episodio.startAt ?? null,
+      hasta: episodio.endAt ?? null,
+    })),
+  );
+
   protected readonly recetas = computed<readonly RecetaEnFicha[]>(() =>
     (this.datos()?.resumen.medicationRequests ?? []).map((receta) => ({
       id: receta.id,
@@ -526,12 +628,38 @@ export class PatientChart {
     })),
   );
 
-  protected readonly columnas = computed<readonly ColumnDef<FilaClinica>[]>(() => [
-    { key: 'principal', header: 'Registro', priority: 1, cell: this.celdaPrincipal() },
-    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-    { key: 'cuando', header: 'Fecha', priority: 2, cell: this.celdaCuando() },
-    { key: 'detalle', header: 'Detalle', priority: 3 },
-  ]);
+  /**
+   * Los `medicationConceptId` de la medicación ya registrada, sin traducir —
+   * lo que {@link MedicationBlock} necesita para chequear interacciones antes
+   * de prescribir una más. Se incluye toda la registrada y no sólo la
+   * vigente: el contrato de `getSummary` no distingue «activa» de «pasada»
+   * por un campo propio, y advertir de más sobre algo que ya no se toma es un
+   * error mucho más chico que no advertir sobre algo que sí.
+   */
+  protected readonly medicacionActivaConceptIds = computed<readonly string[]>(() =>
+    Array.from(
+      new Set((this.datos()?.resumen.medicationRequests ?? []).map((r) => r.medicationConceptId)),
+    ),
+  );
+
+  /**
+   * Las columnas de un bloque concreto.
+   *
+   * `Detalle` sólo se dibuja si alguna fila la llena. Es la diferencia entre una
+   * columna vacía —que se lee como un dato que no cargó— y una columna que ese
+   * bloque no tiene.
+   */
+  private columnasPara(filas: readonly FilaClinica[]): readonly ColumnDef<FilaClinica>[] {
+    const hayDetalle = filas.some((fila) => fila.detalle !== '' && fila.detalle !== SIN_DATO);
+    return [
+      { key: 'principal', header: 'Registro', priority: 1, cell: this.celdaPrincipal() },
+      { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
+      { key: 'cuando', header: 'Fecha', priority: 2, cell: this.celdaCuando() },
+      ...(hayDetalle
+        ? [{ key: 'detalle', header: 'Detalle', priority: 3 } satisfies ColumnDef<FilaClinica>]
+        : []),
+    ];
+  }
 
   protected readonly porFila = (fila: FilaClinica): string => fila.id;
 

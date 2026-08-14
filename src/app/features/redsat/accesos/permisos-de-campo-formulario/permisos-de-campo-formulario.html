@@ -1,0 +1,182 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/accesos/roles-listado">Roles</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/accesos/permisos-de-campo-listado">Permisos de campo</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Configurar</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Configurar el enmascaramiento de campos</h1></div>
+        <p class="caption">Decidí qué campos ve y cuáles escribe este rol dentro de un registro que ya puede abrir. Lo que dejes acá reemplaza la configuración actual.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <div class="app-card app-card--inset" app-card="" style="padding:var(--e4);margin-bottom:var(--e6)">
+      <p class="overline">Rol</p>
+      <p class="num" style="margin-top:var(--e1)">ROL-2026-000015</p>
+      <p>Médico tratante <span class="muted">· CLINICIAN · hereda de Personal clínico</span></p>
+      <p style="margin-top:var(--e2)"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></p>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Regla 2: para poder escribir el campo hace falta que también pueda leerse.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <fieldset class="app-form-section" app-form-section="">
+        <legend class="app-form-section__legend"><span class="overline">Reglas de enmascaramiento</span></legend>
+        <p class="app-form-section__desc">Agregá una fila por campo. Lo que no esté en esta lista queda visible según el permiso del registro.</p>        <div style="display:flex;flex-direction:column;gap:var(--e5)">
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Regla 1</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1-1">Entidad <span class="req">· obligatorio</span></label>
+        <input class="app-input app-textarea--mono" app-input="" id="c-1-1" type="text" required="" value="patient_profiles" placeholder="patient_profiles" aria-describedby="c-1-1-a">
+        <p class="app-form-field__ayuda" id="c-1-1-a">Hasta 150 caracteres. El nombre de la tabla tal como lo manda el backend.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1-2">Columna <span class="req">· obligatorio</span></label>
+        <input class="app-input app-textarea--mono" app-input="" id="c-1-2" type="text" required="" value="national_id" placeholder="national_id">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-1-3-l">¿Puede leerse el campo?</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-1-3-l" checked="">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>El rol ve el valor de este campo</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-1-4-l">¿Puede escribirse el campo?</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-1-4-l" aria-describedby="c-1-4-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>El rol puede modificar este campo</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-1-4-a">Escribir exige poder leer: si apagás la lectura, el backend rechaza la regla con un 412.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-1-5-l">Estrategia de enmascaramiento</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-1-5-l" aria-describedby="c-1-5-a">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-1-5">Redactar</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-1-5">Hash</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-1-5" checked="">Parcial</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-1-5">Anular</label>
+        </div>
+        <p class="app-form-field__ayuda" id="c-1-5-a">Redactar reemplaza el valor por ●●●; hash devuelve una huella estable; parcial deja los últimos dígitos; anular devuelve vacío.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1-6">Condición ABAC</label>
+        <textarea class="app-textarea app-textarea--mono" app-textarea="" id="c-1-6" rows="3" aria-describedby="c-1-6-a">{ "purposeOfUse": ["TREATMENT"] }</textarea>
+        <p class="app-form-field__ayuda" id="c-1-6-a">Opcional. Si la condición no se cumple, la regla no se aplica y el campo se ve entero.</p>      </div>
+          </div>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Regla 2</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2-1">Entidad <span class="req">· obligatorio</span></label>
+        <input class="app-input app-textarea--mono" app-input="" id="c-2-1" type="text" required="" value="patient_profiles" placeholder="patient_profiles">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2-2">Columna <span class="req">· obligatorio</span></label>
+        <input class="app-input app-textarea--mono" app-input="" id="c-2-2" type="text" required="" value="phone_number" placeholder="national_id">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-2-3-l">¿Puede leerse el campo?</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-2-3-l" checked="">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>El rol ve el valor de este campo</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-2-4-l">¿Puede escribirse el campo?</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-2-4-l" checked="">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>El rol puede modificar este campo</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-2-5-l">Estrategia de enmascaramiento</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-2-5-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2-5" checked="">Redactar</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2-5">Hash</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2-5">Parcial</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2-5">Anular</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2-6">Condición ABAC</label>
+        <textarea class="app-textarea app-textarea--mono" app-textarea="" id="c-2-6" rows="3" aria-describedby="c-2-6-a"></textarea>
+        <p class="app-form-field__ayuda" id="c-2-6-a">Opcional. Si la condición no se cumple, la regla no se aplica y el campo se ve entero.</p>      </div>
+          </div>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Regla 3</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3-1">Entidad <span class="req">· obligatorio</span></label>
+        <input class="app-input app-textarea--mono" app-input="" id="c-3-1" type="text" required="" value="lab_results" placeholder="patient_profiles">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3-2">Columna <span class="req">· obligatorio</span></label>
+        <input class="app-input app-textarea--mono" app-input="" id="c-3-2" type="text" required="" value="hiv_status" placeholder="national_id">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-3-3-l">¿Puede leerse el campo?</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-3-3-l" checked="">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>El rol ve el valor de este campo</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-3-4-l">¿Puede escribirse el campo?</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-3-4-l">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>El rol puede modificar este campo</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-3-5-l">Estrategia de enmascaramiento</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-3-5-l">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3-5">Redactar</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3-5" checked="">Hash</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3-5">Parcial</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-3-5">Anular</label>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3-6">Condición ABAC</label>
+        <textarea class="app-textarea app-textarea--mono" app-textarea="" id="c-3-6" rows="3" aria-describedby="c-3-6-a">{ "hasConsent": true }</textarea>
+        <p class="app-form-field__ayuda" id="c-3-6-a">Opcional. Si la condición no se cumple, la regla no se aplica y el campo se ve entero.</p>      </div>
+          </div>
+        </div>
+        <div><button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Agregar una regla</button></div>
+        </div>
+      </fieldset>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora, y reemplaza las reglas de campo del rol.</p>
+        <a app-button="" data-variante="secundario" routerLink="/accesos/permisos-de-campo-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar el enmascaramiento</button>
+      </div>
+    </form>

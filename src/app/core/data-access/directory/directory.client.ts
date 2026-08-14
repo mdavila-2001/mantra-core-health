@@ -1,10 +1,18 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
+import { TENANT_HEADER } from '../../http/auth.interceptor';
 import { API_BASE_URL, apiUrl } from '../api';
-import { sinNulos, type ConNulos } from '../wire';
+import { maybeDate, sinNulos, type ConNulos } from '../wire';
 import type {
+  BranchAssignmentList,
+  BranchAssignmentListItem,
+  BranchList,
+  BranchListItem,
+  MembershipListItem,
+  MembershipPage,
+  MembershipQuery,
   NewTenant,
   TenantCreated,
   TenantListItem,
@@ -13,11 +21,17 @@ import type {
 } from './directory.types';
 
 /**
- * Cliente de `directory`: organizaciones de la plataforma.
+ * Cliente de `directory`: organizaciones de la plataforma y lo que hay dentro
+ * de cada una.
  *
- * Sólo la cara de plataforma (`/admin/tenants`): listado y aprovisionamiento.
- * Las operaciones dentro de una organización —sucursales, membresías— tienen
- * sus propios endpoints bajo `/tenants/{id}` y entrarán con sus vistas.
+ * Dos caras con reglas distintas de acceso, y conviene no mezclarlas:
+ *
+ * - **Plataforma** (`/admin/tenants`) — listado global y aprovisionamiento.
+ *   Pide rol global; el alta es sólo de `SUPERADMIN`.
+ * - **Organización** (`/tenants/{id}/…`) — sucursales, membresías, asignaciones
+ *   y sub-organizaciones. **No piden rol global**: basta pertenecer a la
+ *   organización. Quien no pertenece recibe `403`, y un tenant inexistente
+ *   responde `404` —no `403`— para que el error no sirva de sonda.
  */
 @Injectable({
   providedIn: 'root',
@@ -72,9 +86,135 @@ export class DirectoryClient {
       .pipe(map(toTenantCreated));
   }
 
+  /**
+   * `GET /tenants/{id}/branches` — sucursales de la organización (UC-04-02,
+   * cara de lectura).
+   *
+   * **No pagina**: devuelve todas en una respuesta con su `count`. La pantalla
+   * no puede prometer «Siguientes» sobre esto.
+   */
+  listBranches(tenantId: string): Observable<BranchList> {
+    return this.http
+      .get<RespuestaSucursales>(this.url(`/tenants/${tenantId}/branches`), {
+        headers: deLaOrganizacion(tenantId),
+      })
+      .pipe(
+        map((body) => ({
+          count: body.count,
+          items: body.items.map(toBranchListItem),
+        })),
+      );
+  }
+
+  /**
+   * `GET /tenants/{id}/memberships` — la plantilla de la organización
+   * (UC-04-04, cara de lectura). Por cursor.
+   */
+  listMemberships(tenantId: string, query: MembershipQuery = {}): Observable<MembershipPage> {
+    // Mismo cuidado que en `searchTenants`: un opcional en `undefined` viaja
+    // como clave declarada y `forbidNonWhitelisted` lo devuelve 400.
+    let params = new HttpParams();
+    if (query.statusConceptId !== undefined) {
+      params = params.set('status', query.statusConceptId);
+    }
+    if (query.cursor !== undefined) {
+      params = params.set('cursor', query.cursor);
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+
+    return this.http
+      .get<RespuestaMembresias>(this.url(`/tenants/${tenantId}/memberships`), {
+        params,
+        headers: deLaOrganizacion(tenantId),
+      })
+      .pipe(
+        map((body) => ({
+          ...body,
+          items: body.items.map(toMembershipListItem),
+        })),
+      );
+  }
+
+  /**
+   * `GET /tenants/{id}/memberships/{mid}/branch-assignments` — a qué sucursales
+   * llega una membresía (UC-04-03, cara de lectura). Tampoco pagina.
+   */
+  listBranchAssignments(
+    tenantId: string,
+    membershipId: string,
+  ): Observable<BranchAssignmentList> {
+    return this.http
+      .get<RespuestaAsignaciones>(
+        this.url(`/tenants/${tenantId}/memberships/${membershipId}/branch-assignments`),
+        { headers: deLaOrganizacion(tenantId) },
+      )
+      .pipe(
+        map((body) => ({
+          count: body.count,
+          items: body.items.map(toBranchAssignmentListItem),
+        })),
+      );
+  }
+
+  /**
+   * `GET /tenants/{id}/child-tenants` — sub-organizaciones (UC-04-03, cara de
+   * lectura).
+   *
+   * Devuelve la misma forma que el listado de plataforma, así que la tabla de
+   * organizaciones se reusa tal cual.
+   */
+  listChildTenants(
+    tenantId: string,
+    query: Pick<TenantSearchQuery, 'cursor' | 'limit'> = {},
+  ): Observable<TenantPage> {
+    let params = new HttpParams();
+    if (query.cursor !== undefined) {
+      params = params.set('cursor', query.cursor);
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+
+    return this.http
+      .get<RespuestaPagina>(this.url(`/tenants/${tenantId}/child-tenants`), {
+        params,
+        headers: deLaOrganizacion(tenantId),
+      })
+      .pipe(
+        map((body) => ({
+          ...body,
+          items: body.items.map(toTenantListItem),
+        })),
+      );
+  }
+
+  /** `GET /tenants/{id}` — la ficha completa de una organización. */
+  getTenant(tenantId: string): Observable<TenantListItem> {
+    return this.http
+      .get<ConNulos<WireTenantListItem>>(this.url(`/tenants/${tenantId}`), {
+        headers: deLaOrganizacion(tenantId),
+      })
+      .pipe(map(toTenantListItem));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/**
+ * Declara de qué organización habla la petición.
+ *
+ * Las rutas `/tenants/{id}/…` las usa la plataforma para mirar una organización
+ * **distinta** de la activa, y la API responde 403 si el tenant de la ruta no
+ * coincide con el de la cabecera. Sin esto, la ficha de cualquier organización
+ * que no sea la propia queda inservible. El interceptor respeta la cabecera ya
+ * puesta y no la pisa con la de la sesión.
+ */
+function deLaOrganizacion(tenantId: string): HttpHeaders {
+  return new HttpHeaders({ [TENANT_HEADER]: tenantId });
 }
 
 /* ---- formas de transporte -------------------------------------------------
@@ -102,9 +242,74 @@ interface WireTenantCreated {
   readonly createdAt: string;
 }
 
+type WireBranchListItem = Omit<BranchListItem, 'createdAt'> & { readonly createdAt: string };
+
+interface RespuestaSucursales {
+  readonly items: readonly ConNulos<WireBranchListItem>[];
+  readonly count: number;
+}
+
+/**
+ * Vigencia opcional a propósito: el contrato la declara `Date | null` y una
+ * membresía sin fin es lo normal, no una anomalía. Se declara opcional acá
+ * para que `sinNulos` la borre y `maybeDate` la reponga sólo si vino.
+ */
+type WireMembershipListItem = Omit<
+  MembershipListItem,
+  'startDate' | 'endDate' | 'createdAt'
+> & {
+  readonly startDate?: string;
+  readonly endDate?: string;
+  readonly createdAt: string;
+};
+
+type RespuestaMembresias = Omit<MembershipPage, 'items'> & {
+  readonly items: readonly ConNulos<WireMembershipListItem>[];
+};
+
+type WireBranchAssignmentListItem = Omit<BranchAssignmentListItem, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
+interface RespuestaAsignaciones {
+  readonly items: readonly ConNulos<WireBranchAssignmentListItem>[];
+  readonly count: number;
+}
+
 /** Una fila del listado con su fecha ya convertida. */
 function toTenantListItem(item: ConNulos<WireTenantListItem>): TenantListItem {
   const limpio = sinNulos<WireTenantListItem>(item);
+  return { ...limpio, createdAt: new Date(limpio.createdAt) };
+}
+
+function toBranchListItem(item: ConNulos<WireBranchListItem>): BranchListItem {
+  const limpio = sinNulos<WireBranchListItem>(item);
+  return { ...limpio, createdAt: new Date(limpio.createdAt) };
+}
+
+/**
+ * `startDate` y `endDate` llegan como `null` explícito cuando la membresía no
+ * tiene vigencia acotada. Se reponen sólo si vinieron con fecha, para que la
+ * pantalla pueda distinguir «sin fin» de «no vino el dato».
+ */
+function toMembershipListItem(item: ConNulos<WireMembershipListItem>): MembershipListItem {
+  // Las tres fechas se sacan del resto: si se dejaran en el spread volverían a
+  // entrar como texto y pisarían las ya convertidas.
+  const { startDate, endDate, createdAt, ...resto } = sinNulos<WireMembershipListItem>(item);
+  const desde = maybeDate(startDate);
+  const hasta = maybeDate(endDate);
+  return {
+    ...resto,
+    ...(desde === undefined ? {} : { startDate: desde }),
+    ...(hasta === undefined ? {} : { endDate: hasta }),
+    createdAt: new Date(createdAt),
+  };
+}
+
+function toBranchAssignmentListItem(
+  item: ConNulos<WireBranchAssignmentListItem>,
+): BranchAssignmentListItem {
+  const limpio = sinNulos<WireBranchAssignmentListItem>(item);
   return { ...limpio, createdAt: new Date(limpio.createdAt) };
 }
 

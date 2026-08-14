@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-119 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+177 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -24,6 +24,18 @@ Archivo: `src/app/core/data-access/delegated-access/delegated-access.client.ts`
 | `POST` | `/practitioner-delegates/:delegationId/grants` |
 | `POST` | `/practitioner-delegates/:delegationId/revoke` |
 
+## `AccountingClient`
+
+Archivo: `src/app/core/data-access/accounting/accounting.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/accounting/accounts` |
+| `GET` | `/accounting/journal-transactions` |
+| `GET` | `/accounting/journal-transactions/:transactionId` |
+| `GET` | `/accounting/trial-balance` |
+| `GET` | `/practices` |
+
 ## `DirectoryClient`
 
 Archivo: `src/app/core/data-access/directory/directory.client.ts`
@@ -32,6 +44,11 @@ Archivo: `src/app/core/data-access/directory/directory.client.ts`
 |---|---|
 | `GET` | `/admin/tenants` |
 | `POST` | `/admin/tenants` |
+| `GET` | `/tenants/:tenantId` |
+| `GET` | `/tenants/:tenantId/branches` |
+| `GET` | `/tenants/:tenantId/child-tenants` |
+| `GET` | `/tenants/:tenantId/memberships` |
+| `GET` | `/tenants/:tenantId/memberships/:membershipId/branch-assignments` |
 
 ## `AuthProvidersClient`
 
@@ -61,6 +78,16 @@ Archivo: `src/app/core/data-access/authz/authz.client.ts`
 | `GET` | `/authz/care-relationships` |
 | `GET` | `/authz/legal-representations` |
 
+## `ServicesCatalogClient`
+
+Archivo: `src/app/core/data-access/services-catalog/services-catalog.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/billing/service-catalog` |
+| `POST` | `/billing/service-catalog` |
+| `GET` | `/practices` |
+
 ## `ClinicalClient`
 
 Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
@@ -80,13 +107,88 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `POST` | `/clinical/observations` |
 | `GET` | `/clinical/patients/:patientProfileId/summary` |
 
+## `ChartTemplatesClient`
+
+Archivo: `src/app/core/data-access/chart-templates/chart-templates.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/charts/templates` |
+| `POST` | `/charts/templates` |
+| `GET` | `/charts/templates/:id` |
+
+## `DiagnosticsClient`
+
+Archivo: `src/app/core/data-access/diagnostics/diagnostics.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/clinical/service-requests` |
+| `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` |
+| `GET` | `/diagnostics/patients/:patientProfileId/orders` |
+| `GET` | `/diagnostics/work-orders` |
+
 ## `FilesClient`
 
 Archivo: `src/app/core/data-access/files/files.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `DELETE` | `/common/files/:fileId` |
+| `POST` | `/common/files/:fileId/download-url` |
+| `POST` | `/common/files/:fileId/links` |
+| `GET` | `/common/files/links` |
 | `POST` | `/common/files/upload` |
+
+## `CommunityClient`
+
+Archivo: `src/app/core/data-access/community/community.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/community/blocks` |
+| `GET` | `/community/bookmarks` |
+| `POST` | `/community/comments` |
+| `GET` | `/community/conversations` |
+| `GET` | `/community/conversations/:conversationId/messages` |
+| `GET` | `/community/feed` |
+| `GET` | `/community/follows` |
+| `GET` | `/community/groups` |
+| `GET` | `/community/groups/:groupId/members` |
+| `GET` | `/community/notifications` |
+| `GET` | `/community/polls/:pollId` |
+| `GET` | `/community/posts/:postId` |
+| `GET` | `/community/posts/:postId/comments` |
+| `GET` | `/community/posts/:postId/reactions` |
+| `GET` | `/community/profiles/:profileId` |
+| `GET` | `/community/profiles/:profileId/posts` |
+| `POST` | `/community/profiles/:profileId/posts` |
+| `GET` | `/community/profiles/:profileId/reviews` |
+| `GET` | `/community/profiles/me` |
+| `PUT` | `/community/profiles/me` |
+| `PUT` | `/community/reactions` |
+
+## `ProceduresClient`
+
+Archivo: `src/app/core/data-access/procedures/procedures.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/dental-procedures` |
+| `POST` | `/dental-procedures` |
+| `GET` | `/dental-procedures/catalog` |
+| `GET` | `/procedure-cases` |
+| `GET` | `/procedure-cases/:caseId` |
+
+## `FormsClient`
+
+Archivo: `src/app/core/data-access/forms/forms.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/forms/instances` |
+| `POST` | `/forms/instances/:instanceId/close` |
+| `POST` | `/forms/instances/:instanceId/values` |
 
 ## `GeoClient`
 
@@ -195,6 +297,10 @@ Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
 | `POST` | `/profiles/patients/merge/:eventId/reverse` |
 | `POST` | `/profiles/persons/:personId/account-links` |
 | `POST` | `/profiles/practitioners` |
+| `POST` | `/profiles/practitioners/:profileId/jurisdiction-authorizations` |
+| `POST` | `/profiles/practitioners/:profileId/specialties` |
+| `PATCH` | `/profiles/practitioners/me` |
+| `GET` | `/profiles/practitioners/me/summary` |
 
 ## `PublicClient`
 
@@ -214,6 +320,7 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 | `GET` | `/scheduling/bookings/:bookingId` |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` |
+| `POST` | `/scheduling/bookings/:bookingId/reschedule` |
 | `POST` | `/scheduling/holds/:holdToken/confirm` |
 | `GET` | `/scheduling/resources` |
 | `GET` | `/scheduling/slots` |

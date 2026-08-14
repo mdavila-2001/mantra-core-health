@@ -15,6 +15,13 @@ import { TokenRefreshService } from './token-refresh.service';
 export const LOGIN_ROUTE = '/auth';
 
 /**
+ * Cabecera con la que la API sabe de qué organización se habla. Exportada para
+ * que las pantallas que consultan una organización distinta de la activa la
+ * declaren con este mismo nombre y no con una copia literal.
+ */
+export const TENANT_HEADER = 'X-Tenant-Id';
+
+/**
  * Rutas que la API declara `@Public()` y que por definición se piden sin
  * sesión. Mandarles un `Authorization` no rompe nada, pero intentar refrescar
  * cuando una de ellas responde 401 sí: el 401 de un login son credenciales
@@ -105,6 +112,12 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
  * El tenant sale del propio token —la API no expone `/me`— y solo viaja cuando
  * está resuelto: con varias organizaciones y ninguna elegida todavía, no se
  * manda. Adivinar una podría mostrar datos de la organización equivocada.
+ *
+ * Si la petición ya trae `X-Tenant-Id`, se respeta. Lo necesitan las pantallas
+ * de plataforma que consultan una organización **distinta** de la activa (la
+ * ficha de `/tenants/{id}/…`): la API rechaza con 403 la petición privilegiada
+ * cuyo tenant de la ruta contradice el de la cabecera, así que pisar aquí lo
+ * que la pantalla declaró dejaría esas fichas inservibles.
  */
 function withCredentials<T>(request: HttpRequest<T>, session: SessionStore): HttpRequest<T> {
   const accessToken = session.accessToken();
@@ -112,12 +125,12 @@ function withCredentials<T>(request: HttpRequest<T>, session: SessionStore): Htt
     return request;
   }
 
-  const tenantId = session.activeTenantId();
+  const tenantId = request.headers.has(TENANT_HEADER) ? null : session.activeTenantId();
 
   return request.clone({
     setHeaders: {
       Authorization: `Bearer ${accessToken}`,
-      ...(tenantId === null ? {} : { 'X-Tenant-Id': tenantId }),
+      ...(tenantId === null ? {} : { [TENANT_HEADER]: tenantId }),
     },
   });
 }
