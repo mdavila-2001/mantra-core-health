@@ -54,6 +54,7 @@ import { AttachmentsBlock } from './attachments-block/attachments-block';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import { DiagnosticsBlock } from './diagnostics-block/diagnostics-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
+import { ProceduresBlock } from './procedures-block/procedures-block';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -167,6 +168,7 @@ interface Expediente {
     FormField,
     MedicationBlock,
     PageHeader,
+    ProceduresBlock,
     StatusSeal,
     Tab,
     Tabs,

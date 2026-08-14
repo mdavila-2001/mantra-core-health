@@ -154,6 +154,16 @@
       [encounterId]="encuentroParaRecetar()"
     />
 
+    <!-- ─── El histórico de procedimientos ───────────────────────────────
+         Cirugías y odontología (punto 7). Sin `[encounterId]` y sin
+         `(cambio)`, a diferencia de los tres de arriba, y por el mismo motivo
+         en los dos casos: no cuelga del encuentro abierto. Un histórico es de
+         la persona, no de la consulta de hoy —se lee igual sin encuentro—, y
+         lo único que se escribe desde acá, el tratamiento odontológico, no
+         aparece en `GET /clinical/patients/:id/summary`: el bloque relee lo
+         suyo y avisar acá recargaría cinco bloques que no cambiaron. -->
+    <app-procedures-block [patientProfileId]="pacienteDeLaFicha()" />
+
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->

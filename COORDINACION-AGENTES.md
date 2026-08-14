@@ -168,6 +168,84 @@ todo `redsat/` · `package.json` (ninguno de los dos repos) ·
 
 ---
 
+## Sesión 2026-08-14 · Carril 3 — punto 7, histórico de procedimientos (cirugía y odontología)
+
+**Rama:** `carril-3/procedimientos-quirurgicos` (los dos repos) · **Base:** `dev` en frontend,
+`master` en backend · **Plan:** `CARRIL-3-procedimientos-quirurgicos.md` ·
+`CARRILES-2026-08-14-README.md`
+
+### Dos correcciones al plan del carril, encontradas al leer el código
+
+El documento del carril daba por buenas dos cosas que el repo no sostiene. Las dos cambian
+qué hay que escribir, así que quedan acá antes que en el commit:
+
+1. **La parte quirúrgica *sí* necesita backend.** El plan decía que alcanzaba con confirmar
+   los 28 endpoints y, como mucho, agregar el filtro por paciente. El filtro **ya existe**
+   (`ListCasesQueryDto.patientProfileId`, `periop.dto.ts:531`). Lo que no existe es la
+   **lectura de hallazgos, implantes y pasos operatorios**: se escriben por `POST` y
+   `GET /procedure-cases/:id` no los devuelve (`CaseDetailDto` trae equipo, diagnósticos,
+   órdenes, plan e informes, y nada más). Sin eso, la definición de hecho del carril —«se ve
+   su histórico con equipo, hallazgos e implantes»— es inalcanzable desde el frontend. Es el
+   mismo defecto que `clinical.client.ts` ya nombra: escrituras que la pantalla no puede
+   volver a leer.
+2. **Odontología no necesita tabla nueva, así que el bloqueador de `SQL/` no aplica.**
+   `clinical.procedures` es una tabla de procedimientos **general** (paciente, código,
+   profesional, fecha, `note_text`, categoría) y `procedures_perioperative.procedure_body_sites`
+   cuelga de ella con `body_site_concept_id` + `laterality_concept_id`: pieza y cuadrante. Los
+   conceptos se siembran **desde TypeScript** (`defineModuleConcepts`, UUIDv5 determinista), no
+   desde `SQL/`. El histórico odontológico entra entero en tablas que ya existen. **No hay
+   patch de DDL en este carril y no hay que coordinar con quien tenga el modelo.**
+
+### Archivos nuevos (no chocan con nada)
+
+```text
+backend  src/modules/procedures_perioperative/procedures_perioperative.concepts.ts
+backend  src/modules/procedures_perioperative/repositories/periop-dental.repository.ts
+backend  src/modules/procedures_perioperative/services/periop-dental.service.ts (+ .spec.ts)
+backend  src/modules/procedures_perioperative/controllers/dental.controller.ts (+ .spec.ts)
+backend  test/integration/dental-procedures.int-spec.ts
+frontend src/app/core/data-access/procedures/procedures.client.ts (+ .types.ts + .spec.ts)
+frontend src/app/features/clinical-record/patient-chart/procedures-block/ (ts+html+css+spec)
+```
+
+### Archivos existentes que toco, y por qué
+
+| Repo | Archivo | Qué le hago |
+|---|---|---|
+| backend | `procedures_perioperative/dto/periop.dto.ts` | tres arrays nuevos **al final** de `CaseDetailDto` (`operativeSteps`, `findings`, `implants`) |
+| backend | `procedures_perioperative/services/periop-cases.service.ts` | `getCaseDetail` suma tres lecturas al `Promise.all` |
+| backend | `procedures_perioperative/repositories/periop-intraop.repository.ts` | tres `find*ByCase` nuevos, al final |
+| backend | `procedures_perioperative/procedures_perioperative.module.ts` | registra el controller/service/repo odontológicos |
+| backend | **`src/common/seed/module-concepts.ts`** | **compartido**: un `import` y un `...SPREAD` al final del arreglo. Ningún otro carril declaró conceptos todavía; si otro lo hace, son dos adiciones en líneas distintas |
+| frontend | `patient-chart.ts` (+ `.html`) | import de `procedures-block` + una entrada en el ensamblado, **en el último commit** |
+| frontend | `patient-chart.spec.ts` | un `responderHistoricoDeProcedimientos()` en el `afterEach`, al lado del del carril 4 — mis tres lecturas aparecen en toda prueba que pinte la ficha |
+| frontend | **`proxy.conf.json`, `proxy.conf.docker.json`, `deploy/nginx.conf`** | **compartidos**: el prefijo `/procedure-cases`, al final de cada lista. Los tres o ninguno — `yarn check:prefijos` (`scripts/check-api-prefixes.mjs`) falla si se olvida uno, y el modo de fallo es el peor: anda en desarrollo y devuelve `index.html` en producción |
+
+**Corrección a este mismo bloque, ya escrito:** al empezar leí la ficha contra `master`, donde
+`medication-block/` y `diagnosis-block/` no existen, y anoté acá que el molde del plan era
+imaginario. **Es al revés:** sobre `dev` los dos bloques están, y el molde del plan es exacto.
+`procedures-block` sigue ese molde —`input.required<string>()` llamado `patientProfileId`, una
+etiqueta en la plantilla al final del ensamblado— y no toca el arreglo `bloques()`, que es de
+filas de una misma tabla. Quien venga de los carriles 1, 2 o 5: **arranquen de `dev`**, no de
+`master`.
+
+**Respuesta al aviso del carril 4:** drenadas. `patient-chart.spec.ts` tiene ahora un
+`responderHistoricoDeProcedimientos()` al lado de tu `responderCircuitoDiagnostico()`, en el
+mismo `afterEach` y con el mismo patrón. Las 75 pruebas de `patient-chart/**` pasan con los dos
+bloques montados. Si hay conflicto al mezclar es de dos líneas contiguas: se aceptan las dos.
+
+**Mi bloque no toma `[encounterId]`,** a diferencia de los tuyos y de los otros dos: un
+histórico es de la persona, no de la consulta de hoy, y se lee igual sin encuentro abierto.
+Tampoco emite `(cambio)` — mismo criterio que vos usaste para `diagnostics-block`.
+
+### Lo que NO toco
+
+`navigation.map.ts` · `app.routes.ts` · `package.json` (ninguno de los dos repos) ·
+`registrarEncuentro()`/`cerrarEncuentro()` · `medication`/`diagnosis`/`specialty-form`/`budget` ·
+todo `redsat/` · `src/modules/clinical/` (leo sus entidades, no las edito) · `SQL/`.
+
+---
+
 ## Sesión 2026-08-13 · Port del sistema de diseño y las vistas de la bóveda
 
 **Rama:** `pablo/redsat-vistas`, apilada sobre `pablo/contabilidad-frontend`.

@@ -178,9 +178,32 @@ describe('PatientChart', () => {
     }
   }
 
+  /**
+   * El histórico de procedimientos lee lo suyo, por el mismo motivo que el
+   * circuito diagnóstico: cirugías y odontología son otro módulo y no salen de
+   * `GET /clinical/patients/:id/summary`.
+   *
+   * Son tres peticiones y no una porque las dos mitades del bloque tienen
+   * permisos distintos —de ahí que no vayan en un `forkJoin`— y el catálogo
+   * odontológico es una lectura aparte. Acá sólo se drenan: lo que el bloque
+   * hace con cada respuesta lo fijan sus propias pruebas.
+   */
+  function responderHistoricoDeProcedimientos(): void {
+    for (const req of http.match((r) => r.url === '/procedure-cases')) {
+      req.flush({ items: [], total: 0 });
+    }
+    for (const req of http.match((r) => r.url === '/dental-procedures')) {
+      req.flush({ items: [], total: 0 });
+    }
+    for (const req of http.match((r) => r.url === '/dental-procedures/catalog')) {
+      req.flush({ procedureCodes: [], teeth: [], quadrants: [] });
+    }
+  }
+
   afterEach(() => {
     responderCatalogoDeMedicacion();
     responderCircuitoDiagnostico();
+    responderHistoricoDeProcedimientos();
     http.verify();
   });
 
