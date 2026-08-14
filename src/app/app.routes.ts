@@ -87,6 +87,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/geolocation': () =>
     import('./features/geo/geo-home/geo-home').then((m) => m.GeoHome),
+  'administration/services-catalog': () =>
+    import('./features/admin/services-catalog/services-catalog').then((m) => m.ServicesCatalog),
 };
 
 /**

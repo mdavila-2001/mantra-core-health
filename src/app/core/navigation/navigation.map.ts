@@ -223,6 +223,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Seguí sujetos rastreados, sus recorridos y las geocercas de la organización.',
     module: 'M13 geo',
   },
+  {
+    // Carril 1 (punto 3 del reclamo). `GET /billing/service-catalog` no exige
+    // rol —cualquier profesional que cotice necesita leerlo—, pero la sección
+    // en sí queda en Administración: mantener la lista fija es una tarea de
+    // configuración, no de atención. El alta (`POST`) sí exige `SECURITY_ADMIN`,
+    // como el resto de `billing`.
+    path: 'administration/services-catalog',
+    label: 'Catálogo de servicios',
+    group: 'Administración',
+    icon: 'billing',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Mantené la lista fija de servicios sobre la que se arman los presupuestos.',
+    module: 'M17 billing',
+  },
 
   /* -- Facturación · fase 2 ------------------------------------------------ */
 
