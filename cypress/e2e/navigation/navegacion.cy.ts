@@ -31,9 +31,15 @@ describe('Navegación', () => {
     // El muro, igual: su filtro es tener **perfil público** de `community`, que
     // es otra entidad distinta del `pid` de la sesión y sólo se sabe
     // preguntándole al backend. Un rol no puede expresarlo.
+    //
+    // Y el glosario tampoco declara roles, pero por la razón opuesta: el
+    // cliente lo pidió para «cada profesional» y leer el catálogo no exige
+    // ninguno (UC-03-13). Es la única entrada de la lista que está acá porque
+    // se decidió que la viera todo el mundo, no porque no se pueda filtrar.
     SideNav.rutas().should('deep.equal', [
       '/dashboard',
       '/feed',
+      '/glossary',
       '/my-account',
       '/my-account/appointments',
       '/my-account/identity/verify',
