@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-303 componentes y 39 servicios inyectables, leídos de `src/`.
+318 componentes y 43 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -25,7 +25,7 @@
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (21)
+## Molécula (22)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -47,14 +47,16 @@
 | `app-radio` | `Radio` | `value`, `label`, `disabled` | — | — | OnPush | **no** |
 | `app-reference-combobox` | `ReferenceCombobox` | `selected`, `options`, `loading`, `disabled`, `placeholder`, `debounceMs`, `minQueryLength`, `label`, `emptyMessage` | `searched`, `selectionChange` | `value` | OnPush | sí |
 | `app-search-field` | `SearchField` | `placeholder`, `debounceMs`, `loading`, `disabled`, `label` | `searched` | `value` | OnPush | sí |
+| `li[app-search-result]` | `SearchResult` | `resultado` | — | — | OnPush | sí |
 | `app-tab` | `Tab` | `label`, `disabled` | — | — | OnPush | **no** |
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
 
-## Organismo (15)
+## Organismo (16)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
+| `app-attachment-uploader` | `AttachmentUploader` | `ownerType`, `ownerId` | `attached` | — | OnPush | sí |
 | `app-auth-layout` | `AuthLayout` | `title`, `subtitle`, `showBrand` | — | — | OnPush | sí |
 | `app-auth-split` | `AuthSplit` | `claim`, `tagline` | — | — | OnPush | sí |
 | `app-data-table` | `DataTable` | `state`, `columns`, `trackBy`, `caption`, `selectable`, `sort`, `cursor` | `sortChanged`, `cursorChanged`, `selectionChanged`, `retry`, `refresh` | — | OnPush | sí |
@@ -71,12 +73,17 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (249)
+## Feature (262)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
 | `app-appointments` | `Appointments` | — | — | — | OnPush | sí |
+| `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
+| `app-practitioner-profile-edit` | `PractitionerProfileEdit` | — | — | — | OnPush | sí |
+| `app-practitioner-profile` | `PractitionerProfile` | — | — | — | OnPush | sí |
+| `app-public-profile-preview` | `PublicProfilePreview` | — | — | — | OnPush | sí |
+| `app-work-history` | `WorkHistory` | — | — | — | OnPush | sí |
 | `app-accounting` | `Accounting` | — | — | — | OnPush | **no** |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-organization-detail` | `OrganizationDetail` | — | — | — | OnPush | **no** |
@@ -87,6 +94,7 @@
 | `app-patient-merge` | `PatientMerge` | — | — | — | OnPush | sí |
 | `app-patient-new` | `PatientNew` | — | — | — | OnPush | sí |
 | `app-related-person-form` | `RelatedPersonForm` | `profileId`, `yaTieneTutor` | `registered`, `cancelled` | — | OnPush | sí |
+| `app-services-catalog` | `ServicesCatalog` | — | — | — | OnPush | sí |
 | `app-terminology-catalog` | `TerminologyCatalog` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
 | `app-agenda` | `Agenda` | — | — | — | OnPush | sí |
@@ -116,9 +124,13 @@
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
 | `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
+| `app-admission-block` | `AdmissionBlock` | `patientProfileId`, `encounterId`, `internaciones` | `cambio` | — | OnPush | sí |
+| `app-attachments-block` | `AttachmentsBlock` | `patientProfileId` | — | — | OnPush | sí |
 | `app-diagnosis-block` | `DiagnosisBlock` | `patientProfileId`, `encounterId` | `cambio` | — | OnPush | sí |
+| `app-diagnostics-block` | `DiagnosticsBlock` | `patientProfileId`, `encounterId` | — | — | OnPush | sí |
 | `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas` | `cambio` | — | OnPush | sí |
 | `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |
+| `app-procedures-block` | `ProceduresBlock` | `patientProfileId` | — | — | OnPush | sí |
 | `app-dashboard` | `Dashboard` | — | — | — | OnPush | sí |
 | `app-access-request-form` | `AccessRequestForm` | — | — | — | OnPush | sí |
 | `app-access-request-resolution` | `AccessRequestResolution` | — | — | — | OnPush | sí |
@@ -136,7 +148,10 @@
 | `app-design-system-sample` | `DesignSystemSample` | — | — | — | OnPush | sí |
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
+| `app-diagnostics` | `Diagnostics` | — | — | — | OnPush | sí |
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
+| `app-feed` | `Feed` | — | — | — | OnPush | sí |
+| `app-post-card` | `PostCard` | `post`, `actorProfileId` | `reacted` | — | OnPush | sí |
 | `app-consent-revocation` | `ConsentRevocation` | — | — | — | OnPush | sí |
 | `app-geo-home` | `GeoHome` | — | — | — | OnPush | sí |
 | `app-geofence-event-form` | `GeofenceEventForm` | — | — | — | OnPush | sí |
@@ -224,7 +239,7 @@
 | `app-redsat-buscar-perfil-laboratorio-detalle` | `BuscarPerfilLaboratorioDetalle` | — | — | — | Default | **no** |
 | `app-redsat-buscar-perfil-organizacion-detalle` | `BuscarPerfilOrganizacionDetalle` | — | — | — | Default | **no** |
 | `app-redsat-buscar-perfil-profesional-detalle` | `BuscarPerfilProfesionalDetalle` | — | — | — | Default | **no** |
-| `app-redsat-buscar-profesionales-listado` | `BuscarProfesionalesListado` | — | — | — | Default | **no** |
+| `app-redsat-buscar-profesionales-listado` | `BuscarProfesionalesListado` | — | — | — | OnPush | **no** |
 | `app-redsat-buscar-seguidos-y-guardados-listado` | `BuscarSeguidosYGuardadosListado` | — | — | — | Default | **no** |
 | `app-redsat-datos-compartidos-archivos-eliminar` | `DatosCompartidosArchivosEliminar` | — | — | — | Default | **no** |
 | `app-redsat-datos-compartidos-archivos-formulario` | `DatosCompartidosArchivosFormulario` | — | — | — | Default | **no** |
@@ -337,7 +352,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (39)
+## Servicios (43)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -351,6 +366,7 @@
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
 | `CommunityClient` | `src/app/core/data-access/community/community.client.ts` | root | sí |
 | `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |
+| `DiagnosticsClient` | `src/app/core/data-access/diagnostics/diagnostics.client.ts` | root | sí |
 | `DirectoryClient` | `src/app/core/data-access/directory/directory.client.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
 | `GeoClient` | `src/app/core/data-access/geo/geo.client.ts` | root | sí |
@@ -358,9 +374,12 @@
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |
 | `IdentityAdminClient` | `src/app/core/data-access/identity/identity-admin.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
+| `PracticeSitesClient` | `src/app/core/data-access/practice-sites/practice-sites.client.ts` | root | sí |
+| `ProceduresClient` | `src/app/core/data-access/procedures/procedures.client.ts` | root | sí |
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |
 | `PublicClient` | `src/app/core/data-access/public/public.client.ts` | root | **no** |
 | `SchedulingClient` | `src/app/core/data-access/scheduling/scheduling.client.ts` | root | sí |
+| `ServicesCatalogClient` | `src/app/core/data-access/services-catalog/services-catalog.client.ts` | root | sí |
 | `SystemContextClient` | `src/app/core/data-access/system-context/system-context.client.ts` | root | sí |
 | `TerminologyClient` | `src/app/core/data-access/terminology/terminology.client.ts` | root | sí |
 | `AppErrorHandler` | `src/app/core/errors/app-error-handler.ts` | local | **no** |

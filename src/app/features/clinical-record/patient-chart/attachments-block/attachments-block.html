@@ -1,0 +1,55 @@
+<app-card variant="outlined">
+  <h3 class="adjuntos__titulo">Archivos adjuntos</h3>
+
+  @if (error(); as mensaje) {
+    <app-alert tone="error">{{ mensaje }}</app-alert>
+  }
+
+  @if (cargando()) {
+    <p class="adjuntos__cargando" role="status">Buscando los adjuntos…</p>
+  } @else if (adjuntos().length === 0) {
+    <p class="adjuntos__vacio">Todavía no hay archivos adjuntos en esta ficha.</p>
+  } @else {
+    <ul class="adjuntos__lista">
+      @for (adjunto of adjuntos(); track adjunto.linkId) {
+        <li class="adjuntos__item">
+          <div class="adjuntos__datos">
+            <p class="adjuntos__nombre">{{ nombre(adjunto) }}</p>
+            <p class="adjuntos__meta">
+              {{ adjunto.file.category === 'IMAGE' ? 'Imagen' : 'Documento' }} ·
+              {{ adjunto.linkedAt | date: 'd MMM y' }}
+            </p>
+            @if (esProtegido(adjunto)) {
+              <app-badge variant="warning">Dato clínico protegido</app-badge>
+            }
+          </div>
+
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            [isLoading]="descargando() === adjunto.linkId"
+            (clicked)="abrir(adjunto)"
+          >
+            Abrir
+          </button>
+
+          @if (sinPermiso() === adjunto.linkId) {
+            <!-- Se dice, no se esconde: quien mira tiene que saber que el
+                 archivo existe y que le falta permiso, no creer que no hay. -->
+            <app-alert tone="warning" class="adjuntos__aviso">
+              Este archivo es dato clínico protegido y tu cuenta no tiene permiso
+              para abrirlo. Pedilo a quien administra los accesos.
+            </app-alert>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <app-attachment-uploader
+    ownerType="PATIENT"
+    [ownerId]="patientProfileId()"
+    (attached)="cargar()"
+  />
+</app-card>

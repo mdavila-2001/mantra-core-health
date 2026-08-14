@@ -139,10 +139,71 @@ describe('PatientChart', () => {
         { status: 404, statusText: 'Not Found' },
       );
     }
+    responderAdjuntos();
+  }
+
+  /**
+   * El bloque de adjuntos pide su lista apenas se crea, igual que los otros dos.
+   *
+   * Se responde vacío: qué hace con la lista lo fijan sus propias pruebas
+   * (`attachments-block.spec.ts`). Acá sólo importa que no quede como petición
+   * huérfana del expediente.
+   */
+  function responderAdjuntos(): void {
+    for (const req of http.match((r) => r.url === '/common/files/links')) {
+      req.flush({ items: [], count: 0 });
+    }
+  }
+
+  /**
+   * El bloque de laboratorio e imagenología lee **lo suyo**, a diferencia del de
+   * medicación, al que el expediente le baja las recetas ya hechas.
+   *
+   * Y es a propósito: el circuito diagnóstico no sale de
+   * `GET /clinical/patients/:id/summary` —es otro módulo y otra lectura—, así
+   * que el bloque la hace suya y el expediente no cambia por eso. El precio es
+   * esta petición, que aparece en cualquier prueba que llegue a pintar la ficha
+   * y que acá sólo hay que drenar: lo que el bloque hace con la respuesta lo
+   * fijan sus propias pruebas.
+   */
+  function responderCircuitoDiagnostico(): void {
+    for (const req of http.match((r) => r.url.startsWith('/diagnostics/patients/'))) {
+      req.flush({
+        patientProfileId: 'p-1',
+        orders: [],
+        reports: [],
+        limit: 25,
+        truncated: [],
+      });
+    }
+  }
+
+  /**
+   * El histórico de procedimientos lee lo suyo, por el mismo motivo que el
+   * circuito diagnóstico: cirugías y odontología son otro módulo y no salen de
+   * `GET /clinical/patients/:id/summary`.
+   *
+   * Son tres peticiones y no una porque las dos mitades del bloque tienen
+   * permisos distintos —de ahí que no vayan en un `forkJoin`— y el catálogo
+   * odontológico es una lectura aparte. Acá sólo se drenan: lo que el bloque
+   * hace con cada respuesta lo fijan sus propias pruebas.
+   */
+  function responderHistoricoDeProcedimientos(): void {
+    for (const req of http.match((r) => r.url === '/procedure-cases')) {
+      req.flush({ items: [], total: 0 });
+    }
+    for (const req of http.match((r) => r.url === '/dental-procedures')) {
+      req.flush({ items: [], total: 0 });
+    }
+    for (const req of http.match((r) => r.url === '/dental-procedures/catalog')) {
+      req.flush({ procedureCodes: [], teeth: [], quadrants: [] });
+    }
   }
 
   afterEach(() => {
     responderCatalogoDeMedicacion();
+    responderCircuitoDiagnostico();
+    responderHistoricoDeProcedimientos();
     http.verify();
   });
 

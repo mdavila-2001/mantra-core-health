@@ -30,8 +30,12 @@ import type {
   GroupMembersQuery,
   GroupPage,
   GroupsQuery,
+  NewComment,
+  NewReaction,
+  NewPost,
   NotificationPage,
   NotificationsQuery,
+  OwnPublicProfile,
   PollDetail,
   PostCommentsQuery,
   PostDetail,
@@ -44,18 +48,23 @@ import type {
   ServiceReview,
   ServiceReviewPage,
   SocialNotification,
+  UpsertOwnPublicProfile,
 } from './community.types';
+
+/** El hashtag que distingue un artículo médico del resto de las publicaciones. */
+export const MEDICAL_ARTICLE_HASHTAG = 'articulo-medico';
 
 /**
  * Cliente de `community` (M19): la red social médica.
  *
- * ## Sólo lecturas, y a propósito
+ * ## Lecturas primero, y las escrituras llegan con su pantalla
  *
  * El módulo tiene 17 escrituras en el backend —publicar, comentar, reaccionar,
- * seguir, bloquear, reportar, moderar— y ninguna está acá. No es un olvido: las
- * escrituras llegan con la pantalla que las dispara, y la pantalla necesita
- * antes poder **leer**. Agregar una escritura sin su pantalla es adivinar la
- * forma del formulario.
+ * seguir, bloquear, reportar, moderar—; la regla sigue siendo agregar cada una
+ * recién cuando existe la pantalla que la dispara, para no adivinar la forma
+ * del formulario. La vitrina propia (`getOwnProfile`/`upsertOwnProfile`) y
+ * publicar/comentar (`publishPost`/`createComment`) ya tienen pantalla —«Mi
+ * perfil» y «Mis artículos médicos»— y por eso están.
  *
  * ## Por qué existe antes que las pantallas
  *
@@ -92,6 +101,32 @@ import type {
 export class CommunityClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+
+  // ─── Vitrina propia ────────────────────────────────────────────────────────
+
+  /**
+   * `GET /community/profiles/me` — la vitrina pública propia, o `null` si
+   * todavía no se creó ninguna.
+   *
+   * `null` es un estado normal —el de cualquiera que no publicó nada
+   * todavía—, no un error: quien llama no debe tratarlo como un fallo de
+   * lectura.
+   */
+  getOwnProfile(): Observable<OwnPublicProfile | null> {
+    return this.http
+      .get<WireOwnProfile | null>(this.url('/community/profiles/me'))
+      .pipe(map((body) => (body === null ? null : sinNulos(body))));
+  }
+
+  /**
+   * `PUT /community/profiles/me` — crea o actualiza la vitrina propia.
+   * Idempotente: no hace falta saber si ya existía una.
+   */
+  upsertOwnProfile(datos: UpsertOwnPublicProfile): Observable<OwnPublicProfile> {
+    return this.http
+      .put<WireOwnProfile>(this.url('/community/profiles/me'), datos)
+      .pipe(map((body) => sinNulos(body)));
+  }
 
   // ─── Perfil público ────────────────────────────────────────────────────────
 
@@ -132,6 +167,32 @@ export class CommunityClient {
   // ─── Publicaciones ─────────────────────────────────────────────────────────
 
   /**
+   * `POST /community/profiles/:profileId/posts` — publica.
+   *
+   * Si `esArticulo` es verdadero, agrega el hashtag {@link MEDICAL_ARTICLE_HASHTAG}
+   * — es la única diferencia entre publicar un artículo médico y cualquier otra
+   * publicación: el backend no distingue un tipo de contenido nuevo, sólo un
+   * `post` con esa etiqueta.
+   *
+   * @param profileId - La vitrina que publica.
+   * @param datos - El cuerpo y sus opciones.
+   * @param esArticulo - Si se etiqueta como artículo médico.
+   */
+  publishPost(
+    profileId: string,
+    datos: NewPost,
+    esArticulo = false,
+  ): Observable<{ readonly id: string }> {
+    const hashtags = esArticulo
+      ? [...new Set([...(datos.hashtags ?? []), MEDICAL_ARTICLE_HASHTAG])]
+      : datos.hashtags;
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/community/profiles/${encodeURIComponent(profileId)}/posts`),
+      { ...datos, hashtags },
+    );
+  }
+
+  /**
    * `GET /community/posts/:postId` — una publicación abierta.
    *
    * @param postId - La publicación.
@@ -167,6 +228,34 @@ export class CommunityClient {
         { params: this.cursorParams(query, this.actorParams(query)) },
       )
       .pipe(map(toCommentPage));
+  }
+
+  /**
+   * `POST /community/comments` — comenta, o responde a un comentario si se
+   * pasa `parentCommentId`.
+   */
+  /**
+   * `PUT /community/reactions` — reacciona a una publicación o comentario.
+   *
+   * Es **upsert**, no alta: reaccionar de nuevo con otro tipo cambia la
+   * reacción en vez de agregar una segunda. Por eso es `PUT` y por eso el
+   * contrato exige `actorProfileId` — es la mitad de la clave, no un dato que
+   * el servidor pueda deducir de la sesión.
+   *
+   * @param reaccion - Quién, a qué y con qué.
+   */
+  react(reaccion: NewReaction): Observable<{ readonly id: string }> {
+    return this.http.put<{ readonly id: string }>(
+      this.url('/community/reactions'),
+      reaccion,
+    );
+  }
+
+  createComment(datos: NewComment): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(this.url('/community/comments'), {
+      ...datos,
+      commentableType: 'POST',
+    });
   }
 
   /**
@@ -447,6 +536,8 @@ export class CommunityClient {
     ========================================================================== */
 
 type ConNulos<T> = { readonly [K in keyof T]: T[K] | null };
+
+type WireOwnProfile = ConNulos<OwnPublicProfile>;
 
 type WireBadge = Omit<
   ConNulos<PublicProfileDetail['badges'][number]>,

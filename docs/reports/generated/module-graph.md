@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-678 archivos TypeScript bajo `src/` y 2528 importaciones internas.
+727 archivos TypeScript bajo `src/` y 2777 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -16,6 +16,7 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/core/observability/browser/telemetry-browser.bootstrap.ts`
 - `src/app/features/accounting/accounting.ts`
 - `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
+- `src/app/features/diagnostics/diagnostics.routes.ts`
 - `src/app/features/redsat/accesos/acceso-de-emergencia-formulario/acceso-de-emergencia-formulario.ts`
 - `src/app/features/redsat/accesos/accesos-clinicos-del-paciente-formulario/accesos-clinicos-del-paciente-formulario.ts`
 - `src/app/features/redsat/accesos/accesos-clinicos-del-paciente-listado/accesos-clinicos-del-paciente-listado.ts`
@@ -165,36 +166,36 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/core/view-state/view-state.types.ts` | 114 |
-| `src/app/core/view-state/view-state.ts` | 99 |
-| `src/app/shared/components/atoms/button/button.ts` | 99 |
-| `src/app/core/http/error-to-view-state.ts` | 93 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 93 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 91 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 89 |
-| `src/app/core/navigation/navigation.service.ts` | 87 |
-| `src/app/shared/components/atoms/input/input.ts` | 83 |
-| `src/app/shared/a11y/announce-on-appear.ts` | 76 |
-| `src/app/shared/components/organisms/form-actions/form-actions.ts` | 70 |
-| `src/app/shared/components/organisms/form-section/form-section.ts` | 66 |
+| `src/app/core/view-state/view-state.types.ts` | 124 |
+| `src/app/core/view-state/view-state.ts` | 109 |
+| `src/app/shared/components/atoms/button/button.ts` | 106 |
+| `src/app/core/http/error-to-view-state.ts` | 103 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 100 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 100 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 99 |
+| `src/app/core/navigation/navigation.service.ts` | 92 |
+| `src/app/shared/components/atoms/input/input.ts` | 88 |
+| `src/app/shared/components/organisms/form-actions/form-actions.ts` | 78 |
+| `src/app/shared/a11y/announce-on-appear.ts` | 77 |
+| `src/app/shared/components/organisms/form-section/form-section.ts` | 67 |
 | `src/app/shared/forms/form-support.ts` | 61 |
-| `src/app/shared/components/atoms/textarea/textarea.ts` | 31 |
-| `src/app/shared/components/molecules/radio-group/radio-group.ts` | 31 |
-| `src/app/shared/components/molecules/radio/radio.ts` | 30 |
-| `src/app/shared/components/molecules/card/card.ts` | 29 |
+| `src/app/shared/components/molecules/card/card.ts` | 40 |
+| `src/app/shared/components/atoms/textarea/textarea.ts` | 35 |
+| `src/app/shared/components/molecules/radio-group/radio-group.ts` | 32 |
+| `src/app/shared/components/molecules/radio/radio.ts` | 31 |
+| `src/app/core/auth/session.store.ts` | 30 |
 | `src/app/shared/components/atoms/link/link.ts` | 28 |
-| `src/app/core/auth/session.store.ts` | 27 |
-| `src/app/core/data-access/api.ts` | 20 |
+| `src/app/core/auth/auth.service.ts` | 25 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 618 |
-| `@angular/router` | 316 |
-| `@angular/common` | 306 |
-| `@angular/forms` | 87 |
-| `rxjs` | 53 |
+| `@angular/core` | 667 |
+| `@angular/common` | 355 |
+| `@angular/router` | 330 |
+| `@angular/forms` | 88 |
+| `rxjs` | 67 |
 | `node:fs` | 13 |
 | `@opentelemetry/api` | 12 |
 | `@opentelemetry/sdk-trace-web` | 9 |
@@ -208,6 +209,7 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | `node:path` | 2 |
 | `@opentelemetry/sdk-trace-node` | 1 |
 | `axe-core` | 1 |
+| `jspdf` | 1 |
 | `node:crypto` | 1 |
 | `node:http` | 1 |
 | `node:https` | 1 |

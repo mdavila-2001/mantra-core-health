@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-146 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+175 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -78,6 +78,16 @@ Archivo: `src/app/core/data-access/authz/authz.client.ts`
 | `GET` | `/authz/care-relationships` |
 | `GET` | `/authz/legal-representations` |
 
+## `ServicesCatalogClient`
+
+Archivo: `src/app/core/data-access/services-catalog/services-catalog.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/billing/service-catalog` |
+| `POST` | `/billing/service-catalog` |
+| `GET` | `/practices` |
+
 ## `ClinicalClient`
 
 Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
@@ -86,6 +96,7 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 |---|---|
 | `GET` | `/charts/patients/:patientProfileId/chart` |
 | `POST` | `/clinical/allergy-intolerances` |
+| `POST` | `/clinical/care-episodes` |
 | `POST` | `/clinical/conditions` |
 | `POST` | `/clinical/diagnostic-reports` |
 | `POST` | `/clinical/diagnostic-reports/:diagnosticReportId/release` |
@@ -97,12 +108,27 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `POST` | `/clinical/observations` |
 | `GET` | `/clinical/patients/:patientProfileId/summary` |
 
+## `DiagnosticsClient`
+
+Archivo: `src/app/core/data-access/diagnostics/diagnostics.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/clinical/service-requests` |
+| `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` |
+| `GET` | `/diagnostics/patients/:patientProfileId/orders` |
+| `GET` | `/diagnostics/work-orders` |
+
 ## `FilesClient`
 
 Archivo: `src/app/core/data-access/files/files.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `DELETE` | `/common/files/:fileId` |
+| `POST` | `/common/files/:fileId/download-url` |
+| `POST` | `/common/files/:fileId/links` |
+| `GET` | `/common/files/links` |
 | `POST` | `/common/files/upload` |
 
 ## `CommunityClient`
@@ -113,6 +139,7 @@ Archivo: `src/app/core/data-access/community/community.client.ts`
 |---|---|
 | `GET` | `/community/blocks` |
 | `GET` | `/community/bookmarks` |
+| `POST` | `/community/comments` |
 | `GET` | `/community/conversations` |
 | `GET` | `/community/conversations/:conversationId/messages` |
 | `GET` | `/community/feed` |
@@ -126,7 +153,23 @@ Archivo: `src/app/core/data-access/community/community.client.ts`
 | `GET` | `/community/posts/:postId/reactions` |
 | `GET` | `/community/profiles/:profileId` |
 | `GET` | `/community/profiles/:profileId/posts` |
+| `POST` | `/community/profiles/:profileId/posts` |
 | `GET` | `/community/profiles/:profileId/reviews` |
+| `GET` | `/community/profiles/me` |
+| `PUT` | `/community/profiles/me` |
+| `PUT` | `/community/reactions` |
+
+## `ProceduresClient`
+
+Archivo: `src/app/core/data-access/procedures/procedures.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/dental-procedures` |
+| `POST` | `/dental-procedures` |
+| `GET` | `/dental-procedures/catalog` |
+| `GET` | `/procedure-cases` |
+| `GET` | `/procedure-cases/:caseId` |
 
 ## `GeoClient`
 
@@ -219,6 +262,14 @@ Archivo: `src/app/core/data-access/identity/identity.client.ts`
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
+## `PracticeSitesClient`
+
+Archivo: `src/app/core/data-access/practice-sites/practice-sites.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/practitioners/:practitionerProfileId/sites` |
+
 ## `ProfilesClient`
 
 Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
@@ -235,6 +286,12 @@ Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
 | `POST` | `/profiles/patients/merge/:eventId/reverse` |
 | `POST` | `/profiles/persons/:personId/account-links` |
 | `POST` | `/profiles/practitioners` |
+| `POST` | `/profiles/practitioners/:profileId/jurisdiction-authorizations` |
+| `POST` | `/profiles/practitioners/:profileId/specialties` |
+| `PATCH` | `/profiles/practitioners/me` |
+| `GET` | `/profiles/practitioners/me/affiliations` |
+| `POST` | `/profiles/practitioners/me/affiliations` |
+| `GET` | `/profiles/practitioners/me/summary` |
 
 ## `PublicClient`
 

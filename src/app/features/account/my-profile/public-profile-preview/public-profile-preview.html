@@ -1,0 +1,96 @@
+<app-page-header
+  title="Tu perfil público"
+  subtitle="Configuralo de un lado y mirá cómo queda del otro."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="perfil()" (retry)="recargar()">
+  <div class="vitrina">
+    @if (!tieneVitrina()) {
+      <app-alert tone="info" title="Todavía no tenés una vitrina pública">
+        Completá el formulario y guardá para crearla. Es lo que van a ver las personas que busquen
+        tu perfil fuera de la plataforma.
+      </app-alert>
+    }
+
+    <div class="vitrina__columnas">
+      <!-- ─── El formulario ────────────────────────────────────────────── -->
+      <app-card variant="outlined" padding="lg" class="vitrina__formulario">
+        <h2 class="vitrina__titulo">Configurar</h2>
+
+        <form (submit)="$event.preventDefault()">
+          <app-form-field
+            label="Enlace (slug)"
+            [required]="true"
+            hint="Sólo minúsculas, números y guiones. Es la dirección de tu vitrina."
+            [errorMessage]="
+              slug().length > 0 && !slugValido()
+                ? 'Sólo minúsculas, números y guiones, sin guiones al principio ni al final.'
+                : ''
+            "
+          >
+            <app-input [(value)]="slug" placeholder="dra-lucia-salas" />
+          </app-form-field>
+
+          <app-form-field label="Nombre visible" [required]="true">
+            <app-input [(value)]="displayName" placeholder="Tu nombre" />
+          </app-form-field>
+
+          <app-form-field label="Titular" hint="Una línea corta: «Cardióloga · Hospital del Norte».">
+            <app-input [(value)]="headline" placeholder="Tu titular" />
+          </app-form-field>
+
+          <app-form-field label="Presentación pública">
+            <app-textarea
+              [(value)]="biography"
+              [rows]="5"
+              [maxLength]="2000"
+              [autoResize]="true"
+              placeholder="Cómo te presentás a quien no te conoce."
+            />
+          </app-form-field>
+
+          <app-switch [(checked)]="acceptsReviews" label="Acepto reseñas de las personas que atendí" />
+
+          <app-form-actions
+            submitLabel="Guardar vitrina"
+            [pending]="guardando()"
+            [disabled]="!puedeGuardar()"
+            (submitted)="guardar()"
+          />
+        </form>
+      </app-card>
+
+      <!-- ─── La vista previa ──────────────────────────────────────────────
+           Así te ven, calculada de lo que hay escrito en el formulario en este
+           mismo instante — no de lo último guardado. -->
+      <div class="vitrina__previa">
+        <p class="vitrina__previa-rotulo">Así te ven</p>
+
+        <app-card variant="outlined" padding="lg" class="vitrina__tarjeta">
+          <div class="vitrina__tarjeta-encabezado">
+            <app-avatar size="lg" [name]="vistaPrevia().displayName" alt="" />
+            <div>
+              <h3 class="vitrina__tarjeta-nombre">{{ vistaPrevia().displayName }}</h3>
+              @if (vistaPrevia().headline) {
+                <p class="vitrina__tarjeta-titular">{{ vistaPrevia().headline }}</p>
+              }
+            </div>
+          </div>
+
+          @if (vistaPrevia().biography) {
+            <p class="vitrina__tarjeta-bio">{{ vistaPrevia().biography }}</p>
+          }
+
+          <p class="vitrina__tarjeta-enlace">alovida.app/p/{{ vistaPrevia().slug }}</p>
+        </app-card>
+
+        @if (tieneVitrina()) {
+          <p class="vitrina__articulos">
+            <a routerLink="/my-account/articles">Gestionar mis artículos médicos</a>
+          </p>
+        }
+      </div>
+    </div>
+  </div>
+</app-view-state-host>

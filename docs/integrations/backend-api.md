@@ -1,6 +1,6 @@
 # API de backend
 
-Las 145 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 169 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 145 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` `/procedure-cases` `/dental-procedures` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -140,7 +140,7 @@ publique los `GET` que faltan.
 **`checks:plan` lleva los dos puntos en la URL de verdad**: el backend declara
 el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 
-### `ProfilesClient` — 9 operaciones
+### `ProfilesClient` — 13 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -154,6 +154,10 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 | `POST` | `/profiles/patients/:profileId/related-persons` | `RelatedPersonForm` (V05-05, UC-05-10) |
 | `POST` | `/profiles/practitioners` | — |
 | `POST` | `/profiles/persons/:personId/account-links` | — |
+| `GET` | `/profiles/practitioners/me/summary` | `MyProfile` · `PractitionerProfile` |
+| `PATCH` | `/profiles/practitioners/me` | `PractitionerProfileEdit` |
+| `POST` | `/profiles/practitioners/:profileId/specialties` | — (UC-05-06) |
+| `POST` | `/profiles/practitioners/:profileId/jurisdiction-authorizations` | — |
 
 > **V05-05 no necesitó ningún `GET` nuevo.** El vault la marcaba «Listado pendiente», pero los
 > contactos llegan **embebidos** en la respuesta de `GET /profiles/patients/:profileId`
@@ -259,6 +263,16 @@ silencio es un balance que miente.
 **Las cuatro lecturas del mayor responden 403** si el `practiceId` pertenece a
 otra organización. Es lo que hace seguro que las pueda pedir un `PRACTITIONER`
 y no sólo un `SECURITY_ADMIN`.
+
+### `ServicesCatalogClient` — 2 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/billing/service-catalog` | `ServicesCatalog` (carril 1) |
+| `POST` | `/billing/service-catalog` | `ServicesCatalog` (alta de un servicio) |
+
+Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
+catálogo — mismo motivo: no existe «la práctica del usuario».
 
 ### `SchedulingClient` — 9 operaciones
 
@@ -540,24 +554,79 @@ contrasta con la cabecera `X-Tenant-Id` y responde **403** si difieren. En el
 sujeto conviene omitirlo y dejar que lo resuelva el interceptor; en la geocerca
 tiene que ser el tenant activo de la sesión.
 
-### `FilesClient` — 1 operación
+### `ProceduresClient` — 4 operaciones · carril 3
+
+El histórico de procedimientos quirúrgicos y odontológicos (M53).
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) |
+| `GET` | `/procedure-cases` | `ProceduresBlock` (ficha del paciente) |
+| `GET` | `/procedure-cases/:caseId` | `ProceduresBlock` |
+| `GET` | `/dental-procedures` | `ProceduresBlock` |
+| `GET` | `/dental-procedures/catalog` | `ProceduresBlock` |
+| `POST` | `/dental-procedures` | `ProceduresBlock` |
 
-### `CommunityClient` — 16 operaciones · sólo lectura
+### `DiagnosticsClient` — 4 operaciones · carril 4
 
-La red social médica (M19). **Ninguna tiene pantalla todavía**: el cliente entra
-antes que la interfaz a propósito — ver la nota de abajo.
+Laboratorios e imagenología (M52).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostics/patients/:patientProfileId/orders` | `DiagnosticsBlock` · `Diagnostics` |
+| `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` | `DiagnosticsBlock` · `Diagnostics` |
+| `GET` | `/diagnostics/work-orders` | `Diagnostics` |
+| `POST` | `/clinical/service-requests` | `Diagnostics` (pedir un estudio) |
+
+> **Declaradas acá al resolver el conflicto del carril 15, no por sus autores.**
+> Los carriles 3 y 4 entraron a `dev` sin pasar por esta página, y eso dejó el
+> job `verificar` en rojo para todo el mundo: `check-api-contract-drift` no
+> distingue «lo agregó otro» de «lo agregué yo». Si algún consumidor de arriba
+> quedó mal atribuido, corregilo — se dedujo de quién importa cada cliente.
+
+### `FilesClient` — 5 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/common/files/upload` | `IdentityVerification` (V27-14…17) · `AttachmentUploader` |
+| `GET` | `/common/files/links` | `AttachmentsBlock` (adjuntos de la ficha) |
+| `POST` | `/common/files/:fileId/links` | `AttachmentUploader` |
+| `POST` | `/common/files/:fileId/download-url` | `AttachmentsBlock` |
+| `DELETE` | `/common/files/:fileId` | — (borrado lógico, sin pantalla todavía) |
+
+#### Adjuntar son dos operaciones, no una
+
+`upload` deja el archivo en el sistema; `:fileId/links` lo cuelga de un recurso.
+Están separadas en el backend porque **el mismo archivo puede adjuntarse en más
+de un lado**, y acá se respetan como dos llamadas.
+
+Importa para el mensaje de error: si la segunda falla, el archivo **ya existe**.
+Decir «no se pudo subir» llevaría a reintentar y dejar dos copias.
+
+#### Los adjuntos cuelgan del paciente, no del encuentro
+
+`file_links.owner_type` admite `USER`, `PATIENT` y `TENANT` — **no hay
+`ENCOUNTER`**. Es una restricción del modelo: quien quiera adjuntos por episodio
+tiene que promoverlo al `.puml` primero.
+
+#### La URL de descarga se pide al hacer clic
+
+Es firmada y vence. Emitir una por adjunto al pintar la lista dejaría veinte
+enlaces vivos a datos clínicos de los que diecinueve nadie abrió.
+
+### `CommunityClient` — 20 operaciones
+
+La red social médica (M19). Las 16 lecturas entraron primero, antes que
+cualquier pantalla — ver la nota de abajo. Las 4 escrituras que siguen
+entraron recién con «Mi perfil», «Vitrina pública» y «Mis artículos médicos»,
+que son sus primeros consumidores.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/community/profiles/:profileId` | — (ficha pública, V65-07…11) |
-| `GET` | `/community/profiles/:profileId/posts` | — |
+| `GET` | `/community/profiles/:profileId/posts` | `MedicalArticles` |
 | `GET` | `/community/profiles/:profileId/reviews` | — (V65-14) |
-| `GET` | `/community/posts/:postId` | — |
-| `GET` | `/community/posts/:postId/comments` | — |
+| `GET` | `/community/posts/:postId` | `MedicalArticles` |
+| `GET` | `/community/posts/:postId/comments` | `MedicalArticles` |
 | `GET` | `/community/posts/:postId/reactions` | — |
 | `GET` | `/community/feed` | — (V19-13 muro) |
 | `GET` | `/community/notifications` | — |
@@ -569,6 +638,30 @@ antes que la interfaz a propósito — ver la nota de abajo.
 | `GET` | `/community/conversations` | — (V19-01) |
 | `GET` | `/community/conversations/:conversationId/messages` | — (V19-02) |
 | `GET` | `/community/polls/:pollId` | — |
+| `GET` | `/community/profiles/me` | `PublicProfilePreview` · `MedicalArticles` |
+| `PUT` | `/community/profiles/me` | `PublicProfilePreview` |
+| `POST` | `/community/profiles/:profileId/posts` | `MedicalArticles` |
+| `POST` | `/community/comments` | `MedicalArticles` |
+| `PUT` | `/community/reactions` | `PostCard` (muro) |
+
+#### Reaccionar es `PUT` y es *upsert*
+
+Reaccionar de nuevo con otro tipo **cambia** la reacción, no agrega una segunda.
+Por eso el contrato exige `actorProfileId` en el cuerpo: es la mitad de la clave
+`(actor, objeto)`, no un dato que el servidor deduzca de la sesión.
+
+Y ahí hay una asimetría real del backend que conviene no confundir: **se escribe
+con la palabra** (`LIKE`, `INSIGHTFUL`…) y **se lee con el uuid**
+(`reactionTypeConceptId`). Los tipos de reacción son un enum cerrado del
+contrato, no conceptos de terminología.
+
+**La vitrina propia es un `PUT` idempotente**, igual razón que
+`upsertOwnProfile` del resto del repo: crea si no existía, actualiza si sí, y
+la pantalla que la edita no necesita saber cuál de las dos está haciendo.
+
+**Publicar siempre pasa por `CommunityClient.publishPost`**, que agrega el
+hashtag `articulo-medico` cuando `esArticulo` es verdadero — el backend no
+distingue un artículo de cualquier otra publicación, sólo la etiqueta.
 
 #### Por qué el cliente existe antes que las pantallas
 

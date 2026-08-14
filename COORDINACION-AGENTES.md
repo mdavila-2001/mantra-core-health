@@ -5,6 +5,247 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión en curso · Carril 1 — catálogo de servicios, presupuestos y PDF
+
+**Empezó:** 2026-08-14 · **Ramas:** `carril-1/catalogo-presupuestos-pdf` en los dos repos,
+cada una en su propio `git worktree` (`../mantra-core-health-carril1` y
+`../mantra-core-health-redesa-api-carril1`) para no pisar el trabajo sin commitear que ya
+había en ambos working trees (contabilidad en el backend, tutoriales/perfil público acá).
+**Base:** `origin/dev` acá, `origin/master` en el backend.
+
+Ver `CARRIL-1-catalogo-presupuestos-pdf.md` y `CARRILES-2026-08-14-README.md` para el plan
+completo. Este bloque documenta un bloqueador real que ese plan ya anticipaba y cambia el
+alcance de lo que este carril entrega hoy.
+
+### 🔴 Bloqueador: `billing.budgets`/`billing.budget_lines` no sirven para presupuestos por paciente
+
+El punto 5 del reclamo (presupuesto/cotización por paciente y procedimiento, precio libre por
+doctor sobre el catálogo fijo) iba a apoyarse en `billing.budgets`/`billing.budget_lines`. Al
+auditar las entidades (`mantra-core-health-redesa-api/src/modules/billing/entities/budgets.entity.ts`
+y `budget_lines.entity.ts`) resultó que **están modeladas como presupuesto fiscal por centro de
+costo**, no como presupuesto/cotización clínica:
+
+- `budgets`: `practiceId`, `fiscalYearId`, `name`, `statusConceptId` — **sin `patientId` en
+  ningún lado**.
+- `budget_lines`: `budgetId`, `accountId`, `costCenterId`, `fiscalPeriodId`, `amount` — **sin
+  referencia a `service_catalog`**, sin `quantity` ni `unitPrice` propios.
+
+Confirmado que no hay otra entidad de respaldo: `grep` de `patientId`/`patient_id` en todo
+`src/modules/billing/entities/*.entity.ts` no da resultados, y una búsqueda de
+`quote`/`cotizacion`/`presupuesto` en el resto del backend tampoco encuentra nada relevante (solo
+falsos positivos de otros dominios — ads, marketing). La forma que el punto 5 necesita ya existe,
+pero en otro lado: `billing.invoices` (`patientProfileId`) + `billing.invoice_lines`
+(`serviceId`, `quantity`, `unitPrice`, `description`) — repurposar esa tabla para cotizaciones
+borrador se descartó porque `ledger.service.ts`, `dunning.service.ts`,
+`patient-statements.service.ts` y `kpi-snapshots.service.ts` ya asumen que todo lo que hay en
+`invoices` es contabilizable de verdad.
+
+**Decisión (con el usuario, 2026-08-14):** extender `budgets`/`budget_lines` — agregar
+`patient_profile_id` (uuid, FK a `profiles.patient_profiles`) a `budgets`, y a `budget_lines`
+`service_catalog_id` (uuid, FK a `billing.service_catalog`), `quantity` (numeric),
+`unit_price` (numeric, el precio que puso el doctor — nunca `service_catalog.default_price` a
+ciegas) y `description` (varchar, opcional) — vía el pipeline `.puml` → `gen_ddl.py` →
+`SQL/patches/`, que no vive en ninguno de los dos repos git (ver la advertencia de
+`CARRILES-2026-08-14-README.md`). No se tocó ningún patch a mano.
+
+**Queda pendiente para quien tenga acceso a ese pipeline.** En cuanto las columnas existan,
+completo `BillingBudgetsController`/`BillingBudgetsService` (backend) y `budget-block` +
+`budgets.client.ts` (frontend) exactamente como los describe `CARRIL-1-catalogo-presupuestos-pdf.md`.
+
+### Qué entra en esta entrega, entonces
+
+- **Backend:** `GET|POST /billing/service-catalog` completo (punto 3). Commit
+  `4c2b36cc` en `mantra-core-health-redesa-api`. `yarn test` (4686/4687), `yarn typecheck` y
+  `yarn lint` limpios sobre mis archivos; `yarn test:integration` corrido contra el stack local
+  (15/18 suites OK — los 3 rojos son preexistentes y ajenos a este carril: P14
+  (`identity-verification-cycle`, ya documentado y fuera de alcance de todos los carriles),
+  `vademecum` (falta `SQL/patches/2026-07-30_vademecum_dev_seed.sql`, que no existe en esta
+  máquina) y `audit-worm`).
+- **Frontend:** cliente + pantalla admin del catálogo de servicios (`administration/services-catalog`),
+  y `pdf-export.ts` como utilidad genérica reusable — ver detalle abajo, en curso.
+- **Lo que NO entra:** `budget-block` (patient-chart), `budgets.client.ts`, y el backend de
+  `billing-budgets`. Bloqueados por lo de arriba.
+
+### Archivos nuevos (no chocan con nada)
+
+```
+src/app/core/data-access/services-catalog/services-catalog.client.ts  + .types.ts + .spec.ts
+src/app/features/admin/services-catalog/services-catalog.ts           + .html + .css + .spec.ts
+src/app/shared/utils/pdf-export/pdf-export.ts                         + .spec.ts
+```
+
+### Archivos existentes que toco (de la tabla de compartidos)
+
+| Archivo | Qué le hago | Cuándo |
+|---|---|---|
+| `package.json` | Agrego `jspdf` | Último commit de la rama |
+| `src/app/core/navigation/navigation.map.ts` | Una fila nueva al final del grupo **Administración**: `administration/services-catalog` | Último commit de la rama |
+| `src/app/app.routes.ts` | Entrada en `PANTALLAS_DIFERIDAS` para esa sección | Último commit de la rama |
+
+**No toco** `patient-chart.ts`/`.html` en esta entrega — el `budget-block` que iba a colgar ahí
+está bloqueado (ver arriba). Cuando el schema exista, esa fila se agrega en una rama/PR aparte
+sin reabrir esta.
+
+### Lo que NO toco
+
+`medication-block/`, `diagnosis-block/`, `registrarEncuentro()`/`cerrarEncuentro()`,
+`accounting.client.ts` (leo `GET /practices` directo desde mi propio cliente para el selector de
+práctica, no importo el cliente de contabilidad — son dos dominios distintos aunque el endpoint
+sea el mismo), y todo `redsat/`.
+---
+
+## Sesión 2026-08-14 · Carril 4 — punto 10, laboratorios e imagenología
+
+**Rama:** `carril-4/laboratorios-imagenologia` (los dos repos) · **Base:** `dev` en frontend,
+`master` en backend (`src/modules/diagnostics/` y `src/modules/clinical/` son idénticos entre
+`master` y `origin/dev`, así que la base no cambia nada de lo que toco) ·
+**Plan:** `CARRIL-4-laboratorios-imagenologia.md` · `CARRILES-2026-08-14-README.md`
+
+### Tres correcciones al plan del carril, encontradas al leer el código
+
+1. **El carril no era «casi enteramente frontend».** El plan decía que los 20 endpoints ya
+   construidos probablemente alcanzaban. No alcanzaban: `diagnostics` **no tenía ninguna
+   lectura por paciente**. Se podía abrir una orden de trabajo, acesionar un espécimen, ingerir
+   el mensaje del analizador y liberar el informe, y nadie podía preguntar qué se le pidió a una
+   persona ni qué volvió. Es el mismo defecto que ya había tenido `scheduling` —lo dice su
+   propia fila en `navigation.map.ts`— y que `ClinicalReadService` nombra para `clinical`.
+2. **El alta de la orden ya existía, pero en otro módulo.** No hay que extender
+   `diagnostics-lab`/`diagnostics-imaging`: una orden diagnóstica **es** una orden de servicio
+   con categoría, y se crea con `POST /clinical/service-requests`, que ya acepta
+   `patientProfileId` + `encounterId` + `codeConceptId`. Un alta propia en `diagnostics` habría
+   sido una segunda puerta a la misma tabla.
+3. **No hace falta ninguna columna nueva, así que el bloqueador de `SQL/` no aplica.**
+   `clinical.service_requests` ya tiene `patient_profile_id`, `encounter_id` y
+   `category_concept_id`; `clinical.diagnostic_reports` ya tiene `patient_profile_id` y
+   `service_request_id`. Lo único que faltaba era el **concepto** de categoría «imagenología»
+   (existía sólo `SR_LAB`), y eso se declara en `diagnostics.concepts.ts` — que es exactamente
+   para lo que `defineModuleConcepts` espacia las claves por módulo, sin tocar ningún archivo
+   compartido ni ningún patch.
+
+### Qué creo (no choca con nada)
+
+**Backend** — todo dentro de `src/modules/diagnostics/`: `dto/orders.dto.ts`,
+`repositories/diagnostic-orders.repository.ts`, `services/diagnostics-orders.service.ts`,
+`controllers/diagnostics-orders.controller.ts` (+ sus dos `.spec.ts`).
+Endpoint nuevo: `GET /diagnostics/patients/:patientProfileId/orders`.
+
+**Frontend** — `core/data-access/diagnostics/` (client + types + spec),
+`features/diagnostics/` (la cola del laboratorio) y
+`features/clinical-record/patient-chart/diagnostics-block/`.
+
+### Qué toco de la tabla de archivos compartidos, y por qué
+
+| Archivo | Qué le agrego |
+|---|---|
+| `navigation.map.ts` | una fila `diagnostics`, grupo **Atención**, al final del grupo. Roles `CLINICIAN`/`PRACTITIONER`, que son los `@Roles` reales de los 4 controladores de M20 y del de órdenes de M08 |
+| `app.routes.ts` | una entrada en `PANTALLAS_DIFERIDAS` |
+| `patient-chart.ts` (+ `.html`) | import de `DiagnosticsBlock` + una entrada en el ensamblado y un bloque en la plantilla, al final. **No** toco `registrarEncuentro`/`cerrarEncuentro` |
+| `patient-chart.spec.ts` | un `responderCircuitoDiagnostico()` en el `afterEach`. Hizo falta porque mi bloque **lee lo suyo** (el circuito diagnóstico no sale de `GET /clinical/patients/:id/summary`), y esa petición aparece en toda prueba que pinte la ficha |
+| `diagnostics.concepts.ts` | `SERVICE_REQUEST_CATEGORY_IMAGING`. Es de mi módulo, no compartido |
+
+### Aviso para el Carril 3 (nos cruzamos en el mismo working tree)
+
+A mitad de sesión, `patient-chart.spec.ts` quedó en rojo por `<app-procedures-block>`, que
+dejaba tres peticiones abiertas que el `afterEach` del expediente no drenaba
+(`GET /procedure-cases`, `GET /dental-procedures`, `GET /dental-procedures/catalog`). **No las
+toqué** —son de tu carril— y las resolviste vos mismo mientras tanto, con
+`responderHistoricoDeProcedimientos()`. Queda anotado porque las dos adiciones viven en el
+**mismo `afterEach`**: si hay conflicto al mezclar es de dos bloques contiguos y se aceptan los
+dos. Con las dos puestas, la suite entera queda verde (213 archivos, 2013 pruebas).
+
+Mi commit **no incluye** tu mitad: los archivos compartidos se pusieron en el índice con sólo
+mis líneas (`git hash-object` + `git update-index`), porque el working tree tenía las dos
+adiciones entremezcladas y `git add` del archivo entero se habría llevado tu trabajo a medio
+cablear dentro de mi rama.
+
+### Lo que NO toco
+
+`agenda.ts`/`booking-new.ts` (los leí como referencia) · `medication-block/` ·
+`diagnosis-block/` (distinto de mi `diagnostics-block/`: otro dominio y otro archivo) ·
+`procedures-block/` (carril 3) · `specialty-form-block/` (carril 2) · `budget-block/` (carril 1) ·
+todo `redsat/` · `package.json` (ninguno de los dos repos) ·
+`src/modules/clinical/` en el backend (leo sus entidades y sus conceptos, no los edito) · `SQL/`.
+
+---
+
+## Sesión 2026-08-14 · Carril 3 — punto 7, histórico de procedimientos (cirugía y odontología)
+
+**Rama:** `carril-3/procedimientos-quirurgicos` (los dos repos) · **Base:** `dev` en frontend,
+`master` en backend · **Plan:** `CARRIL-3-procedimientos-quirurgicos.md` ·
+`CARRILES-2026-08-14-README.md`
+
+### Dos correcciones al plan del carril, encontradas al leer el código
+
+El documento del carril daba por buenas dos cosas que el repo no sostiene. Las dos cambian
+qué hay que escribir, así que quedan acá antes que en el commit:
+
+1. **La parte quirúrgica *sí* necesita backend.** El plan decía que alcanzaba con confirmar
+   los 28 endpoints y, como mucho, agregar el filtro por paciente. El filtro **ya existe**
+   (`ListCasesQueryDto.patientProfileId`, `periop.dto.ts:531`). Lo que no existe es la
+   **lectura de hallazgos, implantes y pasos operatorios**: se escriben por `POST` y
+   `GET /procedure-cases/:id` no los devuelve (`CaseDetailDto` trae equipo, diagnósticos,
+   órdenes, plan e informes, y nada más). Sin eso, la definición de hecho del carril —«se ve
+   su histórico con equipo, hallazgos e implantes»— es inalcanzable desde el frontend. Es el
+   mismo defecto que `clinical.client.ts` ya nombra: escrituras que la pantalla no puede
+   volver a leer.
+2. **Odontología no necesita tabla nueva, así que el bloqueador de `SQL/` no aplica.**
+   `clinical.procedures` es una tabla de procedimientos **general** (paciente, código,
+   profesional, fecha, `note_text`, categoría) y `procedures_perioperative.procedure_body_sites`
+   cuelga de ella con `body_site_concept_id` + `laterality_concept_id`: pieza y cuadrante. Los
+   conceptos se siembran **desde TypeScript** (`defineModuleConcepts`, UUIDv5 determinista), no
+   desde `SQL/`. El histórico odontológico entra entero en tablas que ya existen. **No hay
+   patch de DDL en este carril y no hay que coordinar con quien tenga el modelo.**
+
+### Archivos nuevos (no chocan con nada)
+
+```text
+backend  src/modules/procedures_perioperative/procedures_perioperative.concepts.ts
+backend  src/modules/procedures_perioperative/repositories/periop-dental.repository.ts
+backend  src/modules/procedures_perioperative/services/periop-dental.service.ts (+ .spec.ts)
+backend  src/modules/procedures_perioperative/controllers/dental.controller.ts (+ .spec.ts)
+backend  test/integration/dental-procedures.int-spec.ts
+frontend src/app/core/data-access/procedures/procedures.client.ts (+ .types.ts + .spec.ts)
+frontend src/app/features/clinical-record/patient-chart/procedures-block/ (ts+html+css+spec)
+```
+
+### Archivos existentes que toco, y por qué
+
+| Repo | Archivo | Qué le hago |
+|---|---|---|
+| backend | `procedures_perioperative/dto/periop.dto.ts` | tres arrays nuevos **al final** de `CaseDetailDto` (`operativeSteps`, `findings`, `implants`) |
+| backend | `procedures_perioperative/services/periop-cases.service.ts` | `getCaseDetail` suma tres lecturas al `Promise.all` |
+| backend | `procedures_perioperative/repositories/periop-intraop.repository.ts` | tres `find*ByCase` nuevos, al final |
+| backend | `procedures_perioperative/procedures_perioperative.module.ts` | registra el controller/service/repo odontológicos |
+| backend | **`src/common/seed/module-concepts.ts`** | **compartido**: un `import` y un `...SPREAD` al final del arreglo. Ningún otro carril declaró conceptos todavía; si otro lo hace, son dos adiciones en líneas distintas |
+| frontend | `patient-chart.ts` (+ `.html`) | import de `procedures-block` + una entrada en el ensamblado, **en el último commit** |
+| frontend | `patient-chart.spec.ts` | un `responderHistoricoDeProcedimientos()` en el `afterEach`, al lado del del carril 4 — mis tres lecturas aparecen en toda prueba que pinte la ficha |
+| frontend | **`proxy.conf.json`, `proxy.conf.docker.json`, `deploy/nginx.conf`** | **compartidos**: el prefijo `/procedure-cases`, al final de cada lista. Los tres o ninguno — `yarn check:prefijos` (`scripts/check-api-prefixes.mjs`) falla si se olvida uno, y el modo de fallo es el peor: anda en desarrollo y devuelve `index.html` en producción |
+
+**Corrección a este mismo bloque, ya escrito:** al empezar leí la ficha contra `master`, donde
+`medication-block/` y `diagnosis-block/` no existen, y anoté acá que el molde del plan era
+imaginario. **Es al revés:** sobre `dev` los dos bloques están, y el molde del plan es exacto.
+`procedures-block` sigue ese molde —`input.required<string>()` llamado `patientProfileId`, una
+etiqueta en la plantilla al final del ensamblado— y no toca el arreglo `bloques()`, que es de
+filas de una misma tabla. Quien venga de los carriles 1, 2 o 5: **arranquen de `dev`**, no de
+`master`.
+
+**Respuesta al aviso del carril 4:** drenadas. `patient-chart.spec.ts` tiene ahora un
+`responderHistoricoDeProcedimientos()` al lado de tu `responderCircuitoDiagnostico()`, en el
+mismo `afterEach` y con el mismo patrón. Las 75 pruebas de `patient-chart/**` pasan con los dos
+bloques montados. Si hay conflicto al mezclar es de dos líneas contiguas: se aceptan las dos.
+
+**Mi bloque no toma `[encounterId]`,** a diferencia de los tuyos y de los otros dos: un
+histórico es de la persona, no de la consulta de hoy, y se lee igual sin encuentro abierto.
+Tampoco emite `(cambio)` — mismo criterio que vos usaste para `diagnostics-block`.
+
+### Lo que NO toco
+
+`navigation.map.ts` · `app.routes.ts` · `package.json` (ninguno de los dos repos) ·
+`registrarEncuentro()`/`cerrarEncuentro()` · `medication`/`diagnosis`/`specialty-form`/`budget` ·
+todo `redsat/` · `src/modules/clinical/` (leo sus entidades, no las edito) · `SQL/`.
+
+---
+
 ## Sesión 2026-08-13 · Port del sistema de diseño y las vistas de la bóveda
 
 **Rama:** `pablo/redsat-vistas`, apilada sobre `pablo/contabilidad-frontend`.

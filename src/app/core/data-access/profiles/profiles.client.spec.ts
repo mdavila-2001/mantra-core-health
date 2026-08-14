@@ -287,6 +287,73 @@ describe('ProfilesClient', () => {
     expect(resumen?.birthDate).toBeUndefined();
   });
 
+  /* ---- el perfil profesional propio --------------------------------------- */
+
+  const PERFIL_WIRE = {
+    profileId: 'per-1',
+    personId: 'per-1',
+    practitionerCode: 'MED-7',
+    displayName: 'Dra. Salas',
+    professionalTitle: 'Cardióloga',
+    professionalBio: null,
+    photoFileId: null,
+    practitionerCategoryConceptId: 'cat-1',
+    verificationStatusConceptId: 'st-1',
+    practiceStatusConceptId: 'st-2',
+    acceptsNewPatients: true,
+    telehealthAvailable: false,
+    specialties: [],
+    credentials: [],
+    licenses: [],
+    languages: [],
+    activity: { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 },
+    createdAt: '2024-02-01T00:00:00.000Z',
+  };
+
+  it('getOwnPractitionerProfile lee GET /profiles/practitioners/me/summary', () => {
+    let perfil: { professionalTitle?: string; createdAt: Date } | undefined;
+    client.getOwnPractitionerProfile().subscribe((p) => (perfil = p));
+
+    const req = http.expectOne('/profiles/practitioners/me/summary');
+    expect(req.request.method).toBe('GET');
+    req.flush(PERFIL_WIRE);
+
+    expect(perfil?.professionalTitle).toBe('Cardióloga');
+    expect(perfil?.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('updateOwnPractitionerProfile manda un PATCH con sólo lo que cambió', () => {
+    client.updateOwnPractitionerProfile({ professionalTitle: 'Nuevo título' }).subscribe();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ professionalTitle: 'Nuevo título' });
+    req.flush(PERFIL_WIRE);
+  });
+
+  /** Un `''` es una decisión de quien edita: no se filtra antes de mandarlo. */
+  it('updateOwnPractitionerProfile deja pasar una cadena vacía para borrar un campo', () => {
+    client.updateOwnPractitionerProfile({ professionalBio: '' }).subscribe();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ professionalBio: '' });
+    req.flush(PERFIL_WIRE);
+  });
+
+  it('updateOwnPractitionerProfile traduce la respuesta igual que la lectura', () => {
+    let perfil: { professionalTitle?: string; createdAt: Date } | undefined;
+    client
+      .updateOwnPractitionerProfile({ professionalTitle: 'Nuevo título' })
+      .subscribe((p) => (perfil = p));
+
+    http
+      .expectOne('/profiles/practitioners/me')
+      .flush({ ...PERFIL_WIRE, professionalTitle: 'Nuevo título' });
+
+    expect(perfil?.professionalTitle).toBe('Nuevo título');
+    expect(perfil?.createdAt).toBeInstanceOf(Date);
+  });
+
   /* ---- la fecha de nacimiento no puede correrse un día -------------------
      Verificado contra la API viva el 2026-08-08 desde `America/La_Paz` (UTC−4):
      se guardó `1985-03-14`, el servidor devolvió `1985-03-14T00:00:00.000Z` y

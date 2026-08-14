@@ -23,6 +23,7 @@ import {
   CaseStatusCatalog,
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
+import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
 import { WorkHistory } from './work-history/work-history';
 
 /**
@@ -57,16 +58,43 @@ import { WorkHistory } from './work-history/work-history';
  * 3. **Con qué credenciales está entrando** — organización y roles. Estaban sólo
  *    en el panel, que es otra pantalla.
  *
- * ## El cuarto bloque es del profesional, no de la persona
+ * ## Dos perfiles, una pantalla — y un bloque mas, tambien del profesional
  *
- * `app-work-history` agrega **dónde trabajó** (punto 9 del reclamo). Vive acá y
- * no en una pantalla propia porque es una sección más del perfil, y se dibuja
- * solo cuando la sesión tiene perfil profesional: para una cuenta de paciente
- * la pregunta no aplica y el bloque no aparece.
+ * `app-work-history` agrega **dónde trabajó** (punto 9 del reclamo): la
+ * trayectoria de `app-practitioner-profile` dice qué puede ejercer y dónde se
+ * formó; ésta, en qué hospitales estuvo. Va como tarjeta aparte y no dentro de
+ * aquélla porque es lo único de esta pantalla que **se escribe**, y decide por
+ * sí mismo si corresponde dibujarse: sin perfil profesional no renderiza nada.
+ *
+ * ## Dos perfiles, una pantalla
+ *
+ * Esta pantalla llamaba a `GET /profiles/patients/me/summary` para **todo el
+ * mundo**, y ese endpoint es de pacientes: a un profesional le responde `404`
+ * —no tiene perfil de paciente— o `403` si además no verificó su identidad. El
+ * resultado era que la pantalla de perfil de un médico no mostraba nada, y no
+ * por un defecto de la pantalla sino porque no existía la lectura que la
+ * sirviera. Ahora existe (`GET /profiles/practitioners/me/summary`) y esta
+ * pantalla elige cuál pedir según quién entró:
+ *
+ * - con perfil profesional, `app-practitioner-profile`, que es una trayectoria;
+ * - si no, el resumen de paciente, que es lo que había.
+ *
+ * Los dos últimos bloques —verificación de identidad y acceso— son de la
+ * **cuenta**, no del perfil, así que se muestran en los dos casos.
  */
 @Component({
   selector: 'app-my-profile',
-  imports: [Badge, Card, DatePipe, PageHeader, RouterLink, StatusSeal, ViewStateHost, WorkHistory],
+  imports: [
+    Badge,
+    Card,
+    DatePipe,
+    PageHeader,
+    PractitionerProfile,
+    RouterLink,
+    StatusSeal,
+    ViewStateHost,
+    WorkHistory,
+  ],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -84,7 +112,24 @@ export class MyProfile {
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
-  protected readonly resumen = signal<ViewState<OwnPatientSummary>>(loading());
+  /**
+   * Si la sesión tiene un perfil profesional detrás.
+   *
+   * Sale del claim `hpid` del token —el identificador del perfil profesional— y
+   * **no de los roles**: un rol se concede y se revoca por organización, y quien
+   * tiene un perfil profesional lo sigue teniendo aunque hoy entre a una
+   * institución donde no atiende. Preguntar por el rol dejaría a esa persona
+   * mirando un perfil de paciente que no tiene.
+   */
+  protected readonly esProfesional = computed(() => this.auth.practitionerProfileId() !== null);
+
+  /**
+   * El resumen de paciente. Admite `null` **listo**, que no es lo mismo que
+   * «cargando»: es «esta sesión no tiene resumen de paciente que pedir», el caso
+   * de un profesional. Sin ese tercer valor, la única forma de no pedirlo era
+   * dejar el estado en carga para siempre.
+   */
+  protected readonly resumen = signal<ViewState<OwnPatientSummary | null>>(loading());
 
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
@@ -151,6 +196,17 @@ export class MyProfile {
   }
 
   /**
+   * Pide el resumen de paciente **sólo si la sesión es de paciente**.
+   *
+   * Es el arreglo de fondo: la pantalla pedía el resumen siempre, y para un
+   * profesional esa petición vuelve `404` o `403`. Ese fallo no era informativo
+   * —no le faltaba nada a la persona— pero pintaba la pantalla como rota.
+   */
+  private debeLeerResumenDePaciente(): boolean {
+    return !this.esProfesional();
+  }
+
+  /**
    * Pide el historial de verificaciones.
    *
    * Va aparte del resumen y **no comparte su estado de vista** a propósito: el
@@ -168,6 +224,14 @@ export class MyProfile {
   private cargar(): void {
     this.resumen.set(loading());
     this.etiquetas.set(new Map());
+
+    if (!this.debeLeerResumenDePaciente()) {
+      // No hay resumen de paciente que pedir, y tampoco hay vacío que mostrar:
+      // el bloque entero no se dibuja. Se deja en `ready` con un resumen nulo
+      // para que el host de estados no se quede girando para siempre.
+      this.resumen.set(ready(null));
+      return;
+    }
 
     this.profiles
       .getOwnSummary()

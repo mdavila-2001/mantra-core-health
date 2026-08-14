@@ -1,0 +1,22 @@
+/* Catálogo de servicios. Una columna: práctica, alta opcional, buscador y
+   tabla en orden de lectura. Sólo distribución — ni un color ni una tipografía
+   que el sistema no tenga ya. */
+
+:host {
+  display: block;
+}
+
+.catalogo {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+.catalogo__buscador {
+  display: block;
+  max-inline-size: 32rem;
+}
+
+.catalogo__precio {
+  font-variant-numeric: tabular-nums;
+}

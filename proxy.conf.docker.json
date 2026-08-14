@@ -23,7 +23,9 @@
       "/practices",
       "/accounting",
       "/health-context",
-      "/geo"
+      "/geo",
+      "/procedure-cases",
+      "/dental-procedures"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

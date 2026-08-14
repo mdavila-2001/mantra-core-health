@@ -47,7 +47,11 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
+  // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
+  // de publicación con sus reacciones.
+  feed: () => import('./features/feed/feed').then((m) => m.Feed),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
+  diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   'medical-records': () =>
     import('./features/clinical-record/clinical-record').then((m) => m.ClinicalRecord),
   'administration/users': () =>
@@ -87,6 +91,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/geolocation': () =>
     import('./features/geo/geo-home/geo-home').then((m) => m.GeoHome),
+  'administration/services-catalog': () =>
+    import('./features/admin/services-catalog/services-catalog').then((m) => m.ServicesCatalog),
 };
 
 /**
@@ -161,6 +167,35 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/identity-assurance/verification-case-detail/verification-case-detail')
         .then((m) => m.VerificationCaseDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
+    // nunca desde el menú.
+    path: 'my-account/edit',
+    title: `${APP_TITLE} - Configurar tu perfil`,
+    loadComponent: () =>
+      import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
+        .then((m) => m.PractitionerProfileEdit)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La vitrina pública: se configura y se ve en la misma pantalla.
+    path: 'my-account/preview',
+    title: `${APP_TITLE} - Tu perfil público`,
+    loadComponent: () =>
+      import('./features/account/my-profile/public-profile-preview/public-profile-preview')
+        .then((m) => m.PublicProfilePreview)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Publicar, revisar lo publicado y sus comentarios. Cuelga de la vitrina:
+    // sin vitrina, no hay dónde publicar un artículo.
+    path: 'my-account/articles',
+    title: `${APP_TITLE} - Artículos médicos`,
+    loadComponent: () =>
+      import('./features/account/my-profile/medical-articles/medical-articles')
+        .then((m) => m.MedicalArticles)
         .catch(() => chunkFallido()),
   },
   {
