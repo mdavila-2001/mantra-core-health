@@ -71,6 +71,9 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).toEqual([
         '/dashboard',
         '/feed',
+        // El glosario tampoco: el cliente lo pidió accesible por cada
+        // profesional, no sólo por quien administra.
+        '/glossary',
         '/my-account',
         '/my-account/appointments',
         '/my-account/identity/verify',
@@ -100,7 +103,7 @@ describe('NavigationService', () => {
       for (const grupo of service.menu()) {
         expect(grupo.items.length, grupo.label).toBeGreaterThan(0);
       }
-      expect(service.menu().map((g) => g.label)).toEqual(['General', 'Mi cuenta']);
+      expect(service.menu().map((g) => g.label)).toEqual(['General', 'Atención', 'Mi cuenta']);
     });
 
     it('los grupos salen en el orden declarado, no en el del registro', () => {

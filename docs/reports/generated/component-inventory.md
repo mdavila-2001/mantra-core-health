@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-316 componentes y 42 servicios inyectables, leídos de `src/`.
+319 componentes y 44 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -73,7 +73,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (260)
+## Feature (263)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -85,6 +85,7 @@
 | `app-public-profile-preview` | `PublicProfilePreview` | — | — | — | OnPush | sí |
 | `app-accounting` | `Accounting` | — | — | — | OnPush | **no** |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
+| `app-clinical-forms` | `ClinicalForms` | — | — | — | OnPush | sí |
 | `app-organization-detail` | `OrganizationDetail` | — | — | — | OnPush | **no** |
 | `app-organization-list` | `OrganizationList` | — | — | — | OnPush | sí |
 | `app-organization-new` | `OrganizationNew` | — | — | — | OnPush | sí |
@@ -129,6 +130,7 @@
 | `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas` | `cambio` | — | OnPush | sí |
 | `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |
 | `app-procedures-block` | `ProceduresBlock` | `patientProfileId` | — | — | OnPush | sí |
+| `app-specialty-form-block` | `SpecialtyFormBlock` | `encounterId` | `cambio` | — | OnPush | sí |
 | `app-dashboard` | `Dashboard` | — | — | — | OnPush | sí |
 | `app-access-request-form` | `AccessRequestForm` | — | — | — | OnPush | sí |
 | `app-access-request-resolution` | `AccessRequestResolution` | — | — | — | OnPush | sí |
@@ -161,6 +163,7 @@
 | `app-tracking-session-form` | `TrackingSessionForm` | — | — | — | OnPush | sí |
 | `app-trip-close` | `TripClose` | — | — | — | OnPush | sí |
 | `app-trip-form` | `TripForm` | — | — | — | OnPush | sí |
+| `app-glossary` | `Glossary` | — | — | — | OnPush | sí |
 | `app-agent-form` | `AgentForm` | — | — | — | OnPush | sí |
 | `app-collection-run-finish` | `CollectionRunFinish` | — | — | — | OnPush | sí |
 | `app-collection-run-form` | `CollectionRunForm` | — | — | — | OnPush | sí |
@@ -350,7 +353,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (42)
+## Servicios (44)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -361,12 +364,14 @@
 | `AccountingClient` | `src/app/core/data-access/accounting/accounting.client.ts` | root | **no** |
 | `AuthProvidersClient` | `src/app/core/data-access/auth-providers/auth-providers.client.ts` | root | sí |
 | `AuthzClient` | `src/app/core/data-access/authz/authz.client.ts` | root | sí |
+| `ChartTemplatesClient` | `src/app/core/data-access/chart-templates/chart-templates.client.ts` | root | sí |
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
 | `CommunityClient` | `src/app/core/data-access/community/community.client.ts` | root | sí |
 | `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |
 | `DiagnosticsClient` | `src/app/core/data-access/diagnostics/diagnostics.client.ts` | root | sí |
 | `DirectoryClient` | `src/app/core/data-access/directory/directory.client.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
+| `FormsClient` | `src/app/core/data-access/forms/forms.client.ts` | root | sí |
 | `GeoClient` | `src/app/core/data-access/geo/geo.client.ts` | root | sí |
 | `HealthContextClient` | `src/app/core/data-access/health-context/health-context.client.ts` | root | sí |
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |

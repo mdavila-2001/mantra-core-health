@@ -1,0 +1,95 @@
+<app-card variant="outlined" padding="lg" class="formulario-especialidad">
+  <h2 class="formulario-especialidad__titulo">Formulario clínico</h2>
+
+  @if (avisoDeDuplicado(); as aviso) {
+    <app-alert
+      tone="warning"
+      title="Ya estaba completado"
+      data-testid="formulario-especialidad-duplicado"
+    >
+      {{ aviso }}
+    </app-alert>
+  }
+
+  @if (errorDeCompletado(); as mensaje) {
+    <app-alert tone="error" data-testid="formulario-especialidad-error">{{ mensaje }}</app-alert>
+  }
+
+  @if (!hayEncuentro()) {
+    <app-alert tone="info" title="Abrí el encuentro para completar">
+      El formulario clínico se completa dentro de la consulta que lo motivó. Registrá el encuentro
+      acá arriba y el formulario aparece.
+    </app-alert>
+  } @else if (opcionesDePlantilla().length === 0) {
+    <app-alert tone="info" title="Sin plantillas todavía">
+      Tu especialidad todavía no tiene una plantilla de formulario clínico. Un admin de
+      especialidad la crea en «Formularios clínicos».
+    </app-alert>
+  } @else {
+    <form class="formulario-especialidad__formulario" (submit)="$event.preventDefault()">
+      @if (opcionesDePlantilla().length > 1) {
+        <app-form-field label="Plantilla" hint="Qué formulario vas a completar.">
+          <app-select
+            [options]="opcionesDePlantilla()"
+            [value]="plantillaId()"
+            (valueChange)="elegirPlantilla($event)"
+          />
+        </app-form-field>
+      }
+
+      @if (plantillaElegida(); as plantilla) {
+        @for (campo of plantilla.fields; track campo.fieldId) {
+          <app-form-field
+            [label]="campo.name"
+            [required]="campo.required"
+            data-testid="campo-especialidad"
+          >
+            @switch (tipoDibujable(campo.dataType)) {
+              @case ('boolean') {
+                <app-checkbox
+                  [checked]="valorBooleano(campo.fieldId)"
+                  (checkedChange)="actualizarValor(campo.fieldId, $event)"
+                  [label]="campo.name"
+                  [hideLabel]="true"
+                />
+              }
+              @case ('integer') {
+                <app-input
+                  type="number"
+                  [value]="valorNumero(campo.fieldId)"
+                  (valueChange)="actualizarValor(campo.fieldId, $event)"
+                />
+              }
+              @case ('decimal') {
+                <app-input
+                  type="number"
+                  [value]="valorNumero(campo.fieldId)"
+                  (valueChange)="actualizarValor(campo.fieldId, $event)"
+                />
+              }
+              @case ('date') {
+                <app-date-picker
+                  [value]="valorFecha(campo.fieldId)"
+                  (valueChange)="actualizarValor(campo.fieldId, $event)"
+                />
+              }
+              @default {
+                <app-input
+                  [value]="valorTexto(campo.fieldId)"
+                  (valueChange)="actualizarValor(campo.fieldId, $event)"
+                />
+              }
+            }
+          </app-form-field>
+        }
+      }
+
+      <app-form-actions
+        submitLabel="Completar formulario"
+        [pending]="enviando()"
+        [disabled]="!puedeCompletar()"
+        (submitted)="completar()"
+      />
+    </form>
+  }
+</app-card>

@@ -116,6 +116,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Seguí la cola del laboratorio y los estudios que pediste.',
     module: 'M20 diagnostics · M08 clinical',
   },
+  {
+    // Carril 2 · punto 4 del reclamo. `TerminologyCatalog` ya resolvía el
+    // mismo `GET /terminology/concepts?q=` con rol `SECURITY_ADMIN`: es un
+    // buscador técnico de `conceptId` para configuración, no un glosario para
+    // consulta clínica. Esta es la puerta que el cliente pidió — "cada
+    // profesional", no sólo quien administra —, con una pantalla propia que no
+    // expone el identificador.
+    //
+    // Sin `roles` a propósito: el pedido fue explícito, y la lectura del
+    // catálogo tampoco los exige (UC-03-13).
+    path: 'glossary',
+    label: 'Glosario',
+    group: 'Atención',
+    icon: 'orders',
+    availability: 'disponible',
+    summary: 'Buscá un término médico y su significado en lenguaje llano.',
+    module: 'M03 terminology',
+  },
 
   /* -- Administración · fase 0, la fundación ------------------------------- */
 
@@ -268,6 +286,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Mantené la lista fija de servicios sobre la que se arman los presupuestos.',
     module: 'M17 billing',
+  },
+  {
+    // Carril 2 · punto 1 del reclamo. `chart.specialty_chart_templates` sólo
+    // tenía asignación (`POST /charts/templates/:id/assignments`, UC-15-12);
+    // con el alta, el listado y la lectura de esquema ya del lado del
+    // backend, esta es la puerta de administración que arma la plantilla que
+    // `specialty-form-block` completa dentro del encuentro.
+    path: 'administration/clinical-forms',
+    label: 'Formularios clínicos',
+    group: 'Administración',
+    icon: 'orders',
+    // Mismo rol que exige el backend en `ChartTemplatesController`.
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Armá las plantillas de campos propios de cada especialidad.',
+    module: 'M15 chart · M09 forms',
   },
 
   /* -- Facturación · fase 2 ------------------------------------------------ */
