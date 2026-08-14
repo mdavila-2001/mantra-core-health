@@ -5,6 +5,44 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión en curso · Carriles R2-4 y R2-1 — perfil del doctor y guía de profesionales
+
+**Empezó:** 2026-08-14 · **Quién:** Justin · **Ramas:** `carril-r2-4/perfil-del-doctor` (front),
+después `carril-r2-1/guia-de-doctores` (front + backend). **Base:** `origin/dev`.
+
+**Orden:** R2-4 primero, R2-1 encima — es el orden obligatorio del README R2.
+
+### Contrato del `input()` de `practitioner-profile-view` (lo que R2-1 va a consumir)
+
+`PerfilProfesionalVisible` — todo YA resuelto contra terminología, cero clientes adentro:
+
+```ts
+interface PerfilProfesionalVisible {
+  nombre: string; titulo: string; especialidadPrincipal: string; codigo: string;
+  fotoUrl: string | null;               // resuelta por el contenedor (FilesClient), no un fileId
+  verificacion: { label: string; variant: StatusSealVariant } | null;
+  estadoDePractica: string; aceptaPacientesNuevos: boolean; telemedicina: boolean;
+  bio: string;
+  actividad: readonly { clave: string; rotulo: string; valor: number }[];
+  especialidades: readonly EspecialidadVisible[];   // los *Visible se mudan a
+  formacion: readonly FormacionVisible[];           // practitioner-profile-view.types.ts
+  matriculas: readonly MatriculaVisible[];
+  idiomas: readonly IdiomaVisible[];
+  perfilId: string; personaId: string; desde: Date | null;
+}
+```
+
+Más `esPropio = input(false)`: con `true` la vista muestra las acciones de dueño (configurar,
+vista pública, artículos, trayectoria) y el rótulo «Tu actividad»; con `false` — el caso del
+detalle de la guía — ni botones ni tuteo. R2-1 **no** re-resuelve etiquetas: su contenedor
+copia el patrón del contenedor propio (forkJoin perfil + readConceptLabels).
+
+**Qué NO toco en R2-4:** `work-history/`, `medical-articles/`, `public-profile-preview/` y
+`practitioner-profile-edit/` por dentro; `profiles.client.ts`; `navigation.map.ts`;
+`app.routes.ts`; el backend. En R2-1: la fila `feed` de `navigation.map.ts` (la excepción
+autorizada), `app.routes.ts` (repunte + detalle), módulo `profiles` del backend (exclusivo).
+
+
 ## Sesión en curso · Carril 1 — catálogo de servicios, presupuestos y PDF
 
 **Empezó:** 2026-08-14 · **Ramas:** `carril-1/catalogo-presupuestos-pdf` en los dos repos,

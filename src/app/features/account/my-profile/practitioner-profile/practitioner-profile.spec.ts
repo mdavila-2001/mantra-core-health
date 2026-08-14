@@ -3,25 +3,26 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { PractitionerProfile } from './practitioner-profile';
+import type { PerfilProfesionalVisible } from './practitioner-profile-view/practitioner-profile-view.types';
 
 /**
- * El perfil profesional propio.
+ * El contenedor del perfil profesional propio.
  *
- * Existe porque «Mi perfil» llamaba a `GET /profiles/patients/me/summary` para
- * todo el mundo, y a un profesional ese endpoint le responde `404` —no tiene
- * perfil de paciente— o `403` si además no verificó su identidad. La pantalla no
- * mostraba nada, y no por un defecto suyo: no existía la lectura que la sirviera.
+ * Desde el carril R2-4 este componente no dibuja: carga `me/summary`, resuelve
+ * etiquetas y foto, y arma el `PerfilProfesionalVisible` que consume la vista
+ * compartida con la guía de profesionales. Estas pruebas fijan la RESOLUCIÓN —
+ * el dibujo lo fija el spec de `practitioner-profile-view`, con datos fijos.
  *
- * Lo que estas pruebas fijan:
+ * Lo que se fija:
  *
- * 1. **Ningún uuid llega a la pantalla.** Todo `*ConceptId` se traduce, y lo que
- *    el catálogo no conozca sale como ausencia, no como identificador.
+ * 1. **Ningún uuid llega al contrato de la vista.** Todo `*ConceptId` se
+ *    traduce, y lo que el catálogo no conozca sale como ausencia.
  * 2. **La trayectoria se muestra entera.** Lo vencido y lo que ya no se ejerce
  *    siguen ahí: lo que cambia es el sello, no la presencia.
  * 3. **Un sello no se inventa.** Un estado que el catálogo no resuelve queda en
- *    neutro; afirmar «verificado» sobre lo que no se pudo leer sería inventar la
- *    habilitación de alguien para ejercer.
+ *    neutro.
  * 4. **El catálogo se pide una sola vez**, con todos los conceptos juntos.
+ * 5. **La foto se resuelve a URL, y su fallo degrada** al avatar de iniciales.
  */
 
 const AYER = new Date(Date.now() - 86_400_000).toISOString();
@@ -134,6 +135,17 @@ describe('PractitionerProfile', () => {
     return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
   }
 
+  /** El contrato ya armado para la vista, o el porqué de que no esté. */
+  function visible(): PerfilProfesionalVisible {
+    const valor = interno<() => PerfilProfesionalVisible | null>('visible')();
+    if (valor === null) {
+      throw new Error(
+        `el perfil no está listo: ${JSON.stringify(interno<() => unknown>('perfil')())}`,
+      );
+    }
+    return valor;
+  }
+
   /** Responde el perfil y el catálogo, que salen en ese orden. */
   function responder(perfil: object = {}, conceptos: object = CONCEPTOS): void {
     http
@@ -142,12 +154,13 @@ describe('PractitionerProfile', () => {
     http.expectOne((r) => r.url === '/terminology/concepts').flush(conceptos);
   }
 
-  it('pide el perfil propio y el catálogo de sus conceptos', () => {
+  it('pide el perfil propio y arma el contrato de la vista', () => {
     montar();
     responder();
 
-    expect(interno<() => { status: string }>('perfil')().status).toBe('ready');
-    expect(interno<() => string>('nombre')()).toBe('Dra. Lucía Salas');
+    expect(visible().nombre).toBe('Dra. Lucía Salas');
+    expect(visible().codigo).toBe('MED-7');
+    expect(visible().bio).toBe('Quince años en cardiología clínica.');
   });
 
   /**
@@ -156,9 +169,7 @@ describe('PractitionerProfile', () => {
    */
   it('junta todos los conceptos en una sola lectura del catálogo', () => {
     montar();
-    http
-      .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
-      .flush(PERFIL);
+    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
 
     const catalogo = http.expectOne((r) => r.url === '/terminology/concepts');
     // El cliente los manda separados por coma en `ids`, no repitiendo la clave.
@@ -172,26 +183,21 @@ describe('PractitionerProfile', () => {
     catalogo.flush(CONCEPTOS);
   });
 
-  it('traduce los conceptos: ningún uuid queda en pantalla', () => {
+  it('traduce los conceptos: ningún uuid queda en el contrato', () => {
     montar();
     responder();
 
-    expect(interno<() => readonly { nombre: string }[]>('especialidades')()[0].nombre).toBe(
-      'Cardiología',
-    );
-    expect(interno<() => readonly { tipo: string }[]>('formacion')()[0].tipo).toBe(
-      'Título de grado',
-    );
-    expect(interno<() => readonly { jurisdiccion: string }[]>('matriculas')()[0].jurisdiccion).toBe(
-      'Nacional',
-    );
+    expect(visible().especialidades[0].nombre).toBe('Cardiología');
+    expect(visible().formacion[0].tipo).toBe('Título de grado');
+    expect(visible().matriculas[0].jurisdiccion).toBe('Nacional');
+    expect(visible().idiomas[0].nombre).toBe('Español');
   });
 
   it('presenta con la especialidad principal vigente', () => {
     montar();
     responder();
 
-    expect(interno<() => string>('especialidadPrincipal')()).toBe('Cardiología');
+    expect(visible().especialidadPrincipal).toBe('Cardiología');
   });
 
   /**
@@ -204,9 +210,9 @@ describe('PractitionerProfile', () => {
       specialties: [{ ...PERFIL.specialties[0], validTo: '2020-01-01T00:00:00.000Z' }],
     });
 
-    expect(interno<() => string>('especialidadPrincipal')()).toBe('');
+    expect(visible().especialidadPrincipal).toBe('');
     // Pero sigue en la lista: es parte de la trayectoria.
-    expect(interno<() => readonly unknown[]>('especialidades')()).toHaveLength(1);
+    expect(visible().especialidades).toHaveLength(1);
   });
 
   /** Una credencial vencida no habilita, por más verificada que esté. */
@@ -216,9 +222,8 @@ describe('PractitionerProfile', () => {
       credentials: [{ ...PERFIL.credentials[0], expiryDate: AYER }],
     });
 
-    const estudio = interno<() => readonly { sello: string; vencida: boolean }[]>('formacion')()[0];
-    expect(estudio.vencida).toBe(true);
-    expect(estudio.sello).toBe('expired');
+    expect(visible().formacion[0].vencida).toBe(true);
+    expect(visible().formacion[0].sello).toBe('expired');
   });
 
   it('una credencial vigente y verificada sale aprobada', () => {
@@ -227,7 +232,7 @@ describe('PractitionerProfile', () => {
       credentials: [{ ...PERFIL.credentials[0], expiryDate: MANANA }],
     });
 
-    expect(interno<() => readonly { sello: string }[]>('formacion')()[0].sello).toBe('approved');
+    expect(visible().formacion[0].sello).toBe('approved');
   });
 
   /**
@@ -238,26 +243,19 @@ describe('PractitionerProfile', () => {
     montar();
     responder({}, { items: [], count: 0, limit: 200 });
 
-    expect(interno<() => { variant: string } | null>('verificacion')()?.variant).toBe('unknown');
-    expect(interno<() => readonly { estado: string }[]>('matriculas')()[0].estado).toBe(
-      'Sin registrar',
-    );
+    expect(visible().verificacion?.variant).toBe('unknown');
+    expect(visible().matriculas[0].estado).toBe('Sin registrar');
   });
 
   /** El catálogo caído degrada las etiquetas; no puede tumbar la trayectoria. */
   it('un fallo del catálogo no tumba el perfil', () => {
     montar();
-    http
-      .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
-      .flush(PERFIL);
+    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
     http
       .expectOne((r) => r.url === '/terminology/concepts')
       .error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
 
-    expect(interno<() => { status: string }>('perfil')().status).toBe('ready');
-    expect(interno<() => readonly { nombre: string }[]>('especialidades')()[0].nombre).toBe(
-      'Sin registrar',
-    );
+    expect(visible().especialidades[0].nombre).toBe('Sin registrar');
   });
 
   /** Las cuentas de actividad son de la persona, no un ranking. */
@@ -265,9 +263,47 @@ describe('PractitionerProfile', () => {
     montar();
     responder();
 
-    const actividad = interno<() => readonly { clave: string; valor: number }[]>('actividad')();
+    const actividad = visible().actividad;
     expect(actividad.find((a) => a.clave === 'encuentros')?.valor).toBe(12);
     expect(actividad.find((a) => a.clave === 'documentos')?.valor).toBe(2);
+  });
+
+  /* -- La foto (carril R2-4) ---------------------------------------------- */
+
+  /** Sin `photoFileId` no se pide nada: el avatar de iniciales es el diseño. */
+  it('sin foto registrada no pide ninguna URL de descarga', () => {
+    montar();
+    responder();
+
+    expect(visible().fotoUrl).toBeNull();
+  });
+
+  it('con foto registrada resuelve su URL de descarga', () => {
+    montar();
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
+      .flush({ ...PERFIL, photoFileId: 'foto-1' });
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http
+      .expectOne((r) => r.url === '/common/files/foto-1/download-url')
+      .flush({ url: 'https://cdn.example/foto-1.jpg', expiresAt: MANANA });
+
+    expect(visible().fotoUrl).toBe('https://cdn.example/foto-1.jpg');
+  });
+
+  /** La foto es un adorno: su fallo degrada al avatar, no tumba el perfil. */
+  it('una foto que no se puede resolver degrada al avatar de iniciales', () => {
+    montar();
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
+      .flush({ ...PERFIL, photoFileId: 'foto-1' });
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http
+      .expectOne((r) => r.url === '/common/files/foto-1/download-url')
+      .error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
+
+    expect(visible().fotoUrl).toBeNull();
+    expect(visible().nombre).toBe('Dra. Lucía Salas');
   });
 
   /**
