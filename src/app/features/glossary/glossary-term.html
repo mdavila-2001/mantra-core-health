@@ -58,13 +58,16 @@
           </ul>
         }
 
-        <!-- El código sí se muestra —es CIE-10, ATC, UCUM: sirve para buscar el
-             término afuera—. El `conceptId` no: es configuración, y un uuid no
-             ayuda a nadie que no vaya a pegarlo en un formulario. -->
-        <h2 class="termino__subtitulo">Código</h2>
-        <p class="termino__codigo">
-          <code class="tabular-nums">{{ termino.code }}</code>
-        </p>
+        <!-- El código se muestra sólo cuando sirve afuera: `I10` identifica el
+             término en CIE-10 y con él se lo busca en la literatura. La clave
+             interna de un concepto de la plataforma, no — es configuración, del
+             mismo orden que el `conceptId`, que esta pantalla tampoco muestra. -->
+        @if (codigoPublicable(); as codigo) {
+          <h2 class="termino__subtitulo">Código</h2>
+          <p class="termino__codigo">
+            <code class="tabular-nums">{{ codigo }}</code>
+          </p>
+        }
       </app-card>
     }
   </app-view-state-host>

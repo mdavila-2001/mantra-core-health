@@ -78,6 +78,29 @@ export class GlossaryTerm {
    */
   protected readonly titulo = computed(() => this.ficha()?.display ?? 'Término');
 
+  /**
+   * El código del término, **sólo si sirve para algo fuera de este sistema**.
+   *
+   * Un código como `I10` o `N02BE01` es útil: identifica el término en CIE-10 o
+   * en la clasificación ATC y con él se lo busca en la literatura. Pero los
+   * conceptos que siembra la propia plataforma guardan como código su **clave
+   * interna** —`clinical:CONDITION_SEVERITY_SEVERE`—, porque
+   * `catalog_concepts` exige unicidad por versión y varios módulos declaran
+   * códigos genéricos que coinciden. Esa clave no le sirve a nadie en consulta:
+   * es configuración, del mismo orden que el uuid que esta pantalla ya decidió
+   * no mostrar.
+   *
+   * El prefijo de módulo (`modulo:CLAVE`) es lo que las distingue, y lo pone
+   * `defineModuleConcepts` sin excepción. Verificado contra la API viva: los
+   * conceptos internos vuelven con dos puntos, los importados de un catálogo
+   * externo no.
+   */
+  protected readonly codigoPublicable = computed<string | null>(() => {
+    const code = this.ficha()?.code;
+    if (code === undefined || code === '') return null;
+    return code.includes(':') ? null : code;
+  });
+
   constructor() {
     effect(() => {
       const id = this.conceptId();

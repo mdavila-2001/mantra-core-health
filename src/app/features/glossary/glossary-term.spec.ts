@@ -79,13 +79,12 @@ describe('GlossaryTerm', () => {
   it('trae las etiquetas del término y sus otras denominaciones', () => {
     peticion().flush(FICHA);
 
-    const ficha =
-      interno<
-        () => {
-          valueSets: readonly { name: string }[];
-          synonyms: readonly { value: string }[];
-        } | null
-      >('ficha')();
+    const ficha = interno<
+      () => {
+        valueSets: readonly { name: string }[];
+        synonyms: readonly { value: string }[];
+      } | null
+    >('ficha')();
     expect(ficha?.valueSets.map((e) => e.name)).toEqual(['Diagnóstico']);
     // El nombre original sirve para buscar el término en la literatura, así que
     // se muestra en vez de esconderse por estar en inglés.
@@ -98,6 +97,22 @@ describe('GlossaryTerm', () => {
     const ficha = interno<() => { display: string; translated?: boolean } | null>('ficha')();
     expect(ficha?.display).toBe('Mild');
     expect(ficha?.translated).toBe(false);
+  });
+
+  it('muestra el código externo, que es con el que se busca el término afuera', () => {
+    peticion().flush(FICHA);
+
+    expect(interno<() => string | null>('codigoPublicable')()).toBe('I10');
+  });
+
+  it('no muestra la clave interna del catálogo: es configuración, como el uuid', () => {
+    // Los conceptos que siembra la plataforma guardan como código su clave de
+    // módulo (`clinical:CONDITION_SEVERITY_SEVERE`), porque `catalog_concepts`
+    // exige unicidad por versión. Eso no le sirve a nadie en consulta.
+    // Verificado contra la API viva antes de escribir esta prueba.
+    peticion().flush({ ...FICHA, code: 'clinical:CONDITION_SEVERITY_SEVERE' });
+
+    expect(interno<() => string | null>('codigoPublicable')()).toBeNull();
   });
 
   it('un término inexistente se traduce a S6, no a una excepción', () => {
