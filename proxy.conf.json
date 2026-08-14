@@ -44,7 +44,9 @@
       "/practices",
       "/accounting",
       "/health-context",
-      "/geo"
+      "/geo",
+      "/procedure-cases",
+      "/dental-procedures"
     ],
     "target": "http://localhost:3000",
     "secure": false,

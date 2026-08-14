@@ -1,0 +1,256 @@
+<!-- ─── Cirugías ────────────────────────────────────────────────────────────
+     No usa `app-view-state-host`: el anfitrión resuelve los nueve estados
+     sobre una lectura que ocupa la pantalla entera, y esto es un bloque de la
+     ficha. Un `403` acá no puede vaciar el expediente, así que cada mitad dice
+     lo suyo en su tarjeta y la otra sigue en pie. -->
+<app-card variant="outlined" padding="lg" class="procedimientos">
+  <h2 class="procedimientos__titulo">Cirugías</h2>
+
+  @switch (quirurgico().status) {
+    @case ('loading') {
+      <p class="procedimientos__secundario">Cargando el histórico quirúrgico…</p>
+    }
+    @case ('forbidden') {
+      <!-- S5, y separado de S3 a propósito: «no hay cirugías» y «no podés ver
+           las cirugías» son estados opuestos para quien mira. -->
+      <app-alert tone="info" title="No podés ver el histórico quirúrgico">
+        Tu rol no incluye el registro perioperatorio de esta persona. El resto de la ficha
+        sigue disponible.
+      </app-alert>
+    }
+    @case ('offline') {
+      <app-alert tone="warning" title="Sin conexión">
+        No pudimos leer el histórico quirúrgico.
+        <button app-button variant="outline" type="button" (clicked)="recargar()">
+          Reintentar
+        </button>
+      </app-alert>
+    }
+    @case ('error') {
+      <app-alert tone="error" title="No pudimos leer las cirugías">
+        <button app-button variant="outline" type="button" (clicked)="recargar()">
+          Reintentar
+        </button>
+      </app-alert>
+    }
+    @default {
+      @if (casos().length === 0) {
+        <p class="procedimientos__vacio" data-testid="sin-cirugias">
+          Sin cirugías registradas para esta persona.
+        </p>
+      } @else {
+        @if (recorteQuirurgico() > 0) {
+          <app-alert tone="warning" title="Histórico recortado">
+            Se muestran las {{ topeDeCasos }} cirugías más recientes.
+            Quedaron {{ recorteQuirurgico() }} sin mostrar.
+          </app-alert>
+        }
+
+        <ol class="procedimientos__linea" data-testid="cirugias">
+          @for (caso of casos(); track caso.id) {
+            <li class="procedimientos__caso">
+              <div class="procedimientos__cabecera">
+                <span class="procedimientos__principal">{{ caso.numero }}</span>
+                <app-badge variant="info" [value]="caso.estado" />
+                @if (caso.cuando) {
+                  <span class="procedimientos__fecha">{{ caso.cuando | date: 'd MMM y' }}</span>
+                }
+              </div>
+
+              @if (caso.equipo.length > 0) {
+                <p class="procedimientos__secundario">
+                  <span class="procedimientos__rotulo">Equipo:</span>
+                  {{ caso.equipo.join(' · ') }}
+                </p>
+              }
+
+              @if (caso.pasos.length > 0) {
+                <p class="procedimientos__rotulo">Pasos</p>
+                <ul class="procedimientos__detalle">
+                  @for (paso of caso.pasos; track paso.id) {
+                    <li>{{ paso.texto }}</li>
+                  }
+                </ul>
+              }
+
+              @if (caso.hallazgos.length > 0) {
+                <p class="procedimientos__rotulo">Hallazgos</p>
+                <ul class="procedimientos__detalle">
+                  @for (hallazgo of caso.hallazgos; track hallazgo.id) {
+                    <li>{{ hallazgo.texto }}</li>
+                  }
+                </ul>
+              }
+
+              @if (caso.implantes.length > 0) {
+                <p class="procedimientos__rotulo">Implantes</p>
+                <ul class="procedimientos__detalle">
+                  @for (implante of caso.implantes; track implante.id) {
+                    <li>
+                      {{ implante.texto }}
+                      <!-- El lote a la vista: es lo que permite responder a un
+                           retiro del mercado sin volver a abrir el parte. -->
+                      @if (implante.trazabilidad) {
+                        <span class="procedimientos__secundario">
+                          — {{ implante.trazabilidad }}
+                        </span>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </li>
+          }
+        </ol>
+      }
+    }
+  }
+</app-card>
+
+<!-- ─── Odontología ─────────────────────────────────────────────────────── -->
+<app-card variant="outlined" padding="lg" class="procedimientos">
+  <h2 class="procedimientos__titulo">Odontología</h2>
+
+  @switch (odontologico().status) {
+    @case ('loading') {
+      <p class="procedimientos__secundario">Cargando el histórico odontológico…</p>
+    }
+    @case ('forbidden') {
+      <app-alert tone="info" title="No podés ver el histórico odontológico">
+        Tu rol no incluye el registro odontológico de esta persona.
+      </app-alert>
+    }
+    @case ('offline') {
+      <app-alert tone="warning" title="Sin conexión">
+        No pudimos leer el histórico odontológico.
+        <button app-button variant="outline" type="button" (clicked)="recargar()">
+          Reintentar
+        </button>
+      </app-alert>
+    }
+    @case ('error') {
+      <app-alert tone="error" title="No pudimos leer los tratamientos">
+        <button app-button variant="outline" type="button" (clicked)="recargar()">
+          Reintentar
+        </button>
+      </app-alert>
+    }
+    @default {
+      @if (tratamientos().length === 0) {
+        <p class="procedimientos__vacio" data-testid="sin-odontologia">
+          Sin tratamientos odontológicos registrados para esta persona.
+        </p>
+      } @else {
+        @if (recorteOdontologico() > 0) {
+          <app-alert tone="warning" title="Histórico recortado">
+            Quedaron {{ recorteOdontologico() }} tratamientos sin mostrar.
+          </app-alert>
+        }
+
+        <ol class="procedimientos__linea" data-testid="odontologia">
+          @for (tratamiento of tratamientos(); track tratamiento.id) {
+            <li class="procedimientos__caso">
+              <div class="procedimientos__cabecera">
+                <span class="procedimientos__principal">{{ tratamiento.que }}</span>
+                @if (tratamiento.cuando) {
+                  <span class="procedimientos__fecha">
+                    {{ tratamiento.cuando | date: 'd MMM y' }}
+                  </span>
+                }
+              </div>
+              @if (tratamiento.piezas) {
+                <p class="procedimientos__secundario">
+                  <span class="procedimientos__rotulo">Pieza:</span> {{ tratamiento.piezas }}
+                </p>
+              }
+              @if (tratamiento.nota) {
+                <p class="procedimientos__nota">{{ tratamiento.nota }}</p>
+              }
+            </li>
+          }
+        </ol>
+      }
+    }
+  }
+
+  <!-- ─── El alta ────────────────────────────────────────────────────────
+       Debajo del histórico a propósito: se registra después de haber leído
+       qué se le hizo antes a la persona, no antes. -->
+  <div class="procedimientos__alta">
+    <h3 class="procedimientos__subtitulo">Registrar un tratamiento</h3>
+
+    @if (errorDelRegistro(); as mensaje) {
+      <app-alert tone="error" data-testid="odontologia-error">{{ mensaje }}</app-alert>
+    }
+
+    @if (sinOrganizacion()) {
+      <app-alert tone="info" title="Elegí una organización">
+        Un tratamiento queda bajo la custodia de una organización. Elegí una en el selector
+        del encabezado para poder registrarlo.
+      </app-alert>
+    } @else if (opcionesDeCodigo().length === 0) {
+      <!-- Sin catálogo los selectores estarían vacíos y el formulario mandaría
+           un código inexistente. Decirlo es más honesto que ofrecerlo roto. -->
+      <app-alert tone="warning" title="Catálogo no disponible">
+        No pudimos leer el catálogo odontológico, así que el registro no está disponible.
+        El histórico de arriba sí.
+      </app-alert>
+    } @else {
+      <form class="procedimientos__formulario" (submit)="$event.preventDefault()">
+        <app-form-field label="Tratamiento" [required]="true">
+          <app-select
+            [(value)]="codigo"
+            [options]="opcionesDeCodigo()"
+            placeholder="Qué se hizo"
+            ariaLabel="Tratamiento odontológico"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Pieza o cuadrante"
+          hint="Opcional. En notación FDI; los cuadrantes van primero."
+        >
+          <app-select
+            [(value)]="pieza"
+            [options]="opcionesDeSitio()"
+            placeholder="Sobre qué pieza"
+            ariaLabel="Pieza o cuadrante tratado"
+          />
+        </app-form-field>
+
+        <!-- Deshabilitado hasta que haya pieza: el backend rechaza una cara sin
+             pieza con un 422, y es mejor que el campo no se pueda llenar a que
+             el formulario se envíe para que le digan que no. -->
+        <app-form-field
+          label="Cara o superficie"
+          hint="Opcional. Necesita una pieza elegida."
+          [errorMessage]="caraDemasiadoLarga() ? 'Máximo ' + topeDeCara + ' caracteres.' : ''"
+        >
+          <app-input
+            [(value)]="cara"
+            [disabled]="pieza() === null"
+            [hasError]="caraDemasiadoLarga()"
+            placeholder="Oclusal, vestibular…"
+          />
+        </app-form-field>
+
+        <app-form-field label="Nota clínica" hint="Opcional.">
+          <app-textarea
+            [(value)]="nota"
+            [rows]="3"
+            [maxLength]="topeDeNota"
+            [autoResize]="true"
+            placeholder="Qué se hizo y con qué"
+          />
+        </app-form-field>
+
+        <app-form-actions
+          submitLabel="Registrar tratamiento"
+          [pending]="registrando()"
+          [disabled]="!puedeRegistrar()"
+          (submitted)="registrar()"
+        />
+      </form>
+    }
+  </div>
+</app-card>
