@@ -51,6 +51,7 @@ import {
   CLINICAL_RECORD_ROUTE,
   MOTIVO_QUERY_PARAM,
 } from '../clinical-record.routes';
+import { AdmissionBlock, type InternacionEnFicha } from './admission-block/admission-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 import { AttachmentsBlock } from './attachments-block/attachments-block';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
@@ -72,6 +73,7 @@ const NOMBRE_DE_BLOQUE: Readonly<Record<string, string>> = {
   medicationRequests: 'medicación',
   observations: 'observaciones',
   encounters: 'encuentros',
+  careEpisodes: 'internaciones',
   notes: 'notas',
   carePlans: 'planes de cuidados',
   documents: 'documentos',
@@ -158,6 +160,7 @@ interface Expediente {
 @Component({
   selector: 'app-patient-chart',
   imports: [
+    AdmissionBlock,
     Alert,
     AppButton,
     Badge,
@@ -543,6 +546,28 @@ export class PatientChart {
    * a un identificador de catálogo. Es el mismo criterio con el que el bloque
    * de encuentros deriva «en curso» de `endAt`.
    */
+  /* -- La internación, que se abre desde el encuentro --------------------- */
+
+  /**
+   * Las internaciones de esta persona, con su «sigue abierta» ya resuelto.
+   *
+   * «Abierta» se deriva de `endAt` y no del estado, por lo mismo que en los
+   * encuentros: el estado es un uuid de concepto y ramificar por su valor ataría
+   * la pantalla a un identificador de catálogo.
+   *
+   * Salen de `GET /clinical/patients/:id/summary`, que empezó a devolverlas con
+   * este carril: antes el expediente sólo veía el `episodeId` colgado de un
+   * encuentro, y un uuid sin fila detrás no dice ni cuándo empezó ni si sigue.
+   */
+  protected readonly internaciones = computed<readonly InternacionEnFicha[]>(() =>
+    (this.datos()?.resumen.careEpisodes ?? []).map((episodio) => ({
+      id: episodio.id,
+      abierta: episodio.endAt === undefined,
+      desde: episodio.startAt ?? null,
+      hasta: episodio.endAt ?? null,
+    })),
+  );
+
   protected readonly recetas = computed<readonly RecetaEnFicha[]>(() =>
     (this.datos()?.resumen.medicationRequests ?? []).map((receta) => ({
       id: receta.id,

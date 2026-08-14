@@ -48,7 +48,20 @@ const RECURSO = {
   timeZone: 'America/La_Paz',
   capacity: 1,
   stateConceptId: 'st-activo',
+  // Dónde se atiende. Llega resuelto en la misma lectura de recursos: el
+  // backend lo deriva de la asignación de rol vigente del profesional, así que
+  // la agenda no encadena una petición por recurso.
+  site: {
+    id: 'site-1',
+    name: 'Consultorio Central',
+    code: 'CC',
+    addressText: 'Av. Brasil 1234, La Paz',
+    timeZone: 'America/La_Paz',
+  },
 };
+
+/** El mismo recurso sin sede: un estado corriente, no un fallo. */
+const RECURSO_SIN_SEDE = { ...RECURSO, id: 'r-2', name: 'Box 3', site: null };
 
 const CITA = {
   id: 'b-1',
@@ -630,5 +643,38 @@ describe('Agenda', () => {
 
     expect(columnasDeCitas.some((columna) => columna.key === 'acciones')).toBe(false);
     expect(columnasDeCupos.some((columna) => columna.key === 'reservar')).toBe(true);
+  });
+
+  /* ---- dónde atiende el recurso ------------------------------------------- */
+
+  /**
+   * La agenda sabía *cuándo* y no *dónde*, y un turno sin dirección obliga a
+   * averiguarla por fuera del sistema. Llega en la misma lectura de recursos,
+   * así que no cuesta una petición más ni una por recurso.
+   */
+  it('dice dónde se atiende con el recurso elegido', async () => {
+    await montar();
+    await responder();
+
+    harness.detectChanges();
+
+    expect(interno<() => string>('ubicacionDelRecurso')()).toBe(
+      'Consultorio Central · Av. Brasil 1234, La Paz',
+    );
+    expect(harness.routeNativeElement?.textContent).toContain('Av. Brasil 1234, La Paz');
+  });
+
+  /**
+   * Sin sede vigente el renglón lo dice con esas palabras. Dejar el hueco se
+   * leería como un dato que no cargó, que es otra cosa.
+   */
+  it('cuando el recurso no tiene sede lo dice, en vez de dejar el hueco', async () => {
+    await montar();
+    await responderRecursos([RECURSO_SIN_SEDE]);
+    responderResto();
+    harness.detectChanges();
+
+    expect(interno<() => unknown>('sedeDelRecurso')()).toBeNull();
+    expect(harness.routeNativeElement?.textContent).toContain('Sin consultorio registrado');
   });
 });

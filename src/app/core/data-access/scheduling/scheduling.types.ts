@@ -16,6 +16,28 @@
     derivado (`remainingCapacity`, `available`).
     ========================================================================== */
 
+/**
+ * **Dónde** se atiende con un recurso — la mitad que le faltaba a la agenda.
+ *
+ * El backend lo deriva de lo que el recurso ya declara: la asignación de rol
+ * vigente si apunta a un profesional, el espacio de atención si apunta a un
+ * box. No hay columna nueva detrás, y por eso el dato no puede discrepar del
+ * que guarda `practice`.
+ *
+ * `addressText` viene compuesto en una línea desde el servidor: la dirección se
+ * guarda en piezas y decidir cómo se juntan es del dato, no de cada pantalla.
+ */
+export interface AgendaResourceSite {
+  readonly id: string;
+  readonly name: string;
+  /** Código único dentro de la práctica. */
+  readonly code: string;
+  /** Dirección en una línea, o `null` si la sede no tiene ninguna cargada. */
+  readonly addressText: string | null;
+  /** Zona horaria de la sede, p. ej. `America/La_Paz`. */
+  readonly timeZone: string | null;
+}
+
 /** Un recurso agendable: la agenda de un profesional, un box, un equipo. */
 export interface AgendaResource {
   readonly id: string;
@@ -29,6 +51,15 @@ export interface AgendaResource {
   readonly timeZone: string | null;
   readonly capacity: number;
   readonly stateConceptId: string;
+  /**
+   * Dónde se atiende con este recurso.
+   *
+   * `null` es un estado **corriente**, no un error: un recurso sin asignación
+   * vigente con sede no tiene dónde que mostrar, y la agenda sigue sirviendo
+   * para elegir horario. Quien lo pinte tiene que decir «sin consultorio
+   * registrado», nunca dejar el hueco.
+   */
+  readonly site: AgendaResourceSite | null;
 }
 
 /** Los recursos agendables de una organización. */

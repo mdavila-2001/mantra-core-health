@@ -12,6 +12,7 @@
       "/forms",
       "/clinical",
       "/authz",
+      "/practitioners",
       "/practitioner-delegates",
       "/access-requests",
       "/delegated-access",
