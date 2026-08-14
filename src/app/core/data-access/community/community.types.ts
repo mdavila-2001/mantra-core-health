@@ -588,3 +588,43 @@ export interface ConversationsQuery {
 export interface ConversationMessagesQuery extends CursorQuery {
   readonly profileId: string;
 }
+
+// ─── Reaccionar ──────────────────────────────────────────────────────────────
+
+/** A qué se puede reaccionar. */
+export const REACTABLE_TYPES = ['POST', 'COMMENT', 'REVIEW'] as const;
+
+/** El tipo de objeto al que se reacciona. */
+export type ReactableType = (typeof REACTABLE_TYPES)[number];
+
+/**
+ * Los cinco tipos de reacción del modelo.
+ *
+ * Son un enum cerrado del contrato y **no** conceptos de terminología —al revés
+ * que `reactionTypeConceptId`, que es lo que devuelven las lecturas—. Es una
+ * asimetría real del backend: se escribe con la palabra y se lee con el uuid.
+ */
+export const REACTION_TYPES = [
+  'LIKE',
+  'LOVE',
+  'INSIGHTFUL',
+  'CELEBRATE',
+  'SUPPORT',
+] as const;
+
+/** Una reacción. */
+export type ReactionType = (typeof REACTION_TYPES)[number];
+
+/**
+ * Lo que hace falta para reaccionar.
+ *
+ * El backend hace *upsert*: reaccionar dos veces con tipos distintos cambia la
+ * reacción, no agrega una segunda. Por eso `actorProfileId` es obligatorio —es
+ * la mitad de la clave— y no se toma de la sesión.
+ */
+export interface NewReaction {
+  readonly actorProfileId: string;
+  readonly reactableType: ReactableType;
+  readonly reactableRefId: string;
+  readonly reactionType: ReactionType;
+}

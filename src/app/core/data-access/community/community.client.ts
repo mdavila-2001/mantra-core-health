@@ -31,6 +31,7 @@ import type {
   GroupPage,
   GroupsQuery,
   NewComment,
+  NewReaction,
   NewPost,
   NotificationPage,
   NotificationsQuery,
@@ -233,6 +234,23 @@ export class CommunityClient {
    * `POST /community/comments` — comenta, o responde a un comentario si se
    * pasa `parentCommentId`.
    */
+  /**
+   * `PUT /community/reactions` — reacciona a una publicación o comentario.
+   *
+   * Es **upsert**, no alta: reaccionar de nuevo con otro tipo cambia la
+   * reacción en vez de agregar una segunda. Por eso es `PUT` y por eso el
+   * contrato exige `actorProfileId` — es la mitad de la clave, no un dato que
+   * el servidor pueda deducir de la sesión.
+   *
+   * @param reaccion - Quién, a qué y con qué.
+   */
+  react(reaccion: NewReaction): Observable<{ readonly id: string }> {
+    return this.http.put<{ readonly id: string }>(
+      this.url('/community/reactions'),
+      reaccion,
+    );
+  }
+
   createComment(datos: NewComment): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(this.url('/community/comments'), {
       ...datos,
