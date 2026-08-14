@@ -64,8 +64,13 @@ describe('NavigationService', () => {
       // «Mis turnos» entra acá porque su filtro real es tener perfil de
       // paciente —un dato de la cuenta, no un rol—, y eso lo resuelve la
       // pantalla, no el menú.
+      //
+      // El muro entra por la misma razón: su filtro es tener **perfil público**
+      // de `community`, que es otra entidad distinta del `pid` de la sesión y
+      // sólo se sabe preguntándole al backend. Un rol no puede expresarlo.
       expect(rutasDelMenu()).toEqual([
         '/dashboard',
+        '/feed',
         '/my-account',
         '/my-account/appointments',
         '/my-account/identity/verify',

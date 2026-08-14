@@ -1,0 +1,52 @@
+<app-card variant="outlined" padding="md">
+  <header class="publicacion__cabecera">
+    <p class="publicacion__autor">Perfil {{ autor() }}</p>
+    @if (post().publishedAt; as fecha) {
+      <p class="publicacion__fecha">
+        <time [attr.datetime]="fecha.toISOString()">{{ fecha | date: 'd MMM y, HH:mm' }}</time>
+      </p>
+    }
+    @if (post().editedAt) {
+      <app-badge variant="secondary" size="sm">Editada</app-badge>
+    }
+  </header>
+
+  <p class="publicacion__cuerpo">{{ post().bodyText }}</p>
+
+  <footer class="publicacion__acciones">
+    @if (puedeReaccionar()) {
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        [attr.aria-pressed]="reaccionPropia() === 'LIKE'"
+        (clicked)="reaccionar('LIKE')"
+      >
+        Me sirve
+      </button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        [attr.aria-pressed]="reaccionPropia() === 'INSIGHTFUL'"
+        (clicked)="reaccionar('INSIGHTFUL')"
+      >
+        Me hizo pensar
+      </button>
+    } @else {
+      <!-- Sin perfil público no se puede reaccionar: el contrato exige el
+           perfil y no lo deduce de la sesión. Se dice, no se esconde el pie. -->
+      <p class="publicacion__sin-perfil">
+        Creá tu perfil público para reaccionar.
+      </p>
+    }
+
+    @if (reacciones() > 0) {
+      <span class="publicacion__conteo">{{ reacciones() }}</span>
+    }
+  </footer>
+
+  @if (error(); as mensaje) {
+    <p class="publicacion__error" role="alert">{{ mensaje }}</p>
+  }
+</app-card>
