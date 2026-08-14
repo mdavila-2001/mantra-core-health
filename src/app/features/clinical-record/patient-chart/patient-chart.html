@@ -137,6 +137,18 @@
       (cambio)="recargar()"
     />
 
+    <!-- ─── La internación ───────────────────────────────────────────────
+         Punto 8 del reclamo. Va al final de los bloques de escritura y con la
+         lista dentro —no en una pestaña— porque hasta ahora una internación
+         abierta no se veía en ningún lado: quien reabría la ficha no se
+         enteraba de que la persona estaba internada. -->
+    <app-admission-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+      [internaciones]="internaciones()"
+      (cambio)="recargar()"
+    />
+
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque
          invita a suponer que lo trae todo, y no lo trae. -->

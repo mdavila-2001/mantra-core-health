@@ -23,6 +23,7 @@ import {
   CaseStatusCatalog,
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
+import { WorkHistory } from './work-history/work-history';
 
 /**
  * Resumen propio — vista **V05-03** de `SALUD/Vistas/V05 profiles`
@@ -55,10 +56,17 @@ import {
  *    salió, y es la pregunta que más se hace en esta pantalla.
  * 3. **Con qué credenciales está entrando** — organización y roles. Estaban sólo
  *    en el panel, que es otra pantalla.
+ *
+ * ## El cuarto bloque es del profesional, no de la persona
+ *
+ * `app-work-history` agrega **dónde trabajó** (punto 9 del reclamo). Vive acá y
+ * no en una pantalla propia porque es una sección más del perfil, y se dibuja
+ * solo cuando la sesión tiene perfil profesional: para una cuenta de paciente
+ * la pregunta no aplica y el bloque no aparece.
  */
 @Component({
   selector: 'app-my-profile',
-  imports: [Badge, Card, DatePipe, PageHeader, RouterLink, StatusSeal, ViewStateHost],
+  imports: [Badge, Card, DatePipe, PageHeader, RouterLink, StatusSeal, ViewStateHost, WorkHistory],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

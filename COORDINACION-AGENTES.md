@@ -670,3 +670,96 @@ detrás de flag. **Con `dev` verde tras #58/#59, esta rama sí termina en PR.**
 
 - `src/**` entero, `cypress/harness/**`, `cypress/e2e/` fuera de `real/08`, `real/09` y
   `real/10`, `.github/**`, y el contrato de `actores.ts` (lo usan 02/05 tal cual).
+
+---
+
+## Sesión 2026-08-14 · Carril 5 — historial laboral, consultorios y alta de internación
+
+**Rama:** `dev` · **Base:** `3459d0c` · **Puntos del reclamo:** 8, 9 y 11.
+**Los dos repos**: acá y `mantra-core-health-api`.
+
+### 🔴 Bloqueador declarado desde el primer día: una tabla nueva sin materializar
+
+El punto 9 necesita **`profiles.practitioner_affiliations`**, que no existe. Por
+[ADR-0021](../mantra-core-health-api/docs/adr/ADR-0021-fuente-unica-de-ddl.md) el esquema se
+declara en los `.puml` del modelo canónico y lo materializa `gen_ddl.py`: **no se escribe un
+`CREATE TABLE` a mano**, y `check_ddl_sources.py` corre como paso 0/4 de `rebuild_stack.py` para
+que no se pueda. El workspace con `SQL/` y `salud-db/` no está en este checkout, así que la
+tabla **queda declarada y sin materializar**.
+
+Lo que eso significa, en concreto:
+
+```
+GET  /profiles/practitioners/me/affiliations   → 500 hasta que exista la tabla
+POST /profiles/practitioners/me/affiliations   → 500 hasta que exista la tabla
+```
+
+Todo lo demás de este carril funciona contra la API tal como está hoy.
+
+La tabla, sus dos índices y los pasos que faltan están escritos en el vault:
+`SALUD/Entidades/E profiles.practitioner_affiliations.md` y
+`SALUD/🧩 Patch v4.1.0 — Historial laboral, consultorios e internación.md`. **Quien tenga el
+workspace completo puede cerrarlo en cinco pasos** — están enumerados en el patch.
+
+El frontend está construido para ese estado: el bloque de historial laboral trata el fallo de la
+lectura como «no pudimos leer tu historial» con reintento y **sigue mostrando el formulario**. No
+tumba «Mi perfil».
+
+### 🟡 Los otros dos puntos no tocaron el esquema, y eso fue una decisión
+
+- **Punto 11 (consultorios).** La lectura obvia era colgarle un `site_id` a
+  `scheduling.schedulable_resources`. No hizo falta: el recurso ya declara a qué apunta
+  (`resource_ref_type`/`resource_ref_id`) y `practice.practitioner_role_assignments` guarda
+  `practice_site_id` desde siempre. La sede se **deriva**. Una columna nueva sería un segundo
+  lugar donde guardar el mismo hecho.
+- **Punto 8 (internación).** `POST /clinical/care-episodes` existía desde siempre. Lo que
+  faltaba era **leer** los episodios: la ficha sólo veía el `episodeId` colgado de un encuentro.
+
+### Archivos nuevos (no chocan con nada)
+
+```text
+src/app/core/data-access/practice-sites/         cliente de consultorios (+ tipos y spec)
+src/app/features/account/my-profile/work-history/            historial laboral (+ .html/.css/.spec)
+src/app/features/clinical-record/patient-chart/admission-block/   alta de internación (+ .html/.css/.spec)
+```
+
+### Archivos existentes que toqué
+
+| Archivo | Qué |
+|---|---|
+| `core/data-access/profiles/profiles.client.ts` · `.types.ts` (+ spec) | `listAffiliations()` / `addAffiliation()` y `PractitionerAffiliation`. **Sólo métodos y tipos nuevos** |
+| `core/data-access/scheduling/scheduling.types.ts` | `AgendaResourceSite` y el campo `site` en `AgendaResource`. El cliente no cambió: su `WireResource` es identidad |
+| `core/data-access/clinical/clinical.client.ts` · `.types.ts` (+ spec) | `createCareEpisode()`, el bloque `careEpisodes` de `getSummary` y sus tipos. **No toqué `getChart`/`checkInEncounter`/las seis escrituras existentes** |
+| `features/account/my-profile/my-profile.{ts,html}` | Import del bloque nuevo + una tarjeta al final |
+| `features/agenda/agenda.{ts,html,css}` (+ spec) | Renglón «Se atiende en», debajo de los filtros |
+| `features/agenda/booking-new/booking-new.{ts,html}` (+ spec) | Renglón «Dónde» en el resumen de la reserva |
+| `features/clinical-record/patient-chart/patient-chart.{ts,html}` | Import de `admission-block` + una entrada al final del ensamblado, y `internaciones()` |
+| `proxy.conf.json` · `proxy.conf.docker.json` | `/practitioners`. **No es prefijo de ninguna ruta de `APP_SECTIONS`** — comprobado contra `navigation.map.ts` antes de agregarlo, que es la regla que ya mordió una vez con `/admin` |
+
+**No toqué `app.routes.ts` ni `navigation.map.ts`**: ninguno de los tres puntos abre una sección
+nueva de menú. Son extensiones de pantallas que ya existen.
+
+### Lo que NO toqué — es de otros
+
+`community.client.ts` y todo lo de la red social (tiene su propio plan en
+`PENDIENTES-RED-SOCIAL.md`), `medication-block/`, `diagnosis-block/`, `budget-block/`,
+`procedures-block/`, `specialty-form-block/`, y todo `redsat/`.
+
+**Aviso para quien esté en carriles 1, 2 y 3:** `patient-chart.{ts,html}` recibió el import de
+`admission-block` y **una** entrada al final del ensamblado de bloques. Es lo último que toqué
+del archivo, a propósito, para que los otros bloques entren encima sin conflicto.
+
+### ⚠️ Del otro repo: hay otra sesión escribiendo `community` ahora mismo
+
+Mientras trabajaba, `mantra-core-health-api` cambió de rama a `pablo/m19-red-social-backend` y
+aparecieron cambios sin commitear en `community-social-read.service.ts`,
+`community-visibility.service.ts` y `community.concepts.ts`. **No los toqué** y no comparten
+ningún archivo con este carril, pero el `yarn typecheck` del backend arrastra un error de esa
+superficie (`community-social.controller.ts` llama a `listFollows` con dos argumentos y el
+servicio ya pide tres). Es trabajo a medio camino de otra sesión, no de este carril.
+
+### Verificación
+
+`yarn lint` · `yarn typecheck` · `yarn test` · `yarn build` en este repo.
+`yarn lint` · `yarn typecheck` · `yarn test` en el backend.
+

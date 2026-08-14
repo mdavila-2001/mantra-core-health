@@ -19,6 +19,9 @@ import type {
   PatientPage,
   PatientProfile,
   PatientSearchQuery,
+  PractitionerAffiliation,
+  PractitionerAffiliationPage,
+  NewPractitionerAffiliation,
   PractitionerProfile,
   RelatedPerson,
   RelatedPersonCreated,
@@ -224,6 +227,49 @@ export class ProfilesClient {
       .pipe(map((body) => ({ ...body, createdAt: new Date(body.createdAt) })));
   }
 
+  /* -- El historial laboral del profesional (UC-05-16) --------------------- */
+
+  /**
+   * `GET /profiles/practitioners/me/affiliations` — dónde trabajó.
+   *
+   * Autoservicio de verdad: el sujeto lo resuelve el backend desde la sesión,
+   * así que no hay identificador que pasar ni forma de leer el currículum de
+   * otro. Es el mismo trato que `getOwnSummary`.
+   *
+   * Una cuenta sin perfil profesional recibe `403`. No es un error de la
+   * pantalla: es que la pregunta no aplica, y quien la consuma tiene que
+   * contarlo como ausencia de sección, no como fallo.
+   *
+   * @returns Sus vínculos laborales, del más reciente al más antiguo.
+   */
+  listAffiliations(): Observable<PractitionerAffiliationPage> {
+    return this.http
+      .get<WireAffiliationPage>(this.url('/profiles/practitioners/me/affiliations'))
+      .pipe(map((body) => ({ ...body, items: body.items.map(toAffiliation) })));
+  }
+
+  /**
+   * `POST /profiles/practitioners/me/affiliations` — agrega un vínculo laboral.
+   *
+   * Dos respuestas que **no** son errores del sistema y conviene distinguir:
+   * `409` es el mismo vínculo ya cargado —misma institución, mismo cargo y
+   * mismo día de inicio—, y `422` es un período que termina antes de empezar.
+   * Las dos se cuentan como algo que corregir en el formulario.
+   *
+   * @param afiliacion - Institución, cargo y período.
+   * @returns El vínculo registrado, ya con su `current` derivado.
+   */
+  addAffiliation(
+    afiliacion: NewPractitionerAffiliation,
+  ): Observable<PractitionerAffiliation> {
+    return this.http
+      .post<WireAffiliation>(
+        this.url('/profiles/practitioners/me/affiliations'),
+        stripUndefined(afiliacion),
+      )
+      .pipe(map(toAffiliation));
+  }
+
   /**
    * `POST /profiles/persons/:personId/account-links`. Ata una cuenta de acceso
    * a una persona ya registrada.
@@ -276,6 +322,46 @@ type RespuestaFicha = ConNulos<Omit<WirePatientDetail, 'relatedPersons'>> & {
   readonly relatedPersons: readonly ConNulos<RelatedPerson>[];
 };
 type RespuestaResumen = ConNulos<WireOwnSummary>;
+
+/**
+ * Una afiliación como viaja: dos fechas **sin hora** y una marca de tiempo.
+ *
+ * La distinción no es cosmética. `startDate`/`endDate` son `format: 'date'` y
+ * pasan por `maybeDateOnly`, que las ancla a medianoche **local**: con
+ * `new Date()` retrocederían un día en cualquier huso al oeste de Greenwich, y
+ * un vínculo laboral que empieza el 1 de marzo se leería como del 28 de
+ * febrero. `createdAt` sí es un instante y va por el camino directo.
+ */
+type WireAffiliation = Omit<
+  PractitionerAffiliation,
+  'startDate' | 'endDate' | 'createdAt'
+> & {
+  readonly startDate: string;
+  readonly endDate: string | null;
+  readonly createdAt: string;
+};
+
+interface WireAffiliationPage extends Omit<PractitionerAffiliationPage, 'items'> {
+  readonly items: readonly WireAffiliation[];
+}
+
+/** La afiliación con sus fechas ya convertidas. */
+function toAffiliation({
+  startDate,
+  endDate,
+  createdAt,
+  ...resto
+}: WireAffiliation): PractitionerAffiliation {
+  return {
+    ...resto,
+    // `startDate` es obligatoria en el contrato; el `?? new Date(NaN)` no puede
+    // ocurrir, pero declararlo evita que un dato roto se cuele como `undefined`
+    // en un campo que la vista pinta sin preguntar.
+    startDate: maybeDateOnly(startDate) ?? new Date(NaN),
+    endDate: maybeDateOnly(endDate) ?? null,
+    createdAt: new Date(createdAt),
+  };
+}
 
 type WireMergeEvent = Omit<PatientMergeEvent, 'recordedAt'> & { readonly recordedAt: string };
 

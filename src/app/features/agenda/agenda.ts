@@ -405,6 +405,37 @@ export class Agenda {
     return id === null ? '' : (this.recursos().find((r) => r.id === id)?.name ?? '');
   });
 
+  /**
+   * **Dónde** atiende el recurso que se está mirando.
+   *
+   * La agenda sabía *cuándo* desde el principio y no sabía *dónde*: un turno
+   * sin dirección obliga a averiguarla por fuera del sistema. Llega resuelto en
+   * el propio `GET /scheduling/resources`, así que no cuesta una petición más
+   * ni una por recurso.
+   *
+   * `null` cuando el recurso no tiene sede vigente. Es corriente, y la pantalla
+   * lo dice con esas palabras en vez de dejar el hueco: un renglón vacío se lee
+   * como un dato que no cargó.
+   */
+  protected readonly sedeDelRecurso = computed(() => {
+    const id = this.recursoElegido();
+    return id === null ? null : (this.recursos().find((r) => r.id === id)?.site ?? null);
+  });
+
+  /**
+   * La ubicación en una línea, tal como se muestra.
+   *
+   * Nombre y dirección juntos, y la dirección sólo si la sede la tiene: repetir
+   * el nombre como si fuera la dirección sería peor que no ponerla.
+   */
+  protected readonly ubicacionDelRecurso = computed(() => {
+    const sede = this.sedeDelRecurso();
+    if (sede === null) {
+      return '';
+    }
+    return sede.addressText === null ? sede.name : `${sede.name} · ${sede.addressText}`;
+  });
+
   protected readonly ventanaElegida = computed<VentanaClave>(() => {
     const pedida = this.params()?.get('rango');
     return VENTANAS.some((v) => v.clave === pedida)

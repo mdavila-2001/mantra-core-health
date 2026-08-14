@@ -148,6 +148,77 @@ export interface PatientDetail {
   readonly updatedAt: Date;
 }
 
+/* ---- historial laboral del profesional (UC-05-16) ------------------------ */
+
+/**
+ * Un vínculo laboral del profesional: dónde trabajó, con qué cargo y cuándo.
+ *
+ * ## Lo que el perfil no sabía decir
+ *
+ * `credentials` dice dónde se **formó**, `licenses` qué puede **ejercer** y
+ * `specialties` en qué. Ninguno dice dónde **trabajó**, que es lo que el
+ * cliente pidió por nombre: «hospitales o entidades médicas».
+ *
+ * ## La institución es texto
+ *
+ * `organizationName` es una cadena, no un identificador. La mayoría de los
+ * hospitales donde alguien trabajó no están en la plataforma, y exigir que
+ * existan para poder mencionarlos convertiría un dato de currículum en un alta
+ * de organizaciones. Cuando la institución sí está dentro, `practiceSiteId` la
+ * ata.
+ *
+ * ## `current` viene derivado
+ *
+ * Lo calcula el backend a partir de `endDate`, para que quien lo muestre no
+ * tenga que decidir qué significa una fecha ausente.
+ */
+export interface PractitionerAffiliation {
+  readonly id: string;
+  readonly practitionerProfileId: string;
+  /** Hospital o entidad médica, tal como la declaró el profesional. */
+  readonly organizationName: string;
+  readonly roleTitle: string;
+  readonly departmentText: string | null;
+  /** Sede de la plataforma, cuando la institución está dentro. */
+  readonly practiceSiteId: string | null;
+  /** Tipo de vínculo; se resuelve contra `terminology`. */
+  readonly affiliationTypeConceptId: string | null;
+  readonly startDate: Date;
+  /** `null` mientras siga ejerciendo ahí. */
+  readonly endDate: Date | null;
+  /** Derivado de `endDate` por el backend: sin fin declarado, sigue vigente. */
+  readonly current: boolean;
+  /** Concepto del estado del registro, no del vínculo laboral. */
+  readonly status: string;
+  readonly createdAt: Date;
+}
+
+/** El historial laboral completo, del vínculo más reciente al más antiguo. */
+export interface PractitionerAffiliationPage {
+  readonly items: readonly PractitionerAffiliation[];
+  readonly count: number;
+}
+
+/**
+ * Alta de un vínculo laboral.
+ *
+ * **No lleva el profesional**: el backend lo resuelve desde la sesión, así que
+ * no hay forma de escribir el historial de otro. Las fechas viajan como
+ * `YYYY-MM-DD` porque el contrato las declara `date`, no `date-time`: el día en
+ * que alguien entró a un hospital no tiene hora.
+ */
+export interface NewPractitionerAffiliation {
+  readonly organizationName: string;
+  readonly roleTitle: string;
+  readonly departmentText?: string;
+  readonly practiceSiteId?: string;
+  readonly affiliationTypeConceptId?: string;
+  /** ISO `YYYY-MM-DD`. */
+  readonly startDate: string;
+  /** ISO `YYYY-MM-DD`. Se omite si sigue ejerciendo ahí. */
+  readonly endDate?: string;
+}
+
 /* ---- personas relacionadas / contactos (UC-05-10) ----------------------- */
 
 /**
