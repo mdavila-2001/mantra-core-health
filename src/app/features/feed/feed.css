@@ -1,0 +1,23 @@
+.muro__alerta {
+  display: block;
+  margin-bottom: var(--e4);
+}
+
+.muro__cargando {
+  color: var(--text-secondary);
+}
+
+.muro__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  /* Ancho de lectura: una publicación que cruza una pantalla ancha entera
+     obliga a barrer con la vista y se lee peor. */
+  max-inline-size: 68ch;
+}
+
+.muro__mas {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--e5);
+}

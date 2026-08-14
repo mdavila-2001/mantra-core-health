@@ -1,0 +1,146 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Personas</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Personas relacionadas</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Personas relacionadas</h1></div>
+        <p class="caption">A quién llamar cuando el paciente no puede responder: el parentesco, el contacto de emergencia y el tutor legal, uno solo activo por paciente.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/personas/personas-relacionadas-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva persona relacionada</a>
+      </div>
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Pacientes">
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/pacientes-listado">Pacientes</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/vinculos-de-identidad-listado">Vínculos de identidad</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/resumen-propio-listado">Resumen propio</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/apoderados-de-portal-listado">Apoderados de portal</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Personas relacionadas</a>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por paciente o por nombre de la persona">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-1">Paciente</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-2">Persona</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-2" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-3">Relación</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-3">
+            <option>Todas</option>
+            <option>Madre</option>
+            <option>Padre</option>
+            <option>Cónyuge</option>
+            <option>Hijo</option>
+            <option>Hermana</option>
+            <option>Tutor</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Madre<button type="button" aria-label="Quitar el filtro Madre"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="f-4-l">Contacto de emergencia</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="f-4-l">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Sólo contactos de emergencia</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="f-5-l">Tutor legal</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="f-5-l">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Sólo tutores legales</span>
+        </label>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Personas relacionadas — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Paciente</th>
+            <th scope="col">Persona</th>
+            <th scope="col">Relación</th>
+            <th scope="col">Contacto de emergencia</th>
+            <th scope="col">Tutor legal</th>
+            <th scope="col">Estado</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">REL-2026-000512</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Nayra Condori Mamani</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Rosa Mamani Condori</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg>Madre</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Sí</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Sí</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">REL-2026-000508</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Marisol Quispe Ticona</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Julio Quispe Colque</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg>Cónyuge</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Sí</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">REL-2026-000497</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Ignacio Salvatierra Justiniano</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Verónica Justiniano Áñez</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg>Madre</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Sí</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Sí</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">REL-2026-000486</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Ariel Mendoza Villarroel</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Carla Villarroel Rocha</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg>Hermana</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Sí</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">REL-2026-000470</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Elena Vaca Peredo</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Mauricio Peredo Suárez</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg>Hijo</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">REL-2026-000455</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Rodrigo Ferrufino Áñez</a></td><td><a app-link="" aria-disabled="true" data-sin-destino="">Lucía Áñez Montaño</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg>Madre</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>No</span></td><td><span class="celda-si-no"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Sí</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Dada de baja</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg></span>
+        <h2>Todavía no hay personas relacionadas</h2>
+        <p>Son las personas a las que hay que llamar: la madre, el cónyuge, el hijo. Acá se declara el parentesco, a quién avisar en una urgencia y quién es el tutor legal —uno solo activo por paciente—. Es lo primero que mira la guardia cuando el paciente no puede responder.</p>
+        <a app-button="" data-variante="secundario" routerLink="/personas/personas-relacionadas-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva persona relacionada</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar las personas relacionadas.</strong>
+            <p>El registro maestro de personas no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

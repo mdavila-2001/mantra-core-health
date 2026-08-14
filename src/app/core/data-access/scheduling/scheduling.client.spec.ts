@@ -215,6 +215,30 @@ describe('SchedulingClient', () => {
     req.flush({ bookingId: 'b-1', capacityReleased: true });
   });
 
+  it('rescheduleBooking manda toSlotId y omite reasonText si nadie lo dio', () => {
+    let resultado: { bookingId: string } | undefined;
+    client.rescheduleBooking('b-1', { toSlotId: 's-2' }).subscribe((r) => (resultado = r));
+
+    const req = http.expectOne('/scheduling/bookings/b-1/reschedule');
+    expect(req.request.method).toBe('POST');
+    // Mismo criterio que `cancelBooking`: el opcional ausente no viaja, porque
+    // en `undefined` es un 400 seguro (`forbidNonWhitelisted`).
+    expect(req.request.body).toEqual({ toSlotId: 's-2' });
+
+    req.flush({ bookingId: 'b-1', fromSlotId: 's-1', toSlotId: 's-2' });
+    expect(resultado?.bookingId).toBe('b-1');
+  });
+
+  it('rescheduleBooking incluye reasonText cuando se dio', () => {
+    client.rescheduleBooking('b-1', { toSlotId: 's-2', reasonText: 'Cambio de horario' }).subscribe();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/reschedule');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ toSlotId: 's-2', reasonText: 'Cambio de horario' });
+
+    req.flush({ bookingId: 'b-1', fromSlotId: 's-1', toSlotId: 's-2' });
+  });
+
   it('checkInBooking convierte la marca de llegada en fecha', () => {
     let llegada: { checkedInAt: Date } | undefined;
     client.checkInBooking('b-1').subscribe((resultado) => (llegada = resultado));

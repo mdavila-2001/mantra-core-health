@@ -170,8 +170,73 @@ export interface ClinicalSummary {
   readonly medicationRequests: readonly MedicationRequest[];
   readonly observations: readonly Observation[];
   readonly encounters: readonly Encounter[];
+  readonly careEpisodes: readonly CareEpisode[];
   readonly limit: number;
   readonly truncated: readonly string[];
+}
+
+/* ---- el episodio de cuidado: la internación (UC-08-01) ------------------- */
+
+/**
+ * Un episodio de cuidado: la internación o la estancia que agrupa encuentros.
+ *
+ * ## Por qué aparece recién ahora
+ *
+ * El backend abría episodios desde siempre (`POST /clinical/care-episodes`),
+ * pero ninguna lectura los devolvía: la ficha sólo veía el `episodeId` colgado
+ * de un encuentro, y un uuid sin fila detrás no dice ni cuándo empezó ni si
+ * sigue abierta. Dar de alta una internación era, para la interfaz, un acto sin
+ * consecuencias visibles.
+ *
+ * ## `endAt` en `null` es la pregunta que importa
+ *
+ * Es la única que se hace quien reabre el expediente al día siguiente: «¿esta
+ * persona sigue internada?». Se deriva de la fecha y no del estado, por lo
+ * mismo que «encuentro en curso»: el estado es un uuid de catálogo y ramificar
+ * por su valor ataría la pantalla a un identificador que un re-seed puede mover.
+ */
+export interface CareEpisode {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly typeConceptId?: string;
+  readonly statusConceptId: string;
+  readonly responsiblePractitionerId?: string;
+  readonly startAt?: Date;
+  readonly endAt?: Date;
+  readonly createdAt: Date;
+}
+
+/**
+ * Lo que hace falta para abrir una internación (UC-08-01).
+ *
+ * `tenantId` es obligatorio y no se deduce del paciente: es quién queda como
+ * custodio del episodio, y una persona puede estar atendida en más de una
+ * organización. Sale de la sesión activa, que es donde ya se eligió.
+ */
+export interface NewCareEpisode {
+  readonly patientProfileId: string;
+  readonly tenantId: string;
+  /** Quién queda a cargo. Del claim de la sesión cuando lo abre quien atiende. */
+  readonly responsiblePractitionerId?: string;
+  /** Tipo de episodio; se resuelve contra `terminology`. */
+  readonly typeConceptId?: string;
+  /** Inicio. El backend usa «ahora» si no se declara. */
+  readonly startAt?: Date;
+}
+
+/**
+ * El episodio recién abierto.
+ *
+ * `startAt` llega `null` sólo si el backend no lo fijó, que hoy no ocurre: lo
+ * declara `nullable` en el contrato y se respeta esa forma en vez de suponer.
+ */
+export interface CareEpisodeRegistration {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly tenantId: string;
+  readonly status: string;
+  readonly startAt: Date | null;
+  readonly createdAt: Date;
 }
 
 /** Una nota del expediente, con su versión vigente. */
@@ -468,4 +533,82 @@ export interface ObservationRegistration {
   readonly componentIds: readonly string[];
   readonly rowVersion: number;
   readonly createdAt: Date;
+}
+
+/**
+ * Lo que hace falta para emitir un informe diagnóstico (UC-08-06).
+ *
+ * ## Existe el contrato y no la pantalla, a propósito
+ *
+ * El informe **no aparece en ninguna lectura**: no está en el bloque de
+ * `getSummary`, no está en `getChart`, y el backend no expone ningún `GET` de
+ * reportes. Construir el formulario hoy sería exactamente lo que el resto de
+ * este archivo evita —tragarse el dato y no mostrarlo—: quien lo emitiera no
+ * tendría forma de comprobar que existe, ni al recargar.
+ *
+ * El tipo y sus dos métodos entran igual porque el contrato **sí** está
+ * verificado, y así el día que el backend publique la lectura la pantalla es lo
+ * único que falta. Hasta entonces, la ficha del vault lo dice con el mismo
+ * aviso: «Tabla ⚠︎ — la pantalla necesita un listado que el backend todavía no
+ * expone».
+ */
+export interface NewDiagnosticReport {
+  readonly custodianTenantId: string;
+  readonly patientProfileId: string;
+  readonly codeConceptId: string;
+  readonly serviceRequestId?: string;
+  readonly encounterId?: string;
+  readonly categoryConceptId?: string;
+  readonly currentVersionId?: string;
+}
+
+/**
+ * El informe recién emitido o recién liberado.
+ *
+ * Dos estados y no uno: `lifecycleStatus` dice en qué punto está el informe
+ * —parcial, preliminar, final— y `resultReleaseStatus` si el resultado ya se
+ * le liberó a la persona. Son decisiones distintas: un informe final puede
+ * seguir retenido, y esa diferencia es justamente la que la liberación cambia.
+ */
+export interface DiagnosticReportRegistration {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly lifecycleStatus: string;
+  readonly resultReleaseStatus: string | null;
+  readonly serviceRequestId: string | null;
+  readonly createdAt: Date;
+}
+
+/**
+ * Lo que hace falta para pedir el chequeo de interacciones (UC-18-04).
+ *
+ * `substanceConceptIds` va con **todo** lo activo más el que se está por
+ * agregar — el backend exige al menos dos, porque una interacción es entre
+ * dos sustancias y con una sola no hay nada que comparar.
+ */
+export interface InteractionCheckRequest {
+  readonly patientProfileId: string;
+  readonly substanceConceptIds: readonly string[];
+  readonly encounterId?: string;
+  readonly medicationRequestId?: string;
+}
+
+/**
+ * Una alerta generada por el motor de decisión clínica.
+ *
+ * `alertTypeConceptId` y `severityConceptId` son conceptos de catálogo, no
+ * texto: quien los muestre los resuelve con `TerminologyClient`, igual que
+ * cualquier otro `*ConceptId` de la aplicación.
+ */
+export interface InteractionAlert {
+  readonly id: string;
+  readonly alertTypeConceptId: string;
+  readonly severityConceptId: string;
+  readonly ruleId?: string;
+}
+
+/** Resultado del chequeo: puede no encontrar ninguna. */
+export interface InteractionCheckResult {
+  readonly alerts: readonly InteractionAlert[];
+  readonly count: number;
 }

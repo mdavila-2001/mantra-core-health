@@ -1,6 +1,13 @@
 import { capturar, reiniciarContadores } from '../../support/recorrido/evidencia';
 import { admin, apiViva, crearPaciente, tokenDe, type Actor } from '../../support/real/actores';
+import {
+  apiUrl,
+  conceptoPorCodigo,
+  escalarYDecidir,
+  resumenDelTitular,
+} from '../../support/real/casos';
 import { entrar, estable, irA } from '../../support/real/sesion';
+import { anotarTramoApagado, tramoActivo } from '../../support/real/tramos';
 
 /**
  * **El sello del titular acompaña al caso durante todo su ciclo.**
@@ -32,16 +39,8 @@ import { entrar, estable, irA } from '../../support/real/sesion';
  * Es la misma división que `06`, aplicada al ciclo completo.
  */
 describe('Recorrido real · el sello del titular sigue al caso', () => {
-  /**
-   * Raíz de la API, absoluta y siempre: una ruta relativa en `cy.request` se
-   * resuelve contra el servidor del frontend. Mismo camino que `07`.
-   */
-  function apiUrl(ruta: string): string {
-    const raiz = Cypress.expose('E2E_API_URL') as unknown;
-    const base = typeof raiz === 'string' && raiz !== '' ? raiz : 'http://localhost:3000';
-    return `${base}${ruta}`;
-  }
-
+  // `apiUrl`, `conceptoPorCodigo` y `escalarYDecidir` viven en
+  // `support/real/casos.ts` desde que el tramo N4 del 09 los necesita también.
   let paciente: Actor;
 
   before(() => {
@@ -102,56 +101,6 @@ describe('Recorrido real · el sello del titular sigue al caso', () => {
         const cuerpo = caso.body as { caseId?: string };
         expect(cuerpo.caseId, 'la apertura tiene que devolver el id del caso').to.be.a('string');
         return cy.wrap(cuerpo.caseId as string, { log: false });
-      });
-  }
-
-  /** El `conceptId` de un código del catálogo, buscado y no inventado (como en `07`). */
-  function conceptoPorCodigo(token: string, codigo: string): Cypress.Chainable<string> {
-    return cy
-      .request({
-        method: 'GET',
-        url: apiUrl('/terminology/concepts'),
-        qs: { q: codigo, limit: 20 },
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((respuesta) => {
-        const cuerpo = respuesta.body as { items?: { conceptId: string; code: string }[] };
-        const encontrado = (cuerpo.items ?? []).find((item) => item.code === codigo);
-        expect(encontrado, `el catálogo tiene que traer «${codigo}»`).to.not.equal(undefined);
-        return cy.wrap((encontrado as { conceptId: string }).conceptId, { log: false });
-      });
-  }
-
-  /**
-   * Escala el caso a revisión manual y lo decide. Las dos transiciones que en
-   * `07` van por formulario, acá por la API: lo que se prueba es el sello.
-   */
-  function escalarYDecidir(
-    token: string,
-    caseId: string,
-    motivoConceptId: string,
-    decision: 'APPROVED' | 'REJECTED',
-    motivo: string,
-  ): void {
-    cy.request({
-      method: 'POST',
-      url: apiUrl(`/identity/verification-cases/${caseId}/manual-review`),
-      body: { reviewReasonConceptId: motivoConceptId },
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((abierta) => {
-        const cuerpo = abierta.body as { id?: string };
-        expect(cuerpo.id, 'escalar tiene que devolver el id de la revisión').to.be.a('string');
-        return cy.request({
-          method: 'POST',
-          url: apiUrl(`/identity/manual-review/${cuerpo.id as string}/decision`),
-          body: { decision, decisionReason: motivo },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      })
-      .then((decidida) => {
-        const cuerpo = decidida.body as { caseStatus?: string };
-        expect(cuerpo.caseStatus, 'la decisión tiene que mover el caso').to.be.a('string');
       });
   }
 
@@ -311,5 +260,61 @@ describe('Recorrido real · el sello del titular sigue al caso', () => {
       { carpeta: 'sello-07-aprobado-detalle', titulo: 'Caso de verificación · aprobado' },
       'aprobado',
     );
+  });
+
+  /**
+   * **N4 · el desenlace del Acto 3: aprobar habilita el acceso.**
+   *
+   * El sello que la prueba de arriba fija es la mitad de la promesa; la otra
+   * mitad es que el titular **deja de estar bloqueado**: su resumen pasa de
+   * `403 IDENTITY_VERIFICATION_REQUIRED` a `200`. Hasta el fix H-01 del
+   * backend (PR #54), aprobar dejaba el check abierto y la aserción jamás se
+   * emitía — la pantalla decía «Aprobado» y el perfil seguía cerrado.
+   *
+   * Corre con un paciente propio: el de la prueba de arriba ya termina
+   * aprobado, así que su `403` de ANTES no existiría.
+   */
+  it('N4 · aprobar deja al titular con acceso: el resumen pasa de 403 a 200', () => {
+    if (!tramoActivo('TRAMO_N4_ACCESO')) {
+      anotarTramoApagado(
+        'TRAMO_N4_ACCESO',
+        'Caso de verificación',
+        'aprobar la revisión emite la aserción y el resumen del titular pasa de 403 a 200 (espera el PR #54 de la API)',
+      );
+      return;
+    }
+
+    const contexto = { tokenTitular: '', tokenAdmin: '', motivo: '', caso: '' };
+
+    cy.then(() => crearPaciente()).then((titular) => {
+      cy.then(() => tokenDe(titular.identificador, titular.clave)).then((token) => {
+        contexto.tokenTitular = token;
+      });
+    });
+    cy.then(() => tokenDe(admin().identificador, admin().clave)).then((token) => {
+      contexto.tokenAdmin = token;
+    });
+    cy.then(() => conceptoPorCodigo(contexto.tokenAdmin, 'ACTIVE')).then((motivo) => {
+      contexto.motivo = motivo;
+    });
+
+    // ── ANTES · la puerta está cerrada, y con el motivo correcto ────────────
+    cy.then(() => resumenDelTitular(contexto.tokenTitular)).then((antes) => {
+      expect(antes.status, 'sin verificación, el resumen tiene que estar cerrado').to.equal(403);
+      expect(JSON.stringify(antes.body)).to.contain('IDENTITY_VERIFICATION_REQUIRED');
+    });
+
+    // ── El trámite completo: abrir → escalar → aprobar ──────────────────────
+    cy.then(() => abrirCaso(contexto.tokenTitular)).then((id) => {
+      contexto.caso = id;
+    });
+    cy.then(() =>
+      escalarYDecidir(contexto.tokenAdmin, contexto.caso, contexto.motivo, 'APPROVED', 'Documento legible'),
+    );
+
+    // ── DESPUÉS · la aserción existe y la puerta se abre ────────────────────
+    cy.then(() => resumenDelTitular(contexto.tokenTitular)).then((despues) => {
+      expect(despues.status, 'aprobar tiene que habilitar el acceso del titular').to.equal(200);
+    });
   });
 });

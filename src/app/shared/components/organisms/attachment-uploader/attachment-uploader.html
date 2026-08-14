@@ -1,0 +1,55 @@
+@if (error(); as mensaje) {
+  <app-alert tone="error" title="No pudimos adjuntar el archivo">{{ mensaje }}</app-alert>
+}
+
+@if (rechazados().length) {
+  <app-alert tone="warning" title="Estos archivos no se pudieron usar">
+    <ul class="adjuntar__rechazados">
+      @for (motivo of rechazados(); track motivo) {
+        <li>{{ motivo }}</li>
+      }
+    </ul>
+  </app-alert>
+}
+
+<app-form-field
+  label="Archivo"
+  hint="Hasta 10 MB. Se registra con tu nombre y la hora."
+  [required]="true"
+>
+  <app-file-input
+    [(files)]="seleccionados"
+    [maxSizeBytes]="maxBytes"
+    [maxFiles]="1"
+    [disabled]="enviando()"
+    (rejected)="alRechazar($event)"
+  />
+</app-form-field>
+
+<app-form-field label="Categoría" [required]="true">
+  <app-radio-group [(value)]="categoria" [disabled]="enviando()">
+    <app-radio value="DOCUMENT" label="Documento" />
+    <app-radio value="IMAGE" label="Imagen" />
+  </app-radio-group>
+</app-form-field>
+
+<app-form-field
+  label="Sensibilidad"
+  hint="PHI es dato clínico protegido: sólo lo ve quien tiene permiso."
+  [required]="true"
+>
+  <app-radio-group [(value)]="sensibilidad" [disabled]="enviando()">
+    <app-radio value="NORMAL" label="Normal" />
+    <app-radio value="PHI" label="PHI" />
+  </app-radio-group>
+</app-form-field>
+
+<button
+  app-button
+  variant="primary"
+  [isLoading]="enviando()"
+  [disabled]="!puedeSubir()"
+  (clicked)="subir()"
+>
+  Adjuntar
+</button>

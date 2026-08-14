@@ -1,0 +1,160 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5v15"></path><path d="M6 8h12"></path><path d="m6 8-2.8 5.6h5.6z"></path><path d="m18 8-2.8 5.6h5.6z"></path><path d="M8.5 19.5h7"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Personas</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Autorizaciones de jurisdicción</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Autorizaciones de jurisdicción</h1></div>
+        <p class="caption">Dónde puede ejercer cada profesional y con qué alcance: la licencia vale en el departamento que la emitió, y cuando vence la agenda deja de ofrecer sus turnos.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/personas/autorizaciones-de-jurisdiccion-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva autorización</a>
+      </div>
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Profesionales">
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/profesionales-listado">Profesionales</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Autorizaciones de jurisdicción</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/especialidades-listado">Especialidades</a>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por número de licencia o por profesional">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-1">Profesional</label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escribí al menos 3 letras">
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-2">Jurisdicción</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-2">
+            <option>Todas</option>
+            <option>La Paz</option>
+            <option>Cochabamba</option>
+            <option>Santa Cruz</option>
+            <option>Oruro</option>
+            <option>Tarija</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">La Paz<button type="button" aria-label="Quitar el filtro La Paz"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-3">Alcance de práctica</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-3">
+            <option>Todos</option>
+            <option>Medicina interna</option>
+            <option>Cardiología</option>
+            <option>Pediatría</option>
+            <option>Ginecología y obstetricia</option>
+            <option>Traumatología</option>
+            <option>Enfermería general</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-4">Estado</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-4">
+            <option>Todos</option>
+            <option>Vigente</option>
+            <option>En trámite</option>
+            <option>Vencida</option>
+            <option>Suspendida</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Vigente<button type="button" aria-label="Quitar el filtro Vigente"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-5">Vigentes desde</label>
+        <span class="app-date-picker" app-date-picker="">
+          <input class="app-date-picker__input" id="f-5" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" value="01/01/2009">
+          <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+        </span>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Autorizaciones de jurisdicción — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Profesional</th>
+            <th scope="col">Jurisdicción</th>
+            <th scope="col">Número de licencia</th>
+            <th scope="col">Autoridad regulatoria</th>
+            <th scope="col">Alcance de práctica</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Vigente desde</th>
+            <th scope="col">Vigente hasta</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">AUJ-2026-000231</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dra. Carla Nogales Suárez</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5v15"></path><path d="M6 8h12"></path><path d="m6 8-2.8 5.6h5.6z"></path><path d="m18 8-2.8 5.6h5.6z"></path><path d="M8.5 19.5h7"></path></svg>La Paz</span></td><td class="col-codigo">12457-LP</td><td>Colegio Médico de Bolivia</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 3.5v5.2a4.5 4.5 0 0 0 9 0V3.5"></path><path d="M11 13.2v1.9a4 4 0 0 0 8 0v-1.6"></path><circle cx="19" cy="11" r="2"></circle></svg>Medicina interna</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha">12/03/2014</td><td class="col-fecha">12/03/2029</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">AUJ-2026-000224</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dr. Óscar Herbas Callisaya</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5v15"></path><path d="M6 8h12"></path><path d="m6 8-2.8 5.6h5.6z"></path><path d="m18 8-2.8 5.6h5.6z"></path><path d="M8.5 19.5h7"></path></svg>Cochabamba</span></td><td class="col-codigo">8891-CB</td><td>Colegio Médico de Bolivia</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 3.5v5.2a4.5 4.5 0 0 0 9 0V3.5"></path><path d="M11 13.2v1.9a4 4 0 0 0 8 0v-1.6"></path><circle cx="19" cy="11" r="2"></circle></svg>Cardiología</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha">04/08/2011</td><td class="col-fecha">04/08/2031</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">AUJ-2026-000216</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Lic. Miriam Yujra Poma</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5v15"></path><path d="M6 8h12"></path><path d="m6 8-2.8 5.6h5.6z"></path><path d="m18 8-2.8 5.6h5.6z"></path><path d="M8.5 19.5h7"></path></svg>La Paz</span></td><td class="col-codigo">ENF-8842-LP</td><td>Colegio de Enfermeras de Bolivia</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 3.5v5.2a4.5 4.5 0 0 0 9 0V3.5"></path><path d="M11 13.2v1.9a4 4 0 0 0 8 0v-1.6"></path><circle cx="19" cy="11" r="2"></circle></svg>Enfermería general</span></td><td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>En trámite</span></td><td class="col-fecha">17/09/2019</td><td class="col-fecha">17/09/2027</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">AUJ-2026-000209</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dr. Sebastián Urquidi Bleichner</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5v15"></path><path d="M6 8h12"></path><path d="m6 8-2.8 5.6h5.6z"></path><path d="m18 8-2.8 5.6h5.6z"></path><path d="M8.5 19.5h7"></path></svg>Santa Cruz</span></td><td class="col-codigo">10932-SC</td><td>Colegio Médico de Bolivia</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 3.5v5.2a4.5 4.5 0 0 0 9 0V3.5"></path><path d="M11 13.2v1.9a4 4 0 0 0 8 0v-1.6"></path><circle cx="19" cy="11" r="2"></circle></svg>Pediatría</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Vencida</span></td><td class="col-fecha">22/02/2009</td><td class="col-fecha">22/02/2026</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">AUJ-2026-000198</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dra. Patricia Zeballos Rivas</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5v15"></path><path d="M6 8h12"></path><path d="m6 8-2.8 5.6h5.6z"></path><path d="m18 8-2.8 5.6h5.6z"></path><path d="M8.5 19.5h7"></path></svg>La Paz</span></td><td class="col-codigo">9714-LP</td><td>Colegio Médico de Bolivia</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 3.5v5.2a4.5 4.5 0 0 0 9 0V3.5"></path><path d="M11 13.2v1.9a4 4 0 0 0 8 0v-1.6"></path><circle cx="19" cy="11" r="2"></circle></svg>Ginecología y obstetricia</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha">30/06/2016</td><td class="col-fecha">30/06/2031</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">AUJ-2026-000187</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Dr. Hugo Callaú Montero</a></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5v15"></path><path d="M6 8h12"></path><path d="m6 8-2.8 5.6h5.6z"></path><path d="m18 8-2.8 5.6h5.6z"></path><path d="M8.5 19.5h7"></path></svg>Santa Cruz</span></td><td class="col-codigo">MX-44219</td><td>Consejo Mexicano de Traumatología</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 3.5v5.2a4.5 4.5 0 0 0 9 0V3.5"></path><path d="M11 13.2v1.9a4 4 0 0 0 8 0v-1.6"></path><circle cx="19" cy="11" r="2"></circle></svg>Traumatología</span></td><td><span class="app-badge" data-tono="error"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Suspendida</span></td><td class="col-fecha">11/11/2012</td><td class="muted" aria-label="Sin dato">—</td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5v15"></path><path d="M6 8h12"></path><path d="m6 8-2.8 5.6h5.6z"></path><path d="m18 8-2.8 5.6h5.6z"></path><path d="M8.5 19.5h7"></path></svg></span>
+        <h2>Todavía no hay autorizaciones de jurisdicción</h2>
+        <p>Una autorización dice dónde puede ejercer un profesional y con qué alcance: la licencia vale en el departamento que la emitió, no en todo el país. Cuando vence, la agenda deja de ofrecer sus turnos hasta que se registre la renovación.</p>
+        <a app-button="" data-variante="secundario" routerLink="/personas/autorizaciones-de-jurisdiccion-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva autorización de jurisdicción</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar las autorizaciones de jurisdicción.</strong>
+            <p>El registro de licencias no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

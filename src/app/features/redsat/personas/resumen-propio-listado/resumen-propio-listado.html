@@ -1,0 +1,93 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Personas</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Resumen propio</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Resumen propio</h1></div>
+        <p class="caption">Lo tuyo y nada más: tu perfil de paciente, tus vínculos de identidad, quién tiene poder sobre tu portal y las personas que declaraste.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Consultar</button>
+      </div>
+    </div>
+    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Pacientes">
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/pacientes-listado">Pacientes</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/vinculos-de-identidad-listado">Vínculos de identidad</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Resumen propio</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/apoderados-de-portal-listado">Apoderados de portal</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/personas-relacionadas-listado">Personas relacionadas</a>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá en tu resumen">
+      </label>
+      <div class="app-filter-bar__fila">
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Resumen propio — 5 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Registro</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Última actualización</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">PAC-2026-004182</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Perfil de paciente · Marisol Quispe Ticona</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activo</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="08/08/2026 15:12">hace 3 días</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">IDL-2026-000318</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Vínculo de identidad · Hospital San Gabriel</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Verificado</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="12/06/2026 10:20">hace 2 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">APO-2026-000151</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Apoderado de portal · Julio Quispe Colque</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Vigente</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="02/07/2026 08:30">hace 1 mes</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">REL-2026-000508</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Persona relacionada · Julio Quispe Colque</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="11/04/2026 17:45">hace 4 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          <tr><td class="col-codigo">VC-2026-000287</td><td><a app-link="" aria-disabled="true" data-sin-destino="">Vínculo de cuenta · marisol.quispe@correo.bo</a></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Verificado</span></td><td class="col-fecha"><span class="app-tooltip-panel" app-tooltip-panel="" title="12/02/2026 09:05">hace 6 meses</span></td><td class="col-acciones"><span class="boton-desborde" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg></span>
+        <h2>Tu resumen todavía no tiene registros</h2>
+        <p>Acá aparece lo tuyo y nada más: tu perfil de paciente, los vínculos de identidad con otras instituciones, quién tiene poder sobre tu portal y las personas que declaraste como contacto. Si recién te registraste, se va a llenar a medida que la clínica cargue tus datos.</p>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="aviso" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>Necesitás una identidad verificada vigente para ver tu resumen.</strong>
+            <p>Tus datos clínicos no se muestran contra una sesión sin verificar. La verificación se hace una sola vez, con tu documento, y queda vigente un año.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificar mi identidad</button>
+        </div>
+      </div>
+      </div>
+    </section>

@@ -1,0 +1,183 @@
+<app-page-header
+  title="Centro de tutoriales"
+  subtitle="Recorridos guiados sobre la aplicación real. Podés dejarlos y retomarlos cuando quieras."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="tutoriales">
+  <!-- ─── Problemas de configuración ───────────────────────────────────────
+       Esta pantalla es de quien escribe tutoriales tanto como de quien los hace:
+       un id duplicado o un requisito que apunta a la nada tiene que verse acá, no
+       descubrirse cuando un recorrido se corta delante de alguien. -->
+  @if (problemas().length > 0) {
+    <app-alert tone="warning" title="Hay tutoriales mal configurados">
+      <ul class="tutoriales__problemas">
+        @for (problema of problemas(); track problema.tutorialId + problema.code + problema.stepId) {
+          <li>
+            <strong>{{ problema.tutorialId }}</strong>
+            @if (problema.stepId) {
+              · paso «{{ problema.stepId }}»
+            }
+            — {{ problema.message }}
+          </li>
+        }
+      </ul>
+    </app-alert>
+  }
+
+  <!-- ─── Avance general ────────────────────────────────────────────────────
+       Cuenta sobre lo que ESTA sesión puede hacer, no sobre el catálogo entero:
+       un avance del 30 % que nunca puede llegar a 100 porque la mitad es de otro
+       rol no mide nada. -->
+  <app-card variant="outlined" padding="lg" appTutorialTarget="tutoriales-avance">
+    <div class="tutoriales__avance">
+      <div class="tutoriales__avance-texto">
+        <h2 class="tutoriales__titulo">Tu avance</h2>
+        <p class="tutoriales__nota">
+          Completaste {{ completados() }} de {{ total() }} tutoriales disponibles para tu rol.
+        </p>
+      </div>
+
+      <p class="tutoriales__porcentaje">{{ avance() }}%</p>
+    </div>
+
+    <div
+      class="tutoriales__barra"
+      role="progressbar"
+      [attr.aria-valuenow]="avance()"
+      [attr.aria-valuemin]="0"
+      [attr.aria-valuemax]="100"
+      aria-label="Avance general de tutoriales"
+    >
+      <div class="tutoriales__barra-relleno" [style.width.%]="avance()"></div>
+    </div>
+  </app-card>
+
+  <!-- ─── Recomendados ──────────────────────────────────────────────────────
+       Terminar algo empezado vale más que empezar otra cosa, así que lo que está
+       a medias va primero. Tres y no diez: una lista larga no recomienda nada. -->
+  @if (recomendados().length > 0) {
+    <section class="tutoriales__seccion" aria-labelledby="tutoriales-recomendados">
+      <h2 id="tutoriales-recomendados" class="tutoriales__titulo">Para seguir ahora</h2>
+
+      <ul class="tutoriales__rejilla">
+        @for (fila of recomendados(); track fila.definicion.id) {
+          <li>
+            <app-card variant="outlined" padding="lg" class="tutoriales__tarjeta">
+              <div class="tutoriales__tarjeta-encabezado">
+                <h3 class="tutoriales__tarjeta-titulo">{{ fila.definicion.title }}</h3>
+                <app-badge [variant]="fila.tono" [value]="fila.etiquetaDeEstado" />
+              </div>
+
+              <p class="tutoriales__tarjeta-texto">{{ fila.definicion.description }}</p>
+
+              <div class="tutoriales__tarjeta-acciones">
+                <button app-button variant="primary" type="button" (clicked)="abrir(fila)">
+                  {{ fila.accion }}
+                </button>
+              </div>
+            </app-card>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <!-- ─── Filtros ───────────────────────────────────────────────────────────
+       En memoria y no en la URL: el resultado depende del avance de quien mira,
+       así que un enlace compartido le mostraría otra cosa al que lo abre. -->
+  <form
+    class="tutoriales__filtros"
+    appTutorialTarget="tutoriales-filtros"
+    (submit)="$event.preventDefault()"
+  >
+    <div class="tutoriales__filtro" appTutorialTarget="tutoriales-busqueda">
+      <app-search-field
+        label="Buscar un tutorial"
+        placeholder="Qué querés aprender"
+        (searched)="buscar($event)"
+      />
+    </div>
+
+    <app-form-field label="Categoría" class="tutoriales__filtro">
+      <app-select
+        [options]="opcionesDeCategoria()"
+        [value]="categoria()"
+        (valueChange)="elegirCategoria($event)"
+      />
+    </app-form-field>
+
+    <app-form-field label="Estado" class="tutoriales__filtro">
+      <app-select
+        [options]="opcionesDeEstado"
+        [value]="estado()"
+        (valueChange)="elegirEstado($event)"
+      />
+    </app-form-field>
+  </form>
+
+  <!-- ─── El catálogo ───────────────────────────────────────────────────────-->
+  <section class="tutoriales__seccion" aria-labelledby="tutoriales-todos">
+    <h2 id="tutoriales-todos" class="tutoriales__titulo">Todos los tutoriales</h2>
+
+    @if (lista().length > 0) {
+      <ul class="tutoriales__rejilla" appTutorialTarget="tutoriales-lista">
+        @for (fila of lista(); track fila.definicion.id) {
+          <li>
+            <app-card variant="outlined" padding="lg" class="tutoriales__tarjeta">
+              <div class="tutoriales__tarjeta-encabezado">
+                <h3 class="tutoriales__tarjeta-titulo">{{ fila.definicion.title }}</h3>
+                <app-badge [variant]="fila.tono" [value]="fila.etiquetaDeEstado" />
+              </div>
+
+              <p class="tutoriales__tarjeta-texto">{{ fila.definicion.description }}</p>
+
+              <div class="tutoriales__tarjeta-datos">
+                <app-chip variant="neutral" [label]="fila.definicion.category" />
+                <app-chip variant="neutral" [label]="fila.definicion.level" />
+                <app-chip
+                  variant="neutral"
+                  [label]="fila.definicion.estimatedMinutes + ' min'"
+                />
+                <app-chip
+                  variant="neutral"
+                  [label]="fila.definicion.steps.length + ' pasos'"
+                />
+              </div>
+
+              <!-- Los requisitos avisan, no bloquean: quien ya sabe usar la
+                   aplicación no debería fingir que aprende para llegar acá. -->
+              @if (fila.faltanRequisitos) {
+                <p class="tutoriales__requisitos">
+                  Conviene hacer antes: {{ fila.requisitosPendientes.join(', ') }}.
+                </p>
+              }
+
+              <div class="tutoriales__tarjeta-acciones">
+                <button app-button variant="primary" type="button" (clicked)="abrir(fila)">
+                  {{ fila.accion }}
+                </button>
+
+                <!-- Reiniciar sólo tiene sentido si hay algo que reiniciar. -->
+                @if (fila.estado !== 'pendiente') {
+                  <button app-button variant="ghost" type="button" (clicked)="reiniciar(fila)">
+                    Reiniciar
+                  </button>
+                }
+              </div>
+            </app-card>
+          </li>
+        }
+      </ul>
+    } @else {
+      <!-- Un vacío que no ofrece salida deja a la persona sin qué hacer: el
+           vacío de un listado filtrado casi siempre es culpa del filtro. -->
+      <div class="tutoriales__vacio">
+        <p class="tutoriales__nota">Ningún tutorial coincide con lo que buscaste.</p>
+        <button app-button variant="outline" type="button" (clicked)="limpiarFiltros()">
+          Limpiar los filtros
+        </button>
+      </div>
+    }
+  </section>
+</div>

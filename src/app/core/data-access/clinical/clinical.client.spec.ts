@@ -7,6 +7,7 @@ import type {
   AllergyIntoleranceRegistration,
   ClinicalSummary,
   ConditionRegistration,
+  DiagnosticReportRegistration,
   EncounterRegistration,
   MedicationRequestRegistration,
   ObservationRegistration,
@@ -81,6 +82,16 @@ const OBSERVACION_REGISTRADA = {
   status: 'st-final',
   componentIds: [],
   rowVersion: 1,
+  createdAt: '2026-08-13T12:00:00.000Z',
+};
+
+/** Un informe recién emitido: su resultado todavía no se liberó. */
+const INFORME_EMITIDO = {
+  id: 'dr-1',
+  patientProfileId: 'p-1',
+  lifecycleStatus: 'st-final',
+  resultReleaseStatus: null,
+  serviceRequestId: null,
   createdAt: '2026-08-13T12:00:00.000Z',
 };
 
@@ -504,5 +515,139 @@ describe('ClinicalClient', () => {
 
     expect(observacion?.rowVersion).toBe(1);
     expect(observacion?.createdAt).toBeInstanceOf(Date);
+  });
+
+  /* ---- el informe diagnóstico: contrato sin pantalla ---------------------- */
+
+  /**
+   * Estos dos no los usa ninguna vista todavía —el informe no aparece en
+   * ninguna lectura del backend— pero el contrato está verificado y estas
+   * pruebas lo fijan: el día que exista el `GET`, la pantalla es lo único que
+   * falta.
+   */
+  it('createDiagnosticReport omite lo que no vino', () => {
+    let informe: DiagnosticReportRegistration | undefined;
+    client
+      .createDiagnosticReport({
+        custodianTenantId: 't-1',
+        patientProfileId: 'p-1',
+        codeConceptId: 'cod-1',
+      })
+      .subscribe((i) => (informe = i));
+
+    const req = http.expectOne('/clinical/diagnostic-reports');
+    expect(req.request.method).toBe('POST');
+    expect(Object.keys(req.request.body as object).sort()).toEqual([
+      'codeConceptId',
+      'custodianTenantId',
+      'patientProfileId',
+    ]);
+
+    req.flush(INFORME_EMITIDO);
+
+    // `resultReleaseStatus` nulo **es** el dato: el informe existe y su
+    // resultado todavía no se liberó a la persona.
+    expect(informe?.resultReleaseStatus).toBeNull();
+    expect(informe?.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('releaseDiagnosticReport manda la versión esperada sólo si la hay', () => {
+    client.releaseDiagnosticReport('dr-1').subscribe();
+    const sinVersion = http.expectOne('/clinical/diagnostic-reports/dr-1/release');
+    expect(sinVersion.request.body).toEqual({});
+    sinVersion.flush(INFORME_EMITIDO);
+
+    client.releaseDiagnosticReport('dr-1', 2).subscribe();
+    const conVersion = http.expectOne('/clinical/diagnostic-reports/dr-1/release');
+    expect(conVersion.request.body).toEqual({ expectedRowVersion: 2 });
+    conVersion.flush({ ...INFORME_EMITIDO, resultReleaseStatus: 'st-liberado' });
+  });
+
+  /* -- la internación (UC-08-01) ------------------------------------------ */
+
+  it('getSummary trae las internaciones con sus instantes convertidos', () => {
+    let resumen: { careEpisodes: readonly { startAt?: Date; endAt?: Date }[] } | undefined;
+    client.getSummary('p-1').subscribe((r) => (resumen = r));
+
+    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush({
+      ...RESUMEN_VACIO,
+      careEpisodes: [
+        {
+          id: 'ce-1',
+          tenantId: 't-1',
+          statusConceptId: 'c-activo',
+          startAt: '2026-08-13T10:00:00.000Z',
+          endAt: null,
+          createdAt: '2026-08-13T10:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(resumen?.careEpisodes[0].startAt).toBeInstanceOf(Date);
+    // Sin fin, la internación sigue abierta. La clave queda **ausente** y no en
+    // `undefined`, que es lo que deja que `endAt === undefined` signifique eso.
+    expect(resumen?.careEpisodes[0].endAt).toBeUndefined();
+  });
+
+  /**
+   * El bloque es aditivo al contrato y frontend y API se despliegan por
+   * separado: contra una API que todavía no lo publica, el expediente entero
+   * reventaría por un bloque que esa versión no tiene.
+   */
+  it('getSummary tolera una API que todavía no publica las internaciones', () => {
+    let resumen: { careEpisodes: readonly unknown[] } | undefined;
+    client.getSummary('p-1').subscribe((r) => (resumen = r));
+
+    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush(RESUMEN_VACIO);
+
+    expect(resumen?.careEpisodes).toEqual([]);
+  });
+
+  it('createCareEpisode omite lo opcional y manda el inicio como instante ISO', () => {
+    client
+      .createCareEpisode({ patientProfileId: 'pp-1', tenantId: 't-1' })
+      .subscribe();
+
+    const sinOpcionales = http.expectOne('/clinical/care-episodes');
+    expect(sinOpcionales.request.method).toBe('POST');
+    // El backend valida con `forbidNonWhitelisted`: una clave en `undefined`
+    // viajaría declarada y volvería 400.
+    expect(sinOpcionales.request.body).toEqual({
+      patientProfileId: 'pp-1',
+      tenantId: 't-1',
+    });
+    sinOpcionales.flush({
+      id: 'ce-1',
+      patientProfileId: 'pp-1',
+      tenantId: 't-1',
+      status: 'c-activo',
+      startAt: '2026-08-13T10:00:00.000Z',
+      createdAt: '2026-08-13T10:00:00.000Z',
+    });
+
+    client
+      .createCareEpisode({
+        patientProfileId: 'pp-1',
+        tenantId: 't-1',
+        responsiblePractitionerId: 'prac-1',
+        startAt: new Date('2026-08-13T10:00:00.000Z'),
+      })
+      .subscribe();
+
+    const completo = http.expectOne('/clinical/care-episodes');
+    expect(completo.request.body).toEqual({
+      patientProfileId: 'pp-1',
+      tenantId: 't-1',
+      responsiblePractitionerId: 'prac-1',
+      startAt: '2026-08-13T10:00:00.000Z',
+    });
+    completo.flush({
+      id: 'ce-2',
+      patientProfileId: 'pp-1',
+      tenantId: 't-1',
+      status: 'c-activo',
+      startAt: null,
+      createdAt: '2026-08-13T10:00:00.000Z',
+    });
   });
 });

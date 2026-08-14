@@ -1,0 +1,90 @@
+/* ============================================================================
+    Ficha de organización — V04-06·L, V04-02·L y V04-07·L.
+
+    Sólo la ficha de ámbito y los dos textos de celda: todo lo demás lo ponen
+    los organismos del banco. Ni un color, ni un radio, ni un espaciado que no
+    salga de los tokens.
+
+    ⚠️  Este archivo usaba un tercer idioma de tokens (`--ink-*`, `--surface-*`,
+    `--hairline-*`, `--status-*-ink`, `--space-7`) que no está definido en
+    ninguna parte, y esta vez SIN valor de reserva: el navegador descartaba la
+    declaración entera, así que la ficha de ámbito se pintaba sin fondo, sin
+    borde y sin color de etiqueta, heredando lo que hubiera. El vocabulario real
+    es `--sp-*`, `--fs-*`/`--lh-*`, `--r-*`, `--text-*`, `--bg-*`, `--border-*`
+    y `--st-*-bg`/`--st-*-fg`.
+    ========================================================================== */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+/* Ficha compacta del registro cuyo id gobierna las tres pestañas. Fondo inset
+   —no tarjeta blanca— para que se lea como ámbito y no como una sección más. */
+.organizacion__ambito {
+  padding: var(--sp-6);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.organizacion__ambito--error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+  border-color: var(--st-error-bd);
+}
+
+.organizacion__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-5);
+  margin: 0;
+}
+
+.organizacion__datos dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.organizacion__datos dd {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-primary);
+}
+
+/* Cifras tabulares en todo código: es lo que deja comparar dos filas de un
+   vistazo sin que los dígitos bailen. */
+.organizacion__codigo {
+  font-variant-numeric: tabular-nums;
+}
+
+.organizacion__cargando {
+  color: var(--text-secondary);
+}
+
+/* Segunda línea de una celda: el dato que acompaña sin competir. */
+.organizacion__nombre {
+  display: block;
+  font-weight: 500;
+}
+
+.organizacion__secundario {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* La nota que explica por qué esa tabla no tiene pie de paginación. */
+.organizacion__nota {
+  margin-top: var(--sp-4);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

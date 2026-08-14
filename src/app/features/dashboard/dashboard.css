@@ -1,6 +1,15 @@
 /* Panel de inicio.
    Tres franjas: las cifras, los accesos y el estado. Todo lo de acá es
-   distribución — ni un color ni una tipografía que el sistema no tenga ya. */
+   distribución — ni un color ni una tipografía que el sistema no tenga ya.
+
+   ⚠️  Este archivo hablaba OTRO idioma de tokens (`--color-*`, `--space-*`,
+   `--font-size-*`, `--radius-*`) que no existe en `styles.css`. Como todos
+   traían valor de reserva, no fallaba ruidosamente: se pintaba SIEMPRE con la
+   reserva, que estaba escrita para un tema claro. De ahí el defecto que se veía
+   en oscuro —la tarjeta de acceso se volvía blanca al pasar el cursor y se
+   comía el texto—: `--color-surface-hover` no existía y quedaba `#f8fafc`.
+   El vocabulario real es `--sp-*`, `--fs-*`/`--lh-*`, `--r-*`, `--text-*`,
+   `--bg-*` y `--border-*`. */
 
 /* Pantalla enrutada: el host es un custom element y sin `display` sería EN
    LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
@@ -15,43 +24,46 @@
 .panel__cifras {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: var(--space-4, 1rem);
-  margin-block-start: var(--space-5, 1.25rem);
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-5);
 }
 
 .panel__cifra-rotulo {
   margin: 0;
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #64748b);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }
 
 /* Tabular: cuatro cifras en fila se comparan de un vistazo sólo si los dígitos
    ocupan lo mismo. */
 .panel__cifra-valor {
-  margin: var(--space-1, 0.25rem) 0 0;
-  font-size: var(--font-size-2xl, 1.5rem);
+  margin: var(--sp-1) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  line-height: 1.2;
 }
 
 .panel__cifra-esperando {
-  color: var(--color-text-secondary, #64748b);
+  color: var(--text-secondary);
 }
 
 /* Ocupa el alto de una cifra para que la fila no quede desalineada por tener
    una tarjeta con sello en vez de número. */
 .panel__cifra-sello {
-  margin: var(--space-1, 0.25rem) 0 0;
-  min-height: 1.8rem;
+  margin: var(--sp-1) 0 0;
+  min-height: var(--lh-h2);
   display: flex;
   align-items: center;
 }
 
 .panel__cifra-pie {
-  margin: var(--space-2, 0.5rem) 0 0;
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #64748b);
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }
 
 /* ── Rejilla de contenido ─────────────────────────────────────────────────
@@ -61,8 +73,8 @@
 .panel__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-  gap: var(--space-5, 1.25rem);
-  margin-block-start: var(--space-5, 1.25rem);
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-5);
   /* Sin esto, la tarjeta de accesos —que ocupa toda la fila— deja huecos
      detrás cuando las que siguen no llenan su fila. */
   grid-auto-flow: row dense;
@@ -76,9 +88,11 @@
 }
 
 .panel__card-title {
-  margin: 0 0 var(--space-3, 0.75rem);
-  font-size: var(--font-size-lg, 1.125rem);
-  font-weight: 600;
+  margin: 0 0 var(--sp-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 500;
 }
 
 /* ── Accesos ──────────────────────────────────────────────────────────────
@@ -87,7 +101,7 @@
 .panel__accesos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: var(--space-3, 0.75rem);
+  gap: var(--sp-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -96,19 +110,30 @@
 .panel__acceso {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1, 0.25rem);
+  gap: var(--sp-1);
   height: 100%;
-  padding: var(--space-3, 0.75rem);
-  border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: var(--radius-md, 0.5rem);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
   text-decoration: none;
   color: inherit;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
 }
 
+/* El realce es un VELO (`--bg-hover`), no un color opaco: se compone con la
+   tarjeta que hay debajo y por eso funciona igual en claro y en oscuro, sin
+   tocar el contraste del texto. El borde acompaña para que el realce no
+   dependa sólo del relleno. */
 a.panel__acceso:hover,
 a.panel__acceso:focus-visible {
-  border-color: var(--color-border-strong, #94a3b8);
-  background: var(--color-surface-hover, #f8fafc);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+a.panel__acceso:active {
+  background: var(--bg-active);
 }
 
 /* La planificada no es un enlace, y tiene que verse que no lo es sin depender
@@ -120,20 +145,21 @@ a.panel__acceso:focus-visible {
 .panel__acceso-nombre {
   display: flex;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--sp-2);
   font-weight: 600;
 }
 
 .panel__acceso-resumen {
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #64748b);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }
 
 /* ── Listas y datos ───────────────────────────────────────────────────────*/
 
 .panel__lista {
   display: grid;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -143,7 +169,7 @@ a.panel__acceso:focus-visible {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-3, 0.75rem);
+  gap: var(--sp-3);
 }
 
 .panel__fila-nombre {
@@ -156,40 +182,42 @@ a.panel__acceso:focus-visible {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3, 0.75rem);
+  gap: var(--sp-3);
 }
 
 .panel__datos dt {
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #64748b);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }
 
 .panel__datos dd {
-  margin: var(--space-1, 0.25rem) 0 0;
+  margin: var(--sp-1) 0 0;
 }
 
 .panel__roles {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--sp-2);
 }
 
 /* `anywhere` y no `break-all`: un UUID no tiene puntos de corte naturales y sin
    esto desborda la tarjeta en pantallas angostas. */
 .panel__id {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: var(--font-size-sm, 0.875rem);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
   overflow-wrap: anywhere;
 }
 
 .panel__nota,
 .panel__vacio {
-  color: var(--color-text-secondary, #64748b);
-  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .panel__nota {
-  margin-block: var(--space-3, 0.75rem) 0;
+  margin-block: var(--sp-3) 0;
 }
 
 .panel__conteo {

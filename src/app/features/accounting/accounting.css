@@ -1,0 +1,50 @@
+/* ============================================================================
+    Contabilidad. Sólo la disposición: los colores, tipos y espacios salen de
+    los tokens de REDSAT, nunca de valores literales acá.
+    ========================================================================== */
+
+.cuadre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--st-space-4);
+}
+
+.totales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--st-space-5);
+  margin: 0;
+}
+
+.totales div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--st-space-1);
+}
+
+.totales dt {
+  color: var(--st-text-muted);
+  font-size: var(--st-font-size-sm);
+}
+
+.totales dd {
+  margin: 0;
+  /* Cifras tabulares: las columnas de importes se comparan de un vistazo sólo
+     si los dígitos ocupan lo mismo. */
+  font-variant-numeric: tabular-nums;
+  font-size: var(--st-font-size-lg);
+  font-weight: var(--st-font-weight-semibold);
+}
+
+.nota {
+  margin: var(--st-space-4) 0 0;
+  color: var(--st-text-muted);
+  font-size: var(--st-font-size-sm);
+}
+
+.titulo-de-seccion {
+  margin: var(--st-space-6) 0 var(--st-space-3);
+  font-size: var(--st-font-size-lg);
+  font-weight: var(--st-font-weight-semibold);
+}

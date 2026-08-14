@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
+  AgendaResourceSite,
   AgendaSlot,
   SlotHold,
 } from '../../../core/data-access/scheduling/scheduling.types';
@@ -185,6 +186,31 @@ export class BookingNew {
     return estado.status === 'empty' ? (estado.message ?? '') : '';
   });
 
+  /* ---- dónde se atiende --------------------------------------------------- */
+
+  /**
+   * La sede del recurso, para decir **dónde** es el turno.
+   *
+   * Un turno sin dirección obliga a averiguarla por fuera del sistema, y quien
+   * reserva por el portal no tiene a quién preguntarle. Se lee del recurso, que
+   * ya la trae resuelta.
+   *
+   * `null` mientras se pide y también cuando el recurso no tiene sede vigente:
+   * la reserva no depende de esto y el resumen simplemente no muestra el
+   * renglón. Atarla al ciclo de reserva sería impedir reservar porque no se
+   * pudo averiguar una dirección.
+   */
+  protected readonly sede = signal<AgendaResourceSite | null>(null);
+
+  /** La ubicación en una línea, tal como se muestra en el resumen. */
+  protected readonly ubicacion = computed(() => {
+    const sede = this.sede();
+    if (sede === null) {
+      return '';
+    }
+    return sede.addressText === null ? sede.name : `${sede.name} · ${sede.addressText}`;
+  });
+
   /* ---- el formulario ------------------------------------------------------ */
 
   protected readonly paciente = signal<ReferenceOption | null>(null);
@@ -258,6 +284,29 @@ export class BookingNew {
       }
     }
     this.cargarCupo();
+    this.cargarSede();
+  }
+
+  /**
+   * Pide la sede del recurso.
+   *
+   * Va por su lado y su fallo no se muestra: la dirección es contexto del
+   * turno, no una precondición para reservarlo. Perder la reserva porque no se
+   * pudo leer dónde queda el consultorio sería cambiar una comodidad por una
+   * funcionalidad.
+   */
+  private cargarSede(): void {
+    const tenantId = this.auth.activeTenantId();
+    if (tenantId === null || this.resourceId === null) {
+      return;
+    }
+    this.scheduling.listResources({ tenantId }).subscribe({
+      next: (pagina) =>
+        this.sede.set(
+          pagina.items.find((recurso) => recurso.id === this.resourceId)?.site ?? null,
+        ),
+      error: () => this.sede.set(null),
+    });
   }
 
   /* ---- lecturas ----------------------------------------------------------- */

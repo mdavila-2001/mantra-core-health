@@ -1,0 +1,82 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 16.5V8a1.5 1.5 0 0 1 1.5-1.5h8V16.5"></path><path d="M13 10h3.5l3 3.5v3H13"></path><circle cx="7.5" cy="18" r="1.8"></circle><circle cx="17" cy="18" r="1.8"></circle><path d="M7 10.5h3M8.5 9v3"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Elena Chambi Mamani</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Acceso de emergencia</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Acceso de emergencia</h1></div>
+        <p class="caption">Abrí la historia de Elena Chambi Mamani sin consentimiento previo, por una urgencia. El acceso dura horas, no días, y se revisa después: contá acá por qué lo estás pidiendo.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <div class="app-card app-card--inset" app-card="" style="padding:var(--e4);margin-bottom:var(--e6)">
+      <p class="overline">Paciente</p>
+      <p class="num" style="margin-top:var(--e1)">PAC-2026-003190</p>
+      <p>Elena Chambi Mamani <span class="muted">· CI 3892014 LP · 71 años</span></p>
+      <p style="margin-top:var(--e2)"><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 16.5V8a1.5 1.5 0 0 1 1.5-1.5h8V16.5"></path><path d="M13 10h3.5l3 3.5v3H13"></path><circle cx="7.5" cy="18" r="1.8"></circle><circle cx="17" cy="18" r="1.8"></circle><path d="M7 10.5h3M8.5 9v3"></path></svg>Sin consentimiento vigente</span></p>
+    </div>
+    <div class="app-alert" app-alert="" data-tono="aviso" style="margin-bottom:var(--e6)">
+      <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+      <div class="app-alert__cuerpo">
+        <strong>Este acceso se audita uno por uno y se revisa después.</strong>
+        <p>El acceso de emergencia salta el consentimiento del paciente, así que no queda como un acceso más: se registra aparte, con tu justificación textual, y alguien lo revisa cuando pasa la urgencia. Usalo cuando la demora ponga en riesgo a la persona, no para evitar un trámite.</p>
+      </div>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Justificación: contá qué pasó y por qué no podés esperar el consentimiento. Es lo que lee quien revisa.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1">Organización <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-1" type="search" role="combobox" aria-expanded="true" aria-controls="c-1-m" aria-autocomplete="list" aria-describedby="c-1-a" value="los olivos" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-1-m" role="listbox" aria-label="Resultados de Organización" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg><span>Clínica Los Olivos<br><span class="caption muted">clinica-los-olivos · La Paz · activa</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg><span>Hospital San Gabriel<br><span class="caption muted">hospital-san-gabriel · La Paz · activa</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Clínica Los Olivos <span class="muted">· clinica-los-olivos</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-1-a">La organización desde la que se abre la historia. Es la que después responde por la revisión.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-2">Justificación <span class="req">· obligatorio</span></label>
+        <textarea class="app-textarea" app-textarea="" id="c-2" rows="5" required="" aria-describedby="c-2-a">Paciente ingresa por emergencias con pérdida de conocimiento y sin acompañante. Necesito ver sus antecedentes cardiológicos y su medicación habitual antes de indicar tratamiento.</textarea>
+        <p class="app-form-field__ayuda" id="c-2-a">Hasta 1000 caracteres. Escribí el hecho clínico concreto, no una fórmula: esto lo lee una persona.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3">Ventana de acceso</label>
+        <input class="app-input num" app-input="" id="c-3" type="number" min="5" max="240" value="60" aria-describedby="c-3-a">
+        <p class="app-form-field__ayuda" id="c-3-a">En minutos, entre 5 y 240. Por defecto 60. Cuando se cumple, el acceso se cierra solo aunque no hagas nada.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-4">Encuentro clínico</label>
+        <span class="app-search-field" app-search-field="" app-reference-combobox="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-4" type="search" aria-describedby="c-4-a" value="ENC-2026" placeholder="Escribí al menos 3 letras">
+        </span>
+
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>ENC-2026-018510 <span class="muted">· Ingreso por emergencias · 11/08/2026 03:20</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-4-a">Opcional pero muy recomendable: es lo que ata el acceso al episodio concreto cuando alguien lo revise.</p>      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se registra con tu nombre, la hora y tu justificación, y se revisa después.</p>
+        <a app-button="" data-variante="secundario" routerLink="/accesos/accesos-clinicos-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Abrir el acceso de emergencia</button>
+      </div>
+    </form>

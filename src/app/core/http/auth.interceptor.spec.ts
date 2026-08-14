@@ -85,6 +85,21 @@ describe('authInterceptor', () => {
       req.flush({});
     });
 
+    it('respeta el X-Tenant-Id que ya trae la petición', () => {
+      session.start({ accessToken: UN_TENANT, refreshToken: 'r-1' });
+
+      // La ficha de una organización distinta de la activa declara cuál mira.
+      // Pisarla con la de la sesión daría 403: la API rechaza la petición
+      // privilegiada cuyo tenant de la ruta contradice el de la cabecera.
+      http.get('/tenants/t-9', { headers: { 'X-Tenant-Id': 't-9' } }).subscribe();
+
+      const req = backend.expectOne('/tenants/t-9');
+      expect(req.request.headers.get('Authorization')).toBe(`Bearer ${UN_TENANT}`);
+      expect(req.request.headers.get('X-Tenant-Id')).toBe('t-9');
+
+      req.flush({});
+    });
+
     it('manda el tenant elegido cuando hay varios', () => {
       session.start({ accessToken: DOS_TENANTS, refreshToken: 'r-1' });
       session.selectTenant('t-2');

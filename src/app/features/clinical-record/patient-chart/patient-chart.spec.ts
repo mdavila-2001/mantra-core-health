@@ -123,13 +123,14 @@ describe('PatientChart', () => {
   });
 
   /**
-   * El bloque de medicación pregunta por su catálogo apenas se crea, y esa
-   * petición aparece en cualquier prueba que llegue a pintar el expediente.
+   * Los bloques de medicación y de diagnóstico preguntan por su catálogo
+   * apenas se crean, y esas peticiones aparecen en cualquier prueba que llegue
+   * a pintar el expediente.
    *
-   * Se responde con el `404` de «sin binding declarado» —el estado real hoy—
-   * para que `verify()` no tropiece con ella. Lo que el bloque hace con esa
-   * respuesta lo fijan sus propias pruebas: acá sólo importa que no se cuele
-   * como una petición huérfana del expediente.
+   * Se responden con el `404` de «sin binding declarado» para que `verify()`
+   * no tropiece con ellas. Lo que cada bloque hace con esa respuesta lo fijan
+   * sus propias pruebas: acá sólo importa que no se cuelen como peticiones
+   * huérfanas del expediente.
    */
   function responderCatalogoDeMedicacion(): void {
     for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
@@ -138,10 +139,84 @@ describe('PatientChart', () => {
         { status: 404, statusText: 'Not Found' },
       );
     }
+    responderAdjuntos();
+  }
+
+  /**
+   * El bloque de adjuntos pide su lista apenas se crea, igual que los otros dos.
+   *
+   * Se responde vacío: qué hace con la lista lo fijan sus propias pruebas
+   * (`attachments-block.spec.ts`). Acá sólo importa que no quede como petición
+   * huérfana del expediente.
+   */
+  function responderAdjuntos(): void {
+    for (const req of http.match((r) => r.url === '/common/files/links')) {
+      req.flush({ items: [], count: 0 });
+    }
+  }
+
+  /**
+   * El bloque de laboratorio e imagenología lee **lo suyo**, a diferencia del de
+   * medicación, al que el expediente le baja las recetas ya hechas.
+   *
+   * Y es a propósito: el circuito diagnóstico no sale de
+   * `GET /clinical/patients/:id/summary` —es otro módulo y otra lectura—, así
+   * que el bloque la hace suya y el expediente no cambia por eso. El precio es
+   * esta petición, que aparece en cualquier prueba que llegue a pintar la ficha
+   * y que acá sólo hay que drenar: lo que el bloque hace con la respuesta lo
+   * fijan sus propias pruebas.
+   */
+  function responderCircuitoDiagnostico(): void {
+    for (const req of http.match((r) => r.url.startsWith('/diagnostics/patients/'))) {
+      req.flush({
+        patientProfileId: 'p-1',
+        orders: [],
+        reports: [],
+        limit: 25,
+        truncated: [],
+      });
+    }
+  }
+
+  /**
+   * El histórico de procedimientos lee lo suyo, por el mismo motivo que el
+   * circuito diagnóstico: cirugías y odontología son otro módulo y no salen de
+   * `GET /clinical/patients/:id/summary`.
+   *
+   * Son tres peticiones y no una porque las dos mitades del bloque tienen
+   * permisos distintos —de ahí que no vayan en un `forkJoin`— y el catálogo
+   * odontológico es una lectura aparte. Acá sólo se drenan: lo que el bloque
+   * hace con cada respuesta lo fijan sus propias pruebas.
+   */
+  function responderHistoricoDeProcedimientos(): void {
+    for (const req of http.match((r) => r.url === '/procedure-cases')) {
+      req.flush({ items: [], total: 0 });
+    }
+    for (const req of http.match((r) => r.url === '/dental-procedures')) {
+      req.flush({ items: [], total: 0 });
+    }
+    for (const req of http.match((r) => r.url === '/dental-procedures/catalog')) {
+      req.flush({ procedureCodes: [], teeth: [], quadrants: [] });
+    }
+  }
+
+  /**
+   * `specialty-form-block` pregunta por las plantillas de chart apenas se
+   * crea, igual que medicación pregunta por su catálogo. Se responde vacío
+   * —«sin plantillas todavía»— para que `verify()` no tropiece con ella; lo
+   * que el bloque hace con esa respuesta lo fija su propia prueba.
+   */
+  function responderPlantillasDeEspecialidad(): void {
+    for (const req of http.match((r) => r.url === '/charts/templates')) {
+      req.flush([]);
+    }
   }
 
   afterEach(() => {
     responderCatalogoDeMedicacion();
+    responderCircuitoDiagnostico();
+    responderHistoricoDeProcedimientos();
+    responderPlantillasDeEspecialidad();
     http.verify();
   });
 
@@ -251,6 +326,125 @@ describe('PatientChart', () => {
 
     const observacion = interno<() => readonly Record<string, unknown>[]>('observaciones')()[0];
     expect(observacion['secundario']).toBe('78.5 kg');
+  });
+
+  /* ---- la banda de contexto --------------------------------------------- */
+
+  /**
+   * Las alergias salen de la segunda pestaña y suben a la banda.
+   *
+   * Es el único bloque que cambia una conducta **antes** de leerlo: recetar sin
+   * haberlas visto es el error que la banda existe para evitar, y en una pestaña
+   * había que acordarse de ir a mirarlas.
+   */
+  it('destaca las alergias fuera de las pestañas', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        allergies: [
+          {
+            id: 'a-1',
+            substanceConceptId: 'con-diabetes',
+            clinicalStatusConceptId: 'st-activa',
+            criticalityConceptId: 'st-final',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    const destacadas = interno<() => readonly Record<string, unknown>[]>('alergiasDestacadas')();
+    expect(destacadas).toHaveLength(1);
+    expect(destacadas[0]['principal']).toBe('Diabetes tipo 2');
+  });
+
+  it('sin alergias no dibuja la banda de alergias', () => {
+    responderNombre();
+    responderExpediente();
+
+    expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(0);
+  });
+
+  /** Cuánto expediente hay, sin abrir pestaña por pestaña. */
+  it('cuenta los bloques en la banda de contexto', () => {
+    responderNombre();
+    responderExpediente();
+
+    const cifras = interno<() => readonly { clave: string; valor: number }[]>('cifras')();
+    expect(cifras.find((c) => c.clave === 'diagnosticos')?.valor).toBe(1);
+    expect(cifras.find((c) => c.clave === 'observaciones')?.valor).toBe(1);
+    expect(cifras.find((c) => c.clave === 'medicacion')?.valor).toBe(0);
+  });
+
+  /**
+   * Sin encuentros no se afirma «sin atención previa»: el bloque puede venir
+   * recortado, o la atención puede constar en otra organización.
+   */
+  it('sin encuentros no inventa una última atención', () => {
+    responderNombre();
+    responderExpediente();
+
+    expect(interno<() => Date | null>('ultimaAtencion')()).toBeNull();
+  });
+
+  it('la última atención es la más reciente de los encuentros', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        encounters: [
+          { id: 'e-1', classConceptId: 'st-activa', startAt: '2026-01-10T10:00:00.000Z' },
+          { id: 'e-2', classConceptId: 'st-activa', startAt: '2026-05-20T10:00:00.000Z' },
+          { id: 'e-3', classConceptId: 'st-activa', startAt: '2026-03-02T10:00:00.000Z' },
+        ],
+      },
+    });
+
+    expect(interno<() => Date | null>('ultimaAtencion')()?.toISOString()).toBe(
+      '2026-05-20T10:00:00.000Z',
+    );
+  });
+
+  /* ---- columnas por bloque ----------------------------------------------- */
+
+  /**
+   * Una columna «Detalle» vacía de punta a punta se lee como un dato que no
+   * cargó, y se come el ancho que la tabla necesita para lo que sí trae.
+   */
+  it('el bloque sin detalle no dibuja la columna Detalle', () => {
+    responderNombre();
+    responderExpediente();
+
+    const bloques = interno<() => readonly { clave: string; columnas: { key: string }[] }[]>(
+      'bloques',
+    )();
+    const diagnosticos = bloques.find((b) => b.clave === 'diagnosticos');
+    expect(diagnosticos?.columnas.some((c) => c.key === 'detalle')).toBe(false);
+    // Y las tres que siempre están, sí.
+    expect(diagnosticos?.columnas.map((c) => c.key)).toEqual(['principal', 'estado', 'cuando']);
+  });
+
+  it('el bloque que sí trae detalle la dibuja', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        encounters: [
+          {
+            id: 'e-1',
+            classConceptId: 'st-activa',
+            startAt: '2026-01-10T10:00:00.000Z',
+            // Con `endAt` el detalle dice «Cerrado»: hay algo que mostrar.
+            endAt: '2026-01-10T11:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    const bloques = interno<() => readonly { clave: string; columnas: { key: string }[] }[]>(
+      'bloques',
+    )();
+    expect(
+      bloques.find((b) => b.clave === 'encuentros')?.columnas.some((c) => c.key === 'detalle'),
+    ).toBe(true);
   });
 
   it('un 403 al leer el nombre no tumba el expediente', () => {

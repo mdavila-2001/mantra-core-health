@@ -27,8 +27,17 @@ describe('Navegación', () => {
     // «Mis turnos» entra por lo mismo: no declara roles, porque el filtro real
     // es tener perfil de paciente —un dato de la cuenta, no un rol—, y eso la
     // pantalla lo resuelve por su cuenta.
+    //
+    // El muro, igual: su filtro es tener **perfil público** de `community`, que
+    // es otra entidad distinta del `pid` de la sesión y sólo se sabe
+    // preguntándole al backend. Un rol no puede expresarlo.
+    //
+    // El glosario tampoco declara roles: el cliente lo pidió accesible por
+    // cada profesional, no sólo por quien administra.
     SideNav.rutas().should('deep.equal', [
       '/dashboard',
+      '/feed',
+      '/glossary',
       '/my-account',
       '/my-account/appointments',
       '/my-account/identity/verify',

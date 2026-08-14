@@ -1,0 +1,206 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Organizaciones</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Organizaciones</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Organizaciones</h1></div>
+        <p class="caption">Las clínicas, hospitales, laboratorios, farmacias y aseguradoras que operan en la plataforma, con su razón social, su estado y hasta dónde llegó su verificación.</p>
+      </div>
+      <div class="app-page-header__acciones">
+        <a app-button="" data-variante="primario" routerLink="/directorio/organizaciones-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva organización</a>
+      </div>
+    </div>
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá en el listado</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="app-input" app-input="" type="search" placeholder="Buscá por código, razón social o nombre comercial">
+      </label>
+      <div class="app-filter-bar__fila">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-1">Tipo de organización</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-1">
+            <option>Todos</option>
+            <option>Prestador</option>
+            <option>Hospital</option>
+            <option>Farmacia</option>
+            <option>Aseguradora</option>
+            <option>Corredor</option>
+            <option>Universidad</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Prestador<button type="button" aria-label="Quitar el filtro Prestador"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-2">Tipo de entidad legal</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-2">
+            <option>Todos</option>
+            <option>Sociedad anónima</option>
+            <option>Sociedad de responsabilidad limitada</option>
+            <option>Fundación</option>
+            <option>Cooperativa</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-3">Estado</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-3">
+            <option>Todos</option>
+            <option>Activa</option>
+            <option>Pendiente</option>
+            <option>Suspendida</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Activa<button type="button" aria-label="Quitar el filtro Activa"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-4">Estado de verificación</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-4">
+            <option>Todos</option>
+            <option>Verificada</option>
+            <option>Pendiente</option>
+            <option>Sin verificar</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-5">País</label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="f-5">
+            <option>Todos</option>
+            <option>Bolivia</option>
+            <option>Perú</option>
+            <option>Argentina</option>
+            <option>Chile</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <div class="app-chip-lista">
+          <span class="app-chip" app-chip="">Bolivia<button type="button" aria-label="Quitar el filtro Bolivia"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+        </div>
+      </div>
+      </div>
+    </section>
+    <section class="app-card app-card--plano app-view-state-host" app-view-state-host="">
+      <div data-estado="datos">
+      <div class="tabla-envoltorio">
+        <table class="app-data-table" app-data-table="">
+          <caption class="solo-lectores">Organizaciones — 6 registros de la página actual</caption>
+          <thead>
+            <tr>
+            <th scope="col">Identificador</th>
+            <th scope="col">Código</th>
+            <th scope="col">Tipo de organización</th>
+            <th scope="col">Razón social</th>
+            <th scope="col">Nombre comercial</th>
+            <th scope="col">Tipo de entidad legal</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Estado de verificación</th>
+            <th scope="col">País</th>
+            <th scope="col">Jurisdicción</th>
+            <th scope="col">Región de residencia de datos</th>
+            <th scope="col">Moneda</th>
+            <th scope="col" class="col-acciones"><span class="solo-lectores">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr><td class="col-codigo">TEN-2026-000104</td><td class="col-codigo">clinica-los-olivos</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Prestador</span></td><td>Clínica Los Olivos S.R.L.</td><td>Clínica Los Olivos</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Sociedad de responsabilidad limitada</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificada</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 4.5 4 6.5v13l5.5-2 5 2 5.5-2v-13l-5.5 2z"></path><path d="M9.5 4.5v13M14.5 6.5v13"></path></svg>La Paz</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="6" rx="2"></rect><rect x="3.5" y="13" width="17" height="6" rx="2"></rect><path d="M7 8h.01M7 16h.01"></path></svg>Sudamérica</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M14.6 9.4h-3.8a1.8 1.8 0 0 0 0 3.6h2.4a1.8 1.8 0 0 1 0 3.6H9.4"></path><path d="M12 7.4v9.2"></path></svg>Boliviano</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-1" aria-label="Acciones sobre TEN-2026-000104"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-1" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-suspender"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Suspender la organización</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-verificar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificar la organización</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">TEN-2026-000097</td><td class="col-codigo">hospital-san-gabriel</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Hospital</span></td><td>Fundación Hospital San Gabriel</td><td>Hospital San Gabriel</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Fundación</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificada</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 4.5 4 6.5v13l5.5-2 5 2 5.5-2v-13l-5.5 2z"></path><path d="M9.5 4.5v13M14.5 6.5v13"></path></svg>La Paz</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="6" rx="2"></rect><rect x="3.5" y="13" width="17" height="6" rx="2"></rect><path d="M7 8h.01M7 16h.01"></path></svg>Sudamérica</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M14.6 9.4h-3.8a1.8 1.8 0 0 0 0 3.6h2.4a1.8 1.8 0 0 1 0 3.6H9.4"></path><path d="M12 7.4v9.2"></path></svg>Boliviano</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-2" aria-label="Acciones sobre TEN-2026-000097"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-2" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-suspender"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Suspender la organización</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-verificar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificar la organización</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">TEN-2026-000091</td><td class="col-codigo">laboratorio-illimani</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Prestador</span></td><td>Laboratorio Clínico Illimani S.R.L.</td><td>Laboratorio Illimani</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Sociedad de responsabilidad limitada</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificada</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 4.5 4 6.5v13l5.5-2 5 2 5.5-2v-13l-5.5 2z"></path><path d="M9.5 4.5v13M14.5 6.5v13"></path></svg>La Paz</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="6" rx="2"></rect><rect x="3.5" y="13" width="17" height="6" rx="2"></rect><path d="M7 8h.01M7 16h.01"></path></svg>Sudamérica</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M14.6 9.4h-3.8a1.8 1.8 0 0 0 0 3.6h2.4a1.8 1.8 0 0 1 0 3.6H9.4"></path><path d="M12 7.4v9.2"></path></svg>Boliviano</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-3" aria-label="Acciones sobre TEN-2026-000091"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-3" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-suspender"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Suspender la organización</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-verificar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificar la organización</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">TEN-2026-000088</td><td class="col-codigo">ciacruz-salud</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Aseguradora</span></td><td>La Boliviana Ciacruz Seguros S.A.</td><td>Ciacruz Salud</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Sociedad anónima</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Activa</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificada</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 4.5 4 6.5v13l5.5-2 5 2 5.5-2v-13l-5.5 2z"></path><path d="M9.5 4.5v13M14.5 6.5v13"></path></svg>Santa Cruz</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="6" rx="2"></rect><rect x="3.5" y="13" width="17" height="6" rx="2"></rect><path d="M7 8h.01M7 16h.01"></path></svg>Sudamérica</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M14.6 9.4h-3.8a1.8 1.8 0 0 0 0 3.6h2.4a1.8 1.8 0 0 1 0 3.6H9.4"></path><path d="M12 7.4v9.2"></path></svg>Boliviano</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-4" aria-label="Acciones sobre TEN-2026-000088"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-4" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-suspender"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Suspender la organización</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-verificar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificar la organización</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">TEN-2026-000079</td><td class="col-codigo">farmacorp-red</td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Farmacia</span></td><td>Farmacorp S.A.</td><td>Farmacorp</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Sociedad anónima</span></td><td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Pendiente</span></td><td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Pendiente</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 4.5 4 6.5v13l5.5-2 5 2 5.5-2v-13l-5.5 2z"></path><path d="M9.5 4.5v13M14.5 6.5v13"></path></svg>Santa Cruz</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="6" rx="2"></rect><rect x="3.5" y="13" width="17" height="6" rx="2"></rect><path d="M7 8h.01M7 16h.01"></path></svg>Sudamérica</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M14.6 9.4h-3.8a1.8 1.8 0 0 0 0 3.6h2.4a1.8 1.8 0 0 1 0 3.6H9.4"></path><path d="M12 7.4v9.2"></path></svg>Boliviano</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-5" aria-label="Acciones sobre TEN-2026-000079"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-5" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-suspender"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Suspender la organización</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-verificar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificar la organización</a>
+          </div>
+        </div></td></tr>
+          <tr><td class="col-codigo">TEN-2026-000068</td><td class="col-codigo">corredora-altiplano</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Corredor</span></td><td>Corredora de Seguros Altiplano Ltda.</td><td class="muted" aria-label="Sin dato">—</td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3.5v5h5"></path><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"></path></svg>Sociedad de responsabilidad limitada</span></td><td><span class="app-badge" data-tono="error"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Suspendida</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg>Sin verificar</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17"></path><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17"></path></svg>Bolivia</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 4.5 4 6.5v13l5.5-2 5 2 5.5-2v-13l-5.5 2z"></path><path d="M9.5 4.5v13M14.5 6.5v13"></path></svg>Oruro</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="6" rx="2"></rect><rect x="3.5" y="13" width="17" height="6" rx="2"></rect><path d="M7 8h.01M7 16h.01"></path></svg>Sudamérica</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M14.6 9.4h-3.8a1.8 1.8 0 0 0 0 3.6h2.4a1.8 1.8 0 0 1 0 3.6H9.4"></path><path d="M12 7.4v9.2"></path></svg>Boliviano</span></td><td class="col-acciones"><div class="menu-anclaje">
+          <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-6" aria-label="Acciones sobre TEN-2026-000068"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
+          <div class="app-menu" app-menu="" id="fila-6" role="menu" hidden="">
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-suspender"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg>Suspender la organización</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/directorio/organizaciones-verificar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 11.4 2.2 2.2L15.5 9"></path></svg>Verificar la organización</a>
+          </div>
+        </div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+        <p class="app-pagination__nota">25 filas por página</p>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </nav>
+      </div>
+      <div data-estado="vacio" hidden="">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg></span>
+        <h2>Todavía no hay organizaciones</h2>
+        <p>Una organización es la frontera de los datos: cada clínica, hospital, laboratorio o aseguradora que usa la plataforma tiene la suya, y ninguna ve las historias, las agendas ni la facturación de otra. Sin al menos una, no hay dónde crear sucursales ni a quién incorporar.</p>
+        <a app-button="" data-variante="secundario" routerLink="/directorio/organizaciones-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva organización</a>
+      </div>
+      </div>
+      <div data-estado="carga" hidden="">
+      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando el listado…</span>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
+      </div>
+      </div>
+      <div data-estado="error" hidden="">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos cargar las organizaciones.</strong>
+            <p>La organización activa no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+    </section>

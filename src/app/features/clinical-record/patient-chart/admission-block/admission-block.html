@@ -1,0 +1,77 @@
+<app-card variant="outlined" padding="lg" class="internacion">
+  <h2 class="internacion__titulo">Internación</h2>
+
+  <!-- El duplicado va primero y en ámbar: no es un fallo, es el expediente
+       negándose a abrir dos veces la misma estancia, y la que ya está abierta
+       se ve justo debajo. -->
+  @if (avisoDeDuplicado(); as aviso) {
+    <app-alert tone="warning" title="Ya está internada" data-testid="internacion-duplicada">
+      {{ aviso }}
+    </app-alert>
+  }
+
+  @if (errorDelRegistro(); as mensaje) {
+    <app-alert tone="error" data-testid="internacion-error">{{ mensaje }}</app-alert>
+  }
+
+  <!-- ─── Lo que ya hay ─────────────────────────────────────────────────────
+       Es la razón de ser del bloque: hasta ahora una internación abierta no se
+       veía en ningún lado, así que quien reabría la ficha no se enteraba. -->
+  @if (internaciones().length > 0) {
+    <ul class="internacion__lista" data-testid="internacion-lista">
+      @for (internacion of internaciones(); track internacion.id) {
+        <li class="internacion__item">
+          <span class="internacion__estado">
+            {{ internacion.abierta ? 'En curso' : 'Cerrada' }}
+          </span>
+          <span class="internacion__fechas">
+            @if (internacion.desde) {
+              Desde el {{ internacion.desde | date: 'dd/MM/yyyy HH:mm' }}
+            } @else {
+              Sin inicio registrado
+            }
+            @if (internacion.hasta) {
+              · hasta el {{ internacion.hasta | date: 'dd/MM/yyyy HH:mm' }}
+            }
+          </span>
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- ─── Dar de alta ─────────────────────────────────────────────────────
+       Cada precondición se dice con su propia explicación: «no se puede» sin
+       decir qué falta obliga a adivinar. -->
+  @if (internacionAbierta()) {
+    <p class="internacion__nota">
+      Esta persona ya está internada. Abrir una segunda estancia mientras la
+      primera sigue abierta no es algo que el expediente admita.
+    </p>
+  } @else if (sinOrganizacion()) {
+    <app-alert tone="info" title="Elegí una organización">
+      Una internación queda bajo la custodia de una organización. Elegí una en el selector del
+      encabezado para poder darla de alta.
+    </app-alert>
+  } @else if (!hayEncuentro()) {
+    <app-alert tone="info" title="Abrí el encuentro para internar">
+      La internación se da de alta desde la atención que la motivó. Registrá el encuentro acá
+      arriba y el formulario aparece.
+    </app-alert>
+  } @else {
+    <form class="internacion__formulario" (submit)="$event.preventDefault()">
+      <app-form-field
+        label="Inicio de la internación"
+        hint="Opcional. Si no lo cargás, queda con la hora de este momento."
+      >
+        <app-date-picker [(value)]="inicio" mode="date-time" />
+      </app-form-field>
+
+      <app-form-actions
+        submitLabel="Dar de alta la internación"
+        [pending]="registrando()"
+        [disabled]="!puedeRegistrar()"
+        (submitted)="registrar()"
+      />
+    </form>
+  }
+</app-card>

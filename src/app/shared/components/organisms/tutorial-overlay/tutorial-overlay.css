@@ -1,0 +1,186 @@
+/* ============================================================================
+    La capa visual del motor de tutoriales.
+
+    Vive por encima de todo lo que no sea un diálogo modal: si hay un recorrido
+    en curso, es lo que manda. Usa los tokens de apilamiento del sistema, no
+    números sueltos — ese es exactamente el defecto que la escala existe para
+    evitar.
+    ========================================================================== */
+
+:host {
+  display: contents;
+}
+
+/* ── El velo ───────────────────────────────────────────────────────────────
+   Cuatro rectángulos fijos alrededor del hueco. `position: fixed` porque la
+   geometría se mide contra la VENTANA: lo que importa es si el elemento está
+   en pantalla, no dónde cae en el documento. */
+
+.tutorial-velo__parte,
+.tutorial-velo--entero {
+  position: fixed;
+  background: rgba(10, 28, 39, 0.62);
+  z-index: var(--z-overlay);
+  /* El velo no come clics: los pasos interactivos necesitan que el clic pase, y
+     los que no, se tapan con `.tutorial-tapa`, que es explícita. */
+  pointer-events: none;
+}
+
+.tutorial-velo--entero {
+  inset: 0;
+}
+
+/* El marco del elemento resaltado. Es decorativo: lo que comunica es el globo. */
+.tutorial-marco {
+  position: fixed;
+  z-index: calc(var(--z-overlay) + 1);
+  border: 2px solid var(--brand-primary);
+  border-radius: var(--r-sm);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  pointer-events: none;
+  transition:
+    top var(--dur-base) var(--ease-standard),
+    left var(--dur-base) var(--ease-standard),
+    width var(--dur-base) var(--ease-standard),
+    height var(--dur-base) var(--ease-standard);
+}
+
+/* La tapa de los pasos que sólo explican. Transparente y sí come clics: un clic
+   distraído en medio de una explicación no debería disparar una acción real. */
+.tutorial-tapa {
+  position: fixed;
+  z-index: calc(var(--z-overlay) + 2);
+  cursor: not-allowed;
+}
+
+/* ── El globo ──────────────────────────────────────────────────────────────*/
+
+.tutorial-globo {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-body);
+  animation: tutorial-entrada var(--dur-base) var(--ease-out);
+}
+
+/* Se posa, no rebota: el rebote se reserva para confirmar una acción del dedo,
+   y esto no confirma nada — aparece. */
+@keyframes tutorial-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* El anillo de foco del globo entero sería un rectángulo de 340 px alrededor de
+   una tarjeta que ya se distingue del fondo: sobra y confunde. El foco se ve en
+   los botones, que es donde se actúa. */
+.tutorial-globo:focus {
+  outline: none;
+}
+
+.tutorial-globo__progreso {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.tutorial-globo__tutorial {
+  font-weight: 600;
+  /* Un título largo no puede empujar el contador fuera del globo. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tutorial-globo__barra {
+  block-size: 4px;
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.tutorial-globo__barra-relleno {
+  block-size: 100%;
+  background: var(--brand-primary);
+  transition: width var(--dur-base) var(--ease-standard);
+}
+
+.tutorial-globo__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.tutorial-globo__cuerpo {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.tutorial-globo__pista {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* Lo que el paso está esperando. Va con fondo propio para que se lea como un
+   estado y no como una frase más del cuerpo. */
+.tutorial-globo__espera {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.tutorial-globo__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-2);
+}
+
+.tutorial-globo__avance {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* En una pantalla angosta el globo no se posiciona: ocupa el pie de la pantalla
+   entero. Un globo de 340 px anclado a un elemento en un teléfono termina medio
+   afuera, y el cálculo que lo evita es más frágil que esta regla. */
+@media (max-width: 650px) {
+  .tutorial-globo {
+    inset: auto var(--sp-2) var(--sp-2) var(--sp-2);
+    inline-size: auto !important;
+    top: auto !important;
+    left: auto !important;
+  }
+}
+
+/* La regla global de `prefers-reduced-motion` ya anula las duraciones; acá se
+   quita además el desplazamiento de entrada, que es movimiento y no duración. */
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-globo {
+    animation: none;
+  }
+}

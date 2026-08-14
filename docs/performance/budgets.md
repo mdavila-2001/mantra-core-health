@@ -48,6 +48,31 @@ Prerenderizadas: 4 rutas
 **El build no falla**: está 483 kB por debajo del umbral de error. Es un aviso
 preexistente, registrado en [la línea base](../reports/baseline.md).
 
+## Actualización: la hoja de REDSAT (2026-08-13)
+
+Al adoptar el sistema de diseño de la bóveda —ver
+[el port de las vistas](../design-system/port-redsat.md)— la hoja global pasó de
+14,37 kB a **124,54 kB crudos**, y el total inicial a **775 kB**.
+
+```text
+▲ [WARNING] bundle initial exceeded maximum budget.
+  Budget 620.00 kB was not met by 155.00 kB with a total of 775.00 kB.
+```
+
+Tres cosas que conviene mirar juntas antes de decidir qué hacer:
+
+- **Sigue sin fallar**: el umbral de error son 1 MB y estamos 225 kB por debajo.
+- **En tránsito son 18,21 kB**, no 124: el CSS comprime muy bien. Lo que el
+  presupuesto mide es el crudo.
+- **`check-bundle-budget` pasa** (311,81 kB): mide sólo lo que `index.html`
+  referencia de verdad, que es un número distinto del que informa el build.
+
+El costo es intencional —es el sistema de diseño completo, que ahora pinta las
+126 pantallas portadas *y* las que ya existían— pero deja el aviso encendido de
+forma permanente, y un aviso que siempre está rojo deja de avisar. Hay que
+elegir: subir el umbral de aviso a ~800 kB para que vuelva a ser señal, o podar
+la hoja de lo que el producto no usa. **Está sin decidir.**
+
 ### Qué son esos 516 kB
 
 Casi todo es Angular. El proyecto tiene **diez dependencias externas**, todas del

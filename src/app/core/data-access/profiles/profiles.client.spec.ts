@@ -287,6 +287,73 @@ describe('ProfilesClient', () => {
     expect(resumen?.birthDate).toBeUndefined();
   });
 
+  /* ---- el perfil profesional propio --------------------------------------- */
+
+  const PERFIL_WIRE = {
+    profileId: 'per-1',
+    personId: 'per-1',
+    practitionerCode: 'MED-7',
+    displayName: 'Dra. Salas',
+    professionalTitle: 'Cardióloga',
+    professionalBio: null,
+    photoFileId: null,
+    practitionerCategoryConceptId: 'cat-1',
+    verificationStatusConceptId: 'st-1',
+    practiceStatusConceptId: 'st-2',
+    acceptsNewPatients: true,
+    telehealthAvailable: false,
+    specialties: [],
+    credentials: [],
+    licenses: [],
+    languages: [],
+    activity: { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 },
+    createdAt: '2024-02-01T00:00:00.000Z',
+  };
+
+  it('getOwnPractitionerProfile lee GET /profiles/practitioners/me/summary', () => {
+    let perfil: { professionalTitle?: string; createdAt: Date } | undefined;
+    client.getOwnPractitionerProfile().subscribe((p) => (perfil = p));
+
+    const req = http.expectOne('/profiles/practitioners/me/summary');
+    expect(req.request.method).toBe('GET');
+    req.flush(PERFIL_WIRE);
+
+    expect(perfil?.professionalTitle).toBe('Cardióloga');
+    expect(perfil?.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('updateOwnPractitionerProfile manda un PATCH con sólo lo que cambió', () => {
+    client.updateOwnPractitionerProfile({ professionalTitle: 'Nuevo título' }).subscribe();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ professionalTitle: 'Nuevo título' });
+    req.flush(PERFIL_WIRE);
+  });
+
+  /** Un `''` es una decisión de quien edita: no se filtra antes de mandarlo. */
+  it('updateOwnPractitionerProfile deja pasar una cadena vacía para borrar un campo', () => {
+    client.updateOwnPractitionerProfile({ professionalBio: '' }).subscribe();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ professionalBio: '' });
+    req.flush(PERFIL_WIRE);
+  });
+
+  it('updateOwnPractitionerProfile traduce la respuesta igual que la lectura', () => {
+    let perfil: { professionalTitle?: string; createdAt: Date } | undefined;
+    client
+      .updateOwnPractitionerProfile({ professionalTitle: 'Nuevo título' })
+      .subscribe((p) => (perfil = p));
+
+    http
+      .expectOne('/profiles/practitioners/me')
+      .flush({ ...PERFIL_WIRE, professionalTitle: 'Nuevo título' });
+
+    expect(perfil?.professionalTitle).toBe('Nuevo título');
+    expect(perfil?.createdAt).toBeInstanceOf(Date);
+  });
+
   /* ---- la fecha de nacimiento no puede correrse un día -------------------
      Verificado contra la API viva el 2026-08-08 desde `America/La_Paz` (UTC−4):
      se guardó `1985-03-14`, el servidor devolvió `1985-03-14T00:00:00.000Z` y
@@ -518,5 +585,92 @@ describe('ProfilesClient', () => {
       status: 'ACTIVE',
       validFrom: '2026-07-31T12:00:00.000Z',
     });
+  });
+
+  /* -- historial laboral del profesional (UC-05-16) ----------------------- */
+
+  /** Una afiliación tal como llega por el cable. */
+  const afiliacionEnCable = (over: Record<string, unknown> = {}) => ({
+    id: 'af-1',
+    practitionerProfileId: 'pp-1',
+    organizationName: 'Hospital Obrero N.º 1',
+    roleTitle: 'Médico de planta',
+    departmentText: 'Cardiología',
+    practiceSiteId: null,
+    affiliationTypeConceptId: 'c-1',
+    startDate: '2020-03-01',
+    endDate: null,
+    current: true,
+    status: 'c-activo',
+    createdAt: '2026-08-14T12:00:00.000Z',
+    ...over,
+  });
+
+  it('listAffiliations pide el propio y no admite pasar otro perfil', () => {
+    client.listAffiliations().subscribe();
+
+    const req = http.expectOne('/profiles/practitioners/me/affiliations');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys()).toEqual([]);
+
+    req.flush({ items: [], count: 0 });
+  });
+
+  /**
+   * `startDate` es `format: 'date'`: pasarla por `new Date()` la anclaría a
+   * medianoche UTC y en cualquier huso al oeste de Greenwich retrocedería un
+   * día. Un vínculo que empieza el 1 de marzo no puede leerse como del 28 de
+   * febrero.
+   */
+  it('listAffiliations ancla las fechas sin hora a medianoche local', () => {
+    let items: readonly { startDate: Date; endDate: Date | null }[] = [];
+    client.listAffiliations().subscribe((p) => (items = p.items));
+
+    http.expectOne('/profiles/practitioners/me/affiliations').flush({
+      items: [afiliacionEnCable()],
+      count: 1,
+    });
+
+    expect(items[0].startDate.getFullYear()).toBe(2020);
+    expect(items[0].startDate.getMonth()).toBe(2);
+    expect(items[0].startDate.getDate()).toBe(1);
+  });
+
+  /** Sin fin declarado el vínculo sigue vigente; `null` lo dice y no se pierde. */
+  it('listAffiliations conserva el fin ausente como null', () => {
+    let items: readonly { endDate: Date | null; current: boolean }[] = [];
+    client.listAffiliations().subscribe((p) => (items = p.items));
+
+    http.expectOne('/profiles/practitioners/me/affiliations').flush({
+      items: [afiliacionEnCable(), afiliacionEnCable({ id: 'af-2', endDate: '2023-12-31', current: false })],
+      count: 2,
+    });
+
+    expect(items[0].endDate).toBeNull();
+    expect(items[0].current).toBe(true);
+    expect(items[1].endDate).toBeInstanceOf(Date);
+    expect(items[1].current).toBe(false);
+  });
+
+  it('addAffiliation no manda las claves opcionales ausentes', () => {
+    client
+      .addAffiliation({
+        organizationName: 'Hospital Obrero N.º 1',
+        roleTitle: 'Médico de planta',
+        startDate: '2020-03-01',
+      })
+      .subscribe();
+
+    const req = http.expectOne('/profiles/practitioners/me/affiliations');
+    expect(req.request.method).toBe('POST');
+    // El backend valida con `forbidNonWhitelisted`: un opcional en `undefined`
+    // viajaría como clave declarada y volvería 400.
+    expect(req.request.body).toEqual({
+      organizationName: 'Hospital Obrero N.º 1',
+      roleTitle: 'Médico de planta',
+      startDate: '2020-03-01',
+    });
+
+    req.flush(afiliacionEnCable());
   });
 });

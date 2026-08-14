@@ -1,0 +1,14 @@
+/* V04-01·A · Suspender la organización
+   Portada de V04-directory/superadmin/V04-01-organizaciones-suspender.html en la bóveda. El marcado lo
+   genera scripts/port-vistas-redsat.mjs; la lógica va acá, no en el generador. */
+
+import { Component } from '@angular/core';
+
+import { RouterLink } from '@angular/router';
+
+@Component({
+  selector: 'app-redsat-directorio-organizaciones-suspender',
+  imports: [RouterLink],
+  templateUrl: './organizaciones-suspender.html',
+})
+export class DirectorioOrganizacionesSuspender {}

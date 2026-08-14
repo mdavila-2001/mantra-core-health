@@ -1,0 +1,40 @@
+/* Configurar el perfil profesional. Tres bloques independientes —
+   presentación, especialidades, matrículas— en una columna, con medida de
+   formulario. Sólo distribución. */
+
+:host {
+  display: block;
+}
+
+.edicion {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-6);
+}
+
+.edicion__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.edicion__nota {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.edicion__formulario {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-4);
+  /* Un formulario de campos angostos a lo ancho de una pantalla grande se lee
+     peor que uno acotado a la medida de un formulario. */
+  max-inline-size: 44rem;
+}
+
+.edicion__volver {
+  margin: 0;
+}

@@ -1,0 +1,67 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v16"></path><path d="M6 8h12"></path><path d="m6 8-3 6h6z"></path><path d="m18 8-3 6h6z"></path><path d="M8.5 20h7"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/accesos/politicas-de-acceso-listado">Políticas de acceso</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Nueva</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Nueva política de acceso</h1></div>
+        <p class="caption">Escribí una regla que se evalúe por encima de los roles. Sólo puede haber una política por recurso objetivo con la misma prioridad.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <div class="app-card app-card--inset" app-card="" style="padding:var(--e4);margin-bottom:var(--e6)">
+      <p class="overline">Organización</p>
+      <p class="num" style="margin-top:var(--e1)">TEN-2026-000104</p>
+      <p>Clínica Los Olivos <span class="muted">· clinica-los-olivos · La Paz</span></p>
+    </div>
+    <form class="app-card formulario-columna" app-card="">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de guardar.</strong>
+          <ul>
+            <li>Prioridad: ya hay una política con esta prioridad para el mismo recurso objetivo.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-1">Nombre de la política <span class="req">· obligatorio</span></label>
+        <input class="app-input" app-input="" id="c-1" type="text" required="" value="Resultados de laboratorio sólo con consentimiento" placeholder="Resultados de laboratorio sólo con consentimiento" aria-describedby="c-1-a">
+        <p class="app-form-field__ayuda" id="c-1-a">Hasta 200 caracteres. Escribí la regla, no el campo: es lo que va a leer quien audite una denegación.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-2-l">Efecto <span class="req">· obligatorio</span></span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-2-l" aria-describedby="c-2-a">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2">Permitir</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-2" checked="">Denegar</label>
+        </div>
+        <p class="app-form-field__ayuda" id="c-2-a">Denegar prevalece sobre cualquier permiso de rol. Permitir sólo suma a lo que el rol ya autoriza.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-3">Recurso objetivo</label>
+        <input class="app-input" app-input="" id="c-3" type="text" value="lab.result" placeholder="patient.record" aria-describedby="c-3-a">
+        <p class="app-form-field__ayuda" id="c-3-a">Hasta 200 caracteres. Vacío hace que la política se evalúe en todos los recursos: usalo con cuidado.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-4">Condición ABAC</label>
+        <textarea class="app-textarea app-textarea--mono" app-textarea="" id="c-4" rows="6" aria-describedby="c-4-a">{
+  "all": [
+    { "hasConsent": true },
+    { "purposeOfUse": ["TREATMENT", "OPERATIONS"] }
+  ]
+}</textarea>
+        <p class="app-form-field__ayuda" id="c-4-a">Opcional. JSON con las condiciones que tienen que cumplirse para que la política se aplique. Un error de sintaxis se marca en el borde del control, no con un relleno rojo.</p>      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-5">Prioridad de desempate</label>
+        <input class="app-input num" app-input="" id="c-5" type="number" value="25" aria-describedby="c-5-a">
+        <p class="app-form-field__ayuda" id="c-5-a">Menor se evalúa antes. Es única por recurso objetivo dentro de la organización: si repetís una, el backend responde 409.</p>      </div>
+      </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/accesos/politicas-de-acceso-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+    </form>

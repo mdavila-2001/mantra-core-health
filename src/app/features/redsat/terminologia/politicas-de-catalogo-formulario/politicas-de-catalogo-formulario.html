@@ -1,0 +1,261 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg></span>
+      <div class="app-page-header__texto">
+      <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
+          <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a aria-disabled="true" data-sin-destino="">Terminología</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/terminologia/politicas-de-catalogo-listado">Políticas de catálogo</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><span aria-current="page">Definir</span></li>
+      </ol>
+        <div class="app-page-header__titulo"><h1>Política de catálogo</h1></div>
+        <p class="caption">Tres pasos: sobre qué conjunto aplica, qué se le permite a la organización y desde cuándo rige, con la configuración concepto por concepto.</p>
+      </div>
+      <div class="app-page-header__acciones">
+
+      </div>
+    </div>
+    <div class="app-view-state-host" app-view-state-host="" style="display:flex;flex-direction:column;gap:var(--e7)">
+      <div data-estado="paso1">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>1 · Alcance</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>2 · Permisos</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>3 · Vigencia y conceptos</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="33" aria-label="Avance del formulario: paso 1 de 3">
+          <span class="app-progress__relleno" style="width:33%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 1 de 3 · <strong>Alcance</strong></span>
+          <span class="caption muted num">33% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+      <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+        <div class="app-alert__cuerpo">
+          <strong>Revisá un campo antes de continuar.</strong>
+          <ul>
+            <li>Conjunto de valor: elegí uno de la lista, no alcanza con escribir el nombre.</li>
+          </ul>
+        </div>
+      </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-54">Conjunto de valor <span class="req">· obligatorio</span></label>
+        <span class="app-search-field" app-search-field="">
+          <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input class="app-input" app-input="" id="c-54" type="search" role="combobox" aria-expanded="true" aria-controls="c-54-m" aria-autocomplete="list" aria-describedby="c-54-a" value="especialidades" placeholder="Escribí al menos 3 letras">
+        </span>
+        <div class="app-menu" app-menu="" id="c-54-m" role="listbox" aria-label="Resultados de Conjunto de valor" style="position:static;margin-top:0">
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg><span>Especialidades médicas<br><span class="caption muted">especialidades-medicas · borrador</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg><span>Motivos de consulta ambulatoria<br><span class="caption muted">motivos-de-consulta · activo</span></span></button>
+          <button class="app-menu-item" app-menu-item="" type="button" role="option" aria-selected="false"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 9.5h14M5 14.5h14M10 4 8.5 20M16 4l-1.5 16"></path></svg><span>Diagnósticos de egreso<br><span class="caption muted">diagnosticos-egreso · activo</span></span></button>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e3) var(--e4);margin-top:var(--e2)">
+          <p class="overline">Registro elegido</p>
+          <p>Especialidades médicas <span class="muted">· CVA-2026-000315 · especialidades-medicas</span></p>
+        </div>
+        <p class="app-form-field__ayuda" id="c-54-a">Escribí al menos 3 letras del nombre o del código interno.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-55-l">Modo</span>
+        <div class="app-radio-group" app-radio-group="" role="radiogroup" aria-labelledby="c-55-l" aria-describedby="c-55-a">
+          <label class="app-radio" app-radio=""><input type="radio" name="c-55">Heredar el catálogo tal cual</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-55" checked="">Recortar el catálogo</label>
+          <label class="app-radio" app-radio=""><input type="radio" name="c-55">Extender el catálogo</label>
+        </div>
+        <p class="app-form-field__ayuda" id="c-55-a">Heredar no admite cambios; recortar deja quitar conceptos; extender deja además sumar conceptos locales.</p>
+      </div>
+          </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Nada se guarda hasta el último paso.</p>
+        <a app-button="" data-variante="secundario" routerLink="/terminologia/politicas-de-catalogo-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg>Continuar</button>
+      </div>
+        </form>
+      </div>
+      <div data-estado="paso2" hidden="">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>1 · Alcance</span><hr class="app-divider" aria-hidden="true"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>2 · Permisos</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"></circle></svg>3 · Vigencia y conceptos</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="67" aria-label="Avance del formulario: paso 2 de 3">
+          <span class="app-progress__relleno" style="width:67%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 2 de 3 · <strong>Permisos</strong></span>
+          <span class="caption muted num">67% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-56-l">Permite recortar</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-56-l" checked="">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>La organización puede quitar conceptos del conjunto</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-57-l">Permite renombrar</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-57-l" checked="" aria-describedby="c-57-a">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>La organización puede mostrar un concepto con otro nombre</span>
+        </label>
+        <p class="app-form-field__ayuda" id="c-57-a">Sin este permiso, el nombre alternativo de la configuración por concepto queda rechazado.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-58-l">Permite conceptos locales</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-58-l">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>La organización puede sumar conceptos propios al conjunto</span>
+        </label>
+      </div>
+          </div>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Nada se guarda hasta el último paso.</p>
+        <a app-button="" data-variante="secundario" routerLink="." [queryParams]="{ estado: 'paso1' }"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Atrás</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg>Continuar</button>
+      </div>
+        </form>
+      </div>
+      <div data-estado="paso3" hidden="">
+      <nav class="app-card app-card--inset avance-formulario" aria-label="Avance del formulario" style="padding:var(--e4)">
+        <div class="pasos"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>1 · Alcance</span><hr class="app-divider" aria-hidden="true"><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>2 · Permisos</span><hr class="app-divider" aria-hidden="true"><span class="app-badge paso-actual" data-tono="info" aria-current="step"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path><path d="m14.5 7.5 2 2"></path></svg>3 · Vigencia y conceptos</span></div>
+        <span class="app-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-label="Avance del formulario: paso 3 de 3">
+          <span class="app-progress__relleno" style="width:100%"></span>
+        </span>
+        <p class="avance-formulario__pie">
+          <span class="caption">Paso 3 de 3 · <strong>Vigencia y conceptos</strong></span>
+          <span class="caption muted num">100% completado</span>
+        </p>
+      </nav>
+        <form class="app-card formulario-columna" app-card="" style="margin-top:var(--e7)">
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-59-l">Vigente desde</span>
+        <div style="display:flex;gap:var(--e3);align-items:flex-start;flex-wrap:wrap">
+          <span class="app-date-picker" app-date-picker="">
+            <input class="app-date-picker__input" id="c-59" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" value="01/09/2026" aria-labelledby="c-59-l">
+            <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+          </span>
+          <input class="app-input" app-input="" type="time" value="00:00" aria-label="Vigente desde · hora">
+        </div>
+        <p class="app-form-field__ayuda" id="c-59-a">Hora de Bolivia (UTC−4).</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-60-l">Vigente hasta</span>
+        <div style="display:flex;gap:var(--e3);align-items:flex-start;flex-wrap:wrap">
+          <span class="app-date-picker" app-date-picker="">
+            <input class="app-date-picker__input" id="c-60" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" value="" aria-labelledby="c-60-l">
+            <svg class="icono icono--calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10.5h17"></path><path d="M8 3.5v4M16 3.5v4"></path></svg>
+          </span>
+          <input class="app-input" app-input="" type="time" value="" aria-label="Vigente hasta · hora">
+        </div>
+        <p class="app-form-field__ayuda" id="c-60-a">Dejalo vacío si la política no tiene fecha de fin. Hora de Bolivia (UTC−4).</p>
+      </div>
+          </div>
+      <fieldset class="app-form-section" app-form-section="">
+        <legend class="app-form-section__legend"><span class="overline">Configuración por concepto</span></legend>
+        <p class="app-form-section__desc">Una fila por concepto que quieras habilitar, renombrar u ordenar. Sólo uno puede quedar como valor por omisión.</p>
+            <div style="display:flex;flex-direction:column;gap:var(--e4)">
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Concepto 1</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-61">Concepto <span class="req">· obligatorio</span></label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-61" required="">
+            <option>Elegí un concepto</option>
+            <option>Cardiología · CARD</option>
+            <option>Ginecología y obstetricia · GINE</option>
+            <option>Medicina interna · MEDI</option>
+            <option>Pediatría · PEDI</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-62-l">Habilitado</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-62-l" checked="">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>La organización lo ofrece</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-63">Nombre alternativo</label>
+        <input class="app-input" app-input="" id="c-63" type="text" aria-describedby="c-63-a" value="Cardiología clínica" placeholder="Cardiología clínica">
+        <p class="app-form-field__ayuda" id="c-63-a">Exige el permiso de renombrar.</p>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-64">Orden</label>
+        <input class="app-input" app-input="" id="c-64" type="number" data-num="1" value="1" placeholder="">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-65-l">Valor por omisión</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-65-l" checked="">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Es la opción preseleccionada del conjunto</span>
+        </label>
+      </div>
+          </div>
+        </div>
+        <div class="app-card app-card--inset" app-card="" style="padding:var(--e5)">
+          <div class="app-card__cabecera" style="margin-bottom:var(--e4)">
+            <p class="overline">Concepto 2</p>
+            <button app-button="" data-variante="secundario" data-tam="sm" type="button"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Quitar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--e5)">
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-66">Concepto <span class="req">· obligatorio</span></label>
+        <span class="app-select-envoltorio">
+          <select class="app-select" app-select="" id="c-66" required="">
+            <option>Elegí un concepto</option>
+            <option>Cardiología · CARD</option>
+            <option>Ginecología y obstetricia · GINE</option>
+            <option>Medicina interna · MEDI</option>
+            <option>Pediatría · PEDI</option>
+          </select>
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-67-l">Habilitado</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-67-l" checked="">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>La organización lo ofrece</span>
+        </label>
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-68">Nombre alternativo</label>
+        <input class="app-input" app-input="" id="c-68" type="text" value="" placeholder="Ginecología">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="c-69">Orden</label>
+        <input class="app-input" app-input="" id="c-69" type="number" data-num="1" value="2" placeholder="">
+      </div>
+      <div class="app-form-field" app-form-field="">
+        <span class="app-form-field__label" id="c-70-l">Valor por omisión</span>
+        <label class="app-switch" app-switch="">
+          <input type="checkbox" aria-labelledby="c-70-l">
+          <span class="app-switch__pista" aria-hidden="true"></span>
+          <span>Es la opción preseleccionada del conjunto</span>
+        </label>
+      </div>
+          </div>
+        </div>
+              <div><button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Agregar otro concepto</button></div>
+            </div>
+      </fieldset>
+      <div class="app-form-actions" app-form-actions="">
+        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="." [queryParams]="{ estado: 'paso2' }"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Atrás</a>
+        <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar</button>
+      </div>
+        </form>
+      </div>
+    </div>
