@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-157 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+158 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -141,6 +141,7 @@ Archivo: `src/app/core/data-access/community/community.client.ts`
 | `GET` | `/community/profiles/:profileId/reviews` |
 | `GET` | `/community/profiles/me` |
 | `PUT` | `/community/profiles/me` |
+| `PUT` | `/community/reactions` |
 
 ## `GeoClient`
 

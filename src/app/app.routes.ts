@@ -47,6 +47,9 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
+  // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
+  // de publicación con sus reacciones.
+  feed: () => import('./features/feed/feed').then((m) => m.Feed),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   'medical-records': () =>
     import('./features/clinical-record/clinical-record').then((m) => m.ClinicalRecord),

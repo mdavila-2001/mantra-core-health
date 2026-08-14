@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-309 componentes y 40 servicios inyectables, leídos de `src/`.
+311 componentes y 40 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -72,7 +72,7 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (254)
+## Feature (256)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -143,6 +143,8 @@
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
+| `app-feed` | `Feed` | — | — | — | OnPush | sí |
+| `app-post-card` | `PostCard` | `post`, `actorProfileId` | `reacted` | — | OnPush | sí |
 | `app-consent-revocation` | `ConsentRevocation` | — | — | — | OnPush | sí |
 | `app-geo-home` | `GeoHome` | — | — | — | OnPush | sí |
 | `app-geofence-event-form` | `GeofenceEventForm` | — | — | — | OnPush | sí |

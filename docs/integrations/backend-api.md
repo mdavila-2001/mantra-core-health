@@ -1,6 +1,6 @@
 # API de backend
 
-Las 145 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 156 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -589,6 +589,18 @@ que son sus primeros consumidores.
 | `PUT` | `/community/profiles/me` | `PublicProfilePreview` |
 | `POST` | `/community/profiles/:profileId/posts` | `MedicalArticles` |
 | `POST` | `/community/comments` | `MedicalArticles` |
+| `PUT` | `/community/reactions` | `PostCard` (muro) |
+
+#### Reaccionar es `PUT` y es *upsert*
+
+Reaccionar de nuevo con otro tipo **cambia** la reacción, no agrega una segunda.
+Por eso el contrato exige `actorProfileId` en el cuerpo: es la mitad de la clave
+`(actor, objeto)`, no un dato que el servidor deduzca de la sesión.
+
+Y ahí hay una asimetría real del backend que conviene no confundir: **se escribe
+con la palabra** (`LIKE`, `INSIGHTFUL`…) y **se lee con el uuid**
+(`reactionTypeConceptId`). Los tipos de reacción son un enum cerrado del
+contrato, no conceptos de terminología.
 
 **La vitrina propia es un `PUT` idempotente**, igual razón que
 `upsertOwnProfile` del resto del repo: crea si no existía, actualiza si sí, y

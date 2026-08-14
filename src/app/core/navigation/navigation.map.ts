@@ -52,6 +52,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M30 read_models',
   },
 
+  {
+    path: 'feed',
+    label: 'Muro profesional',
+    group: 'General',
+    icon: 'home',
+    // Sin `roles`: cualquier sesión con perfil público puede tener muro. El
+    // perfil público NO es el `pid` de la sesión —es una entidad de M19— así
+    // que la puerta la pone la propia pantalla, no una guarda de rol.
+    availability: 'disponible',
+    summary: 'Lo que publican los perfiles que seguís.',
+    module: 'M19 community',
+  },
+
   /* -- Atención · fase 1 del orden de trabajo ------------------------------ */
 
   {
