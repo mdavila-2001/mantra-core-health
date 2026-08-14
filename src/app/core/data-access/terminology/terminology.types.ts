@@ -79,3 +79,116 @@ export interface ConceptSearchQuery {
   /** Tope de resultados; la API usa 50 por defecto. */
   readonly limit?: number;
 }
+
+/* ---------------------------------------------------------------------------
+   El glosario: etiquetas y términos en castellano.
+
+   Todo lo que sigue se agrega **al final** y no toca nada de arriba.
+   `ValueSetOption` en particular queda intacta: es la forma que devuelve el
+   backend para los selectores y la consume medio repositorio.
+
+   Son tipos aparte y no una ampliación de `ValueSetOption` porque describen
+   otra cosa. Un selector necesita «qué mando en este campo»; un glosario
+   necesita «cómo se llama esto, qué significa y bajo qué categorías cae». El día
+   que el catálogo cambie el shape de una, la otra no tiene por qué moverse.
+   --------------------------------------------------------------------------- */
+
+/**
+ * Una **etiqueta** del glosario: un conjunto de valores del catálogo.
+ *
+ * Las categorías no son un campo nuevo ni una invención de la pantalla — son los
+ * conjuntos de valores que el modelo ya tenía: «Diagnóstico», «Severidad», «Vía
+ * de administración». El glosario nunca los había pedido.
+ */
+export interface GlossaryTag {
+  readonly id: string;
+  /** Código interno estable, como `condition-severity`. Es lo que viaja en la URL. */
+  readonly internalCode: string;
+  /** Nombre legible. Ya viene en castellano del catálogo. */
+  readonly name: string;
+  /** Qué agrupa, si el catálogo lo declara. */
+  readonly description?: string;
+  /** Versión vigente del conjunto, o `null` si todavía no hay ninguna. */
+  readonly defaultVersionId: string | null;
+  /** Cuántos términos tiene. Es el conteo que se muestra junto a la etiqueta. */
+  readonly memberCount?: number;
+}
+
+/** Una página del listado de etiquetas. */
+export interface GlossaryTagPage {
+  readonly items: readonly GlossaryTag[];
+  readonly count: number;
+  readonly limit: number;
+  /** Cursor opaco de continuación, o `null` si ésta es la última página. */
+  readonly nextCursor: string | null;
+}
+
+/** Parámetros del listado de etiquetas. */
+export interface GlossaryTagQuery {
+  /** Código interno exacto. */
+  readonly code?: string;
+  /** Texto libre sobre el código interno y el nombre. */
+  readonly query?: string;
+  /** Cursor devuelto por la página anterior. */
+  readonly cursor?: string;
+  /** Conjuntos por página. */
+  readonly limit?: number;
+}
+
+/** Una etiqueta nombrada desde el término al que pertenece. */
+export interface GlossaryTermTag {
+  readonly id: string;
+  readonly internalCode: string;
+  readonly name: string;
+}
+
+/**
+ * Una entrada del glosario: el término, qué significa y bajo qué categorías cae.
+ *
+ * `translated` en `false` significa que el catálogo **no tiene** ese término en
+ * castellano y lo que se muestra es el original del sistema de codificación. Se
+ * publica para poder decirlo en pantalla: dejar el hueco en blanco o mostrar el
+ * inglés como si fuera lo pedido son las dos formas de mentir acá.
+ */
+export interface GlossaryTerm {
+  readonly conceptId: string;
+  /** Código dentro de su sistema, como `I10`. */
+  readonly code: string;
+  readonly display: string;
+  readonly definition?: string;
+  readonly translated?: boolean;
+  readonly valueSets?: readonly GlossaryTermTag[];
+}
+
+/** Una página de términos del glosario. */
+export interface GlossaryTermPage {
+  readonly items: readonly GlossaryTerm[];
+  readonly count: number;
+  readonly limit: number;
+}
+
+/** Qué se le pide al glosario: texto, categoría o las dos cosas. */
+export interface GlossaryQuery {
+  /** Texto a buscar. */
+  readonly query?: string;
+  /** Categoría por la que se está navegando. */
+  readonly valueSetId?: string;
+  /** Tope de términos. */
+  readonly limit?: number;
+}
+
+/** Otra forma de nombrar el mismo término. */
+export interface GlossarySynonym {
+  readonly value: string;
+  /** Idioma de la denominación, cuando el catálogo lo declara. */
+  readonly language?: string;
+  /** Si es la preferida de su idioma. */
+  readonly preferred?: boolean;
+}
+
+/** La ficha completa de un término, que es lo que se abre al hacerle clic. */
+export interface GlossaryTermDetail extends GlossaryTerm {
+  readonly codeSystemVersionId: string;
+  readonly valueSets: readonly GlossaryTermTag[];
+  readonly synonyms: readonly GlossarySynonym[];
+}

@@ -7,10 +7,24 @@ import type {
   ConceptLabels,
   ConceptSearchPage,
   ConceptSearchQuery,
+  GlossaryQuery,
+  GlossaryTagPage,
+  GlossaryTagQuery,
+  GlossaryTermDetail,
+  GlossaryTermPage,
   ValueSetExpansionPage,
   ValueSetExpansionQuery,
   ValueSetOption,
 } from './terminology.types';
+
+/**
+ * Idioma en el que el glosario pide el catálogo.
+ *
+ * Constante y no configurable: es el idioma del producto. El día que haya que
+ * elegirlo, sale de la sesión y no de aquí — pero mientras no exista esa
+ * elección, un parámetro que nadie cambia es una pregunta sin dueño.
+ */
+const IDIOMA_DEL_GLOSARIO = 'ES';
 
 /**
  * Tope de páginas que `readAllOptions` recorre.
@@ -198,6 +212,108 @@ export class TerminologyClient {
         (paginas) =>
           new Map(paginas.flatMap((pagina) => pagina.items.map((item) => [item.conceptId, item]))),
       ),
+    );
+  }
+
+  /* -------------------------------------------------------------------------
+     El glosario. Tres métodos nuevos, agregados **al final**: los cuatro de
+     arriba no se tocan (`terminology.client.ts` es archivo compartido, ver el
+     README de carriles).
+
+     Son métodos aparte y no parámetros nuevos de `searchConcepts` a propósito.
+     `searchConcepts` la usa el catálogo de administración, que quiere el
+     catálogo crudo: identificadores, códigos y el rótulo del sistema de
+     codificación. El glosario quiere lo contrario —castellano, etiquetas, sin
+     un uuid a la vista— y son dos lecturas de la misma URL con dos contratos
+     distintos. Mezclarlas obligaría a cada llamador a acordarse de pedir lo
+     suyo, que es exactamente el tipo de olvido que deja una pantalla en inglés.
+     ------------------------------------------------------------------------- */
+
+  /**
+   * `GET /terminology/value-sets` — las **etiquetas** del glosario.
+   *
+   * Un conjunto de valores es la categoría bajo la cual un término tiene
+   * sentido: «Diagnóstico», «Severidad», «Vía de administración». Existían en el
+   * modelo desde siempre; lo que faltaba era pedirlas desde acá.
+   *
+   * Cada una trae su conteo de términos, así que la pantalla puede ofrecerlas
+   * sin expandir ninguna: sin el conteo, saber si una categoría tiene algo
+   * dentro cuesta un clic y una espera.
+   *
+   * No exige rol de administración — misma razón que el resto de la lectura del
+   * catálogo: es metadato compartido, sin datos de paciente.
+   *
+   * @param query - Código exacto, texto libre, cursor y tope, todos opcionales.
+   * @returns La página de etiquetas con su cursor de continuación.
+   */
+  listValueSets(query: GlossaryTagQuery = {}): Observable<GlossaryTagPage> {
+    // Parámetro a parámetro, igual que el resto del cliente: el backend valida
+    // con `forbidNonWhitelisted` y un opcional presente en `undefined` viajaría
+    // como clave declarada y volvería 400.
+    let params = new HttpParams();
+    if (query.code !== undefined) {
+      params = params.set('code', query.code);
+    }
+    if (query.query !== undefined && query.query !== '') {
+      params = params.set('q', query.query);
+    }
+    if (query.cursor !== undefined) {
+      params = params.set('cursor', query.cursor);
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+
+    return this.http.get<GlossaryTagPage>(this.url('/terminology/value-sets'), {
+      params,
+    });
+  }
+
+  /**
+   * `GET /terminology/concepts?lang=ES&includeValueSets=true` — los términos del
+   * glosario, en castellano y con sus etiquetas.
+   *
+   * Es la **misma** lectura tanto si se llegó buscando texto como si se llegó
+   * haciendo clic en una categoría: `valueSetId` acota, `query` acota, y las dos
+   * cosas se combinan. Que sea una sola lectura no es una economía — es lo que
+   * hace que las dos formas de llegar se vean igual.
+   *
+   * Deliberadamente **no** usa `readExpansion`: la expansión devuelve los
+   * miembros crudos del conjunto, sin traducir y sin sus otras etiquetas.
+   *
+   * @param query - Texto, categoría y tope, todos opcionales.
+   * @returns La página de términos, ya ordenada alfabéticamente por el backend.
+   */
+  searchGlossary(query: GlossaryQuery = {}): Observable<GlossaryTermPage> {
+    let params = new HttpParams().set('lang', IDIOMA_DEL_GLOSARIO).set('includeValueSets', 'true');
+    if (query.query !== undefined && query.query !== '') {
+      params = params.set('q', query.query);
+    }
+    if (query.valueSetId !== undefined) {
+      params = params.set('valueSetId', query.valueSetId);
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+
+    return this.http.get<GlossaryTermPage>(this.url('/terminology/concepts'), {
+      params,
+    });
+  }
+
+  /**
+   * `GET /terminology/concepts/:conceptId?lang=ES` — la ficha de un término.
+   *
+   * Trae lo que la entrada de la lista no puede mostrar sin volverse ilegible:
+   * la definición completa, todas sus etiquetas y sus otras denominaciones.
+   *
+   * @param conceptId - Término a abrir.
+   * @returns La ficha completa.
+   */
+  readGlossaryTerm(conceptId: string): Observable<GlossaryTermDetail> {
+    return this.http.get<GlossaryTermDetail>(
+      this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}`),
+      { params: new HttpParams().set('lang', IDIOMA_DEL_GLOSARIO) },
     );
   }
 
