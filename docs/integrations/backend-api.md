@@ -1,6 +1,6 @@
 # API de backend
 
-Las 159 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 168 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 159 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` `/procedure-cases` `/dental-procedures` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -553,6 +553,35 @@ están en la lista `OWNERSHIP_FIELDS` del backend: su interceptor de tenant los
 contrasta con la cabecera `X-Tenant-Id` y responde **403** si difieren. En el
 sujeto conviene omitirlo y dejar que lo resuelva el interceptor; en la geocerca
 tiene que ser el tenant activo de la sesión.
+
+### `ProceduresClient` — 4 operaciones · carril 3
+
+El histórico de procedimientos quirúrgicos y odontológicos (M53).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/procedure-cases` | `ProceduresBlock` (ficha del paciente) |
+| `GET` | `/procedure-cases/:caseId` | `ProceduresBlock` |
+| `GET` | `/dental-procedures` | `ProceduresBlock` |
+| `GET` | `/dental-procedures/catalog` | `ProceduresBlock` |
+| `POST` | `/dental-procedures` | `ProceduresBlock` |
+
+### `DiagnosticsClient` — 4 operaciones · carril 4
+
+Laboratorios e imagenología (M52).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostics/patients/:patientProfileId/orders` | `DiagnosticsBlock` · `Diagnostics` |
+| `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` | `DiagnosticsBlock` · `Diagnostics` |
+| `GET` | `/diagnostics/work-orders` | `Diagnostics` |
+| `POST` | `/clinical/service-requests` | `Diagnostics` (pedir un estudio) |
+
+> **Declaradas acá al resolver el conflicto del carril 15, no por sus autores.**
+> Los carriles 3 y 4 entraron a `dev` sin pasar por esta página, y eso dejó el
+> job `verificar` en rojo para todo el mundo: `check-api-contract-drift` no
+> distingue «lo agregó otro» de «lo agregué yo». Si algún consumidor de arriba
+> quedó mal atribuido, corregilo — se dedujo de quién importa cada cliente.
 
 ### `FilesClient` — 5 operaciones
 
