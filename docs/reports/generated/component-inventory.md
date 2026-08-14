@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-304 componentes y 39 servicios inyectables, leídos de `src/`.
+309 componentes y 40 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -72,12 +72,16 @@
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (249)
+## Feature (254)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
 | `app-appointments` | `Appointments` | — | — | — | OnPush | sí |
+| `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
+| `app-practitioner-profile-edit` | `PractitionerProfileEdit` | — | — | — | OnPush | sí |
+| `app-practitioner-profile` | `PractitionerProfile` | — | — | — | OnPush | sí |
+| `app-public-profile-preview` | `PublicProfilePreview` | — | — | — | OnPush | sí |
 | `app-accounting` | `Accounting` | — | — | — | OnPush | **no** |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-organization-detail` | `OrganizationDetail` | — | — | — | OnPush | **no** |
@@ -88,6 +92,7 @@
 | `app-patient-merge` | `PatientMerge` | — | — | — | OnPush | sí |
 | `app-patient-new` | `PatientNew` | — | — | — | OnPush | sí |
 | `app-related-person-form` | `RelatedPersonForm` | `profileId`, `yaTieneTutor` | `registered`, `cancelled` | — | OnPush | sí |
+| `app-services-catalog` | `ServicesCatalog` | — | — | — | OnPush | sí |
 | `app-terminology-catalog` | `TerminologyCatalog` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
 | `app-agenda` | `Agenda` | — | — | — | OnPush | sí |
@@ -338,7 +343,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (39)
+## Servicios (40)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -362,6 +367,7 @@
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |
 | `PublicClient` | `src/app/core/data-access/public/public.client.ts` | root | **no** |
 | `SchedulingClient` | `src/app/core/data-access/scheduling/scheduling.client.ts` | root | sí |
+| `ServicesCatalogClient` | `src/app/core/data-access/services-catalog/services-catalog.client.ts` | root | sí |
 | `SystemContextClient` | `src/app/core/data-access/system-context/system-context.client.ts` | root | sí |
 | `TerminologyClient` | `src/app/core/data-access/terminology/terminology.client.ts` | root | sí |
 | `AppErrorHandler` | `src/app/core/errors/app-error-handler.ts` | local | **no** |

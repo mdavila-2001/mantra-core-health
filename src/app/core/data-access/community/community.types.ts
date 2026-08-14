@@ -74,6 +74,37 @@ export interface PublicProfileDetail {
   readonly prestige?: PrestigeScore;
 }
 
+// ─── Vitrina propia ──────────────────────────────────────────────────────────
+
+/** La vitrina pública propia, tal como la ve su titular. */
+export interface OwnPublicProfile {
+  readonly id: string;
+  readonly tenantId: string;
+  /** El sujeto que representa: el perfil profesional, o la cuenta. */
+  readonly targetId: string;
+  readonly slug: string;
+  readonly displayName: string;
+  readonly headline?: string;
+  readonly biography?: string;
+  readonly acceptsReviews?: boolean;
+  /** Lo otorga la plataforma; se muestra, no se declara. */
+  readonly verificationStatusConceptId?: string;
+  readonly statusConceptId: string;
+}
+
+/**
+ * Lo que se manda a `PUT /community/profiles/me` para crear o actualizar la
+ * vitrina propia. Idempotente: no hace falta saber si ya existía una.
+ */
+export interface UpsertOwnPublicProfile {
+  readonly tenantId: string;
+  readonly slug: string;
+  readonly displayName: string;
+  readonly headline?: string;
+  readonly biography?: string;
+  readonly acceptsReviews?: boolean;
+}
+
 // ─── Publicaciones ───────────────────────────────────────────────────────────
 
 /** Una pieza de medios adjunta a una publicación. */
@@ -126,6 +157,14 @@ export interface PostPage {
   readonly nextCursor: string | null;
 }
 
+/** Lo que se manda a `POST /community/profiles/:profileId/posts` para publicar. */
+export interface NewPost {
+  readonly bodyText: string;
+  readonly visibility?: 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE';
+  readonly commentsEnabled?: boolean;
+  readonly hashtags?: readonly string[];
+}
+
 // ─── Comentarios ─────────────────────────────────────────────────────────────
 
 /**
@@ -152,6 +191,17 @@ export interface CommentThreadPage {
   readonly count: number;
   readonly limit: number;
   readonly nextCursor: string | null;
+}
+
+/**
+ * Lo que se manda a `POST /community/comments` para comentar, o responder si
+ * se pasa `parentCommentId`.
+ */
+export interface NewComment {
+  readonly authorProfileId: string;
+  readonly commentableRefId: string;
+  readonly bodyText: string;
+  readonly parentCommentId?: string;
 }
 
 // ─── Reacciones ──────────────────────────────────────────────────────────────
