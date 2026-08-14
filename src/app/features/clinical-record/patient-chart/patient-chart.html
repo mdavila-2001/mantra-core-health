@@ -1,9 +1,18 @@
-<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()" />
+<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
+  <!-- El PDF sale del bloque `[data-pdf-root]` de abajo, no de la página
+       entera: sin eso el documento se llevaría el menú lateral. -->
+  <app-pdf-export-button
+    page-actions
+    [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
+    [title]="titulo()"
+    [target]="raizExportable()"
+  />
+</app-page-header>
 
 <!-- El anfitrión resuelve los nueve estados del M34 sobre la lectura entera:
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
-  <div class="expediente">
+  <div class="expediente" data-pdf-root #raizPdf>
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
       <app-alert tone="warning" title="Expediente recortado">
