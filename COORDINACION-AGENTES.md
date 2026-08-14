@@ -5,6 +5,96 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión en curso · Carril 1 — catálogo de servicios, presupuestos y PDF
+
+**Empezó:** 2026-08-14 · **Ramas:** `carril-1/catalogo-presupuestos-pdf` en los dos repos,
+cada una en su propio `git worktree` (`../mantra-core-health-carril1` y
+`../mantra-core-health-redesa-api-carril1`) para no pisar el trabajo sin commitear que ya
+había en ambos working trees (contabilidad en el backend, tutoriales/perfil público acá).
+**Base:** `origin/dev` acá, `origin/master` en el backend.
+
+Ver `CARRIL-1-catalogo-presupuestos-pdf.md` y `CARRILES-2026-08-14-README.md` para el plan
+completo. Este bloque documenta un bloqueador real que ese plan ya anticipaba y cambia el
+alcance de lo que este carril entrega hoy.
+
+### 🔴 Bloqueador: `billing.budgets`/`billing.budget_lines` no sirven para presupuestos por paciente
+
+El punto 5 del reclamo (presupuesto/cotización por paciente y procedimiento, precio libre por
+doctor sobre el catálogo fijo) iba a apoyarse en `billing.budgets`/`billing.budget_lines`. Al
+auditar las entidades (`mantra-core-health-redesa-api/src/modules/billing/entities/budgets.entity.ts`
+y `budget_lines.entity.ts`) resultó que **están modeladas como presupuesto fiscal por centro de
+costo**, no como presupuesto/cotización clínica:
+
+- `budgets`: `practiceId`, `fiscalYearId`, `name`, `statusConceptId` — **sin `patientId` en
+  ningún lado**.
+- `budget_lines`: `budgetId`, `accountId`, `costCenterId`, `fiscalPeriodId`, `amount` — **sin
+  referencia a `service_catalog`**, sin `quantity` ni `unitPrice` propios.
+
+Confirmado que no hay otra entidad de respaldo: `grep` de `patientId`/`patient_id` en todo
+`src/modules/billing/entities/*.entity.ts` no da resultados, y una búsqueda de
+`quote`/`cotizacion`/`presupuesto` en el resto del backend tampoco encuentra nada relevante (solo
+falsos positivos de otros dominios — ads, marketing). La forma que el punto 5 necesita ya existe,
+pero en otro lado: `billing.invoices` (`patientProfileId`) + `billing.invoice_lines`
+(`serviceId`, `quantity`, `unitPrice`, `description`) — repurposar esa tabla para cotizaciones
+borrador se descartó porque `ledger.service.ts`, `dunning.service.ts`,
+`patient-statements.service.ts` y `kpi-snapshots.service.ts` ya asumen que todo lo que hay en
+`invoices` es contabilizable de verdad.
+
+**Decisión (con el usuario, 2026-08-14):** extender `budgets`/`budget_lines` — agregar
+`patient_profile_id` (uuid, FK a `profiles.patient_profiles`) a `budgets`, y a `budget_lines`
+`service_catalog_id` (uuid, FK a `billing.service_catalog`), `quantity` (numeric),
+`unit_price` (numeric, el precio que puso el doctor — nunca `service_catalog.default_price` a
+ciegas) y `description` (varchar, opcional) — vía el pipeline `.puml` → `gen_ddl.py` →
+`SQL/patches/`, que no vive en ninguno de los dos repos git (ver la advertencia de
+`CARRILES-2026-08-14-README.md`). No se tocó ningún patch a mano.
+
+**Queda pendiente para quien tenga acceso a ese pipeline.** En cuanto las columnas existan,
+completo `BillingBudgetsController`/`BillingBudgetsService` (backend) y `budget-block` +
+`budgets.client.ts` (frontend) exactamente como los describe `CARRIL-1-catalogo-presupuestos-pdf.md`.
+
+### Qué entra en esta entrega, entonces
+
+- **Backend:** `GET|POST /billing/service-catalog` completo (punto 3). Commit
+  `4c2b36cc` en `mantra-core-health-redesa-api`. `yarn test` (4686/4687), `yarn typecheck` y
+  `yarn lint` limpios sobre mis archivos; `yarn test:integration` corrido contra el stack local
+  (15/18 suites OK — los 3 rojos son preexistentes y ajenos a este carril: P14
+  (`identity-verification-cycle`, ya documentado y fuera de alcance de todos los carriles),
+  `vademecum` (falta `SQL/patches/2026-07-30_vademecum_dev_seed.sql`, que no existe en esta
+  máquina) y `audit-worm`).
+- **Frontend:** cliente + pantalla admin del catálogo de servicios (`administration/services-catalog`),
+  y `pdf-export.ts` como utilidad genérica reusable — ver detalle abajo, en curso.
+- **Lo que NO entra:** `budget-block` (patient-chart), `budgets.client.ts`, y el backend de
+  `billing-budgets`. Bloqueados por lo de arriba.
+
+### Archivos nuevos (no chocan con nada)
+
+```
+src/app/core/data-access/services-catalog/services-catalog.client.ts  + .types.ts + .spec.ts
+src/app/features/admin/services-catalog/services-catalog.ts           + .html + .css + .spec.ts
+src/app/shared/utils/pdf-export/pdf-export.ts                         + .spec.ts
+```
+
+### Archivos existentes que toco (de la tabla de compartidos)
+
+| Archivo | Qué le hago | Cuándo |
+|---|---|---|
+| `package.json` | Agrego `jspdf` | Último commit de la rama |
+| `src/app/core/navigation/navigation.map.ts` | Una fila nueva al final del grupo **Administración**: `administration/services-catalog` | Último commit de la rama |
+| `src/app/app.routes.ts` | Entrada en `PANTALLAS_DIFERIDAS` para esa sección | Último commit de la rama |
+
+**No toco** `patient-chart.ts`/`.html` en esta entrega — el `budget-block` que iba a colgar ahí
+está bloqueado (ver arriba). Cuando el schema exista, esa fila se agrega en una rama/PR aparte
+sin reabrir esta.
+
+### Lo que NO toco
+
+`medication-block/`, `diagnosis-block/`, `registrarEncuentro()`/`cerrarEncuentro()`,
+`accounting.client.ts` (leo `GET /practices` directo desde mi propio cliente para el selector de
+práctica, no importo el cliente de contabilidad — son dos dominios distintos aunque el endpoint
+sea el mismo), y todo `redsat/`.
+
+---
+
 ## Sesión 2026-08-13 · Port del sistema de diseño y las vistas de la bóveda
 
 **Rama:** `pablo/redsat-vistas`, apilada sobre `pablo/contabilidad-frontend`.
