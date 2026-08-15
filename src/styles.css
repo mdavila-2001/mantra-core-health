@@ -372,12 +372,24 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
     font-variant-numeric: tabular-nums;
 }
 
-/* foco: anillo aqua/menta de 4 px; el outline transparente reaparece con
-   color de sistema en modo de contraste forzado */
+/* foco: anillo aqua/menta de 4 px, dibujado con `outline`.
+
+   Antes era un `box-shadow`, y eso lo dejaba a merced de cualquier pieza
+   enfocable que declarara la suya: el avatar del encabezado, el selector de
+   organización y los botones con elevación ganaban la puja del `box-shadow`
+   —por especificidad o por orden en la hoja— y se quedaban SIN señal de foco.
+   Un `outline` no compite con un `box-shadow`, así que el anillo llega
+   siempre. La geometría no cambia: 4 px sin desplazamiento ocupan lo mismo
+   que ocupaba la difusión de `0 0 0 4px`, y el outline además sigue el radio
+   real del elemento (un avatar redondo se rodea como círculo).
+
+   De paso vuelve a funcionar el modo de contraste forzado, donde el sistema
+   descarta los `box-shadow` y repinta los `outline` con su propio color.
+
+   Su espejo para el marco REDSAT está en styles/redsat.css §2. */
 :focus-visible {
-    outline: 2px solid transparent;
-    outline-offset: 2px;
-    box-shadow: 0 0 0 4px var(--focus-ring);
+    outline: 4px solid var(--focus-ring);
+    outline-offset: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

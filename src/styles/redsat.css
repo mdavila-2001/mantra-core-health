@@ -270,10 +270,51 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   font-feature-settings: "tnum" 1;
 }
 
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+/* Foco: el mismo anillo aguamarina de 4 px de siempre, pero dibujado con
+   `outline` y no con `box-shadow`. La geometría es idéntica —un outline de
+   4 px sin desplazamiento ocupa exactamente lo que ocupaba la difusión de
+   `0 0 0 4px`—, y a cambio se corrigen tres defectos que se veían en toda la
+   aplicación:
+
+   1. **Ya no se lo come la sombra propia del componente.** Cuando el anillo
+      era un `box-shadow`, cualquier pieza enfocable que declarara el suyo lo
+      pisaba entero: `.app-avatar` (filo interior de 1 px), `.app-tenant-
+      switcher` y los botones primario y secundario (`--sombra-1`) ganaban por
+      especificidad o por orden y se quedaban SIN señal de foco. Un `outline`
+      y un `box-shadow` son propiedades distintas: ya no compiten.
+
+   2. **Ya no hace falta forzar el radio.** La regla anterior fijaba
+      `border-radius: var(--r-ctrl)` para que el anillo cuadrara, y con eso le
+      cambiaba la FORMA a lo que se enfocara: el avatar redondo del header
+      pasaba a cuadrado redondeado y el interruptor de tema perdía sus
+      extremos de píldora. El outline sigue el radio real del elemento.
+
+   3. **Vuelve el modo de contraste forzado.** Ahí el sistema descarta los
+      `box-shadow` y repinta los `outline` con su propio color; con
+      `outline: none` no quedaba ninguna marca de foco. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 4px solid var(--anillo-foco);
+  outline-offset: 0;
+}
+
+/* Controles compuestos: el anillo lo dibuja el ENVOLTORIO —que es quien tiene
+   el borde, el radio y el tamaño del control—, nunca el elemento nativo de
+   adentro. Sin esto se pintan DOS anillos concéntricos: el del envoltorio y
+   el que la regla de arriba le pone al `<input>`, que al no tener ni borde ni
+   radio propios sale cuadrado y corrido respecto del campo. Es el defecto que
+   se veía en el login y en todo formulario del producto. */
+.input-wrapper > .native-input:focus-visible,
+.select-wrapper > .native-select:focus-visible,
+.textarea-wrapper > .native-textarea:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px var(--anillo-foco);
-  border-radius: var(--r-ctrl);
+  box-shadow: none;
+}
+
+/* Lo mismo para el interruptor, cuyo `<input>` real mide 0×0 y está oculto:
+   quien pinta el estado es la pista de al lado. Un outline alrededor de una
+   caja de 0×0 sería una mancha de 8 px suelta fuera del control. */
+.app-switch input:focus-visible {
+  outline: none;
 }
 
 /* `left: 0` es obligatorio: sin él, un <caption> absoluto se ancla en su
@@ -291,7 +332,53 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .pila-contenidos { display: contents; }
 .pila { display: flex; flex-direction: column; gap: var(--e7); }
 
+/* `router-outlet` es un ANCLA vacía: Angular monta la vista como hermano
+   siguiente, no adentro. Pero el elemento sigue en el DOM, y dentro de un
+   contenedor flex o grid cuenta como un ítem más de alto cero: el `gap` de la
+   columna abre entonces un hueco entre el ancla y la pantalla —32 px en
+   `.app-main__inner`— que se leía como aire de más entre el header y el
+   título de CADA vista. Sacarlo del flujo lo cierra en todas a la vez. */
+router-outlet { display: none; }
+
 /* --- 3 · Marco: app-shell, side nav, header ------------------------------ */
+
+/* Enlace de salto: el primer elemento focusable de la página, invisible hasta
+   que alguien lo enfoca. Vivía sólo en `shell.css` —la hoja del organismo
+   `app-shell`, que hoy únicamente usa la vitrina del sistema de diseño—, así
+   que el marco real (`shell-layout`, que no tiene hoja propia) lo pintaba SIN
+   estilo: un enlace corriente en la esquina superior izquierda que empujaba
+   hacia abajo el header y todo el contenido de cada pantalla con sesión.
+
+   No usa `display: none` ni `visibility: hidden`: eso lo sacaría del orden de
+   tabulación y dejaría de existir para quien navega con teclado. */
+.shell__skip-link {
+  position: absolute;
+  top: var(--e2);
+  left: var(--e2);
+  z-index: 1100;
+  padding: var(--e2) var(--e4);
+  border-radius: var(--r-ctrl);
+  background: var(--petroleo);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  /* fuera de la pantalla hasta que reciba el foco */
+  transform: translateY(calc(-100% - var(--e4)));
+  transition: transform var(--mov-medio) var(--curva);
+}
+
+.shell__skip-link:focus { transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .shell__skip-link { transition: none; }
+}
+
+/* El marco no tiene hoja propia, y un custom element es EN LÍNEA por defecto:
+   un elemento en línea que contiene bloques arma una caja de línea con la
+   interlínea del documento y suma una franja de aire arriba del armazón. Es
+   el mismo motivo por el que `app.css` y cada pantalla enrutada declaran
+   `:host { display: block }`. */
+app-shell-layout { display: block; }
 
 /* El nav es una columna FIJA, no una celda de grilla: así cubre siempre del
    borde superior al inferior, pase lo que pase con el scroll. Cuando era una
@@ -486,6 +573,14 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 }
 .app-main__inner > * { min-width: 0; }
 
+/* Tras navegar, el foco vuelve al contenido por script —para que quien usa
+   teclado no siga parado en el enlace del menú anterior—. Eso llega por
+   código, no por Tab, así que no dibuja el anillo: el `tabindex="-1"` lo hace
+   enfocable, y sin esta regla cada cambio de ruta rodearía la pantalla entera
+   con un halo de 4 px. */
+.app-main__inner:focus,
+.app-main__inner:focus-visible { outline: none; box-shadow: none; }
+
 /* --- 4 · Cabecera de página --------------------------------------------- */
 
 /* Este bloque va directo sobre el fondo celeste, así que su tinta sube de
@@ -631,9 +726,13 @@ a[app-link]:hover { border-bottom-color: currentColor; }
 .app-input:hover, .app-select:hover, .app-textarea:hover, .app-date-picker__input:hover {
   border-color: var(--petroleo); box-shadow: var(--inset-ctrl-h);
 }
+/* El anillo lo pone la regla global con `outline`; acá queda sólo lo propio
+   del control: el borde de marca y su sombra interior. Repetir el anillo en
+   el `box-shadow` lo pintaría dos veces, uno encima del otro, y el color
+   translúcido se sumaría hasta verse casi opaco. */
 .app-input:focus-visible, .app-select:focus-visible, .app-textarea:focus-visible, .app-date-picker__input:focus-visible {
   border-color: var(--aguamarina);
-  box-shadow: var(--inset-ctrl), 0 0 0 4px var(--anillo-foco);
+  box-shadow: var(--inset-ctrl);
 }
 .app-input[aria-invalid="true"], .app-textarea[aria-invalid="true"], .app-select[aria-invalid="true"] {
   border-color: var(--error-tinta); border-width: 1.5px;
@@ -1015,8 +1114,7 @@ body { padding-bottom: 56px; }
 }
 .barra-maqueta__pantalla select:hover { border-color: var(--aguamarina); }
 .barra-maqueta__pantalla select:focus-visible {
-  outline: none; border-color: var(--aguamarina);
-  box-shadow: 0 0 0 4px var(--anillo-foco);
+  border-color: var(--aguamarina);
 }
 .barra-maqueta__pantalla optgroup { font-weight: 700; color: var(--tinta); }
 .barra-maqueta__pantalla option { font-weight: 400; color: var(--tinta); }
@@ -1052,8 +1150,7 @@ body { padding-bottom: 56px; }
 
 .barra-maqueta button:hover { background: var(--tono-bg); color: var(--tono-tinta); }
 .barra-maqueta button:focus-visible {
-  outline: none; background: var(--tono-bg); color: var(--tono-tinta);
-  box-shadow: 0 0 0 4px var(--anillo-foco);
+  background: var(--tono-bg); color: var(--tono-tinta);
 }
 .barra-maqueta button[aria-pressed="true"] {
   background: var(--tono-bg); color: var(--tono-tinta);

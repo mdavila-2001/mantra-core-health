@@ -75,7 +75,7 @@
 
 .reference-combobox__option--disabled {
     cursor: not-allowed;
-    color: var(--text-disabled);
+    color: var(--text-muted);
 }
 
 .reference-combobox__option--disabled:hover {
@@ -87,7 +87,7 @@
 }
 
 .reference-combobox__hint {
-    font-size: var(--fs-sm);
+    font-size: var(--fs-caption);
     color: var(--text-secondary);
 }
 
@@ -95,7 +95,7 @@
     padding: var(--sp-2);
     color: var(--text-secondary);
     font-family: var(--font-body);
-    font-size: var(--fs-sm);
+    font-size: var(--fs-caption);
 }
 
 /* Quien pidió menos movimiento no necesita ver aparecer el panel. */
