@@ -27,7 +27,12 @@
       "/geo",
       "/procedure-cases",
       "/dental-procedures",
-      "/diagnostic-units"
+      "/diagnostic-units",
+      "/pharma-labs",
+      "/visit-agenda",
+      "/visit-requests",
+      "/visit-records",
+      "/visit-surveys"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

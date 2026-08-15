@@ -20,7 +20,11 @@
       "inglés la regla dejó de cumplirse por accidente — los nombres en",
       "castellano eran seguros porque el proxy está en inglés. Por eso M13 vive",
       "en `administration/geolocation` y no en `geolocation`: `/geo` se la",
-      "comería entera."
+      "comería entera.",
+      "",
+      "Carril 17: la API expone `/pharma-labs` y `/visit-*`, y las pantallas",
+      "viven en `administration/pharma-lab`, `lab-visits` y `my-visits` — en",
+      "singular y con otro prefijo justamente para que el proxy no se las coma."
     ],
     "context": [
       "/iam",
@@ -49,7 +53,12 @@
       "/geo",
       "/procedure-cases",
       "/dental-procedures",
-      "/diagnostic-units"
+      "/diagnostic-units",
+      "/pharma-labs",
+      "/visit-agenda",
+      "/visit-requests",
+      "/visit-records",
+      "/visit-surveys"
     ],
     "target": "http://localhost:3000",
     "secure": false,

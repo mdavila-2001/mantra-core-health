@@ -1,0 +1,69 @@
+<app-page-header
+  title="Mis visitas médicas"
+  subtitle="Solicitudes enviadas a doctores, su estado y su horario confirmado."
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (data(); as panel) {
+    <label class="visits__reason" for="motivo-cancelacion">
+      Motivo de la cancelación
+      <input
+        id="motivo-cancelacion"
+        class="visits__reason-input"
+        type="text"
+        data-testid="cancel-reason"
+        placeholder="Ej.: imprevisto de agenda"
+        [value]="motivo()"
+        (input)="escribirMotivo($event)"
+      />
+    </label>
+
+    @if (aviso(); as texto) {
+      <p class="visits__notice" role="status" data-testid="visit-notice">{{ texto }}</p>
+    }
+
+    @if (panel.requests.length === 0) {
+      <p class="visits__empty" data-testid="visits-empty">
+        Todavía no solicitaste ninguna visita.
+      </p>
+    } @else {
+      <table class="visits__table" data-testid="visits-table">
+        <caption class="visits__caption">Solicitudes de visita enviadas</caption>
+        <thead>
+          <tr>
+            <th scope="col">Fecha solicitada</th>
+            <th scope="col">Duración</th>
+            <th scope="col">Modalidad</th>
+            <th scope="col">Motivo</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (request of panel.requests; track request.id) {
+            <tr [attr.data-testid]="'visit-row-' + request.id">
+              <td>{{ request.requestedStartAt.toLocaleString('es-BO') }}</td>
+              <td>{{ request.durationMinutes }} min</td>
+              <td>{{ concepto(request.modalityConceptId) }}</td>
+              <td>{{ request.reason }}</td>
+              <td [attr.data-testid]="'visit-status-' + request.id">
+                {{ concepto(request.statusConceptId) }}
+              </td>
+              <td>
+                <button
+                  app-button
+                  variant="neutral"
+                  size="sm"
+                  [attr.data-testid]="'cancel-' + request.id"
+                  (click)="cancelar(request)"
+                >
+                  Cancelar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+</app-view-state-host>
