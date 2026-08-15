@@ -110,6 +110,14 @@ las otras cuatro conversiones.
 | `yarn typecheck` | ✅ limpio |
 | `yarn lint` | 1 error **preexistente** en `features/dashboard/dashboard.ts` (`TutorialTarget` sin usar) — verificado: está igual en `dev`, fuera del diff de este carril |
 | `ng test` (Vitest) | ✅ **2461/2461 · 257/257 archivos** |
+| `playwright test` (suite completa) | ✅ **13/13** — incluye los carriles 01, 02 y 19, sin regresiones |
+| `playwright/carril-05-perfil-doctor.spec.ts` | ✅ **2/2** contra la app real (front `:4200` → API `:3000`) |
+
+**Cypress no se pudo ejecutar**: el binario 15.20.0 no arranca en macOS 26.5.2
+(`bad option: --no-sandbox` al verificar), y persiste tras `cypress install
+--force`. Es del entorno, no de la suite. La cobertura e2e del carril se hizo
+con **Playwright**, que es la herramienta que el repo usa para las pruebas por
+carril (`carril-01`, `carril-02`, `carril-19`) y la que el equipo prefiere.
 
 Cobertura nueva/actualizada: 3 pestañas y quién ve cuál, estados vacío/parcial/
 completo por fase, agrupación declarado/verificado, la vista previa reinstancia
@@ -144,9 +152,9 @@ integración porque el `.puml` y `SQL/` **no están bajo control de versiones**.
 
 ## 6. Deuda restante
 
-- **Cypress e2e no se ejecutó**: la evidencia de que la vista previa coincide con
-  la del paciente se obtuvo a nivel de contrato (API) y de unidad. Un spec e2e
-  que compare ambas pantallas renderizadas queda pendiente.
+- **Cypress sigue sin poder correr en esta máquina** (ver §4). Quien tenga un
+  macOS anterior debería poder ejecutarla; la cobertura del carril no depende de
+  ella.
 - `fileId` de credenciales sigue sin exponerse: la pestaña muestra la fuente de
   verificación (decisión acordada); ver el archivo exige definir el acceso de un
   paciente a un documento del doctor.
