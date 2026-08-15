@@ -82,8 +82,8 @@ thead .data-table__cell {
     align-items: center;
     justify-content: center;
     /* área táctil de 44 px aunque el triángulo sea chico */
-    inline-size: var(--sp-11, 44px);
-    block-size: var(--sp-11, 44px);
+    inline-size: 44px;
+    block-size: 44px;
     border: none;
     border-radius: var(--r-sm);
     background: transparent;

@@ -149,7 +149,27 @@ export interface Booking {
   readonly confirmedAt?: Date;
   readonly checkedInAt?: Date;
   readonly reasonText?: string;
+  /**
+   * Por qué la cita está como está, cuando el último cambio lo explicó.
+   *
+   * Es lo que hace que una cancelación deje de ser un cartel mudo: el paciente
+   * ve que su médico la canceló **y** por qué, sin salir de su lista. Ausente
+   * cuando el último cambio no exigía motivo o la cita es anterior a la
+   * corrección #14.
+   */
+  readonly statusReason?: BookingStatusReason;
   readonly createdAt: Date;
+}
+
+/** Desde qué lado del mostrador se hizo el cambio. */
+export type BookingActorKind = 'PATIENT' | 'PROVIDER';
+
+/** El motivo del último cambio de una cita, tal como lo devuelve la API. */
+export interface BookingStatusReason {
+  readonly reasonText: string;
+  readonly actorKind?: BookingActorKind;
+  readonly toStateConceptId?: string;
+  readonly changedAt: Date;
 }
 
 /** Una ventana de citas. */
@@ -206,6 +226,15 @@ export interface BookingConfirmation {
   readonly reasonText?: string;
 }
 
+/**
+ * Cuerpo de la **solicitud** (corrección #11).
+ *
+ * Mismo cuerpo que el confirm menos los recordatorios: la cita nace pendiente
+ * de que el profesional la acepte, y recordar un turno que todavía puede
+ * rechazarse sería prometer algo que nadie comprometió.
+ */
+export type BookingRequest = BookingConfirmation;
+
 /** La cita recién confirmada. */
 export interface BookingConfirmed {
   readonly id: string;
@@ -223,6 +252,12 @@ export interface BookingConfirmed {
 export interface BookingCancellation {
   readonly cancelledBy: 'PATIENT' | 'PROVIDER';
   readonly isNoShow?: boolean;
+  /**
+   * **Obligatorio** (corrección #14): el servidor rechaza la cancelación sin
+   * motivo, y con relleno («na», «prueba») también. Se le muestra a la otra
+   * parte en el detalle de su cita.
+   */
+  readonly reasonText: string;
 }
 
 export interface BookingCancelled {
@@ -241,7 +276,11 @@ export interface BookingCancelled {
  */
 export interface BookingReschedule {
   readonly toSlotId: string;
-  readonly reasonText?: string;
+  /**
+   * **Obligatorio** (corrección #14): mover un turno le cambia el día a alguien,
+   * y esa persona ve el motivo en el detalle de su cita.
+   */
+  readonly reasonText: string;
 }
 
 export interface BookingRescheduled {
@@ -250,8 +289,149 @@ export interface BookingRescheduled {
   readonly toSlotId: string;
 }
 
+/**
+ * Lo que devuelven aceptar, iniciar y completar (correcciones #11 y #15).
+ *
+ * Los tres son la misma clase de acto —una transición que decide el
+ * profesional— y quien los llama hace lo mismo con la respuesta: releer.
+ */
+export interface BookingDecision {
+  readonly bookingId: string;
+  /** Estado en el que quedó la cita. */
+  readonly statusConceptId: string;
+  readonly occurredAt: Date;
+}
+
 /** Resultado del check-in (UC-41-10). */
 export interface BookingCheckedIn {
   readonly bookingId: string;
   readonly checkedInAt: Date;
+}
+
+/* ---- construcción de agenda (M41) -----------------------------------------
+   Las cinco fases del alta: recurso → política → plantilla → generación de
+   slots → excepción. Cada una persiste contra su propio `POST`, y su respuesta
+   entrega el identificador que la fase siguiente necesita. Los cuerpos se
+   mandan campo a campo en el cliente: el backend valida con
+   `forbidNonWhitelisted`, así que un opcional en `undefined` es un 400. */
+
+/** Tipo de recurso agendable. Es el enum del DTO, no un concepto de catálogo. */
+export type ResourceType = 'PRACTITIONER' | 'ROOM' | 'EQUIPMENT';
+export const RESOURCE_TYPES: readonly ResourceType[] = ['PRACTITIONER', 'ROOM', 'EQUIPMENT'];
+
+/** Cuerpo de `POST /scheduling/resources` (UC-41-01). */
+export interface NewAgendaResource {
+  readonly tenantId: string;
+  readonly resourceType: ResourceType;
+  /** Tabla referenciada, p. ej. `practitioner_profiles`. */
+  readonly resourceRefType: string;
+  readonly resourceRefId: string;
+  readonly name: string;
+  readonly practiceId?: string;
+  /** Zona horaria IANA del recurso, p. ej. `America/La_Paz`. */
+  readonly timeZone?: string;
+  /** Atenciones simultáneas que admite (≥ 1). */
+  readonly capacity?: number;
+}
+
+/** La respuesta mínima del alta de recurso: el `id` es lo que sigue usándose. */
+export interface AgendaResourceCreated {
+  readonly id: string;
+  readonly name: string;
+  readonly stateConceptId: string;
+}
+
+/** Cuerpo de `POST /scheduling/booking-policies` (UC-41-01). */
+export interface NewBookingPolicy {
+  readonly tenantId: string;
+  readonly code: string;
+  readonly name: string;
+  readonly practiceId?: string;
+  readonly minNoticeMinutes?: number;
+  readonly maxAdvanceDays?: number;
+  readonly cancellationWindowMinutes?: number;
+  /** Cargo por inasistencia; viaja como texto (`@IsNumberString` en el DTO). */
+  readonly noShowFeeAmount?: string;
+  readonly maxActivePerPatient?: number;
+  /** Vigencia de la retención del slot, en segundos (≥ 30, por defecto 300). */
+  readonly holdTtlSeconds?: number;
+}
+
+export interface BookingPolicyCreated {
+  readonly id: string;
+  readonly code: string;
+  readonly stateConceptId: string;
+}
+
+/** Una franja semanal de la plantilla (`ScheduleRuleDto`). */
+export interface ScheduleRule {
+  /** 0 = domingo … 6 = sábado. */
+  readonly dayOfWeek: number;
+  /** Hora de inicio `HH:MM` o `HH:MM:SS`. */
+  readonly startTime: string;
+  /** Hora de fin `HH:MM` o `HH:MM:SS`. */
+  readonly endTime: string;
+  readonly slotMinutes?: number;
+  readonly capacityPerSlot?: number;
+}
+
+/** Cuerpo de `POST /scheduling/resources/:id/templates` (UC-41-02). */
+export interface NewScheduleTemplate {
+  readonly name: string;
+  /** Al menos una franja: sin franjas no hay agenda que generar. */
+  readonly rules: readonly ScheduleRule[];
+  readonly slotMinutes?: number;
+  readonly bookingPolicyId?: string;
+  readonly validFrom?: string;
+  readonly validTo?: string;
+}
+
+export interface ScheduleTemplateCreated {
+  readonly id: string;
+  readonly name: string;
+  /** Franjas creadas. */
+  readonly ruleCount: number;
+  readonly statusConceptId: string;
+}
+
+/** Cuerpo de `POST /scheduling/templates/:id/generate-slots` (UC-41-03). */
+export interface GenerateSlotsRequest {
+  /** Inicio de la ventana a materializar (ISO 8601). */
+  readonly from: string;
+  /** Fin de la ventana, exclusivo (ISO 8601). */
+  readonly to: string;
+}
+
+/**
+ * Resultado de la materialización. Es idempotente: los slots que ya existían
+ * se conservan y se cuentan en `skipped`.
+ */
+export interface SlotsGenerated {
+  readonly templateId: string;
+  readonly created: number;
+  readonly skipped: number;
+}
+
+/** Tipo de excepción de disponibilidad (`ExceptionType`). */
+export type AvailabilityExceptionType = 'ABSENCE' | 'HOLIDAY' | 'EXTRA';
+export const AVAILABILITY_EXCEPTION_TYPES: readonly AvailabilityExceptionType[] = [
+  'ABSENCE',
+  'HOLIDAY',
+  'EXTRA',
+];
+
+/** Cuerpo de `POST /scheduling/resources/:id/exceptions` (UC-41-04). */
+export interface NewAvailabilityException {
+  readonly exceptionType: AvailabilityExceptionType;
+  readonly startAt: string;
+  readonly endAt: string;
+  readonly reason?: string;
+  /** `true` cuando la excepción **añade** disponibilidad extraordinaria. */
+  readonly isAvailable?: boolean;
+}
+
+export interface AvailabilityExceptionCreated {
+  readonly id: string;
+  /** Slots libres que quedaron bloqueados por la excepción. */
+  readonly blockedSlots: number;
 }

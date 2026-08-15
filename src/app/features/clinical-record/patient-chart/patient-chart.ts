@@ -40,6 +40,15 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import {
+  downloadPrescriptionPdf,
+  downloadVisitPdf,
+} from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import {
+  atencionDesdeResumen,
+  recetaDesdeResumen,
+  type ContextoDelDocumento,
+} from '../../../shared/utils/clinical-pdf/from-summary';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
@@ -217,6 +226,8 @@ export class PatientChart {
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaEstado');
   private readonly celdaCuando =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaCuando');
+  private readonly celdaDocumento =
+    viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaDocumento');
 
   /**
    * El perfil que se está mirando, leído del segmento `:profileId`.
@@ -411,7 +422,10 @@ export class PatientChart {
       { clave: 'notas', titulo: 'Notas', filas: this.notas() },
       { clave: 'planes', titulo: 'Planes de cuidados', filas: this.planes() },
       { clave: 'documentos', titulo: 'Documentos', filas: this.documentos() },
-    ].map((bloque) => ({ ...bloque, columnas: this.columnasPara(bloque.filas) })),
+    ].map((bloque) => ({
+      ...bloque,
+      columnas: this.columnasPara(bloque.filas, bloque.clave),
+    })),
   );
 
   /* -- La banda de contexto ------------------------------------------------
@@ -649,7 +663,10 @@ export class PatientChart {
    * columna vacía —que se lee como un dato que no cargó— y una columna que ese
    * bloque no tiene.
    */
-  private columnasPara(filas: readonly FilaClinica[]): readonly ColumnDef<FilaClinica>[] {
+  private columnasPara(
+    filas: readonly FilaClinica[],
+    clave?: string,
+  ): readonly ColumnDef<FilaClinica>[] {
     const hayDetalle = filas.some((fila) => fila.detalle !== '' && fila.detalle !== SIN_DATO);
     return [
       { key: 'principal', header: 'Registro', priority: 1, cell: this.celdaPrincipal() },
@@ -657,6 +674,19 @@ export class PatientChart {
       { key: 'cuando', header: 'Fecha', priority: 2, cell: this.celdaCuando() },
       ...(hayDetalle
         ? [{ key: 'detalle', header: 'Detalle', priority: 3 } satisfies ColumnDef<FilaClinica>]
+        : []),
+      // Sólo el bloque de encuentros lleva descarga (corrección #16): una
+      // atención es lo que se puede entregar como documento. Un diagnóstico
+      // suelto no es un papel que nadie pida.
+      ...(clave === 'encuentros'
+        ? [
+            {
+              key: 'documento',
+              header: 'Documento',
+              priority: 1,
+              cell: this.celdaDocumento(),
+            } satisfies ColumnDef<FilaClinica>,
+          ]
         : []),
     ];
   }
@@ -794,6 +824,80 @@ export class PatientChart {
         this.registro.set(errorToViewState<null>(error));
       },
     });
+  }
+
+  /* -- Los documentos que se llevan en papel (corrección #16) --------------
+     Dos PDF, deliberadamente simples, generados desde los datos que la API ya
+     devolvió. No se piden de nuevo ni se arman leyendo la pantalla: se arman
+     de `datos()`, que es lo mismo que se está mostrando. */
+
+  /**
+   * Descarga la receta de esa indicación.
+   *
+   * Se ofrece **también sobre una receta sin emitir**: quien atiende a veces
+   * quiere revisarla en papel antes de firmar. El documento lo declara con
+   * todas las letras («copia de trabajo») en vez de aparentar validez, que es
+   * lo que haría un PDF idéntico al de una receta emitida.
+   */
+  protected descargarReceta(receta: RecetaEnFicha): void {
+    const guardada = (this.datos()?.resumen.medicationRequests ?? []).find(
+      (fila) => fila.id === receta.id,
+    );
+    if (guardada === undefined) {
+      return;
+    }
+
+    downloadPrescriptionPdf(
+      recetaDesdeResumen(guardada, this.contextoDelDocumento(), (id) => this.label(id)),
+    );
+    this.toasts.success('La receta se descargó como PDF.', 'Receta');
+  }
+
+  /**
+   * Descarga la historia clínica **de esa atención**.
+   *
+   * No es el expediente completo: es lo que pasó en esa consulta —motivo,
+   * diagnósticos, medicación y observaciones registrados durante ella—, que es
+   * lo que la corrección #16 pide poder entregar. Los registros se filtran por
+   * `encounterId`; los que el contrato no ata a un encuentro quedan fuera en vez
+   * de colarse en la atención equivocada.
+   */
+  protected descargarAtencion(fila: FilaClinica): void {
+    const datos = this.datos();
+    const encuentro = (datos?.resumen.encounters ?? []).find((item) => item.id === fila.id);
+    if (datos === undefined || datos === null || encuentro === undefined) {
+      return;
+    }
+
+    downloadVisitPdf(
+      atencionDesdeResumen(encuentro, datos.resumen, this.contextoDelDocumento(), (id) =>
+        this.label(id),
+      ),
+    );
+    this.toasts.success('La atención se descargó como PDF.', 'Historia clínica');
+  }
+
+  /** Quién es quién en el papel: paciente, profesional y organización. */
+  private contextoDelDocumento(): ContextoDelDocumento {
+    return {
+      paciente: this.nombre(),
+      profesional: this.profesionalDeLaSesion(),
+    };
+  }
+
+  /**
+   * Quién firma el documento.
+   *
+   * Hoy es el perfil profesional de la sesión, que es quien está mirando el
+   * expediente y quien registró la atención. Devuelve vacío cuando la cuenta no
+   * tiene perfil profesional —administración, por ejemplo—: el documento lo
+   * imprime como «No registrado» en vez de atribuirle la atención a alguien.
+   */
+  private profesionalDeLaSesion(): string {
+    if (this.auth.practitionerProfileId() === null) {
+      return '';
+    }
+    return this.auth.displayName() ?? '';
   }
 
   /* -- Lectura ------------------------------------------------------------- */

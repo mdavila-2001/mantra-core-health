@@ -17,10 +17,7 @@ import { catchError } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
-import {
-  toBookingStatusPresentation,
-  type BookingStatusPresentation,
-} from './booking-status';
+import { toBookingStatusPresentation, type BookingStatusPresentation } from './booking-status';
 import {
   CITA_QUERY_PARAM,
   MOTIVO_QUERY_PARAM,
@@ -54,7 +51,7 @@ import { ToastService } from '../../shared/components/molecules/toast/toast.serv
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { bookingNewRoute } from './agenda.routes';
+import { AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
@@ -118,6 +115,41 @@ const TABLAS_DE_PERFIL_PROFESIONAL = ['practitioner_profiles', 'health_practitio
 const ROLES_QUE_OPERAN_CITAS = ['SCHEDULING_ADMIN', 'SCHEDULING_AGENT', 'SUPERADMIN'];
 
 /**
+ * Roles que **atienden**: aceptan, rechazan, mueven, inician y cierran.
+ *
+ * Es la lista de mostrador más el profesional, y esa diferencia con
+ * {@link ROLES_QUE_OPERAN_CITAS} no es un descuido: registrar la llegada es
+ * trabajo del mostrador, mientras que decidir sobre la cita es de quien la
+ * atiende. El backend declara los mismos cuatro roles en `accept`, `reject`,
+ * `start`, `complete`, `cancel` y `reschedule`, y además comprueba que la cita
+ * sea **de esa agenda** — un profesional no opera la de un colega.
+ */
+const ROLES_QUE_ATIENDEN = [...ROLES_QUE_OPERAN_CITAS, 'PRACTITIONER'];
+
+/** Estados en los que una solicitud espera respuesta (corrección #11). */
+const CODIGOS_POR_RESPONDER: ReadonlySet<string> = new Set([
+  'BOOKING_REQUESTED',
+  'BOOKING_PENDING_CONFIRMATION',
+]);
+
+/**
+ * Estados desde los que se puede **iniciar** la atención (corrección #15).
+ *
+ * Con llegada registrada o sin ella: el check-in es el registro de que alguien
+ * llegó al mostrador, y hay atenciones donde no hay mostrador.
+ */
+const CODIGOS_INICIABLES: ReadonlySet<string> = new Set([
+  'BOOKING_CONFIRMED',
+  'BOOKING_CHECKED_IN',
+]);
+
+/** El único estado desde el que se cierra una atención. */
+const CODIGO_EN_CURSO = 'BOOKING_IN_PROGRESS';
+
+/** Estados en los que el backend acepta mover o cancelar una cita vigente. */
+const CODIGOS_VIGENTES: ReadonlySet<string> = new Set(['BOOKING_CONFIRMED', 'BOOKING_CHECKED_IN']);
+
+/**
  * Roles que pueden mirar la agenda **de otro recurso**.
  *
  * Son los mismos que operan citas, y el motivo es que ese es exactamente el
@@ -139,6 +171,13 @@ const ROLES_QUE_ELIGEN_RECURSO = ROLES_QUE_OPERAN_CITAS;
 
 /** Roles que pueden retener y confirmar un cupo. `PATIENT` reserva para sí. */
 const ROLES_QUE_RESERVAN = [...ROLES_QUE_OPERAN_CITAS, 'PATIENT'];
+
+/**
+ * Roles que pueden construir agenda (UC-41-01 → UC-41-04). Las cuatro fases de
+ * configuración declaran `SCHEDULING_ADMIN`; `SUPERADMIN` es el comodín del
+ * `RolesGuard`. Ni el agente de mostrador ni el profesional arman la grilla.
+ */
+const ROLES_QUE_CREAN_AGENDA = ['SCHEDULING_ADMIN', 'SUPERADMIN'];
 
 /** Una cita ya lista para pintar: sin uuid, con el recurso y el estado resueltos. */
 export interface CitaVisible {
@@ -274,6 +313,9 @@ export class Agenda {
   private readonly toast = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  /** Destino del enlace «Crear agenda» del encabezado. */
+  protected readonly rutaCrearAgenda = AGENDA_CREATE_ROUTE;
 
   private readonly celdaCuando =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaCuando');
@@ -597,10 +639,51 @@ export class Agenda {
     return ROLES_QUE_OPERAN_CITAS.some((rol) => roles.includes(rol));
   });
 
+  /**
+   * Si la sesión puede decidir sobre las citas: aceptar, rechazar, mover,
+   * iniciar y cerrar. Incluye al profesional, que es quien atiende.
+   */
+  protected readonly puedeAtender = computed(() => {
+    const roles = this.auth.roles();
+    return ROLES_QUE_ATIENDEN.some((rol) => roles.includes(rol));
+  });
+
+  /** La cita espera respuesta: se ofrece aceptar o rechazar. */
+  protected porResponder(cita: CitaVisible): boolean {
+    return CODIGOS_POR_RESPONDER.has(cita.estado.code);
+  }
+
+  /** Se puede empezar a atender, sin importar qué día es hoy. */
+  protected sePuedeIniciar(cita: CitaVisible): boolean {
+    return CODIGOS_INICIABLES.has(cita.estado.code);
+  }
+
+  /** Está en curso: lo único que queda es cerrarla. */
+  protected sePuedeCompletar(cita: CitaVisible): boolean {
+    return cita.estado.code === CODIGO_EN_CURSO;
+  }
+
+  /** Vigente: se puede mover o cancelar. */
+  protected estaVigente(cita: CitaVisible): boolean {
+    return CODIGOS_VIGENTES.has(cita.estado.code);
+  }
+
   /** Si la sesión puede retener y confirmar un cupo. */
   protected readonly puedeReservar = computed(() => {
     const roles = this.auth.roles();
     return ROLES_QUE_RESERVAN.some((rol) => roles.includes(rol));
+  });
+
+  /**
+   * Si la sesión puede construir agenda (recurso, política, plantilla, cupos,
+   * excepciones). Es el enlace al alta por fases, y sólo lo ve quien la API deja
+   * usarla: las cuatro fases de configuración exigen `SCHEDULING_ADMIN`, y
+   * `SUPERADMIN` es su comodín en el `RolesGuard`. Ofrecerlo a otro rol sería
+   * ofrecer un 403.
+   */
+  protected readonly puedeCrearAgenda = computed(() => {
+    const roles = this.auth.roles();
+    return ROLES_QUE_CREAN_AGENDA.some((rol) => roles.includes(rol));
   });
 
   protected readonly columnasDeCitas = computed<readonly ColumnDef<CitaVisible>[]>(() => [
@@ -611,7 +694,7 @@ export class Agenda {
     { key: 'motivo', header: 'Motivo', priority: 3 },
     // La columna sólo existe para quien puede ejecutar las acciones: ofrecer
     // botones que la API va a rechazar con 403 es ofrecer un error.
-    ...(this.puedeOperarCitas()
+    ...(this.puedeAtender()
       ? [
           {
             key: 'acciones',
@@ -745,33 +828,161 @@ export class Agenda {
       return;
     }
 
-    const confirmado = await this.dialogs.confirm({
-      title: 'Cancelar la cita',
-      message:
-        'La cita se cancela y el cupo vuelve a la agenda. La cancelación queda auditada.',
-      confirmLabel: 'Cancelar la cita',
-      cancelLabel: 'Volver',
-      destructive: true,
-    });
-    if (!confirmado) {
+    // El motivo es obligatorio y lo valida el servidor (corrección #14): al
+    // paciente le llega junto con la cancelación, en el detalle de su turno.
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: 'Cancelar la cita',
+        message: 'La cita se cancela y el cupo vuelve a la agenda. La cancelación queda auditada.',
+        confirmLabel: 'Cancelar la cita',
+        cancelLabel: 'Volver',
+        destructive: true,
+      },
+      {
+        label: 'Motivo de la cancelación',
+        placeholder: 'Por qué se cancela la cita',
+        hint: 'El paciente lo va a ver en el detalle de su turno.',
+      },
+    );
+    if (motivo === null) {
       return;
     }
 
     this.operando.set(cita.id);
-    this.scheduling.cancelBooking(cita.id, { cancelledBy: 'PROVIDER' }).subscribe({
-      next: (resultado) => {
+    this.scheduling
+      .cancelBooking(cita.id, { cancelledBy: 'PROVIDER', reasonText: motivo })
+      .subscribe({
+        next: (resultado) => {
+          this.operando.set(null);
+          this.toast.success(
+            resultado.capacityReleased
+              ? 'La cita se canceló y el cupo volvió a la agenda.'
+              : 'La cita se canceló.',
+            'Cancelación',
+          );
+          this.cargarAgenda();
+        },
+        error: (error: unknown) => {
+          this.operando.set(null);
+          this.avisarFallo(error, 'No se pudo cancelar la cita.');
+        },
+      });
+  }
+
+  /* -- lo que decide quien atiende (correcciones #11 y #15) ---------------- */
+
+  /**
+   * Acepta la solicitud: la cita queda confirmada y el paciente lo ve.
+   *
+   * Sin diálogo de confirmación: aceptar no es destructivo y es lo que se hace
+   * decenas de veces por turno. Lo destructivo —rechazar— sí lo pide, y además
+   * con motivo.
+   */
+  protected aceptarCita(cita: CitaVisible): void {
+    if (this.operando() !== null) {
+      return;
+    }
+    this.operando.set(cita.id);
+
+    this.scheduling.acceptBooking(cita.id).subscribe({
+      next: () => {
         this.operando.set(null);
-        this.toast.success(
-          resultado.capacityReleased
-            ? 'La cita se canceló y el cupo volvió a la agenda.'
-            : 'La cita se canceló.',
-          'Cancelación',
-        );
+        this.toast.success('La cita quedó confirmada.', 'Solicitud aceptada');
         this.cargarAgenda();
       },
       error: (error: unknown) => {
         this.operando.set(null);
-        this.avisarFallo(error, 'No se pudo cancelar la cita.');
+        this.avisarFallo(error, 'No se pudo aceptar la solicitud.');
+      },
+    });
+  }
+
+  /**
+   * Rechaza la solicitud con motivo obligatorio (corrección #14).
+   *
+   * El cupo vuelve a la agenda y el motivo le llega al paciente en el detalle
+   * de su turno: rechazar sin decir por qué deja a alguien esperando una
+   * explicación que nunca llega.
+   */
+  protected async rechazarCita(cita: CitaVisible): Promise<void> {
+    if (this.operando() !== null) {
+      return;
+    }
+
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: 'Rechazar la solicitud',
+        message: 'El cupo vuelve a la agenda y el paciente recibe el motivo.',
+        confirmLabel: 'Rechazar',
+        cancelLabel: 'Volver',
+        destructive: true,
+      },
+      {
+        label: 'Motivo del rechazo',
+        placeholder: 'Por qué no se puede tomar este turno',
+        hint: 'El paciente lo va a ver en el detalle de su turno.',
+      },
+    );
+    if (motivo === null) {
+      return;
+    }
+
+    this.operando.set(cita.id);
+    this.scheduling.rejectBooking(cita.id, motivo).subscribe({
+      next: () => {
+        this.operando.set(null);
+        this.toast.success('La solicitud se rechazó y el cupo volvió a la agenda.', 'Solicitud');
+        this.cargarAgenda();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFallo(error, 'No se pudo rechazar la solicitud.');
+      },
+    });
+  }
+
+  /**
+   * Inicia la atención. **En cualquier momento** (corrección #15): no espera a
+   * que llegue el día agendado, ni exige registrar la llegada antes.
+   */
+  protected iniciarAtencion(cita: CitaVisible): void {
+    if (this.operando() !== null) {
+      return;
+    }
+    this.operando.set(cita.id);
+
+    this.scheduling.startBooking(cita.id).subscribe({
+      next: () => {
+        this.operando.set(null);
+        this.toast.success('La atención quedó iniciada.', 'Consulta');
+        this.cargarAgenda();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFallo(error, 'No se pudo iniciar la atención.');
+      },
+    });
+  }
+
+  /**
+   * Completa la cita. Es el botón «Completar cita» que la corrección #15 pide
+   * que exista sin esperar la fecha; el paciente ve «completada» apenas ocurre.
+   */
+  protected completarCita(cita: CitaVisible): void {
+    if (this.operando() !== null) {
+      return;
+    }
+    this.operando.set(cita.id);
+
+    this.scheduling.completeBooking(cita.id).subscribe({
+      next: () => {
+        this.operando.set(null);
+        this.toast.success('La cita quedó completada.', 'Consulta');
+        this.cargarAgenda();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFallo(error, 'No se pudo completar la cita.');
       },
     });
   }
@@ -1002,9 +1213,7 @@ export class Agenda {
       hasta: cita.endAt ?? null,
       recurso: this.nombreDeRecurso(cita.resourceId),
       estado: toBookingStatusPresentation(
-        cita.statusConceptId === undefined
-          ? undefined
-          : this.etiquetas().get(cita.statusConceptId),
+        cita.statusConceptId === undefined ? undefined : this.etiquetas().get(cita.statusConceptId),
         SIN_DATO,
       ),
       motivo: cita.reasonText ?? SIN_DATO,

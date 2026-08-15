@@ -10,6 +10,66 @@
   margin-block-end: var(--sp-6);
 }
 
+/* La cabecera del bloque: el título y el conmutador de vista, que en pantalla
+   chica bajan uno debajo del otro antes que apretarse. */
+.turnos__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.turnos__vistas {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+/* El detalle que comparten las dos vistas. */
+.turnos__detalle {
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.turnos__detalle-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.turnos__detalle-agenda {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+/* El motivo del cambio no es un dato más de la fila: es lo que explica por qué
+   el turno ya no es el que era. Va destacado con un filo, no con color solo. */
+.turnos__aviso-cambio {
+  margin: var(--sp-1) 0 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 3px solid var(--border-strong);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption, var(--lh-body));
+  color: var(--text-secondary);
+}
+
+.turnos__aviso-fecha {
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
 .turnos__titulo {
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);

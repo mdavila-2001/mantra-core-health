@@ -1,0 +1,365 @@
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+
+import { AuthService } from '../../../core/auth/auth.service';
+import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
+import type {
+  ClinicalSummary,
+  Encounter,
+  MedicationRequest,
+} from '../../../core/data-access/clinical/clinical.types';
+import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
+import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
+import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { empty, loading, ready } from '../../../core/view-state/view-state';
+import type { ViewState } from '../../../core/view-state/view-state.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import {
+  downloadPrescriptionPdf,
+  downloadVisitPdf,
+} from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import {
+  atencionDesdeResumen,
+  recetaDesdeResumen,
+  type ContextoDelDocumento,
+} from '../../../shared/utils/clinical-pdf/from-summary';
+import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
+
+/** Tope por bloque. El backend admite hasta 200; nadie lee doscientas filas. */
+const TOPE = 50;
+
+/** Lo que se muestra cuando el registro no trae ese dato. */
+const SIN_DATO = 'Sin registrar';
+
+/** Una atención, tal como la lee quien fue atendido. */
+interface AtencionVisible {
+  readonly id: string;
+  readonly motivo: string;
+  readonly cuando: Date | null;
+  readonly cerrada: boolean;
+  /** Los diagnósticos de esa consulta, en palabras. */
+  readonly diagnosticos: readonly string[];
+}
+
+/** Una receta del archivo. */
+interface RecetaVisible {
+  readonly id: string;
+  readonly medicamento: string;
+  readonly indicacion: string;
+  readonly estado: string;
+  readonly emitida: boolean;
+  readonly cuando: Date;
+}
+
+/** Una fila de las listas de sólo lectura (diagnósticos, alergias, resultados). */
+interface FilaVisible {
+  readonly id: string;
+  readonly principal: string;
+  readonly secundario: string;
+  readonly cuando: Date | null;
+}
+
+/**
+ * **Mi historia clínica** — el archivo del paciente (carril 09, cierre del P0).
+ *
+ * ## Por qué es una pantalla propia y no el expediente del profesional
+ *
+ * El expediente (`/medical-records/:profileId`) mira los datos desde el otro
+ * lado: elige a una persona, ofrece escribir —abrir encuentros, prescribir,
+ * diagnosticar— y exige roles clínicos. Acá el eje es «lo mío», no hay ninguna
+ * escritura y la pregunta que se responde es otra: **qué me pasó y qué me
+ * recetaron**. Reusar aquella pantalla habría significado esconderle la mitad de
+ * los controles a quien no puede usarlos, que es exactamente la clase de
+ * pantalla que la corrección #7 manda a limpiar.
+ *
+ * ## Los documentos son los mismos que los del profesional
+ *
+ * Las descargas usan los generadores compartidos (`shared/utils/clinical-pdf`),
+ * los mismos que el expediente. No hay una versión «del paciente» del PDF: es
+ * el mismo hecho clínico, y dos versiones del mismo documento es lo que un
+ * sistema de salud no puede permitirse.
+ *
+ * ## El aislamiento no depende de esta pantalla
+ *
+ * Se pide siempre el perfil propio, pero eso no es lo que protege nada: el
+ * servidor comprueba la titularidad contra la base en cada lectura. Si esta
+ * pantalla pidiera otro identificador, recibiría un 403.
+ */
+@Component({
+  selector: 'app-medical-record',
+  imports: [Alert, AppButton, Badge, DatePipe, PageHeader, RouterLink, ViewStateHost],
+  templateUrl: './medical-record.html',
+  styleUrl: './medical-record.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class MedicalRecord {
+  private readonly clinical = inject(ClinicalClient);
+  private readonly terminology = inject(TerminologyClient);
+  private readonly auth = inject(AuthService);
+  private readonly toasts = inject(ToastService);
+
+  /** Quién es el titular. Sin esto no hay historia propia que pedir. */
+  private readonly perfil = this.auth.patientProfileId();
+
+  /**
+   * La cuenta no es de un paciente.
+   *
+   * No es un error ni una falta de permisos: el personal de salud tiene sesión
+   * válida y su historia clínica, si la tiene, es la de su propia cuenta de
+   * paciente — que es otra.
+   */
+  protected readonly sinPerfilDePaciente = this.perfil === null;
+
+  /** La salida cuando la cuenta no es de un paciente. */
+  protected readonly rutaDeTurnos = MIS_TURNOS_ROUTE;
+
+  protected readonly historia = signal<ViewState<ClinicalSummary>>(loading());
+
+  private readonly etiquetas = signal<ConceptLabels>(new Map());
+
+  private readonly datos = computed<ClinicalSummary | null>(() => {
+    const estado = this.historia();
+    return estado.status === 'ready' || estado.status === 'stale' ? estado.data : null;
+  });
+
+  /* ---- los bloques, ya traducidos ---------------------------------------- */
+
+  /**
+   * Las atenciones, de la más reciente a la más vieja.
+   *
+   * Al revés que en el expediente del profesional, que las ordena como vienen:
+   * quien entra a su archivo busca la última consulta, no la primera de su vida.
+   */
+  protected readonly atenciones = computed<readonly AtencionVisible[]>(() => {
+    const datos = this.datos();
+    if (datos === null) {
+      return [];
+    }
+    return [...datos.encounters]
+      .sort((a, b) => (b.startAt?.getTime() ?? 0) - (a.startAt?.getTime() ?? 0))
+      .map((encuentro) => ({
+        id: encuentro.id,
+        motivo: encuentro.reasonText ?? 'Consulta',
+        cuando: encuentro.startAt ?? null,
+        cerrada: encuentro.endAt !== undefined,
+        diagnosticos: datos.conditions
+          .filter((fila) => fila.encounterId === encuentro.id)
+          .map((fila) => this.label(fila.codeConceptId)),
+      }));
+  });
+
+  protected readonly recetas = computed<readonly RecetaVisible[]>(() =>
+    (this.datos()?.medicationRequests ?? []).map((receta) => ({
+      id: receta.id,
+      medicamento: this.label(receta.medicationConceptId),
+      indicacion: [receta.doseText, receta.frequencyText].filter(Boolean).join(' · '),
+      estado: this.label(receta.statusConceptId),
+      emitida: receta.issuedAt !== undefined,
+      cuando: receta.createdAt,
+    })),
+  );
+
+  protected readonly diagnosticos = computed<readonly FilaVisible[]>(() =>
+    (this.datos()?.conditions ?? []).map((fila) => ({
+      id: fila.id,
+      principal: this.label(fila.codeConceptId),
+      secundario: this.label(fila.clinicalStatusConceptId),
+      cuando: fila.onsetAt ?? fila.createdAt,
+    })),
+  );
+
+  protected readonly alergias = computed<readonly FilaVisible[]>(() =>
+    (this.datos()?.allergies ?? []).map((fila) => ({
+      id: fila.id,
+      principal: this.label(fila.substanceConceptId),
+      secundario: this.label(fila.criticalityConceptId),
+      cuando: fila.createdAt,
+    })),
+  );
+
+  protected readonly resultados = computed<readonly FilaVisible[]>(() =>
+    (this.datos()?.observations ?? []).map((fila) => ({
+      id: fila.id,
+      principal: this.label(fila.codeConceptId),
+      secundario: this.valorDe(fila.quantityValue, fila.quantityUnitConceptId, fila.valueText),
+      cuando: fila.effectiveStartAt ?? null,
+    })),
+  );
+
+  /**
+   * Qué bloques quedaron recortados por el tope.
+   *
+   * Se dice con esas palabras: un recorte silencioso en una historia clínica se
+   * lee como «no hay nada más», y eso es afirmar algo que nadie comprobó.
+   */
+  protected readonly recorte = computed(() => (this.datos()?.truncated ?? []).join(', '));
+
+  constructor() {
+    if (this.perfil !== null) {
+      this.cargar();
+    } else {
+      // No es un vacío de datos ni un error: la pantalla no le corresponde a
+      // esta cuenta, y el aviso lo dice con su propia salida.
+      this.historia.set(empty({ label: 'Ir a mis turnos', route: MIS_TURNOS_ROUTE }));
+    }
+  }
+
+  /* ---- lectura ------------------------------------------------------------ */
+
+  protected cargar(): void {
+    const perfil = this.perfil;
+    if (perfil === null) {
+      return;
+    }
+
+    this.historia.set(loading());
+    this.etiquetas.set(new Map());
+
+    this.clinical
+      .getSummary(perfil, TOPE)
+      .pipe(
+        switchMap((resumen) =>
+          forkJoin({
+            resumen: of(resumen),
+            // Sin etiquetas la historia igual se muestra: perder la traducción
+            // de un concepto no justifica perder la historia entera.
+            etiquetas: this.terminology
+              .readConceptLabels(conceptosDe(resumen))
+              .pipe(catchError(() => of<ConceptLabels>(new Map()))),
+          }),
+        ),
+      )
+      .subscribe({
+        next: ({ resumen, etiquetas }) => {
+          this.etiquetas.set(etiquetas);
+          this.historia.set(
+            estaVacia(resumen)
+              ? empty(
+                  { label: 'Pedir un turno', route: MIS_TURNOS_ROUTE },
+                  'Todavía no hay atenciones registradas en tu historia.',
+                )
+              : ready(resumen),
+          );
+        },
+        error: (error: unknown) => this.historia.set(errorToViewState<ClinicalSummary>(error)),
+      });
+  }
+
+  /* ---- los documentos (corrección #16) ------------------------------------ */
+
+  /**
+   * Descarga la historia clínica de esa atención.
+   *
+   * Mismo generador y mismo mapeo que usa el profesional: el paciente se lleva
+   * exactamente el documento que su médico ve.
+   */
+  protected descargarAtencion(atencion: AtencionVisible): void {
+    const datos = this.datos();
+    const encuentro = datos?.encounters.find((fila) => fila.id === atencion.id);
+    if (datos === null || encuentro === undefined) {
+      return;
+    }
+
+    downloadVisitPdf(
+      atencionDesdeResumen(encuentro, datos, this.contextoDelDocumento(encuentro), (id) =>
+        this.label(id),
+      ),
+    );
+    this.toasts.success('Descargamos la historia de esa atención.', 'Historia clínica');
+  }
+
+  /** Descarga la receta. Disponible en cualquier momento posterior a su emisión. */
+  protected descargarReceta(receta: RecetaVisible): void {
+    const guardada = this.datos()?.medicationRequests.find((fila) => fila.id === receta.id);
+    if (guardada === undefined) {
+      return;
+    }
+
+    downloadPrescriptionPdf(
+      recetaDesdeResumen(guardada, this.contextoDelDocumento(), (id) => this.label(id)),
+    );
+    this.toasts.success('Descargamos tu receta.', 'Receta');
+  }
+
+  /**
+   * Quién es quién en el papel.
+   *
+   * El nombre del paciente sale de la sesión —es el titular, no hace falta
+   * pedirlo—. El profesional **no se puede resolver desde acá**: el resumen
+   * clínico devuelve su identificador, no su nombre, y el paciente no tiene
+   * permiso para leer el padrón de profesionales. Va vacío y el documento lo
+   * imprime como «No registrado», que es preferible a poner un uuid o a
+   * atribuirle la atención a alguien equivocado.
+   */
+  private contextoDelDocumento(_encuentro?: Encounter): ContextoDelDocumento {
+    return {
+      paciente: this.auth.displayName() ?? '',
+      profesional: '',
+    };
+  }
+
+  /* ---- traducción --------------------------------------------------------- */
+
+  /** La etiqueta de un concepto, o el texto de ausencia. Nunca el uuid. */
+  private label(conceptId: string | undefined): string {
+    if (conceptId === undefined) {
+      return SIN_DATO;
+    }
+    return this.etiquetas().get(conceptId)?.display ?? SIN_DATO;
+  }
+
+  /** El valor de una observación por los caminos que el contrato declara. */
+  private valorDe(
+    cantidad: string | undefined,
+    unidadConceptId: string | undefined,
+    texto: string | undefined,
+  ): string {
+    if (cantidad !== undefined) {
+      return `${cantidad} ${this.label(unidadConceptId)}`.trim();
+    }
+    return texto ?? SIN_DATO;
+  }
+}
+
+/** Los conceptos que hay que traducir para pintar la historia. */
+function conceptosDe(resumen: ClinicalSummary): readonly string[] {
+  const ids = [
+    ...resumen.conditions.flatMap((fila) => [fila.codeConceptId, fila.clinicalStatusConceptId]),
+    ...resumen.allergies.flatMap((fila) => [fila.substanceConceptId, fila.criticalityConceptId]),
+    ...resumen.medicationRequests.flatMap((fila: MedicationRequest) => [
+      fila.medicationConceptId,
+      fila.statusConceptId,
+    ]),
+    ...resumen.observations.flatMap((fila) => [
+      fila.codeConceptId,
+      fila.quantityUnitConceptId,
+      fila.valueConceptId,
+    ]),
+  ];
+  return [...new Set(ids.filter((id): id is string => id !== undefined))];
+}
+
+/**
+ * La historia no tiene nada que mostrar.
+ *
+ * Se mira bloque por bloque y no `encounters` solo: una persona puede tener
+ * alergias registradas antes de su primera consulta, y decirle que su historia
+ * está vacía sería falso.
+ */
+function estaVacia(resumen: ClinicalSummary): boolean {
+  return (
+    resumen.encounters.length === 0 &&
+    resumen.conditions.length === 0 &&
+    resumen.allergies.length === 0 &&
+    resumen.medicationRequests.length === 0 &&
+    resumen.observations.length === 0
+  );
+}

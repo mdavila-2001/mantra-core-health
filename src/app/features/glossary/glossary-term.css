@@ -1,0 +1,71 @@
+/* Ficha de un término. Una columna estrecha: es texto para leer, no una tabla
+   para escanear. Sólo distribución. */
+
+:host {
+  display: block;
+}
+
+.termino {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+  max-inline-size: 68ch;
+}
+
+.termino__volver {
+  margin: 0;
+}
+
+.termino__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+
+.termino__etiqueta {
+  text-decoration: none;
+}
+
+.termino__subtitulo {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.termino__subtitulo:first-of-type {
+  margin-block-start: 0;
+}
+
+.termino__definicion {
+  margin: 0;
+}
+
+.termino__definicion--ausente,
+.termino__sin-traducir {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.termino__sin-traducir {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-caption);
+}
+
+.termino__sinonimos {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--text-secondary);
+}
+
+.termino__idioma {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.termino__codigo {
+  margin: 0;
+}

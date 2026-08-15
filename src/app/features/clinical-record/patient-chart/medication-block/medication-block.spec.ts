@@ -6,11 +6,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../../../../core/auth/session.store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
-import {
-  MedicationBlock,
-  TARGET_MEDICAMENTO,
-  type RecetaEnFicha,
-} from './medication-block';
+import { MedicationBlock, TARGET_MEDICAMENTO, type RecetaEnFicha } from './medication-block';
 
 /**
  * Prescribir, firmar y emitir desde la ficha — V08-01. Lo que estas pruebas
@@ -45,9 +41,7 @@ const CATALOGO = {
   definitionId: 'def-1',
   valueSetId: 'vs-1',
   allowCustomValue: false,
-  options: [
-    { conceptId: 'med-amoxi', code: 'AMOXI', display: 'Amoxicilina', ordinal: 1 },
-  ],
+  options: [{ conceptId: 'med-amoxi', code: 'AMOXI', display: 'Amoxicilina', ordinal: 1 }],
 };
 
 /** Vía y unidad: los dos catálogos opcionales del formulario. */
@@ -333,9 +327,7 @@ describe('MedicationBlock', () => {
     señal<string>('medicamento').set('med-amoxi');
     const prescribiendo = interno<() => Promise<void>>('recetar')();
 
-    http
-      .expectOne('/cds/check-interactions')
-      .flush({ alerts: [], count: 0 });
+    http.expectOne('/cds/check-interactions').flush({ alerts: [], count: 0 });
     await prescribiendo;
 
     http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
@@ -391,10 +383,12 @@ describe('MedicationBlock', () => {
     señal<string>('medicamento').set('med-amoxi');
     const prescribiendo = interno<() => Promise<void>>('recetar')();
 
-    http.expectOne('/cds/check-interactions').flush(
-      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '' },
-      { status: 500, statusText: 'Internal Server Error' },
-    );
+    http
+      .expectOne('/cds/check-interactions')
+      .flush(
+        { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '' },
+        { status: 500, statusText: 'Internal Server Error' },
+      );
     await prescribiendo;
 
     http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
@@ -473,9 +467,7 @@ describe('MedicationBlock', () => {
     );
     fixture.detectChanges();
 
-    expect(interno<() => string | null>('avisoDePrecondicion')()).toContain(
-      'necesita tu firma',
-    );
+    expect(interno<() => string | null>('avisoDePrecondicion')()).toContain('necesita tu firma');
     // Y no se pinta además en rojo: sería decir dos veces lo mismo con dos
     // tonos que se contradicen.
     expect(interno<() => string | null>('errorDeLaReceta')()).toBeNull();
@@ -510,15 +502,41 @@ describe('MedicationBlock', () => {
     expect(interno<() => string | null>('errorDeLaReceta')()).toContain('Recargá el expediente');
   });
 
-  it('una receta emitida no ofrece acciones: es inmutable', () => {
+  it('una receta emitida no ofrece firmar ni emitir: es inmutable', () => {
     fixture.componentRef.setInput('recetas', [
       { ...BORRADOR, firmada: true, emitida: true, estado: 'Emitida' },
     ]);
     responderCatalogo();
     fixture.detectChanges();
 
-    const acciones = (fixture.nativeElement as HTMLElement).querySelector('.receta__acciones');
-    expect(acciones).toBeNull();
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).not.toContain('Firmar');
+    expect(texto).not.toContain('Emitir');
+  });
+
+  /**
+   * La descarga es lo único que una receta emitida sí ofrece (corrección #16):
+   * es justamente el momento en que se pide en papel.
+   */
+  it('la receta emitida sí se puede descargar, y avisa cuál', () => {
+    fixture.componentRef.setInput('recetas', [
+      { ...BORRADOR, firmada: true, emitida: true, estado: 'Emitida' },
+    ]);
+    responderCatalogo();
+    fixture.detectChanges();
+
+    const pedidas: { id: string }[] = [];
+    fixture.componentInstance.descargar.subscribe((receta) => pedidas.push(receta));
+
+    const boton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="receta-descargar"]',
+    );
+    expect(boton).not.toBeNull();
+    boton?.click();
+
+    // El bloque no arma el documento: dice cuál se pidió y el expediente lo
+    // construye desde los datos persistidos.
+    expect(pedidas.map((receta) => receta.id)).toEqual([BORRADOR.id]);
   });
 
   it('el sello distingue las tres etapas del ciclo', () => {

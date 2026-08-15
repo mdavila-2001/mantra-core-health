@@ -96,6 +96,44 @@ describe('APP_SECTIONS', () => {
 
     expect(panel && titleOf(panel)).toBe('Mantra Core Health - Panel');
   });
+
+  /* -- Carril 02 · corrección #2 ------------------------------------------- */
+
+  it('la Guía de profesionales es solo del paciente', () => {
+    const guia = APP_SECTIONS.find((s) => s.path === 'directory');
+
+    // Corrección #2 del 15/08/2026. Nació sin `roles` —«la usa sobre todo quien
+    // busca médico»— y en la práctica la veían la doctora y todo el resto. Es
+    // una guía para elegir a quién consultar; a quien atiende no le toca.
+    expect(guia?.roles).toEqual(['PATIENT']);
+  });
+
+  it('ni la doctora ni quien administra ven la Guía de profesionales', () => {
+    const guia = APP_SECTIONS.find((s) => s.path === 'directory')!;
+
+    expect(isVisibleTo(guia, ['USER', 'PRACTITIONER', 'CLINICIAN'])).toBe(false);
+    expect(isVisibleTo(guia, ['SECURITY_ADMIN'])).toBe(false);
+    expect(isVisibleTo(guia, ['PATIENT'])).toBe(true);
+  });
+
+  it('ni el comodín: «solo pacientes» incluye a SUPERADMIN', () => {
+    const guia = APP_SECTIONS.find((s) => s.path === 'directory')!;
+
+    // La corrección dice «no debe aparecer ni ser accesible para doctor u otros
+    // roles», y SUPERADMIN es otro rol. Es la única sección que rompe el
+    // comodín, y por eso lo declara explícito en vez de que lo decida un guard.
+    expect(guia.exclusiveRoles).toBe(true);
+    expect(isVisibleTo(guia, ['SUPERADMIN'])).toBe(false);
+  });
+
+  it('sólo la Guía rompe el comodín: el resto del registro lo respeta', () => {
+    // Si `exclusiveRoles` se empezara a repartir, el comodín dejaría de servir
+    // para lo que existe —que quien administra pueda recorrer el sistema— y
+    // nadie se enteraría hasta que una sección deje de aparecer.
+    const exclusivas = APP_SECTIONS.filter((s) => s.exclusiveRoles === true).map((s) => s.path);
+
+    expect(exclusivas).toEqual(['directory']);
+  });
 });
 
 describe('isVisibleTo', () => {

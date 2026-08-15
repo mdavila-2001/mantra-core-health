@@ -188,6 +188,90 @@ describe('Dashboard', () => {
     expect(pacientes.status).toBe('empty');
   });
 
+  /* -- Carril 02 · corrección #1: «Tus accesos» son íconos ------------------ */
+
+  describe('Tus accesos', () => {
+    function accesos(): readonly HTMLAnchorElement[] {
+      fixture.detectChanges();
+      return [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
+          '[data-testid="panel-acceso"]',
+        ),
+      ];
+    }
+
+    function abrirPanel(roles: readonly string[]): void {
+      crear({ sub: 'u-1', roles, tenants: ['t-1'] });
+      responder([], null);
+    }
+
+    it('cada acceso es un ícono, no una tarjeta con la descripción pegada', () => {
+      abrirPanel(['PATIENT']);
+
+      const primero = accesos()[0];
+      expect(primero.querySelector('app-nav-icon svg')).not.toBeNull();
+      // El resumen ya no se pinta como texto permanente: vive en el tooltip.
+      expect(primero.querySelector('.panel__acceso-resumen')).toBeNull();
+    });
+
+    it('el resumen viaja en el tooltip y también en el nombre accesible', () => {
+      abrirPanel(['PATIENT']);
+
+      const glosario = accesos().find((a) => a.dataset['ruta'] === '/glossary');
+
+      // Dos caminos a propósito: el globo aparece con el puntero **y con el
+      // foco** (lo garantiza `appTooltip`), y el `aria-label` cubre a quien
+      // navega con lector de pantalla sin llegar a enfocar el enlace.
+      expect(glosario?.getAttribute('aria-label')).toBe(
+        'Glosario. Buscá un término médico y su significado en lenguaje llano.',
+      );
+    });
+
+    it('el rótulo se queda: una rejilla de íconos mudos se recorre a ciegas', () => {
+      abrirPanel(['PATIENT']);
+
+      const rotulos = accesos().map((a) => a.querySelector('.panel__acceso-nombre')?.textContent);
+      expect(rotulos).toContain('Glosario');
+    });
+
+    it('cada acceso apunta a una ruta real del registro, no a un destino inventado', () => {
+      abrirPanel(['PATIENT']);
+
+      for (const acceso of accesos()) {
+        expect(acceso.getAttribute('href')).toBe(acceso.dataset['ruta']);
+      }
+    });
+
+    it('lo que está en construcción no se ofrece como si se pudiera entrar', () => {
+      abrirPanel(['BILLING']);
+
+      const planificados = (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '[data-testid="panel-acceso-planificado"]',
+      );
+
+      // Ni ancla ni tooltip: un globo pide foco, y esto no es enfocable
+      // justamente porque no se puede entrar.
+      for (const planificado of planificados) {
+        expect(planificado.tagName.toLowerCase()).not.toBe('a');
+        expect(planificado.getAttribute('aria-describedby')).toBeNull();
+      }
+    });
+
+    it('la Guía de profesionales no está entre los accesos de la doctora', () => {
+      // Corrección #2. El panel sale de `NavigationService`, el mismo origen
+      // que el menú, así que esto también fija que no se puedan desincronizar.
+      abrirPanel(['PRACTITIONER', 'CLINICIAN']);
+
+      expect(accesos().map((a) => a.dataset['ruta'])).not.toContain('/directory');
+    });
+
+    it('y sí está entre los del paciente', () => {
+      abrirPanel(['PATIENT']);
+
+      expect(accesos().map((a) => a.dataset['ruta'])).toContain('/directory');
+    });
+  });
+
   it('si el historial de verificación falla, el panel sigue en pie', () => {
     // Es información de contexto: romper el panel entero porque el módulo de
     // identidad no contestó sería peor que un panel sin ese dato.
