@@ -277,6 +277,19 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.BookingNew)
         .catch(() => chunkFallido()),
   },
+  {
+    // La ficha de un término del glosario. Es ruta y no panel porque un término
+    // se comparte: «mirá qué quiere decir esto» es un enlace, y un panel no
+    // tiene enlace. Cuelga de `/glossary`, así que el rastro de migas y la
+    // sección marcada en el menú siguen diciendo «Glosario» sin que haya que
+    // tocar `navigation.map.ts`.
+    path: 'glossary/:conceptId',
+    title: `${APP_TITLE} - Término del glosario`,
+    loadComponent: () =>
+      import('./features/glossary/glossary-term')
+        .then((m) => m.GlossaryTerm)
+        .catch(() => chunkFallido()),
+  },
 ];
 
 /**

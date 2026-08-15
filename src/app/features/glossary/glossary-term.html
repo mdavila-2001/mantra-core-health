@@ -1,0 +1,74 @@
+<app-page-header [title]="titulo()" subtitle="Término del glosario" [breadcrumbs]="breadcrumbs()" />
+
+<div class="termino">
+  <p class="termino__volver">
+    <a routerLink="/glossary">← Volver al glosario</a>
+  </p>
+
+  <app-view-state-host [state]="termino()" (retry)="recargar()">
+    @if (ficha(); as termino) {
+      <app-card variant="outlined" padding="lg">
+        @if (termino.translated === false) {
+          <p class="termino__sin-traducir" role="status">
+            Este término todavía no tiene traducción al castellano cargada. Se muestra su nombre
+            original, tal como lo publica el sistema de codificación.
+          </p>
+        }
+
+        <!-- Las etiquetas, arriba y navegables: desde la ficha se vuelve a la
+             categoría, que es cómo se sigue hojeando. -->
+        @if (termino.valueSets.length > 0) {
+          <nav class="termino__etiquetas" aria-label="Categorías de este término">
+            <ul class="termino__chips">
+              @for (etiqueta of termino.valueSets; track etiqueta.id) {
+                <li>
+                  <a
+                    class="termino__etiqueta"
+                    [routerLink]="['/glossary']"
+                    [queryParams]="{ etiqueta: etiqueta.internalCode }"
+                  >
+                    <app-chip size="sm" [label]="etiqueta.name">{{ etiqueta.name }}</app-chip>
+                  </a>
+                </li>
+              }
+            </ul>
+          </nav>
+        }
+
+        <h2 class="termino__subtitulo">Qué significa</h2>
+        @if (termino.definition) {
+          <p class="termino__definicion">{{ termino.definition }}</p>
+        } @else {
+          <p class="termino__definicion termino__definicion--ausente">
+            Este término todavía no tiene una explicación cargada en el catálogo.
+          </p>
+        }
+
+        @if (termino.synonyms.length > 0) {
+          <h2 class="termino__subtitulo">También se le dice</h2>
+          <ul class="termino__sinonimos">
+            @for (sinonimo of termino.synonyms; track sinonimo.value) {
+              <li>
+                {{ sinonimo.value }}
+                @if (sinonimo.language) {
+                  <span class="termino__idioma">({{ sinonimo.language }})</span>
+                }
+              </li>
+            }
+          </ul>
+        }
+
+        <!-- El código se muestra sólo cuando sirve afuera: `I10` identifica el
+             término en CIE-10 y con él se lo busca en la literatura. La clave
+             interna de un concepto de la plataforma, no — es configuración, del
+             mismo orden que el `conceptId`, que esta pantalla tampoco muestra. -->
+        @if (codigoPublicable(); as codigo) {
+          <h2 class="termino__subtitulo">Código</h2>
+          <p class="termino__codigo">
+            <code class="tabular-nums">{{ codigo }}</code>
+          </p>
+        }
+      </app-card>
+    }
+  </app-view-state-host>
+</div>

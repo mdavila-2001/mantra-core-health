@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-774 archivos TypeScript bajo `src/` y 2979 importaciones internas.
+777 archivos TypeScript bajo `src/` y 2989 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -166,20 +166,20 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/core/view-state/view-state.types.ts` | 131 |
-| `src/app/core/view-state/view-state.ts` | 116 |
-| `src/app/core/http/error-to-view-state.ts` | 110 |
+| `src/app/core/view-state/view-state.types.ts` | 132 |
+| `src/app/core/view-state/view-state.ts` | 117 |
+| `src/app/core/http/error-to-view-state.ts` | 111 |
 | `src/app/shared/components/atoms/button/button.ts` | 110 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 106 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 107 |
 | `src/app/shared/components/molecules/alert/alert.ts` | 103 |
 | `src/app/shared/components/molecules/form-field/form-field.ts` | 103 |
-| `src/app/core/navigation/navigation.service.ts` | 95 |
+| `src/app/core/navigation/navigation.service.ts` | 96 |
 | `src/app/shared/components/atoms/input/input.ts` | 90 |
 | `src/app/shared/components/organisms/form-actions/form-actions.ts` | 80 |
 | `src/app/shared/a11y/announce-on-appear.ts` | 77 |
 | `src/app/shared/components/organisms/form-section/form-section.ts` | 67 |
 | `src/app/shared/forms/form-support.ts` | 61 |
-| `src/app/shared/components/molecules/card/card.ts` | 45 |
+| `src/app/shared/components/molecules/card/card.ts` | 46 |
 | `src/app/shared/components/atoms/textarea/textarea.ts` | 35 |
 | `src/app/core/auth/session.store.ts` | 34 |
 | `src/app/shared/components/molecules/radio-group/radio-group.ts` | 32 |
@@ -191,11 +191,11 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 715 |
-| `@angular/common` | 382 |
-| `@angular/router` | 346 |
+| `@angular/core` | 718 |
+| `@angular/common` | 384 |
+| `@angular/router` | 349 |
 | `@angular/forms` | 88 |
-| `rxjs` | 77 |
+| `rxjs` | 78 |
 | `node:fs` | 14 |
 | `@opentelemetry/api` | 12 |
 | `@opentelemetry/sdk-trace-web` | 9 |

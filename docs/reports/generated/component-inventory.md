@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-329 componentes y 50 servicios inyectables, leídos de `src/`.
+330 componentes y 50 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -75,7 +75,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (271)
+## Feature (272)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -170,6 +170,7 @@
 | `app-tracking-session-form` | `TrackingSessionForm` | — | — | — | OnPush | sí |
 | `app-trip-close` | `TripClose` | — | — | — | OnPush | sí |
 | `app-trip-form` | `TripForm` | — | — | — | OnPush | sí |
+| `app-glossary-term` | `GlossaryTerm` | — | — | — | OnPush | sí |
 | `app-glossary` | `Glossary` | — | — | — | OnPush | sí |
 | `app-agent-form` | `AgentForm` | — | — | — | OnPush | sí |
 | `app-collection-run-finish` | `CollectionRunFinish` | — | — | — | OnPush | sí |
