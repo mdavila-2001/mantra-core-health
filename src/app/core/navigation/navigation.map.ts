@@ -390,8 +390,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
   {
     // Carril 18. Preferencias/bandeja propias: cualquier sesión autenticada,
     // sin roles — es autoservicio sobre datos de la propia persona, igual que
-    // «Mi perfil».
-    path: 'notifications',
+    // «Mi perfil». `my-notifications`, no `notifications`: el cliente llama a
+    // `/notifications/*` de la API, y ese prefijo ya está reservado en
+    // `proxy.conf.json` — una ruta del router con el mismo nombre se comería
+    // sus propias peticiones (ver `docs/design-system/port-redsat.md`).
+    path: 'my-notifications',
     label: 'Notificaciones',
     group: 'General',
     icon: 'results',

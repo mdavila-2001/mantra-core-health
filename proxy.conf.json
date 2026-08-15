@@ -45,6 +45,7 @@
       "/tenants",
       "/practices",
       "/accounting",
+      "/notifications",
       "/health-context",
       "/geo",
       "/procedure-cases",

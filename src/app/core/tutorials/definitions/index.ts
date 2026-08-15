@@ -372,7 +372,7 @@ const NOTIFICACIONES: TutorialDefinition = {
   title: 'Configurar tus notificaciones',
   description: 'Tu bandeja y tus preferencias de canal y categoría.',
   category: 'General',
-  route: '/notifications',
+  route: '/my-notifications',
   estimatedMinutes: 2,
   level: 'inicial',
   steps: [
