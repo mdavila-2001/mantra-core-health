@@ -1,0 +1,11 @@
+.tab-help-block {
+  margin-bottom: 1rem;
+}
+
+.tab-help-block :where(p) {
+  margin: 0 0 0.5rem;
+}
+
+.tab-help-block :where(p:last-child) {
+  margin-bottom: 0;
+}

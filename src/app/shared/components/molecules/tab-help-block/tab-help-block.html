@@ -1,0 +1,12 @@
+@if (!oculto()) {
+  <app-alert class="tab-help-block" tone="info" [title]="title()" dismissible (dismissed)="cerrar()">
+    <ng-content />
+    @if (tutorialId()) {
+      <div alert-actions>
+        <button app-button variant="outline" size="sm" type="button" (clicked)="verTutorial()">
+          Ver tutorial
+        </button>
+      </div>
+    }
+  </app-alert>
+}

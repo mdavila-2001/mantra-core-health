@@ -146,10 +146,8 @@
     </p>
   </app-card>
 
-  <!-- ─── Historial laboral ─────────────────────────────────────────────────
-       Punto 9 del reclamo: los hospitales y entidades donde ejerció. El bloque
-       decide por sí mismo si corresponde dibujarse — para una cuenta sin perfil
-       profesional no renderiza nada. El `id` es el destino del enlace
-       «Trayectoria laboral» de la portada del perfil profesional (R2-4). -->
-  <app-work-history id="trayectoria-laboral" class="mi-perfil__bloque" />
+  <!-- El historial laboral (punto 9 del reclamo) ya no va acá: vive dentro de
+       la pestaña Trayectoria de `app-practitioner-profile` (carril 05), con el
+       mismo formulario en modo "timeline". Montarlo también acá sería el mismo
+       dato dos veces con dos formas distintas. -->
 </div>

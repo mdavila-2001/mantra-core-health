@@ -3,11 +3,13 @@
      peor, con el 403 en rojo— sería contarle un problema que no tiene. -->
 @if (esProfesional()) {
   <app-card class="historial" variant="outlined" padding="lg">
-    <h2 class="historial__titulo">Historial laboral</h2>
-    <p class="historial__intro">
-      Los hospitales y entidades médicas donde ejerciste. Lo administrás vos: es tu
-      trayectoria, no un dato que cargue la organización.
-    </p>
+    @if (layout() === 'flat') {
+      <h2 class="historial__titulo">Historial laboral</h2>
+      <p class="historial__intro">
+        Los hospitales y entidades médicas donde ejerciste. Lo administrás vos: es tu
+        trayectoria, no un dato que cargue la organización.
+      </p>
+    }
 
     @if (avisoDeDuplicado(); as aviso) {
       <app-alert tone="warning" title="Ya estaba registrado" data-testid="afiliacion-duplicada">
@@ -21,50 +23,56 @@
 
     <!-- ─── La línea de tiempo ──────────────────────────────────────────────
          Mismo reparto visual que el historial de verificaciones de arriba: una
-         lista con su sello a la izquierda y el período a la derecha. -->
-    @if (afiliaciones().length > 0) {
-      <ul class="historial__lista">
-        @for (afiliacion of afiliaciones(); track afiliacion.id) {
-          <li class="historial__item">
-            <div class="historial__institucion">
-              <strong>{{ afiliacion.organizationName }}</strong>
-              <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
-              @if (afiliacion.departmentText) {
-                <span class="historial__area">{{ afiliacion.departmentText }}</span>
-              }
-              @if (nombreDeSede(afiliacion); as sede) {
-                <span class="historial__sede">Consultorio: {{ sede }}</span>
-              }
-            </div>
+         lista con su sello a la izquierda y el período a la derecha.
 
-            <div class="historial__periodo">
-              <span class="historial__fechas">
-                {{ afiliacion.startDate | date: 'MM/yyyy' }} —
-                @if (afiliacion.endDate) {
-                  {{ afiliacion.endDate | date: 'MM/yyyy' }}
-                } @else {
-                  actualidad
+         En layout="timeline" este listado se suprime: la pestaña Trayectoria
+         del perfil ya pinta el mismo historial por fases, y mostrarlo acá
+         también sería el mismo dato dos veces con dos formas distintas. -->
+    @if (layout() === 'flat') {
+      @if (afiliaciones().length > 0) {
+        <ul class="historial__lista">
+          @for (afiliacion of afiliaciones(); track afiliacion.id) {
+            <li class="historial__item">
+              <div class="historial__institucion">
+                <strong>{{ afiliacion.organizationName }}</strong>
+                <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
+                @if (afiliacion.departmentText) {
+                  <span class="historial__area">{{ afiliacion.departmentText }}</span>
                 }
-              </span>
-              <span class="historial__estado">{{ periodo(afiliacion) }}</span>
-            </div>
-          </li>
-        }
-      </ul>
-    } @else if (historial().status === 'ready') {
-      <p class="historial__vacio">
-        Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente
-        dónde ejerciste antes de llegar acá.
-      </p>
-    } @else if (historial().status !== 'loading') {
-      <!-- El fallo de la lectura no tumba el formulario: cargar un vínculo
-           nuevo sigue siendo posible aunque no se hayan podido leer los viejos. -->
-      <p class="historial__vacio">
-        No pudimos leer tu historial.
-        <button type="button" class="historial__reintento" (click)="recargar()">
-          Reintentar
-        </button>
-      </p>
+                @if (nombreDeSede(afiliacion); as sede) {
+                  <span class="historial__sede">Consultorio: {{ sede }}</span>
+                }
+              </div>
+
+              <div class="historial__periodo">
+                <span class="historial__fechas">
+                  {{ afiliacion.startDate | date: 'MM/yyyy' }} —
+                  @if (afiliacion.endDate) {
+                    {{ afiliacion.endDate | date: 'MM/yyyy' }}
+                  } @else {
+                    actualidad
+                  }
+                </span>
+                <span class="historial__estado">{{ periodo(afiliacion) }}</span>
+              </div>
+            </li>
+          }
+        </ul>
+      } @else if (historial().status === 'ready') {
+        <p class="historial__vacio">
+          Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente
+          dónde ejerciste antes de llegar acá.
+        </p>
+      } @else if (historial().status !== 'loading') {
+        <!-- El fallo de la lectura no tumba el formulario: cargar un vínculo
+             nuevo sigue siendo posible aunque no se hayan podido leer los viejos. -->
+        <p class="historial__vacio">
+          No pudimos leer tu historial.
+          <button type="button" class="historial__reintento" (click)="recargar()">
+            Reintentar
+          </button>
+        </p>
+      }
     }
 
     <!-- ─── Agregar ─────────────────────────────────────────────────────── -->
