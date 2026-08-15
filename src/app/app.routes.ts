@@ -76,6 +76,19 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/organizations/organization-list/organization-list').then(
       (m) => m.OrganizationList,
     ),
+  // Carril 13: la consola de la organización médica. Diferida como el resto de
+  // administración — sólo la alcanza quien administra, así que no tiene sentido
+  // que la descargue todo el mundo al entrar.
+  'administration/medical-organization': () =>
+    import('./features/admin/medical-organization/medical-organization').then(
+      (m) => m.MedicalOrganization,
+    ),
+  // Carril 16: la consola del laboratorio. Distinta de `laboratory-directory`,
+  // que es la vitrina del paciente y sigue en pie sin cambios.
+  'administration/medical-laboratory': () =>
+    import('./features/admin/medical-laboratory/medical-laboratory').then(
+      (m) => m.MedicalLaboratory,
+    ),
   'administration/accounting': () =>
     import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>

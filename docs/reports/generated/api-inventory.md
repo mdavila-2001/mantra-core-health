@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-197 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+201 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -191,6 +191,15 @@ Archivo: `src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts`
 | `GET` | `/diagnostic-units` |
 | `GET` | `/diagnostic-units/:id` |
 
+## `DiagnosticUnitsAdminClient`
+
+Archivo: `src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/diagnostic-units/:id/administration` |
+| `GET` | `/diagnostic-units/administration` |
+
 ## `FormsClient`
 
 Archivo: `src/app/core/data-access/forms/forms.client.ts`
@@ -291,6 +300,15 @@ Archivo: `src/app/core/data-access/identity/identity.client.ts`
 | `POST` | `/identity/me/tenants/:tenantId/verification` |
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
+
+## `MedicalOrganizationClient`
+
+Archivo: `src/app/core/data-access/medical-organization/medical-organization.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/practices` |
+| `GET` | `/practices/:practiceId/organization` |
 
 ## `PracticeSitesClient`
 

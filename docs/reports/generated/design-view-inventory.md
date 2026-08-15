@@ -2,7 +2,7 @@
 
 # Inventario de vistas del diseñador y cableado real
 
-Carril 01. 26 secciones del registro, 78 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
+Carril 01. 28 secciones del registro, 78 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
 
 ## Estados
 
@@ -28,7 +28,7 @@ Carril 01. 26 secciones del registro, 78 pantallas hijas o de operación y 126 v
 | CLINICIAN · PRACTITIONER | `/medical-records` | `ClinicalRecord` | ChartTemplatesClient, ClinicalClient, DiagnosticsClient, FilesClient, FormsClient, ProceduresClient, ProfilesClient, SystemContextClient, TerminologyClient | conectada | ninguna |
 | CLINICIAN · PRACTITIONER | `/diagnostics` | `Diagnostics` | DiagnosticsClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/glossary` | `Glossary` | TerminologyClient | conectada | ninguna |
-| SECURITY_ADMIN | `/administration/patients` | `PatientList` | ProfilesClient | conectada con deuda | resolver: TODO/FIXME |
+| SECURITY_ADMIN | `/administration/patients` | `PatientList` | ProfilesClient | conectada con deuda | resolver: `TODO`/`FIXME` |
 | SECURITY_ADMIN | `/administration/users` | `UserRegistration` | IamClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/organizations` | `OrganizationList` | DirectoryClient, TerminologyClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/delegated-access` | `DelegatedAccessHome` | — | presentacional | verificar que no deba listar |
@@ -38,6 +38,8 @@ Carril 01. 26 secciones del registro, 78 pantallas hijas o de operación y 126 v
 | CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context` | `HealthContextHome` | — | presentacional | verificar que no deba listar |
 | SECURITY_ADMIN | `/administration/geolocation` | `GeoHome` | — | presentacional | verificar que no deba listar |
 | SECURITY_ADMIN | `/administration/services-catalog` | `ServicesCatalog` | ServicesCatalogClient | conectada | ninguna |
+| SECURITY_ADMIN · PERIOP_ADMIN · PRACTITIONER | `/administration/medical-organization` | `MedicalOrganization` | MedicalOrganizationClient | conectada | ninguna |
+| SECURITY_ADMIN | `/administration/medical-laboratory` | `MedicalLaboratory` | DiagnosticUnitsAdminClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/clinical-forms` | `ClinicalForms` | ChartTemplatesClient, TerminologyClient | conectada | ninguna |
 | BILLING · FINANCE · CASHIER · PAYMENTS_ADMIN | `/billing` | `SectionPlaceholder` | — | placeholder | ninguna — declarada planificada |
 | SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting` | `Accounting` | AccountingClient | conectada | ninguna |
@@ -268,7 +270,7 @@ Las 126 pantallas de `features/redsat/`, generadas por `scripts/port-vistas-reds
 | Estado | Pantallas |
 |---|---|
 | maqueta portada | 126 |
-| conectada | 94 |
+| conectada | 96 |
 | presentacional | 6 |
 | conectada con deuda | 3 |
 | placeholder | 1 |

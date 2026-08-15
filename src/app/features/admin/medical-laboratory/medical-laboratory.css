@@ -1,0 +1,152 @@
+/* ============================================================================
+    Consola de administración del laboratorio — CARRIL 16.
+
+    Sólo el ámbito, el selector, los avisos, la cobertura y las líneas de celda:
+    todo lo demás lo ponen los organismos del banco. Vocabulario de tokens
+    `--sp-*`, `--fs-*`/`--lh-*`, `--r-*`, `--text-*`, `--bg-*`, `--border-*` y
+    `--st-*-bg`/`--st-*-fg`/`--st-*-bd`.
+    ========================================================================== */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+.laboratorio__selector {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.laboratorio__selector label {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.laboratorio__selector select {
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  font: inherit;
+}
+
+.laboratorio__ambito {
+  padding: var(--sp-6);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.laboratorio__ambito--error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+  border-color: var(--st-error-bd);
+}
+
+.laboratorio__ambito--vacio {
+  color: var(--text-secondary);
+}
+
+.laboratorio__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-5);
+  margin: 0;
+}
+
+.laboratorio__datos dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.laboratorio__datos dd {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-primary);
+}
+
+.laboratorio__codigo {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Avisos de calibración, vencimiento y falta de validadores. Advertencia y no
+   error: son cosas que hay que atender, no cosas que ya fallaron. */
+.laboratorio__avisos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-5);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-md);
+}
+
+.laboratorio__avisos p {
+  margin: 0;
+}
+
+.laboratorio__cargando {
+  color: var(--text-secondary);
+}
+
+.laboratorio__nombre {
+  display: block;
+  font-weight: 500;
+}
+
+.laboratorio__secundario {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* Cada precio en su línea: son varios cronogramas por estudio y en una sola
+   línea se leerían como un único importe. */
+.laboratorio__precio {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.laboratorio__cobertura {
+  padding: var(--sp-6);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.laboratorio__cobertura h2 {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.laboratorio__cobertura dl {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.laboratorio__cobertura dt {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.laboratorio__cobertura dd {
+  margin: var(--sp-1) 0 0;
+}
