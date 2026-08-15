@@ -1,0 +1,128 @@
+:host {
+  display: block;
+}
+
+.encuesta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-4);
+}
+
+.encuesta__card--ancha {
+  grid-column: 1 / -1;
+}
+
+.encuesta__consigna {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+}
+
+.encuesta__datos {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.encuesta__datos div {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.encuesta__datos dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.encuesta__datos dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.encuesta__vacio {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.encuesta__preguntas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+}
+
+.encuesta__pregunta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.encuesta__pregunta:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.encuesta__pregunta-texto {
+  font-weight: 600;
+}
+
+.encuesta__pregunta-tipo,
+.encuesta__pregunta-opciones,
+.encuesta__respuesta-fecha {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.encuesta__escala {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.encuesta__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
+}
+
+.encuesta__respuestas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.encuesta__respuesta {
+  display: grid;
+  gap: var(--sp-1);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.encuesta__respuesta:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.encuesta__answers {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+}
+
+@media (max-width: 48rem) {
+  .encuesta,
+  .encuesta__datos,
+  .encuesta__escala {
+    grid-template-columns: 1fr;
+  }
+
+  .encuesta__card--ancha {
+    grid-column: auto;
+  }
+}

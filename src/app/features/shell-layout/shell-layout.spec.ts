@@ -150,6 +150,9 @@ describe('ShellLayout', () => {
       // Los resultados propios no exigen rol por lo mismo que los turnos: el
       // filtro real es tener perfil de paciente, que es un dato de la cuenta.
       '/my-account/diagnostic-results',
+      // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
+      // perfil de paciente, que es un dato de la cuenta y no un rol.
+      '/my-account/questionnaires',
       '/my-account/identity/verify',
       '/my-account/identity/cases',
       '/design-system',
