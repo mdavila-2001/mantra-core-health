@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-189 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+194 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -339,6 +339,7 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `POST` | `/scheduling/booking-policies` |
 | `GET` | `/scheduling/bookings` |
 | `GET` | `/scheduling/bookings/:bookingId` |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` |
@@ -346,8 +347,12 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 | `POST` | `/scheduling/bookings/:bookingId/reschedule` |
 | `POST` | `/scheduling/holds/:holdToken/confirm` |
 | `GET` | `/scheduling/resources` |
+| `POST` | `/scheduling/resources` |
+| `POST` | `/scheduling/resources/:resourceId/exceptions` |
+| `POST` | `/scheduling/resources/:resourceId/templates` |
 | `GET` | `/scheduling/slots` |
 | `POST` | `/scheduling/slots/:slotId/holds` |
+| `POST` | `/scheduling/templates/:templateId/generate-slots` |
 
 ## `SystemContextClient`
 

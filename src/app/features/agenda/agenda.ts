@@ -54,7 +54,7 @@ import { ToastService } from '../../shared/components/molecules/toast/toast.serv
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { bookingNewRoute } from './agenda.routes';
+import { AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
@@ -139,6 +139,13 @@ const ROLES_QUE_ELIGEN_RECURSO = ROLES_QUE_OPERAN_CITAS;
 
 /** Roles que pueden retener y confirmar un cupo. `PATIENT` reserva para sí. */
 const ROLES_QUE_RESERVAN = [...ROLES_QUE_OPERAN_CITAS, 'PATIENT'];
+
+/**
+ * Roles que pueden construir agenda (UC-41-01 → UC-41-04). Las cuatro fases de
+ * configuración declaran `SCHEDULING_ADMIN`; `SUPERADMIN` es el comodín del
+ * `RolesGuard`. Ni el agente de mostrador ni el profesional arman la grilla.
+ */
+const ROLES_QUE_CREAN_AGENDA = ['SCHEDULING_ADMIN', 'SUPERADMIN'];
 
 /** Una cita ya lista para pintar: sin uuid, con el recurso y el estado resueltos. */
 export interface CitaVisible {
@@ -274,6 +281,9 @@ export class Agenda {
   private readonly toast = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  /** Destino del enlace «Crear agenda» del encabezado. */
+  protected readonly rutaCrearAgenda = AGENDA_CREATE_ROUTE;
 
   private readonly celdaCuando =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaCuando');
@@ -601,6 +611,18 @@ export class Agenda {
   protected readonly puedeReservar = computed(() => {
     const roles = this.auth.roles();
     return ROLES_QUE_RESERVAN.some((rol) => roles.includes(rol));
+  });
+
+  /**
+   * Si la sesión puede construir agenda (recurso, política, plantilla, cupos,
+   * excepciones). Es el enlace al alta por fases, y sólo lo ve quien la API deja
+   * usarla: las cuatro fases de configuración exigen `SCHEDULING_ADMIN`, y
+   * `SUPERADMIN` es su comodín en el `RolesGuard`. Ofrecerlo a otro rol sería
+   * ofrecer un 403.
+   */
+  protected readonly puedeCrearAgenda = computed(() => {
+    const roles = this.auth.roles();
+    return ROLES_QUE_CREAN_AGENDA.some((rol) => roles.includes(rol));
   });
 
   protected readonly columnasDeCitas = computed<readonly ColumnDef<CitaVisible>[]>(() => [

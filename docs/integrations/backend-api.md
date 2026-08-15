@@ -288,7 +288,7 @@ y no sólo un `SECURITY_ADMIN`.
 Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
 catálogo — mismo motivo: no existe «la práctica del usuario».
 
-### `SchedulingClient` — 9 operaciones
+### `SchedulingClient` — 14 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -296,11 +296,23 @@ catálogo — mismo motivo: no existe «la práctica del usuario».
 | `GET` | `/scheduling/slots` | `Agenda` · `BookingNew` (revalida el cupo) |
 | `GET` | `/scheduling/bookings` | `Agenda` |
 | `GET` | `/scheduling/bookings/:bookingId` | — |
+| `POST` | `/scheduling/resources` | `AgendaCreate` (fase 1, UC-41-01) |
+| `POST` | `/scheduling/booking-policies` | `AgendaCreate` (fase 2, UC-41-01) |
+| `POST` | `/scheduling/resources/:resourceId/templates` | `AgendaCreate` (fase 3, UC-41-02) |
+| `POST` | `/scheduling/templates/:templateId/generate-slots` | `AgendaCreate` (fase 4, UC-41-03) |
+| `POST` | `/scheduling/resources/:resourceId/exceptions` | `AgendaCreate` (fase 5, UC-41-04) |
 | `POST` | `/scheduling/slots/:slotId/holds` | `BookingNew` (V41-09, UC-41-05) |
 | `POST` | `/scheduling/holds/:holdToken/confirm` | `BookingNew` (V41-05, UC-41-06) |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` | `Agenda` (V41-02·A, UC-41-09) |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` | `Agenda` (V41-02·A, UC-41-10) |
 | `POST` | `/scheduling/bookings/:bookingId/reschedule` | `Appointments` (mi cuenta: mover el turno a otro cupo) |
+
+**La construcción de agenda es de cinco fases encadenadas por id** (`AgendaCreate`,
+`/schedule/new`, sólo `SCHEDULING_ADMIN`). El alta del recurso devuelve el
+`resourceId` sobre el que cuelgan la plantilla y las excepciones; la política
+devuelve el `bookingPolicyId` que la plantilla referencia; la plantilla devuelve
+el `templateId` que se materializa en cupos. Cada fase persiste contra su propio
+`POST` antes de avanzar: no se acumula para guardar al final.
 
 **El ciclo de reserva es de dos pasos y el token viaja entre ellos.** El hold
 retiene el cupo con anti-double-booking y un TTL (300 s por defecto, de la
