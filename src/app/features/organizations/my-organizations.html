@@ -1,0 +1,69 @@
+<app-page-header
+  title="Mis organizaciones"
+  subtitle="Dónde tenés una vinculación, y pedir una nueva"
+/>
+
+<app-alert tone="info" class="explicacion">
+  <p>
+    Un profesional puede ejercer en más de una organización a la vez. Acá ves todas tus
+    vinculaciones —incluidas las pendientes de aprobación— y pedís vincularte a una nueva.
+    <strong>Ejemplo:</strong> elegís «Hospital Central», confirmás, y la vinculación queda
+    <em>pendiente</em> hasta que esa organización la apruebe.
+  </p>
+  <p>
+    <strong>Importante:</strong> pertenecer a una organización no te da acceso a sus
+    pacientes. El acceso a un paciente concreto depende siempre de una cita, derivación,
+    intervención o autorización con ese paciente.
+  </p>
+</app-alert>
+
+<h2 class="titulo-de-seccion">Pedir una vinculación</h2>
+<app-card>
+  @if (errorDeSolicitud(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+  }
+  @if (solicitudEnviada()) {
+    <app-alert appAnuncio [asertivo]="false" tone="success" class="alerta-de-formulario">
+      Solicitud enviada. Queda pendiente hasta que la organización la apruebe.
+    </app-alert>
+  }
+  <div class="formulario-de-solicitud">
+    <app-select
+      [options]="opcionesDeOrganizacion()"
+      [(value)]="organizacionElegida"
+      placeholder="Elegí una organización"
+    />
+    <button
+      app-button
+      variant="primary"
+      [disabled]="organizacionElegida() === null || enviando()"
+      (clicked)="solicitar()"
+    >
+      {{ enviando() ? 'Enviando…' : 'Pedir vinculación' }}
+    </button>
+  </div>
+</app-card>
+
+<h2 class="titulo-de-seccion">Mis vinculaciones</h2>
+@if (!cargandoVinculaciones()) {
+  @if (filas().length === 0) {
+    <app-empty-state
+      title="Todavía no tenés vinculaciones"
+      description="Pedí una arriba para empezar."
+    />
+  } @else {
+    <ul class="lista-de-vinculaciones">
+      @for (fila of filas(); track fila.id) {
+        <li class="vinculacion" [class.es-final]="fila.isFinal">
+          <div class="vinculacion__cabecera">
+            <span class="vinculacion__nombre">{{ fila.practiceName }}</span>
+            <span class="vinculacion__estado">{{ fila.statusLabel }}</span>
+          </div>
+          @if (fila.isPrimary) {
+            <span class="vinculacion__principal">Organización principal</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+}

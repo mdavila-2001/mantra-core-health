@@ -48,3 +48,20 @@
   font-size: 21px;
   font-weight: 600;
 }
+
+.explicacion {
+  margin-bottom: var(--e5);
+}
+
+.explicacion p {
+  margin: 0 0 var(--e2);
+}
+
+.explicacion p:last-child {
+  margin-bottom: 0;
+}
+
+.alerta-de-formulario {
+  margin-bottom: var(--e3);
+  display: block;
+}

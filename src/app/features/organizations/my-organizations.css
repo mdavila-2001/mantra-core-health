@@ -1,0 +1,77 @@
+/* ============================================================================
+    Mis organizaciones. Sólo la disposición: los colores, tipos y espacios
+    salen de los tokens de REDSAT, nunca de valores literales acá.
+    ========================================================================== */
+
+.explicacion {
+  margin-bottom: var(--e5);
+}
+
+.explicacion p {
+  margin: 0 0 var(--e2);
+}
+
+.explicacion p:last-child {
+  margin-bottom: 0;
+}
+
+.titulo-de-seccion {
+  margin: var(--e6) 0 var(--e3);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.alerta-de-formulario {
+  margin-bottom: var(--e3);
+  display: block;
+}
+
+.formulario-de-solicitud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--e3);
+}
+
+.lista-de-vinculaciones {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.vinculacion {
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-card);
+  padding: var(--e3) var(--e4);
+}
+
+.vinculacion.es-final {
+  opacity: 0.7;
+}
+
+.vinculacion__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+}
+
+.vinculacion__nombre {
+  font-weight: 600;
+}
+
+.vinculacion__estado {
+  color: var(--tinta-3);
+  font-size: 13px;
+}
+
+.vinculacion__principal {
+  display: inline-block;
+  margin-top: var(--e1);
+  color: var(--tinta-3);
+  font-size: 12px;
+  font-style: italic;
+}
