@@ -116,6 +116,46 @@ Cobertura nueva: 4 specs (2 clientes, 2 pantallas) con 21 casos propios, más lo
 dos casos agregados a `navigation.service.spec.ts` que fijan qué rol ve cada
 consola.
 
+### Recorrido real con Playwright sobre Chromium
+
+`scripts/e2e-carril-13-16.mjs` — evidencia funcional contra el stack vivo, no
+contra el arnés: `ng serve` del worktree proxeando a la API real, sesión abierta
+por la pantalla de login contra `POST /iam/auth/login`.
+
+**17 de 18 comprobaciones en verde.** La única en rojo son tres avisos de CSP
+por scripts en línea del servidor de desarrollo, que **aparecen igual en
+`/auth`** —una pantalla ajena a estos carriles— y por lo tanto son previas y no
+del carril.
+
+```
+✔ Sesión abierta contra la API real                    http://localhost:4300/dashboard
+✔ C13 · la pantalla pide GET /practices/:id/organization           HTTP 200
+✔ C13 · pinta la organización que devolvió la API
+✔ C13 · las siete pestañas del carril están
+✔ C13 · la pestaña de sedes trae filas reales                      4 filas
+✔ C13 · las siete pestañas responden sin exponer identificadores
+✔ C16 · la pantalla pide GET /diagnostic-units/administration      HTTP 200
+✔ C16 · no cae en la lectura del directorio público
+✔ C16 · responde con su estado real, no con un error
+✔ C16 · las cinco pestañas del carril están
+✔ C16 · declara su cobertura en vez de simular lo que no administra
+✔ Las dos secciones entran al menú del administrador
+```
+
+Dos invariantes del carril se comprueban explícitamente: que **ninguna pantalla
+muestre un uuid crudo**, y que la consola del laboratorio **no caiga** en
+`GET /diagnostic-units` —el directorio público, que filtra a unidades
+publicadas—.
+
+**Sobre el estado del entorno local.** La organización médica se recorrió con
+datos reales (`seed-dev-data.mjs`: 1 práctica, 4 sedes). El laboratorio mostró
+su **vacío legítimo**: los conceptos del módulo 23 nunca se materializaron en
+esta base y el seeder del propio repositorio se detiene en vez de inventarlos,
+que es el comportamiento correcto. Lo que quedó probado de C16 end-to-end es el
+recorrido completo —sesión, ruta, rol, petición, respuesta 200 y estado vacío
+con acción—; el camino con datos lo cubren las pruebas unitarias del cliente y
+de la pantalla.
+
 ## 4. Hallazgos ajenos corregidos para no dejar CI en rojo
 
 Los tres eran **anteriores a este carril** y bloqueaban su PR:
