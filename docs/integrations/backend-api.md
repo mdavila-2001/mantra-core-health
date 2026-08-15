@@ -818,6 +818,89 @@ No es código muerto: todas tienen prueba y son la mitad de un flujo cuya
 interfaz todavía no se escribió.
 Ver [el mapa de integraciones §3](../architecture/integration-map.md#3--operaciones-sin-consumidor).
 
+### `DiagnosticsClient` — lecturas del paciente · carril 11
+
+Lo que el paciente ve de sus propios estudios: el resultado, su descarga y con
+quién lo compartió. No es la cola clínica, que sigue en `/diagnostics`.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostic-results/me` | `DiagnosticResults` |
+| `GET` | `/diagnostic-results/me/:reportId` | `DiagnosticResults` |
+| `GET` | `/diagnostic-results/me/:reportId/shares` | `DiagnosticResults` |
+| `POST` | `/diagnostic-results/me/:reportId/shares` | `DiagnosticResults` |
+| `POST` | `/diagnostic-results/me/:reportId/shares/:shareId/revoke` | `DiagnosticResults` |
+| `GET` | `/diagnostic-units/search` | `LaboratoryDirectory` |
+
+### `InsuranceClient` — 5 operaciones · carril 14
+
+La superficie de lectura de aseguradoras y corredores (M26). Solo la relación
+comercial: ni el corredor ni la aseguradora ven historial médico.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/insurance-carriers` | `InsuranceCatalog` |
+| `GET` | `/insurance-carriers/:id` | `InsuranceCatalog` |
+| `GET` | `/insurance-brokers` | `BrokerDirectory` |
+| `GET` | `/insurance-brokers/:id` | `BrokerDetail` |
+| `GET` | `/insurance-brokers/:id/clients` | `BrokerDetail` |
+
+### `PharmaLabClient` — 21 operaciones · carril 17
+
+Laboratorio farmacéutico, visitadores médicos y visitas (M62 `pharma_lab`).
+
+**No hay ninguna ruta clínica en esta tabla y no puede haberla**: la
+especificación le prohíbe al visitador el acceso a pacientes, recetas y
+diagnósticos (5316-5318), y que su cliente no las nombre es la mitad de esa
+garantía — la otra la pone la API, que revalida cada petición.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/pharma-labs` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/staff` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/medical-visitors` | `PharmaLabHome` |
+| `POST` | `/pharma-labs/:pharmaLabId/medical-visitors/:medicalVisitorId/unlink` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/products` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/materials` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/pharmacovigilance/reports` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/regulatory-documents` | `PharmaLabHome` |
+| `GET` | `/visit-agenda/me` | `DoctorVisits` |
+| `PUT` | `/visit-agenda/me` | `DoctorVisits` |
+| `GET` | `/visit-agenda/doctors/:doctorUserId` | `VisitorVisits` |
+| `POST` | `/visit-requests` | `VisitorVisits` |
+| `GET` | `/visit-requests/mine` | `VisitorVisits` |
+| `GET` | `/visit-requests/inbox` | `DoctorVisits` |
+| `POST` | `/visit-requests/:visitRequestId/accept` | `DoctorVisits` |
+| `POST` | `/visit-requests/:visitRequestId/reject` | `DoctorVisits` |
+| `POST` | `/visit-requests/:visitRequestId/cancel` | `VisitorVisits` · `DoctorVisits` |
+| `GET` | `/visit-records/inbox` | `DoctorVisits` |
+| `GET` | `/visit-records/labs/:pharmaLabId` | `PharmaLabHome` |
+| `GET` | `/visit-records/labs/:pharmaLabId/rating-summary` | `PharmaLabHome` |
+
+### `PharmaLabConcepts` — 1 operación · carril 17
+
+El diccionario que traduce cada `*_concept_id` del carril a su rótulo. Existe
+porque recalcular en el navegador el UUID determinista del backend obligaría a
+duplicar su función de derivación —dos implementaciones de la misma regla, que
+se separan en cuanto una cambia— y pintar el identificador crudo no le dice nada
+a nadie. Se pide una vez por sesión y se comparte.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/pharma-labs/reference/concepts` | `PharmaLabHome` · `VisitorVisits` · `DoctorVisits` |
+
+### Operaciones que suman otros carriles
+
+Entradas sueltas que amplían clientes ya documentados más arriba.
+
+| Método | Ruta | Cliente | Consumidor |
+|---|---|---|---|
+| `GET` | `/procedure-cases/:caseId/team-members` | `ProceduresClient` | `Interventions` (carril 12) |
+| `POST` | `/procedure-cases/:caseId/team-members/:memberId/accept` | `ProceduresClient` | `Interventions` |
+| `POST` | `/procedure-cases/:caseId/team-members/:memberId/respond` | `ProceduresClient` | `Interventions` |
+| `POST` | `/charts/templates/:templateId/assignments` | `ChartTemplatesClient` | `ClinicalForms` (R2-5) |
+
 ---
 
 ## Modelo de error

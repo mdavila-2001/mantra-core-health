@@ -194,6 +194,41 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M53 procedures_perioperative',
   },
   {
+    // Carril 17. La bandeja de visitas de laboratorio del doctor.
+    //
+    // Va en «Atención» y **separada de `schedule`** porque la especificación lo
+    // exige (línea 5399): una visita comercial no es una consulta, y mezclarlas
+    // en la misma agenda haría que la solicitud de un visitador compita por
+    // atención con la de un paciente.
+    //
+    // `PRACTITIONER` y `CLINICIAN` son los mismos roles con los que
+    // `VisitRequestsController` responde la bandeja.
+    path: 'lab-visits',
+    label: 'Visitas de laboratorio',
+    group: 'Atención',
+    icon: 'calendar',
+    roles: ['PRACTITIONER', 'CLINICIAN'],
+    availability: 'disponible',
+    summary: 'Aceptá o rechazá visitas de visitadores médicos y mirá tu agenda de visitas.',
+    module: 'M62 pharma_lab',
+  },
+  {
+    // Carril 17. La pantalla del visitador médico.
+    //
+    // Sólo la ve `MEDICAL_VISITOR`, que es un rol de sistema sembrado por este
+    // mismo carril. No aparece ninguna entrada clínica para ese rol —ni acá ni
+    // en el resto del registro— porque la especificación le prohíbe el acceso a
+    // pacientes, recetas y diagnósticos (5316-5318).
+    path: 'my-visits',
+    label: 'Mis visitas médicas',
+    group: 'Atención',
+    icon: 'calendar',
+    roles: ['MEDICAL_VISITOR'],
+    availability: 'disponible',
+    summary: 'Consultá el estado de las visitas que solicitaste a los doctores.',
+    module: 'M62 pharma_lab',
+  },
+  {
     // Carril 2 · punto 4 del reclamo. `TerminologyCatalog` ya resolvía el
     // mismo `GET /terminology/concepts?q=` con rol `SECURITY_ADMIN`: es un
     // buscador técnico de `conceptId` para configuración, no un glosario para
@@ -250,6 +285,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Dá de alta clínicas, farmacias y aseguradoras, y seguí su verificación.',
     module: 'M04 directory',
+  },
+  {
+    // Carril 14 (M26). El módulo tenía **sólo escrituras**: el catálogo se daba
+    // de alta y no había forma de volver a leerlo, así que la sección no podía
+    // existir sin inventarse los datos. Entra ahora con
+    // `GET /insurance-carriers` y su ficha.
+    //
+    // El rol es el mismo que «Organizaciones» porque hoy es el único que
+    // significa «administra esta organización»: la plataforma no tiene todavía
+    // un rol de aseguradora. **La autoridad no es esta línea** — la API acota
+    // por pertenencia al tenant, no por rol global —, así que el día que exista
+    // un `INSURANCE_ADMIN` este es el único lugar que cambia.
+    path: 'administration/insurance',
+    label: 'Aseguradora',
+    group: 'Administración',
+    icon: 'billing',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Revisá tus productos, planes, coberturas y la red de prestadores.',
+    module: 'M26 insurance',
+  },
+  {
+    // Carril 14 (M26), cara de brokers. Separada de «Aseguradora» porque son
+    // dos gestiones distintas —el catálogo y la fuerza comercial— y mezclarlas
+    // obligaría a una sola pantalla a pedir permisos de las dos.
+    path: 'administration/brokers',
+    label: 'Brokers',
+    group: 'Administración',
+    icon: 'patients',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Consultá tus corredores, sus vinculaciones vigentes y su cartera.',
+    module: 'M26 insurance',
   },
   {
     // W2/F3 (M29): el backend del módulo es solo de comando —sin GET—, así
@@ -441,6 +509,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // Carril 17. El panel del administrador de laboratorio farmacéutico.
+    //
+    // Una sola entrada para visitadores, catálogo, material informativo,
+    // farmacovigilancia y documentación: son cinco vistas de **la misma
+    // organización**, y cinco filas de menú obligarían a elegir el laboratorio
+    // cinco veces.
+    //
+    // `PHARMA_LAB_ADMIN` es un rol de sistema que siembra este carril; los otros
+    // dos son los que ya administran organizaciones en el resto del producto.
+    path: 'administration/pharma-lab',
+    label: 'Laboratorio farmacéutico',
+    group: 'Administración',
+    icon: 'settings',
+    roles: ['PHARMA_LAB_ADMIN', 'BUSINESS_ADMIN', 'PLATFORM_ADMIN'],
+    availability: 'disponible',
+    summary:
+      'Administrá visitadores, medicamentos, material aprobado, farmacovigilancia y documentación regulatoria.',
+    module: 'M62 pharma_lab',
+  },
+
+  {
     path: 'administration/accounting',
     label: 'Contabilidad',
     group: 'Facturación',
@@ -505,6 +594,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Tus atenciones y tus recetas, con la descarga en PDF de cada una.',
     module: 'M08 clinical',
+  },
+  {
+    // Carril 11, lado paciente. Es la contracara de «Laboratorio e imagen»:
+    // aquélla es la cola del laboratorio y exige rol clínico; ésta mira los
+    // mismos estudios desde el otro lado, sólo los propios y sólo los que un
+    // profesional ya validó. Sin `roles` por lo mismo que las dos de arriba.
+    path: 'my-account/diagnostic-results',
+    label: 'Mis resultados',
+    group: 'Mi cuenta',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Mirá y descargá tus resultados, y compartilos por un tiempo con un profesional.',
+    module: 'M20 diagnostics',
   },
   {
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino

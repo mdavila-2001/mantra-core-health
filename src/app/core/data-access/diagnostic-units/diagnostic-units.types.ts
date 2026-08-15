@@ -80,3 +80,69 @@ export interface DiagnosticUnitDetail extends DiagnosticUnitDirectoryItem {
   readonly studies: readonly DiagnosticStudy[];
   readonly accreditations: readonly DiagnosticAccreditation[];
 }
+
+/* ============================================================================
+    El buscador del paciente.
+
+    El directorio de arriba contesta «qué laboratorios tiene mi organización».
+    Esto contesta la otra pregunta, la que la especificación le pide al portal:
+    «dónde me hago este estudio» — entre todos los centros publicados, filtrando
+    por tipo, estudio, prestaciones, convenio, precio y calificación.
+
+    Son dos lecturas del mismo catálogo y por eso la tarjeta es la misma, con
+    dos datos más que sólo el buscador necesita.
+    ========================================================================== */
+
+/** Tipo de centro que el buscador entiende. */
+export type DiagnosticUnitKind = 'LABORATORY' | 'IMAGING';
+
+/** Los filtros del buscador. Todos opcionales: sin ninguno, lista todo. */
+export interface DiagnosticUnitSearchQuery {
+  /** Texto libre sobre nombre y código. */
+  readonly q?: string;
+  /** Organización propietaria, si se acota a una. */
+  readonly tenantId?: string;
+  /** Laboratorio o imagenología. */
+  readonly kind?: DiagnosticUnitKind;
+  /** Sólo centros que ofrezcan este estudio. */
+  readonly studyCode?: string;
+  /** Sólo centros con convenio vigente con esta aseguradora. */
+  readonly insurerTenantId?: string;
+  /** Sólo centros que toman muestras a domicilio. */
+  readonly homeCollection?: boolean;
+  /** Sólo centros que atienden sin turno. */
+  readonly walkIn?: boolean;
+  /** Sólo centros que aceptan órdenes de otras instituciones. */
+  readonly acceptsExternalOrders?: boolean;
+  /** Precio publicado máximo. */
+  readonly maxAmount?: number;
+  /** Calificación mínima. */
+  readonly minRating?: number;
+  /** Tope de filas. */
+  readonly limit?: number;
+  /** Filas a saltar. */
+  readonly offset?: number;
+}
+
+/**
+ * Una tarjeta del buscador.
+ *
+ * `rating` es `null` cuando el centro todavía no tiene reseñas publicadas, y
+ * eso **no es lo mismo que cero**: quien lo muestre dice «sin calificaciones»,
+ * nunca una nota mínima que el centro no se ganó. Lo mismo con `minAmount` y
+ * «sin tarifa publicada».
+ */
+export interface DiagnosticUnitSearchItem extends DiagnosticUnitDirectoryItem {
+  readonly tenantId: string;
+  readonly rating: number | null;
+  readonly ratingCount: number;
+  readonly minAmount: number | null;
+}
+
+/** Página del buscador. */
+export interface DiagnosticUnitSearchPage {
+  readonly items: readonly DiagnosticUnitSearchItem[];
+  readonly total: number;
+  readonly limit: number;
+  readonly offset: number;
+}

@@ -91,6 +91,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/medical-laboratory/medical-laboratory').then(
       (m) => m.MedicalLaboratory,
     ),
+  'administration/insurance': () =>
+    import('./features/insurance/insurance-catalog/insurance-catalog').then(
+      (m) => m.InsuranceCatalog,
+    ),
+  'administration/brokers': () =>
+    import('./features/insurance/broker-directory/broker-directory').then((m) => m.BrokerDirectory),
   'administration/accounting': () =>
     import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>
@@ -102,6 +108,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'my-account/medical-record': () =>
     import('./features/account/medical-record/medical-record').then((m) => m.MedicalRecord),
+  'my-account/diagnostic-results': () =>
+    import('./features/account/diagnostic-results/diagnostic-results').then(
+      (m) => m.DiagnosticResults,
+    ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
@@ -129,6 +139,21 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administration/clinical-forms': () =>
     import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
   glossary: () => import('./features/glossary/glossary').then((m) => m.Glossary),
+  // Carril 17. Las tres pantallas van diferidas: cada una la alcanza un rol
+  // distinto —el administrador del laboratorio, el visitador y el doctor— y
+  // ninguna es el destino del login de nadie.
+  'administration/pharma-lab': () =>
+    import('./features/pharma-lab/pharma-lab-home/pharma-lab-home').then(
+      (m) => m.PharmaLabHome,
+    ),
+  'my-visits': () =>
+    import('./features/pharma-lab/visitor-visits/visitor-visits').then(
+      (m) => m.VisitorVisits,
+    ),
+  'lab-visits': () =>
+    import('./features/pharma-lab/doctor-visits/doctor-visits').then(
+      (m) => m.DoctorVisits,
+    ),
 };
 
 /**
@@ -227,6 +252,16 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/laboratory-directory/laboratory-detail/laboratory-detail')
         .then((m) => m.LaboratoryDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La ficha de un corredor (C14): se llega desde el listado de brokers,
+    // nunca desde el menú, así que no es una sección del registro.
+    path: 'administration/brokers/:brokerId',
+    title: `${APP_TITLE} - Perfil del corredor`,
+    loadComponent: () =>
+      import('./features/insurance/broker-detail/broker-detail')
+        .then((m) => m.BrokerDetail)
         .catch(() => chunkFallido()),
   },
   {
