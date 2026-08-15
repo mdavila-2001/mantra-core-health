@@ -15,7 +15,7 @@ describe('Humo', () => {
   it('la ruta principal responde y pinta la aplicación', () => {
     LoginPage.abrir();
 
-    cy.title().should('contain', 'Mantra Core Health');
+    cy.title().should('contain', 'AloVida');
   });
 
   it('el paquete arranca sin errores de consola', () => {

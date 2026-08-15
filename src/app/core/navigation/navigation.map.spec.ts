@@ -94,7 +94,7 @@ describe('APP_SECTIONS', () => {
   it('el título de pestaña deriva del rótulo, para que no se separen', () => {
     const panel = APP_SECTIONS[0];
 
-    expect(panel && titleOf(panel)).toBe('Mantra Core Health - Panel');
+    expect(panel && titleOf(panel)).toBe('AloVida - Panel');
   });
 
   /* -- Carril 02 · corrección #2 ------------------------------------------- */

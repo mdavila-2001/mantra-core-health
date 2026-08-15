@@ -901,35 +901,35 @@ export const routes: Routes = [
       import('./features/design-system-sample/design-system-sample')
         .then((m) => m.DesignSystemSample)
         .catch(() => chunkFallido()),
-    title: 'Mantra Core Health - Vitrina de Diseño',
+    title: 'AloVida - Vitrina de Diseño',
   },
   {
     path: 'auth',
     component: Login,
     pathMatch: 'full',
-    title: 'Mantra Core Health - Iniciar sesión',
+    title: 'AloVida - Iniciar sesión',
   },
   {
     // La ruta la fija `TENANT_SELECTION_ROUTE`, que es a donde manda el guard.
     path: 'auth/organization',
     component: TenantSelection,
-    title: 'Mantra Core Health - Elegí tu organización',
+    title: 'AloVida - Elegí tu organización',
   },
   {
     path: 'auth/register',
     component: RegisterPatient,
-    title: 'Mantra Core Health - Crear cuenta',
+    title: 'AloVida - Crear cuenta',
   },
   {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…
     path: 'auth/verify-email',
     component: VerifyEmail,
-    title: 'Mantra Core Health - Verificar correo',
+    title: 'AloVida - Verificar correo',
   },
   {
     path: 'auth/forgot-password',
     component: ForgotPassword,
-    title: 'Mantra Core Health - Recuperar contraseña',
+    title: 'AloVida - Recuperar contraseña',
   },
   {
     // V01-08. El token puede venir por el enlace (`?token=…`) o escribirse a
@@ -938,19 +938,19 @@ export const routes: Routes = [
     // problema a quien menos herramientas tiene.
     path: 'auth/activate',
     component: ActivateAccount,
-    title: 'Mantra Core Health - Activar cuenta',
+    title: 'AloVida - Activar cuenta',
   },
   {
     // V01-14.
     path: 'auth/resend-verification',
     component: ResendVerification,
-    title: 'Mantra Core Health - Reenviar verificación',
+    title: 'AloVida - Reenviar verificación',
   },
   {
     // También por query string: /auth/nueva-clave?token=…
     path: 'auth/reset-password',
     component: ResetPassword,
-    title: 'Mantra Core Health - Nueva contraseña',
+    title: 'AloVida - Nueva contraseña',
   },
   {
     // Pantalla de recuperación: a donde llega un fragmento que no bajó.
@@ -958,7 +958,7 @@ export const routes: Routes = [
     // alguien que quizá solo necesita recargar.
     path: 'error',
     component: ErrorRecovery,
-    title: 'Mantra Core Health',
+    title: 'AloVida',
   },
   // Las landings públicas en castellano. Van **después** de las nuevas y antes
   // del comodín: si estuvieran primero, `auth/verificar` capturaría antes de
@@ -970,7 +970,7 @@ export const routes: Routes = [
     // equivocado. Ahora lo dice.
     path: '**',
     component: NotFound,
-    title: 'Mantra Core Health - Página no encontrada',
+    title: 'AloVida - Página no encontrada',
   },
 ];
 
