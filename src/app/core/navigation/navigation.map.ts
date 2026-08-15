@@ -287,7 +287,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Los cinco roles humanos de `HealthContextController`. `SYSTEM` queda
     // afuera a propósito: es un rol de servicio para el scheduler, no de alguien
     // que navega — el mismo criterio que dejó a `AUTH_SERVICE` fuera de M40.
-    roles: ['CONTEXT_CURATOR', 'CONTEXT_CONSUMER', 'SOURCE_ADMIN', 'QUALITY_REVIEWER', 'PLATFORM_ADMIN'],
+    roles: [
+      'CONTEXT_CURATOR',
+      'CONTEXT_CONSUMER',
+      'SOURCE_ADMIN',
+      'QUALITY_REVIEWER',
+      'PLATFORM_ADMIN',
+    ],
     availability: 'disponible',
     summary: 'Recolectá y publicá el contexto sanitario de cada país, con su evidencia.',
     module: 'M44 health_context',
@@ -365,8 +371,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // es la suya lo hace la API, que responde 403 ante la de otra organización.
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
-    summary:
-      'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
+    summary: 'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
     module: 'M16 accounting',
   },
 
@@ -402,6 +407,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Mirá tus turnos y pedí uno nuevo con los horarios disponibles.',
     module: 'M41 scheduling',
+  },
+  {
+    // El archivo clínico del paciente (carril 09): cierra el recorrido que
+    // empieza pidiendo un turno. Sin `roles` por lo mismo que «Mis turnos»: el
+    // filtro real es tener perfil de paciente, que es un dato de la cuenta y no
+    // un rol, y la pantalla lo dice cuando falta en vez de esconderse del menú.
+    //
+    // Encendida con el carril 09: `GET /clinical/patients/:id/summary` acepta
+    // ahora al titular, con el aislamiento comprobado del lado del servidor.
+    path: 'my-account/medical-record',
+    label: 'Mi historia clínica',
+    group: 'Mi cuenta',
+    // `results` y no `patients`: lo que esta sección muestra son resultados de
+    // atenciones, y el ícono de pacientes es el de «gente», que acá sería la
+    // persona mirándose a sí misma.
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Tus atenciones y tus recetas, con la descarga en PDF de cada una.',
+    module: 'M08 clinical',
   },
   {
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino

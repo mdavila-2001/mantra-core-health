@@ -133,11 +133,17 @@ describe('ShellLayout', () => {
       // Los tutoriales tampoco exigen rol.
       '/tutorials',
       '/directory',
+      // El directorio de laboratorios tampoco: es oferta publicada, no PHI.
+      '/laboratory-directory',
       // El glosario tampoco: accesible por cada profesional, no sólo por
       // quien administra.
       '/glossary',
       '/my-account',
       '/my-account/appointments',
+      // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que
+      // «Mis turnos»: el filtro real es tener perfil de paciente, que es un
+      // dato de la cuenta y no un rol.
+      '/my-account/medical-record',
       '/my-account/identity/verify',
       '/my-account/identity/cases',
       '/design-system',
