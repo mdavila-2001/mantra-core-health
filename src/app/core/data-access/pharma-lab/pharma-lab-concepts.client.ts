@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, shareReplay, type Observable } from 'rxjs';
 
-import { API_BASE_URL, apiUrl } from '../../core/data-access/api';
+import { API_BASE_URL, apiUrl } from '../api';
 
 /** Un concepto del carril 17, tal como lo devuelve el diccionario de la API. */
 export interface PharmaLabConcept {

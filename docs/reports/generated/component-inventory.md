@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-325 componentes y 52 servicios inyectables, leídos de `src/`.
+334 componentes y 55 servicios inyectables, leídos de `src/`.
 
 ## Átomo (17)
 
@@ -77,12 +77,13 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (265)
+## Feature (274)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
 | `app-appointment-calendar` | `AppointmentCalendar` | `turnos`, `seleccionado` | `turnoElegido` | — | OnPush | sí |
 | `app-appointments` | `Appointments` | — | — | — | OnPush | sí |
+| `app-diagnostic-results` | `DiagnosticResults` | — | — | — | OnPush | sí |
 | `app-medical-record` | `MedicalRecord` | — | — | — | OnPush | sí |
 | `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
@@ -94,6 +95,7 @@
 | `app-accounting` | `Accounting` | — | — | — | OnPush | **no** |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-clinical-forms` | `ClinicalForms` | — | — | — | OnPush | sí |
+| `app-forms-catalog` | `FormsCatalog` | — | `duplicar` | — | OnPush | sí |
 | `app-medical-laboratory` | `MedicalLaboratory` | — | — | — | OnPush | sí |
 | `app-medical-organization` | `MedicalOrganization` | — | — | — | OnPush | sí |
 | `app-organization-detail` | `OrganizationDetail` | — | — | — | OnPush | **no** |
@@ -211,9 +213,16 @@
 | `app-verification-cases` | `VerificationCases` | — | — | — | OnPush | sí |
 | `app-verification-policy-form` | `VerificationPolicyForm` | — | — | — | OnPush | sí |
 | `app-identity-verification` | `IdentityVerification` | — | — | — | OnPush | sí |
+| `app-broker-detail` | `BrokerDetail` | — | — | — | OnPush | sí |
+| `app-broker-directory` | `BrokerDirectory` | — | — | — | OnPush | sí |
+| `app-insurance-catalog` | `InsuranceCatalog` | — | — | — | OnPush | sí |
+| `app-interventions` | `Interventions` | — | — | — | OnPush | **no** |
 | `app-laboratory-detail` | `LaboratoryDetail` | — | — | — | OnPush | sí |
 | `app-laboratory-directory` | `LaboratoryDirectory` | — | — | — | OnPush | sí |
 | `app-not-found` | `NotFound` | — | — | — | OnPush | sí |
+| `app-doctor-visits` | `DoctorVisits` | — | — | — | OnPush | sí |
+| `app-pharma-lab-home` | `PharmaLabHome` | — | — | — | OnPush | sí |
+| `app-visitor-visits` | `VisitorVisits` | — | — | — | OnPush | sí |
 | `app-redsat-accesos-acceso-de-emergencia-formulario` | `AccesosAccesoDeEmergenciaFormulario` | — | — | — | Default | **no** |
 | `app-redsat-accesos-clinicos-del-paciente-formulario` | `AccesosClinicosDelPacienteFormulario` | — | — | — | Default | **no** |
 | `app-redsat-accesos-clinicos-del-paciente-listado` | `AccesosClinicosDelPacienteListado` | — | — | — | Default | **no** |
@@ -359,7 +368,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (52)
+## Servicios (55)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -385,7 +394,10 @@
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |
 | `IdentityAdminClient` | `src/app/core/data-access/identity/identity-admin.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
+| `InsuranceClient` | `src/app/core/data-access/insurance/insurance.client.ts` | root | sí |
 | `MedicalOrganizationClient` | `src/app/core/data-access/medical-organization/medical-organization.client.ts` | root | sí |
+| `PharmaLabConcepts` | `src/app/core/data-access/pharma-lab/pharma-lab-concepts.client.ts` | root | **no** |
+| `PharmaLabClient` | `src/app/core/data-access/pharma-lab/pharma-lab.client.ts` | root | **no** |
 | `PracticeSitesClient` | `src/app/core/data-access/practice-sites/practice-sites.client.ts` | root | sí |
 | `ProceduresClient` | `src/app/core/data-access/procedures/procedures.client.ts` | root | sí |
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |
@@ -423,6 +435,7 @@
 - `OrganizationDetail` — `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
+- `Interventions` — `src/app/features/interventions/interventions.ts`
 - `AccesosAccesoDeEmergenciaFormulario` — `src/app/features/redsat/accesos/acceso-de-emergencia-formulario/acceso-de-emergencia-formulario.ts`
 - `AccesosClinicosDelPacienteFormulario` — `src/app/features/redsat/accesos/accesos-clinicos-del-paciente-formulario/accesos-clinicos-del-paciente-formulario.ts`
 - `AccesosClinicosDelPacienteListado` — `src/app/features/redsat/accesos/accesos-clinicos-del-paciente-listado/accesos-clinicos-del-paciente-listado.ts`

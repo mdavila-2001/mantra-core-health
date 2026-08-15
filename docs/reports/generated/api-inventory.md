@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-201 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+239 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -118,6 +118,7 @@ Archivo: `src/app/core/data-access/chart-templates/chart-templates.client.ts`
 | `GET` | `/charts/templates` |
 | `POST` | `/charts/templates` |
 | `GET` | `/charts/templates/:id` |
+| `POST` | `/charts/templates/:templateId/assignments` |
 
 ## `DiagnosticsClient`
 
@@ -126,6 +127,11 @@ Archivo: `src/app/core/data-access/diagnostics/diagnostics.client.ts`
 | Método | Ruta |
 |---|---|
 | `POST` | `/clinical/service-requests` |
+| `GET` | `/diagnostic-results/me` |
+| `GET` | `/diagnostic-results/me/:reportId` |
+| `GET` | `/diagnostic-results/me/:reportId/shares` |
+| `POST` | `/diagnostic-results/me/:reportId/shares` |
+| `POST` | `/diagnostic-results/me/:reportId/shares/:shareId/revoke` |
 | `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` |
 | `GET` | `/diagnostics/patients/:patientProfileId/orders` |
 | `GET` | `/diagnostics/work-orders` |
@@ -180,7 +186,11 @@ Archivo: `src/app/core/data-access/procedures/procedures.client.ts`
 | `POST` | `/dental-procedures` |
 | `GET` | `/dental-procedures/catalog` |
 | `GET` | `/procedure-cases` |
+| `GET` | `/procedure-cases` |
 | `GET` | `/procedure-cases/:caseId` |
+| `GET` | `/procedure-cases/:caseId/team-members` |
+| `POST` | `/procedure-cases/:caseId/team-members/:memberId/accept` |
+| `POST` | `/procedure-cases/:caseId/team-members/:memberId/respond` |
 
 ## `DiagnosticUnitsClient`
 
@@ -190,6 +200,7 @@ Archivo: `src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts`
 |---|---|
 | `GET` | `/diagnostic-units` |
 | `GET` | `/diagnostic-units/:id` |
+| `GET` | `/diagnostic-units/search` |
 
 ## `DiagnosticUnitsAdminClient`
 
@@ -300,6 +311,54 @@ Archivo: `src/app/core/data-access/identity/identity.client.ts`
 | `POST` | `/identity/me/tenants/:tenantId/verification` |
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
+
+## `InsuranceClient`
+
+Archivo: `src/app/core/data-access/insurance/insurance.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/insurance-brokers` |
+| `GET` | `/insurance-brokers/:id` |
+| `GET` | `/insurance-brokers/:id/clients` |
+| `GET` | `/insurance-carriers` |
+| `GET` | `/insurance-carriers/:id` |
+
+## `PharmaLabClient`
+
+Archivo: `src/app/core/data-access/pharma-lab/pharma-lab.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/pharma-labs` |
+| `GET` | `/pharma-labs/:pharmaLabId` |
+| `GET` | `/pharma-labs/:pharmaLabId/materials` |
+| `GET` | `/pharma-labs/:pharmaLabId/medical-visitors` |
+| `POST` | `/pharma-labs/:pharmaLabId/medical-visitors/:medicalVisitorId/unlink` |
+| `GET` | `/pharma-labs/:pharmaLabId/pharmacovigilance/reports` |
+| `GET` | `/pharma-labs/:pharmaLabId/products` |
+| `GET` | `/pharma-labs/:pharmaLabId/regulatory-documents` |
+| `GET` | `/pharma-labs/:pharmaLabId/staff` |
+| `GET` | `/visit-agenda/doctors/:doctorUserId` |
+| `GET` | `/visit-agenda/me` |
+| `PUT` | `/visit-agenda/me` |
+| `GET` | `/visit-records/inbox` |
+| `GET` | `/visit-records/labs/:pharmaLabId` |
+| `GET` | `/visit-records/labs/:pharmaLabId/rating-summary` |
+| `POST` | `/visit-requests` |
+| `POST` | `/visit-requests/:visitRequestId/accept` |
+| `POST` | `/visit-requests/:visitRequestId/cancel` |
+| `POST` | `/visit-requests/:visitRequestId/reject` |
+| `GET` | `/visit-requests/inbox` |
+| `GET` | `/visit-requests/mine` |
+
+## `PharmaLabConcepts`
+
+Archivo: `src/app/core/data-access/pharma-lab/pharma-lab-concepts.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/pharma-labs/reference/concepts` |
 
 ## `MedicalOrganizationClient`
 

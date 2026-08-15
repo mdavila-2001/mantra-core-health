@@ -9,7 +9,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { PharmaLabConcepts, type ConceptDictionary } from '../pharma-lab-concepts';
+import { PharmaLabConcepts, type ConceptDictionary } from '../../../core/data-access/pharma-lab/pharma-lab-concepts.client';
 
 /** Datos de la pantalla del visitador. */
 export interface VisitorVisitsData {

@@ -15,7 +15,7 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { PharmaLabConcepts, type ConceptDictionary } from '../pharma-lab-concepts';
+import { PharmaLabConcepts, type ConceptDictionary } from '../../../core/data-access/pharma-lab/pharma-lab-concepts.client';
 import { mensajeDeError } from '../visitor-visits/visitor-visits';
 
 /** Nombre del día de la semana, con 0 = domingo, como lo declara la agenda. */
