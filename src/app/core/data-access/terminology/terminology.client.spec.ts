@@ -3,7 +3,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { TerminologyClient } from './terminology.client';
-import type { ValueSetExpansionPage, ValueSetOption } from './terminology.types';
+import type {
+  GlossaryTermDetail,
+  GlossaryTermPage,
+  ValueSetExpansionPage,
+  ValueSetOption,
+} from './terminology.types';
 
 /**
  * Ruta del `$expand` de lectura. El `$` va literal: Express enruta sobre el path
@@ -245,6 +250,43 @@ describe('TerminologyClient', () => {
     req.flush({ items: [], count: 0, limit: 200 });
   });
 
+  /* --- Reconstrucción del glosario (carril 03): categoría, etiquetas y
+     relaciones tipadas. El cliente no cambia ni un parámetro — todo lo nuevo
+     es forma de la respuesta, así que estas pruebas son sobre todo
+     documentación del contrato extendido, no lógica nueva del cliente. */
+
+  it('searchGlossary deja pasar la categoría, la definición breve y las etiquetas sin tocarlas', () => {
+    let pagina: GlossaryTermPage | undefined;
+    client.searchGlossary({ query: 'hiper' }).subscribe((p) => (pagina = p));
+
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({
+      items: [
+        {
+          conceptId: 'c-A',
+          code: 'I10',
+          display: 'Hipertensión esencial',
+          slug: 'hipertension-esencial',
+          translated: true,
+          category: { internalCode: 'glossary-category-disease', name: 'Enfermedades' },
+          shortDefinition: 'Presión arterial persistentemente alta.',
+          tags: ['Cardiovascular', 'Crónico'],
+          relationsCount: 2,
+          status: 'active',
+        },
+      ],
+      count: 1,
+      limit: 50,
+    });
+
+    const item = pagina?.items[0];
+    expect(item?.slug).toBe('hipertension-esencial');
+    expect(item?.category?.name).toBe('Enfermedades');
+    expect(item?.shortDefinition).toBe('Presión arterial persistentemente alta.');
+    expect(item?.tags).toEqual(['Cardiovascular', 'Crónico']);
+    expect(item?.relationsCount).toBe(2);
+    expect(item?.status).toBe('active');
+  });
+
   it('searchConcepts sigue sin pedir idioma ni etiquetas', () => {
     // La garantía de retrocompatibilidad, del lado del cliente: el catálogo de
     // administración y `readConceptLabels` comparten esta URL, y ninguno debe
@@ -268,9 +310,48 @@ describe('TerminologyClient', () => {
       conceptId: 'c-A',
       code: 'I10',
       display: 'Hipertension esencial',
+      slug: 'hipertension-esencial',
       codeSystemVersionId: 'csv-1',
       valueSets: [],
       synonyms: [],
+      category: null,
+      tags: [],
+      clinicalDefinition: { text: 'Persistently high blood pressure.', translated: false },
+      plainSummary: { text: 'Blood pressure that stays too high.', translated: false },
+      relations: [],
     });
+  });
+
+  it('readGlossaryTerm deja pasar la categoría, las etiquetas y las relaciones tipadas sin tocarlas', () => {
+    let ficha: GlossaryTermDetail | undefined;
+    client.readGlossaryTerm('c-A').subscribe((f) => (ficha = f));
+
+    http.expectOne((r) => r.url === '/terminology/concepts/c-A').flush({
+      conceptId: 'c-A',
+      code: 'I10',
+      display: 'Hipertensión esencial',
+      slug: 'hipertension-esencial',
+      codeSystemVersionId: 'csv-1',
+      valueSets: [{ id: 'vs-1', internalCode: 'glossary-category-disease', name: 'Enfermedades' }],
+      synonyms: [],
+      category: { valueSetId: 'vs-1', internalCode: 'glossary-category-disease', name: 'Enfermedades' },
+      tags: [{ valueSetId: 'vs-t1', internalCode: 'glossary-tag-cardiovascular', name: 'Cardiovascular' }],
+      clinicalDefinition: { text: 'Presión arterial persistentemente alta.', translated: true },
+      plainSummary: { text: 'La presión de la sangre está más alta de lo normal.', translated: true },
+      relations: [
+        { type: 'DISEASE', conceptId: 'c-2', slug: 'insuficiencia-cardiaca', display: 'Insuficiencia cardíaca' },
+      ],
+    });
+
+    expect(ficha?.category?.valueSetId).toBe('vs-1');
+    expect(ficha?.tags[0]?.name).toBe('Cardiovascular');
+    expect(ficha?.clinicalDefinition.text).toBe('Presión arterial persistentemente alta.');
+    expect(ficha?.plainSummary.translated).toBe(true);
+    expect(ficha?.relations).toEqual([
+      { type: 'DISEASE', conceptId: 'c-2', slug: 'insuficiencia-cardiaca', display: 'Insuficiencia cardíaca' },
+    ]);
+    // Ningún término tiene imagen sembrada hoy: el campo tiene que poder faltar
+    // sin que el cliente lo reinterprete como un error.
+    expect(ficha?.image).toBeUndefined();
   });
 });
