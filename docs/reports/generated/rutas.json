@@ -275,6 +275,38 @@
       "parametrizada": false
     },
     {
+      "ruta": "/administration/medical-organization",
+      "etiqueta": "Organización médica",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN",
+        "PERIOP_ADMIN",
+        "PRACTITIONER"
+      ],
+      "rolesExclusivos": false,
+      "componente": "MedicalOrganization",
+      "apis": [
+        "MedicalOrganizationClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/medical-laboratory",
+      "etiqueta": "Laboratorio médico",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "MedicalLaboratory",
+      "apis": [
+        "DiagnosticUnitsAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/administration/clinical-forms",
       "etiqueta": "Formularios clínicos",
       "grupo": "Administración",

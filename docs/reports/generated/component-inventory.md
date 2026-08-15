@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-323 componentes y 50 servicios inyectables, leídos de `src/`.
+325 componentes y 52 servicios inyectables, leídos de `src/`.
 
 ## Átomo (17)
 
@@ -77,7 +77,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (263)
+## Feature (265)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -94,6 +94,8 @@
 | `app-accounting` | `Accounting` | — | — | — | OnPush | **no** |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-clinical-forms` | `ClinicalForms` | — | — | — | OnPush | sí |
+| `app-medical-laboratory` | `MedicalLaboratory` | — | — | — | OnPush | sí |
+| `app-medical-organization` | `MedicalOrganization` | — | — | — | OnPush | sí |
 | `app-organization-detail` | `OrganizationDetail` | — | — | — | OnPush | **no** |
 | `app-organization-list` | `OrganizationList` | — | — | — | OnPush | sí |
 | `app-organization-new` | `OrganizationNew` | — | — | — | OnPush | sí |
@@ -357,7 +359,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (50)
+## Servicios (52)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -372,6 +374,7 @@
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
 | `CommunityClient` | `src/app/core/data-access/community/community.client.ts` | root | sí |
 | `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |
+| `DiagnosticUnitsAdminClient` | `src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts` | root | sí |
 | `DiagnosticUnitsClient` | `src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts` | root | sí |
 | `DiagnosticsClient` | `src/app/core/data-access/diagnostics/diagnostics.client.ts` | root | sí |
 | `DirectoryClient` | `src/app/core/data-access/directory/directory.client.ts` | root | sí |
@@ -382,6 +385,7 @@
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |
 | `IdentityAdminClient` | `src/app/core/data-access/identity/identity-admin.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
+| `MedicalOrganizationClient` | `src/app/core/data-access/medical-organization/medical-organization.client.ts` | root | sí |
 | `PracticeSitesClient` | `src/app/core/data-access/practice-sites/practice-sites.client.ts` | root | sí |
 | `ProceduresClient` | `src/app/core/data-access/procedures/procedures.client.ts` | root | sí |
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |

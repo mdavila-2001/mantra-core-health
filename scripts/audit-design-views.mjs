@@ -204,7 +204,12 @@ const CLIENTES = clientesDeDatos();
  */
 const OLORES = [
   [/_DE_MUESTRA\b/, 'datos de muestra'],
-  [/\bTODO\b|\bFIXME\b/, 'TODO/FIXME'],
+  // El nombre del olor va **entre acentos graves**: es el marcador literal que
+  // se encontró en el código, y `check-doc-coverage` prohíbe marcadores
+  // provisionales sueltos en `docs/` —ignorando, a propósito, los que están en
+  // un bloque o span de código, que es justo este caso—. Sin los acentos, este
+  // informe dejaba en rojo esa verificación y con ella el PR de cualquiera.
+  [/\bTODO\b|\bFIXME\b/, '`TODO`/`FIXME`'],
   [/lorem ipsum/i, 'lorem'],
   [/\bfaker\b/i, 'faker en runtime'],
   [/próximamente|proximamente|coming soon|en construcción/i, 'promesa sin pantalla'],
