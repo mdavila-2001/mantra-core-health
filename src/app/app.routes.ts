@@ -91,6 +91,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/medical-laboratory/medical-laboratory').then(
       (m) => m.MedicalLaboratory,
     ),
+  'administration/insurance': () =>
+    import('./features/insurance/insurance-catalog/insurance-catalog').then(
+      (m) => m.InsuranceCatalog,
+    ),
+  'administration/brokers': () =>
+    import('./features/insurance/broker-directory/broker-directory').then((m) => m.BrokerDirectory),
   'administration/accounting': () =>
     import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>
@@ -102,6 +108,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'my-account/medical-record': () =>
     import('./features/account/medical-record/medical-record').then((m) => m.MedicalRecord),
+  'my-account/diagnostic-results': () =>
+    import('./features/account/diagnostic-results/diagnostic-results').then(
+      (m) => m.DiagnosticResults,
+    ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
@@ -128,7 +138,26 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/services-catalog/services-catalog').then((m) => m.ServicesCatalog),
   'administration/clinical-forms': () =>
     import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
+  questionnaires: () =>
+    import('./features/questionnaires/questionnaires').then((m) => m.SurveysHome),
+  'my-account/questionnaires': () =>
+    import('./features/account/questionnaires/questionnaires').then((m) => m.Questionnaires),
   glossary: () => import('./features/glossary/glossary').then((m) => m.Glossary),
+  // Carril 17. Las tres pantallas van diferidas: cada una la alcanza un rol
+  // distinto —el administrador del laboratorio, el visitador y el doctor— y
+  // ninguna es el destino del login de nadie.
+  'administration/pharma-lab': () =>
+    import('./features/pharma-lab/pharma-lab-home/pharma-lab-home').then(
+      (m) => m.PharmaLabHome,
+    ),
+  'my-visits': () =>
+    import('./features/pharma-lab/visitor-visits/visitor-visits').then(
+      (m) => m.VisitorVisits,
+    ),
+  'lab-visits': () =>
+    import('./features/pharma-lab/doctor-visits/doctor-visits').then(
+      (m) => m.DoctorVisits,
+    ),
 };
 
 /**
@@ -149,6 +178,25 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * que `/administration/patients/new` sigue resolviendo a «Pacientes».
  */
 const PANTALLAS_HIJAS: Routes = [
+  {
+    // La ficha de una encuesta (carril 10): cuestionario, publicación y
+    // respuestas. Se llega desde el listado, no desde el menú.
+    path: 'questionnaires/:surveyId',
+    title: `${APP_TITLE} - Encuesta`,
+    loadComponent: () =>
+      import('./features/questionnaires/survey-detail/survey-detail')
+        .then((m) => m.SurveyDetailScreen)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Responder un cuestionario concreto. Cuelga de «Mis cuestionarios».
+    path: 'my-account/questionnaires/:invitationId',
+    title: `${APP_TITLE} - Responder cuestionario`,
+    loadComponent: () =>
+      import('./features/account/questionnaires/answer/answer')
+        .then((m) => m.QuestionnaireAnswer)
+        .catch(() => chunkFallido()),
+  },
   {
     // El expediente de una persona concreta. Cuelga de «Archivo clínico», que
     // es la pantalla que elige a quién se mira: sin paciente no hay expediente,
@@ -227,6 +275,16 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/laboratory-directory/laboratory-detail/laboratory-detail')
         .then((m) => m.LaboratoryDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La ficha de un corredor (C14): se llega desde el listado de brokers,
+    // nunca desde el menú, así que no es una sección del registro.
+    path: 'administration/brokers/:brokerId',
+    title: `${APP_TITLE} - Perfil del corredor`,
+    loadComponent: () =>
+      import('./features/insurance/broker-detail/broker-detail')
+        .then((m) => m.BrokerDetail)
         .catch(() => chunkFallido()),
   },
   {

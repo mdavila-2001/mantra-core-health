@@ -1,0 +1,63 @@
+/* ============================================================================
+    «Encuestas» — el listado del profesional.
+
+    El alta va en la misma pantalla, plegada: crear una encuesta es un acto
+    breve —tres campos— y mandarlo a otra ruta obligaría a volver para ver el
+    resultado.
+    ========================================================================== */
+
+.encuestas__alta {
+  display: block;
+  margin-block-end: var(--sp-6);
+}
+
+.encuestas__acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-start: var(--sp-4);
+}
+
+.encuestas__lista {
+  display: grid;
+  gap: var(--sp-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.encuestas__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.encuestas__datos {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.encuestas__titulo {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin-block: 0 var(--sp-1);
+}
+
+.encuestas__consigna {
+  color: var(--text-secondary);
+  margin-block: 0 var(--sp-2);
+}
+
+.encuestas__meta {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin-block: 0;
+}
+
+.encuestas__acciones-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}

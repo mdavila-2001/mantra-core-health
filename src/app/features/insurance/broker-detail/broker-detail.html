@@ -1,0 +1,122 @@
+<app-page-header
+  [title]="title()"
+  subtitle="Credenciales, vinculaciones y cartera comercial del corredor."
+  [breadcrumbs]="[{ label: 'Brokers', routerLink: '/administration/brokers' }, { label: title() }]"
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (dossier(); as dossier) {
+    <div class="broker">
+      <app-card variant="outlined" padding="lg" class="broker__card broker__card--wide">
+        <h2 card-header>Identificación</h2>
+        <dl class="broker__facts">
+          <div>
+            <dt>Código</dt>
+            <dd>{{ dossier.profile.brokerCode }}</dd>
+          </div>
+          <div>
+            <dt>Matrícula declarada</dt>
+            <dd>{{ dossier.profile.licenseNumber ?? 'Sin registrar' }}</dd>
+          </div>
+          <div>
+            <dt>Jurisdicción</dt>
+            <dd>{{ dossier.profile.jurisdiction?.display ?? 'Sin registrar' }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{{ dossier.profile.status.display }}</dd>
+          </div>
+        </dl>
+        <p class="broker__badges">
+          <app-status-seal
+            [variant]="verificationVariant(dossier.profile.verification.code)"
+            [label]="dossier.profile.verification.display"
+          />
+          @if (dossier.profile.independent) {
+            <app-chip variant="neutral" size="sm">Independiente</app-chip>
+          } @else {
+            <app-chip variant="info" size="sm">
+              Representa a {{ dossier.profile.currentCarrierCount }}
+              {{ dossier.profile.currentCarrierCount === 1 ? 'aseguradora' : 'aseguradoras' }}
+            </app-chip>
+          }
+        </p>
+      </app-card>
+
+      <app-card variant="outlined" padding="lg" class="broker__card broker__card--wide">
+        <h2 card-header>Vinculaciones</h2>
+        @if (dossier.profile.agreements.length === 0) {
+          <p class="broker__hollow">
+            Este corredor no tiene acuerdos registrados con ninguna aseguradora.
+          </p>
+        } @else {
+          <ul class="broker__agreements">
+            @for (acuerdo of dossier.profile.agreements; track acuerdo.id) {
+              <li class="broker__agreement">
+                <span class="broker__agreement-carrier">{{ acuerdo.carrierLegalName }}</span>
+                <span class="broker__agreement-code">{{ acuerdo.agreementCode }}</span>
+                <span class="broker__agreement-validity">
+                  @if (acuerdo.effectiveFrom) {
+                    Desde {{ acuerdo.effectiveFrom | date: 'longDate' }}
+                  } @else {
+                    Sin fecha de inicio
+                  }
+                  @if (acuerdo.effectiveTo) {
+                    · hasta {{ acuerdo.effectiveTo | date: 'longDate' }}
+                  }
+                </span>
+                <!-- La vigencia la decide el servidor. Un acuerdo terminado se
+                     muestra —el histórico es un requisito— pero nunca como si
+                     habilitara a representar a la aseguradora. -->
+                <app-chip [variant]="acuerdo.current ? 'success' : 'neutral'" size="sm">
+                  {{ acuerdo.current ? 'Vigente' : 'Terminada' }}
+                </app-chip>
+              </li>
+            }
+          </ul>
+        }
+      </app-card>
+
+      <app-card variant="outlined" padding="lg" class="broker__card broker__card--wide">
+        <h2 card-header>Cartera</h2>
+        <p class="broker__scope-note">
+          Sólo la relación comercial: el corredor no accede al historial médico de las personas
+          que atiende.
+        </p>
+        @if (dossier.clients.length === 0) {
+          <p class="broker__hollow">Todavía no tiene clientes asignados.</p>
+        } @else {
+          <table class="broker__clients">
+            <caption class="broker__clients-caption">
+              Clientes asignados al corredor
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Tipo de cliente</th>
+                <th scope="col">Colectivo</th>
+                <th scope="col">Desde</th>
+                <th scope="col">Hasta</th>
+                <th scope="col">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (cliente of dossier.clients; track cliente.id) {
+                <tr>
+                  <th scope="row">{{ cliente.clientType.display }}</th>
+                  <td>{{ cliente.employerGroupId ? 'Empresa afiliada' : 'Individual' }}</td>
+                  <td>
+                    {{ cliente.effectiveFrom ? (cliente.effectiveFrom | date: 'longDate') : '—' }}
+                  </td>
+                  <td>
+                    {{ cliente.effectiveTo ? (cliente.effectiveTo | date: 'longDate') : 'Sin fin' }}
+                  </td>
+                  <td>{{ cliente.status.display }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </app-card>
+    </div>
+  }
+</app-view-state-host>

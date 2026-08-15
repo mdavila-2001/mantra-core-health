@@ -211,13 +211,21 @@ const EXPEDIENTE: TutorialDefinition = {
   ],
 };
 
-/** El perfil profesional y qué se hace con él. */
+/**
+ * El perfil profesional y qué se hace con él.
+ *
+ * Versión 2.0 (carril 05): el recorrido cambió de verdad — la formación y las
+ * matrículas pasaron a vivir dentro de las pestañas Trayectoria/Credenciales,
+ * y se agregó la vista previa — así que sube la versión **mayor** en vez de la
+ * menor: quien ya completó el tour de 4 pasos anterior lo vuelve a ver, porque
+ * lo que aprendió ya no es lo que la pantalla hace (ver `tutorial-progress.store.ts`).
+ */
 const PERFIL_PROFESIONAL: TutorialDefinition = {
   id: 'perfil-profesional',
-  version: '1.0',
+  version: '2.0',
   title: 'Tu perfil profesional',
   description:
-    'Tu trayectoria, tus especialidades, tu formación y las matrículas que te habilitan a ejercer.',
+    'Tu trayectoria, tus credenciales y cómo se ve tu perfil público para un paciente.',
   category: 'Mi cuenta',
   route: '/my-account',
   roles: ['PRACTITIONER', 'CLINICIAN'],
@@ -239,17 +247,24 @@ const PERFIL_PROFESIONAL: TutorialDefinition = {
       placement: 'top',
     },
     {
-      id: 'formacion',
-      title: 'Tu formación',
-      body: 'Títulos y certificaciones, con la institución y la fecha. Lo vencido sigue apareciendo: es parte de tu trayectoria.',
-      target: 'perfil-formacion',
+      id: 'trayectoria',
+      title: 'Tu trayectoria',
+      body: 'Formación, dónde ejerciste antes y dónde ejercés hoy, en una línea de tiempo. Acá también agregás vínculos laborales nuevos.',
+      target: 'perfil-trayectoria',
       placement: 'top',
     },
     {
-      id: 'matriculas',
-      title: 'Dónde podés ejercer',
-      body: 'Tus matrículas y su vigencia. Es lo que te habilita, así que conviene revisarlo cuando venza alguna.',
-      target: 'perfil-matriculas',
+      id: 'credenciales',
+      title: 'Declarado y verificado',
+      body: 'Especialidades y matrículas, separadas entre lo que ya se comprobó contra una fuente y lo que todavía está pendiente.',
+      target: 'perfil-credenciales',
+      placement: 'top',
+    },
+    {
+      id: 'preview',
+      title: 'Así te ve un paciente',
+      body: 'La vista previa es el mismo perfil que aparece en la Guía de profesionales, no una maqueta aparte.',
+      target: 'perfil-preview',
       placement: 'top',
     },
   ],

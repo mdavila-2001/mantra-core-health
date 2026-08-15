@@ -263,6 +263,38 @@
   min-inline-size: 0;
 }
 
+/* ── Fases de la pestaña Trayectoria (carril 05) ────────────────────────────
+   Actividad actual, experiencia histórica y formación son tres preguntas
+   distintas contadas con el mismo dibujo de línea de tiempo — el espaciado
+   entre fases es lo único que hace falta acá, todo lo demás ya lo resuelven
+   `.profesional__linea`/`.profesional__hito`. */
+
+.profesional__fase {
+  margin-block-start: var(--sp-5);
+}
+
+.profesional__fase:first-of-type {
+  margin-block-start: 0;
+}
+
+.profesional__fase-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+/* ── Declarado vs. verificado (pestaña Credenciales, carril 05) ────────────
+   Dos columnas cuando entran, apiladas cuando no: es una comparación, no una
+   trayectoria, así que acá sí conviene leerlas una junto a la otra. */
+
+.profesional__seguimiento {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-5);
+}
+
 /* ── Identificadores ───────────────────────────────────────────────────────*/
 
 .profesional__ids {

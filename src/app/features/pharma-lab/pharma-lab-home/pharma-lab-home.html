@@ -1,0 +1,251 @@
+<app-page-header
+  title="Laboratorio farmacéutico"
+  subtitle="Visitadores, catálogo de medicamentos, material informativo, farmacovigilancia y documentación regulatoria."
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (data(); as panel) {
+    <p class="lab__identity" data-testid="lab-identity">
+      <strong>{{ panel.lab.legalName }}</strong>
+      @if (panel.lab.tradeName) {
+        <span class="lab__trade"> · {{ panel.lab.tradeName }}</span>
+      }
+      <app-badge variant="success">{{ concepto(panel.lab.statusConceptId) }}</app-badge>
+    </p>
+
+    <app-tabs>
+      <app-tab label="Visitadores">
+        <section class="lab__section" aria-label="Visitadores médicos">
+          <label class="lab__reason" for="motivo-desvinculacion">
+            Motivo de la desvinculación
+            <input
+              id="motivo-desvinculacion"
+              class="lab__reason-input"
+              type="text"
+              data-testid="unlink-reason"
+              placeholder="Ej.: fin de contrato"
+              [value]="motivo()"
+              (input)="escribirMotivo($event)"
+            />
+          </label>
+
+          @if (ultimaRevocacion(); as aviso) {
+            <p class="lab__revocation" role="status" data-testid="unlink-result">{{ aviso }}</p>
+          }
+
+          @if (panel.visitors.length === 0) {
+            <p class="lab__empty">El laboratorio todavía no registró visitadores.</p>
+          } @else {
+            <table class="lab__table" data-testid="visitors-table">
+              <caption class="lab__caption">
+                Visitadores del laboratorio y su vinculación
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Nombre</th>
+                  <th scope="col">Código</th>
+                  <th scope="col">Zona</th>
+                  <th scope="col">Vinculación</th>
+                  <th scope="col">Perfil público</th>
+                  <th scope="col">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (visitor of panel.visitors; track visitor.id) {
+                  <tr [attr.data-testid]="'visitor-row-' + visitor.internalCode">
+                    <td>{{ visitor.fullName }}</td>
+                    <td class="lab__mono">{{ visitor.internalCode }}</td>
+                    <td>{{ visitor.assignedZone ?? visitor.region ?? '—' }}</td>
+                    <td [attr.data-testid]="'visitor-status-' + visitor.internalCode">
+                      {{ concepto(visitor.statusConceptId) }}
+                    </td>
+                    <td>{{ visitor.publiclyListed ? 'Visible' : 'Oculto' }}</td>
+                    <td>
+                      @if (estaVinculado(visitor)) {
+                        <button
+                          app-button
+                          variant="danger"
+                          size="sm"
+                          [attr.data-testid]="'unlink-' + visitor.internalCode"
+                          (click)="desvincular(visitor)"
+                        >
+                          Desvincular
+                        </button>
+                      } @else {
+                        <span class="lab__muted">{{ visitor.unlinkReason ?? 'Sin acceso' }}</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+      </app-tab>
+
+      <app-tab label="Catálogo">
+        <section class="lab__section" aria-label="Catálogo de medicamentos">
+          @if (panel.products.length === 0) {
+            <p class="lab__empty">El catálogo todavía no tiene medicamentos.</p>
+          } @else {
+            <table class="lab__table" data-testid="products-table">
+              <caption class="lab__caption">Medicamentos desarrollados o fabricados</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Nombre comercial</th>
+                  <th scope="col">Principio activo</th>
+                  <th scope="col">Estado regulatorio</th>
+                  <th scope="col">Indicación autorizada</th>
+                  <th scope="col">Divulgación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (product of panel.products; track product.id) {
+                  <tr>
+                    <td>{{ product.tradeName }}</td>
+                    <td>{{ product.activeIngredient }}</td>
+                    <td>{{ concepto(product.regulatoryStatusConceptId) }}</td>
+                    <td>{{ product.authorizedIndication ?? 'Sin indicación publicable' }}</td>
+                    <td>{{ concepto(product.disclosureLevelConceptId) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+      </app-tab>
+
+      <app-tab label="Material informativo">
+        <section class="lab__section" aria-label="Material informativo">
+          @if (panel.materials.length === 0) {
+            <p class="lab__empty">Todavía no hay material informativo cargado.</p>
+          } @else {
+            <table class="lab__table" data-testid="materials-table">
+              <caption class="lab__caption">
+                Material para doctores y su estado de aprobación
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Título</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Versión</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Vigencia</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (material of panel.materials; track material.id) {
+                  <tr>
+                    <td>{{ material.title }}</td>
+                    <td>{{ concepto(material.kindConceptId) }}</td>
+                    <td class="lab__mono">{{ material.version }}</td>
+                    <td>{{ concepto(material.statusConceptId) }}</td>
+                    <td>{{ material.validFrom ?? '—' }} → {{ material.validTo ?? 'sin límite' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+      </app-tab>
+
+      <app-tab label="Farmacovigilancia">
+        <section class="lab__section" aria-label="Reportes de farmacovigilancia">
+          @if (panel.reports.length === 0) {
+            <p class="lab__empty">No hay reportes de farmacovigilancia registrados.</p>
+          } @else {
+            <table class="lab__table" data-testid="pv-table">
+              <caption class="lab__caption">
+                Reportes recibidos. La identidad del paciente no se registra.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Caso</th>
+                  <th scope="col">Fecha del evento</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Gravedad</th>
+                  <th scope="col">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (report of panel.reports; track report.id) {
+                  <tr>
+                    <td class="lab__mono">{{ report.caseCode }}</td>
+                    <td>{{ report.eventDate }}</td>
+                    <td>{{ concepto(report.eventTypeConceptId) }}</td>
+                    <td>{{ concepto(report.severityConceptId) }}</td>
+                    <td>{{ concepto(report.statusConceptId) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+      </app-tab>
+
+      <app-tab label="Documentación">
+        <section class="lab__section" aria-label="Documentación legal y regulatoria">
+          @if (panel.documents.length === 0) {
+            <p class="lab__empty">El repositorio documental está vacío.</p>
+          } @else {
+            <table class="lab__table" data-testid="documents-table">
+              <caption class="lab__caption">
+                Licencias, registros y autorizaciones. Ningún documento se elimina.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Documento</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Versión</th>
+                  <th scope="col">Vence</th>
+                  <th scope="col">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (document of panel.documents; track document.id) {
+                  <tr>
+                    <td>{{ document.name }}</td>
+                    <td>{{ concepto(document.documentTypeConceptId) }}</td>
+                    <td class="lab__mono">{{ document.currentVersion }}</td>
+                    <td>{{ document.expiresOn ?? 'sin vencimiento' }}</td>
+                    <td>{{ concepto(document.statusConceptId) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+      </app-tab>
+
+      <app-tab label="Calificaciones">
+        <section class="lab__section" aria-label="Resultados agregados de calificaciones">
+          <p class="lab__note">
+            Resultados agregados de {{ panel.ratings.sampleSize }} calificación(es). Las notas
+            individuales de cada doctor no se publican.
+          </p>
+          <dl class="lab__ratings" data-testid="ratings">
+            <div><dt>Puntualidad</dt><dd>{{ panel.ratings.punctuality ?? 'sin datos' }}</dd></div>
+            <div>
+              <dt>Calidad de la información</dt>
+              <dd>{{ panel.ratings.informationQuality ?? 'sin datos' }}</dd>
+            </div>
+            <div><dt>Claridad</dt><dd>{{ panel.ratings.clarity ?? 'sin datos' }}</dd></div>
+            <div><dt>Relevancia</dt><dd>{{ panel.ratings.relevance ?? 'sin datos' }}</dd></div>
+            <div>
+              <dt>Conducta profesional</dt>
+              <dd>{{ panel.ratings.professionalConduct ?? 'sin datos' }}</dd>
+            </div>
+            <div>
+              <dt>Utilidad del material</dt>
+              <dd>{{ panel.ratings.materialUsefulness ?? 'sin datos' }}</dd>
+            </div>
+            <div>
+              <dt>Satisfacción general</dt>
+              <dd>{{ panel.ratings.overallSatisfaction ?? 'sin datos' }}</dd>
+            </div>
+          </dl>
+        </section>
+      </app-tab>
+    </app-tabs>
+  }
+</app-view-state-host>

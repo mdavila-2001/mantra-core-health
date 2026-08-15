@@ -43,6 +43,36 @@ const PERFIL = {
   credentials: [],
   licenses: [],
   languages: [],
+  affiliations: [
+    {
+      id: 'af-1',
+      practitionerProfileId: 'per-9',
+      organizationName: 'Hospital del Niño',
+      roleTitle: 'Pediatra de guardia',
+      departmentText: null,
+      practiceSiteId: null,
+      affiliationTypeConceptId: null,
+      startDate: '2010-01-01',
+      endDate: '2015-01-01',
+      current: false,
+      status: 'c-activo',
+      createdAt: '2010-01-02T00:00:00.000Z',
+    },
+    {
+      id: 'af-2',
+      practitionerProfileId: 'per-9',
+      organizationName: 'Sucursal Miraflores',
+      roleTitle: 'Pediatra',
+      departmentText: null,
+      practiceSiteId: null,
+      affiliationTypeConceptId: null,
+      startDate: '2018-06-01',
+      endDate: null,
+      current: true,
+      status: 'c-activo',
+      createdAt: '2018-06-02T00:00:00.000Z',
+    },
+  ],
   activity: { encounters: 5, medicationRequests: 2, clinicalNotes: 1, documents: 0 },
   createdAt: '2015-01-01T00:00:00.000Z',
 };
@@ -159,6 +189,28 @@ describe('PractitionerDetail', () => {
     http.verify();
 
     expect(visible().fotoUrl).toBe('https://cdn.example/foto-9.jpg');
+  });
+
+  /**
+   * El mismo reparto en fases que ve el dueño en su propio perfil (carril 05):
+   * la ficha que abre un paciente desde la guía no puede mostrar una
+   * trayectoria distinta a la que el profesional ve de sí mismo.
+   */
+  it('separa el historial laboral en actividad actual y experiencia histórica', () => {
+    montar();
+    responder();
+    http.verify();
+
+    expect(visible().actividadActual).toHaveLength(1);
+    expect(visible().actividadActual[0]).toMatchObject({
+      organizacion: 'Sucursal Miraflores',
+      actual: true,
+    });
+    expect(visible().experienciaHistorica).toHaveLength(1);
+    expect(visible().experienciaHistorica[0]).toMatchObject({
+      organizacion: 'Hospital del Niño',
+      actual: false,
+    });
   });
 
   /** El catálogo caído deja los rótulos sin resolver, no la ficha sin perfil. */

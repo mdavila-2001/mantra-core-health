@@ -276,6 +276,9 @@ export class ProfilesClient {
         validFrom: maybeDate(matricula.validFrom),
         validTo: maybeDate(matricula.validTo),
       })),
+      // Mismo mapeo que `listAffiliations`/`addAffiliation`: una sola función,
+      // reutilizada en vez de reimplementar la conversión de fechas acá.
+      affiliations: limpio.affiliations.map(toAffiliation),
     };
   }
 
@@ -512,7 +515,7 @@ type WirePractitionerDirectoryPage = PractitionerDirectoryPage;
 
 type WireOwnPractitioner = Omit<
   OwnPractitionerProfile,
-  'createdAt' | 'specialties' | 'credentials' | 'licenses'
+  'createdAt' | 'specialties' | 'credentials' | 'licenses' | 'affiliations'
 > & {
   readonly createdAt: string;
   readonly specialties: readonly WireDates<PractitionerSpecialty, 'validFrom' | 'validTo'>[];
@@ -521,6 +524,7 @@ type WireOwnPractitioner = Omit<
     'issueDate' | 'expiryDate' | 'verifiedAt'
   >[];
   readonly licenses: readonly WireDates<PractitionerLicense, 'validFrom' | 'validTo'>[];
+  readonly affiliations: readonly WireAffiliation[];
 };
 
 /* Lo que de verdad llega por el cable: la misma forma, con `null` donde el
