@@ -288,7 +288,7 @@ y no sólo un `SECURITY_ADMIN`.
 Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
 catálogo — mismo motivo: no existe «la práctica del usuario».
 
-### `SchedulingClient` — 14 operaciones
+### `SchedulingClient` — 17 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -306,6 +306,16 @@ catálogo — mismo motivo: no existe «la práctica del usuario».
 | `POST` | `/scheduling/bookings/:bookingId/cancel` | `Agenda` (V41-02·A, UC-41-09) |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` | `Agenda` (V41-02·A, UC-41-10) |
 | `POST` | `/scheduling/bookings/:bookingId/reschedule` | `Appointments` (mi cuenta: mover el turno a otro cupo) |
+| `POST` | `/scheduling/holds/:holdToken/request` | `BookingNew` (el paciente solicita, no confirma) |
+| `POST` | `/scheduling/bookings/:bookingId/reject` | `Agenda` (el doctor rechaza una solicitud) |
+| `POST` | `/scheduling/bookings/:bookingId/:accion` | `Agenda` (acepta/atiende: la acción va en la ruta) |
+
+> **Las tres últimas se declaran acá al resolver el conflicto del carril 13/16,
+> no por sus autores.** Entraron a `dev` con los carriles 06 y 07 sin pasar por
+> esta página, y eso deja `check-api-contract-drift` en rojo para todo el que
+> abra un PR después — el verificador no distingue «lo agregó otro» de «lo
+> agregué yo». Si algún consumidor quedó mal atribuido, corregilo: se dedujo de
+> quién importa el cliente.
 
 **La construcción de agenda es de cinco fases encadenadas por id** (`AgendaCreate`,
 `/schedule/new`, sólo `SCHEDULING_ADMIN`). El alta del recurso devuelve el
