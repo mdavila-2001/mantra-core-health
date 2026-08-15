@@ -1,4 +1,4 @@
-import { buildPrescriptionPdf, buildVisitPdf } from './clinical-pdf';
+import { bloquesDeAtencion, bloquesDeReceta } from './clinical-pdf';
 import type { DocumentoDeAtencion, DocumentoDeReceta } from './clinical-pdf.types';
 
 /**
@@ -6,18 +6,22 @@ import type { DocumentoDeAtencion, DocumentoDeReceta } from './clinical-pdf.type
  *
  * El criterio de éxito de esta iteración está escrito en el carril: el PDF **se
  * genera desde datos persistidos, no está vacío y contiene los campos mínimos**.
- * Eso es exactamente lo que estas pruebas miran, y por eso leen el texto del
- * documento en vez de comparar bytes: un snapshot de bytes se rompe cuando
- * cambia la versión de la librería, sin que el documento haya cambiado en nada
- * que le importe a nadie.
+ * Eso es lo que se mira acá: **qué dice el documento**.
+ *
+ * ## Por qué se prueba el contenido y no el PDF
+ *
+ * Porque el contenido es lo que este archivo decide; maquetarlo es de
+ * `pdf-export.ts`, que tiene sus propias pruebas. Ir hasta el `jsPDF` real
+ * obligaba a leer sus estructuras internas —que cambian según qué build resuelve
+ * Vitest— y mockear el módulo acoplaba esta prueba con `pdf-export.spec.ts`: los
+ * dos archivos mockeaban `jspdf` y, según cómo el pool repartiera los workers,
+ * uno se llevaba puesto al otro. Un test que depende del orden en que corren los
+ * archivos no prueba nada.
  */
 
-/** El texto de todas las páginas del PDF, para poder buscar campos. */
-function textoDe(doc: ReturnType<typeof buildVisitPdf>): string {
-  // `getTextContent` no existe en jsPDF; el texto se recupera del stream
-  // interno, que es donde la librería deja lo que va a imprimir.
-  const paginas = (doc as unknown as { internal: { pages: string[][] } }).internal.pages;
-  return paginas.flat().join('\n');
+/** Todo el texto del documento, para poder buscar campos. */
+function textoDe(bloques: readonly { text: string }[]): string {
+  return bloques.map((bloque) => bloque.text).join('\n');
 }
 
 const RECETA: DocumentoDeReceta = {
@@ -53,64 +57,100 @@ const ATENCION: DocumentoDeAtencion = {
   ],
 };
 
-describe('PDF de receta', () => {
+describe('Documento de receta', () => {
   it('no sale vacío y trae paciente, profesional y medicamento', () => {
-    const texto = textoDe(buildPrescriptionPdf(RECETA));
+    const texto = textoDe(bloquesDeReceta(RECETA));
 
-    expect(texto).toContain('Receta');
     expect(texto).toContain('Ana Quispe');
-    expect(texto).toContain('Salas');
+    expect(texto).toContain('Dra. Salas');
     expect(texto).toContain('Amoxicilina');
     expect(texto).toContain('500 mg');
+    expect(texto).toContain('cada 8 horas');
+    // El documento dice de qué organización sale: un papel clínico sin origen
+    // no se puede rastrear después.
+    expect(texto).toContain('Consultorio Central');
   });
 
   it('una receta sin emitir lo dice, en vez de aparentar validez', () => {
     const { emitidaEl: _emitida, ...sinEmitir } = RECETA;
-    const texto = textoDe(buildPrescriptionPdf(sinEmitir));
 
-    expect(texto).toContain('sin emitir');
+    expect(textoDe(bloquesDeReceta(sinEmitir))).toContain('sin emitir');
+    expect(textoDe(bloquesDeReceta(RECETA))).not.toContain('sin emitir');
   });
 
   it('sin medicamentos lo dice: una receta vacía no puede parecer completa', () => {
-    const texto = textoDe(buildPrescriptionPdf({ ...RECETA, medicamentos: [] }));
-
-    expect(texto).toContain('Sin medicamentos');
+    expect(textoDe(bloquesDeReceta({ ...RECETA, medicamentos: [] }))).toContain('Sin medicamentos');
   });
 
   it('los datos que faltan salen como no registrados, nunca como hueco', () => {
     const texto = textoDe(
-      buildPrescriptionPdf({ ...RECETA, paciente: { nombre: '' }, profesional: { nombre: '' } }),
+      bloquesDeReceta({ ...RECETA, paciente: { nombre: '' }, profesional: { nombre: '' } }),
     );
 
     expect(texto).toContain('No registrado');
   });
+
+  it('la matrícula y el documento sólo se imprimen si existen', () => {
+    const texto = textoDe(
+      bloquesDeReceta({
+        ...RECETA,
+        paciente: { nombre: 'Ana Quispe' },
+        profesional: { nombre: 'Dra. Salas' },
+      }),
+    );
+
+    expect(texto).not.toContain('Matrícula');
+    expect(texto).not.toContain('Documento:');
+  });
+
+  it('los medicamentos van numerados: una receta se lee por renglón', () => {
+    const texto = textoDe(
+      bloquesDeReceta({
+        ...RECETA,
+        medicamentos: [
+          { medicamento: 'Amoxicilina' },
+          { medicamento: 'Ibuprofeno', dosis: '400 mg' },
+        ],
+      }),
+    );
+
+    expect(texto).toContain('1. Amoxicilina');
+    expect(texto).toContain('2. Ibuprofeno · 400 mg');
+  });
 });
 
-describe('PDF de la atención', () => {
+describe('Documento de la atención', () => {
   it('trae motivo, fechas y los bloques clínicos', () => {
-    const texto = textoDe(buildVisitPdf(ATENCION));
+    const texto = textoDe(bloquesDeAtencion(ATENCION));
 
     expect(texto).toContain('Dolor de garganta');
-    expect(texto).toContain('Diagn');
+    expect(texto).toContain('Diagnósticos');
     expect(texto).toContain('Faringitis aguda');
   });
 
   it('una atención en curso se declara copia de trabajo', () => {
     const { cierre: _cierre, ...enCurso } = ATENCION;
-    const texto = textoDe(buildVisitPdf(enCurso));
 
-    expect(texto).toContain('en curso');
+    expect(textoDe(bloquesDeAtencion(enCurso))).toContain('en curso');
+    expect(textoDe(bloquesDeAtencion(ATENCION))).not.toContain('en curso');
   });
 
   it('un bloque sin registros lo dice en vez de desaparecer', () => {
     const texto = textoDe(
-      buildVisitPdf({ ...ATENCION, bloques: [{ titulo: 'Medicación', datos: [] }] }),
+      bloquesDeAtencion({ ...ATENCION, bloques: [{ titulo: 'Medicación', datos: [] }] }),
     );
 
+    expect(texto).toContain('Medicación');
     expect(texto).toContain('Sin registros');
   });
 
   it('el documento declara cuándo se generó', () => {
-    expect(textoDe(buildVisitPdf(ATENCION))).toContain('generado el');
+    expect(textoDe(bloquesDeAtencion(ATENCION))).toContain('generado el');
+  });
+
+  it('sin motivo registrado lo dice, en vez de dejar el renglón colgado', () => {
+    const { motivo: _motivo, ...sinMotivo } = ATENCION;
+
+    expect(textoDe(bloquesDeAtencion(sinMotivo))).toContain('Motivo de consulta: No registrado');
   });
 });
