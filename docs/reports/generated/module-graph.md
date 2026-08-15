@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-783 archivos TypeScript bajo `src/` y 3025 importaciones internas.
+786 archivos TypeScript bajo `src/` y 3082 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -14,6 +14,7 @@ Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.jso
 Se excluyen los puntos de entrada del framework y las pruebas.
 
 - `src/app/core/observability/browser/telemetry-browser.bootstrap.ts`
+- `src/app/features/account/medical-record/medical-record.routes.ts`
 - `src/app/features/accounting/accounting.ts`
 - `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
 - `src/app/features/diagnostics/diagnostics.routes.ts`
@@ -97,19 +98,6 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/redsat/directorio/sucursales-listado/sucursales-listado.ts`
 - `src/app/features/redsat/directorio/transferencias-formulario/transferencias-formulario.ts`
 - `src/app/features/redsat/inicio/portada/portada.ts`
-- `src/app/features/redsat/organizaciones/asignaciones-de-sucursal-formulario/asignaciones-de-sucursal-formulario.ts`
-- `src/app/features/redsat/organizaciones/membresias-dar-de-baja/membresias-dar-de-baja.ts`
-- `src/app/features/redsat/organizaciones/membresias-formulario/membresias-formulario.ts`
-- `src/app/features/redsat/organizaciones/membresias-listado/membresias-listado.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-formulario/organizaciones-formulario.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-hijas-formulario/organizaciones-hijas-formulario.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-listado/organizaciones-listado.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-suspender/organizaciones-suspender.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-verificar/organizaciones-verificar.ts`
-- `src/app/features/redsat/organizaciones/roles-formulario/roles-formulario.ts`
-- `src/app/features/redsat/organizaciones/sucursales-formulario/sucursales-formulario.ts`
-- `src/app/features/redsat/organizaciones/sucursales-listado/sucursales-listado.ts`
-- `src/app/features/redsat/organizaciones/transferencias-formulario/transferencias-formulario.ts`
 - `src/app/features/redsat/personas/apoderados-de-portal-formulario/apoderados-de-portal-formulario.ts`
 - `src/app/features/redsat/personas/apoderados-de-portal-listado/apoderados-de-portal-listado.ts`
 - `src/app/features/redsat/personas/autorizaciones-de-jurisdiccion-formulario/autorizaciones-de-jurisdiccion-formulario.ts`
@@ -166,13 +154,13 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/core/view-state/view-state.types.ts` | 133 |
-| `src/app/core/view-state/view-state.ts` | 118 |
-| `src/app/core/http/error-to-view-state.ts` | 112 |
-| `src/app/shared/components/atoms/button/button.ts` | 111 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 108 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 104 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 104 |
+| `src/app/core/view-state/view-state.types.ts` | 134 |
+| `src/app/core/view-state/view-state.ts` | 119 |
+| `src/app/core/http/error-to-view-state.ts` | 113 |
+| `src/app/shared/components/atoms/button/button.ts` | 113 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 109 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 105 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 105 |
 | `src/app/core/navigation/navigation.service.ts` | 98 |
 | `src/app/shared/components/atoms/input/input.ts` | 91 |
 | `src/app/shared/components/organisms/form-actions/form-actions.ts` | 80 |
@@ -180,22 +168,22 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | `src/app/shared/components/organisms/form-section/form-section.ts` | 68 |
 | `src/app/shared/forms/form-support.ts` | 62 |
 | `src/app/shared/components/molecules/card/card.ts` | 46 |
-| `src/app/shared/components/atoms/textarea/textarea.ts` | 36 |
-| `src/app/core/auth/session.store.ts` | 34 |
+| `src/app/core/auth/session.store.ts` | 37 |
+| `src/app/shared/components/atoms/textarea/textarea.ts` | 37 |
 | `src/app/shared/components/molecules/radio-group/radio-group.ts` | 32 |
 | `src/app/shared/components/molecules/radio/radio.ts` | 31 |
-| `src/app/core/auth/auth.service.ts` | 29 |
+| `src/app/core/auth/auth.service.ts` | 30 |
 | `src/app/shared/components/atoms/link/link.ts` | 28 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 724 |
-| `@angular/common` | 386 |
-| `@angular/router` | 351 |
+| `@angular/core` | 722 |
+| `@angular/common` | 390 |
+| `@angular/router` | 344 |
 | `@angular/forms` | 90 |
-| `rxjs` | 78 |
+| `rxjs` | 81 |
 | `node:fs` | 14 |
 | `@opentelemetry/api` | 12 |
 | `@opentelemetry/sdk-trace-web` | 9 |
@@ -207,9 +195,9 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | `node:path` | 3 |
 | `@opentelemetry/exporter-trace-otlp-http` | 2 |
 | `@opentelemetry/resources` | 2 |
+| `jspdf` | 2 |
 | `@opentelemetry/sdk-trace-node` | 1 |
 | `axe-core` | 1 |
-| `jspdf` | 1 |
 | `node:crypto` | 1 |
 | `node:http` | 1 |
 | `node:https` | 1 |

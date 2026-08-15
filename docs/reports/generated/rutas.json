@@ -1,0 +1,2483 @@
+{
+  "generadoPor": "scripts/audit-design-views.mjs",
+  "secciones": [
+    {
+      "ruta": "/dashboard",
+      "etiqueta": "Panel",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Dashboard",
+      "apis": [
+        "IdentityClient",
+        "ProfilesClient",
+        "PublicClient"
+      ],
+      "estado": "conectada con deuda",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/tutorials",
+      "etiqueta": "Tutoriales",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "TutorialsCenter",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directory",
+      "etiqueta": "Guía de profesionales",
+      "grupo": "General",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": true,
+      "componente": "PractitionersDirectory",
+      "apis": [
+        "ProfilesClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/laboratory-directory",
+      "etiqueta": "Directorio de laboratorios",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "LaboratoryDirectory",
+      "apis": [
+        "DiagnosticUnitsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/schedule",
+      "etiqueta": "Agenda",
+      "grupo": "Atención",
+      "roles": [
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "PRACTITIONER"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Agenda",
+      "apis": [
+        "ProfilesClient",
+        "SchedulingClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/medical-records",
+      "etiqueta": "Archivo clínico",
+      "grupo": "Atención",
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
+      "rolesExclusivos": false,
+      "componente": "ClinicalRecord",
+      "apis": [
+        "ChartTemplatesClient",
+        "ClinicalClient",
+        "DiagnosticsClient",
+        "FilesClient",
+        "FormsClient",
+        "ProceduresClient",
+        "ProfilesClient",
+        "SystemContextClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/diagnostics",
+      "etiqueta": "Laboratorio e imagen",
+      "grupo": "Atención",
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Diagnostics",
+      "apis": [
+        "DiagnosticsClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/glossary",
+      "etiqueta": "Glosario",
+      "grupo": "Atención",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Glossary",
+      "apis": [
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/patients",
+      "etiqueta": "Pacientes",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "PatientList",
+      "apis": [
+        "ProfilesClient"
+      ],
+      "estado": "conectada con deuda",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/users",
+      "etiqueta": "Usuarios",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "UserRegistration",
+      "apis": [
+        "IamClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/organizations",
+      "etiqueta": "Organizaciones",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "OrganizationList",
+      "apis": [
+        "DirectoryClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access",
+      "etiqueta": "Acceso delegado",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "DelegatedAccessHome",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers",
+      "etiqueta": "Proveedores de identidad",
+      "grupo": "Administración",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "AuthProvidersHome",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance",
+      "etiqueta": "Verificación de identidad",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "IdentityAdminHome",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/terminology",
+      "etiqueta": "Terminología",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "TerminologyCatalog",
+      "apis": [
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context",
+      "etiqueta": "Contexto sanitario",
+      "grupo": "Administración",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "HealthContextHome",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation",
+      "etiqueta": "Geolocalización",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "GeoHome",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/services-catalog",
+      "etiqueta": "Catálogo de servicios",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "ServicesCatalog",
+      "apis": [
+        "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/clinical-forms",
+      "etiqueta": "Formularios clínicos",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "ClinicalForms",
+      "apis": [
+        "ChartTemplatesClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/billing",
+      "etiqueta": "Facturación",
+      "grupo": "Facturación",
+      "roles": [
+        "BILLING",
+        "FINANCE",
+        "CASHIER",
+        "PAYMENTS_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "SectionPlaceholder",
+      "apis": [],
+      "estado": "placeholder",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/accounting",
+      "etiqueta": "Contabilidad",
+      "grupo": "Facturación",
+      "roles": [
+        "SECURITY_ADMIN",
+        "ACCOUNTING_APPROVER",
+        "PRACTITIONER"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Accounting",
+      "apis": [
+        "AccountingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account",
+      "etiqueta": "Mi perfil",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "MyProfile",
+      "apis": [
+        "CommunityClient",
+        "FilesClient",
+        "IdentityClient",
+        "PracticeSitesClient",
+        "ProfilesClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/appointments",
+      "etiqueta": "Mis turnos",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Appointments",
+      "apis": [
+        "SchedulingClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/medical-record",
+      "etiqueta": "Mi historia clínica",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "MedicalRecord",
+      "apis": [
+        "ClinicalClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/identity/verify",
+      "etiqueta": "Verificar identidad",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "IdentityVerification",
+      "apis": [
+        "FilesClient",
+        "IdentityClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/identity/cases",
+      "etiqueta": "Mis verificaciones",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "VerificationCases",
+      "apis": [
+        "IdentityClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    }
+  ],
+  "hijas": [
+    {
+      "ruta": "/administration/delegated-access/assignments/edit",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "OrgAssignmentUpdate",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access/assignments/new",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "OrgAssignmentForm",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access/delegations/grants/new",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "GrantForm",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access/delegations/new",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "PractitionerDelegateForm",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access/delegations/requests/new",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "AccessRequestForm",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access/delegations/revoke",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "DelegationRevocation",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access/operations/evaluate-actor",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "ActorEvaluation",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access/operations/expiry-sweep",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "ExpirySweep",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access/permission-sets/new",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "PermissionSetForm",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access/permission-sets/new-version",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "SetVersionForm",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/delegated-access/requests/resolve",
+      "seccion": "Acceso delegado",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "AccessRequestResolution",
+      "apis": [
+        "DelegatedAccessClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation/geofence-events/new",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "GeofenceEventForm",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation/geofences/new",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "GeofenceForm",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation/sessions/close",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "TrackingSessionClose",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation/sessions/new",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "TrackingSessionForm",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation/subjects/last-position",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "LastPosition",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation/subjects/last-position/:trackedSubjectId",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "LastPosition",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/administration/geolocation/subjects/new",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "TrackedSubjectForm",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation/subjects/pings",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "PingIngest",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation/subjects/revoke-consent",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "ConsentRevocation",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation/trips/close",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "TripClose",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/geolocation/trips/new",
+      "seccion": "Geolocalización",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "TripForm",
+      "apis": [
+        "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/agents/new",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "AgentForm",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/collection-runs/finish",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "CollectionRunFinish",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/collection-runs/new",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "CollectionRunForm",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/contexts/new",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "ContextForm",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/contexts/resolve",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "ContextResolve",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/observations/new",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "ObservationForm",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/quality-reviews/new",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "QualityReviewForm",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/schedules/new",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "ScheduleForm",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/sources/new",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "SourceForm",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/versions/new",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "VersionForm",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/versions/publish",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "VersionPublish",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/health-context/versions/supersede",
+      "seccion": "Contexto sanitario",
+      "roles": [
+        "CONTEXT_CURATOR",
+        "CONTEXT_CONSUMER",
+        "SOURCE_ADMIN",
+        "QUALITY_REVIEWER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "VersionSupersede",
+      "apis": [
+        "HealthContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/assertions/issue",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "AssertionIssueForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/assertions/revoke",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "AssertionRevokeForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/authorities/endpoint",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "AuthorityEndpointForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/authorities/new",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "AuthorityForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/cases/checks",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "CheckPlanForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/cases/evidence",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "CaseEvidenceForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/cases/expire-sweep",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "CaseExpireSweep",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/cases/new",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "CaseOpenForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/checks/attempt",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "CheckAttemptForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/checks/fraud-signal",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "FraudSignalForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/checks/result",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "CheckResultForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/policies/new",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "VerificationPolicyForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/queue",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "CaseQueue",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/review/decision",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "ReviewDecisionForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-assurance/review/escalate",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "ManualReviewForm",
+      "apis": [
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/accounts/complete",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "AccountLinkCompleteForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/accounts/link",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "AccountLinkRequestForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/accounts/unlink",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "IdentityUnlinkForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/keys/new",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "SigningKeyForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/keys/rotate",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "KeyRotationForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/login/callback",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "LoginCallbackForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/login/start",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "LoginStartForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/organizations/link",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "TenantBindingForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/providers/attribute-mappings",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "AttributeMappingsForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/providers/new",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "ProviderForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/providers/protocol",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "ProtocolConfigForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/identity-providers/providers/provisioning-rule",
+      "seccion": "Proveedores de identidad",
+      "roles": [
+        "IDENTITY_ADMIN"
+      ],
+      "componente": "ProvisioningRuleForm",
+      "apis": [
+        "AuthProvidersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/organizations/:tenantId",
+      "seccion": "Organizaciones",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "OrganizationDetail",
+      "apis": [
+        "DirectoryClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/administration/organizations/new",
+      "seccion": "Organizaciones",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "OrganizationNew",
+      "apis": [
+        "DirectoryClient",
+        "IamClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada con deuda",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/patients/:profileId",
+      "seccion": "Pacientes",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "PatientDetail",
+      "apis": [
+        "AuthzClient",
+        "ProfilesClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/administration/patients/assisted-registration",
+      "seccion": "Pacientes",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "AssistedRegistration",
+      "apis": [
+        "IamClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/patients/merge",
+      "seccion": "Pacientes",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "PatientMerge",
+      "apis": [
+        "ProfilesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/patients/new",
+      "seccion": "Pacientes",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "PatientNew",
+      "apis": [
+        "ProfilesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directory/:profileId",
+      "seccion": "Guía de profesionales",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "PractitionerDetail",
+      "apis": [
+        "FilesClient",
+        "ProfilesClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/glossary/:conceptId",
+      "seccion": "Glosario",
+      "roles": [],
+      "componente": "GlossaryTerm",
+      "apis": [
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/laboratory-directory/:unitId",
+      "seccion": "Directorio de laboratorios",
+      "roles": [],
+      "componente": "LaboratoryDetail",
+      "apis": [
+        "DiagnosticUnitsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/medical-records/:profileId",
+      "seccion": "Archivo clínico",
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
+      "componente": "PatientChart",
+      "apis": [
+        "ChartTemplatesClient",
+        "ClinicalClient",
+        "DiagnosticsClient",
+        "FilesClient",
+        "FormsClient",
+        "ProceduresClient",
+        "ProfilesClient",
+        "SystemContextClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/my-account/appointments/book/:slotId",
+      "seccion": "Mis turnos",
+      "roles": [],
+      "componente": "BookingNew",
+      "apis": [
+        "ProfilesClient",
+        "SchedulingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/my-account/articles",
+      "seccion": "Mi perfil",
+      "roles": [],
+      "componente": "MedicalArticles",
+      "apis": [
+        "CommunityClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/edit",
+      "seccion": "Mi perfil",
+      "roles": [],
+      "componente": "PractitionerProfileEdit",
+      "apis": [
+        "ProfilesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/identity/cases/:caseId",
+      "seccion": "Mis verificaciones",
+      "roles": [],
+      "componente": "VerificationCaseDetail",
+      "apis": [
+        "IdentityClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/my-account/preview",
+      "seccion": "Mi perfil",
+      "roles": [],
+      "componente": "PublicProfilePreview",
+      "apis": [
+        "CommunityClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/schedule/book/:slotId",
+      "seccion": "Agenda",
+      "roles": [
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "PRACTITIONER"
+      ],
+      "componente": "BookingNew",
+      "apis": [
+        "ProfilesClient",
+        "SchedulingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/schedule/new",
+      "seccion": "Agenda",
+      "roles": [
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "PRACTITIONER"
+      ],
+      "componente": "AgendaCreate",
+      "apis": [
+        "SchedulingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    }
+  ],
+  "portadas": [
+    {
+      "ruta": "/datos-compartidos/versiones-internas-escanear",
+      "codigo": "V02-08",
+      "actor": "security-admin",
+      "componente": "DatosCompartidosVersionesInternasEscanear",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/versiones-internas-listado",
+      "codigo": "V02-08",
+      "actor": "security-admin",
+      "componente": "DatosCompartidosVersionesInternasListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/archivos-eliminar",
+      "codigo": "V02-01",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosArchivosEliminar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/archivos-formulario",
+      "codigo": "V02-01",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosArchivosFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/archivos-listado",
+      "codigo": "V02-01",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosArchivosListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/archivos-obtener-enlace",
+      "codigo": "V02-01",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosArchivosObtenerEnlace",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/archivos-subir",
+      "codigo": "V02-01",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosArchivosSubir",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/contenido-detalle",
+      "codigo": "V02-02",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosContenidoDetalle",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/vinculos-formulario",
+      "codigo": "V02-03",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosVinculosFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/vinculos-listado",
+      "codigo": "V02-03",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosVinculosListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/versiones-formulario",
+      "codigo": "V02-04",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosVersionesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/versiones-listado",
+      "codigo": "V02-04",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosVersionesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/puntos-de-contacto-formulario",
+      "codigo": "V02-05",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosPuntosDeContactoFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/puntos-de-contacto-listado",
+      "codigo": "V02-05",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosPuntosDeContactoListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/puntos-de-contacto-verificar",
+      "codigo": "V02-05",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosPuntosDeContactoVerificar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/direcciones-formulario",
+      "codigo": "V02-06",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosDireccionesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/direcciones-listado",
+      "codigo": "V02-06",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosDireccionesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/identificadores-formulario",
+      "codigo": "V02-07",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosIdentificadoresFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/identificadores-listado",
+      "codigo": "V02-07",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosIdentificadoresListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/derivados-formulario",
+      "codigo": "V02-09",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosDerivadosFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/datos-compartidos/derivados-listado",
+      "codigo": "V02-09",
+      "actor": "sesion-autenticada",
+      "componente": "DatosCompartidosDerivadosListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/versiones-importar",
+      "codigo": "V03-01",
+      "actor": "security-admin",
+      "componente": "TerminologiaVersionesImportar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/versiones-listado",
+      "codigo": "V03-01",
+      "actor": "security-admin",
+      "componente": "TerminologiaVersionesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/versiones-publicar",
+      "codigo": "V03-01",
+      "actor": "security-admin",
+      "componente": "TerminologiaVersionesPublicar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/expansion-de-conjunto-de-valores-formulario",
+      "codigo": "V03-04",
+      "actor": "security-admin",
+      "componente": "TerminologiaExpansionDeConjuntoDeValoresFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/sistemas-de-codigos-formulario",
+      "codigo": "V03-05",
+      "actor": "security-admin",
+      "componente": "TerminologiaSistemasDeCodigosFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/sistemas-de-codigos-listado",
+      "codigo": "V03-05",
+      "actor": "security-admin",
+      "componente": "TerminologiaSistemasDeCodigosListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/versiones-de-sistema-formulario",
+      "codigo": "V03-06",
+      "actor": "security-admin",
+      "componente": "TerminologiaVersionesDeSistemaFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/versiones-de-sistema-listado",
+      "codigo": "V03-06",
+      "actor": "security-admin",
+      "componente": "TerminologiaVersionesDeSistemaListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/deprecacion-de-concepto-formulario",
+      "codigo": "V03-08",
+      "actor": "security-admin",
+      "componente": "TerminologiaDeprecacionDeConceptoFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/designaciones-formulario",
+      "codigo": "V03-09",
+      "actor": "security-admin",
+      "componente": "TerminologiaDesignacionesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/designaciones-listado",
+      "codigo": "V03-09",
+      "actor": "security-admin",
+      "componente": "TerminologiaDesignacionesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/propiedades-formulario",
+      "codigo": "V03-10",
+      "actor": "security-admin",
+      "componente": "TerminologiaPropiedadesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/propiedades-listado",
+      "codigo": "V03-10",
+      "actor": "security-admin",
+      "componente": "TerminologiaPropiedadesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/relaciones-formulario",
+      "codigo": "V03-11",
+      "actor": "security-admin",
+      "componente": "TerminologiaRelacionesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/relaciones-listado",
+      "codigo": "V03-11",
+      "actor": "security-admin",
+      "componente": "TerminologiaRelacionesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/politicas-de-catalogo-formulario",
+      "codigo": "V03-12",
+      "actor": "security-admin",
+      "componente": "TerminologiaPoliticasDeCatalogoFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/politicas-de-catalogo-listado",
+      "codigo": "V03-12",
+      "actor": "security-admin",
+      "componente": "TerminologiaPoliticasDeCatalogoListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/conjuntos-de-valor-formulario",
+      "codigo": "V03-13",
+      "actor": "security-admin",
+      "componente": "TerminologiaConjuntosDeValorFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/conjuntos-de-valor-listado",
+      "codigo": "V03-13",
+      "actor": "security-admin",
+      "componente": "TerminologiaConjuntosDeValorListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/consulta-de-concepto-listado",
+      "codigo": "V03-02",
+      "actor": "sesion-autenticada",
+      "componente": "TerminologiaConsultaDeConceptoListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/traduccion-entre-catalogos-formulario",
+      "codigo": "V03-03",
+      "actor": "sesion-autenticada",
+      "componente": "TerminologiaTraduccionEntreCatalogosFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/conceptos-listado",
+      "codigo": "V03-07",
+      "actor": "sesion-autenticada",
+      "componente": "TerminologiaConceptosListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/terminologia/expansion-de-conjunto-de-valores-detalle",
+      "codigo": "V03-14",
+      "actor": "sesion-autenticada",
+      "componente": "TerminologiaExpansionDeConjuntoDeValoresDetalle",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/organizaciones-listado",
+      "codigo": "V04-01",
+      "actor": "security-admin",
+      "componente": "DirectorioOrganizacionesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/organizaciones-verificar",
+      "codigo": "V04-01",
+      "actor": "security-admin",
+      "componente": "DirectorioOrganizacionesVerificar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/membresias-dar-de-baja",
+      "codigo": "V04-02",
+      "actor": "security-admin",
+      "componente": "DirectorioMembresiasDarDeBaja",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/membresias-formulario",
+      "codigo": "V04-02",
+      "actor": "security-admin",
+      "componente": "DirectorioMembresiasFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/membresias-listado",
+      "codigo": "V04-02",
+      "actor": "security-admin",
+      "componente": "DirectorioMembresiasListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/asignaciones-de-sucursal-formulario",
+      "codigo": "V04-03",
+      "actor": "security-admin",
+      "componente": "DirectorioAsignacionesDeSucursalFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/roles-formulario",
+      "codigo": "V04-04",
+      "actor": "security-admin",
+      "componente": "DirectorioRolesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/transferencias-formulario",
+      "codigo": "V04-05",
+      "actor": "security-admin",
+      "componente": "DirectorioTransferenciasFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/sucursales-formulario",
+      "codigo": "V04-06",
+      "actor": "security-admin",
+      "componente": "DirectorioSucursalesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/sucursales-listado",
+      "codigo": "V04-06",
+      "actor": "security-admin",
+      "componente": "DirectorioSucursalesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/organizaciones-hijas-formulario",
+      "codigo": "V04-07",
+      "actor": "security-admin",
+      "componente": "DirectorioOrganizacionesHijasFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/organizaciones-formulario",
+      "codigo": "V04-01",
+      "actor": "superadmin",
+      "componente": "DirectorioOrganizacionesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directorio/organizaciones-suspender",
+      "codigo": "V04-01",
+      "actor": "superadmin",
+      "componente": "DirectorioOrganizacionesSuspender",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/pacientes-formulario",
+      "codigo": "V05-01",
+      "actor": "security-admin",
+      "componente": "PersonasPacientesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/pacientes-fusionar",
+      "codigo": "V05-01",
+      "actor": "security-admin",
+      "componente": "PersonasPacientesFusionar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/pacientes-listado",
+      "codigo": "V05-01",
+      "actor": "security-admin",
+      "componente": "PersonasPacientesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/pacientes-revertir",
+      "codigo": "V05-01",
+      "actor": "security-admin",
+      "componente": "PersonasPacientesRevertir",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/vinculos-de-identidad-formulario",
+      "codigo": "V05-02",
+      "actor": "security-admin",
+      "componente": "PersonasVinculosDeIdentidadFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/vinculos-de-identidad-listado",
+      "codigo": "V05-02",
+      "actor": "security-admin",
+      "componente": "PersonasVinculosDeIdentidadListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/apoderados-de-portal-formulario",
+      "codigo": "V05-04",
+      "actor": "security-admin",
+      "componente": "PersonasApoderadosDePortalFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/apoderados-de-portal-listado",
+      "codigo": "V05-04",
+      "actor": "security-admin",
+      "componente": "PersonasApoderadosDePortalListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/personas-relacionadas-formulario",
+      "codigo": "V05-05",
+      "actor": "security-admin",
+      "componente": "PersonasRelacionadasFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/personas-relacionadas-listado",
+      "codigo": "V05-05",
+      "actor": "security-admin",
+      "componente": "PersonasRelacionadasListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/credenciales-listado",
+      "codigo": "V05-06",
+      "actor": "security-admin",
+      "componente": "PersonasCredencialesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/credenciales-verificar",
+      "codigo": "V05-06",
+      "actor": "security-admin",
+      "componente": "PersonasCredencialesVerificar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/personas-listado",
+      "codigo": "V05-07",
+      "actor": "security-admin",
+      "componente": "PersonasListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/personas-registrar-defuncion",
+      "codigo": "V05-07",
+      "actor": "security-admin",
+      "componente": "PersonasRegistrarDefuncion",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/vinculos-de-cuenta-formulario",
+      "codigo": "V05-08",
+      "actor": "security-admin",
+      "componente": "PersonasVinculosDeCuentaFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/vinculos-de-cuenta-listado",
+      "codigo": "V05-08",
+      "actor": "security-admin",
+      "componente": "PersonasVinculosDeCuentaListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/profesionales-formulario",
+      "codigo": "V05-09",
+      "actor": "security-admin",
+      "componente": "PersonasProfesionalesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/profesionales-listado",
+      "codigo": "V05-09",
+      "actor": "security-admin",
+      "componente": "PersonasProfesionalesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/autorizaciones-de-jurisdiccion-formulario",
+      "codigo": "V05-10",
+      "actor": "security-admin",
+      "componente": "PersonasAutorizacionesDeJurisdiccionFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/autorizaciones-de-jurisdiccion-listado",
+      "codigo": "V05-10",
+      "actor": "security-admin",
+      "componente": "PersonasAutorizacionesDeJurisdiccionListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/especialidades-formulario",
+      "codigo": "V05-11",
+      "actor": "security-admin",
+      "componente": "PersonasEspecialidadesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/especialidades-listado",
+      "codigo": "V05-11",
+      "actor": "security-admin",
+      "componente": "PersonasEspecialidadesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/personas/resumen-propio-listado",
+      "codigo": "V05-03",
+      "actor": "sesion-autenticada",
+      "componente": "PersonasResumenPropioListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/acceso-de-emergencia-formulario",
+      "codigo": "V06-05",
+      "actor": "clinical-approver",
+      "componente": "AccesosAccesoDeEmergenciaFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/accesos-clinicos-del-paciente-formulario",
+      "codigo": "V06-06",
+      "actor": "clinical-approver",
+      "componente": "AccesosClinicosDelPacienteFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/accesos-clinicos-del-paciente-listado",
+      "codigo": "V06-06",
+      "actor": "clinical-approver",
+      "componente": "AccesosClinicosDelPacienteListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/relaciones-de-cuidado-formulario",
+      "codigo": "V06-01",
+      "actor": "clinician",
+      "componente": "AccesosRelacionesDeCuidadoFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/relaciones-de-cuidado-listado",
+      "codigo": "V06-01",
+      "actor": "clinician",
+      "componente": "AccesosRelacionesDeCuidadoListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/relaciones-de-cuidado-revocar",
+      "codigo": "V06-01",
+      "actor": "clinician",
+      "componente": "AccesosRelacionesDeCuidadoRevocar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/representaciones-legales-formulario",
+      "codigo": "V06-02",
+      "actor": "security-admin",
+      "componente": "AccesosRepresentacionesLegalesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/representaciones-legales-listado",
+      "codigo": "V06-02",
+      "actor": "security-admin",
+      "componente": "AccesosRepresentacionesLegalesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/representaciones-legales-revocar",
+      "codigo": "V06-02",
+      "actor": "security-admin",
+      "componente": "AccesosRepresentacionesLegalesRevocar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/accesos-clinicos-listado",
+      "codigo": "V06-03",
+      "actor": "security-admin",
+      "componente": "AccesosClinicosListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/accesos-clinicos-revocar",
+      "codigo": "V06-03",
+      "actor": "security-admin",
+      "componente": "AccesosClinicosRevocar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/decisiones-evaluar",
+      "codigo": "V06-04",
+      "actor": "security-admin",
+      "componente": "AccesosDecisionesEvaluar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/cache-invalidar",
+      "codigo": "V06-07",
+      "actor": "security-admin",
+      "componente": "AccesosCacheInvalidar",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/categorias-de-permiso-formulario",
+      "codigo": "V06-08",
+      "actor": "security-admin",
+      "componente": "AccesosCategoriasDePermisoFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/categorias-de-permiso-listado",
+      "codigo": "V06-08",
+      "actor": "security-admin",
+      "componente": "AccesosCategoriasDePermisoListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/permisos-formulario",
+      "codigo": "V06-09",
+      "actor": "security-admin",
+      "componente": "AccesosPermisosFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/permisos-listado",
+      "codigo": "V06-09",
+      "actor": "security-admin",
+      "componente": "AccesosPermisosListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/alcance-de-recurso-formulario",
+      "codigo": "V06-10",
+      "actor": "security-admin",
+      "componente": "AccesosAlcanceDeRecursoFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/alcance-de-recurso-listado",
+      "codigo": "V06-10",
+      "actor": "security-admin",
+      "componente": "AccesosAlcanceDeRecursoListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/roles-formulario",
+      "codigo": "V06-11",
+      "actor": "security-admin",
+      "componente": "AccesosRolesFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/roles-listado",
+      "codigo": "V06-11",
+      "actor": "security-admin",
+      "componente": "AccesosRolesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/permisos-de-campo-formulario",
+      "codigo": "V06-12",
+      "actor": "security-admin",
+      "componente": "AccesosPermisosDeCampoFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/permisos-de-campo-listado",
+      "codigo": "V06-12",
+      "actor": "security-admin",
+      "componente": "AccesosPermisosDeCampoListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/permisos-del-rol-formulario",
+      "codigo": "V06-13",
+      "actor": "security-admin",
+      "componente": "AccesosPermisosDelRolFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/permisos-del-rol-listado",
+      "codigo": "V06-13",
+      "actor": "security-admin",
+      "componente": "AccesosPermisosDelRolListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/politicas-de-acceso-formulario",
+      "codigo": "V06-14",
+      "actor": "security-admin",
+      "componente": "AccesosPoliticasDeAccesoFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/politicas-de-acceso-listado",
+      "codigo": "V06-14",
+      "actor": "security-admin",
+      "componente": "AccesosPoliticasDeAccesoListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/concesiones-de-permiso-formulario",
+      "codigo": "V06-15",
+      "actor": "security-admin",
+      "componente": "AccesosConcesionesDePermisoFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/concesiones-de-permiso-listado",
+      "codigo": "V06-15",
+      "actor": "security-admin",
+      "componente": "AccesosConcesionesDePermisoListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/asignaciones-de-rol-formulario",
+      "codigo": "V06-16",
+      "actor": "security-admin",
+      "componente": "AccesosAsignacionesDeRolFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/accesos/asignaciones-de-rol-listado",
+      "codigo": "V06-16",
+      "actor": "security-admin",
+      "componente": "AccesosAsignacionesDeRolListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/buscador-listado",
+      "codigo": "V65-01",
+      "actor": "publico",
+      "componente": "BuscarBuscadorListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/profesionales-listado",
+      "codigo": "V65-02",
+      "actor": "publico",
+      "componente": "BuscarProfesionalesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/medicamentos-listado",
+      "codigo": "V65-03",
+      "actor": "publico",
+      "componente": "BuscarMedicamentosListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/hospitales-listado",
+      "codigo": "V65-04",
+      "actor": "publico",
+      "componente": "BuscarHospitalesListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/laboratorios-listado",
+      "codigo": "V65-05",
+      "actor": "publico",
+      "componente": "BuscarLaboratoriosListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/aseguradoras-listado",
+      "codigo": "V65-06",
+      "actor": "publico",
+      "componente": "BuscarAseguradorasListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/perfil-profesional-detalle",
+      "codigo": "V65-07",
+      "actor": "publico",
+      "componente": "BuscarPerfilProfesionalDetalle",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/perfil-organizacion-detalle",
+      "codigo": "V65-08",
+      "actor": "publico",
+      "componente": "BuscarPerfilOrganizacionDetalle",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/perfil-farmacia-detalle",
+      "codigo": "V65-09",
+      "actor": "publico",
+      "componente": "BuscarPerfilFarmaciaDetalle",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/perfil-laboratorio-detalle",
+      "codigo": "V65-10",
+      "actor": "publico",
+      "componente": "BuscarPerfilLaboratorioDetalle",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/perfil-aseguradora-detalle",
+      "codigo": "V65-11",
+      "actor": "publico",
+      "componente": "BuscarPerfilAseguradoraDetalle",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/cercania-detalle",
+      "codigo": "V65-12",
+      "actor": "publico",
+      "componente": "BuscarCercaniaDetalle",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/seguidos-y-guardados-listado",
+      "codigo": "V65-13",
+      "actor": "sesion-autenticada",
+      "componente": "BuscarSeguidosYGuardadosListado",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/buscar/calificar-la-atencion-formulario",
+      "codigo": "V65-14",
+      "actor": "sesion-autenticada",
+      "componente": "BuscarCalificarLaAtencionFormulario",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/inicio",
+      "codigo": null,
+      "actor": null,
+      "componente": "InicioPortada",
+      "estado": "maqueta portada",
+      "parametrizada": false
+    }
+  ]
+}

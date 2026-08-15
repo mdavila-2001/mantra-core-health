@@ -13,9 +13,11 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 
 import { RedsatThemeToggleDirective } from '@core/redsat/redsat-theme-toggle.directive';
 
+import { RedsatDesignNotice } from './redsat-design-notice';
+
 @Component({
   selector: 'app-redsat-public-shell',
-  imports: [RouterLink, RouterOutlet, RedsatThemeToggleDirective],
+  imports: [RedsatDesignNotice, RouterLink, RouterOutlet, RedsatThemeToggleDirective],
   templateUrl: './redsat-public-shell.html',
 })
 export class RedsatPublicShell {}

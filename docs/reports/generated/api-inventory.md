@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-194 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+197 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -342,10 +342,13 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 | `POST` | `/scheduling/booking-policies` |
 | `GET` | `/scheduling/bookings` |
 | `GET` | `/scheduling/bookings/:bookingId` |
+| `POST` | `/scheduling/bookings/:bookingId/:accion` |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` |
+| `POST` | `/scheduling/bookings/:bookingId/reject` |
 | `POST` | `/scheduling/bookings/:bookingId/reschedule` |
 | `POST` | `/scheduling/holds/:holdToken/confirm` |
+| `POST` | `/scheduling/holds/:holdToken/request` |
 | `GET` | `/scheduling/resources` |
 | `POST` | `/scheduling/resources` |
 | `POST` | `/scheduling/resources/:resourceId/exceptions` |

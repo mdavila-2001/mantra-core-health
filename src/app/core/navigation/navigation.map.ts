@@ -80,12 +80,26 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // único que se le sacó es la entrada del menú — borrarlo es una decisión
     // de producto que el cliente no pidió.
     //
-    // Sin `roles`, ahora por una razón más simple que antes: una guía de
-    // profesionales la usa sobre todo quien busca médico, o sea el paciente.
+    // **Sólo `PATIENT`** (corrección #2 del 15/08/2026, carril 02). Nació sin
+    // `roles` con el razonamiento de que «la usa sobre todo quien busca
+    // médico», y «sobre todo» no es una regla: en la práctica la doctora la
+    // veía en su menú y en «Tus accesos» —está en la captura baseline del
+    // carril 01—. Es una guía para elegir a quién consultar; a quien atiende no
+    // le corresponde.
+    //
+    // Esconder el ítem no es la protección: es no ofrecer una puerta. La puerta
+    // la cierra `seccionRolesGuard` sobre la ruta, para que el enlace directo
+    // tampoco entre.
+    //
+    // `exclusiveRoles` porque el pedido fue **solo** el paciente: sin esto el
+    // comodín `SUPERADMIN` la seguiría viendo, y «otros roles» lo incluye. Es
+    // la única sección del registro que lo declara.
     path: 'directory',
     label: 'Guía de profesionales',
     group: 'General',
     icon: 'home',
+    roles: ['PATIENT'],
+    exclusiveRoles: true,
     availability: 'disponible',
     summary: 'Todos los profesionales, agrupados por especialidad.',
     module: 'M05 profiles',
