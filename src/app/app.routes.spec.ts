@@ -176,19 +176,32 @@ describe('rutas del armazón', () => {
    * La prueba que de verdad importa: **`disponible` tiene que significar que hay
    * pantalla**. Comprobar que existe `loadComponent` no alcanza — el placeholder
    * también lo tiene—, así que se resuelve la carga y se mira qué llegó.
+   *
+   * ## Por qué lleva techo propio
+   *
+   * Resuelve un `import()` por cada sección disponible, y hoy son dos docenas:
+   * es de las pocas pruebas del repo cuyo costo **crece con el producto**. Con
+   * los cinco segundos por defecto pasaba aislada y se agotaba dentro de la
+   * suite completa —donde compite por CPU con otras 2 400—, y el síntoma era un
+   * timeout que no dice nada sobre las rutas. Aumentar el techo acá no tapa
+   * ningún defecto: no hay aserción que dependa de cuánto tarde.
    */
-  it('una sección disponible NO cae en el placeholder', async () => {
-    for (const section of APP_SECTIONS.filter((s) => s.availability === 'disponible')) {
-      const ruta = hijas.find((route) => route.path === section.path);
-      const componente = ruta?.component ?? (await ruta?.loadComponent?.());
+  it(
+    'una sección disponible NO cae en el placeholder',
+    async () => {
+      for (const section of APP_SECTIONS.filter((s) => s.availability === 'disponible')) {
+        const ruta = hijas.find((route) => route.path === section.path);
+        const componente = ruta?.component ?? (await ruta?.loadComponent?.());
 
-      expect(componente, section.path).toBeDefined();
-      // Se compara por identidad y no por `name`: el compilador de Angular
-      // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
-      // rompería sin que nada esté mal.
-      expect(componente, section.path).not.toBe(SectionPlaceholder);
-    }
-  });
+        expect(componente, section.path).toBeDefined();
+        // Se compara por identidad y no por `name`: el compilador de Angular
+        // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
+        // rompería sin que nada esté mal.
+        expect(componente, section.path).not.toBe(SectionPlaceholder);
+      }
+    },
+    30_000,
+  );
 
   it('una sección planificada cae en el placeholder, y diferido', async () => {
     for (const section of APP_SECTIONS.filter((s) => s.availability === 'planificada')) {
