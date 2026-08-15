@@ -1,0 +1,163 @@
+<app-page-header
+  title="Mis resultados"
+  subtitle="Los estudios de laboratorio, informes e imagen que ya validó un profesional."
+/>
+
+@if (sinPerfilDePaciente) {
+  <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
+       que esta pantalla no le corresponde. -->
+  <app-alert tone="info" title="Esta sección es para pacientes">
+    Tu cuenta no tiene un perfil de paciente. Si atendés estudios, entrá por «Laboratorio e
+    imagen».
+  </app-alert>
+} @else {
+  @switch (resultados().status) {
+    @case ('loading') {
+      <p class="resultados__estado" role="status">Buscando tus resultados…</p>
+    }
+
+    @case ('empty') {
+      <!-- El vacío se dice con las palabras que corresponden: un estudio en
+           curso todavía no es un resultado, y no decirlo haría creer que se
+           perdió. -->
+      <app-alert tone="info" title="Todavía no hay resultados">
+        {{ mensajeDeVacio() }}
+      </app-alert>
+    }
+
+    @case ('ready') {
+      <ul class="resultados__lista">
+        @for (resultado of resultadosListos(); track resultado.reportId) {
+          <li class="resultados__item">
+            <header class="resultados__encabezado">
+              <div>
+                <h2 class="resultados__titulo">{{ resultado.titulo }}</h2>
+                <p class="resultados__fecha">
+                  Liberado el {{ resultado.liberado | date: "d 'de' MMMM 'de' y" }}
+                </p>
+              </div>
+              <app-badge variant="info">{{ resultado.categoria }}</app-badge>
+            </header>
+
+            @if (resultado.conclusion !== '') {
+              <p class="resultados__conclusion">{{ resultado.conclusion }}</p>
+            }
+
+            @if (resultado.archivos.length > 0) {
+              <ul class="resultados__archivos">
+                @for (archivo of resultado.archivos; track archivo.id) {
+                  <li>
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      [isLoading]="operando() === archivo.id"
+                      (clicked)="descargar(archivo)"
+                    >
+                      Descargar {{ archivo.rotulo }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="resultados__sin-archivos">
+                Este resultado no tiene archivos para descargar.
+              </p>
+            }
+
+            <div class="resultados__acciones">
+              <button
+                app-button
+                variant="secondary"
+                size="sm"
+                [attr.aria-expanded]="abierto() === resultado.reportId"
+                (clicked)="alternarCompartidos(resultado)"
+              >
+                @if (abierto() === resultado.reportId) {
+                  Cerrar
+                } @else {
+                  Compartir con un profesional
+                }
+              </button>
+            </div>
+
+            @if (abierto() === resultado.reportId) {
+              <section class="resultados__compartir" aria-label="Compartir el resultado">
+                <p class="resultados__ayuda">
+                  El acceso vence solo en la fecha que elijas. Podés cerrarlo antes cuando
+                  quieras.
+                </p>
+
+                <app-form-field label="Cuenta del profesional" for="destinatario">
+                  <app-input
+                    id="destinatario"
+                    placeholder="Identificador de la cuenta"
+                    [value]="destinatario()"
+                    (valueChange)="destinatario.set($any($event))"
+                  />
+                </app-form-field>
+
+                <app-form-field label="Hasta" for="vence">
+                  <app-date-picker id="vence" [value]="vence()" (valueChange)="vence.set($event)" />
+                </app-form-field>
+
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  [disabled]="!puedeCompartir()"
+                  [isLoading]="operando() === resultado.reportId"
+                  (clicked)="compartir(resultado.reportId)"
+                >
+                  Compartir
+                </button>
+
+                @if (compartidos().length > 0) {
+                  <h3 class="resultados__subtitulo">Compartido con</h3>
+                  <ul class="resultados__compartidos">
+                    @for (share of compartidos(); track share.id) {
+                      <li class="resultados__compartido">
+                        <span class="resultados__cuenta">{{ share.practitionerUserId }}</span>
+                        <span class="resultados__vigencia">
+                          @if (share.validTo !== undefined) {
+                            hasta el {{ share.validTo | date: 'd MMM y' }}
+                          } @else {
+                            sin vencimiento
+                          }
+                        </span>
+                        @if (share.active) {
+                          <app-badge variant="success">Vigente</app-badge>
+                          <button
+                            app-button
+                            variant="ghost"
+                            size="sm"
+                            [isLoading]="operando() === share.id"
+                            (clicked)="revocar(resultado.reportId, share)"
+                          >
+                            Dejar de compartir
+                          </button>
+                        } @else {
+                          <!-- Los vencidos se siguen mostrando: quién pudo ver un
+                               resultado clínico es lo que alguien querría revisar
+                               después. -->
+                          <app-badge variant="secondary">Cerrado</app-badge>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @default {
+      <app-alert tone="error" title="No pudimos traer tus resultados">
+        Reintentá en un momento.
+        <button app-button variant="secondary" size="sm" (clicked)="cargar()">Reintentar</button>
+      </app-alert>
+    }
+  }
+}

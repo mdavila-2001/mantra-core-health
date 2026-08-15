@@ -7,10 +7,14 @@ import type {
   DiagnosticOrder,
   DiagnosticOrderCreated,
   DiagnosticReport,
+  DiagnosticResultShare,
   ImagingStudy,
   LabWorkOrder,
   LabWorkOrderQuery,
   NewDiagnosticOrder,
+  NewDiagnosticResultShare,
+  PatientDiagnosticResult,
+  PatientDiagnosticResults,
   PatientDiagnostics,
 } from './diagnostics.types';
 
@@ -146,6 +150,107 @@ export class DiagnosticsClient {
       .pipe(map(toOrderCreated));
   }
 
+  /* ---- el portal del paciente ---------------------------------------------
+     Las cuatro operaciones de `/diagnostic-results/me`. Cuelgan de un prefijo
+     propio y no de `/diagnostics` porque `diagnostics` **es una ruta de la
+     aplicación** —la cola clínica— y el proxy compara por primer segmento:
+     declararlo como prefijo de API se comería esa pantalla. No llevan identificador de
+     paciente en ninguna parte: el backend resuelve al titular por el vínculo de
+     su cuenta, así que no hay nada que esta pantalla pueda pedir de otra
+     persona. Tampoco exigen rol clínico — exigen `PATIENT`. */
+
+  /**
+   * `GET /diagnostic-results/me` — los resultados propios.
+   *
+   * Sólo llegan las versiones liberadas y visibles para el paciente. Un informe
+   * redactado y todavía sin validar no aparece, y la pantalla no tiene que
+   * decidir nada al respecto.
+   *
+   * @param limit - Tope de informes considerados. La API aplica 50 si se omite.
+   */
+  getOwnResults(limit?: number): Observable<PatientDiagnosticResults> {
+    return this.http
+      .get<WirePatientResults>(this.url('/diagnostic-results/me'), {
+        params: topeDe(limit),
+      })
+      .pipe(map((body) => ({ ...body, items: body.items.map(toPatientResult) })));
+  }
+
+  /**
+   * `GET /diagnostic-results/me/:reportId` — un resultado propio.
+   *
+   * @param reportId - Informe pedido.
+   */
+  getOwnResult(reportId: string): Observable<PatientDiagnosticResult> {
+    return this.http
+      .get<WirePatientResult>(
+        this.url(`/diagnostic-results/me/${encodeURIComponent(reportId)}`),
+      )
+      .pipe(map(toPatientResult));
+  }
+
+  /**
+   * `GET /diagnostic-results/me/:reportId/shares` — con quién está
+   * compartido, vigentes y vencidos.
+   *
+   * Los vencidos también vuelven, y hay que mostrarlos: quién tuvo acceso a un
+   * resultado clínico es exactamente lo que alguien querría poder revisar
+   * después.
+   *
+   * @param reportId - Informe consultado.
+   */
+  listResultShares(reportId: string): Observable<readonly DiagnosticResultShare[]> {
+    return this.http
+      .get<WireShares>(
+        this.url(`/diagnostic-results/me/${encodeURIComponent(reportId)}/shares`),
+      )
+      .pipe(map((body) => body.items.map(toShare)));
+  }
+
+  /**
+   * `POST /diagnostic-results/me/:reportId/shares` — comparte el
+   * resultado con un profesional hasta una fecha.
+   *
+   * @param reportId - Informe que se comparte.
+   * @param compartir - Con quién y hasta cuándo.
+   */
+  shareResult(
+    reportId: string,
+    compartir: NewDiagnosticResultShare,
+  ): Observable<DiagnosticResultShare> {
+    return this.http
+      .post<WireShare>(
+        this.url(`/diagnostic-results/me/${encodeURIComponent(reportId)}/shares`),
+        {
+          practitionerUserId: compartir.practitionerUserId,
+          validUntil: compartir.validUntil.toISOString(),
+          ...(compartir.reason === undefined ? {} : { reason: compartir.reason }),
+        },
+      )
+      .pipe(map(toShare));
+  }
+
+  /**
+   * `POST /diagnostic-results/me/:reportId/shares/:shareId/revoke`
+   * — deja de compartir.
+   *
+   * Es `revoke` y no `DELETE` porque no se borra nada: se cierra la vigencia y
+   * el registro de que se compartió sigue existiendo.
+   *
+   * @param reportId - Informe compartido.
+   * @param shareId - Compartido a cerrar.
+   */
+  revokeResultShare(reportId: string, shareId: string): Observable<DiagnosticResultShare> {
+    return this.http
+      .post<WireShare>(
+        this.url(
+          `/diagnostic-results/me/${encodeURIComponent(reportId)}/shares/${encodeURIComponent(shareId)}/revoke`,
+        ),
+        {},
+      )
+      .pipe(map(toShare));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
@@ -251,4 +356,37 @@ function fecha<K extends string>(
   return value === null || value === undefined
     ? {}
     : ({ [key]: new Date(value) } as Record<K, Date>);
+}
+
+/* ---- el portal del paciente, formas de transporte ------------------------ */
+
+type WirePatientResult = Fechas<PatientDiagnosticResult, 'issuedAt' | 'releasedAt'> & {
+  // `releasedAt` no es opcional en el contrato: un resultado que llega a esta
+  // lista está liberado por definición, así que siempre trae cuándo.
+  readonly releasedAt: string;
+};
+
+interface WirePatientResults extends Omit<PatientDiagnosticResults, 'items'> {
+  readonly items: readonly WirePatientResult[];
+}
+
+type WireShare = Fechas<DiagnosticResultShare, 'validFrom' | 'validTo'> & {
+  readonly validFrom: string;
+};
+
+interface WireShares {
+  readonly reportId: string;
+  readonly items: readonly WireShare[];
+}
+
+function toPatientResult({
+  issuedAt,
+  releasedAt,
+  ...resto
+}: WirePatientResult): PatientDiagnosticResult {
+  return { ...resto, ...fecha('issuedAt', issuedAt), releasedAt: new Date(releasedAt) };
+}
+
+function toShare({ validFrom, validTo, ...resto }: WireShare): DiagnosticResultShare {
+  return { ...resto, validFrom: new Date(validFrom), ...fecha('validTo', validTo) };
 }
