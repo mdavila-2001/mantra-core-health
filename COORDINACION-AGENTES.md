@@ -5,10 +5,120 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión en curso · Carril R2-6 — el glosario con etiquetas, en castellano
+
+**Empezó:** 2026-08-14 · **Ramas:** `carril-r2-6/glosario-etiquetas` en los dos repos ·
+**Base:** `dev` en frontend, `dev` en backend (el working tree del backend está en `dev`, no en
+`master`; lo único sin commitear ahí es `yarn.lock`, ajeno a este carril) ·
+**Plan:** `CARRIL-R2-6-glosario-etiquetas.md` · `CARRILES-R2-2026-08-14-README.md`
+
+### 🟡 Aviso obligatorio: toco `GET /terminology/concepts`, que consume medio frontend
+
+Es la lectura que usan `readConceptLabels` (agenda, perfil profesional, diagnósticos, ficha
+clínica) y `searchConcepts` (catálogo de administración). **El cambio es aditivo y
+retrocompatible por construcción:** dos parámetros nuevos y opcionales (`lang`,
+`includeValueSets`) y dos campos nuevos y opcionales en cada ítem (`translated`, `valueSets`).
+**Sin `lang`, la respuesta es byte a byte la de hoy** — hay una prueba que lo fija, no es una
+promesa. Ninguna pantalla existente manda esos parámetros y ninguna cambia de comportamiento.
+
+`src/modules/terminology/**` es exclusivo de este carril esta ronda, así que no hay con quién
+chocar dentro del módulo.
+
+### Tres correcciones al plan del carril, encontradas al leer el código
+
+El documento del carril daba por incierto lo que el repo sí sostiene. Las tres cambian qué hay
+que escribir, así que quedan acá antes que en el commit:
+
+1. **Las etiquetas ya están sembradas y ya están en castellano.** El plan temía que no hubiera de
+   dónde sacar la lista. Hay 52 conjuntos de valores, con nombre y descripción en castellano,
+   materializados por `DynamicEnumSeedService` desde `dynamic-enum-catalog.ts` («Género
+   administrativo», «Diagnóstico», «Severidad», «Lateralidad»…). El listado que faltaba era el del
+   **cliente del frontend**, no el del backend.
+2. **El inverso concepto → conjuntos de valores no hace falta pedirlo como bloqueador: lo
+   implemento acá.** El plan lo dejaba como «salida 2, se pide si el cliente lo quiere». Como el
+   módulo `terminology` es exclusivo de este carril, sale más barato hacerlo bien que declararlo
+   pendiente: `GET /terminology/concepts?includeValueSets=true` resuelve la pertenencia de los
+   ≤50 conceptos devueltos **en una sola consulta** sobre `value_set_members`, no en cientos de
+   `$expand` desde el navegador —que es lo que el plan prohíbe explícitamente, y con razón—. Con
+   eso, la definición de hecho «cada término muestra sus etiquetas» se cumple también en el
+   resultado de una búsqueda por texto, no sólo al navegar por categoría.
+3. **El problema del castellano era peor de lo que decía el plan, y en un sitio distinto.** No es
+   sólo que el `display` venga en inglés: **`catalog_concepts.definition` está vacía para todo el
+   catálogo sembrado** (`TerminologySeedService` nunca la escribe). O sea que la segunda columna
+   de la tabla que rebotó —«Qué significa»— estaba en blanco para *todos* los términos. Un
+   glosario sin definiciones no es un glosario aunque los nombres estén traducidos, así que este
+   carril siembra **las dos cosas**: la designación `ES` (el nombre) y la definición en castellano.
+
+### Dónde va la definición en castellano, y por qué no en `catalog_concepts.definition`
+
+`concept_designations` guarda **un texto por idioma** (`value`), y no tiene columna de definición:
+sirve para el nombre, no para la explicación. Escribir la definición castellana en
+`catalog_concepts.definition` la dejaría sin idioma declarado en una tabla que es multilingüe por
+diseño — y el día que haya una segunda lengua no habría dónde ponerla.
+
+Va en `concept_properties` con `property_code = 'definition-es'`, que es exactamente para lo que
+esa tabla existe, y que ya tiene lectura en lote (`findPropertyForConcepts`): una consulta para
+los ≤50 conceptos de la página, sin N+1. `catalog_concepts.definition` **no se toca**.
+
+### Archivos nuevos (no chocan con nada)
+
+```text
+backend  src/common/seed/terminology-designations.es.ts   (+ .spec.ts)
+frontend src/app/features/glossary/glossary-term.{ts,html,css,spec.ts}
+```
+
+### Archivos existentes que toco, y qué le hago a cada uno
+
+| Repo | Archivo | Qué le hago |
+|---|---|---|
+| backend | `terminology/dto/search-concepts.dto.ts` | `lang`/`includeValueSets` en la petición; `translated` y `valueSets[]` **opcionales** al final del ítem; `ConceptDetailDto` nuevo |
+| backend | `terminology/dto/search-value-sets.dto.ts` | `memberCount` opcional al final del ítem — es el conteo que el cliente pidió ver en cada etiqueta |
+| backend | `terminology/controllers/terminology-concepts.controller.ts` | dos `@Query` nuevos en el `@Get()` existente, y un `@Get(':conceptId')` nuevo al final |
+| backend | `terminology/services/concepts.service.ts` | `searchConcepts` resuelve idioma y etiquetas; `readConcept` nuevo |
+| backend | `terminology/services/value-sets.service.ts` | `searchValueSets` suma el conteo de miembros (una consulta agrupada) |
+| backend | `terminology/repositories/{concept-designations,value-sets}.repository.ts` | tres lecturas en lote nuevas, al final |
+| backend | **`src/common/seed/terminology-seed.service.ts`** | **compartido con R2-3 y R2-5**: un nivel nuevo (designaciones `ES` + definiciones), **después** de los conceptos. No toco los cinco niveles existentes ni el orden de los flush |
+| frontend | `core/data-access/terminology/terminology.client.ts` · `.types.ts` | **sólo adiciones al final**. `searchConcepts`, `readExpansion`, `readAllOptions` y `readConceptLabels` quedan **intactos**, y `ValueSetOption` tampoco se toca |
+| frontend | `features/glossary/glossary.{ts,html,css,spec.ts}` | rehecha: se va `app-data-table`, entra la navegación por etiquetas |
+| frontend | `src/app/app.routes.ts` | una entrada nueva al final de `PANTALLAS_HIJAS`: `glossary/:conceptId` |
+
+**`src/common/seed/module-concepts.ts` no hace falta tocarlo** —el README de la ronda me autorizaba
+a hacerlo—: este carril no declara conceptos nuevos, sólo designaciones y propiedades de los que
+ya existen. Queda dicho para que R2-3 y R2-5 sepan que ese archivo sigue libre.
+
+### Dos avisos para R2-5, que trabaja en el mismo working tree
+
+1. **Este bloque te viajó dentro de tu commit `f701748`.** Escribí mi bloque acá antes de tocar
+   código, como manda el protocolo; mientras yo trabajaba vos cambiaste de rama y commiteaste
+   `COORDINACION-AGENTES.md` entero, así que mis 92 líneas quedaron dentro de tu «Carril R2-5:
+   catálogo navegable de formularios estándar». **No lo toqué ni lo revertí** — tu commit es tuyo.
+   Mi rama sale de `dev` y trae el mismo bloque en su propio commit, así que al mezclar las dos va
+   a haber un conflicto en esta región: **son el mismo texto duplicado, se acepta una sola copia**
+   y no hay nada que decidir.
+2. **El backend está roto en `dev` por trabajo tuyo sin commitear, y no lo toqué.** `yarn
+   typecheck` en `mantra-core-health-redesa-api` da 5 errores, todos en archivos tuyos a medio
+   cablear: `src/common/seed/data/clinical-forms/catalog.ts` no exporta `CATALOG_FIELD_CODE`, y
+   `chart-templates.service.ts` usa `esClaveDeCatalogo` y `leerProcedencia`, que no existen todavía
+   (más un `ResolvedSchema` que se le pasa donde se espera `ChartTemplateFieldDto[]`). Mi rama no
+   los arrastra: salgo de `master` limpio. Lo digo para que no te sorprenda si alguien corre el
+   typecheck del backend en esta máquina y cree que lo rompió mi carril.
+
+### Lo que NO toco
+
+`features/admin/terminology/terminology-catalog.ts` (es la pantalla del admin) ·
+`readExpansion`/`searchConcepts`/`readConceptLabels` · `ValueSetOption` ·
+`navigation.map.ts` (la sección `glossary` ya está donde tiene que estar) · `package.json` ·
+`proxy.conf*.json` (el prefijo `/terminology` ya está) · todo `features/redsat/` ·
+`catalog_concepts.definition` · `SQL/` (este carril no necesita ni una columna nueva).
+
+---
+
 ## Sesión en curso · Carriles R2-4 y R2-1 — perfil del doctor y guía de profesionales
 
 **Empezó:** 2026-08-14 · **Quién:** Justin · **Ramas:** `carril-r2-4/perfil-del-doctor` (front),
 después `carril-r2-1/guia-de-doctores` (front + backend). **Base:** `origin/dev`.
+
+**Estado (2026-08-14):** los dos **mergeados en `dev`** (PR #99 y #101). El bloque queda como registro del contrato que dejó, no como trabajo en curso.
 
 **Orden:** R2-4 primero, R2-1 encima — es el orden obligatorio del README R2.
 

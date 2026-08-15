@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-184 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+187 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -356,4 +356,7 @@ Archivo: `src/app/core/data-access/terminology/terminology.client.ts`
 |---|---|
 | `GET` | `/terminology/concepts` |
 | `GET` | `/terminology/concepts` |
+| `GET` | `/terminology/concepts` |
+| `GET` | `/terminology/concepts/:conceptId` |
+| `GET` | `/terminology/value-sets` |
 | `GET` | `/terminology/value-sets/:valueSetId/$expand` |
