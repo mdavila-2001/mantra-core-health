@@ -169,6 +169,31 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics · M08 clinical',
   },
   {
+    // Carril 12. Los cinco roles perioperatorios que declara `PeriopController`
+    // en sus lecturas; `BILLING` queda afuera a propósito: figura sólo en el
+    // endpoint de cargos, que es contabilidad del caso y no atención.
+    //
+    // Encendida con las lecturas del módulo (`GET /procedure-cases`, su detalle
+    // y el equipo) y con la respuesta del integrante a su participación. El
+    // módulo llevaba veinte endpoints de escritura y ninguna pantalla, y sin la
+    // aceptación **ninguna intervención podía confirmarse**: `confirm` exige que
+    // cada integrante haya aceptado y no había dónde hacerlo.
+    path: 'interventions',
+    label: 'Intervenciones',
+    group: 'Atención',
+    icon: 'orders',
+    roles: [
+      'SURGEON',
+      'ANESTHESIOLOGIST',
+      'PERIOP_NURSE',
+      'SURGERY_SCHEDULER',
+      'PERIOP_ADMIN',
+    ],
+    availability: 'disponible',
+    summary: 'Mirá las intervenciones programadas y confirmá tu participación.',
+    module: 'M53 procedures_perioperative',
+  },
+  {
     // Carril 2 · punto 4 del reclamo. `TerminologyCatalog` ya resolvía el
     // mismo `GET /terminology/concepts?q=` con rol `SECURITY_ADMIN`: es un
     // buscador técnico de `conceptId` para configuración, no un glosario para
