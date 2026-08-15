@@ -1,6 +1,6 @@
 # API de backend
 
-Las 182 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 184 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -483,12 +483,14 @@ Los doce comandos tienen pantalla. Las doce operan con identificadores pegados
 —o con el código del proveedor, en el flujo por `by-code`—; cuando lleguen los
 endpoints de consulta, los listados reemplazan ese gesto.
 
-### `TerminologyClient` — 2 operaciones
+### `TerminologyClient` — 4 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/terminology/value-sets/:valueSetId/$expand` | — |
 | `GET` | `/terminology/concepts` | `PatientDetail`, `MyProfile` |
+| `GET` | `/terminology/concepts/:conceptId` | `Glossary` (entrada del glosario, carril R2-6) |
+| `GET` | `/terminology/value-sets` | `Glossary` (las etiquetas por las que se hojea, R2-6) |
 
 La segunda se llama con `?ids=` —los identificadores separados por coma— o con
 `?q=` para buscar por texto, que es lo que usa el catálogo de terminología.

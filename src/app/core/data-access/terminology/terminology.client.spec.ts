@@ -172,11 +172,13 @@ describe('TerminologyClient', () => {
     let etiquetas: ReadonlyMap<string, ValueSetOption> = new Map();
     client.readConceptLabels(['c-A']).subscribe((mapa) => (etiquetas = mapa));
 
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [option('A')],
-      count: 1,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [option('A')],
+        count: 1,
+        limit: 50,
+      });
 
     expect(etiquetas.get('c-A')?.display).toBe('a');
   });
@@ -185,15 +187,90 @@ describe('TerminologyClient', () => {
     let etiquetas: ReadonlyMap<string, ValueSetOption> = new Map();
     client.readConceptLabels(['c-A', 'c-INEXISTENTE']).subscribe((mapa) => (etiquetas = mapa));
 
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [option('A')],
-      count: 1,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [option('A')],
+        count: 1,
+        limit: 50,
+      });
 
     // La ausencia la resuelve quien muestra, que es el único que sabe qué
     // poner en su lugar. Acá simplemente no está.
     expect(etiquetas.has('c-INEXISTENTE')).toBe(false);
     expect(etiquetas.size).toBe(1);
+  });
+  /* --- El glosario: etiquetas, términos en castellano y la ficha ---------
+     Los cuatro métodos de arriba no se tocaron; estas pruebas cubren las tres
+     lecturas nuevas y, sobre todo, que las de siempre sigan yendo como iban. */
+
+  it('listValueSets pide las etiquetas y acepta el tope', () => {
+    client.listValueSets({ limit: 200 }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/value-sets');
+    expect(req.request.params.get('limit')).toBe('200');
+
+    req.flush({ items: [], count: 0, limit: 200, nextCursor: null });
+  });
+
+  it('listValueSets no manda los opcionales que nadie pidió', () => {
+    client.listValueSets().subscribe();
+
+    // El backend valida con `forbidNonWhitelisted`: una clave declarada en
+    // `undefined` volvería 400.
+    const req = http.expectOne((r) => r.url === '/terminology/value-sets');
+    expect(req.request.params.keys()).toEqual([]);
+
+    req.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+  });
+
+  it('searchGlossary pide siempre castellano y etiquetas', () => {
+    client.searchGlossary().subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts');
+    expect(req.request.params.get('lang')).toBe('ES');
+    expect(req.request.params.get('includeValueSets')).toBe('true');
+    expect(req.request.params.has('q')).toBe(false);
+
+    req.flush({ items: [], count: 0, limit: 50 });
+  });
+
+  it('searchGlossary combina el texto con la categoría', () => {
+    client.searchGlossary({ query: 'hiper', valueSetId: 'vs-1', limit: 200 }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts');
+    expect(req.request.params.get('q')).toBe('hiper');
+    expect(req.request.params.get('valueSetId')).toBe('vs-1');
+
+    req.flush({ items: [], count: 0, limit: 200 });
+  });
+
+  it('searchConcepts sigue sin pedir idioma ni etiquetas', () => {
+    // La garantía de retrocompatibilidad, del lado del cliente: el catálogo de
+    // administración y `readConceptLabels` comparten esta URL, y ninguno debe
+    // empezar a recibir textos traducidos porque el glosario los necesite.
+    client.searchConcepts({ query: 'gender' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts');
+    expect(req.request.params.has('lang')).toBe(false);
+    expect(req.request.params.has('includeValueSets')).toBe(false);
+
+    req.flush({ items: [], count: 0, limit: 50 });
+  });
+
+  it('readGlossaryTerm pide la ficha por su id, en castellano', () => {
+    client.readGlossaryTerm('c-A').subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts/c-A');
+    expect(req.request.params.get('lang')).toBe('ES');
+
+    req.flush({
+      conceptId: 'c-A',
+      code: 'I10',
+      display: 'Hipertension esencial',
+      codeSystemVersionId: 'csv-1',
+      valueSets: [],
+      synonyms: [],
+    });
   });
 });
