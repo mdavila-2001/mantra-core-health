@@ -10,6 +10,7 @@
       "/scheduling",
       "/charts",
       "/forms",
+      "/surveys",
       "/clinical",
       "/authz",
       "/practitioners",
@@ -27,7 +28,13 @@
       "/geo",
       "/procedure-cases",
       "/dental-procedures",
-      "/diagnostic-units"
+      "/diagnostic-units",
+      "/diagnostic-results",
+      "/pharma-labs",
+      "/visit-agenda",
+      "/visit-requests",
+      "/visit-records",
+      "/visit-surveys"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

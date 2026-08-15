@@ -507,6 +507,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M08 clinical',
   },
   {
+    // Carril 11, lado paciente. Es la contracara de «Laboratorio e imagen»:
+    // aquélla es la cola del laboratorio y exige rol clínico; ésta mira los
+    // mismos estudios desde el otro lado, sólo los propios y sólo los que un
+    // profesional ya validó. Sin `roles` por lo mismo que las dos de arriba.
+    path: 'my-account/diagnostic-results',
+    label: 'Mis resultados',
+    group: 'Mi cuenta',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Mirá y descargá tus resultados, y compartilos por un tiempo con un profesional.',
+    module: 'M20 diagnostics',
+  },
+  {
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino
     // del 403 `IDENTITY_VERIFICATION_REQUIRED`: **no se renombra**. Cambiarla
     // rompería la puerta que traduce ese error en una salida.

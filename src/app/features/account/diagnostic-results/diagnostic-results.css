@@ -1,0 +1,115 @@
+/* ============================================================================
+    Los resultados del paciente.
+
+    Mobile-first, como el resto del portal: quien abre un resultado lo hace más
+    veces desde el teléfono que desde un escritorio, y una tabla de estudios en
+    360 px no se lee. La lista es de una columna y cada resultado es una tarjeta
+    que se lee entera de arriba abajo.
+    ========================================================================== */
+
+.resultados__estado {
+  color: var(--text-muted);
+  margin-block: var(--sp-4);
+}
+
+.resultados__lista {
+  display: grid;
+  gap: var(--sp-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.resultados__item {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.resultados__encabezado {
+  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: space-between;
+}
+
+.resultados__titulo {
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  margin: 0;
+}
+
+.resultados__fecha {
+  color: var(--text-muted);
+  margin-block: var(--sp-1) 0;
+}
+
+/* La conclusión es el texto clínico firmado: se lee, no se escanea. Un ancho
+   de línea acotado es lo que hace legible un párrafo largo. */
+.resultados__conclusion {
+  margin: 0;
+  max-width: 68ch;
+}
+
+.resultados__archivos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.resultados__sin-archivos,
+.resultados__ayuda {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.resultados__acciones {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.resultados__compartir {
+  border-top: 1px solid var(--border-subtle);
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-3);
+}
+
+.resultados__subtitulo {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
+  margin: 0;
+}
+
+.resultados__compartidos {
+  display: grid;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.resultados__compartido {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.resultados__cuenta {
+  font-family: var(--font-mono, monospace);
+  /* Un identificador de cuenta no tiene espacios donde cortar: sin esto,
+     desborda la tarjeta en pantallas angostas. */
+  overflow-wrap: anywhere;
+}
+
+.resultados__vigencia {
+  color: var(--text-muted);
+}

@@ -1,13 +1,18 @@
 <app-page-header
-  title="Directorio de laboratorios"
-  subtitle="Unidades verificadas de laboratorio clínico e imagenología, agrupadas por categoría."
+  title="Buscar un laboratorio"
+  subtitle="Centros verificados de laboratorio clínico e imagenología, de toda la red."
+/>
+
+<app-filter-bar
+  [filters]="filtros"
+  searchLabel="Buscar por nombre o código del centro"
+  (filtersChanged)="filtrar($event)"
 />
 
 <app-view-state-host [state]="state()" (retry)="retry()">
   @if (state().status === 'ready') {
     <p class="directory__count">
-      {{ groups().length }}
-      {{ groups().length === 1 ? 'categoría disponible' : 'categorías disponibles' }}
+      {{ total() }} {{ total() === 1 ? 'centro encontrado' : 'centros encontrados' }}
     </p>
 
     @for (group of groups(); track group.code) {
