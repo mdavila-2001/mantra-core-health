@@ -107,4 +107,10 @@
       (retry)="recargarPlantillas()"
     />
   </section>
+
+  <!-- ─── El catálogo de formularios estándar ───────────────────────────────
+       Carril R2-5. Va al final y en su propia sección: arriba se arma una
+       plantilla desde cero, acá están las que ya vienen cargadas. «Duplicar
+       para adaptar» precarga el formulario de arriba — es el mismo motor. -->
+  <app-forms-catalog (duplicar)="duplicarDelCatalogo($event)" />
 </div>

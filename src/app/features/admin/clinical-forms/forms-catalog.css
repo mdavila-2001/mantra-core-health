@@ -1,0 +1,122 @@
+/* El catálogo de formularios estándar: una sección por especialidad, y adentro
+   una tarjeta por formulario. La jerarquía visual es la del pedido —primero la
+   especialidad, después el formulario— y no la de una tabla plana. */
+
+:host {
+  display: block;
+}
+
+.catalogo__encabezado {
+  margin-block-end: var(--sp-4);
+}
+
+.catalogo__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.catalogo__bajada,
+.catalogo__resumen {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+}
+
+.catalogo__especialidad {
+  margin-block-start: var(--sp-6);
+}
+
+.catalogo__especialidad-titulo {
+  margin: 0 0 var(--sp-3);
+  padding-block-end: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+.catalogo__formularios {
+  display: grid;
+  gap: var(--sp-4);
+  /* Se acomoda solo: una columna en un teléfono, tres en un escritorio, sin
+     puntos de corte inventados. */
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+}
+
+.catalogo__formulario {
+  display: block;
+  block-size: 100%;
+}
+
+.catalogo__ficha {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.catalogo__formulario-titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.catalogo__version {
+  flex: none;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* La ficha de procedencia, en pares término/definición: es un dato del
+   catálogo, no un pie de página. */
+.catalogo__origen {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-1) var(--sp-3);
+  margin: var(--sp-3) 0 0;
+}
+
+.catalogo__origen dt {
+  color: var(--text-muted);
+}
+
+.catalogo__origen dd {
+  margin: 0;
+  /* Una URL de ministerio no rompe la tarjeta. */
+  overflow-wrap: anywhere;
+}
+
+.catalogo__origen-version {
+  color: var(--text-muted);
+}
+
+.catalogo__nota,
+.catalogo__sin-origen {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.catalogo__campos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-3);
+}
+
+.catalogo__mas-campos {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.catalogo__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
+}
