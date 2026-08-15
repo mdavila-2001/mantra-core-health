@@ -356,6 +356,20 @@
       "parametrizada": false
     },
     {
+      "ruta": "/my-account/medical-record",
+      "etiqueta": "Mi historia clínica",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "MedicalRecord",
+      "apis": [
+        "ClinicalClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/my-account/identity/verify",
       "etiqueta": "Verificar identidad",
       "grupo": "Mi cuenta",

@@ -2,7 +2,7 @@
 
 # Inventario de vistas del diseñador y cableado real
 
-Carril 01. 25 secciones del registro, 78 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
+Carril 01. 26 secciones del registro, 78 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
 
 ## Estados
 
@@ -43,6 +43,7 @@ Carril 01. 25 secciones del registro, 78 pantallas hijas o de operación y 126 v
 | SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting` | `Accounting` | AccountingClient | conectada | ninguna |
 | cualquier sesión | `/my-account` | `MyProfile` | CommunityClient, FilesClient, IdentityClient, PracticeSitesClient, ProfilesClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/my-account/appointments` | `Appointments` | SchedulingClient, TerminologyClient | conectada | ninguna |
+| cualquier sesión | `/my-account/medical-record` | `MedicalRecord` | ClinicalClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/my-account/identity/verify` | `IdentityVerification` | FilesClient, IdentityClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/my-account/identity/cases` | `VerificationCases` | IdentityClient | conectada | ninguna |
 
@@ -267,7 +268,7 @@ Las 126 pantallas de `features/redsat/`, generadas por `scripts/port-vistas-reds
 | Estado | Pantallas |
 |---|---|
 | maqueta portada | 126 |
-| conectada | 93 |
+| conectada | 94 |
 | presentacional | 6 |
 | conectada con deuda | 3 |
 | placeholder | 1 |
