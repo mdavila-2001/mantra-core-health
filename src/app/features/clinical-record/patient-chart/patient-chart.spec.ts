@@ -1,4 +1,4 @@
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+﻿import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type { WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -414,9 +414,8 @@ describe('PatientChart', () => {
     responderNombre();
     responderExpediente();
 
-    const bloques = interno<() => readonly { clave: string; columnas: { key: string }[] }[]>(
-      'bloques',
-    )();
+    const bloques =
+      interno<() => readonly { clave: string; columnas: { key: string }[] }[]>('bloques')();
     const diagnosticos = bloques.find((b) => b.clave === 'diagnosticos');
     expect(diagnosticos?.columnas.some((c) => c.key === 'detalle')).toBe(false);
     // Y las tres que siempre están, sí.
@@ -439,9 +438,8 @@ describe('PatientChart', () => {
       },
     });
 
-    const bloques = interno<() => readonly { clave: string; columnas: { key: string }[] }[]>(
-      'bloques',
-    )();
+    const bloques =
+      interno<() => readonly { clave: string; columnas: { key: string }[] }[]>('bloques')();
     expect(
       bloques.find((b) => b.clave === 'encuentros')?.columnas.some((c) => c.key === 'detalle'),
     ).toBe(true);
@@ -661,7 +659,12 @@ describe('PatientChart', () => {
     responderExpediente({
       resumen: {
         encounters: [
-          { id: 'e-1', statusConceptId: 'st-activa', reasonText: 'Control', startAt: HACE_UNA_HORA },
+          {
+            id: 'e-1',
+            statusConceptId: 'st-activa',
+            reasonText: 'Control',
+            startAt: HACE_UNA_HORA,
+          },
           {
             id: 'e-2',
             statusConceptId: 'st-activa',

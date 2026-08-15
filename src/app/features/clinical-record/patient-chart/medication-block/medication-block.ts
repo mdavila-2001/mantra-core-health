@@ -130,16 +130,7 @@ export interface RecetaEnFicha {
  */
 @Component({
   selector: 'app-medication-block',
-  imports: [
-    Alert,
-    AppButton,
-    AppInput,
-    Card,
-    ConceptSelect,
-    FormActions,
-    FormField,
-    StatusSeal,
-  ],
+  imports: [Alert, AppButton, AppInput, Card, ConceptSelect, FormActions, FormField, StatusSeal],
   templateUrl: './medication-block.html',
   styleUrl: './medication-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -183,6 +174,17 @@ export class MedicationBlock {
    * bloque, y quien lo recibe hace lo mismo en los tres casos.
    */
   readonly cambio = output<void>();
+
+  /**
+   * Se pidió la receta en papel (corrección #16).
+   *
+   * El bloque **no arma el documento**: avisa cuál se pidió y el expediente lo
+   * construye desde los datos que la API devolvió. Acá las recetas llegan ya
+   * traducidas y sin fechas, así que armarlo desde este lado obligaría a
+   * duplicar el modelo o a leer la pantalla — y un PDF que sale de leer la
+   * pantalla dice lo que la pantalla muestra, no lo que está registrado.
+   */
+  readonly descargar = output<RecetaEnFicha>();
 
   protected readonly topeDelTexto = TOPE_DEL_TEXTO;
   protected readonly targetMedicamento = TARGET_MEDICAMENTO;
@@ -362,7 +364,9 @@ export class MedicationBlock {
       return;
     }
 
-    if (!(await this.sinInteraccionesOConfirmadas(patientProfileId, medicationConceptId, encounterId))) {
+    if (
+      !(await this.sinInteraccionesOConfirmadas(patientProfileId, medicationConceptId, encounterId))
+    ) {
       return;
     }
 
