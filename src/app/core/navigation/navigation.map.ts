@@ -90,6 +90,18 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Todos los profesionales, agrupados por especialidad.',
     module: 'M05 profiles',
   },
+  {
+    // Directorio de unidades publicadas del módulo 23. Es una sección distinta
+    // de `/diagnostics`, que sigue siendo la cola clínica de órdenes/resultados.
+    // La ruta tampoco coincide con `/diagnostic-units`, prefijo exclusivo de API.
+    path: 'laboratory-directory',
+    label: 'Directorio de laboratorios',
+    group: 'General',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Laboratorios e imagenología, agrupados por categoría y con su oferta vigente.',
+    module: 'M23 diagnostic_units',
+  },
 
   /* -- Atención · fase 1 del orden de trabajo ------------------------------ */
 

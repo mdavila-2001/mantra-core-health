@@ -16,7 +16,7 @@ Las 184 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` `/procedure-cases` `/dental-procedures` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` `/procedure-cases` `/dental-procedures` `/diagnostic-units` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -616,6 +616,16 @@ El histórico de procedimientos quirúrgicos y odontológicos (M53).
 | `GET` | `/dental-procedures` | `ProceduresBlock` |
 | `GET` | `/dental-procedures/catalog` | `ProceduresBlock` |
 | `POST` | `/dental-procedures` | `ProceduresBlock` |
+
+### `DiagnosticUnitsClient` — 2 operaciones · punto 3
+
+Directorio de unidades verificadas del tenant activo (M23). No es la cola clínica
+de `/diagnostics`: lista laboratorios e imagenología y abre su perfil público.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostic-units` | `LaboratoryDirectory` |
+| `GET` | `/diagnostic-units/:id` | `LaboratoryDetail` |
 
 ### `DiagnosticsClient` — 4 operaciones · carril 4
 

@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-330 componentes y 49 servicios inyectables, leídos de `src/`.
+332 componentes y 50 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -76,7 +76,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (271)
+## Feature (273)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -206,6 +206,8 @@
 | `app-verification-cases` | `VerificationCases` | — | — | — | OnPush | sí |
 | `app-verification-policy-form` | `VerificationPolicyForm` | — | — | — | OnPush | sí |
 | `app-identity-verification` | `IdentityVerification` | — | — | — | OnPush | sí |
+| `app-laboratory-detail` | `LaboratoryDetail` | — | — | — | OnPush | sí |
+| `app-laboratory-directory` | `LaboratoryDirectory` | — | — | — | OnPush | sí |
 | `app-not-found` | `NotFound` | — | — | — | OnPush | sí |
 | `app-redsat-accesos-acceso-de-emergencia-formulario` | `AccesosAccesoDeEmergenciaFormulario` | — | — | — | Default | **no** |
 | `app-redsat-accesos-clinicos-del-paciente-formulario` | `AccesosClinicosDelPacienteFormulario` | — | — | — | Default | **no** |
@@ -364,7 +366,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (49)
+## Servicios (50)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -379,6 +381,7 @@
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
 | `CommunityClient` | `src/app/core/data-access/community/community.client.ts` | root | sí |
 | `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |
+| `DiagnosticUnitsClient` | `src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts` | root | sí |
 | `DiagnosticsClient` | `src/app/core/data-access/diagnostics/diagnostics.client.ts` | root | sí |
 | `DirectoryClient` | `src/app/core/data-access/directory/directory.client.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |

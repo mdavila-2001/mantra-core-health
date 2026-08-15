@@ -1,0 +1,153 @@
+<app-page-header
+  [title]="title()"
+  [subtitle]="category()"
+  [breadcrumbs]="[
+    { label: 'Directorio de laboratorios', routerLink: '/laboratory-directory' },
+    { label: title() },
+  ]"
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (detail(); as unit) {
+    <div class="profile">
+      <app-card variant="outlined" padding="lg" class="profile__card profile__card--wide">
+        <h2 card-header>Identificación</h2>
+        <dl class="profile__facts">
+          <div>
+            <dt>Código</dt>
+            <dd>{{ unit.code }}</dd>
+          </div>
+          <div>
+            <dt>Categoría</dt>
+            <dd>{{ category() }}</dd>
+          </div>
+          <div>
+            <dt>Sedes</dt>
+            <dd>{{ unit.siteCount }}</dd>
+          </div>
+          <div>
+            <dt>Estudios disponibles</dt>
+            <dd>{{ unit.studyCount }}</dd>
+          </div>
+        </dl>
+        @if (unit.walkInAvailable || unit.homeCollectionAvailable || unit.acceptsExternalOrders) {
+          <ul class="profile__capabilities" aria-label="Modalidades de atención">
+            @if (unit.walkInAvailable) {
+              <li>Atención sin cita</li>
+            }
+            @if (unit.homeCollectionAvailable) {
+              <li>Toma de muestras a domicilio</li>
+            }
+            @if (unit.acceptsExternalOrders) {
+              <li>Recibe órdenes externas</li>
+            }
+          </ul>
+        }
+      </app-card>
+
+      @if (unit.sites.length > 0) {
+        <app-card variant="outlined" padding="lg" class="profile__card">
+          <h2 card-header>Sedes</h2>
+          <ul class="profile__items">
+            @for (site of unit.sites; track site.id) {
+              <li>
+                <strong>{{ site.name }}</strong>
+                <span>{{ site.code }} · {{ site.role.display }}</span>
+                @if (site.sampleCollectionAvailable) {
+                  <span>Toma de muestras</span>
+                }
+                @if (site.imagingAvailable) {
+                  <span>Servicios de imagen</span>
+                }
+              </li>
+            }
+          </ul>
+        </app-card>
+      }
+
+      @if (unit.equipment.length > 0) {
+        <app-card variant="outlined" padding="lg" class="profile__card">
+          <h2 card-header>Equipos</h2>
+          <ul class="profile__items">
+            @for (equipment of unit.equipment; track equipment.id) {
+              <li>
+                <strong>{{ equipment.type.display }}</strong>
+                @if (equipment.manufacturer || equipment.model) {
+                  <span>{{ equipment.manufacturer }} {{ equipment.model }}</span>
+                }
+                @if (siteName(equipment.siteId); as site) {
+                  <span>{{ site }}</span>
+                }
+                <span>{{ equipment.operationalStatus.display }}</span>
+                @if (equipment.nextCalibrationDueAt) {
+                  <span
+                    >Próxima calibración:
+                    {{ equipment.nextCalibrationDueAt | date: 'dd/MM/yyyy' }}</span
+                  >
+                }
+              </li>
+            }
+          </ul>
+        </app-card>
+      }
+
+      @if (unit.studies.length > 0) {
+        <app-card variant="outlined" padding="lg" class="profile__card profile__card--wide">
+          <h2 card-header>Estudios y servicios</h2>
+          <ul class="profile__items profile__items--studies">
+            @for (study of unit.studies; track study.id) {
+              <li>
+                <strong>{{ study.name }}</strong>
+                <span>Código {{ study.code }}</span>
+                @if (study.description) {
+                  <p>{{ study.description }}</p>
+                }
+                @if (study.preparationInstructions) {
+                  <span>Preparación: {{ study.preparationInstructions }}</span>
+                }
+                @if (study.requiresMedicalOrder) {
+                  <span>Requiere orden médica</span>
+                }
+                @if (study.expectedTurnaroundMinutes) {
+                  <span>Entrega estimada: {{ study.expectedTurnaroundMinutes }} min</span>
+                }
+                @if (siteName(study.siteId); as site) {
+                  <span>Sede: {{ site }}</span>
+                }
+                @if (study.prices.length > 0) {
+                  <div class="profile__prices" aria-label="Precios públicos">
+                    @for (price of study.prices; track price.scheduleCode + price.siteId) {
+                      <strong>{{ priceLabel(price.amount, price.currency.display) }}</strong>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        </app-card>
+      }
+
+      @if (unit.accreditations.length > 0) {
+        <app-card variant="outlined" padding="lg" class="profile__card profile__card--wide">
+          <h2 card-header>Acreditaciones vigentes</h2>
+          <ul class="profile__items">
+            @for (accreditation of unit.accreditations; track accreditation.id) {
+              <li>
+                <strong>{{ accreditation.type.display }}</strong>
+                @if (accreditation.number) {
+                  <span>N.º {{ accreditation.number }}</span>
+                }
+                @if (siteName(accreditation.siteId); as site) {
+                  <span>{{ site }}</span>
+                }
+                @if (accreditation.validTo) {
+                  <span>Vigente hasta {{ accreditation.validTo | date: 'dd/MM/yyyy' }}</span>
+                }
+              </li>
+            }
+          </ul>
+        </app-card>
+      }
+    </div>
+  }
+</app-view-state-host>

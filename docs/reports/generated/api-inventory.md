@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-192 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+194 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -181,6 +181,15 @@ Archivo: `src/app/core/data-access/procedures/procedures.client.ts`
 | `GET` | `/dental-procedures/catalog` |
 | `GET` | `/procedure-cases` |
 | `GET` | `/procedure-cases/:caseId` |
+
+## `DiagnosticUnitsClient`
+
+Archivo: `src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/diagnostic-units` |
+| `GET` | `/diagnostic-units/:id` |
 
 ## `FormsClient`
 
