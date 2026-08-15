@@ -96,6 +96,22 @@ describe('NavigationService', () => {
 
       expect(rutasDelMenu()).toContain('/administration/users');
       expect(rutasDelMenu()).toContain('/administration/patients');
+      // Carriles 13 y 16: las dos consolas de organización entran con el mismo
+      // rol que el resto de la configuración.
+      expect(rutasDelMenu()).toContain('/administration/medical-organization');
+      expect(rutasDelMenu()).toContain('/administration/medical-laboratory');
+    });
+
+    it('la consola del laboratorio no se ofrece a quien sólo ejerce (C16)', () => {
+      abrirSesion(['PRACTITIONER']);
+
+      // Configurar precios de convenios y permisos de firma es administración,
+      // no atención: el backend exige `SECURITY_ADMIN` y el menú no ofrece una
+      // puerta que la API va a cerrar.
+      expect(rutasDelMenu()).not.toContain('/administration/medical-laboratory');
+      // La estructura de su propia organización sí: es donde ve en qué sede y
+      // con qué rol trabaja, y `GET /practices` ya lo admite.
+      expect(rutasDelMenu()).toContain('/administration/medical-organization');
     });
 
     it('la Guía de profesionales solo aparece en el menú del paciente', () => {

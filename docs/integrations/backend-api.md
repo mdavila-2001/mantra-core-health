@@ -627,6 +627,50 @@ de `/diagnostics`: lista laboratorios e imagenología y abre su perfil público.
 | `GET` | `/diagnostic-units` | `LaboratoryDirectory` |
 | `GET` | `/diagnostic-units/:id` | `LaboratoryDetail` |
 
+### `DiagnosticUnitsAdminClient` — 2 operaciones · carril 16
+
+La **consola de administración** del laboratorio (M23), no su vitrina.
+
+Es un cliente aparte de `DiagnosticUnitsClient` porque responde otra pregunta y
+la contesta con otros datos. Aquél sirve el directorio que un paciente usa para
+elegir dónde hacerse un estudio: filtra a unidades activas **y** verificadas,
+ofertas activas y precios de cronogramas marcados como públicos. Éste devuelve
+el mismo dominio **sin** esos filtros —para poder terminar de configurar lo que
+todavía no se publicó— y agrega dos cosas que a la vitrina no le corresponden:
+el personal con sus permisos de validación y firma, y los números de serie del
+equipamiento.
+
+Las dos operaciones exigen `SECURITY_ADMIN`, y una unidad de otro tenant
+responde el mismo `404` que una inexistente.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostic-units/administration` | `MedicalLaboratory` |
+| `GET` | `/diagnostic-units/:id/administration` | `MedicalLaboratory` |
+
+### `MedicalOrganizationClient` — 2 operaciones · carril 13
+
+La consola del administrador de organización médica (M14 `practice`).
+
+`GET /practices/:practiceId/organization` devuelve **el árbol completo en una
+lectura**: sedes, áreas, infraestructura, servicios, plantilla, documentación
+legal e inventario. Es una sola respuesta y no siete endpoints porque las siete
+listas cuelgan del mismo identificador y se miran juntas; pedirlas por separado
+obligaría a la pantalla a encadenar siete peticiones y a manejar siete estados
+de carga para un único ámbito.
+
+Existe porque el módulo tenía once operaciones de escritura y tres lecturas: se
+daban de alta sedes, áreas, quirófanos, consultorios, servicios, personal,
+acreditaciones e inventario, y ninguna operación los volvía a mencionar.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practices` | `MedicalOrganization` (elige qué organización se administra) |
+| `GET` | `/practices/:practiceId/organization` | `MedicalOrganization` |
+
+> `GET /practices` ya lo consumía `AccountingClient` para elegir de qué práctica
+> son los libros. Se reusa el mismo endpoint: no se forkea el contrato.
+
 ### `DiagnosticsClient` — 4 operaciones · carril 4
 
 Laboratorios e imagenología (M52).

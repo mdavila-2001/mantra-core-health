@@ -346,6 +346,46 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M17 billing',
   },
   {
+    // Carril 13. El módulo 14 (`practice`) tenía once escrituras y tres
+    // lecturas: se daban de alta sedes, áreas, quirófanos, consultorios,
+    // servicios, personal, acreditaciones e inventario, y **ninguna pantalla
+    // los volvía a mostrar**. La sección se enciende con
+    // `GET /practices/:id/organization`, que es la lectura que faltaba.
+    //
+    // Cuelga de `administration/` como el resto de la configuración, y no de
+    // una raíz propia: `/practices` es prefijo del proxy y una sección llamada
+    // así a nivel raíz se iría entera a la API — el mismo motivo por el que M13
+    // vive en `administration/geolocation`.
+    path: 'administration/medical-organization',
+    label: 'Organización médica',
+    group: 'Administración',
+    icon: 'settings',
+    // Los mismos roles que ya admite `GET /practices`: quien puede enumerar las
+    // prácticas del tenant puede ver la estructura de la suya. El aislamiento
+    // real lo hace la API, que responde 404 ante la de otra organización.
+    roles: ['SECURITY_ADMIN', 'PERIOP_ADMIN', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Administrá sedes, áreas, quirófanos, consultorios, plantilla y legajo de tu organización.',
+    module: 'M14 practice',
+  },
+  {
+    // Carril 16. Distinta de «Directorio de laboratorios», que es la vitrina
+    // del paciente: aquélla sólo muestra unidades publicadas y verificadas,
+    // ofertas activas y precios públicos. Ésta lee el mismo dominio **sin** esos
+    // filtros —para poder terminar de configurar lo que todavía no se publicó—
+    // y agrega el personal con sus permisos de validación y firma, que a la
+    // vitrina no le corresponde conocer.
+    path: 'administration/medical-laboratory',
+    label: 'Laboratorio médico',
+    group: 'Administración',
+    icon: 'results',
+    // El mismo rol que exigen las dos lecturas administrativas del módulo.
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Configurá sucursales, equipos, estudios, precios y personal de tu laboratorio.',
+    module: 'M23 diagnostic_units',
+  },
+  {
     // Carril 2 · punto 1 del reclamo. `chart.specialty_chart_templates` sólo
     // tenía asignación (`POST /charts/templates/:id/assignments`, UC-15-12);
     // con el alta, el listado y la lectura de esquema ya del lado del

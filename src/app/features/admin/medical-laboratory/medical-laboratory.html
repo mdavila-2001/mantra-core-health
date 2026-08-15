@@ -1,0 +1,412 @@
+@let listado = unidades();
+@let estado = ficha();
+@let detalle = laboratorio();
+
+<app-page-header
+  [title]="detalle?.name ?? 'Laboratorio médico'"
+  subtitle="Sucursales, equipamiento, catálogo de estudios, personal y acreditaciones del laboratorio."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- El selector sólo aparece con más de una unidad: un laboratorio tiene una o
+     unas pocas, y ofrecer una lista de un elemento es ruido. -->
+@if (listado.status === 'ready' && listado.data.length > 1) {
+  <section class="laboratorio__selector">
+    <label for="unidad-elegida">Unidad</label>
+    <select
+      id="unidad-elegida"
+      [value]="unidadElegida()"
+      (change)="elegirUnidad($any($event.target).value)"
+    >
+      @for (unidad of listado.data; track unidad.id) {
+        <option [value]="unidad.id">{{ unidad.name }} ({{ unidad.code }})</option>
+      }
+    </select>
+  </section>
+}
+
+@switch (estado.status) {
+  @case ('ready') {
+    @if (detalle) {
+      <section class="laboratorio__ambito" aria-label="Laboratorio">
+        <dl class="laboratorio__datos">
+          <div>
+            <dt>Código</dt>
+            <dd class="laboratorio__codigo">{{ detalle.code }}</dd>
+          </div>
+          <div>
+            <dt>Tipo</dt>
+            <dd>{{ etiquetaDe(detalle.type) }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>
+              <app-badge [variant]="varianteDe(detalle.status)">
+                {{ etiquetaDe(detalle.status) }}
+              </app-badge>
+            </dd>
+          </div>
+          <div>
+            <dt>Verificación</dt>
+            <dd>
+              <app-badge [variant]="varianteDe(detalle.verificationStatus)">
+                {{ etiquetaDe(detalle.verificationStatus) }}
+              </app-badge>
+            </dd>
+          </div>
+          <!-- Lo decide el servidor con la misma regla que aplica el directorio.
+               Se muestra y no se recalcula: dos implementaciones de la misma
+               regla acabarían diciendo cosas distintas. -->
+          <div>
+            <dt>En el directorio</dt>
+            <dd>
+              @if (detalle.publiclyListed) {
+                <app-badge variant="success">Visible para pacientes</app-badge>
+              } @else {
+                <app-badge variant="warning">Todavía no se publica</app-badge>
+              }
+            </dd>
+          </div>
+        </dl>
+      </section>
+    }
+
+    @if (
+      acreditacionesPorVencer().length > 0 ||
+      equiposPorCalibrar().length > 0 ||
+      validadores().length === 0
+    ) {
+      <section class="laboratorio__avisos" role="status">
+        @if (acreditacionesPorVencer().length > 0) {
+          <p>
+            <strong>{{ acreditacionesPorVencer().length }}</strong> acreditación(es)
+            vencidas o por vencer dentro del mes.
+          </p>
+        }
+        @if (equiposPorCalibrar().length > 0) {
+          <p>
+            <strong>{{ equiposPorCalibrar().length }}</strong> equipo(s) con la
+            calibración vencida o próxima a vencer.
+          </p>
+        }
+        <!-- Sin nadie habilitado, ningún resultado se puede dar por definitivo:
+             es una condición de operación, no un detalle de configuración. -->
+        @if (validadores().length === 0) {
+          <p>
+            Ningún integrante del personal tiene permiso para validar resultados.
+          </p>
+        }
+      </section>
+    }
+  }
+  @case ('empty') {
+    <section class="laboratorio__ambito laboratorio__ambito--vacio">
+      <p>{{ estado.message ?? 'No hay ningún laboratorio que administrar.' }}</p>
+    </section>
+  }
+  @case ('error') {
+    <section class="laboratorio__ambito laboratorio__ambito--error" role="alert">
+      <p>{{ estado.message ?? 'No se pudo cargar el laboratorio.' }}</p>
+      <button app-button variant="secondary" type="button" (click)="recargar()">
+        Reintentar
+      </button>
+    </section>
+  }
+  @case ('forbidden') {
+    <section class="laboratorio__ambito laboratorio__ambito--error" role="alert">
+      <p>{{ estado.message ?? 'No administrás este laboratorio.' }}</p>
+    </section>
+  }
+  @case ('not-found') {
+    <!-- Mismo texto tanto si no existe como si existe y es de otro tenant. -->
+    <section class="laboratorio__ambito laboratorio__ambito--error" role="alert">
+      <p>No encontramos ese laboratorio.</p>
+    </section>
+  }
+  @case ('offline') {
+    <section class="laboratorio__ambito laboratorio__ambito--error" role="alert">
+      <p>No pudimos comunicarnos con el servidor.</p>
+      <button app-button variant="secondary" type="button" (click)="recargar()">
+        Reintentar
+      </button>
+    </section>
+  }
+  @default {
+    <section class="laboratorio__ambito" aria-busy="true">
+      <p class="laboratorio__cargando">Cargando el laboratorio…</p>
+    </section>
+  }
+}
+
+<app-tabs>
+  <app-tab label="Sucursales">
+    <app-data-table
+      [state]="sedes()"
+      [columns]="columnasDeSede()"
+      [trackBy]="porId"
+      caption="Sucursales del laboratorio"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Equipamiento">
+    <app-data-table
+      [state]="equipamiento()"
+      [columns]="columnasDeEquipo()"
+      [trackBy]="porId"
+      caption="Equipos instalados y su calibración"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Estudios">
+    <app-data-table
+      [state]="estudios()"
+      [columns]="columnasDeEstudio()"
+      [trackBy]="porId"
+      caption="Catálogo de estudios con sus precios"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Personal">
+    <app-data-table
+      [state]="personal()"
+      [columns]="columnasDePersonal()"
+      [trackBy]="porId"
+      caption="Personal del laboratorio y sus permisos"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Acreditaciones">
+    <app-data-table
+      [state]="acreditaciones()"
+      [columns]="columnasDeAcreditacion()"
+      [trackBy]="porId"
+      caption="Acreditaciones y documentación legal"
+      (retry)="recargar()"
+    />
+  </app-tab>
+</app-tabs>
+
+<!-- Cobertura declarada, no simulada. El carril 16 abarca además visitadores
+     médicos, reservas de análisis, resultados, encuestas y contabilidad del
+     laboratorio. Cada uno tiene su módulo y su carril; construir una segunda
+     versión acá sería la duplicación que el carril prohíbe. -->
+<section class="laboratorio__cobertura" aria-labelledby="cobertura-lab-titulo">
+  <h2 id="cobertura-lab-titulo">Qué administra esta pantalla y qué no</h2>
+  <dl>
+    <div>
+      <dt>Acá</dt>
+      <dd>
+        Sucursales, equipamiento con calibración, catálogo de estudios con todos
+        sus precios —también los de convenios—, personal con sus permisos de
+        validación y firma, y acreditaciones — módulo 23
+        (<code>diagnostic_units</code>).
+      </dd>
+    </div>
+    <div>
+      <dt>Reservas y resultados</dt>
+      <dd>
+        Los consume la vista del paciente sobre el módulo 20
+        (<code>diagnostics</code>), en <strong>Laboratorio e imagen</strong>.
+        Esta pantalla configura la oferta; no duplica la cola clínica.
+      </dd>
+    </div>
+    <div>
+      <dt>Visitadores médicos</dt>
+      <dd>
+        La visita médica se modela como un tipo de cita del módulo 41
+        (<code>scheduling</code>) y todavía no tiene consola propia. No se
+        declara acá para no prometer una agenda que nadie despacha.
+      </dd>
+    </div>
+    <div>
+      <dt>Contabilidad y encuestas</dt>
+      <dd>
+        Viven en los módulos 16 (contabilidad) y 9 (formularios), con sus
+        propios carriles.
+      </dd>
+    </div>
+  </dl>
+</section>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+
+<ng-template #celdaSede let-sede>
+  <span class="laboratorio__nombre">{{ sede.name }}</span>
+  <span class="laboratorio__secundario">{{ etiquetaDe(sede.role) }}</span>
+</ng-template>
+
+<ng-template #celdaCapacidadesSede let-sede>
+  @if (sede.sampleCollectionAvailable) {
+    <span>Toma de muestras</span>
+  }
+  @if (sede.imagingAvailable) {
+    <span class="laboratorio__secundario">Imagenología</span>
+  }
+  @if (sede.accessionPrefix) {
+    <span class="laboratorio__secundario">Prefijo {{ sede.accessionPrefix }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstadoSede let-sede>
+  <app-badge [variant]="varianteDe(sede.status)">{{ etiquetaDe(sede.status) }}</app-badge>
+</ng-template>
+
+<ng-template #celdaEquipo let-equipo>
+  <span class="laboratorio__nombre">
+    {{ equipo.manufacturer ?? etiquetaDe(equipo.type) }}
+    @if (equipo.model) {
+      {{ equipo.model }}
+    }
+  </span>
+  <span class="laboratorio__secundario">
+    {{ etiquetaDe(equipo.type) }}
+    @if (equipo.serialNumber) {
+      · Nº {{ equipo.serialNumber }}
+    }
+  </span>
+</ng-template>
+
+<ng-template #celdaSedeDelEquipo let-equipo>
+  {{ sedeDe(equipo.siteId) ?? 'sucursal no encontrada' }}
+</ng-template>
+
+<ng-template #celdaCalibracion let-equipo>
+  <app-badge [variant]="varianteDePlazo(equipo.daysToCalibration)">
+    {{ plazoEnPalabras(equipo.daysToCalibration, 'vencida') }}
+  </app-badge>
+  @if (equipo.lastCalibrationAt) {
+    <span class="laboratorio__secundario">Última: {{ equipo.lastCalibrationAt }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstadoEquipo let-equipo>
+  <app-badge [variant]="varianteDe(equipo.operationalStatus)">
+    {{ etiquetaDe(equipo.operationalStatus) }}
+  </app-badge>
+</ng-template>
+
+<ng-template #celdaEstudio let-estudio>
+  <span class="laboratorio__nombre">{{ estudio.name }}</span>
+  <span class="laboratorio__secundario">
+    {{ estudio.code }}
+    @if (estudio.modality) {
+      · {{ etiquetaDe(estudio.modality) }}
+    }
+    @if (estudio.specimenType) {
+      · muestra: {{ etiquetaDe(estudio.specimenType) }}
+    }
+  </span>
+</ng-template>
+
+<ng-template #celdaPreparacion let-estudio>
+  @if (estudio.preparationInstructions) {
+    <span>{{ estudio.preparationInstructions }}</span>
+  } @else {
+    <span class="laboratorio__secundario">sin preparación declarada</span>
+  }
+  @if (estudio.requiresMedicalOrder) {
+    <span class="laboratorio__secundario">Requiere orden médica</span>
+  }
+  @if (estudio.expectedTurnaroundMinutes !== null) {
+    <span class="laboratorio__secundario">
+      Entrega estimada: {{ estudio.expectedTurnaroundMinutes }} min
+    </span>
+  }
+</ng-template>
+
+<!-- Se listan TODOS los cronogramas, también los internos: el directorio sólo
+     publica los marcados como públicos, y sin los otros no habría manera de
+     administrar el convenio con una aseguradora. -->
+<ng-template #celdaPrecios let-estudio>
+  @if (estudio.prices.length === 0) {
+    <span class="laboratorio__secundario">sin precio cargado</span>
+  } @else {
+    @for (precio of estudio.prices; track precio.id) {
+      <span class="laboratorio__precio">
+        {{ precio.scheduleCode }}: {{ precio.patientAmount ?? precio.baseAmount }}
+        @if (precio.currency) {
+          {{ etiquetaDe(precio.currency) }}
+        }
+        @if (!precio.schedulePublic) {
+          <app-badge variant="secondary">interno</app-badge>
+        }
+      </span>
+    }
+  }
+</ng-template>
+
+<ng-template #celdaEstadoEstudio let-estudio>
+  <app-badge [variant]="varianteDe(estudio.status)">{{ etiquetaDe(estudio.status) }}</app-badge>
+</ng-template>
+
+<!-- El nombre puede faltar cuando la asignación de rol no se pudo resolver. Se
+     dice: esconder la fila dejaría una vinculación activa que nadie puede ver
+     ni cerrar. -->
+<ng-template #celdaIntegrante let-integrante>
+  <span class="laboratorio__nombre">
+    {{ integrante.practitionerName ?? 'Profesional sin nombre registrado' }}
+  </span>
+  <span class="laboratorio__secundario">
+    {{ etiquetaDe(integrante.assignmentRole) }}
+    @if (sedeDe(integrante.siteId); as sede) {
+      · {{ sede }}
+    }
+  </span>
+</ng-template>
+
+<ng-template #celdaPermisos let-integrante>
+  @if (integrante.mayValidateResults) {
+    <app-badge variant="success">Valida resultados</app-badge>
+  }
+  @if (integrante.maySignReports) {
+    <app-badge variant="info">Firma informes</app-badge>
+  }
+  @if (!integrante.mayValidateResults && !integrante.maySignReports) {
+    <span class="laboratorio__secundario">sin permisos de validación ni firma</span>
+  }
+</ng-template>
+
+<ng-template #celdaVigenciaIntegrante let-integrante>
+  @if (integrante.validFrom) {
+    {{ integrante.validFrom }}
+    @if (integrante.validTo) {
+      — {{ integrante.validTo }}
+    } @else {
+      <span class="laboratorio__secundario">sin fecha de fin</span>
+    }
+  } @else {
+    —
+  }
+</ng-template>
+
+<ng-template #celdaEstadoIntegrante let-integrante>
+  <app-badge [variant]="varianteDe(integrante.status)">
+    {{ etiquetaDe(integrante.status) }}
+  </app-badge>
+</ng-template>
+
+<ng-template #celdaAcreditacion let-acreditacion>
+  <span class="laboratorio__nombre">{{ etiquetaDe(acreditacion.type) }}</span>
+  @if (acreditacion.number) {
+    <span class="laboratorio__secundario">Nº {{ acreditacion.number }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaVigenciaAcreditacion let-acreditacion>
+  <app-badge [variant]="varianteDePlazo(acreditacion.daysToExpiry)">
+    {{ plazoEnPalabras(acreditacion.daysToExpiry) }}
+  </app-badge>
+  @if (acreditacion.validTo) {
+    <span class="laboratorio__secundario">{{ acreditacion.validTo }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstadoAcreditacion let-acreditacion>
+  <app-badge [variant]="varianteDe(acreditacion.verificationStatus)">
+    {{ etiquetaDe(acreditacion.verificationStatus) }}
+  </app-badge>
+</ng-template>

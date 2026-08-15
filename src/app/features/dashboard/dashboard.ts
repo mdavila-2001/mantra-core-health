@@ -28,7 +28,6 @@ import {
   CaseStatusCatalog,
   toCaseStatusPresentation,
 } from '../identity-verification/case-status';
-import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
  * Panel de inicio de la aplicación autenticada.
