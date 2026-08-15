@@ -59,6 +59,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
       (m) => m.PractitionersDirectory,
     ),
+  'laboratory-directory': () =>
+    import('./features/laboratory-directory/laboratory-directory').then(
+      (m) => m.LaboratoryDirectory,
+    ),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   'medical-records': () =>
@@ -191,6 +195,14 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/directory/practitioner-detail/practitioner-detail')
         .then((m) => m.PractitionerDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'laboratory-directory/:unitId',
+    title: `${APP_TITLE} - Perfil de laboratorio`,
+    loadComponent: () =>
+      import('./features/laboratory-directory/laboratory-detail/laboratory-detail')
+        .then((m) => m.LaboratoryDetail)
         .catch(() => chunkFallido()),
   },
   {

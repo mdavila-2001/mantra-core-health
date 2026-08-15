@@ -48,7 +48,8 @@
       "/health-context",
       "/geo",
       "/procedure-cases",
-      "/dental-procedures"
+      "/dental-procedures",
+      "/diagnostic-units"
     ],
     "target": "http://localhost:3000",
     "secure": false,
