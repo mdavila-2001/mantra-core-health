@@ -213,6 +213,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M04 directory',
   },
   {
+    // Carril 14 (M26). El módulo tenía **sólo escrituras**: el catálogo se daba
+    // de alta y no había forma de volver a leerlo, así que la sección no podía
+    // existir sin inventarse los datos. Entra ahora con
+    // `GET /insurance-carriers` y su ficha.
+    //
+    // El rol es el mismo que «Organizaciones» porque hoy es el único que
+    // significa «administra esta organización»: la plataforma no tiene todavía
+    // un rol de aseguradora. **La autoridad no es esta línea** — la API acota
+    // por pertenencia al tenant, no por rol global —, así que el día que exista
+    // un `INSURANCE_ADMIN` este es el único lugar que cambia.
+    path: 'administration/insurance',
+    label: 'Aseguradora',
+    group: 'Administración',
+    icon: 'billing',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Revisá tus productos, planes, coberturas y la red de prestadores.',
+    module: 'M26 insurance',
+  },
+  {
+    // Carril 14 (M26), cara de brokers. Separada de «Aseguradora» porque son
+    // dos gestiones distintas —el catálogo y la fuerza comercial— y mezclarlas
+    // obligaría a una sola pantalla a pedir permisos de las dos.
+    path: 'administration/brokers',
+    label: 'Brokers',
+    group: 'Administración',
+    icon: 'patients',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Consultá tus corredores, sus vinculaciones vigentes y su cartera.',
+    module: 'M26 insurance',
+  },
+  {
     // W2/F3 (M29): el backend del módulo es solo de comando —sin GET—, así
     // que la sección entra como panel de operaciones; los listados llegan
     // con sus endpoints de consulta.
