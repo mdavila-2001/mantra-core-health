@@ -1,5 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+  type TestRequest,
+} from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -27,6 +31,8 @@ describe('ClinicalForms', () => {
   let harness: RouterTestingHarness;
   let componente: ClinicalForms;
   let http: HttpTestingController;
+  /** El listado que pide la pantalla de armado al entrar. */
+  let listadoInicial: TestRequest;
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
@@ -40,6 +46,17 @@ describe('ClinicalForms', () => {
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
     componente = await harness.navigateByUrl(RUTA, ClinicalForms);
+
+    // El catálogo de formularios estándar (carril R2-5) va embebido al final de
+    // esta pantalla y pide su propio listado —sin filtrar, porque agrupa por
+    // especialidad—. La pantalla pide primero, en su constructor; el catálogo
+    // después, al renderizarse. Se descarta acá para que cada prueba hable sólo
+    // de la pantalla de armado; el catálogo tiene su propio spec.
+    const [pantalla, ...delCatalogo] = http.match(
+      (r) => r.url === '/charts/templates' && r.method === 'GET',
+    );
+    listadoInicial = pantalla;
+    delCatalogo.forEach((peticion) => peticion.flush([]));
   });
 
   afterEach(() => http.verify());
@@ -63,15 +80,14 @@ describe('ClinicalForms', () => {
   }
 
   it('al entrar pide el listado de plantillas sin filtro de especialidad', () => {
-    const req = peticionDeListado();
-    expect(req.request.params.keys()).toEqual([]);
+    expect(listadoInicial.request.params.keys()).toEqual([]);
 
-    req.flush([PLANTILLA]);
+    listadoInicial.flush([PLANTILLA]);
     expect(interno<() => { status: string }>('plantillas')().status).toBe('ready');
   });
 
   it('no deja crear sin especialidad, código, nombre y al menos un campo completo', () => {
-    peticionDeListado().flush([]);
+    listadoInicial.flush([]);
 
     expect(interno<() => boolean>('puedeCrear')()).toBe(false);
 
@@ -91,7 +107,7 @@ describe('ClinicalForms', () => {
   });
 
   it('crear manda la especialidad, el código, el nombre y los campos completos', () => {
-    peticionDeListado().flush([]);
+    listadoInicial.flush([]);
 
     señal<string>('especialidad').set('sp-1');
     señal<string>('codigo').set('CARDIO_INTAKE');
@@ -129,7 +145,7 @@ describe('ClinicalForms', () => {
   });
 
   it('una fila de campo a medias (código sin nombre) no habilita crear ni manda nada', () => {
-    peticionDeListado().flush([]);
+    listadoInicial.flush([]);
 
     señal<string>('especialidad').set('sp-1');
     señal<string>('codigo').set('C1');
@@ -149,7 +165,7 @@ describe('ClinicalForms', () => {
   });
 
   it('elegir una especialidad vuelve a pedir el listado filtrado', () => {
-    peticionDeListado().flush([]);
+    listadoInicial.flush([]);
 
     señal<string>('especialidad').set('sp-1');
     interno<() => void>('onEspecialidadElegida')();
@@ -157,5 +173,50 @@ describe('ClinicalForms', () => {
     const req = http.expectOne((r) => r.url === '/charts/templates' && r.method === 'GET');
     expect(req.request.params.get('specialtyId')).toBe('sp-1');
     req.flush([PLANTILLA]);
+  });
+
+  /* -- Carril R2-5: duplicar un formulario del catálogo --------------------- */
+
+  it('duplicar del catálogo precarga el alta con los campos del formulario', () => {
+    listadoInicial.flush([]);
+
+    interno<(p: unknown) => void>('duplicarDelCatalogo')({
+      id: 'tpl-cat',
+      specialtyConceptId: 'esp-cardio',
+      code: 'CARDIO_FICHA_BASE',
+      name: 'Ficha cardiológica',
+      version: 1,
+      statusConceptId: 'st-1',
+      fields: [
+        {
+          assignmentId: 'a1',
+          fieldId: 'f1',
+          // El catálogo prefija el código con el de su plantilla; al editarlo
+          // el admin trabaja con el código pelado.
+          code: 'CARDIO_FICHA_BASE.dolor_toracico',
+          name: 'Dolor torácico',
+          dataType: 'boolean',
+          required: true,
+        },
+      ],
+    });
+
+    expect(interno<() => string>('especialidad')()).toBe('esp-cardio');
+    expect(interno<() => string>('codigo')()).toBe('CARDIO_FICHA_BASE_ADAPTADA');
+    expect(interno<() => string>('nombre')()).toBe('Ficha cardiológica (adaptada)');
+
+    const campos = interno<
+      () => readonly { code: string; name: string; dataType: string; required: boolean }[]
+    >('campos')();
+    expect(campos).toHaveLength(1);
+    expect(campos[0].code).toBe('dolor_toracico');
+    expect(campos[0].name).toBe('Dolor torácico');
+    expect(campos[0].dataType).toBe('boolean');
+    expect(campos[0].required).toBe(true);
+
+    // Duplicar no crea nada del lado del servidor: lo que hace es dejar el alta
+    // listo. Sí vuelve a leer el listado, ahora filtrado por la especialidad.
+    http.expectNone((r) => r.method === 'POST');
+    peticionDeListado().flush([]);
   });
 });

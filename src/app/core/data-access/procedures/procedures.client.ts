@@ -5,6 +5,7 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, sinNulos, type ConNulos } from '../wire';
 import type {
+  CaseTeamMember,
   DentalCatalog,
   DentalProcedure,
   DentalProcedurePage,
@@ -14,9 +15,12 @@ import type {
   OperativeStep,
   PatientHistoryQuery,
   ProcedureImplant,
+  SurgicalAgendaQuery,
   SurgicalCase,
   SurgicalCaseDetail,
   SurgicalCasePage,
+  TeamMemberResponse,
+  TeamParticipationResponse,
 } from './procedures.types';
 
 /**
@@ -70,6 +74,93 @@ export class ProceduresClient {
     return this.http
       .get<WireCasePage>(this.url('/procedure-cases'), { params: filtroDe(query) })
       .pipe(map((body) => ({ items: body.items.map(toCase), total: body.total })));
+  }
+
+  /**
+   * `GET /procedure-cases` — la **agenda quirúrgica** del profesional.
+   *
+   * El mismo endpoint que {@link listCases}, con la otra mitad de sus filtros.
+   * Va aparte porque responde otra pregunta: aquélla contesta «qué se le hizo a
+   * esta persona» y por eso fija el paciente; ésta contesta «qué hay programado»
+   * y se acota por cirujano, quirófano, estado o ventana temporal.
+   *
+   * @param query - Filtros de la agenda. Todos opcionales; el backend acota
+   *   siempre al tenant del contexto.
+   * @returns La página de casos y el total sin paginar.
+   */
+  listAgenda(query: SurgicalAgendaQuery = {}): Observable<SurgicalCasePage> {
+    return this.http
+      .get<WireCasePage>(this.url('/procedure-cases'), { params: agendaDe(query) })
+      .pipe(map((body) => ({ items: body.items.map(toCase), total: body.total })));
+  }
+
+  /**
+   * `GET /procedure-cases/:id/team-members` — el equipo del caso.
+   *
+   * El detalle ya trae el equipo, pero esta lectura existe para el caso en que
+   * sólo hace falta eso: releerla tras aceptar o rechazar no obliga a
+   * traerse otra vez pasos, hallazgos e implantes.
+   *
+   * @param caseId - Caso cuyo equipo se lee.
+   */
+  listTeamMembers(caseId: string): Observable<readonly CaseTeamMember[]> {
+    return this.http
+      .get<readonly ConNulos<CaseTeamMember>[]>(
+        this.url(`/procedure-cases/${encodeURIComponent(caseId)}/team-members`),
+      )
+      .pipe(map((body) => body.map((m) => sinNulos<CaseTeamMember>(m))));
+  }
+
+  /**
+   * `POST /procedure-cases/:id/team-members/:memberId/accept` — el integrante
+   * acepta su participación (spec 162).
+   *
+   * Sin cuerpo: quién acepta sale del token. Ofrecerlo como parámetro sería
+   * justo lo que la spec 168 prohíbe —aceptar en nombre de otro—, y el backend
+   * lo rechaza igual.
+   *
+   * Responde **422** si el integrante no tiene credencial profesional vigente:
+   * no es un fallo del cliente sino la precondición CAN-INT-002, y la pantalla
+   * la cuenta como tal.
+   *
+   * @param caseId - Caso del equipo.
+   * @param memberId - Integrante que acepta.
+   */
+  acceptTeamMember(caseId: string, memberId: string): Observable<TeamMemberResponse> {
+    return this.http.post<TeamMemberResponse>(
+      this.url(
+        `/procedure-cases/${encodeURIComponent(caseId)}/team-members/${encodeURIComponent(memberId)}/accept`,
+      ),
+      {},
+    );
+  }
+
+  /**
+   * `POST /procedure-cases/:id/team-members/:memberId/respond` — el integrante
+   * rechaza, pide una modificación o informa indisponibilidad (spec 164).
+   *
+   * El motivo es obligatorio en el contrato, no una cortesía: es lo que el
+   * responsable recibe en la notificación y lo único que le permite decidir si
+   * negocia, reemplaza o reprograma.
+   *
+   * @param caseId - Caso del equipo.
+   * @param memberId - Integrante que responde.
+   * @param respuesta - Qué contesta y por qué.
+   */
+  respondTeamMember(
+    caseId: string,
+    memberId: string,
+    respuesta: {
+      readonly response: TeamParticipationResponse;
+      readonly reasonText: string;
+    },
+  ): Observable<TeamMemberResponse> {
+    return this.http.post<TeamMemberResponse>(
+      this.url(
+        `/procedure-cases/${encodeURIComponent(caseId)}/team-members/${encodeURIComponent(memberId)}/respond`,
+      ),
+      respuesta,
+    );
   }
 
   /**
@@ -149,6 +240,26 @@ export class ProceduresClient {
 function filtroDe(query: PatientHistoryQuery): HttpParams {
   const params = new HttpParams().set('patientProfileId', query.patientProfileId);
   return query.limit === undefined ? params : params.set('limit', String(query.limit));
+}
+
+/**
+ * Los filtros de la agenda, todos opcionales.
+ *
+ * Se recorre el objeto en vez de encadenar ocho `if`: la regla es la misma para
+ * los ocho —lo ausente no viaja, porque el backend valida con
+ * `forbidNonWhitelisted`— y escribirla una vez impide que el noveno filtro
+ * llegue con la excepción puesta a mano.
+ */
+function agendaDe(query: SurgicalAgendaQuery): HttpParams {
+  let params = new HttpParams();
+  for (const [clave, valor] of Object.entries(query)) {
+    if (valor === undefined) continue;
+    params = params.set(
+      clave,
+      valor instanceof Date ? valor.toISOString() : String(valor),
+    );
+  }
+  return params;
 }
 
 /* ---- formas de transporte ------------------------------------------------

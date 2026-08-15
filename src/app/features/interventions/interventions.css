@@ -1,0 +1,138 @@
+/* Sección de intervenciones: la agenda arriba, el equipo del caso abierto en el
+   medio y la nota que explica por qué la aceptación bloquea la confirmación.
+   Mismo reparto que laboratorio —tabla, luego tarjetas— porque es el mismo
+   problema: una lectura principal que no le alcanza a todo el que llega. */
+
+:host {
+  display: block;
+}
+
+.intervenciones {
+  display: grid;
+  gap: var(--sp-6);
+}
+
+/* -- El equipo del caso abierto ------------------------------------------- */
+
+.intervenciones__equipo {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.intervenciones__equipo-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.intervenciones__equipo-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.intervenciones__integrantes {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada integrante en una fila con sus acciones al final. Se envuelve en
+   pantallas angostas en vez de recortar: los botones son el acto de la
+   pantalla y no pueden quedar fuera de vista. */
+.intervenciones__integrante {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.intervenciones__integrante:last-child {
+  border-block-end: none;
+}
+
+.intervenciones__integrante-datos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.intervenciones__rol {
+  font-weight: 600;
+}
+
+.intervenciones__estado,
+.intervenciones__sin-fecha {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Marca de "sos vos": es lo que explica por qué esta fila tiene botones y las
+   demás no, así que se distingue del estado, que es dato del caso. */
+.intervenciones__marca {
+  color: var(--st-info-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+.intervenciones__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.intervenciones__cargando {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* -- La respuesta negativa ------------------------------------------------ */
+
+.intervenciones__respuesta {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+  /* Formulario corto: a lo ancho de la tarjeta el textarea se vuelve un muro. */
+  max-inline-size: 56ch;
+}
+
+.intervenciones__respuesta-titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+/* -- La nota del pie ------------------------------------------------------ */
+
+.intervenciones__nota {
+  display: grid;
+  gap: var(--sp-3);
+  /* Texto corrido: a lo ancho de la tabla la línea se vuelve ilegible. */
+  max-inline-size: 68ch;
+}
+
+.intervenciones__nota-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.intervenciones__nota-texto {
+  margin: 0;
+  color: var(--text-secondary);
+}
