@@ -16,11 +16,11 @@ apertura. La lista de rutas no está escrita en la suite: sale de
 `app.routes.ts`. Una pantalla nueva entra sola al barrido; una lista a mano se
 habría quedado vieja y el barrido diría «todo bien» sin haberla mirado.
 
-**405 aperturas** — 93 rutas × 3 roles, más las 126 vistas portadas sin sesión.
+**408 aperturas** — 94 rutas × 3 roles, más las 126 vistas portadas sin sesión.
 
 | Estado | Aperturas |
 |---|---|
-| `ok` | 375 |
+| `ok` | 378 |
 | `denegada` (el rol no alcanzaba: el guard funcionando) | 30 |
 | `no navega`, `vacía`, `error de consola`, `error de API` | **0** |
 
@@ -29,9 +29,9 @@ navega` son su comprobación más fuerte: **no hay una sola ruta que el menú
 ofrezca y el guard rechace**. Menú, «Tus accesos» y ruta salen del mismo
 registro, y el barrido lo confirma con sesiones de verdad.
 
-### El instrumento tuvo que corregirse dos veces antes de creerle
+### El instrumento tuvo que corregirse cuatro veces antes de creerle
 
-Vale contarlo porque el primer resultado era falso y parecía verdadero:
+Vale contarlo porque los primeros resultados eran falsos y parecían verdaderos:
 
 1. **Seis «errores de consola» que no lo eran.** Chromium escribe en la consola
    *toda* petición que no vuelve 2xx, con el mismo `console.error` que usaría una
@@ -46,9 +46,22 @@ Vale contarlo porque el primer resultado era falso y parecía verdadero:
    se estaba midiendo el reloj, no la pantalla. Ahora se pregunta por el
    contenido hasta que aparezca o hasta el techo; vacía sigue significando vacía,
    pero deja de significar «todavía no».
+3. **Una matriz que se calló lo que perdió.** Los resultados se acumulaban en un
+   array del módulo. Playwright reinicia el proceso trabajador cuando una prueba
+   falla, y eso vació el acumulador a mitad de camino: una corrida donde falló el
+   administrador escribió una matriz de 126 filas en vez de 408 **sin decir que
+   faltaba nada**. Ahora cada actor deja su parcial en disco
+   (`artifacts/playwright/rutas/`) y la matriz se arma con todos los que haya.
+4. **Un `429` que se leía como pantalla rota.** Con tres specs de tres actores
+   cada una, el cupo de ingresos —diez por minuto y por IP— se agota, y el
+   síntoma es un `waitForURL` agotado a los 60 s que no menciona ningún límite.
+   `entrar()` reconoce el `429`, espera a que el cubo se libere y reintenta una
+   vez; sólo ante `429`, para no esconder credenciales rechazadas ni gastar
+   intentos contra `ACCOUNT_LOCK_THRESHOLD`.
 
 Un instrumento que da dos veredictos sobre lo mismo no sirve para decidir nada,
-y uno que llora lobo deja de servir para encontrar al lobo.
+uno que llora lobo deja de servir para encontrar al lobo, y uno que pierde la
+mitad de la medición en silencio es peor que no tener ninguno.
 
 ---
 

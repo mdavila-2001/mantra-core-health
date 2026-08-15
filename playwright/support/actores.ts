@@ -25,6 +25,24 @@ export interface Actor {
   readonly nombre: string;
 }
 
+/**
+ * Dónde escucha la API.
+ *
+ * El 3005 es el puerto del entorno local documentado, y sobre todo **es el que
+ * el front espera**: su contenedor arranca con
+ * `BACKEND_ORIGIN=http://host.docker.internal:3005` y de ahí sale el
+ * `proxy.generated.json`. Apuntar esta suite a otro puerto que el del proxy
+ * produce el peor fallo posible — el alta del paciente funciona, el ingreso por
+ * pantalla no, y el error que se ve es un tiempo de espera agotado en
+ * `waitForURL` que no menciona ningún puerto.
+ *
+ * `E2E_API_URL` lo sobreescribe: el `docker-compose.yml` del backend publica
+ * `"${PORT:-3000}:3000"`, así que un stack levantado sin `PORT` la deja en el
+ * 3000 y hay que decírselo a las dos puntas.
+ *
+ * Sólo lo usa el alta del paciente y la comprobación de que la API vive: el
+ * navegador nunca la llama directo, va por el proxy del servidor de desarrollo.
+ */
 export function urlDeApi(): string {
   return process.env['E2E_API_URL'] ?? 'http://localhost:3005';
 }

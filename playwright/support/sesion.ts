@@ -60,6 +60,38 @@ async function escribir(page: Page, testId: string, texto: string): Promise<void
  * barrido es justamente ver lo que ve una persona.
  */
 export async function entrar(page: Page, actor: Actor): Promise<void> {
+  // `POST /iam/auth/login` admite **diez por minuto y por IP**. Tres specs con
+  // tres actores cada una llegan al techo si se corren seguidas, y el `429` que
+  // vuelve no se distingue de un fallo del producto: la pantalla se queda en
+  // `/auth` y lo único que se ve es un `waitForURL` agotado a los 60 s.
+  //
+  // Se reintenta una vez tras esperar a que se libere el cubo. Una sola vez, y
+  // sólo ante `429`: reintentar credenciales rechazadas escondería el fallo real
+  // y gastaría los intentos que quedan contra `ACCOUNT_LOCK_THRESHOLD`.
+  let limitado = false;
+  const anotarLimite = (respuesta: { url(): string; status(): number }): void => {
+    if (respuesta.url().includes('/iam/auth/login') && respuesta.status() === 429) {
+      limitado = true;
+    }
+  };
+  page.on('response', anotarLimite);
+
+  try {
+    await intentarIngreso(page, actor);
+  } catch (fallo) {
+    if (!limitado) throw fallo;
+    // El cubo es de un minuto: se espera un poco más que eso y se vuelve.
+    await page.waitForTimeout(65_000);
+    await intentarIngreso(page, actor);
+  } finally {
+    page.off('response', anotarLimite);
+  }
+
+  await esperarAplicacionLista(page);
+}
+
+/** Un intento de ingreso completo, desde la pantalla hasta el panel. */
+async function intentarIngreso(page: Page, actor: Actor): Promise<void> {
   await page.goto('/auth');
   await esperarAplicacionLista(page);
 
@@ -76,8 +108,6 @@ export async function entrar(page: Page, actor: Actor): Promise<void> {
     await page.getByTestId('tenant-opcion').first().click();
     await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
   }
-
-  await esperarAplicacionLista(page);
 }
 
 /**

@@ -1,4 +1,11 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 
 import { test, expect, type Page } from '@playwright/test';
@@ -42,8 +49,26 @@ import { entrar, estable, irA } from './support/sesion';
 
 const SALIDA = 'ROUTE_HEALTH_MATRIX.md';
 
-/** Todo lo que este barrido fue midiendo, en el orden en que se midió. */
-const resultados: ResultadoDeRuta[] = [];
+/**
+ * Dónde se van dejando los parciales de cada actor.
+ *
+ * **Uno por actor, en disco, y no un array del módulo.** Playwright reinicia el
+ * proceso trabajador cuando una prueba falla, y con un acumulador en memoria eso
+ * borra en silencio lo que ya se había medido: una corrida donde falló el
+ * administrador escribió una matriz con 126 filas en vez de 405, y la matriz no
+ * decía que faltaba nada. Un informe que se calla lo que perdió es peor que no
+ * tener informe.
+ */
+const PARCIALES = join('artifacts', 'playwright', 'rutas');
+
+/**
+ * Lo que **el actor en curso** fue midiendo, en el orden en que se midió.
+ *
+ * Se vacía al empezar cada actor: sin eso, el parcial de la doctora contendría
+ * también las filas del paciente —el módulo es uno solo por proceso
+ * trabajador— y la matriz saldría con todo duplicado.
+ */
+let resultados: ResultadoDeRuta[] = [];
 
 /**
  * Abre una ruta y la clasifica.
@@ -123,6 +148,7 @@ function puedeVer(entrada: RutaDelCatalogo, roles: readonly string[]): boolean {
 
 /** Recorre secciones e hijas con la sesión de un actor. */
 async function barrer(page: Page, actor: Actor): Promise<void> {
+  resultados = [];
   const vigilante = vigilar(page);
   await entrar(page, actor);
   const roles = await rolesDeLaSesion(page);
@@ -135,6 +161,30 @@ async function barrer(page: Page, actor: Actor): Promise<void> {
     // sólo cuando el catálogo los trae, y si no, se asume que se pueden abrir.
     await medir(page, vigilante, actor, entrada, puedeVer(entrada, roles));
   }
+
+  guardarParcial(actor.rol);
+}
+
+/**
+ * Deja en disco lo que este actor midió.
+ *
+ * Se escribe al terminar cada actor y no al final de todo: si el proceso se
+ * reinicia o la corrida se corta, lo ya medido sobrevive y la matriz se arma
+ * igual con lo que haya.
+ */
+function guardarParcial(rol: string): void {
+  mkdirSync(PARCIALES, { recursive: true });
+  const archivo = join(PARCIALES, `${rol.replace(/[^a-z]/gi, '-')}.json`);
+  writeFileSync(archivo, `${JSON.stringify(resultados, null, 2)}\n`, 'utf8');
+}
+
+/** Todo lo medido por todos los actores, venga del proceso que venga. */
+function leerParciales(): ResultadoDeRuta[] {
+  if (!existsSync(PARCIALES)) return [];
+
+  return readdirSync(PARCIALES)
+    .filter((n) => n.endsWith('.json'))
+    .flatMap((n) => JSON.parse(readFileSync(join(PARCIALES, n), 'utf8')) as ResultadoDeRuta[]);
 }
 
 test.describe('Carril 19 · salud de todas las rutas', () => {
@@ -146,6 +196,12 @@ test.describe('Carril 19 · salud de todas las rutas', () => {
     const api = await contextoDeApi();
     expect(await apiViva(api), 'la API tiene que estar viva para el barrido').toBe(true);
     await api.dispose();
+
+    // Los parciales de la corrida anterior se borran acá y no al final: si una
+    // corrida se corta, lo medido queda para inspeccionarlo, y la siguiente
+    // empieza limpia igual. Mezclarlos daría una matriz que describe dos
+    // estados del código a la vez.
+    rmSync(PARCIALES, { recursive: true, force: true });
   });
 
   test('paciente', async ({ page }) => {
@@ -167,6 +223,7 @@ test.describe('Carril 19 · salud de todas las rutas', () => {
   test('vistas portadas de la bóveda, sin sesión', async ({ page }) => {
     // Van sin sesión porque **no tienen guard**: es parte del hallazgo del
     // carril 01, y hay que medirlas como se alcanzan de verdad.
+    resultados = [];
     const vigilante = vigilar(page);
     const portadas = catalogoDeRutas().portadas.filter((r) => !r.parametrizada);
     const sinSesion: Actor = {
@@ -182,6 +239,8 @@ test.describe('Carril 19 · salud de todas las rutas', () => {
     for (const entrada of portadas) {
       await medir(page, vigilante, { ...sinSesion, rol: 'sin sesión' as Actor['rol'] }, entrada, true);
     }
+
+    guardarParcial('sin-sesion');
   });
 
   test.afterAll(() => {
@@ -201,14 +260,17 @@ const ORDEN: readonly EstadoDeRuta[] = [
 ];
 
 function escribirMatriz(): void {
-  if (resultados.length === 0) return;
+  // De disco y no de memoria: ver {@link PARCIALES}. Así la matriz incluye a
+  // los actores que midió otro proceso trabajador.
+  const medidos = leerParciales();
+  if (medidos.length === 0) return;
 
   const recuento = new Map<EstadoDeRuta, number>();
-  for (const r of resultados) {
+  for (const r of medidos) {
     recuento.set(r.estado, (recuento.get(r.estado) ?? 0) + 1);
   }
 
-  const problemas = resultados.filter((r) => r.estado !== 'ok' && r.estado !== 'denegada');
+  const problemas = medidos.filter((r) => r.estado !== 'ok' && r.estado !== 'denegada');
 
   const lineas: string[] = [];
   lineas.push('# Matriz de salud de rutas — carril 19');
@@ -218,7 +280,7 @@ function escribirMatriz(): void {
       'contra la API viva. Se regenera con `yarn pw:rutas`. No editar a mano.',
   );
   lineas.push('');
-  lineas.push(`${resultados.length} aperturas de ruta, sobre las rutas declaradas por el router.`);
+  lineas.push(`${medidos.length} aperturas de ruta, sobre las rutas declaradas por el router.`);
   lineas.push('');
 
   lineas.push('## Qué significa cada estado');
@@ -262,7 +324,7 @@ function escribirMatriz(): void {
   lineas.push('');
   lineas.push('| Rol | Ruta | Componente | Estado |');
   lineas.push('|---|---|---|---|');
-  for (const r of resultados) {
+  for (const r of medidos) {
     lineas.push(`| ${r.rol} | \`${r.ruta}\` | \`${r.componente}\` | ${r.estado} |`);
   }
   lineas.push('');
