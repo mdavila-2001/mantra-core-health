@@ -77,9 +77,16 @@ export function downloadVisitPdf(atencion: DocumentoDeAtencion): void {
   );
 }
 
-/* ---- el contenido, bloque por bloque ------------------------------------- */
+/* ---- el contenido, bloque por bloque -------------------------------------
+   Los dos armadores se exportan para poder probarlos **sin jsPDF de por
+   medio**: lo que este archivo decide es qué dice el documento, y el motor de
+   render ya tiene sus propias pruebas en `pdf-export.spec.ts`. Además evita el
+   acoplamiento entre specs — dos archivos que mockeen el mismo módulo se pisan
+   según cómo el pool reparta los workers, y un test que depende del orden no
+   prueba nada. */
 
-function bloquesDeReceta(receta: DocumentoDeReceta): readonly PdfBlock[] {
+/** Las líneas de una receta, en orden de lectura. */
+export function bloquesDeReceta(receta: DocumentoDeReceta): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [];
 
   bloques.push(...datosDeCabecera(receta.paciente, receta.profesional, receta.organizacion));
@@ -125,7 +132,8 @@ function lineaDeMedicamento(medicamento: DocumentoMedicamento): string {
   return partes.join(' · ');
 }
 
-function bloquesDeAtencion(atencion: DocumentoDeAtencion): readonly PdfBlock[] {
+/** Las líneas de la historia de una atención, en orden de lectura. */
+export function bloquesDeAtencion(atencion: DocumentoDeAtencion): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [];
 
   bloques.push(...datosDeCabecera(atencion.paciente, atencion.profesional, atencion.organizacion));
