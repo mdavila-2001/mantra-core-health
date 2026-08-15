@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-334 componentes y 55 servicios inyectables, leídos de `src/`.
+339 componentes y 57 servicios inyectables, leídos de `src/`.
 
 ## Átomo (17)
 
@@ -26,7 +26,7 @@
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (24)
+## Molécula (25)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -51,6 +51,7 @@
 | `app-search-field` | `SearchField` | `placeholder`, `debounceMs`, `loading`, `disabled`, `label` | `searched` | `value` | OnPush | sí |
 | `li[app-search-result]` | `SearchResult` | `resultado` | — | — | OnPush | sí |
 | `app-stepper` | `Stepper` | `steps`, `label` | — | — | OnPush | sí |
+| `app-tab-help-block` | `TabHelpBlock` | `helpId`, `title`, `tutorialId` | — | — | OnPush | sí |
 | `app-tab` | `Tab` | `label`, `disabled` | — | — | OnPush | **no** |
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
@@ -77,7 +78,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (274)
+## Feature (278)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -88,10 +89,12 @@
 | `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-practitioner-profile-edit` | `PractitionerProfileEdit` | — | — | — | OnPush | sí |
-| `app-practitioner-profile-view` | `PractitionerProfileView` | `perfil`, `esPropio` | — | — | OnPush | sí |
+| `app-practitioner-profile-view` | `PractitionerProfileView` | `perfil`, `esPropio`, `previewMode` | `trayectoriaCambio` | — | OnPush | sí |
 | `app-practitioner-profile` | `PractitionerProfile` | — | — | — | OnPush | sí |
 | `app-public-profile-preview` | `PublicProfilePreview` | — | — | — | OnPush | sí |
-| `app-work-history` | `WorkHistory` | — | — | — | OnPush | sí |
+| `app-work-history` | `WorkHistory` | `layout` | `added` | — | OnPush | sí |
+| `app-questionnaire-answer` | `QuestionnaireAnswer` | — | — | — | OnPush | **no** |
+| `app-questionnaires` | `Questionnaires` | — | — | — | OnPush | **no** |
 | `app-accounting` | `Accounting` | — | — | — | OnPush | **no** |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-clinical-forms` | `ClinicalForms` | — | — | — | OnPush | sí |
@@ -223,6 +226,8 @@
 | `app-doctor-visits` | `DoctorVisits` | — | — | — | OnPush | sí |
 | `app-pharma-lab-home` | `PharmaLabHome` | — | — | — | OnPush | sí |
 | `app-visitor-visits` | `VisitorVisits` | — | — | — | OnPush | sí |
+| `app-surveys-home` | `SurveysHome` | — | — | — | OnPush | **no** |
+| `app-survey-detail` | `SurveyDetailScreen` | — | — | — | OnPush | **no** |
 | `app-redsat-accesos-acceso-de-emergencia-formulario` | `AccesosAccesoDeEmergenciaFormulario` | — | — | — | Default | **no** |
 | `app-redsat-accesos-clinicos-del-paciente-formulario` | `AccesosClinicosDelPacienteFormulario` | — | — | — | Default | **no** |
 | `app-redsat-accesos-clinicos-del-paciente-listado` | `AccesosClinicosDelPacienteListado` | — | — | — | Default | **no** |
@@ -368,7 +373,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (55)
+## Servicios (57)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -404,6 +409,7 @@
 | `PublicClient` | `src/app/core/data-access/public/public.client.ts` | root | **no** |
 | `SchedulingClient` | `src/app/core/data-access/scheduling/scheduling.client.ts` | root | sí |
 | `ServicesCatalogClient` | `src/app/core/data-access/services-catalog/services-catalog.client.ts` | root | sí |
+| `SurveysClient` | `src/app/core/data-access/surveys/surveys.client.ts` | root | **no** |
 | `SystemContextClient` | `src/app/core/data-access/system-context/system-context.client.ts` | root | sí |
 | `TerminologyClient` | `src/app/core/data-access/terminology/terminology.client.ts` | root | sí |
 | `AppErrorHandler` | `src/app/core/errors/app-error-handler.ts` | local | **no** |
@@ -419,6 +425,7 @@
 | `TracingService` | `src/app/core/observability/tracing/tracing.service.ts` | root | sí |
 | `RedsatRuntimeService` | `src/app/core/redsat/redsat-runtime.service.ts` | root | sí |
 | `ThemeService` | `src/app/core/tokens/theme.service.ts` | root | sí |
+| `HelpBlockDismissalStore` | `src/app/core/tutorials/help-block-dismissal.store.ts` | root | sí |
 | `TutorialProgressStore` | `src/app/core/tutorials/tutorial-progress.store.ts` | root | sí |
 | `TutorialEngine` | `src/app/core/tutorials/tutorial.engine.ts` | root | sí |
 | `TutorialRegistry` | `src/app/core/tutorials/tutorial.registry.ts` | root | sí |
@@ -431,11 +438,15 @@
 ## Componentes sin prueba
 
 - `ToastDevPanel` — `src/app/core/dev/toast-dev-panel/toast-dev-panel.ts`
+- `QuestionnaireAnswer` — `src/app/features/account/questionnaires/answer/answer.ts`
+- `Questionnaires` — `src/app/features/account/questionnaires/questionnaires.ts`
 - `Accounting` — `src/app/features/accounting/accounting.ts`
 - `OrganizationDetail` — `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
 - `Interventions` — `src/app/features/interventions/interventions.ts`
+- `SurveysHome` — `src/app/features/questionnaires/questionnaires.ts`
+- `SurveyDetailScreen` — `src/app/features/questionnaires/survey-detail/survey-detail.ts`
 - `AccesosAccesoDeEmergenciaFormulario` — `src/app/features/redsat/accesos/acceso-de-emergencia-formulario/acceso-de-emergencia-formulario.ts`
 - `AccesosClinicosDelPacienteFormulario` — `src/app/features/redsat/accesos/accesos-clinicos-del-paciente-formulario/accesos-clinicos-del-paciente-formulario.ts`
 - `AccesosClinicosDelPacienteListado` — `src/app/features/redsat/accesos/accesos-clinicos-del-paciente-listado/accesos-clinicos-del-paciente-listado.ts`

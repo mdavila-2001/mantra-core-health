@@ -137,6 +137,26 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M41 scheduling',
   },
   {
+    // Carril 10. **La ruta NO es `surveys` y eso no es decoración**: `/surveys`
+    // es el prefijo del módulo en la API, y el proxy compara por inicio de ruta
+    // sin límite de segmento — una sección llamada `surveys` se iría entera al
+    // backend. Mismo caso que M13 en `administration/geolocation`. Lo hace
+    // cumplir `scripts/check-route-prefixes.mjs`.
+    path: 'questionnaires',
+    label: 'Encuestas',
+    group: 'Atención',
+    icon: 'orders',
+    // Los dos roles que exigen `SurveysTemplatesController` y
+    // `SurveysAssignmentsController`.
+    roles: ['PRACTITIONER', 'CLINICIAN'],
+    // Encendida con la slice completa del módulo: `GET /surveys/templates`
+    // existe junto con la escritura, así que no hereda la espera por el `GET`
+    // de colección que tiene al resto de las secciones en `planificada`.
+    availability: 'disponible',
+    summary: 'Creá encuestas para tus pacientes y revisá lo que respondieron.',
+    module: 'M-surveys',
+  },
+  {
     path: 'medical-records',
     label: 'Archivo clínico',
     group: 'Atención',
@@ -607,6 +627,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Mirá y descargá tus resultados, y compartilos por un tiempo con un profesional.',
     module: 'M20 diagnostics',
+  },
+  {
+    // Carril 10, lado paciente. Es la contracara de «Encuestas»: aquélla autora
+    // el instrumento y exige roles clínicos; ésta responde el que a uno le tocó
+    // y no exige ninguno.
+    //
+    // Sin `roles` a propósito, por el mismo motivo que «Mis turnos»: el filtro
+    // real es tener perfil de paciente, que no es un rol sino un dato de la
+    // cuenta —el claim `pid` del token—, y la pantalla lo dice cuando falta en
+    // vez de esconderse del menú.
+    //
+    // La ruta tampoco puede llamarse `surveys`: ver la nota de «Encuestas».
+    path: 'my-account/questionnaires',
+    label: 'Mis cuestionarios',
+    group: 'Mi cuenta',
+    icon: 'orders',
+    availability: 'disponible',
+    summary: 'Respondé los cuestionarios de las consultas que ya tuviste.',
+    module: 'M-surveys',
   },
   {
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino

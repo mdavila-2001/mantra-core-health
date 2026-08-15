@@ -104,6 +104,15 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   tutorials: () =>
     import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
+  // Carril 10: el listado de encuestas del profesional y el del paciente. La
+  // ruta no puede empezar con `surveys` — es el prefijo del módulo en la API y
+  // el proxy compara por inicio de ruta, así que se iría entera al backend.
+  questionnaires: () =>
+    import('./features/questionnaires/questionnaires').then((m) => m.SurveysHome),
+  'my-account/questionnaires': () =>
+    import('./features/account/questionnaires/questionnaires').then(
+      (m) => m.Questionnaires,
+    ),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'my-account/medical-record': () =>
@@ -252,6 +261,26 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/laboratory-directory/laboratory-detail/laboratory-detail')
         .then((m) => m.LaboratoryDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La ficha de una encuesta (C10): se llega desde el listado, nunca desde el
+    // menú, así que no es una sección del registro.
+    path: 'questionnaires/:surveyId',
+    title: `${APP_TITLE} - Encuesta`,
+    loadComponent: () =>
+      import('./features/questionnaires/survey-detail/survey-detail')
+        .then((m) => m.SurveyDetailScreen)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Responder un cuestionario concreto (C10, lado paciente): se llega desde
+    // «Mis cuestionarios» o desde el enlace de la invitación.
+    path: 'my-account/questionnaires/:invitationId',
+    title: `${APP_TITLE} - Responder cuestionario`,
+    loadComponent: () =>
+      import('./features/account/questionnaires/answer/answer')
+        .then((m) => m.QuestionnaireAnswer)
         .catch(() => chunkFallido()),
   },
   {

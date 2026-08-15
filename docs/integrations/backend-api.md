@@ -890,6 +890,32 @@ a nadie. Se pide una vez por sesión y se comparte.
 |---|---|---|
 | `GET` | `/pharma-labs/reference/concepts` | `PharmaLabHome` · `VisitorVisits` · `DoctorVisits` |
 
+### `SurveysClient` — 12 operaciones · carril 10
+
+Cuestionarios y encuestas (M `surveys`). Un cliente para los dos lados de la
+misma relación, porque son el mismo recurso visto desde cada punta: quien crea
+el instrumento y quien lo responde.
+
+**Las rutas del paciente no llevan su identificador.** `/surveys/me/...` se
+resuelve con el claim `pid` del token, no con un parámetro: si el paciente
+viajara en la URL, cualquiera podría pedir los cuestionarios de otro y la
+comprobación quedaría del lado del servidor recordando hacerla.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/surveys/templates` | `SurveysHome` |
+| `POST` | `/surveys/templates` | `SurveysHome` |
+| `GET` | `/surveys/templates/:surveyId` | `SurveyDetailScreen` |
+| `POST` | `/surveys/templates/:surveyId/questions` | `SurveyDetailScreen` |
+| `POST` | `/surveys/templates/:surveyId/versions/:versionNumber/publish` | `SurveyDetailScreen` |
+| `POST` | `/surveys/templates/:surveyId/deactivate` | `SurveyDetailScreen` |
+| `GET` | `/surveys/templates/:surveyId/responses` | `SurveyDetailScreen` |
+| `POST` | `/surveys/assignments` | `SurveyDetailScreen` |
+| `POST` | `/surveys/invitations` | `SurveysHome` |
+| `GET` | `/surveys/me/invitations` | `Questionnaires` |
+| `GET` | `/surveys/me/invitations/:invitationId` | `QuestionnaireAnswer` |
+| `POST` | `/surveys/me/invitations/:invitationId/responses` | `QuestionnaireAnswer` |
+
 ### Operaciones que suman otros carriles
 
 Entradas sueltas que amplían clientes ya documentados más arriba.

@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-239 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+251 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -433,6 +433,25 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 | `GET` | `/scheduling/slots` |
 | `POST` | `/scheduling/slots/:slotId/holds` |
 | `POST` | `/scheduling/templates/:templateId/generate-slots` |
+
+## `SurveysClient`
+
+Archivo: `src/app/core/data-access/surveys/surveys.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/surveys/assignments` |
+| `POST` | `/surveys/invitations` |
+| `GET` | `/surveys/me/invitations` |
+| `GET` | `/surveys/me/invitations/:invitationId` |
+| `POST` | `/surveys/me/invitations/:invitationId/responses` |
+| `GET` | `/surveys/templates` |
+| `POST` | `/surveys/templates` |
+| `GET` | `/surveys/templates/:surveyId` |
+| `POST` | `/surveys/templates/:surveyId/deactivate` |
+| `POST` | `/surveys/templates/:surveyId/questions` |
+| `GET` | `/surveys/templates/:surveyId/responses` |
+| `POST` | `/surveys/templates/:surveyId/versions/:versionNumber/publish` |
 
 ## `SystemContextClient`
 

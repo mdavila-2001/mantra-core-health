@@ -95,6 +95,12 @@ describe('Definiciones de tutoriales', () => {
    * La contrapartida de que el motor tolere un objetivo ausente: acá sí se
    * exige que exista, para que borrarlo se vea en el commit que lo borra.
    */
+  // El plazo explícito no tapa nada: la prueba recorre **todas** las plantillas
+  // del árbol leyéndolas de disco, así que su duración crece con el proyecto y
+  // depende de cuántas otras suites compitan por el disco. Con el techo de 5 s
+  // por defecto empezó a caerse por tiempo —no por un objetivo faltante— en
+  // cuanto el carril 10 sumó dos plantillas, y una prueba que falla según la
+  // carga de la máquina deja de ser una señal.
   it('cada objetivo de cada paso existe en alguna plantilla', () => {
     const { literales } = objetivosDeclarados();
     const faltantes: string[] = [];
@@ -111,7 +117,7 @@ describe('Definiciones de tutoriales', () => {
     }
 
     expect(faltantes).toEqual([]);
-  });
+  }, 30_000);
 
   /** Un solo tutorial puede abrirse solo: dos peleando por hacerlo es el caos. */
   it('sólo un tutorial arranca automáticamente', () => {

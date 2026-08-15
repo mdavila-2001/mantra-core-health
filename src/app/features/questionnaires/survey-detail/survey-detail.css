@@ -1,0 +1,122 @@
+/* ============================================================================
+    La ficha de una encuesta.
+
+    Cinco bloques en el orden en que se usan —cuestionario, alta de preguntas,
+    publicar, asociar, respuestas—, cada uno en su tarjeta. No es decoración:
+    los pasos están encadenados, y la separación es lo que hace evidente cuál
+    viene después. Los que todavía no corresponden no se deshabilitan, no se
+    dibujan.
+    ========================================================================== */
+
+.encuesta__meta {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin-block: 0 var(--sp-5);
+}
+
+.encuesta__bloque {
+  display: block;
+  margin-block-end: var(--sp-6);
+}
+
+.encuesta__seccion {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin-block: 0 var(--sp-4);
+}
+
+.encuesta__ayuda {
+  color: var(--text-secondary);
+  margin-block: 0 var(--sp-4);
+}
+
+/* --- El cuestionario ------------------------------------------------------ */
+
+.encuesta__preguntas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.encuesta__pregunta {
+  padding-block: var(--sp-2);
+}
+
+.encuesta__pregunta-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.encuesta__pregunta-texto {
+  /* Que el texto se lleve el espacio y las etiquetas queden juntas al final. */
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.encuesta__pregunta-detalle {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin-block: var(--sp-1) 0;
+}
+
+/* --- Alta de preguntas ---------------------------------------------------- */
+
+.encuesta__escala {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.encuesta__acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-start: var(--sp-4);
+}
+
+/* --- Respuestas ----------------------------------------------------------- */
+
+.encuesta__respuestas {
+  display: grid;
+  gap: var(--sp-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.encuesta__respuesta {
+  border-block-start: 1px solid var(--border-subtle);
+  padding-block-start: var(--sp-4);
+}
+
+.encuesta__respuesta:first-child {
+  border-block-start: none;
+  padding-block-start: 0;
+}
+
+.encuesta__respuesta-fecha {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin-block: 0 var(--sp-2);
+}
+
+.encuesta__respuesta-detalle {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.encuesta__par > dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.encuesta__par > dd {
+  margin-inline-start: 0;
+}
