@@ -116,6 +116,56 @@ describe('RedsatShell', () => {
     // seguridad»: el rol va después del punto y no debe entrar en el círculo.
     expect(raiz().querySelector('.app-avatar')?.textContent?.trim()).toBe('RS');
   });
+
+  /* -- Carril 01: la maqueta tiene que decir que es una maqueta ------------- */
+
+  it('el marco declara que lo de adentro es una referencia de diseño', () => {
+    // Estas rutas NO pasan por `authGuard` y su marcado es estático: sin este
+    // aviso, la pantalla es indistinguible del producto (corrección #7).
+    const aviso = raiz().querySelector('app-redsat-design-notice .app-alert');
+
+    expect(aviso).not.toBeNull();
+    expect(aviso?.getAttribute('data-tono')).toBe('aviso');
+    expect(aviso?.textContent).toContain('Referencia de diseño');
+  });
+
+  it('el aviso va antes del contenido, no debajo', () => {
+    // Debajo del fold no lo lee nadie, y el punto entero es que se lea antes de
+    // creerle a la pantalla.
+    const interior = raiz().querySelector('.app-main__inner');
+
+    expect(interior?.children[0]?.tagName.toLowerCase()).toBe('app-redsat-design-notice');
+  });
+
+  it('el aviso no se puede cerrar: no informa de un estado, dice qué es la pantalla', () => {
+    const aviso = raiz().querySelector('app-redsat-design-notice');
+
+    expect(aviso?.querySelector('button')).toBeNull();
+  });
+
+  it('cuando el módulo tiene pantalla real construida, el aviso lleva a ella', async () => {
+    await ir('/personas/profesionales-listado');
+
+    const salida = raiz().querySelector('app-redsat-design-notice a');
+    expect(salida?.getAttribute('href')).toBe('/administration/patients');
+  });
+
+  it('cuando no la tiene, el aviso no inventa un destino', async () => {
+    await ir('/nada');
+
+    expect(raiz().querySelector('app-redsat-design-notice a')).toBeNull();
+  });
+
+  it('la identidad del header se declara de ejemplo', () => {
+    // El marco anunciaba «Rocío Salazar · Administración de seguridad» a quien
+    // no tiene ninguna sesión. Una captura de eso pasaba por producto.
+    const cabecera = raiz().querySelector('.app-header__derecha');
+
+    expect(cabecera?.querySelector('.solo-lectores')?.textContent).toContain('(ejemplo)');
+    expect(cabecera?.querySelector('.app-tenant-switcher')?.getAttribute('aria-label')).toContain(
+      '(ejemplo)',
+    );
+  });
 });
 
 describe('RedsatPublicShell', () => {
@@ -149,5 +199,15 @@ describe('RedsatPublicShell', () => {
     ].map((a) => a.getAttribute('href'));
 
     expect(enlaces).toEqual(['/auth', '/auth/register']);
+  });
+
+  it('también declara que el buscador público es una referencia de diseño', () => {
+    // Acá importa más que en el marco de sesión: las fichas de profesionales y
+    // farmacias del buscador son inventadas y cualquiera las alcanza sin entrar.
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '.app-main__inner > app-redsat-design-notice',
+    );
+
+    expect(aviso?.textContent).toContain('Referencia de diseño');
   });
 });

@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-783 archivos TypeScript bajo `src/` y 3025 importaciones internas.
+784 archivos TypeScript bajo `src/` y 3027 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -191,11 +191,11 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 724 |
+| `@angular/core` | 726 |
 | `@angular/common` | 386 |
-| `@angular/router` | 351 |
+| `@angular/router` | 352 |
 | `@angular/forms` | 90 |
-| `rxjs` | 78 |
+| `rxjs` | 79 |
 | `node:fs` | 14 |
 | `@opentelemetry/api` | 12 |
 | `@opentelemetry/sdk-trace-web` | 9 |

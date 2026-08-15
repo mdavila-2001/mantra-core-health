@@ -1,0 +1,26 @@
+/* Configuración de tipos de la suite de Playwright.
+
+   Es propia y no una extensión de `tsconfig.spec.json` por el mismo motivo que
+   la de Cypress: esto NO conoce el `TestBed` de Angular. Son pruebas que
+   conducen la aplicación desde afuera, con los globales de `@playwright/test` y
+   con acceso a Node (`node:fs` para escribir la evidencia y los informes).
+
+   Se type-chequea en `yarn typecheck`: un ayudante que quedó apuntando a un
+   método que ya no existe tiene que fallar al compilar, no a mitad de una
+   corrida con navegador. */
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../out-tsc/playwright",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    /* `node` por el `node:fs`/`node:path` de los informes. Los tipos del DOM
+       entran por el `target` y hacen falta igual: lo que se ejecuta dentro de
+       `page.evaluate()` es código de navegador aunque viva en este archivo. */
+    "types": ["node"],
+    "allowJs": false,
+    "noEmit": true
+  },
+  "include": ["**/*.ts", "../playwright.config.ts"],
+  "exclude": ["../node_modules"]
+}

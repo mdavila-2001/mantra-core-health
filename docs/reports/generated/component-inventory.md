@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-332 componentes y 50 servicios inyectables, leídos de `src/`.
+333 componentes y 50 servicios inyectables, leídos de `src/`.
 
 ## Átomo (16)
 
@@ -76,7 +76,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (273)
+## Feature (274)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -325,6 +325,7 @@
 | `app-redsat-personas-vinculos-de-cuenta-listado` | `PersonasVinculosDeCuentaListado` | — | — | — | Default | **no** |
 | `app-redsat-personas-vinculos-de-identidad-formulario` | `PersonasVinculosDeIdentidadFormulario` | — | — | — | Default | **no** |
 | `app-redsat-personas-vinculos-de-identidad-listado` | `PersonasVinculosDeIdentidadListado` | — | — | — | Default | **no** |
+| `app-redsat-design-notice` | `RedsatDesignNotice` | — | — | — | OnPush | **no** |
 | `app-redsat-public-shell` | `RedsatPublicShell` | — | — | — | Default | **no** |
 | `app-redsat-shell` | `RedsatShell` | — | — | — | Default | sí |
 | `app-redsat-terminologia-conceptos-listado` | `TerminologiaConceptosListado` | — | — | — | Default | **no** |
@@ -544,6 +545,7 @@
 - `PersonasVinculosDeCuentaListado` — `src/app/features/redsat/personas/vinculos-de-cuenta-listado/vinculos-de-cuenta-listado.ts`
 - `PersonasVinculosDeIdentidadFormulario` — `src/app/features/redsat/personas/vinculos-de-identidad-formulario/vinculos-de-identidad-formulario.ts`
 - `PersonasVinculosDeIdentidadListado` — `src/app/features/redsat/personas/vinculos-de-identidad-listado/vinculos-de-identidad-listado.ts`
+- `RedsatDesignNotice` — `src/app/features/redsat/shell/redsat-design-notice.ts`
 - `RedsatPublicShell` — `src/app/features/redsat/shell/redsat-public-shell.ts`
 - `TerminologiaConceptosListado` — `src/app/features/redsat/terminologia/conceptos-listado/conceptos-listado.ts`
 - `TerminologiaConjuntosDeValorFormulario` — `src/app/features/redsat/terminologia/conjuntos-de-valor-formulario/conjuntos-de-valor-formulario.ts`
