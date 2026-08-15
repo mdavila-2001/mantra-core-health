@@ -86,6 +86,9 @@ describe('NavigationService', () => {
         // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
         // el filtro real es tener perfil de paciente, y lo resuelve la pantalla.
         '/my-account/medical-record',
+        // Los resultados propios no exigen rol por lo mismo que los turnos: el
+        // filtro real es tener perfil de paciente, que es un dato de la cuenta.
+        '/my-account/diagnostic-results',
         '/my-account/identity/verify',
         '/my-account/identity/cases',
       ]);
