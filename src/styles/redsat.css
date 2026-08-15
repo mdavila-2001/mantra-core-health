@@ -138,7 +138,14 @@
 
   /* Estados: fondo tintado claro + tinta oscura del mismo tono */
   --ok-bg:        #DFEDE9;  --ok-tinta:     #27725C;
-  --aviso-bg:     #FBF2E8;  --aviso-tinta:  #8B6A47;
+  /* CORRECCIÓN DE CONTRASTE aplicada por sync-redsat.mjs (transformación 3).
+     La bóveda trae ámbar-700 #8B6A47, que sobre #FBF2E8 da 4,46:1 y no llega
+     a AA para texto chico —y este token pinta badges de 11,5 px—. Ámbar-800
+     sube a 7,49:1. Es la MISMA corrección que styles.css ya documenta para
+     --st-warning-fg; allá la detectó check-contrast.mjs, que hasta ahora no
+     leía esta hoja. Mientras la bóveda no lo corrija en origen, el script la
+     reaplica en cada regeneración. */
+  --aviso-bg:     #FBF2E8;  --aviso-tinta:  #5E4B35;
   --error-bg:     #F4E5E1;  --error-tinta:  #924534;
   --info-bg:      #E4F3F2;  --info-tinta:   #33706C;
   --neutro-bg:    #F3F6F5;  --neutro-tinta: #4E5151;
