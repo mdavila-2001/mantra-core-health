@@ -84,6 +84,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
+  'my-account/medical-record': () =>
+    import('./features/account/medical-record/medical-record').then((m) => m.MedicalRecord),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,

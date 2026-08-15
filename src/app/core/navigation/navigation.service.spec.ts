@@ -74,11 +74,16 @@ describe('NavigationService', () => {
         // cada cuenta ya puede ver.
         '/tutorials',
         '/directory',
+        // El directorio de laboratorios tampoco: es oferta publicada, no PHI.
+        '/laboratory-directory',
         // El glosario tampoco: el cliente lo pidió accesible por cada
         // profesional, no sólo por quien administra.
         '/glossary',
         '/my-account',
         '/my-account/appointments',
+        // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
+        // el filtro real es tener perfil de paciente, y lo resuelve la pantalla.
+        '/my-account/medical-record',
         '/my-account/identity/verify',
         '/my-account/identity/cases',
       ]);
