@@ -56,7 +56,7 @@
         <li>
           <p class="expediente__cifra-rotulo">Última atención</p>
           <p class="expediente__cifra-valor expediente__cifra-valor--fecha">
-            {{ ultimaAtencion() ? (ultimaAtencion() | date: "d MMM y") : 'Sin atención previa' }}
+            {{ ultimaAtencion() ? (ultimaAtencion() | date: 'd MMM y') : 'Sin atención previa' }}
           </p>
         </li>
       </ul>
@@ -91,7 +91,12 @@
          mandarlo a hacer scroll hasta el fondo para dejar constancia era pedirle
          que perdiera de vista lo que acaba de consultar. Queda pegada al hacer
          scroll, así que la historia se recorre entera sin perderla. -->
-    <app-card variant="outlined" padding="lg" class="expediente__encuentro" appTutorialTarget="expediente-encuentro">
+    <app-card
+      variant="outlined"
+      padding="lg"
+      class="expediente__encuentro"
+      appTutorialTarget="expediente-encuentro"
+    >
       <h2 class="expediente__nota-titulo">Encuentro</h2>
 
       @if (errorDelRegistro(); as mensaje) {
@@ -194,6 +199,7 @@
       [recetas]="recetas()"
       [medicacionActivaConceptIds]="medicacionActivaConceptIds()"
       (cambio)="recargar()"
+      (descargar)="descargarReceta($event)"
     />
 
     <!-- ─── El diagnóstico ───────────────────────────────────────────────
@@ -295,4 +301,20 @@
   } @else {
     <span class="expediente__secundario">Sin fecha</span>
   }
+</ng-template>
+
+<!-- La historia clínica de esa atención, en PDF (corrección #16). Se ofrece
+     también sobre una atención en curso: el documento se declara copia de
+     trabajo en vez de aparentar que la consulta ya cerró. -->
+<ng-template #celdaDocumento let-fila>
+  <button
+    app-button
+    variant="outline"
+    size="sm"
+    type="button"
+    data-testid="expediente-descargar-atencion"
+    (clicked)="descargarAtencion(fila)"
+  >
+    Descargar PDF
+  </button>
 </ng-template>
