@@ -85,12 +85,10 @@ describe('DialogService', () => {
 
     it('con `dismissible: false` el fondo no cierra', async () => {
       let resuelto = false;
-      const respuesta = service
-        .confirm({ ...CONFIRMACION, dismissible: false })
-        .then((valor) => {
-          resuelto = true;
-          return valor;
-        });
+      const respuesta = service.confirm({ ...CONFIRMACION, dismissible: false }).then((valor) => {
+        resuelto = true;
+        return valor;
+      });
       await esperarRender();
 
       dialogo().click();
@@ -162,6 +160,97 @@ describe('DialogService', () => {
 
       boton('Cancelar').click();
       await respuesta;
+    });
+  });
+
+  describe('motivo obligatorio (corrección #14)', () => {
+    const MOTIVO = { label: 'Motivo de la cancelación' } as const;
+
+    function campoDeMotivo(): HTMLTextAreaElement {
+      const campo = dialogo().querySelector('textarea');
+      if (!(campo instanceof HTMLTextAreaElement)) {
+        throw new Error('el diálogo no está pidiendo motivo');
+      }
+      return campo;
+    }
+
+    /** Escribe en el textarea como lo haría una persona. */
+    function escribir(texto: string): void {
+      const campo = campoDeMotivo();
+      campo.value = texto;
+      campo.dispatchEvent(new Event('input'));
+      TestBed.inject(ApplicationRef).tick();
+    }
+
+    it('sin motivo pedido no dibuja el campo: la confirmación de siempre', async () => {
+      const respuesta = service.confirm(CONFIRMACION);
+      await esperarRender();
+
+      expect(dialogo().querySelector('textarea')).toBeNull();
+
+      boton('Cancelar').click();
+      await respuesta;
+    });
+
+    it('confirmar con el campo vacío NO cierra y muestra el error', async () => {
+      let resuelto = false;
+      const respuesta = service.confirmWithReason(CONFIRMACION, MOTIVO).then((valor) => {
+        resuelto = true;
+        return valor;
+      });
+      await esperarRender();
+
+      boton('Confirmar').click();
+      await esperarRender();
+
+      // Sigue abierto: cerrar y mostrar después el rechazo del servidor haría
+      // perder lo escrito.
+      expect(resuelto).toBe(false);
+      expect(dialogo().textContent).toContain('Escribí el motivo');
+
+      boton('Cancelar').click();
+      await expect(respuesta).resolves.toBeNull();
+    });
+
+    it('con motivo suficiente devuelve el texto recortado', async () => {
+      const respuesta = service.confirmWithReason(CONFIRMACION, MOTIVO);
+      await esperarRender();
+
+      escribir('  Se superpone con una cirugía  ');
+      boton('Confirmar').click();
+
+      await expect(respuesta).resolves.toBe('Se superpone con una cirugía');
+    });
+
+    it('cancelar devuelve null aunque haya texto escrito', async () => {
+      const respuesta = service.confirmWithReason(CONFIRMACION, MOTIVO);
+      await esperarRender();
+
+      escribir('Cambio de horario del consultorio');
+      boton('Cancelar').click();
+
+      await expect(respuesta).resolves.toBeNull();
+    });
+
+    it('el mínimo lo declara quien abre el diálogo', async () => {
+      let resuelto = false;
+      const respuesta = service
+        .confirmWithReason(CONFIRMACION, { ...MOTIVO, minLength: 20 })
+        .then((valor) => {
+          resuelto = true;
+          return valor;
+        });
+      await esperarRender();
+
+      escribir('Muy corto');
+      boton('Confirmar').click();
+      await esperarRender();
+      expect(resuelto).toBe(false);
+
+      escribir('Ahora sí es un motivo largo de verdad');
+      boton('Confirmar').click();
+
+      await expect(respuesta).resolves.toBe('Ahora sí es un motivo largo de verdad');
     });
   });
 

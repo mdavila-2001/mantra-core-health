@@ -684,12 +684,13 @@ describe('Agenda', () => {
     expect(citas().status).toBe('ready');
   });
 
-  it('cancelar pide confirmación explícita y no hace nada sin ella', async () => {
+  it('cancelar pide motivo y no hace nada si no se dio', async () => {
     await montar();
     await responder();
 
     const dialogs = TestBed.inject(DialogService);
-    vi.spyOn(dialogs, 'confirm').mockResolvedValue(false);
+    // `null` es lo que devuelve el diálogo cuando se vuelve sin confirmar.
+    vi.spyOn(dialogs, 'confirmWithReason').mockResolvedValue(null);
 
     await interno<(c: unknown) => Promise<void>>('cancelarCita')(primeraCita());
 
@@ -697,20 +698,25 @@ describe('Agenda', () => {
     expect(citas().status).toBe('ready');
   });
 
-  it('cancelar confirmado libera el cupo y recarga', async () => {
+  it('cancelar con motivo lo manda al servidor, libera el cupo y recarga', async () => {
     await montar();
     await responder();
 
     const dialogs = TestBed.inject(DialogService);
-    vi.spyOn(dialogs, 'confirm').mockResolvedValue(true);
+    vi.spyOn(dialogs, 'confirmWithReason').mockResolvedValue('El profesional tuvo una urgencia');
 
     const pendiente = interno<(c: unknown) => Promise<void>>('cancelarCita')(primeraCita());
     await harness.fixture.whenStable();
 
     const req = http.expectOne('/scheduling/bookings/b-1/cancel');
     // Desde esta pantalla cancela la organización; `isNoShow` no viaja si
-    // nadie lo marcó, porque es lo que dispara el cargo de la política.
-    expect(req.request.body).toEqual({ cancelledBy: 'PROVIDER' });
+    // nadie lo marcó, porque es lo que dispara el cargo de la política. El
+    // motivo sí va siempre: el paciente tiene que poder leer por qué se le
+    // canceló el turno (corrección #14).
+    expect(req.request.body).toEqual({
+      cancelledBy: 'PROVIDER',
+      reasonText: 'El profesional tuvo una urgencia',
+    });
     req.flush({ bookingId: 'b-1', capacityReleased: true });
     responderRecarga();
     await pendiente;

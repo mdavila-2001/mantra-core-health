@@ -17,10 +17,7 @@ import { catchError } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
-import {
-  toBookingStatusPresentation,
-  type BookingStatusPresentation,
-} from './booking-status';
+import { toBookingStatusPresentation, type BookingStatusPresentation } from './booking-status';
 import {
   CITA_QUERY_PARAM,
   MOTIVO_QUERY_PARAM,
@@ -767,35 +764,45 @@ export class Agenda {
       return;
     }
 
-    const confirmado = await this.dialogs.confirm({
-      title: 'Cancelar la cita',
-      message:
-        'La cita se cancela y el cupo vuelve a la agenda. La cancelación queda auditada.',
-      confirmLabel: 'Cancelar la cita',
-      cancelLabel: 'Volver',
-      destructive: true,
-    });
-    if (!confirmado) {
+    // El motivo es obligatorio y lo valida el servidor (corrección #14): al
+    // paciente le llega junto con la cancelación, en el detalle de su turno.
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: 'Cancelar la cita',
+        message: 'La cita se cancela y el cupo vuelve a la agenda. La cancelación queda auditada.',
+        confirmLabel: 'Cancelar la cita',
+        cancelLabel: 'Volver',
+        destructive: true,
+      },
+      {
+        label: 'Motivo de la cancelación',
+        placeholder: 'Por qué se cancela la cita',
+        hint: 'El paciente lo va a ver en el detalle de su turno.',
+      },
+    );
+    if (motivo === null) {
       return;
     }
 
     this.operando.set(cita.id);
-    this.scheduling.cancelBooking(cita.id, { cancelledBy: 'PROVIDER' }).subscribe({
-      next: (resultado) => {
-        this.operando.set(null);
-        this.toast.success(
-          resultado.capacityReleased
-            ? 'La cita se canceló y el cupo volvió a la agenda.'
-            : 'La cita se canceló.',
-          'Cancelación',
-        );
-        this.cargarAgenda();
-      },
-      error: (error: unknown) => {
-        this.operando.set(null);
-        this.avisarFallo(error, 'No se pudo cancelar la cita.');
-      },
-    });
+    this.scheduling
+      .cancelBooking(cita.id, { cancelledBy: 'PROVIDER', reasonText: motivo })
+      .subscribe({
+        next: (resultado) => {
+          this.operando.set(null);
+          this.toast.success(
+            resultado.capacityReleased
+              ? 'La cita se canceló y el cupo volvió a la agenda.'
+              : 'La cita se canceló.',
+            'Cancelación',
+          );
+          this.cargarAgenda();
+        },
+        error: (error: unknown) => {
+          this.operando.set(null);
+          this.avisarFallo(error, 'No se pudo cancelar la cita.');
+        },
+      });
   }
 
   /** El destino del enlace «Reservar» de un cupo. */
@@ -1024,9 +1031,7 @@ export class Agenda {
       hasta: cita.endAt ?? null,
       recurso: this.nombreDeRecurso(cita.resourceId),
       estado: toBookingStatusPresentation(
-        cita.statusConceptId === undefined
-          ? undefined
-          : this.etiquetas().get(cita.statusConceptId),
+        cita.statusConceptId === undefined ? undefined : this.etiquetas().get(cita.statusConceptId),
         SIN_DATO,
       ),
       motivo: cita.reasonText ?? SIN_DATO,

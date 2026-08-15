@@ -149,7 +149,27 @@ export interface Booking {
   readonly confirmedAt?: Date;
   readonly checkedInAt?: Date;
   readonly reasonText?: string;
+  /**
+   * Por qué la cita está como está, cuando el último cambio lo explicó.
+   *
+   * Es lo que hace que una cancelación deje de ser un cartel mudo: el paciente
+   * ve que su médico la canceló **y** por qué, sin salir de su lista. Ausente
+   * cuando el último cambio no exigía motivo o la cita es anterior a la
+   * corrección #14.
+   */
+  readonly statusReason?: BookingStatusReason;
   readonly createdAt: Date;
+}
+
+/** Desde qué lado del mostrador se hizo el cambio. */
+export type BookingActorKind = 'PATIENT' | 'PROVIDER';
+
+/** El motivo del último cambio de una cita, tal como lo devuelve la API. */
+export interface BookingStatusReason {
+  readonly reasonText: string;
+  readonly actorKind?: BookingActorKind;
+  readonly toStateConceptId?: string;
+  readonly changedAt: Date;
 }
 
 /** Una ventana de citas. */
@@ -206,6 +226,15 @@ export interface BookingConfirmation {
   readonly reasonText?: string;
 }
 
+/**
+ * Cuerpo de la **solicitud** (corrección #11).
+ *
+ * Mismo cuerpo que el confirm menos los recordatorios: la cita nace pendiente
+ * de que el profesional la acepte, y recordar un turno que todavía puede
+ * rechazarse sería prometer algo que nadie comprometió.
+ */
+export type BookingRequest = BookingConfirmation;
+
 /** La cita recién confirmada. */
 export interface BookingConfirmed {
   readonly id: string;
@@ -223,6 +252,12 @@ export interface BookingConfirmed {
 export interface BookingCancellation {
   readonly cancelledBy: 'PATIENT' | 'PROVIDER';
   readonly isNoShow?: boolean;
+  /**
+   * **Obligatorio** (corrección #14): el servidor rechaza la cancelación sin
+   * motivo, y con relleno («na», «prueba») también. Se le muestra a la otra
+   * parte en el detalle de su cita.
+   */
+  readonly reasonText: string;
 }
 
 export interface BookingCancelled {
@@ -241,7 +276,11 @@ export interface BookingCancelled {
  */
 export interface BookingReschedule {
   readonly toSlotId: string;
-  readonly reasonText?: string;
+  /**
+   * **Obligatorio** (corrección #14): mover un turno le cambia el día a alguien,
+   * y esa persona ve el motivo en el detalle de su cita.
+   */
+  readonly reasonText: string;
 }
 
 export interface BookingRescheduled {
