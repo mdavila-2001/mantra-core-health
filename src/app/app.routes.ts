@@ -16,6 +16,7 @@ import { NotFound } from './features/not-found/not-found';
 import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
 import { authGuard } from './core/auth/auth.guard';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
+import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
   APP_TITLE,
   SECTION_ROUTE_DATA,
@@ -194,6 +195,12 @@ const PANTALLAS_HIJAS: Routes = [
     // en el menú — se llega desde la guía, nunca desde el shell.
     path: 'directory/:profileId',
     title: `${APP_TITLE} - Perfil profesional`,
+    // La ficha es parte de la Guía, así que hereda su restricción a paciente
+    // (corrección #2). Se declara explícita y no por prefijo: ver el porqué en
+    // `section-roles.guard.ts` — hay hijas cuyo rol legítimo no es el de su
+    // sección, y cerrarlas todas por prefijo rompería flujos que nadie pidió
+    // tocar.
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/directory/practitioner-detail/practitioner-detail')
         .then((m) => m.PractitionerDetail)
@@ -369,6 +376,11 @@ function rutasDeSecciones(): Routes {
   return APP_SECTIONS.map((section) => ({
     path: section.path,
     title: titleOf(section),
+    // Los roles que el registro declara se hacen cumplir **también por ruta**
+    // (carril 02). Filtrar el menú es cortesía; quien escribe la dirección a
+    // mano llega igual, y la corrección #2 pide que la Guía de profesionales no
+    // sea *accesible* para quien no es paciente, no sólo que no se vea.
+    canActivate: [seccionRolesGuard],
     // La sección viaja con la ruta: el placeholder la lee de acá y no necesita
     // saber cuál de todas es.
     data: { [SECTION_ROUTE_DATA]: section },

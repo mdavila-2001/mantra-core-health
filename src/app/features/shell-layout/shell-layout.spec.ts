@@ -132,8 +132,11 @@ describe('ShellLayout', () => {
       '/dashboard',
       // Los tutoriales tampoco exigen rol.
       '/tutorials',
-      '/directory',
-      // El directorio de laboratorios tampoco: es oferta publicada, no PHI.
+      // La **Guía de profesionales** ya no está: desde la corrección #2 del
+      // 15/08/2026 declara `roles: ['PATIENT']` y excluyentes, y una sesión sin
+      // roles no es una sesión de paciente. El directorio de laboratorios sí
+      // sigue: es oferta publicada, no PHI, y lo consulta cualquiera que
+      // necesite un estudio.
       '/laboratory-directory',
       // El glosario tampoco: accesible por cada profesional, no sólo por
       // quien administra.

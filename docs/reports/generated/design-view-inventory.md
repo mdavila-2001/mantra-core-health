@@ -2,7 +2,7 @@
 
 # Inventario de vistas del diseñador y cableado real
 
-Carril 01. 25 secciones del registro, 30 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
+Carril 01. 25 secciones del registro, 29 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
 
 ## Estados
 
@@ -22,7 +22,7 @@ Carril 01. 25 secciones del registro, 30 pantallas hijas o de operación y 126 v
 |---|---|---|---|---|---|
 | cualquier sesión | `/dashboard` | `Dashboard` | IdentityClient, ProfilesClient, PublicClient | conectada con deuda | resolver: promesa sin pantalla |
 | cualquier sesión | `/tutorials` | `TutorialsCenter` | — | presentacional | verificar que no deba listar |
-| cualquier sesión | `/directory` | `PractitionersDirectory` | ProfilesClient, TerminologyClient | conectada | ninguna |
+| PATIENT | `/directory` | `PractitionersDirectory` | ProfilesClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/laboratory-directory` | `LaboratoryDirectory` | DiagnosticUnitsClient | conectada | ninguna |
 | SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule` | `Agenda` | ProfilesClient, SchedulingClient, TerminologyClient | conectada | ninguna |
 | CLINICIAN · PRACTITIONER | `/medical-records` | `ClinicalRecord` | ChartTemplatesClient, ClinicalClient, DiagnosticsClient, FilesClient, FormsClient, ProceduresClient, ProfilesClient, SystemContextClient, TerminologyClient | conectada | ninguna |
@@ -69,7 +69,6 @@ Carril 01. 25 secciones del registro, 30 pantallas hijas o de operación y 126 v
 | SECURITY_ADMIN | `/administration/patients/assisted-registration` | `AssistedRegistration` | IamClient | conectada |
 | SECURITY_ADMIN | `/administration/patients/merge` | `PatientMerge` | ProfilesClient | conectada |
 | SECURITY_ADMIN | `/administration/patients/new` | `PatientNew` | ProfilesClient | conectada |
-| cualquier sesión | `/directory/:profileId` | `PractitionerDetail` | FilesClient, ProfilesClient, TerminologyClient | conectada |
 | cualquier sesión | `/glossary/:conceptId` | `GlossaryTerm` | TerminologyClient | conectada |
 | cualquier sesión | `/laboratory-directory/:unitId` | `LaboratoryDetail` | DiagnosticUnitsClient | conectada |
 | CLINICIAN · PRACTITIONER | `/medical-records/:profileId` | `PatientChart` | ChartTemplatesClient, ClinicalClient, DiagnosticsClient, FilesClient, FormsClient, ProceduresClient, ProfilesClient, SystemContextClient, TerminologyClient | conectada |
@@ -219,7 +218,7 @@ Las 126 pantallas de `features/redsat/`, generadas por `scripts/port-vistas-reds
 | Estado | Pantallas |
 |---|---|
 | maqueta portada | 126 |
-| conectada | 45 |
+| conectada | 44 |
 | presentacional | 6 |
 | conectada con deuda | 3 |
 | placeholder | 1 |

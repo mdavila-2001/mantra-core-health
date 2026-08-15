@@ -2,9 +2,9 @@
 
 # Inventario de componentes y servicios
 
-333 componentes y 50 servicios inyectables, leídos de `src/`.
+334 componentes y 50 servicios inyectables, leídos de `src/`.
 
-## Átomo (16)
+## Átomo (17)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -17,6 +17,7 @@
 | `app-divider` | `Divider` | `orientation`, `label` | — | — | OnPush | sí |
 | `app-input` | `Input` | `type`, `autocomplete`, `placeholder`, `disabled`, `readonly`, `hasError`, `hasSuccess`, `testId`, `comboboxAria` | `focused`, `blurred` | `value` | OnPush | sí |
 | `a[app-link]` | `Link` | `variant`, `external` | — | — | OnPush | sí |
+| `app-nav-icon` | `NavIcon` | `name` | — | — | OnPush | **no** |
 | `app-progress` | `Progress` | `value`, `tone`, `size`, `label` | — | — | OnPush | sí |
 | `app-select` | `Select` | `options`, `disabled`, `placeholder`, `hasError`, `ariaLabel` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-skeleton` | `Skeleton` | `variant`, `width`, `height`, `lines` | — | — | OnPush | sí |
@@ -570,6 +571,7 @@
 - `TerminologiaVersionesImportar` — `src/app/features/redsat/terminologia/versiones-importar/versiones-importar.ts`
 - `TerminologiaVersionesListado` — `src/app/features/redsat/terminologia/versiones-listado/versiones-listado.ts`
 - `TerminologiaVersionesPublicar` — `src/app/features/redsat/terminologia/versiones-publicar/versiones-publicar.ts`
+- `NavIcon` — `src/app/shared/components/atoms/nav-icon/nav-icon.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`
 - `AccordionPanel` — `src/app/shared/components/molecules/accordion/accordion-panel/accordion-panel.ts`
 - `ConceptSelect` — `src/app/shared/components/molecules/concept-select/concept-select.ts`
