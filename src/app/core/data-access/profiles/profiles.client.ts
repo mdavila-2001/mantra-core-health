@@ -28,6 +28,8 @@ import type {
   PractitionerCredential,
   PractitionerLicense,
   PractitionerProfile,
+  PractitionerDirectoryPage,
+  PractitionerListItem,
   PractitionerSpecialty,
   RelatedPerson,
   RelatedPersonCreated,
@@ -151,6 +153,74 @@ export class ProfilesClient {
   getOwnPractitionerProfile(): Observable<OwnPractitionerProfile> {
     return this.http
       .get<ConNulos<WireOwnPractitioner>>(this.url('/profiles/practitioners/me/summary'))
+      .pipe(map((body) => this.traducirPerfilPropio(body)));
+  }
+
+  /**
+   * `GET /profiles/practitioners` — la guía de profesionales (carril R2-1).
+   *
+   * Cada fila trae lo que una guía necesita para agrupar y rotular: nombre,
+   * título, foto, disponibilidad y las especialidades **vigentes**. El detalle
+   * de cada uno sale de `getPractitionerProfile`.
+   *
+   * Pagina por cursor y **no devuelve total**, como el resto de los listados
+   * del sistema: la pantalla junta las páginas hasta agotarlas para poder
+   * agrupar por especialidad, que es lo que se pidió — una guía se hojea, no
+   * se interroga.
+   *
+   * @param filtros - Especialidad vigente, cursor y tope de página.
+   */
+  listPractitioners(
+    filtros: {
+      readonly specialtyConceptId?: string;
+      readonly cursor?: string;
+      readonly limit?: number;
+    } = {},
+  ): Observable<PractitionerDirectoryPage> {
+    let params = new HttpParams();
+    if (filtros.specialtyConceptId !== undefined) {
+      params = params.set('specialtyConceptId', filtros.specialtyConceptId);
+    }
+    if (filtros.cursor !== undefined) {
+      params = params.set('cursor', filtros.cursor);
+    }
+    if (filtros.limit !== undefined) {
+      params = params.set('limit', String(filtros.limit));
+    }
+    return this.http
+      .get<ConNulos<WirePractitionerDirectoryPage>>(this.url('/profiles/practitioners'), {
+        params,
+      })
+      .pipe(
+        map((body) => {
+          const limpio = sinNulos<WirePractitionerDirectoryPage>(body);
+          return {
+            ...limpio,
+            items: limpio.items.map((fila) => sinNulos<PractitionerListItem>(fila)),
+            // `nextCursor` viaja `null` en la última página y `sinNulos` lo
+            // borraría: acá la ausencia SÍ significa algo —«no hay más»— y la
+            // pantalla la lee como fin del recorrido.
+            nextCursor: body.nextCursor ?? null,
+          };
+        }),
+      );
+  }
+
+  /**
+   * `GET /profiles/practitioners/:profileId/summary` — el perfil de un colega.
+   *
+   * Devuelve **el mismo contrato** que `getOwnPractitionerProfile`, así que la
+   * ficha de la guía se pinta con la misma vista con la que un doctor ve su
+   * propio perfil. Dos formas distintas serían dos perfiles de doctor en el
+   * producto — que es justo lo que el punto 4 del reclamo señaló.
+   *
+   * @param profileId - El profesional consultado.
+   */
+  getPractitionerProfile(profileId: string): Observable<OwnPractitionerProfile> {
+    return this.http
+      .get<ConNulos<WireOwnPractitioner>>(
+        this.url(`/profiles/practitioners/${encodeURIComponent(profileId)}/summary`),
+      )
       .pipe(map((body) => this.traducirPerfilPropio(body)));
   }
 
@@ -434,6 +504,12 @@ type WireOwnSummary = WireDates<OwnPatientSummary, 'birthDate'>;
    `WireDates` sobre el todo porque están anidadas, y ese ayudante sólo alcanza
    el primer nivel — dejarlas pasar tipadas como `Date` haría que el texto que
    de verdad llega no se convirtiera y terminara crudo en la pantalla. */
+/**
+ * La página de la guía como viaja: sin fechas, pero con opcionales en `null`
+ * —el backend serializa así— que `sinNulos` limpia fila por fila.
+ */
+type WirePractitionerDirectoryPage = PractitionerDirectoryPage;
+
 type WireOwnPractitioner = Omit<
   OwnPractitionerProfile,
   'createdAt' | 'specialties' | 'credentials' | 'licenses'

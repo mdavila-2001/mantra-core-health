@@ -2,7 +2,11 @@
   title="Agenda"
   subtitle="Las citas comprometidas y los cupos que quedan por ofrecer."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  @if (puedeCrearAgenda()) {
+    <a app-button page-actions variant="primary" [routerLink]="rutaCrearAgenda">Crear agenda</a>
+  }
+</app-page-header>
 
 <div class="agenda">
   <!-- ─── Sin organización ────────────────────────────────────────────────
@@ -232,29 +236,90 @@
 
 <ng-template #celdaAccionesCita let-cita>
   <div class="agenda__acciones">
-    @if (!cita.llegadaRegistrada) {
+    <!-- Cada acción se ofrece SOLO en el estado en que el backend la acepta:
+         un botón que va a volver con 422 es un error con forma de oferta. Con
+         el estado sin resolver (código vacío) no se ofrece ninguna. -->
+    @if (porResponder(cita)) {
+      <!-- Corrección #11: la solicitud del paciente espera respuesta. -->
       <button
         app-button
-        variant="outline"
+        variant="primary"
         size="sm"
+        data-testid="agenda-aceptar"
         [isLoading]="operando() === cita.id"
-        (clicked)="registrarLlegada(cita)"
+        (clicked)="aceptarCita(cita)"
       >
-        Registrar llegada
+        Aceptar
       </button>
-    } @else {
-      <span class="agenda__hasta">Llegó</span>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        data-testid="agenda-rechazar"
+        [isLoading]="operando() === cita.id"
+        (clicked)="rechazarCita(cita)"
+      >
+        Rechazar
+      </button>
     }
-    <!-- Destructiva: lleva su etiqueta y pide confirmación explícita. -->
-    <button
-      app-button
-      variant="ghost"
-      size="sm"
-      [isLoading]="operando() === cita.id"
-      (clicked)="cancelarCita(cita)"
-    >
-      Cancelar
-    </button>
+
+    @if (sePuedeIniciar(cita)) {
+      <!-- Corrección #15: disponible en cualquier momento, sin esperar el día
+           agendado ni exigir que se haya registrado la llegada. -->
+      <button
+        app-button
+        variant="primary"
+        size="sm"
+        data-testid="agenda-iniciar"
+        [isLoading]="operando() === cita.id"
+        (clicked)="iniciarAtencion(cita)"
+      >
+        Iniciar consulta
+      </button>
+    }
+
+    @if (sePuedeCompletar(cita)) {
+      <button
+        app-button
+        variant="primary"
+        size="sm"
+        data-testid="agenda-completar"
+        [isLoading]="operando() === cita.id"
+        (clicked)="completarCita(cita)"
+      >
+        Completar cita
+      </button>
+    }
+
+    @if (puedeOperarCitas() && estaVigente(cita)) {
+      @if (!cita.llegadaRegistrada) {
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          [isLoading]="operando() === cita.id"
+          (clicked)="registrarLlegada(cita)"
+        >
+          Registrar llegada
+        </button>
+      } @else {
+        <span class="agenda__hasta">Llegó</span>
+      }
+    }
+
+    @if (estaVigente(cita) || porResponder(cita)) {
+      <!-- Destructiva: lleva su etiqueta, pide confirmación y exige motivo. -->
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        data-testid="agenda-cancelar"
+        [isLoading]="operando() === cita.id"
+        (clicked)="cancelarCita(cita)"
+      >
+        Cancelar
+      </button>
+    }
   </div>
 </ng-template>
 

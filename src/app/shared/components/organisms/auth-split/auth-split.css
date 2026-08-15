@@ -24,7 +24,14 @@
   display: flex;
   flex-direction: column;
   padding: var(--sp-4);
-  background: var(--bg-surface);
+  /* `--bg-surface` sola es plana (en claro es igual a `--bg-base`, #fff sobre
+     #fff), y ahí es donde flota la tarjeta de `login`/`register`. Los dos
+     lavados radiales dan un fondo con aire sin tocar el contraste de texto:
+     son manchas de marca al 6-10%, no superficies — nada se lee encima. */
+  background:
+    radial-gradient(circle at 12% -8%, color-mix(in srgb, var(--brand-secondary) 10%, transparent), transparent 42%),
+    radial-gradient(circle at 100% 108%, color-mix(in srgb, var(--brand-primary) 7%, transparent), transparent 46%),
+    var(--bg-surface);
 }
 
 /* El selector de tema arriba a la derecha, sin empujar el formulario. */
@@ -113,12 +120,18 @@
        y el aqua —acento de marca— sube a la esquina opuesta (arriba-derecha), sin
        texto. Así se cumple la regla REDSAT «nada de blanco sobre aqua»
        (identidad-visual.md 8.1) en toda la superficie del texto. */
-    background: linear-gradient(
-      150deg,
-      var(--c-aqua-500),
-      var(--c-petrol-500) 45%,
-      var(--c-petrol-800)
-    );
+    /* El brillo radial es blanco literal (no un token) a propósito: vive
+       arriba-derecha, lejos del rincón abajo-izquierda que sostiene el
+       contraste de texto documentado abajo, y a 14% de opacidad no mueve ese
+       cálculo — es sheen, no una superficie que alguien tenga que leer. */
+    background:
+      radial-gradient(circle at 82% 10%, rgba(255, 255, 255, 0.14), transparent 40%),
+      linear-gradient(
+        150deg,
+        var(--c-aqua-500),
+        var(--c-petrol-500) 45%,
+        var(--c-petrol-800)
+      );
     color: #ffffff;
     /* Ya no hace falta `position: sticky`: la columna mide lo que la ventana y
        la ventana no se mueve. */

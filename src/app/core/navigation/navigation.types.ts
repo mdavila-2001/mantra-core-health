@@ -126,6 +126,23 @@ export interface AppSection {
    */
   readonly roles?: readonly string[];
 
+  /**
+   * Los `roles` de arriba son **excluyentes**: ni siquiera el comodín entra.
+   *
+   * Existe por la corrección #2 del 15/08/2026, y es la única sección que hoy
+   * lo usa. El pedido del cliente no dijo «que la vean los pacientes y quien
+   * administra»: dijo que la Guía de profesionales es **solo** del paciente y
+   * «no debe aparecer ni ser accesible para doctor u otros roles». `SUPERADMIN`
+   * es otro rol.
+   *
+   * Se declara acá y no como un caso especial en el guard a propósito: el menú,
+   * «Tus accesos», el catálogo de tutoriales y `seccionRolesGuard` preguntan
+   * todos por {@link isVisibleTo}, así que una sola bandera los mantiene de
+   * acuerdo. Un caso especial en el guard produciría lo peor: un ítem visible
+   * que rebota.
+   */
+  readonly exclusiveRoles?: boolean;
+
   readonly availability: SectionAvailability;
 
   /**
@@ -190,9 +207,17 @@ const WILDCARD_ROLE = 'SUPERADMIN';
  * mano llega igual, y quien la autoriza de verdad es el backend.
  */
 export function isVisibleTo(section: AppSection, roles: readonly string[]): boolean {
+  const required = section.roles;
+
+  // Una sección con roles **excluyentes** ignora el comodín: es la excepción
+  // que la corrección #2 pidió explícitamente, y por eso el `if` del comodín
+  // deja de ser lo primero que se evalúa.
+  if (section.exclusiveRoles === true) {
+    return required !== undefined && required.some((role) => roles.includes(role));
+  }
+
   if (roles.includes(WILDCARD_ROLE)) {
     return true;
   }
-  const required = section.roles;
   return required === undefined || required.some((role) => roles.includes(role));
 }

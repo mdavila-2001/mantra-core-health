@@ -35,6 +35,13 @@ export { Link } from './link/link';
 export { BROWSABLE_PROTOCOLS, LINK_VARIANTS } from './link/link.types';
 export type { LinkVariant } from './link/link.types';
 
+/* El ícono de una sección. Lo dibujan el nav lateral y «Tus accesos» del panel:
+   son la misma puerta vista desde dos lugares y tienen que mostrar el mismo
+   trazo. */
+export { NavIcon } from './nav-icon/nav-icon';
+export { NAV_ICON_NAMES } from './nav-icon/nav-icon.types';
+export type { NavIconName } from './nav-icon/nav-icon.types';
+
 export { Progress } from './progress/progress';
 export {
   PROGRESS_MAX,

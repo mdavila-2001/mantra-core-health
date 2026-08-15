@@ -28,15 +28,16 @@ describe('Navegación', () => {
     // es tener perfil de paciente —un dato de la cuenta, no un rol—, y eso la
     // pantalla lo resuelve por su cuenta.
     //
-    // El muro, igual: su filtro es tener **perfil público** de `community`, que
-    // es otra entidad distinta del `pid` de la sesión y sólo se sabe
-    // preguntándole al backend. Un rol no puede expresarlo.
+    // La guía de profesionales tampoco declara roles, y ahí la razón es más
+    // simple: la usa sobre todo quien busca médico, o sea el paciente. Ocupó
+    // el lugar del muro en el menú (carril R2-1) — el muro sigue existiendo
+    // como ruta, pero ya no se ofrece desde acá.
     //
     // El glosario tampoco declara roles: el cliente lo pidió accesible por
     // cada profesional, no sólo por quien administra.
     SideNav.rutas().should('deep.equal', [
       '/dashboard',
-      '/feed',
+      '/directory',
       '/glossary',
       '/my-account',
       '/my-account/appointments',

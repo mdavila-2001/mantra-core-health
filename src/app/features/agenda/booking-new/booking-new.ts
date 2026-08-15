@@ -120,9 +120,7 @@ export class BookingNew {
   protected readonly esAutoservicio = this.entrada === 'PORTAL';
 
   /** Adónde se vuelve: a la agenda de la organización o a los turnos propios. */
-  protected readonly rutaDeVuelta = this.esAutoservicio
-    ? MIS_TURNOS_ROUTE
-    : AGENDA_ROUTE;
+  protected readonly rutaDeVuelta = this.esAutoservicio ? MIS_TURNOS_ROUTE : AGENDA_ROUTE;
 
   /**
    * La cuenta no tiene perfil de paciente y entró por el portal.
@@ -157,10 +155,7 @@ export class BookingNew {
 
   /** Sin franja no hay cómo reencontrar el cupo: se entra desde la agenda. */
   protected readonly sinContexto =
-    this.slotId === '' ||
-    this.resourceId === null ||
-    this.desde === null ||
-    this.hasta === null;
+    this.slotId === '' || this.resourceId === null || this.desde === null || this.hasta === null;
 
   protected readonly rutaDeAgenda = AGENDA_ROUTE;
   protected readonly rutaDeMisTurnos = MIS_TURNOS_ROUTE;
@@ -239,9 +234,7 @@ export class BookingNew {
   protected readonly maxMotivo = MAX_MOTIVO;
 
   private readonly enviado = signal(false);
-  protected readonly pacienteFaltante = computed(
-    () => this.enviado() && this.paciente() === null,
-  );
+  protected readonly pacienteFaltante = computed(() => this.enviado() && this.paciente() === null);
 
   /* ---- la retención vigente ---------------------------------------------- */
 
@@ -302,9 +295,7 @@ export class BookingNew {
     }
     this.scheduling.listResources({ tenantId }).subscribe({
       next: (pagina) =>
-        this.sede.set(
-          pagina.items.find((recurso) => recurso.id === this.resourceId)?.site ?? null,
-        ),
+        this.sede.set(pagina.items.find((recurso) => recurso.id === this.resourceId)?.site ?? null),
       error: () => this.sede.set(null),
     });
   }
@@ -316,7 +307,12 @@ export class BookingNew {
    * respuesta y con lugar es la única prueba de que todavía se puede ofrecer.
    */
   protected cargarCupo(): void {
-    if (this.sinContexto || this.resourceId === null || this.desde === null || this.hasta === null) {
+    if (
+      this.sinContexto ||
+      this.resourceId === null ||
+      this.desde === null ||
+      this.hasta === null
+    ) {
       return;
     }
 
@@ -407,45 +403,53 @@ export class BookingNew {
     this.state.set(loading());
 
     const motivo = this.motivo.value.trim();
-    this.scheduling
-      .confirmHold(retencion.holdToken, {
-        tenantId,
-        patientProfileId: paciente.value,
-        channel: this.entrada,
-        ...(motivo === '' ? {} : { reasonText: motivo }),
-      })
-      .subscribe({
-        next: () => {
+    const cuerpo = {
+      tenantId,
+      patientProfileId: paciente.value,
+      channel: this.entrada,
+      ...(motivo === '' ? {} : { reasonText: motivo }),
+    };
+
+    // **El paciente solicita; el mostrador confirma** (corrección #11). Son dos
+    // endpoints y no una bandera: quien pide desde el portal no puede
+    // comprometer la agenda de nadie, así que su turno nace pendiente de que el
+    // profesional lo acepte. El mostrador sí compromete, porque para eso está.
+    const peticion = this.esAutoservicio
+      ? this.scheduling.requestHold(retencion.holdToken, cuerpo)
+      : this.scheduling.confirmHold(retencion.holdToken, cuerpo);
+
+    peticion.subscribe({
+      next: () => {
+        this.state.set(ready(null));
+        this.toast.success(
+          this.esAutoservicio
+            ? 'Enviamos tu solicitud. El profesional la confirma o te propone otro horario.'
+            : `El turno de ${paciente.label} quedó confirmado.`,
+          this.esAutoservicio ? 'Turno solicitado' : 'Reserva confirmada',
+        );
+        if (this.esAutoservicio) {
+          void this.router.navigateByUrl(MIS_TURNOS_ROUTE);
+          return;
+        }
+        void this.router.navigate([AGENDA_ROUTE], {
+          queryParams: this.resourceId === null ? {} : { recurso: this.resourceId },
+        });
+      },
+      error: (error: unknown) => {
+        const estado = errorToViewState<null>(error);
+        // Un rechazo de validación o un «no existe» sobre el token es la
+        // retención vencida o consumida: el paso a repetir es retener, no
+        // insistir con un confirm que ya no puede salir bien.
+        if (estado.status === 'validation' || estado.status === 'not-found') {
+          this.retencion.set(null);
+          this.retencionVencida.set(true);
           this.state.set(ready(null));
-          this.toast.success(
-            this.esAutoservicio
-              ? 'Tu turno quedó confirmado.'
-              : `El turno de ${paciente.label} quedó confirmado.`,
-            'Reserva confirmada',
-          );
-          if (this.esAutoservicio) {
-            void this.router.navigateByUrl(MIS_TURNOS_ROUTE);
-            return;
-          }
-          void this.router.navigate([AGENDA_ROUTE], {
-            queryParams: this.resourceId === null ? {} : { recurso: this.resourceId },
-          });
-        },
-        error: (error: unknown) => {
-          const estado = errorToViewState<null>(error);
-          // Un rechazo de validación o un «no existe» sobre el token es la
-          // retención vencida o consumida: el paso a repetir es retener, no
-          // insistir con un confirm que ya no puede salir bien.
-          if (estado.status === 'validation' || estado.status === 'not-found') {
-            this.retencion.set(null);
-            this.retencionVencida.set(true);
-            this.state.set(ready(null));
-            this.cargarCupo();
-            return;
-          }
-          this.state.set(estado);
-        },
-      });
+          this.cargarCupo();
+          return;
+        }
+        this.state.set(estado);
+      },
+    });
   }
 
   /** Suelta la retención del lado de la pantalla; el TTL la devuelve al cupo. */

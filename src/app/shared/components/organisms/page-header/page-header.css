@@ -18,6 +18,13 @@
     margin-top: var(--sp-3);
 }
 
+/* Ese aire de arriba separa del rastro de migas. Sin migas —que es el caso de
+   la mayoría de las pantallas— no separa de nada: queda como un margen suelto
+   entre el header del marco y el h1. */
+.page-header__row:first-child {
+    margin-top: 0;
+}
+
 .page-header__title {
     margin: 0;
 }

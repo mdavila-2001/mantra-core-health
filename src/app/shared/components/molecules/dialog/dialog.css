@@ -4,60 +4,66 @@
     ========================================================================== */
 
 .dialog {
-    padding: 0;
-    border: none;
-    background: transparent;
-    /* el nativo trae un ancho raro y un margen automático que no sirven */
-    max-width: min(90vw, 480px);
-    width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  /* el nativo trae un ancho raro y un margen automático que no sirven */
+  max-width: min(90vw, 480px);
+  width: 100%;
 }
 
 .dialog::backdrop {
-    /* petróleo del sistema, no un negro cualquiera */
-    background: rgb(10 28 39 / 55%);
+  /* petróleo del sistema, no un negro cualquiera */
+  background: rgb(10 28 39 / 55%);
 }
 
 .dialog__panel {
-    background: var(--bg-surface);
-    border-radius: var(--r-lg);
-    box-shadow: var(--shadow-lg);
-    padding: var(--sp-6);
-    font-family: var(--font-body);
+  background: var(--bg-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--sp-6);
+  font-family: var(--font-body);
 }
 
 .dialog__title {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--fs-h3);
-    line-height: var(--lh-h3);
-    font-weight: 600;
-    color: var(--text-primary);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .dialog__message {
-    margin: var(--sp-3) 0 0;
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
-    color: var(--text-secondary);
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+/* El motivo separa el mensaje de los botones: es un paso más, no un renglón
+   del texto. */
+.dialog__reason {
+  margin-top: var(--sp-5);
 }
 
 .dialog__actions {
-    display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: var(--sp-3);
-    margin-top: var(--sp-6);
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
 }
 
 /* Entrada corta; la regla global de prefers-reduced-motion la vuelve
    instantánea, que para un modal es exactamente lo correcto. */
 .dialog[open] .dialog__panel {
-    animation: dialog-in 0.15s ease;
+  animation: dialog-in 0.15s ease;
 }
 
 @keyframes dialog-in {
-    from {
-        opacity: 0;
-        transform: translateY(var(--sp-2));
-    }
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-2));
+  }
 }

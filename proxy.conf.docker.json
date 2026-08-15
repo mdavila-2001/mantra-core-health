@@ -26,7 +26,8 @@
       "/health-context",
       "/geo",
       "/procedure-cases",
-      "/dental-procedures"
+      "/dental-procedures",
+      "/diagnostic-units"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

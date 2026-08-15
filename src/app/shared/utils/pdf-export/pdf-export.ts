@@ -30,8 +30,16 @@ export interface PdfExportOptions {
   readonly title?: string;
 }
 
-/** Un bloque de contenido extraído del elemento, listo para maquetar. */
-interface PdfBlock {
+/**
+ * Un bloque de contenido listo para maquetar.
+ *
+ * Se exporta porque el maquetador es **uno solo** para todo el repo: un
+ * documento puede llegar desde el DOM (`buildPdfDocument`) o desde datos
+ * (`buildBlocksPdf`, que usan los documentos clínicos del carril 08), y las dos
+ * entradas terminan en la misma lista de bloques. Dos maquetadores producirían
+ * dos PDFs con márgenes distintos para el mismo sistema.
+ */
+export interface PdfBlock {
   readonly kind: 'heading' | 'paragraph' | 'row';
   readonly text: string;
   /** Nivel de encabezado (1–6); sólo presente cuando `kind === 'heading'`. */
@@ -67,6 +75,23 @@ const HEADING_FONT_SIZE_PT: Readonly<Record<number, number>> = {
  * @returns El documento `jsPDF` ya maquetado, listo para `.save()` o `.output()`.
  */
 export function buildPdfDocument(element: HTMLElement, options: PdfExportOptions = {}): jsPDF {
+  return buildBlocksPdf(blocksOf(element), options);
+}
+
+/**
+ * Arma el documento a partir de bloques ya extraídos.
+ *
+ * Es el maquetador de verdad: `buildPdfDocument` es esto mismo con un paso
+ * previo que saca los bloques del DOM. Existe separado porque hay documentos
+ * que **no vienen de una pantalla** —la receta y la historia de una atención,
+ * del carril 08— y renderizarlos en el DOM sólo para volver a leerlos sería dar
+ * una vuelta larga y frágil, además de imposible bajo SSR.
+ *
+ * @param blocks - Contenido en orden de lectura.
+ * @param options - Título opcional del documento.
+ * @returns El documento `jsPDF` maquetado, listo para `.save()` o `.output()`.
+ */
+export function buildBlocksPdf(blocks: readonly PdfBlock[], options: PdfExportOptions = {}): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   if (options.title !== undefined) {
     doc.setProperties({ title: options.title });
@@ -94,7 +119,7 @@ export function buildPdfDocument(element: HTMLElement, options: PdfExportOptions
     y += lineas.length * LINE_HEIGHT_PT + BLOCK_SPACING_PT;
   }
 
-  for (const block of blocksOf(element)) {
+  for (const block of blocks) {
     const size =
       block.kind === 'heading'
         ? (HEADING_FONT_SIZE_PT[block.level ?? 6] ?? BODY_FONT_SIZE_PT)
@@ -102,7 +127,10 @@ export function buildPdfDocument(element: HTMLElement, options: PdfExportOptions
           ? ROW_FONT_SIZE_PT
           : BODY_FONT_SIZE_PT;
 
-    doc.setFont(block.kind === 'row' ? 'courier' : 'helvetica', block.kind === 'heading' ? 'bold' : 'normal');
+    doc.setFont(
+      block.kind === 'row' ? 'courier' : 'helvetica',
+      block.kind === 'heading' ? 'bold' : 'normal',
+    );
     doc.setFontSize(size);
 
     const lineas = doc.splitTextToSize(block.text, maxWidth) as string[];

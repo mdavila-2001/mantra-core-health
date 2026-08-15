@@ -51,7 +51,7 @@
     align-items: center;
     gap: var(--sp-3);
     /* área táctil de 44 px en cualquier ancho */
-    min-block-size: var(--sp-11, 44px);
+    min-block-size: 44px;
     padding: var(--sp-2) var(--sp-3);
     border-radius: var(--r-sm);
     color: var(--text-secondary);

@@ -16,6 +16,7 @@ import { NotFound } from './features/not-found/not-found';
 import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
 import { authGuard } from './core/auth/auth.guard';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
+import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
   APP_TITLE,
   SECTION_ROUTE_DATA,
@@ -49,7 +50,20 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
   // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
   // de publicación con sus reacciones.
+  //
+  // Sigue existiendo aunque el menú ya no la ofrezca (carril R2-1): quien tenga
+  // el enlace guardado llega igual. Borrarla es una decisión de producto que el
+  // cliente no pidió — dijo «sacar del perfil de paciente», no «eliminar».
   feed: () => import('./features/feed/feed').then((m) => m.Feed),
+  // La guía que ocupó su lugar en el menú.
+  directory: () =>
+    import('./features/directory/practitioners-directory/practitioners-directory').then(
+      (m) => m.PractitionersDirectory,
+    ),
+  'laboratory-directory': () =>
+    import('./features/laboratory-directory/laboratory-directory').then(
+      (m) => m.LaboratoryDirectory,
+    ),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   'medical-records': () =>
@@ -62,6 +76,19 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/organizations/organization-list/organization-list').then(
       (m) => m.OrganizationList,
     ),
+  // Carril 13: la consola de la organización médica. Diferida como el resto de
+  // administración — sólo la alcanza quien administra, así que no tiene sentido
+  // que la descargue todo el mundo al entrar.
+  'administration/medical-organization': () =>
+    import('./features/admin/medical-organization/medical-organization').then(
+      (m) => m.MedicalOrganization,
+    ),
+  // Carril 16: la consola del laboratorio. Distinta de `laboratory-directory`,
+  // que es la vitrina del paciente y sigue en pie sin cambios.
+  'administration/medical-laboratory': () =>
+    import('./features/admin/medical-laboratory/medical-laboratory').then(
+      (m) => m.MedicalLaboratory,
+    ),
   'administration/accounting': () =>
     import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>
@@ -71,6 +98,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
+  'my-account/medical-record': () =>
+    import('./features/account/medical-record/medical-record').then((m) => m.MedicalRecord),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
@@ -175,6 +204,30 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // La ficha de un profesional: el destino del clic en la guía (R2-1). No va
+    // en el menú — se llega desde la guía, nunca desde el shell.
+    path: 'directory/:profileId',
+    title: `${APP_TITLE} - Perfil profesional`,
+    // La ficha es parte de la Guía, así que hereda su restricción a paciente
+    // (corrección #2). Se declara explícita y no por prefijo: ver el porqué en
+    // `section-roles.guard.ts` — hay hijas cuyo rol legítimo no es el de su
+    // sección, y cerrarlas todas por prefijo rompería flujos que nadie pidió
+    // tocar.
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/directory/practitioner-detail/practitioner-detail')
+        .then((m) => m.PractitionerDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'laboratory-directory/:unitId',
+    title: `${APP_TITLE} - Perfil de laboratorio`,
+    loadComponent: () =>
+      import('./features/laboratory-directory/laboratory-detail/laboratory-detail')
+        .then((m) => m.LaboratoryDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
     // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
     // nunca desde el menú.
     path: 'my-account/edit',
@@ -244,6 +297,19 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/agenda/booking-new/booking-new')
         .then((m) => m.BookingNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La ficha de un término del glosario. Es ruta y no panel porque un término
+    // se comparte: «mirá qué quiere decir esto» es un enlace, y un panel no
+    // tiene enlace. Cuelga de `/glossary`, así que el rastro de migas y la
+    // sección marcada en el menú siguen diciendo «Glosario» sin que haya que
+    // tocar `navigation.map.ts`.
+    path: 'glossary/:conceptId',
+    title: `${APP_TITLE} - Término del glosario`,
+    loadComponent: () =>
+      import('./features/glossary/glossary-term')
+        .then((m) => m.GlossaryTerm)
         .catch(() => chunkFallido()),
   },
 ];
@@ -323,6 +389,11 @@ function rutasDeSecciones(): Routes {
   return APP_SECTIONS.map((section) => ({
     path: section.path,
     title: titleOf(section),
+    // Los roles que el registro declara se hacen cumplir **también por ruta**
+    // (carril 02). Filtrar el menú es cortesía; quien escribe la dirección a
+    // mano llega igual, y la corrección #2 pide que la Guía de profesionales no
+    // sea *accesible* para quien no es paciente, no sólo que no se vea.
+    canActivate: [seccionRolesGuard],
     // La sección viaja con la ruta: el placeholder la lee de acá y no necesita
     // saber cuál de todas es.
     data: { [SECTION_ROUTE_DATA]: section },
@@ -438,6 +509,13 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
+      // Alta de agenda por fases (UC-41-01 → UC-41-04). Cuelga de la sección
+      // `schedule`: se llega desde la propia agenda, no desde el menú, igual que
+      // las demás pantallas de operación. El rol lo hace cumplir el backend
+      // (`SCHEDULING_ADMIN`) y la pantalla no ofrece lo que la API negaría.
+      pantallaDeOperacion('schedule', 'new', 'Crear agenda', () =>
+        import('./features/agenda/agenda-create/agenda-create').then((m) => m.AgendaCreate),
+      ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
         import(
           './features/delegated-access/practitioner-delegate-form/practitioner-delegate-form'

@@ -71,16 +71,50 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
-    path: 'feed',
-    label: 'Muro profesional',
+    // Carril R2-1 · punto 1 del reclamo. Acá estaba el **muro profesional**, y
+    // el cliente pidió sacarlo del menú del paciente: «o cambiarle su enfoque:
+    // debe mostrar una especie de guía telefónica de todos los doctores
+    // agrupados por especialidad». Esta es esa guía.
+    //
+    // El muro NO se borró: `features/feed/` sigue en pie y su ruta también. Lo
+    // único que se le sacó es la entrada del menú — borrarlo es una decisión
+    // de producto que el cliente no pidió.
+    //
+    // **Sólo `PATIENT`** (corrección #2 del 15/08/2026, carril 02). Nació sin
+    // `roles` con el razonamiento de que «la usa sobre todo quien busca
+    // médico», y «sobre todo» no es una regla: en la práctica la doctora la
+    // veía en su menú y en «Tus accesos» —está en la captura baseline del
+    // carril 01—. Es una guía para elegir a quién consultar; a quien atiende no
+    // le corresponde.
+    //
+    // Esconder el ítem no es la protección: es no ofrecer una puerta. La puerta
+    // la cierra `seccionRolesGuard` sobre la ruta, para que el enlace directo
+    // tampoco entre.
+    //
+    // `exclusiveRoles` porque el pedido fue **solo** el paciente: sin esto el
+    // comodín `SUPERADMIN` la seguiría viendo, y «otros roles» lo incluye. Es
+    // la única sección del registro que lo declara.
+    path: 'directory',
+    label: 'Guía de profesionales',
     group: 'General',
     icon: 'home',
-    // Sin `roles`: cualquier sesión con perfil público puede tener muro. El
-    // perfil público NO es el `pid` de la sesión —es una entidad de M19— así
-    // que la puerta la pone la propia pantalla, no una guarda de rol.
+    roles: ['PATIENT'],
+    exclusiveRoles: true,
     availability: 'disponible',
-    summary: 'Lo que publican los perfiles que seguís.',
-    module: 'M19 community',
+    summary: 'Todos los profesionales, agrupados por especialidad.',
+    module: 'M05 profiles',
+  },
+  {
+    // Directorio de unidades publicadas del módulo 23. Es una sección distinta
+    // de `/diagnostics`, que sigue siendo la cola clínica de órdenes/resultados.
+    // La ruta tampoco coincide con `/diagnostic-units`, prefijo exclusivo de API.
+    path: 'laboratory-directory',
+    label: 'Directorio de laboratorios',
+    group: 'General',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Laboratorios e imagenología, agrupados por categoría y con su oferta vigente.',
+    module: 'M23 diagnostic_units',
   },
 
   /* -- Atención · fase 1 del orden de trabajo ------------------------------ */
@@ -267,7 +301,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Los cinco roles humanos de `HealthContextController`. `SYSTEM` queda
     // afuera a propósito: es un rol de servicio para el scheduler, no de alguien
     // que navega — el mismo criterio que dejó a `AUTH_SERVICE` fuera de M40.
-    roles: ['CONTEXT_CURATOR', 'CONTEXT_CONSUMER', 'SOURCE_ADMIN', 'QUALITY_REVIEWER', 'PLATFORM_ADMIN'],
+    roles: [
+      'CONTEXT_CURATOR',
+      'CONTEXT_CONSUMER',
+      'SOURCE_ADMIN',
+      'QUALITY_REVIEWER',
+      'PLATFORM_ADMIN',
+    ],
     availability: 'disponible',
     summary: 'Recolectá y publicá el contexto sanitario de cada país, con su evidencia.',
     module: 'M44 health_context',
@@ -304,6 +344,46 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Mantené la lista fija de servicios sobre la que se arman los presupuestos.',
     module: 'M17 billing',
+  },
+  {
+    // Carril 13. El módulo 14 (`practice`) tenía once escrituras y tres
+    // lecturas: se daban de alta sedes, áreas, quirófanos, consultorios,
+    // servicios, personal, acreditaciones e inventario, y **ninguna pantalla
+    // los volvía a mostrar**. La sección se enciende con
+    // `GET /practices/:id/organization`, que es la lectura que faltaba.
+    //
+    // Cuelga de `administration/` como el resto de la configuración, y no de
+    // una raíz propia: `/practices` es prefijo del proxy y una sección llamada
+    // así a nivel raíz se iría entera a la API — el mismo motivo por el que M13
+    // vive en `administration/geolocation`.
+    path: 'administration/medical-organization',
+    label: 'Organización médica',
+    group: 'Administración',
+    icon: 'settings',
+    // Los mismos roles que ya admite `GET /practices`: quien puede enumerar las
+    // prácticas del tenant puede ver la estructura de la suya. El aislamiento
+    // real lo hace la API, que responde 404 ante la de otra organización.
+    roles: ['SECURITY_ADMIN', 'PERIOP_ADMIN', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Administrá sedes, áreas, quirófanos, consultorios, plantilla y legajo de tu organización.',
+    module: 'M14 practice',
+  },
+  {
+    // Carril 16. Distinta de «Directorio de laboratorios», que es la vitrina
+    // del paciente: aquélla sólo muestra unidades publicadas y verificadas,
+    // ofertas activas y precios públicos. Ésta lee el mismo dominio **sin** esos
+    // filtros —para poder terminar de configurar lo que todavía no se publicó—
+    // y agrega el personal con sus permisos de validación y firma, que a la
+    // vitrina no le corresponde conocer.
+    path: 'administration/medical-laboratory',
+    label: 'Laboratorio médico',
+    group: 'Administración',
+    icon: 'results',
+    // El mismo rol que exigen las dos lecturas administrativas del módulo.
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Configurá sucursales, equipos, estudios, precios y personal de tu laboratorio.',
+    module: 'M23 diagnostic_units',
   },
   {
     // Carril 2 · punto 1 del reclamo. `chart.specialty_chart_templates` sólo
@@ -345,8 +425,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // es la suya lo hace la API, que responde 403 ante la de otra organización.
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
-    summary:
-      'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
+    summary: 'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
     module: 'M16 accounting',
   },
 
@@ -382,6 +461,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Mirá tus turnos y pedí uno nuevo con los horarios disponibles.',
     module: 'M41 scheduling',
+  },
+  {
+    // El archivo clínico del paciente (carril 09): cierra el recorrido que
+    // empieza pidiendo un turno. Sin `roles` por lo mismo que «Mis turnos»: el
+    // filtro real es tener perfil de paciente, que es un dato de la cuenta y no
+    // un rol, y la pantalla lo dice cuando falta en vez de esconderse del menú.
+    //
+    // Encendida con el carril 09: `GET /clinical/patients/:id/summary` acepta
+    // ahora al titular, con el aislamiento comprobado del lado del servidor.
+    path: 'my-account/medical-record',
+    label: 'Mi historia clínica',
+    group: 'Mi cuenta',
+    // `results` y no `patients`: lo que esta sección muestra son resultados de
+    // atenciones, y el ícono de pacientes es el de «gente», que acá sería la
+    // persona mirándose a sí misma.
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Tus atenciones y tus recetas, con la descarga en PDF de cada una.',
+    module: 'M08 clinical',
   },
   {
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino

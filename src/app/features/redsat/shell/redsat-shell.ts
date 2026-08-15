@@ -21,6 +21,7 @@ import { filter, map, startWith } from 'rxjs';
 import { RedsatThemeToggleDirective } from '@core/redsat/redsat-theme-toggle.directive';
 
 import { MODULO_POR_SEGMENTO, type SeccionRedsat } from '../redsat-nav.data';
+import { RedsatDesignNotice } from './redsat-design-notice';
 
 /** Un módulo tal como aparece en el nav: rótulo, icono, y a qué segmento va. */
 interface EntradaNav {
@@ -35,6 +36,7 @@ const SIN_SECCIONES: readonly SeccionRedsat[] = [];
   selector: 'app-redsat-shell',
   imports: [
     NgTemplateOutlet,
+    RedsatDesignNotice,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
@@ -71,9 +73,16 @@ export class RedsatShell {
 
   /* Identidad de la sesión. Hoy son los valores con los que está maquetada la
      bóveda; cuando el marco se enganche a la sesión real, se reemplazan por lo
-     que devuelva el servicio y la plantilla no cambia. */
-  readonly organizacion = signal('Clínica Los Olivos · La Paz');
-  readonly sesion = signal('Rocío Salazar · Administración de seguridad');
+     que devuelva el servicio y la plantilla no cambia.
+
+     Llevan «(ejemplo)» desde el carril 01 y no es cosmética: estas rutas NO
+     pasan por `authGuard`, así que el marco anunciaba una sesión abierta a
+     quien no tiene ninguna. Un recorte de pantalla de esto era indistinguible
+     del producto, que es justo lo que la corrección #7 prohíbe. El aviso de
+     `RedsatDesignNotice` lo dice en el cuerpo; esto lo dice también en el
+     encabezado, que es lo que entra en una captura. */
+  readonly organizacion = signal('Clínica Los Olivos · La Paz (ejemplo)');
+  readonly sesion = signal('Rocío Salazar · Administración de seguridad (ejemplo)');
   readonly sinLeer = signal(3);
 
   readonly iniciales = computed(() =>

@@ -65,20 +65,27 @@ describe('NavigationService', () => {
       // paciente —un dato de la cuenta, no un rol—, y eso lo resuelve la
       // pantalla, no el menú.
       //
-      // El muro entra por la misma razón: su filtro es tener **perfil público**
-      // de `community`, que es otra entidad distinta del `pid` de la sesión y
-      // sólo se sabe preguntándole al backend. Un rol no puede expresarlo.
+      // El directorio de laboratorios entra por una razón parecida: lo consulta
+      // cualquiera que necesite un estudio, y no hay rol que exprese eso.
+      //
+      // La **Guía de profesionales** ya NO entra: desde la corrección #2 del
+      // 15/08/2026 declara `roles: ['PATIENT']`, y una sesión sin roles no es
+      // una sesión de paciente.
       expect(rutasDelMenu()).toEqual([
         '/dashboard',
         // Los tutoriales tampoco exigen rol: son la guía de cómo usar lo que
         // cada cuenta ya puede ver.
         '/tutorials',
-        '/feed',
+        // El directorio de laboratorios tampoco: es oferta publicada, no PHI.
+        '/laboratory-directory',
         // El glosario tampoco: el cliente lo pidió accesible por cada
         // profesional, no sólo por quien administra.
         '/glossary',
         '/my-account',
         '/my-account/appointments',
+        // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
+        // el filtro real es tener perfil de paciente, y lo resuelve la pantalla.
+        '/my-account/medical-record',
         '/my-account/identity/verify',
         '/my-account/identity/cases',
       ]);
@@ -89,6 +96,35 @@ describe('NavigationService', () => {
 
       expect(rutasDelMenu()).toContain('/administration/users');
       expect(rutasDelMenu()).toContain('/administration/patients');
+      // Carriles 13 y 16: las dos consolas de organización entran con el mismo
+      // rol que el resto de la configuración.
+      expect(rutasDelMenu()).toContain('/administration/medical-organization');
+      expect(rutasDelMenu()).toContain('/administration/medical-laboratory');
+    });
+
+    it('la consola del laboratorio no se ofrece a quien sólo ejerce (C16)', () => {
+      abrirSesion(['PRACTITIONER']);
+
+      // Configurar precios de convenios y permisos de firma es administración,
+      // no atención: el backend exige `SECURITY_ADMIN` y el menú no ofrece una
+      // puerta que la API va a cerrar.
+      expect(rutasDelMenu()).not.toContain('/administration/medical-laboratory');
+      // La estructura de su propia organización sí: es donde ve en qué sede y
+      // con qué rol trabaja, y `GET /practices` ya lo admite.
+      expect(rutasDelMenu()).toContain('/administration/medical-organization');
+    });
+
+    it('la Guía de profesionales solo aparece en el menú del paciente', () => {
+      // Corrección #2. La medición del carril 01 la encontró en el menú de la
+      // doctora, que es exactamente lo que el cliente pidió sacar.
+      abrirSesion(['PATIENT']);
+      expect(rutasDelMenu()).toContain('/directory');
+
+      abrirSesion(['PRACTITIONER', 'CLINICIAN']);
+      expect(rutasDelMenu()).not.toContain('/directory');
+
+      abrirSesion(['SECURITY_ADMIN']);
+      expect(rutasDelMenu()).not.toContain('/directory');
     });
 
     it('un rol clínico no ve administración, y un administrador no ve el archivo clínico', () => {

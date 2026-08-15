@@ -1,0 +1,27 @@
+<app-page-header
+  title="Directorio de laboratorios"
+  subtitle="Unidades verificadas de laboratorio clínico e imagenología, agrupadas por categoría."
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (state().status === 'ready') {
+    <p class="directory__count">
+      {{ groups().length }}
+      {{ groups().length === 1 ? 'categoría disponible' : 'categorías disponibles' }}
+    </p>
+
+    @for (group of groups(); track group.code) {
+      <section class="directory__group" [attr.aria-labelledby]="'category-' + group.code">
+        <h2 class="directory__category" [id]="'category-' + group.code">
+          {{ group.name }}
+          <span class="directory__quantity">{{ group.units.length }}</span>
+        </h2>
+        <ul class="directory__list">
+          @for (unit of group.units; track unit.id) {
+            <li app-search-result [resultado]="unit"></li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</app-view-state-host>

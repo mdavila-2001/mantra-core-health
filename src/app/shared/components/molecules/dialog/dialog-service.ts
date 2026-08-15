@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 
 import { Dialog } from './dialog';
-import type { DialogConfig } from './dialog.types';
+import type { DialogConfig, DialogReasonConfig, DialogResult } from './dialog.types';
 
 /**
  * Abre confirmaciones sin que la pantalla tenga que declarar el diálogo.
@@ -38,32 +38,66 @@ export class DialogService {
   private readonly document = inject(DOCUMENT);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  confirm(config: DialogConfig): Promise<boolean> {
+  async confirm(config: DialogConfig): Promise<boolean> {
+    const { confirmed } = await this.open(config);
+    return confirmed;
+  }
+
+  /**
+   * Confirma **exigiendo un motivo**, y lo devuelve (corrección #14).
+   *
+   * ```ts
+   * const motivo = await this.dialogs.confirmWithReason(
+   *   { title: 'Cancelar el turno', message: '…', confirmLabel: 'Cancelar el turno' },
+   *   { label: 'Motivo', hint: 'Tu médico lo va a ver' },
+   * );
+   * if (motivo === null) return;   // se arrepintió
+   * ```
+   *
+   * Devuelve `null` si no se confirmó, y nunca una cadena vacía: el diálogo no
+   * deja confirmar sin texto suficiente, así que quien recibe un `string` puede
+   * mandarlo al servidor sin volver a comprobarlo.
+   */
+  async confirmWithReason(
+    config: DialogConfig,
+    reason: DialogReasonConfig,
+  ): Promise<string | null> {
+    const resultado = await this.open({ ...config, reason });
+    return resultado.confirmed ? (resultado.reason ?? null) : null;
+  }
+
+  /**
+   * Monta el diálogo, espera su resultado y lo desmonta.
+   *
+   * Es el único lugar que toca el DOM: las dos entradas públicas se distinguen
+   * por lo que piden y por lo que devuelven, no por cómo se abren.
+   */
+  private open(config: DialogConfig): Promise<DialogResult> {
     if (!this.isBrowser) {
       // En el servidor no hay quién confirme: se resuelve que no y se avisa.
       if (isDevMode()) {
         console.warn(
-          '[DialogService] `confirm()` en el servidor: no hay diálogo posible, devuelve false.',
+          '[DialogService] diálogo en el servidor: no hay quién responda, devuelve «cancelado».',
         );
       }
-      return Promise.resolve(false);
+      return Promise.resolve({ confirmed: false });
     }
 
     const origen = this.document.activeElement;
 
-    return new Promise<boolean>((resolve) => {
+    return new Promise<DialogResult>((resolve) => {
       const dialog = createComponent(Dialog, {
         environmentInjector: this.environmentInjector,
       });
       dialog.setInput('config', config);
 
-      const subscripcion = dialog.instance.resolved.subscribe((confirmado: boolean) => {
+      const subscripcion = dialog.instance.resolved.subscribe((resultado: DialogResult) => {
         subscripcion.unsubscribe();
         this.applicationRef.detachView(dialog.hostView);
         dialog.destroy();
         dialog.location.nativeElement.remove();
         this.returnFocus(origen);
-        resolve(confirmado);
+        resolve(resultado);
       });
 
       this.applicationRef.attachView(dialog.hostView);

@@ -16,6 +16,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs/operators';
 
 import { Badge } from '../../atoms/badge/badge';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../atoms/tooltip/tooltip';
 import type { NavItem, NavSection } from './side-nav.types';
 
@@ -39,7 +40,7 @@ import type { NavItem, NavSection } from './side-nav.types';
  */
 @Component({
   selector: 'app-side-nav',
-  imports: [Badge, RouterLink, Tooltip],
+  imports: [Badge, NavIcon, RouterLink, Tooltip],
   templateUrl: './side-nav.html',
   styleUrl: './side-nav.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

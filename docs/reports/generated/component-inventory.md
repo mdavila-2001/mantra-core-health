@@ -2,9 +2,9 @@
 
 # Inventario de componentes y servicios
 
-320 componentes y 45 servicios inyectables, leídos de `src/`.
+325 componentes y 52 servicios inyectables, leídos de `src/`.
 
-## Átomo (16)
+## Átomo (17)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -17,6 +17,7 @@
 | `app-divider` | `Divider` | `orientation`, `label` | — | — | OnPush | sí |
 | `app-input` | `Input` | `type`, `autocomplete`, `placeholder`, `disabled`, `readonly`, `hasError`, `hasSuccess`, `testId`, `comboboxAria` | `focused`, `blurred` | `value` | OnPush | sí |
 | `a[app-link]` | `Link` | `variant`, `external` | — | — | OnPush | sí |
+| `app-nav-icon` | `NavIcon` | `name` | — | — | OnPush | **no** |
 | `app-progress` | `Progress` | `value`, `tone`, `size`, `label` | — | — | OnPush | sí |
 | `app-select` | `Select` | `options`, `disabled`, `placeholder`, `hasError`, `ariaLabel` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-skeleton` | `Skeleton` | `variant`, `width`, `height`, `lines` | — | — | OnPush | sí |
@@ -25,7 +26,7 @@
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (23)
+## Molécula (24)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -49,11 +50,12 @@
 | `app-reference-combobox` | `ReferenceCombobox` | `selected`, `options`, `loading`, `disabled`, `placeholder`, `debounceMs`, `minQueryLength`, `label`, `emptyMessage` | `searched`, `selectionChange` | `value` | OnPush | sí |
 | `app-search-field` | `SearchField` | `placeholder`, `debounceMs`, `loading`, `disabled`, `label` | `searched` | `value` | OnPush | sí |
 | `li[app-search-result]` | `SearchResult` | `resultado` | — | — | OnPush | sí |
+| `app-stepper` | `Stepper` | `steps`, `label` | — | — | OnPush | sí |
 | `app-tab` | `Tab` | `label`, `disabled` | — | — | OnPush | **no** |
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
 
-## Organismo (16)
+## Organismo (17)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -72,21 +74,28 @@
 | `app-status-seal` | `StatusSeal` | `variant`, `label` | — | — | OnPush | sí |
 | `app-tenant-switcher` | `TenantSwitcher` | `tenants`, `activeTenantId`, `variant` | `tenantChanged` | — | OnPush | sí |
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
+| `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (263)
+## Feature (265)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
+| `app-appointment-calendar` | `AppointmentCalendar` | `turnos`, `seleccionado` | `turnoElegido` | — | OnPush | sí |
 | `app-appointments` | `Appointments` | — | — | — | OnPush | sí |
+| `app-medical-record` | `MedicalRecord` | — | — | — | OnPush | sí |
 | `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-practitioner-profile-edit` | `PractitionerProfileEdit` | — | — | — | OnPush | sí |
+| `app-practitioner-profile-view` | `PractitionerProfileView` | `perfil`, `esPropio` | — | — | OnPush | sí |
 | `app-practitioner-profile` | `PractitionerProfile` | — | — | — | OnPush | sí |
 | `app-public-profile-preview` | `PublicProfilePreview` | — | — | — | OnPush | sí |
+| `app-work-history` | `WorkHistory` | — | — | — | OnPush | sí |
 | `app-accounting` | `Accounting` | — | — | — | OnPush | **no** |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-clinical-forms` | `ClinicalForms` | — | — | — | OnPush | sí |
+| `app-medical-laboratory` | `MedicalLaboratory` | — | — | — | OnPush | sí |
+| `app-medical-organization` | `MedicalOrganization` | — | — | — | OnPush | sí |
 | `app-organization-detail` | `OrganizationDetail` | — | — | — | OnPush | **no** |
 | `app-organization-list` | `OrganizationList` | — | — | — | OnPush | sí |
 | `app-organization-new` | `OrganizationNew` | — | — | — | OnPush | sí |
@@ -98,6 +107,7 @@
 | `app-services-catalog` | `ServicesCatalog` | — | — | — | OnPush | sí |
 | `app-terminology-catalog` | `TerminologyCatalog` | — | — | — | OnPush | sí |
 | `app-user-registration` | `UserRegistration` | — | — | — | OnPush | sí |
+| `app-agenda-create` | `AgendaCreate` | — | — | — | OnPush | sí |
 | `app-agenda` | `Agenda` | — | — | — | OnPush | sí |
 | `app-booking-new` | `BookingNew` | — | — | — | OnPush | sí |
 | `app-account-link-complete-form` | `AccountLinkCompleteForm` | — | — | — | OnPush | sí |
@@ -125,10 +135,11 @@
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
 | `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
+| `app-admission-block` | `AdmissionBlock` | `patientProfileId`, `encounterId`, `internaciones` | `cambio` | — | OnPush | sí |
 | `app-attachments-block` | `AttachmentsBlock` | `patientProfileId` | — | — | OnPush | sí |
 | `app-diagnosis-block` | `DiagnosisBlock` | `patientProfileId`, `encounterId` | `cambio` | — | OnPush | sí |
 | `app-diagnostics-block` | `DiagnosticsBlock` | `patientProfileId`, `encounterId` | — | — | OnPush | sí |
-| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas` | `cambio` | — | OnPush | sí |
+| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas`, `medicacionActivaConceptIds` | `cambio`, `descargar` | — | OnPush | sí |
 | `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |
 | `app-procedures-block` | `ProceduresBlock` | `patientProfileId` | — | — | OnPush | sí |
 | `app-specialty-form-block` | `SpecialtyFormBlock` | `encounterId` | `cambio` | — | OnPush | sí |
@@ -150,6 +161,8 @@
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
 | `app-diagnostics` | `Diagnostics` | — | — | — | OnPush | sí |
+| `app-practitioner-detail` | `PractitionerDetail` | — | — | — | OnPush | sí |
+| `app-practitioners-directory` | `PractitionersDirectory` | — | — | — | OnPush | sí |
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
 | `app-feed` | `Feed` | — | — | — | OnPush | sí |
 | `app-post-card` | `PostCard` | `post`, `actorProfileId` | `reacted` | — | OnPush | sí |
@@ -164,6 +177,7 @@
 | `app-tracking-session-form` | `TrackingSessionForm` | — | — | — | OnPush | sí |
 | `app-trip-close` | `TripClose` | — | — | — | OnPush | sí |
 | `app-trip-form` | `TripForm` | — | — | — | OnPush | sí |
+| `app-glossary-term` | `GlossaryTerm` | — | — | — | OnPush | sí |
 | `app-glossary` | `Glossary` | — | — | — | OnPush | sí |
 | `app-agent-form` | `AgentForm` | — | — | — | OnPush | sí |
 | `app-collection-run-finish` | `CollectionRunFinish` | — | — | — | OnPush | sí |
@@ -197,6 +211,8 @@
 | `app-verification-cases` | `VerificationCases` | — | — | — | OnPush | sí |
 | `app-verification-policy-form` | `VerificationPolicyForm` | — | — | — | OnPush | sí |
 | `app-identity-verification` | `IdentityVerification` | — | — | — | OnPush | sí |
+| `app-laboratory-detail` | `LaboratoryDetail` | — | — | — | OnPush | sí |
+| `app-laboratory-directory` | `LaboratoryDirectory` | — | — | — | OnPush | sí |
 | `app-not-found` | `NotFound` | — | — | — | OnPush | sí |
 | `app-redsat-accesos-acceso-de-emergencia-formulario` | `AccesosAccesoDeEmergenciaFormulario` | — | — | — | Default | **no** |
 | `app-redsat-accesos-clinicos-del-paciente-formulario` | `AccesosClinicosDelPacienteFormulario` | — | — | — | Default | **no** |
@@ -278,19 +294,6 @@
 | `app-redsat-directorio-sucursales-listado` | `DirectorioSucursalesListado` | — | — | — | Default | **no** |
 | `app-redsat-directorio-transferencias-formulario` | `DirectorioTransferenciasFormulario` | — | — | — | Default | **no** |
 | `app-redsat-inicio-portada` | `InicioPortada` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-asignaciones-de-sucursal-formulario` | `OrganizacionesAsignacionesDeSucursalFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-membresias-dar-de-baja` | `OrganizacionesMembresiasDarDeBaja` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-membresias-formulario` | `OrganizacionesMembresiasFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-membresias-listado` | `OrganizacionesMembresiasListado` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-formulario` | `OrganizacionesFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-hijas-formulario` | `OrganizacionesHijasFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-listado` | `OrganizacionesListado` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-suspender` | `OrganizacionesSuspender` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-verificar` | `OrganizacionesVerificar` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-roles-formulario` | `OrganizacionesRolesFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-sucursales-formulario` | `OrganizacionesSucursalesFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-sucursales-listado` | `OrganizacionesSucursalesListado` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-transferencias-formulario` | `OrganizacionesTransferenciasFormulario` | — | — | — | Default | **no** |
 | `app-redsat-personas-apoderados-de-portal-formulario` | `PersonasApoderadosDePortalFormulario` | — | — | — | Default | **no** |
 | `app-redsat-personas-apoderados-de-portal-listado` | `PersonasApoderadosDePortalListado` | — | — | — | Default | **no** |
 | `app-redsat-personas-autorizaciones-de-jurisdiccion-formulario` | `PersonasAutorizacionesDeJurisdiccionFormulario` | — | — | — | Default | **no** |
@@ -314,6 +317,7 @@
 | `app-redsat-personas-vinculos-de-cuenta-listado` | `PersonasVinculosDeCuentaListado` | — | — | — | Default | **no** |
 | `app-redsat-personas-vinculos-de-identidad-formulario` | `PersonasVinculosDeIdentidadFormulario` | — | — | — | Default | **no** |
 | `app-redsat-personas-vinculos-de-identidad-listado` | `PersonasVinculosDeIdentidadListado` | — | — | — | Default | **no** |
+| `app-redsat-design-notice` | `RedsatDesignNotice` | — | — | — | OnPush | **no** |
 | `app-redsat-public-shell` | `RedsatPublicShell` | — | — | — | Default | **no** |
 | `app-redsat-shell` | `RedsatShell` | — | — | — | Default | sí |
 | `app-redsat-terminologia-conceptos-listado` | `TerminologiaConceptosListado` | — | — | — | Default | **no** |
@@ -341,6 +345,7 @@
 | `app-redsat-terminologia-versiones-publicar` | `TerminologiaVersionesPublicar` | — | — | — | Default | **no** |
 | `app-section-placeholder` | `SectionPlaceholder` | — | — | — | OnPush | sí |
 | `app-shell-layout` | `ShellLayout` | — | — | — | OnPush | sí |
+| `app-tutorials-center` | `TutorialsCenter` | — | — | — | OnPush | sí |
 
 ## Core (1)
 
@@ -354,7 +359,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (45)
+## Servicios (52)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -369,6 +374,8 @@
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
 | `CommunityClient` | `src/app/core/data-access/community/community.client.ts` | root | sí |
 | `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |
+| `DiagnosticUnitsAdminClient` | `src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts` | root | sí |
+| `DiagnosticUnitsClient` | `src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts` | root | sí |
 | `DiagnosticsClient` | `src/app/core/data-access/diagnostics/diagnostics.client.ts` | root | sí |
 | `DirectoryClient` | `src/app/core/data-access/directory/directory.client.ts` | root | sí |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
@@ -378,6 +385,8 @@
 | `IamClient` | `src/app/core/data-access/iam/iam.client.ts` | root | sí |
 | `IdentityAdminClient` | `src/app/core/data-access/identity/identity-admin.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
+| `MedicalOrganizationClient` | `src/app/core/data-access/medical-organization/medical-organization.client.ts` | root | sí |
+| `PracticeSitesClient` | `src/app/core/data-access/practice-sites/practice-sites.client.ts` | root | sí |
 | `ProceduresClient` | `src/app/core/data-access/procedures/procedures.client.ts` | root | sí |
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |
 | `PublicClient` | `src/app/core/data-access/public/public.client.ts` | root | **no** |
@@ -398,6 +407,9 @@
 | `TracingService` | `src/app/core/observability/tracing/tracing.service.ts` | root | sí |
 | `RedsatRuntimeService` | `src/app/core/redsat/redsat-runtime.service.ts` | root | sí |
 | `ThemeService` | `src/app/core/tokens/theme.service.ts` | root | sí |
+| `TutorialProgressStore` | `src/app/core/tutorials/tutorial-progress.store.ts` | root | sí |
+| `TutorialEngine` | `src/app/core/tutorials/tutorial.engine.ts` | root | sí |
+| `TutorialRegistry` | `src/app/core/tutorials/tutorial.registry.ts` | root | sí |
 | `CaseStatusCatalog` | `src/app/features/identity-verification/case-status.ts` | root | sí |
 | `DialogService` | `src/app/shared/components/molecules/dialog/dialog-service.ts` | root | **no** |
 | `PdfExportService` | `src/app/shared/components/molecules/pdf-export-button/pdf-export.service.ts` | root | **no** |
@@ -491,19 +503,6 @@
 - `DirectorioSucursalesListado` — `src/app/features/redsat/directorio/sucursales-listado/sucursales-listado.ts`
 - `DirectorioTransferenciasFormulario` — `src/app/features/redsat/directorio/transferencias-formulario/transferencias-formulario.ts`
 - `InicioPortada` — `src/app/features/redsat/inicio/portada/portada.ts`
-- `OrganizacionesAsignacionesDeSucursalFormulario` — `src/app/features/redsat/organizaciones/asignaciones-de-sucursal-formulario/asignaciones-de-sucursal-formulario.ts`
-- `OrganizacionesMembresiasDarDeBaja` — `src/app/features/redsat/organizaciones/membresias-dar-de-baja/membresias-dar-de-baja.ts`
-- `OrganizacionesMembresiasFormulario` — `src/app/features/redsat/organizaciones/membresias-formulario/membresias-formulario.ts`
-- `OrganizacionesMembresiasListado` — `src/app/features/redsat/organizaciones/membresias-listado/membresias-listado.ts`
-- `OrganizacionesFormulario` — `src/app/features/redsat/organizaciones/organizaciones-formulario/organizaciones-formulario.ts`
-- `OrganizacionesHijasFormulario` — `src/app/features/redsat/organizaciones/organizaciones-hijas-formulario/organizaciones-hijas-formulario.ts`
-- `OrganizacionesListado` — `src/app/features/redsat/organizaciones/organizaciones-listado/organizaciones-listado.ts`
-- `OrganizacionesSuspender` — `src/app/features/redsat/organizaciones/organizaciones-suspender/organizaciones-suspender.ts`
-- `OrganizacionesVerificar` — `src/app/features/redsat/organizaciones/organizaciones-verificar/organizaciones-verificar.ts`
-- `OrganizacionesRolesFormulario` — `src/app/features/redsat/organizaciones/roles-formulario/roles-formulario.ts`
-- `OrganizacionesSucursalesFormulario` — `src/app/features/redsat/organizaciones/sucursales-formulario/sucursales-formulario.ts`
-- `OrganizacionesSucursalesListado` — `src/app/features/redsat/organizaciones/sucursales-listado/sucursales-listado.ts`
-- `OrganizacionesTransferenciasFormulario` — `src/app/features/redsat/organizaciones/transferencias-formulario/transferencias-formulario.ts`
 - `PersonasApoderadosDePortalFormulario` — `src/app/features/redsat/personas/apoderados-de-portal-formulario/apoderados-de-portal-formulario.ts`
 - `PersonasApoderadosDePortalListado` — `src/app/features/redsat/personas/apoderados-de-portal-listado/apoderados-de-portal-listado.ts`
 - `PersonasAutorizacionesDeJurisdiccionFormulario` — `src/app/features/redsat/personas/autorizaciones-de-jurisdiccion-formulario/autorizaciones-de-jurisdiccion-formulario.ts`
@@ -527,6 +526,7 @@
 - `PersonasVinculosDeCuentaListado` — `src/app/features/redsat/personas/vinculos-de-cuenta-listado/vinculos-de-cuenta-listado.ts`
 - `PersonasVinculosDeIdentidadFormulario` — `src/app/features/redsat/personas/vinculos-de-identidad-formulario/vinculos-de-identidad-formulario.ts`
 - `PersonasVinculosDeIdentidadListado` — `src/app/features/redsat/personas/vinculos-de-identidad-listado/vinculos-de-identidad-listado.ts`
+- `RedsatDesignNotice` — `src/app/features/redsat/shell/redsat-design-notice.ts`
 - `RedsatPublicShell` — `src/app/features/redsat/shell/redsat-public-shell.ts`
 - `TerminologiaConceptosListado` — `src/app/features/redsat/terminologia/conceptos-listado/conceptos-listado.ts`
 - `TerminologiaConjuntosDeValorFormulario` — `src/app/features/redsat/terminologia/conjuntos-de-valor-formulario/conjuntos-de-valor-formulario.ts`
@@ -551,6 +551,7 @@
 - `TerminologiaVersionesImportar` — `src/app/features/redsat/terminologia/versiones-importar/versiones-importar.ts`
 - `TerminologiaVersionesListado` — `src/app/features/redsat/terminologia/versiones-listado/versiones-listado.ts`
 - `TerminologiaVersionesPublicar` — `src/app/features/redsat/terminologia/versiones-publicar/versiones-publicar.ts`
+- `NavIcon` — `src/app/shared/components/atoms/nav-icon/nav-icon.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`
 - `AccordionPanel` — `src/app/shared/components/molecules/accordion/accordion-panel/accordion-panel.ts`
 - `ConceptSelect` — `src/app/shared/components/molecules/concept-select/concept-select.ts`

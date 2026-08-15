@@ -1,0 +1,8 @@
+/* ============================================================================
+    La ficha de la guía sólo carga y delega: todo el CSS del perfil vive en
+    `practitioner-profile-view`.
+    ========================================================================== */
+
+:host {
+  display: block;
+}

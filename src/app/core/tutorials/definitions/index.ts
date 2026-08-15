@@ -55,13 +55,11 @@ const BIENVENIDA: TutorialDefinition = {
       target: 'shell-selector-organizacion',
       placement: 'bottom',
     },
-    {
-      id: 'buscador',
-      title: 'Buscar en toda la organización',
-      body: 'Desde acá llegás a personas y registros sin pasar por el menú.',
-      target: 'shell-busqueda',
-      placement: 'bottom',
-    },
+    // Acá iba el paso «Buscar en toda la organización», que apuntaba a un campo
+    // del encabezado sin ningún manejador: prometía «desde acá llegás a
+    // personas y registros sin pasar por el menú» sobre un control que no
+    // buscaba nada. Se retiran los dos juntos en el carril 19 — el paso no
+    // sobrevive al control que señalaba.
     {
       id: 'ayuda',
       title: 'Dónde volver',

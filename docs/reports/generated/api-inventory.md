@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-177 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+201 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -94,8 +94,10 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `POST` | `/cds/check-interactions` |
 | `GET` | `/charts/patients/:patientProfileId/chart` |
 | `POST` | `/clinical/allergy-intolerances` |
+| `POST` | `/clinical/care-episodes` |
 | `POST` | `/clinical/conditions` |
 | `POST` | `/clinical/diagnostic-reports` |
 | `POST` | `/clinical/diagnostic-reports/:diagnosticReportId/release` |
@@ -179,6 +181,24 @@ Archivo: `src/app/core/data-access/procedures/procedures.client.ts`
 | `GET` | `/dental-procedures/catalog` |
 | `GET` | `/procedure-cases` |
 | `GET` | `/procedure-cases/:caseId` |
+
+## `DiagnosticUnitsClient`
+
+Archivo: `src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/diagnostic-units` |
+| `GET` | `/diagnostic-units/:id` |
+
+## `DiagnosticUnitsAdminClient`
+
+Archivo: `src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/diagnostic-units/:id/administration` |
+| `GET` | `/diagnostic-units/administration` |
 
 ## `FormsClient`
 
@@ -281,6 +301,23 @@ Archivo: `src/app/core/data-access/identity/identity.client.ts`
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
 
+## `MedicalOrganizationClient`
+
+Archivo: `src/app/core/data-access/medical-organization/medical-organization.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/practices` |
+| `GET` | `/practices/:practiceId/organization` |
+
+## `PracticeSitesClient`
+
+Archivo: `src/app/core/data-access/practice-sites/practice-sites.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/practitioners/:practitionerProfileId/sites` |
+
 ## `ProfilesClient`
 
 Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
@@ -296,10 +333,14 @@ Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
 | `GET` | `/profiles/patients/merge-events` |
 | `POST` | `/profiles/patients/merge/:eventId/reverse` |
 | `POST` | `/profiles/persons/:personId/account-links` |
+| `GET` | `/profiles/practitioners` |
 | `POST` | `/profiles/practitioners` |
 | `POST` | `/profiles/practitioners/:profileId/jurisdiction-authorizations` |
 | `POST` | `/profiles/practitioners/:profileId/specialties` |
+| `GET` | `/profiles/practitioners/:profileId/summary` |
 | `PATCH` | `/profiles/practitioners/me` |
+| `GET` | `/profiles/practitioners/me/affiliations` |
+| `POST` | `/profiles/practitioners/me/affiliations` |
 | `GET` | `/profiles/practitioners/me/summary` |
 
 ## `PublicClient`
@@ -316,15 +357,23 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `POST` | `/scheduling/booking-policies` |
 | `GET` | `/scheduling/bookings` |
 | `GET` | `/scheduling/bookings/:bookingId` |
+| `POST` | `/scheduling/bookings/:bookingId/:accion` |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` |
+| `POST` | `/scheduling/bookings/:bookingId/reject` |
 | `POST` | `/scheduling/bookings/:bookingId/reschedule` |
 | `POST` | `/scheduling/holds/:holdToken/confirm` |
+| `POST` | `/scheduling/holds/:holdToken/request` |
 | `GET` | `/scheduling/resources` |
+| `POST` | `/scheduling/resources` |
+| `POST` | `/scheduling/resources/:resourceId/exceptions` |
+| `POST` | `/scheduling/resources/:resourceId/templates` |
 | `GET` | `/scheduling/slots` |
 | `POST` | `/scheduling/slots/:slotId/holds` |
+| `POST` | `/scheduling/templates/:templateId/generate-slots` |
 
 ## `SystemContextClient`
 
@@ -342,4 +391,7 @@ Archivo: `src/app/core/data-access/terminology/terminology.client.ts`
 |---|---|
 | `GET` | `/terminology/concepts` |
 | `GET` | `/terminology/concepts` |
+| `GET` | `/terminology/concepts` |
+| `GET` | `/terminology/concepts/:conceptId` |
+| `GET` | `/terminology/value-sets` |
 | `GET` | `/terminology/value-sets/:valueSetId/$expand` |

@@ -1,0 +1,98 @@
+/* ============================================================================
+    Stepper — marcadores numerados unidos por un riel. El completado se tiñe
+    con la tinta de marca y muestra ✓; el actual se resalta con anillo; el
+    pendiente queda apagado. Nunca ámbar: no es el punto de acción.
+    ========================================================================== */
+
+.stepper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-4);
+    align-items: flex-start;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.stepper__step {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: max-content;
+}
+
+/* ---- marcador ------------------------------------------------------------ */
+
+.stepper__marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: var(--sp-6);
+    height: var(--sp-6);
+    border: 2px solid var(--border-strong);
+    border-radius: var(--r-full);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    line-height: 1;
+}
+
+.stepper__marker svg {
+    width: 60%;
+    height: 60%;
+}
+
+/* ---- cuerpo -------------------------------------------------------------- */
+
+.stepper__body {
+    display: inline-flex;
+    flex-direction: column;
+}
+
+.stepper__label {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* ---- conector ------------------------------------------------------------ */
+
+.stepper__connector {
+    flex: 1 1 var(--sp-4);
+    min-width: var(--sp-4);
+    height: 2px;
+    background: var(--border-default);
+}
+
+/* ---- estados ------------------------------------------------------------- */
+
+.stepper__step--complete .stepper__marker {
+    border-color: var(--brand-primary);
+    background: var(--brand-primary);
+    color: var(--text-inverse);
+}
+
+.stepper__step--complete .stepper__label {
+    color: var(--text-default);
+}
+
+.stepper__step--current .stepper__marker {
+    border-color: var(--brand-primary);
+    color: var(--brand-primary);
+    box-shadow: 0 0 0 3px var(--bg-surface-alt);
+}
+
+.stepper__step--current .stepper__label {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* El completado ya cruzó su riel: se tiñe para que la línea llena marque el
+   avance de un vistazo. */
+.stepper__step--complete .stepper__connector {
+    background: var(--brand-primary);
+}
