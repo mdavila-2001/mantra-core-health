@@ -16,17 +16,97 @@
   margin: 0;
 }
 
+.termino__clasificacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+}
+
+.termino__categoria {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.termino__categoria app-glossary-category-icon {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.termino__categoria app-glossary-category-icon svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
 .termino__chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
-  margin: 0 0 var(--sp-4);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.termino__etiqueta {
-  text-decoration: none;
+.termino__imagen {
+  margin: 0 0 var(--sp-4);
+}
+
+.termino__imagen img {
+  max-inline-size: 100%;
+  border-radius: var(--r-md);
+}
+
+.termino__imagen-atribucion {
+  margin-block-start: var(--sp-1);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* El ícono de categoría hace de marcador permanente cuando el término no tiene
+   imagen — que hoy es siempre. No es un relleno temporal: reemplaza a
+   cualquier foto de stock que este glosario no va a usar. */
+.termino__imagen-marcador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: 6rem;
+  margin: 0 0 var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--text-muted);
+}
+
+.termino__imagen-marcador app-glossary-category-icon {
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+}
+
+.termino__imagen-marcador app-glossary-category-icon svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.termino__sin-traducir-parcial {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  font-style: italic;
+}
+
+.termino__relaciones {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--text-secondary);
 }
 
 .termino__subtitulo {
