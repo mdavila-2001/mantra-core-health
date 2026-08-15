@@ -123,6 +123,8 @@ export interface PractitionerCredential {
   readonly stateConceptId: string;
   /** Ausente = «sin verificar todavía», que no es «rechazada». */
   readonly verifiedAt?: Date;
+  /** Contra qué se comprobó. Ausente antes de verificar. */
+  readonly verificationSourceUri?: string;
 }
 
 /** Una matrícula: dónde está habilitado a ejercer y con qué número. */
@@ -180,6 +182,8 @@ export interface OwnPractitionerProfile {
   readonly credentials: readonly PractitionerCredential[];
   readonly licenses: readonly PractitionerLicense[];
   readonly languages: readonly PractitionerLanguage[];
+  /** Historial laboral (UC-05-16), del más reciente al más antiguo. */
+  readonly affiliations: readonly PractitionerAffiliation[];
   readonly activity: PractitionerActivity;
   readonly createdAt: Date;
 }
@@ -446,4 +450,49 @@ export interface OwnPatientSummary {
   readonly birthDate?: Date;
   /** Concepto del estado de la persona; se resuelve contra `terminology`. */
   readonly personStatus: string;
+}
+
+/* ============================================================================
+    La guía de profesionales (carril R2-1).
+    ========================================================================== */
+
+/** Una especialidad en la fila de la guía: lo justo para agrupar y rotular. */
+export interface PractitionerListSpecialty {
+  readonly specialtyConceptId: string;
+  readonly isPrimary: boolean;
+}
+
+/**
+ * Una fila de la guía de profesionales.
+ *
+ * Datos de presentación —lo que una guía médica publica—, nunca PHI. **No hay
+ * teléfono**: el modelo no declara un teléfono profesional con marca de
+ * visibilidad, y derivarlo de los datos de la persona publicaría un dato
+ * personal. Es un bloqueador declarado del carril del modelo, no un olvido.
+ */
+export interface PractitionerListItem {
+  /** Con este id se abre la ficha. */
+  readonly profileId: string;
+  readonly practitionerCode: string;
+  readonly displayName?: string;
+  readonly professionalTitle?: string;
+  readonly photoFileId?: string;
+  readonly verificationStatusConceptId: string;
+  readonly acceptsNewPatients: boolean;
+  readonly telehealthAvailable: boolean;
+  /** Sólo las vigentes, la principal primero. */
+  readonly specialties: readonly PractitionerListSpecialty[];
+}
+
+/**
+ * Una página de la guía.
+ *
+ * Cursor sin total, como todos los listados del sistema: `nextCursor` en
+ * `null` significa que no hay más — la ausencia acá SÍ es información.
+ */
+export interface PractitionerDirectoryPage {
+  readonly items: readonly PractitionerListItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
 }

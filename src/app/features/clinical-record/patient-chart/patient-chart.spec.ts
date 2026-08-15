@@ -1,4 +1,4 @@
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+﻿import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type { WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -200,10 +200,23 @@ describe('PatientChart', () => {
     }
   }
 
+  /**
+   * `specialty-form-block` pregunta por las plantillas de chart apenas se
+   * crea, igual que medicación pregunta por su catálogo. Se responde vacío
+   * —«sin plantillas todavía»— para que `verify()` no tropiece con ella; lo
+   * que el bloque hace con esa respuesta lo fija su propia prueba.
+   */
+  function responderPlantillasDeEspecialidad(): void {
+    for (const req of http.match((r) => r.url === '/charts/templates')) {
+      req.flush([]);
+    }
+  }
+
   afterEach(() => {
     responderCatalogoDeMedicacion();
     responderCircuitoDiagnostico();
     responderHistoricoDeProcedimientos();
+    responderPlantillasDeEspecialidad();
     http.verify();
   });
 
@@ -313,6 +326,123 @@ describe('PatientChart', () => {
 
     const observacion = interno<() => readonly Record<string, unknown>[]>('observaciones')()[0];
     expect(observacion['secundario']).toBe('78.5 kg');
+  });
+
+  /* ---- la banda de contexto --------------------------------------------- */
+
+  /**
+   * Las alergias salen de la segunda pestaña y suben a la banda.
+   *
+   * Es el único bloque que cambia una conducta **antes** de leerlo: recetar sin
+   * haberlas visto es el error que la banda existe para evitar, y en una pestaña
+   * había que acordarse de ir a mirarlas.
+   */
+  it('destaca las alergias fuera de las pestañas', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        allergies: [
+          {
+            id: 'a-1',
+            substanceConceptId: 'con-diabetes',
+            clinicalStatusConceptId: 'st-activa',
+            criticalityConceptId: 'st-final',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    const destacadas = interno<() => readonly Record<string, unknown>[]>('alergiasDestacadas')();
+    expect(destacadas).toHaveLength(1);
+    expect(destacadas[0]['principal']).toBe('Diabetes tipo 2');
+  });
+
+  it('sin alergias no dibuja la banda de alergias', () => {
+    responderNombre();
+    responderExpediente();
+
+    expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(0);
+  });
+
+  /** Cuánto expediente hay, sin abrir pestaña por pestaña. */
+  it('cuenta los bloques en la banda de contexto', () => {
+    responderNombre();
+    responderExpediente();
+
+    const cifras = interno<() => readonly { clave: string; valor: number }[]>('cifras')();
+    expect(cifras.find((c) => c.clave === 'diagnosticos')?.valor).toBe(1);
+    expect(cifras.find((c) => c.clave === 'observaciones')?.valor).toBe(1);
+    expect(cifras.find((c) => c.clave === 'medicacion')?.valor).toBe(0);
+  });
+
+  /**
+   * Sin encuentros no se afirma «sin atención previa»: el bloque puede venir
+   * recortado, o la atención puede constar en otra organización.
+   */
+  it('sin encuentros no inventa una última atención', () => {
+    responderNombre();
+    responderExpediente();
+
+    expect(interno<() => Date | null>('ultimaAtencion')()).toBeNull();
+  });
+
+  it('la última atención es la más reciente de los encuentros', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        encounters: [
+          { id: 'e-1', classConceptId: 'st-activa', startAt: '2026-01-10T10:00:00.000Z' },
+          { id: 'e-2', classConceptId: 'st-activa', startAt: '2026-05-20T10:00:00.000Z' },
+          { id: 'e-3', classConceptId: 'st-activa', startAt: '2026-03-02T10:00:00.000Z' },
+        ],
+      },
+    });
+
+    expect(interno<() => Date | null>('ultimaAtencion')()?.toISOString()).toBe(
+      '2026-05-20T10:00:00.000Z',
+    );
+  });
+
+  /* ---- columnas por bloque ----------------------------------------------- */
+
+  /**
+   * Una columna «Detalle» vacía de punta a punta se lee como un dato que no
+   * cargó, y se come el ancho que la tabla necesita para lo que sí trae.
+   */
+  it('el bloque sin detalle no dibuja la columna Detalle', () => {
+    responderNombre();
+    responderExpediente();
+
+    const bloques =
+      interno<() => readonly { clave: string; columnas: { key: string }[] }[]>('bloques')();
+    const diagnosticos = bloques.find((b) => b.clave === 'diagnosticos');
+    expect(diagnosticos?.columnas.some((c) => c.key === 'detalle')).toBe(false);
+    // Y las tres que siempre están, sí.
+    expect(diagnosticos?.columnas.map((c) => c.key)).toEqual(['principal', 'estado', 'cuando']);
+  });
+
+  it('el bloque que sí trae detalle la dibuja', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        encounters: [
+          {
+            id: 'e-1',
+            classConceptId: 'st-activa',
+            startAt: '2026-01-10T10:00:00.000Z',
+            // Con `endAt` el detalle dice «Cerrado»: hay algo que mostrar.
+            endAt: '2026-01-10T11:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    const bloques =
+      interno<() => readonly { clave: string; columnas: { key: string }[] }[]>('bloques')();
+    expect(
+      bloques.find((b) => b.clave === 'encuentros')?.columnas.some((c) => c.key === 'detalle'),
+    ).toBe(true);
   });
 
   it('un 403 al leer el nombre no tumba el expediente', () => {
@@ -529,7 +659,12 @@ describe('PatientChart', () => {
     responderExpediente({
       resumen: {
         encounters: [
-          { id: 'e-1', statusConceptId: 'st-activa', reasonText: 'Control', startAt: HACE_UNA_HORA },
+          {
+            id: 'e-1',
+            statusConceptId: 'st-activa',
+            reasonText: 'Control',
+            startAt: HACE_UNA_HORA,
+          },
           {
             id: 'e-2',
             statusConceptId: 'st-activa',

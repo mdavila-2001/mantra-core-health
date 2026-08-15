@@ -19,7 +19,7 @@
 <output class="solo-lectores" aria-live="polite">{{ anuncio() }}</output>
 
 <div class="app-shell" app-shell>
-  <nav class="app-side-nav" aria-label="Navegación principal">
+  <nav class="app-side-nav" aria-label="Navegación principal" appTutorialTarget="shell-nav">
     <div class="app-side-nav__fondo" aria-hidden="true">
       <svg class="app-side-nav__textura" viewBox="0 0 264 1024" preserveAspectRatio="xMidYMid slice" fill="none">
         <defs>
@@ -61,9 +61,14 @@
               <span class="side-nav__label">{{ item.label }}</span>
             </span>
           } @else {
+            <!-- Cada entrada del menú es un objetivo posible: los tutoriales
+                 que empiezan por «acá se entra a tal cosa» necesitan señalarla,
+                 y el identificador se deriva de la ruta para que agregar una
+                 sección no obligue a tocar nada de tutoriales. -->
             <a
               class="app-side-nav__item side-nav__link"
               data-testid="nav-enlace"
+              [appTutorialTarget]="'nav-' + item.route.slice(1)"
               [attr.data-route]="item.route"
               [routerLink]="item.route"
               [class.is-activo]="rutaActiva() === item.route"
@@ -82,17 +87,26 @@
 
   <div class="app-main">
     <header class="app-header" app-header>
-      <label class="app-search-field app-header__buscador">
-        <span class="solo-lectores">Buscá en toda la organización</span>
-        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-        <input class="app-input" type="search" placeholder="Buscá en toda la organización" />
-      </label>
+      <!-- Acá había un buscador «en toda la organización» **sin un solo
+           manejador**: ni `(input)`, ni `(keydown.enter)`, ni formulario. Se
+           escribía, se apretaba Enter, y no pasaba nada. Y el tutorial del
+           armazón lo señalaba prometiendo «desde acá llegás a personas y
+           registros sin pasar por el menú», que era una promesa que el control
+           no podía cumplir.
+
+           Carril 19: se retira el control y su paso de tutorial. El buscador
+           global es una funcionalidad que no existe todavía —vive maquetada en
+           `features/redsat/`, que es donde vive el diseño— y dejar su caja en
+           el producto es exactamente la «pantalla que aparenta funcionar» que
+           la corrección #7 prohíbe. Cuando el buscador se construya, vuelve
+           acá con su manejador y con su paso. -->
 
       <div class="app-header__derecha">
         @if (tenants().length > 1) {
           <div class="menu-anclaje">
             <button
               class="app-tenant-switcher"
+              appTutorialTarget="shell-selector-organizacion"
               type="button"
               app-tenant-switcher
               data-testid="header-organizacion"
@@ -183,3 +197,11 @@
     </main>
   </div>
 </div>
+
+<!-- La capa de los tutoriales, montada una sola vez y fuera del contenido.
+     Fuera del `<main>` porque un recorrido puede señalar el menú o el
+     encabezado, y una capa anidada en el contenido no puede dibujar por encima
+     de sus hermanos sin pelearse con el apilamiento. Ninguna pantalla la importa
+     ni sabe que existe: eso es lo que permite que un tutorial cruce de la agenda
+     al expediente sin que ninguna de las dos colabore. -->
+<app-tutorial-overlay />

@@ -16,7 +16,10 @@ import type { AppSection } from '../../core/navigation/navigation.types';
 import { dataOf, empty, loading, ready, stale } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Badge } from '../../shared/components/atoms/badge/badge';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
+import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
+import { StaggerList } from '../../shared/motion/stagger-list.directive';
 import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
@@ -25,6 +28,7 @@ import {
   CaseStatusCatalog,
   toCaseStatusPresentation,
 } from '../identity-verification/case-status';
+import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
  * Panel de inicio de la aplicación autenticada.
@@ -58,7 +62,25 @@ import {
  */
 @Component({
   selector: 'app-dashboard',
-  imports: [Badge, Card, PageHeader, RouterLink, Skeleton, StatusSeal, ViewStateHost],
+  imports: [
+    Badge,
+    Card,
+    NavIcon,
+    PageHeader,
+    RouterLink,
+    Skeleton,
+    StaggerList,
+    StatusSeal,
+    Tooltip,
+    // Faltaba de la lista aunque la plantilla lo usa en dos elementos: el
+    // atributo `appTutorialTarget` se renderizaba como un atributo cualquiera,
+    // la directiva no aplicaba, y el tutorial del panel no encontraba ni el
+    // título ni la rejilla de accesos —se salteaba los pasos en silencio, que
+    // es justo lo que la directiva existe para evitar—. `yarn lint` lo venía
+    // reportando como import sin usar desde antes de este carril.
+    TutorialTarget,
+    ViewStateHost,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,6 +91,11 @@ export class Dashboard {
   private readonly profiles = inject(ProfilesClient);
   // El panel muestra el sello del trámite de identidad: necesita los estados
   // resueltos contra terminología.
+  //
+  // **No se lee, y aun así no sobra**: inyectarlo es lo que dispara la
+  // resolución del catálogo desde su constructor, y de eso depende que
+  // `toCaseStatusPresentation` devuelva la palabra en vez de «Desconocido».
+  // Borrarlo por parecer sin uso rompe el sello sin romper ninguna prueba.
   private readonly estadosDeCaso = inject(CaseStatusCatalog);
   private readonly identity = inject(IdentityClient);
   private readonly navigation = inject(NavigationService);

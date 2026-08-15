@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -31,6 +32,8 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
+import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
+import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
 import { reservaDelPortalRoute } from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 
@@ -84,6 +87,20 @@ const CODIGOS_REPROGRAMABLES: ReadonlySet<string> = new Set([
   'BOOKING_CHECKED_IN',
 ]);
 
+/**
+ * Las dos formas de mirar los mismos turnos (corrección #10).
+ *
+ * Viven en la URL para que el enlace se comparta con la vista puesta y para que
+ * «atrás» deshaga el cambio, igual que los filtros del resto del repo.
+ */
+export type VistaDeTurnos = 'lista' | 'calendario';
+
+/** La vista por omisión: la lista es la que además permite operar. */
+const VISTA_POR_DEFECTO: VistaDeTurnos = 'lista';
+
+/** Clave del parámetro de la URL que recuerda la vista elegida. */
+const PARAM_DE_VISTA = 'vista';
+
 /** Un turno propio, ya listo para mostrarse. */
 interface TurnoVisible {
   readonly id: string;
@@ -101,6 +118,16 @@ interface TurnoVisible {
   /** Con quién es el turno, en palabras. Vacío mientras no se sepa. */
   readonly agenda: string;
   readonly motivo: string;
+  /**
+   * Por qué te cambiaron el turno, ya redactado (corrección #14).
+   *
+   * Vacío cuando el último cambio no exigía motivo —o cuando el turno es
+   * anterior a la corrección—. Se arma acá y no en la plantilla porque quién lo
+   * hizo cambia la frase entera: «tu médico canceló» no es «cancelaste».
+   */
+  readonly avisoDelCambio: string;
+  /** Cuándo se hizo ese cambio, para fecharlo en pantalla. */
+  readonly cambioCuando: Date | null;
 }
 
 /** Un horario que se puede pedir. */
@@ -140,6 +167,7 @@ interface HorarioVisible {
     Alert,
     AppButton,
     AppButtonLink,
+    AppointmentCalendar,
     Badge,
     DatePipe,
     FormField,
@@ -161,6 +189,8 @@ export class Appointments {
   private readonly dialogs = inject(DialogService);
   private readonly toast = inject(ToastService);
   private readonly fecha = inject(DatePipe);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   /** Quién es el titular. Sin esto no hay turnos propios que pedir ni mostrar. */
   private readonly perfil = this.auth.patientProfileId();
@@ -185,6 +215,52 @@ export class Appointments {
 
   /** Etiquetas de los conceptos de estado, para no mostrar uuid. */
   private readonly etiquetas = signal<ConceptLabels>(new Map());
+
+  /* ---- lista o calendario, y en la URL (corrección #10) ------------------- */
+
+  private readonly params = toSignal(this.route.queryParamMap, { initialValue: null });
+
+  /**
+   * Qué vista se está mirando.
+   *
+   * Sale de la URL y no de un signal suelto para que el enlace se comparta con
+   * la vista puesta y «atrás» la deshaga — el mismo criterio que los filtros de
+   * la agenda y del buscador de pacientes.
+   */
+  protected readonly vista = computed<VistaDeTurnos>(() =>
+    this.params()?.get(PARAM_DE_VISTA) === 'calendario' ? 'calendario' : VISTA_POR_DEFECTO,
+  );
+
+  protected readonly enCalendario = computed(() => this.vista() === 'calendario');
+
+  /**
+   * El turno abierto en el detalle.
+   *
+   * Es **uno solo para las dos vistas**: clickear un evento del calendario abre
+   * exactamente el mismo detalle que clickear una fila de la lista, con las
+   * mismas acciones. Dos detalles distintos serían dos implementaciones de lo
+   * mismo, que es lo que la regla 3 del carril prohíbe.
+   */
+  protected readonly seleccionado = signal<string | null>(null);
+
+  protected elegirVista(vista: VistaDeTurnos): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [PARAM_DE_VISTA]: vista === VISTA_POR_DEFECTO ? null : vista },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  /** Abre —o cierra, si ya estaba abierto— el detalle de un turno. */
+  protected alternarDetalle(id: string): void {
+    this.seleccionado.update((actual) => (actual === id ? null : id));
+  }
+
+  /** Desde el calendario el clic siempre abre: nunca cierra por segunda vez. */
+  protected abrirDetalle(id: string): void {
+    this.seleccionado.set(id);
+  }
 
   /* ---- mis turnos --------------------------------------------------------- */
 
@@ -243,6 +319,29 @@ export class Appointments {
     return estado.status === 'ready' ? estado.data : [];
   });
 
+  /**
+   * Los mismos turnos, en la forma que el calendario entiende.
+   *
+   * **Los mismos**, no otra lectura: las dos vistas tienen que decir lo mismo o
+   * la agenda se contradice a sí misma.
+   */
+  protected readonly turnosDeCalendario = computed<readonly CalendarAppointment[]>(() =>
+    this.turnosListos().map((turno) => ({
+      id: turno.id,
+      cuando: turno.cuando,
+      hasta: turno.hasta,
+      titulo: turno.agenda === '' ? 'Turno' : turno.agenda,
+      estado: turno.estado,
+      tono: turno.tono,
+    })),
+  );
+
+  /** El turno abierto en el detalle, ya resuelto. */
+  protected readonly turnoEnDetalle = computed<TurnoVisible | null>(() => {
+    const id = this.seleccionado();
+    return id === null ? null : (this.turnosListos().find((turno) => turno.id === id) ?? null);
+  });
+
   protected readonly horariosListos = computed<readonly HorarioVisible[]>(() => {
     const estado = this.horarios();
     return estado.status === 'ready' ? estado.data : [];
@@ -273,9 +372,7 @@ export class Appointments {
       .subscribe({
         next: (pagina) => {
           if (pagina.items.length === 0) {
-            this.turnos.set(
-              empty(this.elegirAgenda, 'Todavía no pediste ningún turno.'),
-            );
+            this.turnos.set(empty(this.elegirAgenda, 'Todavía no pediste ningún turno.'));
             return;
           }
           this.traducirEstados(pagina.items);
@@ -393,31 +490,42 @@ export class Appointments {
       return;
     }
 
-    const confirmado = await this.dialogs.confirm({
-      title: 'Cancelar el turno',
-      message: `Vas a cancelar ${this.nombreDelTurno(turno)}. El horario queda libre para otra persona.`,
-      confirmLabel: 'Cancelar el turno',
-      cancelLabel: 'Volver',
-    });
-    if (!confirmado) {
+    // El motivo es obligatorio y el servidor lo exige (corrección #14): se pide
+    // en el mismo diálogo que confirma, no en un paso aparte ni después del 422.
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: 'Cancelar el turno',
+        message: `Vas a cancelar ${this.nombreDelTurno(turno)}. El horario queda libre para otra persona.`,
+        confirmLabel: 'Cancelar el turno',
+        cancelLabel: 'Volver',
+      },
+      {
+        label: 'Motivo de la cancelación',
+        placeholder: 'Contá brevemente por qué no vas a poder ir',
+        hint: 'El profesional lo va a ver junto con la cancelación.',
+      },
+    );
+    if (motivo === null) {
       return;
     }
 
     this.operando.set(turno.id);
-    this.scheduling.cancelBooking(turno.id, { cancelledBy: 'PATIENT' }).subscribe({
-      next: () => {
-        this.operando.set(null);
-        this.toast.success('Cancelamos tu turno y liberamos el horario.', 'Turno cancelado');
-        // El servidor es la verdad: se relee en vez de tachar la fila y devolver
-        // el cupo a mano. El turno reaparece como cancelado (por `includeCancelled`)
-        // y el horario vuelve a ofrecerse.
-        this.recargar();
-      },
-      error: (error: unknown) => {
-        this.operando.set(null);
-        this.avisarFalloCancelacion(error);
-      },
-    });
+    this.scheduling
+      .cancelBooking(turno.id, { cancelledBy: 'PATIENT', reasonText: motivo })
+      .subscribe({
+        next: () => {
+          this.operando.set(null);
+          this.toast.success('Cancelamos tu turno y liberamos el horario.', 'Turno cancelado');
+          // El servidor es la verdad: se relee en vez de tachar la fila y devolver
+          // el cupo a mano. El turno reaparece como cancelado (por `includeCancelled`)
+          // y el horario vuelve a ofrecerse.
+          this.recargar();
+        },
+        error: (error: unknown) => {
+          this.operando.set(null);
+          this.avisarFalloCancelacion(error);
+        },
+      });
   }
 
   /** Cómo nombrar el turno en la confirmación: por su fecha, o genérico. */
@@ -442,8 +550,7 @@ export class Appointments {
    */
   private avisarFalloCancelacion(error: unknown): void {
     const estado = errorToViewState<null>(error);
-    const codigos =
-      estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
+    const codigos = estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
 
     if (codigos.includes('CONFLICT')) {
       this.toast.info('Este turno ya estaba cancelado. Actualizamos tu lista.', 'Turno');
@@ -518,36 +625,47 @@ export class Appointments {
     }
 
     const origen = this.turnoEnReprogramacion();
-    const confirmado = await this.dialogs.confirm({
-      title: 'Mover el turno',
-      message: `Vas a mover ${origen === null ? 'este turno' : this.nombreDelTurno(origen)} al ${this.nombreDelHorario(horario)}. El horario anterior queda libre.`,
-      confirmLabel: 'Mover el turno',
-      cancelLabel: 'Volver',
-    });
-    if (!confirmado) {
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: 'Mover el turno',
+        message: `Vas a mover ${origen === null ? 'este turno' : this.nombreDelTurno(origen)} al ${this.nombreDelHorario(horario)}. El horario anterior queda libre.`,
+        confirmLabel: 'Mover el turno',
+        cancelLabel: 'Volver',
+      },
+      {
+        label: 'Motivo del cambio',
+        placeholder: 'Contá brevemente por qué necesitás moverlo',
+        hint: 'El profesional lo va a ver junto con el horario nuevo.',
+      },
+    );
+    if (motivo === null) {
       return;
     }
 
     this.operando.set(origenId);
-    this.scheduling.rescheduleBooking(origenId, { toSlotId: horario.id }).subscribe({
-      next: () => {
-        this.operando.set(null);
-        this.reprogramando.set(null);
-        this.toast.success('Movimos tu turno al horario nuevo.', 'Turno reprogramado');
-        // El servidor es la verdad: la lista muestra la hora nueva y el cupo
-        // viejo vuelve a ofrecerse releyendo, no restando a mano.
-        this.recargar();
-      },
-      error: (error: unknown) => {
-        this.operando.set(null);
-        this.avisarFalloReprogramacion(error);
-      },
-    });
+    this.scheduling
+      .rescheduleBooking(origenId, { toSlotId: horario.id, reasonText: motivo })
+      .subscribe({
+        next: () => {
+          this.operando.set(null);
+          this.reprogramando.set(null);
+          this.toast.success('Movimos tu turno al horario nuevo.', 'Turno reprogramado');
+          // El servidor es la verdad: la lista muestra la hora nueva y el cupo
+          // viejo vuelve a ofrecerse releyendo, no restando a mano.
+          this.recargar();
+        },
+        error: (error: unknown) => {
+          this.operando.set(null);
+          this.avisarFalloReprogramacion(error);
+        },
+      });
   }
 
   /** Cómo nombrar el horario destino en la confirmación. */
   private nombreDelHorario(horario: HorarioVisible): string {
-    return this.fecha.transform(horario.desde, "EEEE d 'de' MMM 'a las' HH:mm") ?? 'horario elegido';
+    return (
+      this.fecha.transform(horario.desde, "EEEE d 'de' MMM 'a las' HH:mm") ?? 'horario elegido'
+    );
   }
 
   /**
@@ -563,8 +681,7 @@ export class Appointments {
    */
   private avisarFalloReprogramacion(error: unknown): void {
     const estado = errorToViewState<null>(error);
-    const codigos =
-      estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
+    const codigos = estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
 
     if (codigos.includes('CONFLICT')) {
       this.toast.info('Ese horario se acaba de ocupar. Elegí otro de la lista.', 'Turno');
@@ -660,6 +777,8 @@ export class Appointments {
       resourceId,
       agenda: this.nombreDeLaAgenda(resourceId),
       motivo: cita.reasonText ?? '',
+      avisoDelCambio: avisoDelCambio(cita),
+      cambioCuando: cita.statusReason?.changedAt ?? null,
     };
   }
 
@@ -717,4 +836,24 @@ export class Appointments {
       lugaresLibres: cupo.remainingCapacity,
     };
   }
+}
+
+/**
+ * Cómo se le cuenta al paciente el último cambio de su turno (corrección #14).
+ *
+ * Quién lo hizo cambia la frase entera, y por eso no se resuelve en la
+ * plantilla: «tu profesional canceló el turno» y «cancelaste el turno» son la
+ * misma transición contada desde dos lados, y mostrar la segunda cuando pasó la
+ * primera es peor que no mostrar nada.
+ *
+ * Devuelve `''` cuando no hay motivo registrado, que es lo corriente en un
+ * turno que nadie tocó y en los anteriores a esta versión.
+ */
+function avisoDelCambio(cita: Booking): string {
+  const cambio = cita.statusReason;
+  if (cambio === undefined || cambio.reasonText.trim() === '') {
+    return '';
+  }
+  const quien = cambio.actorKind === 'PATIENT' ? 'Indicaste' : 'El profesional indicó';
+  return `${quien}: ${cambio.reasonText}`;
 }

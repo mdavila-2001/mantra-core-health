@@ -5,6 +5,265 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión en curso · Conformidad de identidad visual con la bóveda
+
+**Empezó:** 2026-08-15 · **Alcance:** sólo frontend · **Encargo:** que la identidad visual, su
+inspiración y su forma de trabajar sean las mismas que las de las vistas HTML de la bóveda, en
+**todo** el frontend web.
+
+### 🟢 No toco ninguna pantalla: el carril es de tokens y guardarraíles
+
+Sé que R2-6, R2-4/R2-1 y R2-5 están dentro de `features/**`. **No toco una sola plantilla ni un
+solo CSS de componente.** Mi huella son cuatro archivos y ninguno es de features.
+
+### El hallazgo: el front tiene DOS sistemas de diseño, no uno
+
+No es una desviación de detalle, es estructural, y conviene que lo sepan todos:
+
+| | `src/styles.css` (REDSAT v1.0) | `src/styles/redsat.css` (v1.1, la bóveda) |
+|---|---|---|
+| Vocabulario | `--text-primary`, `--sp-4`, `--r-md` | `--tinta`, `--e4`, `--r-card` |
+| Tipografía de cuerpo | **Inter** | **Nunito Sans** |
+| Marcado | elemento Angular `<app-card>` | clase `class="app-card"` |
+| Pantallas | **132** (el resto de `features/`) | **141** (`features/redsat/`) |
+
+El reparto es **total y sin solape**: 0 de las 132 legadas usan una clase REDSAT, 0 de las 141
+portadas usan un componente del banco. Las dos mitades cuelgan del **mismo** armazón REDSAT
+(`shell-layout` → `PANTALLAS_HIJAS`), así que se navega de una a otra sin cambiar de ruta y sí
+cambiando de producto. Es exactamente lo que la propia bóveda llama «la causa número uno de que
+dos vistas del mismo producto no parezcan del mismo producto» (🎨 Banco de componentes, «Marco
+invariante»).
+
+### Un defecto de contraste real, y por qué nadie lo vio
+
+`--aviso-tinta: #8B6A47` (ámbar-700) sobre `--aviso-bg: #FBF2E8` da **4,46:1** — no llega a AA
+para texto chico, y pinta `.app-badge[data-tono="aviso"]` (11,5 px), `.app-alert` y la portada.
+
+Lo llamativo: **este proyecto ya arregló este mismo par una vez.** `styles.css` lo dice con todas
+las letras — «ámbar-700 sobre ámbar-50 da 4,46:1 y se queda a 0,04 de AA; con el 800 sube a
+7,49:1. Lo detectó `scripts/check-contrast.mjs`». La corrección nunca llegó a la hoja de la
+bóveda, y reapareció donde el guardarraíl no mira: **`check-contrast.mjs` y `check-tokens.mjs`
+leen sólo `src/styles.css`**. La hoja que pinta el armazón de las 273 pantallas y las 141
+portadas no la mide nadie.
+
+### Archivos que toco, y qué le hago a cada uno
+
+| Archivo | Qué le hago |
+|---|---|
+| `src/styles/redsat.css` | **un valor**: `--aviso-tinta` claro pasa a ámbar-800 `#5E4B35` (4,46 → 7,49) |
+| `scripts/sync-redsat.mjs` | una tercera transformación declarada, para que la corrección **sobreviva a la regeneración** |
+| `scripts/check-contrast.mjs` | pasa a medir también `src/styles/redsat.css` (67 pares en 2 hojas), con sus excepciones declaradas |
+| `.github/workflows/ci.yml` | una etapa nueva: `check-contrast.mjs`, que **no estaba en CI** |
+| `COORDINACION-AGENTES.md` | este bloque |
+
+### El guardarraíl existía, se documentaba, y no corría
+
+`styles.css` dice con todas las letras «lo detectó `check-contrast.mjs`, que mide estas
+combinaciones **en cada CI**». No era cierto: el script nunca estuvo en `ci.yml`. Corría a mano,
+cuando alguien se acordaba. Por eso el par del ámbar pudo reaparecer y quedarse. Ahora es una
+etapa más, al lado de `check-tokens`.
+
+Al encenderlo sobre la hoja de la bóveda saltó un tercer par, que **no existía en v1.0**:
+
+> **R3 · `--petroleo` en oscuro está sobrecargado.** Es a la vez la tinta de `a[app-link]`
+> (necesita ≥4,5:1 *contra* la superficie) y el relleno del botón primario (necesita ≥4,5:1 *con
+> blanco encima*). Los dos umbrales se mueven en sentido contrario y **no hay un valor que cumpla
+> los dos**: hoy `#12719F` da 3,09:1 como enlace sobre tarjeta y 5,40:1 como botón; en cuanto se
+> aclara hasta que el enlace pasa (~`#1E8CC4`), el blanco del botón ya cayó a 3,75:1. La salida
+> es **partir el token en dos** —uno de tinta, uno de relleno—, y eso se decide sobre la hoja de
+> la bóveda, no acá.
+
+Queda registrado como excepción **R3** siguiendo la política que fija `identidad-visual.md` («si
+un par no llega al umbral, no se ajusta el tono: se registra y se avisa al diseñador»), con una
+diferencia que está escrita en el código: **R1 y R2 son límites aceptados; R3 es una tarea
+abierta y se espera que desaparezca.**
+
+### Lo que NO toco
+
+Ninguna plantilla ni CSS de `features/**` (ni legadas ni portadas) · ningún componente del banco
+en `shared/components/**` · los **valores** de `src/styles.css` · `angular.json` · rutas ·
+`navigation.map.ts` · backend · SQL.
+
+### Dos cosas que quedan abiertas y no decido solo
+
+1. **Inter vs Nunito Sans.** La bóveda se contradice: `identidad-visual.md` (marcado «documento
+   normativo») fija **Poppins + Inter**; la hoja de las vistas HTML fija **Poppins + Nunito
+   Sans**. Hoy conviven mal: el `body` de `redsat.css` gana y pone Nunito Sans, pero once
+   componentes del banco (`data-table`, `filter-bar`, `side-nav`, `date-picker`,
+   `view-state-host`, `status-seal`…) fuerzan `var(--font-body)` y vuelven a Inter. O sea que la
+   mitad legada **ya es incoherente consigo misma**. Consultado con quien encarga; no cambio la
+   tipografía de la aplicación por mi cuenta.
+2. **`--borde-ctrl` en oscuro** (`#4A5F64` sobre `#0F2028`) da **2,47:1**, por debajo del 3:1 de
+   WCAG 1.4.11 para el borde de un control. Es de la misma clase que la excepción **E3** que
+   `styles.css` ya declara; lo dejo **declarado como excepción**, no corregido: cambiar la paleta
+   oscura de la bóveda es decisión de diseño, no de este carril.
+
+---
+
+## Sesión en curso · Carril R2-6 — el glosario con etiquetas, en castellano
+
+**Empezó:** 2026-08-14 · **Ramas:** `carril-r2-6/glosario-etiquetas` en los dos repos ·
+**Base:** `dev` en frontend, `dev` en backend (el working tree del backend está en `dev`, no en
+`master`; lo único sin commitear ahí es `yarn.lock`, ajeno a este carril) ·
+**Plan:** `CARRIL-R2-6-glosario-etiquetas.md` · `CARRILES-R2-2026-08-14-README.md`
+
+### 🟡 Aviso obligatorio: toco `GET /terminology/concepts`, que consume medio frontend
+
+Es la lectura que usan `readConceptLabels` (agenda, perfil profesional, diagnósticos, ficha
+clínica) y `searchConcepts` (catálogo de administración). **El cambio es aditivo y
+retrocompatible por construcción:** dos parámetros nuevos y opcionales (`lang`,
+`includeValueSets`) y dos campos nuevos y opcionales en cada ítem (`translated`, `valueSets`).
+**Sin `lang`, la respuesta es byte a byte la de hoy** — hay una prueba que lo fija, no es una
+promesa. Ninguna pantalla existente manda esos parámetros y ninguna cambia de comportamiento.
+
+`src/modules/terminology/**` es exclusivo de este carril esta ronda, así que no hay con quién
+chocar dentro del módulo.
+
+### Tres correcciones al plan del carril, encontradas al leer el código
+
+El documento del carril daba por incierto lo que el repo sí sostiene. Las tres cambian qué hay
+que escribir, así que quedan acá antes que en el commit:
+
+1. **Las etiquetas ya están sembradas y ya están en castellano.** El plan temía que no hubiera de
+   dónde sacar la lista. Hay 52 conjuntos de valores, con nombre y descripción en castellano,
+   materializados por `DynamicEnumSeedService` desde `dynamic-enum-catalog.ts` («Género
+   administrativo», «Diagnóstico», «Severidad», «Lateralidad»…). El listado que faltaba era el del
+   **cliente del frontend**, no el del backend.
+2. **El inverso concepto → conjuntos de valores no hace falta pedirlo como bloqueador: lo
+   implemento acá.** El plan lo dejaba como «salida 2, se pide si el cliente lo quiere». Como el
+   módulo `terminology` es exclusivo de este carril, sale más barato hacerlo bien que declararlo
+   pendiente: `GET /terminology/concepts?includeValueSets=true` resuelve la pertenencia de los
+   ≤50 conceptos devueltos **en una sola consulta** sobre `value_set_members`, no en cientos de
+   `$expand` desde el navegador —que es lo que el plan prohíbe explícitamente, y con razón—. Con
+   eso, la definición de hecho «cada término muestra sus etiquetas» se cumple también en el
+   resultado de una búsqueda por texto, no sólo al navegar por categoría.
+3. **El problema del castellano era peor de lo que decía el plan, y en un sitio distinto.** No es
+   sólo que el `display` venga en inglés: **`catalog_concepts.definition` está vacía para todo el
+   catálogo sembrado** (`TerminologySeedService` nunca la escribe). O sea que la segunda columna
+   de la tabla que rebotó —«Qué significa»— estaba en blanco para *todos* los términos. Un
+   glosario sin definiciones no es un glosario aunque los nombres estén traducidos, así que este
+   carril siembra **las dos cosas**: la designación `ES` (el nombre) y la definición en castellano.
+
+### Dónde va la definición en castellano, y por qué no en `catalog_concepts.definition`
+
+`concept_designations` guarda **un texto por idioma** (`value`), y no tiene columna de definición:
+sirve para el nombre, no para la explicación. Escribir la definición castellana en
+`catalog_concepts.definition` la dejaría sin idioma declarado en una tabla que es multilingüe por
+diseño — y el día que haya una segunda lengua no habría dónde ponerla.
+
+Va en `concept_properties` con `property_code = 'definition-es'`, que es exactamente para lo que
+esa tabla existe, y que ya tiene lectura en lote (`findPropertyForConcepts`): una consulta para
+los ≤50 conceptos de la página, sin N+1. `catalog_concepts.definition` **no se toca**.
+
+### Archivos nuevos (no chocan con nada)
+
+```text
+backend  src/common/seed/terminology-designations.es.ts   (+ .spec.ts)
+frontend src/app/features/glossary/glossary-term.{ts,html,css,spec.ts}
+```
+
+### Archivos existentes que toco, y qué le hago a cada uno
+
+| Repo | Archivo | Qué le hago |
+|---|---|---|
+| backend | `terminology/dto/search-concepts.dto.ts` | `lang`/`includeValueSets` en la petición; `translated` y `valueSets[]` **opcionales** al final del ítem; `ConceptDetailDto` nuevo |
+| backend | `terminology/dto/search-value-sets.dto.ts` | `memberCount` opcional al final del ítem — es el conteo que el cliente pidió ver en cada etiqueta |
+| backend | `terminology/controllers/terminology-concepts.controller.ts` | dos `@Query` nuevos en el `@Get()` existente, y un `@Get(':conceptId')` nuevo al final |
+| backend | `terminology/services/concepts.service.ts` | `searchConcepts` resuelve idioma y etiquetas; `readConcept` nuevo |
+| backend | `terminology/services/value-sets.service.ts` | `searchValueSets` suma el conteo de miembros (una consulta agrupada) |
+| backend | `terminology/repositories/{concept-designations,value-sets}.repository.ts` | tres lecturas en lote nuevas, al final |
+| backend | **`src/common/seed/terminology-seed.service.ts`** | **compartido con R2-3 y R2-5**: un nivel nuevo (designaciones `ES` + definiciones), **después** de los conceptos. No toco los cinco niveles existentes ni el orden de los flush |
+| frontend | `core/data-access/terminology/terminology.client.ts` · `.types.ts` | **sólo adiciones al final**. `searchConcepts`, `readExpansion`, `readAllOptions` y `readConceptLabels` quedan **intactos**, y `ValueSetOption` tampoco se toca |
+| frontend | `features/glossary/glossary.{ts,html,css,spec.ts}` | rehecha: se va `app-data-table`, entra la navegación por etiquetas |
+| frontend | `src/app/app.routes.ts` | una entrada nueva al final de `PANTALLAS_HIJAS`: `glossary/:conceptId` |
+
+**`src/common/seed/module-concepts.ts` no hace falta tocarlo** —el README de la ronda me autorizaba
+a hacerlo—: este carril no declara conceptos nuevos, sólo designaciones y propiedades de los que
+ya existen. Queda dicho para que R2-3 y R2-5 sepan que ese archivo sigue libre.
+
+### Dos avisos para R2-5, que trabaja en el mismo working tree
+
+1. **Este bloque te viajó dentro de tu commit `f701748`.** Escribí mi bloque acá antes de tocar
+   código, como manda el protocolo; mientras yo trabajaba vos cambiaste de rama y commiteaste
+   `COORDINACION-AGENTES.md` entero, así que mis 92 líneas quedaron dentro de tu «Carril R2-5:
+   catálogo navegable de formularios estándar». **No lo toqué ni lo revertí** — tu commit es tuyo.
+   Mi rama sale de `dev` y trae el mismo bloque en su propio commit, así que al mezclar las dos va
+   a haber un conflicto en esta región: **son el mismo texto duplicado, se acepta una sola copia**
+   y no hay nada que decidir.
+2. **El backend está roto en `dev` por trabajo tuyo sin commitear, y no lo toqué.** `yarn
+   typecheck` en `mantra-core-health-redesa-api` da 5 errores, todos en archivos tuyos a medio
+   cablear: `src/common/seed/data/clinical-forms/catalog.ts` no exporta `CATALOG_FIELD_CODE`, y
+   `chart-templates.service.ts` usa `esClaveDeCatalogo` y `leerProcedencia`, que no existen todavía
+   (más un `ResolvedSchema` que se le pasa donde se espera `ChartTemplateFieldDto[]`). Mi rama no
+   los arrastra: salgo de `master` limpio. Lo digo para que no te sorprenda si alguien corre el
+   typecheck del backend en esta máquina y cree que lo rompió mi carril.
+
+### Lo que NO toco
+
+`features/admin/terminology/terminology-catalog.ts` (es la pantalla del admin) ·
+`readExpansion`/`searchConcepts`/`readConceptLabels` · `ValueSetOption` ·
+`navigation.map.ts` (la sección `glossary` ya está donde tiene que estar) · `package.json` ·
+`proxy.conf*.json` (el prefijo `/terminology` ya está) · todo `features/redsat/` ·
+`catalog_concepts.definition` · `SQL/` (este carril no necesita ni una columna nueva).
+
+---
+
+## Sesión en curso · Carriles R2-4 y R2-1 — perfil del doctor y guía de profesionales
+
+**Empezó:** 2026-08-14 · **Quién:** Justin · **Ramas:** `carril-r2-4/perfil-del-doctor` (front),
+después `carril-r2-1/guia-de-doctores` (front + backend). **Base:** `origin/dev`.
+
+**Estado (2026-08-14):** los dos **mergeados en `dev`** (PR #99 y #101). El bloque queda como registro del contrato que dejó, no como trabajo en curso.
+
+**Orden:** R2-4 primero, R2-1 encima — es el orden obligatorio del README R2.
+
+### Contrato del `input()` de `practitioner-profile-view` (lo que R2-1 va a consumir)
+
+`PerfilProfesionalVisible` — todo YA resuelto contra terminología, cero clientes adentro:
+
+```ts
+interface PerfilProfesionalVisible {
+  nombre: string; titulo: string; especialidadPrincipal: string; codigo: string;
+  fotoUrl: string | null;               // resuelta por el contenedor (FilesClient), no un fileId
+  verificacion: { label: string; variant: StatusSealVariant } | null;
+  estadoDePractica: string; aceptaPacientesNuevos: boolean; telemedicina: boolean;
+  bio: string;
+  actividad: readonly { clave: string; rotulo: string; valor: number }[];
+  especialidades: readonly EspecialidadVisible[];   // los *Visible se mudan a
+  formacion: readonly FormacionVisible[];           // practitioner-profile-view.types.ts
+  matriculas: readonly MatriculaVisible[];
+  idiomas: readonly IdiomaVisible[];
+  perfilId: string; personaId: string; desde: Date | null;
+}
+```
+
+Más `esPropio = input(false)`: con `true` la vista muestra las acciones de dueño (configurar,
+vista pública, artículos, trayectoria) y el rótulo «Tu actividad»; con `false` — el caso del
+detalle de la guía — ni botones ni tuteo. R2-1 **no** re-resuelve etiquetas: su contenedor
+copia el patrón del contenedor propio (forkJoin perfil + readConceptLabels).
+
+### 🔴 Bloqueador de modelo: no hay teléfono profesional publicable (R2-1)
+
+El punto 1 pide una **guía telefónica**. La guía se entrega completa —nombre, título, foto,
+especialidad, disponibilidad, ficha completa al hacer clic— **menos la columna teléfono**.
+
+El modelo no declara un teléfono profesional con marca de visibilidad. Existen los datos de
+contacto de la **persona**, pero publicarlos en una guía visible para cualquier sesión sería
+publicar un dato personal por una vía que nadie declaró pública. No se inventó la columna ni
+se derivó de otra tabla (regla del repo: `SQL/` no se edita a mano; el pipeline es `.puml` →
+`gen_ddl.py` → `SQL/patches/`).
+
+**Lo que hace falta:** una columna de contacto profesional en `health_practitioner_profiles`
+—o una marca de publicable sobre el contacto existente— y su exposición en
+`GET /profiles/practitioners`. Queda para quien tenga acceso al modelo. Está dicho también en
+el PR, no en silencio.
+
+**Qué NO toco en R2-4:** `work-history/`, `medical-articles/`, `public-profile-preview/` y
+`practitioner-profile-edit/` por dentro; `profiles.client.ts`; `navigation.map.ts`;
+`app.routes.ts`; el backend. En R2-1: la fila `feed` de `navigation.map.ts` (la excepción
+autorizada), `app.routes.ts` (repunte + detalle), módulo `profiles` del backend (exclusivo).
+
+
 ## Sesión en curso · Carril 1 — catálogo de servicios, presupuestos y PDF
 
 **Empezó:** 2026-08-14 · **Ramas:** `carril-1/catalogo-presupuestos-pdf` en los dos repos,
@@ -243,6 +502,81 @@ Tampoco emite `(cambio)` — mismo criterio que vos usaste para `diagnostics-blo
 `navigation.map.ts` · `app.routes.ts` · `package.json` (ninguno de los dos repos) ·
 `registrarEncuentro()`/`cerrarEncuentro()` · `medication`/`diagnosis`/`specialty-form`/`budget` ·
 todo `redsat/` · `src/modules/clinical/` (leo sus entidades, no las edito) · `SQL/`.
+
+---
+
+## Sesión cerrada · Carril 2 — formularios clínicos por especialidad y glosario accesible
+
+**Empezó:** 2026-08-14 · **Rama:** `carril-2/formularios-glosario` (frontend y backend) ·
+**Base:** `dev` al día en frontend, `pablo/contabilidad-visible` en backend (ver nota abajo).
+**Spec:** `CARRIL-2-formularios-glosario.md`.
+
+### Nota sobre la base en el backend
+
+`master` no está checked out — el working tree del backend está en
+`pablo/contabilidad-visible` con cambios sin commitear de `profiles`/`community` (ajenos a este
+carril). Creo `carril-2/formularios-glosario` desde ahí porque es el HEAD real disponible; no
+toco ninguno de esos archivos de `profiles`/`community`.
+
+### Encontré trabajo ajeno sin commitear en el working tree del frontend, y no lo toco
+
+Al entrar, `dev` ya tenía sin commitear: el centro de tutoriales (`navigation.map.ts`,
+`app.routes.ts`), la banda de alergias/cifras y el rediseño en dos columnas de
+`patient-chart.ts`/`.html`, y las pantallas de perfil público/artículos médicos. Nada de eso es
+mío — lo dejo intacto y agrego mis filas/entradas **después** de las suyas, nunca reordenando.
+
+### Archivos nuevos (no chocan con nada)
+
+```text
+Frontend:
+src/app/core/data-access/forms/forms.client.ts (+ .types.ts, .spec.ts)
+src/app/core/data-access/chart-templates/chart-templates.client.ts (+ .types.ts, .spec.ts)
+src/app/features/admin/clinical-forms/clinical-forms.{ts,html,css,spec.ts}
+src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.{ts,html,css,spec.ts}
+src/app/features/glossary/glossary.{ts,html,css,spec.ts}
+
+Backend:
+src/modules/chart/dto/ (DTOs de creación/lectura de plantillas, agregados a templates.dto.ts)
+```
+
+### Archivos existentes que toco
+
+| Archivo | Qué agrego |
+|---|---|
+| `navigation.map.ts` | Dos filas nuevas, al final: `administration/clinical-forms` (grupo Administración) y `glossary` (grupo Atención, sin roles) |
+| `app.routes.ts` | Dos entradas nuevas en `PANTALLAS_DIFERIDAS`, al final del bloque que corresponda |
+| `patient-chart.ts` / `.html` | Import de `specialty-form-block` + una entrada al final del ensamblado de bloques (ver nota arriba: sobre la versión ya modificada por el trabajo de tutoriales/alergias, no la de `dev` limpio) |
+| `chart-templates.controller.ts` / `.service.ts` / `chart-templates.repository.ts` (backend) | `POST /charts/templates`, `GET /charts/templates`, `GET /charts/templates/:id` — extienden, no reescriben `assignTemplate` |
+
+### Lo que NO toco
+
+`terminology-catalog.ts`, `terminology.client.ts`, `medication-block/`, `diagnosis-block/`,
+`registrarEncuentro()`/`cerrarEncuentro()`, `redsat/` completo, ni nada de `profiles`/`community`
+en el backend.
+
+### Cerrada · 2026-08-14
+
+Los tres endpoints nuevos (`POST`/`GET`/`GET :id` de `/charts/templates`) y las cinco pantallas
+del frontend quedaron. Dos ajustes sobre lo previsto en el plan original:
+
+- **`proxy.conf.json` y `proxy.conf.docker.json`** ganaron `/forms`, que no estaba en la tabla de
+  archivos compartidos del README de carriles porque `forms.client.ts` no existía todavía cuando
+  se escribió. Sin el prefijo, la app en desarrollo no llega a `/forms/instances`.
+- **`specialty-form-block` no resuelve la especialidad del encuentro activo** — el frontend no
+  tiene de dónde leerla hoy (el encuentro no la trae, no hay binding declarado). Ofrece un
+  selector de plantillas en su lugar, que se preselecciona solo si hay una sola. Documentado en el
+  propio componente; no es un faltante silencioso.
+- **`navigation.service.spec.ts`, `shell-layout.spec.ts` y `patient-chart.spec.ts`** necesitaron un
+  ajuste — son los mismos "inventarios" que W2 ya había tocado por el mismo motivo: una sección o
+  un bloque nuevo mueve una lista que las pruebas fijan a mano. `cypress/e2e/navigation/navegacion.cy.ts`
+  tiene el mismo problema (le falta hasta `/tutorials`, de la sesión de tutoriales) pero es e2e, no
+  entra en la verificación mínima del carril, y arreglarlo es de quien lo dejó así.
+
+`yarn lint` · `yarn typecheck` · `yarn test` (2102/2102) · `yarn build` · `check-route-prefixes.mjs`
+en el frontend; `yarn lint` · `yarn typecheck` · `yarn test` (4703/4704, 1 skipped) en el backend.
+`yarn test:integration` tiene 3 suites rojas ajenas a este carril (`vademecum` por un `.sql` que
+falta en el filesystem, `identity-verification-cycle` y `audit-worm`, ninguna toca `chart` ni
+`forms`) — no se tocaron.
 
 ---
 
@@ -1004,3 +1338,172 @@ servicio ya pide tres). Es trabajo a medio camino de otra sesión, no de este ca
 `yarn lint` · `yarn typecheck` · `yarn test` · `yarn build` en este repo.
 `yarn lint` · `yarn typecheck` · `yarn test` en el backend.
 
+---
+
+## Sesión en curso · Carril R2-5 — formularios estándar por especialidad, catalogados
+
+**Empezó:** 2026-08-14 · **Ramas:** `carril-r2-5/formularios-estandar` en los dos repos, desde
+`dev` en cada uno (el backend está hoy en `dev`, no en `master`).
+Plan completo en `CARRIL-R2-5-formularios-estandar.md`; índice de la ronda en
+`CARRILES-R2-2026-08-14-README.md`.
+
+Punto 5 del reclamo: «NO ESTAN LOS FORMULARIOS: DESCARGAR DE INTERNET LA VERSION GENERAL BASE DE
+CADA FORMULARIO ESTANDAR POR ESPECIALIDAD Y DEBE ESTAR CATALOGADO.» La ronda anterior entregó el
+motor (armar plantillas a mano); **este carril carga el contenido y lo cataloga**. El motor no se
+reescribe.
+
+### 🔴 Bloqueador: `chart.specialty_chart_templates` no tiene dónde guardar la procedencia
+
+El cliente pide que cada formulario esté **catalogado**, y el carril exige que cada uno guarde de
+dónde salió —organismo, URL, licencia, versión de origen, fecha de descarga— como **campo del
+catálogo, no como nota suelta**. La entidad no tiene ninguna de esas columnas:
+
+`mantra-core-health-api/src/modules/chart/entities/specialty_chart_templates.entity.ts` declara
+exactamente `id`, `specialty_concept_id`, `tenant_id`, `code`, `name`, `section_id`, `version`,
+`status_concept_id` y las cuatro de auditoría. **Ni una columna de procedencia.** Tampoco la
+sección que aloja el esquema (`forms.dynamic_field_sections`): `code`, `name`,
+`parent_section_id`, `ordinal`, `state_concept_id` y auditoría, sin ningún `jsonb`.
+
+**No se agregó la columna a mano** — `SQL/` no vive en ninguno de los dos repos y el pipeline es
+`.puml` → `gen_ddl.py` → `SQL/patches/` → base (advertencia de `CARRILES-R2-2026-08-14-README.md`
+y P14 de `PENDIENTES-BACKEND.md`). Lo que haría falta, para quien tenga acceso al modelo:
+
+| Tabla | Columna | Tipo | Por qué |
+|---|---|---|---|
+| `chart.specialty_chart_templates` | `source_organization` | `varchar` | Organismo que publica el formulario |
+| `chart.specialty_chart_templates` | `source_url` | `text` | De dónde se bajó |
+| `chart.specialty_chart_templates` | `source_license` | `varchar` | Licencia bajo la que se puede usar |
+| `chart.specialty_chart_templates` | `source_version` | `varchar` | Versión/edición del formulario original |
+| `chart.specialty_chart_templates` | `source_retrieved_at` | `date` | Cuándo se descargó |
+
+**Mientras tanto (y esto va explícito en el PR, no implícito):** la procedencia viaja **dentro del
+propio esquema de la plantilla, en una clave reservada** — un `forms.dynamic_field_definitions`
+de código `__catalog__` cuyo `default_value_json` (jsonb, ya existente) guarda la ficha entera.
+`ChartTemplatesService.resolveFields` lo **saca de `fields`** y lo publica como `provenance` en
+`ChartTemplateResponseDto`, así que ningún consumidor lo ve como campo a completar —
+`specialty-form-block` incluido, que no se tocó. El día que existan las columnas, el seed escribe
+ahí y la clave reservada se retira sin cambiar el contrato del frontend.
+
+### Especialidades: no existían como conceptos
+
+`terminology` sólo tenía `profiles:SPECIALTY_GENERAL` (`dynamic-enum-catalog.ts:338-343`). Sin
+concepto no hay `specialty_concept_id` al que colgar una plantilla, así que **las siembra este
+mismo carril**, en su propio servicio, como pide el plan. **No toqué `terminology-seed.service.ts`
+ni `module-concepts.ts`** — son de R2-6 en esta ronda.
+
+### Archivos nuevos (no chocan con nada)
+
+**Backend (`mantra-core-health-api`)**
+
+```text
+src/common/seed/clinical-forms-seed.service.ts            + .spec.ts
+src/common/seed/data/clinical-forms/catalog.ts            barrel tipado de las definiciones
+src/common/seed/data/clinical-forms/<especialidad>/*.json 16 formularios estándar
+```
+
+**Frontend (`mantra-core-health`)**
+
+```text
+src/app/features/admin/clinical-forms/forms-catalog.ts + .html + .css + .spec.ts
+```
+
+### Archivos existentes que toco
+
+| Repo | Archivo | Qué le hago |
+|---|---|---|
+| api | `src/common/seed/seed.module.ts` | Una línea al final de `providers` y otra de `exports`, más las entidades del seed en `forReference`. **Nada existente se reordena** — es el patrón que el README de carriles pide para `src/common/seed/` compartido con R2-3 y R2-6 |
+| api | `src/common/seed/seed-bootstrap.service.ts` | Una llamada `runDependent` **al final**, antes del admin de arranque. Sin esto el seed queda registrado pero no corre |
+| api | `src/modules/chart/services/chart-templates.service.ts` | `resolveFields` filtra la clave reservada y `toResponse` publica `provenance`. **Aditivo**: una plantilla sin procedencia responde exactamente lo mismo que hoy |
+| api | `src/modules/chart/dto/templates.dto.ts` | `ChartTemplateProvenanceDto` + el campo opcional `provenance` en la respuesta. Nada existente cambia de forma |
+| api | `src/modules/chart/repositories/chart-templates.repository.ts` | `CreateTemplateFieldData` acepta `defaultValueJson?` opcional. Aditivo |
+| api | `tsconfig.json` | `"resolveJsonModule": true`. Hace falta para que las definiciones vivan en `.json` versionado, como pide el carril, en vez de tipeadas dentro de un `.ts`. Verificado que `tsc` copia los `.json` a `dist/` y que jest los resuelve |
+| front | `src/app/features/admin/clinical-forms/clinical-forms.{ts,html}` | Import del catálogo + una sección **al final** de la plantilla. La pantalla de armado no se reescribe |
+| front | `src/app/core/data-access/chart-templates/chart-templates.types.ts` | `ChartTemplateProvenance` y el campo opcional `provenance`. **Sólo tipos nuevos**; el cliente no cambia |
+
+**No toco `navigation.map.ts` ni `app.routes.ts`**: la sección «Formularios clínicos» ya existe y
+el catálogo va adentro de esa pantalla, no en una ruta nueva. Ni `forms.client.ts`,
+`patient-chart.ts`, `specialty-form-block/`, ni el módulo `forms` del backend.
+
+### 🟡 Formularios que quedaron afuera por licencia
+
+Van listados con su reemplazo libre en el PR y en el README del directorio de datos
+(`src/common/seed/data/clinical-forms/README.md`). Resumen: los instrumentos propietarios de
+sociedades científicas y editoriales (MMSE, Beck, AUDIT en su versión editorial, escalas de
+sociedades de cardiología) **no se cargaron**. Se cargó únicamente material de dominio público o
+con licencia abierta —OMS/OPS, CDC, ministerios de salud— y cada archivo guarda su URL y su
+licencia. No se omitió nada en silencio.
+
+### ⚠️ Del otro repo: `yarn.lock` del backend llegó ya modificado
+
+Al arrancar, `mantra-core-health-api` tenía `yarn.lock` con una entrada borrada
+(`@aws-sdk/s3-request-presigner`) sin commitear, de otra sesión. **No lo toqué ni lo restauré.**
+
+### Verificación, ya corrida
+
+Los dos repos se verificaron en un `git worktree` aparte, contra el commit de la rama y **no**
+contra el working tree compartido: mientras duró este carril, la sesión de R2-6 estaba editando
+`glossary.{ts,html}` y todo `src/modules/terminology/**`, y su estado intermedio rompía la
+compilación de plantillas de Angular. Ninguno de esos archivos es de R2-5.
+
+| Repo | Comando | Resultado |
+|---|---|---|
+| front | `yarn typecheck` · `yarn test` · `yarn build` | limpio · **2281/2281** · limpio |
+| front | `yarn lint` | 1 error **preexistente y ajeno**: `dashboard.ts:29` importa `TutorialTarget` sin usarlo. Viene de `dev`, no lo toqué |
+| api | `yarn lint` · `yarn typecheck` · `yarn build` | limpios. El build copia los 15 `.json` a `dist/src/common/seed/data/` — comprobado |
+| api | `yarn test` | **4772 pasan**, 1 saltada |
+| api | `yarn test:integration` | **no corrida**: necesita el stack levantado y `postgres-init` falla en esta máquina porque `SQL/` está vacío (ver abajo) |
+
+### Y se corrió de verdad, que es donde apareció el único bug
+
+Se construyó `mantra-redesa-api:r2-5` desde el worktree de la rama —**no** se pisó
+`mantra-redesa-api:local`, que la sesión de R2-6 había reconstruido desde la suya— y se levantó el
+servicio `api` en el puerto **3005** (el 3000 lo tenía tomado la API que corre esa otra sesión).
+
+Contra la base de desarrollo, tras el arranque:
+
+```text
+plantillas: 15   especialidades: 10   campos: 245  (230 visibles + 15 fichas de procedencia)
+```
+
+Repartidas: 4 transversales, 2 cardiología, 2 pediatría, y 1 de ginecología y obstetricia,
+traumatología, oftalmología, odontología, psiquiatría, dermatología y medicina interna.
+**Reiniciado el contenedor, los tres números no se mueven** — la idempotencia del punto 4 de la
+definición de hecho está comprobada contra base, no sólo contra mocks.
+
+**El bug que sólo aparece corriéndolo** (commit `3d8506ab`): la sección y la plantilla se creaban
+en el mismo flush, y `specialty_chart_templates.section_id` es una columna `uuid` plana con FK, no
+una relación del ORM. MikroORM ordena los inserts por tabla, así que la plantilla entraba antes que
+su sección y la base rechazaba el lote entero con
+`fk_specialty_chart_templates_section_id`. El seed quedaba como «Seed dependiente omitido» en el
+arranque y el catálogo, vacío — exactamente el síntoma del que salió este carril. Es el mismo
+motivo por el que `TerminologySeedService` flushea por niveles. La prueba nueva anota los `flush`
+en la misma bitácora que los `create` y afirma el orden.
+
+### 🟡 Dos cosas ajenas que encontré por el camino
+
+- **`yarn.lock` del backend no instala con `--immutable`.** El `Dockerfile` hace
+  `yarn install --immutable` y falla: el lockfile commiteado en `dev` arrastra una entrada huérfana
+  de `@aws-sdk/s3-request-presigner@3.1094.0` que `package.json` ya no pide (sólo declara
+  `@aws-sdk/client-s3`). Yarn quiere podarla y `--immutable` lo prohíbe. **No es de este carril y no
+  lo commiteé**: el `yarn.lock` ya podado estaba sin commitear en el working tree compartido cuando
+  llegué. Para construir la imagen lo copié al worktree como entrada de build, nada más. Quien
+  mergee primero debería llevarse esa poda.
+- **`postgres-init` falla en esta máquina.** Busca `/init/SQL/apply_all.sql` y
+  `/init/NoSQL/58_time_series_timescaledb/…`, y `alovida/SQL/` está vacío — el pipeline `.puml` →
+  `gen_ddl.py` → `SQL/patches/` no vive en ningún repo git. El esquema ya estaba aplicado
+  (`apply_all: iam.users ya existe — skip`), así que el `api` se levantó con `--no-deps`. Es la
+  advertencia de siempre del README de carriles, no una regresión.
+
+### Ramas y PR
+
+Pusheadas las dos: `carril-r2-5/formularios-estandar` en ambos repos. **Los PR quedan por abrir a
+mano**: `gh` no está instalado en esta máquina y no hay token de GitHub en el entorno (el push va
+por Git Credential Manager).
+
+- Backend: <https://github.com/mdavila-2001/mantra-core-health-api/pull/new/carril-r2-5/formularios-estandar>
+- Frontend: <https://github.com/mdavila-2001/mantra-core-health/pull/new/carril-r2-5/formularios-estandar>
+
+En el cuerpo del PR van, sí o sí, las dos cosas que este carril no puede dejar implícitas: el
+**bloqueador de las columnas de procedencia** (arriba) y la **lista de formularios que quedaron
+afuera por licencia**, con su reemplazo libre, que está en
+`src/common/seed/data/clinical-forms/README.md`.

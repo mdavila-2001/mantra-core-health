@@ -130,9 +130,29 @@ describe('ShellLayout', () => {
     // armazón porque no es una sección del producto.
     expect(rutasDelMenu()).toEqual([
       '/dashboard',
-      '/feed',
+      // Los tutoriales tampoco exigen rol.
+      '/tutorials',
+      // La **Guía de profesionales** ya no está: desde la corrección #2 del
+      // 15/08/2026 declara `roles: ['PATIENT']` y excluyentes, y una sesión sin
+      // roles no es una sesión de paciente. El directorio de laboratorios sí
+      // sigue: es oferta publicada, no PHI, y lo consulta cualquiera que
+      // necesite un estudio.
+      '/laboratory-directory',
+      // El glosario tampoco: accesible por cada profesional, no sólo por
+      // quien administra.
+      '/glossary',
       '/my-account',
       '/my-account/appointments',
+      // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que
+      // «Mis turnos»: el filtro real es tener perfil de paciente, que es un
+      // dato de la cuenta y no un rol.
+      '/my-account/medical-record',
+      // Los resultados propios no exigen rol por lo mismo que los turnos: el
+      // filtro real es tener perfil de paciente, que es un dato de la cuenta.
+      '/my-account/diagnostic-results',
+      // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
+      // perfil de paciente, que es un dato de la cuenta y no un rol.
+      '/my-account/questionnaires',
       '/my-account/identity/verify',
       '/my-account/identity/cases',
       '/design-system',

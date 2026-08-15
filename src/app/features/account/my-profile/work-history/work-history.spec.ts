@@ -209,4 +209,59 @@ describe('WorkHistory', () => {
 
     http.verify();
   });
+
+  /* ---- layout="timeline" (embebido en la pestaña Trayectoria) ------------ */
+
+  it('en layout="timeline" no dibuja su propio listado, sólo el formulario', async () => {
+    const { fixture, http } = await montar('prac-1');
+    fixture.componentRef.setInput('layout', 'timeline');
+
+    http.expectOne(AFILIACIONES).flush({ items: [enCable()], count: 1 });
+    http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('Historial laboral');
+    expect(texto).not.toContain('Hospital Obrero N.º 1');
+    expect(texto).toContain('Agregar un vínculo');
+
+    http.verify();
+  });
+
+  it('en layout="flat" (por defecto) sigue dibujando su propio listado', async () => {
+    const { fixture, http } = await montar('prac-1');
+
+    http.expectOne(AFILIACIONES).flush({ items: [enCable()], count: 1 });
+    http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Historial laboral');
+
+    http.verify();
+  });
+
+  it('emite `added` tras un alta exitosa', async () => {
+    const { fixture, http } = await montar('prac-1');
+
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+    http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+
+    let emitido = false;
+    fixture.componentInstance.added.subscribe(() => (emitido = true));
+
+    const componente = api(fixture);
+    componente['institucion'].set('Clínica del Sur');
+    componente['cargo'].set('Jefe de guardia');
+    componente['desde'].set(new Date(2021, 2, 1));
+    fixture.detectChanges();
+    componente['registrar']();
+
+    http
+      .expectOne((r) => r.url === AFILIACIONES && r.method === 'POST')
+      .flush(enCable({ id: 'af-2' }));
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+
+    expect(emitido).toBe(true);
+    http.verify();
+  });
 });

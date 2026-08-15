@@ -302,6 +302,9 @@ function cupoMock(id: string) {
   };
 }
 
+/** El motivo que devuelve el diálogo en las pruebas (corrección #14). */
+const MOTIVO_DE_PRUEBA = 'Me surgió un viaje esa semana';
+
 interface Opciones {
   readonly bookings: readonly ReturnType<typeof citaMock>[];
   readonly labels: readonly [string, unknown][];
@@ -322,6 +325,13 @@ function montarCancelacion(opts: Opciones) {
     .mockReturnValue(of({ bookingId: 'x', fromSlotId: 'a', toSlotId: 'b' }));
   const readConceptLabels = vi.fn().mockReturnValue(of(new Map(opts.labels)));
   const confirm = vi.fn().mockResolvedValue(opts.confirm ?? true);
+  /**
+   * Cancelar y reprogramar piden motivo (corrección #14): el diálogo devuelve
+   * el texto, o `null` si se arrepintieron. `opts.confirm: false` es ese `null`.
+   */
+  const confirmWithReason = vi
+    .fn()
+    .mockResolvedValue((opts.confirm ?? true) ? MOTIVO_DE_PRUEBA : null);
   const toast = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
 
   TestBed.configureTestingModule({
@@ -339,7 +349,7 @@ function montarCancelacion(opts: Opciones) {
         provide: AuthService,
         useValue: { patientProfileId: () => 'p-1', activeTenantId: () => opts.tenant ?? null },
       },
-      { provide: DialogService, useValue: { confirm } },
+      { provide: DialogService, useValue: { confirm, confirmWithReason } },
       { provide: ToastService, useValue: toast },
       provideRouter([]),
     ],
@@ -354,6 +364,7 @@ function montarCancelacion(opts: Opciones) {
     cancelBooking,
     rescheduleBooking,
     confirm,
+    confirmWithReason,
     toast,
   };
 }
@@ -440,14 +451,21 @@ describe('Appointments · cancelar turno propio', () => {
     expect(cancelBooking).not.toHaveBeenCalled();
   });
 
-  it('con la confirmación afirmativa cancela como PATIENT', async () => {
+  it('con la confirmación afirmativa cancela como PATIENT y manda el motivo', () => {
     const { comp, cancelBooking } = montarCancelacion({
       bookings: [citaMock('b1', 's1')],
       labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
     });
 
-    await api(comp).cancelarTurno(api(comp).turnosListos()[0]);
-    expect(cancelBooking).toHaveBeenCalledWith('b1', { cancelledBy: 'PATIENT' });
+    return api(comp)
+      .cancelarTurno(api(comp).turnosListos()[0])
+      .then(() => {
+        // El motivo viaja siempre: el servidor lo exige (corrección #14).
+        expect(cancelBooking).toHaveBeenCalledWith('b1', {
+          cancelledBy: 'PATIENT',
+          reasonText: MOTIVO_DE_PRUEBA,
+        });
+      });
   });
 
   it('tras cancelar releé turnos y horarios y avisa el éxito', async () => {
@@ -473,7 +491,11 @@ describe('Appointments · cancelar turno propio', () => {
     });
     cancelBooking.mockReturnValue(
       throwError(
-        () => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: 'La cita ya está cancelada' } }),
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: { code: 'CONFLICT', message: 'La cita ya está cancelada' },
+          }),
       ),
     );
     const horarios = vi.spyOn(comp as unknown as { cargarHorarios(): void }, 'cargarHorarios');
@@ -497,7 +519,10 @@ describe('Appointments · cancelar turno propio', () => {
         () =>
           new HttpErrorResponse({
             status: 422,
-            error: { code: 'PRECONDITION_FAILED', message: 'La cita no está en un estado cancelable' },
+            error: {
+              code: 'PRECONDITION_FAILED',
+              message: 'La cita no está en un estado cancelable',
+            },
           }),
       ),
     );
@@ -645,7 +670,9 @@ describe('Appointments · reprogramar turno propio', () => {
     expect(fixture.nativeElement.querySelector('.turnos__horario a')).toBeNull();
     expect(fixture.nativeElement.querySelector('.turnos__mover')).not.toBeNull();
     // Y el aviso dice qué turno se está moviendo, con su salida.
-    expect(fixture.nativeElement.querySelector('[data-testid="turnos-reprogramando"]')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="turnos-reprogramando"]'),
+    ).not.toBeNull();
   });
 
   it('con la confirmación negada no llama a rescheduleBooking', async () => {
@@ -674,7 +701,10 @@ describe('Appointments · reprogramar turno propio', () => {
 
     await a.reprogramarA(HORARIO);
 
-    expect(rescheduleBooking).toHaveBeenCalledWith('b1', { toSlotId: 'slot-9' });
+    expect(rescheduleBooking).toHaveBeenCalledWith('b1', {
+      toSlotId: 'slot-9',
+      reasonText: MOTIVO_DE_PRUEBA,
+    });
   });
 
   it('tras mover releé turnos y horarios, limpia el modo y avisa el éxito', async () => {
@@ -865,3 +895,116 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
     expect(texto).toContain('encabezado');
   });
 });
+
+// Carril 06 — vista dual (corrección #10) y motivo visible (corrección #14).
+
+describe('Appointments · lista y calendario', () => {
+  it('arranca en lista y el calendario no está dibujado', () => {
+    const { fixture } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+    });
+
+    expect(fixture.nativeElement.querySelector('.turnos__lista')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-appointment-calendar')).toBeNull();
+  });
+
+  it('el conmutador cambia de vista y las dos miran los MISMOS turnos', async () => {
+    const { fixture, comp, searchBookings } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+    });
+    const lecturasAntes = searchBookings.mock.calls.length;
+
+    vista(comp).elegirVista('calendario');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-appointment-calendar')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.turnos__lista')).toBeNull();
+    // Ni una lectura más: el calendario pinta lo que la lista ya trajo. Si
+    // pidiera lo suyo, las dos vistas podrían discrepar.
+    expect(searchBookings.mock.calls.length).toBe(lecturasAntes);
+    expect(vista(comp).turnosDeCalendario()).toHaveLength(1);
+  });
+
+  it('elegir un turno en el calendario abre el detalle con sus acciones', async () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+    });
+
+    vista(comp).elegirVista('calendario');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    vista(comp).abrirDetalle('b1');
+    fixture.detectChanges();
+
+    const detalle = fixture.nativeElement.querySelector('[data-testid="turnos-detalle"]');
+    expect(detalle).not.toBeNull();
+    expect(detalle.textContent).toContain('Cancelar');
+  });
+});
+
+describe('Appointments · el motivo del cambio llega al paciente', () => {
+  it('la lista dice quién lo hizo y qué escribió', () => {
+    const cancelada = {
+      ...citaMock('b1', 's1'),
+      statusReason: {
+        reasonText: 'El profesional tuvo una urgencia',
+        actorKind: 'PROVIDER' as const,
+        changedAt: new Date('2026-08-13T15:00:00.000Z'),
+      },
+    };
+    const { fixture } = montarCancelacion({
+      bookings: [cancelada],
+      labels: [etiqueta('s1', 'BOOKING_CANCELLED')],
+    });
+    fixture.detectChanges();
+
+    const aviso = fixture.nativeElement.querySelector('[data-testid="turnos-motivo-cambio"]');
+    expect(aviso?.textContent).toContain('El profesional indicó');
+    expect(aviso?.textContent).toContain('El profesional tuvo una urgencia');
+  });
+
+  it('lo que hizo el propio paciente no se le atribuye al profesional', () => {
+    const propia = {
+      ...citaMock('b1', 's1'),
+      statusReason: {
+        reasonText: 'Me surgió un viaje',
+        actorKind: 'PATIENT' as const,
+        changedAt: new Date('2026-08-13T15:00:00.000Z'),
+      },
+    };
+    const { fixture } = montarCancelacion({
+      bookings: [propia],
+      labels: [etiqueta('s1', 'BOOKING_CANCELLED')],
+    });
+    fixture.detectChanges();
+
+    const aviso = fixture.nativeElement.querySelector('[data-testid="turnos-motivo-cambio"]');
+    expect(aviso?.textContent).toContain('Indicaste');
+    expect(aviso?.textContent).not.toContain('El profesional');
+  });
+
+  it('un turno que nadie cambió no muestra ningún aviso', () => {
+    const { fixture } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="turnos-motivo-cambio"]')).toBeNull();
+  });
+});
+
+/** Acceso tipado a lo que las pruebas de vista dual ejercen. */
+function vista(comp: Appointments) {
+  return comp as unknown as {
+    elegirVista(v: 'lista' | 'calendario'): void;
+    abrirDetalle(id: string): void;
+    enCalendario(): boolean;
+    turnosDeCalendario(): readonly unknown[];
+  };
+}

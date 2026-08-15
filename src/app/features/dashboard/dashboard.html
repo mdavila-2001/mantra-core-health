@@ -1,12 +1,16 @@
 <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
      acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
-<app-page-header title="Panel" subtitle="Tu organización, tus accesos y el estado del sistema." />
+<app-page-header
+  title="Panel"
+  subtitle="Tu organización, tus accesos y el estado del sistema."
+  appTutorialTarget="panel-titulo"
+/>
 
 <!-- ─── Cifras ──────────────────────────────────────────────────────────────
      Cuatro tarjetas angostas en una fila propia. Van arriba porque son la
      respuesta más corta a «¿cómo está esto hoy?», y separadas del resto porque
      mezclarlas con las tarjetas de contenido las volvería una más. -->
-<section class="panel__cifras" aria-label="Resumen">
+<section class="panel__cifras" aria-label="Resumen" appStaggerList>
   @if (puedeVerPacientes()) {
     <app-card variant="outlined" padding="md" data-testid="panel-cifra-pacientes">
       <p class="panel__cifra-rotulo">Pacientes registrados</p>
@@ -58,7 +62,7 @@
   </app-card>
 </section>
 
-<div class="panel__grid">
+<div class="panel__grid" appStaggerList>
   <!-- ─── Accesos ───────────────────────────────────────────────────────────
        La lista sale de `NavigationService`, el mismo origen del menú lateral:
        una sección nueva aparece acá sola, y una que se apaga desaparece de los
@@ -67,16 +71,30 @@
   <app-card variant="outlined" padding="lg" class="panel__bloque--ancho" data-testid="panel-accesos">
     <h2 class="panel__card-title">Tus accesos</h2>
     <p class="panel__nota">
-      Lo que tus roles habilitan en esta organización. Las secciones en
-      construcción se muestran para que sepas qué viene, no para entrar.
+      Lo que tus roles habilitan en esta organización. Pasá el cursor o llegá con
+      el tabulador para ver qué hace cada una.
     </p>
 
-    <ul class="panel__accesos">
+    <!-- Corrección #1: acciones visuales, no tarjetas con descripción pegada.
+         El resumen vive en el tooltip —que aparece con el puntero **y con el
+         foco**— y además en el `aria-label`, así que quien navega con lector de
+         pantalla recibe rótulo y explicación sin depender del globo. -->
+    <ul class="panel__accesos" appTutorialTarget="panel-accesos">
       @for (seccion of seccionesDisponibles(); track seccion.path) {
         <li>
-          <a class="panel__acceso" [routerLink]="'/' + seccion.path">
+          <a
+            class="panel__acceso"
+            data-testid="panel-acceso"
+            [attr.data-ruta]="'/' + seccion.path"
+            [routerLink]="'/' + seccion.path"
+            [attr.aria-label]="seccion.label + '. ' + seccion.summary"
+            [appTooltip]="seccion.summary"
+            appTooltipPosition="bottom"
+          >
+            <span class="panel__acceso-icono">
+              <app-nav-icon [name]="seccion.icon" />
+            </span>
             <span class="panel__acceso-nombre">{{ seccion.label }}</span>
-            <span class="panel__acceso-resumen">{{ seccion.summary }}</span>
           </a>
         </li>
       }
@@ -84,13 +102,20 @@
       @for (seccion of seccionesPlanificadas(); track seccion.path) {
         <li>
           <!-- Sin enlace: lleva al placeholder y prometer una pantalla que no
-               existe es peor que decir que falta. -->
-          <div class="panel__acceso panel__acceso--planificada">
-            <span class="panel__acceso-nombre">
-              {{ seccion.label }}
-              <app-badge variant="secondary" value="En construcción" />
+               existe es peor que decir que falta. Tampoco lleva tooltip: un
+               globo pide foco, y esto no es enfocable justamente porque no se
+               puede entrar. Lo que hay que saber —que está en construcción— se
+               dice con el sello, a la vista y sin interacción. -->
+          <div
+            class="panel__acceso panel__acceso--planificada"
+            data-testid="panel-acceso-planificado"
+            [attr.aria-label]="seccion.label + '. En construcción. ' + seccion.summary"
+          >
+            <span class="panel__acceso-icono">
+              <app-nav-icon [name]="seccion.icon" />
             </span>
-            <span class="panel__acceso-resumen">{{ seccion.summary }}</span>
+            <span class="panel__acceso-nombre">{{ seccion.label }}</span>
+            <app-badge variant="secondary" value="En construcción" />
           </div>
         </li>
       }

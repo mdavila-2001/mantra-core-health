@@ -306,6 +306,7 @@ describe('ProfilesClient', () => {
     credentials: [],
     licenses: [],
     languages: [],
+    affiliations: [],
     activity: { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 },
     createdAt: '2024-02-01T00:00:00.000Z',
   };
@@ -320,6 +321,40 @@ describe('ProfilesClient', () => {
 
     expect(perfil?.professionalTitle).toBe('Cardióloga');
     expect(perfil?.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('getOwnPractitionerProfile trae el historial laboral con sus fechas convertidas', () => {
+    let perfil:
+      | { affiliations: readonly { organizationName: string; current: boolean; startDate: Date }[] }
+      | undefined;
+    client.getOwnPractitionerProfile().subscribe((p) => (perfil = p));
+
+    http.expectOne('/profiles/practitioners/me/summary').flush({
+      ...PERFIL_WIRE,
+      affiliations: [
+        {
+          id: 'aff-1',
+          practitionerProfileId: 'per-1',
+          organizationName: 'Hospital Obrero N.º 1',
+          roleTitle: 'Médica de planta',
+          departmentText: null,
+          practiceSiteId: null,
+          affiliationTypeConceptId: null,
+          startDate: '2018-01-01',
+          endDate: null,
+          current: true,
+          status: 'c-activo',
+          createdAt: '2018-01-02T00:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(perfil?.affiliations).toHaveLength(1);
+    expect(perfil?.affiliations[0]).toMatchObject({
+      organizationName: 'Hospital Obrero N.º 1',
+      current: true,
+    });
+    expect(perfil?.affiliations[0].startDate).toBeInstanceOf(Date);
   });
 
   it('updateOwnPractitionerProfile manda un PATCH con sólo lo que cambió', () => {

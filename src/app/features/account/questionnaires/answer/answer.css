@@ -1,0 +1,42 @@
+/* ============================================================================
+    Responder un cuestionario.
+
+    Una pregunta por tarjeta y una sola columna: el formulario lo arma el
+    profesional y puede tener cualquier largo, así que la pantalla optimiza para
+    no perder el hilo entre pregunta y respuesta antes que para ocupar el ancho.
+    ========================================================================== */
+
+.responder__consigna {
+  color: var(--text-secondary);
+  margin-block: 0 var(--sp-4);
+}
+
+.responder__aviso {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
+.responder__form {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.responder__pregunta {
+  display: block;
+}
+
+/*
+  Las casillas de elección múltiple se apilan. En fila serían más compactas,
+  pero con opciones de largo desigual las etiquetas dejan de alinearse con su
+  control y se vuelve ambiguo cuál pertenece a cuál.
+*/
+.responder__opciones {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.responder__acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-start: var(--sp-2);
+}

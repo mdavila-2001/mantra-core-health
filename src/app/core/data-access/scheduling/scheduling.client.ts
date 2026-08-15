@@ -5,23 +5,36 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AgendaResource,
+  AgendaResourceCreated,
   AgendaResourcePage,
   AgendaResourceQuery,
   AgendaSlot,
   AgendaSlotPage,
   AgendaSlotQuery,
+  AvailabilityExceptionCreated,
   Booking,
   BookingCancellation,
   BookingCancelled,
   BookingCheckedIn,
+  BookingDecision,
   BookingConfirmation,
   BookingConfirmed,
   BookingPage,
+  BookingPolicyCreated,
   BookingQuery,
+  BookingRequest,
   BookingReschedule,
   BookingRescheduled,
+  BookingStatusReason,
+  GenerateSlotsRequest,
+  NewAgendaResource,
+  NewAvailabilityException,
+  NewBookingPolicy,
   NewHold,
+  NewScheduleTemplate,
+  ScheduleTemplateCreated,
   SlotHold,
+  SlotsGenerated,
 } from './scheduling.types';
 
 /**
@@ -151,6 +164,120 @@ export class SchedulingClient {
       .pipe(map(toBooking));
   }
 
+  /* -- Construcción de agenda (UC-41-01 → UC-41-04) ------------------------
+     Las cinco fases del alta. Los cuerpos se arman campo a campo: un opcional
+     en `undefined` viaja como clave declarada y el backend lo rechaza con 400
+     (`forbidNonWhitelisted`). Cada respuesta trae el id que consume la fase
+     siguiente. */
+
+  /**
+   * `POST /scheduling/resources` — da de alta un recurso agendable (UC-41-01).
+   *
+   * Es la primera fase: sin recurso no hay dónde colgar la plantilla ni las
+   * excepciones. Devuelve el `id` que las dos usan en su ruta.
+   */
+  createResource(resource: NewAgendaResource): Observable<AgendaResourceCreated> {
+    return this.http.post<AgendaResourceCreated>(this.url('/scheduling/resources'), {
+      tenantId: resource.tenantId,
+      resourceType: resource.resourceType,
+      resourceRefType: resource.resourceRefType,
+      resourceRefId: resource.resourceRefId,
+      name: resource.name,
+      ...(resource.practiceId === undefined ? {} : { practiceId: resource.practiceId }),
+      ...(resource.timeZone === undefined ? {} : { timeZone: resource.timeZone }),
+      ...(resource.capacity === undefined ? {} : { capacity: resource.capacity }),
+    });
+  }
+
+  /**
+   * `POST /scheduling/booking-policies` — define una política de reserva
+   * (UC-41-01). Su `id` es opcional aguas abajo: la plantilla puede referirla
+   * en `bookingPolicyId`.
+   */
+  createPolicy(policy: NewBookingPolicy): Observable<BookingPolicyCreated> {
+    return this.http.post<BookingPolicyCreated>(this.url('/scheduling/booking-policies'), {
+      tenantId: policy.tenantId,
+      code: policy.code,
+      name: policy.name,
+      ...(policy.practiceId === undefined ? {} : { practiceId: policy.practiceId }),
+      ...(policy.minNoticeMinutes === undefined
+        ? {}
+        : { minNoticeMinutes: policy.minNoticeMinutes }),
+      ...(policy.maxAdvanceDays === undefined ? {} : { maxAdvanceDays: policy.maxAdvanceDays }),
+      ...(policy.cancellationWindowMinutes === undefined
+        ? {}
+        : { cancellationWindowMinutes: policy.cancellationWindowMinutes }),
+      ...(policy.noShowFeeAmount === undefined ? {} : { noShowFeeAmount: policy.noShowFeeAmount }),
+      ...(policy.maxActivePerPatient === undefined
+        ? {}
+        : { maxActivePerPatient: policy.maxActivePerPatient }),
+      ...(policy.holdTtlSeconds === undefined ? {} : { holdTtlSeconds: policy.holdTtlSeconds }),
+    });
+  }
+
+  /**
+   * `POST /scheduling/resources/:id/templates` — publica una plantilla con sus
+   * franjas semanales (UC-41-02). Cada franja se arma campo a campo por la
+   * misma razón que el cuerpo: sus opcionales no pueden viajar en `undefined`.
+   */
+  createTemplate(
+    resourceId: string,
+    template: NewScheduleTemplate,
+  ): Observable<ScheduleTemplateCreated> {
+    return this.http.post<ScheduleTemplateCreated>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
+      {
+        name: template.name,
+        rules: template.rules.map((rule) => ({
+          dayOfWeek: rule.dayOfWeek,
+          startTime: rule.startTime,
+          endTime: rule.endTime,
+          ...(rule.slotMinutes === undefined ? {} : { slotMinutes: rule.slotMinutes }),
+          ...(rule.capacityPerSlot === undefined ? {} : { capacityPerSlot: rule.capacityPerSlot }),
+        })),
+        ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
+        ...(template.bookingPolicyId === undefined
+          ? {}
+          : { bookingPolicyId: template.bookingPolicyId }),
+        ...(template.validFrom === undefined ? {} : { validFrom: template.validFrom }),
+        ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
+      },
+    );
+  }
+
+  /**
+   * `POST /scheduling/templates/:id/generate-slots` — materializa los slots de
+   * la plantilla en una ventana (UC-41-03). Idempotente: reejecutar no duplica,
+   * los ya existentes vuelven como `skipped`.
+   */
+  generateSlots(templateId: string, window: GenerateSlotsRequest): Observable<SlotsGenerated> {
+    return this.http.post<SlotsGenerated>(
+      this.url(`/scheduling/templates/${encodeURIComponent(templateId)}/generate-slots`),
+      { from: window.from, to: window.to },
+    );
+  }
+
+  /**
+   * `POST /scheduling/resources/:id/exceptions` — registra una excepción de
+   * disponibilidad (UC-41-04). Bloquea los slots libres que se solapan; las
+   * citas ya reservadas no se tocan.
+   */
+  createException(
+    resourceId: string,
+    exception: NewAvailabilityException,
+  ): Observable<AvailabilityExceptionCreated> {
+    return this.http.post<AvailabilityExceptionCreated>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/exceptions`),
+      {
+        exceptionType: exception.exceptionType,
+        startAt: exception.startAt,
+        endAt: exception.endAt,
+        ...(exception.reason === undefined ? {} : { reason: exception.reason }),
+        ...(exception.isAvailable === undefined ? {} : { isAvailable: exception.isAvailable }),
+      },
+    );
+  }
+
   /**
    * `POST /scheduling/slots/:id/holds` — retiene un cupo (UC-41-05).
    *
@@ -187,15 +314,42 @@ export class SchedulingClient {
   }
 
   /**
+   * `POST /scheduling/holds/:holdToken/request` — solicita la cita
+   * (corrección #11).
+   *
+   * Es la otra salida de la misma retención: `confirmHold` compromete la agenda
+   * y esto la **pide**. La cita nace pendiente y el profesional la acepta o la
+   * rechaza desde su agenda.
+   */
+  requestHold(holdToken: string, request: BookingRequest): Observable<BookingConfirmed> {
+    return this.http.post<BookingConfirmed>(
+      this.url(`/scheduling/holds/${encodeURIComponent(holdToken)}/request`),
+      {
+        tenantId: request.tenantId,
+        patientProfileId: request.patientProfileId,
+        channel: request.channel,
+        ...(request.reasonText === undefined ? {} : { reasonText: request.reasonText }),
+      },
+    );
+  }
+
+  /**
    * `POST /scheduling/bookings/:id/cancel` — cancela y libera el cupo
    * (UC-41-09). El cargo por inasistencia sólo aplica si la política lo
    * define **y** la cancelación va marcada como no-show.
+   *
+   * `reasonText` va siempre: desde la corrección #14 el servidor lo exige y
+   * responde 422 sin él.
    */
-  cancelBooking(bookingId: string, cancellation: BookingCancellation): Observable<BookingCancelled> {
+  cancelBooking(
+    bookingId: string,
+    cancellation: BookingCancellation,
+  ): Observable<BookingCancelled> {
     return this.http.post<BookingCancelled>(
       this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/cancel`),
       {
         cancelledBy: cancellation.cancelledBy,
+        reasonText: cancellation.reasonText,
         ...(cancellation.isNoShow === undefined ? {} : { isNoShow: cancellation.isNoShow }),
       },
     );
@@ -215,11 +369,74 @@ export class SchedulingClient {
       this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/reschedule`),
       {
         toSlotId: reschedule.toSlotId,
-        // Construimos el body campo a campo para no enviar propiedades opcionales
-        // cuando no fueron proporcionadas.
-        ...(reschedule.reasonText === undefined ? {} : { reasonText: reschedule.reasonText }),
+        // Obligatorio desde la corrección #14: sin motivo el servidor responde
+        // 422 y la otra parte se quedaría sin saber por qué le movieron el día.
+        reasonText: reschedule.reasonText,
       },
     );
+  }
+
+  /* -- lo que decide el profesional (correcciones #11 y #15) ---------------
+     Aceptar, rechazar, iniciar y completar. Las cuatro validan estado y actor
+     en el servidor; **ninguna valida el reloj**: una cita confirmada se puede
+     empezar y cerrar en cualquier momento. */
+
+  /**
+   * `POST /scheduling/bookings/:id/accept` — el profesional acepta la solicitud.
+   *
+   * Recién acá hay compromiso: la cita pasa a confirmada, su cita clínica deja
+   * de estar pendiente y se programan los recordatorios que la solicitud no
+   * programó.
+   */
+  acceptBooking(
+    bookingId: string,
+    offsetsMinutes?: readonly number[],
+  ): Observable<BookingDecision> {
+    return this.decidir(bookingId, 'accept', {
+      ...(offsetsMinutes === undefined ? {} : { reminderOffsetsMinutes: [...offsetsMinutes] }),
+    });
+  }
+
+  /**
+   * `POST /scheduling/bookings/:id/reject` — rechaza la solicitud, con motivo.
+   *
+   * Devuelve lo mismo que cancelar porque **es** una cancelación desde el otro
+   * lado del mostrador: libera el cupo y el paciente ve el motivo.
+   */
+  rejectBooking(bookingId: string, reasonText: string): Observable<BookingCancelled> {
+    return this.http.post<BookingCancelled>(
+      this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/reject`),
+      { reasonText },
+    );
+  }
+
+  /**
+   * `POST /scheduling/bookings/:id/start` — inicia la atención.
+   *
+   * Disponible sobre cualquier cita confirmada **en cualquier momento**: el
+   * backend no exige que haya llegado el día agendado (corrección #15).
+   */
+  startBooking(bookingId: string): Observable<BookingDecision> {
+    return this.decidir(bookingId, 'start', {});
+  }
+
+  /** `POST /scheduling/bookings/:id/complete` — cierra la atención en curso. */
+  completeBooking(bookingId: string): Observable<BookingDecision> {
+    return this.decidir(bookingId, 'complete', {});
+  }
+
+  /** Las tres decisiones comparten forma de ida y de vuelta. */
+  private decidir(
+    bookingId: string,
+    accion: 'accept' | 'start' | 'complete',
+    cuerpo: Record<string, unknown>,
+  ): Observable<BookingDecision> {
+    return this.http
+      .post<WireDecision>(
+        this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/${accion}`),
+        cuerpo,
+      )
+      .pipe(map((body) => ({ ...body, occurredAt: new Date(body.occurredAt) })));
   }
 
   /** `POST /scheduling/bookings/:id/check-in` — registra la llegada (UC-41-10). */
@@ -240,6 +457,8 @@ export class SchedulingClient {
 type WireHold = Omit<SlotHold, 'expiresAt'> & { readonly expiresAt: string };
 
 type WireCheckedIn = Omit<BookingCheckedIn, 'checkedInAt'> & { readonly checkedInAt: string };
+
+type WireDecision = Omit<BookingDecision, 'occurredAt'> & { readonly occurredAt: string };
 
 /* ---- formas de transporte ------------------------------------------------
    Las fechas llegan como texto ISO. Se declaran acá y no en `scheduling.types`
@@ -264,13 +483,18 @@ interface WireSlotPage extends Omit<AgendaSlotPage, 'items'> {
 
 type WireBooking = Omit<
   Booking,
-  'startAt' | 'endAt' | 'confirmedAt' | 'checkedInAt' | 'createdAt'
+  'startAt' | 'endAt' | 'confirmedAt' | 'checkedInAt' | 'createdAt' | 'statusReason'
 > & {
   readonly startAt?: string | null;
   readonly endAt?: string | null;
   readonly confirmedAt?: string | null;
   readonly checkedInAt?: string | null;
   readonly createdAt: string;
+  readonly statusReason?: WireStatusReason | null;
+};
+
+type WireStatusReason = Omit<BookingStatusReason, 'changedAt'> & {
+  readonly changedAt: string;
 };
 
 interface WireBookingPage extends Omit<BookingPage, 'items'> {
@@ -299,6 +523,7 @@ function toBooking({
   confirmedAt,
   checkedInAt,
   createdAt,
+  statusReason,
   ...resto
 }: WireBooking): Booking {
   return {
@@ -307,6 +532,14 @@ function toBooking({
     ...optionalDate('endAt', endAt),
     ...optionalDate('confirmedAt', confirmedAt),
     ...optionalDate('checkedInAt', checkedInAt),
+    ...(statusReason === null || statusReason === undefined
+      ? {}
+      : {
+          statusReason: {
+            ...statusReason,
+            changedAt: new Date(statusReason.changedAt),
+          },
+        }),
     createdAt: new Date(createdAt),
   };
 }

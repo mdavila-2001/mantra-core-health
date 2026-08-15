@@ -1,0 +1,168 @@
+/* Glosario. Una columna que se hojea: categorías, buscador, índice y entradas.
+   Sólo distribución — ni un color ni una tipografía que el sistema no tenga ya. */
+
+:host {
+  display: block;
+}
+
+.glosario {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-6);
+}
+
+.glosario__titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* --- Etiquetas ---------------------------------------------------------- */
+
+.glosario__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.glosario__chips--entrada {
+  margin-block-start: var(--sp-2);
+}
+
+/* El conteo va dentro del chip pero no compite con el nombre: es el dato de
+   apoyo que dice si vale la pena entrar. */
+.glosario__conteo {
+  margin-inline-start: var(--sp-1);
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.glosario__filtro {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* --- Buscador ----------------------------------------------------------- */
+
+.glosario__buscador {
+  display: block;
+  /* Un campo de texto de mil píxeles no ayuda a escribir «hipertensión». */
+  max-inline-size: 32rem;
+}
+
+/* --- Índice alfabético -------------------------------------------------- */
+
+.glosario__indice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  align-items: center;
+}
+
+.glosario__letra {
+  min-inline-size: 2rem;
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.glosario__letra:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.glosario__letra--activa {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Una letra sin entradas se muestra apagada y no se esconde: que la Ñ esté
+   vacía es información, no un motivo para que la fila cambie de largo. */
+.glosario__letra:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* --- Entradas ----------------------------------------------------------- */
+
+.glosario__aviso {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.glosario__grupo + .glosario__grupo {
+  margin-block-start: var(--sp-5);
+}
+
+.glosario__inicial {
+  margin: 0 0 var(--sp-3);
+  padding-block-end: var(--sp-1);
+  border-block-end: 1px solid var(--border-subtle);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+}
+
+.glosario__entradas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.glosario__termino {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.glosario__definicion {
+  margin: var(--sp-2) 0 0;
+  max-inline-size: 68ch;
+  color: var(--text-secondary);
+}
+
+.glosario__definicion--ausente,
+.glosario__sin-traducir {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  font-style: italic;
+}
+
+.glosario__sin-traducir {
+  margin: var(--sp-1) 0 0;
+}
+
+/* Botón que se lee como enlace: quitar un filtro es una acción menor y no
+   merece el peso visual de un botón del sistema. */
+.glosario__quitar {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-link, var(--text-primary));
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* --- Ayuda -------------------------------------------------------------- */
+
+.glosario__ayuda {
+  display: block;
+  max-inline-size: 68ch;
+}
+
+.glosario__ayuda-texto {
+  margin: 0;
+  color: var(--text-secondary);
+}

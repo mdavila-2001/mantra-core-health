@@ -51,18 +51,70 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Tu punto de partida: la sesión activa y el estado del sistema.',
     module: 'M30 read_models',
   },
+  {
+    // El centro de tutoriales. Va en «General» y no en una sección de ayuda
+    // aparte por una razón concreta: un desplegable de ayuda es donde van a
+    // morir los tutoriales —se abre por accidente, no se comparte por enlace y
+    // no tiene dónde decir cuánto llevás hecho—. Como sección tiene URL propia y
+    // entra en el menú con las mismas reglas que el resto.
+    //
+    // Sin `roles` a propósito: cualquiera que pueda entrar tiene algo que
+    // aprender, y el catálogo ya se filtra por rol tutorial por tutorial. Poner
+    // roles acá escondería el centro entero a quien tiene pocos.
+    path: 'tutorials',
+    label: 'Tutoriales',
+    group: 'General',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
+    module: '—  ayuda en producto',
+  },
 
   {
-    path: 'feed',
-    label: 'Muro profesional',
+    // Carril R2-1 · punto 1 del reclamo. Acá estaba el **muro profesional**, y
+    // el cliente pidió sacarlo del menú del paciente: «o cambiarle su enfoque:
+    // debe mostrar una especie de guía telefónica de todos los doctores
+    // agrupados por especialidad». Esta es esa guía.
+    //
+    // El muro NO se borró: `features/feed/` sigue en pie y su ruta también. Lo
+    // único que se le sacó es la entrada del menú — borrarlo es una decisión
+    // de producto que el cliente no pidió.
+    //
+    // **Sólo `PATIENT`** (corrección #2 del 15/08/2026, carril 02). Nació sin
+    // `roles` con el razonamiento de que «la usa sobre todo quien busca
+    // médico», y «sobre todo» no es una regla: en la práctica la doctora la
+    // veía en su menú y en «Tus accesos» —está en la captura baseline del
+    // carril 01—. Es una guía para elegir a quién consultar; a quien atiende no
+    // le corresponde.
+    //
+    // Esconder el ítem no es la protección: es no ofrecer una puerta. La puerta
+    // la cierra `seccionRolesGuard` sobre la ruta, para que el enlace directo
+    // tampoco entre.
+    //
+    // `exclusiveRoles` porque el pedido fue **solo** el paciente: sin esto el
+    // comodín `SUPERADMIN` la seguiría viendo, y «otros roles» lo incluye. Es
+    // la única sección del registro que lo declara.
+    path: 'directory',
+    label: 'Guía de profesionales',
     group: 'General',
     icon: 'home',
-    // Sin `roles`: cualquier sesión con perfil público puede tener muro. El
-    // perfil público NO es el `pid` de la sesión —es una entidad de M19— así
-    // que la puerta la pone la propia pantalla, no una guarda de rol.
+    roles: ['PATIENT'],
+    exclusiveRoles: true,
     availability: 'disponible',
-    summary: 'Lo que publican los perfiles que seguís.',
-    module: 'M19 community',
+    summary: 'Todos los profesionales, agrupados por especialidad.',
+    module: 'M05 profiles',
+  },
+  {
+    // Directorio de unidades publicadas del módulo 23. Es una sección distinta
+    // de `/diagnostics`, que sigue siendo la cola clínica de órdenes/resultados.
+    // La ruta tampoco coincide con `/diagnostic-units`, prefijo exclusivo de API.
+    path: 'laboratory-directory',
+    label: 'Directorio de laboratorios',
+    group: 'General',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Laboratorios e imagenología, agrupados por categoría y con su oferta vigente.',
+    module: 'M23 diagnostic_units',
   },
 
   /* -- Atención · fase 1 del orden de trabajo ------------------------------ */
@@ -116,6 +168,102 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Seguí la cola del laboratorio y los estudios que pediste.',
     module: 'M20 diagnostics · M08 clinical',
   },
+  {
+    // Carril 12. Los cinco roles perioperatorios que declara `PeriopController`
+    // en sus lecturas; `BILLING` queda afuera a propósito: figura sólo en el
+    // endpoint de cargos, que es contabilidad del caso y no atención.
+    //
+    // Encendida con las lecturas del módulo (`GET /procedure-cases`, su detalle
+    // y el equipo) y con la respuesta del integrante a su participación. El
+    // módulo llevaba veinte endpoints de escritura y ninguna pantalla, y sin la
+    // aceptación **ninguna intervención podía confirmarse**: `confirm` exige que
+    // cada integrante haya aceptado y no había dónde hacerlo.
+    path: 'interventions',
+    label: 'Intervenciones',
+    group: 'Atención',
+    icon: 'orders',
+    roles: [
+      'SURGEON',
+      'ANESTHESIOLOGIST',
+      'PERIOP_NURSE',
+      'SURGERY_SCHEDULER',
+      'PERIOP_ADMIN',
+    ],
+    availability: 'disponible',
+    summary: 'Mirá las intervenciones programadas y confirmá tu participación.',
+    module: 'M53 procedures_perioperative',
+  },
+  {
+    // Carril 17. La bandeja de visitas de laboratorio del doctor.
+    //
+    // Va en «Atención» y **separada de `schedule`** porque la especificación lo
+    // exige (línea 5399): una visita comercial no es una consulta, y mezclarlas
+    // en la misma agenda haría que la solicitud de un visitador compita por
+    // atención con la de un paciente.
+    //
+    // `PRACTITIONER` y `CLINICIAN` son los mismos roles con los que
+    // `VisitRequestsController` responde la bandeja.
+    path: 'lab-visits',
+    label: 'Visitas de laboratorio',
+    group: 'Atención',
+    icon: 'calendar',
+    roles: ['PRACTITIONER', 'CLINICIAN'],
+    availability: 'disponible',
+    summary: 'Aceptá o rechazá visitas de visitadores médicos y mirá tu agenda de visitas.',
+    module: 'M62 pharma_lab',
+  },
+  {
+    // Carril 17. La pantalla del visitador médico.
+    //
+    // Sólo la ve `MEDICAL_VISITOR`, que es un rol de sistema sembrado por este
+    // mismo carril. No aparece ninguna entrada clínica para ese rol —ni acá ni
+    // en el resto del registro— porque la especificación le prohíbe el acceso a
+    // pacientes, recetas y diagnósticos (5316-5318).
+    path: 'my-visits',
+    label: 'Mis visitas médicas',
+    group: 'Atención',
+    icon: 'calendar',
+    roles: ['MEDICAL_VISITOR'],
+    availability: 'disponible',
+    summary: 'Consultá el estado de las visitas que solicitaste a los doctores.',
+    module: 'M62 pharma_lab',
+  },
+  {
+    // Carril 2 · punto 4 del reclamo. `TerminologyCatalog` ya resolvía el
+    // mismo `GET /terminology/concepts?q=` con rol `SECURITY_ADMIN`: es un
+    // buscador técnico de `conceptId` para configuración, no un glosario para
+    // consulta clínica. Esta es la puerta que el cliente pidió — "cada
+    // profesional", no sólo quien administra —, con una pantalla propia que no
+    // expone el identificador.
+    //
+    // Sin `roles` a propósito: el pedido fue explícito, y la lectura del
+    // catálogo tampoco los exige (UC-03-13).
+    path: 'glossary',
+    label: 'Glosario',
+    group: 'Atención',
+    icon: 'orders',
+    availability: 'disponible',
+    summary: 'Buscá un término médico y su significado en lenguaje llano.',
+    module: 'M03 terminology',
+  },
+
+  {
+    // Carril 10. **La ruta NO es `surveys` y eso no es decoración**: `/surveys`
+    // es el prefijo del módulo en la API, y el proxy compara por inicio de ruta
+    // sin límite de segmento — una sección llamada `surveys` se iría entera al
+    // backend. Mismo caso que M13 en `administration/geolocation`. Lo hace
+    // cumplir `scripts/check-route-prefixes.mjs`.
+    path: 'questionnaires',
+    label: 'Encuestas',
+    group: 'Atención',
+    icon: 'orders',
+    // Los dos roles que exigen `SurveysTemplatesController` y
+    // `SurveysAssignmentsController`.
+    roles: ['PRACTITIONER', 'CLINICIAN'],
+    availability: 'disponible',
+    summary: 'Creá encuestas para tus pacientes y revisá lo que respondieron.',
+    module: 'M-surveys',
+  },
 
   /* -- Administración · fase 0, la fundación ------------------------------- */
 
@@ -155,6 +303,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Dá de alta clínicas, farmacias y aseguradoras, y seguí su verificación.',
     module: 'M04 directory',
+  },
+  {
+    // Carril 14 (M26). El módulo tenía **sólo escrituras**: el catálogo se daba
+    // de alta y no había forma de volver a leerlo, así que la sección no podía
+    // existir sin inventarse los datos. Entra ahora con
+    // `GET /insurance-carriers` y su ficha.
+    //
+    // El rol es el mismo que «Organizaciones» porque hoy es el único que
+    // significa «administra esta organización»: la plataforma no tiene todavía
+    // un rol de aseguradora. **La autoridad no es esta línea** — la API acota
+    // por pertenencia al tenant, no por rol global —, así que el día que exista
+    // un `INSURANCE_ADMIN` este es el único lugar que cambia.
+    path: 'administration/insurance',
+    label: 'Aseguradora',
+    group: 'Administración',
+    icon: 'billing',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Revisá tus productos, planes, coberturas y la red de prestadores.',
+    module: 'M26 insurance',
+  },
+  {
+    // Carril 14 (M26), cara de brokers. Separada de «Aseguradora» porque son
+    // dos gestiones distintas —el catálogo y la fuerza comercial— y mezclarlas
+    // obligaría a una sola pantalla a pedir permisos de las dos.
+    path: 'administration/brokers',
+    label: 'Brokers',
+    group: 'Administración',
+    icon: 'patients',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Consultá tus corredores, sus vinculaciones vigentes y su cartera.',
+    module: 'M26 insurance',
   },
   {
     // W2/F3 (M29): el backend del módulo es solo de comando —sin GET—, así
@@ -231,7 +412,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Los cinco roles humanos de `HealthContextController`. `SYSTEM` queda
     // afuera a propósito: es un rol de servicio para el scheduler, no de alguien
     // que navega — el mismo criterio que dejó a `AUTH_SERVICE` fuera de M40.
-    roles: ['CONTEXT_CURATOR', 'CONTEXT_CONSUMER', 'SOURCE_ADMIN', 'QUALITY_REVIEWER', 'PLATFORM_ADMIN'],
+    roles: [
+      'CONTEXT_CURATOR',
+      'CONTEXT_CONSUMER',
+      'SOURCE_ADMIN',
+      'QUALITY_REVIEWER',
+      'PLATFORM_ADMIN',
+    ],
     availability: 'disponible',
     summary: 'Recolectá y publicá el contexto sanitario de cada país, con su evidencia.',
     module: 'M44 health_context',
@@ -269,6 +456,62 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Mantené la lista fija de servicios sobre la que se arman los presupuestos.',
     module: 'M17 billing',
   },
+  {
+    // Carril 13. El módulo 14 (`practice`) tenía once escrituras y tres
+    // lecturas: se daban de alta sedes, áreas, quirófanos, consultorios,
+    // servicios, personal, acreditaciones e inventario, y **ninguna pantalla
+    // los volvía a mostrar**. La sección se enciende con
+    // `GET /practices/:id/organization`, que es la lectura que faltaba.
+    //
+    // Cuelga de `administration/` como el resto de la configuración, y no de
+    // una raíz propia: `/practices` es prefijo del proxy y una sección llamada
+    // así a nivel raíz se iría entera a la API — el mismo motivo por el que M13
+    // vive en `administration/geolocation`.
+    path: 'administration/medical-organization',
+    label: 'Organización médica',
+    group: 'Administración',
+    icon: 'settings',
+    // Los mismos roles que ya admite `GET /practices`: quien puede enumerar las
+    // prácticas del tenant puede ver la estructura de la suya. El aislamiento
+    // real lo hace la API, que responde 404 ante la de otra organización.
+    roles: ['SECURITY_ADMIN', 'PERIOP_ADMIN', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Administrá sedes, áreas, quirófanos, consultorios, plantilla y legajo de tu organización.',
+    module: 'M14 practice',
+  },
+  {
+    // Carril 16. Distinta de «Directorio de laboratorios», que es la vitrina
+    // del paciente: aquélla sólo muestra unidades publicadas y verificadas,
+    // ofertas activas y precios públicos. Ésta lee el mismo dominio **sin** esos
+    // filtros —para poder terminar de configurar lo que todavía no se publicó—
+    // y agrega el personal con sus permisos de validación y firma, que a la
+    // vitrina no le corresponde conocer.
+    path: 'administration/medical-laboratory',
+    label: 'Laboratorio médico',
+    group: 'Administración',
+    icon: 'results',
+    // El mismo rol que exigen las dos lecturas administrativas del módulo.
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Configurá sucursales, equipos, estudios, precios y personal de tu laboratorio.',
+    module: 'M23 diagnostic_units',
+  },
+  {
+    // Carril 2 · punto 1 del reclamo. `chart.specialty_chart_templates` sólo
+    // tenía asignación (`POST /charts/templates/:id/assignments`, UC-15-12);
+    // con el alta, el listado y la lectura de esquema ya del lado del
+    // backend, esta es la puerta de administración que arma la plantilla que
+    // `specialty-form-block` completa dentro del encuentro.
+    path: 'administration/clinical-forms',
+    label: 'Formularios clínicos',
+    group: 'Administración',
+    icon: 'orders',
+    // Mismo rol que exige el backend en `ChartTemplatesController`.
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Armá las plantillas de campos propios de cada especialidad.',
+    module: 'M15 chart · M09 forms',
+  },
 
   /* -- Facturación · fase 2 ------------------------------------------------ */
 
@@ -284,6 +527,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // Carril 17. El panel del administrador de laboratorio farmacéutico.
+    //
+    // Una sola entrada para visitadores, catálogo, material informativo,
+    // farmacovigilancia y documentación: son cinco vistas de **la misma
+    // organización**, y cinco filas de menú obligarían a elegir el laboratorio
+    // cinco veces.
+    //
+    // `PHARMA_LAB_ADMIN` es un rol de sistema que siembra este carril; los otros
+    // dos son los que ya administran organizaciones en el resto del producto.
+    path: 'administration/pharma-lab',
+    label: 'Laboratorio farmacéutico',
+    group: 'Administración',
+    icon: 'settings',
+    roles: ['PHARMA_LAB_ADMIN', 'BUSINESS_ADMIN', 'PLATFORM_ADMIN'],
+    availability: 'disponible',
+    summary:
+      'Administrá visitadores, medicamentos, material aprobado, farmacovigilancia y documentación regulatoria.',
+    module: 'M62 pharma_lab',
+  },
+
+  {
     path: 'administration/accounting',
     label: 'Contabilidad',
     group: 'Facturación',
@@ -293,8 +557,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // es la suya lo hace la API, que responde 403 ante la de otra organización.
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
-    summary:
-      'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
+    summary: 'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
     module: 'M16 accounting',
   },
 
@@ -330,6 +593,53 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Mirá tus turnos y pedí uno nuevo con los horarios disponibles.',
     module: 'M41 scheduling',
+  },
+  {
+    // El archivo clínico del paciente (carril 09): cierra el recorrido que
+    // empieza pidiendo un turno. Sin `roles` por lo mismo que «Mis turnos»: el
+    // filtro real es tener perfil de paciente, que es un dato de la cuenta y no
+    // un rol, y la pantalla lo dice cuando falta en vez de esconderse del menú.
+    //
+    // Encendida con el carril 09: `GET /clinical/patients/:id/summary` acepta
+    // ahora al titular, con el aislamiento comprobado del lado del servidor.
+    path: 'my-account/medical-record',
+    label: 'Mi historia clínica',
+    group: 'Mi cuenta',
+    // `results` y no `patients`: lo que esta sección muestra son resultados de
+    // atenciones, y el ícono de pacientes es el de «gente», que acá sería la
+    // persona mirándose a sí misma.
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Tus atenciones y tus recetas, con la descarga en PDF de cada una.',
+    module: 'M08 clinical',
+  },
+  {
+    // Carril 11, lado paciente. Es la contracara de «Laboratorio e imagen»:
+    // aquélla es la cola del laboratorio y exige rol clínico; ésta mira los
+    // mismos estudios desde el otro lado, sólo los propios y sólo los que un
+    // profesional ya validó. Sin `roles` por lo mismo que las dos de arriba.
+    path: 'my-account/diagnostic-results',
+    label: 'Mis resultados',
+    group: 'Mi cuenta',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Mirá y descargá tus resultados, y compartilos por un tiempo con un profesional.',
+    module: 'M20 diagnostics',
+  },
+  {
+    // Carril 10, lado paciente. Sin `roles` a propósito, por el mismo motivo
+    // que «Mis turnos»: el filtro real es tener perfil de paciente, que no es
+    // un rol sino un dato de la cuenta —el claim `pid` del token—, y la
+    // pantalla lo dice cuando falta en vez de esconderse del menú.
+    //
+    // La ruta tampoco puede llamarse `surveys`: ver la nota de «Encuestas».
+    path: 'my-account/questionnaires',
+    label: 'Mis cuestionarios',
+    group: 'Mi cuenta',
+    icon: 'orders',
+    availability: 'disponible',
+    summary: 'Respondé los cuestionarios de las consultas que ya tuviste.',
+    module: 'M-surveys',
   },
   {
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino

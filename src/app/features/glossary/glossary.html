@@ -1,0 +1,177 @@
+<app-page-header
+  title="Glosario"
+  subtitle="Hojeá los términos por categoría, o buscá uno por su nombre."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="glosario">
+  <!-- Las etiquetas van ARRIBA del buscador a propósito: son la puerta de
+       entrada, no un filtro colgado de un costado. Al abrir la pantalla ya hay
+       algo que mirar y por dónde entrar sin escribir nada. -->
+  <section class="glosario__etiquetas" aria-labelledby="glosario-etiquetas-titulo">
+    <h2 class="glosario__titulo" id="glosario-etiquetas-titulo">Categorías</h2>
+
+    <app-view-state-host [state]="etiquetas()" (retry)="recargarEtiquetas()">
+      <ul class="glosario__chips">
+        @for (etiqueta of etiquetasConTerminos(); track etiqueta.id) {
+          <li>
+            <!-- `selectedChange` y no `(click)`: el chip ya alterna solo y con
+                 teclado (Enter/Espacio). Escuchar el clic duplicaría el gesto y
+                 dejaría el teclado afuera. La URL manda sobre `[selected]`. -->
+            <app-chip
+              [selectable]="true"
+              [selected]="etiquetaCodigo() === etiqueta.internalCode"
+              [variant]="etiquetaCodigo() === etiqueta.internalCode ? 'info' : 'neutral'"
+              [label]="etiqueta.name + ', ' + etiqueta.memberCount + ' términos'"
+              [attr.title]="etiqueta.description ?? null"
+              (selectedChange)="filtrarPorEtiqueta(etiqueta.internalCode)"
+            >
+              {{ etiqueta.name }}
+              <span class="glosario__conteo">{{ etiqueta.memberCount }}</span>
+            </app-chip>
+          </li>
+        }
+      </ul>
+    </app-view-state-host>
+  </section>
+
+  <!-- El campo se nombra solo (publica su propio contexto de control): no va
+       dentro de un app-form-field, o quedarían dos nombres accesibles. -->
+  <app-search-field
+    class="glosario__buscador"
+    label="Buscar un término"
+    placeholder="Por ejemplo «hipertensión» o «alergia»"
+    [value]="busqueda()"
+    [loading]="cargando()"
+    (searched)="buscar($event)"
+  />
+
+  @if (etiquetaActiva(); as activa) {
+    <p class="glosario__filtro" role="status">
+      Mostrando <strong>{{ activa.name }}</strong
+      >{{ activa.description ? ' — ' + activa.description : '' }}
+      <button type="button" class="glosario__quitar" (click)="quitarEtiqueta()">
+        Quitar esta categoría
+      </button>
+    </p>
+  }
+
+  <!-- Índice alfabético: saltar a una letra sin pasar por el buscador, que es
+       lo que un glosario tiene. Las letras sin entradas se ofrecen
+       deshabilitadas en vez de esconderse: que la Ñ esté vacía es información. -->
+  <nav class="glosario__indice" aria-label="Índice alfabético">
+    <button
+      type="button"
+      class="glosario__letra"
+      [class.glosario__letra--activa]="letra() === null"
+      [attr.aria-pressed]="letra() === null"
+      (click)="verTodasLasLetras()"
+    >
+      Todas
+    </button>
+    @for (inicial of abecedario; track inicial) {
+      <button
+        type="button"
+        class="glosario__letra"
+        [class.glosario__letra--activa]="letra() === inicial"
+        [disabled]="!letrasDisponibles().has(inicial)"
+        [attr.aria-pressed]="letra() === inicial"
+        [attr.aria-label]="'Términos que empiezan con ' + inicial"
+        (click)="elegirLetra(inicial)"
+      >
+        {{ inicial }}
+      </button>
+    }
+  </nav>
+
+  <!-- Un recorte silencioso haría creer que el glosario tiene exactamente estos
+       términos. La lectura no publica cursor, así que lo único honesto es
+       decirlo y sugerir acotar por categoría. -->
+  @if (recortado()) {
+    <p class="glosario__aviso" role="status">
+      Se muestran los primeros {{ tope }} términos. Elegí una categoría o afiná el texto para ver el
+      resto.
+    </p>
+  }
+
+  @if (sinTraduccion() > 0) {
+    <p class="glosario__aviso" role="status">
+      {{ sinTraduccion() }}
+      {{ sinTraduccion() === 1 ? 'término todavía no tiene' : 'términos todavía no tienen' }}
+      traducción al castellano cargada. Se
+      {{ sinTraduccion() === 1 ? 'muestra' : 'muestran' }} con su nombre original, marcado.
+    </p>
+  }
+
+  <app-view-state-host [state]="terminos()" (retry)="recargar()">
+    @if (gruposVisibles().length === 0) {
+      <p class="glosario__aviso" role="status">
+        No hay términos con esa inicial entre los que se están mostrando.
+        <button type="button" class="glosario__quitar" (click)="verTodasLasLetras()">
+          Ver todas las letras
+        </button>
+      </p>
+    }
+
+    <!-- Entradas de glosario, no filas de una tabla: cada una con su término,
+         sus etiquetas y su definición, y cada una se puede abrir. -->
+    @for (grupo of gruposVisibles(); track grupo.letra) {
+      <section class="glosario__grupo" [attr.aria-labelledby]="'grupo-' + grupo.letra">
+        <h2 class="glosario__inicial" [id]="'grupo-' + grupo.letra">{{ grupo.letra }}</h2>
+
+        <ul class="glosario__entradas">
+          @for (termino of grupo.terminos; track termino.conceptId) {
+            <li class="glosario__entrada">
+              <app-card variant="outlined" padding="lg">
+                <h3 class="glosario__termino">
+                  <a [routerLink]="['/glossary', termino.conceptId]">{{ termino.display }}</a>
+                </h3>
+
+                @if (termino.translated === false) {
+                  <p class="glosario__sin-traducir">
+                    Sin traducción al castellano cargada: se muestra el nombre original.
+                  </p>
+                }
+
+                @if (termino.valueSets && termino.valueSets.length > 0) {
+                  <ul class="glosario__chips glosario__chips--entrada">
+                    @for (etiqueta of termino.valueSets; track etiqueta.id) {
+                      <li>
+                        <app-chip
+                          size="sm"
+                          [selectable]="true"
+                          [selected]="etiquetaCodigo() === etiqueta.internalCode"
+                          [label]="'Ver todos los términos de ' + etiqueta.name"
+                          (selectedChange)="filtrarPorEtiqueta(etiqueta.internalCode)"
+                        >
+                          {{ etiqueta.name }}
+                        </app-chip>
+                      </li>
+                    }
+                  </ul>
+                }
+
+                @if (termino.definition) {
+                  <p class="glosario__definicion">{{ termino.definition }}</p>
+                } @else {
+                  <p class="glosario__definicion glosario__definicion--ausente">
+                    Este término todavía no tiene una explicación cargada.
+                  </p>
+                }
+              </app-card>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </app-view-state-host>
+
+  <app-card variant="outlined" padding="lg" class="glosario__ayuda">
+    <p class="glosario__ayuda-texto">
+      El glosario reúne los mismos términos que usa el sistema en el resto de la ficha clínica —
+      diagnósticos, alergias, medicación— explicados sin abreviaturas ni identificadores técnicos.
+      Las categorías son las mismas con las que el sistema agrupa esos términos, no una
+      clasificación aparte.
+    </p>
+  </app-card>
+</div>

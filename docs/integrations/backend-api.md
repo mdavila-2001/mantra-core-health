@@ -1,6 +1,6 @@
 # API de backend
 
-Las 169 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 184 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -16,7 +16,7 @@ Las 169 operaciones que el frontend consume, su contrato y su modelo de error.
 | Por defecto | `''` — rutas relativas |
 | Cliente | `HttpClient` con `withFetch()` |
 | Interceptor | `authInterceptor` |
-| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` `/procedure-cases` `/dental-procedures` |
+| Prefijos | `/iam` `/public` `/terminology` `/profiles` `/identity` `/common` `/scheduling` `/charts` `/clinical` `/authz` `/practitioner-delegates` `/access-requests` `/delegated-access` `/delegated-permission-sets` `/org` `/auth-providers` `/admin/tenants` `/community` `/procedure-cases` `/dental-procedures` `/diagnostic-units` |
 
 ```ts
 export function apiUrl(baseUrl: string, path: string): string {
@@ -140,7 +140,7 @@ publique los `GET` que faltan.
 **`checks:plan` lleva los dos puntos en la URL de verdad**: el backend declara
 el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 
-### `ProfilesClient` — 13 operaciones
+### `ProfilesClient` — 20 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -158,6 +158,20 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 | `PATCH` | `/profiles/practitioners/me` | `PractitionerProfileEdit` |
 | `POST` | `/profiles/practitioners/:profileId/specialties` | — (UC-05-06) |
 | `POST` | `/profiles/practitioners/:profileId/jurisdiction-authorizations` | — |
+| `GET` | `/profiles/practitioners` | `PractitionersDirectory` (guía, carril R2-1) |
+| `GET` | `/profiles/practitioners/:profileId/summary` | `PractitionerDetail` (ficha de la guía, R2-1) |
+| `GET` | `/profiles/practitioners/me/affiliations` | `WorkHistory` (carril 5) |
+| `POST` | `/profiles/practitioners/me/affiliations` | `WorkHistory` (carril 5) |
+| `GET` | `/practitioners/:practitionerProfileId/sites` | `PracticeSitesClient` (carril 5) |
+| `POST` | `/clinical/care-episodes` | `admission-block` (carril 5) |
+| `POST` | `/cds/check-interactions` | receta y medicación (Pablo) |
+
+> **Las cinco últimas no son de `ProfilesClient` y están declaradas acá al resolver el
+> carril R2-1, no por sus autores.** Vienen de los carriles 3, 4 y 5 y de la medicación, que
+> agregaron operaciones sin declararlas. `check-api-contract-drift` no distingue «lo agregó
+> otro» de «lo agregué yo»: mientras estén sin declarar, **toda** rama que mezcle `dev`
+> hereda el rojo. Si su autor prefiere moverlas a una sección propia, mejor — lo que no puede
+> quedar es sin declarar.
 
 > **V05-05 no necesitó ningún `GET` nuevo.** El vault la marcaba «Listado pendiente», pero los
 > contactos llegan **embebidos** en la respuesta de `GET /profiles/patients/:profileId`
@@ -274,7 +288,7 @@ y no sólo un `SECURITY_ADMIN`.
 Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
 catálogo — mismo motivo: no existe «la práctica del usuario».
 
-### `SchedulingClient` — 9 operaciones
+### `SchedulingClient` — 17 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -282,11 +296,33 @@ catálogo — mismo motivo: no existe «la práctica del usuario».
 | `GET` | `/scheduling/slots` | `Agenda` · `BookingNew` (revalida el cupo) |
 | `GET` | `/scheduling/bookings` | `Agenda` |
 | `GET` | `/scheduling/bookings/:bookingId` | — |
+| `POST` | `/scheduling/resources` | `AgendaCreate` (fase 1, UC-41-01) |
+| `POST` | `/scheduling/booking-policies` | `AgendaCreate` (fase 2, UC-41-01) |
+| `POST` | `/scheduling/resources/:resourceId/templates` | `AgendaCreate` (fase 3, UC-41-02) |
+| `POST` | `/scheduling/templates/:templateId/generate-slots` | `AgendaCreate` (fase 4, UC-41-03) |
+| `POST` | `/scheduling/resources/:resourceId/exceptions` | `AgendaCreate` (fase 5, UC-41-04) |
 | `POST` | `/scheduling/slots/:slotId/holds` | `BookingNew` (V41-09, UC-41-05) |
 | `POST` | `/scheduling/holds/:holdToken/confirm` | `BookingNew` (V41-05, UC-41-06) |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` | `Agenda` (V41-02·A, UC-41-09) |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` | `Agenda` (V41-02·A, UC-41-10) |
 | `POST` | `/scheduling/bookings/:bookingId/reschedule` | `Appointments` (mi cuenta: mover el turno a otro cupo) |
+| `POST` | `/scheduling/holds/:holdToken/request` | `BookingNew` (el paciente solicita, no confirma) |
+| `POST` | `/scheduling/bookings/:bookingId/reject` | `Agenda` (el doctor rechaza una solicitud) |
+| `POST` | `/scheduling/bookings/:bookingId/:accion` | `Agenda` (acepta/atiende: la acción va en la ruta) |
+
+> **Las tres últimas se declaran acá al resolver el conflicto del carril 13/16,
+> no por sus autores.** Entraron a `dev` con los carriles 06 y 07 sin pasar por
+> esta página, y eso deja `check-api-contract-drift` en rojo para todo el que
+> abra un PR después — el verificador no distingue «lo agregó otro» de «lo
+> agregué yo». Si algún consumidor quedó mal atribuido, corregilo: se dedujo de
+> quién importa el cliente.
+
+**La construcción de agenda es de cinco fases encadenadas por id** (`AgendaCreate`,
+`/schedule/new`, sólo `SCHEDULING_ADMIN`). El alta del recurso devuelve el
+`resourceId` sobre el que cuelgan la plantilla y las excepciones; la política
+devuelve el `bookingPolicyId` que la plantilla referencia; la plantilla devuelve
+el `templateId` que se materializa en cupos. Cada fase persiste contra su propio
+`POST` antes de avanzar: no se acumula para guardar al final.
 
 **El ciclo de reserva es de dos pasos y el token viaja entre ellos.** El hold
 retiene el cupo con anti-double-booking y un TTL (300 s por defecto, de la
@@ -369,6 +405,29 @@ separado y la respuesta declara en `truncated` cuáles quedaron cortadas. Se
 reenvía tal cual a la vista: un expediente al que le faltan notas sin avisar se
 lee como «no hay antecedentes».
 
+### `ChartTemplatesClient` — 3 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/charts/templates` | `ClinicalForms` (listado por especialidad) |
+| `GET` | `/charts/templates/:id` | `ClinicalForms` · `SpecialtyFormBlock` (esquema de campos) |
+| `POST` | `/charts/templates` | `ClinicalForms` (alta) |
+
+Completa el CRUD que antes sólo tenía `assignTemplate` — crear, listar y leer
+el esquema de una plantilla por especialidad, no sólo asignarla.
+
+### `FormsClient` — 3 operaciones
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/forms/instances` | `SpecialtyFormBlock` (abre una instancia) |
+| `POST` | `/forms/instances/:instanceId/values` | `SpecialtyFormBlock` (captura valores) |
+| `POST` | `/forms/instances/:instanceId/close` | `SpecialtyFormBlock` (cierra la instancia) |
+
+Cubre sólo el ciclo de vida que `specialty-form-block` necesita —abrir, capturar,
+cerrar—; el motor de `forms` tiene mucho más (sets versionados, migraciones)
+y queda sin cliente hasta que una pantalla lo necesite de verdad.
+
 ### `AuthzClient` — 2 operaciones · sólo lectura
 
 | Método | Ruta | Consumidor |
@@ -434,12 +493,14 @@ Los doce comandos tienen pantalla. Las doce operan con identificadores pegados
 —o con el código del proveedor, en el flujo por `by-code`—; cuando lleguen los
 endpoints de consulta, los listados reemplazan ese gesto.
 
-### `TerminologyClient` — 2 operaciones
+### `TerminologyClient` — 4 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/terminology/value-sets/:valueSetId/$expand` | — |
 | `GET` | `/terminology/concepts` | `PatientDetail`, `MyProfile` |
+| `GET` | `/terminology/concepts/:conceptId` | `Glossary` (entrada del glosario, carril R2-6) |
+| `GET` | `/terminology/value-sets` | `Glossary` (las etiquetas por las que se hojea, R2-6) |
 
 La segunda se llama con `?ids=` —los identificadores separados por coma— o con
 `?q=` para buscar por texto, que es lo que usa el catálogo de terminología.
@@ -565,6 +626,60 @@ El histórico de procedimientos quirúrgicos y odontológicos (M53).
 | `GET` | `/dental-procedures` | `ProceduresBlock` |
 | `GET` | `/dental-procedures/catalog` | `ProceduresBlock` |
 | `POST` | `/dental-procedures` | `ProceduresBlock` |
+
+### `DiagnosticUnitsClient` — 2 operaciones · punto 3
+
+Directorio de unidades verificadas del tenant activo (M23). No es la cola clínica
+de `/diagnostics`: lista laboratorios e imagenología y abre su perfil público.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostic-units` | `LaboratoryDirectory` |
+| `GET` | `/diagnostic-units/:id` | `LaboratoryDetail` |
+
+### `DiagnosticUnitsAdminClient` — 2 operaciones · carril 16
+
+La **consola de administración** del laboratorio (M23), no su vitrina.
+
+Es un cliente aparte de `DiagnosticUnitsClient` porque responde otra pregunta y
+la contesta con otros datos. Aquél sirve el directorio que un paciente usa para
+elegir dónde hacerse un estudio: filtra a unidades activas **y** verificadas,
+ofertas activas y precios de cronogramas marcados como públicos. Éste devuelve
+el mismo dominio **sin** esos filtros —para poder terminar de configurar lo que
+todavía no se publicó— y agrega dos cosas que a la vitrina no le corresponden:
+el personal con sus permisos de validación y firma, y los números de serie del
+equipamiento.
+
+Las dos operaciones exigen `SECURITY_ADMIN`, y una unidad de otro tenant
+responde el mismo `404` que una inexistente.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostic-units/administration` | `MedicalLaboratory` |
+| `GET` | `/diagnostic-units/:id/administration` | `MedicalLaboratory` |
+
+### `MedicalOrganizationClient` — 2 operaciones · carril 13
+
+La consola del administrador de organización médica (M14 `practice`).
+
+`GET /practices/:practiceId/organization` devuelve **el árbol completo en una
+lectura**: sedes, áreas, infraestructura, servicios, plantilla, documentación
+legal e inventario. Es una sola respuesta y no siete endpoints porque las siete
+listas cuelgan del mismo identificador y se miran juntas; pedirlas por separado
+obligaría a la pantalla a encadenar siete peticiones y a manejar siete estados
+de carga para un único ámbito.
+
+Existe porque el módulo tenía once operaciones de escritura y tres lecturas: se
+daban de alta sedes, áreas, quirófanos, consultorios, servicios, personal,
+acreditaciones e inventario, y ninguna operación los volvía a mencionar.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practices` | `MedicalOrganization` (elige qué organización se administra) |
+| `GET` | `/practices/:practiceId/organization` | `MedicalOrganization` |
+
+> `GET /practices` ya lo consumía `AccountingClient` para elegir de qué práctica
+> son los libros. Se reusa el mismo endpoint: no se forkea el contrato.
 
 ### `DiagnosticsClient` — 4 operaciones · carril 4
 
@@ -702,6 +817,89 @@ encendieron las altas de perfil, y las vistas de verificación de identidad
 No es código muerto: todas tienen prueba y son la mitad de un flujo cuya
 interfaz todavía no se escribió.
 Ver [el mapa de integraciones §3](../architecture/integration-map.md#3--operaciones-sin-consumidor).
+
+### `DiagnosticsClient` — lecturas del paciente · carril 11
+
+Lo que el paciente ve de sus propios estudios: el resultado, su descarga y con
+quién lo compartió. No es la cola clínica, que sigue en `/diagnostics`.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostic-results/me` | `DiagnosticResults` |
+| `GET` | `/diagnostic-results/me/:reportId` | `DiagnosticResults` |
+| `GET` | `/diagnostic-results/me/:reportId/shares` | `DiagnosticResults` |
+| `POST` | `/diagnostic-results/me/:reportId/shares` | `DiagnosticResults` |
+| `POST` | `/diagnostic-results/me/:reportId/shares/:shareId/revoke` | `DiagnosticResults` |
+| `GET` | `/diagnostic-units/search` | `LaboratoryDirectory` |
+
+### `InsuranceClient` — 5 operaciones · carril 14
+
+La superficie de lectura de aseguradoras y corredores (M26). Solo la relación
+comercial: ni el corredor ni la aseguradora ven historial médico.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/insurance-carriers` | `InsuranceCatalog` |
+| `GET` | `/insurance-carriers/:id` | `InsuranceCatalog` |
+| `GET` | `/insurance-brokers` | `BrokerDirectory` |
+| `GET` | `/insurance-brokers/:id` | `BrokerDetail` |
+| `GET` | `/insurance-brokers/:id/clients` | `BrokerDetail` |
+
+### `PharmaLabClient` — 21 operaciones · carril 17
+
+Laboratorio farmacéutico, visitadores médicos y visitas (M62 `pharma_lab`).
+
+**No hay ninguna ruta clínica en esta tabla y no puede haberla**: la
+especificación le prohíbe al visitador el acceso a pacientes, recetas y
+diagnósticos (5316-5318), y que su cliente no las nombre es la mitad de esa
+garantía — la otra la pone la API, que revalida cada petición.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/pharma-labs` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/staff` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/medical-visitors` | `PharmaLabHome` |
+| `POST` | `/pharma-labs/:pharmaLabId/medical-visitors/:medicalVisitorId/unlink` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/products` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/materials` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/pharmacovigilance/reports` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/regulatory-documents` | `PharmaLabHome` |
+| `GET` | `/visit-agenda/me` | `DoctorVisits` |
+| `PUT` | `/visit-agenda/me` | `DoctorVisits` |
+| `GET` | `/visit-agenda/doctors/:doctorUserId` | `VisitorVisits` |
+| `POST` | `/visit-requests` | `VisitorVisits` |
+| `GET` | `/visit-requests/mine` | `VisitorVisits` |
+| `GET` | `/visit-requests/inbox` | `DoctorVisits` |
+| `POST` | `/visit-requests/:visitRequestId/accept` | `DoctorVisits` |
+| `POST` | `/visit-requests/:visitRequestId/reject` | `DoctorVisits` |
+| `POST` | `/visit-requests/:visitRequestId/cancel` | `VisitorVisits` · `DoctorVisits` |
+| `GET` | `/visit-records/inbox` | `DoctorVisits` |
+| `GET` | `/visit-records/labs/:pharmaLabId` | `PharmaLabHome` |
+| `GET` | `/visit-records/labs/:pharmaLabId/rating-summary` | `PharmaLabHome` |
+
+### `PharmaLabConcepts` — 1 operación · carril 17
+
+El diccionario que traduce cada `*_concept_id` del carril a su rótulo. Existe
+porque recalcular en el navegador el UUID determinista del backend obligaría a
+duplicar su función de derivación —dos implementaciones de la misma regla, que
+se separan en cuanto una cambia— y pintar el identificador crudo no le dice nada
+a nadie. Se pide una vez por sesión y se comparte.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/pharma-labs/reference/concepts` | `PharmaLabHome` · `VisitorVisits` · `DoctorVisits` |
+
+### Operaciones que suman otros carriles
+
+Entradas sueltas que amplían clientes ya documentados más arriba.
+
+| Método | Ruta | Cliente | Consumidor |
+|---|---|---|---|
+| `GET` | `/procedure-cases/:caseId/team-members` | `ProceduresClient` | `Interventions` (carril 12) |
+| `POST` | `/procedure-cases/:caseId/team-members/:memberId/accept` | `ProceduresClient` | `Interventions` |
+| `POST` | `/procedure-cases/:caseId/team-members/:memberId/respond` | `ProceduresClient` | `Interventions` |
+| `POST` | `/charts/templates/:templateId/assignments` | `ChartTemplatesClient` | `ClinicalForms` (R2-5) |
 
 ---
 

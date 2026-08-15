@@ -7,6 +7,7 @@ import {
   signal,
   untracked,
   viewChild,
+  ElementRef,
   type TemplateRef,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -39,6 +40,15 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import {
+  downloadPrescriptionPdf,
+  downloadVisitPdf,
+} from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import {
+  atencionDesdeResumen,
+  recetaDesdeResumen,
+  type ContextoDelDocumento,
+} from '../../../shared/utils/clinical-pdf/from-summary';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
@@ -51,11 +61,13 @@ import {
   MOTIVO_QUERY_PARAM,
 } from '../clinical-record.routes';
 import { AdmissionBlock, type InternacionEnFicha } from './admission-block/admission-block';
+import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 import { AttachmentsBlock } from './attachments-block/attachments-block';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import { DiagnosticsBlock } from './diagnostics-block/diagnostics-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
 import { ProceduresBlock } from './procedures-block/procedures-block';
+import { SpecialtyFormBlock } from './specialty-form-block/specialty-form-block';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -167,11 +179,13 @@ interface Expediente {
     AttachmentsBlock,
     DiagnosisBlock,
     DiagnosticsBlock,
+    PdfExportButton,
     FormActions,
     FormField,
     MedicationBlock,
     PageHeader,
     ProceduresBlock,
+    SpecialtyFormBlock,
     StatusSeal,
     Tab,
     Tabs,
@@ -183,6 +197,20 @@ interface Expediente {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PatientChart {
+  /**
+   * El bloque que se exporta a PDF.
+   *
+   * Se toma por referencia y no dejando que el botón busque su contenedor,
+   * porque el botón vive en la cabecera de la página: su contenedor sería la
+   * cabecera, y el PDF saldría con el título y nada más.
+   */
+  protected readonly raizPdf = viewChild<ElementRef<HTMLElement>>('raizPdf');
+
+  /** El elemento exportable, o `null` mientras el expediente no se pintó. */
+  protected raizExportable(): HTMLElement | null {
+    return this.raizPdf()?.nativeElement ?? null;
+  }
+
   private readonly clinical = inject(ClinicalClient);
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
@@ -198,6 +226,8 @@ export class PatientChart {
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaEstado');
   private readonly celdaCuando =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaCuando');
+  private readonly celdaDocumento =
+    viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaDocumento');
 
   /**
    * El perfil que se está mirando, leído del segmento `:profileId`.
@@ -373,17 +403,69 @@ export class PatientChart {
     })),
   );
 
-  /** Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada. */
-  protected readonly bloques = computed(() => [
-    { clave: 'diagnosticos', titulo: 'Diagnósticos', filas: this.diagnosticos() },
-    { clave: 'alergias', titulo: 'Alergias', filas: this.alergias() },
-    { clave: 'medicacion', titulo: 'Medicación', filas: this.medicacion() },
-    { clave: 'observaciones', titulo: 'Observaciones', filas: this.observaciones() },
-    { clave: 'encuentros', titulo: 'Encuentros', filas: this.encuentros() },
-    { clave: 'notas', titulo: 'Notas', filas: this.notas() },
-    { clave: 'planes', titulo: 'Planes de cuidados', filas: this.planes() },
-    { clave: 'documentos', titulo: 'Documentos', filas: this.documentos() },
+  /**
+   * Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada.
+   *
+   * Cada uno trae **sus** columnas y no las de todos: `detalle` significa una
+   * cosa distinta en cada bloque —la criticidad de una alergia, si un encuentro
+   * sigue abierto— y en varios no significa nada. Una columna «Detalle» vacía de
+   * punta a punta no es un dato que falta: es una columna que sobra, y se come
+   * el ancho que la tabla necesita para lo que sí trae.
+   */
+  protected readonly bloques = computed(() =>
+    [
+      { clave: 'diagnosticos', titulo: 'Diagnósticos', filas: this.diagnosticos() },
+      { clave: 'alergias', titulo: 'Alergias', filas: this.alergias() },
+      { clave: 'medicacion', titulo: 'Medicación', filas: this.medicacion() },
+      { clave: 'observaciones', titulo: 'Observaciones', filas: this.observaciones() },
+      { clave: 'encuentros', titulo: 'Encuentros', filas: this.encuentros() },
+      { clave: 'notas', titulo: 'Notas', filas: this.notas() },
+      { clave: 'planes', titulo: 'Planes de cuidados', filas: this.planes() },
+      { clave: 'documentos', titulo: 'Documentos', filas: this.documentos() },
+    ].map((bloque) => ({
+      ...bloque,
+      columnas: this.columnasPara(bloque.filas, bloque.clave),
+    })),
+  );
+
+  /* -- La banda de contexto ------------------------------------------------
+     Lo que hay que saber ANTES de abrir una pestaña. Antes esto no existía y la
+     pantalla abría en «Diagnósticos (2)»: para enterarse de que la persona es
+     alérgica a algo había que acordarse de ir a mirar. */
+
+  /**
+   * Las alergias, arriba y a la vista, no en la segunda pestaña.
+   *
+   * Es el único bloque del expediente que cambia una conducta **antes** de
+   * leerlo: recetar sin haberlas visto es el error que esta banda existe para
+   * evitar. No se filtra por criticidad —la criticidad llega como concepto y
+   * deducirla del texto sería adivinar—: se muestran todas, que son pocas.
+   */
+  protected readonly alergiasDestacadas = this.alergias;
+
+  /** Las cifras del expediente, para dimensionarlo sin abrir pestaña por pestaña. */
+  protected readonly cifras = computed(() => [
+    { clave: 'diagnosticos', rotulo: 'Diagnósticos', valor: this.diagnosticos().length },
+    { clave: 'medicacion', rotulo: 'Medicación', valor: this.medicacion().length },
+    { clave: 'encuentros', rotulo: 'Encuentros', valor: this.encuentros().length },
+    { clave: 'observaciones', rotulo: 'Observaciones', valor: this.observaciones().length },
   ]);
+
+  /**
+   * Cuándo fue la última vez que se la atendió.
+   *
+   * De los encuentros, que es donde consta. `null` mientras no haya ninguno con
+   * fecha: inventar «sin atención previa» a partir de un bloque vacío diría algo
+   * que el expediente no dice.
+   */
+  protected readonly ultimaAtencion = computed<Date | null>(() => {
+    const fechas = this.encuentros()
+      .map((fila) => fila.cuando)
+      .filter((fecha): fecha is Date => fecha !== null);
+    return fechas.length === 0
+      ? null
+      : fechas.reduce((mayor, fecha) => (fecha > mayor ? fecha : mayor));
+  });
 
   /**
    * Aviso de recorte, en palabras.
@@ -560,12 +642,54 @@ export class PatientChart {
     })),
   );
 
-  protected readonly columnas = computed<readonly ColumnDef<FilaClinica>[]>(() => [
-    { key: 'principal', header: 'Registro', priority: 1, cell: this.celdaPrincipal() },
-    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-    { key: 'cuando', header: 'Fecha', priority: 2, cell: this.celdaCuando() },
-    { key: 'detalle', header: 'Detalle', priority: 3 },
-  ]);
+  /**
+   * Los `medicationConceptId` de la medicación ya registrada, sin traducir —
+   * lo que {@link MedicationBlock} necesita para chequear interacciones antes
+   * de prescribir una más. Se incluye toda la registrada y no sólo la
+   * vigente: el contrato de `getSummary` no distingue «activa» de «pasada»
+   * por un campo propio, y advertir de más sobre algo que ya no se toma es un
+   * error mucho más chico que no advertir sobre algo que sí.
+   */
+  protected readonly medicacionActivaConceptIds = computed<readonly string[]>(() =>
+    Array.from(
+      new Set((this.datos()?.resumen.medicationRequests ?? []).map((r) => r.medicationConceptId)),
+    ),
+  );
+
+  /**
+   * Las columnas de un bloque concreto.
+   *
+   * `Detalle` sólo se dibuja si alguna fila la llena. Es la diferencia entre una
+   * columna vacía —que se lee como un dato que no cargó— y una columna que ese
+   * bloque no tiene.
+   */
+  private columnasPara(
+    filas: readonly FilaClinica[],
+    clave?: string,
+  ): readonly ColumnDef<FilaClinica>[] {
+    const hayDetalle = filas.some((fila) => fila.detalle !== '' && fila.detalle !== SIN_DATO);
+    return [
+      { key: 'principal', header: 'Registro', priority: 1, cell: this.celdaPrincipal() },
+      { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
+      { key: 'cuando', header: 'Fecha', priority: 2, cell: this.celdaCuando() },
+      ...(hayDetalle
+        ? [{ key: 'detalle', header: 'Detalle', priority: 3 } satisfies ColumnDef<FilaClinica>]
+        : []),
+      // Sólo el bloque de encuentros lleva descarga (corrección #16): una
+      // atención es lo que se puede entregar como documento. Un diagnóstico
+      // suelto no es un papel que nadie pida.
+      ...(clave === 'encuentros'
+        ? [
+            {
+              key: 'documento',
+              header: 'Documento',
+              priority: 1,
+              cell: this.celdaDocumento(),
+            } satisfies ColumnDef<FilaClinica>,
+          ]
+        : []),
+    ];
+  }
 
   protected readonly porFila = (fila: FilaClinica): string => fila.id;
 
@@ -700,6 +824,80 @@ export class PatientChart {
         this.registro.set(errorToViewState<null>(error));
       },
     });
+  }
+
+  /* -- Los documentos que se llevan en papel (corrección #16) --------------
+     Dos PDF, deliberadamente simples, generados desde los datos que la API ya
+     devolvió. No se piden de nuevo ni se arman leyendo la pantalla: se arman
+     de `datos()`, que es lo mismo que se está mostrando. */
+
+  /**
+   * Descarga la receta de esa indicación.
+   *
+   * Se ofrece **también sobre una receta sin emitir**: quien atiende a veces
+   * quiere revisarla en papel antes de firmar. El documento lo declara con
+   * todas las letras («copia de trabajo») en vez de aparentar validez, que es
+   * lo que haría un PDF idéntico al de una receta emitida.
+   */
+  protected descargarReceta(receta: RecetaEnFicha): void {
+    const guardada = (this.datos()?.resumen.medicationRequests ?? []).find(
+      (fila) => fila.id === receta.id,
+    );
+    if (guardada === undefined) {
+      return;
+    }
+
+    downloadPrescriptionPdf(
+      recetaDesdeResumen(guardada, this.contextoDelDocumento(), (id) => this.label(id)),
+    );
+    this.toasts.success('La receta se descargó como PDF.', 'Receta');
+  }
+
+  /**
+   * Descarga la historia clínica **de esa atención**.
+   *
+   * No es el expediente completo: es lo que pasó en esa consulta —motivo,
+   * diagnósticos, medicación y observaciones registrados durante ella—, que es
+   * lo que la corrección #16 pide poder entregar. Los registros se filtran por
+   * `encounterId`; los que el contrato no ata a un encuentro quedan fuera en vez
+   * de colarse en la atención equivocada.
+   */
+  protected descargarAtencion(fila: FilaClinica): void {
+    const datos = this.datos();
+    const encuentro = (datos?.resumen.encounters ?? []).find((item) => item.id === fila.id);
+    if (datos === undefined || datos === null || encuentro === undefined) {
+      return;
+    }
+
+    downloadVisitPdf(
+      atencionDesdeResumen(encuentro, datos.resumen, this.contextoDelDocumento(), (id) =>
+        this.label(id),
+      ),
+    );
+    this.toasts.success('La atención se descargó como PDF.', 'Historia clínica');
+  }
+
+  /** Quién es quién en el papel: paciente, profesional y organización. */
+  private contextoDelDocumento(): ContextoDelDocumento {
+    return {
+      paciente: this.nombre(),
+      profesional: this.profesionalDeLaSesion(),
+    };
+  }
+
+  /**
+   * Quién firma el documento.
+   *
+   * Hoy es el perfil profesional de la sesión, que es quien está mirando el
+   * expediente y quien registró la atención. Devuelve vacío cuando la cuenta no
+   * tiene perfil profesional —administración, por ejemplo—: el documento lo
+   * imprime como «No registrado» en vez de atribuirle la atención a alguien.
+   */
+  private profesionalDeLaSesion(): string {
+    if (this.auth.practitionerProfileId() === null) {
+      return '';
+    }
+    return this.auth.displayName() ?? '';
   }
 
   /* -- Lectura ------------------------------------------------------------- */

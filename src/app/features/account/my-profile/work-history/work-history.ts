@@ -4,6 +4,8 @@ import {
   Component,
   computed,
   inject,
+  input,
+  output,
   signal,
 } from '@angular/core';
 
@@ -68,6 +70,18 @@ export class WorkHistory {
   private readonly sites = inject(PracticeSitesClient);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
+
+  /**
+   * `'flat'` (por defecto): la lista propia, tal como vive hoy al pie de «Mi
+   * perfil». `'timeline'`: la pestaña Trayectoria del perfil ya pinta el
+   * mismo historial como línea de tiempo por fases — acá se suprime el
+   * listado propio y sólo queda el formulario de alta, para no mostrar el
+   * mismo dato dos veces con dos formas distintas.
+   */
+  readonly layout = input<'flat' | 'timeline'>('flat');
+
+  /** Se emite tras un alta exitosa, para que quien embebe el formulario recargue lo que ya tenía leído. */
+  readonly added = output<void>();
 
   /**
    * Si esta cuenta tiene perfil profesional.
@@ -237,6 +251,7 @@ export class WorkHistory {
           this.limpiar();
           this.toasts.success('Quedó en tu historial laboral.', 'Vínculo registrado');
           this.cargar();
+          this.added.emit();
         },
         error: (error: unknown) => {
           this.registrando.set(false);

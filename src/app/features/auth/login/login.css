@@ -10,24 +10,70 @@
   display: block;
 }
 
+/* Tarjeta elevada: en mobile el panel de `app-auth-split` es un fondo plano,
+   así que la elevación (borde + `--shadow-lg`) es lo único que hace flotar el
+   documento sobre él — no depende de que el panel tenga un tono distinto. */
 .login {
   display: flex;
   flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xl);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow-lg);
 }
 
-/* Membrete: título y bajada separados del cuerpo por una regla, como la
-   cabecera de un expediente. */
+@media (min-width: 650px) {
+  /* --bp-sm literal: ver la nota de src/styles.css, las media queries no
+     admiten custom properties en la condición. */
+  .login {
+    padding: var(--sp-8);
+  }
+}
+
+/* Sello de acceso: mismo par bg/fg que `btn--primary` (7,25 AAA peor caso),
+   así que el contraste ya está validado — no es una combinación nueva. */
+.login__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-sm), 0 10px 24px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+}
+
+.login__mark svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* Membrete: título y bajada, cerrados por una regla que se apaga hacia la
+   derecha en vez de cortar seco — el mismo gesto que un membrete impreso. */
 .login__header {
+  position: relative;
   margin-bottom: var(--sp-6);
-  padding-bottom: var(--sp-4);
-  border-bottom: 1px solid var(--border-default);
+  padding-bottom: var(--sp-5);
+}
+
+.login__header::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-strong), transparent 75%);
 }
 
 .login__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--fs-h2);
-  line-height: var(--lh-h2);
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: var(--lh-h1);
   /* Documento: el título va en tinta (texto), no en color de marca; el acento
      de marca queda para la acción primaria. */
   color: var(--text-primary);
@@ -56,14 +102,24 @@ form {
   width: 100%;
 }
 
-/* Pie del formulario: acciones secundarias separadas del cuerpo por una regla. */
+/* Pie del formulario: acciones secundarias separadas del cuerpo por una regla
+   que se apaga hacia la izquierda, en espejo con la del membrete. */
 .login__footer {
+  position: relative;
   margin-top: var(--sp-6);
   padding-top: var(--sp-5);
-  border-top: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+}
+
+.login__footer::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(270deg, var(--border-strong), transparent 75%);
 }
 
 .login__pie {

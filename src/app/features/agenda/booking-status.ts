@@ -34,8 +34,24 @@ import { UNKNOWN_STATUS_VARIANT } from '../../shared/components/organisms/status
  * `unknown`, que es neutro y con su palabra: nunca una pantalla rota.
  */
 const VARIANTE_POR_CODIGO: Readonly<Record<string, StatusSealVariant>> = Object.freeze({
+  /**
+   * Pedida por el paciente y todavía sin respuesta (corrección #11).
+   *
+   * `in-review` como quien ya llegó, y por el mismo motivo: es lo que espera
+   * una decisión de quien mira la agenda. Una solicitud que se pinta igual que
+   * una cita confirmada es una solicitud que nadie contesta.
+   */
+  BOOKING_REQUESTED: 'in-review',
+  BOOKING_PENDING_CONFIRMATION: 'in-review',
   /** Reservada y en pie: es el estado normal de la agenda del día. */
   BOOKING_CONFIRMED: 'approved',
+  /** La atención está ocurriendo ahora. */
+  BOOKING_IN_PROGRESS: 'in-review',
+  /** Se atendió y se cerró: la cita ya cumplió su función. */
+  BOOKING_COMPLETED: 'approved',
+  EV_BOOKING_DONE: 'approved',
+  /** No se presentó. Se marca como vencida, no como rechazada: nadie la anuló. */
+  BOOKING_NO_SHOW: 'expired',
   /**
    * La persona ya llegó y está esperando.
    *
@@ -65,6 +81,22 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, StatusSealVariant>> = Object.
 export interface BookingStatusPresentation {
   readonly variant: StatusSealVariant;
   readonly label: string;
+  /**
+   * El código del catálogo, ya sin prefijo de módulo.
+   *
+   * Es lo que decide **qué acciones** ofrece la fila: aceptar solo sobre una
+   * solicitud, completar solo sobre lo que está en curso. Ramificar por el uuid
+   * ataría la pantalla a los identificadores de un re-seed; por la palabra, al
+   * idioma del catálogo. `''` mientras terminología no resolvió el concepto: en
+   * ese caso no se ofrece ninguna acción, que es lo correcto — no se opera
+   * sobre un estado que no se conoce.
+   */
+  readonly code: string;
+}
+
+/** El código sin el prefijo de módulo (`scheduling:X` → `X`). */
+export function sufijoDeCodigo(code: string): string {
+  return code.includes(':') ? code.slice(code.lastIndexOf(':') + 1) : code;
 }
 
 /**
@@ -83,17 +115,16 @@ export function toBookingStatusPresentation(
   textoDeReserva: string,
 ): BookingStatusPresentation {
   if (concepto === undefined) {
-    return { variant: UNKNOWN_STATUS_VARIANT, label: textoDeReserva };
+    return { variant: UNKNOWN_STATUS_VARIANT, label: textoDeReserva, code: '' };
   }
 
-  const sufijo = concepto.code.includes(':')
-    ? concepto.code.slice(concepto.code.lastIndexOf(':') + 1)
-    : concepto.code;
+  const sufijo = sufijoDeCodigo(concepto.code);
 
   return {
     variant: VARIANTE_POR_CODIGO[sufijo] ?? UNKNOWN_STATUS_VARIANT,
     // La palabra sale del catálogo, no de acá: es el dato, y la interfaz sólo
     // decide con qué forma y tono acompañarlo.
     label: concepto.display || textoDeReserva,
+    code: sufijo,
   };
 }

@@ -18,6 +18,10 @@ import { RedsatThemeToggleDirective } from '../../core/redsat/redsat-theme-toggl
 import type { HeaderUser } from '../../shared/components/organisms/header/header.types';
 import type { NavSection } from '../../shared/components/organisms/side-nav/side-nav.types';
 import type { TenantOption } from '../../shared/components/organisms/tenant-switcher/tenant-switcher.types';
+import { TutorialOverlay } from '../../shared/components/organisms/tutorial-overlay/tutorial-overlay';
+import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
+import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
+import { TUTORIALS } from '../../core/tutorials/definitions';
 
 /**
  * Armazón de todas las pantallas con sesión.
@@ -38,7 +42,13 @@ import type { TenantOption } from '../../shared/components/organisms/tenant-swit
  */
 @Component({
   selector: 'app-shell-layout',
-  imports: [RouterLink, RouterOutlet, RedsatThemeToggleDirective],
+  imports: [
+    RouterLink,
+    RouterOutlet,
+    RedsatThemeToggleDirective,
+    TutorialOverlay,
+    TutorialTarget,
+  ],
   templateUrl: './shell-layout.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -73,7 +83,16 @@ export class ShellLayout {
   /** La URL de la pantalla, sin parámetros de consulta ni fragmento. */
   private readonly urlActual = signal('');
 
+  private readonly tutorials = inject(TutorialRegistry);
+
   constructor() {
+    // El catálogo de tutoriales se registra acá y no en un proveedor de arranque
+    // porque el armazón es lo único que existe exactamente una vez por sesión
+    // con interfaz. Registrar dos veces es inofensivo —`register` reemplaza, no
+    // acumula— pero hacerlo en el arranque lo cargaría también en las pantallas
+    // públicas, donde no hay ningún tutorial que ofrecer.
+    this.tutorials.register(TUTORIALS);
+
     this.urlActual.set(this.rutaLimpia());
     this.router.events
       .pipe(

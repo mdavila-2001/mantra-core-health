@@ -87,6 +87,19 @@ __screenshots__/
 # del repositorio: versionarlas metería el árbol dentro de sí mismo.
 .claude/
 
+# El PDF que la suite unitaria deja en la raíz al correr.
+#
+# `pdf-export-button.spec.ts` y `clinical-pdf.spec.ts` ejercitan jsPDF **sin
+# mockearlo** —a diferencia de `pdf-export.spec.ts`, que sí lo hace—, así que
+# `save()` escribe de verdad. Es deliberado de esas pruebas: comprueban que el
+# documento se genera, no que se llamó a una función.
+#
+# La consecuencia no lo era: cada `yarn test` deja un binario suelto en la raíz
+# del repositorio, que aparece como archivo sin seguimiento y tienta a
+# commitearlo. Se ignora acá en vez de mockear jsPDF: el mock debilitaría la
+# prueba, que es de las pocas que tocan la biblioteca de verdad.
+/presupuesto-ana-perez.pdf
+
 # System files
 .DS_Store
 Thumbs.db

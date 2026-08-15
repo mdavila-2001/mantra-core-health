@@ -15,6 +15,26 @@
     <h2 class="dialog__title" [id]="titleId" data-testid="dialogo-titulo">{{ config().title }}</h2>
     <p class="dialog__message" [id]="messageId">{{ config().message }}</p>
 
+    @if (reasonConfig(); as motivo) {
+      <div class="dialog__reason">
+        <app-form-field
+          [label]="motivo.label"
+          [hint]="motivo.hint ?? ''"
+          [errorMessage]="reasonError()"
+          [required]="true"
+        >
+          <app-textarea
+            data-testid="dialogo-motivo"
+            [(value)]="reason"
+            [placeholder]="motivo.placeholder ?? ''"
+            [maxLength]="reasonMaxLength()"
+            [rows]="3"
+            [hasError]="reasonError() !== ''"
+          />
+        </app-form-field>
+      </div>
+    }
+
     <div class="dialog__actions">
       <!-- Cancelar va primero en el DOM: en una acción destructiva es el que
            recibe el foco inicial del navegador, que es lo que se busca. -->

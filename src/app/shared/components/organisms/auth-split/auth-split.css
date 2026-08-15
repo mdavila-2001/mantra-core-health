@@ -24,7 +24,14 @@
   display: flex;
   flex-direction: column;
   padding: var(--sp-4);
-  background: var(--bg-surface);
+  /* `--bg-surface` sola es plana (en claro es igual a `--bg-base`, #fff sobre
+     #fff), y ahí es donde flota la tarjeta de `login`/`register`. Los dos
+     lavados radiales dan un fondo con aire sin tocar el contraste de texto:
+     son manchas de marca al 6-10%, no superficies — nada se lee encima. */
+  background:
+    radial-gradient(circle at 12% -8%, color-mix(in srgb, var(--brand-secondary) 10%, transparent), transparent 42%),
+    radial-gradient(circle at 100% 108%, color-mix(in srgb, var(--brand-primary) 7%, transparent), transparent 46%),
+    var(--bg-surface);
 }
 
 /* El selector de tema arriba a la derecha, sin empujar el formulario. */
@@ -88,6 +95,29 @@
   .auth-split__tagline {
     animation-delay: 0ms !important;
   }
+
+  /* El lienzo vivo es movimiento continuo, no una entrada: acortar el delay no
+     alcanza, hay que apagar la animación entera y dejar una composición fija.
+     Los anillos de pulso no tienen un fotograma de reposo con sentido (son
+     puro movimiento), así que se ocultan en vez de congelarse a mitad de camino. */
+  .auth-split__blob,
+  .auth-split__node,
+  .auth-split__edge {
+    animation: none !important;
+  }
+
+  .auth-split__ring {
+    animation: none !important;
+    opacity: 0;
+  }
+
+  .auth-split__node {
+    opacity: 0.7;
+  }
+
+  .auth-split__edge {
+    opacity: 0.22;
+  }
 }
 
 /* --bp-lg. El valor va literal: CSS no admite variables en la condición. */
@@ -102,6 +132,7 @@
   }
 
   .auth-split__brand {
+    position: relative;
     display: flex;
     align-items: flex-end;
     padding: var(--sp-8);
@@ -127,7 +158,168 @@
   }
 
   .auth-split__brand-content {
+    position: relative;
+    z-index: 1;
     max-width: 26rem;
+  }
+
+  /* ==========================================================================
+      Lienzo vivo — "tu salud, conectada" en forma: una red de nodos que
+      respira como un pulso y masas orgánicas que flotan despacio detrás,
+      como si el fondo estuviera vivo. Todo el lienzo es `aria-hidden` y vive
+      en `#ffffff`/rampas fijas (no tokens semánticos): igual que el degradado
+      de la marca, tiene que quedar IGUAL en claro y oscuro — es el escenario
+      fijo detrás del texto, no parte del tema de la app.
+      Se ancla arriba-derecha, lejos del rincón abajo-izquierda documentado
+      arriba (petrol-800 bajo el texto): nada acá se acerca al 12:1 que
+      sostiene esa lectura. ========================================================================== */
+  .auth-split__pulse {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .auth-split__blob {
+    fill: currentColor;
+    opacity: 0.15;
+    filter: blur(46px);
+    mix-blend-mode: screen;
+    transform-origin: center;
+    animation: auth-masa-flota 24s ease-in-out infinite;
+  }
+
+  .auth-split__blob--2 {
+    color: var(--c-mint-300);
+    opacity: 0.13;
+    animation-duration: 19s;
+    animation-delay: -6s;
+  }
+
+  .auth-split__blob--3 {
+    color: var(--c-aqua-300);
+    opacity: 0.11;
+    animation-duration: 27s;
+    animation-delay: -14s;
+  }
+
+  @keyframes auth-masa-flota {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(-16px, 12px) scale(1.08);
+    }
+    66% {
+      transform: translate(12px, -10px) scale(0.94);
+    }
+  }
+
+  /* Anillo de pulso: un ping que nace del nodo central y se disuelve, como un
+     latido — el gesto más literal de "vivo" en toda la composición. */
+  .auth-split__ring {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    opacity: 0;
+    animation: auth-pulso-anillo 3.6s cubic-bezier(0.2, 0, 0.2, 1) infinite;
+  }
+
+  .auth-split__ring--2 {
+    animation-delay: 1.2s;
+  }
+
+  .auth-split__ring--3 {
+    animation-delay: 2.4s;
+  }
+
+  @keyframes auth-pulso-anillo {
+    0% {
+      transform: scale(1);
+      opacity: 0.45;
+    }
+    100% {
+      transform: scale(9);
+      opacity: 0;
+    }
+  }
+
+  /* Red de nodos: las líneas laten de a poco (una señal viajando) y cada nodo
+     respira en su propio compás — nunca los siete a la vez, que se leería
+     como parpadeo y no como pulso. */
+  .auth-split__edge {
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linecap: round;
+    opacity: 0.14;
+    animation: auth-linea-pulso 4.4s ease-in-out infinite;
+  }
+
+  .auth-split__edge:nth-of-type(2) {
+    animation-delay: 0.7s;
+  }
+  .auth-split__edge:nth-of-type(3) {
+    animation-delay: 1.4s;
+  }
+  .auth-split__edge:nth-of-type(4) {
+    animation-delay: 2.1s;
+  }
+  .auth-split__edge:nth-of-type(5) {
+    animation-delay: 2.8s;
+  }
+  .auth-split__edge:nth-of-type(6) {
+    animation-delay: 3.5s;
+  }
+
+  @keyframes auth-linea-pulso {
+    0%,
+    100% {
+      opacity: 0.12;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  .auth-split__node {
+    fill: currentColor;
+    opacity: 0.6;
+    transform-origin: center;
+    animation: auth-nodo-late 3.2s ease-in-out infinite;
+  }
+
+  .auth-split__node:nth-of-type(2) {
+    animation-delay: 0.5s;
+  }
+  .auth-split__node:nth-of-type(3) {
+    animation-delay: 1s;
+  }
+  .auth-split__node:nth-of-type(4) {
+    animation-delay: 1.5s;
+  }
+  .auth-split__node:nth-of-type(5) {
+    animation-delay: 2s;
+  }
+  .auth-split__node:nth-of-type(6) {
+    animation-delay: 0.8s;
+  }
+  .auth-split__node:nth-of-type(7) {
+    animation-delay: 1.7s;
+  }
+
+  @keyframes auth-nodo-late {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.5;
+    }
+    50% {
+      transform: scale(1.7);
+      opacity: 0.95;
+    }
   }
 
   /* Escalonado: marca, titular y bajada entran en ese orden, con 70 ms entre

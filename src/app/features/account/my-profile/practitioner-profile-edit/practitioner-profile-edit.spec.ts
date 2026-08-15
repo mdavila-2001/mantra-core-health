@@ -36,6 +36,7 @@ const PERFIL_BASE = {
   credentials: [],
   licenses: [],
   languages: [],
+  affiliations: [],
   activity: { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 },
   createdAt: '2024-02-01T00:00:00.000Z',
 };

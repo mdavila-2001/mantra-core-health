@@ -1,0 +1,179 @@
+<app-page-header
+  title="Mi historia clínica"
+  subtitle="Tus atenciones, tus recetas y lo que quedó registrado de cada consulta."
+/>
+
+@if (sinPerfilDePaciente) {
+  <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
+       que esta pantalla no le corresponde. -->
+  <app-alert tone="info" title="Esta sección es para pacientes">
+    Tu cuenta no tiene un perfil de paciente, así que no hay una historia clínica propia que
+    mostrar.
+  </app-alert>
+  <a app-button variant="primary" [routerLink]="rutaDeTurnos">Ir a mis turnos</a>
+} @else {
+  <app-view-state-host [state]="historia()" (retry)="cargar()">
+    <div class="historia">
+      <!-- Un recorte silencioso se lee como «no hay nada más», y eso es afirmar
+           algo que nadie comprobó. -->
+      @if (recorte() !== '') {
+        <app-alert tone="warning" title="Historia recortada">
+          Se muestran los últimos registros de cada bloque. Quedaron recortados: {{ recorte() }}.
+        </app-alert>
+      }
+
+      <!-- ─── Atenciones ────────────────────────────────────────────────────
+           Primero y con la descarga al lado: es lo que se viene a buscar. -->
+      <section class="historia__bloque" aria-labelledby="historia-atenciones">
+        <h2 id="historia-atenciones" class="historia__titulo">
+          Atenciones ({{ atenciones().length }})
+        </h2>
+
+        @if (atenciones().length === 0) {
+          <p class="historia__vacio">Todavía no tenés atenciones registradas.</p>
+        } @else {
+          <ul class="historia__lista" data-testid="historia-atenciones">
+            @for (atencion of atenciones(); track atencion.id) {
+              <li class="historia__item">
+                <div class="historia__datos">
+                  <span class="historia__principal">{{ atencion.motivo }}</span>
+                  <span class="historia__secundario">
+                    @if (atencion.cuando !== null) {
+                      {{ atencion.cuando | date: "d 'de' MMMM y, HH:mm" }}
+                    } @else {
+                      Sin fecha registrada
+                    }
+                  </span>
+                  @if (atencion.diagnosticos.length > 0) {
+                    <span class="historia__secundario">
+                      Diagnósticos: {{ atencion.diagnosticos.join(', ') }}
+                    </span>
+                  }
+                </div>
+
+                <div class="historia__acciones">
+                  <app-badge [variant]="atencion.cerrada ? 'success' : 'info'">
+                    {{ atencion.cerrada ? 'Cerrada' : 'En curso' }}
+                  </app-badge>
+                  <!-- Corrección #16: la historia de esa atención, en PDF, en
+                       cualquier momento. También en curso, y ahí el documento
+                       se declara copia de trabajo. -->
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    data-testid="historia-descargar-atencion"
+                    (clicked)="descargarAtencion(atencion)"
+                  >
+                    Descargar PDF
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <!-- ─── Recetas ──────────────────────────────────────────────────────── -->
+      <section class="historia__bloque" aria-labelledby="historia-recetas">
+        <h2 id="historia-recetas" class="historia__titulo">Recetas ({{ recetas().length }})</h2>
+
+        @if (recetas().length === 0) {
+          <p class="historia__vacio">Todavía no tenés recetas registradas.</p>
+        } @else {
+          <ul class="historia__lista" data-testid="historia-recetas">
+            @for (receta of recetas(); track receta.id) {
+              <li class="historia__item">
+                <div class="historia__datos">
+                  <span class="historia__principal">{{ receta.medicamento }}</span>
+                  @if (receta.indicacion !== '') {
+                    <span class="historia__secundario">{{ receta.indicacion }}</span>
+                  }
+                  <span class="historia__secundario">{{ receta.cuando | date: 'd MMM y' }}</span>
+                </div>
+
+                <div class="historia__acciones">
+                  <app-badge [variant]="receta.emitida ? 'success' : 'warning'">
+                    {{ receta.estado }}
+                  </app-badge>
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    data-testid="historia-descargar-receta"
+                    (clicked)="descargarReceta(receta)"
+                  >
+                    Descargar PDF
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <!-- ─── Lo demás, en sólo lectura ─────────────────────────────────────
+           Sin descarga propia: no son documentos que nadie pida en papel por
+           separado, y ofrecerlo sería inventar un trámite. -->
+      @if (alergias().length > 0) {
+        <section class="historia__bloque" aria-labelledby="historia-alergias">
+          <h2 id="historia-alergias" class="historia__titulo">
+            Alergias ({{ alergias().length }})
+          </h2>
+          <ul class="historia__lista historia__lista--simple">
+            @for (fila of alergias(); track fila.id) {
+              <li class="historia__item">
+                <span class="historia__principal">{{ fila.principal }}</span>
+                <span class="historia__secundario">{{ fila.secundario }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      @if (diagnosticos().length > 0) {
+        <section class="historia__bloque" aria-labelledby="historia-diagnosticos">
+          <h2 id="historia-diagnosticos" class="historia__titulo">
+            Diagnósticos ({{ diagnosticos().length }})
+          </h2>
+          <ul class="historia__lista historia__lista--simple">
+            @for (fila of diagnosticos(); track fila.id) {
+              <li class="historia__item">
+                <span class="historia__principal">{{ fila.principal }}</span>
+                <span class="historia__secundario">
+                  {{ fila.secundario }}
+                  @if (fila.cuando !== null) {
+                    · {{ fila.cuando | date: 'd MMM y' }}
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      @if (resultados().length > 0) {
+        <section class="historia__bloque" aria-labelledby="historia-resultados">
+          <h2 id="historia-resultados" class="historia__titulo">
+            Resultados ({{ resultados().length }})
+          </h2>
+          <ul class="historia__lista historia__lista--simple">
+            @for (fila of resultados(); track fila.id) {
+              <li class="historia__item">
+                <span class="historia__principal">{{ fila.principal }}</span>
+                <span class="historia__secundario">
+                  {{ fila.secundario }}
+                  @if (fila.cuando !== null) {
+                    · {{ fila.cuando | date: 'd MMM y' }}
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+  </app-view-state-host>
+}

@@ -28,8 +28,23 @@
             }
           </div>
 
-          <!-- Una receta emitida no ofrece nada: es inmutable, y un botón que
-               siempre responde 422 es una trampa, no una acción. -->
+          <div class="receta__acciones">
+            <!-- La receta en papel (corrección #16). Está siempre, también
+                 sobre una emitida —que es cuando más se pide— y sobre una sin
+                 emitir, donde el documento se declara copia de trabajo. -->
+            <button
+              app-button
+              variant="ghost"
+              type="button"
+              data-testid="receta-descargar"
+              (clicked)="descargar.emit(receta)"
+            >
+              Descargar PDF
+            </button>
+          </div>
+
+          <!-- Una receta emitida no ofrece nada más: es inmutable, y un botón
+               que siempre responde 422 es una trampa, no una acción. -->
           @if (!receta.emitida) {
             <div class="receta__acciones">
               @if (!receta.firmada) {
@@ -71,8 +86,8 @@
     </app-alert>
   } @else if (!hayEncuentro()) {
     <app-alert tone="info" title="Abrí el encuentro para recetar">
-      La receta se registra dentro de la consulta que la motivó. Registrá el encuentro acá abajo y el
-      formulario aparece.
+      La receta se registra dentro de la consulta que la motivó. Registrá el encuentro acá abajo y
+      el formulario aparece.
     </app-alert>
   } @else if (catalogoListo() === false) {
     <!-- El selector no cae a texto libre por diseño: un uuid tecleado a mano es

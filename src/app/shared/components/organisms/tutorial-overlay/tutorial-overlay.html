@@ -1,0 +1,134 @@
+@if (paso(); as activo) {
+  <!-- ─── El velo, en cuatro rectángulos ────────────────────────────────────
+       Cuatro y no uno con recorte: así el hueco NO tiene capa encima y el clic
+       llega al elemento de verdad en los pasos que piden tocarlo. Con un velo
+       entero, o se podía tocar todo o no se podía tocar nada. -->
+  @if (geometria().recorte; as hueco) {
+    <div class="tutorial-velo" aria-hidden="true">
+      <div class="tutorial-velo__parte" [style.inset]="'0 0 auto 0'" [style.height.px]="hueco.top"></div>
+      <div
+        class="tutorial-velo__parte"
+        [style.top.px]="hueco.top + hueco.height"
+        [style.inset-inline]="'0'"
+        [style.bottom]="'0'"
+      ></div>
+      <div
+        class="tutorial-velo__parte"
+        [style.top.px]="hueco.top"
+        [style.height.px]="hueco.height"
+        [style.left]="'0'"
+        [style.width.px]="hueco.left"
+      ></div>
+      <div
+        class="tutorial-velo__parte"
+        [style.top.px]="hueco.top"
+        [style.height.px]="hueco.height"
+        [style.left.px]="hueco.left + hueco.width"
+        [style.right]="'0'"
+      ></div>
+    </div>
+
+    <!-- El marco del elemento resaltado. Decorativo: lo que comunica es el
+         globo, que sí se lee. -->
+    <div
+      class="tutorial-marco"
+      aria-hidden="true"
+      [style.top.px]="hueco.top"
+      [style.left.px]="hueco.left"
+      [style.width.px]="hueco.width"
+      [style.height.px]="hueco.height"
+    ></div>
+
+    <!-- La tapa del hueco en los pasos que sólo explican: un clic distraído en
+         medio de una explicación no debería disparar una acción real. -->
+    @if (!interactivo()) {
+      <div
+        class="tutorial-tapa"
+        aria-hidden="true"
+        [style.top.px]="hueco.top"
+        [style.left.px]="hueco.left"
+        [style.width.px]="hueco.width"
+        [style.height.px]="hueco.height"
+      ></div>
+    }
+  } @else {
+    <!-- Sin ancla el velo es entero: no hay nada que dejar tocar. -->
+    <div class="tutorial-velo tutorial-velo--entero" aria-hidden="true"></div>
+  }
+
+  <!-- ─── El globo ──────────────────────────────────────────────────────────
+       `role="dialog"` con `aria-modal`: mientras el recorrido corre, es lo único
+       con lo que se dialoga. `tabindex="-1"` para poder recibir el foco sin
+       aparecer en el orden de tabulación. -->
+  <div
+    #globo
+    class="tutorial-globo"
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    [attr.aria-labelledby]="'tutorial-titulo'"
+    [attr.aria-describedby]="'tutorial-cuerpo'"
+    [attr.data-lado]="geometria().lado"
+    [style.top.px]="geometria().globo.top"
+    [style.left.px]="geometria().globo.left"
+    [style.width.px]="340"
+  >
+    <!-- El progreso se dice con palabras además de con la barra: una barra no
+         se escucha, y el color solo tampoco alcanza. -->
+    <p class="tutorial-globo__progreso">
+      <span>{{ progresoEnPalabras() }}</span>
+      <span class="tutorial-globo__tutorial">{{ activo.tutorial.title }}</span>
+    </p>
+
+    <div
+      class="tutorial-globo__barra"
+      role="progressbar"
+      [attr.aria-valuenow]="activo.index"
+      [attr.aria-valuemin]="1"
+      [attr.aria-valuemax]="activo.total"
+      [attr.aria-label]="progresoEnPalabras()"
+    >
+      <div class="tutorial-globo__barra-relleno" [style.width.%]="porcentaje()"></div>
+    </div>
+
+    <h2 id="tutorial-titulo" class="tutorial-globo__titulo">{{ activo.step.title }}</h2>
+    <p id="tutorial-cuerpo" class="tutorial-globo__cuerpo">{{ activo.step.body }}</p>
+
+    @if (activo.step.hint) {
+      <p class="tutorial-globo__pista">{{ activo.step.hint }}</p>
+    }
+
+    <!-- Que el paso espera una acción se dice; no se deduce de que el botón
+         «Siguiente» no esté. -->
+    @if (activo.step.advanceOn === 'click') {
+      <p class="tutorial-globo__espera" role="status">
+        Hacé clic en lo que está resaltado para continuar.
+      </p>
+    } @else if (activo.step.advanceOn === 'input') {
+      <p class="tutorial-globo__espera" role="status">
+        Escribí en el campo resaltado para continuar.
+      </p>
+    }
+
+    @if (buscando()) {
+      <p class="tutorial-globo__espera" role="status">Buscando el elemento en la pantalla…</p>
+    }
+
+    <div class="tutorial-globo__acciones">
+      <button app-button variant="ghost" type="button" (clicked)="abandonar()">
+        Dejarlo
+      </button>
+
+      <div class="tutorial-globo__avance">
+        @if (!activo.isFirst) {
+          <button app-button variant="outline" type="button" (clicked)="anterior()">
+            Atrás
+          </button>
+        }
+        <button app-button variant="primary" type="button" (clicked)="siguiente()">
+          {{ activo.isLast ? 'Terminar' : 'Siguiente' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

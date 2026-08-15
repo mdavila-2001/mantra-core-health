@@ -1,0 +1,7 @@
+<button app-button [variant]="variant()" size="sm" (clicked)="exportar()">
+  {{ nombreVisible() }}
+</button>
+
+@if (error(); as mensaje) {
+  <p class="pdf-export__error" role="alert">{{ mensaje }}</p>
+}

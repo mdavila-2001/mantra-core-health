@@ -1,0 +1,32 @@
+<app-page-header
+  title="Buscar un laboratorio"
+  subtitle="Centros verificados de laboratorio clínico e imagenología, de toda la red."
+/>
+
+<app-filter-bar
+  [filters]="filtros"
+  searchLabel="Buscar por nombre o código del centro"
+  (filtersChanged)="filtrar($event)"
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (state().status === 'ready') {
+    <p class="directory__count">
+      {{ total() }} {{ total() === 1 ? 'centro encontrado' : 'centros encontrados' }}
+    </p>
+
+    @for (group of groups(); track group.code) {
+      <section class="directory__group" [attr.aria-labelledby]="'category-' + group.code">
+        <h2 class="directory__category" [id]="'category-' + group.code">
+          {{ group.name }}
+          <span class="directory__quantity">{{ group.units.length }}</span>
+        </h2>
+        <ul class="directory__list">
+          @for (unit of group.units; track unit.id) {
+            <li app-search-result [resultado]="unit"></li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</app-view-state-host>

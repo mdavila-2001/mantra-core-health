@@ -16,7 +16,16 @@
   <app-card>
     <!-- El cuadre va arriba y como sello —color, forma y texto—: si no cuadra,
          nada de lo que hay debajo significa lo que parece. -->
-    <div class="cuadre" appAnnounceOnAppear>
+    <!-- `appAnuncio`, que es el selector real de la directiva. Decía
+         `appAnnounceOnAppear` —el nombre de la clase, no el del atributo— así
+         que no aplicaba: el cuadre aparecía sin anunciarse y quien usa lector
+         de pantalla no se enteraba de si la contabilidad cuadra. El compilador
+         lo venía diciendo con un NG8113 en cada build.
+
+         Sin foco y sin urgencia: el cuadre llega cuando termina una lectura, no
+         como respuesta a una acción, y robar el foco ahí es perder el lugar en
+         la página. -->
+    <div class="cuadre" appAnuncio [asertivo]="false" [enfocar]="false">
       @if (selloDelCuadre(); as sello) {
         <app-status-seal [variant]="sello.variant" [label]="sello.label" />
       }

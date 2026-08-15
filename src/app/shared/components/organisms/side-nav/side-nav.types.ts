@@ -5,6 +5,8 @@
     quien sí sabe qué rol tiene la persona. Acá solo hay forma, nunca permisos.
     ========================================================================== */
 
+import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
+
 /** Un destino del menú. `route` es la ruta interna de Angular. */
 export interface NavItem {
   readonly label: string;
@@ -23,19 +25,14 @@ export interface NavSection {
 }
 
 /**
- * Set de íconos de trazo propio del nav. Cerrado a propósito: un string libre
- * terminaría en nombres que no existen y en íconos mudos.
+ * Set de íconos de trazo propio del nav.
+ *
+ * Se re-exporta: el dueño es `atoms/nav-icon`, que es quien los dibuja, desde
+ * que «Tus accesos» del panel usa los mismos (carril 02). Sigue disponible acá
+ * para quien ya lo importaba de este archivo.
  */
-export const NAV_ICON_NAMES = [
-  'home',
-  'patients',
-  'calendar',
-  'orders',
-  'results',
-  'billing',
-  'settings',
-] as const;
-export type NavIconName = (typeof NAV_ICON_NAMES)[number];
+export { NAV_ICON_NAMES } from '../../atoms/nav-icon/nav-icon.types';
+export type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
 
 /** Estados del panel de navegación. Los resuelve `ShellService`. */
 export const NAV_MODES = ['expanded', 'collapsed', 'drawer-open', 'drawer-closed'] as const;

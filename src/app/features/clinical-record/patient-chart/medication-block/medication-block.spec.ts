@@ -6,11 +6,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../../../../core/auth/session.store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
-import {
-  MedicationBlock,
-  TARGET_MEDICAMENTO,
-  type RecetaEnFicha,
-} from './medication-block';
+import { MedicationBlock, TARGET_MEDICAMENTO, type RecetaEnFicha } from './medication-block';
 
 /**
  * Prescribir, firmar y emitir desde la ficha — V08-01. Lo que estas pruebas
@@ -45,9 +41,7 @@ const CATALOGO = {
   definitionId: 'def-1',
   valueSetId: 'vs-1',
   allowCustomValue: false,
-  options: [
-    { conceptId: 'med-amoxi', code: 'AMOXI', display: 'Amoxicilina', ordinal: 1 },
-  ],
+  options: [{ conceptId: 'med-amoxi', code: 'AMOXI', display: 'Amoxicilina', ordinal: 1 }],
 };
 
 /** Vía y unidad: los dos catálogos opcionales del formulario. */
@@ -203,11 +197,11 @@ describe('MedicationBlock', () => {
     expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
   });
 
-  it('manda los tres obligatorios y el encuentro, y omite lo vacío', () => {
+  it('manda los tres obligatorios y el encuentro, y omite lo vacío', async () => {
     responderCatalogo();
 
     señal<string>('medicamento').set('med-amoxi');
-    interno<() => void>('recetar')();
+    await interno<() => Promise<void>>('recetar')();
 
     const req = http.expectOne('/clinical/medication-requests');
     expect(Object.keys(req.request.body as object).sort()).toEqual([
@@ -221,14 +215,14 @@ describe('MedicationBlock', () => {
     req.flush(RESPUESTA);
   });
 
-  it('manda dosis, frecuencia y cantidad cuando se cargaron', () => {
+  it('manda dosis, frecuencia y cantidad cuando se cargaron', async () => {
     responderCatalogo();
 
     señal<string>('medicamento').set('med-amoxi');
     señal<string>('dosis').set('  500 mg  ');
     señal<string>('frecuencia').set('cada 8 horas');
     señal<string>('cantidad').set('21');
-    interno<() => void>('recetar')();
+    await interno<() => Promise<void>>('recetar')();
 
     const req = http.expectOne('/clinical/medication-requests');
     const body = req.request.body as Record<string, unknown>;
@@ -245,13 +239,13 @@ describe('MedicationBlock', () => {
    * clave no viaja. Es el mismo criterio que los textos libres, y el que
    * permite que el alta funcione aunque sus catálogos no estén publicados.
    */
-  it('manda vía y unidad como conceptos cuando se eligieron', () => {
+  it('manda vía y unidad como conceptos cuando se eligieron', async () => {
     responderCatalogo();
 
     señal<string>('medicamento').set('med-amoxi');
     señal<string>('via').set('via-oral');
     señal<string>('unidad').set('u-mg');
-    interno<() => void>('recetar')();
+    await interno<() => Promise<void>>('recetar')();
 
     const req = http.expectOne('/clinical/medication-requests');
     const body = req.request.body as Record<string, unknown>;
@@ -261,11 +255,11 @@ describe('MedicationBlock', () => {
     req.flush(RESPUESTA);
   });
 
-  it('sin elegir vía ni unidad, esas claves no viajan', () => {
+  it('sin elegir vía ni unidad, esas claves no viajan', async () => {
     responderCatalogo();
 
     señal<string>('medicamento').set('med-amoxi');
-    interno<() => void>('recetar')();
+    await interno<() => Promise<void>>('recetar')();
 
     const req = http.expectOne('/clinical/medication-requests');
     const body = req.request.body as object;
@@ -279,12 +273,12 @@ describe('MedicationBlock', () => {
    * `Number('')` es `0`, y «cantidad cero» en una indicación médica no es lo
    * mismo que no haber escrito cantidad.
    */
-  it('una cantidad en blanco no viaja como cero', () => {
+  it('una cantidad en blanco no viaja como cero', async () => {
     responderCatalogo();
 
     señal<string>('medicamento').set('med-amoxi');
     señal<string>('cantidad').set('');
-    interno<() => void>('recetar')();
+    await interno<() => Promise<void>>('recetar')();
 
     const req = http.expectOne('/clinical/medication-requests');
     expect('quantityDecimal' in (req.request.body as object)).toBe(false);
@@ -292,7 +286,7 @@ describe('MedicationBlock', () => {
     req.flush(RESPUESTA);
   });
 
-  it('tras prescribir avisa para releer y limpia el formulario', () => {
+  it('tras prescribir avisa para releer y limpia el formulario', async () => {
     responderCatalogo();
 
     let releido = 0;
@@ -300,12 +294,104 @@ describe('MedicationBlock', () => {
 
     señal<string>('medicamento').set('med-amoxi');
     señal<string>('dosis').set('500 mg');
-    interno<() => void>('recetar')();
+    await interno<() => Promise<void>>('recetar')();
     http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
 
     expect(releido).toBe(1);
     expect(interno<() => string | null>('medicamento')()).toBeNull();
     expect(interno<() => string>('dosis')()).toBe('');
+  });
+
+  /* ---- el chequeo de interacciones ---------------------------------------- */
+
+  /**
+   * Sin medicación previa registrada no hay con qué comparar —el contrato
+   * exige al menos dos sustancias—, así que ni siquiera se pide el chequeo.
+   * Ya lo cubren las pruebas de arriba (todas parten de `recetas: []`); ésta
+   * lo deja explícito.
+   */
+  it('sin medicación activa, prescribe sin pedir el chequeo de interacciones', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    await interno<() => Promise<void>>('recetar')();
+
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+    http.expectNone('/cds/check-interactions');
+  });
+
+  it('con medicación activa y sin interacciones, prescribe sin confirmar nada', async () => {
+    fixture.componentRef.setInput('medicacionActivaConceptIds', ['med-previo']);
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    const prescribiendo = interno<() => Promise<void>>('recetar')();
+
+    http.expectOne('/cds/check-interactions').flush({ alerts: [], count: 0 });
+    await prescribiendo;
+
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+  });
+
+  it('con interacciones encontradas, pide confirmar antes de prescribir', async () => {
+    fixture.componentRef.setInput('medicacionActivaConceptIds', ['med-previo']);
+    responderCatalogo();
+
+    TestBed.inject(DialogService).confirm = () => Promise.resolve(true);
+    señal<string>('medicamento').set('med-amoxi');
+    const prescribiendo = interno<() => Promise<void>>('recetar')();
+
+    const chequeo = http.expectOne('/cds/check-interactions');
+    expect((chequeo.request.body as { substanceConceptIds: string[] }).substanceConceptIds).toEqual(
+      ['med-previo', 'med-amoxi'],
+    );
+    chequeo.flush({
+      alerts: [{ id: 'al-1', alertTypeConceptId: 'tipo-1', severityConceptId: 'sev-1' }],
+      count: 1,
+    });
+    await prescribiendo;
+
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+  });
+
+  it('si se rechaza la confirmación de interacciones, no prescribe', async () => {
+    fixture.componentRef.setInput('medicacionActivaConceptIds', ['med-previo']);
+    responderCatalogo();
+
+    TestBed.inject(DialogService).confirm = () => Promise.resolve(false);
+    señal<string>('medicamento').set('med-amoxi');
+    const prescribiendo = interno<() => Promise<void>>('recetar')();
+
+    http.expectOne('/cds/check-interactions').flush({
+      alerts: [{ id: 'al-1', alertTypeConceptId: 'tipo-1', severityConceptId: 'sev-1' }],
+      count: 1,
+    });
+    await prescribiendo;
+
+    http.expectNone('/clinical/medication-requests');
+  });
+
+  /**
+   * Si el chequeo mismo no responde, prescribir no se bloquea por eso: hoy la
+   * ausencia total de esta alerta es el estado normal, y una caída puntual no
+   * puede ser más restrictiva que eso.
+   */
+  it('si el chequeo de interacciones falla, prescribe igual', async () => {
+    fixture.componentRef.setInput('medicacionActivaConceptIds', ['med-previo']);
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    const prescribiendo = interno<() => Promise<void>>('recetar')();
+
+    http
+      .expectOne('/cds/check-interactions')
+      .flush(
+        { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '' },
+        { status: 500, statusText: 'Internal Server Error' },
+      );
+    await prescribiendo;
+
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
   });
 
   /* ---- firmar y emitir ---------------------------------------------------- */
@@ -381,9 +467,7 @@ describe('MedicationBlock', () => {
     );
     fixture.detectChanges();
 
-    expect(interno<() => string | null>('avisoDePrecondicion')()).toContain(
-      'necesita tu firma',
-    );
+    expect(interno<() => string | null>('avisoDePrecondicion')()).toContain('necesita tu firma');
     // Y no se pinta además en rojo: sería decir dos veces lo mismo con dos
     // tonos que se contradicen.
     expect(interno<() => string | null>('errorDeLaReceta')()).toBeNull();
@@ -418,15 +502,41 @@ describe('MedicationBlock', () => {
     expect(interno<() => string | null>('errorDeLaReceta')()).toContain('Recargá el expediente');
   });
 
-  it('una receta emitida no ofrece acciones: es inmutable', () => {
+  it('una receta emitida no ofrece firmar ni emitir: es inmutable', () => {
     fixture.componentRef.setInput('recetas', [
       { ...BORRADOR, firmada: true, emitida: true, estado: 'Emitida' },
     ]);
     responderCatalogo();
     fixture.detectChanges();
 
-    const acciones = (fixture.nativeElement as HTMLElement).querySelector('.receta__acciones');
-    expect(acciones).toBeNull();
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).not.toContain('Firmar');
+    expect(texto).not.toContain('Emitir');
+  });
+
+  /**
+   * La descarga es lo único que una receta emitida sí ofrece (corrección #16):
+   * es justamente el momento en que se pide en papel.
+   */
+  it('la receta emitida sí se puede descargar, y avisa cuál', () => {
+    fixture.componentRef.setInput('recetas', [
+      { ...BORRADOR, firmada: true, emitida: true, estado: 'Emitida' },
+    ]);
+    responderCatalogo();
+    fixture.detectChanges();
+
+    const pedidas: { id: string }[] = [];
+    fixture.componentInstance.descargar.subscribe((receta) => pedidas.push(receta));
+
+    const boton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="receta-descargar"]',
+    );
+    expect(boton).not.toBeNull();
+    boton?.click();
+
+    // El bloque no arma el documento: dice cuál se pidió y el expediente lo
+    // construye desde los datos persistidos.
+    expect(pedidas.map((receta) => receta.id)).toEqual([BORRADOR.id]);
   });
 
   it('el sello distingue las tres etapas del ciclo', () => {

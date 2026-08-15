@@ -1,0 +1,62 @@
+/* ============================================================================
+    «Mis cuestionarios» — el listado del paciente.
+
+    Mobile-first y de una columna, por el mismo motivo que el portal de turnos:
+    quien responde una encuesta de satisfacción lo hace desde el teléfono, poco
+    después de la consulta.
+    ========================================================================== */
+
+.cuestionarios__resumen {
+  color: var(--text-secondary);
+  margin-block: 0 var(--sp-4);
+}
+
+.cuestionarios__lista {
+  display: grid;
+  gap: var(--sp-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+  El estado y el botón van juntos: responden la misma pregunta —«¿tengo algo
+  que hacer con esto?»—. Separarlos obligaría a recorrer la tarjeta dos veces.
+  En angosto se apilan bajo el texto en vez de comprimirlo.
+*/
+.cuestionarios__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.cuestionarios__datos {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.cuestionarios__titulo {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin-block: 0 var(--sp-1);
+}
+
+.cuestionarios__consigna {
+  color: var(--text-secondary);
+  margin-block: 0 var(--sp-2);
+}
+
+.cuestionarios__plazo {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin-block: 0;
+}
+
+.cuestionarios__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}

@@ -1,0 +1,52 @@
+<app-page-header
+  title="Brokers"
+  subtitle="Tus corredores, sus credenciales y las aseguradoras que representan hoy."
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (state().status === 'ready') {
+    <p class="brokers__count">
+      {{ brokers().length }}
+      {{ brokers().length === 1 ? 'corredor registrado' : 'corredores registrados' }}
+    </p>
+
+    <ul class="brokers__list">
+      @for (broker of brokers(); track broker.id) {
+        <li>
+          <app-card variant="outlined" padding="lg">
+            <h2 card-header>
+              <a [routerLink]="['/administration/brokers', broker.id]">{{ broker.legalName }}</a>
+            </h2>
+
+            <dl class="brokers__facts">
+              <div>
+                <dt>Código</dt>
+                <dd>{{ broker.brokerCode }}</dd>
+              </div>
+              <div>
+                <dt>Matrícula</dt>
+                <dd>{{ broker.licenseNumber ?? 'Sin registrar' }}</dd>
+              </div>
+              <div>
+                <dt>Jurisdicción</dt>
+                <dd>{{ broker.jurisdiction?.display ?? 'Sin registrar' }}</dd>
+              </div>
+            </dl>
+
+            <p class="brokers__badges">
+              <!-- La credencial declarada y la verificada son cosas distintas, y
+                   la pantalla lo dice en vez de dar por buena la matrícula. -->
+              <app-status-seal
+                [variant]="verificationVariant(broker.verification.code)"
+                [label]="broker.verification.display"
+              />
+              <app-chip [variant]="broker.independent ? 'neutral' : 'info'" size="sm">
+                {{ linkLabel(broker) }}
+              </app-chip>
+            </p>
+          </app-card>
+        </li>
+      }
+    </ul>
+  }
+</app-view-state-host>

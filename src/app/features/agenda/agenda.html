@@ -2,7 +2,11 @@
   title="Agenda"
   subtitle="Las citas comprometidas y los cupos que quedan por ofrecer."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  @if (puedeCrearAgenda()) {
+    <a app-button page-actions variant="primary" [routerLink]="rutaCrearAgenda">Crear agenda</a>
+  }
+</app-page-header>
 
 <div class="agenda">
   <!-- ─── Sin organización ────────────────────────────────────────────────
@@ -32,31 +36,53 @@
       </app-alert>
     }
 
+    <!-- Quien atiende y no tiene recurso propio en esta organización: antes se
+         le mostraba la agenda del primer consultorio de la lista —los pacientes
+         y los motivos de consulta de un colega— sin que hubiera pedido nada. -->
+    @if (sinAgendaPropia()) {
+      <app-alert tone="info" title="Todavía no tenés agenda en esta organización">
+        Tu agenda se arma sobre un recurso a tu nombre y esta organización no tiene ninguno cargado
+        todavía. Pedíselo a quien administra la agenda. Mientras tanto no se muestra ninguna: la de
+        otro profesional no es la tuya.
+      </app-alert>
+    }
+
     <!-- ─── Filtros ─────────────────────────────────────────────────────── -->
     <form class="agenda__filtros" (submit)="$event.preventDefault()">
-      <!-- Sin opción «todos»: la agenda de la organización entera no se puede
-           pedir, y ofrecerla sería ofrecer un botón que devuelve un error. -->
-      <!-- Cuál se está mirando importa más cuando la agenda la eligió sola: sin
-           decirlo, quien tiene la suya no sabe si está viendo la propia o la
-           primera de la lista, y las dos se ven igual. -->
-      <app-form-field
-        label="Recurso"
-        class="agenda__filtro"
-        [hint]="
-          mirandoAgendaPropia()
-            ? 'Estás viendo tu agenda. Podés cambiar a la de otro recurso.'
-            : 'Las citas se listan por recurso; el backend no admite pedirlas todas juntas.'
-        "
-      >
-        <app-select
-          [options]="opcionesDeRecurso()"
-          [value]="recursoElegido() ?? ''"
-          [disabled]="sinRecursos()"
-          (valueChange)="elegirRecurso($event)"
-        />
-      </app-form-field>
+      <!-- El selector de recurso existe SÓLO para quien reparte turnos entre
+           consultorios. Para quien atiende, su agenda es la suya y la lista de
+           las ajenas no es una comodidad: es la agenda clínica de pacientes que
+           no atiende, con nombre y motivo de consulta, a un clic de distancia.
 
-      <app-form-field label="Ventana" class="agenda__filtro">
+           Sin opción «todos»: la agenda de la organización entera no se puede
+           pedir, y ofrecerla sería ofrecer un botón que devuelve un error. -->
+      @if (puedeElegirRecurso()) {
+        <app-form-field
+          label="Recurso"
+          class="agenda__filtro"
+          [hint]="
+            mirandoAgendaPropia()
+              ? 'Estás viendo tu agenda. Podés cambiar a la de otro recurso.'
+              : 'Las citas se listan por recurso; el backend no admite pedirlas todas juntas.'
+          "
+        >
+          <app-select
+            [options]="opcionesDeRecurso()"
+            [value]="recursoElegido() ?? ''"
+            [disabled]="sinRecursos()"
+            (valueChange)="elegirRecurso($event)"
+          />
+        </app-form-field>
+      } @else if (hayAgendaQueMirar()) {
+        <!-- El nombre igual se dice: sin él, la pantalla no declara de quién es
+             lo que está mostrando, y ese dato no es decorativo en una agenda. -->
+        <p class="agenda__ambito" appTutorialTarget="agenda-ambito">
+          <span class="agenda__ambito-rotulo">Agenda</span>
+          <span class="agenda__ambito-valor">{{ nombreDelRecurso() }}</span>
+        </p>
+      }
+
+      <app-form-field label="Ventana" class="agenda__filtro" appTutorialTarget="agenda-ventana">
         <app-select
           [options]="opcionesDeVentana()"
           [value]="ventanaElegida()"
@@ -88,7 +114,11 @@
       </p>
     }
 
-    <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="elegirPestana($event)">
+    <app-tabs
+      [selectedIndex]="pestana()"
+      (selectedIndexChange)="elegirPestana($event)"
+      appTutorialTarget="agenda-pestanas"
+    >
       <!-- ─── Citas ─────────────────────────────────────────────────────── -->
       <app-tab [label]="rotuloDeCitas()">
         @if (citasRecortadas()) {
@@ -99,6 +129,7 @@
         }
 
         <app-data-table
+          appTutorialTarget="agenda-tabla-citas"
           [state]="citas()"
           [columns]="columnasDeCitas()"
           [trackBy]="porCita"
@@ -205,29 +236,90 @@
 
 <ng-template #celdaAccionesCita let-cita>
   <div class="agenda__acciones">
-    @if (!cita.llegadaRegistrada) {
+    <!-- Cada acción se ofrece SOLO en el estado en que el backend la acepta:
+         un botón que va a volver con 422 es un error con forma de oferta. Con
+         el estado sin resolver (código vacío) no se ofrece ninguna. -->
+    @if (porResponder(cita)) {
+      <!-- Corrección #11: la solicitud del paciente espera respuesta. -->
       <button
         app-button
-        variant="outline"
+        variant="primary"
         size="sm"
+        data-testid="agenda-aceptar"
         [isLoading]="operando() === cita.id"
-        (clicked)="registrarLlegada(cita)"
+        (clicked)="aceptarCita(cita)"
       >
-        Registrar llegada
+        Aceptar
       </button>
-    } @else {
-      <span class="agenda__hasta">Llegó</span>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        data-testid="agenda-rechazar"
+        [isLoading]="operando() === cita.id"
+        (clicked)="rechazarCita(cita)"
+      >
+        Rechazar
+      </button>
     }
-    <!-- Destructiva: lleva su etiqueta y pide confirmación explícita. -->
-    <button
-      app-button
-      variant="ghost"
-      size="sm"
-      [isLoading]="operando() === cita.id"
-      (clicked)="cancelarCita(cita)"
-    >
-      Cancelar
-    </button>
+
+    @if (sePuedeIniciar(cita)) {
+      <!-- Corrección #15: disponible en cualquier momento, sin esperar el día
+           agendado ni exigir que se haya registrado la llegada. -->
+      <button
+        app-button
+        variant="primary"
+        size="sm"
+        data-testid="agenda-iniciar"
+        [isLoading]="operando() === cita.id"
+        (clicked)="iniciarAtencion(cita)"
+      >
+        Iniciar consulta
+      </button>
+    }
+
+    @if (sePuedeCompletar(cita)) {
+      <button
+        app-button
+        variant="primary"
+        size="sm"
+        data-testid="agenda-completar"
+        [isLoading]="operando() === cita.id"
+        (clicked)="completarCita(cita)"
+      >
+        Completar cita
+      </button>
+    }
+
+    @if (puedeOperarCitas() && estaVigente(cita)) {
+      @if (!cita.llegadaRegistrada) {
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          [isLoading]="operando() === cita.id"
+          (clicked)="registrarLlegada(cita)"
+        >
+          Registrar llegada
+        </button>
+      } @else {
+        <span class="agenda__hasta">Llegó</span>
+      }
+    }
+
+    @if (estaVigente(cita) || porResponder(cita)) {
+      <!-- Destructiva: lleva su etiqueta, pide confirmación y exige motivo. -->
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        data-testid="agenda-cancelar"
+        [isLoading]="operando() === cita.id"
+        (clicked)="cancelarCita(cita)"
+      >
+        Cancelar
+      </button>
+    }
   </div>
 </ng-template>
 
