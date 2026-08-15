@@ -4,6 +4,10 @@
      vista que usa la guía de profesionales para el perfil de otro doctor. -->
 <app-view-state-host [state]="perfil()" (retry)="recargar()">
   @if (visible(); as perfil) {
-    <app-practitioner-profile-view [perfil]="perfil" [esPropio]="true" />
+    <app-practitioner-profile-view
+      [perfil]="perfil"
+      [esPropio]="true"
+      (trayectoriaCambio)="recargar()"
+    />
   }
 </app-view-state-host>

@@ -71,6 +71,36 @@ const PERFIL = {
     },
   ],
   languages: [{ languageConceptId: 'idi-es', clinicalInterpretationAllowed: true }],
+  affiliations: [
+    {
+      id: 'af-1',
+      practitionerProfileId: 'per-1',
+      organizationName: 'Hospital Obrero N.º 1',
+      roleTitle: 'Médica de planta',
+      departmentText: null,
+      practiceSiteId: null,
+      affiliationTypeConceptId: null,
+      startDate: '2012-01-01',
+      endDate: '2016-01-01',
+      current: false,
+      status: 'c-activo',
+      createdAt: '2012-01-02T00:00:00.000Z',
+    },
+    {
+      id: 'af-2',
+      practitionerProfileId: 'per-1',
+      organizationName: 'Sede Central Sopocachi',
+      roleTitle: 'Médica cardióloga',
+      departmentText: null,
+      practiceSiteId: null,
+      affiliationTypeConceptId: null,
+      startDate: '2019-04-01',
+      endDate: null,
+      current: true,
+      status: 'c-activo',
+      createdAt: '2019-04-02T00:00:00.000Z',
+    },
+  ],
   activity: { encounters: 12, medicationRequests: 30, clinicalNotes: 4, documents: 2 },
   createdAt: '2014-02-01T00:00:00.000Z',
 };
@@ -266,6 +296,32 @@ describe('PractitionerProfile', () => {
     const actividad = visible().actividad;
     expect(actividad.find((a) => a.clave === 'encuentros')?.valor).toBe(12);
     expect(actividad.find((a) => a.clave === 'documentos')?.valor).toBe(2);
+  });
+
+  /* -- El historial laboral, en fases (carril 05) --------------------------- */
+
+  it('separa el historial laboral en actividad actual y experiencia histórica', () => {
+    montar();
+    responder();
+
+    expect(visible().actividadActual).toHaveLength(1);
+    expect(visible().actividadActual[0]).toMatchObject({
+      organizacion: 'Sede Central Sopocachi',
+      actual: true,
+    });
+    expect(visible().experienciaHistorica).toHaveLength(1);
+    expect(visible().experienciaHistorica[0]).toMatchObject({
+      organizacion: 'Hospital Obrero N.º 1',
+      actual: false,
+    });
+  });
+
+  it('sin historial laboral, ambas fases quedan vacías', () => {
+    montar();
+    responder({ affiliations: [] });
+
+    expect(visible().actividadActual).toHaveLength(0);
+    expect(visible().experienciaHistorica).toHaveLength(0);
   });
 
   /* -- La foto (carril R2-4) ---------------------------------------------- */

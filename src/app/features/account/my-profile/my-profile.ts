@@ -24,7 +24,6 @@ import {
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
-import { WorkHistory } from './work-history/work-history';
 
 /**
  * Resumen propio — vista **V05-03** de `SALUD/Vistas/V05 profiles`
@@ -58,14 +57,6 @@ import { WorkHistory } from './work-history/work-history';
  * 3. **Con qué credenciales está entrando** — organización y roles. Estaban sólo
  *    en el panel, que es otra pantalla.
  *
- * ## Dos perfiles, una pantalla — y un bloque mas, tambien del profesional
- *
- * `app-work-history` agrega **dónde trabajó** (punto 9 del reclamo): la
- * trayectoria de `app-practitioner-profile` dice qué puede ejercer y dónde se
- * formó; ésta, en qué hospitales estuvo. Va como tarjeta aparte y no dentro de
- * aquélla porque es lo único de esta pantalla que **se escribe**, y decide por
- * sí mismo si corresponde dibujarse: sin perfil profesional no renderiza nada.
- *
  * ## Dos perfiles, una pantalla
  *
  * Esta pantalla llamaba a `GET /profiles/patients/me/summary` para **todo el
@@ -93,7 +84,6 @@ import { WorkHistory } from './work-history/work-history';
     RouterLink,
     StatusSeal,
     ViewStateHost,
-    WorkHistory,
   ],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',

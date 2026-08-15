@@ -123,6 +123,8 @@ export interface PractitionerCredential {
   readonly stateConceptId: string;
   /** Ausente = «sin verificar todavía», que no es «rechazada». */
   readonly verifiedAt?: Date;
+  /** Contra qué se comprobó. Ausente antes de verificar. */
+  readonly verificationSourceUri?: string;
 }
 
 /** Una matrícula: dónde está habilitado a ejercer y con qué número. */
@@ -180,6 +182,8 @@ export interface OwnPractitionerProfile {
   readonly credentials: readonly PractitionerCredential[];
   readonly licenses: readonly PractitionerLicense[];
   readonly languages: readonly PractitionerLanguage[];
+  /** Historial laboral (UC-05-16), del más reciente al más antiguo. */
+  readonly affiliations: readonly PractitionerAffiliation[];
   readonly activity: PractitionerActivity;
   readonly createdAt: Date;
 }
