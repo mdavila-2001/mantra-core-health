@@ -6,15 +6,21 @@ import {
   ElementRef,
   input,
   output,
+  signal,
   viewChild,
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
+import { Textarea } from '../../atoms/textarea/textarea';
+import { FormField } from '../form-field/form-field';
 import { nextControlId } from '@shared/forms/form-control.context';
 import {
   DEFAULT_CANCEL_LABEL,
   DEFAULT_CONFIRM_LABEL,
+  DEFAULT_REASON_MAX_LENGTH,
+  DEFAULT_REASON_MIN_LENGTH,
   type DialogConfig,
+  type DialogResult,
 } from './dialog.types';
 
 /**
@@ -27,19 +33,18 @@ import {
  */
 @Component({
   selector: 'app-dialog',
-  imports: [AppButton],
+  imports: [AppButton, FormField, Textarea],
   templateUrl: './dialog.html',
   styleUrl: './dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Dialog {
-  private readonly dialogRef =
-    viewChild.required<ElementRef<HTMLDialogElement>>('nativeDialog');
+  private readonly dialogRef = viewChild.required<ElementRef<HTMLDialogElement>>('nativeDialog');
 
   readonly config = input.required<DialogConfig>();
 
-  /** `true` confirmó; `false` canceló, cerró con Escape o clickeó el fondo. */
-  readonly resolved = output<boolean>();
+  /** Qué se decidió y, si el diálogo lo pedía, el motivo escrito. */
+  readonly resolved = output<DialogResult>();
 
   private readonly baseId = nextControlId('dialog');
   protected readonly titleId = `${this.baseId}-title`;
@@ -53,6 +58,40 @@ export class Dialog {
   );
   protected readonly isDestructive = computed(() => this.config().destructive === true);
 
+  /* ---- motivo, cuando el diálogo lo exige (corrección #14) ---------------- */
+
+  /** La configuración del campo, o `null` si este diálogo no pide motivo. */
+  protected readonly reasonConfig = computed(() => this.config().reason ?? null);
+
+  protected readonly reason = signal('');
+
+  /**
+   * Se muestra el error recién cuando alguien intentó confirmar.
+   *
+   * Un campo que nace en rojo acusa antes de que la persona haya hecho nada; el
+   * error tiene que aparecer cuando hay algo que corregir, no al abrir.
+   */
+  private readonly reasonTouched = signal(false);
+
+  protected readonly reasonMinLength = computed(
+    () => this.reasonConfig()?.minLength ?? DEFAULT_REASON_MIN_LENGTH,
+  );
+
+  protected readonly reasonMaxLength = computed(
+    () => this.reasonConfig()?.maxLength ?? DEFAULT_REASON_MAX_LENGTH,
+  );
+
+  /** El motivo alcanza para el servidor. Sin motivo pedido, siempre `true`. */
+  protected readonly reasonIsValid = computed(
+    () => this.reasonConfig() === null || this.reason().trim().length >= this.reasonMinLength(),
+  );
+
+  protected readonly reasonError = computed(() =>
+    this.reasonTouched() && !this.reasonIsValid()
+      ? `Escribí el motivo (al menos ${this.reasonMinLength()} caracteres). La otra parte lo va a ver.`
+      : '',
+  );
+
   constructor() {
     afterNextRender(() => this.showModal());
   }
@@ -60,14 +99,26 @@ export class Dialog {
   /** Cierra devolviendo el resultado. Lo llama el servicio y los botones. */
   close(confirmed: boolean): void {
     this.closeNative();
-    this.resolved.emit(confirmed);
+    this.resolved.emit({
+      confirmed,
+      ...(confirmed && this.reasonConfig() !== null ? { reason: this.reason().trim() } : {}),
+    });
   }
 
   protected handleCancel(): void {
     this.close(false);
   }
 
+  /**
+   * Confirmar con el motivo incompleto **no cierra**: marca el campo y deja el
+   * diálogo abierto. Cerrar y mostrar después el rechazo del servidor haría
+   * perder lo escrito y obligaría a empezar de nuevo.
+   */
   protected handleConfirm(): void {
+    if (!this.reasonIsValid()) {
+      this.reasonTouched.set(true);
+      return;
+    }
     this.close(true);
   }
 

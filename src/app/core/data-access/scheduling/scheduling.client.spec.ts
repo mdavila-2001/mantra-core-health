@@ -169,9 +169,7 @@ describe('SchedulingClient', () => {
 
   it('placeHold convierte el vencimiento de la retención en fecha', () => {
     let retencion: { expiresAt: Date } | undefined;
-    client
-      .placeHold('s-1', { patientProfileId: 'pp-1' })
-      .subscribe((hold) => (retencion = hold));
+    client.placeHold('s-1', { patientProfileId: 'pp-1' }).subscribe((hold) => (retencion = hold));
 
     const req = http.expectOne('/scheduling/slots/s-1/holds');
     expect(req.request.body).toEqual({ patientProfileId: 'pp-1' });
@@ -211,34 +209,93 @@ describe('SchedulingClient', () => {
     });
   });
 
-  it('cancelBooking no manda isNoShow si nadie lo marcó', () => {
-    client.cancelBooking('b-1', { cancelledBy: 'PROVIDER' }).subscribe();
+  it('cancelBooking manda el motivo y no manda isNoShow si nadie lo marcó', () => {
+    client
+      .cancelBooking('b-1', { cancelledBy: 'PROVIDER', reasonText: 'El profesional se enfermó' })
+      .subscribe();
 
     const req = http.expectOne('/scheduling/bookings/b-1/cancel');
     // `isNoShow` es lo que dispara el cargo de la política: mandarlo en falso
     // es distinto de no mandarlo sólo para quien lea el cuerpo, pero mandarlo
-    // en `undefined` es un 400 seguro.
-    expect(req.request.body).toEqual({ cancelledBy: 'PROVIDER' });
+    // en `undefined` es un 400 seguro. `reasonText` sí va siempre: el servidor
+    // lo exige desde la corrección #14.
+    expect(req.request.body).toEqual({
+      cancelledBy: 'PROVIDER',
+      reasonText: 'El profesional se enfermó',
+    });
 
     req.flush({ bookingId: 'b-1', capacityReleased: true });
   });
 
-  it('rescheduleBooking manda toSlotId y omite reasonText si nadie lo dio', () => {
+  it('rescheduleBooking manda toSlotId y el motivo obligatorio', () => {
     let resultado: { bookingId: string } | undefined;
-    client.rescheduleBooking('b-1', { toSlotId: 's-2' }).subscribe((r) => (resultado = r));
+    client
+      .rescheduleBooking('b-1', { toSlotId: 's-2', reasonText: 'Se superpone con una cirugía' })
+      .subscribe((r) => (resultado = r));
 
     const req = http.expectOne('/scheduling/bookings/b-1/reschedule');
     expect(req.request.method).toBe('POST');
-    // Mismo criterio que `cancelBooking`: el opcional ausente no viaja, porque
-    // en `undefined` es un 400 seguro (`forbidNonWhitelisted`).
-    expect(req.request.body).toEqual({ toSlotId: 's-2' });
+    expect(req.request.body).toEqual({
+      toSlotId: 's-2',
+      reasonText: 'Se superpone con una cirugía',
+    });
 
     req.flush({ bookingId: 'b-1', fromSlotId: 's-1', toSlotId: 's-2' });
     expect(resultado?.bookingId).toBe('b-1');
   });
 
+  it('requestHold pide el turno por la ruta de solicitud, no por la de confirmación', () => {
+    let resultado: { statusConceptId: string } | undefined;
+    client
+      .requestHold('tok-1', {
+        tenantId: 't-1',
+        patientProfileId: 'pp-1',
+        channel: 'PORTAL',
+        reasonText: 'Control anual',
+      })
+      .subscribe((r) => (resultado = r));
+
+    const req = http.expectOne('/scheduling/holds/tok-1/request');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      tenantId: 't-1',
+      patientProfileId: 'pp-1',
+      channel: 'PORTAL',
+      reasonText: 'Control anual',
+    });
+
+    req.flush({
+      id: 'b-9',
+      bookableSlotId: 's-1',
+      statusConceptId: 'c-pend',
+      remindersScheduled: 0,
+    });
+    expect(resultado?.statusConceptId).toBe('c-pend');
+  });
+
+  it('una cita con motivo de cambio lo entrega con la fecha convertida', () => {
+    let recibida: { statusReason?: { reasonText: string; changedAt: Date } } | undefined;
+    client.getBooking('b-1').subscribe((b) => (recibida = b));
+
+    http.expectOne('/scheduling/bookings/b-1').flush({
+      id: 'b-1',
+      statusConceptId: 'c-canc',
+      createdAt: '2026-08-01T10:00:00.000Z',
+      statusReason: {
+        reasonText: 'El profesional se enfermó',
+        actorKind: 'PROVIDER',
+        changedAt: '2026-08-02T09:00:00.000Z',
+      },
+    });
+
+    expect(recibida?.statusReason?.reasonText).toBe('El profesional se enfermó');
+    expect(recibida?.statusReason?.changedAt).toEqual(new Date('2026-08-02T09:00:00.000Z'));
+  });
+
   it('rescheduleBooking incluye reasonText cuando se dio', () => {
-    client.rescheduleBooking('b-1', { toSlotId: 's-2', reasonText: 'Cambio de horario' }).subscribe();
+    client
+      .rescheduleBooking('b-1', { toSlotId: 's-2', reasonText: 'Cambio de horario' })
+      .subscribe();
 
     const req = http.expectOne('/scheduling/bookings/b-1/reschedule');
     expect(req.request.method).toBe('POST');

@@ -21,8 +21,10 @@ import type {
   BookingPage,
   BookingPolicyCreated,
   BookingQuery,
+  BookingRequest,
   BookingReschedule,
   BookingRescheduled,
+  BookingStatusReason,
   GenerateSlotsRequest,
   NewAgendaResource,
   NewAvailabilityException,
@@ -197,7 +199,9 @@ export class SchedulingClient {
       code: policy.code,
       name: policy.name,
       ...(policy.practiceId === undefined ? {} : { practiceId: policy.practiceId }),
-      ...(policy.minNoticeMinutes === undefined ? {} : { minNoticeMinutes: policy.minNoticeMinutes }),
+      ...(policy.minNoticeMinutes === undefined
+        ? {}
+        : { minNoticeMinutes: policy.minNoticeMinutes }),
       ...(policy.maxAdvanceDays === undefined ? {} : { maxAdvanceDays: policy.maxAdvanceDays }),
       ...(policy.cancellationWindowMinutes === undefined
         ? {}
@@ -309,15 +313,42 @@ export class SchedulingClient {
   }
 
   /**
+   * `POST /scheduling/holds/:holdToken/request` — solicita la cita
+   * (corrección #11).
+   *
+   * Es la otra salida de la misma retención: `confirmHold` compromete la agenda
+   * y esto la **pide**. La cita nace pendiente y el profesional la acepta o la
+   * rechaza desde su agenda.
+   */
+  requestHold(holdToken: string, request: BookingRequest): Observable<BookingConfirmed> {
+    return this.http.post<BookingConfirmed>(
+      this.url(`/scheduling/holds/${encodeURIComponent(holdToken)}/request`),
+      {
+        tenantId: request.tenantId,
+        patientProfileId: request.patientProfileId,
+        channel: request.channel,
+        ...(request.reasonText === undefined ? {} : { reasonText: request.reasonText }),
+      },
+    );
+  }
+
+  /**
    * `POST /scheduling/bookings/:id/cancel` — cancela y libera el cupo
    * (UC-41-09). El cargo por inasistencia sólo aplica si la política lo
    * define **y** la cancelación va marcada como no-show.
+   *
+   * `reasonText` va siempre: desde la corrección #14 el servidor lo exige y
+   * responde 422 sin él.
    */
-  cancelBooking(bookingId: string, cancellation: BookingCancellation): Observable<BookingCancelled> {
+  cancelBooking(
+    bookingId: string,
+    cancellation: BookingCancellation,
+  ): Observable<BookingCancelled> {
     return this.http.post<BookingCancelled>(
       this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/cancel`),
       {
         cancelledBy: cancellation.cancelledBy,
+        reasonText: cancellation.reasonText,
         ...(cancellation.isNoShow === undefined ? {} : { isNoShow: cancellation.isNoShow }),
       },
     );
@@ -337,9 +368,9 @@ export class SchedulingClient {
       this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/reschedule`),
       {
         toSlotId: reschedule.toSlotId,
-        // Construimos el body campo a campo para no enviar propiedades opcionales
-        // cuando no fueron proporcionadas.
-        ...(reschedule.reasonText === undefined ? {} : { reasonText: reschedule.reasonText }),
+        // Obligatorio desde la corrección #14: sin motivo el servidor responde
+        // 422 y la otra parte se quedaría sin saber por qué le movieron el día.
+        reasonText: reschedule.reasonText,
       },
     );
   }
@@ -386,13 +417,18 @@ interface WireSlotPage extends Omit<AgendaSlotPage, 'items'> {
 
 type WireBooking = Omit<
   Booking,
-  'startAt' | 'endAt' | 'confirmedAt' | 'checkedInAt' | 'createdAt'
+  'startAt' | 'endAt' | 'confirmedAt' | 'checkedInAt' | 'createdAt' | 'statusReason'
 > & {
   readonly startAt?: string | null;
   readonly endAt?: string | null;
   readonly confirmedAt?: string | null;
   readonly checkedInAt?: string | null;
   readonly createdAt: string;
+  readonly statusReason?: WireStatusReason | null;
+};
+
+type WireStatusReason = Omit<BookingStatusReason, 'changedAt'> & {
+  readonly changedAt: string;
 };
 
 interface WireBookingPage extends Omit<BookingPage, 'items'> {
@@ -421,6 +457,7 @@ function toBooking({
   confirmedAt,
   checkedInAt,
   createdAt,
+  statusReason,
   ...resto
 }: WireBooking): Booking {
   return {
@@ -429,6 +466,14 @@ function toBooking({
     ...optionalDate('endAt', endAt),
     ...optionalDate('confirmedAt', confirmedAt),
     ...optionalDate('checkedInAt', checkedInAt),
+    ...(statusReason === null || statusReason === undefined
+      ? {}
+      : {
+          statusReason: {
+            ...statusReason,
+            changedAt: new Date(statusReason.changedAt),
+          },
+        }),
     createdAt: new Date(createdAt),
   };
 }
