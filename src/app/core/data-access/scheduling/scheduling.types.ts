@@ -289,6 +289,19 @@ export interface BookingRescheduled {
   readonly toSlotId: string;
 }
 
+/**
+ * Lo que devuelven aceptar, iniciar y completar (correcciones #11 y #15).
+ *
+ * Los tres son la misma clase de acto —una transición que decide el
+ * profesional— y quien los llama hace lo mismo con la respuesta: releer.
+ */
+export interface BookingDecision {
+  readonly bookingId: string;
+  /** Estado en el que quedó la cita. */
+  readonly statusConceptId: string;
+  readonly occurredAt: Date;
+}
+
 /** Resultado del check-in (UC-41-10). */
 export interface BookingCheckedIn {
   readonly bookingId: string;

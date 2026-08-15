@@ -16,6 +16,7 @@ import type {
   BookingCancellation,
   BookingCancelled,
   BookingCheckedIn,
+  BookingDecision,
   BookingConfirmation,
   BookingConfirmed,
   BookingPage,
@@ -375,6 +376,69 @@ export class SchedulingClient {
     );
   }
 
+  /* -- lo que decide el profesional (correcciones #11 y #15) ---------------
+     Aceptar, rechazar, iniciar y completar. Las cuatro validan estado y actor
+     en el servidor; **ninguna valida el reloj**: una cita confirmada se puede
+     empezar y cerrar en cualquier momento. */
+
+  /**
+   * `POST /scheduling/bookings/:id/accept` — el profesional acepta la solicitud.
+   *
+   * Recién acá hay compromiso: la cita pasa a confirmada, su cita clínica deja
+   * de estar pendiente y se programan los recordatorios que la solicitud no
+   * programó.
+   */
+  acceptBooking(
+    bookingId: string,
+    offsetsMinutes?: readonly number[],
+  ): Observable<BookingDecision> {
+    return this.decidir(bookingId, 'accept', {
+      ...(offsetsMinutes === undefined ? {} : { reminderOffsetsMinutes: [...offsetsMinutes] }),
+    });
+  }
+
+  /**
+   * `POST /scheduling/bookings/:id/reject` — rechaza la solicitud, con motivo.
+   *
+   * Devuelve lo mismo que cancelar porque **es** una cancelación desde el otro
+   * lado del mostrador: libera el cupo y el paciente ve el motivo.
+   */
+  rejectBooking(bookingId: string, reasonText: string): Observable<BookingCancelled> {
+    return this.http.post<BookingCancelled>(
+      this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/reject`),
+      { reasonText },
+    );
+  }
+
+  /**
+   * `POST /scheduling/bookings/:id/start` — inicia la atención.
+   *
+   * Disponible sobre cualquier cita confirmada **en cualquier momento**: el
+   * backend no exige que haya llegado el día agendado (corrección #15).
+   */
+  startBooking(bookingId: string): Observable<BookingDecision> {
+    return this.decidir(bookingId, 'start', {});
+  }
+
+  /** `POST /scheduling/bookings/:id/complete` — cierra la atención en curso. */
+  completeBooking(bookingId: string): Observable<BookingDecision> {
+    return this.decidir(bookingId, 'complete', {});
+  }
+
+  /** Las tres decisiones comparten forma de ida y de vuelta. */
+  private decidir(
+    bookingId: string,
+    accion: 'accept' | 'start' | 'complete',
+    cuerpo: Record<string, unknown>,
+  ): Observable<BookingDecision> {
+    return this.http
+      .post<WireDecision>(
+        this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/${accion}`),
+        cuerpo,
+      )
+      .pipe(map((body) => ({ ...body, occurredAt: new Date(body.occurredAt) })));
+  }
+
   /** `POST /scheduling/bookings/:id/check-in` — registra la llegada (UC-41-10). */
   checkInBooking(bookingId: string): Observable<BookingCheckedIn> {
     return this.http
@@ -393,6 +457,8 @@ export class SchedulingClient {
 type WireHold = Omit<SlotHold, 'expiresAt'> & { readonly expiresAt: string };
 
 type WireCheckedIn = Omit<BookingCheckedIn, 'checkedInAt'> & { readonly checkedInAt: string };
+
+type WireDecision = Omit<BookingDecision, 'occurredAt'> & { readonly occurredAt: string };
 
 /* ---- formas de transporte ------------------------------------------------
    Las fechas llegan como texto ISO. Se declaran acá y no en `scheduling.types`

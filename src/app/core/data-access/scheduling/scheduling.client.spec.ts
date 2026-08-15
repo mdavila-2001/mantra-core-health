@@ -273,6 +273,61 @@ describe('SchedulingClient', () => {
     expect(resultado?.statusConceptId).toBe('c-pend');
   });
 
+  it('aceptar manda el cuerpo vacío y convierte el instante de la decisión', () => {
+    let decision: { statusConceptId: string; occurredAt: Date } | undefined;
+    client.acceptBooking('b-1').subscribe((d) => (decision = d));
+
+    const req = http.expectOne('/scheduling/bookings/b-1/accept');
+    expect(req.request.method).toBe('POST');
+    // Sin recordatorios pedidos no viaja la clave: en `undefined` sería un 400.
+    expect(req.request.body).toEqual({});
+
+    req.flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c-conf',
+      occurredAt: '2026-08-15T12:00:00.000Z',
+    });
+    expect(decision?.occurredAt).toEqual(new Date('2026-08-15T12:00:00.000Z'));
+  });
+
+  it('aceptar con recordatorios los manda', () => {
+    client.acceptBooking('b-1', [1440, 120]).subscribe();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/accept');
+    expect(req.request.body).toEqual({ reminderOffsetsMinutes: [1440, 120] });
+    req.flush({ bookingId: 'b-1', statusConceptId: 'c', occurredAt: '2026-08-15T12:00:00.000Z' });
+  });
+
+  it('rechazar manda el motivo obligatorio', () => {
+    client.rejectBooking('b-1', 'La agenda de ese día se cerró').subscribe();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/reject');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ reasonText: 'La agenda de ese día se cerró' });
+    req.flush({ bookingId: 'b-1', capacityReleased: true });
+  });
+
+  it('iniciar y completar pegan a su propia ruta, sin datos de fecha', () => {
+    client.startBooking('b-1').subscribe();
+    const inicio = http.expectOne('/scheduling/bookings/b-1/start');
+    // Ningún dato de reloj viaja: la corrección #15 es que la fecha no decide.
+    expect(inicio.request.body).toEqual({});
+    inicio.flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c',
+      occurredAt: '2026-08-15T12:00:00.000Z',
+    });
+
+    client.completeBooking('b-1').subscribe();
+    const cierre = http.expectOne('/scheduling/bookings/b-1/complete');
+    expect(cierre.request.body).toEqual({});
+    cierre.flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c',
+      occurredAt: '2026-08-15T12:30:00.000Z',
+    });
+  });
+
   it('una cita con motivo de cambio lo entrega con la fecha convertida', () => {
     let recibida: { statusReason?: { reasonText: string; changedAt: Date } } | undefined;
     client.getBooking('b-1').subscribe((b) => (recibida = b));

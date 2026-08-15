@@ -134,10 +134,7 @@ describe('Agenda', () => {
    * Abre sesión **antes** de montar: la agenda decide en su constructor si
    * puede pedir algo, y esa decisión sale de la organización del token.
    */
-  async function montar(
-    claims: Record<string, unknown> = {},
-    url = '/schedule',
-  ): Promise<void> {
+  async function montar(claims: Record<string, unknown> = {}, url = '/schedule'): Promise<void> {
     session.start({
       accessToken: jwt({
         sub: 'u-1',
@@ -226,6 +223,36 @@ describe('Agenda', () => {
       });
   }
 
+  /**
+   * Responde el arranque con una cita en el estado que se quiera probar.
+   *
+   * Las acciones de la agenda se ofrecen por **código de estado** (correcciones
+   * #11 y #15), así que cada caso necesita que terminología resuelva el suyo:
+   * sin eso, el código llega vacío y —correctamente— no se ofrece nada.
+   */
+  async function responderConEstado(code: string, display: string): Promise<void> {
+    await responderRecursos();
+    http
+      .expectOne((r) => r.url === '/scheduling/bookings')
+      .flush({
+        items: [{ ...CITA, statusConceptId: 'c-estado' }],
+        count: 1,
+        limit: 100,
+        truncated: false,
+      });
+    http
+      .expectOne((r) => r.url === '/scheduling/slots')
+      .flush({ items: [], count: 0, limit: 100, truncated: false });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [{ conceptId: 'c-estado', code, display, codeSystemVersionId: 'csv-1' }],
+        count: 1,
+        limit: 200,
+      });
+    harness.detectChanges();
+  }
+
   /** Los recursos, y la espera para que el efecto de la agenda los vea. */
   async function responderRecursos(items: unknown[] = [RECURSO]): Promise<void> {
     http.expectOne((r) => r.url === '/scheduling/resources').flush({ items, count: items.length });
@@ -268,7 +295,13 @@ describe('Agenda', () => {
     const fila = citas().data?.[0] as Record<string, unknown>;
     // El estado lleva sus tres canales: la palabra del catálogo y la variante
     // que le da tono y forma. Nunca el uuid.
-    expect(fila['estado']).toEqual({ variant: 'approved', label: 'Confirmada' });
+    // El `code` viaja junto al sello porque es lo que decide qué acciones
+    // ofrece la fila (correcciones #11 y #15); el uuid nunca llega a pantalla.
+    expect(fila['estado']).toEqual({
+      variant: 'approved',
+      label: 'Confirmada',
+      code: 'BOOKING_CONFIRMED',
+    });
     expect(fila['recurso']).toBe('Consultorio 1 · Dra. Salas');
   });
 
@@ -284,6 +317,9 @@ describe('Agenda', () => {
     expect(citas().data?.[0]?.['estado']).toEqual({
       variant: 'unknown',
       label: 'Sin registrar',
+      // Sin código resuelto no se ofrece ninguna acción: no se opera sobre un
+      // estado que no se conoce.
+      code: '',
     });
   });
 
@@ -414,10 +450,7 @@ describe('Agenda', () => {
    * Vale **para quien puede elegir recurso**, que es el que comparte grillas.
    */
   it('el recurso de la URL manda sobre la agenda propia', async () => {
-    await montar(
-      { roles: ['SCHEDULING_ADMIN'], hpid: 'hp-1' },
-      '/schedule?recurso=r-0',
-    );
+    await montar({ roles: ['SCHEDULING_ADMIN'], hpid: 'hp-1' }, '/schedule?recurso=r-0');
     await responderRecursos([RECURSO_AJENO, RECURSO]);
     await responderResto();
 
@@ -779,5 +812,120 @@ describe('Agenda', () => {
 
     expect(interno<() => unknown>('sedeDelRecurso')()).toBeNull();
     expect(harness.routeNativeElement?.textContent).toContain('Sin consultorio registrado');
+  });
+
+  /* ========================================================================
+     Carril 07 — el profesional decide sobre la cita.
+     ======================================================================== */
+
+  /** El botón de una acción, por su `data-testid`. */
+  function boton(testid: string): HTMLButtonElement | null {
+    return harness.routeNativeElement?.querySelector(`[data-testid="${testid}"]`) ?? null;
+  }
+
+  it('una solicitud pendiente ofrece aceptar y rechazar, no iniciar', async () => {
+    await montar();
+    await responderConEstado('BOOKING_PENDING_CONFIRMATION', 'Por confirmar');
+
+    expect(boton('agenda-aceptar')).not.toBeNull();
+    expect(boton('agenda-rechazar')).not.toBeNull();
+    expect(boton('agenda-iniciar')).toBeNull();
+    expect(boton('agenda-completar')).toBeNull();
+  });
+
+  it('aceptar confirma la cita y relee la agenda', async () => {
+    await montar();
+    await responderConEstado('BOOKING_PENDING_CONFIRMATION', 'Por confirmar');
+
+    interno<(c: unknown) => void>('aceptarCita')(citas().data?.[0]);
+    await harness.fixture.whenStable();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/accept');
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c-confirmada',
+      occurredAt: '2026-08-15T12:00:00.000Z',
+    });
+    // Releer es lo que hace que el estado nuevo llegue a pantalla sin
+    // inventarlo del lado del cliente. La recarga NO vuelve a pedir los
+    // recursos: son el catálogo de la agenda, no su contenido.
+    responderResto();
+  });
+
+  it('rechazar sin motivo no manda nada; con motivo manda el motivo', async () => {
+    await montar();
+    await responderConEstado('BOOKING_PENDING_CONFIRMATION', 'Por confirmar');
+    const dialogs = TestBed.inject(DialogService);
+
+    vi.spyOn(dialogs, 'confirmWithReason').mockResolvedValue(null);
+    await interno<(c: unknown) => Promise<void>>('rechazarCita')(citas().data?.[0]);
+    // El `http.verify()` del afterEach falla si algo salió a la red.
+
+    vi.spyOn(dialogs, 'confirmWithReason').mockResolvedValue('La agenda de ese día se cerró');
+    const pendiente = interno<(c: unknown) => Promise<void>>('rechazarCita')(citas().data?.[0]);
+    await harness.fixture.whenStable();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/reject');
+    expect(req.request.body).toEqual({ reasonText: 'La agenda de ese día se cerró' });
+    req.flush({ bookingId: 'b-1', capacityReleased: true });
+    responderResto();
+    await pendiente;
+  });
+
+  /**
+   * Corrección #15: el botón existe sobre una cita confirmada **sin ninguna
+   * comprobación de fecha**. La cita de estas pruebas es del 8 de agosto y la
+   * acción se ofrece igual, corra el día que corra.
+   */
+  it('una cita confirmada ofrece iniciar la consulta, sin esperar el día', async () => {
+    await montar();
+    await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+
+    expect(boton('agenda-iniciar')).not.toBeNull();
+    expect(boton('agenda-completar')).toBeNull();
+
+    interno<(c: unknown) => void>('iniciarAtencion')(citas().data?.[0]);
+    await harness.fixture.whenStable();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/start');
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c-curso',
+      occurredAt: '2026-08-15T12:00:00.000Z',
+    });
+    responderResto();
+  });
+
+  it('una cita en curso ofrece completarla, y solo eso', async () => {
+    await montar();
+    await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+
+    expect(boton('agenda-completar')).not.toBeNull();
+    expect(boton('agenda-iniciar')).toBeNull();
+    // En curso ya no se cancela ni se mueve: el backend tampoco lo acepta.
+    expect(boton('agenda-cancelar')).toBeNull();
+
+    interno<(c: unknown) => void>('completarCita')(citas().data?.[0]);
+    await harness.fixture.whenStable();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/complete');
+    req.flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c-completada',
+      occurredAt: '2026-08-15T12:30:00.000Z',
+    });
+    responderResto();
+  });
+
+  it('una cita completada no ofrece ninguna acción', async () => {
+    await montar();
+    await responderConEstado('BOOKING_COMPLETED', 'Completada');
+
+    expect(boton('agenda-aceptar')).toBeNull();
+    expect(boton('agenda-iniciar')).toBeNull();
+    expect(boton('agenda-completar')).toBeNull();
+    expect(boton('agenda-cancelar')).toBeNull();
   });
 });
