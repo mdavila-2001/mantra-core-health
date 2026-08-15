@@ -91,6 +91,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/medical-laboratory/medical-laboratory').then(
       (m) => m.MedicalLaboratory,
     ),
+  'administration/insurance': () =>
+    import('./features/insurance/insurance-catalog/insurance-catalog').then(
+      (m) => m.InsuranceCatalog,
+    ),
+  'administration/brokers': () =>
+    import('./features/insurance/broker-directory/broker-directory').then((m) => m.BrokerDirectory),
   'administration/accounting': () =>
     import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>
@@ -231,6 +237,16 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/laboratory-directory/laboratory-detail/laboratory-detail')
         .then((m) => m.LaboratoryDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La ficha de un corredor (C14): se llega desde el listado de brokers,
+    // nunca desde el menú, así que no es una sección del registro.
+    path: 'administration/brokers/:brokerId',
+    title: `${APP_TITLE} - Perfil del corredor`,
+    loadComponent: () =>
+      import('./features/insurance/broker-detail/broker-detail')
+        .then((m) => m.BrokerDetail)
         .catch(() => chunkFallido()),
   },
   {

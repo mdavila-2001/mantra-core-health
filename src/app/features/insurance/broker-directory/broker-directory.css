@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.brokers__count {
+  margin: var(--sp-4) 0 var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.brokers__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brokers__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.brokers__facts div {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.brokers__facts dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.brokers__facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.brokers__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+}
+
+@media (max-width: 48rem) {
+  .brokers__list,
+  .brokers__facts {
+    grid-template-columns: 1fr;
+  }
+}
