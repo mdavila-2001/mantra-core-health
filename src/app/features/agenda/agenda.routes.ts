@@ -10,6 +10,13 @@
 export const AGENDA_ROUTE = '/schedule';
 
 /**
+ * El alta de agenda por fases (UC-41-01 → UC-41-04). Cuelga de la sección, no
+ * del menú: se llega desde la propia agenda, como las demás pantallas de
+ * operación.
+ */
+export const AGENDA_CREATE_ROUTE = `${AGENDA_ROUTE}/new`;
+
+/**
  * La reserva de un cupo concreto (V41-09 → V41-05: hold → confirm).
  *
  * El cupo viaja en la ruta; el recurso y la franja van por query string

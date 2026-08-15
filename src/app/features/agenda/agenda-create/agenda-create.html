@@ -1,0 +1,326 @@
+<app-page-header
+  title="Crear agenda"
+  subtitle="Cada paso se guarda antes de seguir: recurso, política, plantilla, cupos y excepciones."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (!puedeCrear()) {
+  <app-alert tone="error" title="No tenés permiso para crear agenda">
+    Construir una agenda —recursos, políticas, plantillas y cupos— es tarea de quien administra la
+    agenda de la organización. Si creés que debería estar habilitado para vos, pedíselo a quien
+    gestiona los accesos.
+  </app-alert>
+} @else if (sinOrganizacion()) {
+  <!-- ─── Sin organización activa ───────────────────────────────────────────
+       El recurso y la política se crean en una organización concreta: sin una
+       elegida no hay `tenantId` que enviar. Se dice así, y no se ofrece un
+       campo para teclearlo, porque elegir organización es cambiar el contexto
+       de la sesión —lo hace el selector del encabezado—, no rellenar un UUID. -->
+  <app-alert tone="info" title="Elegí una organización">
+    Una agenda pertenece a una organización concreta. Elegí una en el selector del encabezado para
+    poder crear su recurso, su política y su plantilla.
+  </app-alert>
+} @else if (finalizado()) {
+  <!-- ─── Finalización ──────────────────────────────────────────────────── -->
+  <div class="agenda-create__done">
+    <h2 appAnuncio [asertivo]="false" class="agenda-create__done-title">La agenda quedó creada</h2>
+    <p class="agenda-create__done-text">
+      Las cinco fases se guardaron contra el servidor. Ya podés ver los cupos generados en la
+      agenda del recurso.
+    </p>
+
+    <dl class="agenda-create__summary">
+      <div>
+        <dt>Recurso</dt>
+        <dd>{{ resourceName() }} · <code>{{ resourceId() }}</code></dd>
+      </div>
+      <div>
+        <dt>Política</dt>
+        <dd>{{ policyCode() }} · <code>{{ policyId() }}</code></dd>
+      </div>
+      <div>
+        <dt>Plantilla</dt>
+        <dd>{{ templateName() }} · <code>{{ templateId() }}</code></dd>
+      </div>
+      @if (slotsResultado(); as slots) {
+        <div>
+          <dt>Cupos generados</dt>
+          <dd>{{ slots.created }} nuevos · {{ slots.skipped }} ya existían</dd>
+        </div>
+      }
+      @if (excepcionResultado(); as exc) {
+        <div>
+          <dt>Excepción</dt>
+          <dd>{{ exc.blockedSlots }} cupos bloqueados · <code>{{ exc.id }}</code></dd>
+        </div>
+      }
+    </dl>
+
+    <a app-button variant="primary" routerLink="/schedule">Ir a la agenda</a>
+  </div>
+} @else {
+  <app-stepper [steps]="pasos()" label="Crear agenda" />
+
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="agenda-create__error" title="No se pudo guardar">
+      {{ mensaje }}
+    </app-alert>
+  }
+
+  <!-- Lo ya capturado, visible en todo momento: los ids que encadenan las fases. -->
+  @if (resourceId() || policyId() || templateId()) {
+    <dl class="agenda-create__captured">
+      @if (resourceId(); as id) {
+        <div><dt>Recurso</dt><dd><code>{{ id }}</code></dd></div>
+      }
+      @if (policyId(); as id) {
+        <div><dt>Política</dt><dd><code>{{ id }}</code></dd></div>
+      }
+      @if (templateId(); as id) {
+        <div><dt>Plantilla</dt><dd><code>{{ id }}</code></dd></div>
+      }
+    </dl>
+  }
+
+  <div class="agenda-create__panel">
+    @switch (fase()) {
+      <!-- ─── Fase 1: recurso ─────────────────────────────────────────── -->
+      @case (0) {
+        <form [formGroup]="formRecurso" novalidate>
+          <app-form-section
+            legend="Recurso agendable"
+            description="La agenda de un profesional, un box o un equipo. Es sobre lo que se cuelga todo lo demás."
+          >
+            <app-form-field label="Tipo de recurso" [required]="true"
+              [errorMessage]="formRecurso.controls.resourceType.touched && formRecurso.controls.resourceType.invalid ? 'Elegí el tipo de recurso.' : ''">
+              <app-select formControlName="resourceType" [options]="opcionesTipoRecurso" placeholder="Elegí un tipo" />
+            </app-form-field>
+
+            <app-form-field label="Tabla referenciada" [required]="true" hint="Ej.: practitioner_profiles, practice_sites."
+              [errorMessage]="formRecurso.controls.resourceRefType.touched && formRecurso.controls.resourceRefType.invalid ? 'Indicá la tabla referenciada (máx. 100).' : ''">
+              <app-input formControlName="resourceRefType" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Id de la entidad referenciada" [required]="true" hint="El identificador del profesional, box o equipo (UUID)."
+              [errorMessage]="formRecurso.controls.resourceRefId.touched && formRecurso.controls.resourceRefId.invalid ? uuidError : ''">
+              <app-input formControlName="resourceRefId" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Nombre" [required]="true"
+              [errorMessage]="formRecurso.controls.name.touched && formRecurso.controls.name.invalid ? 'Escribí un nombre (máx. 200).' : ''">
+              <app-input formControlName="name" type="text" />
+            </app-form-field>
+          </app-form-section>
+
+          <app-form-section legend="Ajustes" description="Opcionales: práctica, zona horaria y cuántas atenciones simultáneas admite.">
+            <app-form-field label="Práctica" hint="Identificador de la práctica (UUID)."
+              [errorMessage]="formRecurso.controls.practiceId.touched && formRecurso.controls.practiceId.invalid ? uuidError : ''">
+              <app-input formControlName="practiceId" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Zona horaria" hint="IANA, p. ej. America/La_Paz.">
+              <app-input formControlName="timeZone" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Capacidad" hint="Atenciones simultáneas (entero ≥ 1)."
+              [errorMessage]="formRecurso.controls.capacity.touched && formRecurso.controls.capacity.invalid ? 'Ingresá un entero sin signo.' : ''">
+              <app-input formControlName="capacity" type="text" />
+            </app-form-field>
+          </app-form-section>
+        </form>
+      }
+
+      <!-- ─── Fase 2: política ────────────────────────────────────────── -->
+      @case (1) {
+        <form [formGroup]="formPolitica" novalidate>
+          <app-form-section legend="Política de reserva" description="Las reglas de antelación, cancelación y retención que después usa la plantilla.">
+            <app-form-field label="Código" [required]="true" hint="Único dentro de la organización."
+              [errorMessage]="formPolitica.controls.code.touched && formPolitica.controls.code.invalid ? 'Indicá un código (máx. 100).' : ''">
+              <app-input formControlName="code" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Nombre" [required]="true"
+              [errorMessage]="formPolitica.controls.name.touched && formPolitica.controls.name.invalid ? 'Escribí un nombre (máx. 200).' : ''">
+              <app-input formControlName="name" type="text" />
+            </app-form-field>
+          </app-form-section>
+
+          <app-form-section legend="Reglas" description="Todas opcionales; el backend aplica sus valores por defecto si se dejan vacías.">
+            <app-form-field label="Antelación mínima (minutos)"
+              [errorMessage]="formPolitica.controls.minNoticeMinutes.touched && formPolitica.controls.minNoticeMinutes.invalid ? 'Ingresá un entero sin signo.' : ''">
+              <app-input formControlName="minNoticeMinutes" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Antelación máxima (días)"
+              [errorMessage]="formPolitica.controls.maxAdvanceDays.touched && formPolitica.controls.maxAdvanceDays.invalid ? 'Ingresá un entero sin signo.' : ''">
+              <app-input formControlName="maxAdvanceDays" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Ventana de cancelación (minutos)"
+              [errorMessage]="formPolitica.controls.cancellationWindowMinutes.touched && formPolitica.controls.cancellationWindowMinutes.invalid ? 'Ingresá un entero sin signo.' : ''">
+              <app-input formControlName="cancellationWindowMinutes" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Cargo por inasistencia" hint="Un importe, como 50.00."
+              [errorMessage]="formPolitica.controls.noShowFeeAmount.touched && formPolitica.controls.noShowFeeAmount.invalid ? numberStringError : ''">
+              <app-input formControlName="noShowFeeAmount" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Citas activas por paciente"
+              [errorMessage]="formPolitica.controls.maxActivePerPatient.touched && formPolitica.controls.maxActivePerPatient.invalid ? 'Ingresá un entero sin signo.' : ''">
+              <app-input formControlName="maxActivePerPatient" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Vigencia de la retención (segundos)" hint="Cuánto vive un hold. Por defecto 300."
+              [errorMessage]="formPolitica.controls.holdTtlSeconds.touched && formPolitica.controls.holdTtlSeconds.invalid ? 'Ingresá un entero sin signo.' : ''">
+              <app-input formControlName="holdTtlSeconds" type="text" />
+            </app-form-field>
+          </app-form-section>
+        </form>
+      }
+
+      <!-- ─── Fase 3: plantilla ───────────────────────────────────────── -->
+      @case (2) {
+        <form [formGroup]="formPlantilla" novalidate>
+          <app-form-section legend="Plantilla de agenda" description="Las franjas semanales que después se materializan en cupos.">
+            <app-form-field label="Nombre" [required]="true"
+              [errorMessage]="formPlantilla.controls.name.touched && formPlantilla.controls.name.invalid ? 'Escribí un nombre (máx. 200).' : ''">
+              <app-input formControlName="name" type="text" />
+            </app-form-field>
+
+            <app-form-field label="Duración por defecto del slot (minutos)" hint="Si una franja no la fija, se usa esta. Por defecto 30."
+              [errorMessage]="formPlantilla.controls.slotMinutes.touched && formPlantilla.controls.slotMinutes.invalid ? 'Ingresá un entero sin signo.' : ''">
+              <app-input formControlName="slotMinutes" type="text" />
+            </app-form-field>
+
+            @if (policyId()) {
+              <p class="agenda-create__note">Se vincula la política creada en el paso anterior.</p>
+            }
+          </app-form-section>
+
+          <app-form-section legend="Franjas semanales" description="Al menos una. Día, hora de inicio y de fin; el resto es opcional.">
+            <div formArrayName="rules" class="agenda-create__rules">
+              @for (regla of franjas.controls; track regla; let i = $index) {
+                <div [formGroupName]="i" class="agenda-create__rule">
+                  <app-form-field label="Día">
+                    <app-select formControlName="dayOfWeek" [options]="opcionesDia" />
+                  </app-form-field>
+
+                  <app-form-field label="Inicio" hint="HH:MM"
+                    [errorMessage]="regla.controls.startTime.touched && regla.controls.startTime.invalid ? 'Hora HH:MM.' : ''">
+                    <app-input formControlName="startTime" type="text" />
+                  </app-form-field>
+
+                  <app-form-field label="Fin" hint="HH:MM"
+                    [errorMessage]="regla.controls.endTime.touched && regla.controls.endTime.invalid ? 'Hora HH:MM.' : ''">
+                    <app-input formControlName="endTime" type="text" />
+                  </app-form-field>
+
+                  <app-form-field label="Min/slot"
+                    [errorMessage]="regla.controls.slotMinutes.touched && regla.controls.slotMinutes.invalid ? 'Entero.' : ''">
+                    <app-input formControlName="slotMinutes" type="text" />
+                  </app-form-field>
+
+                  <app-form-field label="Cupos/slot"
+                    [errorMessage]="regla.controls.capacityPerSlot.touched && regla.controls.capacityPerSlot.invalid ? 'Entero.' : ''">
+                    <app-input formControlName="capacityPerSlot" type="text" />
+                  </app-form-field>
+
+                  @if (franjas.length > 1) {
+                    <button app-button variant="ghost" size="sm" type="button" (clicked)="quitarFranja(i)">
+                      Quitar
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <button app-button variant="outline" size="sm" type="button" (clicked)="agregarFranja()">
+              Agregar franja
+            </button>
+          </app-form-section>
+
+          <app-form-section legend="Vigencia" description="Opcional: desde y hasta cuándo rige la plantilla.">
+            <app-form-field label="Válida desde">
+              <app-date-picker mode="date-time" [(value)]="validFrom" [disabled]="cargando()" />
+            </app-form-field>
+            <app-form-field label="Válida hasta">
+              <app-date-picker mode="date-time" [(value)]="validTo" [disabled]="cargando()" />
+            </app-form-field>
+          </app-form-section>
+        </form>
+      }
+
+      <!-- ─── Fase 4: generar cupos ───────────────────────────────────── -->
+      @case (3) {
+        <app-form-section legend="Generar cupos" description="Materializa la plantilla en una ventana. Es idempotente: reejecutar no duplica.">
+          <app-form-field label="Desde" [required]="true">
+            <app-date-picker mode="date-time" [(value)]="desde" [disabled]="cargando()" />
+          </app-form-field>
+          <app-form-field label="Hasta" [required]="true">
+            <app-date-picker mode="date-time" [(value)]="hasta" [disabled]="cargando()" />
+          </app-form-field>
+
+          @if (ventanaTocada() && ventanaInvalida()) {
+            <app-alert tone="warning">
+              Indicá una ventana válida: el fin tiene que ser posterior al inicio.
+            </app-alert>
+          }
+        </app-form-section>
+      }
+
+      <!-- ─── Fase 5: excepción ───────────────────────────────────────── -->
+      @case (4) {
+        <form [formGroup]="formExcepcion" novalidate>
+          <app-form-section legend="Excepción de disponibilidad" description="Una ausencia, un feriado o disponibilidad extra. Bloquea los cupos libres que se solapan.">
+            <app-form-field label="Tipo" [required]="true"
+              [errorMessage]="formExcepcion.controls.exceptionType.touched && formExcepcion.controls.exceptionType.invalid ? 'Elegí el tipo de excepción.' : ''">
+              <app-select formControlName="exceptionType" [options]="opcionesExcepcion" placeholder="Elegí un tipo" />
+            </app-form-field>
+
+            <app-form-field label="Desde" [required]="true">
+              <app-date-picker mode="date-time" [(value)]="excStart" [disabled]="cargando()" />
+            </app-form-field>
+            <app-form-field label="Hasta" [required]="true">
+              <app-date-picker mode="date-time" [(value)]="excEnd" [disabled]="cargando()" />
+            </app-form-field>
+
+            @if (rangoTocado() && rangoInvalido()) {
+              <app-alert tone="warning">
+                Indicá un rango válido: el fin tiene que ser posterior al inicio.
+              </app-alert>
+            }
+
+            <app-form-field label="Motivo" hint="Visible en la agenda (máx. 500)."
+              [errorMessage]="formExcepcion.controls.reason.touched && formExcepcion.controls.reason.invalid ? 'Máximo 500 caracteres.' : ''">
+              <app-textarea formControlName="reason" [rows]="3" />
+            </app-form-field>
+
+            <app-form-field label="Suma disponibilidad extraordinaria" hint="Activá si esta excepción añade horario en vez de bloquearlo.">
+              <app-switch formControlName="isAvailable" />
+            </app-form-field>
+          </app-form-section>
+        </form>
+      }
+    }
+  </div>
+
+  <!-- ─── Navegación de fases ───────────────────────────────────────────── -->
+  <div class="agenda-create__nav">
+    @if (fase() > 0) {
+      <button app-button variant="ghost" type="button" [disabled]="cargando()" (clicked)="atras()">
+        Atrás
+      </button>
+    }
+    <button
+      app-button
+      variant="primary"
+      type="button"
+      [isLoading]="cargando()"
+      [disabled]="cargando()"
+      (clicked)="siguiente()"
+    >
+      {{ etiquetaPrimaria() }}
+    </button>
+  </div>
+}

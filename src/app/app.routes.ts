@@ -470,6 +470,13 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
+      // Alta de agenda por fases (UC-41-01 → UC-41-04). Cuelga de la sección
+      // `schedule`: se llega desde la propia agenda, no desde el menú, igual que
+      // las demás pantallas de operación. El rol lo hace cumplir el backend
+      // (`SCHEDULING_ADMIN`) y la pantalla no ofrece lo que la API negaría.
+      pantallaDeOperacion('schedule', 'new', 'Crear agenda', () =>
+        import('./features/agenda/agenda-create/agenda-create').then((m) => m.AgendaCreate),
+      ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
         import(
           './features/delegated-access/practitioner-delegate-form/practitioner-delegate-form'
