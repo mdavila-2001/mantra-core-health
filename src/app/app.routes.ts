@@ -139,6 +139,21 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administration/clinical-forms': () =>
     import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
   glossary: () => import('./features/glossary/glossary').then((m) => m.Glossary),
+  // Carril 17. Las tres pantallas van diferidas: cada una la alcanza un rol
+  // distinto —el administrador del laboratorio, el visitador y el doctor— y
+  // ninguna es el destino del login de nadie.
+  'administration/pharma-lab': () =>
+    import('./features/pharma-lab/pharma-lab-home/pharma-lab-home').then(
+      (m) => m.PharmaLabHome,
+    ),
+  'my-visits': () =>
+    import('./features/pharma-lab/visitor-visits/visitor-visits').then(
+      (m) => m.VisitorVisits,
+    ),
+  'lab-visits': () =>
+    import('./features/pharma-lab/doctor-visits/doctor-visits').then(
+      (m) => m.DoctorVisits,
+    ),
 };
 
 /**

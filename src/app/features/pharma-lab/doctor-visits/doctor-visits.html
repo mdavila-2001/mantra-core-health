@@ -1,0 +1,154 @@
+<app-page-header
+  title="Visitas de laboratorio"
+  subtitle="Solicitudes de visitadores médicos, separadas de tu agenda de pacientes."
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (data(); as panel) {
+    @if (aviso(); as texto) {
+      <p class="doctor-visits__notice" role="status" data-testid="visit-notice">{{ texto }}</p>
+    }
+
+    <app-tabs>
+      <app-tab label="Solicitudes">
+        <section class="doctor-visits__section" aria-label="Solicitudes de visita recibidas">
+          @if (panel.requests.length === 0) {
+            <p class="doctor-visits__empty" data-testid="requests-empty">
+              No recibiste solicitudes de visita.
+            </p>
+          } @else {
+            <table class="doctor-visits__table" data-testid="requests-table">
+              <caption class="doctor-visits__caption">
+                Solicitudes de visitadores médicos
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Fecha solicitada</th>
+                  <th scope="col">Duración</th>
+                  <th scope="col">Modalidad</th>
+                  <th scope="col">Motivo</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Decisión</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (request of panel.requests; track request.id) {
+                  <tr [attr.data-testid]="'request-row-' + request.id">
+                    <td>{{ request.requestedStartAt.toLocaleString('es-BO') }}</td>
+                    <td>{{ request.durationMinutes }} min</td>
+                    <td>{{ concepto(request.modalityConceptId) }}</td>
+                    <td>{{ request.reason }}</td>
+                    <td [attr.data-testid]="'request-status-' + request.id">
+                      {{ concepto(request.statusConceptId) }}
+                    </td>
+                    <td class="doctor-visits__actions">
+                      @if (esperaDecision(request)) {
+                        <button
+                          app-button
+                          variant="primary"
+                          size="sm"
+                          [attr.data-testid]="'accept-' + request.id"
+                          (click)="aceptar(request)"
+                        >
+                          Aceptar
+                        </button>
+                        <button
+                          app-button
+                          variant="neutral"
+                          size="sm"
+                          [attr.data-testid]="'reject-' + request.id"
+                          (click)="rechazar(request)"
+                        >
+                          Rechazar
+                        </button>
+                      } @else {
+                        <span class="doctor-visits__muted">Resuelta</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+      </app-tab>
+
+      <app-tab label="Mi agenda de visitas">
+        <section class="doctor-visits__section" aria-label="Agenda de visitas">
+          @if (panel.agenda === null) {
+            <p class="doctor-visits__empty" data-testid="agenda-empty">
+              Todavía no configuraste horarios para visitadores, así que no recibís visitas de
+              laboratorio.
+            </p>
+          } @else {
+            <p class="doctor-visits__note" data-testid="agenda-summary">
+              Zona horaria {{ panel.agenda.timeZone }} ·
+              {{ panel.agenda.autoConfirm ? 'confirmación automática' : 'confirmación manual' }} ·
+              antelación mínima {{ panel.agenda.minNoticeHours }} h · plazo de cancelación
+              {{ panel.agenda.rescheduleCutoffHours }} h.
+            </p>
+            <table class="doctor-visits__table" data-testid="agenda-table">
+              <caption class="doctor-visits__caption">
+                Franjas en las que recibís visitadores
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Día</th>
+                  <th scope="col">Desde</th>
+                  <th scope="col">Hasta</th>
+                  <th scope="col">Duración</th>
+                  <th scope="col">Modalidad</th>
+                  <th scope="col">Lugar</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (window of panel.agenda.windows; track $index) {
+                  <tr>
+                    <td>{{ dia(window.weekday) }}</td>
+                    <td class="doctor-visits__mono">{{ window.startTime }}</td>
+                    <td class="doctor-visits__mono">{{ window.endTime }}</td>
+                    <td>{{ window.slotDurationMinutes }} min</td>
+                    <td>{{ concepto(window.modalityConceptId) }}</td>
+                    <td>{{ window.location ?? '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+      </app-tab>
+
+      <app-tab label="Visitas realizadas">
+        <section class="doctor-visits__section" aria-label="Visitas realizadas">
+          @if (panel.records.length === 0) {
+            <p class="doctor-visits__empty">Todavía no hay visitas registradas.</p>
+          } @else {
+            <table class="doctor-visits__table" data-testid="records-table">
+              <caption class="doctor-visits__caption">
+                Visitas registradas por los visitadores
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Lugar</th>
+                  <th scope="col">Temas</th>
+                  <th scope="col">Confirmación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (record of panel.records; track record.id) {
+                  <tr>
+                    <td>{{ record.occurredAt.toLocaleString('es-BO') }}</td>
+                    <td>{{ record.location ?? '—' }}</td>
+                    <td>{{ record.topicsDiscussed ?? '—' }}</td>
+                    <td>{{ concepto(record.confirmationConceptId) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+      </app-tab>
+    </app-tabs>
+  }
+</app-view-state-host>

@@ -194,6 +194,41 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M53 procedures_perioperative',
   },
   {
+    // Carril 17. La bandeja de visitas de laboratorio del doctor.
+    //
+    // Va en «Atención» y **separada de `schedule`** porque la especificación lo
+    // exige (línea 5399): una visita comercial no es una consulta, y mezclarlas
+    // en la misma agenda haría que la solicitud de un visitador compita por
+    // atención con la de un paciente.
+    //
+    // `PRACTITIONER` y `CLINICIAN` son los mismos roles con los que
+    // `VisitRequestsController` responde la bandeja.
+    path: 'lab-visits',
+    label: 'Visitas de laboratorio',
+    group: 'Atención',
+    icon: 'calendar',
+    roles: ['PRACTITIONER', 'CLINICIAN'],
+    availability: 'disponible',
+    summary: 'Aceptá o rechazá visitas de visitadores médicos y mirá tu agenda de visitas.',
+    module: 'M62 pharma_lab',
+  },
+  {
+    // Carril 17. La pantalla del visitador médico.
+    //
+    // Sólo la ve `MEDICAL_VISITOR`, que es un rol de sistema sembrado por este
+    // mismo carril. No aparece ninguna entrada clínica para ese rol —ni acá ni
+    // en el resto del registro— porque la especificación le prohíbe el acceso a
+    // pacientes, recetas y diagnósticos (5316-5318).
+    path: 'my-visits',
+    label: 'Mis visitas médicas',
+    group: 'Atención',
+    icon: 'calendar',
+    roles: ['MEDICAL_VISITOR'],
+    availability: 'disponible',
+    summary: 'Consultá el estado de las visitas que solicitaste a los doctores.',
+    module: 'M62 pharma_lab',
+  },
+  {
     // Carril 2 · punto 4 del reclamo. `TerminologyCatalog` ya resolvía el
     // mismo `GET /terminology/concepts?q=` con rol `SECURITY_ADMIN`: es un
     // buscador técnico de `conceptId` para configuración, no un glosario para
@@ -471,6 +506,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'planificada',
     summary: 'Emití comprobantes y seguí los cobros de la organización.',
     module: 'M26 billing · M42 payments',
+  },
+
+  {
+    // Carril 17. El panel del administrador de laboratorio farmacéutico.
+    //
+    // Una sola entrada para visitadores, catálogo, material informativo,
+    // farmacovigilancia y documentación: son cinco vistas de **la misma
+    // organización**, y cinco filas de menú obligarían a elegir el laboratorio
+    // cinco veces.
+    //
+    // `PHARMA_LAB_ADMIN` es un rol de sistema que siembra este carril; los otros
+    // dos son los que ya administran organizaciones en el resto del producto.
+    path: 'administration/pharma-lab',
+    label: 'Laboratorio farmacéutico',
+    group: 'Administración',
+    icon: 'settings',
+    roles: ['PHARMA_LAB_ADMIN', 'BUSINESS_ADMIN', 'PLATFORM_ADMIN'],
+    availability: 'disponible',
+    summary:
+      'Administrá visitadores, medicamentos, material aprobado, farmacovigilancia y documentación regulatoria.',
+    module: 'M62 pharma_lab',
   },
 
   {
