@@ -1,9 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { type Observable } from 'rxjs';
+import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import type { PracticeSitePage } from './practice-sites.types';
+import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
+import type {
+  MyRoleAssignment,
+  PracticeSitePage,
+  RoleAssignmentResult,
+  SelfRequestAffiliationInput,
+} from './practice-sites.types';
 
 /**
  * Cliente de los **consultorios** de `practice` (M14).
@@ -54,7 +60,83 @@ export class PracticeSitesClient {
     );
   }
 
+  /**
+   * `GET /practitioners/me/role-assignments` — Carril 18: mis vinculaciones
+   * con organizaciones, en cualquier estado (pendiente, activa, suspendida,
+   * rechazada, finalizada). No implica acceso a los pacientes de esas
+   * organizaciones.
+   */
+  listMyRoleAssignments(): Observable<readonly MyRoleAssignment[]> {
+    return this.http
+      .get<readonly ConNulos<WireRoleAssignment>[]>(
+        this.url('/practitioners/me/role-assignments'),
+      )
+      .pipe(map((items) => items.map(aVinculacion)));
+  }
+
+  /**
+   * `POST /practices/{practiceId}/role-assignments/self-request` — pido
+   * vincularme a una organización. Queda pendiente hasta que ella la
+   * apruebe, rechace, suspenda o finalice.
+   */
+  selfRequestAffiliation(
+    practiceId: string,
+    input: SelfRequestAffiliationInput,
+  ): Observable<RoleAssignmentResult> {
+    return this.http
+      .post<ConNulos<WireRoleAssignmentResult>>(
+        this.url(`/practices/${encodeURIComponent(practiceId)}/role-assignments/self-request`),
+        input,
+      )
+      .pipe(map(aResultadoDeVinculacion));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/* ---- Carril 18: transporte de "mis organizaciones" ------------------------ */
+
+interface WireRoleAssignment {
+  readonly id: string;
+  readonly practiceId: string;
+  readonly practiceName: string;
+  readonly practiceType: string | null;
+  readonly practiceSiteId: string | null;
+  readonly roleConceptId: string;
+  readonly specialtyConceptId: string | null;
+  readonly status: string;
+  readonly isPrimary: boolean;
+  readonly validFrom: string | null;
+  readonly validTo: string | null;
+  readonly createdAt: string;
+}
+
+interface WireRoleAssignmentResult {
+  readonly id: string;
+  readonly practiceId: string;
+  readonly practitionerProfileId: string;
+  readonly status: string;
+  readonly createdAt: string;
+}
+
+function aVinculacion(body: ConNulos<WireRoleAssignment>): MyRoleAssignment {
+  const { validFrom, validTo, createdAt, ...resto } = body;
+  return {
+    ...sinNulos(resto),
+    ...(maybeDateOnly(validFrom) === undefined ? {} : { validFrom: maybeDateOnly(validFrom) }),
+    ...(maybeDateOnly(validTo) === undefined ? {} : { validTo: maybeDateOnly(validTo) }),
+    createdAt: maybeDate(createdAt) ?? new Date(createdAt as string),
+  };
+}
+
+function aResultadoDeVinculacion(
+  body: ConNulos<WireRoleAssignmentResult>,
+): RoleAssignmentResult {
+  const { createdAt, ...resto } = body;
+  return {
+    ...sinNulos(resto),
+    createdAt: maybeDate(createdAt) ?? new Date(createdAt as string),
+  };
 }
