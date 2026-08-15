@@ -105,6 +105,19 @@ jobs:
       - name: Tokens del sistema de diseño
         run: node scripts/check-tokens.mjs
 
+      # Contraste WCAG de las DOS hojas: `styles.css` (banco de componentes) y
+      # `styles/redsat.css` (la hoja de la bóveda, que pinta el armazón de todas
+      # las pantallas y las 141 portadas).
+      #
+      # El script existía y se documentaba como si corriera acá —`styles.css`
+      # dice literalmente «lo detectó check-contrast.mjs, que mide estas
+      # combinaciones en cada CI»— pero nunca estuvo en el workflow. Por eso un
+      # par que el proyecto YA había corregido en v1.0 (ámbar-700 sobre
+      # ámbar-50, 4,46:1) volvió a aparecer en la hoja de la bóveda y sobrevivió
+      # sin que nada avisara. Un guardarraíl que no corre no guarda nada.
+      - name: Contraste del sistema de diseño
+        run: node scripts/check-contrast.mjs
+
       # Inventarios al día, enlaces, cobertura documental y deriva de contrato.
       - name: Documentación
         run: node scripts/generate-doc-report.mjs

@@ -5,6 +5,101 @@ Archivo vivo. Existe para que dos personas (o dos agentes) trabajando a la vez s
 
 ---
 
+## Sesión en curso · Conformidad de identidad visual con la bóveda
+
+**Empezó:** 2026-08-15 · **Alcance:** sólo frontend · **Encargo:** que la identidad visual, su
+inspiración y su forma de trabajar sean las mismas que las de las vistas HTML de la bóveda, en
+**todo** el frontend web.
+
+### 🟢 No toco ninguna pantalla: el carril es de tokens y guardarraíles
+
+Sé que R2-6, R2-4/R2-1 y R2-5 están dentro de `features/**`. **No toco una sola plantilla ni un
+solo CSS de componente.** Mi huella son cuatro archivos y ninguno es de features.
+
+### El hallazgo: el front tiene DOS sistemas de diseño, no uno
+
+No es una desviación de detalle, es estructural, y conviene que lo sepan todos:
+
+| | `src/styles.css` (REDSAT v1.0) | `src/styles/redsat.css` (v1.1, la bóveda) |
+|---|---|---|
+| Vocabulario | `--text-primary`, `--sp-4`, `--r-md` | `--tinta`, `--e4`, `--r-card` |
+| Tipografía de cuerpo | **Inter** | **Nunito Sans** |
+| Marcado | elemento Angular `<app-card>` | clase `class="app-card"` |
+| Pantallas | **132** (el resto de `features/`) | **141** (`features/redsat/`) |
+
+El reparto es **total y sin solape**: 0 de las 132 legadas usan una clase REDSAT, 0 de las 141
+portadas usan un componente del banco. Las dos mitades cuelgan del **mismo** armazón REDSAT
+(`shell-layout` → `PANTALLAS_HIJAS`), así que se navega de una a otra sin cambiar de ruta y sí
+cambiando de producto. Es exactamente lo que la propia bóveda llama «la causa número uno de que
+dos vistas del mismo producto no parezcan del mismo producto» (🎨 Banco de componentes, «Marco
+invariante»).
+
+### Un defecto de contraste real, y por qué nadie lo vio
+
+`--aviso-tinta: #8B6A47` (ámbar-700) sobre `--aviso-bg: #FBF2E8` da **4,46:1** — no llega a AA
+para texto chico, y pinta `.app-badge[data-tono="aviso"]` (11,5 px), `.app-alert` y la portada.
+
+Lo llamativo: **este proyecto ya arregló este mismo par una vez.** `styles.css` lo dice con todas
+las letras — «ámbar-700 sobre ámbar-50 da 4,46:1 y se queda a 0,04 de AA; con el 800 sube a
+7,49:1. Lo detectó `scripts/check-contrast.mjs`». La corrección nunca llegó a la hoja de la
+bóveda, y reapareció donde el guardarraíl no mira: **`check-contrast.mjs` y `check-tokens.mjs`
+leen sólo `src/styles.css`**. La hoja que pinta el armazón de las 273 pantallas y las 141
+portadas no la mide nadie.
+
+### Archivos que toco, y qué le hago a cada uno
+
+| Archivo | Qué le hago |
+|---|---|
+| `src/styles/redsat.css` | **un valor**: `--aviso-tinta` claro pasa a ámbar-800 `#5E4B35` (4,46 → 7,49) |
+| `scripts/sync-redsat.mjs` | una tercera transformación declarada, para que la corrección **sobreviva a la regeneración** |
+| `scripts/check-contrast.mjs` | pasa a medir también `src/styles/redsat.css` (67 pares en 2 hojas), con sus excepciones declaradas |
+| `.github/workflows/ci.yml` | una etapa nueva: `check-contrast.mjs`, que **no estaba en CI** |
+| `COORDINACION-AGENTES.md` | este bloque |
+
+### El guardarraíl existía, se documentaba, y no corría
+
+`styles.css` dice con todas las letras «lo detectó `check-contrast.mjs`, que mide estas
+combinaciones **en cada CI**». No era cierto: el script nunca estuvo en `ci.yml`. Corría a mano,
+cuando alguien se acordaba. Por eso el par del ámbar pudo reaparecer y quedarse. Ahora es una
+etapa más, al lado de `check-tokens`.
+
+Al encenderlo sobre la hoja de la bóveda saltó un tercer par, que **no existía en v1.0**:
+
+> **R3 · `--petroleo` en oscuro está sobrecargado.** Es a la vez la tinta de `a[app-link]`
+> (necesita ≥4,5:1 *contra* la superficie) y el relleno del botón primario (necesita ≥4,5:1 *con
+> blanco encima*). Los dos umbrales se mueven en sentido contrario y **no hay un valor que cumpla
+> los dos**: hoy `#12719F` da 3,09:1 como enlace sobre tarjeta y 5,40:1 como botón; en cuanto se
+> aclara hasta que el enlace pasa (~`#1E8CC4`), el blanco del botón ya cayó a 3,75:1. La salida
+> es **partir el token en dos** —uno de tinta, uno de relleno—, y eso se decide sobre la hoja de
+> la bóveda, no acá.
+
+Queda registrado como excepción **R3** siguiendo la política que fija `identidad-visual.md` («si
+un par no llega al umbral, no se ajusta el tono: se registra y se avisa al diseñador»), con una
+diferencia que está escrita en el código: **R1 y R2 son límites aceptados; R3 es una tarea
+abierta y se espera que desaparezca.**
+
+### Lo que NO toco
+
+Ninguna plantilla ni CSS de `features/**` (ni legadas ni portadas) · ningún componente del banco
+en `shared/components/**` · los **valores** de `src/styles.css` · `angular.json` · rutas ·
+`navigation.map.ts` · backend · SQL.
+
+### Dos cosas que quedan abiertas y no decido solo
+
+1. **Inter vs Nunito Sans.** La bóveda se contradice: `identidad-visual.md` (marcado «documento
+   normativo») fija **Poppins + Inter**; la hoja de las vistas HTML fija **Poppins + Nunito
+   Sans**. Hoy conviven mal: el `body` de `redsat.css` gana y pone Nunito Sans, pero once
+   componentes del banco (`data-table`, `filter-bar`, `side-nav`, `date-picker`,
+   `view-state-host`, `status-seal`…) fuerzan `var(--font-body)` y vuelven a Inter. O sea que la
+   mitad legada **ya es incoherente consigo misma**. Consultado con quien encarga; no cambio la
+   tipografía de la aplicación por mi cuenta.
+2. **`--borde-ctrl` en oscuro** (`#4A5F64` sobre `#0F2028`) da **2,47:1**, por debajo del 3:1 de
+   WCAG 1.4.11 para el borde de un control. Es de la misma clase que la excepción **E3** que
+   `styles.css` ya declara; lo dejo **declarado como excepción**, no corregido: cambiar la paleta
+   oscura de la bóveda es decisión de diseño, no de este carril.
+
+---
+
 ## Sesión en curso · Carril R2-6 — el glosario con etiquetas, en castellano
 
 **Empezó:** 2026-08-14 · **Ramas:** `carril-r2-6/glosario-etiquetas` en los dos repos ·
