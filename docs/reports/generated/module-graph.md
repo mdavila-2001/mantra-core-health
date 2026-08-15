@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-788 archivos TypeScript bajo `src/` y 3044 importaciones internas.
+775 archivos TypeScript bajo `src/` y 3044 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -97,19 +97,6 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/redsat/directorio/sucursales-listado/sucursales-listado.ts`
 - `src/app/features/redsat/directorio/transferencias-formulario/transferencias-formulario.ts`
 - `src/app/features/redsat/inicio/portada/portada.ts`
-- `src/app/features/redsat/organizaciones/asignaciones-de-sucursal-formulario/asignaciones-de-sucursal-formulario.ts`
-- `src/app/features/redsat/organizaciones/membresias-dar-de-baja/membresias-dar-de-baja.ts`
-- `src/app/features/redsat/organizaciones/membresias-formulario/membresias-formulario.ts`
-- `src/app/features/redsat/organizaciones/membresias-listado/membresias-listado.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-formulario/organizaciones-formulario.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-hijas-formulario/organizaciones-hijas-formulario.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-listado/organizaciones-listado.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-suspender/organizaciones-suspender.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-verificar/organizaciones-verificar.ts`
-- `src/app/features/redsat/organizaciones/roles-formulario/roles-formulario.ts`
-- `src/app/features/redsat/organizaciones/sucursales-formulario/sucursales-formulario.ts`
-- `src/app/features/redsat/organizaciones/sucursales-listado/sucursales-listado.ts`
-- `src/app/features/redsat/organizaciones/transferencias-formulario/transferencias-formulario.ts`
 - `src/app/features/redsat/personas/apoderados-de-portal-formulario/apoderados-de-portal-formulario.ts`
 - `src/app/features/redsat/personas/apoderados-de-portal-listado/apoderados-de-portal-listado.ts`
 - `src/app/features/redsat/personas/autorizaciones-de-jurisdiccion-formulario/autorizaciones-de-jurisdiccion-formulario.ts`
@@ -191,9 +178,9 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 729 |
+| `@angular/core` | 716 |
 | `@angular/common` | 386 |
-| `@angular/router` | 354 |
+| `@angular/router` | 341 |
 | `@angular/forms` | 90 |
 | `rxjs` | 79 |
 | `node:fs` | 14 |

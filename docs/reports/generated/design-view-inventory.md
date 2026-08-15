@@ -2,7 +2,7 @@
 
 # Inventario de vistas del diseñador y cableado real
 
-Carril 01. 25 secciones del registro, 29 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
+Carril 01. 25 secciones del registro, 78 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
 
 ## Estados
 
@@ -50,25 +50,74 @@ Carril 01. 25 secciones del registro, 29 pantallas hijas o de operación y 126 v
 
 | Rol | Ruta | Vista actual | API que usa | Estado |
 |---|---|---|---|---|
+| SECURITY_ADMIN | `/administration/delegated-access/assignments/edit` | `OrgAssignmentUpdate` | DelegatedAccessClient | conectada |
+| SECURITY_ADMIN | `/administration/delegated-access/assignments/new` | `OrgAssignmentForm` | DelegatedAccessClient | conectada |
 | SECURITY_ADMIN | `/administration/delegated-access/delegations/grants/new` | `GrantForm` | DelegatedAccessClient | conectada |
+| SECURITY_ADMIN | `/administration/delegated-access/delegations/new` | `PractitionerDelegateForm` | DelegatedAccessClient | conectada |
+| SECURITY_ADMIN | `/administration/delegated-access/delegations/requests/new` | `AccessRequestForm` | DelegatedAccessClient | conectada |
+| SECURITY_ADMIN | `/administration/delegated-access/delegations/revoke` | `DelegationRevocation` | DelegatedAccessClient | conectada |
+| SECURITY_ADMIN | `/administration/delegated-access/operations/evaluate-actor` | `ActorEvaluation` | DelegatedAccessClient | conectada |
 | SECURITY_ADMIN | `/administration/delegated-access/operations/expiry-sweep` | `ExpirySweep` | DelegatedAccessClient | conectada |
+| SECURITY_ADMIN | `/administration/delegated-access/permission-sets/new` | `PermissionSetForm` | DelegatedAccessClient | conectada |
+| SECURITY_ADMIN | `/administration/delegated-access/permission-sets/new-version` | `SetVersionForm` | DelegatedAccessClient | conectada |
+| SECURITY_ADMIN | `/administration/delegated-access/requests/resolve` | `AccessRequestResolution` | DelegatedAccessClient | conectada |
+| SECURITY_ADMIN | `/administration/geolocation/geofence-events/new` | `GeofenceEventForm` | GeoClient | conectada |
 | SECURITY_ADMIN | `/administration/geolocation/geofences/new` | `GeofenceForm` | GeoClient | conectada |
+| SECURITY_ADMIN | `/administration/geolocation/sessions/close` | `TrackingSessionClose` | GeoClient | conectada |
+| SECURITY_ADMIN | `/administration/geolocation/sessions/new` | `TrackingSessionForm` | GeoClient | conectada |
 | SECURITY_ADMIN | `/administration/geolocation/subjects/last-position` | `LastPosition` | GeoClient | conectada |
 | SECURITY_ADMIN | `/administration/geolocation/subjects/last-position/:trackedSubjectId` | `LastPosition` | GeoClient | conectada |
+| SECURITY_ADMIN | `/administration/geolocation/subjects/new` | `TrackedSubjectForm` | GeoClient | conectada |
 | SECURITY_ADMIN | `/administration/geolocation/subjects/pings` | `PingIngest` | GeoClient | conectada |
+| SECURITY_ADMIN | `/administration/geolocation/subjects/revoke-consent` | `ConsentRevocation` | GeoClient | conectada |
 | SECURITY_ADMIN | `/administration/geolocation/trips/close` | `TripClose` | GeoClient | conectada |
 | SECURITY_ADMIN | `/administration/geolocation/trips/new` | `TripForm` | GeoClient | conectada |
 | CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/agents/new` | `AgentForm` | HealthContextClient | conectada |
+| CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/collection-runs/finish` | `CollectionRunFinish` | HealthContextClient | conectada |
+| CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/collection-runs/new` | `CollectionRunForm` | HealthContextClient | conectada |
 | CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/contexts/new` | `ContextForm` | HealthContextClient | conectada |
+| CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/contexts/resolve` | `ContextResolve` | HealthContextClient | conectada |
+| CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/observations/new` | `ObservationForm` | HealthContextClient | conectada |
+| CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/quality-reviews/new` | `QualityReviewForm` | HealthContextClient | conectada |
+| CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/schedules/new` | `ScheduleForm` | HealthContextClient | conectada |
 | CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/sources/new` | `SourceForm` | HealthContextClient | conectada |
 | CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/versions/new` | `VersionForm` | HealthContextClient | conectada |
+| CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/versions/publish` | `VersionPublish` | HealthContextClient | conectada |
+| CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context/versions/supersede` | `VersionSupersede` | HealthContextClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/assertions/issue` | `AssertionIssueForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/assertions/revoke` | `AssertionRevokeForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/authorities/endpoint` | `AuthorityEndpointForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/authorities/new` | `AuthorityForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/cases/checks` | `CheckPlanForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/cases/evidence` | `CaseEvidenceForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/cases/expire-sweep` | `CaseExpireSweep` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/cases/new` | `CaseOpenForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/checks/attempt` | `CheckAttemptForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/checks/fraud-signal` | `FraudSignalForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/checks/result` | `CheckResultForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/policies/new` | `VerificationPolicyForm` | IdentityAdminClient | conectada |
 | SECURITY_ADMIN | `/administration/identity-assurance/queue` | `CaseQueue` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/review/decision` | `ReviewDecisionForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/review/escalate` | `ManualReviewForm` | IdentityAdminClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/accounts/complete` | `AccountLinkCompleteForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/accounts/link` | `AccountLinkRequestForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/accounts/unlink` | `IdentityUnlinkForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/keys/new` | `SigningKeyForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/keys/rotate` | `KeyRotationForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/login/callback` | `LoginCallbackForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/login/start` | `LoginStartForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/organizations/link` | `TenantBindingForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/providers/attribute-mappings` | `AttributeMappingsForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/providers/new` | `ProviderForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/providers/protocol` | `ProtocolConfigForm` | AuthProvidersClient | conectada |
+| IDENTITY_ADMIN | `/administration/identity-providers/providers/provisioning-rule` | `ProvisioningRuleForm` | AuthProvidersClient | conectada |
 | SECURITY_ADMIN | `/administration/organizations/:tenantId` | `OrganizationDetail` | DirectoryClient, TerminologyClient | conectada |
 | SECURITY_ADMIN | `/administration/organizations/new` | `OrganizationNew` | DirectoryClient, IamClient, TerminologyClient | conectada con deuda |
 | SECURITY_ADMIN | `/administration/patients/:profileId` | `PatientDetail` | AuthzClient, ProfilesClient, TerminologyClient | conectada |
 | SECURITY_ADMIN | `/administration/patients/assisted-registration` | `AssistedRegistration` | IamClient | conectada |
 | SECURITY_ADMIN | `/administration/patients/merge` | `PatientMerge` | ProfilesClient | conectada |
 | SECURITY_ADMIN | `/administration/patients/new` | `PatientNew` | ProfilesClient | conectada |
+| PATIENT | `/directory/:profileId` | `PractitionerDetail` | FilesClient, ProfilesClient, TerminologyClient | conectada |
 | cualquier sesión | `/glossary/:conceptId` | `GlossaryTerm` | TerminologyClient | conectada |
 | cualquier sesión | `/laboratory-directory/:unitId` | `LaboratoryDetail` | DiagnosticUnitsClient | conectada |
 | CLINICIAN · PRACTITIONER | `/medical-records/:profileId` | `PatientChart` | ChartTemplatesClient, ClinicalClient, DiagnosticsClient, FilesClient, FormsClient, ProceduresClient, ProfilesClient, SystemContextClient, TerminologyClient | conectada |
@@ -218,7 +267,7 @@ Las 126 pantallas de `features/redsat/`, generadas por `scripts/port-vistas-reds
 | Estado | Pantallas |
 |---|---|
 | maqueta portada | 126 |
-| conectada | 44 |
+| conectada | 93 |
 | presentacional | 6 |
 | conectada con deuda | 3 |
 | placeholder | 1 |

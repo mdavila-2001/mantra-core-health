@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-334 componentes y 50 servicios inyectables, leídos de `src/`.
+321 componentes y 50 servicios inyectables, leídos de `src/`.
 
 ## Átomo (17)
 
@@ -77,7 +77,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (274)
+## Feature (261)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -290,19 +290,6 @@
 | `app-redsat-directorio-sucursales-listado` | `DirectorioSucursalesListado` | — | — | — | Default | **no** |
 | `app-redsat-directorio-transferencias-formulario` | `DirectorioTransferenciasFormulario` | — | — | — | Default | **no** |
 | `app-redsat-inicio-portada` | `InicioPortada` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-asignaciones-de-sucursal-formulario` | `OrganizacionesAsignacionesDeSucursalFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-membresias-dar-de-baja` | `OrganizacionesMembresiasDarDeBaja` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-membresias-formulario` | `OrganizacionesMembresiasFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-membresias-listado` | `OrganizacionesMembresiasListado` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-formulario` | `OrganizacionesFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-hijas-formulario` | `OrganizacionesHijasFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-listado` | `OrganizacionesListado` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-suspender` | `OrganizacionesSuspender` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-verificar` | `OrganizacionesVerificar` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-roles-formulario` | `OrganizacionesRolesFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-sucursales-formulario` | `OrganizacionesSucursalesFormulario` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-sucursales-listado` | `OrganizacionesSucursalesListado` | — | — | — | Default | **no** |
-| `app-redsat-organizaciones-transferencias-formulario` | `OrganizacionesTransferenciasFormulario` | — | — | — | Default | **no** |
 | `app-redsat-personas-apoderados-de-portal-formulario` | `PersonasApoderadosDePortalFormulario` | — | — | — | Default | **no** |
 | `app-redsat-personas-apoderados-de-portal-listado` | `PersonasApoderadosDePortalListado` | — | — | — | Default | **no** |
 | `app-redsat-personas-autorizaciones-de-jurisdiccion-formulario` | `PersonasAutorizacionesDeJurisdiccionFormulario` | — | — | — | Default | **no** |
@@ -510,19 +497,6 @@
 - `DirectorioSucursalesListado` — `src/app/features/redsat/directorio/sucursales-listado/sucursales-listado.ts`
 - `DirectorioTransferenciasFormulario` — `src/app/features/redsat/directorio/transferencias-formulario/transferencias-formulario.ts`
 - `InicioPortada` — `src/app/features/redsat/inicio/portada/portada.ts`
-- `OrganizacionesAsignacionesDeSucursalFormulario` — `src/app/features/redsat/organizaciones/asignaciones-de-sucursal-formulario/asignaciones-de-sucursal-formulario.ts`
-- `OrganizacionesMembresiasDarDeBaja` — `src/app/features/redsat/organizaciones/membresias-dar-de-baja/membresias-dar-de-baja.ts`
-- `OrganizacionesMembresiasFormulario` — `src/app/features/redsat/organizaciones/membresias-formulario/membresias-formulario.ts`
-- `OrganizacionesMembresiasListado` — `src/app/features/redsat/organizaciones/membresias-listado/membresias-listado.ts`
-- `OrganizacionesFormulario` — `src/app/features/redsat/organizaciones/organizaciones-formulario/organizaciones-formulario.ts`
-- `OrganizacionesHijasFormulario` — `src/app/features/redsat/organizaciones/organizaciones-hijas-formulario/organizaciones-hijas-formulario.ts`
-- `OrganizacionesListado` — `src/app/features/redsat/organizaciones/organizaciones-listado/organizaciones-listado.ts`
-- `OrganizacionesSuspender` — `src/app/features/redsat/organizaciones/organizaciones-suspender/organizaciones-suspender.ts`
-- `OrganizacionesVerificar` — `src/app/features/redsat/organizaciones/organizaciones-verificar/organizaciones-verificar.ts`
-- `OrganizacionesRolesFormulario` — `src/app/features/redsat/organizaciones/roles-formulario/roles-formulario.ts`
-- `OrganizacionesSucursalesFormulario` — `src/app/features/redsat/organizaciones/sucursales-formulario/sucursales-formulario.ts`
-- `OrganizacionesSucursalesListado` — `src/app/features/redsat/organizaciones/sucursales-listado/sucursales-listado.ts`
-- `OrganizacionesTransferenciasFormulario` — `src/app/features/redsat/organizaciones/transferencias-formulario/transferencias-formulario.ts`
 - `PersonasApoderadosDePortalFormulario` — `src/app/features/redsat/personas/apoderados-de-portal-formulario/apoderados-de-portal-formulario.ts`
 - `PersonasApoderadosDePortalListado` — `src/app/features/redsat/personas/apoderados-de-portal-listado/apoderados-de-portal-listado.ts`
 - `PersonasAutorizacionesDeJurisdiccionFormulario` — `src/app/features/redsat/personas/autorizaciones-de-jurisdiccion-formulario/autorizaciones-de-jurisdiccion-formulario.ts`

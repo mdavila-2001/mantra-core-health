@@ -14,7 +14,15 @@
  * 3. **¿La pantalla lee la API o se está pintando sola?** — buscando qué
  *    cliente de `core/data-access` inyecta, y qué señales de dato falso tiene.
  *
- * No modifica código. Escribe `docs/reports/generated/design-view-inventory.md`.
+ * No modifica código. Escribe dos archivos en `docs/reports/generated/`:
+ *
+ * - `design-view-inventory.md`, la tabla que se lee;
+ * - `rutas.json`, la **misma** lista en forma de datos, que consume el barrido
+ *   del carril 19 (`playwright/carril-19-route-health.spec.ts`).
+ *
+ * Que las dos salgan de acá y no de dos lugares es el punto: una lista de rutas
+ * escrita a mano en la suite se queda vieja el día que alguien agregue una
+ * pantalla, y el barrido diría «todo bien» sin haberla mirado nunca.
  *
  * Uso:
  *   node scripts/audit-design-views.mjs           # escribe
@@ -27,6 +35,7 @@ import { dirname, join } from 'node:path';
 import { DOCS_ROOT, REPO_ROOT, SRC_ROOT, repoPath, walk } from './lib/scan.mjs';
 
 const OUT = join(DOCS_ROOT, 'reports/generated/design-view-inventory.md');
+const OUT_JSON = join(DOCS_ROOT, 'reports/generated/rutas.json');
 const checkOnly = process.argv.includes('--check');
 
 const AVISO =
@@ -62,7 +71,10 @@ function leerSecciones() {
       rolesRaw === undefined
         ? []
         : [...rolesRaw.matchAll(/'([^']+)'/g)].map((m) => m[1]);
-    secciones.push({ path, label, group, roles, availability, module });
+    // Los roles excluyentes ignoran el comodín `SUPERADMIN` (corrección #2). El
+    // barrido lo necesita para no dar por rota una ruta que rebota a propósito.
+    const exclusiveRoles = /exclusiveRoles:\s*true/.test(bloque);
+    secciones.push({ path, label, group, roles, exclusiveRoles, availability, module });
   }
   return secciones;
 }
@@ -118,16 +130,25 @@ function leerPantallas() {
 function leerPantallasHijas() {
   const hijas = [];
 
+  // La ventana es holgada porque entre el `path:` y su `import()` puede haber
+  // `title`, `data`, `canActivate` y un comentario largo explicando por qué.
+  // Con una ventana corta, una entrada bien escrita simplemente desaparecía del
+  // inventario — y desaparecer en silencio es el defecto que este script busca.
   const bloque = /const PANTALLAS_HIJAS:[\s\S]*?\n\];/.exec(appRoutes)?.[0] ?? '';
   for (const m of bloque.matchAll(
-    /path:\s*'([^']+)'[\s\S]{0,400}?import\('([^']+)'\)[\s\S]{0,120}?m\.(\w+)\)/g,
+    /path:\s*'([^']+)'[\s\S]{0,900}?import\(\s*'([^']+)'\s*\)[\s\S]{0,120}?m\.(\w+)\)/g,
   )) {
     hijas.push({ ruta: m[1], archivo: m[2], componente: m[3], origen: 'hija' });
   }
 
   // Las pantallas de operación se declaran por función, no por literal.
+  //
+  // El `import(...)` admite saltos de línea adentro del paréntesis: el
+  // formateador parte las rutas largas, y una expresión que exigiera
+  // `import('…')` en una sola línea perdía la mitad de las pantallas de
+  // operación sin decir nada.
   for (const m of appRoutes.matchAll(
-    /pantallaDe(\w+)\(\s*(?:'([^']+)',\s*)?'([^']+)',\s*'[^']*',\s*\(\)\s*=>\s*\n?\s*import\('([^']+)'\)[\s\S]{0,140}?m\.(\w+)\)/g,
+    /pantallaDe(\w+)\(\s*(?:'([^']+)',\s*)?'([^']+)',\s*'[^']*',\s*\(\)\s*=>\s*\n?\s*import\(\s*'([^']+)'\s*\)[\s\S]{0,200}?m\.(\w+)/g,
   )) {
     const seccion = m[2] ?? SECCION_DE_HELPER[m[1]] ?? m[1];
     hijas.push({
@@ -371,20 +392,69 @@ lineas.push('');
 
 const contenido = AVISO + lineas.join('\n');
 
+/**
+ * La misma lista, en datos, para el barrido del carril 19.
+ *
+ * Las rutas con parámetro (`:profileId`) se marcan y **no** se emiten como
+ * navegables: abrirlas con un identificador inventado mide el manejo de un 404
+ * del backend, que es otra prueba y no la de que la pantalla existe.
+ */
+const catalogo = {
+  generadoPor: 'scripts/audit-design-views.mjs',
+  secciones: filasSecciones.map((f) => ({
+    ruta: `/${f.path}`,
+    etiqueta: f.label,
+    grupo: f.group,
+    roles: f.roles,
+    rolesExclusivos: f.exclusiveRoles === true,
+    componente: f.pantalla?.componente ?? 'SectionPlaceholder',
+    apis: f.analisis.apis,
+    estado: f.estado,
+    parametrizada: f.path.includes(':'),
+  })),
+  hijas: filasHijas.map((f) => ({
+    ruta: `/${f.ruta}`,
+    seccion: f.seccion,
+    roles: f.roles,
+    componente: f.componente,
+    apis: f.analisis.apis,
+    estado: f.estado,
+    parametrizada: f.ruta.includes(':'),
+  })),
+  portadas: filasDisenador.map((f) => ({
+    ruta: f.ruta,
+    codigo: f.codigo,
+    actor: f.actor,
+    componente: f.nombre,
+    estado: f.estado,
+    parametrizada: f.ruta.includes(':'),
+  })),
+};
+const contenidoJson = `${JSON.stringify(catalogo, null, 2)}\n`;
+
 if (checkOnly) {
-  const actual = existsSync(OUT) ? readFileSync(OUT, 'utf8') : '';
-  if (actual !== contenido) {
+  const desactualizados = [
+    [OUT, contenido],
+    [OUT_JSON, contenidoJson],
+  ].filter(([archivo, esperado]) => {
+    const actual = existsSync(archivo) ? readFileSync(archivo, 'utf8') : '';
+    return actual !== esperado;
+  });
+
+  if (desactualizados.length > 0) {
     console.error(
-      '✗ docs/reports/generated/design-view-inventory.md quedó desactualizado.\n' +
+      `✗ ${desactualizados.length} salida(s) del auditor quedaron desactualizadas.\n` +
         '  Volvé a correr: node scripts/audit-design-views.mjs',
     );
     process.exit(1);
   }
-  console.log('✓ design-view-inventory.md al día');
+  console.log('✓ inventario de vistas y catálogo de rutas al día');
 } else {
   mkdirSync(join(DOCS_ROOT, 'reports/generated'), { recursive: true });
   writeFileSync(OUT, contenido, 'utf8');
+  writeFileSync(OUT_JSON, contenidoJson, 'utf8');
   console.log('✓ docs/reports/generated/design-view-inventory.md');
+  console.log('✓ docs/reports/generated/rutas.json');
   for (const [estado, total] of Object.entries(resumen).sort((a, b) => b[1] - a[1])) {
     console.log(`  ${estado}: ${total}`);
   }
