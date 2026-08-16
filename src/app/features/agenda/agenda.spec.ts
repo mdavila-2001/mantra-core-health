@@ -393,6 +393,16 @@ describe('Agenda', () => {
     http.verify();
     expect(interno<() => string | null>('recursoElegido')()).toBeNull();
     expect(interno<() => boolean>('sinAgendaPropia')()).toBe(true);
+
+    // El aviso dejó de mandar a «pedírselo a quien administra»: desde el
+    // autoservicio, el siguiente paso es publicar la propia, y el CTA tiene
+    // que llevar directo al asistente.
+    harness.fixture.detectChanges();
+    const alerta = harness.fixture.nativeElement.querySelector('app-alert');
+    expect(alerta?.textContent).toContain('no pueden pedirte turno');
+    expect(
+      alerta?.querySelector('a[app-button]')?.getAttribute('href'),
+    ).toContain('/schedule/new');
     expect(citas().status).toBe('empty');
   });
 
