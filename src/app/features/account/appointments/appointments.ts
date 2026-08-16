@@ -291,7 +291,15 @@ export class Appointments {
   protected readonly recursoElegido = signal<string | null>(null);
 
   protected readonly opcionesDeRecurso = computed<readonly SelectOption<string>[]>(() =>
-    this.recursos().map((recurso) => ({ value: recurso.id, label: recurso.name })),
+    this.recursos().map((recurso) => ({
+      value: recurso.id,
+      // La pregunta de la pantalla es «¿con quién te querés atender?»: la
+      // respuesta honesta es la persona. El nombre del recurso queda de
+      // respaldo para salas, equipos o perfiles que no resolvieron — que es
+      // exactamente lo que esta opción mostraba siempre. Si el nombre interno
+      // de la agenda agrega algo (sede, turno), va como aclaración.
+      label: etiquetaDeRecurso(recurso),
+    })),
   );
 
   /** La organización todavía no cargó ninguna agenda que ofrecer. */
@@ -856,4 +864,26 @@ function avisoDelCambio(cita: Booking): string {
   }
   const quien = cambio.actorKind === 'PATIENT' ? 'Indicaste' : 'El profesional indicó';
   return `${quien}: ${cambio.reasonText}`;
+}
+
+/**
+ * La etiqueta del selector «¿con quién te querés atender?».
+ *
+ * La respuesta honesta es la persona; el nombre del recurso queda de respaldo
+ * para salas, equipos o perfiles que no resolvieron —que es exactamente lo que
+ * la opción mostraba siempre—. Cuando el nombre interno de la agenda agrega
+ * algo (sede, turno), va como aclaración detrás del nombre. Tolera `undefined`
+ * además de `null` porque los dobles de prueba y las respuestas viejas de la
+ * API no traen el campo.
+ *
+ * @param recurso - El recurso agendable tal como llegó de la API.
+ */
+export function etiquetaDeRecurso(recurso: {
+  readonly name: string;
+  readonly practitionerName?: string | null;
+}): string {
+  const persona = recurso.practitionerName ?? null;
+  if (persona === null || persona === '') return recurso.name;
+  if (persona === recurso.name) return persona;
+  return `${persona} — ${recurso.name}`;
 }

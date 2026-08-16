@@ -46,6 +46,13 @@ export interface AgendaResource {
   /** Tabla a la que apunta el recurso, p. ej. `health_practitioner_profiles`. */
   readonly resourceRefType: string;
   readonly resourceRefId: string;
+  /**
+   * Nombre del profesional detrás del recurso, cuando la referencia apunta a
+   * un perfil profesional y la persona pudo resolverse. `null` para salas,
+   * equipos, o si el nombre no se pudo resolver — en ese caso la pantalla cae
+   * a `name`, que es lo que mostraba siempre.
+   */
+  readonly practitionerName: string | null;
   readonly practiceId: string | null;
   /** Zona horaria del recurso, p. ej. `America/La_Paz`. */
   readonly timeZone: string | null;
