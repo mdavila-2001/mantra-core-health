@@ -40,10 +40,17 @@
          le mostraba la agenda del primer consultorio de la lista —los pacientes
          y los motivos de consulta de un colega— sin que hubiera pedido nada. -->
     @if (sinAgendaPropia()) {
-      <app-alert tone="info" title="Todavía no tenés agenda en esta organización">
-        Tu agenda se arma sobre un recurso a tu nombre y esta organización no tiene ninguno cargado
-        todavía. Pedíselo a quien administra la agenda. Mientras tanto no se muestra ninguna: la de
-        otro profesional no es la tuya.
+      <app-alert tone="info" title="Todavía no publicaste tu agenda">
+        <!-- Antes decía «pedíselo a quien administra la agenda»: era cierto
+             cuando publicar exigía SCHEDULING_ADMIN. Ahora el profesional puede
+             crear la suya, y lo que importa decirle es la consecuencia: sin
+             horarios publicados, los pacientes no pueden pedirle turno. -->
+        Los pacientes todavía no pueden pedirte turno: tu agenda no tiene horarios publicados en
+        esta organización. Creala con tus días y franjas — lleva un par de minutos. Mientras tanto
+        no se muestra ninguna otra: la agenda de otro profesional no es la tuya.
+        <a app-button alert-actions variant="primary" size="sm" [routerLink]="rutaCrearAgenda">
+          Publicar mi agenda
+        </a>
       </app-alert>
     }
 
