@@ -11,7 +11,7 @@ import { TerminologyClient } from '../../../core/data-access/terminology/termino
 import type { ValueSetOption } from '../../../core/data-access/terminology/terminology.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import { Appointments } from './appointments';
+import { Appointments, etiquetaDeRecurso } from './appointments';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 
 /**
@@ -1008,3 +1008,25 @@ function vista(comp: Appointments) {
     turnosDeCalendario(): readonly unknown[];
   };
 }
+
+describe('etiquetaDeRecurso', () => {
+  it('muestra a la persona cuando el recurso la resuelve', () => {
+    expect(
+      etiquetaDeRecurso({ name: 'Agenda mañana', practitionerName: 'Rosa Quispe' }),
+    ).toBe('Rosa Quispe — Agenda mañana');
+  });
+
+  it('no repite cuando la agenda ya se llama como la persona', () => {
+    expect(
+      etiquetaDeRecurso({ name: 'Rosa Quispe', practitionerName: 'Rosa Quispe' }),
+    ).toBe('Rosa Quispe');
+  });
+
+  it('cae al nombre del recurso para salas o perfiles sin resolver', () => {
+    expect(etiquetaDeRecurso({ name: 'Consultorio 3', practitionerName: null })).toBe(
+      'Consultorio 3',
+    );
+    // Los dobles de prueba y las respuestas viejas de la API no traen el campo.
+    expect(etiquetaDeRecurso({ name: 'Consultorio 3' })).toBe('Consultorio 3');
+  });
+});

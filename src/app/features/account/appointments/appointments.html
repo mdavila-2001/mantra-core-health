@@ -234,15 +234,19 @@
         Elegí una organización desde el selector del encabezado para ver los horarios disponibles.
       </app-alert>
     } @else if (sinRecursos()) {
-      <app-alert tone="info" title="Todavía no hay agendas publicadas">
-        Esta organización no tiene horarios cargados. Volvé a probar más adelante.
+      <app-alert tone="info" title="Todavía no hay profesionales con horarios">
+        <!-- Antes decía «no hay agendas publicadas», que es la jerga interna:
+             para quien pide un turno, lo que falta son profesionales entre los
+             cuales elegir. -->
+        Ningún profesional de esta organización publicó horarios todavía. Volvé a
+        probar más adelante.
       </app-alert>
     } @else {
       <app-form-field label="¿Con quién te querés atender?" class="turnos__filtro">
         <app-select
           [options]="opcionesDeRecurso()"
           [value]="recursoElegido() ?? ''"
-          placeholder="Elegí una agenda"
+          placeholder="Elegí un profesional"
           (valueChange)="elegirRecurso($event)"
         />
       </app-form-field>
