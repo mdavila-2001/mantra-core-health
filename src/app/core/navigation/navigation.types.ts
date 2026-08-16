@@ -163,7 +163,7 @@ export interface AppSection {
 }
 
 /** Prefijo de todos los títulos de pestaña, tal como ya lo usaban las rutas. */
-export const APP_TITLE = 'Mantra Core Health';
+export const APP_TITLE = 'AloVida';
 
 /**
  * Clave con la que cada ruta lleva su sección en `data`.
