@@ -1623,7 +1623,7 @@ La matriz regenerada NO se commitea (el actor paciente del arnés no entra por e
 
 | # | Arreglo | Rama | Estado |
 |---|---|---|---|
-| 1 | Guards de rol en rutas hijas | `itzan/guards-rutas-operacion` | **PR #127 abierto** contra `dev`, espera review de otro (regla 2) — mergea PRIMERO, antes de las rutas de Pablo |
+| 1 | Guards de rol en rutas hijas | `itzan/guards-rutas-operacion` | **PR #127 mergeado** en `dev` (`23906b7`, 2026-08-17) |
 | 2 | H-05 `patient-merge` recarga (+ el cuestionario del paciente, misma clase) | `itzan/h05-patient-merge` | **PR #128 abierto** contra `dev`, espera review — independiente de #127 |
 | 3 | H-07 textos internos | `itzan/h07-textos-internos` | pendiente |
 | 4 | H-10 seeder verde (API) | `itzan/h10-seeder-verde` | pendiente — ojo: `cuenta-doctor-demo.mjs` mostró «emitir sin firmar → 200», hay que mirarlo antes de tocar la aserción |
@@ -1671,6 +1671,10 @@ incluirlo en este PR por ser la misma clase de defecto.
 sin recarga, diálogo → fusión → **deshacer**, con la query intacta todo el tiempo. `answer` en
 navegador **no cubierto** (exige la vertical clínica completa hasta reserva COMPLETED); su
 evidencia queda en el arnés.
+
+### Estado
+
+**PR #128 abierto** contra `dev` (rebasado sobre `23906b7`, tras el merge de #127), espera review de otro (regla 2). Cuenta del carril: arreglo 1 = PR #127 (**mergeado**) · **arreglo 2 = PR #128 (abierto)** · arreglos 3 (H-07) y 4 (H-10) pendientes.
 
 ### Lo que NO toco
 
