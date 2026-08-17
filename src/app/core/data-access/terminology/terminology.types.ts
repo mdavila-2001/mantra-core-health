@@ -70,6 +70,68 @@ export interface ConceptSearchPage {
   readonly limit: number;
 }
 
+/**
+ * La ficha de un concepto del catálogo, con sus propiedades declaradas.
+ *
+ * Es la lectura que hace falta **después** de elegir en un buscador: la
+ * búsqueda devuelve identidad (código y denominación) y la ficha agrega lo que
+ * cada sistema de codificación publica de suyo.
+ *
+ * No se reutiliza `GlossaryTermDetail` aunque sea la misma URL: aquélla pide
+ * `lang=ES` y describe un término del glosario —definición clínica, resumen
+ * llano, relaciones tipadas—, que es otro contrato. Mezclarlas obligaría a esta
+ * lectura a arrastrar campos del glosario que el catálogo crudo no tiene.
+ */
+export interface ConceptDetail {
+  readonly conceptId: string;
+  readonly code: string;
+  readonly display: string;
+  readonly definition?: string;
+  readonly selectable?: boolean;
+  readonly codeSystemVersionId: string;
+  /**
+   * Lo que el sistema de codificación declara de este concepto, por código.
+   *
+   * Deliberadamente `unknown`: el valor es el `value_json` tal como se guardó
+   * —un texto, una lista o un objeto, según la propiedad— y el modelo no acota
+   * su forma. Quien la consuma debe estrecharla; para las listas de texto está
+   * {@link listaDeTextos}.
+   *
+   * El vademécum publica acá `dose_forms`, `strengths` y `routes`, que es lo
+   * que la receta necesita para ofrecer presentación y concentración en vez de
+   * pedirlas tecleadas.
+   */
+  readonly properties: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Lee una propiedad de concepto como lista de textos.
+ *
+ * Devuelve vacío ante cualquier otra forma en lugar de lanzar: `properties` es
+ * `value_json` libre, así que una propiedad con la forma inesperada es un dato
+ * del catálogo que este consumidor no sabe mostrar — no una falla de la
+ * pantalla. Vacío significa «no hay lista que ofrecer», que es exactamente lo
+ * que la receta necesita saber para caer a su campo de texto.
+ *
+ * @param propiedades - Las propiedades de la ficha.
+ * @param codigo - Código de la propiedad, como `dose_forms`.
+ * @returns Los textos no vacíos, sin repetir y en el orden del catálogo.
+ */
+export function listaDeTextos(
+  propiedades: Readonly<Record<string, unknown>> | undefined,
+  codigo: string,
+): readonly string[] {
+  const valor = propiedades?.[codigo];
+  if (!Array.isArray(valor)) {
+    return [];
+  }
+  const textos = valor
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter((item) => item !== '');
+  return [...new Set(textos)];
+}
+
 /** Parámetros de la búsqueda de conceptos (UC-03-13). */
 export interface ConceptSearchQuery {
   /** Texto a buscar en el código o la denominación. */
