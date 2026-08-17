@@ -1564,3 +1564,54 @@ camino canónico, lo que además deja sin razón de existir a
 
 Fuera de mi alcance esta semana por decisión tomada. Sigue rigiendo la **regla 1**: verificación
 local con la evidencia pegada en el reporte o el PR.
+
+## Sesión 2026-08-17 · Carril C-E (Itzan) — arreglo 1: guards de rol en rutas hijas de operación
+
+**Rama:** `itzan/guards-rutas-operacion` (worktree propio `../wt-itzan`, base `origin/dev` `234227b`) ·
+**Alcance:** sólo `mantra-core-health` · **Ficha:** `REGISTRO-DEFECTOS.md` de la API, «rutas hijas de
+operación sin guard de rol» (un paciente escribe `/administration/geolocation/trips/new` y llega al
+formulario; la API responde 403, la pantalla no debería ofrecerse).
+
+### Qué cambia (y por qué es chico)
+
+Las secciones ya llevan `seccionRolesGuard` (`app.routes.ts`, `rutasDeSecciones()`); las hijas no —
+sólo `directory/:profileId` lo declaraba. Cuelgo **el mismo guard, sin inventar otro**, de:
+
+- la fábrica `pantallaDeOperacion()` → cubre de una vez `schedule/new` y las 61 pantallas de
+  `administration/{delegated-access,identity-providers,identity-assurance,health-context,geolocation}/*`;
+- 7 entradas de `PANTALLAS_HIJAS`: `administration/patients/{new,merge,:profileId}`,
+  `administration/organizations/new`, `medical-records/:profileId`, `questionnaires/:surveyId`,
+  `schedule/book/:slotId`.
+
+Criterio: **el guard nunca niega a quien la API aceptaría.** Cada grupo se contrastó contra los
+`@Roles(...)` reales del controller que consume. Por eso quedan **abiertas a propósito** (se listan en
+el PR para decidir en review): `administration/patients/assisted-registration` (la API acepta
+`CLINICIAN`, `iam-users.controller.ts:223`), `administration/brokers/:brokerId` y
+`administration/organizations/:tenantId` (sus lecturas no declaran `@Roles`).
+
+### ⚠️ Candado nuevo — leer si agregás rutas hijas esta semana (Pablo)
+
+`app.routes.spec.ts` gana una prueba estructural: **toda hija cuya sección declara `roles` debe
+llevar `seccionRolesGuard`**, salvo la lista explícita de excepciones de arriba. Si agregás una ruta
+bajo una sección con roles, ponele `canActivate: [seccionRolesGuard]` (o usá `pantallaDeOperacion`).
+Una sección nueva vía `APP_SECTIONS` no necesita nada: `rutasDeSecciones()` ya lo pone.
+
+### Archivos que toco
+
+- `src/app/app.routes.ts` — sólo líneas existentes (la fábrica y las 7 entradas) + comentarios.
+- `src/app/app.routes.spec.ts` — prueba estructural nueva.
+- `src/app/core/navigation/section-roles.guard.ts` — sólo el docstring («Dónde se aplica»).
+- `src/app/core/navigation/section-roles.guard.spec.ts` — 2 casos nuevos.
+
+### Lo que NO toco
+
+`navigation.map.ts` (roles de sección), la API, las rutas gemelas del paciente
+(`my-account/appointments/book/:slotId`), `REDSAT_ROUTES` (126 portadas estáticas sin `authGuard`:
+hallazgo anotado, fuera de este arreglo), ni el `no-unused-vars` de `dashboard.ts:29` que ya tiene
+rojo el `lint` de `dev`.
+
+### Verificación prevista
+
+`corepack yarn typecheck` · `test --watch=false` · `build` · `lint` (declarando el rojo preexistente) ·
+`corepack yarn pw:rutas` con la API viva: las hijas del paciente y de la doctora pasan de `ok` a
+`denegada` en la matriz; el administrador sigue `ok`. Evidencia literal en el PR.
