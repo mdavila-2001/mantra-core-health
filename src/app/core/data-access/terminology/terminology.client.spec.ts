@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { TerminologyClient } from './terminology.client';
 import type {
+  ConceptDetail,
   GlossaryTermDetail,
   GlossaryTermPage,
   ValueSetExpansionPage,
@@ -259,24 +260,26 @@ describe('TerminologyClient', () => {
     let pagina: GlossaryTermPage | undefined;
     client.searchGlossary({ query: 'hiper' }).subscribe((p) => (pagina = p));
 
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [
-        {
-          conceptId: 'c-A',
-          code: 'I10',
-          display: 'Hipertensión esencial',
-          slug: 'hipertension-esencial',
-          translated: true,
-          category: { internalCode: 'glossary-category-disease', name: 'Enfermedades' },
-          shortDefinition: 'Presión arterial persistentemente alta.',
-          tags: ['Cardiovascular', 'Crónico'],
-          relationsCount: 2,
-          status: 'active',
-        },
-      ],
-      count: 1,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [
+          {
+            conceptId: 'c-A',
+            code: 'I10',
+            display: 'Hipertensión esencial',
+            slug: 'hipertension-esencial',
+            translated: true,
+            category: { internalCode: 'glossary-category-disease', name: 'Enfermedades' },
+            shortDefinition: 'Presión arterial persistentemente alta.',
+            tags: ['Cardiovascular', 'Crónico'],
+            relationsCount: 2,
+            status: 'active',
+          },
+        ],
+        count: 1,
+        limit: 50,
+      });
 
     const item = pagina?.items[0];
     expect(item?.slug).toBe('hipertension-esencial');
@@ -326,32 +329,103 @@ describe('TerminologyClient', () => {
     let ficha: GlossaryTermDetail | undefined;
     client.readGlossaryTerm('c-A').subscribe((f) => (ficha = f));
 
-    http.expectOne((r) => r.url === '/terminology/concepts/c-A').flush({
-      conceptId: 'c-A',
-      code: 'I10',
-      display: 'Hipertensión esencial',
-      slug: 'hipertension-esencial',
-      codeSystemVersionId: 'csv-1',
-      valueSets: [{ id: 'vs-1', internalCode: 'glossary-category-disease', name: 'Enfermedades' }],
-      synonyms: [],
-      category: { valueSetId: 'vs-1', internalCode: 'glossary-category-disease', name: 'Enfermedades' },
-      tags: [{ valueSetId: 'vs-t1', internalCode: 'glossary-tag-cardiovascular', name: 'Cardiovascular' }],
-      clinicalDefinition: { text: 'Presión arterial persistentemente alta.', translated: true },
-      plainSummary: { text: 'La presión de la sangre está más alta de lo normal.', translated: true },
-      relations: [
-        { type: 'DISEASE', conceptId: 'c-2', slug: 'insuficiencia-cardiaca', display: 'Insuficiencia cardíaca' },
-      ],
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts/c-A')
+      .flush({
+        conceptId: 'c-A',
+        code: 'I10',
+        display: 'Hipertensión esencial',
+        slug: 'hipertension-esencial',
+        codeSystemVersionId: 'csv-1',
+        valueSets: [
+          { id: 'vs-1', internalCode: 'glossary-category-disease', name: 'Enfermedades' },
+        ],
+        synonyms: [],
+        category: {
+          valueSetId: 'vs-1',
+          internalCode: 'glossary-category-disease',
+          name: 'Enfermedades',
+        },
+        tags: [
+          {
+            valueSetId: 'vs-t1',
+            internalCode: 'glossary-tag-cardiovascular',
+            name: 'Cardiovascular',
+          },
+        ],
+        clinicalDefinition: { text: 'Presión arterial persistentemente alta.', translated: true },
+        plainSummary: {
+          text: 'La presión de la sangre está más alta de lo normal.',
+          translated: true,
+        },
+        relations: [
+          {
+            type: 'DISEASE',
+            conceptId: 'c-2',
+            slug: 'insuficiencia-cardiaca',
+            display: 'Insuficiencia cardíaca',
+          },
+        ],
+      });
 
     expect(ficha?.category?.valueSetId).toBe('vs-1');
     expect(ficha?.tags[0]?.name).toBe('Cardiovascular');
     expect(ficha?.clinicalDefinition.text).toBe('Presión arterial persistentemente alta.');
     expect(ficha?.plainSummary.translated).toBe(true);
     expect(ficha?.relations).toEqual([
-      { type: 'DISEASE', conceptId: 'c-2', slug: 'insuficiencia-cardiaca', display: 'Insuficiencia cardíaca' },
+      {
+        type: 'DISEASE',
+        conceptId: 'c-2',
+        slug: 'insuficiencia-cardiaca',
+        display: 'Insuficiencia cardíaca',
+      },
     ]);
     // Ningún término tiene imagen sembrada hoy: el campo tiene que poder faltar
     // sin que el cliente lo reinterprete como un error.
     expect(ficha?.image).toBeUndefined();
+  });
+
+  /* ---- readConceptDetail: la ficha cruda, con sus propiedades ------------- */
+
+  it('readConceptDetail pide la ficha SIN lang: un medicamento no es un término del glosario', () => {
+    let ficha: ConceptDetail | undefined;
+    client.readConceptDetail('c-vanco').subscribe((f) => (ficha = f));
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts/c-vanco');
+    // `lang=ES` scopea la lectura al value set paraguas del glosario, donde un
+    // medicamento no está: pedirlo devolvería 404.
+    expect(req.request.params.get('lang')).toBeNull();
+
+    req.flush({
+      conceptId: 'c-vanco',
+      code: 'J01XA01',
+      display: 'Vancomycin',
+      codeSystemVersionId: 'csv-vademecum',
+      properties: {
+        dose_forms: ['oral capsule'],
+        strengths: ['500 mg', '1 g'],
+        rxnorm_cui: '11124',
+      },
+    });
+
+    expect(ficha?.code).toBe('J01XA01');
+    // Las propiedades pasan tal cual: su forma la declara cada sistema de
+    // codificación y el cliente no la reinterpreta.
+    expect(ficha?.properties['strengths']).toEqual(['500 mg', '1 g']);
+    expect(ficha?.properties['rxnorm_cui']).toBe('11124');
+  });
+
+  it('readConceptDetail escapa el identificador en la ruta', () => {
+    client.readConceptDetail('c/raro?').subscribe();
+
+    http
+      .expectOne((r) => r.url === '/terminology/concepts/c%2Fraro%3F')
+      .flush({
+        conceptId: 'c/raro?',
+        code: 'X',
+        display: 'X',
+        codeSystemVersionId: 'csv-1',
+        properties: {},
+      });
   });
 });

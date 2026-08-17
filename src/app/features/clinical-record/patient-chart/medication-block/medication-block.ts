@@ -12,16 +12,22 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import { SystemContextClient } from '../../../../core/data-access/system-context/system-context.client';
+import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
+import { listaDeTextos } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
+import { Select } from '../../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
@@ -71,6 +77,30 @@ const ETIQUETAS_DE_UNIDAD: Readonly<Record<string, string>> = {
 /** Largo máximo de los dos textos libres. El backend no los acota; la legibilidad sí. */
 const TOPE_DEL_TEXTO = 200;
 
+/** Resultados que devuelve la búsqueda de medicamentos. */
+const TOPE_DE_LA_BUSQUEDA = 20;
+
+/**
+ * Las propiedades del vademécum que la receta ofrece como listas.
+ *
+ * Son códigos del catálogo, no invención de esta pantalla: los publica el
+ * sistema de codificación en la ficha del concepto. Un medicamento que no las
+ * declare —los del enum básico, por ejemplo— cae al campo de dosis en texto.
+ */
+const PROPIEDAD_PRESENTACIONES = 'dose_forms';
+const PROPIEDAD_CONCENTRACIONES = 'strengths';
+
+/**
+ * Separador con el que presentación y concentración se componen en `doseText`.
+ *
+ * El modelo **no tiene columna** para ninguna de las dos: `medication_requests`
+ * guarda el medicamento como concepto y la posología como texto (`dose_text`).
+ * Componerlas acá es lo que permite que el profesional las elija de una lista en
+ * vez de teclearlas, sin inventar esquema. El mismo separador que usa el PDF
+ * para unir las partes de la línea del medicamento.
+ */
+const SEPARADOR_DE_DOSIS = ' · ';
+
 /** Una receta del expediente, ya sin uuid y con su ciclo resuelto. */
 export interface RecetaEnFicha {
   readonly id: string;
@@ -103,14 +133,30 @@ export interface RecetaEnFicha {
  * opcional en el contrato, pero una receta suelta —sin la consulta que la
  * motivó— es un dato que después nadie sabe explicar.
  *
- * ## El binding del selector se verifica antes de ofrecer nada
+ * ## El medicamento se busca en el catálogo, no se despliega
  *
- * `medicationConceptId` es obligatorio y sale del catálogo. Si la columna no
- * tiene binding declarado el selector queda vacío **por diseño** —no cae a
- * texto libre, porque un uuid tecleado a mano es un dato inválido o, peor, uno
- * válido de otro conjunto—. En ese caso el bloque lo dice con todas las letras
- * en vez de mostrar un formulario que no puede enviarse: es un dato que falta
- * en el catálogo, no un fallo de quien atiende.
+ * `medicationConceptId` es obligatorio y sale del catálogo de terminología. Se
+ * elige con un buscador y no con un desplegable porque un vademécum no es una
+ * lista corta para desplegar entera, y porque un desplegable sólo puede ofrecer
+ * la expansión de **un** conjunto de valores: los medicamentos viven en varios
+ * sistemas de codificación y el que interesa es el que la organización haya
+ * publicado. Sigue sin haber texto libre —lo que se guarda es el `conceptId` de
+ * lo elegido—, que es la garantía que importa.
+ *
+ * ## La posología sale del catálogo cuando el catálogo la declara
+ *
+ * Al elegir se lee la ficha del concepto: si publica `dose_forms` y `strengths`
+ * —como hace el vademécum—, presentación y concentración se **eligen** y viajan
+ * compuestas en `doseText`, porque el modelo no tiene una columna para cada
+ * una. Si no las declara, la dosis sigue siendo el texto libre de siempre. Es
+ * degradación, no dos modos: el formulario nunca ofrece las dos cosas a la vez.
+ *
+ * ## El binding del catálogo se verifica antes de ofrecer nada
+ *
+ * El bloque comprueba que la columna del medicamento tenga su enumeración
+ * declarada antes de mostrar el formulario. Se conserva tal cual estaba: es la
+ * señal de que el catálogo clínico está publicado en esta instalación, y sin él
+ * las vías y unidades tampoco tendrían opciones que ofrecer.
  *
  * ## El `422` de emitir sin firmar es un paso que falta, no un error
  *
@@ -130,7 +176,18 @@ export interface RecetaEnFicha {
  */
 @Component({
   selector: 'app-medication-block',
-  imports: [Alert, AppButton, AppInput, Card, ConceptSelect, FormActions, FormField, StatusSeal],
+  imports: [
+    Alert,
+    AppButton,
+    AppInput,
+    Card,
+    ConceptSelect,
+    FormActions,
+    FormField,
+    ReferenceCombobox,
+    Select,
+    StatusSeal,
+  ],
   templateUrl: './medication-block.html',
   styleUrl: './medication-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -138,6 +195,7 @@ export interface RecetaEnFicha {
 export class MedicationBlock {
   private readonly clinical = inject(ClinicalClient);
   private readonly systemContext = inject(SystemContextClient);
+  private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
@@ -210,6 +268,37 @@ export class MedicationBlock {
   protected readonly cantidad = signal<string | number | null>('');
   protected readonly via = signal<string | null>(null);
   protected readonly unidad = signal<string | null>(null);
+
+  /* -- Buscar el medicamento en el catálogo -------------------------------- */
+
+  /** Resultados de la última búsqueda. Los provee este componente, no el combobox. */
+  protected readonly opcionesDeMedicamento = signal<readonly ReferenceOption[]>([]);
+  protected readonly buscandoMedicamento = signal(false);
+
+  /** La opción elegida, para que el buscador conserve el rótulo tras elegir. */
+  protected readonly medicamentoElegido = signal<ReferenceOption | null>(null);
+
+  /**
+   * Presentaciones y concentraciones que declara el medicamento elegido.
+   *
+   * Vacías mientras no haya ficha, o cuando el concepto no las publica. Es lo
+   * que decide si la posología se elige o se escribe: ver {@link hayPosologia}.
+   */
+  protected readonly presentaciones = signal<readonly SelectOption<string>[]>([]);
+  protected readonly concentraciones = signal<readonly SelectOption<string>[]>([]);
+  protected readonly presentacion = signal<string | null>(null);
+  protected readonly concentracion = signal<string | null>(null);
+
+  /**
+   * Si el medicamento elegido trae listas para armar la posología.
+   *
+   * Cuando las trae, el campo de dosis en texto **se reemplaza** por los dos
+   * desplegables: ofrecer las dos cosas invitaría a escribir una dosis que
+   * contradiga la elegida, y sólo una de las dos puede viajar en `doseText`.
+   */
+  protected readonly hayPosologia = computed(
+    () => this.presentaciones().length > 0 || this.concentraciones().length > 0,
+  );
 
   /**
    * Si el catálogo del medicamento está disponible.
@@ -337,6 +426,97 @@ export class MedicationBlock {
     });
   }
 
+  /* -- Elegir el medicamento ----------------------------------------------- */
+
+  /**
+   * Busca en el catálogo de terminología por texto (UC-03-13).
+   *
+   * Sin acotar a una versión de sistema de códigos a propósito: el vademécum es
+   * una versión más del catálogo y hardcodear su uuid acá ataría la pantalla a
+   * un identificador que un re-seed puede mover. Lo que garantiza que se elija
+   * algo válido no es el filtro sino el propio buscador, que sólo devuelve
+   * conceptos existentes y nunca acepta texto libre.
+   */
+  protected buscarMedicamento(texto: string): void {
+    this.buscandoMedicamento.set(true);
+    this.terminology.searchConcepts({ query: texto, limit: TOPE_DE_LA_BUSQUEDA }).subscribe({
+      next: (pagina) => {
+        this.opcionesDeMedicamento.set(
+          pagina.items.map((concepto) => ({
+            value: concepto.conceptId,
+            label: concepto.display,
+            // El código —el ATC, en el vademécum— desambigua dos denominaciones
+            // parecidas, que en un catálogo de medicamentos es lo habitual.
+            hint: concepto.code,
+          })),
+        );
+        this.buscandoMedicamento.set(false);
+      },
+      // Sin resultados y sin ruido: el combobox ya dice «sin resultados», y un
+      // aviso rojo por una búsqueda que falló mientras se teclea interrumpe algo
+      // que la siguiente pulsación puede resolver sola.
+      error: () => {
+        this.opcionesDeMedicamento.set([]);
+        this.buscandoMedicamento.set(false);
+      },
+    });
+  }
+
+  /**
+   * Al elegir, lee la ficha del concepto y ofrece su posología.
+   *
+   * La búsqueda alcanza para elegir pero no trae las propiedades; son dos
+   * lecturas porque traerlas para cada resultado de un autocompletar sería peso
+   * que la lista no usa.
+   */
+  protected onMedicamentoElegido(opcion: ReferenceOption | null): void {
+    this.medicamentoElegido.set(opcion);
+    this.limpiarPosologia();
+
+    if (opcion === null) {
+      return;
+    }
+
+    this.terminology.readConceptDetail(opcion.value).subscribe({
+      next: (ficha) => {
+        this.presentaciones.set(
+          aOpciones(listaDeTextos(ficha.properties, PROPIEDAD_PRESENTACIONES)),
+        );
+        this.concentraciones.set(
+          aOpciones(listaDeTextos(ficha.properties, PROPIEDAD_CONCENTRACIONES)),
+        );
+      },
+      // Un medicamento sin ficha legible sigue siendo prescribible: se cae al
+      // campo de dosis en texto, que es como funcionaba esta pantalla entera
+      // antes de que el catálogo publicara presentaciones.
+      error: () => this.limpiarPosologia(),
+    });
+  }
+
+  /** Deja la posología sin listas ni elección. */
+  private limpiarPosologia(): void {
+    this.presentaciones.set([]);
+    this.concentraciones.set([]);
+    this.presentacion.set(null);
+    this.concentracion.set(null);
+  }
+
+  /**
+   * La posología que viaja en `doseText`.
+   *
+   * Compone lo elegido —concentración primero, que es lo que primero se lee en
+   * una indicación— o devuelve el texto libre cuando el medicamento no declara
+   * listas. Vacío significa «no mandar la clave».
+   */
+  private posologia(): string {
+    if (!this.hayPosologia()) {
+      return this.dosis().trim();
+    }
+    return [this.concentracion(), this.presentacion()]
+      .filter((parte): parte is string => parte !== null && parte !== '')
+      .join(SEPARADOR_DE_DOSIS);
+  }
+
   /* -- Las tres escrituras ------------------------------------------------- */
 
   /**
@@ -370,7 +550,7 @@ export class MedicationBlock {
       return;
     }
 
-    const dosis = this.dosis().trim();
+    const dosis = this.posologia();
     const frecuencia = this.frecuencia().trim();
     const cantidad = cantidadDe(this.cantidad());
     const via = this.via();
@@ -552,12 +732,20 @@ export class MedicationBlock {
   /** Vacía el formulario tras un alta. El siguiente medicamento arranca limpio. */
   private limpiar(): void {
     this.medicamento.set(null);
+    this.medicamentoElegido.set(null);
+    this.opcionesDeMedicamento.set([]);
+    this.limpiarPosologia();
     this.dosis.set('');
     this.frecuencia.set('');
     this.cantidad.set('');
     this.via.set(null);
     this.unidad.set(null);
   }
+}
+
+/** Textos del catálogo como opciones de un desplegable, tal como vienen. */
+function aOpciones(textos: readonly string[]): readonly SelectOption<string>[] {
+  return textos.map((texto) => ({ value: texto, label: texto }));
 }
 
 /**
