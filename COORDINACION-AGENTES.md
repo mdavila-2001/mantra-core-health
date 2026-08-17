@@ -1624,8 +1624,8 @@ La matriz regenerada NO se commitea (el actor paciente del arnés no entra por e
 | # | Arreglo | Rama | Estado |
 |---|---|---|---|
 | 1 | Guards de rol en rutas hijas | `itzan/guards-rutas-operacion` | **PR #127 mergeado** en `dev` (`23906b7`, 2026-08-17) |
-| 2 | H-05 `patient-merge` recarga (+ el cuestionario del paciente, misma clase) | `itzan/h05-patient-merge` | **PR #128 abierto** contra `dev`, espera review — independiente de #127 |
-| 3 | H-07 textos internos | `itzan/h07-textos-internos` | pendiente |
+| 2 | H-05 `patient-merge` recarga (+ el cuestionario del paciente, misma clase) | `itzan/h05-patient-merge` | **PR #128 mergeado** en `dev` (`8a0a25a`, 2026-08-18) |
+| 3 | H-07 textos internos filtrados al paciente | `itzan/h07-textos-paciente` (el plan sugería `-textos-internos`) | **PR #131 abierto** contra `dev`, espera review — independiente de #127/#128; sólo comparte este archivo (bloque al final) |
 | 4 | H-10 seeder verde (API) | `itzan/h10-seeder-verde` | pendiente — ojo: `cuenta-doctor-demo.mjs` mostró «emitir sin firmar → 200», hay que mirarlo antes de tocar la aserción |
 
 ## Sesión 2026-08-17 · Carril C-E (Itzan) — arreglo 2: H-05 `patient-merge` recarga la página
@@ -1680,3 +1680,52 @@ evidencia queda en el arnés.
 
 `answer.ts`, `patient-merge.ts`, `app-form-actions`, nada del backend. Deuda prettier preexistente
 en `patient-merge.html:28` y `patient-merge.spec.ts:108`, sin tocar (prettier no es gate del repo).
+
+## Sesión 2026-08-17 · Carril C-E (Itzan) — arreglo 3: H-07 textos internos filtrados a la vista del paciente
+
+**Rama:** `itzan/h07-textos-paciente` (worktree propio `../wt-itzan`, base `origin/dev` `2fe01d6` tras rebase;
+nació en `23906b7`) · **Alcance:** sólo `mantra-core-health`, ningún cambio de esquema ni de API ·
+**Ficha:** `ITZAN.md` §Arreglo 3 / `REGISTRO-DEFECTOS.md` H-07 · **PR #131** contra `dev`.
+Independiente de #127 (mergeado) y #128: no comparten archivos de código; sí este bloque, que va al
+final — si chocan, aceptar las dos adiciones.
+
+### Qué veía el paciente (confirmado ejecutando: 12 rutas, antes/después, arnés Playwright propio)
+
+Menú de la cuenta `USER · PATIENT` en todas las pantallas · barra lateral con «Herramientas → Sistema de
+diseño» · `/dashboard` «Tu sesión» con UUID de usuario, insignias `USER`/`PATIENT`, «Organización
+activa» + UUID del tenant y «Estos datos salen del propio token de acceso…» · nota «Lectura real de
+`GET /public/directory`: cruza el proxy, el interceptor…» · `/my-account` «Tu acceso» con las mismas
+insignias y «Salen de tu token de acceso» · «Perfil `<uuid>` · Persona `<uuid>`» con identidad
+verificada.
+
+### Qué cambia (14 archivos, +336/−73)
+
+- **Nuevo `core/auth/role-labels.ts`**: diccionario código → etiqueta (mismo molde que
+  `TENANT_TYPE_LABELS`); `USER` no se muestra (rol base) y un código sin entrada se omite en vez de
+  pintarse crudo; `rolesConEtiqueta` deduplica por código (las insignias se rastrean por él).
+  Etiquetas con fuente en el equipo (redsat, `authz.seed.ts`) y **12 propuestas propias** listadas en
+  el PR para validar; `SECURITY_ADMIN` tiene dos textos en las maquetas — unificar en review.
+- Shell: etiquetas en el menú de la cuenta; «Herramientas» no se arma para el paciente (para el resto
+  sigue). Panel: tarjeta «Tu cuenta» sin ids ni prosa del token, insignias con etiqueta y
+  `data-role="<código>"`; nota del proxy fuera. Mi perfil: ídem, párrafo de ids fuera.
+- E2E adaptados en el mismo PR: `cypress/support/pages/dashboard.page.ts` + `sesion.cy.ts` y
+  `playwright/carril-19-route-health.spec.ts` leen el código desde `data-role`, no del texto.
+
+### Verificación (CI caído → local)
+
+`lint` 0 · `typecheck` 0 · `build` OK + 6 scripts del CI exit 0 · `test --watch=false` 272/272 ·
+2 623/2 623 (+13 propias) · `cypress run sesion.cy.ts` 6/6 · `pw:rutas` doctora/admin/sin sesión OK
+(el actor paciente sigue sin entrar por el 500 ajeno de `register-patient` con nombre en 4 partes:
+la base local no tiene el patch `2026-08-10_v4011_person_name_components.sql`; no es del front) ·
+arnés propio: paciente **12/12 rutas sin textos internos**, admin 0 hallazgos y conserva «Sistema
+de diseño»; por DOM: 0 UUID en `/my-account`, insignias `data-role` presentes.
+
+### Lo que NO toco (listado en el PR)
+
+Las «dudosas» de la ficha (códigos de caso de identidad, placeholder «Identificador de la cuenta»,
+«para tu rol», «N más en construcción», ids del perfil profesional) · el estado vacío de «Directorio
+público» del panel, que ofrece «Ver el sistema de diseño» a todos (`dashboard.ts:258`, scaffold de
+`a9edf5c`): el M34 exige `nextAction` y la proyección no tiene pantalla propia — **decisión de J7**
+· `/design-system` sigue sin guard (F esconde la puerta, no la cierra) · el `aria-label`
+«Organización activa: …» del selector · backend (exponer `authz.roles.name` en el token es
+seguimiento) · deuda prettier preexistente en líneas ajenas.
