@@ -44,13 +44,17 @@ export const SECCION_DENEGADA_ROUTE = '/dashboard';
  *
  * ## Dónde se aplica
  *
- * A **las rutas de sección**, que se construyen desde el registro, y a las
- * pantallas hijas que lo declaran explícitamente (`/directory/:profileId`, la
- * ficha de la Guía). No se cuelga del armazón entero a propósito: hay hijas
- * cuyo rol legítimo **no** es el de su sección —`administration/patients` es
+ * A **las rutas de sección**, que se construyen desde el registro; a **toda
+ * pantalla de operación** (`pantallaDeOperacion` en `app.routes.ts` lo pone por
+ * construcción); y a las pantallas hijas que lo declaran explícitamente
+ * (`/directory/:profileId`, `/administration/patients/new`…). Se declara ruta
+ * por ruta y no se cuelga del armazón entero a propósito: hay hijas cuyo rol
+ * legítimo **no** es el de su sección —`administration/patients` es
  * `SECURITY_ADMIN` en el menú, pero su alta asistida la usa también un
  * `CLINICIAN` que llega por su propio flujo—, y un guard por prefijo sobre todo
- * el árbol les cerraría la puerta sin que nadie lo hubiera pedido.
+ * el árbol les cerraría la puerta sin que nadie lo hubiera pedido. La regla
+ * «hija de sección con roles ⇒ guard, salvo excepción escrita» la fija
+ * `app.routes.spec.ts`.
  */
 export const seccionRolesGuard: CanActivateFn = tracedGuard(
   'seccionRolesGuard',

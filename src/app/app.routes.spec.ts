@@ -1,4 +1,5 @@
 import { APP_SECTIONS } from './core/navigation/navigation.map';
+import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import { SECTION_ROUTE_DATA, titleOf } from './core/navigation/navigation.types';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes } from './app.routes';
@@ -61,6 +62,71 @@ describe('rutas del armazón', () => {
     });
 
     expect(huerfanas.map((r) => r.path)).toEqual([]);
+  });
+
+  /**
+   * El rol de la sección se hace cumplir también en sus hijas.
+   *
+   * Sin esto, la sección rebota a quien no tiene el rol y su formulario lo deja
+   * pasar: un paciente que escriba `/administration/geolocation/trips/new`
+   * llega a la pantalla aunque `/administration/geolocation` lo devuelva al
+   * panel. La API responde 403 y no hay fuga, pero la pantalla no debería
+   * ofrecerse.
+   *
+   * La regla se comprueba contra el árbol y no contra una lista de rutas: la
+   * próxima hija que alguien cuelgue de una sección con `roles` sin ponerle el
+   * guard hace fallar esto, que es exactamente lo que se quiere.
+   *
+   * Las excepciones se nombran una por una y se explican en `app.routes.ts`:
+   * son hijas cuyo endpoint acepta un rol que la sección no declara, y el
+   * guard nunca niega lo que la API permite.
+   */
+  describe('el guard de rol de la sección', () => {
+    const SIN_GUARD_A_PROPOSITO: readonly string[] = [
+      'administration/patients/assisted-registration',
+      'administration/brokers/:brokerId',
+      'administration/organizations/:tenantId',
+    ];
+
+    const seccionDe = (path: string) =>
+      APP_SECTIONS.filter((s) => path.startsWith(`${s.path}/`)).sort(
+        (a, b) => b.path.length - a.path.length,
+      )[0];
+
+    const hijasDeSeccionConRoles = hijas.filter((r) => {
+      const path = r.path ?? '';
+      if (path === '' || r.redirectTo !== undefined) {
+        return false;
+      }
+      return seccionDe(path)?.roles !== undefined;
+    });
+
+    it('lo lleva toda pantalla hija cuya sección declara roles', () => {
+      const destapadas = hijasDeSeccionConRoles
+        .filter((r) => !SIN_GUARD_A_PROPOSITO.includes(r.path ?? ''))
+        .filter((r) => !(r.canActivate ?? []).includes(seccionRolesGuard));
+
+      expect(destapadas.map((r) => r.path)).toEqual([]);
+    });
+
+    it('las excepciones existen, cuelgan de una sección con roles y siguen sin guard', () => {
+      for (const path of SIN_GUARD_A_PROPOSITO) {
+        const ruta = hijas.find((r) => r.path === path);
+
+        expect(ruta, path).toBeDefined();
+        expect(seccionDe(path)?.roles, path).toBeDefined();
+        expect((ruta?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(false);
+      }
+    });
+
+    it('cubre a las pantallas de operación, que salen todas de la misma fábrica', () => {
+      const operacion = hijasDeSeccionConRoles.filter((r) =>
+        (r.path ?? '').startsWith('administration/geolocation/'),
+      );
+
+      expect(operacion.length).toBeGreaterThan(0);
+      expect(operacion.every((r) => (r.canActivate ?? []).includes(seccionRolesGuard))).toBe(true);
+    });
   });
 
   /**
