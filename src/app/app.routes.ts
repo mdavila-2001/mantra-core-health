@@ -14,6 +14,7 @@ import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
 import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
+import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { authGuard } from './core/auth/auth.guard';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
@@ -594,12 +595,56 @@ function rutasHeredadas(mapa: Readonly<Record<string, string>>): Routes {
   }));
 }
 
+/**
+ * Las cinco fichas públicas por slug, bajo el marco público del buscador.
+ *
+ * Se generan del mapa en vez de escribirse cinco veces porque las cinco son la
+ * misma pantalla con otro tipo esperado: lo único que cambia es el prefijo y el
+ * `kind`, y cinco bloques copiados serían cinco lugares donde arreglar el mismo
+ * defecto.
+ *
+ * Diferidas: quien entra por el buscador no necesita este fragmento hasta que
+ * abre una ficha, y quien llega directo de un enlace descarga sólo esto.
+ */
+function rutasDeFichasPublicas(): Routes {
+  const TIPOS = [
+    ['p', 'PRACTITIONER'],
+    ['o', 'ORGANIZATION'],
+    ['f', 'PHARMACY'],
+    ['l', 'DIAGNOSTIC_UNIT'],
+    ['s', 'INSURER'],
+  ] as const;
+
+  return TIPOS.map(([prefijo, kind]) => ({
+    path: prefijo,
+    loadComponent: () =>
+      import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+    children: [
+      {
+        path: ':slug',
+        data: { kind },
+        resolve: { perfil: perfilPublicoResolver },
+        loadComponent: () =>
+          import('./features/public-profile/public-profile').then((m) => m.PublicProfile),
+      },
+    ],
+  }));
+}
+
 export const routes: Routes = [
   // Las pantallas portadas desde la bóveda, con su propio marco REDSAT. Van
   // primero y con segmento propio: no compiten con el armazón de abajo, que
   // vive en `path: ''`, así que ninguna de las dos depende de que el router
   // retroceda para encontrar a la otra.
   ...REDSAT_ROUTES,
+  // Las fichas públicas por slug. Van con el marco público y **sin guard**:
+  // son la superficie anónima, y el enlace que alguien pega en un mensaje.
+  //
+  // Los cinco prefijos son cortos por diseño —`/p/`, `/o/`, `/f/`, `/l/`,
+  // `/s/`— y cada uno promete un tipo de sujeto: la ruta lo declara en `data`
+  // y el cliente lo traduce al prefijo de la API, que devuelve 404 si el slug
+  // es de otra clase en vez de redirigir.
+  ...rutasDeFichasPublicas(),
   {
     // El armazón: header con el usuario, navegación y selector de organización.
     // El guard corre en el padre — S1 del M34: autorizar ANTES de pedir datos —

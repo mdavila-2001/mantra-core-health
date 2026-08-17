@@ -1,0 +1,149 @@
+<!-- La ficha pública. Las clases son las de `redsat.css` §25 y las de la
+     maqueta V65-07: el marcado se reusa, los datos son los de la API. Lo que la
+     maqueta dibuja y la API todavía no sirve no se pinta con valores de
+     relleno — ver la nota de la clase. -->
+
+@if (perfil(); as p) {
+  <div class="app-page-header" app-page-header>
+    <span class="app-page-header__icono" aria-hidden="true">
+      <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    </span>
+    <div class="app-page-header__texto">
+      <p style="margin-bottom: var(--e2)">
+        <a app-link routerLink="/buscar/buscador-listado">
+          <svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>
+          Volver a los resultados
+        </a>
+      </p>
+      <p class="overline">{{ rotuloTipo() }}</p>
+    </div>
+  </div>
+
+  <div class="pila">
+    <section class="app-card">
+      <div class="app-perfil-cabecera">
+        @if (p.avatarUrl; as foto) {
+          <img
+            class="app-perfil-cabecera__figura"
+            [src]="foto"
+            alt=""
+            width="56"
+            height="56"
+          />
+        } @else {
+          <!-- Sin foto van las iniciales, no un roto ni un icono genérico. La
+               foto llega con el carril de medios y esta pantalla no la
+               espera. -->
+          <span class="app-perfil-cabecera__figura" aria-hidden="true">{{ iniciales() }}</span>
+        }
+
+        <div class="app-perfil-cabecera__texto">
+          <div class="app-page-header__titulo"><h1>{{ p.displayName }}</h1></div>
+
+          @if (p.headline) {
+            <p class="caption">{{ p.headline }}</p>
+          }
+
+          <p class="app-resultado__sellos">
+            <span class="app-badge" data-tono="neutro">{{ rotuloTipo() }}</span>
+
+            <!-- El sello sólo aparece si la verificación está activa. Pendiente
+                 cuenta como no verificado: la jerarquía la pone el sello, y uno
+                 que aparece por omisión no significa nada. -->
+            @if (p.verified) {
+              <span class="app-badge" data-tono="ok">
+                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                Verificado
+              </span>
+            }
+
+            @if (p.city) {
+              <span class="app-badge" data-tono="neutro">{{ p.city }}</span>
+            }
+          </p>
+        </div>
+      </div>
+    </section>
+
+    @if (p.specialties.length > 0) {
+      <section class="app-card">
+        <div class="app-card__cabecera"><h2>Especialidades</h2></div>
+        <p class="app-resultado__sellos">
+          @for (especialidad of p.specialties; track especialidad) {
+            <span class="app-badge" data-tono="info">{{ especialidad }}</span>
+          }
+        </p>
+      </section>
+    }
+
+    <section class="app-card">
+      <div class="app-perfil-cifras">
+        <div>
+          <span class="overline">Calificación</span>
+          <!-- Sin reseñas se escribe «Sin calificar» y no «0». Un profesional
+               que nadie calificó todavía no está calificado con cero, y la
+               diferencia decide a quién elige alguien que compara dos fichas. -->
+          <strong>{{ puntuacion() ?? 'Sin calificar' }}</strong>
+        </div>
+        <div>
+          <span class="overline">Opiniones</span>
+          <strong>{{ p.ratingCount }}</strong>
+        </div>
+        @if (p.acceptsReviews) {
+          <div>
+            <span class="overline">Reseñas</span>
+            <strong>Abiertas</strong>
+          </div>
+        }
+      </div>
+    </section>
+
+    @if (p.biography) {
+      <section class="app-card">
+        <div class="app-card__cabecera"><h2>Presentación</h2></div>
+        <p style="max-width: 80ch">{{ p.biography }}</p>
+      </section>
+    }
+
+    @if (p.address) {
+      <section class="app-card">
+        <div class="app-card__cabecera"><h2>Dónde atiende</h2></div>
+        <p>{{ p.address }}</p>
+      </section>
+    }
+
+    <section class="app-card">
+      <div class="app-card__cabecera"><h2>Publicaciones</h2></div>
+      @if (p.posts.length === 0) {
+        <p class="caption">Todavía no publicó nada.</p>
+      } @else {
+        <div class="pila-contenidos">
+          @for (post of p.posts; track post.id) {
+            <article class="app-card app-card--inset">
+              <p class="overline">{{ post.publishedAt | date: 'dd/MM/yyyy' }}</p>
+              <p style="margin-top: var(--e3); max-width: 80ch">{{ post.bodyText }}</p>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  </div>
+} @else {
+  <!-- Un slug inexistente y uno despublicado caen los dos acá, con el mismo
+       texto. Distinguirlos —«este perfil es privado»— confirmaría que existe, y
+       es justo lo que el 404 idéntico del servidor evita. -->
+  <div class="app-page-header" app-page-header>
+    <div class="app-page-header__texto">
+      <div class="app-page-header__titulo"><h1>Ese perfil no está disponible</h1></div>
+      <p class="caption">
+        El enlace puede estar mal escrito, o quien lo publicó puede haberlo quitado del
+        directorio.
+      </p>
+    </div>
+  </div>
+  <section class="app-card">
+    <p>
+      <a app-link routerLink="/buscar/buscador-listado">Volver al buscador</a>
+    </p>
+  </section>
+}

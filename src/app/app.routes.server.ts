@@ -56,6 +56,29 @@ export const serverRoutes: ServerRoute[] = [
     path: 'design-system',
     renderMode: RenderMode.Prerender,
   },
+  /**
+   * Las fichas públicas por slug: `Server`, no `Prerender` ni `Client`.
+   *
+   * **`Client` no sirve** —y era lo que hacían hasta ahora por caer en el
+   * comodín—: el criterio del carril P4 es que `curl http://…/p/doctor-uno-e2e`
+   * devuelva HTML que ya contenga el nombre. Con `Client` devuelve el cascarón,
+   * y quien lo lea sin ejecutar JavaScript —un rastreador, una vista previa de
+   * enlace en WhatsApp, alguien con la conexión a medias— no ve nada. Una ficha
+   * pública que sólo existe después de hidratar no es una ficha pública.
+   *
+   * **`Prerender` tampoco**: el slug es un parámetro y el directorio crece; no
+   * hay una lista de rutas que congelar al construir, y la que hubiera quedaría
+   * vieja en cuanto alguien publique su vitrina.
+   *
+   * Con `Server` el servidor resuelve la ficha por petición —el resolver de la
+   * ruta espera a la API antes de activar— y manda el HTML ya pintado, con su
+   * `<title>` y sus metadatos de Open Graph adentro.
+   */
+  { path: 'p/:slug', renderMode: RenderMode.Server },
+  { path: 'o/:slug', renderMode: RenderMode.Server },
+  { path: 'f/:slug', renderMode: RenderMode.Server },
+  { path: 'l/:slug', renderMode: RenderMode.Server },
+  { path: 's/:slug', renderMode: RenderMode.Server },
   {
     path: '**',
     renderMode: RenderMode.Client,
