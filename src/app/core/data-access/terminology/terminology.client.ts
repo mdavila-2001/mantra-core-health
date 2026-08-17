@@ -4,6 +4,7 @@ import { expand, forkJoin, map, of, reduce, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
+  ConceptDetail,
   ConceptLabels,
   ConceptSearchPage,
   ConceptSearchQuery,
@@ -188,6 +189,28 @@ export class TerminologyClient {
     }
 
     return this.http.get<ConceptSearchPage>(this.url('/terminology/concepts'), { params });
+  }
+
+  /**
+   * `GET /terminology/concepts/:conceptId` — la ficha del concepto elegido.
+   *
+   * Es el paso siguiente a {@link searchConcepts}: la búsqueda alcanza para
+   * *elegir* —código y denominación—, pero no trae lo que cada sistema de
+   * codificación declara de suyo. El vademécum publica ahí `dose_forms`,
+   * `strengths` y `routes`, que es lo que la receta necesita para ofrecer
+   * presentación y concentración en lugar de pedirlas tecleadas.
+   *
+   * **Sin `lang`**, a diferencia de {@link readGlossaryTerm}: pedirlo scopea la
+   * lectura al value set paraguas del glosario y un medicamento no está ahí. Son
+   * dos contratos sobre la misma URL — ver el comentario de arriba.
+   *
+   * @param conceptId - Concepto a leer.
+   * @returns La ficha con sus propiedades declaradas.
+   */
+  readConceptDetail(conceptId: string): Observable<ConceptDetail> {
+    return this.http.get<ConceptDetail>(
+      this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}`),
+    );
   }
 
   readConceptLabels(conceptIds: readonly string[]): Observable<ConceptLabels> {
