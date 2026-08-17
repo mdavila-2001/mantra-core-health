@@ -1610,8 +1610,20 @@ Una sección nueva vía `APP_SECTIONS` no necesita nada: `rutasDeSecciones()` ya
 hallazgo anotado, fuera de este arreglo), ni el `no-unused-vars` de `dashboard.ts:29` que ya tiene
 rojo el `lint` de `dev`.
 
-### Verificación prevista
+### Verificación (hecha, CI caído → local)
 
-`corepack yarn typecheck` · `test --watch=false` · `build` · `lint` (declarando el rojo preexistente) ·
-`corepack yarn pw:rutas` con la API viva: las hijas del paciente y de la doctora pasan de `ok` a
-`denegada` en la matriz; el administrador sigue `ok`. Evidencia literal en el PR.
+`lint` 0 · `typecheck` 0 · `test --watch=false` 271 archivos / 2 603 pruebas · `build` + bundle OK ·
+`pw:rutas` con la API viva (`59bf51e6`, `E2E_API_URL=http://localhost:3000`): doctora 63 hijas
+`denegada` / 2 `ok` legítimas, administrador 95 `ok`, «Hallazgos: Ninguno» · recorrida manual
+paciente 7× rebota a `/dashboard` + excepción pinta, admin 8× pinta. Evidencia literal en el PR.
+La matriz regenerada NO se commitea (el actor paciente del arnés no entra por el 500 ajeno de
+`register-patient`; sin sus filas se perdería el «antes»).
+
+### Estado del carril (cuenta de los 4 arreglos)
+
+| # | Arreglo | Rama | Estado |
+|---|---|---|---|
+| 1 | Guards de rol en rutas hijas | `itzan/guards-rutas-operacion` | **PR #127 abierto** contra `dev`, espera review de otro (regla 2) — mergea PRIMERO, antes de las rutas de Pablo |
+| 2 | H-05 `patient-merge` recarga (+ el cuestionario del paciente, misma clase) | `itzan/h05-patient-merge` | **PR #128 abierto** contra `dev`, espera review — independiente de #127 |
+| 3 | H-07 textos internos | `itzan/h07-textos-internos` | pendiente |
+| 4 | H-10 seeder verde (API) | `itzan/h10-seeder-verde` | pendiente — ojo: `cuenta-doctor-demo.mjs` mostró «emitir sin firmar → 200», hay que mirarlo antes de tocar la aserción |
