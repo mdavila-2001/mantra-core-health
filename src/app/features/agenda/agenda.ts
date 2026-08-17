@@ -173,11 +173,15 @@ const ROLES_QUE_ELIGEN_RECURSO = ROLES_QUE_OPERAN_CITAS;
 const ROLES_QUE_RESERVAN = [...ROLES_QUE_OPERAN_CITAS, 'PATIENT'];
 
 /**
- * Roles que pueden construir agenda (UC-41-01 → UC-41-04). Las cuatro fases de
- * configuración declaran `SCHEDULING_ADMIN`; `SUPERADMIN` es el comodín del
- * `RolesGuard`. Ni el agente de mostrador ni el profesional arman la grilla.
+ * Roles que pueden construir agenda (UC-41-01 → UC-41-04).
+ *
+ * El agente de mostrador no arma la grilla; el profesional **sí**, desde el
+ * autoservicio: las cinco escrituras del catálogo declaran
+ * `@Roles('SCHEDULING_ADMIN', 'PRACTITIONER')`, y el backend le acota el
+ * recurso al suyo. Dejarlo afuera escondía «Crear agenda» justo a quien la
+ * pantalla le está pidiendo que la publique.
  */
-const ROLES_QUE_CREAN_AGENDA = ['SCHEDULING_ADMIN', 'SUPERADMIN'];
+const ROLES_QUE_CREAN_AGENDA = ['SCHEDULING_ADMIN', 'SUPERADMIN', 'PRACTITIONER'];
 
 /** Una cita ya lista para pintar: sin uuid, con el recurso y el estado resueltos. */
 export interface CitaVisible {
