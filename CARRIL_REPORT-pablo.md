@@ -5,7 +5,7 @@
 ## Cabecera de ejecución
 
 - Base `origin/dev` SHA: front `23906b7` · API `6c21ffce` · docs `c7071a0e` · mobile `8dab6c9`
-- Fecha/hora: 2026-08-17, 20:20–21:15 UTC
+- Fecha/hora: 2026-08-17, 20:20–22:55 UTC
 - Ambiente: base E2E aislada `mantra_redesa_health_e2e` + API E2E propia en `:3001`
 - Seed catalog version: `2026-08-17-pablo-v1` — **ejecutado, 13 llamadas correctas**
 - `seed:e2e:verify-auth`: **verde**, 38 comprobaciones
@@ -26,7 +26,7 @@ Todo con `curl` **sin cabecera `Authorization`**, contra la API del stack local
 (`http://localhost:3000`).
 
 | Ruta | Status | Observado |
-|---|---|---|
+| --- | --- | --- |
 | `GET /public/search?limit=2` | `200` | `{"items":[],"nextCursor":null,"totalHint":null,"generatedAt":"…"}` |
 | `GET /public/search/practitioners?limit=3` | `200` | misma envoltura, `items: []` |
 | `GET /public/nearby` (sin coordenadas) | `400` | `VALIDATION_FAILED` · «Se requieren coordenadas válidas: lat en [-90,90] y lng en [-180,180]» |
@@ -35,7 +35,7 @@ Todo con `curl` **sin cabecera `Authorization`**, contra la API del stack local
 
 Cabeceras verificadas en `/public/search`:
 
-```
+```text
 X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 59
 X-RateLimit-Reset: 60
@@ -46,12 +46,12 @@ Cache-Control: public, max-age=60, stale-while-revalidate=300
 Coinciden con `openapi/CONTRATO-PUBLICO.md` §4: límite por IP de 60/min, ETag
 débil y caché de 60 s con revalidación. **La superficie existe y responde.**
 
-Desviación del contrato encontrada, sin impacto funcional: el contrato documenta
-el cuerpo del 404 como `{"statusCode":404,"message":"No encontrado"}` y la API
-sirve `{"code":"NOT_FOUND","message":"No encontrado","details":{…},…}`, que es el
-filtro de excepciones global del proyecto. El `details.slug` devuelve el slug que
-mandó quien llama, así que **no revela existencia**; lo que hay que corregir es
-el documento, no el código. Registrado como D-P4-01.
+Desviación del contrato encontrada, sin impacto funcional: el contrato
+documentaba el cuerpo del 404 como `{"statusCode":404,"message":"No encontrado"}`
+y la API sirve `{"code":"NOT_FOUND","message":"No encontrado","details":{…},…}`,
+que es el filtro de excepciones global del proyecto. El `details.slug` devuelve
+el slug que mandó quien llama, así que **no revela existencia**. Lo que estaba
+mal era el documento, no el código: corregido (D-P4-01, cerrado).
 
 ### Hueco de API cerrado en este carril
 
@@ -125,12 +125,21 @@ API (`pablo/p4-buscador-publico`, commit `404de2f1`):
 - `community/repositories/public-profiles.repository.ts`: `visibilityConceptId` en el alta.
 - `community/services/community-social.service.spec.ts`: cuatro pruebas nuevas.
 
-Front (`pablo/p4-buscador-publico`, commit `9d8767a`):
+API (commit `56c2e4e2` y el cierre de desajustes):
+
+- `tools/e2e/entorno.mjs`, `seed-e2e.mjs`, `verify-e2e.mjs`, `reset-e2e.mjs`.
+- `package.json`: `seed:e2e:reset`, `seed:e2e`, `seed:e2e:verify`, `seed:e2e:verify-auth`.
+- `openapi/CONTRATO-PUBLICO.md`: cuerpo real del 404.
+
+Front (`pablo/p4-buscador-publico`, commits `9d8767a` y `f3e2fee`):
 
 - `core/data-access/public-directory/public-directory.types.ts`: los tipos del contrato público.
 - `core/data-access/public-directory/public-directory.client.ts`: las nueve lecturas anónimas.
 - `core/data-access/public-directory/public-directory.client.spec.ts`: 12 pruebas.
 - `core/data-access/community/community.types.ts`: `visibility` en la vitrina propia.
+- `features/public-profile/`: la ficha, su resolver y 11 pruebas.
+- `app.routes.ts`: las cinco rutas de ficha, sin guard.
+- `app.routes.server.ts`: `RenderMode.Server` para las cinco.
 
 ### Seeds/precondiciones usadas
 
@@ -166,7 +175,7 @@ flujo que la produce es lo que el contrato prohíbe. El hueco está marcado en
 ### Unit/API tests
 
 | Comando | Resultado |
-|---|---|
+| --- | --- |
 | `jest src/modules/community/services/community-social.service.spec.ts` | **22 passed** |
 | `tsc -p tsconfig.json --noEmit` (API) | **exit 0** |
 | `eslint` sobre los 4 archivos tocados (API) | **exit 0** |
@@ -215,17 +224,50 @@ contrato. Se agregó `tools/e2e/` con `seed:e2e`, `seed:e2e:verify` y
 `seed:e2e:verify-auth` (commit `56c2e4e2`).
 
 **B-P4-03 — cerrado.** Base E2E aislada `mantra_redesa_health_e2e` en el mismo
-Postgres, con API propia en `:3001`. Falta pendiente menor: `seed:e2e:reset` no
-existe todavía; hoy el reset se hace recreando la base a mano.
+Postgres, con API propia en `:3001`. `seed:e2e:reset` ya existe
+(`tools/e2e/reset-e2e.mjs`, `--truncate` por omisión y `--drop` cuando cambia el
+esquema). El ciclo completo se probó de punta a punta: reset → reinicio de la
+API → `seed:e2e` (13/13) → `verify-auth` (verde) → `verify` (verde). La siembra
+es reproducible desde cero, no acumulativa.
 
-**B-P4-05 — abierto, SEO.** Un slug inexistente o despublicado devuelve HTTP
-**200** con la pantalla «Ese perfil no está disponible». La UX es la correcta,
-el estado no: un rastreador indexa esa página como válida. La versión de
-`@angular/ssr` de este repo no expone ninguna forma soportada de fijar el estado
-de la respuesta desde un componente, así que corregirlo exige tocar
-`src/server.ts` —zona roja, compartida con las otras cuatro máquinas— para
-consultar el slug antes de delegar en el motor de Angular. Se deja registrado en
-vez de hacerlo al final de una jornada larga sobre un archivo compartido.
+El guard se probó **apuntándolo a la base de desarrollo**: corta con exit 2 y el
+mensaje «`DB_NAME="mantra_redesa_health"` no contiene "e2e" ni "test"». No tiene
+`--force`.
+
+**B-P4-04 — cerrado.** El `.env` declaraba una contraseña de 49 caracteres y el
+volumen de Postgres usa una de 32; los contenedores vivos coincidían con el
+volumen y el archivo no, así que cualquier `docker compose up` que recreara
+Postgres o la API desde el `.env` dejaba la API sin conectarse.
+
+Se alineó el `.env` al valor real —cero downtime, sin tocar la base— y se
+verificó conectando con la credencial del archivo. **No se rotó nada**: si la
+contraseña larga era una rotación intencional, el valor quedó anotado dentro del
+propio `.env` (que ya está en `.gitignore`) junto con los dos comandos que la
+aplican. Se prefirió eso a rotar por cuenta propia, que obliga a recrear la API
+y los 21 workers.
+
+**B-P4-05 — cerrado.** Un slug inexistente o despublicado devolvía HTTP 200 con
+la pantalla «Ese perfil no está disponible»: la UX correcta y el estado
+equivocado, que es como un enlace muerto termina indexado como ficha válida.
+
+Resultó no hacer falta tocar `src/server.ts`: `RESPONSE_INIT` —token público de
+`@angular/core`— es el **mismo objeto** que el motor de SSR usa para construir
+la respuesta después de renderizar, así que el resolver le cambia el estado
+durante el render y llega a tiempo. Se inyecta `optional` porque en el navegador
+no existe. Verificado:
+
+```text
+/p/doctor-uno-e2e     -> 200  <h1>Dra. Marisol Quispe Ticona</h1>
+/p/doctor-oculto-e2e  -> 404  <h1>Ese perfil no está disponible</h1>
+/p/no-existe-jamas    -> 404  <h1>Ese perfil no está disponible</h1>
+```
+
+Los dos que no resuelven dan el mismo estado y la misma pantalla: el
+despublicado no se distingue del inexistente tampoco por el código HTTP.
+
+**D-P4-01 — cerrado.** `openapi/CONTRATO-PUBLICO.md` §4 documentaba un cuerpo de
+404 que la API no sirve. Corregido con el cuerpo real y con la nota de por qué
+el `details.slug` que devuelve no revela existencia.
 
 **B-P4-04 — abierto, del entorno local.** El `.env` en disco de la API tiene una
 `POSTGRES_PASSWORD` distinta de la que el volumen de Postgres realmente usa
@@ -278,5 +320,7 @@ Sin PR todavía. Estado contra los gates:
 2. Conectar las pantallas de listado del buscador (`/buscar/*`) al cliente real:
    hoy `profesionales-listado` sigue pintando `PROFESIONALES_DE_MUESTRA` y las
    otras cinco son marcado estático de la bóveda sin lógica.
-3. `seed:e2e:reset`.
-4. B-P4-05 (estado 404 en SSR) y B-P4-04 (deriva del `.env`).
+
+Nada más. Los bloqueos B-P4-01 a B-P4-05 y el defecto documental D-P4-01 están
+todos cerrados; lo que queda son las dos piezas de arriba, que son trabajo de
+carril y no desajustes del entorno.

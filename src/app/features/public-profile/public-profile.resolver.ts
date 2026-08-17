@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { inject, RESPONSE_INIT } from '@angular/core';
 import type { ResolveFn } from '@angular/router';
 import { catchError, of } from 'rxjs';
 
@@ -37,11 +37,36 @@ export type PerfilPublicoResuelto = PublicProfileDetail | null;
  * mano. Dejar que la excepción suba mataría la navegación y mandaría a la
  * pantalla de recuperación —«algo falló, recargá»— cuando lo que pasó es que
  * ese perfil no está. Se convierte en `null` y la pantalla lo cuenta.
+ *
+ * ## Y por qué igual tiene que ser un 404 de verdad
+ *
+ * Porque la pantalla amable no alcanza: sin el estado correcto, un rastreador
+ * indexa «Ese perfil no está disponible» como una página válida del directorio,
+ * y el enlace muerto queda en los resultados de búsqueda repartiendo visitas a
+ * una ficha que no existe.
+ *
+ * `RESPONSE_INIT` es el objeto que el motor de SSR usa para construir la
+ * respuesta **después** de renderizar, así que cambiarle el estado durante el
+ * render llega a tiempo. Es la vía soportada: no hace falta que
+ * `src/server.ts` —zona roja compartida con las otras cuatro máquinas— consulte
+ * el slug por su cuenta y duplique la petición a la API.
+ *
+ * En el navegador el token no existe, y por eso se inyecta `optional`: una
+ * navegación del lado del cliente no tiene ninguna respuesta HTTP que marcar.
  */
 export const perfilPublicoResolver: ResolveFn<PerfilPublicoResuelto> = (ruta) => {
   const cliente = inject(PublicDirectoryClient);
+  // Se resuelve **acá**, dentro del contexto de inyección: el `catchError` de
+  // abajo corre después, cuando `inject()` ya no está disponible.
+  const respuesta = inject(RESPONSE_INIT, { optional: true });
+
   const slug = ruta.paramMap.get('slug') ?? '';
   const kind = (ruta.data['kind'] ?? 'PRACTITIONER') as PublicProfileDetail['kind'];
 
-  return cliente.getProfile(kind, slug).pipe(catchError(() => of(null)));
+  return cliente.getProfile(kind, slug).pipe(
+    catchError(() => {
+      if (respuesta !== null) respuesta.status = 404;
+      return of(null);
+    }),
+  );
 };
