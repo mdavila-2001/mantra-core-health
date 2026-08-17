@@ -6,11 +6,11 @@
 
 - Base `origin/dev` SHA: front `23906b7` · API `6c21ffce` · docs `c7071a0e` · mobile `8dab6c9`
 - Fecha/hora: 2026-08-17, 20:20–21:15 UTC
-- Ambiente: **stack de desarrollo local**, no un stack E2E aislado (ver bloqueo B-P4-03)
-- Seed catalog version: `2026-08-17-pablo-v1` — **no ejecutado todavía** (ver bloqueo B-P4-02)
-- `seed:e2e:verify-auth`: no ejecutado — el comando no existe en el repo
-- API health: `GET /health` → `200 {"status":"ok"}`
-- Front health: contenedor `mantra-core-health-dev` up (4200), SSR no ejercitado todavía
+- Ambiente: base E2E aislada `mantra_redesa_health_e2e` + API E2E propia en `:3001`
+- Seed catalog version: `2026-08-17-pablo-v1` — **ejecutado, 13 llamadas correctas**
+- `seed:e2e:verify-auth`: **verde**, 38 comprobaciones
+- API health: dev `:3000` → `200`; E2E `:3001` → `200`
+- Front health: SSR construido y servido en `:4300` contra la API E2E
 - Workers health: 21 workers up; `identity_assurance` **unhealthy** (preexistente, ajeno a P4)
 
 ---
@@ -84,9 +84,37 @@ no puede significar «publicame».
 
 ### SSR comprobado por HTML
 
-**No comprobado todavía.** `app.routes.server.ts` declara `**` → `RenderMode.Client`,
-así que hoy `/buscar` y una eventual `/p/:slug` devolverían el cascarón y no el
-contenido. Es trabajo pendiente de este carril, no un bloqueo externo.
+**Comprobado.** `curl` contra el servidor SSR real (`node dist/…/server.mjs` en
+`:4300`, construido con `PUBLIC_API_BASE_URL=http://localhost:3001`):
+
+```text
+$ curl -s http://localhost:4300/p/doctor-uno-e2e
+<title>Dra. Marisol Quispe Ticona — AloVida</title>
+<meta property="og:title" content="Dra. Marisol Quispe Ticona">
+<meta property="og:description" content="Cardióloga · Hospital del Norte">
+<meta property="og:type" content="profile">
+<meta property="og:updated_time" content="2026-08-17T22:13:00.252Z">
+…
+<h1>Dra. Marisol Quispe Ticona</h1>
+```
+
+El nombre está en el `<h1>` del HTML **que devuelve el servidor**, no en el DOM
+hidratado: la respuesta pesa 11 987 bytes y el `<h1>` viaja adentro. Sin
+cookies, sin `Authorization` y sin ningún enlace a login en la página.
+
+Los `**` seguían mandando `/p/:slug` a `RenderMode.Client`. Ahora las cinco
+rutas de ficha declaran `RenderMode.Server`.
+
+**Un fallo silencioso encontrado y corregido en el camino.** La primera versión
+pasaba la ficha resuelta como `input.required` ligado por el router. Eso exige
+`withComponentInputBinding()` en `provideRouter`, que esta aplicación no tiene:
+el servidor devolvía **200 con el cascarón vacío**, con los datos del perfil
+presentes en el estado transferido y ausentes del HTML, y dos `NG0950` en un log
+que nadie mira. Se detectó porque el `curl` de verificación buscaba el nombre en
+el cuerpo y no lo encontró. Ahora se lee de `ActivatedRoute.data` —encender esa
+opción del router cambiaría el comportamiento de las 141 pantallas, y esto es
+una rama de carril que corre en paralelo con otras cuatro— y hay un spec de
+componente que falla si alguien lo revierte.
 
 ### Cambios realizados
 
@@ -106,9 +134,34 @@ Front (`pablo/p4-buscador-publico`, commit `9d8767a`):
 
 ### Seeds/precondiciones usadas
 
-Ninguna todavía. **No se creó ningún perfil a mano por Postman ni por SQL**, que
-es lo que el contrato de seeds prohíbe explícitamente: el perfil publicado tiene
-que salir de un seeder reproducible desde cero. Ver bloqueo B-P4-02.
+**Ningún perfil se creó a mano por Postman ni por SQL.** Todo sale de
+`yarn seed:e2e` sobre una base recién creada y vacía.
+
+Entorno: base `mantra_redesa_health_e2e` dentro del mismo Postgres del stack de
+desarrollo, y una API E2E propia (`mantra-alovida-api:p4-e2e`) en `:3001` con
+`ORM_SCHEMA_SYNC=safe`. La base de desarrollo no se tocó. Arrancó con 1284
+tablas creadas desde cero y 0 perfiles públicos.
+
+Actores sembrados por el camino real —alta asistida, activación con token de un
+solo uso, **login real**, y la vitrina publicada por la propia titular con su
+sesión—:
+
+| Clave | Slug | Publicado |
+| --- | --- | --- |
+| `doctor.one` | `doctor-uno-e2e` | sí |
+| `doctor.two` | `doctor-dos-e2e` | sí |
+| `doctor.hidden` | `doctor-oculto-e2e` | **no**, a propósito |
+
+`doctor.hidden` existe para que la prueba negativa tenga contra qué correr: sin
+un perfil que exista y no sea público, «un slug despublicado da el mismo 404 que
+uno inexistente» no se puede demostrar, sólo afirmar. Y no manda `visibility:
+'PRIVATE'` sino que **omite el campo**, así que prueba además que omitirlo no
+publica nada.
+
+Pacientes, citas, encuentros, recetas, publicaciones y reseñas **no** se
+siembran: son precondiciones de P1, P2, P3, P5 y P6, y sembrar una cita sin el
+flujo que la produce es lo que el contrato prohíbe. El hueco está marcado en
+`tools/e2e/seed-e2e.mjs`.
 
 ### Unit/API tests
 
@@ -134,33 +187,45 @@ No implementado.
 
 ### Privacidad/seguridad
 
-Verificado por lectura del código, **no** por prueba ejecutada todavía:
-`CommunityPublicService` arma la proyección campo por campo, sin *spread* de la
-entidad, y `PUBLIC_RESULT_KEYS` / `PUBLIC_PROFILE_KEYS` declaran la lista blanca
-que su spec compara contra la salida real. El tipo del cliente nuevo es el
-espejo de esa lista.
+Verificado **contra datos reales y sin token**, por `yarn seed:e2e:verify`:
 
-Falta la prueba anónima de ausencia de campos prohibidos contra datos reales
-(P4-E2E-002), que no se puede ejecutar sin un perfil publicado.
+- los dos perfiles publicados aparecen en `GET /public/search` anónimo;
+- `doctor.hidden` **no** aparece;
+- `/p/doctor-uno-e2e` y `/p/doctor-dos-e2e` resuelven sin sesión y sirven su nombre;
+- ninguna de las dos fichas expone `tenantId`, `targetId`, `targetTypeConceptId`,
+  `statusConceptId`, `visibilityConceptId`, `verificationStatusConceptId`,
+  `avatarFileId`, `coverFileId`, `createdByUserId`, `updatedByUserId` ni `rowVersion`;
+- `/p/doctor-oculto-e2e` da 404 **con el mismo mensaje** que
+  `/p/no-existe-en-ninguna-parte-e2e`;
+- `/f/doctor-uno-e2e` —prefijo de farmacia sobre un profesional— da 404 y no redirige.
+
+En el front, la pantalla del estado vacío es idéntica para inexistente y
+despublicado, y hay un spec que falla si alguien escribe «privado» en ella.
+
+Esto cubre el contenido de P4-E2E-002. Lo que falta es empaquetarlo como journey
+con su ID compartido y su adaptador Playwright/Cypress.
 
 ### Defectos/bloqueos
 
 **B-P4-01 — cerrado.** Ninguna ruta escribía `visibility_concept_id`. Corregido
 en `404de2f1`.
 
-**B-P4-02 — abierto, es el bloqueo del carril.** No existe `seed:e2e` ni ninguno
-de los comandos que el contrato exige (`seed:e2e:reset`, `:verify`,
-`:verify-auth`). El repo tiene `tools/redesa/seed-dev-data.mjs`, que siembra por
-la API real pero es acumulativo y no crea perfiles públicos publicados. Sin
-`doctor-uno-e2e` y `doctor-dos-e2e` publicados y autenticables, ni P4-E2E-001 ni
-P4-E2E-002 pueden ejecutarse. Es el siguiente trabajo del carril.
+**B-P4-02 — cerrado.** No existía `seed:e2e` ni ninguno de los comandos del
+contrato. Se agregó `tools/e2e/` con `seed:e2e`, `seed:e2e:verify` y
+`seed:e2e:verify-auth` (commit `56c2e4e2`).
 
-**B-P4-03 — abierto, de entorno.** No hay stack E2E aislado: la única base es la
-de desarrollo, `mantra_redesa_health`, cuyo nombre no contiene `e2e` ni `test`,
-así que el guard de ambiente que el contrato de seeds exige **rechazaría**
-correctamente sembrar ahí. Sembrar sobre la base de desarrollo compartida
-tampoco es aceptable. Hace falta decidir entre una base E2E separada en el mismo
-Postgres o un `COMPOSE_PROJECT_NAME` propio.
+**B-P4-03 — cerrado.** Base E2E aislada `mantra_redesa_health_e2e` en el mismo
+Postgres, con API propia en `:3001`. Falta pendiente menor: `seed:e2e:reset` no
+existe todavía; hoy el reset se hace recreando la base a mano.
+
+**B-P4-05 — abierto, SEO.** Un slug inexistente o despublicado devuelve HTTP
+**200** con la pantalla «Ese perfil no está disponible». La UX es la correcta,
+el estado no: un rastreador indexa esa página como válida. La versión de
+`@angular/ssr` de este repo no expone ninguna forma soportada de fijar el estado
+de la respuesta desde un componente, así que corregirlo exige tocar
+`src/server.ts` —zona roja, compartida con las otras cuatro máquinas— para
+consultar el slug antes de delegar en el motor de Angular. Se deja registrado en
+vez de hacerlo al final de una jornada larga sobre un archivo compartido.
 
 **B-P4-04 — abierto, del entorno local.** El `.env` en disco de la API tiene una
 `POSTGRES_PASSWORD` distinta de la que el volumen de Postgres realmente usa
@@ -187,6 +252,31 @@ merece su propio ticket fuera de este carril.
 ### Commits/PR
 
 - API `404de2f1` — `feat(p4-community): permitir declarar la visibilidad de la vitrina pública`
+- API `56c2e4e2` — `feat(p4-e2e): entorno y seeds E2E reales para el directorio público`
 - Front `9d8767a` — `feat(p4-public): cliente del directorio público anónimo`
+- Front `63434e5` — `docs(p4): reporte del carril`
+- Front `f3e2fee` — `feat(p4-public): ficha pública por slug con SSR real`
 
-Sin PR todavía: el carril no pasa G2, G4 ni G5.
+Sin PR todavía. Estado contra los gates:
+
+| Gate | Estado |
+| --- | --- |
+| G0 higiene | verde |
+| G1 build estático | verde (typecheck, lint y unit en los dos repos) |
+| G2 datos reales | verde (`seed:e2e` + `verify-auth`) |
+| G3 API real | verde (relevamiento anónimo + 38 comprobaciones) |
+| G4 Playwright | **rojo — no implementado** |
+| G5 Cypress | **rojo — no implementado** |
+| G6 negativos | verde en contenido, falta empaquetarlo como journey |
+| G7 evidencia | este documento |
+| G8 rebase final | pendiente |
+
+### Lo que falta para DONE
+
+1. `P4-E2E-001` y `P4-E2E-002` en el catálogo poligonal compartido, con
+   adaptador Playwright y adaptador Cypress.
+2. Conectar las pantallas de listado del buscador (`/buscar/*`) al cliente real:
+   hoy `profesionales-listado` sigue pintando `PROFESIONALES_DE_MUESTRA` y las
+   otras cinco son marcado estático de la bóveda sin lógica.
+3. `seed:e2e:reset`.
+4. B-P4-05 (estado 404 en SSR) y B-P4-04 (deriva del `.env`).
