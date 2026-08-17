@@ -17,26 +17,41 @@
     description="El muro muestra lo que publican los perfiles que seguís, y para eso hace falta tener el tuyo. Se crea desde «Mi perfil»."
     variant="empty"
   />
-} @else if (vacio()) {
-  <app-empty-state
-    title="Tu muro está vacío"
-    description="Cuando sigas a otros profesionales, sus publicaciones van a aparecer acá."
-    variant="empty"
-  />
 } @else {
-  <div class="muro__lista">
-    @for (entrada of entradas(); track entrada.id) {
-      <app-post-card [post]="entrada.post!" [actorProfileId]="perfil()" />
-    }
-  </div>
+  <!-- El composer va antes del listado y no dentro de la rama «hay
+       publicaciones»: un muro vacío es justamente cuando más hace falta poder
+       publicar. -->
+  <app-composer
+    class="muro__composer"
+    [profileId]="perfil()!"
+    (publicado)="recargar()"
+  />
 
-  @if (hayMas()) {
-    <div class="muro__mas">
-      <!-- «Ver más» y no «página 3 de 47»: el contrato del M34 no da totales,
-           así que decir un número de páginas sería inventarlo. -->
-      <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
-        Ver más publicaciones
-      </button>
+  @if (vacio()) {
+    <app-empty-state
+      title="Tu muro está vacío"
+      description="Cuando sigas a otros profesionales, sus publicaciones van a aparecer acá."
+      variant="empty"
+    />
+  } @else {
+    <div class="muro__lista">
+      @for (entrada of entradas(); track entrada.id) {
+        <!-- `cambio` no recarga el muro: la tarjeta ya movió su propio contador
+             y recargar la lista entera en cada reacción perdería la posición de
+             lectura. El recuento del servidor vuelve a mandar en la próxima
+             carga, que es cuando importa. -->
+        <app-post-card [post]="entrada.post!" [actorProfileId]="perfil()" />
+      }
     </div>
+
+    @if (hayMas()) {
+      <div class="muro__mas">
+        <!-- «Ver más» y no «página 3 de 47»: el contrato del M34 no da totales,
+             así que decir un número de páginas sería inventarlo. -->
+        <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
+          Ver más publicaciones
+        </button>
+      </div>
+    }
   }
 }

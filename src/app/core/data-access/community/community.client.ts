@@ -30,9 +30,13 @@ import type {
   GroupMembersQuery,
   GroupPage,
   GroupsQuery,
+  NewBlock,
+  NewBookmark,
   NewComment,
+  NewFollow,
   NewReaction,
   NewPost,
+  SocialRemoval,
   NotificationPage,
   NotificationsQuery,
   OwnPublicProfile,
@@ -278,6 +282,103 @@ export class CommunityClient {
   }
 
   // ─── Seguimientos, marcadores y bloqueos ───────────────────────────────────
+
+  /**
+   * `POST /community/follows` — seguir un perfil, tema, etiqueta o grupo.
+   *
+   * @param seguimiento - Quién sigue y qué.
+   * @returns El identificador del seguimiento.
+   */
+  follow(seguimiento: NewFollow): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/community/follows'),
+      seguimiento,
+    );
+  }
+
+  /**
+   * `DELETE /community/follows` — dejar de seguir.
+   *
+   * Va por query y no por el id del vínculo porque la pantalla sabe **a quién**
+   * dejó de seguir, no el uuid de la fila; pedirle ese uuid la obligaría a una
+   * lectura extra sólo para deshacer lo que acaba de hacer.
+   *
+   * @param seguimiento - Quién dejaba de seguir y qué.
+   * @returns Si esta llamada deshizo el seguimiento. `false` no es un error: el
+   *   estado final es el que se pedía.
+   */
+  unfollow(seguimiento: NewFollow): Observable<SocialRemoval> {
+    return this.http.delete<SocialRemoval>(this.url('/community/follows'), {
+      params: new HttpParams()
+        .set('followerProfileId', seguimiento.followerProfileId)
+        .set('followableType', seguimiento.followableType)
+        .set('followableRefId', seguimiento.followableRefId),
+    });
+  }
+
+  /**
+   * `POST /community/bookmarks` — guardar contenido en una colección.
+   *
+   * @param marcador - Quién guarda y qué.
+   * @returns El identificador del marcador.
+   */
+  bookmark(marcador: NewBookmark): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/community/bookmarks'),
+      marcador,
+    );
+  }
+
+  /**
+   * `DELETE /community/bookmarks` — quitar un marcador.
+   *
+   * @param marcador - Quién guardaba y qué.
+   * @returns Si esta llamada quitó el marcador.
+   */
+  unbookmark(marcador: NewBookmark): Observable<SocialRemoval> {
+    let params = new HttpParams()
+      .set('profileId', marcador.profileId)
+      .set('bookmarkableType', marcador.bookmarkableType)
+      .set('bookmarkableRefId', marcador.bookmarkableRefId);
+    if (marcador.collectionName !== undefined) {
+      params = params.set('collectionName', marcador.collectionName);
+    }
+
+    return this.http.delete<SocialRemoval>(this.url('/community/bookmarks'), {
+      params,
+    });
+  }
+
+  /**
+   * `POST /community/blocks` — bloquear a alguien.
+   *
+   * @param bloqueo - Quién bloquea a quién y por qué.
+   * @returns El identificador del bloqueo.
+   */
+  block(bloqueo: NewBlock): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/community/blocks'),
+      bloqueo,
+    );
+  }
+
+  /**
+   * `DELETE /community/blocks` — levantar un bloqueo.
+   *
+   * Levantar el bloqueo **no devuelve los seguimientos** que el bloqueo cortó:
+   * el servidor devuelve el permiso de volver a seguir, no la decisión de
+   * seguir. La pantalla no debe prometer lo contrario.
+   *
+   * @param bloqueo - Quién bloqueaba a quién.
+   * @returns Si esta llamada levantó el bloqueo.
+   */
+  unblock(bloqueo: NewBlock): Observable<SocialRemoval> {
+    return this.http.delete<SocialRemoval>(this.url('/community/blocks'), {
+      params: new HttpParams()
+        .set('blockerProfileId', bloqueo.blockerProfileId)
+        .set('blockedProfileId', bloqueo.blockedProfileId),
+    });
+  }
 
   /**
    * `GET /community/follows` — a quién sigue un perfil.
@@ -558,9 +659,13 @@ type WireProfile = Omit<ConNulos<PublicProfileDetail>, 'badges' | 'prestige'> & 
   readonly prestige: WirePrestige | null;
 };
 
-type WirePost = Omit<ConNulos<PostListItem>, 'publishedAt' | 'editedAt'> & {
+type WirePost = Omit<
+  ConNulos<PostListItem>,
+  'publishedAt' | 'editedAt' | 'reactions'
+> & {
   readonly publishedAt: string | null;
   readonly editedAt: string | null;
+  readonly reactions: WireReactionSummary;
 };
 
 type WirePostDetail = WirePost & {
@@ -714,11 +819,27 @@ function toProfile({ badges, prestige, ...resto }: WireProfile): PublicProfileDe
   };
 }
 
-function toPost({ publishedAt, editedAt, ...resto }: WirePost): PostListItem {
+function toPost({
+  publishedAt,
+  editedAt,
+  reactions,
+  ...resto
+}: WirePost): PostListItem {
   return {
     ...sinNulos(resto),
     ...fecha('publishedAt', publishedAt),
     ...fecha('editedAt', editedAt),
+    // El resumen anidado se normaliza aparte: `sinNulos` no entra en los
+    // objetos hijos, y el servidor manda `actorReactionTypeConceptId: null`
+    // para decir «no reaccionó». Para la pantalla los dos casos —no reaccionó y
+    // no se preguntó— se pintan igual: botón apagado.
+    //
+    // El `??` no es defensa contra un contrato incumplido: es que la API y el
+    // frontend se despliegan por separado, y una API anterior a este campo haría
+    // reventar el muro **entero** por una publicación sin recuento. Un cero es
+    // menos falso que una pantalla en blanco.
+    reactions: reactions == null ? { tallies: [], total: 0 } : sinNulos(reactions),
+    commentCount: resto.commentCount ?? 0,
   };
 }
 

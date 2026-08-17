@@ -50,3 +50,71 @@
   color: var(--st-error-fg);
   font-size: var(--fs-sm);
 }
+
+.publicacion__conteo,
+.publicacion__cerrado,
+.publicacion__sin-perfil {
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.publicacion__hilo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-top: var(--e4);
+  padding-top: var(--e3);
+  border-top: 1px solid var(--border-subtle, var(--text-secondary));
+}
+
+.publicacion__cargando {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.hilo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hilo--anidado {
+  /* Sangría de una sola profundidad: el hilo puede anidar más, pero sangrar sin
+     tope deja los niveles hondos en una columna de dos palabras. */
+  margin-top: var(--e2);
+  padding-inline-start: var(--e4);
+  border-inline-start: 1px solid var(--border-subtle, var(--text-secondary));
+}
+
+.hilo__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+}
+
+.hilo__autor {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.hilo__cuerpo {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.hilo__mas {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.hilo__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  align-items: flex-start;
+}
