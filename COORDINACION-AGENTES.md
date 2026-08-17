@@ -1507,3 +1507,60 @@ En el cuerpo del PR van, sí o sí, las dos cosas que este carril no puede dejar
 **bloqueador de las columnas de procedencia** (arriba) y la **lista de formularios que quedaron
 afuera por licencia**, con su reemplazo libre, que está en
 `src/common/seed/data/clinical-forms/README.md`.
+
+---
+
+## 2026-08-17 · Marcelo · carril C-C (higiene + vademécum + B-6)
+
+Bloque de apertura de mi carril de la semana (`carriles-semana-2026-08-17/MARCELO.md`).
+
+### 🔴 Aviso que cambia trabajo de esta semana: hay código vivo en 3 ramas «sin integrar»
+
+Mi fase 0 me pedía **borrar** 3 ramas «zombis» porque su contenido «ya había llegado a `dev`».
+Auditadas con diff de árboles: **es falso, las tres tienen código que `dev` no tiene.** No borré
+ninguna. Evidencia completa en `CARRIL_REPORT-marcelo.md` del repo API (PR #114).
+
+- **Pablo** — `fix/alovida-c18-doctor_accounting_notifications` ya tiene la **bandeja in-app**
+  que tu carril construye desde cero: `GET /messaging/notifications/in-app`, `…/channels`,
+  `…/preferences`, más `notifications.service.ts` (136 líneas), `notifications.repository.ts` (87)
+  y su spec (163) — con `listMyInApp`, `markInAppRead`, `getMyPreferences`, `setMyPreference`.
+  `dev` tiene la escritura y **no** el `GET` de la bandeja. Miralo antes de escribir el tuyo.
+  Trae además `accounting/practitioner` (3 rutas, 590 líneas) y el autoservicio de `practice`
+  para vincularse a organizaciones (424) — sin dueño esta semana.
+- **Justin** — dos endpoints de `scheduling` que `dev` no tiene:
+  `POST /scheduling/bookings/:id/request-info` (UC-41-18) y `:id/propose-schedule` (UC-41-19)
+  en `fix/alovida-c11-diagnostics_lab_imaging`, con service, DTOs, transición y 150 líneas de
+  spec; y `GET /scheduling/bookings/:id/decisions` en `integracion/carriles-10-11-14-17`.
+  Es tu módulo: no los toqué. Ojo, el `request-info` que ya está en `dev` es de `pharma_lab`,
+  otro caso de uso.
+
+### `dev` es la rama canónica (declarado por escrito)
+
+`master` tiene 11 commits que `dev` no tiene, y revisados uno por uno **está detrás y revierte
+correcciones deliberadas** (reintroduce el `ALTER TABLE` de `row_version` por arranque que
+prohíbe ADR-0021; vuelve al salto por `person_profiles` que no resolvía ni un nombre). Queda
+escrito en `ESTADO-Y-PENDIENTES.md` del repo API. **No partan de `master`.**
+
+### Qué voy a tocar yo, y dónde
+
+- **API**: `pharmacy`/`terminology` (catálogo de vademécum y su búsqueda), `clinical` solo en
+  lo que la receta necesita para referenciar el ítem del catálogo, y `profiles` para B-6.
+- **Front**: **solo** la feature de receta (autocompletar de medicamento + los datos del
+  medicamento en el PDF que ya existe). No toco `app.routes.ts` ni `navigation.map.ts`.
+  Justin: si estás cableando la receta en tu fase 3, avisame acá y lo ordenamos.
+- **Pipeline del modelo** (fuera de git): `.puml` del módulo 05 + `gen_ddl.py` + patch en
+  `SQL/patches/` para `profiles.practitioner_affiliations`. **Cuando ese PR entre, sus bases
+  vivas necesitan el patch o un `python salud-db/rebuild_stack.py --yes`** — lo aviso acá.
+
+### B-6: falta solo el esquema, el código ya está en `dev`
+
+`practitioner_affiliations` tiene entidad, repositorio, DTOs, conceptos y los dos endpoints
+(`GET`/`POST /profiles/practitioners/me/affiliations`) ya mergeados; responden **500** porque la
+tabla no existe. Es el bloqueador que abre `ESTADO-Y-PENDIENTES.md`. Lo materializo por el
+camino canónico, lo que además deja sin razón de existir a
+`tools/redesa/2026-08-15_c05_practitioner_affiliations.sql` (un `CREATE TABLE` fuera de `SQL/`).
+
+### GitHub Actions
+
+Fuera de mi alcance esta semana por decisión tomada. Sigue rigiendo la **regla 1**: verificación
+local con la evidencia pegada en el reporte o el PR.
