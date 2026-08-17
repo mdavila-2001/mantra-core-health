@@ -118,6 +118,26 @@ describe('seccionRolesGuard', () => {
     expect(destino(ejecutar('/directory', ['SUPERADMIN']))).toBe(SECCION_DENEGADA_ROUTE);
   });
 
+  /* -- las pantallas de operación, hijas de una sección con roles ---------- */
+
+  it('una pantalla de operación hereda el rol de su sección', () => {
+    // El defecto que cierra el carril C-E: la sección rebotaba al paciente y su
+    // formulario lo dejaba pasar. Colgado de la hija, el guard resuelve la
+    // misma sección por prefijo y aplica los mismos roles.
+    expect(destino(ejecutar('/administration/geolocation/trips/new', ['PATIENT']))).toBe(
+      SECCION_DENEGADA_ROUTE,
+    );
+    expect(destino(ejecutar('/administration/patients/new', ['PATIENT', 'USER']))).toBe(
+      SECCION_DENEGADA_ROUTE,
+    );
+  });
+
+  it('y la abre quien tiene el rol de la sección', () => {
+    expect(ejecutar('/administration/geolocation/trips/new', ['SECURITY_ADMIN'])).toBe(true);
+    expect(ejecutar('/administration/patients/new', ['SECURITY_ADMIN'])).toBe(true);
+    expect(ejecutar('/schedule/new', ['PRACTITIONER'])).toBe(true);
+  });
+
   /* -- resolución de la sección -------------------------------------------- */
 
   it('resuelve por la coincidencia más larga, no por la primera', () => {
