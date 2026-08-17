@@ -22,23 +22,20 @@ export const DashboardPage = {
     cy.porTestId('panel-sesion').should('be.visible');
   },
 
-  /** El identificador de la sesión, tal como lo declara el token. */
-  identificadorDeSesion(): Cypress.Chainable<string> {
-    return cy
-      .porTestId('panel-user-id')
-      .invoke('text')
-      .then((texto) => texto.trim());
-  },
-
-  /** Roles mostrados como insignias. */
+  /**
+   * Los códigos de rol de las insignias.
+   *
+   * Salen de `data-role`, no del texto: lo visible es la etiqueta en palabras
+   * («Paciente»), y el código del token sólo viaja en el atributo.
+   */
   rolesVisibles(): Cypress.Chainable<string[]> {
     return cy
       .get('[data-testid="panel-roles"] app-badge')
       .then(($insignias) =>
         $insignias
           .toArray()
-          .map((nodo) => (nodo.textContent ?? '').trim())
-          .filter((texto) => texto !== ''),
+          .map((nodo) => nodo.getAttribute('data-role') ?? '')
+          .filter((codigo) => codigo !== ''),
       );
   },
 
