@@ -3,7 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
-import { ROLES_ROUTE_DATA, SECTION_ROUTE_DATA, titleOf } from './core/navigation/navigation.types';
+import {
+  ROLES_ROUTE_DATA,
+  SECTION_ROUTE_DATA,
+  restringePorRol,
+  titleOf,
+} from './core/navigation/navigation.types';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes } from './app.routes';
 
@@ -114,7 +119,8 @@ describe('rutas del armazón', () => {
       if (path === '' || r.redirectTo !== undefined) {
         return false;
       }
-      return seccionDe(path)?.roles !== undefined;
+      const section = seccionDe(path);
+      return section !== undefined && restringePorRol(section);
     });
 
     it('lo lleva toda pantalla hija cuya sección declara roles', () => {
@@ -130,7 +136,9 @@ describe('rutas del armazón', () => {
         const ruta = hijas.find((r) => r.path === path);
 
         expect(ruta, path).toBeDefined();
-        expect(seccionDe(path)?.roles, path).toBeDefined();
+        const section = seccionDe(path);
+        expect(section, path).toBeDefined();
+        expect(restringePorRol(section!), path).toBe(true);
         expect((ruta?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(false);
       }
     });
