@@ -1,0 +1,86 @@
+<app-page-header
+  title="Mis órdenes"
+  subtitle="Los estudios de laboratorio e imagen que te pidió un médico, con las indicaciones para hacértelos."
+/>
+
+@if (sinPerfilDePaciente) {
+  <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
+       que esta pantalla no le corresponde. -->
+  <app-alert tone="info" title="Esta sección es para pacientes">
+    Tu cuenta no tiene un perfil de paciente. Si emitís órdenes, entrá por la ficha del
+    paciente.
+  </app-alert>
+} @else {
+  @switch (ordenes().status) {
+    @case ('loading') {
+      <p class="ordenes__estado" role="status">Buscando tus órdenes…</p>
+    }
+
+    @case ('empty') {
+      <app-alert tone="info" title="No tenés órdenes pendientes">
+        {{ mensajeDeVacio() }}
+      </app-alert>
+    }
+
+    @case ('ready') {
+      <ul class="ordenes__lista">
+        @for (orden of listas(); track orden.id) {
+          <li class="ordenes__item">
+            <header class="ordenes__encabezado">
+              <div>
+                <h2 class="ordenes__titulo">{{ orden.estudio }}</h2>
+                <p class="ordenes__fecha">
+                  Pedida el {{ orden.pedida | date: "d 'de' MMMM 'de' y" }}
+                </p>
+              </div>
+              <div class="ordenes__etiquetas">
+                <app-badge variant="info">{{ orden.categoria }}</app-badge>
+                @if (orden.tieneResultado) {
+                  <app-badge variant="success">Con resultado</app-badge>
+                }
+              </div>
+            </header>
+
+            <!-- La preparación va en un aviso y no en letra chica: es lo único
+                 de esta pantalla que cambia lo que la persona hace mañana a la
+                 mañana. Cuando no hay, no se dice nada — inventar un «no
+                 requiere preparación» sería afirmar lo que el catálogo no
+                 dice. -->
+            @if (orden.preparacion !== '') {
+              <app-alert tone="warning" title="Cómo prepararte">
+                {{ orden.preparacion }}
+              </app-alert>
+            }
+
+            <footer class="ordenes__acciones">
+              @if (orden.tieneResultado) {
+                <a
+                  app-link
+                  class="ordenes__resultado"
+                  [routerLink]="['/my-account/diagnostic-results']"
+                  [fragment]="orden.reportId"
+                >
+                  Ver resultado
+                </a>
+              }
+
+              <!-- Reservar hora en un laboratorio es el carril J2. Se muestra
+                   deshabilitado en vez de ocultarlo porque la orden dice «andá
+                   a hacerte esto» y esconder el camino haría creer que no
+                   existe. -->
+              <button app-button variant="secondary" size="sm" disabled>Reservar hora</button>
+              <span class="ordenes__proximamente">Próximamente</span>
+            </footer>
+          </li>
+        }
+      </ul>
+    }
+
+    @default {
+      <app-alert tone="error" title="No pudimos traer tus órdenes">
+        Reintentá en un momento.
+        <button app-button variant="secondary" size="sm" (clicked)="cargar()">Reintentar</button>
+      </app-alert>
+    }
+  }
+}

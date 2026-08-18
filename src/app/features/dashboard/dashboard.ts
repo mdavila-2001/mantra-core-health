@@ -30,6 +30,22 @@ import {
   toCaseStatusPresentation,
 } from '../identity-verification/case-status';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
+import { PatientHome } from './patient-home/patient-home';
+
+/**
+ * Los roles con los que se viene a trabajar, no a atenderse.
+ *
+ * Quien tiene alguno de estos ve el panel de la organización aunque además sea
+ * paciente: entra a hacer su trabajo.
+ */
+const ROLES_DE_TRABAJO: readonly string[] = [
+  'SUPERADMIN',
+  'SECURITY_ADMIN',
+  'SCHEDULING_ADMIN',
+  'SCHEDULING_AGENT',
+  'PRACTITIONER',
+  'CLINICIAN',
+];
 
 /**
  * Panel de inicio de la aplicación autenticada.
@@ -81,6 +97,7 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
     // reportando como import sin usar desde antes de este carril.
     TutorialTarget,
     ViewStateHost,
+    PatientHome,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -141,6 +158,20 @@ export class Dashboard {
 
   /** Sólo quien administra puede listar pacientes; al resto la API le responde 403. */
   protected readonly puedeVerPacientes = computed(() => this.roles().includes('SECURITY_ADMIN'));
+
+  /**
+   * Si quien entra viene a atenderse, y no a trabajar acá.
+   *
+   * Se pregunta por los roles de trabajo y no sólo por `PATIENT`: quien atiende
+   * y además es paciente del sistema entra a trabajar, y su panel es el de
+   * siempre. Al revés dejaría a un profesional sin su tablero el día que alguien
+   * le cargue una ficha de paciente.
+   */
+  protected readonly esPaciente = computed(() => {
+    const roles = this.roles();
+    if (!roles.includes('PATIENT')) return false;
+    return !ROLES_DE_TRABAJO.some((rol) => roles.includes(rol));
+  });
 
   protected readonly pacientes = signal<ViewState<PatientPageResumen>>(loading());
   protected readonly directory = signal<ViewState<PublicProjection>>(loading());

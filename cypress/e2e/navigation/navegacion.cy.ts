@@ -33,17 +33,29 @@ describe('Navegación', () => {
     // el lugar del muro en el menú (carril R2-1) — el muro sigue existiendo
     // como ruta, pero ya no se ofrece desde acá.
     //
-    // El glosario tampoco declara roles: el cliente lo pidió accesible por
-    // cada profesional, no sólo por quien administra.
+    // El glosario ya no está: desde el 18/08/2026 (feedback de la analista,
+    // F-03) declara los roles de quien atiende — es herramienta de trabajo, no
+    // una pantalla del paciente.
+    //
+    // La lista es la misma que fija `navigation.service.spec.ts` para una
+    // sesión sin roles de gestión, más la Guía (que es sólo del paciente):
+    // tutoriales, directorio de laboratorios, archivo clínico, resultados y
+    // cuestionarios propios entraron después de que se escribiera esta prueba
+    // y nadie la actualizó (la suite E2E no corre en el CI caído). Y la vitrina
+    // (`/design-system`) no está: desde H-07 (#131) el grupo «Herramientas» no
+    // se arma para el paciente.
     SideNav.rutas().should('deep.equal', [
       '/dashboard',
+      '/tutorials',
       '/directory',
-      '/glossary',
+      '/laboratory-directory',
       '/my-account',
       '/my-account/appointments',
+      '/my-account/medical-record',
+      '/my-account/diagnostic-results',
+      '/my-account/questionnaires',
       '/my-account/identity/verify',
       '/my-account/identity/cases',
-      '/design-system',
     ]);
     SideNav.rutas().should('not.include', '/administration/users');
 

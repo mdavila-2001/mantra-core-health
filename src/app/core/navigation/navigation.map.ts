@@ -124,6 +124,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M05 profiles',
   },
   {
+    // Grupos y foros (P7). Es la entrada **mínima** que el carril se permite en
+    // este archivo: sin ella la pantalla queda huérfana —el invariante de
+    // `app.routes.spec` exige que toda pantalla cuelgue de una sección— y
+    // `feed` ya no está declarada desde el carril R2-1.
+    //
+    // Sin `roles`, que significa «cualquier sesión» y no «nadie»: un grupo
+    // público lo puede leer cualquiera con sesión, y quién puede publicar en
+    // cada grupo lo decide la API por membresía, no el menú.
+    path: 'groups',
+    label: 'Grupos y foros',
+    group: 'General',
+    icon: 'home',
+    availability: 'disponible',
+    summary: 'Comunidades por tema y especialidad, con su muro y sus integrantes.',
+    module: 'M19 community',
+  },
+  {
     // Directorio de unidades publicadas del módulo 23. Es una sección distinta
     // de `/diagnostics`, que sigue siendo la cola clínica de órdenes/resultados.
     // La ruta tampoco coincide con `/diagnostic-units`, prefijo exclusivo de API.
@@ -255,12 +272,29 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // profesional", no sólo quien administra —, con una pantalla propia que no
     // expone el identificador.
     //
-    // Sin `roles` a propósito: el pedido fue explícito, y la lectura del
-    // catálogo tampoco los exige (UC-03-13).
+    // Los roles son los de quien atiende: la unión de las filas de este mismo
+    // grupo, más quien administra. Nació sin `roles` («cada profesional», y la
+    // lectura del catálogo tampoco los exige — UC-03-13), y por efecto
+    // colateral lo veía también el paciente: es una herramienta de trabajo, no
+    // una pantalla suya (feedback de la analista F-03, decidido el 18/08/2026).
+    // La ruta lo hace cumplir por `seccionRolesGuard`, hija incluida.
     path: 'glossary',
     label: 'Glosario',
     group: 'Atención',
     icon: 'orders',
+    roles: [
+      'PRACTITIONER',
+      'CLINICIAN',
+      'SCHEDULING_ADMIN',
+      'SCHEDULING_AGENT',
+      'SURGEON',
+      'ANESTHESIOLOGIST',
+      'PERIOP_NURSE',
+      'SURGERY_SCHEDULER',
+      'PERIOP_ADMIN',
+      'MEDICAL_VISITOR',
+      'SECURITY_ADMIN',
+    ],
     availability: 'disponible',
     summary: 'Buscá un término médico y su significado en lenguaje llano.',
     module: 'M03 terminology',
@@ -660,6 +694,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'results',
     availability: 'disponible',
     summary: 'Mirá y descargá tus resultados, y compartilos por un tiempo con un profesional.',
+    module: 'M20 diagnostics',
+  },
+  {
+    // Carril J1, lado paciente. Va pegada a «Mis resultados» porque son las dos
+    // mitades del mismo circuito, pero es una entrada aparte y no una pestaña
+    // adentro: contestan preguntas de momentos distintos —«qué me pidieron» y
+    // «qué me volvió»— y la primera es la que tiene algo pendiente que hacer.
+    // Sin `roles` por lo mismo que su hermana: el filtro real es tener perfil
+    // de paciente, y la pantalla lo dice cuando falta.
+    path: 'my-account/diagnostic-orders',
+    label: 'Mis órdenes',
+    group: 'Mi cuenta',
+    icon: 'orders',
+    availability: 'disponible',
+    summary: 'Los estudios que te pidió un médico, con las indicaciones para hacértelos.',
     module: 'M20 diagnostics',
   },
   {

@@ -3,7 +3,7 @@
        de los formularios del repo: `(ngSubmit)` necesita la directiva `NgForm`,
        y sin `FormsModule` importado no se enlaza a nada — el formulario parecería
        funcionar y no enviaría nunca. -->
-  <form class="composer" (submit)="$event.preventDefault()">
+  <form class="composer" data-testid="post-composer" (submit)="$event.preventDefault()">
     <!-- Punto de extensión P6: la advertencia de datos identificables de
          pacientes. Vacío hoy, y por eso no se pinta nada: una advertencia
          inventada acá diría que el sistema detecta algo que no detecta. -->
@@ -19,6 +19,7 @@
       [errorMessage]="excedido() ? 'Te pasaste del largo permitido.' : ''"
     >
       <app-textarea
+        data-testid="post-composer-body"
         [(value)]="cuerpo"
         [rows]="4"
         [maxRows]="14"
@@ -46,6 +47,7 @@
 
     <app-form-field label="Quién puede leerla" [hint]="explicacion()">
       <app-select
+        data-testid="post-composer-visibility"
         [options]="opciones"
         [value]="visibilidad()"
         (valueChange)="cambiarVisibilidad($event)"
@@ -61,6 +63,7 @@
            de archivos falso detrás. -->
       <button
         app-button
+        data-testid="post-composer-media"
         type="button"
         variant="ghost"
         size="sm"
@@ -75,6 +78,7 @@
 
       <button
         app-button
+        data-testid="post-composer-submit"
         type="button"
         variant="primary"
         size="md"

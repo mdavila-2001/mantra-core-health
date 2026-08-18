@@ -19,10 +19,30 @@ import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
   APP_TITLE,
+  ROLES_ROUTE_DATA,
   SECTION_ROUTE_DATA,
   titleOf,
   type AppSection,
 } from './core/navigation/navigation.types';
+
+/**
+ * Los roles de quien atiende, para las hijas de «Mi perfil» que son sólo suyas.
+ *
+ * Es la misma pareja que declaran «Archivo clínico» y «Laboratorio e imagen» en
+ * el registro (`navigation.map.ts`): la Guía es del paciente; configurar el
+ * perfil profesional, la vitrina pública y los artículos médicos son de quien
+ * atiende. Un paciente que escribía la dirección llegaba a una pantalla que le
+ * hablaba de «las personas que atendí» (feedback de la analista, 18/08/2026).
+ */
+const ROLES_DE_QUIEN_ATIENDE: readonly string[] = ['CLINICIAN', 'PRACTITIONER'];
+
+/** La declaración que cierra una hija de «Mi perfil» a quien atiende. */
+function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
+  return {
+    canActivate: [seccionRolesGuard],
+    data: { [ROLES_ROUTE_DATA]: ROLES_DE_QUIEN_ATIENDE },
+  };
+}
 
 /**
  * Qué componente pinta cada sección **que ya tiene pantalla**.
@@ -55,10 +75,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // el enlace guardado llega igual. Borrarla es una decisión de producto que el
   // cliente no pidió — dijo «sacar del perfil de paciente», no «eliminar».
   feed: () => import('./features/feed/feed').then((m) => m.Feed),
-  // Carril P2 · la bandeja de mensajería. Diferida: no es la primera pantalla
-  // de nadie y arrastra el buscador del directorio.
-  messaging: () =>
-    import('./features/messaging/messaging').then((m) => m.Messaging),
   // Carril P1 · el centro de notificaciones. Diferido: la campana del header ya
   // resuelve el 90 % de los casos —enterarse y saltar— y esta pantalla sólo la
   // abre quien viene a revisar.
@@ -66,6 +82,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/notifications/notification-center').then(
       (m) => m.NotificationCenter,
     ),
+  // Carril P2 · la bandeja de mensajería. Diferida: no es la primera pantalla
+  // de nadie y arrastra el buscador del directorio.
+  messaging: () =>
+    import('./features/messaging/messaging').then((m) => m.Messaging),
+  // El directorio de grupos (P7). Diferido como el muro: no es la primera
+  // pantalla de nadie y arrastra la tarjeta de grupo con su alta.
+  groups: () => import('./features/groups/groups').then((m) => m.Groups),
   // Carril P9 · las preferencias de aviso. Diferida: se abre una vez y se
   // olvida, que es exactamente lo que una pantalla de preferencias debería
   // conseguir.
@@ -131,6 +154,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'my-account/diagnostic-results': () =>
     import('./features/account/diagnostic-results/diagnostic-results').then(
       (m) => m.DiagnosticResults,
+    ),
+  'my-account/diagnostic-orders': () =>
+    import('./features/account/diagnostic-orders/diagnostic-orders').then(
+      (m) => m.DiagnosticOrders,
     ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
@@ -219,6 +246,17 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/messaging/thread/thread')
         .then((m) => m.Thread)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El grupo por dentro (P7). El directorio es la sección `groups`, que el
+    // registro declara; esto es la ficha a la que se llega desde una tarjeta,
+    // y por eso vive acá y no en el menú.
+    path: 'groups/:groupId',
+    title: `${APP_TITLE} - Grupo`,
+    loadComponent: () =>
+      import('./features/groups/group-detail/group-detail')
+        .then((m) => m.GroupDetail)
         .catch(() => chunkFallido()),
   },
   {
@@ -347,9 +385,11 @@ const PANTALLAS_HIJAS: Routes = [
   },
   {
     // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
-    // nunca desde el menú.
+    // nunca desde el menú. Y sólo la abre quien atiende: «Mi perfil» no
+    // declara roles, así que la restricción va en la ruta.
     path: 'my-account/edit',
     title: `${APP_TITLE} - Configurar tu perfil`,
+    ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
         .then((m) => m.PractitionerProfileEdit)
@@ -359,6 +399,7 @@ const PANTALLAS_HIJAS: Routes = [
     // La vitrina pública: se configura y se ve en la misma pantalla.
     path: 'my-account/preview',
     title: `${APP_TITLE} - Tu perfil público`,
+    ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/public-profile-preview/public-profile-preview')
         .then((m) => m.PublicProfilePreview)
@@ -369,6 +410,7 @@ const PANTALLAS_HIJAS: Routes = [
     // sin vitrina, no hay dónde publicar un artículo.
     path: 'my-account/articles',
     title: `${APP_TITLE} - Artículos médicos`,
+    ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/medical-articles/medical-articles')
         .then((m) => m.MedicalArticles)
@@ -432,9 +474,11 @@ const PANTALLAS_HIJAS: Routes = [
     // se comparte: «mirá qué quiere decir esto» es un enlace, y un panel no
     // tiene enlace. Cuelga de `/glossary`, así que el rastro de migas y la
     // sección marcada en el menú siguen diciendo «Glosario» sin que haya que
-    // tocar `navigation.map.ts`.
+    // tocar `navigation.map.ts`. Y hereda sus roles: un enlace compartido a un
+    // término no le abre al paciente lo que el listado le cierra.
     path: 'glossary/:conceptId',
     title: `${APP_TITLE} - Término del glosario`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/glossary/glossary-term')
         .then((m) => m.GlossaryTerm)

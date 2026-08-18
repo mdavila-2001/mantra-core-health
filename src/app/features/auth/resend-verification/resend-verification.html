@@ -48,7 +48,7 @@
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="reenviar-form">
         <app-form-field
           label="Correo o documento"
-          hint="El mismo con el que entrás. No es a dónde se manda: eso lo decide el sistema."
+          hint="El mismo con el que entrás. El enlace va al correo de tu cuenta."
           [required]="true"
           [errorMessage]="
             form.controls.identifier.touched && form.controls.identifier.invalid

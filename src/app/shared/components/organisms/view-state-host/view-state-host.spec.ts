@@ -174,6 +174,15 @@ describe('ViewStateHost', () => {
       expect(textoVisible()).not.toContain('permiso');
       expect(textoVisible()).toContain('No encontramos lo que buscás');
     });
+
+    it('le habla a una persona: «la dirección», no «el identificador»', async () => {
+      // «Identificador» es vocabulario de sistema; quien llegó por un enlace
+      // roto no tiene ningún identificador que verificar (barrido del 18/08/2026).
+      await conEstado(notFound());
+
+      expect(textoVisible()).toContain('Verificá la dirección');
+      expect(textoVisible()).not.toContain('identificador');
+    });
   });
 
   describe('S7 · dato viejo', () => {
