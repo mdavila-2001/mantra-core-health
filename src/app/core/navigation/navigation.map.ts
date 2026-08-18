@@ -678,6 +678,29 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M-surveys',
   },
   {
+    // Carril P1 · el centro de notificaciones, el otro extremo de la campana.
+    //
+    // Va en «Mi cuenta» y no en «General» porque la bandeja es de la persona,
+    // no del producto: es la misma regla que pone «Mis turnos» y «Mi historia
+    // clínica» acá y no junto al panel.
+    //
+    // **La ruta no puede llamarse `notifications`.** El proxy enruta ese
+    // prefijo hacia la API (es donde vive `GET /notifications/me`), así que una
+    // ruta de Angular con ese nombre devolvería JSON en producción en lugar de
+    // la pantalla. Es el defecto #137 al revés, y por eso el nombre es
+    // `notification-center`.
+    //
+    // Sin `roles`: cualquiera con sesión tiene bandeja. El backend sólo
+    // devuelve la propia, así que no hay nada que filtrar por rol.
+    path: 'notification-center',
+    label: 'Notificaciones',
+    group: 'Mi cuenta',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Revisá todos tus avisos: recetas, consultas, turnos y mensajes.',
+    module: 'M35 messaging',
+  },
+  {
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino
     // del 403 `IDENTITY_VERIFICATION_REQUIRED`: **no se renombra**. Cambiarla
     // rompería la puerta que traduce ese error en una salida.

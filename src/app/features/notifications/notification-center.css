@@ -1,0 +1,78 @@
+.avisos__alerta {
+  display: block;
+  margin-bottom: var(--e4);
+}
+
+.avisos__barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin-bottom: var(--e4);
+}
+
+.avisos__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* Ancho de lectura: una línea que cruza una pantalla ancha entera obliga a
+     barrer con la vista para volver al principio de la siguiente. */
+  max-inline-size: 68ch;
+}
+
+.avisos__fila {
+  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
+  border-radius: var(--radio-md, 0.75rem);
+  background: var(--surface-raised, #fff);
+}
+
+/* Sin leer se marca con una barra y con peso, no sólo con color: el color solo
+   no distingue nada para quien no lo percibe. */
+.avisos__fila.is-sin-leer {
+  border-inline-start: 4px solid var(--accent, #0e6690);
+}
+
+.avisos__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  inline-size: 100%;
+  padding: var(--e3);
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+button.avisos__item {
+  cursor: pointer;
+}
+
+button.avisos__item:hover,
+button.avisos__item:focus-visible {
+  background: var(--surface-hover, rgb(0 0 0 / 4%));
+}
+
+.avisos__fila.is-sin-leer .avisos__titulo {
+  font-weight: 600;
+}
+
+.avisos__detalle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.avisos__fecha {
+  color: var(--text-tertiary, var(--text-secondary));
+  font-size: 0.8rem;
+}
+
+.avisos__mas {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--e5);
+}

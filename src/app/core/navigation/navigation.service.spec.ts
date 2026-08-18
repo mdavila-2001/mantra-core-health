@@ -95,6 +95,9 @@ describe('NavigationService', () => {
         // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
         // perfil de paciente, que es un dato de la cuenta y no un rol.
         '/my-account/questionnaires',
+        // Carril P1: la bandeja es de la persona y el backend sólo devuelve la
+        // propia, así que no hay rol que filtrar.
+        '/notification-center',
         '/my-account/identity/verify',
         '/my-account/identity/cases',
       ]);

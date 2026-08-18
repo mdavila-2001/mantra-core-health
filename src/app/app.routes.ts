@@ -59,6 +59,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // de nadie y arrastra el buscador del directorio.
   messaging: () =>
     import('./features/messaging/messaging').then((m) => m.Messaging),
+  // Carril P1 · el centro de notificaciones. Diferido: la campana del header ya
+  // resuelve el 90 % de los casos —enterarse y saltar— y esta pantalla sólo la
+  // abre quien viene a revisar.
+  'notification-center': () =>
+    import('./features/notifications/notification-center').then(
+      (m) => m.NotificationCenter,
+    ),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
