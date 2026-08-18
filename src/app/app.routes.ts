@@ -121,6 +121,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/diagnostic-results/diagnostic-results').then(
       (m) => m.DiagnosticResults,
     ),
+  'my-account/diagnostic-orders': () =>
+    import('./features/account/diagnostic-orders/diagnostic-orders').then(
+      (m) => m.DiagnosticOrders,
+    ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
