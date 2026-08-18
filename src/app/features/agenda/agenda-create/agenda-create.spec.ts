@@ -43,6 +43,7 @@ describe('AgendaCreate', () => {
   function crear(
     rolesIniciales: readonly string[] = ['SCHEDULING_ADMIN'],
     tenant: string | null = TENANT,
+    perfilProfesional: string | null = null,
   ): void {
     roles = signal<readonly string[]>(rolesIniciales);
     TestBed.configureTestingModule({
@@ -52,7 +53,11 @@ describe('AgendaCreate', () => {
         provideRouter([]),
         {
           provide: AuthService,
-          useValue: { roles, activeTenantId: signal<string | null>(tenant) },
+          useValue: {
+            roles,
+            activeTenantId: signal<string | null>(tenant),
+            practitionerProfileId: signal<string | null>(perfilProfesional),
+          },
         },
         { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
       ],
@@ -137,6 +142,78 @@ describe('AgendaCreate', () => {
     // Ni el stepper ni el formulario: sólo el aviso de elegir organización.
     expect(fixture.debugElement.query(By.css('app-stepper'))).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Elegí una organización');
+    http.expectNone(() => true);
+  });
+
+  /* -- autoservicio del profesional ---------------------------------------- */
+
+  /**
+   * El aviso de la agenda invita al profesional a «Publicar mi agenda» y su CTA
+   * abre esta pantalla. Mientras el rol no estuvo en la lista, el viaje moría
+   * acá con «No tenés permiso», en el único camino que lo vuelve reservable.
+   */
+  it('un profesional puede abrir el asistente', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    expect(fixture.nativeElement.textContent).not.toContain('No tenés permiso');
+    expect(fixture.debugElement.query(By.css('app-stepper'))).not.toBeNull();
+    http.expectNone(() => true);
+  });
+
+  /**
+   * El backend le acota el recurso al suyo (`assertPuedeCrearRecurso`). Son tres
+   * datos que el profesional no tiene por qué saber —uno es un uuid—, así que la
+   * pantalla los aporta en vez de pedirlos.
+   */
+  it('al profesional le fija la identidad del recurso y no se la pide', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    const c = acc.formRecurso.controls;
+    expect(c['resourceType'].value).toBe('PRACTITIONER');
+    expect(c['resourceRefType'].value).toBe('practitioner_profiles');
+    expect(c['resourceRefId'].value).toBe(REF);
+    expect(c['resourceType'].disabled).toBe(true);
+    expect(c['resourceRefType'].disabled).toBe(true);
+    expect(c['resourceRefId'].disabled).toBe(true);
+    http.expectNone(() => true);
+  });
+
+  it('el profesional publica su agenda sin tocar los campos de identidad', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    // Sólo completa lo suyo: el nombre. Lo demás ya está puesto.
+    acc.formRecurso.controls['name'].setValue('Dra. Ríos');
+    acc.siguiente();
+
+    const req = http.expectOne('/scheduling/resources');
+    // `getRawValue()` lee también los deshabilitados: el cuerpo va completo.
+    expect(req.request.body).toMatchObject({
+      tenantId: TENANT,
+      resourceType: 'PRACTITIONER',
+      resourceRefType: 'practitioner_profiles',
+      resourceRefId: REF,
+      name: 'Dra. Ríos',
+    });
+    req.flush({ id: 'res-1', name: 'Dra. Ríos', stateConceptId: 'c' });
+    expect(acc.fase()).toBe(1);
+  });
+
+  /** Sin perfil en la sesión no hay agenda propia: se dice antes de las 5 fases. */
+  it('un profesional sin perfil en la sesión ve el aviso y no el formulario', () => {
+    crear(['PRACTITIONER'], TENANT, null);
+
+    expect(fixture.debugElement.query(By.css('app-stepper'))).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('perfil profesional');
+    http.expectNone(() => true);
+  });
+
+  /** Quien administra el catálogo arma la agenda de cualquiera: nada se fija. */
+  it('a quien administra no le fija ni deshabilita nada', () => {
+    crear(['SCHEDULING_ADMIN'], TENANT, null);
+
+    const c = acc.formRecurso.controls;
+    expect(c['resourceType'].value).toBe('');
+    expect(c['resourceRefId'].enabled).toBe(true);
     http.expectNone(() => true);
   });
 

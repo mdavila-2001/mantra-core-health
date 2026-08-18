@@ -536,4 +536,85 @@ describe('CommunityClient', () => {
     expect(miembros.request.params.get('actorProfileId')).toBe('a-1');
     miembros.flush(paginaVacia);
   });
+
+  /**
+   * Las tres caras inversas van por query, no por el id de la fila: la pantalla
+   * sabe a quién dejó de seguir, no el uuid del vínculo.
+   */
+  it('unfollow, unbookmark y unblock identifican el vínculo por query', () => {
+    client
+      .unfollow({
+        followerProfileId: 'p-1',
+        followableType: 'PROFILE',
+        followableRefId: 'p-2',
+      })
+      .subscribe();
+    const unfollow = http.expectOne((r) => r.url === '/community/follows');
+    expect(unfollow.request.method).toBe('DELETE');
+    expect(unfollow.request.params.get('followerProfileId')).toBe('p-1');
+    expect(unfollow.request.params.get('followableType')).toBe('PROFILE');
+    expect(unfollow.request.params.get('followableRefId')).toBe('p-2');
+    unfollow.flush({ removed: true });
+
+    client
+      .unbookmark({
+        profileId: 'p-1',
+        bookmarkableType: 'POST',
+        bookmarkableRefId: 'post-1',
+      })
+      .subscribe();
+    const unbookmark = http.expectOne((r) => r.url === '/community/bookmarks');
+    expect(unbookmark.request.method).toBe('DELETE');
+    // Sin colección declarada no se manda el parámetro: mandarlo vacío acotaría
+    // el borrado a «la colección llamada cadena vacía».
+    expect(unbookmark.request.params.has('collectionName')).toBe(false);
+    unbookmark.flush({ removed: false });
+
+    client
+      .unblock({ blockerProfileId: 'p-1', blockedProfileId: 'p-2' })
+      .subscribe();
+    const unblock = http.expectOne((r) => r.url === '/community/blocks');
+    expect(unblock.request.method).toBe('DELETE');
+    expect(unblock.request.params.get('blockedProfileId')).toBe('p-2');
+    unblock.flush({ removed: true });
+  });
+
+  it('follow, bookmark y block mandan el cuerpo tal cual', () => {
+    client
+      .follow({
+        followerProfileId: 'p-1',
+        followableType: 'PROFILE',
+        followableRefId: 'p-2',
+      })
+      .subscribe();
+    const follow = http.expectOne(
+      (r) => r.url === '/community/follows' && r.method === 'POST',
+    );
+    expect(follow.request.body).toEqual({
+      followerProfileId: 'p-1',
+      followableType: 'PROFILE',
+      followableRefId: 'p-2',
+    });
+    follow.flush({ id: 'f-1' });
+
+    client
+      .bookmark({
+        profileId: 'p-1',
+        bookmarkableType: 'POST',
+        bookmarkableRefId: 'post-1',
+      })
+      .subscribe();
+    http
+      .expectOne((r) => r.url === '/community/bookmarks' && r.method === 'POST')
+      .flush({ id: 'b-1' });
+
+    client
+      .block({ blockerProfileId: 'p-1', blockedProfileId: 'p-2', reason: 'SPAM' })
+      .subscribe();
+    const block = http.expectOne(
+      (r) => r.url === '/community/blocks' && r.method === 'POST',
+    );
+    expect(block.request.body.reason).toBe('SPAM');
+    block.flush({ id: 'blk-1' });
+  });
 });

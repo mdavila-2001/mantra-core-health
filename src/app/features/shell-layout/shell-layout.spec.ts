@@ -171,6 +171,23 @@ describe('ShellLayout', () => {
     expect(rutasDelMenu().at(-1)).toBe('/design-system');
   });
 
+  function rotulosDelMenu(): readonly string[] {
+    const secciones =
+      interno<() => readonly { items: readonly { label: string }[] }[]>('sections')();
+    return secciones.flatMap((s) => [...s.items].map((i) => i.label));
+  }
+
+  it('al paciente no se le ofrece la vitrina; a quien administra, sí', () => {
+    // H-07: el paciente nunca ve vocabulario de sistema, y «Sistema de diseño»
+    // es una herramienta de desarrollo, no algo de su cuenta.
+    abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+    expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
+    expect(rutasDelMenu()).not.toContain('/design-system');
+
+    abrirSesion({ sub: 'u-2', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+    expect(rotulosDelMenu()).toContain('Sistema de diseño');
+  });
+
   /**
    * El armazón es **el único lugar que puede ver las dos capas**: `core/` no
    * importa de `shared/` (lo hace cumplir `scripts/check-architecture.mjs`), así
@@ -356,6 +373,16 @@ describe('ShellLayout', () => {
       abrirSesion({ sub: 'u-1', name: 'Rocío Salazar', roles: [], tenants: ['t-1'] });
 
       expect(raiz().querySelector('[data-testid="header-cuenta"]')?.textContent?.trim()).toBe('RS');
+    });
+
+    it('el menú de la cuenta nombra el rol en palabras, nunca con el código del token', () => {
+      // H-07: «USER · PATIENT» era vocabulario de sistema a la vista del paciente.
+      abrirSesion({ sub: 'u-1', name: 'Ana Salas', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+
+      const resumen = raiz().querySelector('.app-header__account-summary')?.textContent ?? '';
+      expect(resumen).toContain('Paciente');
+      expect(resumen).not.toContain('PATIENT');
+      expect(resumen).not.toContain('USER');
     });
   });
 

@@ -19,17 +19,23 @@ describe('PostCard', () => {
 
   const texto = (): string => fixture.nativeElement.textContent as string;
 
-  const post: PostListItem = {
+  const post = (extra: Partial<PostListItem> = {}): PostListItem => ({
     id: 'p-1',
     authorPublicProfileId: 'abcdef01-2345-6789-abcd-ef0123456789',
     postTypeConceptId: 'c-tipo',
     bodyText: 'Un hallazgo de la consulta de hoy.',
     publishedAt: new Date('2026-08-14T09:00:00.000Z'),
-  };
+    reactions: { tallies: [], total: 0 },
+    commentCount: 0,
+    ...extra,
+  });
 
-  const montar = (actorProfileId: string | null): void => {
+  const montar = (
+    actorProfileId: string | null,
+    publicacion: PostListItem = post(),
+  ): void => {
     fixture = TestBed.createComponent(PostCard);
-    fixture.componentRef.setInput('post', post);
+    fixture.componentRef.setInput('post', publicacion);
     fixture.componentRef.setInput('actorProfileId', actorProfileId);
     fixture.detectChanges();
   };
@@ -39,6 +45,18 @@ describe('PostCard', () => {
       fixture.nativeElement.querySelectorAll('button'),
     );
     botones.find((b) => b.textContent!.includes(etiqueta))!.click();
+    fixture.detectChanges();
+  };
+
+  /**
+   * Pulsa por texto **exacto**. Hace falta porque «Comentar» está contenido en
+   * «Comentarios (0)», y buscar por inclusión abría el hilo en vez de enviar.
+   */
+  const pulsarExacto = (etiqueta: string): void => {
+    const botones: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    );
+    botones.find((b) => b.textContent!.trim() === etiqueta)!.click();
     fixture.detectChanges();
   };
 
@@ -63,11 +81,17 @@ describe('PostCard', () => {
    * obligatorio y es la mitad de la clave del upsert. Se dice, no se ofrece un
    * botón que va a fallar.
    */
-  it('sin perfil público no ofrece reaccionar: lo explica', () => {
+  it('sin perfil público no ofrece escribir: lo explica', () => {
     montar(null);
 
     expect(texto()).toContain('Creá tu perfil público para reaccionar');
-    expect(fixture.nativeElement.querySelectorAll('button').length).toBe(0);
+    // Queda el botón de abrir comentarios —leer no exige perfil—, pero ninguno
+    // de los que escriben.
+    const etiquetas: string[] = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ).map((b) => (b as HTMLButtonElement).textContent ?? '');
+    expect(etiquetas.some((t) => t.includes('Me sirve'))).toBe(false);
+    expect(etiquetas.some((t) => t.includes('Guardar'))).toBe(false);
   });
 
   it('reaccionar manda el upsert con los cuatro campos', () => {
@@ -92,9 +116,161 @@ describe('PostCard', () => {
     pulsar('Me sirve');
 
     // Todavía sin respuesta: el gesto ya se siente.
-    expect(texto()).toContain('1');
+    expect(texto()).toContain('1 reacción');
 
     http.expectOne((r) => r.url === '/community/reactions').flush({ id: 'r-1' });
+  });
+
+  /**
+   * El hueco que cierra el carril: el contador arrancaba en cero y sólo subía
+   * con el gesto del momento, así que al recargar una publicación con doce
+   * reacciones mostraba cero y el botón propio aparecía apagado aunque la
+   * reacción estuviera guardada.
+   */
+  it('parte del recuento que trajo la lectura, no de cero', () => {
+    montar(
+      'pp-1',
+      post({
+        reactions: {
+          tallies: [{ reactionTypeConceptId: 'c-like', reactionType: 'LIKE', count: 12 }],
+          total: 12,
+          actorReactionType: 'INSIGHTFUL',
+        },
+        commentCount: 3,
+      }),
+    );
+
+    expect(texto()).toContain('12 reacciones');
+    expect(texto()).toContain('Comentarios (3)');
+
+    const botones: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    );
+    const pensar = botones.find((b) => b.textContent!.includes('Me hizo pensar'))!;
+    // El botón queda marcado sin ningún gesto en esta sesión: lo dijo el servidor.
+    expect(pensar.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  /**
+   * Cambiar de reacción no agrega una segunda: el backend hace upsert sobre
+   * `(actor, objeto)`, así que el total no puede subir dos veces.
+   */
+  it('cambiar la reacción propia no vuelve a sumar al total', () => {
+    montar(
+      'pp-1',
+      post({
+        reactions: {
+          tallies: [{ reactionTypeConceptId: 'c-like', reactionType: 'LIKE', count: 4 }],
+          total: 4,
+          actorReactionType: 'LIKE',
+        },
+      }),
+    );
+
+    pulsar('Me hizo pensar');
+
+    expect(texto()).toContain('4 reacciones');
+    http.expectOne((r) => r.url === '/community/reactions').flush({ id: 'r-1' });
+  });
+
+  it('guardar manda el marcador y quitarlo lo borra', () => {
+    montar('pp-1');
+    pulsar('Guardar');
+
+    const alta = http.expectOne((r) => r.url === '/community/bookmarks');
+    expect(alta.request.method).toBe('POST');
+    expect(alta.request.body).toEqual({
+      profileId: 'pp-1',
+      bookmarkableType: 'POST',
+      bookmarkableRefId: 'p-1',
+    });
+    alta.flush({ id: 'b-1' });
+
+    fixture.componentRef.setInput('guardado', true);
+    fixture.detectChanges();
+    pulsar('Guardada');
+
+    const baja = http.expectOne((r) => r.url.startsWith('/community/bookmarks'));
+    expect(baja.request.method).toBe('DELETE');
+    baja.flush({ removed: true });
+  });
+
+  it('abrir el hilo lo relee, no muestra una copia vieja', () => {
+    montar('pp-1');
+    pulsar('Comentarios');
+
+    http
+      .expectOne((r) => r.url === '/community/posts/p-1/comments')
+      .flush({ items: [], count: 0, limit: 20, nextCursor: null });
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Todavía no hay comentarios');
+
+    // Volver a abrirlo pide de nuevo: quien lo abre quiere saber si contestaron,
+    // y una copia guardada le mostraría la conversación de hace diez minutos.
+    pulsar('Ocultar');
+    pulsar('Comentarios');
+
+    http
+      .expectOne((r) => r.url === '/community/posts/p-1/comments')
+      .flush({
+        items: [
+          {
+            id: 'c-1',
+            authorProfileId: 'ffffffff-0000-0000-0000-000000000000',
+            bodyText: 'Coincido con el hallazgo.',
+            parentCommentId: null,
+            threadDepth: 0,
+            replyCount: 0,
+            createdAt: '2026-08-14T11:00:00.000Z',
+            replies: [],
+          },
+        ],
+        count: 1,
+        limit: 20,
+        nextCursor: null,
+      });
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Coincido con el hallazgo.');
+  });
+
+  it('comentar manda el cuerpo y relee el hilo', () => {
+    montar('pp-1');
+    pulsar('Comentarios');
+    http
+      .expectOne((r) => r.url === '/community/posts/p-1/comments')
+      .flush({ items: [], count: 0, limit: 20, nextCursor: null });
+    fixture.detectChanges();
+
+    const area: HTMLTextAreaElement =
+      fixture.nativeElement.querySelector('textarea');
+    area.value = 'Gracias por compartirlo.';
+    area.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    pulsarExacto('Comentar');
+
+    const alta = http.expectOne((r) => r.url === '/community/comments');
+    expect(alta.request.body).toEqual({
+      authorProfileId: 'pp-1',
+      commentableRefId: 'p-1',
+      bodyText: 'Gracias por compartirlo.',
+      commentableType: 'POST',
+    });
+    alta.flush({ id: 'c-9' });
+    fixture.detectChanges();
+
+    // El hilo se relee en vez de insertarse a mano: el servidor decide la
+    // profundidad, el orden y el `rootCommentId`.
+    http
+      .expectOne((r) => r.url === '/community/posts/p-1/comments')
+      .flush({ items: [], count: 0, limit: 20, nextCursor: null });
+    fixture.detectChanges();
+
+    // El hilo quedó abierto, así que el botón dice «Ocultar»; lo que importa es
+    // que el contador subió a 1 y no se quedó en el que trajo la lectura.
+    expect(texto()).toContain('Ocultar (1)');
   });
 
   /**

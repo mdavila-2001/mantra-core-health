@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { rolesConEtiqueta } from '../../../core/auth/role-labels';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
@@ -125,7 +126,13 @@ export class MyProfile {
 
   protected readonly datos = computed(() => dataOf(this.resumen()));
 
-  protected readonly roles = this.auth.roles;
+  /**
+   * Los roles con etiqueta, para las insignias de «Tu acceso».
+   *
+   * El código crudo no se pinta —es vocabulario de sistema— pero sigue viajando
+   * en `data-role` para quien lo lea por máquina; el rol sin etiqueta se omite.
+   */
+  protected readonly rolesLegibles = computed(() => rolesConEtiqueta(this.auth.roles()));
 
   protected readonly tenantName = computed(() => {
     const id = this.auth.activeTenantId();

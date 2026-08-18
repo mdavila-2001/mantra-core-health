@@ -12,6 +12,7 @@ import { AppButton } from '../../shared/components/atoms/button/button';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
+import { Composer } from './composer/composer';
 import { PostCard } from './post-card/post-card';
 
 /** Cuántas publicaciones se piden por página. */
@@ -49,7 +50,7 @@ const PAGE_SIZE = 20;
  */
 @Component({
   selector: 'app-feed',
-  imports: [Alert, AppButton, EmptyState, PageHeader, PostCard],
+  imports: [Alert, AppButton, Composer, EmptyState, PageHeader, PostCard],
   templateUrl: './feed.html',
   styleUrl: './feed.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -95,7 +96,13 @@ export class Feed {
     });
   }
 
-  /** Trae la primera página, descartando lo que hubiera. */
+  /**
+   * Trae la primera página, descartando lo que hubiera.
+   *
+   * Es también lo que se hace al publicar: la publicación propia entra al muro
+   * por el fan-out del worker, no por una inserción del cliente, así que la única
+   * forma honesta de mostrarla es volver a pedir la página.
+   */
   protected recargar(): void {
     this.entradas.set([]);
     this.cursor.set(null);
