@@ -644,6 +644,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
+    // Carril J1, lado paciente. Va pegada a «Mis resultados» porque son las dos
+    // mitades del mismo circuito, pero es una entrada aparte y no una pestaña
+    // adentro: contestan preguntas de momentos distintos —«qué me pidieron» y
+    // «qué me volvió»— y la primera es la que tiene algo pendiente que hacer.
+    // Sin `roles` por lo mismo que su hermana: el filtro real es tener perfil
+    // de paciente, y la pantalla lo dice cuando falta.
+    path: 'my-account/diagnostic-orders',
+    label: 'Mis órdenes',
+    group: 'Mi cuenta',
+    icon: 'orders',
+    availability: 'disponible',
+    summary: 'Los estudios que te pidió un médico, con las indicaciones para hacértelos.',
+    module: 'M20 diagnostics',
+  },
+  {
     // Carril 10, lado paciente. Sin `roles` a propósito, por el mismo motivo
     // que «Mis turnos»: el filtro real es tener perfil de paciente, que no es
     // un rol sino un dato de la cuenta —el claim `pid` del token—, y la
