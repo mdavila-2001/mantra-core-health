@@ -174,6 +174,35 @@ describe('TerminologyClient', () => {
     req.flush({ items: [], count: 0, limit: 50 });
   });
 
+  // Sin `lang`, el endpoint devuelve el rótulo del sistema de codificación, que
+  // está en inglés: es lo que dejó «Academic degree credential» y «National
+  // jurisdiction» a la vista en el perfil del profesional, con la traducción ya
+  // cargada en el catálogo y nadie pidiéndola. Va con test propio porque el
+  // parámetro es invisible en pantalla hasta que alguien mira una etiqueta.
+  it('readConceptLabels pide las etiquetas en castellano', () => {
+    client.readConceptLabels(['c-A']).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts');
+    expect(req.request.params.get('lang')).toBe('ES');
+
+    req.flush({ items: [], count: 0, limit: 50 });
+  });
+
+  it('readConceptLabels pide el idioma también en cada tanda de una lectura grande', () => {
+    // El troceo es por el tope de 200 ids del backend: si el idioma se pusiera
+    // fuera del `map`, la segunda tanda saldría sin él y media pantalla
+    // quedaría en inglés — que es peor que toda, porque parece un dato roto.
+    const muchos = Array.from({ length: 250 }, (_, i) => `c-${i}`);
+    client.readConceptLabels(muchos).subscribe();
+
+    const reqs = http.match((r) => r.url === '/terminology/concepts');
+    expect(reqs.length).toBe(2);
+    for (const req of reqs) {
+      expect(req.request.params.get('lang')).toBe('ES');
+      req.flush({ items: [], count: 0, limit: 50 });
+    }
+  });
+
   it('readConceptLabels devuelve un mapa indexado por conceptId', () => {
     let etiquetas: ReadonlyMap<string, ValueSetOption> = new Map();
     client.readConceptLabels(['c-A']).subscribe((mapa) => (etiquetas = mapa));
