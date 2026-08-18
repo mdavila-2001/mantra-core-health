@@ -71,7 +71,7 @@
   <app-card variant="outlined" padding="lg" class="panel__bloque--ancho" data-testid="panel-accesos">
     <h2 class="panel__card-title">Tus accesos</h2>
     <p class="panel__nota">
-      Lo que tus roles habilitan en esta organización. Pasá el cursor o llegá con
+      Lo que tu cuenta habilita en esta organización. Pasá el cursor o llegá con
       el tabulador para ver qué hace cada una.
     </p>
 
@@ -152,40 +152,34 @@
     </app-card>
   }
 
-  <!-- ─── Sesión ────────────────────────────────────────────────────────────
+  <!-- ─── Cuenta ────────────────────────────────────────────────────────────
        Todo sale del access token: ninguna petición de por medio, porque la API
-       no expone `/me` y el token ya trae `sub`, `roles` y `tenants`. -->
+       no expone `/me` y el token ya trae `sub`, `roles` y `tenants`. Se muestra
+       sólo lo que le dice algo a la persona: ni identificadores internos ni el
+       código de los roles —el paciente no tiene por qué leer `PATIENT`—. El
+       código viaja en `data-role`, para quien lo necesite leer por máquina. -->
   <app-card variant="outlined" padding="lg" data-testid="panel-sesion">
-    <h2 class="panel__card-title">Tu sesión</h2>
+    <h2 class="panel__card-title">Tu cuenta</h2>
 
     <dl class="panel__datos">
-      <dt>Identificador</dt>
-      <dd><code class="panel__id" data-testid="panel-user-id">{{ userId() ?? '—' }}</code></dd>
-
       <dt>Roles</dt>
       <dd class="panel__roles" data-testid="panel-roles">
-        @for (role of roles(); track role) {
-          <app-badge variant="info" [value]="role" />
+        @for (rol of rolesLegibles(); track rol.codigo) {
+          <app-badge variant="info" [value]="rol.etiqueta" [attr.data-role]="rol.codigo" />
         } @empty {
-          <span class="panel__vacio">El token no declara ningún rol.</span>
+          <span class="panel__vacio">Tu cuenta no tiene ningún rol asignado.</span>
         }
       </dd>
 
-      <dt>Organización activa</dt>
+      <dt>Organización</dt>
       <dd>
         @if (tenantName(); as nombre) {
           {{ nombre }}
-          <br />
-          <code class="panel__id">{{ activeTenantId() }}</code>
         } @else {
           <span class="panel__vacio">Sin organización activa.</span>
         }
       </dd>
     </dl>
-
-    <p class="panel__nota">
-      Estos datos salen del propio token de acceso. No hay ninguna petición detrás.
-    </p>
   </app-card>
 
   <!-- ─── Directorio ────────────────────────────────────────────────────────
@@ -210,10 +204,5 @@
         </p>
       }
     </app-view-state-host>
-
-    <p class="panel__nota">
-      Lectura real de <code>GET /public/directory</code>: cruza el proxy, el interceptor y la
-      traducción de errores.
-    </p>
   </app-card>
 </div>

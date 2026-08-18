@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { rolesConEtiqueta } from '../../core/auth/role-labels';
 import { IdentityClient } from '../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
@@ -100,12 +101,19 @@ export class Dashboard {
   private readonly identity = inject(IdentityClient);
   private readonly navigation = inject(NavigationService);
 
-  protected readonly userId = this.auth.userId;
   protected readonly roles = this.auth.roles;
   protected readonly activeTenantId = this.auth.activeTenantId;
   protected readonly displayName = this.auth.displayName;
 
-  /** La organización activa por su nombre; el identificador queda para reportar. */
+  /**
+   * Los roles con etiqueta, para las insignias de «Tu cuenta».
+   *
+   * El código crudo no se pinta —es vocabulario de sistema— pero sigue viajando en
+   * `data-role` para quien lo lea por máquina; el rol sin etiqueta se omite.
+   */
+  protected readonly rolesLegibles = computed(() => rolesConEtiqueta(this.roles()));
+
+  /** La organización activa por su nombre. */
   protected readonly tenantName = computed(() => {
     const id = this.activeTenantId();
     return id === null ? null : this.auth.tenantName(id);

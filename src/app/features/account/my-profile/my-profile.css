@@ -102,11 +102,3 @@
   font-size: var(--fs-caption);
   color: var(--text-muted);
 }
-
-.mi-perfil__ids {
-  margin-block: var(--sp-6) 0;
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
-  /* Un uuid no tiene espacios: sin esto desborda la tarjeta en móvil. */
-  overflow-wrap: anywhere;
-}
