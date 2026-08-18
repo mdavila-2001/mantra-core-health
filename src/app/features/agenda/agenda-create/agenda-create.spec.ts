@@ -16,6 +16,8 @@ const REF = '22222222-2222-2222-2222-222222222222';
 /** Acceso a los miembros protegidos que el recorrido de prueba necesita mover. */
 interface Testable {
   readonly fase: WritableSignal<number>;
+  /** FX-1 · el interruptor del formulario técnico, para agendas ajenas. */
+  readonly publicarParaOtro: WritableSignal<boolean>;
   readonly finalizado: WritableSignal<boolean>;
   readonly resourceId: () => string | null;
   readonly policyId: () => string | null;
@@ -57,6 +59,7 @@ describe('AgendaCreate', () => {
             roles,
             activeTenantId: signal<string | null>(tenant),
             practitionerProfileId: signal<string | null>(perfilProfesional),
+            displayName: signal<string | null>('Dra. Elena Salas'),
           },
         },
         { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
@@ -176,6 +179,56 @@ describe('AgendaCreate', () => {
     expect(c['resourceRefType'].disabled).toBe(true);
     expect(c['resourceRefId'].disabled).toBe(true);
     http.expectNone(() => true);
+  });
+
+  /**
+   * FX-1 · F-28. Deshabilitados no alcanzaba: seguían a la vista, y la pantalla
+   * le mostraba al médico «Tabla referenciada: practitioner_profiles» y un uuid.
+   * Ahora no se muestran; en su lugar va una frase que dice de quién es la
+   * agenda, que es lo único que necesita confirmar.
+   */
+  it('el médico NO ve la jerga técnica: ni tabla, ni uuid, ni zona horaria IANA', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('Tabla referenciada');
+    expect(texto).not.toContain('Id de la entidad referenciada');
+    expect(texto).not.toContain('IANA');
+    expect(texto).not.toContain(REF);
+    expect(texto).toContain('tu propia agenda');
+    expect(texto).toContain('Dra. Elena Salas');
+    http.expectNone(() => true);
+  });
+
+  /**
+   * F-29. El dueño del consultorio es médico **y** administra: la condición
+   * vieja exigía NO administrar, así que caía al formulario técnico y tenía que
+   * pegar su propio uuid para publicar su propia agenda.
+   */
+  it('quien administra y además atiende publica lo suyo sin escribir un uuid', () => {
+    crear(['PRACTITIONER', 'SCHEDULING_ADMIN'], TENANT, REF);
+
+    expect(acc.formRecurso.controls['resourceRefId'].value).toBe(REF);
+    expect(fixture.nativeElement.textContent).not.toContain('Id de la entidad referenciada');
+    http.expectNone(() => true);
+  });
+
+  /** Pero puede pedir el formulario técnico cuando la agenda es de otro. */
+  it('quien administra puede cambiar al formulario técnico para una agenda ajena', () => {
+    crear(['PRACTITIONER', 'SCHEDULING_ADMIN'], TENANT, REF);
+
+    acc.publicarParaOtro.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Id de la entidad referenciada');
+    http.expectNone(() => true);
+  });
+
+  /** La zona horaria deja de ser un campo IANA a completar a mano. */
+  it('la zona horaria se completa sola para el médico', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    expect(acc.formRecurso.controls['timeZone'].value).not.toBe('');
   });
 
   it('el profesional publica su agenda sin tocar los campos de identidad', () => {

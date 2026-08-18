@@ -6,13 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import {
-  FormArray,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -158,10 +152,27 @@ export class AgendaCreate {
    * pedirlos: ver {@link identidadDelRecurso}.
    */
   protected readonly publicaSoloLaPropia = computed(() => {
-    const roles = this.auth.roles();
-    const esCatalogo = ROLES_DE_CATALOGO.some((rol) => roles.includes(rol));
-    return !esCatalogo && roles.includes('PRACTITIONER');
+    if (this.publicarParaOtro()) return false;
+    // Basta con TENER perfil profesional. Antes exigía además no administrar el
+    // catálogo, y eso dejaba al dueño del consultorio —que es médico y admin a
+    // la vez— pegando su propio uuid en el formulario técnico para publicar su
+    // propia agenda (F-29/F-28). Quien administra puede cambiarse al modo
+    // técnico con {@link publicarParaOtro} cuando la agenda es de otro.
+    return this.auth.practitionerProfileId() !== null;
   });
+
+  /** Quien administra el catálogo puede publicar la agenda de otro recurso. */
+  protected readonly puedePublicarParaOtro = computed(() => {
+    const roles = this.auth.roles();
+    return ROLES_DE_CATALOGO.some((rol) => roles.includes(rol));
+  });
+
+  /**
+   * El administrador pidió el formulario técnico, para una agenda que no es la
+   * suya. Es opt-in: el camino por defecto —incluso para un admin que además
+   * atiende— es publicar la propia sin escribir un identificador.
+   */
+  protected readonly publicarParaOtro = signal(false);
 
   /* -- Recorrido ----------------------------------------------------------- */
 
@@ -285,14 +296,33 @@ export class AgendaCreate {
     this.formRecurso.controls.resourceRefType.setValue(TABLA_DE_PERFIL_PROFESIONAL);
     if (propio) this.formRecurso.controls.resourceRefId.setValue(propio);
 
+    // La zona horaria del navegador: es la de la sede donde va a atender, y
+    // equivocarla le mueve todos los horarios. Sólo si no la eligió a mano.
+    if (this.formRecurso.controls.timeZone.value.trim() === '') {
+      const zona = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (zona) this.formRecurso.controls.timeZone.setValue(zona);
+    }
+
     this.formRecurso.controls.resourceType.disable();
     this.formRecurso.controls.resourceRefType.disable();
     if (propio) this.formRecurso.controls.resourceRefId.disable();
   });
 
+  /**
+   * «, Dra. Elena Salas» cuando la sesión trae el nombre; vacío si no.
+   *
+   * Va como sufijo de la frase y no como campo: confirma de quién es la agenda
+   * sin pedirle nada. Sin nombre en el token la frase sigue teniendo sentido
+   * («Vas a publicar tu propia agenda.»), así que no se inventa un relleno.
+   */
+  protected readonly nombreDelTitular = computed(() => {
+    const nombre = this.auth.displayName();
+    return nombre === null || nombre.trim() === '' ? '' : `, ${nombre}`;
+  });
+
   /** Si la sesión no declara perfil profesional no hay agenda propia que armar. */
   protected readonly sinPerfilProfesional = computed(
-    () => this.publicaSoloLaPropia() && this.auth.practitionerProfileId() === null,
+    () => !this.puedePublicarParaOtro() && this.auth.practitionerProfileId() === null,
   );
 
   /* -- Fase 2: política ---------------------------------------------------- */
