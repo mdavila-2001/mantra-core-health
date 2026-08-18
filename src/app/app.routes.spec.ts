@@ -1,6 +1,10 @@
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
-import { SECTION_ROUTE_DATA, titleOf } from './core/navigation/navigation.types';
+import {
+  ROLES_ROUTE_DATA,
+  SECTION_ROUTE_DATA,
+  titleOf,
+} from './core/navigation/navigation.types';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes } from './app.routes';
 
@@ -126,6 +130,25 @@ describe('rutas del armazón', () => {
 
       expect(operacion.length).toBeGreaterThan(0);
       expect(operacion.every((r) => (r.canActivate ?? []).includes(seccionRolesGuard))).toBe(true);
+    });
+
+    /**
+     * El caso inverso: hijas de una sección **sin** roles que son de un rol
+     * concreto. «Mi perfil» la abre cualquiera; configurar el perfil
+     * profesional, la vitrina pública y los artículos médicos son de quien
+     * atiende, y lo declaran en `data` para que el mismo guard las cierre
+     * (feedback de la analista, barrido del 18/08/2026).
+     */
+    it('las hijas de «Mi perfil» que son de quien atiende lo declaran y llevan el guard', () => {
+      const DE_QUIEN_ATIENDE = ['my-account/edit', 'my-account/preview', 'my-account/articles'];
+
+      for (const path of DE_QUIEN_ATIENDE) {
+        const ruta = hijas.find((r) => r.path === path);
+
+        expect(ruta, path).toBeDefined();
+        expect((ruta?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(true);
+        expect(ruta?.data?.[ROLES_ROUTE_DATA], path).toEqual(['CLINICIAN', 'PRACTITIONER']);
+      }
     });
   });
 
