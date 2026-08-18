@@ -17,31 +17,10 @@
       <span class="auth-split__velo auth-split__velo--c"></span>
     </div>
 
-    <!-- Lienzo vivo: red de nodos + trazo de latido, ver auth-split.css. Solo
-         escritorio (el propio `.auth-split__brand` está oculto antes de eso),
-         así que no anima nada en mobile. -->
+    <!-- Lienzo vivo: el trazo de latido, ver auth-split.css. Solo escritorio (el
+         propio `.auth-split__brand` está oculto antes de eso), así que no anima
+         nada en mobile. -->
     <svg class="auth-split__pulse" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid slice" focusable="false">
-      <circle class="auth-split__ring auth-split__ring--1" cx="288" cy="132" r="6" />
-      <circle class="auth-split__ring auth-split__ring--2" cx="288" cy="132" r="6" />
-      <circle class="auth-split__ring auth-split__ring--3" cx="288" cy="132" r="6" />
-
-      <g class="auth-split__network">
-        <line class="auth-split__edge" x1="288" y1="132" x2="205" y2="66" />
-        <line class="auth-split__edge" x1="288" y1="132" x2="356" y2="196" />
-        <line class="auth-split__edge" x1="288" y1="132" x2="226" y2="214" />
-        <line class="auth-split__edge" x1="205" y1="66" x2="124" y2="104" />
-        <line class="auth-split__edge" x1="356" y1="196" x2="326" y2="284" />
-        <line class="auth-split__edge" x1="226" y1="214" x2="152" y2="252" />
-
-        <circle class="auth-split__node" cx="288" cy="132" r="5" />
-        <circle class="auth-split__node" cx="205" cy="66" r="3.5" />
-        <circle class="auth-split__node" cx="356" cy="196" r="4" />
-        <circle class="auth-split__node" cx="226" cy="214" r="3.5" />
-        <circle class="auth-split__node" cx="124" cy="104" r="3" />
-        <circle class="auth-split__node" cx="326" cy="284" r="3" />
-        <circle class="auth-split__node" cx="152" cy="252" r="3" />
-      </g>
-
       <!-- Latido: el mismo gesto que el logotipo de AloVida, cruzando la columna
            justo encima del texto. `pathLength="1000"` normaliza el largo real
            del trazo, así el CSS puede animar el guion en centésimas sin que

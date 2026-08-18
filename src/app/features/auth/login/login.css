@@ -109,8 +109,8 @@
   box-shadow: var(--shadow-sm), 0 10px 24px color-mix(in srgb, var(--brand-primary) 30%, transparent);
 }
 
-/* Halo: un anillo que nace del sello y se disuelve, en el mismo compás que el
-   pulso de la columna de marca. Es lo único que se mueve del lado del
+/* Halo: un anillo que nace del sello y se disuelve, en el mismo compás lento
+   que el latido de la columna de marca. Es lo único que se mueve del lado del
    formulario cuando nadie toca nada, y ata las dos mitades de la pantalla. */
 .login__mark::after {
   content: '';
