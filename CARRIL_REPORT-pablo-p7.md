@@ -7,39 +7,48 @@
 
 ## Base
 
-| Repo | Base SHA | Qué es esa base |
+| Repo | Base | Qué es |
 |---|---|---|
-| `mantra-core-health-api` | `ac6fcebe` | último commit de P1 |
-| `mantra-core-health` | `e744b2f` | último commit de P1 |
+| `mantra-core-health-api` | `cc2f8376` | punta de `origin/pablo/p1-notificaciones` |
+| `mantra-core-health` | `9738329` | punta de `origin/pablo/p1-notificaciones` |
 
 **El carril NO parte de `origin/dev`, y es a propósito.** La tarea 5 —«te
 aceptaron en el grupo» / «nuevo post»— consume el contrato de emisión de P1, que
-todavía no está en `dev`. Ramificar de `dev` obligaba a escribir contra un
-servicio que no existe. El orden de merge del README ya pone **P7 al final,
-después de P1**, así que basarse en P1 no adelanta nada que el plan no dijera.
+todavía **no está mergeado en `dev`** (comprobado al cerrar: `dev` está en
+`d8a46221` / `f0ca260` y no contiene P1). Ramificar de `dev` obligaba a escribir
+contra un servicio que no existe. El orden de merge del README ya pone **P7 al
+final, después de P1**, así que basarse en P1 no adelanta nada que el plan no
+dijera.
 
-Antes de abrir el PR: `git fetch origin && git rebase origin/dev` una vez que P1
-esté mergeado.
+**Ambas ramas están empujadas y rebaseadas sobre el P1 real:**
+
+```text
+origin/pablo/p7-grupos-foros   (mantra-core-health-api)
+origin/pablo/p7-grupos-foros   (mantra-core-health)
+```
+
+Cuando P1 mergee: `git fetch origin && git rebase origin/dev` y abrir los PRs.
 
 ## Entregado
 
-### API (`mantra-core-health-api`)
+### API (`mantra-core-health-api`) — 4 commits sobre P1
 
 | Commit | Qué |
 |---|---|
-| `80adc39a` | dominio de grupos: ficha, muro, bajas, administración de membresías, temas |
-| `fb91baa6` | enganche con la campana de P1 |
-| `1dda6935` | arreglo: un profesional también resuelve su perfil público |
-| `33a3cb55` | journey del carril contra la API viva |
+| `52974661` | dominio de grupos: ficha, muro, bajas, administración de membresías, temas |
+| `67b3d173` | enganche con la campana de P1 |
+| `f4626b9e` | journey del carril contra la API viva |
+| `5280d364` | este reporte |
 
-### Front (`mantra-core-health`)
+### Front (`mantra-core-health`) — 4 commits sobre P1
 
 | Commit | Qué |
 |---|---|
-| `83380ce` | métodos aditivos de grupos en `community.client.ts` (aislado) |
-| `cacfe92` | directorio de grupos y el grupo por dentro |
-| `f348285` | sección `groups` y ruta `groups/:groupId` (hotspots, aislado) |
-| `81b1d72` | `/community` en el proxy y en nginx |
+| `3f42e7c` | métodos aditivos de grupos en `community.client.ts` (aislado) |
+| `4726b87` | directorio de grupos y el grupo por dentro |
+| `ee8a528` | sección `groups` y ruta `groups/:groupId` (hotspots, aislado) |
+| `0f7c686` | las dos listas de menú que enumeran las secciones sin rol |
+| `4a62aa1` | este reporte |
 
 ## Endpoints / contratos verificados
 
@@ -129,19 +138,26 @@ primera corrida, A creaba el grupo y quedaba fuera de él. Causa:
 `target_id = users.id`, pero `CommunitySocialService` la crea con
 `target_id = practitionerProfileId` cuando quien la abre es un profesional. El
 efecto era mucho más ancho que P7: **todo profesional leía la comunidad como una
-sesión anónima** —sin sus reacciones, sin sus votos—. Arreglado en `1dda6935`.
+sesión anónima** —sin sus reacciones, sin sus votos—.
+
+Se arregló localmente para poder terminar el journey, y al rebasear se encontró
+que **`dev` ya lo tenía resuelto** (`849cf9b4 fix(community): la vitrina propia
+que la lectura no encontraba`, con `sujetosDe` en plural). El commit propio se
+descartó: el arreglo bueno es el de `dev`. Queda como confirmación
+independiente de que ese defecto era real y de que la corrección de `dev` es la
+que hace falta.
 
 ## Tests ejecutados
 
 ```text
-API   · yarn test (suite completa)           →  506 suites, 5278 tests
-                                                5276 pasan · 1 salta · 1 falla (*)
-API   · yarn test src/modules/community      →   24 suites, 202 tests, 0 fallos
+API   · yarn test (suite completa)           →  521 suites, 5509 tests
+                                                5507 pasan · 1 salta · 1 falla (*)
+API   · yarn test community + messaging      →   33 suites, 389 tests, 0 fallos
 API   · npx tsc --noEmit                     →  limpio
-API   · npx eslint src/modules/community     →  limpio
+API   · eslint sobre los archivos de P7      →  limpio (**)
 API   · node tools/e2e/journey-p7-grupos.mjs →  21 comprobaciones, 0 fallos
 
-FRONT · ng test (suite completa)             →  278 suites, 2661 tests, 0 fallos
+FRONT · ng test (suite completa)             →  283 suites, 2735 tests, 0 fallos
 FRONT · ng build                             →  bundle completo, sin errores
 FRONT · npx tsc -p tsconfig.app.json         →  limpio
 FRONT · npx eslint (grupos + community)      →  limpio
@@ -152,6 +168,10 @@ FRONT · node scripts/check-api-prefixes.mjs  →  37 prefijos, iguales en las 3
 `modules/diagnostic_units/diagnostic_units.indexes.spec.ts` espera el índice
 `uq_diagnostic_units_tenant_id_code` y encuentra dos índices separados. Ni ese
 módulo ni ese spec están en el diff de P7. Queda anotado, no tocado.
+
+(**) `community-social.service.spec.ts` tiene 17 avisos de formato de
+`prettier`, **preexistentes en la base de P1** y en un archivo que P7 no toca.
+No se corrigen acá para no meter ruido de formato en este PR.
 
 **Nota sobre corridas en paralelo:** ejecutar las dos suites a la vez en esta
 máquina produce fallos de tiempo que no se reproducen por separado (rate
@@ -165,8 +185,17 @@ secuenciales, que es como hay que leerlas.
 | `community.client.ts` | los 10 métodos del carril | **commit aislado** (`83380ce`), sólo aditivo, sin refactor — respeta el acuerdo con P2 |
 | `app.routes.ts` | la sección y la ficha | **commit aislado** (`f348285`) |
 | `navigation.map.ts` | la sección `groups` | mismo commit aislado. **Hizo falta:** el invariante de `app.routes.spec` exige que toda pantalla cuelgue de una sección declarada, y `feed` dejó de estarlo desde el carril R2-1, así que colgar los grupos de `feed/…` dejaba dos pantallas huérfanas. Es una entrada mínima, sin `roles` |
-| `community-visibility.service.ts` | el defecto del perfil profesional | **commit aislado** (`1dda6935`) |
-| `proxy.conf*.json` · `deploy/nginx.conf` | `/community` no estaba proxeado | **commit aislado** (`81b1d72`) |
+| `navigation.service.spec.ts` · `shell-layout.spec.ts` | las dos listas literales del menú | mismo commit del registro (`0f7c686`) |
+
+**Dos cambios que se hicieron y después se descartaron**, porque al rebasear se
+encontró que ya estaban resueltos aguas arriba:
+
+- el arreglo de titularidad del perfil profesional → ya está en `dev`
+  (`849cf9b4`);
+- `/community` en el proxy y en nginx → ya está en la rama de P1.
+
+Los dos se habían descubierto trabajando contra una base vieja. Quedan anotados
+porque **confirman de forma independiente** que ambos defectos eran reales.
 
 ## Bloqueadores / decisiones
 
@@ -178,14 +207,13 @@ tema sobre publicaciones, `topic_id`). Mientras no exista, el muro vive sobre
 `comments`; el día que llegue, la migración del muro es de datos, no de
 contrato: los endpoints ya tienen la forma correcta.
 
-### Defecto de infraestructura encontrado y arreglado — cerrado
+### Defecto de infraestructura — ya resuelto aguas arriba
 
-**`/community` no figuraba en ninguna de las tres declaraciones de prefijos.**
-Toda llamada de la red social desde el navegador devolvía el `index.html` de
-Angular en vez de JSON — el modo de falla exacto que `check-api-prefixes`
-documenta, que funciona en la máquina de quien lo escribió y sale como «error
-inesperado» sin que nadie sospeche del proxy. **Esto afectaba también a P2 y a
-P4**, no sólo a P7.
+**`/community` no figuraba en ninguna de las tres declaraciones de prefijos** en
+la base con la que arrancó el carril. Toda llamada de la red social desde el
+navegador devolvía el `index.html` de Angular en vez de JSON — el modo de falla
+exacto que `check-api-prefixes` documenta. La rama de P1 ya lo trae arreglado, así
+que P7 no lo toca.
 
 ### Regla de producto tomada por defecto
 
@@ -214,13 +242,18 @@ que corresponde.
 
 ## Handoff al integrador (PC-01)
 
-1. **Mergear P1 primero.** P7 está basado en él.
-2. Rebasear `pablo/p7-grupos-foros` sobre `origin/dev` en los dos repos y abrir
-   los PRs. El orden del README pone P7 al final; el rebase debería ser limpio
-   salvo en `community.client.ts` (P2) y `app.routes.ts`, y los dos cambios de
-   P7 están en commits aislados, listos para rehacerse solos si hiciera falta.
-3. **Llevar `81b1d72` cuanto antes**, incluso separado del resto: sin él la red
-   social entera no funciona en el navegador, y eso también bloquea a P2 y P4.
-4. `1dda6935` toca un servicio compartido de `community`. Vale la pena que P2 lo
-   mire: le arregla el mismo problema.
-5. El bloqueador de la FK `social_posts.group_id` va a Marcelo.
+1. **Mergear P1 primero.** P7 está rebaseado encima de
+   `origin/pablo/p1-notificaciones` en los dos repos, y su enganche de
+   notificación depende de él.
+2. Ya mergeado P1: `git fetch origin && git rebase origin/dev` en las dos ramas
+   de P7 y abrir los PRs. El diff de P7 contra P1 son **24 archivos** en la API y
+   **15** en el front; nada fuera de `community` / `features/groups` salvo los
+   dos hotspots, que están en commits propios.
+3. `community.client.ts` (compartido con P2) y `app.routes.ts` +
+   `navigation.map.ts` van en commits aislados: si P2 mergea antes y hay choque,
+   se rehacen solos sin tocar la feature.
+4. **Bloqueador para Marcelo:** la FK `social_posts.group_id`. Hasta que exista,
+   el muro de un grupo vive sobre `community.comments`.
+5. El journey (`tools/e2e/journey-p7-grupos.mjs`) sirve como prueba de humo del
+   carril después del merge: reutiliza los actores de `seed-e2e` y no crea
+   ninguno.
