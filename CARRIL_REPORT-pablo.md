@@ -686,10 +686,29 @@ ajenos al producto y ambos con su moraleja:
 
 #### Capturas
 
-Quince imágenes en `artifacts/p4/`, tomadas con
-`playwright/carril-p4-evidencia.spec.ts` sobre el mismo origen: los siete
-destinos del buscador, las dos fichas, los dos negativos, la maqueta todavía
-marcada, y dos a 390 px.
+Quince imágenes, tomadas sobre el mismo origen que los journeys:
+
+```bash
+E2E_BASE_URL=http://localhost:4250 npx playwright test carril-p4-evidencia
+```
+
+| Archivo | Qué muestra |
+| --- | --- |
+| `01-buscador-unificado` | `/buscar` con los dos perfiles reales |
+| `02-buscador-filtrado` | `/buscar?q=Mamani`, la lista acotada |
+| `03-profesionales` | el vertical con paginación y sellos «Declarado» |
+| `04`–`07` | los cuatro verticales vacíos, cada uno con **su** texto de la ficha V65 |
+| `08-mapa-consentimiento` | V65-12 pidiendo la ubicación, con la alternativa escrita |
+| `09`, `10` | las dos fichas públicas |
+| `11`, `12` | despublicado e inexistente: la misma pantalla |
+| `15-maqueta-sigue-marcada` | `/buscar/buscador-listado` **con** el aviso: la contracara de D-P4-05 |
+| `13`, `14` | buscador y ficha a 390 px |
+
+**No se versionan**, y no es un olvido: `.gitignore` excluye `/artifacts/*` con su
+propio motivo escrito —«no tienen por qué vivir en la historia del
+repositorio»— y las únicas imágenes que el repo versiona son *fixtures* de
+entrada, no evidencia de salida. El comando de arriba las reproduce, que es lo
+que hace a la evidencia verificable en vez de sólo mostrable.
 
 **Una de esas capturas encontró un defecto que ninguna prueba veía.** Ver abajo.
 
