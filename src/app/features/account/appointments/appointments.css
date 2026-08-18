@@ -203,3 +203,13 @@
   justify-items: start;
   margin-block: var(--sp-3);
 }
+
+/* J2 · el selector de con quién se pide el turno. Dos botones y no un
+   desplegable: son dos opciones, y esconder la mitad detrás de un clic hace que
+   nadie descubra que se puede reservar en un laboratorio. */
+.turnos__tipo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
+}

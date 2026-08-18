@@ -290,29 +290,73 @@
              dónde dejaba a la persona buscando un control que acá no está. -->
         Elegí una organización desde el selector del encabezado para ver los horarios disponibles.
       </app-alert>
-    } @else if (sinRecursos()) {
-      <app-alert tone="info" title="Todavía no hay profesionales con horarios">
-        <!-- Antes decía «no hay agendas publicadas», que es la jerga interna:
-             para quien pide un turno, lo que falta son profesionales entre los
-             cuales elegir. -->
-        Ningún profesional de esta organización publicó horarios todavía. Volvé a
-        probar más adelante.
-      </app-alert>
     } @else {
+      <!-- J2 · con quién se pide el turno. Va ANTES del buscador porque decide
+           qué lista se busca: elegirlo después sería buscar en el conjunto
+           equivocado. Dos opciones y no un desplegable — son dos, y un
+           desplegable de dos esconde la mitad. -->
+      <div class="turnos__tipo" role="group" aria-label="Con quién querés el turno">
+        <button
+          app-button
+          [variant]="esLaboratorio() ? 'ghost' : 'primary'"
+          size="sm"
+          data-testid="turnos-tipo-profesional"
+          [attr.aria-pressed]="!esLaboratorio()"
+          (clicked)="cambiarTipoDeRecurso('PRACTITIONER')"
+        >
+          Con un profesional
+        </button>
+        <button
+          app-button
+          [variant]="esLaboratorio() ? 'primary' : 'ghost'"
+          size="sm"
+          data-testid="turnos-tipo-laboratorio"
+          [attr.aria-pressed]="esLaboratorio()"
+          (clicked)="cambiarTipoDeRecurso('ROOM')"
+        >
+          En un laboratorio
+        </button>
+      </div>
+    }
+
+    @if (organizacion() !== null && sinRecursos()) {
+      @if (esLaboratorio()) {
+        <app-alert tone="info" title="Todavía no hay laboratorios con horarios">
+          Ningún laboratorio de esta organización publicó horarios todavía. Podés llevar tu orden al
+          mostrador mientras tanto.
+        </app-alert>
+      } @else {
+        <app-alert tone="info" title="Todavía no hay profesionales con horarios">
+          <!-- Antes decía «no hay agendas publicadas», que es la jerga interna:
+               para quien pide un turno, lo que falta son profesionales entre los
+               cuales elegir. -->
+          Ningún profesional de esta organización publicó horarios todavía. Volvé a probar más
+          adelante.
+        </app-alert>
+      }
+    } @else if (organizacion() !== null) {
       <!-- Buscador y no desplegable: con una guía larga había que recorrerla
            entera hasta dar con el profesional propio (F-13). Se escribe el
            nombre y la lista se acota sola; en blanco los ofrece a todos. -->
       <app-form-field
-        label="¿Con quién te querés atender?"
-        hint="Escribí su nombre para encontrarlo más rápido."
+        [label]="esLaboratorio() ? '¿En qué laboratorio?' : '¿Con quién te querés atender?'"
+        [hint]="
+          esLaboratorio()
+            ? 'Escribí el nombre del laboratorio para encontrarlo más rápido.'
+            : 'Escribí su nombre para encontrarlo más rápido.'
+        "
         class="turnos__filtro"
       >
         <app-reference-combobox
           [selected]="recursoSeleccionado()"
           [options]="opcionesBuscadas()"
           [minQueryLength]="0"
-          placeholder="Buscá por nombre"
-          emptyMessage="Ningún profesional coincide con esa búsqueda"
+          [placeholder]="esLaboratorio() ? 'Buscá por nombre del laboratorio' : 'Buscá por nombre'"
+          [emptyMessage]="
+            esLaboratorio()
+              ? 'Ningún laboratorio coincide con esa búsqueda'
+              : 'Ningún profesional coincide con esa búsqueda'
+          "
           (searched)="busquedaDeRecurso.set($event)"
           (selectionChange)="elegirRecurso($event?.value ?? null)"
         />
@@ -323,7 +367,9 @@
            sin explicación (F-10). -->
       @if (diaDeHorarios() !== null) {
         <p class="turnos__filtro-dia" data-testid="turnos-dia-elegido">
-          <span>Horarios del <strong>{{ diaDeHorariosEnPalabras() }}</strong></span>
+          <span
+            >Horarios del <strong>{{ diaDeHorariosEnPalabras() }}</strong></span
+          >
           <button app-button variant="ghost" size="sm" (clicked)="verTodosLosHorarios()">
             Ver todos los días
           </button>
