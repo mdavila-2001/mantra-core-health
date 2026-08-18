@@ -56,9 +56,22 @@ describe('rutas del armazón', () => {
    */
   it('toda pantalla hija pertenece a una sección del registro', () => {
     const declaradas = APP_SECTIONS.map((s) => s.path);
+
+    /**
+     * Pantallas que a propósito no cuelgan de ninguna sección.
+     *
+     * El muro salió del menú con R2-1 —el ítem del paciente pasó a ser la guía
+     * de doctores— pero la pantalla sigue en pie y se alcanza por enlace
+     * directo. Es una decisión de producto, no un olvido: por eso figura acá y
+     * no como sección, y por eso esta lista es explícita y corta. Cualquier
+     * pantalla que no esté en ella y no cuelgue de una sección sigue siendo un
+     * error.
+     */
+    const sinSeccionAProposito = ['feed'];
+
     const huerfanas = hijas.filter((r) => {
       const path = r.path ?? '';
-      if (path === '' || r.redirectTo !== undefined) {
+      if (path === '' || r.redirectTo !== undefined || sinSeccionAProposito.includes(path)) {
         return false;
       }
       return !declaradas.some((seccion) => path === seccion || path.startsWith(`${seccion}/`));
