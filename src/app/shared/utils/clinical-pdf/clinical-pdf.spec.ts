@@ -1,5 +1,9 @@
-import { bloquesDeAtencion, bloquesDeReceta } from './clinical-pdf';
-import type { DocumentoDeAtencion, DocumentoDeReceta } from './clinical-pdf.types';
+import { bloquesDeAtencion, bloquesDeFormulario, bloquesDeReceta, VALOR_ENMASCARADO } from './clinical-pdf';
+import type {
+  DocumentoDeAtencion,
+  DocumentoDeFormulario,
+  DocumentoDeReceta,
+} from './clinical-pdf.types';
 
 /**
  * Los dos documentos de la corrección #16.
@@ -152,5 +156,52 @@ describe('Documento de la atención', () => {
     const { motivo: _motivo, ...sinMotivo } = ATENCION;
 
     expect(textoDe(bloquesDeAtencion(sinMotivo))).toContain('Motivo de consulta: No registrado');
+  });
+});
+
+const FORMULARIO: DocumentoDeFormulario = {
+  id: '99999999-8888-7777-6666-555555555555',
+  titulo: 'Ficha de cardiología',
+  completadoEl: new Date('2026-08-17T15:00:00.000Z'),
+  respuestas: [
+    { etiqueta: 'Tolerancia al ejercicio', texto: 'Buena', masked: false },
+    { etiqueta: 'Edema', texto: 'No', masked: false },
+    { etiqueta: 'Serología', texto: 'SECRETO', masked: true },
+  ],
+};
+
+describe('Documento del formulario respondido', () => {
+  it('trae las respuestas en el orden en que se respondieron', () => {
+    const lineas = bloquesDeFormulario(FORMULARIO).map((bloque) => bloque.text);
+
+    const tolerancia = lineas.findIndex((linea) => linea.includes('Tolerancia al ejercicio'));
+    const edema = lineas.findIndex((linea) => linea.includes('Edema'));
+    expect(tolerancia).toBeGreaterThan(-1);
+    expect(edema).toBeGreaterThan(tolerancia);
+    expect(textoDe(bloquesDeFormulario(FORMULARIO))).toContain(
+      'Tolerancia al ejercicio: Buena',
+    );
+  });
+
+  it('un valor enmascarado imprime el marcador y jamás el contenido', () => {
+    const texto = textoDe(bloquesDeFormulario(FORMULARIO));
+
+    expect(texto).toContain(`Serología: ${VALOR_ENMASCARADO}`);
+    // Aunque el llamador haya pasado texto por error, la bandera manda.
+    expect(texto).not.toContain('SECRETO');
+  });
+
+  it('declara la fecha de completado, o su ausencia con todas las letras', () => {
+    const { completadoEl: _fecha, ...sinFecha } = FORMULARIO;
+
+    expect(textoDe(bloquesDeFormulario(FORMULARIO))).toContain('Completado el');
+    expect(textoDe(bloquesDeFormulario(sinFecha))).toContain('sin fecha de completado');
+  });
+
+  it('sin respuestas lo dice en vez de salir un papel vacío', () => {
+    const texto = textoDe(bloquesDeFormulario({ ...FORMULARIO, respuestas: [] }));
+
+    expect(texto).toContain('Sin respuestas registradas');
+    expect(texto).toContain('generado el');
   });
 });

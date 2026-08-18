@@ -17,3 +17,42 @@
   gap: var(--sp-4);
   max-inline-size: 40rem;
 }
+
+.formulario-especialidad__estado {
+  margin: 0;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.formulario-especialidad__respondido {
+  display: grid;
+  gap: var(--sp-4);
+  max-inline-size: 40rem;
+}
+
+.formulario-especialidad__completado {
+  margin: 0;
+  font-weight: 600;
+}
+
+.formulario-especialidad__respuestas {
+  margin: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.formulario-especialidad__respuesta dt {
+  font-weight: 600;
+}
+
+.formulario-especialidad__respuesta dd {
+  margin: 0;
+}
+
+.formulario-especialidad__enmascarado {
+  font-style: italic;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.formulario-especialidad__pdf {
+  justify-self: start;
+}
