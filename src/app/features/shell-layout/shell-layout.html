@@ -102,6 +102,12 @@
            acá con su manejador y con su paso. -->
 
       <div class="app-header__derecha">
+        <!-- Carril P1 · la campana. Va primera de las acciones —antes del
+             selector de organización y del tema— porque es la única que trae
+             información nueva: las otras dos son preferencias, y una preferencia
+             no compite por la atención con «tu receta está lista». -->
+        <app-notification-bell />
+
         @if (tenants().length > 1) {
           <div class="menu-anclaje">
             <button

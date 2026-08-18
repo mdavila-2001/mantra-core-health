@@ -55,6 +55,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // el enlace guardado llega igual. Borrarla es una decisión de producto que el
   // cliente no pidió — dijo «sacar del perfil de paciente», no «eliminar».
   feed: () => import('./features/feed/feed').then((m) => m.Feed),
+  // Carril P1 · el centro de notificaciones. Diferido: la campana del header ya
+  // resuelve el 90 % de los casos —enterarse y saltar— y esta pantalla sólo la
+  // abre quien viene a revisar.
+  'notification-center': () =>
+    import('./features/notifications/notification-center').then(
+      (m) => m.NotificationCenter,
+    ),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
