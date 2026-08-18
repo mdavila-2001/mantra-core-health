@@ -66,6 +66,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/notifications/notification-center').then(
       (m) => m.NotificationCenter,
     ),
+  // Carril P9 · las preferencias de aviso. Diferida: se abre una vez y se
+  // olvida, que es exactamente lo que una pantalla de preferencias debería
+  // conseguir.
+  'my-account/notification-preferences': () =>
+    import(
+      './features/account/notification-preferences/notification-preferences'
+    ).then((m) => m.NotificationPreferences),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(

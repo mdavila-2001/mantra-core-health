@@ -159,6 +159,8 @@ describe('ShellLayout', () => {
       // Carril P1: el centro de notificaciones. Tampoco exige rol —cualquiera
       // con sesión tiene bandeja, y el backend sólo devuelve la propia—, así
       // que aparece también en una sesión sin roles.
+      // Carril P9: las preferencias de aviso, pegadas a la bandeja.
+      '/my-account/notification-preferences',
       '/notification-center',
       '/my-account/identity/verify',
       '/my-account/identity/cases',

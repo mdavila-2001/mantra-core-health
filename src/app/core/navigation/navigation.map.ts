@@ -678,6 +678,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M-surveys',
   },
   {
+    // Carril P9 · qué avisos querés recibir.
+    //
+    // Va pegada al centro de notificaciones y en «Mi cuenta» por lo mismo: la
+    // bandeja y sus preferencias son de la persona. Sin `roles`, porque
+    // cualquiera con sesión tiene avisos que configurar y el backend sólo
+    // devuelve los propios.
+    path: 'my-account/notification-preferences',
+    label: 'Preferencias de avisos',
+    group: 'Mi cuenta',
+    icon: 'settings',
+    availability: 'disponible',
+    summary: 'Elegí de qué te avisamos y en qué horario no.',
+    module: 'M35 messaging',
+  },
+  {
     // Carril P1 · el centro de notificaciones, el otro extremo de la campana.
     //
     // Va en «Mi cuenta» y no en «General» porque la bandeja es de la persona,
