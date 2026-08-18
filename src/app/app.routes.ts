@@ -631,7 +631,118 @@ function rutasDeFichasPublicas(): Routes {
   }));
 }
 
+/**
+ * Las rutas públicas del buscador, con las URL que la ficha V65 declara.
+ *
+ * ## Por qué existen además de las que genera el portador de vistas
+ *
+ * `scripts/port-vistas-redsat.mjs` deriva el segmento del **nombre del archivo
+ * de la maqueta**, así que la portada quedó en `/buscar/buscador-listado` y los
+ * verticales en `/buscar/…-listado`. Sirve para recorrer la bóveda; no sirve
+ * como superficie pública. Estas URL son las que la ficha declara —`/buscar`,
+ * `/buscar/profesionales`, `/buscar/mapa`—, las que se pegan en un mensaje y
+ * las que un buscador indexa, y son cortas y estables porque un directorio
+ * público las cambia una sola vez.
+ *
+ * ## Por qué van antes de `REDSAT_ROUTES` y no dentro
+ *
+ * Porque `redsat.routes.ts` es un **archivo generado**: escribirlas ahí las
+ * borra la próxima vez que alguien porte una vista. Declaradas acá conviven
+ * con el bloque generado —el router prueba estas primero y retrocede al
+ * siguiente `buscar` cuando el segmento no coincide—, así que los enlaces de
+ * la bóveda que todavía apuntan a `/buscar/buscador-listado` siguen abriendo.
+ * Hay una prueba que resuelve las dos formas y falla si eso deja de ser cierto.
+ */
+function rutasDeBusquedaPublica(): Routes {
+  const VERTICALES = [
+    ['profesionales', 'Profesionales de salud — AloVida', 'profesionales-listado', 'BuscarProfesionalesListado'],
+    ['medicamentos', 'Medicamentos y farmacias — AloVida', 'medicamentos-listado', 'BuscarMedicamentosListado'],
+    ['organizaciones', 'Hospitales y clínicas — AloVida', 'hospitales-listado', 'BuscarHospitalesListado'],
+    ['diagnostico', 'Laboratorios e imagen — AloVida', 'laboratorios-listado', 'BuscarLaboratoriosListado'],
+    ['aseguradoras', 'Aseguradoras y convenios — AloVida', 'aseguradoras-listado', 'BuscarAseguradorasListado'],
+  ] as const;
+
+  return [
+    {
+      path: 'buscar',
+      loadComponent: () =>
+        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+      children: [
+        {
+          path: '',
+          pathMatch: 'full',
+          title: 'Buscar en AloVida — profesionales, medicamentos y centros de salud',
+          data: { arquetipo: 'listado' },
+          loadComponent: () =>
+            import('./features/redsat/buscar/buscador-listado/buscador-listado').then(
+              (m) => m.BuscarBuscadorListado,
+            ),
+        },
+        {
+          path: 'profesionales',
+          title: 'Profesionales de salud — AloVida',
+          data: { arquetipo: 'listado' },
+          loadComponent: () =>
+            import('./features/redsat/buscar/profesionales-listado/profesionales-listado').then(
+              (m) => m.BuscarProfesionalesListado,
+            ),
+        },
+        {
+          path: 'medicamentos',
+          title: 'Medicamentos y farmacias — AloVida',
+          data: { arquetipo: 'listado' },
+          loadComponent: () =>
+            import('./features/redsat/buscar/medicamentos-listado/medicamentos-listado').then(
+              (m) => m.BuscarMedicamentosListado,
+            ),
+        },
+        {
+          path: 'hospitales',
+          title: 'Hospitales y clínicas — AloVida',
+          data: { arquetipo: 'listado' },
+          loadComponent: () =>
+            import('./features/redsat/buscar/hospitales-listado/hospitales-listado').then(
+              (m) => m.BuscarHospitalesListado,
+            ),
+        },
+        {
+          path: 'diagnostico',
+          title: 'Laboratorios e imagen — AloVida',
+          data: { arquetipo: 'listado' },
+          loadComponent: () =>
+            import('./features/redsat/buscar/laboratorios-listado/laboratorios-listado').then(
+              (m) => m.BuscarLaboratoriosListado,
+            ),
+        },
+        {
+          path: 'aseguradoras',
+          title: 'Aseguradoras y convenios — AloVida',
+          data: { arquetipo: 'listado' },
+          loadComponent: () =>
+            import('./features/redsat/buscar/aseguradoras-listado/aseguradoras-listado').then(
+              (m) => m.BuscarAseguradorasListado,
+            ),
+        },
+        {
+          // V65-12. `mapa` y no `cercania`: es el rótulo de la pestaña y el
+          // que la ficha declara.
+          path: 'mapa',
+          title: 'Cerca mío — AloVida',
+          data: { arquetipo: 'detalle' },
+          loadComponent: () =>
+            import('./features/redsat/buscar/cercania-detalle/cercania-detalle').then(
+              (m) => m.BuscarCercaniaDetalle,
+            ),
+        },
+      ],
+    },
+  ];
+}
+
 export const routes: Routes = [
+  // La superficie pública del buscador con sus URL limpias. Va **antes** del
+  // bloque generado: las dos declaran `buscar`, y la primera que coincide gana.
+  ...rutasDeBusquedaPublica(),
   // Las pantallas portadas desde la bóveda, con su propio marco REDSAT. Van
   // primero y con segmento propio: no compiten con el armazón de abajo, que
   // vive en `path: ''`, así que ninguna de las dos depende de que el router

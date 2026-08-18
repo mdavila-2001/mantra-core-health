@@ -74,6 +74,34 @@ export const serverRoutes: ServerRoute[] = [
    * ruta espera a la API antes de activar— y manda el HTML ya pintado, con su
    * `<title>` y sus metadatos de Open Graph adentro.
    */
+  /**
+   * El buscador público, también en `Server`.
+   *
+   * Mismo criterio que las fichas y por el mismo motivo: `/buscar` y sus seis
+   * verticales se ven **igual para todo el mundo** —no hay sesión que consultar—
+   * y son la puerta de entrada de quien todavía no tiene cuenta. Servidas en
+   * `Client` devolverían el cascarón, y una búsqueda compartida en un mensaje
+   * llegaría sin resultados a quien la abra desde una vista previa.
+   *
+   * **`Prerender` no sirve acá**: el contenido depende de `?q=` y del estado del
+   * directorio, y una lista congelada en el momento de construir queda vieja en
+   * cuanto alguien publica su vitrina. Con `Server` cada petición resuelve
+   * contra la API — el texto buscado viaja en la URL, que es justamente lo que
+   * el servidor puede leer y una caja de texto no.
+   */
+  { path: 'buscar', renderMode: RenderMode.Server },
+  { path: 'buscar/profesionales', renderMode: RenderMode.Server },
+  { path: 'buscar/medicamentos', renderMode: RenderMode.Server },
+  { path: 'buscar/hospitales', renderMode: RenderMode.Server },
+  { path: 'buscar/diagnostico', renderMode: RenderMode.Server },
+  { path: 'buscar/aseguradoras', renderMode: RenderMode.Server },
+  /**
+   * El mapa **no**: abre pidiendo consentimiento para usar la ubicación, y esa
+   * pantalla no tiene nada que el servidor pueda resolver. Renderizarla en el
+   * servidor sólo adelantaría el botón, y la geolocalización vive en el
+   * navegador de todos modos.
+   */
+  { path: 'buscar/mapa', renderMode: RenderMode.Client },
   { path: 'p/:slug', renderMode: RenderMode.Server },
   { path: 'o/:slug', renderMode: RenderMode.Server },
   { path: 'f/:slug', renderMode: RenderMode.Server },
