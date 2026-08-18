@@ -55,6 +55,7 @@
             [turnos]="turnosDeCalendario()"
             [seleccionado]="seleccionado()"
             (turnoElegido)="abrirDetalle($event)"
+            (diaElegido)="elegirDiaDeHorarios($event)"
           />
 
           @if (turnoEnDetalle(); as turno) {
@@ -242,14 +243,36 @@
         probar más adelante.
       </app-alert>
     } @else {
-      <app-form-field label="¿Con quién te querés atender?" class="turnos__filtro">
-        <app-select
-          [options]="opcionesDeRecurso()"
-          [value]="recursoElegido() ?? ''"
-          placeholder="Elegí un profesional"
-          (valueChange)="elegirRecurso($event)"
+      <!-- Buscador y no desplegable: con una guía larga había que recorrerla
+           entera hasta dar con el profesional propio (F-13). Se escribe el
+           nombre y la lista se acota sola; en blanco los ofrece a todos. -->
+      <app-form-field
+        label="¿Con quién te querés atender?"
+        hint="Escribí su nombre para encontrarlo más rápido."
+        class="turnos__filtro"
+      >
+        <app-reference-combobox
+          [selected]="recursoSeleccionado()"
+          [options]="opcionesBuscadas()"
+          [minQueryLength]="0"
+          placeholder="Buscá por nombre"
+          emptyMessage="Ningún profesional coincide con esa búsqueda"
+          (searched)="busquedaDeRecurso.set($event)"
+          (selectionChange)="elegirRecurso($event?.value ?? null)"
         />
       </app-form-field>
+
+      <!-- Cuando se llegó acá señalando un día en el calendario, se dice cuál
+           es y se ofrece volver a verlos todos: si no, la lista parece corta
+           sin explicación (F-10). -->
+      @if (diaDeHorarios() !== null) {
+        <p class="turnos__filtro-dia" data-testid="turnos-dia-elegido">
+          <span>Horarios del <strong>{{ diaDeHorariosEnPalabras() }}</strong></span>
+          <button app-button variant="ghost" size="sm" (clicked)="verTodosLosHorarios()">
+            Ver todos los días
+          </button>
+        </p>
+      }
 
       @switch (horarios().status) {
         @case ('loading') {

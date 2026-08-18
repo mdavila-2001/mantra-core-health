@@ -99,6 +99,17 @@ describe('Appointments', () => {
     return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
   }
 
+  /**
+   * El miembro tal cual, sin ligar.
+   *
+   * `interno` liga las funciones al componente, y una señal **es** una función:
+   * ligarla devuelve una copia sin `.set`. Para escribir en una señal hace falta
+   * la original.
+   */
+  function crudo<T>(nombre: string): T {
+    return (componente as unknown as Record<string, unknown>)[nombre] as T;
+  }
+
   /** Responde las dos lecturas del arranque: los turnos y las agendas. */
   function responderArranque(citas: unknown[]): void {
     http
@@ -242,6 +253,75 @@ describe('Appointments', () => {
     // El `http.verify()` del afterEach falla si se pidieron cupos.
     const estado = interno<() => { status: string }>('horarios')();
     expect(estado.status).toBe('empty');
+  });
+
+  /* ---- elegir el día en el calendario (F-10) ------------------------------ */
+
+  /**
+   * Señalar un día acota los horarios a ese día. Antes había que recorrer los
+   * catorce de la ventana, y para la semana siguiente, más scroll.
+   */
+  it('elegir un día en el calendario acota los horarios a ese día', () => {
+    montar();
+    responderArranque([]);
+
+    const hoy = new Date();
+    hoy.setHours(9, 0, 0, 0);
+    const pasadoManana = new Date(hoy);
+    pasadoManana.setDate(hoy.getDate() + 2);
+
+    // Se inyectan los horarios ya resueltos: lo que se prueba es el filtro, no
+    // la lectura, que tiene su propia prueba.
+    crudo<{ set: (v: unknown) => void }>('horarios').set({
+      status: 'ready',
+      data: [
+        { id: 'h-hoy', desde: hoy, hasta: hoy, resourceId: 'r-1', lugaresLibres: 1 },
+        {
+          id: 'h-otro',
+          desde: pasadoManana,
+          hasta: pasadoManana,
+          resourceId: 'r-1',
+          lugaresLibres: 1,
+        },
+      ],
+    });
+
+    expect(interno<() => readonly { id: string }[]>('horariosListos')()).toHaveLength(2);
+
+    interno<(d: Date) => void>('elegirDiaDeHorarios')(hoy);
+    const acotados = interno<() => readonly { id: string }[]>('horariosListos')();
+    expect(acotados).toHaveLength(1);
+    expect(acotados[0].id).toBe('h-hoy');
+
+    interno<() => void>('verTodosLosHorarios')();
+    expect(interno<() => readonly { id: string }[]>('horariosListos')()).toHaveLength(2);
+  });
+
+  /* ---- buscar al profesional en vez de recorrer la lista (F-13) ----------- */
+
+  it('el buscador de profesional filtra por nombre, sin tildes ni mayúsculas', () => {
+    montar();
+    responderArranque([]);
+
+    crudo<{ set: (v: unknown) => void }>('recursos').set([
+      { id: 'r-1', name: 'Agenda 1', practitionerName: 'Dra. Ana Muñoz' },
+      { id: 'r-2', name: 'Agenda 2', practitionerName: 'Dr. Beto Peña' },
+    ]);
+
+    const buscar = crudo<{ set: (v: string) => void }>('busquedaDeRecurso');
+    const opciones = interno<() => readonly { value: string; label: string }[]>('opcionesBuscadas');
+
+    expect(opciones()).toHaveLength(2);
+
+    buscar.set('munoz');
+    expect(opciones()).toHaveLength(1);
+    expect(opciones()[0].value).toBe('r-1');
+
+    buscar.set('PEÑA');
+    expect(opciones()[0].value).toBe('r-2');
+
+    buscar.set('');
+    expect(opciones()).toHaveLength(2);
   });
 });
 

@@ -166,3 +166,15 @@
   margin-block-end: var(--sp-4);
   max-inline-size: 28rem;
 }
+
+/* El aviso de que la lista de horarios está acotada a un día del calendario.
+   Sin él, la lista se ve corta y no se entiende por qué (F-10). */
+.turnos__filtro-dia {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
