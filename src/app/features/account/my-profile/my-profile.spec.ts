@@ -178,9 +178,10 @@ describe('MyProfile', () => {
 
   it('«Tu acceso» nombra el rol en palabras, con el código sólo en data-role', () => {
     // La sesión se abre después de crear la pantalla: las insignias derivan de
-    // una señal, así que reaccionan igual.
+    // una señal, así que reaccionan igual. Con un rol de trabajo, porque desde
+    // F-22 la tarjeta no se le muestra a un paciente.
     TestBed.inject(SessionStore).start({
-      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] }),
+      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] }),
       refreshToken: 'r-1',
     });
     responderResumen();
@@ -188,8 +189,49 @@ describe('MyProfile', () => {
     const insignias = [
       ...(fixture.nativeElement as HTMLElement).querySelectorAll('.mi-perfil__roles app-badge'),
     ];
-    expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Paciente']);
-    expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PATIENT']);
+    expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Profesional sanitario']);
+    expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PRACTITIONER']);
+  });
+
+  /**
+   * F-22. «Organización: Care Default Tenant» y «Roles: Paciente» responden a
+   * «¿por qué no veo tal cosa?», una pregunta de quien trabaja acá. Un paciente
+   * no tiene secciones que le falten: tiene lo suyo.
+   */
+  it('a un paciente no se le muestra «Tu acceso» ni su organización', () => {
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({
+        sub: 'u-1',
+        roles: ['USER', 'PATIENT'],
+        tenants: ['t-1'],
+        tenantNames: { 't-1': 'Care Default Tenant' },
+      }),
+      refreshToken: 'r-1',
+    });
+    responderResumen();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('[data-testid="mi-perfil-acceso"]')).toBeNull();
+    expect(raiz.textContent).not.toContain('Tu acceso');
+    expect(raiz.textContent).not.toContain('Care Default Tenant');
+    expect(raiz.textContent).not.toContain('Organización');
+  });
+
+  /** Quien atiende y además es paciente entra a trabajar: la tarjeta le sirve. */
+  it('a quien atiende sí se le muestra, aunque además sea paciente', () => {
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({
+        sub: 'u-1',
+        roles: ['PATIENT', 'PRACTITIONER'],
+        tenants: ['t-1'],
+      }),
+      refreshToken: 'r-1',
+    });
+    responderResumen();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-acceso"]'),
+    ).not.toBeNull();
   });
 
   it('los identificadores del perfil y la persona ya no se muestran', () => {
