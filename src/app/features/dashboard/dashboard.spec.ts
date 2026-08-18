@@ -206,7 +206,9 @@ describe('Dashboard', () => {
     }
 
     it('cada acceso es un ícono, no una tarjeta con la descripción pegada', () => {
-      abrirPanel(['PATIENT']);
+      // Un rol de trabajo: desde J6 el paciente tiene su propio panel y este
+      // no lo ve. Lo que se prueba acá es la forma del acceso, no el rol.
+      abrirPanel(['PRACTITIONER']);
 
       const primero = accesos()[0];
       expect(primero.querySelector('app-nav-icon svg')).not.toBeNull();
@@ -215,7 +217,7 @@ describe('Dashboard', () => {
     });
 
     it('el resumen viaja en el tooltip y también en el nombre accesible', () => {
-      abrirPanel(['PATIENT']);
+      abrirPanel(['PRACTITIONER']);
 
       // Los tutoriales y no el glosario: desde F-03 (18/08/2026) el glosario es
       // de quien atiende y el paciente ya no lo tiene entre sus accesos.
@@ -230,7 +232,7 @@ describe('Dashboard', () => {
     });
 
     it('el rótulo se queda: una rejilla de íconos mudos se recorre a ciegas', () => {
-      abrirPanel(['PATIENT']);
+      abrirPanel(['PRACTITIONER']);
 
       const rotulos = accesos().map((a) => a.querySelector('.panel__acceso-nombre')?.textContent);
       expect(rotulos).toContain('Tutoriales');
@@ -239,7 +241,7 @@ describe('Dashboard', () => {
     });
 
     it('cada acceso apunta a una ruta real del registro, no a un destino inventado', () => {
-      abrirPanel(['PATIENT']);
+      abrirPanel(['PRACTITIONER']);
 
       for (const acceso of accesos()) {
         expect(acceso.getAttribute('href')).toBe(acceso.dataset['ruta']);
@@ -269,10 +271,15 @@ describe('Dashboard', () => {
       expect(accesos().map((a) => a.dataset['ruta'])).not.toContain('/directory');
     });
 
-    it('y sí está entre los del paciente', () => {
-      abrirPanel(['PATIENT']);
+    /**
+     * La garantía sigue en pie, pero cambió de pantalla: desde J6 el paciente
+     * no ve este panel, y la Guía es uno de los cuatro accesos de «Mi salud».
+     * La prueba vive ahora en `patient-home.spec.ts`.
+     */
+    it('la Guía es de los pacientes, y por eso no está acá', () => {
+      abrirPanel(['PRACTITIONER', 'CLINICIAN']);
 
-      expect(accesos().map((a) => a.dataset['ruta'])).toContain('/directory');
+      expect(accesos().map((a) => a.dataset['ruta'])).not.toContain('/directory');
     });
   });
 
@@ -290,7 +297,7 @@ describe('Dashboard', () => {
     it('nombra el rol en palabras y no muestra ningún identificador ni habla del token', () => {
       crear({
         sub: '11111111-1111-4111-8111-111111111111',
-        roles: ['USER', 'PATIENT'],
+        roles: ['USER', 'PRACTITIONER'],
         tenants: ['22222222-2222-4222-8222-222222222222'],
         tenantNames: { '22222222-2222-4222-8222-222222222222': 'Clínica Norte' },
       });
@@ -299,15 +306,15 @@ describe('Dashboard', () => {
       const texto = tarjeta().textContent ?? '';
       expect(texto).not.toMatch(UUID);
       expect(texto).not.toMatch(/token/i);
-      expect(texto).not.toContain('PATIENT');
+      expect(texto).not.toContain('PRACTITIONER');
       expect(texto).not.toContain('USER');
       expect(texto).toContain('Clínica Norte');
 
       // El código sigue disponible para las pruebas de extremo a extremo, pero
       // fuera del texto: en `data-role`.
       const insignias = [...tarjeta().querySelectorAll('[data-testid="panel-roles"] app-badge')];
-      expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Paciente']);
-      expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PATIENT']);
+      expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Profesional sanitario']);
+      expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PRACTITIONER']);
     });
 
     it('sin roles sigue diciendo que no hay ninguno', () => {
