@@ -833,11 +833,28 @@ export interface ModerationAppealsQuery {
   readonly limit?: number;
 }
 
+/**
+ * Los cinco motivos de reporte del contrato.
+ *
+ * Son el enum del DTO del servidor, no etiquetas inventadas para la pantalla:
+ * cualquier otro valor es un 400.
+ */
+export const REPORT_REASONS = [
+  'SPAM',
+  'ABUSE',
+  'MISINFORMATION',
+  'PHI',
+  'OTHER',
+] as const;
+
+/** Un motivo de reporte. */
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
 /** Lo que se manda a `POST /community/reports`. */
 export interface NewReport {
   readonly targetType: ModerableContentType;
   readonly targetId: string;
-  readonly reason: string;
+  readonly reason: ReportReason;
   readonly detailText?: string;
 }
 
