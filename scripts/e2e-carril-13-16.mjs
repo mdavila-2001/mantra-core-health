@@ -38,7 +38,9 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:4300';
-const USUARIO = process.env.E2E_USER ?? 'admin@redesa.test';
+// Buzón real por defecto: el mismo con el que siembra la API.
+const USUARIO =
+  process.env.E2E_USER ?? 'cpacentropreparacionacademica@gmail.com';
 const CLAVE = process.env.E2E_PASS ?? 'S3cret-passw0rd';
 const EVIDENCIA = process.env.E2E_OUT ?? './artifacts';
 
