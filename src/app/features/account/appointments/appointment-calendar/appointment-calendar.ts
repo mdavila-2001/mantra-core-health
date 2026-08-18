@@ -54,6 +54,16 @@ export class AppointmentCalendar {
   /** Se eligió un turno: la pantalla abre su detalle. */
   readonly turnoElegido = output<string>();
 
+  /**
+   * Se eligió un día: la pantalla ofrece los horarios libres de esa fecha.
+   *
+   * El calendario servía sólo para mirar: para pedir un turno había que bajar
+   * al formulario y recorrer una lista de dos semanas, y para la semana
+   * siguiente, más scroll. Mirando un calendario, lo natural es señalar el día
+   * (F-10 de la analista).
+   */
+  readonly diaElegido = output<Date>();
+
   protected readonly diasDeLaSemana = DIAS_DE_LA_SEMANA;
 
   /**
@@ -77,6 +87,10 @@ export class AppointmentCalendar {
   protected readonly semanas = computed<readonly (readonly CalendarDay[])[]>(() => {
     const porDia = this.turnosPorDia();
     const hoy = claveDelDia(new Date());
+    // A medianoche, para comparar días y no instantes. La clave de día NO sirve
+    // para ordenar: `2026-7-9` y `2026-7-18` comparados como texto dicen que el
+    // 9 es posterior.
+    const desdeHoy = medianoche(new Date()).getTime();
     const mesActual = this.mes();
     const inicio = primerDiaDeLaGrilla(mesActual);
 
@@ -95,6 +109,10 @@ export class AppointmentCalendar {
           esHoy: clave === hoy,
           turnos: delDia,
           etiqueta: etiquetaDelDia(fecha, delDia.length),
+          // Hacia atrás no hay horario que pedir: el día pasado se sigue
+          // mirando, pero no se ofrece como punto de partida de una reserva.
+          pedible: fecha.getTime() >= desdeHoy,
+          etiquetaCorta: fechaLarga(fecha),
         });
       }
       semanas.push(dias);
@@ -165,6 +183,25 @@ export class AppointmentCalendar {
   protected elegir(turno: CalendarAppointment): void {
     this.turnoElegido.emit(turno.id);
   }
+
+  /** Se señaló un día del mes: se piden sus horarios libres. */
+  protected elegirDia(fecha: Date): void {
+    this.diaElegido.emit(fecha);
+  }
+}
+
+/** La misma fecha, a las 00:00. */
+function medianoche(fecha: Date): Date {
+  return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+}
+
+/** La fecha dicha en palabras: «martes 19 de agosto». */
+function fechaLarga(fecha: Date): string {
+  return fecha.toLocaleDateString('es-BO', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
 }
 
 /** El día 1 del mes de una fecha, a medianoche. */
@@ -210,11 +247,7 @@ function claveDelDia(fecha: Date): string {
  * lee un calendario mirándolo— no llegan por audio.
  */
 function etiquetaDelDia(fecha: Date, cuantos: number): string {
-  const dia = fecha.toLocaleDateString('es-BO', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
+  const dia = fechaLarga(fecha);
   if (cuantos === 0) {
     return `${dia}, sin turnos`;
   }

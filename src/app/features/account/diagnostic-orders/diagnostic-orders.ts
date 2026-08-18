@@ -27,6 +27,9 @@ const TOPE_DE_ORDENES = 50;
 /** Una orden ya lista para mostrarse, sin un solo uuid. */
 interface OrdenVisible {
   readonly id: string;
+  /** La atención en que se pidió. Vacío = se pidió fuera de una consulta.
+      Nunca llega a la pantalla: agrupa, y el encabezado es la fecha. */
+  readonly encounterId: string;
   readonly estudio: string;
   readonly categoria: string;
   readonly estado: string;
@@ -39,6 +42,27 @@ interface OrdenVisible {
   readonly codeConceptId: string;
   readonly categoryConceptId: string;
   readonly statusConceptId: string;
+}
+
+/**
+ * Las órdenes de una misma atención.
+ *
+ * El carril pide la lista **por atención** y no por fecha suelta: un médico que
+ * pide hemograma, orina y placa en la misma consulta generó tres órdenes que
+ * para la persona son *un* pedido. Verlas como tres filas sueltas hace pensar
+ * que son tres trámites.
+ *
+ * El título es la **fecha**, no el identificador de la atención: `encounterId`
+ * es un uuid y la regla 1 del carril prohíbe que uno llegue a la pantalla. Las
+ * órdenes de una misma atención se emiten en la misma transacción, así que
+ * comparten fecha.
+ */
+interface GrupoDeOrdenes {
+  /** Clave de agrupación. Es el `encounterId`, o `sueltas` si no hubo. */
+  readonly clave: string;
+  /** Lo que se lee como encabezado del grupo. */
+  readonly titulo: string;
+  readonly ordenes: readonly OrdenVisible[];
 }
 
 /**
@@ -89,6 +113,41 @@ export class DiagnosticOrders {
     return estado.status === 'ready' ? estado.data : [];
   });
 
+  /** Las órdenes agrupadas por la atención en que se pidieron. */
+  protected readonly grupos = computed<readonly GrupoDeOrdenes[]>(() => {
+    const porAtencion = new Map<string, OrdenVisible[]>();
+    for (const orden of this.listas()) {
+      const clave = orden.encounterId === '' ? 'sueltas' : orden.encounterId;
+      const lista = porAtencion.get(clave) ?? [];
+      lista.push(orden);
+      porAtencion.set(clave, lista);
+    }
+    return [...porAtencion].map(([clave, ordenes]) => ({
+      clave,
+      titulo:
+        clave === 'sueltas'
+          ? 'Pedidas fuera de una consulta'
+          : this.tituloDeAtencion(ordenes[0].pedida),
+      ordenes,
+    }));
+  });
+
+  /** El encabezado de un grupo, en lenguaje de paciente y sin identificadores. */
+  private tituloDeAtencion(fecha: Date): string {
+    const dia = fecha.toLocaleDateString('es', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    return `Atención del ${dia}`;
+  }
+
+  /** La salida que ofrece el estado vacío (contrato S3 del M34). */
+  protected readonly salidaDelVacio = computed(() => {
+    const estado = this.ordenes();
+    return estado.status === 'empty' ? estado.nextAction : undefined;
+  });
+
   /** El mensaje del vacío, que la plantilla no puede sacar del estado tipada. */
   protected readonly mensajeDeVacio = computed(() => {
     const estado = this.ordenes();
@@ -123,8 +182,7 @@ export class DiagnosticOrders {
         this.traducirConceptos(pagina.items);
         this.ordenes.set(ready(pagina.items.map((item) => this.aVisible(item))));
       },
-      error: (error: unknown) =>
-        this.ordenes.set(errorToViewState<readonly OrdenVisible[]>(error)),
+      error: (error: unknown) => this.ordenes.set(errorToViewState<readonly OrdenVisible[]>(error)),
     });
   }
 
@@ -162,6 +220,7 @@ export class DiagnosticOrders {
   private aVisible(item: PatientOrder): OrdenVisible {
     return {
       id: item.id,
+      encounterId: item.encounterId ?? '',
       estudio: this.etiqueta(item.codeConceptId, 'Estudio'),
       categoria: this.etiqueta(item.categoryConceptId ?? '', 'Sin clasificar'),
       estado: this.etiqueta(item.statusConceptId, 'Pendiente'),

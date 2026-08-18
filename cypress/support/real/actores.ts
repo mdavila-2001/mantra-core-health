@@ -43,7 +43,10 @@ export function admin(): { identificador: string; clave: string } {
   const correo = Cypress.expose('E2E_ADMIN_EMAIL') as unknown;
   const clave = Cypress.expose('E2E_ADMIN_PASSWORD') as unknown;
   return {
-    identificador: typeof correo === 'string' && correo !== '' ? correo : 'admin@redesa.test',
+    identificador:
+      typeof correo === 'string' && correo !== ''
+        ? correo
+        : 'cpacentropreparacionacademica@gmail.com',
     clave: typeof clave === 'string' && clave !== '' ? clave : CLAVE,
   };
 }

@@ -98,7 +98,13 @@ describe('Thread', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            paramMap: of({ get: (clave: string) => (clave === 'conversationId' ? 'c-1' : null) }),
+            paramMap: of({
+              get: (clave: string) =>
+                clave === 'conversationId' ? 'c-1' : null,
+            }),
+            // Carril P9: el hilo mira `?responder` para decidir si se lleva el
+            // foco al composer. Sin este doble, la suscripción explota.
+            queryParamMap: of({ get: () => null }),
           },
         },
       ],

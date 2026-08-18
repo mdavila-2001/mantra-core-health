@@ -55,10 +55,78 @@
     </ol>
   }
 
+  <!-- Carril P9 · las plantillas del profesional. Van sobre el composer y no
+       dentro: es una ayuda para escribir, no un campo del formulario. -->
+  <div class="hilo__plantillas">
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      data-testid="hilo-plantillas"
+      [attr.aria-expanded]="plantillasAbiertas()"
+      (clicked)="alternarPlantillas()"
+    >
+      {{ plantillasAbiertas() ? 'Cerrar plantillas' : 'Usar una plantilla' }}
+    </button>
+
+    @if (plantillasAbiertas()) {
+      <ul class="hilo__plantillas-lista">
+        @for (plantilla of plantillasDisponibles(); track plantilla) {
+          <li class="hilo__plantilla">
+            <button
+              class="hilo__plantilla-texto"
+              type="button"
+              data-testid="hilo-plantilla"
+              (click)="usarPlantilla(plantilla)"
+            >
+              {{ plantilla }}
+            </button>
+            @if (esPropia(plantilla)) {
+              <button
+                class="hilo__plantilla-quitar"
+                type="button"
+                [attr.aria-label]="'Quitar la plantilla: ' + plantilla"
+                (click)="olvidarPlantilla(plantilla)"
+              >
+                Quitar
+              </button>
+            }
+          </li>
+        }
+      </ul>
+
+      <div class="hilo__plantilla-nueva">
+        <label class="hilo__campo">
+          <span class="solo-lectores">Nueva plantilla</span>
+          <input
+            type="text"
+            data-testid="hilo-plantilla-nueva"
+            placeholder="Guardar una frase que uses seguido"
+            [ngModel]="plantillaNueva()"
+            (ngModelChange)="plantillaNueva.set($event)"
+            name="plantillaNueva"
+          />
+        </label>
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="hilo-plantilla-guardar"
+          (clicked)="guardarPlantilla()"
+        >
+          Guardar
+        </button>
+      </div>
+    }
+  </div>
+
   <form class="hilo__composer" (submit)="$event.preventDefault(); enviar()">
     <label class="hilo__campo">
       <span class="solo-lectores">Escribí tu mensaje</span>
       <textarea
+        #composer
         data-testid="hilo-texto"
         rows="2"
         placeholder="Escribí tu mensaje. Enter envía, Shift+Enter hace salto de línea."

@@ -123,6 +123,17 @@ export class BookingNew {
   protected readonly rutaDeVuelta = this.esAutoservicio ? MIS_TURNOS_ROUTE : AGENDA_ROUTE;
 
   /**
+   * Qué se espera en el campo de motivo, dicho para quien lo va a llenar.
+   *
+   * Antes decía «Opcional. Acompaña a la cita», que no explicaba ni para qué
+   * sirve ni quién lo lee. Cambia según quién reserva porque no es lo mismo
+   * contar lo que a uno le pasa que anotar lo que dijo el paciente por teléfono.
+   */
+  protected readonly ayudaDelMotivo = this.esAutoservicio
+    ? 'Contale al profesional qué te pasa o qué querés consultar. Es opcional, y lo lee antes de atenderte.'
+    : 'Lo que cuenta el paciente sobre su consulta. Es opcional, y el profesional lo lee antes de atenderlo.';
+
+  /**
    * La cuenta no tiene perfil de paciente y entró por el portal.
    *
    * Pasa con el personal de salud y con administración: son cuentas reales, con
@@ -196,6 +207,23 @@ export class BookingNew {
    * pudo averiguar una dirección.
    */
   protected readonly sede = signal<AgendaResourceSite | null>(null);
+
+  /**
+   * Con quién es el turno, para poder confirmarlo sabiéndolo.
+   *
+   * Antes el resumen decía cuándo y dónde, pero no a quién: se confirmaba «a
+   * ciegas» respecto de lo único que la persona eligió a mano. Sale del mismo
+   * recurso del que ya se lee la sede, así que no cuesta una consulta más.
+   *
+   * Se prefiere `practitionerName` sobre `name` porque el segundo es el rótulo
+   * de la agenda («Agenda Dra. Ríos») y el primero la persona. Vacío mientras
+   * se pide o si el recurso no es de un profesional —un box, un equipo—, y en
+   * ese caso el renglón no se dibuja.
+   *
+   * **Pendiente:** la especialidad, que Melissa también pidió (F-07), no viene
+   * en el recurso; hoy no hay de dónde leerla sin otra llamada.
+   */
+  protected readonly profesional = signal<string>('');
 
   /** La ubicación en una línea, tal como se muestra en el resumen. */
   protected readonly ubicacion = computed(() => {
@@ -281,11 +309,11 @@ export class BookingNew {
   }
 
   /**
-   * Pide la sede del recurso.
+   * Pide el recurso del cupo: de ahí salen **con quién** y **dónde** es el turno.
    *
-   * Va por su lado y su fallo no se muestra: la dirección es contexto del
-   * turno, no una precondición para reservarlo. Perder la reserva porque no se
-   * pudo leer dónde queda el consultorio sería cambiar una comodidad por una
+   * Va por su lado y su fallo no se muestra: son contexto del turno, no una
+   * precondición para reservarlo. Perder la reserva porque no se pudo leer
+   * dónde queda el consultorio sería cambiar una comodidad por una
    * funcionalidad.
    */
   private cargarSede(): void {
@@ -294,9 +322,15 @@ export class BookingNew {
       return;
     }
     this.scheduling.listResources({ tenantId }).subscribe({
-      next: (pagina) =>
-        this.sede.set(pagina.items.find((recurso) => recurso.id === this.resourceId)?.site ?? null),
-      error: () => this.sede.set(null),
+      next: (pagina) => {
+        const recurso = pagina.items.find((item) => item.id === this.resourceId);
+        this.sede.set(recurso?.site ?? null);
+        this.profesional.set(recurso?.practitionerName ?? '');
+      },
+      error: () => {
+        this.sede.set(null);
+        this.profesional.set('');
+      },
     });
   }
 

@@ -95,14 +95,17 @@ describe('NavigationService', () => {
         // Los resultados propios no exigen rol por lo mismo que los turnos: el
         // filtro real es tener perfil de paciente, que es un dato de la cuenta.
         '/my-account/diagnostic-results',
-        // «Mis órdenes» (J1, #149): tampoco exige rol — es la lista de las
-        // órdenes del propio paciente.
+        // Las órdenes propias entran por lo mismo que los resultados: son las
+        // dos mitades del mismo circuito y ninguna exige rol — el filtro real
+        // es tener perfil de paciente, que la pantalla resuelve.
         '/my-account/diagnostic-orders',
         // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
         // perfil de paciente, que es un dato de la cuenta y no un rol.
         '/my-account/questionnaires',
         // Carril P1: la bandeja es de la persona y el backend sólo devuelve la
         // propia, así que no hay rol que filtrar.
+        // Carril P9: las preferencias de aviso, pegadas a la bandeja.
+        '/my-account/notification-preferences',
         '/notification-center',
         '/my-account/identity/verify',
         '/my-account/identity/cases',

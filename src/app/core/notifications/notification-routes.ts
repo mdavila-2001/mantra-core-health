@@ -31,8 +31,10 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
   ENCOUNTER: () => '/my-account/medical-record',
   DIAGNOSTIC_REPORT: () => '/my-account/diagnostic-results',
   APPOINTMENT: () => '/my-account/appointments',
-  // Mensajería directa (carril P2): el hilo abre por su id.
-  CONVERSATION: (id) => `/messaging/${id}`,
+  // Mensajería directa (carril P2). Con `?responder=1` (carril P9) el hilo
+  // abre con el foco puesto en el textarea: llegar desde «te escribieron» y
+  // tener que buscar dónde escribir rompe el gesto que la notificación empezó.
+  CONVERSATION: (id) => `/messaging/${id}?responder=1`,
   // El muro no tiene todavía pantalla de publicación suelta.
   POST: null,
 };

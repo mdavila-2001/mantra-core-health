@@ -1,0 +1,98 @@
+<app-page-header
+  title="Preferencias de avisos"
+  subtitle="Elegí de qué querés que te avisemos y cuándo."
+/>
+
+@if (error(); as mensaje) {
+  <app-alert tone="error" class="prefs__alerta">{{ mensaje }}</app-alert>
+}
+
+@if (guardado()) {
+  <app-alert tone="success" class="prefs__alerta">Guardamos tus preferencias.</app-alert>
+}
+
+@if (cargando()) {
+  <p class="prefs__cargando" role="status">Cargando tus preferencias…</p>
+} @else {
+  <section class="prefs__bloque">
+    <h2 class="prefs__titulo">Qué avisos recibís</h2>
+
+    <ul class="prefs__lista">
+      @for (fila of filas(); track fila.category) {
+        <li class="prefs__fila">
+          <label class="prefs__control">
+            <input
+              type="checkbox"
+              [attr.data-testid]="'pref-' + fila.category"
+              [checked]="fila.optedIn"
+              (change)="alternar(fila.category)"
+            />
+            <span class="prefs__texto">
+              <span class="prefs__nombre">{{ fila.titulo }}</span>
+              <span class="prefs__detalle">{{ fila.detalle }}</span>
+            </span>
+          </label>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="prefs__bloque">
+    <h2 class="prefs__titulo">Silencio nocturno</h2>
+
+    <label class="prefs__control">
+      <input
+        type="checkbox"
+        data-testid="pref-silencio"
+        [checked]="silencioActivo()"
+        (change)="alternarSilencio()"
+      />
+      <span class="prefs__texto">
+        <span class="prefs__nombre">No mostrarme avisos en este horario</span>
+        <!-- Se dice lo que hace, no lo que suena mejor: aplaza. Prometer «no te
+             molesto» y perder un aviso serían dos cosas distintas. -->
+        <span class="prefs__detalle">
+          Los avisos que lleguen en esa franja no aparecen hasta que termina. No se pierde ninguno.
+        </span>
+      </span>
+    </label>
+
+    @if (silencioActivo()) {
+      <div class="prefs__horas">
+        <label class="prefs__hora">
+          <span>Desde</span>
+          <input
+            type="time"
+            data-testid="pref-desde"
+            [ngModel]="desde()"
+            (ngModelChange)="desde.set($event)"
+            name="desde"
+          />
+        </label>
+        <label class="prefs__hora">
+          <span>Hasta</span>
+          <input
+            type="time"
+            data-testid="pref-hasta"
+            [ngModel]="hasta()"
+            (ngModelChange)="hasta.set($event)"
+            name="hasta"
+          />
+        </label>
+      </div>
+      <p class="prefs__nota">Se usa la hora de tu dispositivo.</p>
+    }
+  </section>
+
+  <div class="prefs__acciones">
+    <button
+      app-button
+      variant="primary"
+      data-testid="pref-guardar"
+      [isLoading]="guardando()"
+      (clicked)="guardar()"
+    >
+      Guardar preferencias
+    </button>
+  </div>
+}

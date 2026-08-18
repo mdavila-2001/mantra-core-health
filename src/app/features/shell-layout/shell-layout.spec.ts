@@ -156,6 +156,8 @@ describe('ShellLayout', () => {
       // Los resultados propios no exigen rol por lo mismo que los turnos: el
       // filtro real es tener perfil de paciente, que es un dato de la cuenta.
       '/my-account/diagnostic-results',
+      // Las órdenes propias, la otra mitad del mismo circuito. Tampoco exigen
+      // rol: el filtro real es tener perfil de paciente.
       '/my-account/diagnostic-orders',
       // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
       // perfil de paciente, que es un dato de la cuenta y no un rol.
@@ -163,6 +165,8 @@ describe('ShellLayout', () => {
       // Carril P1: el centro de notificaciones. Tampoco exige rol —cualquiera
       // con sesión tiene bandeja, y el backend sólo devuelve la propia—, así
       // que aparece también en una sesión sin roles.
+      // Carril P9: las preferencias de aviso, pegadas a la bandeja.
+      '/my-account/notification-preferences',
       '/notification-center',
       '/my-account/identity/verify',
       '/my-account/identity/cases',
@@ -363,7 +367,9 @@ describe('ShellLayout', () => {
 
       // Con varias organizaciones la sesión no elige por su cuenta: marcar una
       // sería afirmar un contexto de datos que la persona no eligió.
-      expect(opcionesDeOrganizacion().filter((o) => o.getAttribute('aria-current'))).toHaveLength(0);
+      expect(opcionesDeOrganizacion().filter((o) => o.getAttribute('aria-current'))).toHaveLength(
+        0,
+      );
     });
 
     it('elegir una la marca, y sólo a ella', () => {

@@ -6,6 +6,8 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type { ConNulos } from '../wire';
 import type {
   InAppNotification,
+  MyPreferences,
+  UpdatePreferences,
   InAppNotificationPage,
   InAppReadResult,
   MarkAllReadResult,
@@ -99,6 +101,32 @@ export class NotificationsClient {
     return this.http.post<MarkAllReadResult>(
       this.url('/notifications/in-app/read-all'),
       {},
+    );
+  }
+
+  /**
+   * `GET /notifications/preferences/me` — qué avisos quiero recibir.
+   *
+   * Devuelve **siempre las cuatro categorías**, haya filas guardadas o no.
+   *
+   * @returns Las categorías y la ventana de silencio, en UTC.
+   */
+  readPreferences(): Observable<MyPreferences> {
+    return this.http.get<MyPreferences>(
+      this.url('/notifications/preferences/me'),
+    );
+  }
+
+  /**
+   * `PUT /notifications/preferences/me` — guardar las preferencias.
+   *
+   * @param datos - Sólo lo que cambia.
+   * @returns Las preferencias ya guardadas.
+   */
+  updatePreferences(datos: UpdatePreferences): Observable<MyPreferences> {
+    return this.http.put<MyPreferences>(
+      this.url('/notifications/preferences/me'),
+      datos,
     );
   }
 
