@@ -313,14 +313,216 @@ Sin PR todavía. Estado contra los gates:
 | G7 evidencia | este documento |
 | G8 rebase final | pendiente |
 
+## Segunda tanda — 18/08/2026 · rebase sobre `dev` y superficie de búsqueda
+
+### Rebase (G8)
+
+Las dos ramas partían de una base vieja: front **39 commits** por detrás de
+`origin/dev`, API **34**. Rebasadas las dos sobre `origin/dev` limpio.
+
+- API: un solo conflicto, de importaciones en `community-social.service.spec.ts`
+  —`AttachableFileService` entró en `dev` mientras P4 agregaba `COMM`—. Se
+  conservan las dos. Base nueva: `d8a46221`.
+- Front: rebase sin conflictos. Base nueva: `f0ca260`.
+
+Respaldos antes de rebasear: `backup/p4-api-pre-rebase` y `backup/p4-web-pre-rebase`.
+
+### Lo que faltaba y ahora está
+
+El reporte anterior cerraba con dos pendientes. Los dos están hechos.
+
+**1 · Las pantallas de listado leen la API real.** `profesionales-listado`
+pintaba `PROFESIONALES_DE_MUESTRA` —un archivo de datos inventados, ya
+borrado— y las otras cinco eran marcado estático de la bóveda sin lógica. Las
+seis leen ahora su endpoint público, sin sesión, con sus cuatro estados
+conmutados por el estado real de la lectura y con paginación por cursor.
+
+**2 · Los journeys E2E existen en los dos adaptadores.**
+`playwright/carril-p4-buscador-publico.spec.ts` y
+`cypress/e2e/real/11-directorio-publico.cy.ts` cubren P4-E2E-001 y P4-E2E-002
+contra la API viva, sin `route.fulfill` ni un cuerpo escrito a mano.
+
+### Tres defectos encontrados por el camino
+
+**D-P4-02 · `/public/search/medications` devolvía el directorio entero de
+profesionales.** El controlador acota por `kind: 'MEDICATION'`; el servicio
+traduce el vertical a un concepto de sujeto con un `find` sobre
+`KIND_BY_TARGET_CONCEPT`, y `MEDICATION` no está en ese mapa —un medicamento no
+es un perfil: vive en el catálogo de farmacia—. El `find` devolvía `undefined`,
+el filtro **se perdía en silencio** y la consulta salía sin acotar.
+
+Verificado contra la API viva antes de tocar nada:
+
+```text
+$ curl -s 'http://localhost:3001/public/search/medications?limit=2'
+{"items":[{"kind":"PRACTITIONER","slug":"doctor-dos-e2e", …
+```
+
+Quien buscaba un remedio recibía una lista de médicos, con `kind` que ni
+siquiera coincidía con el vertical pedido. Corregido: un vertical pedido sin
+concepto de sujeto devuelve **vacío** y lo deja anotado en el log del servicio,
+igual que `nearby` mientras no existan las coordenadas. Cuatro pruebas nuevas,
+una de ellas afirmando que el repositorio **no llega a consultarse**.
+
+**D-P4-03 · la ruta de datos de la ficha chocaba con la ruta de la pantalla.**
+El cliente pedía `GET /p/:slug`, que es **también la URL de la ficha en el
+router**. Las dos no pueden convivir del lado del navegador: el proxy enruta
+comparando el comienzo de la ruta, así que mandar `/p` a la API se come la ruta
+del router —abrir la ficha devolvería JSON en vez de la pantalla— y no mandarla
+deja la llamada pidiéndole `/p/:slug` al servidor de Angular, que responde el
+`index.html` con **200**; el cliente recibe HTML donde espera JSON y el fallo
+sale como «error inesperado».
+
+Lo denunciaba `check-client-prefixes.mjs`, que fallaba en la rama. Por eso el
+SSR sí funcionaba —se construye con `PUBLIC_API_BASE_URL` absoluta y no pasa por
+el proxy— y la ficha estaba rota en `:4200`.
+
+Corregido en la API con una ruta aditiva e inequívoca,
+`GET /public/profiles/:prefijo/:slug`, que delega en el mismo servicio con el
+mismo concepto de sujeto. **Las cinco rutas cortas se quedan**: son el contrato
+público y lo que alguien pega en un mensaje. Un prefijo inventado da el mismo
+404 que un slug inexistente, no un 400: un 400 abriría por la puerta de al lado
+la distinción que esta superficie no hace.
+
+**D-P4-04 · `city` y los filtros por vertical estaban en el contrato y no en el
+código.** `CONTRATO-PUBLICO.md` §2 promete `city`, `specialty`, `form`,
+`inStock`, `kind`, `study`, `planKind` y `open`. El controlador lee **`q`,
+`cursor`, `limit` y `verified`**, y nada más; `city` viaja como `null` en toda
+respuesta porque `community.public_profiles` no tiene columna de ciudad.
+
+No es un defecto de código sino de documento, pero cuesta caro: quien construya
+una pantalla contra esa tabla dibuja un filtro que no filtra. El contrato ahora
+marca cada parámetro como **implementado** o *previsto*, con la advertencia de
+qué pasa si se usa uno previsto.
+
+Consecuencia en las pantallas: la barra de filtros conserva la caja de texto —y
+en profesionales, «sólo verificados»— y **no dibuja los seis selectores de la
+maqueta que no tienen backend**. Es una desviación deliberada de la maqueta y
+está acá para que se vea: alguien filtra «Atiende hoy», la lista no cambia, y la
+pantalla le dice —sin decírselo— que todos atienden hoy. Un filtro que no filtra
+no es un pendiente visual; es una respuesta equivocada a una pregunta que la
+persona sí hizo. Vuelven cuando exista el dato.
+
+### Rutas públicas con las URL de la ficha
+
+`redsat.routes.ts` es un archivo **generado** y deriva el segmento del nombre de
+archivo de cada maqueta: la portada quedaba en `/buscar/buscador-listado`. Sirve
+para recorrer la bóveda; no sirve como superficie pública.
+
+Las URL que la ficha declara se agregaron en `app.routes.ts` —commit aislado,
+como pide el carril— **antes** del bloque generado, que sigue intacto:
+
+```text
+/buscar  ·  /buscar/profesionales  ·  /buscar/medicamentos
+/buscar/hospitales  ·  /buscar/diagnostico  ·  /buscar/aseguradoras
+/buscar/mapa
+```
+
+`hospitales` y no `organizaciones`: `check-route-prefixes.mjs` denuncia que
+`/organizaciones` empieza con el prefijo de API `/org`, y el proxy compara por
+inicio de texto y no por segmento. Además es el rótulo de la propia pestaña.
+
+Los enlaces de la bóveda que apuntan a `/buscar/buscador-listado` siguen
+abriendo **por retroceso del router** entre los dos bloques `buscar`. Eso es
+comportamiento del router y no una garantía de este repositorio, y de él dependen
+a la vez las URL limpias y los enlaces viejos; si dejara de ocurrir, media
+superficie pública devolvería la pantalla equivocada **sin ningún error**. Hay
+una prueba (`app.routes.spec.ts`) que resuelve las dos formas y falla si eso
+cambia.
+
+### `?q=` es la fuente de verdad del texto buscado
+
+No hay estado de búsqueda escondido en un componente: el texto vive en la URL.
+Tres cosas salen de ahí y ninguna hubo que programarla aparte —una búsqueda se
+puede pegar en un mensaje; el servidor la renderiza con resultados, porque el
+SSR no tiene una caja de texto que leer pero sí una URL; y el buscador del
+marco público, que está en las catorce pantallas y no conoce a ninguna, sólo
+tiene que navegar.
+
+El buscador del header es un `<form>` y no un campo que navega al teclear: vive
+también en las fichas de perfil, y navegar al teclear sacaría a alguien de la
+ficha que está leyendo en la primera letra.
+
+### SSR y datos estructurados
+
+- Las seis pantallas de búsqueda pasan a `RenderMode.Server`, por el mismo
+  motivo que las fichas: se ven igual para todo el mundo y son la puerta de
+  entrada de quien no tiene cuenta. `Prerender` no sirve —el contenido depende
+  de `?q=` y del estado del directorio—.
+- `/buscar/mapa` queda en `Client`: abre pidiendo consentimiento y no hay nada
+  que el servidor pueda resolver.
+- **JSON-LD** por tipo de perfil: `Physician`, `MedicalOrganization`,
+  `Pharmacy`, `DiagnosticLab`, `InsuranceAgency`. Se inyecta por DOM en la
+  cabeza porque Angular **elimina** los `<script>` de las plantillas; el motor
+  de SSR serializa el documento después de estabilizar, así que viaja en el HTML
+  de la respuesta. Se reemplaza el nodo anterior en vez de agregar uno: el
+  router reutiliza el componente entre slugs, y una página con cinco `Physician`
+  declarados no la lee ningún rastreador.
+- **No hay `aggregateRating` sin reseñas.** schema.org exige `ratingCount`
+  mayor que cero, y declarar «0 reseñas, puntuación 0» publica en el buscador
+  que a ese profesional lo calificaron mal cuando nadie lo calificó. Tampoco
+  `address` sin dirección ni `geo` sin coordenadas.
+- El texto del JSON-LD escapa `<`: los campos los escribe cada prestador en su
+  propia vitrina, y un `</script>` dentro de una cadena cerraría la etiqueta ahí
+  mismo y dejaría el resto del objeto como marcado suelto.
+
+### V65-12 · el mapa
+
+- **La ubicación se pide, no se toma.** La pantalla abre en consentimiento y no
+  llama a la geolocalización hasta que alguien aprieta el botón. Pedirla al
+  entrar convierte una visita en un diálogo de sistema que nadie provocó, y la
+  respuesta refleja —«bloquear»— es permanente para el sitio.
+- **La alternativa escrita está siempre visible**, no sólo cuando se deniega el
+  permiso (F6.72).
+- **La tabla va debajo del mapa con la misma información** y la columna se
+  titula «Distancia en línea recta» (`PAC-MED-005`). El mapa lleva `role="img"`
+  con una descripción que remite a la tabla: el mapa nunca es el único camino al
+  dato.
+- Hoy la pantalla cae en el estado vacío porque `GET /public/nearby` devuelve
+  `items: []` por diseño —el directorio no tiene coordenadas propias todavía— y
+  el estado vacío explica exactamente eso. El recorrido está cableado contra el
+  endpoint real, así que el día que haya coordenadas se pinta sin tocar una
+  línea.
+
+### Paginación por cursor
+
+La maqueta dibuja «Anteriores» y el contrato pagina por cursor opaco: no hay
+`prevCursor` que pedir. El store guarda la **pila de cursores** con los que se
+pidió cada página, y volver es desapilar y repetir la petición anterior. Se
+descartó ocultar el botón: una lista pública en la que sólo se puede avanzar
+obliga a empezar de cero para releer un resultado que se acaba de pasar.
+
+El rótulo dice «aproximadamente N» sólo cuando `totalHint` viene, y cuando no
+viene dice cuántos se están viendo. El contrato prohíbe escribir «N resultados»
+con una pista.
+
 ### Lo que falta para DONE
 
-1. `P4-E2E-001` y `P4-E2E-002` en el catálogo poligonal compartido, con
-   adaptador Playwright y adaptador Cypress.
-2. Conectar las pantallas de listado del buscador (`/buscar/*`) al cliente real:
-   hoy `profesionales-listado` sigue pintando `PROFESIONALES_DE_MUESTRA` y las
-   otras cinco son marcado estático de la bóveda sin lógica.
+1. **Los campos propios de cada vertical.** Los DTOs declaran `specialties`,
+   `priceFrom`+`currency`, `branchCount`, `studies`, `planKinds` y `openNow`;
+   `toResult` proyecta nueve claves y la lista blanca falla si aparece una más,
+   así que **ninguno se sirve**. Las tarjetas muestran lo que llega y omiten el
+   resto —precio, disponibilidad horaria, distancia, modalidad— en vez de
+   rellenarlo con los valores de la maqueta. Un precio inventado en un
+   directorio de salud es alguien que llega con Bs 200 a una consulta de Bs 350.
 
-Nada más. Los bloqueos B-P4-01 a B-P4-05 y el defecto documental D-P4-01 están
-todos cerrados; lo que queda son las dos piezas de arriba, que son trabajo de
-carril y no desajustes del entorno.
+2. **Los filtros de la maqueta que no tienen backend**, que son los mismos seis:
+   modalidad, organización, disponibilidad, precio, calificación mínima e
+   idioma, más `city` y `specialty`, que el contrato declara y el controlador no
+   lee. Vuelven a la barra cuando exista el dato.
+
+3. **Coordenadas del directorio.** `GET /public/nearby` valida y devuelve vacío
+   porque no hay `geo_point`. El recorrido del mapa está cableado contra el
+   endpoint real y hoy cae en su estado vacío, que lo explica.
+
+Ninguno es un desajuste del entorno ni una deuda de este carril: son datos que
+la API todavía no tiene. Lo que P4 prometía —búsqueda pública, fichas por URL
+limpia, SSR con contenido real y los journeys sin sesión— está entregado.
+
+### Gate de documentación
+
+`check-doc-coverage` queda con **dos hallazgos preexistentes de `origin/dev`**,
+ajenos a P4: `SurveysClient` (carril 10, `9f66497`) y `HelpBlockDismissalStore`
+(`d2b5146`). P4 cerró el suyo documentando `PublicDirectoryClient` en
+`docs/integrations/backend-api.md`. No se tocan los otros dos: son entregables
+de otros carriles y quien los escribió sabe qué decir de ellos.
