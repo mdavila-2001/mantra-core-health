@@ -398,6 +398,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M03 terminology',
   },
   {
+    path: 'administration/moderation',
+    label: 'Moderación',
+    group: 'Administración',
+    icon: 'settings',
+    // `SECURITY_ADMIN` y sólo él: las tres lecturas exponen contenido
+    // reportado, el texto que escribió quien reportó y quién decidió qué. El
+    // servidor lo comprueba en cada una; esta guarda evita llegar a una
+    // pantalla que sólo devolvería 403.
+    roles: ['SECURITY_ADMIN'],
+    // Encendida con las lecturas de moderación (carril P6): antes se podía
+    // decidir sobre una entrada cuyo uuid ya se conociera, pero no había forma
+    // de saber qué entradas había. Una cola que no se puede leer no es una cola.
+    availability: 'disponible',
+    summary: 'Trabajá la cola de contenido reportado y las apelaciones.',
+    module: 'M19 community',
+  },
+  {
     // W5/M44. El backend tiene **una** lectura —`GET /health-context/contexts/
     // resolve`— y doce comandos, así que la sección entra como panel de
     // operaciones, igual que M29, M40 y M27: la portada agrupa lo que se puede

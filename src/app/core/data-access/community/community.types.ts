@@ -697,3 +697,202 @@ export interface NewReaction {
   readonly reactableRefId: string;
   readonly reactionType: ReactionType;
 }
+
+// ─── Moderación (UC-19-08/09/10) ─────────────────────────────────────────────
+
+/** Estados de la cola de moderación, tal como los filtra la pantalla. */
+export type ModerationQueueStatus = 'QUEUED' | 'IN_REVIEW' | 'RESOLVED';
+
+/** Prioridades de la cola. */
+export type ModerationPriority = 'LOW' | 'NORMAL' | 'HIGH';
+
+/** Tipos de contenido moderable. */
+export type ModerableContentType =
+  | 'POST'
+  | 'COMMENT'
+  | 'PROFILE'
+  | 'MESSAGE'
+  | 'REVIEW';
+
+/** Las cuatro decisiones que un moderador puede tomar. */
+export type ModerationDecisionCode =
+  | 'REMOVED'
+  | 'RESTRICTED'
+  | 'WARNED'
+  | 'DISMISSED';
+
+/** Estados de una apelación. `OPEN` no es una resolución. */
+export type AppealStatus = 'OPEN' | 'UPHELD' | 'OVERTURNED' | 'PARTIAL';
+
+/** Las tres resoluciones posibles de una apelación. */
+export type AppealResolution = 'UPHELD' | 'OVERTURNED' | 'PARTIAL';
+
+/** El reporte que originó una entrada de cola, como contexto del moderador. */
+export interface QueueReportContext {
+  readonly id: string;
+  readonly reasonConceptId: string;
+  /** Texto libre de quien reportó. Puede mencionar a terceros. */
+  readonly detailText?: string;
+  readonly createdAt: Date;
+}
+
+/** Una entrada de la cola de moderación. */
+export interface ModerationQueueItem {
+  readonly id: string;
+  readonly contentTypeConceptId: string;
+  readonly contentRefId: string;
+  readonly sourceConceptId: string;
+  readonly priorityConceptId?: string;
+  readonly statusConceptId: string;
+  readonly assignedToUserId?: string;
+  readonly queuedAt?: Date;
+  /**
+   * Cuántos reportes acumula el contenido.
+   *
+   * La cola deduplica por contenido: sin este número, una entrada reportada por
+   * diez personas se ve igual que una reportada por una.
+   */
+  readonly reportCount: number;
+  readonly report?: QueueReportContext;
+}
+
+/** Una página de la cola. */
+export interface ModerationQueuePage {
+  readonly items: readonly ModerationQueueItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Una decisión ya tomada. */
+export interface ModerationDecisionItem {
+  readonly id: string;
+  readonly moderationQueueId: string;
+  readonly decisionConceptId: string;
+  readonly policyConceptId: string;
+  readonly rationaleText?: string;
+  readonly actionTakenConceptId?: string;
+  readonly decidedByUserId: string;
+  readonly decidedAt?: Date;
+}
+
+/** Una página de decisiones. */
+export interface ModerationDecisionPage {
+  readonly items: readonly ModerationDecisionItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Una apelación, con la decisión que impugna resuelta. */
+export interface ModerationAppealItem {
+  readonly id: string;
+  readonly moderationDecisionId: string;
+  readonly appellantProfileId: string;
+  readonly reasonText: string;
+  readonly statusConceptId: string;
+  readonly resolutionConceptId?: string;
+  readonly reviewedByUserId?: string;
+  readonly resolvedAt?: Date;
+  readonly createdAt: Date;
+  readonly decision?: ModerationDecisionItem;
+}
+
+/** Una página de apelaciones. */
+export interface ModerationAppealPage {
+  readonly items: readonly ModerationAppealItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Filtros de la cola de moderación. */
+export interface ModerationQueueQuery {
+  readonly status?: readonly ModerationQueueStatus[];
+  readonly priority?: readonly ModerationPriority[];
+  readonly contentType?: readonly ModerableContentType[];
+  /** Antigüedad mínima en horas: «qué lleva más de N horas sin decisión». */
+  readonly minAgeHours?: number;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Filtros del historial de decisiones. */
+export interface ModerationDecisionsQuery {
+  readonly moderationQueueId?: string;
+  readonly decision?: readonly ModerationDecisionCode[];
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Filtros de las apelaciones. */
+export interface ModerationAppealsQuery {
+  readonly status?: readonly AppealStatus[];
+  readonly appellantProfileId?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Lo que se manda a `POST /community/reports`. */
+export interface NewReport {
+  readonly targetType: ModerableContentType;
+  readonly targetId: string;
+  readonly reason: string;
+  readonly detailText?: string;
+}
+
+/**
+ * Lo que se manda a `POST /community/moderation/queue/:id/decision`.
+ *
+ * `rationaleText` es **obligatorio**: una decisión sin motivo deja al sancionado
+ * sin nada que leer cuando apela y al equipo sin nada que auditar.
+ */
+export interface NewModerationDecision {
+  readonly decision: ModerationDecisionCode;
+  readonly rationaleText: string;
+  readonly subjectProfileId?: string;
+  readonly strikeSeverity?: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+/** Lo que se manda a `POST /community/moderation/decisions/:id/appeal`. */
+export interface NewAppeal {
+  readonly appellantProfileId: string;
+  readonly reasonText: string;
+}
+
+/**
+ * Lo que se manda a `POST /community/moderation/appeals/:id/resolve`.
+ *
+ * Sin motivo, y no por olvido: `moderation_appeals` no tiene columna donde
+ * guardarlo. Está declarado como bloqueo de esquema en el carril P6.
+ */
+export interface ResolveAppeal {
+  readonly resolution: AppealResolution;
+}
+
+/** Lo que se manda a `POST /community/profiles/:id/reviews`. */
+export interface NewReview {
+  /**
+   * La atención que respalda la reseña. **Obligatoria.**
+   *
+   * El servidor comprueba que sea de quien reseña, con quien se califica, y que
+   * esté terminada. Quién reseña **no** viaja en el cuerpo: sale del token.
+   */
+  readonly verifiedEncounterId: string;
+  readonly overallRating: number;
+  readonly reviewText?: string;
+  readonly displayMode?: 'REAL_NAME' | 'ANONYMOUS';
+  readonly dimensions?: readonly {
+    readonly dimension:
+      | 'COMMUNICATION'
+      | 'PUNCTUALITY'
+      | 'CLEANLINESS'
+      | 'OUTCOME';
+    readonly score: number;
+  }[];
+}
+
+/** Lo que se manda al responder una reseña. */
+export interface NewReviewResponse {
+  readonly responseText: string;
+}
