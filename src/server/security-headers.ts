@@ -49,6 +49,21 @@ export interface SecurityHeadersOptions {
    * Se calculan del HTML servido, no se declaran a mano.
    */
   readonly inlineScriptHashes?: readonly string[];
+  /**
+   * Si la respuesta lleva `upgrade-insecure-requests`. Por omisión, sí.
+   *
+   * La directiva solo tiene sentido cuando la página ya viaja por HTTPS: ahí
+   * corrige un `http://` suelto en un subrecurso. Servida **por HTTP**, hace lo
+   * contrario de proteger: el navegador pide todos los subrecursos por `https`
+   * contra un servidor que no habla TLS y la página queda sin estilos, sin
+   * JavaScript y sin imágenes, con `ERR_SSL_PROTOCOL_ERROR` en la consola.
+   *
+   * `localhost` no lo sufre —los navegadores lo eximen del ascenso—, así que el
+   * modo de fallo aparece recién cuando alguien abre el servidor de desarrollo
+   * desde otra máquina de la red. Por eso se decide por petición, mirando el
+   * protocolo real, y no por entorno.
+   */
+  readonly upgradeInsecureRequests?: boolean;
 }
 
 /**
@@ -150,6 +165,7 @@ function originOf(url: string | undefined): string | null {
 export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): string {
   const apiOrigin = originOf(options.apiBaseUrl);
   const scriptHashes = options.inlineScriptHashes ?? [];
+  const upgrade = options.upgradeInsecureRequests ?? true;
 
   return [
     "default-src 'self'",
@@ -165,7 +181,7 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    'upgrade-insecure-requests',
+    ...(upgrade ? ['upgrade-insecure-requests'] : []),
   ].join('; ');
 }
 

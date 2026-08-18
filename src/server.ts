@@ -61,12 +61,43 @@ const telemetryHandle = startServerTelemetry(telemetry);
  * Es la misma variable que compila el paquete, así que las dos mitades no se
  * pueden separar.
  */
-const headers = securityHeaders({
+const cabecerasComunes = {
   apiBaseUrl: process.env['PUBLIC_API_BASE_URL'] ?? '',
   inlineScriptHashes: collectInlineScriptHashes(browserDistFolder),
-});
+};
 
-app.use((_request, response, next) => {
+/**
+ * Dos juegos de cabeceras, armados una sola vez, y la petición elige.
+ *
+ * Lo único que los separa es `upgrade-insecure-requests`, que solo corresponde
+ * si la página ya viaja cifrada. Emitirla sobre HTTP rompe la página entera:
+ * el navegador pide cada subrecurso por `https` contra un servidor que no habla
+ * TLS. `localhost` está exento del ascenso, así que eso no se ve trabajando en
+ * la propia máquina y sí en cuanto alguien abre la aplicación desde otra
+ * —`yarn start:lan`, una demo por IP, una tablet en la misma red—.
+ *
+ * Se arman los dos al arrancar y no uno por petición porque la parte cara son
+ * los hashes de los scripts en línea, que no cambian mientras el proceso viva.
+ */
+const headersHttps = securityHeaders(cabecerasComunes);
+const headersHttp = securityHeaders({ ...cabecerasComunes, upgradeInsecureRequests: false });
+
+/**
+ * `x-forwarded-proto` antes que `request.secure` porque en producción el TLS lo
+ * termina el proxy de adelante: al servidor la conexión le llega en claro, y sin
+ * mirar la cabecera creería que toda la producción es HTTP.
+ */
+function vieneCifrada(request: express.Request): boolean {
+  const reenviado = request.headers['x-forwarded-proto'];
+  const primero = Array.isArray(reenviado) ? reenviado[0] : reenviado;
+  if (primero !== undefined && primero !== '') {
+    return primero.split(',')[0]?.trim() === 'https';
+  }
+  return request.protocol === 'https' || request.secure;
+}
+
+app.use((request, response, next) => {
+  const headers = vieneCifrada(request) ? headersHttps : headersHttp;
   for (const [name, value] of Object.entries(headers)) {
     response.setHeader(name, value);
   }
