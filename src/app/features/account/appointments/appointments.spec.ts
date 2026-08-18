@@ -76,8 +76,17 @@ describe('Appointments', () => {
 
   afterEach(() => http.verify());
 
-  /** Abre la sesión y monta. `pid` ausente = cuenta que no es de un paciente. */
-  function montar({ pid }: { pid?: string } = { pid: 'pp-1' }): void {
+  /**
+   * Abre la sesión y monta. `pid` ausente = cuenta que no es de un paciente.
+   *
+   * Desde P8 el arranque hace **tres** lecturas y no dos: la lista de espera se
+   * pide junto con los turnos y las agendas. Se responde acá —vacía salvo que
+   * la prueba diga otra cosa— para que las pruebas que no van de esperas no
+   * tengan que saber que existe.
+   */
+  function montar(
+    { pid, esperas }: { pid?: string; esperas?: unknown[] } = { pid: 'pp-1' },
+  ): void {
     session.start({
       accessToken: jwt({
         sub: 'u-1',
@@ -92,6 +101,13 @@ describe('Appointments', () => {
     fixture = TestBed.createComponent(Appointments);
     componente = fixture.componentInstance;
     fixture.detectChanges();
+
+    if (pid !== undefined) {
+      http
+        .expectOne((r) => r.url === '/scheduling/waitlist')
+        .flush({ items: esperas ?? [] });
+      fixture.detectChanges();
+    }
   }
 
   function interno<T>(nombre: string): T {
@@ -99,7 +115,10 @@ describe('Appointments', () => {
     return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
   }
 
-  /** Responde las dos lecturas del arranque: los turnos y las agendas. */
+  /**
+   * Responde las dos lecturas de datos del arranque: los turnos y las agendas.
+   * La lista de espera (P8) ya la respondió {@link montar}.
+   */
   function responderArranque(citas: unknown[]): void {
     http
       .expectOne((r) => r.url === '/scheduling/bookings')
@@ -270,7 +289,16 @@ function page<T>(items: readonly T[]) {
 }
 
 /** Una cita ya mapeada por el cliente (fechas como `Date`), para los dobles. */
-function citaMock(id: string, statusConceptId: string) {
+function citaMock(
+  id: string,
+  statusConceptId: string,
+  /** La demora informada sobre el turno (P8), cuando la prueba la necesita. */
+  delayNotice?: {
+    readonly delayMinutes: number;
+    readonly message?: string;
+    readonly announcedAt: Date;
+  },
+) {
   return {
     id,
     patientProfileId: 'p-1',
@@ -280,6 +308,7 @@ function citaMock(id: string, statusConceptId: string) {
     endAt: new Date('2026-08-12T12:30:00.000Z'),
     reasonText: '',
     createdAt: new Date('2026-08-01T10:00:00.000Z'),
+    ...(delayNotice === undefined ? {} : { delayNotice }),
   };
 }
 
@@ -313,6 +342,16 @@ interface Opciones {
   readonly tenant?: string;
   readonly resources?: readonly { id: string; name: string }[];
   readonly slots?: readonly ReturnType<typeof cupoMock>[];
+  /** Las esperas activas del titular (P8). Por omisión, ninguna. */
+  readonly waitlist?: readonly {
+    id: string;
+    patientProfileId: string;
+    resourceId?: string;
+    resourceLabel: string;
+    priority: number;
+    statusConceptId: string;
+    createdAt: Date;
+  }[];
 }
 
 function montarCancelacion(opts: Opciones) {
@@ -323,6 +362,11 @@ function montarCancelacion(opts: Opciones) {
   const rescheduleBooking = vi
     .fn()
     .mockReturnValue(of({ bookingId: 'x', fromSlotId: 'a', toSlotId: 'b' }));
+  // P8 · lista de espera: leerla y anotarse.
+  const listWaitlist = vi.fn().mockReturnValue(of({ items: opts.waitlist ?? [] }));
+  const enrollWaitlist = vi
+    .fn()
+    .mockReturnValue(of({ id: 'w1', priority: 0, statusConceptId: 'c-waiting' }));
   const readConceptLabels = vi.fn().mockReturnValue(of(new Map(opts.labels)));
   const confirm = vi.fn().mockResolvedValue(opts.confirm ?? true);
   /**
@@ -339,7 +383,15 @@ function montarCancelacion(opts: Opciones) {
     providers: [
       {
         provide: SchedulingClient,
-        useValue: { searchBookings, listResources, listSlots, cancelBooking, rescheduleBooking },
+        useValue: {
+          searchBookings,
+          listResources,
+          listSlots,
+          cancelBooking,
+          rescheduleBooking,
+          listWaitlist,
+          enrollWaitlist,
+        },
       },
       { provide: TerminologyClient, useValue: { readConceptLabels } },
       // Sin token de paciente del seed, se inyecta el mínimo que la pantalla usa:
@@ -363,6 +415,8 @@ function montarCancelacion(opts: Opciones) {
     searchBookings,
     cancelBooking,
     rescheduleBooking,
+    listWaitlist,
+    enrollWaitlist,
     confirm,
     confirmWithReason,
     toast,
@@ -996,6 +1050,174 @@ describe('Appointments · el motivo del cambio llega al paciente', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid="turnos-motivo-cambio"]')).toBeNull();
+  });
+});
+
+/* ==========================================================================
+   P8 · lista de espera y demora del profesional, en la pantalla del paciente
+   ========================================================================== */
+
+/** Acceso tipado a lo que las pruebas de P8 ejercen. */
+function p8(comp: Appointments) {
+  return comp as unknown as {
+    elegirRecurso(id: string | null): void;
+    anotarmeEnEspera(): Promise<void>;
+    yaEnEspera(): boolean;
+    esperas(): readonly { id: string; agenda: string }[];
+  };
+}
+
+/** Una espera tal como la devuelve `GET /scheduling/waitlist`. */
+function esperaMock(resourceId = 'r-1') {
+  return {
+    id: `w-${resourceId}`,
+    patientProfileId: 'p-1',
+    resourceId,
+    resourceLabel: 'Dra. Rivas',
+    priority: 0,
+    statusConceptId: 'c-activa',
+    createdAt: new Date('2026-08-17T10:00:00.000Z'),
+  };
+}
+
+describe('Appointments · lista de espera (P8)', () => {
+  it('sin esperas no dibuja el bloque: no hay cola que mostrar', () => {
+    const { fixture } = montarCancelacion({ bookings: [], labels: [] });
+
+    expect(fixture.nativeElement.querySelector('[data-testid="turnos-esperas"]')).toBeNull();
+  });
+
+  it('con una espera activa la muestra con el nombre de la agenda', () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [],
+      labels: [],
+      waitlist: [esperaMock()],
+    });
+
+    const bloque = fixture.nativeElement.querySelector('[data-testid="turnos-esperas"]');
+    expect(bloque).not.toBeNull();
+    expect(bloque.textContent).toContain('Dra. Rivas');
+    // El servidor ya resuelve el nombre: la pantalla no cruza contra recursos.
+    expect(p8(comp).esperas()).toHaveLength(1);
+  });
+
+  it('anotarse pide confirmación y da de alta con la agenda elegida', async () => {
+    const { comp, enrollWaitlist, confirm, toast } = montarCancelacion({
+      bookings: [],
+      labels: [],
+      tenant: 't-1',
+      resources: [{ id: 'r-1', name: 'Consultorio Cardiología' }],
+    });
+
+    p8(comp).elegirRecurso('r-1');
+    await p8(comp).anotarmeEnEspera();
+
+    expect(confirm).toHaveBeenCalled();
+    expect(enrollWaitlist).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: 't-1',
+        patientProfileId: 'p-1',
+        resourceId: 'r-1',
+      }),
+    );
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('si se arrepiente no da de alta nada', async () => {
+    const { comp, enrollWaitlist } = montarCancelacion({
+      bookings: [],
+      labels: [],
+      confirm: false,
+      tenant: 't-1',
+      resources: [{ id: 'r-1', name: 'Consultorio Cardiología' }],
+    });
+
+    p8(comp).elegirRecurso('r-1');
+    await p8(comp).anotarmeEnEspera();
+
+    expect(enrollWaitlist).not.toHaveBeenCalled();
+  });
+
+  it('sin agenda elegida no hay a qué cola anotarse', async () => {
+    const { comp, enrollWaitlist } = montarCancelacion({
+      bookings: [],
+      labels: [],
+      tenant: 't-1',
+    });
+
+    await p8(comp).anotarmeEnEspera();
+
+    expect(enrollWaitlist).not.toHaveBeenCalled();
+  });
+
+  it('ya anotado en esa agenda: se dice, no se ofrece anotarse de nuevo', () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [],
+      labels: [],
+      tenant: 't-1',
+      resources: [{ id: 'r-1', name: 'Consultorio Cardiología' }],
+      waitlist: [esperaMock('r-1')],
+    });
+
+    p8(comp).elegirRecurso('r-1');
+    fixture.detectChanges();
+
+    expect(p8(comp).yaEnEspera()).toBe(true);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="turnos-ya-en-espera"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="turnos-anotarme-espera"]'),
+    ).toBeNull();
+  });
+});
+
+describe('Appointments · la demora se ve en el turno (P8)', () => {
+  it('muestra los minutos y el mensaje del profesional', () => {
+    const { fixture } = montarCancelacion({
+      bookings: [
+        citaMock('b-1', 's-conf', {
+          delayMinutes: 20,
+          message: 'Estoy en una urgencia',
+          announcedAt: new Date('2026-08-12T11:40:00.000Z'),
+        }),
+      ],
+      labels: [etiqueta('s-conf', 'BOOKING_CONFIRMED', 'Booking confirmed')],
+    });
+
+    const aviso = fixture.nativeElement.querySelector('[data-testid="turnos-motivo-demora"]');
+    expect(aviso).not.toBeNull();
+    expect(aviso.textContent).toContain('20 minutos');
+    expect(aviso.textContent).toContain('Estoy en una urgencia');
+  });
+
+  it('sin mensaje dice los minutos igual y no deja la frase colgando', () => {
+    const { fixture } = montarCancelacion({
+      bookings: [
+        citaMock('b-1', 's-conf', {
+          delayMinutes: 15,
+          announcedAt: new Date('2026-08-12T11:40:00.000Z'),
+        }),
+      ],
+      labels: [etiqueta('s-conf', 'BOOKING_CONFIRMED', 'Booking confirmed')],
+    });
+
+    const aviso = fixture.nativeElement.querySelector('[data-testid="turnos-motivo-demora"]');
+    expect(aviso.textContent).toContain('15 minutos');
+    // La frase cierra con punto y no con «minutos:» seguido de nada.
+    expect(aviso.textContent).toContain('15 minutos.');
+    expect(aviso.textContent).not.toContain('minutos:');
+  });
+
+  it('un turno sin demora no muestra el aviso', () => {
+    const { fixture } = montarCancelacion({
+      bookings: [citaMock('b-1', 's-conf')],
+      labels: [etiqueta('s-conf', 'BOOKING_CONFIRMED', 'Booking confirmed')],
+    });
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="turnos-motivo-demora"]'),
+    ).toBeNull();
   });
 });
 

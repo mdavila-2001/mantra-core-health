@@ -25,7 +25,10 @@ import type {
   BookingRequest,
   BookingReschedule,
   BookingRescheduled,
+  BookingDelayNotice,
   BookingStatusReason,
+  DelayNotice,
+  DelayNoticeResult,
   GenerateSlotsRequest,
   NewAgendaResource,
   NewAvailabilityException,
@@ -35,6 +38,11 @@ import type {
   ScheduleTemplateCreated,
   SlotHold,
   SlotsGenerated,
+  NewWaitlistEntry,
+  WaitlistEntry,
+  WaitlistEntryCreated,
+  WaitlistPage,
+  WaitlistQuery,
 } from './scheduling.types';
 
 /**
@@ -55,10 +63,15 @@ import type {
  * Un hold vencido no se puede confirmar: la pantalla lo trata como paso a
  * repetir, no como error terminal.
  *
- * ## Lo que este cliente sigue sin hacer
+ * ## Lista de espera y avisos de demora (P8)
  *
- * Recordatorios y lista de espera: existen en el backend y entrarán con las
- * pantallas que los pidan.
+ * Desde el carril P8 el cliente cubre las dos: anotarse en lista de espera y
+ * leerla —«estás en espera» dejó de ser una suposición de la pantalla sobre un
+ * POST que ya devolvió— y el aviso de demora del profesional, que no mueve el
+ * turno: avisa que empieza más tarde.
+ *
+ * Los recordatorios los programa el servidor al aceptar la cita (24 h y 2 h) y
+ * los entrega su worker; el cliente no los pide.
  */
 @Injectable({
   providedIn: 'root',
@@ -449,6 +462,92 @@ export class SchedulingClient {
       .pipe(map((body) => ({ ...body, checkedInAt: new Date(body.checkedInAt) })));
   }
 
+  /* -- P8 · lista de espera ------------------------------------------------ */
+
+  /**
+   * `POST /scheduling/waitlist` — anota al paciente en la lista de espera
+   * (UC-41-11).
+   *
+   * Es lo que ofrece la pantalla cuando **no** hay cupo: sin esto, un horario
+   * completo es un callejón sin salida. Anotarse no reserva nada; cuando se
+   * libera un cupo el paciente recibe el aviso y confirma por el flujo normal.
+   */
+  enrollWaitlist(entry: NewWaitlistEntry): Observable<WaitlistEntryCreated> {
+    return this.http.post<WaitlistEntryCreated>(this.url('/scheduling/waitlist'), {
+      tenantId: entry.tenantId,
+      patientProfileId: entry.patientProfileId,
+      ...(entry.resourceId === undefined ? {} : { resourceId: entry.resourceId }),
+      ...(entry.desiredFrom === undefined
+        ? {}
+        : { desiredFrom: entry.desiredFrom.toISOString() }),
+      ...(entry.desiredTo === undefined ? {} : { desiredTo: entry.desiredTo.toISOString() }),
+      ...(entry.priority === undefined ? {} : { priority: entry.priority }),
+    });
+  }
+
+  /**
+   * `GET /scheduling/waitlist` — en qué esperas está el paciente.
+   *
+   * Por omisión sólo las activas: una espera ya cubierta no es una espera, y
+   * mostrarla como tal haría creer que sigue pendiente.
+   */
+  listWaitlist(query: WaitlistQuery): Observable<WaitlistPage> {
+    // Parámetro a parámetro, como el resto del cliente: el backend valida con
+    // `forbidNonWhitelisted` y una clave en `undefined` vuelve 400.
+    let params = new HttpParams().set('patientProfileId', query.patientProfileId);
+    if (query.includeClosed === true) {
+      params = params.set('includeClosed', 'true');
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+
+    return this.http
+      .get<WireWaitlistPage>(this.url('/scheduling/waitlist'), { params })
+      .pipe(map((body) => ({ items: body.items.map(toWaitlistEntry) })));
+  }
+
+  /* -- P8 · «el médico se demora» ------------------------------------------ */
+
+  /**
+   * `POST /scheduling/bookings/:id/delay` — avisa una demora sobre un turno.
+   *
+   * No lo mueve ni toca su cupo: la cita sigue donde estaba y el paciente se
+   * entera de que empieza más tarde.
+   */
+  delayBooking(bookingId: string, notice: DelayNotice): Observable<DelayNoticeResult> {
+    return this.http.post<DelayNoticeResult>(
+      this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/delay`),
+      {
+        delayMinutes: notice.delayMinutes,
+        ...(notice.message === undefined || notice.message === ''
+          ? {}
+          : { message: notice.message }),
+      },
+    );
+  }
+
+  /**
+   * `POST /scheduling/resources/:id/delay` — «me demoro veinte minutos hoy».
+   *
+   * Alcanza a las citas vigentes de la ventana; por omisión, de ahora al fin
+   * del día. Es como la demora ocurre en la práctica: es de la jornada, no de
+   * un turno suelto.
+   */
+  delayResource(resourceId: string, notice: DelayNotice): Observable<DelayNoticeResult> {
+    return this.http.post<DelayNoticeResult>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/delay`),
+      {
+        delayMinutes: notice.delayMinutes,
+        ...(notice.message === undefined || notice.message === ''
+          ? {}
+          : { message: notice.message }),
+        ...(notice.from === undefined ? {} : { from: notice.from.toISOString() }),
+        ...(notice.to === undefined ? {} : { to: notice.to.toISOString() }),
+      },
+    );
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
@@ -483,7 +582,13 @@ interface WireSlotPage extends Omit<AgendaSlotPage, 'items'> {
 
 type WireBooking = Omit<
   Booking,
-  'startAt' | 'endAt' | 'confirmedAt' | 'checkedInAt' | 'createdAt' | 'statusReason'
+  | 'startAt'
+  | 'endAt'
+  | 'confirmedAt'
+  | 'checkedInAt'
+  | 'createdAt'
+  | 'statusReason'
+  | 'delayNotice'
 > & {
   readonly startAt?: string | null;
   readonly endAt?: string | null;
@@ -491,11 +596,26 @@ type WireBooking = Omit<
   readonly checkedInAt?: string | null;
   readonly createdAt: string;
   readonly statusReason?: WireStatusReason | null;
+  readonly delayNotice?: WireDelayNotice | null;
 };
 
 type WireStatusReason = Omit<BookingStatusReason, 'changedAt'> & {
   readonly changedAt: string;
 };
+
+type WireDelayNotice = Omit<BookingDelayNotice, 'announcedAt'> & {
+  readonly announcedAt: string;
+};
+
+type WireWaitlistEntry = Omit<WaitlistEntry, 'desiredFrom' | 'desiredTo' | 'createdAt'> & {
+  readonly desiredFrom?: string | null;
+  readonly desiredTo?: string | null;
+  readonly createdAt: string;
+};
+
+interface WireWaitlistPage {
+  readonly items: readonly WireWaitlistEntry[];
+}
 
 interface WireBookingPage extends Omit<BookingPage, 'items'> {
   readonly items: readonly WireBooking[];
@@ -524,6 +644,7 @@ function toBooking({
   checkedInAt,
   createdAt,
   statusReason,
+  delayNotice,
   ...resto
 }: WireBooking): Booking {
   return {
@@ -540,6 +661,29 @@ function toBooking({
             changedAt: new Date(statusReason.changedAt),
           },
         }),
+    ...(delayNotice === null || delayNotice === undefined
+      ? {}
+      : {
+          delayNotice: {
+            ...delayNotice,
+            announcedAt: new Date(delayNotice.announcedAt),
+          },
+        }),
+    createdAt: new Date(createdAt),
+  };
+}
+
+/** Una espera con sus tres instantes convertidos. */
+function toWaitlistEntry({
+  desiredFrom,
+  desiredTo,
+  createdAt,
+  ...resto
+}: WireWaitlistEntry): WaitlistEntry {
+  return {
+    ...resto,
+    ...optionalDate('desiredFrom', desiredFrom),
+    ...optionalDate('desiredTo', desiredTo),
     createdAt: new Date(createdAt),
   };
 }

@@ -1,0 +1,43 @@
+<article class="publicacion" [attr.data-nivel]="sangria()">
+  <header class="publicacion__cabecera">
+    <p class="publicacion__autor">{{ autor() }}</p>
+    <p class="publicacion__fecha">{{ post().createdAt | date: 'short' }}</p>
+  </header>
+
+  <p class="publicacion__cuerpo">{{ post().bodyText }}</p>
+
+  @if (puedeResponder()) {
+    <div class="publicacion__acciones">
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        [attr.aria-expanded]="esRespuestaAbierta()"
+        (clicked)="responder.emit(post().id)"
+      >
+        {{ esRespuestaAbierta() ? 'Cerrar respuesta' : 'Responder' }}
+      </button>
+
+      @if (post().replyCount; as respuestas) {
+        <span class="publicacion__conteo">{{ respuestas }} respuestas</span>
+      }
+    </div>
+  }
+
+  <!-- Contenido proyectado: la caja de respuesta la pone el muro, que es quien
+       sabe publicar. Esta tarjeta sólo dice dónde va. -->
+  <ng-content />
+
+  @if (post().replies.length > 0) {
+    <div class="publicacion__hilo">
+      @for (respuesta of post().replies; track respuesta.id) {
+        <app-group-post
+          [post]="respuesta"
+          [puedeResponder]="puedeResponder()"
+          [respondiendoA]="respondiendoA()"
+          (responder)="responder.emit($event)"
+        />
+      }
+    </div>
+  }
+</article>

@@ -295,18 +295,19 @@
   margin-block-end: var(--sp-5);
 }
 
-/* ── Identificadores ───────────────────────────────────────────────────────*/
+/* ── Antigüedad ────────────────────────────────────────────────────────────*/
 
-.profesional__ids {
+/* Sin `text-transform`: el mes va en minúscula en español, y el pie ya no lleva
+   identificadores que hubiera que proteger de él. */
+.profesional__desde {
   margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
-  text-transform: capitalize;
 }
 
-/* `anywhere` y no `break-all`: un uuid no tiene puntos de corte naturales y sin
-   esto desborda la tarjeta en pantallas angostas. */
+/* `anywhere` y no `break-all`: una matrícula o un número de estudio no tienen
+   puntos de corte naturales y sin esto desbordan la tarjeta en pantallas angostas. */
 .profesional__cifra {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;

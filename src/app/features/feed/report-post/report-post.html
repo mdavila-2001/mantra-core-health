@@ -1,0 +1,67 @@
+<app-card variant="outlined" padding="md">
+  @if (listo()) {
+    <!-- Se dice lo que pasó y nada más. Prometer que el contenido se va a bajar
+         sería prometer en nombre de quien todavía no lo miró. -->
+    <app-alert tone="success" title="Reporte enviado">
+      Lo va a revisar el equipo de moderación.
+    </app-alert>
+    <button app-button variant="ghost" size="sm" (clicked)="cancelar()">
+      Cerrar
+    </button>
+  } @else {
+    <form class="reporte" data-testid="report-post" (submit)="$event.preventDefault()">
+      <p class="reporte__titulo">¿Por qué reportás esta publicación?</p>
+
+      <div class="reporte__motivos" role="group" aria-label="Motivo del reporte">
+        @for (motivo of motivos; track motivo.code) {
+          <button
+            app-button
+            type="button"
+            variant="outline"
+            size="sm"
+            [attr.aria-pressed]="elegido() === motivo.code"
+            (clicked)="elegir(motivo.code)"
+          >
+            {{ motivo.label }}
+          </button>
+        }
+      </div>
+
+      <app-form-field
+        label="Detalle (opcional)"
+        hint="Lo lee el equipo de moderación. No copies acá datos de un paciente: sería agregar al sistema lo mismo que estás denunciando."
+      >
+        <app-textarea
+          data-testid="report-post-detail"
+          [(value)]="detalle"
+          [rows]="3"
+          [autoResize]="true"
+          [maxLength]="2000"
+          [disabled]="enviando()"
+          placeholder="Qué viste, en tus palabras"
+        />
+      </app-form-field>
+
+      <div class="reporte__acciones">
+        <button
+          app-button
+          data-testid="report-post-submit"
+          type="button"
+          variant="primary"
+          size="sm"
+          [disabled]="!puedeEnviar()"
+          (clicked)="enviar()"
+        >
+          {{ enviando() ? 'Enviando…' : 'Enviar reporte' }}
+        </button>
+        <button app-button variant="ghost" size="sm" (clicked)="cancelar()">
+          Cancelar
+        </button>
+      </div>
+
+      @if (error(); as mensaje) {
+        <p class="reporte__error" role="alert">{{ mensaje }}</p>
+      }
+    </form>
+  }
+</app-card>

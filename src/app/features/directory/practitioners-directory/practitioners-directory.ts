@@ -249,6 +249,11 @@ function porNombre(a: SearchResultItem, b: SearchResultItem): number {
  *
  * La tarjeta no conoce al dominio a propósito (ver `search-result.types.ts`):
  * recibe figura, título, líneas de contexto y sellos, y quien la usa traduce.
+ *
+ * El `practitionerCode` no se muestra: es un identificador de sistema, y la
+ * Guía es sólo del paciente (`navigation.map.ts`, `exclusiveRoles`), así que
+ * no hay a quién mostrárselo por rol (feedback de la analista F-01, 18/08/2026).
+ * Sigue viajando en el DTO por si una consola de administración lo necesita.
  */
 function toResultado(fila: PractitionerListItem): SearchResultItem {
   const nombre = fila.displayName ?? 'Profesional sin nombre registrado';
@@ -256,7 +261,6 @@ function toResultado(fila: PractitionerListItem): SearchResultItem {
   if (fila.professionalTitle !== undefined && fila.professionalTitle !== '') {
     meta.push({ text: fila.professionalTitle });
   }
-  meta.push({ text: `Código ${fila.practitionerCode}` });
 
   const sellos = [];
   // Disponibilidad con palabras: es lo que decide si quien busca puede pedir
