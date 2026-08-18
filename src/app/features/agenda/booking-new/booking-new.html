@@ -51,8 +51,18 @@
         <!-- El resumen dice qué se está por reservar; los datos salen de la
              relectura, no de la fila que originó la navegación. -->
         <dl class="reserva__resumen" data-testid="reserva-resumen">
+          <!-- Con quién es el turno. Va primero porque es lo que la persona
+               quiere confirmar antes que nada, y hasta ahora no estaba: se veía
+               el horario y el lugar, pero no a quién iba a atenderla. -->
+          @if (profesional(); as nombre) {
+            <div class="reserva__dato" data-testid="reserva-profesional">
+              <dt>Con quién</dt>
+              <dd>{{ nombre }}</dd>
+            </div>
+          }
+
           <div class="reserva__dato">
-            <dt>Franja</dt>
+            <dt>Fecha de reserva</dt>
             <dd>
               <span class="reserva__cifra">{{ cupo.startAt | date: 'EEEE d MMM, HH:mm' }}</span>
               hasta <span class="reserva__cifra">{{ cupo.endAt | date: 'HH:mm' }}</span>
@@ -127,16 +137,20 @@
               </app-form-section>
             }
 
-            <app-form-section legend="Motivo" description="Opcional. Acompaña a la cita.">
+            <app-form-section legend="Motivo de la consulta" [description]="ayudaDelMotivo">
+              <!-- Ocupa la fila entera: la sección tiene un solo campo y, en el
+                   grid de dos columnas, quedaba a media caja para un texto que
+                   admite 500 caracteres. -->
               <app-form-field
-                label="Motivo de consulta"
+                class="reserva__campo--ancho"
+                label="¿Qué te pasa o qué querés consultar?"
                 [errorMessage]="
                   motivo.touched && motivo.invalid
                     ? 'El motivo no puede superar los 500 caracteres.'
                     : ''
                 "
               >
-                <app-textarea formControlName="motivo" [maxLength]="maxMotivo" [rows]="3" />
+                <app-textarea formControlName="motivo" [maxLength]="maxMotivo" [rows]="5" />
               </app-form-field>
             </app-form-section>
 

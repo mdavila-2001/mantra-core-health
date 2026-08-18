@@ -57,22 +57,46 @@
               [class.calendario__dia--hoy]="dia.esHoy"
               [attr.aria-label]="dia.etiqueta"
             >
-              <span class="calendario__numero" aria-hidden="true">{{ dia.numero }}</span>
-              @for (turno of dia.turnos; track turno.id) {
+              <!-- El número del día es el botón para pedir turno ese día: es
+                   donde la persona apunta cuando mira un calendario. Los días
+                   pasados no lo son —no hay horario que pedir hacia atrás—. -->
+              @if (dia.pedible) {
                 <button
                   type="button"
-                  class="calendario__turno"
-                  [class.calendario__turno--activo]="seleccionado() === turno.id"
-                  [attr.data-tono]="turno.tono"
-                  [attr.aria-current]="seleccionado() === turno.id ? 'true' : null"
-                  (click)="elegir(turno)"
+                  class="calendario__numero calendario__numero--pedible"
+                  [attr.aria-label]="'Ver horarios libres del ' + dia.etiquetaCorta"
+                  (click)="elegirDia(dia.fecha)"
                 >
-                  <span class="calendario__hora">{{ turno.cuando | date: 'HH:mm' }}</span>
-                  <span class="calendario__titulo">{{ turno.titulo }}</span>
-                  <!-- El estado también en palabras: el color del borde no se lee
-                       en voz alta ni lo distingue todo el mundo. -->
-                  <span class="calendario__estado">{{ turno.estado }}</span>
+                  {{ dia.numero }}
                 </button>
+              } @else {
+                <span class="calendario__numero" aria-hidden="true">{{ dia.numero }}</span>
+              }
+
+              <!-- Los turnos viven en su propia caja con desplazamiento: la
+                   celda tiene alto fijo y un día con dos o tres turnos la
+                   estiraba, deformando toda la fila del calendario. Ahora el
+                   bloque se ajusta a la celda y no al texto. -->
+              @if (dia.turnos.length > 0) {
+                <div class="calendario__turnos">
+                  @for (turno of dia.turnos; track turno.id) {
+                    <button
+                      type="button"
+                      class="calendario__turno"
+                      [class.calendario__turno--activo]="seleccionado() === turno.id"
+                      [attr.data-tono]="turno.tono"
+                      [attr.aria-current]="seleccionado() === turno.id ? 'true' : null"
+                      [title]="turno.titulo + ' · ' + turno.estado"
+                      (click)="elegir(turno)"
+                    >
+                      <span class="calendario__hora">{{ turno.cuando | date: 'HH:mm' }}</span>
+                      <span class="calendario__titulo">{{ turno.titulo }}</span>
+                      <!-- El estado también en palabras: el color del borde no se lee
+                           en voz alta ni lo distingue todo el mundo. -->
+                      <span class="calendario__estado">{{ turno.estado }}</span>
+                    </button>
+                  }
+                </div>
               }
             </td>
           }

@@ -26,6 +26,8 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { Select } from '../../../shared/components/atoms/select/select';
+import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -202,8 +204,8 @@ interface HorarioVisible {
     DatePipe,
     FormField,
     PageHeader,
+    ReferenceCombobox,
     RouterLink,
-    Select,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
@@ -289,6 +291,23 @@ export class Appointments {
     this.seleccionado.update((actual) => (actual === id ? null : id));
   }
 
+  /**
+   * Se señaló un día en el calendario: se ofrecen los horarios libres de ese día.
+   *
+   * No navega ni cambia de vista: el calendario sigue a la vista y debajo
+   * aparece lo que hay ese día. Cambiar de pantalla en respuesta a un clic en
+   * un número obligaría a volver para probar con otro día, que es la queja que
+   * originó esto.
+   */
+  protected elegirDiaDeHorarios(dia: Date): void {
+    this.diaDeHorarios.set(dia);
+  }
+
+  /** Vuelve a ofrecer los horarios de toda la ventana. */
+  protected verTodosLosHorarios(): void {
+    this.diaDeHorarios.set(null);
+  }
+
   /** Desde el calendario el clic siempre abre: nunca cierra por segunda vez. */
   protected abrirDetalle(id: string): void {
     this.seleccionado.set(id);
@@ -355,6 +374,40 @@ export class Appointments {
     })),
   );
 
+  /**
+   * Lo tecleado en el buscador de profesional.
+   *
+   * El listado ya está en memoria, así que filtrar es local: no se consulta a
+   * la API por cada letra. Vacío = se ofrecen todos, que es como se comportaba
+   * el desplegable.
+   */
+  protected readonly busquedaDeRecurso = signal('');
+
+  /**
+   * Las opciones del buscador, acotadas por lo tecleado.
+   *
+   * Con una organización de pocos profesionales daba igual, pero con un listado
+   * largo había que recorrerlo a mano hasta encontrar al propio (F-13). Se busca
+   * por lo que la persona conoce —el nombre— y también por el rótulo de la
+   * agenda, que suele traer sede o especialidad.
+   */
+  protected readonly opcionesBuscadas = computed<readonly ReferenceOption[]>(() => {
+    const termino = normalizar(this.busquedaDeRecurso());
+    const todas = this.opcionesDeRecurso().map((opcion) => ({
+      value: opcion.value,
+      label: opcion.label,
+    }));
+    if (termino === '') return todas;
+    return todas.filter((opcion) => normalizar(opcion.label).includes(termino));
+  });
+
+  /** El profesional elegido, con la forma que pide el buscador. */
+  protected readonly recursoSeleccionado = computed<ReferenceOption | null>(() => {
+    const id = this.recursoElegido();
+    if (id === null) return null;
+    return this.opcionesDeRecurso().find((opcion) => opcion.value === id) ?? null;
+  });
+
   /** La organización todavía no cargó ninguna agenda que ofrecer. */
   protected readonly sinRecursos = signal(false);
 
@@ -403,9 +456,31 @@ export class Appointments {
     return id === null ? null : (this.turnosListos().find((turno) => turno.id === id) ?? null);
   });
 
+  /**
+   * El día que se señaló en el calendario, o `null` si se miran los de la
+   * ventana entera.
+   *
+   * Antes el calendario sólo servía para mirar: para pedir turno había que
+   * bajar al formulario y recorrer catorce días de horarios, y para la semana
+   * siguiente, más scroll (F-10). Ahora el día se elige donde se lo está
+   * mirando, y esta señal es la que traduce ese gesto en un filtro.
+   */
+  protected readonly diaDeHorarios = signal<Date | null>(null);
+
+  /** El día elegido, dicho en palabras para el aviso que lo ofrece deshacer. */
+  protected readonly diaDeHorariosEnPalabras = computed(() => {
+    const dia = this.diaDeHorarios();
+    return dia === null
+      ? ''
+      : dia.toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long' });
+  });
+
   protected readonly horariosListos = computed<readonly HorarioVisible[]>(() => {
     const estado = this.horarios();
-    return estado.status === 'ready' ? estado.data : [];
+    const todos = estado.status === 'ready' ? estado.data : [];
+    const dia = this.diaDeHorarios();
+    if (dia === null) return todos;
+    return todos.filter((horario) => mismoDia(horario.desde, dia));
   });
 
   constructor() {
@@ -1055,6 +1130,29 @@ function avisoDeDemora(cita: Booking): string {
  *
  * @param recurso - El recurso agendable tal como llegó de la API.
  */
+/** Si dos fechas caen el mismo día del calendario. */
+function mismoDia(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+/**
+ * Texto comparable: sin mayúsculas ni tildes.
+ *
+ * Quien busca a «Muñoz» escribe «munoz», y quien busca a «Peña» escribe «pena».
+ * Sin esto el buscador no encuentra a media guía por un acento.
+ */
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 export function etiquetaDeRecurso(recurso: {
   readonly name: string;
   readonly practitionerName?: string | null;
