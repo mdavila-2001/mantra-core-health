@@ -71,6 +71,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // Carril P2 · la mensajería directa paciente↔doctor.
+    //
+    // Va en «General» y no en «Mi cuenta» porque no es un dato propio que se
+    // consulta: es una forma de comunicarse con otra persona, como la guía de
+    // profesionales. «Mi cuenta» es lo que uno mira de sí mismo.
+    //
+    // Sin `roles`: el filtro real es tener perfil público de `community`, que
+    // es un dato de la cuenta y no un rol —la misma razón por la que «Mis
+    // turnos» tampoco los declara—. La pantalla lo dice cuando falta, en vez
+    // de esconderse del menú.
+    path: 'messaging',
+    label: 'Mensajes',
+    group: 'General',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Escribile a tu médico y seguí la conversación.',
+    module: 'M19 community',
+  },
+  {
     // Carril R2-1 · punto 1 del reclamo. Acá estaba el **muro profesional**, y
     // el cliente pidió sacarlo del menú del paciente: «o cambiarle su enfoque:
     // debe mostrar una especie de guía telefónica de todos los doctores

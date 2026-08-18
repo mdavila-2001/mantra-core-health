@@ -55,6 +55,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // el enlace guardado llega igual. Borrarla es una decisión de producto que el
   // cliente no pidió — dijo «sacar del perfil de paciente», no «eliminar».
   feed: () => import('./features/feed/feed').then((m) => m.Feed),
+  // Carril P2 · la bandeja de mensajería. Diferida: no es la primera pantalla
+  // de nadie y arrastra el buscador del directorio.
+  messaging: () =>
+    import('./features/messaging/messaging').then((m) => m.Messaging),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
@@ -188,6 +192,21 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * el guard nunca niega lo que la API permite. `app.routes.spec.ts` fija la regla.
  */
 const PANTALLAS_HIJAS: Routes = [
+  {
+    // Carril P2 · el hilo de una conversación. Cuelga de `messaging` y se llega
+    // desde la bandeja o desde una notificación de la campana, no desde el
+    // menú: es la ficha de una conversación concreta.
+    //
+    // Sin `seccionRolesGuard` explícito porque su sección no declara roles; el
+    // backend comprueba que quien lee participe del hilo, que es la única
+    // barrera que importa acá.
+    path: 'messaging/:conversationId',
+    title: `${APP_TITLE} - Conversación`,
+    loadComponent: () =>
+      import('./features/messaging/thread/thread')
+        .then((m) => m.Thread)
+        .catch(() => chunkFallido()),
+  },
   {
     // La ficha de una encuesta (carril 10): cuestionario, publicación y
     // respuestas. Se llega desde el listado, no desde el menú.
