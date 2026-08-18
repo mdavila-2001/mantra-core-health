@@ -611,6 +611,25 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
+      {
+        // El muro profesional, **sin entrada de menú**.
+        //
+        // El carril R2-1 sacó el ítem del menú del paciente porque el cliente
+        // pidió reemplazarlo por la guía de doctores, y su comentario en
+        // `navigation.map.ts` dice que «el muro NO se borró: `features/feed/`
+        // sigue en pie y su ruta también». Lo segundo no era cierto: las rutas
+        // se construyen desde `APP_SECTIONS`, así que al salir del registro la
+        // ruta salió con él. El cargador diferido quedó declarado y sin nada que
+        // lo alcance — la pantalla existía y no se podía abrir.
+        //
+        // Se declara acá y no en `APP_SECTIONS` justamente para respetar la
+        // decisión de producto: sin ítem de menú, pero alcanzable por enlace
+        // directo, que es lo que el comentario decía que pasaba.
+        path: 'feed',
+        title: 'Muro profesional',
+        loadComponent: () =>
+          import('./features/feed/feed').then((m) => m.Feed),
+      },
       // Alta de agenda por fases (UC-41-01 → UC-41-04). Cuelga de la sección
       // `schedule`: se llega desde la propia agenda, no desde el menú, igual que
       // las demás pantallas de operación. La autoridad sigue siendo el backend
