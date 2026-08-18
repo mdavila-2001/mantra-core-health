@@ -16,9 +16,12 @@ describe('rutaDeNotificacion', () => {
     );
   });
 
-  it('lleva el hilo de mensajería a su conversación, con el id', () => {
+  it('lleva el hilo de mensajería a su conversación, listo para responder', () => {
+    // `?responder=1` (carril P9): el hilo abre con el foco en el textarea.
+    // Llegar desde «te escribieron» y tener que buscar dónde escribir rompe el
+    // gesto que la notificación empezó.
     expect(rutaDeNotificacion({ type: 'CONVERSATION', id: 'c-9' })).toBe(
-      '/messaging/c-9',
+      '/messaging/c-9?responder=1',
     );
   });
 

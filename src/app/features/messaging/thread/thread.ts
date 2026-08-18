@@ -3,9 +3,11 @@ import {
   Component,
   computed,
   DestroyRef,
+  ElementRef,
   inject,
   PLATFORM_ID,
   signal,
+  viewChild,
 } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +15,7 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CommunityClient } from '../../../core/data-access/community/community.client';
+import { MessageTemplates } from '../../../core/messaging/message-templates';
 import type { DirectMessage } from '../../../core/data-access/community/community.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -58,7 +61,12 @@ const PAGE_SIZE = 30;
 export class Thread {
   private readonly community = inject(CommunityClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly plantillas = inject(MessageTemplates);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  /** El textarea, para poder darle el foco al llegar desde una notificación. */
+  private readonly composer =
+    viewChild<ElementRef<HTMLTextAreaElement>>('composer');
 
   private temporizador: ReturnType<typeof setTimeout> | null = null;
   private conversationId: string | null = null;
@@ -91,12 +99,67 @@ export class Thread {
     () => this.borrador().trim() !== '' && !this.enviando(),
   );
 
+  /* --- Carril P9 · plantillas del profesional ---------------------------- */
+
+  /** Si está abierta la lista de plantillas. */
+  protected readonly plantillasAbiertas = signal(false);
+
+  /** Las de fábrica más las propias. */
+  protected readonly plantillasDisponibles = this.plantillas.todas;
+
+  /** El texto de una plantilla nueva que se está escribiendo. */
+  protected readonly plantillaNueva = signal('');
+
+  protected alternarPlantillas(): void {
+    this.plantillasAbiertas.set(!this.plantillasAbiertas());
+  }
+
+  /**
+   * Pega una plantilla en el composer.
+   *
+   * **Reemplaza el borrador vacío y se agrega al que no lo está**: quien ya
+   * escribió media frase y elige una plantilla la está agregando, no
+   * descartando lo que escribió.
+   */
+  protected usarPlantilla(texto: string): void {
+    const actual = this.borrador().trim();
+    this.borrador.set(actual === '' ? texto : `${actual} ${texto}`);
+    this.plantillasAbiertas.set(false);
+    this.enfocarComposer();
+  }
+
+  /** Guarda la plantilla propia que se está escribiendo. */
+  protected guardarPlantilla(): void {
+    this.plantillas.agregar(this.plantillaNueva());
+    this.plantillaNueva.set('');
+  }
+
+  /** Olvida una plantilla propia. Las de fábrica no se tocan. */
+  protected olvidarPlantilla(texto: string): void {
+    this.plantillas.quitar(texto);
+  }
+
+  /** `true` si la plantilla la agregó la persona y se puede quitar. */
+  protected esPropia(texto: string): boolean {
+    return this.plantillas.mias().includes(texto);
+  }
+
   constructor() {
     inject(DestroyRef).onDestroy(() => this.detener());
 
     // Por `paramMap` y no por `snapshot`: al ir de un hilo a otro el router
     // reutiliza el componente, y con el snapshot quedaría mostrando el
     // anterior.
+    // Carril P9 · responder desde la notificación. La in-app de «mensaje
+    // nuevo» navega con `?responder=1`, y entonces el hilo abre con el foco en
+    // el textarea: es la mitad que faltaba de la ida y vuelta, porque llegar al
+    // hilo y tener que buscar dónde escribir rompe el gesto.
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
+      if (query.get('responder') !== null) {
+        this.enfocarComposer();
+      }
+    });
+
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.conversationId = params.get('conversationId');
       this.yaMarcado = false;
@@ -280,6 +343,20 @@ export class Thread {
       }
       this.agendar();
     }, SONDEO_MS);
+  }
+
+  /**
+   * Mueve el foco al composer.
+   *
+   * En el próximo cuadro y no en el acto: al llegar por navegación el textarea
+   * todavía no existe —la rama que lo pinta depende del perfil resuelto—, y un
+   * foco sobre `null` no falla pero tampoco hace nada.
+   */
+  private enfocarComposer(): void {
+    if (!this.isBrowser) {
+      return;
+    }
+    setTimeout(() => this.composer()?.nativeElement.focus(), 0);
   }
 
   private detener(): void {

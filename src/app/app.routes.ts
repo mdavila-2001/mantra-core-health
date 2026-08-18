@@ -90,6 +90,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // El directorio de grupos (P7). Diferido como el muro: no es la primera
   // pantalla de nadie y arrastra la tarjeta de grupo con su alta.
   groups: () => import('./features/groups/groups').then((m) => m.Groups),
+  // Carril P9 · las preferencias de aviso. Diferida: se abre una vez y se
+  // olvida, que es exactamente lo que una pantalla de preferencias debería
+  // conseguir.
+  'my-account/notification-preferences': () =>
+    import(
+      './features/account/notification-preferences/notification-preferences'
+    ).then((m) => m.NotificationPreferences),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
