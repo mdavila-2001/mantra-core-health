@@ -25,11 +25,17 @@ import type {
   FollowListItem,
   FollowPage,
   FollowsQuery,
+  GroupDetail,
   GroupMember,
+  GroupMemberChange,
   GroupMemberPage,
   GroupMembersQuery,
+  GroupMemberUpdated,
   GroupPage,
   GroupsQuery,
+  GroupWallItem,
+  GroupWallPage,
+  GroupWallQuery,
   ModerationAppealItem,
   ModerationAppealPage,
   ModerationAppealsQuery,
@@ -42,6 +48,8 @@ import type {
   NewAppeal,
   NewBlock,
   NewBookmark,
+  NewGroup,
+  NewGroupPost,
   NewComment,
   NewFollow,
   NewModerationDecision,
@@ -52,6 +60,7 @@ import type {
   NewReaction,
   NewPost,
   SocialRemoval,
+  TopicPage,
   NotificationPage,
   NotificationsQuery,
   OwnPublicProfile,
@@ -711,10 +720,16 @@ export class CommunityClient {
    * @returns Una página de grupos.
    */
   listGroups(query: GroupsQuery): Observable<GroupPage> {
-    const params = this.cursorParams(
-      query,
-      new HttpParams().set('tenantId', query.tenantId),
-    );
+    let base = new HttpParams().set('tenantId', query.tenantId);
+    // Parámetro a parámetro y sólo si vinieron: el backend valida con
+    // `forbidNonWhitelisted` y un opcional en `undefined` vuelve 400.
+    if (query.topicId !== undefined) {
+      base = base.set('topicId', query.topicId);
+    }
+    if (query.q !== undefined && query.q !== '') {
+      base = base.set('q', query.q);
+    }
+    const params = this.cursorParams(query, base);
 
     return this.http
       .get<GroupPage>(this.url('/community/groups'), { params })
@@ -732,12 +747,169 @@ export class CommunityClient {
     groupId: string,
     query: GroupMembersQuery = {},
   ): Observable<GroupMemberPage> {
+    let base = this.actorParams(query);
+    if (query.joinStatus !== undefined) {
+      base = base.set('joinStatus', query.joinStatus);
+    }
+
     return this.http
       .get<WireGroupMemberPage>(
         this.url(`/community/groups/${encodeURIComponent(groupId)}/members`),
-        { params: this.cursorParams(query, this.actorParams(query)) },
+        { params: this.cursorParams(query, base) },
       )
       .pipe(map(toGroupMemberPage));
+  }
+
+  /**
+   * `GET /community/groups/:groupId` — la ficha del grupo.
+   *
+   * Trae `viewer`: si quien mira ya es integrante, si puede publicar y si
+   * administra. Con eso la pantalla se pinta una sola vez y bien.
+   *
+   * @param groupId - El grupo.
+   * @param query - Con qué perfil mira.
+   * @returns La ficha del grupo.
+   */
+  getGroup(groupId: string, query: GroupWallQuery = {}): Observable<GroupDetail> {
+    return this.http
+      .get<ConNulos<GroupDetail>>(
+        this.url(`/community/groups/${encodeURIComponent(groupId)}`),
+        { params: this.actorParams(query) },
+      )
+      .pipe(map((body) => sinNulos(body) as GroupDetail));
+  }
+
+  /**
+   * `POST /community/groups` — crea un grupo.
+   *
+   * La organización no viaja en el cuerpo: sale del contexto de tenant de la
+   * sesión, que es el mismo que decide qué directorio se está mirando.
+   *
+   * @param datos - Nombre, slug, visibilidad y tema.
+   * @returns El identificador del grupo creado.
+   */
+  createGroup(datos: NewGroup): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/community/groups'),
+      datos,
+    );
+  }
+
+  /**
+   * `POST /community/groups/:groupId/members` — unirse a un grupo.
+   *
+   * En un grupo público la membresía queda activa; en uno privado queda
+   * esperando que alguien la apruebe. Cuál de las dos pasó lo dice
+   * `joinStatus` de la respuesta, no el código HTTP.
+   *
+   * @param groupId - El grupo.
+   * @param memberProfileId - Qué perfil se une.
+   * @returns La membresía y su estado.
+   */
+  joinGroup(
+    groupId: string,
+    memberProfileId: string,
+  ): Observable<{ readonly id: string; readonly joinStatus: string }> {
+    return this.http.post<{ readonly id: string; readonly joinStatus: string }>(
+      this.url(`/community/groups/${encodeURIComponent(groupId)}/members`),
+      { memberProfileId },
+    );
+  }
+
+  /**
+   * `DELETE /community/groups/:groupId/members/:memberProfileId` — dejar el
+   * grupo, o dar de baja a alguien.
+   *
+   * Lleva el **perfil** y no el id de membresía porque quien se va conoce su
+   * perfil, no el uuid de su fila en el padrón.
+   *
+   * @param groupId - El grupo.
+   * @param memberProfileId - Quién deja el grupo.
+   * @returns La membresía con su estado final.
+   */
+  leaveGroup(
+    groupId: string,
+    memberProfileId: string,
+  ): Observable<GroupMemberUpdated> {
+    return this.http.delete<GroupMemberUpdated>(
+      this.url(
+        `/community/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberProfileId)}`,
+      ),
+    );
+  }
+
+  /**
+   * `PATCH /community/groups/:groupId/members/:memberId` — resolver un alta o
+   * cambiar un rol.
+   *
+   * @param groupId - El grupo.
+   * @param memberId - La membresía.
+   * @param cambio - Decisión y/o rol nuevo.
+   * @returns La membresía con su rol y estado resultantes.
+   */
+  updateGroupMember(
+    groupId: string,
+    memberId: string,
+    cambio: GroupMemberChange,
+  ): Observable<GroupMemberUpdated> {
+    return this.http.patch<GroupMemberUpdated>(
+      this.url(
+        `/community/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberId)}`,
+      ),
+      cambio,
+    );
+  }
+
+  /**
+   * `GET /community/groups/:groupId/posts` — el muro del grupo.
+   *
+   * @param groupId - El grupo.
+   * @param query - Quién mira, y la paginación.
+   * @returns Una página de publicaciones con sus respuestas.
+   */
+  listGroupWall(
+    groupId: string,
+    query: GroupWallQuery = {},
+  ): Observable<GroupWallPage> {
+    return this.http
+      .get<WireGroupWallPage>(
+        this.url(`/community/groups/${encodeURIComponent(groupId)}/posts`),
+        { params: this.cursorParams(query, this.actorParams(query)) },
+      )
+      .pipe(map(toGroupWallPage));
+  }
+
+  /**
+   * `POST /community/groups/:groupId/posts` — publicar en el muro, o responder.
+   *
+   * Publicar y responder son la misma llamada: lo único que las distingue es
+   * `parentCommentId`.
+   *
+   * @param groupId - El grupo.
+   * @param datos - Autor, cuerpo y publicación padre si es una respuesta.
+   * @returns La publicación creada.
+   */
+  publishGroupPost(
+    groupId: string,
+    datos: NewGroupPost,
+  ): Observable<GroupWallItem> {
+    return this.http
+      .post<WireGroupWallItem>(
+        this.url(`/community/groups/${encodeURIComponent(groupId)}/posts`),
+        datos,
+      )
+      .pipe(map(toGroupWallItem));
+  }
+
+  /**
+   * `GET /community/topics` — los temas de la comunidad.
+   *
+   * @returns El árbol de temas activos.
+   */
+  listTopics(): Observable<TopicPage> {
+    return this.http
+      .get<TopicPage>(this.url('/community/topics'))
+      .pipe(map((body) => ({ ...body, items: body.items.map(sinNulos) })));
   }
 
   // ─── Mensajería directa ────────────────────────────────────────────────────
@@ -999,6 +1171,18 @@ type WireGroupMember = Omit<ConNulos<GroupMember>, 'joinedAt'> & {
 
 interface WireGroupMemberPage extends Omit<GroupMemberPage, 'items'> {
   readonly items: readonly WireGroupMember[];
+}
+
+type WireGroupWallItem = Omit<
+  ConNulos<GroupWallItem>,
+  'createdAt' | 'replies'
+> & {
+  readonly createdAt: string;
+  readonly replies: readonly WireGroupWallItem[] | null;
+};
+
+interface WireGroupWallPage extends Omit<GroupWallPage, 'items'> {
+  readonly items: readonly WireGroupWallItem[];
 }
 
 type WireConversation = Omit<
@@ -1328,6 +1512,20 @@ function toReviewPage(body: WireReviewPage): ServiceReviewPage {
 
 function toGroupMember({ joinedAt, ...resto }: WireGroupMember): GroupMember {
   return { ...sinNulos(resto), ...fecha('joinedAt', joinedAt) };
+}
+
+function toGroupWallItem(item: WireGroupWallItem): GroupWallItem {
+  const { createdAt, replies, ...resto } = item;
+  return {
+    ...sinNulos(resto),
+    createdAt: new Date(createdAt),
+    replies: (replies ?? []).map(toGroupWallItem),
+  } as GroupWallItem;
+}
+
+/** Una página del muro, ya con sus fechas convertidas. */
+function toGroupWallPage(body: WireGroupWallPage): GroupWallPage {
+  return { ...body, items: body.items.map(toGroupWallItem) };
 }
 
 function toGroupMemberPage(body: WireGroupMemberPage): GroupMemberPage {
