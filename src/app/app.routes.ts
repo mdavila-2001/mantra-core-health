@@ -399,9 +399,11 @@ const PANTALLAS_HIJAS: Routes = [
     // se comparte: «mirá qué quiere decir esto» es un enlace, y un panel no
     // tiene enlace. Cuelga de `/glossary`, así que el rastro de migas y la
     // sección marcada en el menú siguen diciendo «Glosario» sin que haya que
-    // tocar `navigation.map.ts`.
+    // tocar `navigation.map.ts`. Y hereda sus roles: un enlace compartido a un
+    // término no le abre al paciente lo que el listado le cierra.
     path: 'glossary/:conceptId',
     title: `${APP_TITLE} - Término del glosario`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/glossary/glossary-term')
         .then((m) => m.GlossaryTerm)

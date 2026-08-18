@@ -89,8 +89,20 @@ describe('seccionRolesGuard', () => {
   /* -- el resto del registro ----------------------------------------------- */
 
   it('una sección sin roles la abre cualquier sesión', () => {
-    expect(ejecutar('/glossary', [])).toBe(true);
+    expect(ejecutar('/tutorials', [])).toBe(true);
     expect(ejecutar('/my-account', ['PATIENT'])).toBe(true);
+  });
+
+  it('el glosario es de quien atiende: el paciente rebota, aun por el enlace a un término', () => {
+    // Feedback de la analista (F-03, 18/08/2026): el glosario aparecía en el
+    // menú del paciente por no declarar roles. Es herramienta de trabajo, y la
+    // ficha de un término se comparte como enlace: si sólo se cerrara el
+    // listado, un enlace pegado en un chat abriría lo que el menú esconde.
+    expect(destino(ejecutar('/glossary', ['USER', 'PATIENT']))).toBe(SECCION_DENEGADA_ROUTE);
+    expect(destino(ejecutar('/glossary/c-1', ['USER', 'PATIENT']))).toBe(SECCION_DENEGADA_ROUTE);
+    expect(ejecutar('/glossary', ['PRACTITIONER'])).toBe(true);
+    expect(ejecutar('/glossary/c-1', ['CLINICIAN'])).toBe(true);
+    expect(ejecutar('/glossary', ['SECURITY_ADMIN'])).toBe(true);
   });
 
   it('la agenda pide rol de agenda', () => {

@@ -207,7 +207,9 @@ function interceptarTerminologia(): void {
 describe('Regresión · glosario médico', () => {
   beforeEach(() => {
     interceptarTerminologia();
-    iniciarSesion();
+    // Sesión de quien atiende: desde el 18/08/2026 (feedback de la analista,
+    // F-03) el glosario es herramienta de trabajo y al paciente no se le ofrece.
+    iniciarSesion({ escenario: 'sesion-profesional' });
     SideNav.irA('/glossary');
   });
 

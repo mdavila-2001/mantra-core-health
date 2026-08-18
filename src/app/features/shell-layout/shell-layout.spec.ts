@@ -138,9 +138,9 @@ describe('ShellLayout', () => {
       // sigue: es oferta publicada, no PHI, y lo consulta cualquiera que
       // necesite un estudio.
       '/laboratory-directory',
-      // El glosario tampoco: accesible por cada profesional, no sólo por
-      // quien administra.
-      '/glossary',
+      // El glosario ya NO está: desde el 18/08/2026 (feedback de la analista,
+      // F-03) declara los roles de quien atiende, y una sesión sin roles no es
+      // de nadie que atienda.
       '/my-account',
       '/my-account/appointments',
       // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que
