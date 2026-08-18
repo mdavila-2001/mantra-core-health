@@ -176,6 +176,14 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * El breadcrumb y el menú marcado siguen funcionando sin tocar nada:
  * `NavigationService` resuelve la sección por la coincidencia **más larga**, así
  * que `/administration/patients/new` sigue resolviendo a «Pacientes».
+ *
+ * **El rol de la sección se hace cumplir también en la hija.** Una hija cuya
+ * sección declara `roles` lleva `seccionRolesGuard` explícito, como las rutas
+ * de sección: sin él, quien escribe la dirección a mano llega al formulario
+ * aunque el listado del que cuelga lo rebote. Las tres excepciones —el alta
+ * asistida, la ficha del corredor y la ficha de organización— dicen por qué en
+ * su propio comentario: la API acepta ahí un rol que la sección no declara, y
+ * el guard nunca niega lo que la API permite. `app.routes.spec.ts` fija la regla.
  */
 const PANTALLAS_HIJAS: Routes = [
   {
@@ -183,6 +191,7 @@ const PANTALLAS_HIJAS: Routes = [
     // respuestas. Se llega desde el listado, no desde el menú.
     path: 'questionnaires/:surveyId',
     title: `${APP_TITLE} - Encuesta`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/questionnaires/survey-detail/survey-detail')
         .then((m) => m.SurveyDetailScreen)
@@ -203,6 +212,7 @@ const PANTALLAS_HIJAS: Routes = [
     // y las dos lecturas del backend piden el perfil en la ruta.
     path: 'medical-records/:profileId',
     title: `${APP_TITLE} - Expediente clínico`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/clinical-record/patient-chart/patient-chart')
         .then((m) => m.PatientChart)
@@ -211,6 +221,7 @@ const PANTALLAS_HIJAS: Routes = [
   {
     path: 'administration/patients/new',
     title: `${APP_TITLE} - Nuevo paciente`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/admin/patients/patient-new/patient-new')
         .then((m) => m.PatientNew)
@@ -219,6 +230,7 @@ const PANTALLAS_HIJAS: Routes = [
   {
     path: 'administration/patients/merge',
     title: `${APP_TITLE} - Fusionar duplicados`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/admin/patients/patient-merge/patient-merge')
         .then((m) => m.PatientMerge)
@@ -228,6 +240,11 @@ const PANTALLAS_HIJAS: Routes = [
     // Estaba en la raíz de la sección; se corre acá para dejarle el lugar al
     // listado, que es la pantalla que el vault declara como principal de
     // V05-01. Cambia la ruta, no la pantalla.
+    //
+    // Sin guard de sección a propósito: `POST /iam/users/assisted-registration`
+    // acepta también a `CLINICIAN`, que llega por su propio flujo y no es
+    // `SECURITY_ADMIN`. El guard por sección lo dejaría afuera de un alta que
+    // la API le permite.
     path: 'administration/patients/assisted-registration',
     title: `${APP_TITLE} - Alta asistida`,
     loadComponent: () =>
@@ -238,6 +255,7 @@ const PANTALLAS_HIJAS: Routes = [
   {
     path: 'administration/patients/:profileId',
     title: `${APP_TITLE} - Ficha de paciente`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/admin/patients/patient-detail/patient-detail')
         .then((m) => m.PatientDetail)
@@ -280,6 +298,11 @@ const PANTALLAS_HIJAS: Routes = [
   {
     // La ficha de un corredor (C14): se llega desde el listado de brokers,
     // nunca desde el menú, así que no es una sección del registro.
+    //
+    // Sin guard de sección a propósito: `GET /insurance-brokers/:id` no exige
+    // rol global por decisión escrita en la API (el administrador de la
+    // aseguradora ve su propio catálogo sin ser `SECURITY_ADMIN`; el
+    // aislamiento lo da el tenant). Cerrarla acá contradiría esa decisión.
     path: 'administration/brokers/:brokerId',
     title: `${APP_TITLE} - Perfil del corredor`,
     loadComponent: () =>
@@ -319,6 +342,7 @@ const PANTALLAS_HIJAS: Routes = [
   {
     path: 'administration/organizations/new',
     title: `${APP_TITLE} - Nueva organización`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/admin/organizations/organization-new/organization-new')
         .then((m) => m.OrganizationNew)
@@ -328,6 +352,12 @@ const PANTALLAS_HIJAS: Routes = [
     // Ficha de una organización (V04-06·L, V04-02·L y V04-07·L): sus
     // sucursales, su plantilla y sus sub-organizaciones. Va DESPUÉS de
     // `/new`, o el literal se comería el parámetro.
+    //
+    // Sin guard de sección a propósito: sus tres lecturas
+    // (`GET /tenants/:id/branches|memberships|child-tenants`) no declaran rol
+    // en la API — cualquier sesión del tenant es legítima ahí — y el guard
+    // nunca niega lo que la API permite. Si el equipo decide que la ficha es
+    // sólo administrativa, la línea es una y el spec ya la contempla.
     path: 'administration/organizations/:tenantId',
     title: `${APP_TITLE} - Ficha de organización`,
     loadComponent: () =>
@@ -341,6 +371,9 @@ const PANTALLAS_HIJAS: Routes = [
     path: 'schedule/book/:slotId',
     title: `${APP_TITLE} - Reservar un turno`,
     data: { entrada: 'DESK' },
+    // Es la entrada de mostrador: hereda el rol de la agenda. El paciente tiene
+    // la suya propia justo abajo, sin guard, porque su sección no declara roles.
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/agenda/booking-new/booking-new')
         .then((m) => m.BookingNew)
@@ -378,6 +411,12 @@ const PANTALLAS_HIJAS: Routes = [
  * Pantalla de operación de una sección sin listados (M29, M40): una acción de
  * la sección, no una entrada de menú. Como con las pantallas hijas, la sección
  * del breadcrumb la resuelve `NavigationService` por la coincidencia más larga.
+ *
+ * Lleva el guard de rol de su sección **siempre**: una pantalla de operación es
+ * un formulario que la sección ofrece, y no tiene sentido que la sección rebote
+ * a quien no tiene el rol mientras el formulario lo deja pasar. La sección se
+ * resuelve por prefijo, así que el guard aplica los mismos `roles` que el menú
+ * (`APP_SECTIONS`) sin repetirlos acá.
  */
 function pantallaDeOperacion(
   seccion: string,
@@ -388,6 +427,7 @@ function pantallaDeOperacion(
   return {
     path: `${seccion}/${subpath}`,
     title: `${APP_TITLE} - ${titulo}`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () => loader().catch(() => chunkFallido()),
   };
 }
@@ -571,8 +611,9 @@ export const routes: Routes = [
       ...PANTALLAS_HIJAS,
       // Alta de agenda por fases (UC-41-01 → UC-41-04). Cuelga de la sección
       // `schedule`: se llega desde la propia agenda, no desde el menú, igual que
-      // las demás pantallas de operación. El rol lo hace cumplir el backend
-      // (`SCHEDULING_ADMIN`) y la pantalla no ofrece lo que la API negaría.
+      // las demás pantallas de operación. La autoridad sigue siendo el backend
+      // (`SCHEDULING_ADMIN`); el guard de la sección sólo evita ofrecer la
+      // pantalla a quien la API igual negaría.
       pantallaDeOperacion('schedule', 'new', 'Crear agenda', () =>
         import('./features/agenda/agenda-create/agenda-create').then((m) => m.AgendaCreate),
       ),

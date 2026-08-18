@@ -140,6 +140,17 @@ export interface PostListItem {
   readonly commentsEnabled?: boolean;
   readonly publishedAt?: Date;
   readonly editedAt?: Date;
+  /**
+   * Reacciones de la publicación, con la propia del lector si tiene perfil.
+   *
+   * **Viene con la fila.** Antes había que pedir
+   * `GET /posts/:id/reactions` una vez por tarjeta, así que en la práctica no se
+   * pedía y el contador de la pantalla era el del gesto que el usuario acababa
+   * de hacer: al recargar volvía a cero aunque la reacción estuviera guardada.
+   */
+  readonly reactions: ReactionSummary;
+  /** Comentarios vigentes del hilo completo, raíces y respuestas. */
+  readonly commentCount: number;
 }
 
 /** Una publicación abierta, con sus medios, etiquetas y menciones. */
@@ -157,10 +168,19 @@ export interface PostPage {
   readonly nextCursor: string | null;
 }
 
+/**
+ * Quién puede leer una publicación.
+ *
+ * Los tres códigos son los del enum del DTO del servidor; omitir el campo
+ * equivale a `PUBLIC`, que es como se leen las publicaciones anteriores a que el
+ * campo existiera.
+ */
+export type PostVisibility = 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE';
+
 /** Lo que se manda a `POST /community/profiles/:profileId/posts` para publicar. */
 export interface NewPost {
   readonly bodyText: string;
-  readonly visibility?: 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE';
+  readonly visibility?: PostVisibility;
   readonly commentsEnabled?: boolean;
   readonly hashtags?: readonly string[];
 }
@@ -209,6 +229,13 @@ export interface NewComment {
 /** Cuántas reacciones de un tipo tiene una publicación. */
 export interface ReactionTally {
   readonly reactionTypeConceptId: string;
+  /**
+   * El código del tipo, el mismo con el que se escribe.
+   *
+   * Ausente sólo si la fila guarda un concepto que no está en el enum del
+   * módulo: en ese caso no se pudo resolver, y la pantalla no debe inventarlo.
+   */
+  readonly reactionType?: ReactionType;
   readonly count: number;
 }
 
@@ -223,6 +250,13 @@ export interface ReactionSummary {
   readonly tallies: readonly ReactionTally[];
   readonly total: number;
   readonly actorReactionTypeConceptId?: string;
+  /**
+   * El código de la reacción propia, resuelto del concepto por el servidor.
+   *
+   * Es lo que permite pintar activo el botón correcto **después de recargar**,
+   * sin resolver terminología en cada render.
+   */
+  readonly actorReactionType?: ReactionType;
 }
 
 // ─── Seguimientos, marcadores y bloqueos ─────────────────────────────────────
@@ -622,6 +656,41 @@ export type ReactionType = (typeof REACTION_TYPES)[number];
  * reacción, no agrega una segunda. Por eso `actorProfileId` es obligatorio —es
  * la mitad de la clave— y no se toma de la sesión.
  */
+/** Lo que se manda a `POST /community/follows` y a su `DELETE`. */
+export interface NewFollow {
+  readonly followerProfileId: string;
+  readonly followableType: 'PROFILE' | 'TOPIC' | 'HASHTAG' | 'GROUP';
+  readonly followableRefId: string;
+  readonly notificationLevel?: 'ALL' | 'HIGHLIGHTS' | 'NONE';
+}
+
+/** Lo que se manda a `POST /community/bookmarks` y a su `DELETE`. */
+export interface NewBookmark {
+  readonly profileId: string;
+  readonly bookmarkableType: 'POST' | 'COMMENT' | 'REVIEW';
+  readonly bookmarkableRefId: string;
+  readonly collectionName?: string;
+}
+
+/** Lo que se manda a `POST /community/blocks` y a su `DELETE`. */
+export interface NewBlock {
+  readonly blockerProfileId: string;
+  readonly blockedProfileId: string;
+  readonly reason?: 'HARASSMENT' | 'SPAM' | 'OTHER';
+}
+
+/**
+ * Lo que contestan los `DELETE` del grafo social.
+ *
+ * `removed: false` no es un error: dejar de seguir, quitar un marcador y
+ * desbloquear son conmutadores, y si el vínculo ya no estaba, el estado final es
+ * el que se pedía. Se distingue igual para no anunciar «dejaste de seguir»
+ * cuando no seguía.
+ */
+export interface SocialRemoval {
+  readonly removed: boolean;
+}
+
 export interface NewReaction {
   readonly actorProfileId: string;
   readonly reactableType: ReactableType;
