@@ -92,3 +92,43 @@ export interface MarkAllReadResult {
   readonly marked: number;
   readonly unreadCount: number;
 }
+
+/* ============================================================================
+    Carril P9 · preferencias de notificación
+    ========================================================================== */
+
+/**
+ * Ventana de silencio, en `HH:mm`.
+ *
+ * **Viaja en UTC.** El backend la compara contra `getUTCHours()`, así que la
+ * pantalla convierte lo que la persona escribe —hora local— antes de guardar y
+ * de vuelta al leer. Hacerlo en el cliente es lo único posible hoy: el modelo
+ * no guarda el huso horario de nadie.
+ */
+export interface QuietHours {
+  readonly start: string;
+  readonly end: string;
+}
+
+/** La decisión para una categoría. */
+export interface CategoryPreference {
+  readonly category: NotificationCategory;
+  readonly optedIn: boolean;
+}
+
+/** Las preferencias in-app de una persona: siempre las cuatro categorías. */
+export interface MyPreferences {
+  readonly categories: readonly CategoryPreference[];
+  readonly quietHours: QuietHours | null;
+}
+
+/**
+ * Lo que se manda a guardar.
+ *
+ * `categories` es un reemplazo **por categoría**: lo que no viene no se toca.
+ * `quietHours` ausente significa «no la toques»; `null`, «quitala».
+ */
+export interface UpdatePreferences {
+  readonly categories?: readonly CategoryPreference[];
+  readonly quietHours?: QuietHours | null;
+}
