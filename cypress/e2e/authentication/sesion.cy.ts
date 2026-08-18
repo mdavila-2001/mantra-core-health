@@ -81,10 +81,10 @@ describe('Autenticación · sesión', () => {
     Header.nombreDeUsuario().should('equal', 'Ana Salas');
   });
 
-  it('el panel lee la identidad del propio token, sin pedirla a la API', () => {
+  it('el panel lee los roles del propio token, sin pedirlos a la API', () => {
     iniciarSesion();
 
-    DashboardPage.identificadorDeSesion().should('equal', 'u-e2e');
+    // El código viaja en `data-role`; lo visible es la etiqueta («Paciente»).
     DashboardPage.rolesVisibles().should('include', 'PATIENT');
   });
 });

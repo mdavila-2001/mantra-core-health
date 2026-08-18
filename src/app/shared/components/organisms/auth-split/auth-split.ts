@@ -2,7 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 
 import type { ThemeMode } from '../../../../core/tokens/design-tokens.types';
 import { ThemeService } from '../../../../core/tokens/theme.service';
+import { PointerScene } from '../../../motion/pointer-scene.directive';
 import { AppButton } from '../../atoms/button/button';
+
+/** Las dos medidas del hueco del formulario. Ver `AuthSplit.contentWidth`. */
+export type AuthSplitWidth = 'form' | 'wide';
 
 /**
  * Estructura partida de las pantallas de acceso: columna de marca a la
@@ -19,6 +23,15 @@ import { AppButton } from '../../atoms/button/button';
  * </app-auth-split>
  * ```
  *
+ * ## El fondo vivo
+ *
+ * Las dos columnas llevan una aurora —masas de color que derivan solas— y toda
+ * la escena se corre con el puntero a través de `appPointerScene`, que publica
+ * las variables `--pointer-*` en el nodo raíz. La composición es enteramente
+ * CSS: acá no hay ni un `requestAnimationFrame` propio. Se apaga sola con
+ * `prefers-reduced-motion` y el paralaje ni siquiera se engancha en pantallas
+ * táctiles.
+ *
  * **No sabe qué es un token**: es puro layout. El único servicio que toca es el
  * de tema, porque una persona ajusta claro/oscuro **antes** de entrar y ese
  * control tiene que existir también fuera de la aplicación autenticada — hasta
@@ -26,7 +39,7 @@ import { AppButton } from '../../atoms/button/button';
  */
 @Component({
   selector: 'app-auth-split',
-  imports: [AppButton],
+  imports: [AppButton, PointerScene],
   templateUrl: './auth-split.html',
   styleUrl: './auth-split.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,6 +52,21 @@ export class AuthSplit {
 
   /** Bajada del titular. */
   readonly tagline = input<string>('');
+
+  /**
+   * Cuánto ancho puede ocupar el formulario proyectado.
+   *
+   * `form` (27 rem) es la medida de un formulario de acceso: pocos campos, uno
+   * debajo del otro. `wide` (40 rem) es para altas largas que agrupan campos
+   * cortos de a dos por fila —el registro— y que a 27 rem quedarían con dos
+   * columnas de menos de 200 px.
+   *
+   * Existe como entrada y no como una regla suelta porque la limitación **tiene
+   * que vivir en esta plantilla**: con encapsulación emulada, un selector de
+   * este componente no alcanza al contenido proyectado, así que la pantalla de
+   * adentro no puede fijarse el ancho a sí misma.
+   */
+  readonly contentWidth = input<AuthSplitWidth>('form');
 
   /**
    * El titular y la bajada, envueltos en una lista de un solo elemento para

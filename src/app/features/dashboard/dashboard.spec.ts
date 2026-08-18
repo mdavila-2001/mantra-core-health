@@ -272,6 +272,49 @@ describe('Dashboard', () => {
     });
   });
 
+  /* -- H-07: la tarjeta «Tu cuenta» no filtra vocabulario de sistema --------- */
+
+  describe('Tu cuenta', () => {
+    const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+    function tarjeta(): HTMLElement {
+      fixture.detectChanges();
+      const raiz = fixture.nativeElement as HTMLElement;
+      return raiz.querySelector<HTMLElement>('[data-testid="panel-sesion"]') as HTMLElement;
+    }
+
+    it('nombra el rol en palabras y no muestra ningún identificador ni habla del token', () => {
+      crear({
+        sub: '11111111-1111-4111-8111-111111111111',
+        roles: ['USER', 'PATIENT'],
+        tenants: ['22222222-2222-4222-8222-222222222222'],
+        tenantNames: { '22222222-2222-4222-8222-222222222222': 'Clínica Norte' },
+      });
+      responder([], null);
+
+      const texto = tarjeta().textContent ?? '';
+      expect(texto).not.toMatch(UUID);
+      expect(texto).not.toMatch(/token/i);
+      expect(texto).not.toContain('PATIENT');
+      expect(texto).not.toContain('USER');
+      expect(texto).toContain('Clínica Norte');
+
+      // El código sigue disponible para las pruebas de extremo a extremo, pero
+      // fuera del texto: en `data-role`.
+      const insignias = [...tarjeta().querySelectorAll('[data-testid="panel-roles"] app-badge')];
+      expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Paciente']);
+      expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PATIENT']);
+    });
+
+    it('sin roles sigue diciendo que no hay ninguno', () => {
+      crear({ sub: 'u-1', roles: [], tenants: ['t-1'] });
+      responder([], null);
+
+      expect(tarjeta().querySelectorAll('app-badge')).toHaveLength(0);
+      expect(tarjeta().querySelector('[data-testid="panel-roles"] .panel__vacio')).not.toBeNull();
+    });
+  });
+
   it('si el historial de verificación falla, el panel sigue en pie', () => {
     // Es información de contexto: romper el panel entero porque el módulo de
     // identidad no contestó sería peor que un panel sin ese dato.

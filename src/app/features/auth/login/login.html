@@ -2,7 +2,11 @@
   claim="Tu salud, conectada"
   tagline="Entrá y encontrá tu historia clínica, tus turnos y tus estudios en un solo lugar."
 >
-  <div class="login">
+  <!-- `appPointerScene` acá además del de la escena: la tarjeta necesita la
+       posición del puntero medida contra SU rectángulo, no contra la pantalla,
+       o el reflejo aparece corrido media ventana. Las variables se heredan, así
+       que basta con volver a publicarlas en este nodo. -->
+  <div class="login" appPointerScene>
     <div class="login__header">
       <!-- Marca de seguridad: refuerza "acceso" en el mismo lenguaje de marca
            que la columna del split, también en mobile donde esa columna no existe. -->
