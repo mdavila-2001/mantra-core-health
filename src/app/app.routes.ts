@@ -62,6 +62,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/notifications/notification-center').then(
       (m) => m.NotificationCenter,
     ),
+  // Carril P2 · la bandeja de mensajería. Diferida: no es la primera pantalla
+  // de nadie y arrastra el buscador del directorio.
+  messaging: () =>
+    import('./features/messaging/messaging').then((m) => m.Messaging),
+  // El directorio de grupos (P7). Diferido como el muro: no es la primera
+  // pantalla de nadie y arrastra la tarjeta de grupo con su alta.
+  groups: () => import('./features/groups/groups').then((m) => m.Groups),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
@@ -199,6 +206,32 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * el guard nunca niega lo que la API permite. `app.routes.spec.ts` fija la regla.
  */
 const PANTALLAS_HIJAS: Routes = [
+  {
+    // Carril P2 · el hilo de una conversación. Cuelga de `messaging` y se llega
+    // desde la bandeja o desde una notificación de la campana, no desde el
+    // menú: es la ficha de una conversación concreta.
+    //
+    // Sin `seccionRolesGuard` explícito porque su sección no declara roles; el
+    // backend comprueba que quien lee participe del hilo, que es la única
+    // barrera que importa acá.
+    path: 'messaging/:conversationId',
+    title: `${APP_TITLE} - Conversación`,
+    loadComponent: () =>
+      import('./features/messaging/thread/thread')
+        .then((m) => m.Thread)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El grupo por dentro (P7). El directorio es la sección `groups`, que el
+    // registro declara; esto es la ficha a la que se llega desde una tarjeta,
+    // y por eso vive acá y no en el menú.
+    path: 'groups/:groupId',
+    title: `${APP_TITLE} - Grupo`,
+    loadComponent: () =>
+      import('./features/groups/group-detail/group-detail')
+        .then((m) => m.GroupDetail)
+        .catch(() => chunkFallido()),
+  },
   {
     // La ficha de una encuesta (carril 10): cuestionario, publicación y
     // respuestas. Se llega desde el listado, no desde el menú.

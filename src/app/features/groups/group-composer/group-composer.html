@@ -1,0 +1,31 @@
+<div class="compositor">
+  <!-- DOC-SOC-014: el aviso va **antes** del área de texto. Leerlo después de
+       haber escrito el caso propio no cambia lo que se escribió. -->
+  <p class="compositor__aviso">
+    Lo que publiques lo leen los integrantes del grupo. No escribas datos
+    personales de un paciente ni información de tu historia clínica.
+  </p>
+
+  <app-form-field label="Tu mensaje">
+    <app-textarea
+      [(value)]="texto"
+      [placeholder]="placeholder()"
+      [maxLength]="maxLargo"
+      [rows]="3"
+    />
+  </app-form-field>
+
+  <div class="compositor__acciones">
+    @if (cancelable()) {
+      <button app-button variant="ghost" (clicked)="cancelar()">Cancelar</button>
+    }
+    <button
+      app-button
+      [disabled]="!puedeEnviar()"
+      [isLoading]="enviando()"
+      (clicked)="enviar()"
+    >
+      {{ accion() }}
+    </button>
+  </div>
+</div>

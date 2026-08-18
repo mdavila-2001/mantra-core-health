@@ -71,6 +71,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // Carril P2 · la mensajería directa paciente↔doctor.
+    //
+    // Va en «General» y no en «Mi cuenta» porque no es un dato propio que se
+    // consulta: es una forma de comunicarse con otra persona, como la guía de
+    // profesionales. «Mi cuenta» es lo que uno mira de sí mismo.
+    //
+    // Sin `roles`: el filtro real es tener perfil público de `community`, que
+    // es un dato de la cuenta y no un rol —la misma razón por la que «Mis
+    // turnos» tampoco los declara—. La pantalla lo dice cuando falta, en vez
+    // de esconderse del menú.
+    path: 'messaging',
+    label: 'Mensajes',
+    group: 'General',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Escribile a tu médico y seguí la conversación.',
+    module: 'M19 community',
+  },
+  {
     // Carril R2-1 · punto 1 del reclamo. Acá estaba el **muro profesional**, y
     // el cliente pidió sacarlo del menú del paciente: «o cambiarle su enfoque:
     // debe mostrar una especie de guía telefónica de todos los doctores
@@ -103,6 +122,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Todos los profesionales, agrupados por especialidad.',
     module: 'M05 profiles',
+  },
+  {
+    // Grupos y foros (P7). Es la entrada **mínima** que el carril se permite en
+    // este archivo: sin ella la pantalla queda huérfana —el invariante de
+    // `app.routes.spec` exige que toda pantalla cuelgue de una sección— y
+    // `feed` ya no está declarada desde el carril R2-1.
+    //
+    // Sin `roles`, que significa «cualquier sesión» y no «nadie»: un grupo
+    // público lo puede leer cualquiera con sesión, y quién puede publicar en
+    // cada grupo lo decide la API por membresía, no el menú.
+    path: 'groups',
+    label: 'Grupos y foros',
+    group: 'General',
+    icon: 'home',
+    availability: 'disponible',
+    summary: 'Comunidades por tema y especialidad, con su muro y sus integrantes.',
+    module: 'M19 community',
   },
   {
     // Directorio de unidades publicadas del módulo 23. Es una sección distinta

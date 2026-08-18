@@ -76,6 +76,12 @@ describe('NavigationService', () => {
         // Los tutoriales tampoco exigen rol: son la guía de cómo usar lo que
         // cada cuenta ya puede ver.
         '/tutorials',
+        // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
+        // perfil público de `community`, que es un dato de la cuenta.
+        '/messaging',
+        // Grupos y foros (P7): un grupo público lo lee cualquier sesión, y
+        // quién puede publicar en cada uno lo decide la API por membresía.
+        '/groups',
         // El directorio de laboratorios tampoco: es oferta publicada, no PHI.
         '/laboratory-directory',
         // El glosario ya NO entra: desde el 18/08/2026 (feedback de la analista,
