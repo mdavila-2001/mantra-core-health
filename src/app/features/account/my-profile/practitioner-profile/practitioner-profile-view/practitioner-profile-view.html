@@ -31,10 +31,16 @@
           <p class="profesional__especialidad">{{ perfil().especialidadPrincipal }}</p>
         }
 
-        <p class="profesional__codigo">
-          Código profesional
-          <span class="profesional__cifra">{{ perfil().codigo }}</span>
-        </p>
+        <!-- El código profesional es del dueño: le sirve para identificarse ante
+             quien administra. Al paciente que abre la ficha desde la Guía no le
+             dice nada y es vocabulario de sistema (feedback de la analista
+             F-01/F-12, 18/08/2026). -->
+        @if (esPropio()) {
+          <p class="profesional__codigo">
+            Código profesional
+            <span class="profesional__cifra">{{ perfil().codigo }}</span>
+          </p>
+        }
       </div>
 
       <!-- El estado de habilitación va en la portada porque es lo que decide
@@ -414,13 +420,11 @@
     </app-tabs>
   </app-card>
 
-  <!-- Los identificadores al final: no le dicen nada a la persona hasta que
-       tiene que reportar un problema, y entonces son lo único que sirve. -->
-  <p class="profesional__ids">
-    Perfil <span class="profesional__cifra">{{ perfil().perfilId }}</span> · Persona
-    <span class="profesional__cifra">{{ perfil().personaId }}</span>
-    @if (perfil().desde) {
-      · En la plataforma desde {{ perfil().desde | date: 'MMMM y' }}
-    }
-  </p>
+  <!-- Sin identificadores al pie: el uuid del perfil y el de la persona no le
+       dicen nada a nadie en esta ficha (feedback de la analista F-12,
+       18/08/2026); si alguien tiene que reportar un problema, el dato vive en
+       la consola de administración, no acá. -->
+  @if (perfil().desde) {
+    <p class="profesional__desde">En la plataforma desde {{ perfil().desde | date: 'MMMM y' }}</p>
+  }
 </div>
