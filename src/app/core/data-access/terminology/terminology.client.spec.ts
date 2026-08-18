@@ -319,15 +319,36 @@ describe('TerminologyClient', () => {
     expect(item?.status).toBe('active');
   });
 
-  it('searchConcepts sigue sin pedir idioma ni etiquetas', () => {
-    // La garantía de retrocompatibilidad, del lado del cliente: el catálogo de
-    // administración y `readConceptLabels` comparten esta URL, y ninguno debe
-    // empezar a recibir textos traducidos porque el glosario los necesite.
+  it('searchConcepts pide castellano, porque quien lee la búsqueda es una persona', () => {
+    // Este test decía lo contrario: fijaba que `searchConcepts` NO pidiera
+    // idioma. Era la garantía de retrocompatibilidad de cuando `lang` se agregó
+    // para el glosario y ninguna otra lectura lo mandaba —incluida
+    // `readConceptLabels`, que por eso mismo pintaba el perfil del profesional
+    // en inglés (F-11)—.
+    //
+    // Esa garantía ya no aplica: `readConceptLabels` pide `lang=ES` desde el
+    // arreglo de F-11, y la decisión de producto del 18/08 es que todo va en
+    // castellano. Los cinco consumidores de esta búsqueda son elecciones de una
+    // persona, no lecturas de máquina.
     client.searchConcepts({ query: 'gender' }).subscribe();
 
     const req = http.expectOne((r) => r.url === '/terminology/concepts');
-    expect(req.request.params.has('lang')).toBe(false);
+    expect(req.request.params.get('lang')).toBe('ES');
+
+    req.flush({ items: [], count: 0, limit: 50 });
+  });
+
+  it('searchConcepts no pide conjuntos de valores: pedirlos sí cambiaría lo que encuentra', () => {
+    // La mitad que importa conservar. `lang` elige de qué designación sale el
+    // texto y degrada al rótulo original si falta la traducción, así que el
+    // conjunto de resultados es el mismo. `includeValueSets` es el que scopea,
+    // y por eso no se manda: con él, el buscador de medicamentos de la receta
+    // dejaría de encontrar el vademécum.
+    client.searchConcepts({ query: 'paracetamol' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts');
     expect(req.request.params.has('includeValueSets')).toBe(false);
+    expect(req.request.params.get('q')).toBe('paracetamol');
 
     req.flush({ items: [], count: 0, limit: 50 });
   });
