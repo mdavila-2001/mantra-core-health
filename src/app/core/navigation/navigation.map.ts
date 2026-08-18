@@ -105,6 +105,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M05 profiles',
   },
   {
+    // Grupos y foros (P7). Es la entrada **mínima** que el carril se permite en
+    // este archivo: sin ella la pantalla queda huérfana —el invariante de
+    // `app.routes.spec` exige que toda pantalla cuelgue de una sección— y
+    // `feed` ya no está declarada desde el carril R2-1.
+    //
+    // Sin `roles`, que significa «cualquier sesión» y no «nadie»: un grupo
+    // público lo puede leer cualquiera con sesión, y quién puede publicar en
+    // cada grupo lo decide la API por membresía, no el menú.
+    path: 'groups',
+    label: 'Grupos y foros',
+    group: 'General',
+    icon: 'home',
+    availability: 'disponible',
+    summary: 'Comunidades por tema y especialidad, con su muro y sus integrantes.',
+    module: 'M19 community',
+  },
+  {
     // Directorio de unidades publicadas del módulo 23. Es una sección distinta
     // de `/diagnostics`, que sigue siendo la cola clínica de órdenes/resultados.
     // La ruta tampoco coincide con `/diagnostic-units`, prefijo exclusivo de API.
