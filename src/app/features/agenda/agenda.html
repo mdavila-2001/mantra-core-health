@@ -3,6 +3,20 @@
   subtitle="Las citas comprometidas y los cupos que quedan por ofrecer."
   [breadcrumbs]="breadcrumbs()"
 >
+  @if (puedeAvisarDemora()) {
+    <!-- P8 · registro del cliente 4.2: «el médico informa a los pacientes que
+         se va a demorar». Va en las acciones de la página porque la demora es
+         de la jornada, no de un turno suelto. -->
+    <button
+      app-button
+      page-actions
+      variant="outline"
+      data-testid="agenda-avisar-demora"
+      (clicked)="abrirDemoraDeAgenda()"
+    >
+      Avisar demora
+    </button>
+  }
   @if (puedeCrearAgenda()) {
     <a app-button page-actions variant="primary" [routerLink]="rutaCrearAgenda">Crear agenda</a>
   }
@@ -52,6 +66,67 @@
           Publicar mi agenda
         </a>
       </app-alert>
+    }
+
+    <!-- ─── Avisar demora (P8) ─────────────────────────────────────────────
+         Un panel en la propia página y no un diálogo: la demora se avisa entre
+         dos pacientes, mirando la agenda, y sacar la agenda de la pantalla para
+         escribirlo obligaría a recordar de memoria a quién alcanza. -->
+    @if (panelDeDemoraAbierto()) {
+      <section class="agenda__demora" data-testid="agenda-demora-panel" aria-labelledby="demora-titulo">
+        <h2 id="demora-titulo" class="agenda__demora-titulo">
+          @if (demoraDeTodaLaAgenda()) {
+            Avisar demora de la agenda
+          } @else {
+            Avisar demora de este turno
+          }
+        </h2>
+        <p class="agenda__demora-ayuda">
+          El turno no se mueve ni pierde su lugar: al paciente le llega que empieza más tarde.
+          @if (demoraDeTodaLaAgenda()) {
+            Alcanza a los turnos vigentes de hoy en «{{ nombreDelRecurso() }}».
+          }
+        </p>
+
+        <div class="agenda__demora-campos">
+          <app-form-field label="Cuánto te demorás" class="agenda__filtro">
+            <app-select
+              [options]="opcionesDeDemora()"
+              [value]="minutosDeDemora()"
+              (valueChange)="minutosDeDemora.set($event ?? '')"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Mensaje para el paciente"
+            hint="Opcional. Se lee junto con el aviso."
+            class="agenda__demora-mensaje"
+          >
+            <app-textarea
+              [value]="mensajeDeDemora()"
+              [maxLength]="maxMensajeDeDemora"
+              [rows]="2"
+              (valueChange)="mensajeDeDemora.set($event)"
+            />
+          </app-form-field>
+        </div>
+
+        <div class="agenda__demora-acciones">
+          <button
+            app-button
+            variant="primary"
+            size="sm"
+            data-testid="agenda-demora-confirmar"
+            [isLoading]="avisandoDemora()"
+            (clicked)="confirmarDemora()"
+          >
+            Avisar
+          </button>
+          <button app-button variant="ghost" size="sm" (clicked)="cerrarDemora()">
+            Volver
+          </button>
+        </div>
+      </section>
     }
 
     <!-- ─── Filtros ─────────────────────────────────────────────────────── -->
@@ -312,6 +387,20 @@
       } @else {
         <span class="agenda__hasta">Llegó</span>
       }
+    }
+
+    @if (puedeAtender() && estaVigente(cita)) {
+      <!-- P8: la demora de un turno concreto. Es la excepción de la demora de
+           agenda —«a este lo veo más tarde»— y no cambia el estado de la cita. -->
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        data-testid="agenda-demorar"
+        (clicked)="abrirDemoraDeCita(cita)"
+      >
+        Avisar demora
+      </button>
     }
 
     @if (estaVigente(cita) || porResponder(cita)) {
