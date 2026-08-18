@@ -2,32 +2,38 @@
    Portada de V65-buscador/publico/V65-02-profesionales-listado.html en la bóveda. El marcado lo
    genera scripts/port-vistas-redsat.mjs; la lógica va acá, no en el generador. */
 
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
+import { aTarjeta } from '../public-result.mapper';
+import { BusquedaPublica } from '@core/data-access/public-directory/public-search.store';
+
 import { SearchResult } from '../../../../shared/components/molecules';
-import { PROFESIONALES_DE_MUESTRA } from './profesionales-listado.data';
 
 /**
  * El listado de profesionales de la superficie pública.
  *
- * ## Qué cambió respecto del marcado portado
+ * ## De dónde salen los datos
  *
- * La maqueta repite la misma tarjeta cinco veces. Acá esa tarjeta es
- * {@link SearchResult} —la molécula del banco, con el marcado y las clases de
- * `redsat.css` §25 intactos— y la pantalla recorre una lista.
+ * De `GET /public/search/practitioners`, **sin sesión**. Hasta el commit que
+ * escribió esta clase la pantalla pintaba `PROFESIONALES_DE_MUESTRA`, un
+ * archivo de datos inventados, porque `community` no tenía un solo `@Public()`.
+ * Ya tiene trece, así que la lista es real.
  *
- * **El resultado renderizado es el mismo**: se movieron los datos del HTML a un
- * archivo tipado, no se rediseñó nada. Lo que se gana es que el día que
- * `CommunityClient` pueda llamarse sin sesión, cambiar la fuente es reemplazar
- * un `signal` por una lectura — la plantilla no se toca.
+ * ## Por qué la barra de filtros perdió seis controles
  *
- * ## Por qué los datos siguen siendo de mentira
+ * La maqueta dibuja ocho: especialidad, ciudad, modalidad, organización,
+ * disponibilidad, precio, calificación mínima e idioma. **La API implementa
+ * dos**: el texto libre y `verified`. `city` y `specialty` figuran en
+ * `CONTRATO-PUBLICO.md` §2 pero el controlador no los lee, y los otros cuatro
+ * no existen en ninguna parte.
  *
- * `community` no tiene un solo `@Public()`: un visitante sin sesión recibiría
- * 401. Es F4 del plan, y es lo único que separa a esta pantalla de mostrar
- * datos reales.
+ * Dejarlos dibujados habría sido peor que quitarlos: alguien filtra «Atiende
+ * hoy», la lista no cambia y la pantalla le dice —sin decirlo— que todos
+ * atienden hoy. Un filtro que no filtra no es un pendiente visual, es una
+ * respuesta equivocada a una pregunta que la persona sí hizo. Los seis están
+ * registrados en el reporte del carril con el dato que les falta a cada uno.
  */
 @Component({
   selector: 'app-redsat-buscar-profesionales-listado',
@@ -36,11 +42,28 @@ import { PROFESIONALES_DE_MUESTRA } from './profesionales-listado.data';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuscarProfesionalesListado {
-  /**
-   * Los profesionales que se listan.
-   *
-   * Señal y no constante: es el punto exacto donde entra la lectura real, y
-   * dejarlo como señal ahora evita tener que tocar la plantilla después.
-   */
-  protected readonly profesionales = signal(PROFESIONALES_DE_MUESTRA);
+  private readonly directorio = inject(PublicDirectoryClient);
+
+  /** Sólo verificados. Omitido trae todos, con los verificados primero (D7). */
+  protected readonly soloVerificados = signal(false);
+
+  protected readonly busqueda = new BusquedaPublica((filtros) =>
+    this.directorio.searchPractitioners({
+      ...filtros,
+      ...(this.soloVerificados() ? { verified: true } : {}),
+    }),
+  );
+
+  protected readonly tarjetas = computed(() => this.busqueda.resultados().map(aTarjeta));
+
+  /** Escribir lleva el texto a `?q=`; el cambio de la URL dispara la lectura. */
+  protected alEscribir(valor: string): void {
+    this.busqueda.escribir(valor);
+  }
+
+  /** Conmutar «sólo verificados» también vuelve a la primera página. */
+  protected alConmutarVerificados(valor: boolean): void {
+    this.soloVerificados.set(valor);
+    this.busqueda.buscar();
+  }
 }

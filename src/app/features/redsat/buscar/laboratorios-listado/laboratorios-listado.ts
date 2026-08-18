@@ -1,14 +1,45 @@
 /* V65-05·L · Laboratorios e imagen
-   Portada de V65-buscador/publico/V65-05-laboratorios-listado.html en la bóveda. El marcado lo
-   genera scripts/port-vistas-redsat.mjs; la lógica va acá, no en el generador. */
+   Portada de V65-buscador/publico/ en la bóveda. El marcado lo genera
+   scripts/port-vistas-redsat.mjs; la lógica va acá, no en el generador. */
 
-import { Component } from '@angular/core';
-
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
+import { aTarjeta } from '../public-result.mapper';
+import { BusquedaPublica } from '@core/data-access/public-directory/public-search.store';
+
+import { SearchResult } from '../../../../shared/components/molecules';
+
+/**
+ * Laboratorios e imagenología, desde `GET /public/search/diagnostic-units`.
+ *
+ * ## Por qué la barra de filtros conserva sólo la caja de texto
+ *
+ * La maqueta dibuja varios selectores más. La API pública implementa **`q`**
+ * —y `verified` sólo en profesionales—: `city` y los filtros propios de cada
+ * vertical figuran en `CONTRATO-PUBLICO.md` §2 pero el controlador no los lee.
+ * Un selector que no filtra devuelve la lista sin acotar y le dice a quien lo
+ * usó, sin decírselo, que todos los resultados cumplen su criterio. Los que
+ * faltan están registrados en el reporte del carril.
+ */
 @Component({
   selector: 'app-redsat-buscar-laboratorios-listado',
-  imports: [RouterLink],
+  imports: [RouterLink, SearchResult],
   templateUrl: './laboratorios-listado.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BuscarLaboratoriosListado {}
+export class BuscarLaboratoriosListado {
+  private readonly directorio = inject(PublicDirectoryClient);
+
+  protected readonly busqueda = new BusquedaPublica((filtros) =>
+    this.directorio.searchDiagnosticUnits(filtros),
+  );
+
+  protected readonly tarjetas = computed(() => this.busqueda.resultados().map(aTarjeta));
+
+  /** Escribir lleva el texto a `?q=`; el cambio de la URL dispara la lectura. */
+  protected alEscribir(valor: string): void {
+    this.busqueda.escribir(valor);
+  }
+}

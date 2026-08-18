@@ -169,10 +169,25 @@ export class PublicDirectoryClient {
   }
 
   /**
-   * La ficha pública por slug: `GET /p/:slug` y sus cuatro hermanas.
+   * La ficha pública por slug.
    *
-   * @param kind - Qué clase de sujeto se espera. Fija el prefijo de la ruta, y
-   *   un slug de otra clase da 404 en vez de redirigir.
+   * ## Por qué pide `/public/profiles/:prefijo/:slug` y no `/p/:slug`
+   *
+   * Porque `/p/:slug` es **también la URL de esta pantalla**, y las dos no
+   * pueden convivir del lado del navegador. El proxy del servidor de
+   * desarrollo enruta comparando el comienzo de la ruta: mandar `/p` a la API
+   * se come la ruta del router —abrir la ficha devolvería JSON en vez de la
+   * pantalla— y no mandarla deja esta llamada pidiéndole `/p/:slug` al
+   * servidor de Angular, que responde el `index.html` con **200**; el cliente
+   * recibe HTML donde espera JSON y el fallo sale como «error inesperado».
+   * `check-client-prefixes.mjs` denuncia exactamente ese caso.
+   *
+   * Las cinco rutas cortas de la API siguen existiendo y sirviendo lo mismo:
+   * son el contrato público que alguien puede llamar directo. Esta cuelga de
+   * `/public`, que ya está enrutado, y no es ambigua.
+   *
+   * @param kind - Qué clase de sujeto se espera. Fija el prefijo, y un slug de
+   *   otra clase da 404 en vez de redirigir.
    * @param slug - El slug tal como aparece en la URL.
    */
   getProfile(
@@ -181,7 +196,9 @@ export class PublicDirectoryClient {
   ): Observable<PublicProfileDetail> {
     const prefijo = PUBLIC_PROFILE_PREFIX[kind];
     return this.http
-      .get<WireProfile>(this.url(`/${prefijo}/${encodeURIComponent(slug)}`))
+      .get<WireProfile>(
+        this.url(`/public/profiles/${prefijo}/${encodeURIComponent(slug)}`),
+      )
       .pipe(map(toProfile));
   }
 

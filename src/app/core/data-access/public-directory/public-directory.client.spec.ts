@@ -159,13 +159,15 @@ describe('PublicDirectoryClient', () => {
   // ─── La ficha por slug ─────────────────────────────────────────────────────
 
   /**
-   * El prefijo es parte del contrato, no un detalle de la URL: `/p/` promete un
-   * profesional y un slug de otra clase da 404 en vez de redirigir.
+   * El prefijo es parte del contrato, no un detalle de la URL: `/f/` promete
+   * una farmacia y un slug de otra clase da 404 en vez de redirigir. Viaja
+   * como segmento de `/public/profiles/` y no como raíz de la ruta porque
+   * `/p/:slug` es también la URL de la pantalla — ver la nota de `getProfile`.
    */
   it('getProfile usa el prefijo corto que corresponde al tipo', () => {
     client.getProfile('PHARMACY', 'farmacia-central').subscribe();
 
-    const req = http.expectOne((r) => r.url === '/f/farmacia-central');
+    const req = http.expectOne((r) => r.url === '/public/profiles/f/farmacia-central');
     expect(req.request.method).toBe('GET');
     req.flush(fichaCruda());
   });
@@ -173,7 +175,7 @@ describe('PublicDirectoryClient', () => {
   it('getProfile escapa el slug antes de ponerlo en la ruta', () => {
     client.getProfile('PRACTITIONER', 'a/b').subscribe();
 
-    http.expectOne((r) => r.url === '/p/a%2Fb').flush(fichaCruda());
+    http.expectOne((r) => r.url === '/public/profiles/p/a%2Fb').flush(fichaCruda());
   });
 
   /**
@@ -184,7 +186,7 @@ describe('PublicDirectoryClient', () => {
   it('no manda cabecera de autorización', () => {
     client.getProfile('PRACTITIONER', 'doctor-uno-e2e').subscribe();
 
-    const req = http.expectOne((r) => r.url === '/p/doctor-uno-e2e');
+    const req = http.expectOne((r) => r.url === '/public/profiles/p/doctor-uno-e2e');
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush(fichaCruda());
   });
@@ -193,7 +195,7 @@ describe('PublicDirectoryClient', () => {
     let ficha: unknown;
     client.getProfile('PRACTITIONER', 'doctor-uno-e2e').subscribe((f) => (ficha = f));
 
-    http.expectOne((r) => r.url === '/p/doctor-uno-e2e').flush(fichaCruda());
+    http.expectOne((r) => r.url === '/public/profiles/p/doctor-uno-e2e').flush(fichaCruda());
 
     const f = ficha as { updatedAt: Date; posts: { publishedAt: Date }[] };
     expect(f.updatedAt instanceof Date).toBe(true);
