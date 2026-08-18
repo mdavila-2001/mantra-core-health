@@ -84,9 +84,7 @@ describe('Appointments', () => {
    * la prueba diga otra cosa— para que las pruebas que no van de esperas no
    * tengan que saber que existe.
    */
-  function montar(
-    { pid, esperas }: { pid?: string; esperas?: unknown[] } = { pid: 'pp-1' },
-  ): void {
+  function montar({ pid, esperas }: { pid?: string; esperas?: unknown[] } = { pid: 'pp-1' }): void {
     session.start({
       accessToken: jwt({
         sub: 'u-1',
@@ -103,9 +101,7 @@ describe('Appointments', () => {
     fixture.detectChanges();
 
     if (pid !== undefined) {
-      http
-        .expectOne((r) => r.url === '/scheduling/waitlist')
-        .flush({ items: esperas ?? [] });
+      http.expectOne((r) => r.url === '/scheduling/waitlist').flush({ items: esperas ?? [] });
       fixture.detectChanges();
     }
   }
@@ -147,6 +143,122 @@ describe('Appointments', () => {
       .flush({ items, count: items.length, limit: 50 });
     fixture.detectChanges();
   }
+
+  /* ---- J2 · pedir turno en un laboratorio --------------------------------- */
+
+  describe('con quién se pide el turno (J2)', () => {
+    it('por defecto sólo pide PROFESIONALES, no todos los recursos del tenant', () => {
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+
+      const pedido = http.expectOne((r) => r.url === '/scheduling/resources');
+      // Sin este filtro, en cuanto un laboratorio publique agenda aparecería
+      // bajo «¿con quién te querés atender?» y alguien pediría una consulta
+      // médica en una sala de toma de muestras.
+      expect(pedido.request.params.get('resourceType')).toBe('PRACTITIONER');
+      pedido.flush({ items: [], count: 0 });
+    });
+
+    it('al cambiar a laboratorio, vuelve a preguntar por recursos de tipo ROOM', () => {
+      montar();
+      responderArranque([]);
+
+      interno<(tipo: string) => void>('cambiarTipoDeRecurso')('ROOM');
+      fixture.detectChanges();
+
+      const pedido = http.expectOne((r) => r.url === '/scheduling/resources');
+      expect(pedido.request.params.get('resourceType')).toBe('ROOM');
+      pedido.flush({
+        items: [{ id: 'lab-1', name: 'Laboratorio Central', capacity: 2 }],
+        count: 1,
+      });
+    });
+
+    it('cambiar de tipo limpia lo elegido: el recurso era de la otra lista', () => {
+      montar();
+      responderArranque([]);
+
+      crudo<{ set: (v: string | null) => void }>('recursoElegido').set('r-1');
+      interno<(tipo: string) => void>('cambiarTipoDeRecurso')('ROOM');
+      fixture.detectChanges();
+
+      // Dejarlo puesto mostraría horarios de un profesional bajo el rótulo de
+      // laboratorio hasta que la lectura vuelva.
+      expect(crudo<() => string | null>('recursoElegido')()).toBeNull();
+      http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
+    });
+
+    it('cambiar al tipo que ya está puesto no vuelve a pedir nada', () => {
+      montar();
+      responderArranque([]);
+
+      interno<(tipo: string) => void>('cambiarTipoDeRecurso')('PRACTITIONER');
+      fixture.detectChanges();
+
+      http.expectNone((r) => r.url === '/scheduling/resources');
+    });
+
+    it('un turno médico conserva el nombre de su agenda al mirar laboratorios', () => {
+      montar();
+      // Un turno ya sacado con un profesional…
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({
+          items: [
+            {
+              id: 'b-1',
+              resourceId: 'r-1',
+              statusConceptId: 'c-conf',
+              startAt: '2026-09-01T13:00:00.000Z',
+            },
+          ],
+          count: 1,
+          limit: 50,
+          truncated: false,
+        });
+      http
+        .expectOne((r) => r.url === '/scheduling/resources')
+        .flush({
+          items: [{ id: 'r-1', name: 'Consultorio Cardiología', capacity: 1 }],
+          count: 1,
+        });
+      fixture.detectChanges();
+      responderTerminologia([]);
+
+      // …y ahora la persona se pone a mirar laboratorios.
+      interno<(tipo: string) => void>('cambiarTipoDeRecurso')('ROOM');
+      fixture.detectChanges();
+      http
+        .expectOne((r) => r.url === '/scheduling/resources')
+        .flush({
+          items: [{ id: 'lab-1', name: 'Laboratorio Central', capacity: 2 }],
+          count: 1,
+        });
+      fixture.detectChanges();
+
+      // El rótulo sale del catálogo acumulado, no de la lista filtrada: con una
+      // sola lista, entrar al modo laboratorio dejaba sin nombre a todos los
+      // turnos médicos ya sacados.
+      expect(fixture.nativeElement.textContent).toContain('Consultorio Cardiología');
+    });
+
+    it('el vacío de laboratorios no le dice a la persona que espere sin más', () => {
+      montar();
+      responderArranque([]);
+
+      interno<(tipo: string) => void>('cambiarTipoDeRecurso')('ROOM');
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).toContain('Todavía no hay laboratorios con horarios');
+      // La salida honesta: la orden se puede llevar al mostrador igual.
+      expect(texto).toContain('mostrador');
+    });
+  });
 
   it('sin perfil de paciente no sale a la red y lo dice', () => {
     montar({ pid: undefined });
@@ -1295,9 +1407,7 @@ describe('Appointments · la demora se ve en el turno (P8)', () => {
       labels: [etiqueta('s-conf', 'BOOKING_CONFIRMED', 'Booking confirmed')],
     });
 
-    expect(
-      fixture.nativeElement.querySelector('[data-testid="turnos-motivo-demora"]'),
-    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="turnos-motivo-demora"]')).toBeNull();
   });
 });
 
@@ -1313,15 +1423,15 @@ function vista(comp: Appointments) {
 
 describe('etiquetaDeRecurso', () => {
   it('muestra a la persona cuando el recurso la resuelve', () => {
-    expect(
-      etiquetaDeRecurso({ name: 'Agenda mañana', practitionerName: 'Rosa Quispe' }),
-    ).toBe('Rosa Quispe — Agenda mañana');
+    expect(etiquetaDeRecurso({ name: 'Agenda mañana', practitionerName: 'Rosa Quispe' })).toBe(
+      'Rosa Quispe — Agenda mañana',
+    );
   });
 
   it('no repite cuando la agenda ya se llama como la persona', () => {
-    expect(
-      etiquetaDeRecurso({ name: 'Rosa Quispe', practitionerName: 'Rosa Quispe' }),
-    ).toBe('Rosa Quispe');
+    expect(etiquetaDeRecurso({ name: 'Rosa Quispe', practitionerName: 'Rosa Quispe' })).toBe(
+      'Rosa Quispe',
+    );
   });
 
   it('cae al nombre del recurso para salas o perfiles sin resolver', () => {

@@ -358,7 +358,51 @@ export class Appointments {
 
   /* ---- pedir un turno ----------------------------------------------------- */
 
+  /**
+   * Con quién se pide el turno: un profesional o un laboratorio.
+   *
+   * ## Por qué es la misma pantalla y no una nueva
+   *
+   * Porque el motor es el mismo —recurso, cupos, retener, confirmar— y lo único
+   * que cambia es qué recursos se ofrecen. Duplicar la pantalla duplicaría
+   * también la lista de espera, la reprogramación y la cancelación, que ya
+   * tienen sus reglas resueltas acá.
+   *
+   * ## Por qué hay que filtrar, y no es cosmético
+   *
+   * `GET /scheduling/resources` devuelve **todos** los recursos del tenant. Sin
+   * el filtro, en cuanto un laboratorio publique agenda aparecería en la lista
+   * de «¿con quién te querés atender?», y alguien pediría consulta médica en
+   * una sala de toma de muestras. El filtro existe en la API desde siempre;
+   * esta pantalla no lo estaba usando.
+   */
+  protected readonly tipoDeRecurso = signal<'PRACTITIONER' | 'ROOM'>('PRACTITIONER');
+
+  /** Se está pidiendo turno en un laboratorio, no con un profesional. */
+  protected readonly esLaboratorio = computed(() => this.tipoDeRecurso() === 'ROOM');
+
+  /**
+   * Los recursos que se OFRECEN para elegir: sólo los del tipo activo.
+   *
+   * Se vacía al cambiar de tipo, porque un profesional no es una opción válida
+   * cuando se está pidiendo turno en un laboratorio.
+   */
   protected readonly recursos = signal<readonly AgendaResource[]>([]);
+
+  /**
+   * Todos los recursos vistos, para poder **rotular** los turnos ya reservados.
+   *
+   * Separado de {@link recursos} a propósito: los turnos de la persona incluyen
+   * los de profesional y los de laboratorio a la vez, así que el nombre de su
+   * agenda no puede salir de una lista que se filtra por el tipo que se está
+   * eligiendo ahora. Con una sola lista, entrar al modo laboratorio dejaba sin
+   * nombre a todos los turnos médicos ya sacados.
+   *
+   * Acumula y no reemplaza: un recurso que dejó de ofrecerse sigue siendo el
+   * nombre correcto de un turno viejo.
+   */
+  private readonly catalogoDeRecursos = signal<ReadonlyMap<string, AgendaResource>>(new Map());
+
   protected readonly recursoElegido = signal<string | null>(null);
 
   protected readonly opcionesDeRecurso = computed<readonly SelectOption<string>[]>(() =>
@@ -526,15 +570,42 @@ export class Appointments {
    * que ser el mismo que viaja en `X-Tenant-Id`: si difieren, el interceptor de
    * tenant responde 403 antes de llegar al handler.
    */
+  /**
+   * Cambia entre pedir turno con un profesional o en un laboratorio.
+   *
+   * Limpia lo elegido antes de recargar: el recurso seleccionado pertenece a la
+   * lista anterior, y dejarlo puesto mostraría horarios de un profesional bajo
+   * el rótulo de laboratorio hasta que la lectura vuelva.
+   *
+   * @param tipo - Con quién se quiere pedir el turno.
+   */
+  protected cambiarTipoDeRecurso(tipo: 'PRACTITIONER' | 'ROOM'): void {
+    if (this.tipoDeRecurso() === tipo) {
+      return;
+    }
+    this.tipoDeRecurso.set(tipo);
+    this.recursoElegido.set(null);
+    this.recursos.set([]);
+    this.busquedaDeRecurso.set('');
+    this.cargarRecursos();
+  }
+
   private cargarRecursos(): void {
     const tenantId = this.organizacion();
     if (tenantId === null) {
       return;
     }
 
-    this.scheduling.listResources({ tenantId }).subscribe({
+    this.scheduling.listResources({ tenantId, resourceType: this.tipoDeRecurso() }).subscribe({
       next: (pagina) => {
         this.recursos.set(pagina.items);
+        this.catalogoDeRecursos.update((previo) => {
+          const mezcla = new Map(previo);
+          for (const recurso of pagina.items) {
+            mezcla.set(recurso.id, recurso);
+          }
+          return mezcla;
+        });
         this.sinRecursos.set(pagina.items.length === 0);
         // Los turnos pueden haberse pintado antes que esto: las dos lecturas
         // del arranque salen a la vez. Se rehacen para que tomen el nombre de
@@ -1052,7 +1123,10 @@ export class Appointments {
     if (resourceId === '') {
       return '';
     }
-    return this.recursos().find((recurso) => recurso.id === resourceId)?.name ?? '';
+    // Del catálogo acumulado y no de la lista ofrecida: un turno médico
+    // conserva el nombre de su agenda aunque ahora se estén mirando
+    // laboratorios.
+    return this.catalogoDeRecursos().get(resourceId)?.name ?? '';
   }
 
   /**
@@ -1145,11 +1219,7 @@ function mismoDia(a: Date, b: Date): boolean {
  * Sin esto el buscador no encuentra a media guía por un acento.
  */
 function normalizar(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim();
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
 export function etiquetaDeRecurso(recurso: {
