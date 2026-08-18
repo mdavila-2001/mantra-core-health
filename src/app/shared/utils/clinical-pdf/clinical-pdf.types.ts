@@ -137,3 +137,74 @@ export interface DocumentoDeFormulario {
   readonly completadoEl?: Date;
   readonly respuestas: readonly RespuestaDeFormulario[];
 }
+
+/* ============================================================================
+    Carril J3 · los dos documentos que faltaban: la **orden** para llevar al
+    laboratorio y la **historia completa** del paciente.
+
+    La diferencia con los de arriba: aquéllos son de un hecho clínico —una
+    receta, una atención—; la historia es longitudinal, y es lo que el registro
+    del cliente llama «el paciente puede descargar su historia».
+    ========================================================================== */
+
+/**
+ * Una orden de laboratorio o imagen, para llevar.
+ *
+ * Existe como PDF y no sólo como pantalla porque el laboratorio la pide en
+ * papel: es el documento que se entrega en el mostrador. Por eso el instructivo
+ * va **dentro** del documento y no como una nota aparte — quien lo lee está
+ * decidiendo si viene en ayunas mañana.
+ */
+export interface DocumentoDeOrden {
+  readonly id: string;
+  readonly paciente: DocumentoPaciente;
+  readonly profesional: DocumentoProfesional;
+  readonly organizacion?: string;
+  /** Qué se pidió, en palabras. */
+  readonly estudio: string;
+  /** Laboratorio o imagenología, en palabras. */
+  readonly categoria: string;
+  /** Estado de la orden, en palabras. */
+  readonly estado: string;
+  readonly pedidaEl: Date;
+  /**
+   * Ayunas, horarios, qué llevar.
+   *
+   * Ausente **no** se imprime como «sin preparación»: el documento dice que no
+   * hay indicaciones publicadas, que es distinto de afirmar que no hacen falta.
+   */
+  readonly preparacion?: string;
+}
+
+/** Una atención dentro de la historia, con lo que se registró en ella. */
+export interface HistoriaAtencion {
+  readonly titulo: string;
+  readonly bloques: readonly DocumentoBloque[];
+}
+
+/**
+ * La historia clínica completa de una persona, en un solo documento.
+ *
+ * ## Por qué es un tipo y no la concatenación de los otros
+ *
+ * Porque el orden y las ausencias son parte del documento. Una historia sin
+ * recetas tiene que **decir** que no hay recetas: si la sección desaparece,
+ * quien lo lee no sabe si no hubo o si el sistema no la trajo, y eso en un
+ * documento clínico no es lo mismo.
+ *
+ * Cada sección es opcional en el sentido de que puede venir vacía, pero
+ * ninguna se omite al imprimir.
+ */
+export interface DocumentoDeHistoria {
+  readonly paciente: DocumentoPaciente;
+  /** Edad ya calculada, en palabras. La aritmética no se hace en el papel. */
+  readonly edad?: string;
+  /** Organización que emite la copia, si la sesión pertenece a una. */
+  readonly organizacion?: string;
+  readonly atenciones: readonly HistoriaAtencion[];
+  readonly recetas: readonly DocumentoDeReceta[];
+  readonly formularios: readonly DocumentoDeFormulario[];
+  readonly ordenes: readonly DocumentoDeOrden[];
+  /** Resultados liberados, ya en palabras. */
+  readonly resultados: readonly DocumentoBloque[];
+}

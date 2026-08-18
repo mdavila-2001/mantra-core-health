@@ -4,7 +4,17 @@ import type {
   MedicationRequest,
   Observation,
 } from '../../../core/data-access/clinical/clinical.types';
-import type { DocumentoDeAtencion, DocumentoDeReceta } from './clinical-pdf.types';
+import type {
+  PatientDiagnosticResult,
+  PatientOrder,
+} from '../../../core/data-access/diagnostics/diagnostics.types';
+import type {
+  DocumentoBloque,
+  DocumentoDeAtencion,
+  DocumentoDeHistoria,
+  DocumentoDeOrden,
+  DocumentoDeReceta,
+} from './clinical-pdf.types';
 
 /* ============================================================================
     De lo que devuelve la API a los dos documentos de la corrección #16.
@@ -169,4 +179,110 @@ function valorDe(observacion: Observation, etiqueta: ResolverEtiqueta): string {
   if (observacion.valueBoolean !== undefined) return observacion.valueBoolean ? 'Sí' : 'No';
   if (observacion.valueConceptId !== undefined) return etiqueta(observacion.valueConceptId);
   return '';
+}
+
+/* ============================================================================
+    Carril J3 · de las cuatro fuentes al documento único.
+
+    El resumen clínico no trae todo: los formularios los expone `forms`, las
+    órdenes `diagnostics` y los resultados su portal. El carril es explícito en
+    que **eso está bien** y que no hay que pedir un mega-endpoint — la
+    composición se hace acá, y sigue siendo una función pura.
+    ========================================================================== */
+
+/** Una orden del portal, como documento para llevar al laboratorio. */
+export function ordenDesdeElPortal(
+  orden: PatientOrder,
+  contexto: ContextoDelDocumento,
+  etiqueta: ResolverEtiqueta,
+): DocumentoDeOrden {
+  return {
+    id: orden.id,
+    paciente: {
+      nombre: contexto.paciente,
+      ...(contexto.documentoDelPaciente === undefined
+        ? {}
+        : { documento: contexto.documentoDelPaciente }),
+    },
+    profesional: {
+      nombre: contexto.profesional,
+      ...(contexto.matricula === undefined ? {} : { matricula: contexto.matricula }),
+    },
+    ...(contexto.organizacion === undefined ? {} : { organizacion: contexto.organizacion }),
+    estudio: etiqueta(orden.codeConceptId),
+    categoria: etiqueta(orden.categoryConceptId),
+    estado: etiqueta(orden.statusConceptId),
+    pedidaEl: orden.createdAt,
+    ...(orden.preparationInstructions === undefined
+      ? {}
+      : { preparacion: orden.preparationInstructions }),
+  };
+}
+
+/**
+ * La historia completa, compuesta de lo que devolvieron las cuatro lecturas.
+ *
+ * Las secciones se pasan aunque estén vacías: `bloquesDeHistoria` las imprime
+ * igual y dice que no hay nada, que es distinto de omitirlas.
+ *
+ * `edad` llega ya calculada y no se deriva acá de la fecha de nacimiento: la
+ * aritmética de edades tiene reglas (¿cumplió ya este año?) que no pertenecen a
+ * un armador de documentos, y la pantalla que la muestra ya la resolvió.
+ */
+export function historiaDesdeFuentes(
+  fuentes: {
+    /** El resumen clínico del paciente. */
+    readonly resumen: ClinicalSummary;
+    /** Las órdenes del portal del paciente. */
+    readonly ordenes: readonly PatientOrder[];
+    /** Los resultados liberados. */
+    readonly resultados: readonly PatientDiagnosticResult[];
+  },
+  contexto: ContextoDelDocumento,
+  etiqueta: ResolverEtiqueta,
+  edad?: string,
+): DocumentoDeHistoria {
+  const atenciones = fuentes.resumen.encounters.map((encuentro) => {
+    const documento = atencionDesdeResumen(encuentro, fuentes.resumen, contexto, etiqueta);
+    return {
+      titulo:
+        documento.inicio === undefined
+          ? 'Atención sin fecha registrada'
+          : `Atención del ${documento.inicio.toLocaleDateString('es')}`,
+      bloques: documento.bloques,
+    };
+  });
+
+  return {
+    paciente: {
+      nombre: contexto.paciente,
+      ...(contexto.documentoDelPaciente === undefined
+        ? {}
+        : { documento: contexto.documentoDelPaciente }),
+    },
+    ...(edad === undefined ? {} : { edad }),
+    ...(contexto.organizacion === undefined ? {} : { organizacion: contexto.organizacion }),
+    atenciones,
+    recetas: fuentes.resumen.medicationRequests.map((indicacion) =>
+      recetaDesdeResumen(indicacion, contexto, etiqueta),
+    ),
+    // Los formularios los expone `forms` y hoy ninguna pantalla del paciente los
+    // trae: la sección se imprime vacía —diciéndolo— hasta que E1 de Ender
+    // exponga la lectura. TODO(J3/E1).
+    formularios: [],
+    ordenes: fuentes.ordenes.map((orden) => ordenDesdeElPortal(orden, contexto, etiqueta)),
+    resultados: fuentes.resultados.map((resultado) => bloqueDeResultado(resultado, etiqueta)),
+  };
+}
+
+/** Un resultado liberado, como bloque de la historia. */
+function bloqueDeResultado(
+  resultado: PatientDiagnosticResult,
+  etiqueta: ResolverEtiqueta,
+): DocumentoBloque {
+  const datos = [{ etiqueta: 'Liberado', valor: resultado.releasedAt.toLocaleDateString('es') }];
+  if (resultado.conclusionText !== undefined && resultado.conclusionText.trim() !== '') {
+    datos.push({ etiqueta: 'Conclusión', valor: resultado.conclusionText });
+  }
+  return { titulo: etiqueta(resultado.codeConceptId), datos };
 }

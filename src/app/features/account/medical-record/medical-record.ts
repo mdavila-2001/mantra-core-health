@@ -6,6 +6,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
+import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import type {
   ClinicalSummary,
   Encounter,
@@ -23,6 +24,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import {
+  downloadHistoryPdf,
   downloadPrescriptionPdf,
   downloadVisitPdf,
 } from '../../../shared/utils/clinical-pdf/clinical-pdf';
@@ -30,6 +32,7 @@ import {
   atencionDesdeResumen,
   recetaDesdeResumen,
   type ContextoDelDocumento,
+  historiaDesdeFuentes,
 } from '../../../shared/utils/clinical-pdf/from-summary';
 import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
 
@@ -102,6 +105,7 @@ interface FilaVisible {
 })
 export class MedicalRecord {
   private readonly clinical = inject(ClinicalClient);
+  private readonly diagnostics = inject(DiagnosticsClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
@@ -122,6 +126,9 @@ export class MedicalRecord {
   protected readonly rutaDeTurnos = MIS_TURNOS_ROUTE;
 
   protected readonly historia = signal<ViewState<ClinicalSummary>>(loading());
+
+  /** El documento completo se está armando: dos lecturas más en vuelo. */
+  protected readonly armandoHistoria = signal(false);
 
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
@@ -274,6 +281,52 @@ export class MedicalRecord {
       ),
     );
     this.toasts.success('Descargamos la historia de esa atención.', 'Historia clínica');
+  }
+
+  /**
+   * Descarga **toda** la historia en un solo documento.
+   *
+   * Las órdenes y los resultados se piden **al tocar el botón** y no al abrir la
+   * pantalla: son dos lecturas más que la mayoría de las visitas no necesita, y
+   * pagarlas siempre para que un botón esté listo por si acaso es cobrarle a
+   * todos por lo que usan pocos.
+   *
+   * Si alguna de las dos falla, el documento se arma igual con lo que haya y el
+   * aviso lo dice. Un PDF con las atenciones y sin las órdenes sigue sirviendo;
+   * negarle la descarga entera a alguien porque una lectura secundaria falló, no.
+   */
+  protected descargarHistoriaCompleta(): void {
+    const datos = this.datos();
+    if (datos === null || this.armandoHistoria()) {
+      return;
+    }
+    this.armandoHistoria.set(true);
+
+    forkJoin({
+      ordenes: this.diagnostics.getOwnOrders().pipe(catchError(() => of({ items: [] as never[] }))),
+      resultados: this.diagnostics
+        .getOwnResults()
+        .pipe(catchError(() => of({ items: [] as never[] }))),
+    }).subscribe({
+      next: ({ ordenes, resultados }) => {
+        this.armandoHistoria.set(false);
+        downloadHistoryPdf(
+          historiaDesdeFuentes(
+            { resumen: datos, ordenes: ordenes.items, resultados: resultados.items },
+            this.contextoDelDocumento(),
+            (id) => this.label(id),
+          ),
+        );
+        this.toasts.success('Descargamos tu historia completa.', 'Historia clínica');
+      },
+      error: () => {
+        this.armandoHistoria.set(false);
+        this.toasts.error(
+          'No pudimos armar el documento. Reintentá en un momento.',
+          'Historia clínica',
+        );
+      },
+    });
   }
 
   /** Descarga la receta. Disponible en cualquier momento posterior a su emisión. */

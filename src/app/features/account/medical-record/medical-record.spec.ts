@@ -211,4 +211,59 @@ describe('MedicalRecord', () => {
 
     expect(harness.routeNativeElement?.textContent).toContain('observations');
   });
+
+  /* ---- J3 · la descarga de la historia completa --------------------------- */
+
+  it('no pide órdenes ni resultados al abrir la pantalla', async () => {
+    await montar();
+    responder();
+
+    // Son dos lecturas más que la mayoría de las visitas no necesita: pagarlas
+    // siempre para que un botón esté listo por si acaso es cobrarle a todos por
+    // lo que usan pocos.
+    http.expectNone((r) => r.url === '/diagnostic-results/me/orders');
+    http.expectNone((r) => r.url === '/diagnostic-results/me');
+  });
+
+  it('al pedir la historia completa trae órdenes y resultados', async () => {
+    await montar();
+    responder();
+
+    const boton = [
+      ...(harness.routeNativeElement?.querySelectorAll('button[app-button]') ?? []),
+    ].find((b) => (b.textContent ?? '').includes('historia completa')) as HTMLButtonElement;
+    expect(boton).toBeDefined();
+    boton.click();
+    harness.detectChanges();
+
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
+      .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me')
+      .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+  });
+
+  it('si las lecturas secundarias fallan, la descarga sigue en pie', async () => {
+    await montar();
+    responder();
+
+    const boton = [
+      ...(harness.routeNativeElement?.querySelectorAll('button[app-button]') ?? []),
+    ].find((b) => (b.textContent ?? '').includes('historia completa')) as HTMLButtonElement;
+    boton.click();
+    harness.detectChanges();
+
+    // Un PDF con las atenciones y sin las órdenes sigue sirviendo; negarle la
+    // descarga entera a alguien porque una lectura secundaria falló, no.
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me')
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement?.textContent).not.toContain('No pudimos armar');
+  });
 });

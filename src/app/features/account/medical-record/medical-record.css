@@ -93,3 +93,18 @@
     flex: none;
   }
 }
+
+/* La descarga completa encabeza la pantalla: es lo que el registro del cliente
+   pide poder hacer, y quien viene a eso no debería recorrer todo primero. */
+.historia__descarga-total {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  margin-block-end: var(--sp-5);
+}
+
+.historia__descarga-nota {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  margin: 0;
+}
