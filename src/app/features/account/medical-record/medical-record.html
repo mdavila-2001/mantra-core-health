@@ -14,6 +14,26 @@
 } @else {
   <app-view-state-host [state]="historia()" (retry)="cargar()">
     <div class="historia">
+      <!-- La descarga de TODO, arriba y no al final: es lo que el registro del
+           cliente pide («el paciente puede descargar su historia») y quien viene
+           a buscarla no debería tener que recorrer la pantalla entera primero.
+
+           Trae órdenes y resultados al tocarse, no al abrir la pantalla: son dos
+           lecturas más que la mayoría de las visitas no necesita. -->
+      <div class="historia__descarga-total">
+        <button
+          app-button
+          variant="primary"
+          [isLoading]="armandoHistoria()"
+          (clicked)="descargarHistoriaCompleta()"
+        >
+          Descargar mi historia completa
+        </button>
+        <p class="historia__descarga-nota">
+          Un solo PDF con tus atenciones, recetas, órdenes y resultados.
+        </p>
+      </div>
+
       <!-- Un recorte silencioso se lee como «no hay nada más», y eso es afirmar
            algo que nadie comprobó. -->
       @if (recorte() !== '') {

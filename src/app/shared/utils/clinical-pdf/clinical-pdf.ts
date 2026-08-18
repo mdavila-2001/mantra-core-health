@@ -2,8 +2,11 @@ import type { jsPDF } from 'jspdf';
 
 import { buildBlocksPdf, type PdfBlock } from '../pdf-export/pdf-export';
 import type {
+  DocumentoBloque,
   DocumentoDeAtencion,
   DocumentoDeFormulario,
+  DocumentoDeHistoria,
+  DocumentoDeOrden,
   DocumentoDeReceta,
   DocumentoMedicamento,
   DocumentoPaciente,
@@ -76,6 +79,33 @@ export function downloadVisitPdf(atencion: DocumentoDeAtencion): void {
   buildVisitPdf(atencion).save(
     nombreDeArchivo('atencion', atencion.cierre ?? atencion.inicio ?? new Date(), atencion.id),
   );
+}
+
+/** Arma el PDF de una orden de laboratorio o imagen. */
+export function buildOrderPdf(orden: DocumentoDeOrden): jsPDF {
+  return buildBlocksPdf(bloquesDeOrden(orden), { title: 'Orden de estudio' });
+}
+
+/** Descarga la orden, para llevarla al laboratorio. */
+export function downloadOrderPdf(orden: DocumentoDeOrden): void {
+  buildOrderPdf(orden).save(nombreDeArchivo('orden', orden.pedidaEl, orden.id));
+}
+
+/** Arma el PDF de la historia completa del paciente. */
+export function buildHistoryPdf(historia: DocumentoDeHistoria): jsPDF {
+  return buildBlocksPdf(bloquesDeHistoria(historia), { title: 'Historia clínica' });
+}
+
+/**
+ * Descarga la historia completa.
+ *
+ * El nombre lleva el apellido y la fecha —`historia-perez-2026-08-18.pdf`— y no
+ * el identificador: este archivo lo abre la persona en su carpeta de descargas,
+ * no un sistema, y un sufijo hexadecimal no le dice nada. Es lo que pide el
+ * carril.
+ */
+export function downloadHistoryPdf(historia: DocumentoDeHistoria): void {
+  buildHistoryPdf(historia).save(nombreLegible('historia', historia.paciente.nombre, new Date()));
 }
 
 /**
@@ -218,6 +248,135 @@ export function bloquesDeFormulario(formulario: DocumentoDeFormulario): readonly
   return bloques;
 }
 
+/** Las líneas de una orden de estudio, en orden de lectura. */
+export function bloquesDeOrden(orden: DocumentoDeOrden): readonly PdfBlock[] {
+  const bloques: PdfBlock[] = [encabezado('Orden de estudio', 1)];
+
+  bloques.push(...datosDeCabecera(orden.paciente, orden.profesional, orden.organizacion));
+
+  bloques.push(parrafo(`Estudio: ${textoDe(orden.estudio)}`));
+  bloques.push(parrafo(`Tipo: ${textoDe(orden.categoria)}`));
+  bloques.push(parrafo(`Estado: ${textoDe(orden.estado)}`));
+  bloques.push(parrafo(`Pedida el ${FORMATO_FECHA.format(orden.pedidaEl)}`));
+
+  // La preparación es lo que la persona tiene que hacer ANTES de venir, así que
+  // va en su propia sección y no en una línea más de la lista.
+  bloques.push(encabezado('Cómo prepararse', 2));
+  bloques.push(
+    parrafo(
+      orden.preparacion === undefined || orden.preparacion.trim() === ''
+        ? // No se afirma que no haga falta preparación: se dice que no hay
+          // indicaciones publicadas. En un ayuno, la diferencia importa.
+          'El centro no publicó indicaciones de preparación para este estudio. Consultá al laboratorio antes de asistir.'
+        : orden.preparacion,
+    ),
+  );
+
+  bloques.push(parrafo(pieDeDocumento()));
+  return bloques;
+}
+
+/**
+ * Las líneas de la historia completa, en orden de lectura.
+ *
+ * Las cinco secciones se imprimen **siempre**, incluso vacías: una sección
+ * ausente deja a quien lee sin saber si no hubo nada o si el sistema no lo
+ * trajo, y en un documento clínico eso no es lo mismo. Cuando está vacía, lo
+ * dice con palabras.
+ */
+export function bloquesDeHistoria(historia: DocumentoDeHistoria): readonly PdfBlock[] {
+  const bloques: PdfBlock[] = [encabezado('Historia clínica', 1)];
+
+  bloques.push(parrafo(`Paciente: ${textoDe(historia.paciente.nombre)}`));
+  if (historia.paciente.documento !== undefined && historia.paciente.documento.trim() !== '') {
+    bloques.push(parrafo(`Documento: ${historia.paciente.documento}`));
+  }
+  if (historia.edad !== undefined && historia.edad.trim() !== '') {
+    bloques.push(parrafo(`Edad: ${historia.edad}`));
+  }
+  if (historia.organizacion !== undefined && historia.organizacion.trim() !== '') {
+    bloques.push(parrafo(`Organización: ${historia.organizacion}`));
+  }
+
+  bloques.push(encabezado('Atenciones', 2));
+  if (historia.atenciones.length === 0) {
+    bloques.push(parrafo('Sin atenciones registradas.'));
+  }
+  for (const atencion of historia.atenciones) {
+    bloques.push(encabezado(atencion.titulo, 3));
+    bloques.push(...lineasDeBloques(atencion.bloques));
+  }
+
+  bloques.push(encabezado('Recetas', 2));
+  if (historia.recetas.length === 0) {
+    bloques.push(parrafo('Sin recetas registradas.'));
+  }
+  for (const receta of historia.recetas) {
+    bloques.push(encabezado(`Receta del ${FORMATO_FECHA.format(receta.creadaEl)}`, 3));
+    if (receta.medicamentos.length === 0) {
+      bloques.push(parrafo('Sin medicamentos indicados.'));
+    }
+    for (const medicamento of receta.medicamentos) {
+      bloques.push(parrafo(lineaDeMedicamento(medicamento)));
+    }
+    if (receta.indicaciones !== undefined && receta.indicaciones.trim() !== '') {
+      bloques.push(parrafo(`Indicaciones: ${receta.indicaciones}`));
+    }
+  }
+
+  bloques.push(encabezado('Formularios', 2));
+  if (historia.formularios.length === 0) {
+    bloques.push(parrafo('Sin formularios respondidos.'));
+  }
+  for (const formulario of historia.formularios) {
+    bloques.push(encabezado(formulario.titulo, 3));
+    for (const respuesta of formulario.respuestas) {
+      bloques.push(
+        parrafo(
+          `${respuesta.etiqueta}: ${respuesta.masked ? VALOR_ENMASCARADO : textoDe(respuesta.texto)}`,
+        ),
+      );
+    }
+  }
+
+  bloques.push(encabezado('Órdenes de estudio', 2));
+  if (historia.ordenes.length === 0) {
+    bloques.push(parrafo('Sin órdenes registradas.'));
+  }
+  for (const orden of historia.ordenes) {
+    bloques.push(
+      parrafo(
+        `${textoDe(orden.estudio)} (${textoDe(orden.categoria)}) — pedida el ${FORMATO_FECHA.format(orden.pedidaEl)}. Estado: ${textoDe(orden.estado)}`,
+      ),
+    );
+  }
+
+  bloques.push(encabezado('Resultados', 2));
+  if (historia.resultados.length === 0) {
+    bloques.push(parrafo('Sin resultados liberados.'));
+  }
+  bloques.push(...lineasDeBloques(historia.resultados));
+
+  bloques.push(parrafo(pieDeDocumento()));
+  return bloques;
+}
+
+/** Aplana bloques de datos a líneas, diciendo los vacíos en vez de saltearlos. */
+function lineasDeBloques(bloques: readonly DocumentoBloque[]): readonly PdfBlock[] {
+  const salida: PdfBlock[] = [];
+  for (const bloque of bloques) {
+    salida.push(encabezado(bloque.titulo, 4));
+    if (bloque.datos.length === 0) {
+      salida.push(parrafo('Sin registros.'));
+      continue;
+    }
+    for (const dato of bloque.datos) {
+      salida.push(parrafo(`${dato.etiqueta}: ${dato.valor}`));
+    }
+  }
+  return salida;
+}
+
 /** Los tres datos que encabezan cualquiera de los dos documentos. */
 function datosDeCabecera(
   paciente: DocumentoPaciente,
@@ -264,4 +423,27 @@ function nombreDeArchivo(prefijo: string, fecha: Date, id: string): string {
     String(fecha.getDate()).padStart(2, '0'),
   ].join('-');
   return `${prefijo}-${dia}-${id.replace(/-/g, '').slice(-6)}.pdf`;
+}
+
+/**
+ * `historia-perez-2026-08-18.pdf`.
+ *
+ * Con el apellido y sin sufijo hexadecimal: este archivo lo abre una persona en
+ * su carpeta de descargas. Se queda con la última palabra del nombre —que en
+ * castellano es el apellido— y la reduce a caracteres seguros para un nombre de
+ * archivo en cualquier sistema.
+ */
+function nombreLegible(prefijo: string, nombre: string, fecha: Date): string {
+  const dia = [
+    fecha.getFullYear(),
+    String(fecha.getMonth() + 1).padStart(2, '0'),
+    String(fecha.getDate()).padStart(2, '0'),
+  ].join('-');
+  const palabras = nombre.trim().split(/\s+/).filter(Boolean);
+  const apellido = (palabras.at(-1) ?? 'paciente')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+  return `${prefijo}-${apellido === '' ? 'paciente' : apellido}-${dia}.pdf`;
 }
