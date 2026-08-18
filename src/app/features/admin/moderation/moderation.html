@@ -6,6 +6,7 @@
 <nav class="moderacion__pestanias" aria-label="Secciones de moderación">
   <button
     app-button
+    data-testid="moderation-queue-tab"
     variant="ghost"
     [attr.aria-pressed]="pestania() === 'cola'"
     (clicked)="verCola()"
@@ -14,6 +15,7 @@
   </button>
   <button
     app-button
+    data-testid="moderation-appeals-tab"
     variant="ghost"
     [attr.aria-pressed]="pestania() === 'apelaciones'"
     (clicked)="verApelaciones()"
@@ -71,7 +73,7 @@
 } @else if (pestania() === 'cola') {
   <ul class="moderacion__lista">
     @for (entrada of entradas(); track entrada.id) {
-      <li>
+      <li [attr.data-testid]="'moderation-queue-row-' + entrada.contentRefId">
         <app-card variant="outlined" padding="md">
           <header class="entrada__cabecera">
             <!-- Se muestra el identificador del contenido y no su texto: la cola
@@ -126,6 +128,7 @@
                 hint="Es lo que va a leer quien apele, y lo que queda para auditar."
               >
                 <app-textarea
+                  data-testid="moderation-rationale"
                   [(value)]="motivo"
                   [rows]="3"
                   [autoResize]="true"
@@ -161,7 +164,7 @@
 } @else {
   <ul class="moderacion__lista">
     @for (apelacion of apelaciones(); track apelacion.id) {
-      <li>
+      <li [attr.data-testid]="'moderation-appeal-row-' + apelacion.id">
         <app-card variant="outlined" padding="md">
           <header class="entrada__cabecera">
             <p class="entrada__ref">
