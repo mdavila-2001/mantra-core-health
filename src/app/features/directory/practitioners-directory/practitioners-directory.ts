@@ -13,6 +13,7 @@ import { SearchResult } from '../../../shared/components/molecules/search-result
 import type { SearchResultItem } from '../../../shared/components/molecules/search-result/search-result.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { subtituloProfesional } from '../subtitulo-profesional';
 
 /** Tope por página del backend. La guía las junta todas. */
 const POR_PAGINA = 50;
@@ -203,6 +204,13 @@ function agrupar(
 ): readonly GrupoDeEspecialidad[] {
   const porEspecialidad = new Map<string, { nombre: string; filas: PractitionerListItem[] }>();
   const sinEspecialidad: PractitionerListItem[] = [];
+  // Los nombres de toda la respuesta, para que ninguna tarjeta pueda mostrar el
+  // de otra como subtítulo (F-25). Se calculan una vez: es la comprobación
+  // exacta, y la heurística de `subtituloProfesional` sólo cubre lo que esta no
+  // puede ver.
+  const nombres = filas
+    .map((fila) => fila.displayName)
+    .filter((nombre): nombre is string => nombre !== undefined && nombre !== '');
 
   for (const fila of filas) {
     if (fila.specialties.length === 0) {
@@ -224,7 +232,7 @@ function agrupar(
     .map(([conceptId, grupo]) => ({
       conceptId,
       nombre: grupo.nombre,
-      profesionales: grupo.filas.map(toResultado).sort(porNombre),
+      profesionales: grupo.filas.map((fila) => toResultado(fila, nombres)).sort(porNombre),
     }))
     // Alfabético por especialidad: es como se hojea una guía, no por cuántos
     // tenga cada una.
@@ -234,7 +242,7 @@ function agrupar(
     grupos.push({
       conceptId: 'sin-especialidad',
       nombre: SIN_ESPECIALIDAD,
-      profesionales: sinEspecialidad.map(toResultado).sort(porNombre),
+      profesionales: sinEspecialidad.map((fila) => toResultado(fila, nombres)).sort(porNombre),
     });
   }
   return grupos;
@@ -255,11 +263,17 @@ function porNombre(a: SearchResultItem, b: SearchResultItem): number {
  * no hay a quién mostrárselo por rol (feedback de la analista F-01, 18/08/2026).
  * Sigue viajando en el DTO por si una consola de administración lo necesita.
  */
-function toResultado(fila: PractitionerListItem): SearchResultItem {
+function toResultado(
+  fila: PractitionerListItem,
+  nombresDeOtros: readonly string[] = [],
+): SearchResultItem {
   const nombre = fila.displayName ?? 'Profesional sin nombre registrado';
   const meta = [];
-  if (fila.professionalTitle !== undefined && fila.professionalTitle !== '') {
-    meta.push({ text: fila.professionalTitle });
+  // El subtítulo pasa por el guardia de F-25: una tarjeta sin subtítulo es más
+  // pobre, una con el nombre de otro es una guía que miente.
+  const subtitulo = subtituloProfesional(fila.professionalTitle, nombre, nombresDeOtros);
+  if (subtitulo !== undefined) {
+    meta.push({ text: subtitulo });
   }
 
   const sellos = [];
