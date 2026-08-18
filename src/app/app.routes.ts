@@ -19,10 +19,30 @@ import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
   APP_TITLE,
+  ROLES_ROUTE_DATA,
   SECTION_ROUTE_DATA,
   titleOf,
   type AppSection,
 } from './core/navigation/navigation.types';
+
+/**
+ * Los roles de quien atiende, para las hijas de «Mi perfil» que son sólo suyas.
+ *
+ * Es la misma pareja que declaran «Archivo clínico» y «Laboratorio e imagen» en
+ * el registro (`navigation.map.ts`): la Guía es del paciente; configurar el
+ * perfil profesional, la vitrina pública y los artículos médicos son de quien
+ * atiende. Un paciente que escribía la dirección llegaba a una pantalla que le
+ * hablaba de «las personas que atendí» (feedback de la analista, 18/08/2026).
+ */
+const ROLES_DE_QUIEN_ATIENDE: readonly string[] = ['CLINICIAN', 'PRACTITIONER'];
+
+/** La declaración que cierra una hija de «Mi perfil» a quien atiende. */
+function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
+  return {
+    canActivate: [seccionRolesGuard],
+    data: { [ROLES_ROUTE_DATA]: ROLES_DE_QUIEN_ATIENDE },
+  };
+}
 
 /**
  * Qué componente pinta cada sección **que ya tiene pantalla**.
@@ -314,9 +334,11 @@ const PANTALLAS_HIJAS: Routes = [
   },
   {
     // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
-    // nunca desde el menú.
+    // nunca desde el menú. Y sólo la abre quien atiende: «Mi perfil» no
+    // declara roles, así que la restricción va en la ruta.
     path: 'my-account/edit',
     title: `${APP_TITLE} - Configurar tu perfil`,
+    ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
         .then((m) => m.PractitionerProfileEdit)
@@ -326,6 +348,7 @@ const PANTALLAS_HIJAS: Routes = [
     // La vitrina pública: se configura y se ve en la misma pantalla.
     path: 'my-account/preview',
     title: `${APP_TITLE} - Tu perfil público`,
+    ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/public-profile-preview/public-profile-preview')
         .then((m) => m.PublicProfilePreview)
@@ -336,6 +359,7 @@ const PANTALLAS_HIJAS: Routes = [
     // sin vitrina, no hay dónde publicar un artículo.
     path: 'my-account/articles',
     title: `${APP_TITLE} - Artículos médicos`,
+    ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/medical-articles/medical-articles')
         .then((m) => m.MedicalArticles)
