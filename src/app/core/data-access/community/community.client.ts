@@ -16,6 +16,8 @@ import type {
   ConversationListItem,
   ConversationMessagesQuery,
   ConversationPage,
+  ConversationPeer,
+  ConversationRead,
   ConversationsQuery,
   DirectMessage,
   DirectMessagePage,
@@ -43,6 +45,8 @@ import type {
   NewBlock,
   NewBookmark,
   NewComment,
+  NewConversation,
+  NewDirectMessage,
   NewFollow,
   NewModerationDecision,
   NewReport,
@@ -61,11 +65,13 @@ import type {
   PostListItem,
   PostPage,
   ProfilePostsQuery,
+  PublicDirectoryResult,
   PublicProfileDetail,
   ReactionSummary,
   ReviewsQuery,
   ServiceReview,
   ServiceReviewPage,
+  SentMessage,
   SocialNotification,
   UpsertOwnPublicProfile,
 } from './community.types';
@@ -788,6 +794,121 @@ export class CommunityClient {
       .pipe(map(toMessagePage));
   }
 
+  /**
+   * `GET /community/profiles/by-slug/:slug` — la ficha por su slug.
+   *
+   * Es el puente entre el buscador público —que devuelve `slug` y no uuid— y
+   * cualquier acción que necesite el `profileId`, «escribirle» la primera.
+   *
+   * @param slug - El slug estable del directorio.
+   * @returns La ficha, con su identificador.
+   */
+  readProfileBySlug(slug: string): Observable<PublicProfileDetail> {
+    return this.http
+      .get<WireProfile>(
+        this.url(`/community/profiles/by-slug/${encodeURIComponent(slug)}`),
+      )
+      .pipe(map(toProfile));
+  }
+
+  /**
+   * `GET /community/public/search/practitioners` — profesionales del directorio.
+   *
+   * Devuelve `slug`, no `profileId`: la superficie pública no expone
+   * identificadores internos. Para escribirle a alguien, este resultado se
+   * resuelve después con {@link readProfileBySlug}.
+   *
+   * @param q - Texto de búsqueda.
+   * @param limit - Tope de resultados.
+   * @returns Los profesionales que coinciden.
+   */
+  searchPractitioners(
+    q: string,
+    limit = 10,
+  ): Observable<readonly PublicDirectoryResult[]> {
+    let params = new HttpParams().set('limit', String(limit));
+    if (q !== '') {
+      params = params.set('q', q);
+    }
+    return this.http
+      .get<{ readonly items: readonly PublicDirectoryResult[] }>(
+        this.url('/community/public/search/practitioners'),
+        { params },
+      )
+      .pipe(map((body) => body.items));
+  }
+
+  /**
+   * `POST /community/conversations` — abre el hilo con alguien.
+   *
+   * **Devuelve el hilo que ya existe** si lo hay: desde el carril P2 el backend
+   * reutiliza la conversación directa entre los mismos dos perfiles. Por eso
+   * esta llamada se puede hacer cada vez que alguien pulsa «Escribir al
+   * doctor», sin que el cliente tenga que recordar si ya la abrió.
+   *
+   * @param datos - Los participantes (los dos, el propio incluido).
+   * @returns El identificador de la conversación.
+   */
+  createConversation(datos: NewConversation): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/community/conversations'),
+      datos,
+    );
+  }
+
+  /**
+   * `POST /community/conversations/:id/messages` — envía un mensaje.
+   *
+   * @param conversationId - El hilo.
+   * @param datos - Quién escribe y qué.
+   * @returns El mensaje creado, con su marca de envío.
+   */
+  sendMessage(
+    conversationId: string,
+    datos: NewDirectMessage,
+  ): Observable<SentMessage> {
+    return this.http
+      .post<ConNulos<{ id: string; conversationId: string; sentAt: string }>>(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}/messages`,
+        ),
+        datos,
+      )
+      .pipe(
+        map((body) => ({
+          id: body.id ?? '',
+          conversationId: body.conversationId ?? conversationId,
+          ...fecha('sentAt', body.sentAt),
+        })),
+      );
+  }
+
+  /**
+   * `POST /community/conversations/:id/read` — marca leído hasta el último.
+   *
+   * Sin `upToMessageId` el backend usa el mensaje más reciente, que es lo que
+   * quiere decir «abrí el hilo y lo leí».
+   *
+   * @param conversationId - El hilo.
+   * @param recipientProfileId - Quién lo leyó.
+   * @param upToMessageId - Hasta dónde, si no es hasta el final.
+   * @returns Cuántos recibos se asentaron y hasta qué mensaje.
+   */
+  markConversationRead(
+    conversationId: string,
+    recipientProfileId: string,
+    upToMessageId?: string,
+  ): Observable<ConversationRead> {
+    return this.http.post<ConversationRead>(
+      this.url(
+        `/community/conversations/${encodeURIComponent(conversationId)}/read`,
+      ),
+      upToMessageId === undefined
+        ? { recipientProfileId }
+        : { recipientProfileId, upToMessageId },
+    );
+  }
+
   // ─── Encuestas ─────────────────────────────────────────────────────────────
 
   /**
@@ -1003,13 +1124,15 @@ interface WireGroupMemberPage extends Omit<GroupMemberPage, 'items'> {
 
 type WireConversation = Omit<
   ConNulos<ConversationListItem>,
-  'lastMessageAt' | 'lastMessage' | 'unreadCount'
+  'lastMessageAt' | 'lastMessage' | 'unreadCount' | 'peers'
 > & {
   readonly lastMessageAt: string | null;
   readonly unreadCount: number;
   readonly lastMessage:
     | (Omit<ConNulos<PreviewLike>, 'sentAt'> & { readonly sentAt: string | null })
     | null;
+  /** Opcional en el transporte: un backend anterior a P2 no lo manda. */
+  readonly peers?: readonly ConNulos<ConversationPeer>[];
 };
 
 type PreviewLike = NonNullable<ConversationListItem['lastMessage']>;
@@ -1338,11 +1461,16 @@ function toConversation({
   lastMessageAt,
   lastMessage,
   unreadCount,
+  peers,
   ...resto
 }: WireConversation): ConversationListItem {
   return {
     ...sinNulos(resto),
     unreadCount,
+    // `peers` viaja siempre desde el carril P2, pero se defiende igual: un
+    // backend anterior devolvería la fila sin la clave, y una bandeja que
+    // explota al iterar `undefined` es peor que una sin nombres.
+    peers: (peers ?? []).map((peer) => sinNulos(peer)),
     ...fecha('lastMessageAt', lastMessageAt),
     ...(lastMessage === null
       ? {}
