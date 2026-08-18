@@ -11,6 +11,7 @@ import type {
 import type {
   DocumentoBloque,
   DocumentoDeAtencion,
+  DocumentoDeFormulario,
   DocumentoDeHistoria,
   DocumentoDeOrden,
   DocumentoDeReceta,
@@ -95,12 +96,17 @@ export function recetaDesdeResumen(
  * observaciones que el contrato no ata a un encuentro **quedan fuera** en vez
  * de colarse en la atención equivocada. La medicación va entera y a propósito
  * —el contrato no la ata al encuentro— y el bloque lo dice con su título.
+ *
+ * Los formularios respondidos los aporta quien ya los leyó (el resumen clínico
+ * no los trae); el parámetro es opcional para que las pantallas que no los
+ * leen sigan produciendo el mismo papel que antes.
  */
 export function atencionDesdeResumen(
   encuentro: Encounter,
   resumen: ClinicalSummary,
   contexto: ContextoDelDocumento,
   etiqueta: ResolverEtiqueta,
+  formularios?: readonly DocumentoDeFormulario[],
 ): DocumentoDeAtencion {
   const diagnosticos = resumen.conditions.filter((fila) => fila.encounterId === encuentro.id);
   const observaciones = resumen.observations.filter((fila) => fila.encounterId === encuentro.id);
@@ -144,6 +150,7 @@ export function atencionDesdeResumen(
         })),
       },
     ],
+    ...(formularios === undefined || formularios.length === 0 ? {} : { formularios }),
   };
 }
 
@@ -233,6 +240,8 @@ export function historiaDesdeFuentes(
   fuentes: {
     /** El resumen clínico del paciente. */
     readonly resumen: ClinicalSummary;
+    /** Los formularios respondidos, ya en la forma del documento (los lee `forms/me`). */
+    readonly formularios: readonly DocumentoDeFormulario[];
     /** Las órdenes del portal del paciente. */
     readonly ordenes: readonly PatientOrder[];
     /** Los resultados liberados. */
@@ -266,10 +275,9 @@ export function historiaDesdeFuentes(
     recetas: fuentes.resumen.medicationRequests.map((indicacion) =>
       recetaDesdeResumen(indicacion, contexto, etiqueta),
     ),
-    // Los formularios los expone `forms` y hoy ninguna pantalla del paciente los
-    // trae: la sección se imprime vacía —diciéndolo— hasta que E1 de Ender
-    // exponga la lectura. TODO(J3/E1).
-    formularios: [],
+    // Cerrado el TODO(J3/E1): el archivo del paciente ya lee `forms/me` y los
+    // aporta acá como fuente, igual que las órdenes y los resultados.
+    formularios: fuentes.formularios,
     ordenes: fuentes.ordenes.map((orden) => ordenDesdeElPortal(orden, contexto, etiqueta)),
     resultados: fuentes.resultados.map((resultado) => bloqueDeResultado(resultado, etiqueta)),
   };

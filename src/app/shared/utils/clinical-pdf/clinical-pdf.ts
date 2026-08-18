@@ -11,6 +11,7 @@ import type {
   DocumentoMedicamento,
   DocumentoPaciente,
   DocumentoProfesional,
+  RespuestaDeFormulario,
 } from './clinical-pdf.types';
 
 /* ============================================================================
@@ -213,6 +214,15 @@ export function bloquesDeAtencion(atencion: DocumentoDeAtencion): readonly PdfBl
     }
   }
 
+  // Los formularios respondidos en la atención, una sección por formulario.
+  // Mismas líneas que el documento del formulario suelto: es el mismo hecho
+  // clínico, y el enmascarado lo aplica el armador acá también.
+  for (const formulario of atencion.formularios ?? []) {
+    bloques.push(encabezado(`Formulario: ${formulario.titulo}`, 2));
+    bloques.push(parrafo(lineaDeCompletado(formulario)));
+    bloques.push(...lineasDeRespuestas(formulario.respuestas));
+  }
+
   bloques.push(parrafo(pieDeDocumento()));
   return bloques;
 }
@@ -221,28 +231,10 @@ export function bloquesDeAtencion(atencion: DocumentoDeAtencion): readonly PdfBl
 export function bloquesDeFormulario(formulario: DocumentoDeFormulario): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [];
 
-  bloques.push(
-    parrafo(
-      formulario.completadoEl === undefined
-        ? // Se dice, no se disimula: sin fecha de cierre es una copia de trabajo.
-          'Estado: sin fecha de completado registrada.'
-        : `Completado el ${FORMATO_FECHA.format(formulario.completadoEl)}`,
-    ),
-  );
+  bloques.push(parrafo(lineaDeCompletado(formulario)));
 
   bloques.push(encabezado('Respuestas', 2));
-  if (formulario.respuestas.length === 0) {
-    bloques.push(parrafo('Sin respuestas registradas.'));
-  }
-  for (const respuesta of formulario.respuestas) {
-    // `masked` decide acá, no en el llamador: aunque `texto` trajera algo, un
-    // campo protegido imprime el marcador y nada más.
-    bloques.push(
-      parrafo(
-        `${respuesta.etiqueta}: ${respuesta.masked ? VALOR_ENMASCARADO : textoDe(respuesta.texto)}`,
-      ),
-    );
-  }
+  bloques.push(...lineasDeRespuestas(formulario.respuestas));
 
   bloques.push(parrafo(pieDeDocumento()));
   return bloques;
@@ -330,13 +322,9 @@ export function bloquesDeHistoria(historia: DocumentoDeHistoria): readonly PdfBl
   }
   for (const formulario of historia.formularios) {
     bloques.push(encabezado(formulario.titulo, 3));
-    for (const respuesta of formulario.respuestas) {
-      bloques.push(
-        parrafo(
-          `${respuesta.etiqueta}: ${respuesta.masked ? VALOR_ENMASCARADO : textoDe(respuesta.texto)}`,
-        ),
-      );
-    }
+    // Las mismas líneas que el formulario suelto y la atención: una sola regla
+    // decide el enmascarado en papel, no una por documento.
+    bloques.push(...lineasDeRespuestas(formulario.respuestas));
   }
 
   bloques.push(encabezado('Órdenes de estudio', 2));
@@ -375,6 +363,32 @@ function lineasDeBloques(bloques: readonly DocumentoBloque[]): readonly PdfBlock
     }
   }
   return salida;
+}
+
+/** Cuándo se completó el formulario, o su ausencia con todas las letras. */
+function lineaDeCompletado(formulario: DocumentoDeFormulario): string {
+  return formulario.completadoEl === undefined
+    ? // Se dice, no se disimula: sin fecha de cierre es una copia de trabajo.
+      'Estado: sin fecha de completado registrada.'
+    : `Completado el ${FORMATO_FECHA.format(formulario.completadoEl)}`;
+}
+
+/**
+ * Las respuestas, una línea por campo. Lo comparten el documento del
+ * formulario suelto y la historia de la atención: el mismo hecho clínico no
+ * puede salir distinto según qué papel lo lleve.
+ */
+function lineasDeRespuestas(respuestas: readonly RespuestaDeFormulario[]): readonly PdfBlock[] {
+  if (respuestas.length === 0) {
+    return [parrafo('Sin respuestas registradas.')];
+  }
+  // `masked` decide acá, no en el llamador: aunque `texto` trajera algo, un
+  // campo protegido imprime el marcador y nada más.
+  return respuestas.map((respuesta) =>
+    parrafo(
+      `${respuesta.etiqueta}: ${respuesta.masked ? VALOR_ENMASCARADO : textoDe(respuesta.texto)}`,
+    ),
+  );
 }
 
 /** Los tres datos que encabezan cualquiera de los dos documentos. */

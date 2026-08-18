@@ -1,5 +1,7 @@
+import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
 import { bloquesDeHistoria, bloquesDeOrden, VALOR_ENMASCARADO } from './clinical-pdf';
 import type { DocumentoDeHistoria, DocumentoDeOrden } from './clinical-pdf.types';
+import { historiaDesdeFuentes } from './from-summary';
 
 /**
  * Los dos documentos del carril J3: la **orden** para llevar al laboratorio y la
@@ -183,5 +185,60 @@ describe('bloquesDeHistoria', () => {
     const texto = textoDe(bloquesDeHistoria({ ...HISTORIA_VACIA, ordenes: [ORDEN] }));
 
     expect(texto).not.toContain(ORDEN.id);
+  });
+});
+
+describe('historiaDesdeFuentes con formularios (cierre del TODO(J3/E1))', () => {
+  const RESUMEN_VACIO: ClinicalSummary = {
+    patientProfileId: 'pp-1',
+    conditions: [],
+    allergies: [],
+    medicationRequests: [],
+    observations: [],
+    encounters: [],
+    careEpisodes: [],
+    limit: 50,
+    truncated: [],
+  };
+
+  it('los formularios que aporta la pantalla llegan al documento, con su enmascarado', () => {
+    const historia = historiaDesdeFuentes(
+      {
+        resumen: RESUMEN_VACIO,
+        formularios: [
+          {
+            id: 'fi-1',
+            titulo: 'Formulario clínico',
+            completadoEl: new Date('2026-08-17T15:00:00.000Z'),
+            respuestas: [
+              { etiqueta: 'Tolerancia al ejercicio', texto: 'Buena', masked: false },
+              // Aunque el llamador pasara el contenido por error, la bandera manda.
+              { etiqueta: 'Serología', texto: 'SECRETO', masked: true },
+            ],
+          },
+        ],
+        ordenes: [],
+        resultados: [],
+      },
+      { paciente: 'Ana Quispe', profesional: '' },
+      () => 'No registrado',
+    );
+    const texto = textoDe(bloquesDeHistoria(historia));
+
+    // La respuesta normal aparece, legible.
+    expect(texto).toContain('Tolerancia al ejercicio: Buena');
+    // La protegida imprime el marcador y jamás el contenido.
+    expect(texto).toContain(`Serología: ${VALOR_ENMASCARADO}`);
+    expect(texto).not.toContain('SECRETO');
+  });
+
+  it('sin formularios, la sección sigue diciendo que no hay', () => {
+    const historia = historiaDesdeFuentes(
+      { resumen: RESUMEN_VACIO, formularios: [], ordenes: [], resultados: [] },
+      { paciente: 'Ana Quispe', profesional: '' },
+      () => 'No registrado',
+    );
+
+    expect(textoDe(bloquesDeHistoria(historia))).toContain('Sin formularios respondidos.');
   });
 });

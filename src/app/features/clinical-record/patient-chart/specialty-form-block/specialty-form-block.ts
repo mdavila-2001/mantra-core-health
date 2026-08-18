@@ -39,6 +39,7 @@ import {
   downloadFormResponsePdf,
   VALOR_ENMASCARADO,
 } from '../../../../shared/utils/clinical-pdf/clinical-pdf';
+import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 
 /** Los tipos de dato que este bloque sabe dibujar como campo de captura. */
 type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string';
@@ -518,25 +519,4 @@ export class SpecialtyFormBlock {
 
 function esVacio(valor: unknown): boolean {
   return valor === undefined || valor === null || valor === '';
-}
-
-/**
- * El valor de un campo, en palabras.
- *
- * Los valores llegan como los serializó JSON: fechas en ISO, `integer` como
- * string (la columna es bigint). Lo no representable cae a `String(...)` antes
- * que a un hueco.
- */
-function textoDeValor(valor: unknown, dataType: string | undefined): string {
-  if (valor === undefined || valor === null) return '—';
-  if (typeof valor === 'boolean') return valor ? 'Sí' : 'No';
-  if (dataType === 'date' || dataType === 'datetime') {
-    const fecha = new Date(String(valor));
-    if (!Number.isNaN(fecha.getTime())) {
-      return dataType === 'date'
-        ? new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' }).format(fecha)
-        : FORMATO_FECHA.format(fecha);
-    }
-  }
-  return String(valor);
 }
