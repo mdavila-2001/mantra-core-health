@@ -2,7 +2,7 @@
 
 # Inventario de la suite de extremo a extremo (Cypress)
 
-Leído de `cypress/`. 33 archivos de prueba, 164 pruebas, 11 Page Objects y 12 escenarios de API.
+Leído de `cypress/`. 36 archivos de prueba, 176 pruebas, 11 Page Objects y 12 escenarios de API.
 
 La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—
 está en [`cypress/README.md`](../../../cypress/README.md).
@@ -13,6 +13,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | --- | --- | --- | --- |
 | `authentication` | Autenticación · inicio de sesión | 7 | `cypress/e2e/authentication/login.cy.ts` |
 | `authentication` | Autenticación · sesión | 6 | `cypress/e2e/authentication/sesion.cy.ts` |
+| `carriles` | P3 · muro social (segundo motor) · P6 · moderación (segundo motor) · catálogo compartido | 4 | `cypress/e2e/carriles/p3-p6-smoke.cy.ts` |
 | `forms` | Formularios · activar cuenta | 5 | `cypress/e2e/forms/activar-cuenta.cy.ts` |
 | `forms` | Formularios · nueva contraseña | 6 | `cypress/e2e/forms/nueva-clave.cy.ts` |
 | `forms` | Formularios · recuperar contraseña | 4 | `cypress/e2e/forms/recuperar-password.cy.ts` |
@@ -30,6 +31,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `real` | Recorrido real · el sello del titular sigue al caso | 2 | `cypress/e2e/real/08-sello-del-titular.cy.ts` |
 | `real` | Recorrido real · el camino del consumidor | 1 | `cypress/e2e/real/09-camino-consumidor.cy.ts` |
 | `real` | Recorrido real · el camino del médico | 2 | `cypress/e2e/real/10-camino-medico.cy.ts` |
+| `real` | Directorio público · sin sesión | 6 | `cypress/e2e/real/11-directorio-publico.cy.ts` |
 | `recorrido` | Recorrido · pantallas públicas | 11 | `cypress/e2e/recorrido/01-publico.cy.ts` |
 | `recorrido` | Recorrido · área con sesión · Recorrido · armazón | 10 | `cypress/e2e/recorrido/02-sesion.cy.ts` |
 | `recorrido` | Recorrido · administración | 10 | `cypress/e2e/recorrido/03-administracion.cy.ts` |
@@ -37,6 +39,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `recorrido` | Recorrido · atención | 5 | `cypress/e2e/recorrido/05-atencion.cy.ts` |
 | `e2e` | Pantallas portadas de la bóveda | 5 | `cypress/e2e/redsat-port.cy.ts` |
 | `regression` | Regresión · accesibilidad | 6 | `cypress/e2e/regression/accesibilidad.cy.ts` |
+| `regression` | Regresión · glosario médico | 2 | `cypress/e2e/regression/glosario.cy.ts` |
 | `regression` | Regresión · modales | 6 | `cypress/e2e/regression/modales.cy.ts` |
 | `regression` | Regresión · notificaciones | 5 | `cypress/e2e/regression/notificaciones.cy.ts` |
 | `regression` | Regresión · directorio del panel | 4 | `cypress/e2e/regression/panel-directorio.cy.ts` |
@@ -50,7 +53,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | Objeto | Ruta | Métodos | Archivo |
 | --- | --- | --- | --- |
 | `ActivateAccountPage` | `/auth/activate` | 13 | `cypress/support/pages/activate-account.page.ts` |
-| `DashboardPage` | `/dashboard` | 11 | `cypress/support/pages/dashboard.page.ts` |
+| `DashboardPage` | `/dashboard` | 10 | `cypress/support/pages/dashboard.page.ts` |
 | `DesignSystemPage` | `/design-system` | 7 | `cypress/support/pages/design-system.page.ts` |
 | `ForgotPasswordPage` | `/auth/forgot-password` | 9 | `cypress/support/pages/forgot-password.page.ts` |
 | `LoginPage` | `/auth` | 17 | `cypress/support/pages/login.page.ts` |
@@ -80,4 +83,4 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 
 ## Coherencia de los selectores
 
-Los 84 identificadores que la suite localiza están declarados en las plantillas.
+Los 83 identificadores que la suite localiza están declarados en las plantillas.
