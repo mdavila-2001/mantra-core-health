@@ -322,4 +322,122 @@ test.describe('P5 · medios reales @critical', () => {
     expect(resultado.ancho).toBe(600);
     expect(resultado.alto).toBe(360);
   });
+
+  test('P5-E2E-003 · la foto del perfil profesional se fija y el navegador la decodifica', async ({
+    page,
+  }) => {
+    // §3 del carril. Hasta este commit `photo_file_id` se leía y no lo escribía
+    // nadie: la columna existía y no había forma de llenarla desde la API.
+    //
+    // Todo el recorrido pasa por el navegador con la sesión real de la doctora:
+    // pinta el PNG, lo sube, lo fija como su foto, relee su ficha y decodifica
+    // la imagen que la API devuelve para ese identificador. Lo que se afirma no
+    // es «respondió 200», sino que la ficha apunta a un archivo que **es** una
+    // imagen y que el navegador puede pintar.
+    await entrar(page, doctora());
+    await esperarAplicacionLista(page);
+
+    const resultado = await page.evaluate(async () => {
+      const refreshToken = localStorage.getItem('mantra.refresh-token');
+      const renovada = await fetch('/iam/auth/token/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      const { accessToken } = await renovada.json();
+      const auth = { Authorization: `Bearer ${accessToken}` };
+
+      const ficha = await (
+        await fetch('/profiles/practitioners/me/summary', { headers: auth })
+      ).json();
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 320;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = '#0b5d8a';
+      ctx.fillRect(0, 0, 320, 320);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(160, 130, 58, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(80, 210, 160, 90);
+      const blob: Blob = await new Promise((listo) =>
+        canvas.toBlob((b) => listo(b!), 'image/png'),
+      );
+
+      const formulario = new FormData();
+      formulario.append(
+        'file',
+        new File([blob], 'avatar-navegador.png', { type: 'image/png' }),
+      );
+      formulario.append('category', 'IMAGE');
+      formulario.append('sensitivity', 'NORMAL');
+      const subida = await fetch('/common/files/upload', {
+        method: 'POST',
+        headers: auth,
+        body: formulario,
+      });
+      const { id: fileId } = await subida.json();
+
+      const fijada = await fetch(
+        `/profiles/practitioners/${ficha.profileId}/photo`,
+        {
+          method: 'PUT',
+          headers: { ...auth, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileId }),
+        },
+      );
+      const perfil = await fijada.json();
+
+      // Se relee la ficha: lo que importa es lo que quedó guardado, no lo que
+      // devolvió la escritura.
+      const releida = await (
+        await fetch('/profiles/practitioners/me/summary', { headers: auth })
+      ).json();
+
+      const servida = await fetch(`/common/files/${fileId}/content`, {
+        headers: auth,
+      });
+      const recibida = await servida.blob();
+      const dataUrl: string = await new Promise((listo) => {
+        const lector = new FileReader();
+        lector.onload = () => listo(lector.result as string);
+        lector.readAsDataURL(recibida);
+      });
+      const img = new Image();
+      img.src = dataUrl;
+      await img.decode();
+
+      // Sin sesión, la misma ruta no entrega la foto. Es el hueco D-6 del
+      // informe —no hay servido público de imágenes—, y se deja escrito acá en
+      // vez de simular un avatar público que todavía no existe.
+      const anonima = await fetch(`/common/files/${fileId}/content`);
+
+      return {
+        fileId,
+        statusSubida: subida.status,
+        statusFijada: fijada.status,
+        fotoEnLaRespuesta: perfil.photoFileId,
+        fotoEnLaFichaReleida: releida.photoFileId,
+        statusServida: servida.status,
+        contentType: servida.headers.get('content-type'),
+        ancho: img.naturalWidth,
+        alto: img.naturalHeight,
+        statusAnonima: anonima.status,
+      };
+    });
+
+    expect(resultado.statusSubida).toBe(201);
+    expect(resultado.statusFijada).toBe(200);
+    expect(resultado.fotoEnLaRespuesta).toBe(resultado.fileId);
+    expect(resultado.fotoEnLaFichaReleida).toBe(resultado.fileId);
+    expect(resultado.statusServida).toBe(200);
+    expect(resultado.contentType).toContain('image/png');
+    // La afirmación que separa «respondió 200» de «es una foto».
+    expect(resultado.ancho).toBe(320);
+    expect(resultado.alto).toBe(320);
+    // El avatar público de §9 sigue sin existir: la ruta exige sesión.
+    expect(resultado.statusAnonima).toBe(401);
+  });
 });
