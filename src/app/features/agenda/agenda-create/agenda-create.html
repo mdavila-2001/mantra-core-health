@@ -97,46 +97,77 @@
       <!-- ─── Fase 1: recurso ─────────────────────────────────────────── -->
       @case (0) {
         <form [formGroup]="formRecurso" novalidate>
-          <app-form-section
-            legend="Recurso agendable"
-            description="La agenda de un profesional, un box o un equipo. Es sobre lo que se cuelga todo lo demás."
-          >
-            <app-form-field label="Tipo de recurso" [required]="true"
-              [errorMessage]="formRecurso.controls.resourceType.touched && formRecurso.controls.resourceType.invalid ? 'Elegí el tipo de recurso.' : ''">
-              <app-select formControlName="resourceType" [options]="opcionesTipoRecurso" placeholder="Elegí un tipo" />
-            </app-form-field>
+          <!-- ─── F-28: lo técnico no se le pide al médico ──────────────────
+               Tipo de recurso, tabla referenciada e identificador son los tres
+               datos que el backend comprueba, y los tres los sabe la pantalla:
+               es su agenda. Se mostraban deshabilitados «para que se vea qué se
+               está publicando», pero lo que se veía era «Tabla referenciada:
+               practitioner_profiles» y un UUID — de ahí el «no se entiende» de
+               la recorrida. Ahora se dice en una línea, y los campos quedan
+               sólo para quien arma la agenda de otros. -->
+          @if (publicaSoloLaPropia()) {
+            <app-form-section
+              legend="Tu agenda"
+              description="Estás publicando tu propia agenda: los datos del profesional los completamos nosotros."
+            >
+              <app-form-field label="Nombre" [required]="true" hint="Cómo vas a reconocerla, p. ej. «Consultorio centro»."
+                [errorMessage]="formRecurso.controls.name.touched && formRecurso.controls.name.invalid ? 'Escribí un nombre (máx. 200).' : ''">
+                <app-input formControlName="name" type="text" />
+              </app-form-field>
+            </app-form-section>
 
-            <app-form-field label="Tabla referenciada" [required]="true" hint="Ej.: practitioner_profiles, practice_sites."
-              [errorMessage]="formRecurso.controls.resourceRefType.touched && formRecurso.controls.resourceRefType.invalid ? 'Indicá la tabla referenciada (máx. 100).' : ''">
-              <app-input formControlName="resourceRefType" type="text" />
-            </app-form-field>
+            <app-form-section legend="Ajustes" description="Opcionales: desde dónde atendés y cuántas personas a la vez.">
+              <app-form-field label="Zona horaria" hint="La de tu equipo, ya cargada. Cambiala si atendés desde otra.">
+                <app-input formControlName="timeZone" type="text" />
+              </app-form-field>
 
-            <app-form-field label="Id de la entidad referenciada" [required]="true" hint="El identificador del profesional, box o equipo (UUID)."
-              [errorMessage]="formRecurso.controls.resourceRefId.touched && formRecurso.controls.resourceRefId.invalid ? uuidError : ''">
-              <app-input formControlName="resourceRefId" type="text" />
-            </app-form-field>
+              <app-form-field label="Capacidad" hint="Cuántas atenciones a la vez (1 si atendés de a una)."
+                [errorMessage]="formRecurso.controls.capacity.touched && formRecurso.controls.capacity.invalid ? 'Ingresá un entero sin signo.' : ''">
+                <app-input formControlName="capacity" type="text" />
+              </app-form-field>
+            </app-form-section>
+          } @else {
+            <app-form-section
+              legend="Recurso agendable"
+              description="La agenda de un profesional, un box o un equipo. Es sobre lo que se cuelga todo lo demás."
+            >
+              <app-form-field label="Tipo de recurso" [required]="true"
+                [errorMessage]="formRecurso.controls.resourceType.touched && formRecurso.controls.resourceType.invalid ? 'Elegí el tipo de recurso.' : ''">
+                <app-select formControlName="resourceType" [options]="opcionesTipoRecurso" placeholder="Elegí un tipo" />
+              </app-form-field>
 
-            <app-form-field label="Nombre" [required]="true"
-              [errorMessage]="formRecurso.controls.name.touched && formRecurso.controls.name.invalid ? 'Escribí un nombre (máx. 200).' : ''">
-              <app-input formControlName="name" type="text" />
-            </app-form-field>
-          </app-form-section>
+              <app-form-field label="Tabla referenciada" [required]="true" hint="Ej.: practitioner_profiles, practice_sites."
+                [errorMessage]="formRecurso.controls.resourceRefType.touched && formRecurso.controls.resourceRefType.invalid ? 'Indicá la tabla referenciada (máx. 100).' : ''">
+                <app-input formControlName="resourceRefType" type="text" />
+              </app-form-field>
 
-          <app-form-section legend="Ajustes" description="Opcionales: práctica, zona horaria y cuántas atenciones simultáneas admite.">
-            <app-form-field label="Práctica" hint="Identificador de la práctica (UUID)."
-              [errorMessage]="formRecurso.controls.practiceId.touched && formRecurso.controls.practiceId.invalid ? uuidError : ''">
-              <app-input formControlName="practiceId" type="text" />
-            </app-form-field>
+              <app-form-field label="Id de la entidad referenciada" [required]="true" hint="El identificador del profesional, box o equipo (UUID)."
+                [errorMessage]="formRecurso.controls.resourceRefId.touched && formRecurso.controls.resourceRefId.invalid ? uuidError : ''">
+                <app-input formControlName="resourceRefId" type="text" />
+              </app-form-field>
 
-            <app-form-field label="Zona horaria" hint="IANA, p. ej. America/La_Paz.">
-              <app-input formControlName="timeZone" type="text" />
-            </app-form-field>
+              <app-form-field label="Nombre" [required]="true"
+                [errorMessage]="formRecurso.controls.name.touched && formRecurso.controls.name.invalid ? 'Escribí un nombre (máx. 200).' : ''">
+                <app-input formControlName="name" type="text" />
+              </app-form-field>
+            </app-form-section>
 
-            <app-form-field label="Capacidad" hint="Atenciones simultáneas (entero ≥ 1)."
-              [errorMessage]="formRecurso.controls.capacity.touched && formRecurso.controls.capacity.invalid ? 'Ingresá un entero sin signo.' : ''">
-              <app-input formControlName="capacity" type="text" />
-            </app-form-field>
-          </app-form-section>
+            <app-form-section legend="Ajustes" description="Opcionales: práctica, zona horaria y cuántas atenciones simultáneas admite.">
+              <app-form-field label="Práctica" hint="Identificador de la práctica (UUID)."
+                [errorMessage]="formRecurso.controls.practiceId.touched && formRecurso.controls.practiceId.invalid ? uuidError : ''">
+                <app-input formControlName="practiceId" type="text" />
+              </app-form-field>
+
+              <app-form-field label="Zona horaria" hint="IANA, p. ej. America/La_Paz.">
+                <app-input formControlName="timeZone" type="text" />
+              </app-form-field>
+
+              <app-form-field label="Capacidad" hint="Atenciones simultáneas (entero ≥ 1)."
+                [errorMessage]="formRecurso.controls.capacity.touched && formRecurso.controls.capacity.invalid ? 'Ingresá un entero sin signo.' : ''">
+                <app-input formControlName="capacity" type="text" />
+              </app-form-field>
+            </app-form-section>
+          }
         </form>
       }
 

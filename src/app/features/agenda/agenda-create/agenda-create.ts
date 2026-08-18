@@ -16,6 +16,7 @@ import {
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import {
   AVAILABILITY_EXCEPTION_TYPES,
@@ -83,6 +84,22 @@ const ROLES_DE_CATALOGO = ['SCHEDULING_ADMIN', 'SUPERADMIN'];
  */
 const TABLA_DE_PERFIL_PROFESIONAL = 'practitioner_profiles';
 
+/**
+ * Zona horaria del navegador, que es la del consultorio en la práctica.
+ *
+ * Pedirla como texto IANA («America/La_Paz») era uno de los campos que hacían
+ * ilegible el alta para un médico (F-28). Se propone la del equipo y se puede
+ * cambiar; si el navegador no la resuelve, queda vacía y el backend aplica la
+ * suya, que es lo que pasaba antes.
+ */
+function zonaHorariaDelEquipo(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
+  } catch {
+    return '';
+  }
+}
+
 /** Entero positivo o vacío: los numéricos opcionales viajan como texto. */
 const ENTERO_POSITIVO = /^\d+$/;
 
@@ -136,6 +153,7 @@ type RuleGroup = FormGroup<{
 export class AgendaCreate {
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
+  private readonly profiles = inject(ProfilesClient);
   private readonly navigation = inject(NavigationService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
@@ -280,8 +298,11 @@ export class AgendaCreate {
   private readonly identidadDelRecurso = effect(() => {
     if (!this.publicaSoloLaPropia()) return;
 
-    const propio = this.auth.practitionerProfileId();
+    const propio = this.perfilPropio();
     this.formRecurso.controls.resourceType.setValue('PRACTITIONER');
+    if (this.formRecurso.controls.timeZone.value === '') {
+      this.formRecurso.controls.timeZone.setValue(zonaHorariaDelEquipo());
+    }
     this.formRecurso.controls.resourceRefType.setValue(TABLA_DE_PERFIL_PROFESIONAL);
     if (propio) this.formRecurso.controls.resourceRefId.setValue(propio);
 
@@ -290,9 +311,47 @@ export class AgendaCreate {
     if (propio) this.formRecurso.controls.resourceRefId.disable();
   });
 
+  /**
+   * El perfil profesional propio **leído de la API**, cuando el token no lo trae.
+   *
+   * F-29 (18/08/2026): «no deja crear agenda». La sesión de un médico recién
+   * registrado puede no llevar el claim `hpid` —el token se emitió antes de que
+   * existiera el perfil—, y sin él esta pantalla se rendía con «tu sesión
+   * todavía no tiene perfil profesional»: el único camino que vuelve reservable
+   * a un profesional, cerrado, y sin nada que la persona pudiera hacer al
+   * respecto. `GET /profiles/practitioners/me/summary` resuelve el mismo dato
+   * desde la sesión, así que se pregunta en vez de rendirse. Un 404 ahí sí
+   * significa que la cuenta no es de quien atiende.
+   */
+  private readonly perfilPropioDeLaApi = signal<string | null>(null);
+
+  /** El perfil propio, venga del token o de la API. */
+  protected readonly perfilPropio = computed(
+    () => this.auth.practitionerProfileId() ?? this.perfilPropioDeLaApi(),
+  );
+
+  /**
+   * Pregunta por el perfil propio cuando el token no lo declara.
+   *
+   * Sólo para quien publica la suya: a quien administra el catálogo no le hace
+   * falta, y una lectura de más en cada alta sería ruido.
+   */
+  private readonly resolverPerfilPropio = effect(() => {
+    if (!this.publicaSoloLaPropia()) return;
+    if (this.auth.practitionerProfileId() !== null) return;
+    if (this.perfilPropioDeLaApi() !== null) return;
+
+    this.profiles.getOwnPractitionerProfile().subscribe({
+      next: (perfil) => this.perfilPropioDeLaApi.set(perfil.profileId),
+      // Sin perfil profesional propio la pantalla ya dice lo que corresponde;
+      // no hay nada que reintentar desde acá.
+      error: () => this.perfilPropioDeLaApi.set(null),
+    });
+  });
+
   /** Si la sesión no declara perfil profesional no hay agenda propia que armar. */
   protected readonly sinPerfilProfesional = computed(
-    () => this.publicaSoloLaPropia() && this.auth.practitionerProfileId() === null,
+    () => this.publicaSoloLaPropia() && this.perfilPropio() === null,
   );
 
   /* -- Fase 2: política ---------------------------------------------------- */

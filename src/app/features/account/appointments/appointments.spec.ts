@@ -161,6 +161,44 @@ describe('Appointments', () => {
       pedido.flush({ items: [], count: 0 });
     });
 
+    /**
+     * F-24 (18/08/2026): buscar a un profesional que existe pero todavía no
+     * publicó agenda respondía «ningún profesional coincide con esa búsqueda»,
+     * que manda a corregir un nombre bien escrito. El desplegable ofrece
+     * agendas; la Guía sabe quién existe, y de ahí sale el mensaje verdadero.
+     */
+    it('si la Guía lo conoce, dice que todavía no publicó sus horarios', () => {
+      montar();
+      responderArranque([]);
+
+      crudo<{ set: (v: string) => void }>('busquedaDeRecurso').set('mercado');
+      fixture.detectChanges();
+
+      http
+        .expectOne((r) => r.url === '/profiles/practitioners')
+        .flush({ items: [{ profileId: 'per-9', displayName: 'Dr. Andrés Mercado' }], count: 1 });
+      fixture.detectChanges();
+
+      expect(interno<() => string>('mensajeSinCoincidencias')()).toBe(
+        'Dr. Andrés Mercado todavía no publicó sus horarios',
+      );
+    });
+
+    it('si nadie con ese nombre existe, el mensaje sigue siendo el genérico', () => {
+      montar();
+      responderArranque([]);
+
+      crudo<{ set: (v: string) => void }>('busquedaDeRecurso').set('zzz');
+      fixture.detectChanges();
+
+      http.expectOne((r) => r.url === '/profiles/practitioners').flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      expect(interno<() => string>('mensajeSinCoincidencias')()).toBe(
+        'Ningún profesional coincide con esa búsqueda',
+      );
+    });
+
     it('al cambiar a laboratorio, vuelve a preguntar por recursos de tipo ROOM', () => {
       montar();
       responderArranque([]);

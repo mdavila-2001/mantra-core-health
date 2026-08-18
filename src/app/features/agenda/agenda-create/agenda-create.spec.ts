@@ -198,13 +198,46 @@ describe('AgendaCreate', () => {
     expect(acc.fase()).toBe(1);
   });
 
-  /** Sin perfil en la sesión no hay agenda propia: se dice antes de las 5 fases. */
-  it('un profesional sin perfil en la sesión ve el aviso y no el formulario', () => {
+  /**
+   * F-29: el token de un médico recién registrado puede no traer `hpid`. Antes
+   * la pantalla se rendía ahí mismo —«no deja crear agenda»—; ahora pregunta.
+   */
+  it('sin el perfil en el token lo pide a la API y el alta sigue', () => {
     crear(['PRACTITIONER'], TENANT, null);
+
+    const req = http.expectOne('/profiles/practitioners/me/summary');
+    // El perfil propio completo: el cliente convierte fechas de cada colección.
+    req.flush({
+      profileId: REF,
+      personId: REF,
+      displayName: 'Dra. Ríos',
+      createdAt: new Date().toISOString(),
+      specialties: [],
+      credentials: [],
+      licenses: [],
+      languages: [],
+      affiliations: [],
+      activity: { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 },
+    });
+    fixture.detectChanges();
+
+    // El aviso no aparece y el asistente está en pie, con la identidad puesta.
+    expect(fixture.nativeElement.textContent).not.toContain('perfil profesional');
+    expect(fixture.debugElement.query(By.css('app-stepper'))).not.toBeNull();
+    expect(acc.formRecurso.getRawValue().resourceRefId).toBe(REF);
+  });
+
+  /** Si la API tampoco lo conoce, la cuenta no es de quien atiende: se dice. */
+  it('un profesional sin perfil ni en el token ni en la API ve el aviso', () => {
+    crear(['PRACTITIONER'], TENANT, null);
+
+    http
+      .expectOne('/profiles/practitioners/me/summary')
+      .flush({ message: 'no hay perfil' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('app-stepper'))).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('perfil profesional');
-    http.expectNone(() => true);
   });
 
   /** Quien administra el catálogo arma la agenda de cualquiera: nada se fija. */

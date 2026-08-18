@@ -352,11 +352,7 @@
           [options]="opcionesBuscadas()"
           [minQueryLength]="0"
           [placeholder]="esLaboratorio() ? 'Buscá por nombre del laboratorio' : 'Buscá por nombre'"
-          [emptyMessage]="
-            esLaboratorio()
-              ? 'Ningún laboratorio coincide con esa búsqueda'
-              : 'Ningún profesional coincide con esa búsqueda'
-          "
+          [emptyMessage]="mensajeSinCoincidencias()"
           (searched)="busquedaDeRecurso.set($event)"
           (selectionChange)="elegirRecurso($event?.value ?? null)"
         />

@@ -1,11 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
   AgendaResource,
@@ -50,6 +51,15 @@ const DIAS_DE_BUSQUEDA = 14;
 
 /** Tope de horarios que se listan. El backend admite hasta 500. */
 const TOPE_DE_HORARIOS = 100;
+
+/**
+ * Cuántos profesionales se traen de la Guía para explicar un «no coincide».
+ *
+ * Es una fuente secundaria y de una sola lectura: alcanza con una página amplia
+ * para reconocer un nombre, y no se pagina — si alguien no entra en esta, el
+ * mensaje vuelve al genérico, que es lo que había antes.
+ */
+const TOPE_DE_GUIA = 200;
 
 /** Tope de turnos propios que se traen. Nadie tiene cien turnos a la vez. */
 const TOPE_DE_TURNOS = 50;
@@ -222,6 +232,7 @@ export class Appointments {
   private readonly fecha = inject(DatePipe);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly profiles = inject(ProfilesClient);
 
   /** Quién es el titular. Sin esto no hay turnos propios que pedir ni mostrar. */
   private readonly perfil = this.auth.patientProfileId();
@@ -442,6 +453,65 @@ export class Appointments {
     }));
     if (termino === '') return todas;
     return todas.filter((opcion) => normalizar(opcion.label).includes(termino));
+  });
+
+  /* ---- F-24: «no coincide» no es lo mismo que «todavía no publicó» ------- */
+
+  /**
+   * Los profesionales de la Guía, como **fuente secundaria** del buscador.
+   *
+   * El desplegable ofrece agendas, no profesionales, así que quien todavía no
+   * publicó la suya simplemente no está — y la pantalla respondía «ningún
+   * profesional coincide con esa búsqueda», que es falso y deja pensando que se
+   * escribió mal el nombre. La Guía sí lo conoce, así que cuando la búsqueda no
+   * encuentra agenda se le pregunta a ella y se dice lo que de verdad pasa.
+   *
+   * Se pide **una sola vez** y sólo cuando hace falta: mientras el buscador
+   * encuentre agendas, esta lectura no ocurre.
+   */
+  private readonly profesionalesDeLaGuia = signal<readonly string[]>([]);
+  private readonly guiaPedida = signal(false);
+
+  private readonly consultarLaGuia = effect(() => {
+    if (this.esLaboratorio()) return;
+    if (this.busquedaDeRecurso().trim() === '') return;
+    if (this.opcionesBuscadas().length > 0) return;
+    if (this.guiaPedida()) return;
+
+    this.guiaPedida.set(true);
+    this.profiles
+      .listPractitioners({ limit: TOPE_DE_GUIA })
+      .pipe(catchError(() => of({ items: [], nextCursor: undefined })))
+      .subscribe((pagina) =>
+        this.profesionalesDeLaGuia.set(
+          pagina.items
+            .map((fila) => fila.displayName)
+            .filter((nombre): nombre is string => nombre !== undefined && nombre !== ''),
+        ),
+      );
+  });
+
+  /**
+   * Lo que el buscador dice cuando no encuentra ninguna agenda.
+   *
+   * Si la Guía conoce a alguien con ese nombre, el problema no es la búsqueda:
+   * es que esa persona todavía no publicó sus horarios. Decirlo con su nombre
+   * es la diferencia entre «buscá de nuevo» y «no hay nada que buscar».
+   */
+  protected readonly mensajeSinCoincidencias = computed(() => {
+    if (this.esLaboratorio()) {
+      return 'Ningún laboratorio coincide con esa búsqueda';
+    }
+    const termino = normalizar(this.busquedaDeRecurso());
+    if (termino !== '') {
+      const conocido = this.profesionalesDeLaGuia().find((nombre) =>
+        normalizar(nombre).includes(termino),
+      );
+      if (conocido !== undefined) {
+        return `${conocido} todavía no publicó sus horarios`;
+      }
+    }
+    return 'Ningún profesional coincide con esa búsqueda';
   });
 
   /** El profesional elegido, con la forma que pide el buscador. */
