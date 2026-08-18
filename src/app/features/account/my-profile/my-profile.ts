@@ -79,6 +79,22 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
  * Los dos últimos bloques —verificación de identidad y acceso— son de la
  * **cuenta**, no del perfil, así que se muestran en los dos casos.
  */
+/**
+ * Los roles con los que se viene a trabajar, no a atenderse.
+ *
+ * Mismo criterio que el panel: quien tiene alguno de estos ve «Tu acceso»
+ * aunque además sea paciente, porque para él la pregunta que responde esa
+ * tarjeta sí existe.
+ */
+const ROLES_DE_TRABAJO: readonly string[] = [
+  'SUPERADMIN',
+  'SECURITY_ADMIN',
+  'SCHEDULING_ADMIN',
+  'SCHEDULING_AGENT',
+  'PRACTITIONER',
+  'CLINICIAN',
+];
+
 @Component({
   selector: 'app-my-profile',
   imports: [
@@ -164,6 +180,28 @@ export class MyProfile {
    * en `data-role` para quien lo lea por máquina; el rol sin etiqueta se omite.
    */
   protected readonly rolesLegibles = computed(() => rolesConEtiqueta(this.auth.roles()));
+
+  /**
+   * Si se muestra la tarjeta «Tu acceso» (F-22).
+   *
+   * A quien viene a atenderse no le dice nada: «Organización: Care Default
+   * Tenant» y «Roles: Paciente» son la respuesta a «¿por qué no veo tal cosa?»,
+   * una pregunta que se hace quien trabaja acá y tiene secciones que le faltan.
+   * Un paciente no tiene secciones que le falten: tiene lo suyo. Es la cuarta
+   * fuga de la misma regla —cero organización, roles ni jerga en su vista— y
+   * los barridos anteriores no alcanzaron esta pantalla.
+   *
+   * Se oculta en vez de reemplazarse: lo que iría en su lugar —su código de
+   * paciente— todavía no tiene formato decidido (H-04).
+   *
+   * Se pregunta por los roles de trabajo, igual que el panel: quien atiende y
+   * además es paciente entra a trabajar, y la tarjeta le sirve.
+   */
+  protected readonly muestraElAcceso = computed(() => {
+    const roles = this.auth.roles();
+    if (!roles.includes('PATIENT')) return true;
+    return ROLES_DE_TRABAJO.some((rol) => roles.includes(rol));
+  });
 
   protected readonly tenantName = computed(() => {
     const id = this.auth.activeTenantId();

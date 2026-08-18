@@ -100,21 +100,32 @@
       </div>
     }
 
-    <!-- Los cuatro lugares a los que un paciente va. La Guía entra acá porque
-         es suya: buscar profesional es lo que hace antes de pedir turno. -->
+    <!-- Los lugares del paciente, como grilla de tarjetas con ícono: es la
+         forma que tenía el panel anterior y que la gente ya conocía (F-21).
+         El resumen vive en el globo —que aparece con el puntero **y con el
+         foco**— y también en el nombre accesible, así que quien navega con
+         lector de pantalla lo recibe sin depender del globo. -->
     <nav class="mi-salud__accesos" aria-label="Ir a lo tuyo">
-      <a app-button variant="ghost" data-testid="mi-salud-acceso" [routerLink]="misTurnos">
-        Mis turnos
-      </a>
-      <a app-button variant="ghost" data-testid="mi-salud-acceso" [routerLink]="miHistoria">
-        Mi historia
-      </a>
-      <a app-button variant="ghost" data-testid="mi-salud-acceso" [routerLink]="laGuia">
-        Buscar un profesional
-      </a>
-      <a app-button variant="ghost" data-testid="mi-salud-acceso" [routerLink]="miCuenta">
-        Mis datos
-      </a>
+      <ul class="mi-salud__accesos-lista">
+        @for (acceso of accesos(); track acceso.ruta) {
+          <li>
+            <a
+              class="mi-salud__acceso"
+              data-testid="mi-salud-acceso"
+              [attr.data-ruta]="acceso.ruta"
+              [routerLink]="acceso.ruta"
+              [attr.aria-label]="acceso.etiqueta + '. ' + acceso.resumen"
+              [appTooltip]="acceso.resumen"
+              appTooltipPosition="bottom"
+            >
+              <span class="mi-salud__acceso-icono">
+                <app-nav-icon [name]="acceso.icono" />
+              </span>
+              <span class="mi-salud__acceso-nombre">{{ acceso.etiqueta }}</span>
+            </a>
+          </li>
+        }
+      </ul>
     </nav>
   }
 }
