@@ -496,6 +496,183 @@ El rótulo dice «aproximadamente N» sólo cuando `totalHint` viene, y cuando n
 viene dice cuántos se están viendo. El contrato prohíbe escribir «N resultados»
 con una pista.
 
+### Evidencia funcional — 18/08/2026, contra el stack real
+
+Entorno: API E2E corriendo **en el host** contra la base `mantra_redesa_health_e2e`
+del mismo Postgres, en `:3001`. Front en `:4250` (`ng serve` con el proxy
+apuntado a esa API) y en `:4300` (artefacto SSR construido). Sin mocks.
+
+#### La prueba reina
+
+```text
+$ curl -s http://localhost:4300/p/doctor-uno-e2e
+HTTP 200 · 12290 bytes
+<title>Dra. Marisol Quispe Ticona — AloVida</title>
+<h1>Dra. Marisol Quispe Ticona</h1>
+```
+
+El nombre viaja en el `<h1>` del HTML que devuelve el servidor, sin cookies y
+sin `Authorization`.
+
+#### JSON-LD servido en el HTML
+
+```json
+{ "@context": "https://schema.org", "@type": "Physician",
+  "name": "Dra. Marisol Quispe Ticona",
+  "url": "http://localhost:4300/p/doctor-uno-e2e",
+  "description": "Cardióloga · Hospital del Norte" }
+```
+
+**Sin `aggregateRating`**, porque ese perfil no tiene reseñas. La decisión de no
+publicar una puntuación inventada, funcionando.
+
+#### Estado HTTP real
+
+```text
+/p/doctor-uno-e2e     -> 200  Dra. Marisol Quispe Ticona
+/p/doctor-oculto-e2e  -> 404  Ese perfil no está disponible
+/p/no-existe-jamas    -> 404  Ese perfil no está disponible
+```
+
+#### Los siete destinos públicos, renderizados en servidor
+
+| Ruta | HTTP | Estado | `<h1>` |
+| --- | --- | --- | --- |
+| `/buscar` | 200 | `datos` | Buscá salud cerca tuyo |
+| `/buscar?q=Mamani` | 200 | `datos` | 2 coincidencias de Mamani, 0 de Quispe |
+| `/buscar/profesionales` | 200 | `datos` | Profesionales de salud |
+| `/buscar/medicamentos` | 200 | `vacio` | Dónde conseguir tu medicamento |
+| `/buscar/hospitales` | 200 | `vacio` | Hospitales y clínicas |
+| `/buscar/diagnostico` | 200 | `vacio` | Laboratorios y centros de imagen |
+| `/buscar/aseguradoras` | 200 | `vacio` | Aseguradoras y convenios |
+
+`vacio` es correcto: sólo hay profesionales sembrados. Cada estado vacío sirve
+**el texto de su propia ficha V65**, verificado uno a uno; son cuatro textos
+distintos y ninguno es el genérico.
+
+Las tarjetas enlazan a `/p/doctor-uno-e2e` y `/p/doctor-dos-e2e`, y las dos
+llevan el sello «Declarado» — correcto, ninguno está verificado.
+
+#### D-P4-02 verificado en vivo
+
+```text
+$ curl -s 'http://localhost:3001/public/search/medications?limit=5'
+{"items":[],"nextCursor":null,"totalHint":0,…}
+```
+
+Antes devolvía el directorio entero de profesionales. Respondió **al instante
+mientras la base estaba saturada**, que es la confirmación de que la corrección
+corta antes de consultar — justo lo que afirma su prueba.
+
+#### Con sesión real: la superficie pública no cambia
+
+Login real de `bootstrap.admin.e2e@local.test` (rol `SECURITY_ADMIN`):
+
+- `GET /public/search` devuelve **exactamente los mismos ítems** con y sin el
+  token. El contrato promete que el resultado no depende de quién mira, y se
+  cumple byte a byte.
+- `GET /public/profiles/p/doctor-oculto-e2e` **con token de administrador** →
+  `404`. La superficie pública es una proyección aparte, no una vista filtrada
+  por permisos. Si un admin viera el perfil despublicado por acá, la caché
+  `public, max-age=60` podría servir esa respuesta a un anónimo.
+
+**Segundo motivo, no previsto, para D-P4-03.** `authInterceptor.isPublic()`
+reconoce como pública toda ruta que empiece con `/public/`. `/p/:slug` **no**
+empieza así, de modo que con una sesión abierta el interceptor le habría
+adjuntado el bearer token — a un endpoint que responde `Cache-Control: public,
+max-age=60`. Mandar un token a un endpoint público cacheable es un problema de
+higiene real, aunque el cuerpo no varíe. Al pedir la ficha por
+`/public/profiles/…` deja de ocurrir.
+
+#### Journeys
+
+`playwright/carril-p4-buscador-publico.spec.ts` contra `:4250` —donde `ng serve`
+**sí** renderiza en servidor (`ng-server-context` presente), así que la misma
+corrida cubre el HTML del servidor y la navegación del navegador sobre un solo
+origen, que es la forma de producción—:
+
+```text
+13 passed (22.5s)
+```
+
+Cubre: buscar y abrir ficha sin cuenta · `?q=` acota · el buscador del marco
+lleva a resultados · la pestaña de profesionales · el recorrido no deja token ni
+manda `Authorization` · despublicado e inexistente dan la misma pantalla, el
+mismo 404 y el mismo `code`/`message` · la pantalla no dice «privado» · prefijo
+de otro vertical da 404 sin redirigir · el despublicado no aparece en la
+búsqueda · y los tres casos de SSR por HTTP.
+
+#### Lighthouse sobre `/p/:slug`
+
+| Categoría | Puntaje |
+| --- | --- |
+| SEO | **92** |
+| Accesibilidad | 92 |
+| Buenas prácticas | 92 |
+
+La meta del carril era SEO > 90.
+
+#### Unitarias y gates
+
+| Comando | Resultado |
+| --- | --- |
+| `yarn test` (front, suite completa) | **2725 passed** |
+| Los 9 archivos que agotaron tiempo bajo carga 279, repetidos en calma | **134/134 passed** |
+| `yarn test src/modules/community/services/` (API) | **225 passed**, 16 suites |
+| `tsc --noEmit` (API) · `yarn typecheck` (front) | exit 0 |
+| `check-client-prefixes` | ✓ 270 operaciones, todas ruteadas |
+| `check-route-prefixes` | ✓ 154 rutas, ninguna colisiona |
+| `check-architecture` | ✓ sin ciclos, capas en una dirección |
+| `check-tokens` | ✓ 205 tokens |
+| `check-bundle-budget` | ✓ inicial 356.73 kB |
+
+Ninguna pieza de P4 está en el bundle inicial: se comprobó que
+`rotuloDePagina`, `hayAnteriores`, `jsonLdDePerfil`, `TIPO_SCHEMA` e
+`inicialesDe` no aparecen en los 12 archivos iniciales. Todo va diferido.
+
+### Bloqueadores del entorno encontrados en esta tanda
+
+**B-P4-06 — `origin/dev` no arrancaba. Ajeno a P4, corregido para desbloquear.**
+`CommunityReviewsService` (P6, `4293c63f`, ya mergeado) inyecta
+`EncountersRepository`; `ClinicalModule` lo provee **sin exportarlo** y
+`CommunityModule` no lo importa. Nest no puede construir el grafo y el proceso
+muere al arrancar. Verificado que es de `dev` y no del rebase:
+`community.module.ts`, `community-reviews.service.ts` y `services/index.ts` son
+**byte-idénticos** a `origin/dev`. Ni el typecheck ni las unitarias lo ven,
+porque la resolución de dependencias sólo ocurre al levantar la aplicación.
+Corregido en un commit propio y rotulado (`a2706b32`), sin ciclo —`clinical` no
+importa nada de `community`— y con el mismo patrón que ya usa
+`procedures_perioperative`.
+
+**B-P4-07 — `ORM_SCHEMA_SYNC=safe` hace inarrancable el entorno en esta máquina.**
+La API introspecciona 1284 tablas en cada arranque; una consulta de metadatos
+tardó **2 325 881 ms** (39 minutos) y Postgres cortó la conexión. Con
+`ORM_SCHEMA_SYNC=off` —lo que ya usa `test:integration`— arranca en 30 segundos
+contra la misma base. No es un defecto del producto; es una precondición del
+entorno que conviene dejar escrita.
+
+**B-P4-08 — un corte de conexión de Postgres tumba el proceso de la API.**
+`Connection terminated unexpectedly` sube sin capturar y mata el proceso; ocurrió
+tres veces durante esta tanda e interrumpió una corrida de Playwright a mitad.
+Es la misma fragilidad que este documento ya registraba como ticket aparte, ahora
+con reproducción. Para tomar la evidencia se levantó la API bajo un supervisor
+que la reinicia; **eso sortea el síntoma y no arregla nada**.
+
+**La API deshabilita CORS** (`app.enableCors({ origin: false })`), así que el
+front sólo puede hablarle por el proxy, mismo origen — `PUBLIC_API_BASE_URL`
+vacío, como recomienda `src/server.ts`. Construir el SSR con una raíz absoluta
+funciona desde Node y **falla desde el navegador**, y es lo que hizo fallar los
+journeys hasta que se corrió el front por el proxy. No es un defecto: es la
+forma en que este sistema está diseñado, y conviene que quede escrita porque la
+evidencia por `curl` sola no la habría descubierto nunca.
+
+### Lo que no se ejecutó
+
+`cypress/e2e/real/11-directorio-publico.cy.ts` está escrito pero **no se corrió**:
+su arnés construye el artefacto de producción y levanta su propio servidor, y
+con esta máquina en carga 30–40 la corrida no cabía en la tanda. El adaptador
+existe y es el mismo journey; queda pendiente de ejecución, no de escritura.
+
 ### Lo que falta para DONE
 
 1. **Los campos propios de cada vertical.** Los DTOs declaran `specialties`,
