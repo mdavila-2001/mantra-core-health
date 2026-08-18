@@ -140,6 +140,9 @@ describe('ShellLayout', () => {
       // roles no es una sesión de paciente. El directorio de laboratorios sí
       // sigue: es oferta publicada, no PHI, y lo consulta cualquiera que
       // necesite un estudio.
+      // Grupos y foros (P7): un grupo público lo lee cualquier sesión, y
+      // quién puede publicar en cada uno lo decide la API por membresía.
+      '/groups',
       '/laboratory-directory',
       // El glosario tampoco: accesible por cada profesional, no sólo por
       // quien administra.

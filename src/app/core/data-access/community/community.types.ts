@@ -456,6 +456,115 @@ export interface GroupMemberPage {
   readonly nextCursor: string | null;
 }
 
+/**
+ * Cómo se para quien mira frente a un grupo.
+ *
+ * Viene dentro de la ficha y no en una llamada aparte: la pantalla necesita
+ * saber al mismo tiempo qué grupo es y si ya se está adentro. Sin eso, el botón
+ * «unirse» aparece por un instante delante de quien ya es integrante.
+ */
+export interface GroupViewerMembership {
+  readonly isMember: boolean;
+  readonly canAdminister: boolean;
+  readonly canPost: boolean;
+  readonly membershipId: string | null;
+  readonly memberRoleConceptId: string | null;
+  readonly joinStatusConceptId: string | null;
+}
+
+/** La ficha de un grupo. */
+export interface GroupDetail {
+  readonly id: string;
+  readonly tenantId?: string;
+  readonly slug: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly visibilityConceptId: string;
+  readonly groupTypeConceptId: string;
+  readonly topicId?: string;
+  readonly ownerProfileId?: string;
+  readonly coverFileId?: string;
+  readonly memberCount?: number;
+  readonly postCount?: number;
+  /** Altas esperando aprobación. Sólo llega a quien administra. */
+  readonly pendingCount?: number;
+  readonly statusConceptId: string;
+  readonly viewer: GroupViewerMembership;
+}
+
+/**
+ * Una publicación del muro de un grupo, con sus respuestas.
+ *
+ * El tipo es recursivo porque el hilo lo es, igual que en los comentarios de
+ * una publicación del feed.
+ */
+export interface GroupWallItem {
+  readonly id: string;
+  readonly authorProfileId: string;
+  readonly bodyText: string;
+  readonly parentCommentId?: string;
+  readonly threadDepth?: number;
+  readonly replyCount?: number;
+  readonly createdAt: Date;
+  readonly replies: readonly GroupWallItem[];
+}
+
+/** Una página del muro de un grupo. */
+export interface GroupWallPage {
+  readonly items: readonly GroupWallItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Lo que hace falta para crear un grupo. */
+export interface NewGroup {
+  readonly slug: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly visibility?: 'PUBLIC' | 'PRIVATE' | 'SECRET';
+  readonly groupType?: 'GENERAL' | 'SUPPORT';
+  readonly topicId?: string;
+  readonly ownerProfileId?: string;
+}
+
+/** Lo que hace falta para publicar en el muro de un grupo. */
+export interface NewGroupPost {
+  readonly authorProfileId: string;
+  readonly bodyText: string;
+  readonly parentCommentId?: string;
+}
+
+/** Lo que un administrador cambia de una membresía. */
+export interface GroupMemberChange {
+  readonly role?: 'MEMBER' | 'MODERATOR' | 'ADMIN';
+  readonly decision?: 'APPROVE' | 'REJECT';
+  readonly actorProfileId?: string;
+}
+
+/** Cómo quedó una membresía después de administrarla. */
+export interface GroupMemberUpdated {
+  readonly id: string;
+  readonly memberRoleConceptId: string;
+  readonly joinStatusConceptId: string;
+}
+
+/** Un tema con el que se clasifican grupos y publicaciones. */
+export interface Topic {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly parentTopicId?: string;
+  readonly specialtyConceptId?: string;
+}
+
+/** El árbol de temas. No pagina: son decenas, y alimenta un selector. */
+export interface TopicPage {
+  readonly items: readonly Topic[];
+  readonly count: number;
+  readonly limit: number;
+}
+
 // ─── Mensajería directa ──────────────────────────────────────────────────────
 
 /** El último mensaje de una conversación, para pintar la lista. */
@@ -660,10 +769,26 @@ export type ReviewsQuery = CursorQuery;
 /** Filtros de `GET /community/groups`. `tenantId` es obligatorio. */
 export interface GroupsQuery extends CursorQuery {
   readonly tenantId: string;
+  /** Acota el directorio a un tema. */
+  readonly topicId?: string;
+  /** Busca en nombre y descripción. */
+  readonly q?: string;
 }
 
 /** Filtros de `GET /community/groups/:groupId/members`. */
-export interface GroupMembersQuery extends CursorQuery, ActorQuery {}
+export interface GroupMembersQuery extends CursorQuery, ActorQuery {
+  /**
+   * Estado de membresía que se pide.
+   *
+   * `PENDING` es lo que dibuja la cola de solicitudes de un grupo privado; sin
+   * el filtro habría que traer el padrón entero para encontrar las tres que
+   * esperan.
+   */
+  readonly joinStatus?: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'LEFT' | 'REMOVED';
+}
+
+/** Filtros de `GET /community/groups/:groupId/posts`. */
+export interface GroupWallQuery extends CursorQuery, ActorQuery {}
 
 /**
  * Filtros de `GET /community/conversations`. `profileId` es obligatorio.

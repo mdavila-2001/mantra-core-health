@@ -7,6 +7,8 @@ import type {
   CommentThreadPage,
   ConversationPage,
   FeedPage,
+  GroupDetail,
+  GroupWallPage,
   NotificationPage,
   PollDetail,
   PostDetail,
@@ -616,5 +618,174 @@ describe('CommunityClient', () => {
     );
     expect(block.request.body.reason).toBe('SPAM');
     block.flush({ id: 'blk-1' });
+  });
+
+  // ─── Grupos (P7) ───────────────────────────────────────────────────────────
+
+  /**
+   * Los filtros nuevos del directorio son opcionales y el backend valida con
+   * `forbidNonWhitelisted`: si viajaran en `undefined` —o el buscador vacío
+   * mandara `q=`— la búsqueda volvería 400 justo al abrir la pantalla.
+   */
+  it('listGroups no manda topicId ni q cuando no vinieron', () => {
+    client.listGroups({ tenantId: 't-1' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/community/groups');
+    expect(req.request.params.has('topicId')).toBe(false);
+    expect(req.request.params.has('q')).toBe(false);
+    req.flush(paginaVacia);
+  });
+
+  it('listGroups manda los filtros cuando vinieron, y omite la búsqueda vacía', () => {
+    client.listGroups({ tenantId: 't-1', topicId: 'top-1', q: 'cardio' }).subscribe();
+    const conFiltros = http.expectOne((r) => r.url === '/community/groups');
+    expect(conFiltros.request.params.get('topicId')).toBe('top-1');
+    expect(conFiltros.request.params.get('q')).toBe('cardio');
+    conFiltros.flush(paginaVacia);
+
+    client.listGroups({ tenantId: 't-1', q: '' }).subscribe();
+    const sinTexto = http.expectOne((r) => r.url === '/community/groups');
+    expect(sinTexto.request.params.has('q')).toBe(false);
+    sinTexto.flush(paginaVacia);
+  });
+
+  it('listGroupMembers acota por estado de membresía', () => {
+    client.listGroupMembers('g-1', { joinStatus: 'PENDING' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/community/groups/g-1/members');
+    expect(req.request.params.get('joinStatus')).toBe('PENDING');
+    req.flush(paginaVacia);
+  });
+
+  /**
+   * La ficha llega con opcionales en `null`: si se colaran tal cual, la
+   * pantalla pintaría «null» donde no hay descripción.
+   */
+  it('getGroup limpia los nulos y conserva la posición del lector', () => {
+    let ficha: GroupDetail | undefined;
+    client.getGroup('g-1', { actorProfileId: 'a-1' }).subscribe((r) => (ficha = r));
+
+    const req = http.expectOne((r) => r.url === '/community/groups/g-1');
+    expect(req.request.params.get('actorProfileId')).toBe('a-1');
+    req.flush({
+      id: 'g-1',
+      tenantId: 't-1',
+      slug: 'cardio',
+      name: 'Cardiología',
+      description: null,
+      visibilityConceptId: 'v-1',
+      groupTypeConceptId: 'gt-1',
+      topicId: null,
+      ownerProfileId: 'p-1',
+      coverFileId: null,
+      memberCount: 3,
+      postCount: 2,
+      pendingCount: null,
+      statusConceptId: 's-1',
+      viewer: {
+        isMember: true,
+        canAdminister: false,
+        canPost: true,
+        membershipId: 'm-1',
+        memberRoleConceptId: 'r-1',
+        joinStatusConceptId: 'j-1',
+      },
+    });
+
+    expect(ficha?.description).toBeUndefined();
+    expect(ficha?.topicId).toBeUndefined();
+    expect(ficha?.viewer.canPost).toBe(true);
+  });
+
+  /**
+   * El muro es recursivo igual que el hilo de comentarios: si la conversión se
+   * quedara en el primer nivel, las respuestas llegarían con la fecha en texto
+   * y `toLocaleDateString` fallaría recién al pintarlas.
+   */
+  it('listGroupWall convierte las fechas de todo el hilo, no sólo de la raíz', () => {
+    let pagina: GroupWallPage | undefined;
+    client.listGroupWall('g-1').subscribe((r) => (pagina = r));
+
+    const req = http.expectOne((r) => r.url === '/community/groups/g-1/posts');
+    req.flush({
+      items: [
+        {
+          id: 'c-1',
+          authorProfileId: 'p-1',
+          bodyText: 'hola',
+          parentCommentId: null,
+          threadDepth: 0,
+          replyCount: 1,
+          createdAt: '2026-08-18T10:00:00.000Z',
+          replies: [
+            {
+              id: 'c-2',
+              authorProfileId: 'p-2',
+              bodyText: 'respondo',
+              parentCommentId: 'c-1',
+              threadDepth: 1,
+              replyCount: 0,
+              createdAt: '2026-08-18T11:00:00.000Z',
+              replies: null,
+            },
+          ],
+        },
+      ],
+      count: 1,
+      limit: 20,
+      nextCursor: null,
+    });
+
+    expect(pagina?.items[0].createdAt).toBeInstanceOf(Date);
+    expect(pagina?.items[0].replies[0].createdAt).toBeInstanceOf(Date);
+    // `replies: null` es una hoja del hilo, no un fallo de conversión.
+    expect(pagina?.items[0].replies[0].replies).toEqual([]);
+    expect(pagina?.items[0].parentCommentId).toBeUndefined();
+  });
+
+  it('publishGroupPost manda el cuerpo al muro del grupo', () => {
+    client
+      .publishGroupPost('g-1', { authorProfileId: 'p-1', bodyText: 'hola' })
+      .subscribe();
+
+    const req = http.expectOne((r) => r.url === '/community/groups/g-1/posts');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ authorProfileId: 'p-1', bodyText: 'hola' });
+    req.flush({
+      id: 'c-1',
+      authorProfileId: 'p-1',
+      bodyText: 'hola',
+      parentCommentId: null,
+      threadDepth: 0,
+      replyCount: 0,
+      createdAt: '2026-08-18T10:00:00.000Z',
+      replies: null,
+    });
+  });
+
+  it('las escrituras de membresía usan su verbo y su ruta', () => {
+    client.joinGroup('g-1', 'p-1').subscribe();
+    const alta = http.expectOne((r) => r.url === '/community/groups/g-1/members');
+    expect(alta.request.method).toBe('POST');
+    expect(alta.request.body).toEqual({ memberProfileId: 'p-1' });
+    alta.flush({ id: 'm-1', joinStatus: 'j-1' });
+
+    client.leaveGroup('g-1', 'p-1').subscribe();
+    const baja = http.expectOne((r) => r.url === '/community/groups/g-1/members/p-1');
+    expect(baja.request.method).toBe('DELETE');
+    baja.flush({ id: 'm-1', memberRoleConceptId: 'r-1', joinStatusConceptId: 'j-2' });
+
+    client.updateGroupMember('g-1', 'm-2', { decision: 'APPROVE' }).subscribe();
+    const cambio = http.expectOne((r) => r.url === '/community/groups/g-1/members/m-2');
+    expect(cambio.request.method).toBe('PATCH');
+    expect(cambio.request.body).toEqual({ decision: 'APPROVE' });
+    cambio.flush({ id: 'm-2', memberRoleConceptId: 'r-1', joinStatusConceptId: 'j-1' });
+  });
+
+  it('listTopics lee el árbol de temas', () => {
+    client.listTopics().subscribe();
+
+    const req = http.expectOne((r) => r.url === '/community/topics');
+    req.flush({ items: [], count: 0, limit: 200 });
   });
 });
