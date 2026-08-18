@@ -14,6 +14,7 @@ import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
 import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
+import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { authGuard } from './core/auth/auth.guard';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
@@ -664,12 +665,167 @@ function rutasHeredadas(mapa: Readonly<Record<string, string>>): Routes {
   }));
 }
 
+/**
+ * Las cinco fichas públicas por slug, bajo el marco público del buscador.
+ *
+ * Se generan del mapa en vez de escribirse cinco veces porque las cinco son la
+ * misma pantalla con otro tipo esperado: lo único que cambia es el prefijo y el
+ * `kind`, y cinco bloques copiados serían cinco lugares donde arreglar el mismo
+ * defecto.
+ *
+ * Diferidas: quien entra por el buscador no necesita este fragmento hasta que
+ * abre una ficha, y quien llega directo de un enlace descarga sólo esto.
+ */
+function rutasDeFichasPublicas(): Routes {
+  const TIPOS = [
+    ['p', 'PRACTITIONER'],
+    ['o', 'ORGANIZATION'],
+    ['f', 'PHARMACY'],
+    ['l', 'DIAGNOSTIC_UNIT'],
+    ['s', 'INSURER'],
+  ] as const;
+
+  return TIPOS.map(([prefijo, kind]) => ({
+    path: prefijo,
+    loadComponent: () =>
+      import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+    children: [
+      {
+        path: ':slug',
+        data: { kind, pantallaReal: true },
+        resolve: { perfil: perfilPublicoResolver },
+        loadComponent: () =>
+          import('./features/public-profile/public-profile').then((m) => m.PublicProfile),
+      },
+    ],
+  }));
+}
+
+/**
+ * Las rutas públicas del buscador, con las URL que la ficha V65 declara.
+ *
+ * ## Por qué existen además de las que genera el portador de vistas
+ *
+ * `scripts/port-vistas-redsat.mjs` deriva el segmento del **nombre del archivo
+ * de la maqueta**, así que la portada quedó en `/buscar/buscador-listado` y los
+ * verticales en `/buscar/…-listado`. Sirve para recorrer la bóveda; no sirve
+ * como superficie pública. Estas URL son las que la ficha declara —`/buscar`,
+ * `/buscar/profesionales`, `/buscar/mapa`—, las que se pegan en un mensaje y
+ * las que un buscador indexa, y son cortas y estables porque un directorio
+ * público las cambia una sola vez.
+ *
+ * ## Por qué van antes de `REDSAT_ROUTES` y no dentro
+ *
+ * Porque `redsat.routes.ts` es un **archivo generado**: escribirlas ahí las
+ * borra la próxima vez que alguien porte una vista. Declaradas acá conviven
+ * con el bloque generado —el router prueba estas primero y retrocede al
+ * siguiente `buscar` cuando el segmento no coincide—, así que los enlaces de
+ * la bóveda que todavía apuntan a `/buscar/buscador-listado` siguen abriendo.
+ * Hay una prueba que resuelve las dos formas y falla si eso deja de ser cierto.
+ */
+function rutasDeBusquedaPublica(): Routes {
+  const VERTICALES = [
+    ['profesionales', 'Profesionales de salud — AloVida', 'profesionales-listado', 'BuscarProfesionalesListado'],
+    ['medicamentos', 'Medicamentos y farmacias — AloVida', 'medicamentos-listado', 'BuscarMedicamentosListado'],
+    ['organizaciones', 'Hospitales y clínicas — AloVida', 'hospitales-listado', 'BuscarHospitalesListado'],
+    ['diagnostico', 'Laboratorios e imagen — AloVida', 'laboratorios-listado', 'BuscarLaboratoriosListado'],
+    ['aseguradoras', 'Aseguradoras y convenios — AloVida', 'aseguradoras-listado', 'BuscarAseguradorasListado'],
+  ] as const;
+
+  return [
+    {
+      path: 'buscar',
+      loadComponent: () =>
+        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+      children: [
+        {
+          path: '',
+          pathMatch: 'full',
+          title: 'Buscar en AloVida — profesionales, medicamentos y centros de salud',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/buscador-listado/buscador-listado').then(
+              (m) => m.BuscarBuscadorListado,
+            ),
+        },
+        {
+          path: 'profesionales',
+          title: 'Profesionales de salud — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/profesionales-listado/profesionales-listado').then(
+              (m) => m.BuscarProfesionalesListado,
+            ),
+        },
+        {
+          path: 'medicamentos',
+          title: 'Medicamentos y farmacias — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/medicamentos-listado/medicamentos-listado').then(
+              (m) => m.BuscarMedicamentosListado,
+            ),
+        },
+        {
+          path: 'hospitales',
+          title: 'Hospitales y clínicas — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/hospitales-listado/hospitales-listado').then(
+              (m) => m.BuscarHospitalesListado,
+            ),
+        },
+        {
+          path: 'diagnostico',
+          title: 'Laboratorios e imagen — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/laboratorios-listado/laboratorios-listado').then(
+              (m) => m.BuscarLaboratoriosListado,
+            ),
+        },
+        {
+          path: 'aseguradoras',
+          title: 'Aseguradoras y convenios — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/aseguradoras-listado/aseguradoras-listado').then(
+              (m) => m.BuscarAseguradorasListado,
+            ),
+        },
+        {
+          // V65-12. `mapa` y no `cercania`: es el rótulo de la pestaña y el
+          // que la ficha declara.
+          path: 'mapa',
+          title: 'Cerca mío — AloVida',
+          data: { arquetipo: 'detalle', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/cercania-detalle/cercania-detalle').then(
+              (m) => m.BuscarCercaniaDetalle,
+            ),
+        },
+      ],
+    },
+  ];
+}
+
 export const routes: Routes = [
+  // La superficie pública del buscador con sus URL limpias. Va **antes** del
+  // bloque generado: las dos declaran `buscar`, y la primera que coincide gana.
+  ...rutasDeBusquedaPublica(),
   // Las pantallas portadas desde la bóveda, con su propio marco REDSAT. Van
   // primero y con segmento propio: no compiten con el armazón de abajo, que
   // vive en `path: ''`, así que ninguna de las dos depende de que el router
   // retroceda para encontrar a la otra.
   ...REDSAT_ROUTES,
+  // Las fichas públicas por slug. Van con el marco público y **sin guard**:
+  // son la superficie anónima, y el enlace que alguien pega en un mensaje.
+  //
+  // Los cinco prefijos son cortos por diseño —`/p/`, `/o/`, `/f/`, `/l/`,
+  // `/s/`— y cada uno promete un tipo de sujeto: la ruta lo declara en `data`
+  // y el cliente lo traduce al prefijo de la API, que devuelve 404 si el slug
+  // es de otra clase en vez de redirigir.
+  ...rutasDeFichasPublicas(),
   {
     // El armazón: header con el usuario, navegación y selector de organización.
     // El guard corre en el padre — S1 del M34: autorizar ANTES de pedir datos —

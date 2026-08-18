@@ -76,6 +76,15 @@ export interface PublicProfileDetail {
 
 // ─── Vitrina propia ──────────────────────────────────────────────────────────
 
+/**
+ * Si una vitrina se lista en el directorio público.
+ *
+ * Publicarse es **opt-in explícito**: el directorio es anónimo y atraviesa
+ * todos los tenants, así que nada se publica por omisión ni por herencia de un
+ * valor ausente.
+ */
+export type ProfileVisibility = 'PUBLIC' | 'PRIVATE';
+
 /** La vitrina pública propia, tal como la ve su titular. */
 export interface OwnPublicProfile {
   readonly id: string;
@@ -87,6 +96,14 @@ export interface OwnPublicProfile {
   readonly headline?: string;
   readonly biography?: string;
   readonly acceptsReviews?: boolean;
+  /**
+   * Si la vitrina está listada en el directorio público anónimo.
+   *
+   * Siempre viene, nunca `null`: el servidor resuelve la columna nula —las
+   * vitrinas anteriores a que el campo existiera— como `PRIVATE`, así que la
+   * pantalla no tiene que decidir esa regla por su cuenta.
+   */
+  readonly visibility: ProfileVisibility;
   /** Lo otorga la plataforma; se muestra, no se declara. */
   readonly verificationStatusConceptId?: string;
   readonly statusConceptId: string;
@@ -103,6 +120,15 @@ export interface UpsertOwnPublicProfile {
   readonly headline?: string;
   readonly biography?: string;
   readonly acceptsReviews?: boolean;
+  /**
+   * Si listar la vitrina en el directorio público.
+   *
+   * **Omitirlo conserva lo que haya.** No es lo mismo que mandar `'PRIVATE'`:
+   * una pantalla que edita el nombre sin tocar el interruptor no debe
+   * despublicar la vitrina, y una que la crea sin mencionarlo no debe
+   * publicarla.
+   */
+  readonly visibility?: ProfileVisibility;
 }
 
 // ─── Publicaciones ───────────────────────────────────────────────────────────
