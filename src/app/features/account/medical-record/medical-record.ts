@@ -421,7 +421,15 @@ export class MedicalRecord {
         this.armandoHistoria.set(false);
         downloadHistoryPdf(
           historiaDesdeFuentes(
-            { resumen: datos, ordenes: ordenes.items, resultados: resultados.items },
+            {
+              resumen: datos,
+              // Todos los formularios del paciente, sin filtrar por encuentro:
+              // la historia completa es longitudinal. Si su lectura falló, va
+              // vacío y la sección lo dice — el documento no se niega por eso.
+              formularios: this.formulariosVisibles().map(comoDocumentoDeFormulario),
+              ordenes: ordenes.items,
+              resultados: resultados.items,
+            },
             this.contextoDelDocumento(),
             (id) => this.label(id),
           ),
@@ -448,16 +456,7 @@ export class MedicalRecord {
   private formulariosDeLaAtencion(encounterId: string): readonly DocumentoDeFormulario[] {
     return this.formulariosVisibles()
       .filter((formulario) => formulario.encounterId === encounterId)
-      .map((formulario) => ({
-        id: formulario.id,
-        titulo: formulario.titulo,
-        ...(formulario.cerradoEl === undefined ? {} : { completadoEl: formulario.cerradoEl }),
-        respuestas: formulario.respuestas.map((respuesta) => ({
-          etiqueta: respuesta.etiqueta,
-          texto: respuesta.texto,
-          masked: respuesta.masked,
-        })),
-      }));
+      .map(comoDocumentoDeFormulario);
   }
 
   /** Descarga la receta. Disponible en cualquier momento posterior a su emisión. */
@@ -529,6 +528,27 @@ function conceptosDe(resumen: ClinicalSummary): readonly string[] {
     ]),
   ];
   return [...new Set(ids.filter((id): id is string => id !== undefined))];
+}
+
+/**
+ * Un formulario visible, en la forma del documento PDF.
+ *
+ * Lo comparten la historia de una atención y la historia completa: el mismo
+ * formulario no puede salir distinto según qué papel lo lleve. `completadoEl`
+ * sale sólo del cierre real, y el texto de un campo enmascarado ya viene vacío
+ * del view-model — el armador además lo descarta por la bandera.
+ */
+function comoDocumentoDeFormulario(formulario: FormularioVisible): DocumentoDeFormulario {
+  return {
+    id: formulario.id,
+    titulo: formulario.titulo,
+    ...(formulario.cerradoEl === undefined ? {} : { completadoEl: formulario.cerradoEl }),
+    respuestas: formulario.respuestas.map((respuesta) => ({
+      etiqueta: respuesta.etiqueta,
+      texto: respuesta.texto,
+      masked: respuesta.masked,
+    })),
+  };
 }
 
 /**

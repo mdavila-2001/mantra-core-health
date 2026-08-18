@@ -240,6 +240,8 @@ export function historiaDesdeFuentes(
   fuentes: {
     /** El resumen clínico del paciente. */
     readonly resumen: ClinicalSummary;
+    /** Los formularios respondidos, ya en la forma del documento (los lee `forms/me`). */
+    readonly formularios: readonly DocumentoDeFormulario[];
     /** Las órdenes del portal del paciente. */
     readonly ordenes: readonly PatientOrder[];
     /** Los resultados liberados. */
@@ -273,10 +275,9 @@ export function historiaDesdeFuentes(
     recetas: fuentes.resumen.medicationRequests.map((indicacion) =>
       recetaDesdeResumen(indicacion, contexto, etiqueta),
     ),
-    // Los formularios los expone `forms` y hoy ninguna pantalla del paciente los
-    // trae: la sección se imprime vacía —diciéndolo— hasta que E1 de Ender
-    // exponga la lectura. TODO(J3/E1).
-    formularios: [],
+    // Cerrado el TODO(J3/E1): el archivo del paciente ya lee `forms/me` y los
+    // aporta acá como fuente, igual que las órdenes y los resultados.
+    formularios: fuentes.formularios,
     ordenes: fuentes.ordenes.map((orden) => ordenDesdeElPortal(orden, contexto, etiqueta)),
     resultados: fuentes.resultados.map((resultado) => bloqueDeResultado(resultado, etiqueta)),
   };
