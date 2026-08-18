@@ -236,8 +236,12 @@ describe('Dashboard', () => {
 
       const rotulos = accesos().map((a) => a.querySelector('.panel__acceso-nombre')?.textContent);
       expect(rotulos).toContain('Tutoriales');
-      // Y el glosario no está: es herramienta de quien atiende (F-03).
-      expect(rotulos).not.toContain('Glosario');
+      // El glosario sí está, y debe estar: este panel se abre con un rol de
+      // trabajo y F-03 (18/08/2026) hizo del glosario justamente la herramienta
+      // de quien atiende. Que el paciente no lo vea lo fija el registro de
+      // navegación —la sección declara `roles`— y lo prueba
+      // `navigation.service.spec.ts`, no esta rejilla.
+      expect(rotulos).toContain('Glosario');
     });
 
     it('cada acceso apunta a una ruta real del registro, no a un destino inventado', () => {
