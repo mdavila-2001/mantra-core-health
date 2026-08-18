@@ -6,14 +6,25 @@ import {
   type OnInit,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { DatePipe } from '@angular/common';
+import { DOCUMENT, DatePipe } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
 
+import { jsonLdDePerfil, serializarJsonLd } from './public-profile.jsonld';
 import type { PerfilPublicoResuelto } from './public-profile.resolver';
+
+/**
+ * El identificador del `<script>` de datos estructurados.
+ *
+ * Fijo y único: el router reutiliza este componente al navegar de un slug a
+ * otro, y sin un identificador estable cada ficha visitada dejaría su JSON-LD
+ * en la cabeza. Una página con cinco `Physician` distintos declarados no es
+ * una página con más datos: es una que ningún rastreador sabe leer.
+ */
+const ID_JSON_LD = 'perfil-publico-jsonld';
 
 /**
  * Los tratamientos que no aportan una inicial.
@@ -102,6 +113,7 @@ export class PublicProfile implements OnInit {
 
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private readonly documento = inject(DOCUMENT);
 
   /** El rótulo del tipo, para la insignia junto al nombre. */
   protected readonly rotuloTipo = computed(() => {
@@ -159,6 +171,7 @@ export class PublicProfile implements OnInit {
 
     const descripcion = p.headline ?? p.biography ?? `Perfil público de ${p.displayName}`;
     this.title.setTitle(`${p.displayName} — AloVida`);
+    this.publicarDatosEstructurados(p);
     this.meta.updateTag({ name: 'description', content: descripcion.slice(0, 300) });
     this.meta.updateTag({ property: 'og:title', content: p.displayName });
     this.meta.updateTag({ property: 'og:description', content: descripcion.slice(0, 300) });
@@ -167,5 +180,38 @@ export class PublicProfile implements OnInit {
       property: 'og:updated_time',
       content: p.updatedAt.toISOString(),
     });
+  }
+
+  /**
+   * Escribe el JSON-LD de la ficha en la cabeza del documento.
+   *
+   * ## Por qué por DOM y no en la plantilla
+   *
+   * Porque Angular **elimina** los `<script>` que aparecen en una plantilla:
+   * es una defensa del compilador, no un descuido, y no tiene interruptor.
+   * Escribirlo con `[innerHTML]` obligaría a marcar la cadena como segura y a
+   * confiar en texto que escribe cada prestador en su propia vitrina.
+   *
+   * Por DOM funciona en el servidor igual que en el navegador: el motor de SSR
+   * serializa el documento entero después de estabilizar, así que el `<script>`
+   * viaja dentro del HTML que devuelve la petición — que es la única forma de
+   * que un rastreador lo lea.
+   *
+   * Se reemplaza el nodo anterior en vez de agregar uno: ver {@link ID_JSON_LD}.
+   */
+  private publicarDatosEstructurados(perfil: PublicProfileDetail): void {
+    const doc = this.documento;
+    const anterior = doc.getElementById(ID_JSON_LD);
+    anterior?.remove();
+
+    // El origen sale del documento y no de una constante: en desarrollo es
+    // `localhost:4300`, detrás del proxy es el dominio real, y una URL canónica
+    // que apunte al host equivocado es peor que no declararla.
+    const origen = doc.location?.origin ?? '';
+    const script = doc.createElement('script');
+    script.id = ID_JSON_LD;
+    script.type = 'application/ld+json';
+    script.textContent = serializarJsonLd(jsonLdDePerfil(perfil, origen));
+    doc.head.appendChild(script);
   }
 }
