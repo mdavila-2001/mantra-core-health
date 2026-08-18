@@ -180,7 +180,21 @@ export class TerminologyClient {
     // Parámetro a parámetro y no con un objeto: el backend valida con
     // `forbidNonWhitelisted`, así que un opcional presente en `undefined`
     // viajaría como clave declarada y la petición volvería con 400.
-    let params = new HttpParams();
+    //
+    // `lang` va siempre, por lo mismo que en `readConceptLabels`: sin él la
+    // respuesta trae el rótulo del sistema de codificación, que está en inglés
+    // a propósito porque es el catálogo. Los cinco consumidores de esta
+    // búsqueda son elecciones de una persona —el buscador de medicamentos de la
+    // receta, el catálogo de terminología, los selectores de formularios
+    // clínicos y de alta de organización, la consulta por prefijo de
+    // verificación—, o sea interfaz, no catálogo.
+    //
+    // **No acota el conjunto de resultados**, que es la duda razonable acá:
+    // `lang` solo elige de qué designación sale el texto y degrada al rótulo
+    // original cuando falta la traducción. Quien scopea es `includeValueSets`,
+    // que es otro parámetro y no se manda. Por eso el buscador de medicamentos
+    // sigue encontrando el vademécum entero.
+    let params = new HttpParams().set('lang', IDIOMA_DEL_CATALOGO);
     if (query.query !== undefined && query.query !== '') {
       params = params.set('q', query.query);
     }
