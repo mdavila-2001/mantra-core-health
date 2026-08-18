@@ -18,6 +18,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
+import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 
 /** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
 const HOME_ROUTE = '/';
@@ -36,7 +37,18 @@ const HOME_ROUTE = '/';
  */
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, AppButton, Input, Link, FormField, Alert, AuthSplit, AnnounceOnAppear],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    AppButton,
+    Input,
+    Link,
+    FormField,
+    Alert,
+    AuthSplit,
+    AnnounceOnAppear,
+    PointerScene,
+  ],
   templateUrl: './login.html',
   styleUrl: './login.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
