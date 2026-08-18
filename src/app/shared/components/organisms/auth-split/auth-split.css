@@ -485,6 +485,85 @@
     }
   }
 
+  /* Constelación: cinco astros y cuatro hilos, arriba a la derecha. Dice
+     «conectada» sin pelear con el formulario, que es lo que la pantalla pide
+     mirar: los radios son de 1.8 a 3.4 sobre un lienzo de 400x520 y ninguno
+     pasa de 0.5 de opacidad.
+
+     Solo se anima `opacity`. La versión anterior escalaba los círculos y
+     saltaban —`transform-box` por omisión es `view-box`, así que el origen era
+     el centro del SVG y no el del astro—; acá no hay `transform` que pueda
+     tomar el sistema de coordenadas equivocado. De paso es más barato: la
+     opacidad no invalida el layout ni el paint del resto de la capa. */
+  .auth-split__hilo {
+    stroke: #ffffff;
+    stroke-width: 0.75;
+    opacity: 0.1;
+    animation: auth-hilo-respira 9s ease-in-out infinite;
+  }
+
+  .auth-split__hilo:nth-of-type(2) {
+    animation-delay: 1.4s;
+  }
+
+  .auth-split__hilo:nth-of-type(3) {
+    animation-delay: 2.8s;
+  }
+
+  .auth-split__hilo:nth-of-type(4) {
+    animation-delay: 4.2s;
+  }
+
+  @keyframes auth-hilo-respira {
+    0%,
+    100% {
+      opacity: 0.07;
+    }
+    50% {
+      opacity: 0.2;
+    }
+  }
+
+  .auth-split__astro {
+    fill: #ffffff;
+    opacity: 0.28;
+    animation: auth-astro-respira 6.5s ease-in-out infinite;
+  }
+
+  /* El del centro es el que sostiene los cuatro hilos: un punto más y con el
+     mismo halo aqua que el trazo del latido, para que las dos capas se lean
+     como un solo dibujo y no como dos adornos sueltos. */
+  .auth-split__astro--eje {
+    opacity: 0.5;
+    filter: drop-shadow(0 0 6px var(--c-aqua-300));
+  }
+
+  .auth-split__astro:nth-of-type(2) {
+    animation-delay: 0.8s;
+  }
+
+  .auth-split__astro:nth-of-type(3) {
+    animation-delay: 1.9s;
+  }
+
+  .auth-split__astro:nth-of-type(4) {
+    animation-delay: 3.1s;
+  }
+
+  .auth-split__astro:nth-of-type(5) {
+    animation-delay: 4.4s;
+  }
+
+  @keyframes auth-astro-respira {
+    0%,
+    100% {
+      opacity: 0.2;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+
   /* Escalonado: marca, titular y bajada entran en ese orden, con 70 ms entre
      medio. Es lo que hace que la columna se lea como una frase y no como un
      bloque que apareció. */
@@ -558,6 +637,14 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    /* La constelación se queda quieta en su valor medio: sigue dibujada, deja
+       de respirar. Es la lectura correcta de la preferencia —quitar movimiento,
+       no quitar el dibujo. */
+    .auth-split__hilo,
+    .auth-split__astro {
+      animation: none;
+    }
+
     .auth-split__latido-base {
       opacity: 0.22;
     }
