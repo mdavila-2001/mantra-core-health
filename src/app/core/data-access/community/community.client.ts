@@ -30,7 +30,22 @@ import type {
   GroupMembersQuery,
   GroupPage,
   GroupsQuery,
+  ModerationAppealItem,
+  ModerationAppealPage,
+  ModerationAppealsQuery,
+  ModerationDecisionItem,
+  ModerationDecisionPage,
+  ModerationDecisionsQuery,
+  ModerationQueueItem,
+  ModerationQueuePage,
+  ModerationQueueQuery,
+  NewAppeal,
   NewComment,
+  NewModerationDecision,
+  NewReport,
+  NewReview,
+  NewReviewResponse,
+  ResolveAppeal,
   NewReaction,
   NewPost,
   NotificationPage,
@@ -389,6 +404,203 @@ export class CommunityClient {
       .pipe(map(toReviewPage));
   }
 
+
+  // ─── Moderación (UC-19-08/09/10) ───────────────────────────────────────────
+  //
+  // Las tres lecturas exigen `SECURITY_ADMIN` en el servidor. El cliente no lo
+  // comprueba: si lo hiciera, habría dos verdades sobre quién puede leer y la
+  // del navegador sería la que se puede saltear.
+
+  /**
+   * `GET /community/moderation/queue` — la cola de trabajo.
+   *
+   * Los filtros van por **código** (`QUEUED`, `HIGH`), no por uuid de concepto:
+   * pedirle uuids a la pantalla la ataría a la semilla de terminología de cada
+   * ambiente.
+   *
+   * @param query - Filtros de trabajo y paginación.
+   * @returns Una página de la cola, con el reporte que originó cada entrada.
+   */
+  listModerationQueue(
+    query: ModerationQueueQuery = {},
+  ): Observable<ModerationQueuePage> {
+    let params = this.cursorParams(query, new HttpParams());
+    params = this.listaParam(params, 'status', query.status);
+    params = this.listaParam(params, 'priority', query.priority);
+    params = this.listaParam(params, 'contentType', query.contentType);
+    if (query.minAgeHours !== undefined) {
+      params = params.set('minAgeHours', String(query.minAgeHours));
+    }
+
+    return this.http
+      .get<WireModerationQueuePage>(this.url('/community/moderation/queue'), {
+        params,
+      })
+      .pipe(map(toModerationQueuePage));
+  }
+
+  /**
+   * `GET /community/moderation/decisions` — las decisiones tomadas.
+   *
+   * @param query - Filtros y paginación.
+   * @returns Una página de decisiones, de la más reciente hacia atrás.
+   */
+  listModerationDecisions(
+    query: ModerationDecisionsQuery = {},
+  ): Observable<ModerationDecisionPage> {
+    let params = this.cursorParams(query, new HttpParams());
+    params = this.listaParam(params, 'decision', query.decision);
+    if (query.moderationQueueId !== undefined) {
+      params = params.set('moderationQueueId', query.moderationQueueId);
+    }
+
+    return this.http
+      .get<WireModerationDecisionPage>(
+        this.url('/community/moderation/decisions'),
+        { params },
+      )
+      .pipe(map(toModerationDecisionPage));
+  }
+
+  /**
+   * `GET /community/moderation/appeals` — las apelaciones presentadas.
+   *
+   * @param query - Filtros y paginación.
+   * @returns Una página de apelaciones, con la decisión que cada una impugna.
+   */
+  listModerationAppeals(
+    query: ModerationAppealsQuery = {},
+  ): Observable<ModerationAppealPage> {
+    let params = this.cursorParams(query, new HttpParams());
+    params = this.listaParam(params, 'status', query.status);
+    if (query.appellantProfileId !== undefined) {
+      params = params.set('appellantProfileId', query.appellantProfileId);
+    }
+
+    return this.http
+      .get<WireModerationAppealPage>(
+        this.url('/community/moderation/appeals'),
+        { params },
+      )
+      .pipe(map(toModerationAppealPage));
+  }
+
+  /**
+   * `POST /community/reports` — reporta contenido y lo encola.
+   *
+   * @param reporte - Qué se reporta y por qué.
+   * @returns El id del reporte y la entrada de cola en la que cayó.
+   */
+  report(
+    reporte: NewReport,
+  ): Observable<{ readonly id: string; readonly moderationQueueId: string }> {
+    return this.http.post<{
+      readonly id: string;
+      readonly moderationQueueId: string;
+    }>(this.url('/community/reports'), reporte);
+  }
+
+  /**
+   * `POST /community/moderation/queue/:queueId/decision` — resuelve una entrada.
+   *
+   * @param queueId - Entrada de cola.
+   * @param decision - Decisión y su motivo, que es obligatorio.
+   * @returns El id de la decisión y el del strike, si emitió uno.
+   */
+  decideModeration(
+    queueId: string,
+    decision: NewModerationDecision,
+  ): Observable<ModerationDecisionResult> {
+    return this.http.post<ModerationDecisionResult>(
+      this.url(
+        `/community/moderation/queue/${encodeURIComponent(queueId)}/decision`,
+      ),
+      decision,
+    );
+  }
+
+  /**
+   * `POST /community/moderation/decisions/:decisionId/appeal` — apela.
+   *
+   * @param decisionId - Decisión impugnada.
+   * @param apelacion - Perfil que apela y motivo.
+   * @returns El id de la apelación.
+   */
+  appealDecision(
+    decisionId: string,
+    apelacion: NewAppeal,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(
+        `/community/moderation/decisions/${encodeURIComponent(decisionId)}/appeal`,
+      ),
+      apelacion,
+    );
+  }
+
+  /**
+   * `POST /community/moderation/appeals/:appealId/resolve` — cierra una apelación.
+   *
+   * @param appealId - Apelación abierta.
+   * @param resolucion - Qué se resuelve.
+   * @returns El id de la apelación resuelta.
+   */
+  resolveAppeal(
+    appealId: string,
+    resolucion: ResolveAppeal,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(
+        `/community/moderation/appeals/${encodeURIComponent(appealId)}/resolve`,
+      ),
+      resolucion,
+    );
+  }
+
+  // ─── Reseñas de servicio (UC-19-11) ────────────────────────────────────────
+
+  /**
+   * `POST /community/profiles/:profileId/reviews` — califica a un profesional.
+   *
+   * **Quién califica no viaja en el cuerpo**: lo resuelve el servidor desde la
+   * sesión. Lo que sí hay que mandar es la atención que respalda la reseña, y el
+   * servidor comprueba que sea de esa persona, con ese profesional, y terminada.
+   *
+   * @param profileId - Vitrina calificada.
+   * @param review - Calificación, atención que la respalda y dimensiones.
+   * @returns El id de la reseña y si quedó verificada.
+   */
+  publishReview(
+    profileId: string,
+    review: NewReview,
+  ): Observable<ReviewCreated> {
+    return this.http.post<ReviewCreated>(
+      this.url(`/community/profiles/${encodeURIComponent(profileId)}/reviews`),
+      review,
+    );
+  }
+
+  /**
+   * `POST /community/profiles/:profileId/reviews/:reviewId/responses` —
+   * el profesional contesta una reseña de su propia vitrina.
+   *
+   * @param profileId - Vitrina calificada, que tiene que ser la propia.
+   * @param reviewId - Reseña contestada.
+   * @param respuesta - Texto de la respuesta.
+   * @returns El id de la respuesta.
+   */
+  respondToReview(
+    profileId: string,
+    reviewId: string,
+    respuesta: NewReviewResponse,
+  ): Observable<{ readonly id: string }> {
+    const base = `/community/profiles/${encodeURIComponent(profileId)}`;
+    return this.http.post<{ readonly id: string }>(
+      this.url(`${base}/reviews/${encodeURIComponent(reviewId)}/responses`),
+      respuesta,
+    );
+  }
+
   // ─── Grupos ────────────────────────────────────────────────────────────────
 
   /**
@@ -517,6 +729,25 @@ export class CommunityClient {
       params = params.set('limit', String(query.limit));
     }
     return params;
+  }
+
+  /**
+   * Agrega un filtro de lista como valores separados por comas.
+   *
+   * Es la forma que el servidor acepta además del `?x=a&x=b` de Nest, y la que
+   * deja la URL legible cuando alguien la copia de la barra del navegador.
+   *
+   * Una lista vacía **no se manda**: `?status=` significaría «filtrá por el
+   * estado llamado cadena vacía», que no devuelve nada, en vez de «no filtres».
+   */
+  private listaParam(
+    params: HttpParams,
+    nombre: string,
+    valores: readonly string[] | undefined,
+  ): HttpParams {
+    return valores === undefined || valores.length === 0
+      ? params
+      : params.set(nombre, valores.join(','));
   }
 
   /** Agrega `actorProfileId` sólo si vino. Sin él la lectura es la anónima. */
@@ -712,6 +943,144 @@ function toProfile({ badges, prestige, ...resto }: WireProfile): PublicProfileDe
           },
         }),
   };
+}
+
+// ─── Moderación ──────────────────────────────────────────────────────────────
+
+/**
+ * Lo que devuelve decidir una moderación.
+ *
+ * `strikeId` es `null` cuando la decisión no sancionó a nadie —«desestimada», o
+ * una advertencia sin sujeto declarado—, no cuando falló algo.
+ */
+export interface ModerationDecisionResult {
+  readonly id: string;
+  readonly strikeId: string | null;
+  readonly decision: string;
+}
+
+/** Lo que devuelve publicar una reseña. */
+export interface ReviewCreated {
+  readonly id: string;
+  readonly overallRating: number;
+  readonly verified: boolean;
+  readonly dimensionCount: number;
+}
+
+/**
+ * El reporte tal como viaja.
+ *
+ * Sólo `detailText` puede ser nulo —quien reporta puede no escribir nada—; el
+ * id, la razón y la fecha siempre vienen, así que declararlos nulables obligaría
+ * a la pantalla a defenderse de un caso que el servidor no produce.
+ */
+interface WireQueueReport {
+  readonly id: string;
+  readonly reasonConceptId: string;
+  readonly detailText: string | null;
+  readonly createdAt: string;
+}
+
+type WireQueueItem = Omit<
+  ConNulos<ModerationQueueItem>,
+  'queuedAt' | 'report' | 'reportCount'
+> & {
+  readonly queuedAt: string | null;
+  readonly report: WireQueueReport | null;
+  readonly reportCount: number;
+};
+
+interface WireModerationQueuePage
+  extends Omit<ModerationQueuePage, 'items'> {
+  readonly items: readonly WireQueueItem[];
+}
+
+type WireDecisionItem = Omit<
+  ConNulos<ModerationDecisionItem>,
+  'decidedAt'
+> & { readonly decidedAt: string | null };
+
+interface WireModerationDecisionPage
+  extends Omit<ModerationDecisionPage, 'items'> {
+  readonly items: readonly WireDecisionItem[];
+}
+
+type WireAppealItem = Omit<
+  ConNulos<ModerationAppealItem>,
+  'createdAt' | 'resolvedAt' | 'decision'
+> & {
+  readonly createdAt: string;
+  readonly resolvedAt: string | null;
+  readonly decision: WireDecisionItem | null;
+};
+
+interface WireModerationAppealPage
+  extends Omit<ModerationAppealPage, 'items'> {
+  readonly items: readonly WireAppealItem[];
+}
+
+function toQueueItem({
+  queuedAt,
+  report,
+  ...resto
+}: WireQueueItem): ModerationQueueItem {
+  return {
+    ...sinNulos(resto),
+    ...fecha('queuedAt', queuedAt),
+    // `report` en `null` significa «esta entrada no nació de un reporte» —la
+    // abrió una apelación o un proceso automático—, no que falte el dato.
+    ...(report === null
+      ? {}
+      : {
+          report: {
+            id: report.id,
+            reasonConceptId: report.reasonConceptId,
+            createdAt: new Date(report.createdAt),
+            ...(report.detailText === null
+              ? {}
+              : { detailText: report.detailText }),
+          },
+        }),
+  };
+}
+
+function toModerationQueuePage(
+  body: WireModerationQueuePage,
+): ModerationQueuePage {
+  return { ...body, items: body.items.map(toQueueItem) };
+}
+
+function toDecisionItem({
+  decidedAt,
+  ...resto
+}: WireDecisionItem): ModerationDecisionItem {
+  return { ...sinNulos(resto), ...fecha('decidedAt', decidedAt) };
+}
+
+function toModerationDecisionPage(
+  body: WireModerationDecisionPage,
+): ModerationDecisionPage {
+  return { ...body, items: body.items.map(toDecisionItem) };
+}
+
+function toAppealItem({
+  createdAt,
+  resolvedAt,
+  decision,
+  ...resto
+}: WireAppealItem): ModerationAppealItem {
+  return {
+    ...sinNulos(resto),
+    createdAt: new Date(createdAt),
+    ...fecha('resolvedAt', resolvedAt),
+    ...(decision === null ? {} : { decision: toDecisionItem(decision) }),
+  };
+}
+
+function toModerationAppealPage(
+  body: WireModerationAppealPage,
+): ModerationAppealPage {
+  return { ...body, items: body.items.map(toAppealItem) };
 }
 
 function toPost({ publishedAt, editedAt, ...resto }: WirePost): PostListItem {

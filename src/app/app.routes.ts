@@ -101,6 +101,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
+  'administration/moderation': () =>
+    import('./features/admin/moderation/moderation').then((m) => m.Moderation),
   tutorials: () =>
     import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
