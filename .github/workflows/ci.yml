@@ -8,9 +8,11 @@
 
 name: CI
 
+# Desde el 18/08 corre en un runner propio (ver los jobs), que es una máquina
+# del equipo y no una flota elástica: el disparo se acota a `pull_request` para
+# que la batería llegue cuando sirve —antes de mergear— sin duplicar cada
+# corrida con el `push` que sigue al merge.
 on:
-  push:
-    branches: [dev, master]
   pull_request:
   # Para lanzar a mano la regresión completa de extremo a extremo antes de un despliegue,
   # sin esperar a que algo llegue a `master`.
@@ -24,7 +26,12 @@ concurrency:
 
 jobs:
   verificar:
-    runs-on: ubuntu-latest
+    # Runner self-hosted: los minutos de GitHub están agotados por facturación
+    # desde el 14/08 y los jobs morían en 2 s sin máquina, así que ~30 PRs
+    # entraron sin un solo check. Cuando la facturación se reponga, volver a
+    # `ubuntu-latest` es cambiar esta línea en los tres jobs.
+    # Detalles y recuperación: mantra-core-health-api/docs/operations/ci-runner-self-hosted.md
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 20
 
     steps:
@@ -140,7 +147,7 @@ jobs:
   # así que la diferencia real era el corredor, no la cobertura. Está todo en
   # Cypress ahora, en un solo job.
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 25
 
     steps:
@@ -228,7 +235,7 @@ jobs:
           retention-days: 7
 
   dependencias:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 10
 
     steps:
