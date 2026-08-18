@@ -80,9 +80,7 @@ describe('DiagnosticOrders', () => {
     configurar(PROFILE_ID);
     mount();
 
-    const pedido = http.expectOne(
-      (request) => request.url === '/diagnostic-results/me/orders',
-    );
+    const pedido = http.expectOne((request) => request.url === '/diagnostic-results/me/orders');
     expect(pedido.request.url).not.toContain(PROFILE_ID);
     pedido.flush({ patientProfileId: PROFILE_ID, items: [], limit: 50, truncated: false });
   });
@@ -139,6 +137,74 @@ describe('DiagnosticOrders', () => {
     const texto: string = fixture.nativeElement.textContent;
     expect(texto).toContain('Ver resultado');
     expect(texto).toContain('Con resultado');
+  });
+
+  it('agrupa por atención: tres estudios de una consulta son un pedido, no tres', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderOrdenes([
+      { ...ORDEN, id: 'o-1' },
+      { ...ORDEN, id: 'o-2' },
+      { ...ORDEN, id: 'o-3' },
+    ]);
+
+    const grupos = fixture.nativeElement.querySelectorAll('.ordenes__grupo');
+    const filas = fixture.nativeElement.querySelectorAll('.ordenes__item');
+    expect(grupos).toHaveLength(1);
+    expect(filas).toHaveLength(3);
+  });
+
+  it('separa las atenciones distintas', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderOrdenes([
+      { ...ORDEN, id: 'o-1', encounterId: 'enc-a' },
+      { ...ORDEN, id: 'o-2', encounterId: 'enc-b' },
+    ]);
+
+    expect(fixture.nativeElement.querySelectorAll('.ordenes__grupo')).toHaveLength(2);
+  });
+
+  it('el encabezado del grupo es la fecha, no el identificador de la atención', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderOrdenes([ORDEN]);
+
+    const titulo: string =
+      fixture.nativeElement.querySelector('.ordenes__grupo-titulo').textContent;
+    expect(titulo).toContain('Atención del');
+    expect(titulo).not.toContain(ORDEN.encounterId);
+  });
+
+  it('una orden pedida fuera de una consulta se agrupa aparte y lo dice', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderOrdenes([{ ...ORDEN, encounterId: undefined }]);
+
+    expect(fixture.nativeElement.querySelector('.ordenes__grupo-titulo').textContent).toContain(
+      'fuera de una consulta',
+    );
+  });
+
+  it('el estado vacío ofrece su salida, no sólo el texto (contrato S3)', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderOrdenes([]);
+
+    const salida = fixture.nativeElement.querySelector('a[app-link]');
+    expect(salida).not.toBeNull();
+    expect(salida.textContent).toContain('Ver mis turnos');
+  });
+
+  it('el botón de reservar se apaga con aria-disabled, no con el disabled nativo', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderOrdenes([ORDEN]);
+
+    const boton = fixture.nativeElement.querySelector('button[app-button][variant="secondary"]');
+    expect(boton.getAttribute('aria-disabled')).toBe('true');
+    // Nativo apagado = no enfocable y el lector lo saltea.
+    expect(boton.disabled).toBe(false);
   });
 
   it('no muestra ningún uuid en pantalla', () => {

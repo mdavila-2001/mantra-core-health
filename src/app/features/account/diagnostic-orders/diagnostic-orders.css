@@ -69,3 +69,15 @@
   color: var(--text-muted);
   font-size: var(--fs-sm);
 }
+
+/* El encabezado de cada atención. Separa los grupos sin cajas: la jerarquía la
+   dan el espacio y el peso, que en una lista corta se lee mejor que un marco. */
+.ordenes__grupo + .ordenes__grupo {
+  margin-block-start: var(--sp-6);
+}
+
+.ordenes__grupo-titulo {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  margin: 0 0 var(--sp-3);
+}
