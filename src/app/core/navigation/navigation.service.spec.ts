@@ -76,11 +76,17 @@ describe('NavigationService', () => {
         // Los tutoriales tampoco exigen rol: son la guía de cómo usar lo que
         // cada cuenta ya puede ver.
         '/tutorials',
+        // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
+        // perfil público de `community`, que es un dato de la cuenta.
+        '/messaging',
+        // Grupos y foros (P7): un grupo público lo lee cualquier sesión, y
+        // quién puede publicar en cada uno lo decide la API por membresía.
+        '/groups',
         // El directorio de laboratorios tampoco: es oferta publicada, no PHI.
         '/laboratory-directory',
-        // El glosario tampoco: el cliente lo pidió accesible por cada
-        // profesional, no sólo por quien administra.
-        '/glossary',
+        // El glosario ya NO entra: desde el 18/08/2026 (feedback de la analista,
+        // F-03) declara los roles de quien atiende, y una sesión sin roles no
+        // es de nadie que atienda.
         '/my-account',
         '/my-account/appointments',
         // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
@@ -92,6 +98,9 @@ describe('NavigationService', () => {
         // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
         // perfil de paciente, que es un dato de la cuenta y no un rol.
         '/my-account/questionnaires',
+        // Carril P1: la bandeja es de la persona y el backend sólo devuelve la
+        // propia, así que no hay rol que filtrar.
+        '/notification-center',
         '/my-account/identity/verify',
         '/my-account/identity/cases',
       ]);
@@ -148,7 +157,9 @@ describe('NavigationService', () => {
       for (const grupo of service.menu()) {
         expect(grupo.items.length, grupo.label).toBeGreaterThan(0);
       }
-      expect(service.menu().map((g) => g.label)).toEqual(['General', 'Atención', 'Mi cuenta']);
+      // «Atención» ya no aparece: su único ítem sin rol era el glosario, y desde
+      // F-03 es de quien atiende. Para el paciente, sus cosas viven en «Mi cuenta».
+      expect(service.menu().map((g) => g.label)).toEqual(['General', 'Mi cuenta']);
     });
 
     it('los grupos salen en el orden declarado, no en el del registro', () => {

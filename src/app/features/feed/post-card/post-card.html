@@ -1,4 +1,4 @@
-<app-card variant="outlined" padding="md">
+<app-card variant="outlined" padding="md" [attr.data-testid]="'post-card-' + post().id">
   <header class="publicacion__cabecera">
     <p class="publicacion__autor">Perfil {{ autor() }}</p>
     @if (post().publishedAt; as fecha) {
@@ -39,14 +39,21 @@
     }
 
     @if (totalReacciones() > 0) {
-      <span class="publicacion__conteo">
+      <span class="publicacion__conteo" data-testid="post-reaction-count">
         {{ totalReacciones() }} {{ totalReacciones() === 1 ? 'reacción' : 'reacciones' }}
       </span>
     }
 
     @if (admiteComentarios()) {
-      <button app-button variant="ghost" size="sm" (clicked)="alternarHilo()">
-        {{ hiloAbierto() ? 'Ocultar' : 'Comentarios' }} ({{ totalComentarios() }})
+      <button
+        app-button
+        data-testid="post-comments-toggle"
+        variant="ghost"
+        size="sm"
+        (clicked)="alternarHilo()"
+      >
+        {{ hiloAbierto() ? 'Ocultar' : 'Comentarios' }}
+        (<span data-testid="post-comment-count">{{ totalComentarios() }}</span>)
       </button>
     } @else {
       <span class="publicacion__cerrado">Comentarios cerrados</span>
@@ -114,6 +121,7 @@
       @if (puedeEscribir()) {
         <form class="hilo__form" (submit)="$event.preventDefault()">
           <app-textarea
+            data-testid="post-comment-body"
             [(value)]="nuevoComentario"
             [rows]="2"
             [autoResize]="true"
@@ -122,6 +130,7 @@
           />
           <button
             app-button
+            data-testid="post-comment-submit"
             type="button"
             variant="secondary"
             size="sm"

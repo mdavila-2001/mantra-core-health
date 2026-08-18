@@ -1,0 +1,140 @@
+.campana {
+  position: relative;
+  display: inline-flex;
+}
+
+.campana__boton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.campana__boton:hover,
+.campana__boton:focus-visible {
+  background: var(--surface-hover, rgb(255 255 255 / 12%));
+}
+
+.campana__badge {
+  /* Sobre el borde del ícono, no dentro: con el número dentro del círculo el
+     conteo tapa la campana justo cuando hay algo que mirar. */
+  position: absolute;
+  inset-block-start: 0.1rem;
+  inset-inline-end: 0.1rem;
+}
+
+.campana__panel {
+  position: absolute;
+  inset-block-start: calc(100% + var(--e2, 0.5rem));
+  inset-inline-end: 0;
+  z-index: 40;
+  inline-size: min(22rem, calc(100vw - 2rem));
+  padding: var(--e3, 0.75rem);
+  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
+  border-radius: var(--radio-md, 0.75rem);
+  background: var(--surface-raised, #fff);
+  color: var(--text-primary, #10202b);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+}
+
+.campana__encabezado {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e2, 0.5rem);
+  margin-block-end: var(--e2, 0.5rem);
+}
+
+.campana__titulo {
+  margin: 0;
+  font-weight: 600;
+}
+
+.campana__accion,
+.campana__ver-todas {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--text-link, #0e6690);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.campana__ver-todas {
+  display: block;
+  margin-block-start: var(--e3, 0.75rem);
+  text-align: center;
+}
+
+.campana__error {
+  margin: 0 0 var(--e2, 0.5rem);
+  color: var(--text-danger, #b3261e);
+  font-size: 0.85rem;
+}
+
+.campana__vacio {
+  margin: 0;
+  color: var(--text-secondary, #4a5c66);
+  font-size: 0.9rem;
+}
+
+.campana__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* El panel muestra pocas y ofrece «ver todas»: sin tope, un panel de ocho
+     líneas largas empuja el botón fuera de la pantalla en un teléfono. */
+  max-block-size: 24rem;
+  overflow-y: auto;
+}
+
+.campana__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  inline-size: 100%;
+  margin: 0;
+  padding: var(--e2, 0.5rem);
+  border: 0;
+  border-radius: var(--radio-sm, 0.5rem);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+button.campana__item {
+  cursor: pointer;
+}
+
+button.campana__item:hover,
+button.campana__item:focus-visible {
+  background: var(--surface-hover, rgb(0 0 0 / 5%));
+}
+
+/* Sin leer se marca con peso y una barra lateral, no sólo con color: el color
+   solo no distingue nada para quien no lo percibe. */
+.campana__item.is-sin-leer {
+  border-inline-start: 3px solid var(--accent, #0e6690);
+  font-weight: 600;
+}
+
+.campana__item-detalle {
+  color: var(--text-secondary, #4a5c66);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.campana__item-fecha {
+  color: var(--text-tertiary, #6b7b85);
+  font-size: 0.75rem;
+  font-weight: 400;
+}

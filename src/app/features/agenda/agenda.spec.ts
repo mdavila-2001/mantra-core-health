@@ -938,4 +938,104 @@ describe('Agenda', () => {
     expect(boton('agenda-completar')).toBeNull();
     expect(boton('agenda-cancelar')).toBeNull();
   });
+
+  /* ========================================================================
+     P8 · «el médico se demora» (registro del cliente 3.5 y 4.2)
+     ======================================================================== */
+
+  /** Acceso tipado a lo que las pruebas de la demora ejercen. */
+  function demora() {
+    return componente as unknown as {
+      abrirDemoraDeAgenda(): void;
+      abrirDemoraDeCita(cita: { id: string }): void;
+      cerrarDemora(): void;
+      confirmarDemora(): void;
+      minutosDeDemora: { set(v: string): void };
+      mensajeDeDemora: { set(v: string): void };
+      panelDeDemoraAbierto(): boolean;
+      puedeAvisarDemora(): boolean;
+    };
+  }
+
+  it('ofrece avisar demora cuando hay una agenda que mirar', async () => {
+    await montar();
+    await responder();
+    harness.detectChanges();
+
+    expect(demora().puedeAvisarDemora()).toBe(true);
+    expect(boton('agenda-avisar-demora')).not.toBeNull();
+  });
+
+  it('el panel está cerrado hasta que se pide', async () => {
+    await montar();
+    await responder();
+    harness.detectChanges();
+
+    expect(demora().panelDeDemoraAbierto()).toBe(false);
+    expect(
+      harness.routeNativeElement?.querySelector('[data-testid="agenda-demora-panel"]'),
+    ).toBeNull();
+  });
+
+  it('la demora de la agenda avisa por recurso y no mueve ningún turno', async () => {
+    await montar();
+    await responder();
+    harness.detectChanges();
+
+    demora().abrirDemoraDeAgenda();
+    harness.detectChanges();
+    expect(demora().panelDeDemoraAbierto()).toBe(true);
+
+    demora().minutosDeDemora.set('30');
+    demora().mensajeDeDemora.set('  Estoy en una urgencia  ');
+    demora().confirmarDemora();
+
+    const req = http.expectOne('/scheduling/resources/r-1/delay');
+    expect(req.request.method).toBe('POST');
+    // El mensaje viaja recortado y sin ventana: la de por omisión —de ahora al
+    // fin del día— la pone el servidor.
+    expect(req.request.body).toEqual({
+      delayMinutes: 30,
+      message: 'Estoy en una urgencia',
+    });
+
+    req.flush({ notified: 2, affected: 2, bookingIds: ['b-1'], detail: 'ok' });
+    harness.detectChanges();
+
+    // No se reprograma nada: la agenda sólo se relee para reflejar la demora.
+    expect(demora().panelDeDemoraAbierto()).toBe(false);
+    responderResto();
+  });
+
+  it('la demora de un turno concreto pega al endpoint de la cita', async () => {
+    await montar();
+    await responder();
+    harness.detectChanges();
+
+    demora().abrirDemoraDeCita({ id: 'b-1' });
+    demora().minutosDeDemora.set('15');
+    demora().confirmarDemora();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/delay');
+    // Sin mensaje: la clave no viaja, porque `forbidNonWhitelisted` rechaza un
+    // opcional declarado en `undefined`.
+    expect(req.request.body).toEqual({ delayMinutes: 15 });
+
+    req.flush({ notified: 1, affected: 1, bookingIds: ['b-1'], detail: 'ok' });
+    harness.detectChanges();
+    responderResto();
+  });
+
+  it('volver cierra el panel sin avisar nada', async () => {
+    await montar();
+    await responder();
+    harness.detectChanges();
+
+    demora().abrirDemoraDeAgenda();
+    demora().cerrarDemora();
+    harness.detectChanges();
+
+    expect(demora().panelDeDemoraAbierto()).toBe(false);
+    // `http.verify()` del `afterEach` comprueba que no salió ninguna petición.
+  });
 });

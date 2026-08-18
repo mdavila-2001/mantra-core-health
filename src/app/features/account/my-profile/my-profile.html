@@ -26,6 +26,31 @@
       <h2 class="mi-perfil__titulo">Tus datos</h2>
 
       <app-view-state-host [state]="resumen()" (retry)="recargar()">
+        <!-- El 403 por identidad es el estado normal de un paciente nuevo, no un
+             error: se dice en neutro y con la salida a mano. Cualquier otro 403
+             sigue siendo un muro y se pinta como tal. -->
+        <ng-container vsh-forbidden>
+          @if (verificacionPendiente()) {
+            <app-alert
+              tone="info"
+              title="Tus datos aparecen acá cuando tu identidad esté verificada"
+            >
+              Es un trámite único: subís tu documento, lo revisamos y a partir de ahí ves acá tu
+              código de paciente y tus datos.
+              <div alert-actions>
+                <a app-link [routerLink]="rutaDeVerificacion">Verificar identidad</a>
+              </div>
+            </app-alert>
+          } @else {
+            <app-alert tone="error" title="No tenés acceso a esta sección">
+              {{
+                motivoDelMuro() ??
+                  'Tu rol o el propósito de uso declarado no alcanzan para ver este contenido.'
+              }}
+            </app-alert>
+          }
+        </ng-container>
+
         @if (datos(); as resumen) {
           <dl class="mi-perfil__datos">
             <div class="mi-perfil__dato">

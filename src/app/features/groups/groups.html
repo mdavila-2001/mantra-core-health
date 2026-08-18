@@ -1,0 +1,115 @@
+<app-page-header
+  title="Grupos y foros"
+  subtitle="Comunidades por tema y especialidad dentro de tu organización."
+/>
+
+@if (error(); as mensaje) {
+  <app-alert tone="error" class="grupos__alerta">{{ mensaje }}</app-alert>
+}
+
+@if (tenantId() === null) {
+  <!-- Una puerta, no un error: el directorio de grupos es por organización y
+       elegir por la persona mostraría los de la organización equivocada. -->
+  <app-empty-state
+    title="Elegí una organización"
+    description="Los grupos son de cada organización. Elegí una desde el encabezado para ver los suyos."
+    variant="empty"
+  />
+} @else {
+  <div class="grupos__filtros">
+    <app-search-field
+      label="Buscar grupos"
+      placeholder="Buscar por nombre o descripción"
+      [(value)]="busqueda"
+      (searched)="buscar($event)"
+    />
+
+    @if (temas().length > 0) {
+      <div class="grupos__temas" role="group" aria-label="Filtrar por tema">
+        @for (tema of temas(); track tema.id) {
+          <button
+            app-button
+            size="sm"
+            [variant]="temaElegido() === tema.id ? 'primary' : 'outline'"
+            [attr.aria-pressed]="temaElegido() === tema.id"
+            (clicked)="filtrarPorTema(tema.id)"
+          >
+            {{ tema.name }}
+          </button>
+        }
+      </div>
+    }
+
+    <button app-button variant="outline" (clicked)="alternarAlta()">
+      {{ creando() ? 'Cancelar' : 'Crear grupo' }}
+    </button>
+  </div>
+
+  @if (creando()) {
+    <app-card class="grupos__alta">
+      <h2 class="grupos__alta-titulo">Nuevo grupo</h2>
+
+      <app-form-field label="Nombre" [required]="true">
+        <app-input [(value)]="nombre" placeholder="Cardiología clínica" />
+      </app-form-field>
+
+      <app-form-field label="De qué trata" hint="Opcional. Se ve en la tarjeta del directorio.">
+        <app-input [(value)]="descripcion" placeholder="Casos, guías y ateneos" />
+      </app-form-field>
+
+      <!-- La dirección se deriva del nombre, pero se muestra: sigue siendo
+           visible antes de crear, sin obligar a nadie a saber qué es un slug. -->
+      <p class="grupos__slug">
+        Dirección: <code>{{ slug() || '—' }}</code>
+      </p>
+
+      <app-switch
+        [(checked)]="privado"
+        label="Grupo privado (hay que aprobar cada ingreso)"
+      />
+
+      <div class="grupos__alta-acciones">
+        <button
+          app-button
+          [disabled]="!puedeCrear()"
+          [isLoading]="guardando()"
+          (clicked)="crear()"
+        >
+          Crear grupo
+        </button>
+      </div>
+    </app-card>
+  }
+
+  @if (vacio()) {
+    <app-empty-state
+      title="No hay grupos que coincidan"
+      description="Probá con otra búsqueda o sacá el filtro de tema. También podés crear el grupo vos."
+      variant="empty"
+    />
+  } @else {
+    <div class="grupos__lista">
+      @for (grupo of grupos(); track grupo.id) {
+        <a class="grupos__enlace" [routerLink]="['/groups', grupo.id]">
+          <app-card>
+            <h2 class="grupos__nombre">{{ grupo.name }}</h2>
+            @if (grupo.description) {
+              <p class="grupos__descripcion">{{ grupo.description }}</p>
+            }
+            <p class="grupos__meta">
+              {{ grupo.memberCount ?? 0 }} integrantes
+            </p>
+          </app-card>
+        </a>
+      }
+    </div>
+
+    @if (hayMas()) {
+      <div class="grupos__mas">
+        <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
+          Ver más grupos
+        </button>
+      </div>
+    }
+  }
+}

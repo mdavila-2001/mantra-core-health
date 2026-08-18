@@ -35,8 +35,9 @@ const RECORRIDO: Readonly<Record<string, readonly { ruta: string; nombre: string
     { ruta: '/directory', nombre: '02-guia-de-profesionales' },
     { ruta: '/my-account/appointments', nombre: '03-mis-turnos' },
     { ruta: '/my-account', nombre: '04-mi-perfil' },
-    { ruta: '/glossary', nombre: '05-glosario' },
-    { ruta: '/tutorials', nombre: '06-tutoriales' },
+    // Sin `/glossary`: desde el 18/08/2026 (feedback de la analista, F-03) el
+    // glosario es de quien atiende y al paciente lo rebota el guard de sección.
+    { ruta: '/tutorials', nombre: '05-tutoriales' },
   ],
   doctora: [
     { ruta: '/dashboard', nombre: '01-panel' },

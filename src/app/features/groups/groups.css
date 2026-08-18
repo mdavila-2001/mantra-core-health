@@ -1,0 +1,78 @@
+.grupos__alerta {
+  display: block;
+  margin-bottom: var(--e4);
+}
+
+.grupos__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--e3);
+  margin-bottom: var(--e4);
+}
+
+.grupos__temas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.grupos__alta {
+  display: block;
+  margin-bottom: var(--e4);
+  max-inline-size: 52ch;
+}
+
+.grupos__alta-titulo {
+  margin: 0 0 var(--e3);
+  font-size: var(--fs-lg);
+  color: var(--text-primary);
+}
+
+.grupos__slug {
+  margin: var(--e2) 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.grupos__alta-acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--e3);
+}
+
+.grupos__lista {
+  display: grid;
+  /* Una sola columna en teléfono y tantas como entren después: el directorio
+     de una organización grande no se lee en una tira de tarjetas anchas. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 26ch), 1fr));
+  gap: var(--e3);
+}
+
+.grupos__enlace {
+  text-decoration: none;
+  color: inherit;
+}
+
+.grupos__nombre {
+  margin: 0;
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+}
+
+.grupos__descripcion {
+  margin: var(--e2) 0 0;
+  color: var(--text-secondary);
+}
+
+.grupos__meta {
+  margin: var(--e2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.grupos__mas {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--e5);
+}
