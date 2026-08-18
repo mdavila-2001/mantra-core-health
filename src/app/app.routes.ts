@@ -731,14 +731,6 @@ function rutasDeFichasPublicas(): Routes {
  * Hay una prueba que resuelve las dos formas y falla si eso deja de ser cierto.
  */
 function rutasDeBusquedaPublica(): Routes {
-  const VERTICALES = [
-    ['profesionales', 'Profesionales de salud — AloVida', 'profesionales-listado', 'BuscarProfesionalesListado'],
-    ['medicamentos', 'Medicamentos y farmacias — AloVida', 'medicamentos-listado', 'BuscarMedicamentosListado'],
-    ['organizaciones', 'Hospitales y clínicas — AloVida', 'hospitales-listado', 'BuscarHospitalesListado'],
-    ['diagnostico', 'Laboratorios e imagen — AloVida', 'laboratorios-listado', 'BuscarLaboratoriosListado'],
-    ['aseguradoras', 'Aseguradoras y convenios — AloVida', 'aseguradoras-listado', 'BuscarAseguradorasListado'],
-  ] as const;
-
   return [
     {
       path: 'buscar',
