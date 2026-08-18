@@ -42,7 +42,10 @@ describe('AssistedRegistration', () => {
 
   function completarFormulario(reason = 'Internada, sin acceso a un dispositivo propio') {
     interno<{ setValue: (v: unknown) => void }>('form').setValue({
-      displayName: 'Ana Salas',
+      name: 'Ana',
+      middleName: '',
+      lastName: 'Salas',
+      motherLastName: '',
       email: 'ana@mantra.test',
       reason,
     });
@@ -66,7 +69,8 @@ describe('AssistedRegistration', () => {
 
     const req = http.expectOne('/iam/users/assisted-registration');
     expect(req.request.body).toEqual({
-      displayName: 'Ana Salas',
+      name: 'Ana',
+      lastName: 'Salas',
       email: 'ana@mantra.test',
       reason: 'Internada, sin acceso a un dispositivo propio',
     });
