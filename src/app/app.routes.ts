@@ -622,7 +622,7 @@ function rutasDeFichasPublicas(): Routes {
     children: [
       {
         path: ':slug',
-        data: { kind },
+        data: { kind, pantallaReal: true },
         resolve: { perfil: perfilPublicoResolver },
         loadComponent: () =>
           import('./features/public-profile/public-profile').then((m) => m.PublicProfile),
@@ -672,7 +672,7 @@ function rutasDeBusquedaPublica(): Routes {
           path: '',
           pathMatch: 'full',
           title: 'Buscar en AloVida — profesionales, medicamentos y centros de salud',
-          data: { arquetipo: 'listado' },
+          data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
             import('./features/redsat/buscar/buscador-listado/buscador-listado').then(
               (m) => m.BuscarBuscadorListado,
@@ -681,7 +681,7 @@ function rutasDeBusquedaPublica(): Routes {
         {
           path: 'profesionales',
           title: 'Profesionales de salud — AloVida',
-          data: { arquetipo: 'listado' },
+          data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
             import('./features/redsat/buscar/profesionales-listado/profesionales-listado').then(
               (m) => m.BuscarProfesionalesListado,
@@ -690,7 +690,7 @@ function rutasDeBusquedaPublica(): Routes {
         {
           path: 'medicamentos',
           title: 'Medicamentos y farmacias — AloVida',
-          data: { arquetipo: 'listado' },
+          data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
             import('./features/redsat/buscar/medicamentos-listado/medicamentos-listado').then(
               (m) => m.BuscarMedicamentosListado,
@@ -699,7 +699,7 @@ function rutasDeBusquedaPublica(): Routes {
         {
           path: 'hospitales',
           title: 'Hospitales y clínicas — AloVida',
-          data: { arquetipo: 'listado' },
+          data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
             import('./features/redsat/buscar/hospitales-listado/hospitales-listado').then(
               (m) => m.BuscarHospitalesListado,
@@ -708,7 +708,7 @@ function rutasDeBusquedaPublica(): Routes {
         {
           path: 'diagnostico',
           title: 'Laboratorios e imagen — AloVida',
-          data: { arquetipo: 'listado' },
+          data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
             import('./features/redsat/buscar/laboratorios-listado/laboratorios-listado').then(
               (m) => m.BuscarLaboratoriosListado,
@@ -717,7 +717,7 @@ function rutasDeBusquedaPublica(): Routes {
         {
           path: 'aseguradoras',
           title: 'Aseguradoras y convenios — AloVida',
-          data: { arquetipo: 'listado' },
+          data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
             import('./features/redsat/buscar/aseguradoras-listado/aseguradoras-listado').then(
               (m) => m.BuscarAseguradorasListado,
@@ -728,7 +728,7 @@ function rutasDeBusquedaPublica(): Routes {
           // que la ficha declara.
           path: 'mapa',
           title: 'Cerca mío — AloVida',
-          data: { arquetipo: 'detalle' },
+          data: { arquetipo: 'detalle', pantallaReal: true },
           loadComponent: () =>
             import('./features/redsat/buscar/cercania-detalle/cercania-detalle').then(
               (m) => m.BuscarCercaniaDetalle,
