@@ -11,6 +11,7 @@ import type {
 import type {
   DocumentoBloque,
   DocumentoDeAtencion,
+  DocumentoDeFormulario,
   DocumentoDeHistoria,
   DocumentoDeOrden,
   DocumentoDeReceta,
@@ -95,12 +96,17 @@ export function recetaDesdeResumen(
  * observaciones que el contrato no ata a un encuentro **quedan fuera** en vez
  * de colarse en la atención equivocada. La medicación va entera y a propósito
  * —el contrato no la ata al encuentro— y el bloque lo dice con su título.
+ *
+ * Los formularios respondidos los aporta quien ya los leyó (el resumen clínico
+ * no los trae); el parámetro es opcional para que las pantallas que no los
+ * leen sigan produciendo el mismo papel que antes.
  */
 export function atencionDesdeResumen(
   encuentro: Encounter,
   resumen: ClinicalSummary,
   contexto: ContextoDelDocumento,
   etiqueta: ResolverEtiqueta,
+  formularios?: readonly DocumentoDeFormulario[],
 ): DocumentoDeAtencion {
   const diagnosticos = resumen.conditions.filter((fila) => fila.encounterId === encuentro.id);
   const observaciones = resumen.observations.filter((fila) => fila.encounterId === encuentro.id);
@@ -144,6 +150,7 @@ export function atencionDesdeResumen(
         })),
       },
     ],
+    ...(formularios === undefined || formularios.length === 0 ? {} : { formularios }),
   };
 }
 

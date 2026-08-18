@@ -3,7 +3,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { FormsClient } from './forms.client';
-import type { FormInstance, FormInstanceDetail, FormInstanceList } from './forms.types';
+import type {
+  FormInstance,
+  FormInstanceDetail,
+  FormInstanceList,
+  MyFormInstanceList,
+} from './forms.types';
 
 describe('FormsClient', () => {
   let client: FormsClient;
@@ -139,6 +144,78 @@ describe('FormsClient', () => {
     });
 
     expect(recibido?.values).toHaveLength(2);
+    expect(recibido?.values[1].masked).toBe(true);
+    expect(recibido?.values[1].value).toBeNull();
+  });
+
+  it('listMyInstances pregunta por lo propio sin mandar ningún identificador', () => {
+    let recibido: MyFormInstanceList | undefined;
+    client.listMyInstances(10).subscribe((r) => (recibido = r));
+
+    // La URL no lleva paciente ni tenant: el servidor los toma de la sesión.
+    const req = http.expectOne(
+      (r) =>
+        r.url === '/forms/me/instances' &&
+        r.method === 'GET' &&
+        r.params.get('limit') === '10' &&
+        r.params.keys().length === 1,
+    );
+
+    const listado: MyFormInstanceList = {
+      items: [
+        {
+          id: 'inst-1',
+          resourceId: 'enc-1',
+          resourceTypeConceptId: 'rt-1',
+          schemaVersion: 1,
+          createdAt: '2026-08-17T14:00:00Z',
+        },
+      ],
+      limit: 10,
+      truncated: false,
+    };
+    req.flush(listado);
+    expect(recibido).toEqual(listado);
+  });
+
+  it('listMyInstances sin tope no manda limit', () => {
+    client.listMyInstances().subscribe();
+
+    const req = http.expectOne(
+      (r) => r.url === '/forms/me/instances' && r.method === 'GET' && !r.params.has('limit'),
+    );
+    req.flush({ items: [], limit: 50, truncated: false });
+  });
+
+  it('getMyInstance trae el detalle propio con la etiqueta del campo', () => {
+    let recibido: FormInstanceDetail | undefined;
+    client.getMyInstance('inst-1').subscribe((r) => (recibido = r));
+
+    const req = http.expectOne(
+      (r) => r.url === '/forms/me/instances/inst-1' && r.method === 'GET',
+    );
+
+    req.flush({
+      id: 'inst-1',
+      resourceId: 'enc-1',
+      resourceTypeConceptId: 'rt-1',
+      schemaVersion: 1,
+      createdAt: '2026-08-17T14:00:00Z',
+      values: [
+        {
+          id: 'v-1',
+          fieldId: 'f-1',
+          dataType: 'string',
+          fieldName: 'Tolerancia al ejercicio',
+          value: 'Buena',
+          ordinal: 0,
+          masked: false,
+        },
+        { id: 'v-2', fieldId: 'f-2', dataType: 'string', value: null, ordinal: 1, masked: true },
+      ],
+    });
+
+    expect(recibido?.values[0].fieldName).toBe('Tolerancia al ejercicio');
     expect(recibido?.values[1].masked).toBe(true);
     expect(recibido?.values[1].value).toBeNull();
   });

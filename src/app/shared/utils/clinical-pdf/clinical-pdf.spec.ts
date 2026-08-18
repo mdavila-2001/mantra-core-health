@@ -157,6 +157,38 @@ describe('Documento de la atención', () => {
 
     expect(textoDe(bloquesDeAtencion(sinMotivo))).toContain('Motivo de consulta: No registrado');
   });
+
+  it('incorpora los formularios respondidos, una sección legible por formulario', () => {
+    const texto = textoDe(
+      bloquesDeAtencion({
+        ...ATENCION,
+        formularios: [
+          {
+            id: 'fi-1',
+            titulo: 'Ficha de cardiología',
+            completadoEl: new Date('2026-08-17T15:00:00.000Z'),
+            respuestas: [
+              { etiqueta: 'Tolerancia al ejercicio', texto: 'Buena', masked: false },
+              { etiqueta: 'Serología', texto: 'SECRETO', masked: true },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(texto).toContain('Formulario: Ficha de cardiología');
+    expect(texto).toContain('Completado el');
+    expect(texto).toContain('Tolerancia al ejercicio: Buena');
+    // El enmascarado no cede tampoco dentro de la historia.
+    expect(texto).toContain(`Serología: ${VALOR_ENMASCARADO}`);
+    expect(texto).not.toContain('SECRETO');
+  });
+
+  it('sin formularios el documento es el mismo de antes: cero regresión', () => {
+    const texto = textoDe(bloquesDeAtencion(ATENCION));
+
+    expect(texto).not.toContain('Formulario:');
+  });
 });
 
 const FORMULARIO: DocumentoDeFormulario = {

@@ -12,6 +12,8 @@ import type {
   Encounter,
   MedicationRequest,
 } from '../../../core/data-access/clinical/clinical.types';
+import { FormsClient } from '../../../core/data-access/forms/forms.client';
+import type { FormInstanceDetail } from '../../../core/data-access/forms/forms.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -27,13 +29,16 @@ import {
   downloadHistoryPdf,
   downloadPrescriptionPdf,
   downloadVisitPdf,
+  VALOR_ENMASCARADO,
 } from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import type { DocumentoDeFormulario } from '../../../shared/utils/clinical-pdf/clinical-pdf.types';
 import {
   atencionDesdeResumen,
   recetaDesdeResumen,
   type ContextoDelDocumento,
   historiaDesdeFuentes,
 } from '../../../shared/utils/clinical-pdf/from-summary';
+import { textoDeValor } from '../../../shared/utils/form-values/form-values';
 import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
 
 /** Tope por bloque. El backend admite hasta 200; nadie lee doscientas filas. */
@@ -68,6 +73,28 @@ interface FilaVisible {
   readonly principal: string;
   readonly secundario: string;
   readonly cuando: Date | null;
+}
+
+/** Una respuesta de un formulario, ya en palabras. */
+interface RespuestaLeible {
+  readonly id: string;
+  readonly etiqueta: string;
+  /** La respuesta en palabras. Vacía cuando `masked`: el marcador la reemplaza. */
+  readonly texto: string;
+  readonly masked: boolean;
+}
+
+/** Un formulario clínico respondido, tal como lo lee quien fue atendido. */
+interface FormularioVisible {
+  readonly id: string;
+  /** El encuentro en que se respondió; ata el formulario a su atención. */
+  readonly encounterId: string;
+  readonly titulo: string;
+  /** Cuándo se completó, para mostrarse: el cierre manda; si no, la creación. */
+  readonly cuando: Date | null;
+  /** El cierre real, si lo hubo. Es lo único que el PDF declara como completado. */
+  readonly cerradoEl?: Date;
+  readonly respuestas: readonly RespuestaLeible[];
 }
 
 /**
@@ -107,6 +134,7 @@ export class MedicalRecord {
   private readonly clinical = inject(ClinicalClient);
   private readonly diagnostics = inject(DiagnosticsClient);
   private readonly terminology = inject(TerminologyClient);
+  private readonly forms = inject(FormsClient);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
 
@@ -209,13 +237,90 @@ export class MedicalRecord {
    */
   protected readonly recorte = computed(() => (this.datos()?.truncated ?? []).join(', '));
 
+  /* ---- los formularios clínicos respondidos ------------------------------- */
+
+  /** Lo que el archivo imprime donde el backend no expuso el valor. */
+  protected readonly marcadorEnmascarado = VALOR_ENMASCARADO;
+
+  /**
+   * Los formularios propios, con sus respuestas ya leídas.
+   *
+   * Estado aparte de `historia` a propósito: salen de otro módulo del backend
+   * (`/forms/me`), y un fallo ahí no justifica perder las atenciones ni al
+   * revés. Cada bloque declara su propia carga y su propio error.
+   */
+  protected readonly formularios = signal<ViewState<readonly FormularioVisible[]>>(loading());
+
+  protected readonly buscandoFormularios = computed(
+    () => this.formularios().status === 'loading',
+  );
+
+  protected readonly formulariosVisibles = computed<readonly FormularioVisible[]>(() => {
+    const estado = this.formularios();
+    return estado.status === 'ready' || estado.status === 'stale' ? estado.data : [];
+  });
+
+  /** Si la lectura de formularios falló, acá está el porqué, en palabras. */
+  protected readonly errorDeFormularios = computed<string | null>(() => {
+    const estado = this.formularios();
+    if (estado.status === 'offline') {
+      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    }
+    if (estado.status === 'forbidden') {
+      return estado.message ?? 'Tu cuenta no puede leer estos formularios.';
+    }
+    if (estado.status === 'not-found') {
+      return 'No encontramos tus formularios.';
+    }
+    if (estado.status === 'validation') {
+      return estado.issues.map((issue) => issue.message).join(' ') || 'No pudimos leerlos.';
+    }
+    if (estado.status === 'error') {
+      return `${estado.message || 'Ocurrió un error inesperado.'} (${estado.requestId})`;
+    }
+    return null;
+  });
+
+  /**
+   * Lee el listado propio y el detalle de cada instancia.
+   *
+   * El detalle se trae entero de una vez —no al desplegar— porque es lo que la
+   * sección muestra y lo que el PDF de la atención incorpora: descargar un
+   * documento no puede depender de una lectura que todavía no salió.
+   */
+  protected cargarFormularios(): void {
+    if (this.perfil === null) {
+      return;
+    }
+
+    this.formularios.set(loading());
+    this.forms
+      .listMyInstances(TOPE)
+      .pipe(
+        switchMap((listado) =>
+          listado.items.length === 0
+            ? of<FormInstanceDetail[]>([])
+            : forkJoin(listado.items.map((item) => this.forms.getMyInstance(item.id))),
+        ),
+      )
+      .subscribe({
+        next: (detalles) => {
+          this.formularios.set(ready(detalles.map((detalle) => formularioLeible(detalle))));
+        },
+        error: (error: unknown) =>
+          this.formularios.set(errorToViewState<readonly FormularioVisible[]>(error)),
+      });
+  }
+
   constructor() {
     if (this.perfil !== null) {
       this.cargar();
+      this.cargarFormularios();
     } else {
       // No es un vacío de datos ni un error: la pantalla no le corresponde a
       // esta cuenta, y el aviso lo dice con su propia salida.
       this.historia.set(empty({ label: 'Ir a mis turnos', route: MIS_TURNOS_ROUTE }));
+      this.formularios.set(ready([]));
     }
   }
 
@@ -276,8 +381,12 @@ export class MedicalRecord {
     }
 
     downloadVisitPdf(
-      atencionDesdeResumen(encuentro, datos, this.contextoDelDocumento(encuentro), (id) =>
-        this.label(id),
+      atencionDesdeResumen(
+        encuentro,
+        datos,
+        this.contextoDelDocumento(encuentro),
+        (id) => this.label(id),
+        this.formulariosDeLaAtencion(encuentro.id),
       ),
     );
     this.toasts.success('Descargamos la historia de esa atención.', 'Historia clínica');
@@ -327,6 +436,28 @@ export class MedicalRecord {
         );
       },
     });
+  }
+
+  /**
+   * Los formularios respondidos en esa atención, en la forma del documento.
+   *
+   * `completadoEl` sale sólo del cierre real: una instancia sin cerrar no puede
+   * aparentar fecha de completado en el papel. Si la lectura de formularios
+   * falló, va vacío — el PDF no inventa una sección que no se pudo leer.
+   */
+  private formulariosDeLaAtencion(encounterId: string): readonly DocumentoDeFormulario[] {
+    return this.formulariosVisibles()
+      .filter((formulario) => formulario.encounterId === encounterId)
+      .map((formulario) => ({
+        id: formulario.id,
+        titulo: formulario.titulo,
+        ...(formulario.cerradoEl === undefined ? {} : { completadoEl: formulario.cerradoEl }),
+        respuestas: formulario.respuestas.map((respuesta) => ({
+          etiqueta: respuesta.etiqueta,
+          texto: respuesta.texto,
+          masked: respuesta.masked,
+        })),
+      }));
   }
 
   /** Descarga la receta. Disponible en cualquier momento posterior a su emisión. */
@@ -398,6 +529,36 @@ function conceptosDe(resumen: ClinicalSummary): readonly string[] {
     ]),
   ];
   return [...new Set(ids.filter((id): id is string => id !== undefined))];
+}
+
+/**
+ * Un formulario respondido, en la forma en que el archivo lo lee.
+ *
+ * El título es genérico porque la instancia no declara su plantilla y el
+ * paciente no puede leer el catálogo de plantillas; la etiqueta de cada campo
+ * sí viaja en el detalle (`fieldName`) y es lo que vuelve legible la lista.
+ * Cuando `masked` está puesto, el texto queda vacío: el marcador lo pone la
+ * vista — acá jamás viaja el contenido.
+ */
+function formularioLeible(detalle: FormInstanceDetail): FormularioVisible {
+  const cierre = detalle.closedAt === undefined ? undefined : new Date(detalle.closedAt);
+  const cerradoEl = cierre !== undefined && !Number.isNaN(cierre.getTime()) ? cierre : undefined;
+  const creacion = new Date(detalle.createdAt);
+  return {
+    id: detalle.id,
+    encounterId: detalle.resourceId,
+    titulo: 'Formulario clínico',
+    cuando: cerradoEl ?? (Number.isNaN(creacion.getTime()) ? null : creacion),
+    ...(cerradoEl === undefined ? {} : { cerradoEl }),
+    respuestas: [...detalle.values]
+      .sort((a, b) => a.ordinal - b.ordinal)
+      .map((valor) => ({
+        id: valor.id,
+        etiqueta: valor.fieldName ?? 'Campo del formulario',
+        texto: valor.masked ? '' : textoDeValor(valor.value, valor.dataType),
+        masked: valor.masked,
+      })),
+  };
 }
 
 /**

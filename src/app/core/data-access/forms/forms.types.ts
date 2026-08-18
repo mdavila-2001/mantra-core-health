@@ -69,6 +69,12 @@ export interface FormFieldValue {
   /** Tipo técnico del campo, si su definición sigue existiendo. */
   readonly dataType?: string;
   /**
+   * Nombre legible del campo, si su definición sigue existiendo. Es la
+   * etiqueta con que una pantalla sin acceso a las plantillas de chart —el
+   * archivo del paciente— re-pinta el valor.
+   */
+  readonly fieldName?: string;
+  /**
    * El valor único, resuelto de la columna `value[x]` por el backend. Ojo:
    * `integer` llega como string (bigint) y las fechas como ISO.
    */
@@ -85,4 +91,17 @@ export interface FormFieldValue {
 /** Respuesta de `GET /forms/instances/:id`: la instancia con sus valores. */
 export interface FormInstanceDetail extends FormInstanceListItem {
   readonly values: readonly FormFieldValue[];
+}
+
+/**
+ * Respuesta de `GET /forms/me/instances`: los formularios del paciente de la
+ * sesión, de todos sus encuentros del tenant activo. Sin `encounterId`: acá no
+ * se filtra por un encuentro elegido sino por la titularidad de la sesión.
+ */
+export interface MyFormInstanceList {
+  readonly items: readonly FormInstanceListItem[];
+  /** Tope aplicado al listado. */
+  readonly limit: number;
+  /** true si quedaron instancias fuera del tope. */
+  readonly truncated: boolean;
 }

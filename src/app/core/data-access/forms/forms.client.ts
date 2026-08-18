@@ -8,6 +8,7 @@ import type {
   FormInstance,
   FormInstanceDetail,
   FormInstanceList,
+  MyFormInstanceList,
   OpenFormInstanceInput,
 } from './forms.types';
 
@@ -84,6 +85,27 @@ export class FormsClient {
   getInstance(instanceId: string): Observable<FormInstanceDetail> {
     return this.http.get<FormInstanceDetail>(
       this.url(`/forms/instances/${encodeURIComponent(instanceId)}`),
+    );
+  }
+
+  /**
+   * `GET /forms/me/instances` — los formularios del paciente de la sesión.
+   *
+   * Sin identificador de paciente a propósito: el servidor lo toma del claim
+   * de la sesión, y aceptar uno por parámetro sería dejar pedir los de otro.
+   */
+  listMyInstances(limit?: number): Observable<MyFormInstanceList> {
+    let params = new HttpParams();
+    if (limit !== undefined) {
+      params = params.set('limit', limit);
+    }
+    return this.http.get<MyFormInstanceList>(this.url('/forms/me/instances'), { params });
+  }
+
+  /** `GET /forms/me/instances/:id` — un formulario propio con sus respuestas. */
+  getMyInstance(instanceId: string): Observable<FormInstanceDetail> {
+    return this.http.get<FormInstanceDetail>(
+      this.url(`/forms/me/instances/${encodeURIComponent(instanceId)}`),
     );
   }
 

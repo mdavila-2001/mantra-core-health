@@ -101,6 +101,12 @@ export interface DocumentoDeAtencion {
   readonly cierre?: Date;
   /** Diagnósticos, indicaciones, mediciones… ya traducidos. */
   readonly bloques: readonly DocumentoBloque[];
+  /**
+   * Los formularios clínicos respondidos en esta atención, si quien arma el
+   * documento los tiene. Opcional a propósito: las pantallas que todavía no
+   * los leen siguen produciendo exactamente el mismo papel que antes.
+   */
+  readonly formularios?: readonly DocumentoDeFormulario[];
 }
 
 /**
