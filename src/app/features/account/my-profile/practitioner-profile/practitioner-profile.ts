@@ -174,8 +174,6 @@ export class PractitionerProfile {
       idiomas: this.idiomas(perfil, etiquetas),
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
-      perfilId: perfil.profileId,
-      personaId: perfil.personId,
       desde: perfil.createdAt ?? null,
     };
   }

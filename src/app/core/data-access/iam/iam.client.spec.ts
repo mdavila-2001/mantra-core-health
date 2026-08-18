@@ -229,7 +229,8 @@ describe('IamClient', () => {
   it('assistedRegistration va a /iam/users/assisted-registration y no manda contraseña', () => {
     client
       .assistedRegistration({
-        displayName: 'Ana Paciente',
+        name: 'Ana',
+        lastName: 'Paciente',
         email: 'ana@mantra.test',
         reason: 'No puede registrarse por sí misma',
       })
@@ -239,7 +240,8 @@ describe('IamClient', () => {
     expect(req.request.method).toBe('POST');
     // El titular fija su clave al activar: acá no viaja ninguna.
     expect(req.request.body).toEqual({
-      displayName: 'Ana Paciente',
+      name: 'Ana',
+      lastName: 'Paciente',
       email: 'ana@mantra.test',
       reason: 'No puede registrarse por sí misma',
     });
@@ -255,7 +257,12 @@ describe('IamClient', () => {
   it('assistedRegistration devuelve la caducidad como fecha, no como texto', () => {
     let resultado: { activationExpiresAt: Date } | undefined;
     client
-      .assistedRegistration({ displayName: 'Ana', email: 'a@m.test', reason: 'motivo' })
+      .assistedRegistration({
+        name: 'Ana',
+        lastName: 'Paciente',
+        email: 'a@m.test',
+        reason: 'motivo',
+      })
       .subscribe((r) => (resultado = r));
 
     http.expectOne('/iam/users/assisted-registration').flush({

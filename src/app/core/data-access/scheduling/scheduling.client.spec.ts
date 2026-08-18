@@ -9,8 +9,10 @@ import type {
   AvailabilityExceptionCreated,
   Booking,
   BookingPolicyCreated,
+  DelayNoticeResult,
   ScheduleTemplateCreated,
   SlotsGenerated,
+  WaitlistPage,
 } from './scheduling.types';
 
 const DESDE = new Date('2026-08-08T00:00:00.000Z');
@@ -517,5 +519,149 @@ describe('SchedulingClient', () => {
 
     req.flush({ id: 'exc-1', blockedSlots: 6 });
     expect(creada?.blockedSlots).toBe(6);
+  });
+
+  /* ======================================================================
+     P8 · lista de espera y avisos de demora
+     ====================================================================== */
+
+  it('enrollWaitlist omite los opcionales ausentes y manda las fechas en ISO', () => {
+    client
+      .enrollWaitlist({
+        tenantId: 't-1',
+        patientProfileId: 'p-1',
+        resourceId: 'r-1',
+        desiredFrom: DESDE,
+        desiredTo: HASTA,
+      })
+      .subscribe();
+
+    const req = http.expectOne('/scheduling/waitlist');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      tenantId: 't-1',
+      patientProfileId: 'p-1',
+      resourceId: 'r-1',
+      desiredFrom: DESDE.toISOString(),
+      desiredTo: HASTA.toISOString(),
+    });
+    // `priority` no viaja: con `forbidNonWhitelisted`, una clave en `undefined`
+    // vuelve 400.
+    expect(Object.keys(req.request.body as object)).not.toContain('priority');
+
+    req.flush({ id: 'w-1', priority: 0, statusConceptId: 'c-activa' });
+  });
+
+  it('listWaitlist pide sólo las activas por omisión y convierte las fechas', () => {
+    let pagina: WaitlistPage | undefined;
+    client.listWaitlist({ patientProfileId: 'p-1' }).subscribe((p) => (pagina = p));
+
+    const req = http.expectOne((r) => r.url === '/scheduling/waitlist');
+    expect(req.request.params.get('patientProfileId')).toBe('p-1');
+    expect(req.request.params.has('includeClosed')).toBe(false);
+    expect(req.request.params.has('limit')).toBe(false);
+
+    req.flush({
+      items: [
+        {
+          id: 'w-1',
+          patientProfileId: 'p-1',
+          resourceId: 'r-1',
+          resourceLabel: 'Dra. Rivas',
+          desiredFrom: '2026-08-18T00:00:00.000Z',
+          desiredTo: null,
+          priority: 0,
+          statusConceptId: 'c-activa',
+          createdAt: '2026-08-17T10:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(pagina?.items[0].resourceLabel).toBe('Dra. Rivas');
+    expect(pagina?.items[0].desiredFrom).toEqual(new Date('2026-08-18T00:00:00.000Z'));
+    // `null` se normaliza a ausencia, como en las citas: un `null` conviviendo
+    // con `undefined` obliga a comprobar los dos en cada pantalla.
+    expect(pagina?.items[0].desiredTo).toBeUndefined();
+    expect(pagina?.items[0].createdAt).toEqual(new Date('2026-08-17T10:00:00.000Z'));
+  });
+
+  it('listWaitlist declara includeClosed sólo cuando se pide', () => {
+    client
+      .listWaitlist({ patientProfileId: 'p-1', includeClosed: true, limit: 5 })
+      .subscribe();
+
+    const req = http.expectOne((r) => r.url === '/scheduling/waitlist');
+    expect(req.request.params.get('includeClosed')).toBe('true');
+    expect(req.request.params.get('limit')).toBe('5');
+
+    req.flush({ items: [] });
+  });
+
+  it('delayBooking escapa el id y omite el mensaje vacío', () => {
+    let resultado: DelayNoticeResult | undefined;
+    client
+      .delayBooking('bk/1', { delayMinutes: 20, message: '' })
+      .subscribe((r) => (resultado = r));
+
+    const req = http.expectOne('/scheduling/bookings/bk%2F1/delay');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ delayMinutes: 20 });
+
+    req.flush({ notified: 1, affected: 1, bookingIds: ['bk/1'], detail: 'ok' });
+    expect(resultado?.notified).toBe(1);
+  });
+
+  it('delayResource manda la ventana en ISO cuando se acota', () => {
+    client
+      .delayResource('r-1', {
+        delayMinutes: 30,
+        message: 'Estoy en una urgencia',
+        from: DESDE,
+        to: HASTA,
+      })
+      .subscribe();
+
+    const req = http.expectOne('/scheduling/resources/r-1/delay');
+    expect(req.request.body).toEqual({
+      delayMinutes: 30,
+      message: 'Estoy en una urgencia',
+      from: DESDE.toISOString(),
+      to: HASTA.toISOString(),
+    });
+
+    req.flush({ notified: 0, affected: 0, bookingIds: [], detail: 'ok' });
+  });
+
+  it('la cita trae la demora informada con su instante convertido', () => {
+    let recibida: Booking | undefined;
+    client.getBooking('b-1').subscribe((b) => (recibida = b));
+
+    http.expectOne('/scheduling/bookings/b-1').flush({
+      id: 'b-1',
+      statusConceptId: 'c-confirmada',
+      createdAt: '2026-08-17T10:00:00.000Z',
+      delayNotice: {
+        delayMinutes: 20,
+        message: 'Estoy en una urgencia',
+        announcedAt: '2026-08-20T13:40:00.000Z',
+      },
+    });
+
+    expect(recibida?.delayNotice?.delayMinutes).toBe(20);
+    expect(recibida?.delayNotice?.announcedAt).toEqual(new Date('2026-08-20T13:40:00.000Z'));
+  });
+
+  it('una cita sin demora no inventa el campo', () => {
+    let recibida: Booking | undefined;
+    client.getBooking('b-1').subscribe((b) => (recibida = b));
+
+    http.expectOne('/scheduling/bookings/b-1').flush({
+      id: 'b-1',
+      statusConceptId: 'c-confirmada',
+      createdAt: '2026-08-17T10:00:00.000Z',
+      delayNotice: null,
+    });
+
+    expect(recibida?.delayNotice).toBeUndefined();
   });
 });

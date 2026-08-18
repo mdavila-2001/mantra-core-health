@@ -1,0 +1,26 @@
+.reporte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.reporte__titulo {
+  margin: 0;
+  font-weight: 600;
+}
+
+.reporte__motivos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.reporte__acciones {
+  display: flex;
+  gap: var(--e2);
+}
+
+.reporte__error {
+  margin: 0;
+  color: var(--danger-fg, var(--text-primary));
+}

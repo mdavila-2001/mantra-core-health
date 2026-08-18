@@ -108,4 +108,35 @@ describe('security-headers', () => {
       );
     });
   });
+
+  describe('`upgrade-insecure-requests` y el servidor sin TLS', () => {
+    it('va por omisión: sobre HTTPS es lo correcto', () => {
+      expect(contentSecurityPolicy()).toContain('upgrade-insecure-requests');
+    });
+
+    it('se puede quitar, y entonces no aparece en ninguna forma', () => {
+      // Servida por HTTP, la directiva hace que el navegador pida cada
+      // subrecurso por `https` contra un servidor que no habla TLS: la página
+      // queda sin estilos, sin JavaScript y sin imágenes. `localhost` está
+      // exento del ascenso, así que el defecto solo se ve desde otra máquina.
+      const politica = contentSecurityPolicy({ upgradeInsecureRequests: false });
+
+      expect(politica).not.toContain('upgrade-insecure-requests');
+      // Sin `;` colgando ni directiva vacía al final.
+      expect(politica.endsWith("form-action 'self'")).toBe(true);
+    });
+
+    it('quitarla no toca ninguna otra directiva', () => {
+      const conDirectiva = contentSecurityPolicy().split('; ');
+      const sinDirectiva = contentSecurityPolicy({ upgradeInsecureRequests: false }).split('; ');
+
+      expect(conDirectiva.filter((d) => d !== 'upgrade-insecure-requests')).toEqual(sinDirectiva);
+    });
+
+    it('`securityHeaders` la propaga a la cabecera que se emite', () => {
+      expect(securityHeaders({ upgradeInsecureRequests: false })['Content-Security-Policy']).not.toContain(
+        'upgrade-insecure-requests',
+      );
+    });
+  });
 });

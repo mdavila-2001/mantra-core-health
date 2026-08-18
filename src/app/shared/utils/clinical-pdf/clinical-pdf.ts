@@ -3,6 +3,7 @@ import type { jsPDF } from 'jspdf';
 import { buildBlocksPdf, type PdfBlock } from '../pdf-export/pdf-export';
 import type {
   DocumentoDeAtencion,
+  DocumentoDeFormulario,
   DocumentoDeReceta,
   DocumentoMedicamento,
   DocumentoPaciente,
@@ -74,6 +75,25 @@ export function buildVisitPdf(atencion: DocumentoDeAtencion): jsPDF {
 export function downloadVisitPdf(atencion: DocumentoDeAtencion): void {
   buildVisitPdf(atencion).save(
     nombreDeArchivo('atencion', atencion.cierre ?? atencion.inicio ?? new Date(), atencion.id),
+  );
+}
+
+/**
+ * Lo que el papel dice donde el backend no expuso el valor por una regla de
+ * acceso. La pantalla usa la misma frase: un marcador distinto en el PDF y en
+ * el DOM se leería como dos hechos distintos.
+ */
+export const VALOR_ENMASCARADO = 'No disponible por reglas de acceso';
+
+/** Arma el PDF de un formulario clínico respondido. */
+export function buildFormResponsePdf(formulario: DocumentoDeFormulario): jsPDF {
+  return buildBlocksPdf(bloquesDeFormulario(formulario), { title: formulario.titulo });
+}
+
+/** Descarga el formulario respondido. */
+export function downloadFormResponsePdf(formulario: DocumentoDeFormulario): void {
+  buildFormResponsePdf(formulario).save(
+    nombreDeArchivo('formulario', formulario.completadoEl ?? new Date(), formulario.id),
   );
 }
 
@@ -161,6 +181,37 @@ export function bloquesDeAtencion(atencion: DocumentoDeAtencion): readonly PdfBl
     for (const dato of bloque.datos) {
       bloques.push(parrafo(`${dato.etiqueta}: ${dato.valor}`));
     }
+  }
+
+  bloques.push(parrafo(pieDeDocumento()));
+  return bloques;
+}
+
+/** Las líneas de un formulario respondido, en orden de lectura. */
+export function bloquesDeFormulario(formulario: DocumentoDeFormulario): readonly PdfBlock[] {
+  const bloques: PdfBlock[] = [];
+
+  bloques.push(
+    parrafo(
+      formulario.completadoEl === undefined
+        ? // Se dice, no se disimula: sin fecha de cierre es una copia de trabajo.
+          'Estado: sin fecha de completado registrada.'
+        : `Completado el ${FORMATO_FECHA.format(formulario.completadoEl)}`,
+    ),
+  );
+
+  bloques.push(encabezado('Respuestas', 2));
+  if (formulario.respuestas.length === 0) {
+    bloques.push(parrafo('Sin respuestas registradas.'));
+  }
+  for (const respuesta of formulario.respuestas) {
+    // `masked` decide acá, no en el llamador: aunque `texto` trajera algo, un
+    // campo protegido imprime el marcador y nada más.
+    bloques.push(
+      parrafo(
+        `${respuesta.etiqueta}: ${respuesta.masked ? VALOR_ENMASCARADO : textoDe(respuesta.texto)}`,
+      ),
+    );
   }
 
   bloques.push(parrafo(pieDeDocumento()));

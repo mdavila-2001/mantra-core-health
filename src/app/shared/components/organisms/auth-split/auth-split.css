@@ -330,28 +330,17 @@
 
   /* El fondo vivo es movimiento continuo, no una entrada: acortar el delay no
      alcanza, hay que apagar la animación entera y dejar una composición fija.
-     Los anillos de pulso y el latido no tienen un fotograma de reposo con
-     sentido (son puro movimiento), así que se ocultan en vez de congelarse a
-     mitad de camino. El velo SÍ se queda: quieto es un degradado, y sin él la
-     pantalla pierde el fondo entero en vez de perder la animación. */
-  .auth-split__velo,
-  .auth-split__node,
-  .auth-split__edge {
+     El latido no tiene un fotograma de reposo con sentido (es puro
+     movimiento), así que se oculta en vez de congelarse a mitad de camino. El
+     velo SÍ se queda: quieto es un degradado, y sin él la pantalla pierde el
+     fondo entero en vez de perder la animación. */
+  .auth-split__velo {
     animation: none !important;
   }
 
-  .auth-split__ring,
   .auth-split__latido-trazo {
     animation: none !important;
     opacity: 0;
-  }
-
-  .auth-split__node {
-    opacity: 0.7;
-  }
-
-  .auth-split__edge {
-    opacity: 0.22;
   }
 }
 
@@ -443,11 +432,10 @@
   }
 
   /* ==========================================================================
-      Lienzo vivo — "tu salud, conectada" en forma: una red de nodos que
-      respira como un pulso y un latido que la cruza, sobre las auroras que
-      derivan detrás. Todo el lienzo es `aria-hidden` y vive en `#ffffff` y
-      rampas fijas, por el mismo motivo que los velos de esta columna.
-      Se ancla arriba-derecha, lejos del rincón abajo-izquierda documentado
+      Lienzo vivo — "tu salud, conectada" en forma: un latido que cruza la
+      columna sobre las auroras que derivan detrás. Es `aria-hidden` y vive en
+      `#ffffff` y rampas fijas, por el mismo motivo que los velos de esta
+      columna. Cruza muy por encima del rincón abajo-izquierda documentado
       arriba (petrol-800 bajo el texto): nada acá se acerca al 12:1 que
       sostiene esa lectura. ========================================================================== */
   .auth-split__pulse {
@@ -460,110 +448,6 @@
     pointer-events: none;
     /* Contra el puntero: el dibujo es el plano de atrás. */
     translate: calc(var(--pointer-tilt-x) * -16px) calc(var(--pointer-tilt-y) * -11px);
-  }
-
-  /* Anillo de pulso: un ping que nace del nodo central y se disuelve, como un
-     latido — el gesto más literal de "vivo" en toda la composición. */
-  .auth-split__ring {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    opacity: 0;
-    animation: auth-pulso-anillo 3.6s cubic-bezier(0.2, 0, 0.2, 1) infinite;
-  }
-
-  .auth-split__ring--2 {
-    animation-delay: 1.2s;
-  }
-
-  .auth-split__ring--3 {
-    animation-delay: 2.4s;
-  }
-
-  @keyframes auth-pulso-anillo {
-    0% {
-      transform: scale(1);
-      opacity: 0.45;
-    }
-    100% {
-      transform: scale(9);
-      opacity: 0;
-    }
-  }
-
-  /* Red de nodos: las líneas laten de a poco (una señal viajando) y cada nodo
-     respira en su propio compás — nunca los siete a la vez, que se leería
-     como parpadeo y no como pulso. */
-  .auth-split__edge {
-    stroke: currentColor;
-    stroke-width: 1;
-    stroke-linecap: round;
-    opacity: 0.14;
-    animation: auth-linea-pulso 4.4s ease-in-out infinite;
-  }
-
-  .auth-split__edge:nth-of-type(2) {
-    animation-delay: 0.7s;
-  }
-  .auth-split__edge:nth-of-type(3) {
-    animation-delay: 1.4s;
-  }
-  .auth-split__edge:nth-of-type(4) {
-    animation-delay: 2.1s;
-  }
-  .auth-split__edge:nth-of-type(5) {
-    animation-delay: 2.8s;
-  }
-  .auth-split__edge:nth-of-type(6) {
-    animation-delay: 3.5s;
-  }
-
-  @keyframes auth-linea-pulso {
-    0%,
-    100% {
-      opacity: 0.12;
-    }
-    50% {
-      opacity: 0.4;
-    }
-  }
-
-  .auth-split__node {
-    fill: currentColor;
-    opacity: 0.6;
-    transform-origin: center;
-    animation: auth-nodo-late 3.2s ease-in-out infinite;
-  }
-
-  .auth-split__node:nth-of-type(2) {
-    animation-delay: 0.5s;
-  }
-  .auth-split__node:nth-of-type(3) {
-    animation-delay: 1s;
-  }
-  .auth-split__node:nth-of-type(4) {
-    animation-delay: 1.5s;
-  }
-  .auth-split__node:nth-of-type(5) {
-    animation-delay: 2s;
-  }
-  .auth-split__node:nth-of-type(6) {
-    animation-delay: 0.8s;
-  }
-  .auth-split__node:nth-of-type(7) {
-    animation-delay: 1.7s;
-  }
-
-  @keyframes auth-nodo-late {
-    0%,
-    100% {
-      transform: scale(1);
-      opacity: 0.5;
-    }
-    50% {
-      transform: scale(1.7);
-      opacity: 0.95;
-    }
   }
 
   /* Latido: el mismo gesto que el logotipo, cruzando la columna justo encima
@@ -598,6 +482,85 @@
     }
     to {
       stroke-dashoffset: 0;
+    }
+  }
+
+  /* Constelación: cinco astros y cuatro hilos, arriba a la derecha. Dice
+     «conectada» sin pelear con el formulario, que es lo que la pantalla pide
+     mirar: los radios son de 1.8 a 3.4 sobre un lienzo de 400x520 y ninguno
+     pasa de 0.5 de opacidad.
+
+     Solo se anima `opacity`. La versión anterior escalaba los círculos y
+     saltaban —`transform-box` por omisión es `view-box`, así que el origen era
+     el centro del SVG y no el del astro—; acá no hay `transform` que pueda
+     tomar el sistema de coordenadas equivocado. De paso es más barato: la
+     opacidad no invalida el layout ni el paint del resto de la capa. */
+  .auth-split__hilo {
+    stroke: #ffffff;
+    stroke-width: 0.75;
+    opacity: 0.1;
+    animation: auth-hilo-respira 9s ease-in-out infinite;
+  }
+
+  .auth-split__hilo:nth-of-type(2) {
+    animation-delay: 1.4s;
+  }
+
+  .auth-split__hilo:nth-of-type(3) {
+    animation-delay: 2.8s;
+  }
+
+  .auth-split__hilo:nth-of-type(4) {
+    animation-delay: 4.2s;
+  }
+
+  @keyframes auth-hilo-respira {
+    0%,
+    100% {
+      opacity: 0.07;
+    }
+    50% {
+      opacity: 0.2;
+    }
+  }
+
+  .auth-split__astro {
+    fill: #ffffff;
+    opacity: 0.28;
+    animation: auth-astro-respira 6.5s ease-in-out infinite;
+  }
+
+  /* El del centro es el que sostiene los cuatro hilos: un punto más y con el
+     mismo halo aqua que el trazo del latido, para que las dos capas se lean
+     como un solo dibujo y no como dos adornos sueltos. */
+  .auth-split__astro--eje {
+    opacity: 0.5;
+    filter: drop-shadow(0 0 6px var(--c-aqua-300));
+  }
+
+  .auth-split__astro:nth-of-type(2) {
+    animation-delay: 0.8s;
+  }
+
+  .auth-split__astro:nth-of-type(3) {
+    animation-delay: 1.9s;
+  }
+
+  .auth-split__astro:nth-of-type(4) {
+    animation-delay: 3.1s;
+  }
+
+  .auth-split__astro:nth-of-type(5) {
+    animation-delay: 4.4s;
+  }
+
+  @keyframes auth-astro-respira {
+    0%,
+    100% {
+      opacity: 0.2;
+    }
+    50% {
+      opacity: 0.45;
     }
   }
 
@@ -674,6 +637,14 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    /* La constelación se queda quieta en su valor medio: sigue dibujada, deja
+       de respirar. Es la lectura correcta de la preferencia —quitar movimiento,
+       no quitar el dibujo. */
+    .auth-split__hilo,
+    .auth-split__astro {
+      animation: none;
+    }
+
     .auth-split__latido-base {
       opacity: 0.22;
     }

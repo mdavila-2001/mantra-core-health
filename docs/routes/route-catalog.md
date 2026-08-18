@@ -103,6 +103,24 @@ la sección en blanco.
 Lo hace cumplir `node scripts/check-route-prefixes.mjs`, que corre en CI y dentro
 del informe documental.
 
+### La otra mitad de la regla: prefijos que faltan
+
+Que ninguna ruta se coma un prefijo no dice nada de los prefijos que **no
+están**. Una llamada de `core/data-access` cuyo prefijo no figure en el proxy la
+responde el router de Angular con su `index.html` y un **200**, así que el
+cliente recibe HTML donde espera JSON y el fallo sale como «error inesperado».
+
+Medido el 2026-08-17: **39 operaciones de 258** estaban así —27 de ellas del
+muro social, ya integrado en `dev`—, además del catálogo de servicios, las
+aseguradoras, el laboratorio y las interacciones medicamentosas. Ninguna prueba
+lo denunciaba: las unitarias de los clientes doblan `HttpClient` y nunca salen a
+la red.
+
+Lo hace cumplir `node scripts/check-client-prefixes.mjs`, en CI y en el informe
+documental. Cuando el primer segmento colisiona con una ruta del armazón se usa
+un prefijo de dos segmentos —`/billing/service-catalog`,
+`/diagnostics/patients`— igual que `/admin/tenants`.
+
 ## Cobertura
 
 | Métrica | Valor |

@@ -93,8 +93,7 @@
             "allowedHosts": [
               "localhost",
               "127.0.0.1",
-              ".devtunnels.ms",
-              "all"
+              ".devtunnels.ms"
             ]
           },
           "configurations": {
@@ -103,6 +102,10 @@
             },
             "development": {
               "buildTarget": "mantra-core-health:build:development"
+            },
+            "lan": {
+              "buildTarget": "mantra-core-health:build:development",
+              "allowedHosts": true
             }
           },
           "defaultConfiguration": "development"

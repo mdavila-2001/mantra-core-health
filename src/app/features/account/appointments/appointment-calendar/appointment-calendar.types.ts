@@ -32,6 +32,15 @@ export interface CalendarDay {
   readonly turnos: readonly CalendarAppointment[];
   /** Cómo se anuncia la celda entera a un lector de pantalla. */
   readonly etiqueta: string;
+  /**
+   * Si desde este día se puede salir a pedir un turno.
+   *
+   * Hacia atrás no hay horario que reservar: el día pasado se sigue mirando,
+   * pero no ofrece el botón (F-10).
+   */
+  readonly pedible: boolean;
+  /** La fecha en palabras, para nombrar la acción sin leer un número suelto. */
+  readonly etiquetaCorta: string;
 }
 
 /** Los días de la semana, empezando el lunes como el calendario local. */

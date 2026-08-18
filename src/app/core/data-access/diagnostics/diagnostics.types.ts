@@ -211,6 +211,37 @@ export interface PatientDiagnosticResults {
 }
 
 /**
+ * Una orden diagnóstica que el paciente tiene pendiente o cumplida.
+ *
+ * Es la otra mitad de {@link PatientDiagnosticResult}: aquélla es «qué me
+ * volvió» y ésta «qué me pidieron y qué tengo que hacer para cumplirlo».
+ *
+ * `hasReleasedResult` lo decide el servidor y no se recalcula acá: que exista un
+ * informe no quiere decir que haya un resultado que esta persona pueda leer.
+ */
+export interface PatientOrder {
+  readonly id: string;
+  readonly encounterId?: string;
+  readonly codeConceptId: string;
+  readonly categoryConceptId?: string;
+  readonly statusConceptId: string;
+  readonly priorityConceptId?: string;
+  readonly createdAt: Date;
+  /** Ayunas, horarios, qué llevar. Ausente = ningún centro publicó preparación. */
+  readonly preparationInstructions?: string;
+  readonly hasReleasedResult: boolean;
+  readonly reportId?: string;
+}
+
+/** Página de órdenes propias. */
+export interface PatientOwnOrders {
+  readonly patientProfileId: string;
+  readonly items: readonly PatientOrder[];
+  readonly limit: number;
+  readonly truncated: boolean;
+}
+
+/**
  * Con quién está compartido un resultado, y hasta cuándo.
  *
  * `active` lo decide el servidor contra su propio reloj, no la pantalla: dos

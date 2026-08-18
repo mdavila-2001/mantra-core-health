@@ -1,0 +1,21 @@
+.compositor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.compositor__aviso {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  /* Se lee como una advertencia, no como un pie de página: quien va a contar
+     su caso tiene que verlo antes de empezar a escribir. */
+  border-inline-start: 3px solid var(--border-strong, var(--border));
+  padding-inline-start: var(--e2);
+}
+
+.compositor__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--e2);
+}

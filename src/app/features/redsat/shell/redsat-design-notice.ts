@@ -1,6 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  Router,
+  RouterLink,
+  type ActivatedRouteSnapshot,
+} from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 
 /**
@@ -57,6 +63,7 @@ const PANTALLA_REAL: Readonly<Record<string, { readonly ruta: string; readonly r
   selector: 'app-redsat-design-notice',
   imports: [RouterLink],
   template: `
+    @if (esMaqueta()) {
     <div class="app-alert redsat-aviso-diseno" data-tono="aviso" role="note">
       <svg
         class="icono"
@@ -85,6 +92,7 @@ const PANTALLA_REAL: Readonly<Record<string, { readonly ruta: string; readonly r
         </span>
       </div>
     </div>
+    }
   `,
   styles: `
     .redsat-aviso-diseno {
@@ -95,6 +103,7 @@ const PANTALLA_REAL: Readonly<Record<string, { readonly ruta: string; readonly r
 })
 export class RedsatDesignNotice {
   private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
 
   /** El módulo que se está mirando: el primer segmento de la URL. */
   private readonly segmento = toSignal(
@@ -108,6 +117,57 @@ export class RedsatDesignNotice {
 
   /** La pantalla real equivalente, si el módulo tiene una construida. */
   protected readonly destino = computed(() => PANTALLA_REAL[this.segmento()] ?? null);
+
+  /**
+   * Si lo que se está mirando es una maqueta y no el producto.
+   *
+   * ## Por qué hizo falta, y por qué el aviso estaba mintiendo
+   *
+   * El marco público envuelve **dos cosas distintas**: las pantallas portadas de
+   * la bóveda, que siguen siendo marcado estático, y la superficie pública de
+   * P4 —`/buscar`, sus verticales y las fichas `/p/:slug`—, que lee la API real
+   * sin sesión.
+   *
+   * Como el aviso se pintaba siempre, la ficha pública de un profesional —con
+   * su nombre, su especialidad y su biografía traídos de la API— aparecía
+   * coronada por un cartel que decía «los filtros y botones no consultan la
+   * API» y ofrecía ir a «la pantalla que sí funciona». Se lo habría dicho a un
+   * paciente, sobre datos ciertos.
+   *
+   * Un aviso que marca lo real como falso es peor que no tenerlo: enseña a
+   * ignorarlo, y entonces deja de proteger a las 126 pantallas para las que sí
+   * existe.
+   *
+   * ## Por qué se decide por dato de ruta y no por una lista de URL
+   *
+   * Porque la lista se desincroniza en la primera pantalla que alguien conecte
+   * a la API y no recuerde venir a tacharla acá, y el fallo vuelve en silencio.
+   * Con `data.pantallaReal` la declara la propia ruta, junto a su
+   * `loadComponent`: quien conecta la pantalla ya está editando esa línea.
+   *
+   * Por omisión **es maqueta**. La regla se equivoca del lado seguro: una
+   * pantalla nueva de la bóveda queda marcada aunque nadie se acuerde del aviso.
+   */
+  protected readonly esMaqueta = computed(() => !this.pantallaReal());
+
+  private readonly pantallaReal = toSignal(
+    this.router.events.pipe(
+      filter((evento) => evento instanceof NavigationEnd),
+      map(() => this.rutaDeclaraReal()),
+      startWith(this.rutaDeclaraReal()),
+    ),
+    { initialValue: false },
+  );
+
+  /** Lee `data.pantallaReal` de la hoja del árbol de rutas activo. */
+  private rutaDeclaraReal(): boolean {
+    let nodo: ActivatedRouteSnapshot | null = this.ruta.snapshot.root;
+    while (nodo !== null) {
+      if (nodo.data['pantallaReal'] === true) return true;
+      nodo = nodo.firstChild;
+    }
+    return false;
+  }
 
   private primerSegmento(): string {
     return this.router.url.split('?')[0].split('/').filter(Boolean)[0] ?? '';

@@ -32,7 +32,7 @@ import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Largos que exige `AssistedRegistrationDto` en el backend. */
 const MAX_MOTIVO = 500;
-const MAX_NOMBRE = 200;
+const MAX_PARTE_NOMBRE = 100;
 
 /**
  * Alta asistida de un paciente que no puede registrarse por sí mismo
@@ -52,10 +52,11 @@ const MAX_NOMBRE = 200;
  *
  * ## Sin orquestación ni reanudación
  *
- * Una sola petición: el backend crea persona, perfil y cuenta en la misma
- * transacción (regla 11 del modelo, registro CTI atómico). No hay estado
- * intermedio de «perfil sin cuenta» que reanudar — o quedó todo, o no quedó
- * nada—, y el doble envío lo frena `app-form-actions`.
+ * Una sola petición y una sola transacción: o quedó la cuenta con su token de
+ * activación, o no quedó nada. Esta vía crea la cuenta y nada más —la persona y
+ * su perfil se registran después, cuando el titular completa su filiación—, así
+ * que el nombre que se declara acá sólo alimenta el nombre visible de la
+ * cuenta. El doble envío lo frena `app-form-actions`.
  *
  * > **Pendiente de contrato:** el DTO acepta `legalRepresentationId` y
  * > `legalRepresentativeUserId`, los dos uuid de referencia. Las convenciones
@@ -94,9 +95,24 @@ export class AssistedRegistration {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
   protected readonly form = new FormGroup({
-    displayName: new FormControl('', {
+    // El nombre va en sus cuatro partes, no en un campo libre: es como lo emite
+    // el documento de identidad y como se comparan dos personas al buscar
+    // duplicados.
+    name: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
+      validators: [Validators.required, Validators.maxLength(MAX_PARTE_NOMBRE)],
+    }),
+    middleName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
+    }),
+    lastName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(MAX_PARTE_NOMBRE)],
+    }),
+    motherLastName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
     }),
     email: new FormControl('', {
       nonNullable: true,
@@ -181,10 +197,18 @@ export class AssistedRegistration {
   }
 
   private datos(): AssistedPatientRegistration {
-    const { displayName, email, reason } = this.form.getRawValue();
+    const { name, middleName, lastName, motherLastName, email, reason } =
+      this.form.getRawValue();
+    const segundoNombre = middleName.trim();
+    const apellidoMaterno = motherLastName.trim();
 
     return {
-      displayName: displayName.trim(),
+      name: name.trim(),
+      lastName: lastName.trim(),
+      // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
+      // y una cadena vacía no es lo mismo que la ausencia del campo.
+      ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
+      ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       email: email.trim(),
       reason: reason.trim(),
     };

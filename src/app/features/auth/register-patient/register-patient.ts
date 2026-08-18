@@ -95,7 +95,12 @@ export class RegisterPatient {
   });
 
   readonly formProfesional = new FormGroup({
-    displayName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    // Mismas cuatro partes que el paciente: la persona se registra igual sea
+    // cual sea el perfil, y el backend compone con ellas el nombre que muestra.
+    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    middleName: new FormControl('', { nonNullable: true }),
+    lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    motherLastName: new FormControl('', { nonNullable: true }),
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
@@ -243,11 +248,16 @@ export class RegisterPatient {
     const raw = this.formProfesional.getRawValue();
     const titulo = raw.professionalTitle.trim();
     const telefono = raw.phone.trim();
+    const segundoNombre = raw.middleName.trim();
+    const apellidoMaterno = raw.motherLastName.trim();
 
     return {
       email: raw.email.trim(),
       password: raw.password,
-      displayName: raw.displayName.trim(),
+      name: raw.name.trim(),
+      lastName: raw.lastName.trim(),
+      ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
+      ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       licenseNumber: raw.licenseNumber.trim(),
       credentialNumber: raw.credentialNumber.trim(),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),

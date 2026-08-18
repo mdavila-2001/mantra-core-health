@@ -728,6 +728,45 @@ tiene que promoverlo al `.puml` primero.
 Es firmada y vence. Emitir una por adjunto al pintar la lista dejaría veinte
 enlaces vivos a datos clínicos de los que diecinueve nadie abrió.
 
+### `PublicDirectoryClient` — 9 lecturas anónimas
+
+El directorio público del buscador V65 (carril P4). Es **otra superficie**, no
+otras rutas de `CommunityClient`: aquélla habla con la red social **con
+sesión** y sus respuestas traen `tenantId`, ids de concepto y de archivo; ésta
+es anónima, y el servidor arma cada respuesta con una lista blanca de campos.
+
+Una petición de este cliente **no lleva `Authorization`**. No es una omisión
+sino el contrato: el resultado no depende de quién mira, y mandar un token
+ataría una respuesta cacheada `public, max-age=60` a una sesión.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/public/search` | `BuscarBuscadorListado` (`/buscar`) |
+| `GET` | `/public/search/practitioners` | `BuscarProfesionalesListado` |
+| `GET` | `/public/search/medications` | `BuscarMedicamentosListado` |
+| `GET` | `/public/search/organizations` | `BuscarHospitalesListado` |
+| `GET` | `/public/search/diagnostic-units` | `BuscarLaboratoriosListado` |
+| `GET` | `/public/search/insurers` | `BuscarAseguradorasListado` |
+| `GET` | `/public/search/pharmacies` | — (sin pantalla propia todavía) |
+| `GET` | `/public/nearby` | `BuscarCercaniaDetalle` (`/buscar/mapa`) |
+| `GET` | `/public/profiles/:prefijo/:slug` | `perfilPublicoResolver` (`/p/:slug`…) |
+
+**La ficha se pide por `/public/profiles/…` y no por `/p/:slug`**, aunque la
+API sirva las dos. `/p/:slug` es también **la URL de la pantalla**, y las dos
+no pueden convivir del lado del navegador: el proxy enruta comparando el
+comienzo de la ruta, así que mandar `/p` a la API se come la ruta del router, y
+no mandarla deja la llamada pidiéndole `/p/:slug` al servidor de Angular, que
+responde el `index.html` con **200** — el cliente recibe HTML donde espera
+JSON. Las cinco rutas cortas siguen siendo el contrato público para quien las
+llame directo.
+
+**Los filtros que existen son `q`, `cursor`, `limit` y `verified`.** El
+contrato de la API declara además `city`, `specialty`, `form`, `inStock`,
+`kind`, `study`, `planKind` y `open`, y el controlador **no los lee**: están
+marcados como *previstos* en `openapi/CONTRATO-PUBLICO.md` §2. Por eso las
+pantallas no dibujan esos filtros — uno que no filtra le dice a quien lo usó,
+sin decírselo, que todos los resultados cumplen su criterio.
+
 ### `CommunityClient` — 20 operaciones
 
 La red social médica (M19). Las 16 lecturas entraron primero, antes que

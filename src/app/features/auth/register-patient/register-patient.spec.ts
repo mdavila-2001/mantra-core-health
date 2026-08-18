@@ -82,10 +82,17 @@ describe('RegisterPatient', () => {
     });
   }
 
-  function completarProfesional(extra: Partial<Record<'professionalTitle' | 'phone', string>> = {}): void {
+  function completarProfesional(
+    extra: Partial<
+      Record<'professionalTitle' | 'phone' | 'middleName' | 'motherLastName', string>
+    > = {},
+  ): void {
     component.cambiarTipo('profesional');
     component.formProfesional.setValue({
-      displayName: 'Dra. Ana Paz',
+      name: 'Ana',
+      middleName: extra.middleName ?? '',
+      lastName: 'Paz',
+      motherLastName: extra.motherLastName ?? '',
       email: 'ana@hospital.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
@@ -176,14 +183,27 @@ describe('RegisterPatient', () => {
 
       const req = http.expectOne('/iam/auth/register-practitioner');
       expect(req.request.method).toBe('POST');
-      // El identificador de acceso es el correo, no el documento.
+      // El identificador de acceso es el correo, no el documento. El nombre va
+      // en partes, igual que en el alta de paciente.
       expect(req.request.body).toEqual({
-        displayName: 'Dra. Ana Paz',
+        name: 'Ana',
+        lastName: 'Paz',
         email: 'ana@hospital.test',
         password: 'secreto12',
         licenseNumber: 'MP-12345',
         credentialNumber: 'TIT-6789',
       });
+
+      req.flush({ userId: 'u', personId: 'p', practitionerProfileId: 'pp', practitionerCode: 'PRO-1' });
+    });
+
+    it('agrega segundo nombre y apellido materno solo si se completaron', () => {
+      completarProfesional({ middleName: 'Lucía', motherLastName: 'Rojas' });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.middleName).toBe('Lucía');
+      expect(req.request.body.motherLastName).toBe('Rojas');
 
       req.flush({ userId: 'u', personId: 'p', practitionerProfileId: 'pp', practitionerCode: 'PRO-1' });
     });
@@ -202,7 +222,10 @@ describe('RegisterPatient', () => {
     it('exige matrícula y credencial: sin habilitación no hay alta', () => {
       component.cambiarTipo('profesional');
       component.formProfesional.setValue({
-        displayName: 'Ana',
+        name: 'Ana',
+        middleName: '',
+        lastName: 'Paz',
+        motherLastName: '',
         email: 'ana@hospital.test',
         password: 'secreto12',
         licenseNumber: '',

@@ -40,7 +40,20 @@
              y recargar la lista entera en cada reacción perdería la posición de
              lectura. El recuento del servidor vuelve a mandar en la próxima
              carga, que es cuando importa. -->
-        <app-post-card [post]="entrada.post!" [actorProfileId]="perfil()" />
+        @if (reportando() === entrada.post!.id) {
+          <app-report-post
+            [postId]="entrada.post!.id"
+            (reportado)="cerrarReporte()"
+            (cancelado)="cerrarReporte()"
+          />
+        } @else {
+          <app-post-card
+            [post]="entrada.post!"
+            [actorProfileId]="perfil()"
+            [puedeReportar]="true"
+            (reportar)="abrirReporte($event)"
+          />
+        }
       }
     </div>
 

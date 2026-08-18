@@ -92,7 +92,14 @@ export interface ActivationResult {
 export interface PractitionerRegistration {
   readonly email: string;
   readonly password: string;
-  readonly displayName: string;
+  /** Nombre de pila. */
+  readonly name: string;
+  /** Segundo nombre. Opcional: mucha gente no tiene. */
+  readonly middleName?: string;
+  /** Apellido paterno. */
+  readonly lastName: string;
+  /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
+  readonly motherLastName?: string;
   readonly licenseNumber: string;
   readonly credentialNumber: string;
   readonly professionalTitle?: string;
@@ -180,7 +187,14 @@ export interface CreatedUser {
  * alguien haya creado una cuenta a nombre de otra persona.
  */
 export interface AssistedPatientRegistration {
-  readonly displayName: string;
+  /** Nombre de pila. */
+  readonly name: string;
+  /** Segundo nombre. Opcional: mucha gente no tiene. */
+  readonly middleName?: string;
+  /** Apellido paterno. */
+  readonly lastName: string;
+  /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
+  readonly motherLastName?: string;
   readonly email: string;
   readonly reason: string;
   readonly timeZone?: string;

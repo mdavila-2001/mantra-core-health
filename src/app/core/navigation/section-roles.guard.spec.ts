@@ -8,6 +8,7 @@ import {
 } from '@angular/router';
 
 import { SessionStore } from '../auth/session.store';
+import { ROLES_ROUTE_DATA } from './navigation.types';
 import { seccionRolesGuard, SECCION_DENEGADA_ROUTE } from './section-roles.guard';
 
 function token(roles: readonly string[]): string {
@@ -49,11 +50,20 @@ describe('seccionRolesGuard', () => {
     router = TestBed.inject(Router);
   });
 
-  function ejecutar(url: string, roles: readonly string[]): boolean | UrlTree {
+  function ejecutar(
+    url: string,
+    roles: readonly string[],
+    ruta: ActivatedRouteSnapshot = RUTA,
+  ): boolean | UrlTree {
     session.start({ accessToken: token(roles), refreshToken: 'r-1' });
     return TestBed.runInInjectionContext(
-      () => seccionRolesGuard(RUTA, estadoDe(url)),
+      () => seccionRolesGuard(ruta, estadoDe(url)),
     ) as boolean | UrlTree;
+  }
+
+  /** Una ruta que declara sus propios roles en `data`, como las hijas de «Mi perfil». */
+  function rutaConRoles(roles: unknown): ActivatedRouteSnapshot {
+    return { data: { [ROLES_ROUTE_DATA]: roles } } as unknown as ActivatedRouteSnapshot;
   }
 
   function destino(resultado: boolean | UrlTree): string {
@@ -89,8 +99,20 @@ describe('seccionRolesGuard', () => {
   /* -- el resto del registro ----------------------------------------------- */
 
   it('una sección sin roles la abre cualquier sesión', () => {
-    expect(ejecutar('/glossary', [])).toBe(true);
+    expect(ejecutar('/tutorials', [])).toBe(true);
     expect(ejecutar('/my-account', ['PATIENT'])).toBe(true);
+  });
+
+  it('el glosario es de quien atiende: el paciente rebota, aun por el enlace a un término', () => {
+    // Feedback de la analista (F-03, 18/08/2026): el glosario aparecía en el
+    // menú del paciente por no declarar roles. Es herramienta de trabajo, y la
+    // ficha de un término se comparte como enlace: si sólo se cerrara el
+    // listado, un enlace pegado en un chat abriría lo que el menú esconde.
+    expect(destino(ejecutar('/glossary', ['USER', 'PATIENT']))).toBe(SECCION_DENEGADA_ROUTE);
+    expect(destino(ejecutar('/glossary/c-1', ['USER', 'PATIENT']))).toBe(SECCION_DENEGADA_ROUTE);
+    expect(ejecutar('/glossary', ['PRACTITIONER'])).toBe(true);
+    expect(ejecutar('/glossary/c-1', ['CLINICIAN'])).toBe(true);
+    expect(ejecutar('/glossary', ['SECURITY_ADMIN'])).toBe(true);
   });
 
   it('la agenda pide rol de agenda', () => {
@@ -156,6 +178,41 @@ describe('seccionRolesGuard', () => {
 
   it('los parámetros de consulta no confunden la resolución', () => {
     expect(destino(ejecutar('/directory?especialidad=cardiologia', ['PRACTITIONER']))).toBe(
+      SECCION_DENEGADA_ROUTE,
+    );
+  });
+
+  /* -- las hijas que declaran sus propios roles ----------------------------- */
+
+  const DE_QUIEN_ATIENDE = rutaConRoles(['CLINICIAN', 'PRACTITIONER']);
+
+  it('una hija de «Mi perfil» que declara roles propios no la abre el paciente', () => {
+    // «Mi perfil» no declara roles, así que por prefijo pasaría cualquiera. La
+    // ruta manda: el paciente que escribe /my-account/preview a mano rebota
+    // (feedback de la analista, barrido del 18/08/2026).
+    expect(destino(ejecutar('/my-account/preview', ['USER', 'PATIENT'], DE_QUIEN_ATIENDE))).toBe(
+      SECCION_DENEGADA_ROUTE,
+    );
+  });
+
+  it('y la abre quien atiende, con la misma regla del comodín', () => {
+    expect(ejecutar('/my-account/edit', ['USER', 'PRACTITIONER'], DE_QUIEN_ATIENDE)).toBe(true);
+    expect(ejecutar('/my-account/articles', ['CLINICIAN'], DE_QUIEN_ATIENDE)).toBe(true);
+    expect(ejecutar('/my-account/articles', ['SUPERADMIN'], DE_QUIEN_ATIENDE)).toBe(true);
+  });
+
+  it('una declaración que no se puede leer cierra, no abre', () => {
+    // Quien declaró la clave quiso restringir. Si el guard la ignorara por mal
+    // formada, el error de tipeo abriría la puerta que se quiso cerrar.
+    expect(destino(ejecutar('/my-account/edit', ['PRACTITIONER'], rutaConRoles('PRACTITIONER')))).toBe(
+      SECCION_DENEGADA_ROUTE,
+    );
+    expect(ejecutar('/my-account/edit', ['SUPERADMIN'], rutaConRoles('PRACTITIONER'))).toBe(true);
+  });
+
+  it('una ruta sin roles propios sigue resolviendo por su sección', () => {
+    expect(ejecutar('/my-account', ['PATIENT'], rutaConRoles(undefined))).toBe(true);
+    expect(destino(ejecutar('/schedule', ['PATIENT'], rutaConRoles(undefined)))).toBe(
       SECCION_DENEGADA_ROUTE,
     );
   });

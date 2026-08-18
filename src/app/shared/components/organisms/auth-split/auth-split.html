@@ -17,29 +17,28 @@
       <span class="auth-split__velo auth-split__velo--c"></span>
     </div>
 
-    <!-- Lienzo vivo: red de nodos + trazo de latido, ver auth-split.css. Solo
-         escritorio (el propio `.auth-split__brand` está oculto antes de eso),
-         así que no anima nada en mobile. -->
+    <!-- Lienzo vivo: la constelación y el trazo de latido, ver auth-split.css.
+         Solo escritorio (el propio `.auth-split__brand` está oculto antes de
+         eso), así que no anima nada en mobile. -->
     <svg class="auth-split__pulse" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid slice" focusable="false">
-      <circle class="auth-split__ring auth-split__ring--1" cx="288" cy="132" r="6" />
-      <circle class="auth-split__ring auth-split__ring--2" cx="288" cy="132" r="6" />
-      <circle class="auth-split__ring auth-split__ring--3" cx="288" cy="132" r="6" />
+      <!-- Constelación: la parte «conectada» del claim, dicha en dibujo. Vive
+           arriba y a la derecha, lejos del texto de abajo, y NADA acá se anima
+           con `transform`. Ese fue el defecto anterior: `scale()` sobre un
+           `<circle>` sin `transform-box: fill-box` toma como origen el centro
+           del viewBox, no el del círculo, y cada nodo se disparaba en diagonal
+           en vez de latir donde estaba. Animando solo `opacity` el defecto no
+           puede volver: no hay sistema de coordenadas que malinterpretar. -->
+      <g class="auth-split__constelacion">
+        <line class="auth-split__hilo" x1="300" y1="120" x2="228" y2="70" />
+        <line class="auth-split__hilo" x1="300" y1="120" x2="356" y2="182" />
+        <line class="auth-split__hilo" x1="300" y1="120" x2="242" y2="196" />
+        <line class="auth-split__hilo" x1="242" y1="196" x2="168" y2="238" />
 
-      <g class="auth-split__network">
-        <line class="auth-split__edge" x1="288" y1="132" x2="205" y2="66" />
-        <line class="auth-split__edge" x1="288" y1="132" x2="356" y2="196" />
-        <line class="auth-split__edge" x1="288" y1="132" x2="226" y2="214" />
-        <line class="auth-split__edge" x1="205" y1="66" x2="124" y2="104" />
-        <line class="auth-split__edge" x1="356" y1="196" x2="326" y2="284" />
-        <line class="auth-split__edge" x1="226" y1="214" x2="152" y2="252" />
-
-        <circle class="auth-split__node" cx="288" cy="132" r="5" />
-        <circle class="auth-split__node" cx="205" cy="66" r="3.5" />
-        <circle class="auth-split__node" cx="356" cy="196" r="4" />
-        <circle class="auth-split__node" cx="226" cy="214" r="3.5" />
-        <circle class="auth-split__node" cx="124" cy="104" r="3" />
-        <circle class="auth-split__node" cx="326" cy="284" r="3" />
-        <circle class="auth-split__node" cx="152" cy="252" r="3" />
+        <circle class="auth-split__astro auth-split__astro--eje" cx="300" cy="120" r="3.4" />
+        <circle class="auth-split__astro" cx="228" cy="70" r="2.2" />
+        <circle class="auth-split__astro" cx="356" cy="182" r="2.6" />
+        <circle class="auth-split__astro" cx="242" cy="196" r="2.2" />
+        <circle class="auth-split__astro" cx="168" cy="238" r="1.8" />
       </g>
 
       <!-- Latido: el mismo gesto que el logotipo de AloVida, cruzando la columna

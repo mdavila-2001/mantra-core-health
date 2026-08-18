@@ -1,71 +1,141 @@
 <div class="app-page-header" app-page-header="">
-      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg></span>
-      <div class="app-page-header__texto">
-        <p style="margin-bottom:var(--e2)"><a app-link="" routerLink="/buscar/buscador-listado"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Volver a los resultados</a></p><div class="app-page-header__titulo"><h1>Cerca mío</h1></div>
-        <p class="caption">Lo que tenés a mano ahora mismo: farmacias abiertas, emergencias, laboratorios. Pensada para el momento en que algo pasa y hay que decidir rápido a dónde ir.</p>
-      </div>
+  <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg></span>
+  <div class="app-page-header__texto">
+    <p style="margin-bottom: var(--e2)">
+      <a app-link="" routerLink="/buscar"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Volver a los resultados</a>
+    </p>
+    <div class="app-page-header__titulo"><h1>Cerca mío</h1></div>
+    <p class="caption">Lo que tenés a mano ahora mismo: farmacias abiertas, emergencias, laboratorios. Pensada para el momento en que algo pasa y hay que decidir rápido a dónde ir.</p>
+  </div>
+</div>
 
-    </div>
-    <p class="app-revelacion"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Si es una emergencia con riesgo de vida, no busques acá: llamá al 165 o andá a la emergencia más cercana. Esta pantalla orienta, no reemplaza al servicio de urgencias.</p>
-    <div class="app-view-state-host" app-view-state-host="">
+<p class="app-revelacion"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Si es una emergencia con riesgo de vida, no busques acá: llamá al 165 o andá a la emergencia más cercana. Esta pantalla orienta, no reemplaza al servicio de urgencias.</p>
+
+<div class="app-view-state-host" app-view-state-host="">
+  @switch (estado()) {
+    @case ('datos') {
       <div data-estado="datos" class="pila">
-      <section class="app-card">
-        <div class="app-card__cabecera"><h2>Lo que hay a tu alrededor</h2><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>6 lugares a menos de 5 km</span></div>
-        <div class="app-mapa">
-          <svg viewBox="0 0 800 400" role="img" aria-label="Mapa esquemático de Miraflores y Sopocachi con seis puntos de atención marcados. La lista completa, con nombre y distancia, está debajo del mapa.">
-            <rect width="800" height="400" fill="#F9F8F4"></rect>
-            <g stroke="#CDD9D5" stroke-width="10" stroke-linecap="round">
-              <path d="M0 120h800M0 250h800M180 0v400M430 0v400M640 0v400"></path>
-            </g>
-            <g stroke="#E3EAE7" stroke-width="4">
-              <path d="M0 60h800M0 185h800M0 320h800M90 0v400M300 0v400M540 0v400M720 0v400"></path>
-            </g>
-            <path d="M180 250h250v130H180z" fill="#DFEDE9" opacity=".55"></path>
-            <path d="M430 0h210v120H430z" fill="#E4F3F2" opacity=".55"></path>
-            <g font-family="Nunito Sans, sans-serif" font-size="13" fill="#787B7B">
-              <text x="196" y="276">Parque Urbano</text>
-              <text x="446" y="34">Miraflores</text>
-              <text x="24" y="112">Sopocachi</text>
-            </g>
-            <g fill="#0B557E">
-              <circle cx="300" cy="185" r="13"></circle><circle cx="300" cy="185" r="26" fill="#0B557E" opacity=".14"></circle>
-            </g>
-            <text x="322" y="190" font-family="Nunito Sans, sans-serif" font-size="14" font-weight="600" fill="#0A3E5C">Estás acá</text>
-            <g><circle cx="255" cy="120" r="15" fill="#4FB3A9"></circle><text x="255" y="125" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">A</text><text x="277" y="125" font-family="Nunito Sans, sans-serif" font-size="13" fill="#4E5151">Farmacia Chávez · 0,8 km</text></g>
-            <g><circle cx="190" cy="300" r="15" fill="#4FB3A9"></circle><text x="190" y="305" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">B</text><text x="212" y="305" font-family="Nunito Sans, sans-serif" font-size="13" fill="#4E5151">Clínica Los Olivos · 1,2 km</text></g>
-            <g><circle cx="470" cy="210" r="15" fill="#4FB3A9"></circle><text x="470" y="215" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">C</text><text x="492" y="215" font-family="Nunito Sans, sans-serif" font-size="13" fill="#4E5151">Farmacorp · 1,4 km</text></g>
-            <g><circle cx="560" cy="95" r="15" fill="#4FB3A9"></circle><text x="560" y="100" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">D</text><text x="582" y="100" font-family="Nunito Sans, sans-serif" font-size="13" fill="#4E5151">Hospital Arco Iris · 2,9 km</text></g>
-            <g><circle cx="620" cy="300" r="15" fill="#4FB3A9"></circle><text x="620" y="305" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">E</text><text x="642" y="305" font-family="Nunito Sans, sans-serif" font-size="13" fill="#4E5151">Laboratorio Zamora · 3,4 km</text></g>
-            <g><circle cx="700" cy="160" r="15" fill="#4FB3A9"></circle><text x="700" y="165" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">F</text><text x="722" y="165" font-family="Nunito Sans, sans-serif" font-size="13" fill="#4E5151">Farmacia San Martín · 5,7 km</text></g>
-          </svg>
-          <p class="app-mapa__nota"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"></circle></svg> Las distancias son en línea recta, no de recorrido. El tiempo de viaje real depende del tráfico y AloVida no lo calcula.</p>
-        </div>
-      </section>
-      <section class="app-card">
-        <div class="app-card__cabecera"><h2>Los seis, en orden de cercanía</h2></div>
-        <div class="tabla-envoltorio">
-          <table class="app-data-table" app-data-table="">
-            <caption class="solo-lectores">Lugares cercanos ordenados por distancia</caption>
-            <thead><tr><th scope="col"></th><th scope="col">Lugar</th><th scope="col">Qué es</th><th scope="col">Distancia</th><th scope="col">Estado</th><th scope="col"></th></tr></thead>
-            <tbody>
-            <tr><td><span class="col-codigo">A</span></td><td><a app-link="" routerLink="/buscar/perfil-farmacia-detalle">Farmacia Chávez · Miraflores</a></td><td>Farmacia</td><td><span class="num">0,8 km</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Abierta hasta 22:00</span></td><td><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-farmacia-detalle">Ver</a></td></tr>
-            <tr><td><span class="col-codigo">B</span></td><td><a app-link="" routerLink="/buscar/perfil-organizacion-detalle">Clínica Los Olivos</a></td><td>Clínica con emergencias</td><td><span class="num">1,2 km</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Emergencias 24 h</span></td><td><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-organizacion-detalle">Ver</a></td></tr>
-            <tr><td><span class="col-codigo">C</span></td><td><a app-link="" routerLink="/buscar/perfil-farmacia-detalle">Farmacorp · Sopocachi</a></td><td>Farmacia</td><td><span class="num">1,4 km</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Abierta 24 horas</span></td><td><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-farmacia-detalle">Ver</a></td></tr>
-            <tr><td><span class="col-codigo">D</span></td><td><a app-link="" routerLink="/buscar/perfil-organizacion-detalle">Hospital Arco Iris</a></td><td>Hospital con emergencias</td><td><span class="num">2,9 km</span></td><td><span class="app-badge" data-tono="ok"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg>Emergencias 24 h</span></td><td><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-organizacion-detalle">Ver</a></td></tr>
-            <tr><td><span class="col-codigo">E</span></td><td><a app-link="" routerLink="/buscar/perfil-laboratorio-detalle">Laboratorio Zamora</a></td><td>Laboratorio</td><td><span class="num">3,4 km</span></td><td><span class="app-badge" data-tono="aviso"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Cierra a las 19:00</span></td><td><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-laboratorio-detalle">Ver</a></td></tr>
-            <tr><td><span class="col-codigo">F</span></td><td><a app-link="" routerLink="/buscar/perfil-farmacia-detalle">Farmacia San Martín</a></td><td>Farmacia</td><td><span class="num">5,7 km</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"></circle></svg>Cerrada</span></td><td><a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/perfil-farmacia-detalle">Ver</a></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-      <section class="app-card app-card--inset">
-        <p class="caption"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"></circle></svg> Tu ubicación no sale de este dispositivo salvo que la compartas. Si preferís no darla, escribí tu zona en el buscador —«Miraflores», «Equipetrol»— y el resultado es el mismo.</p>
-      </section>
+        <section class="app-card">
+          <div class="app-card__cabecera">
+            <h2>Lo que hay a tu alrededor</h2>
+            <span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>{{ cuantos() }} lugares a menos de {{ radioKm }} km</span>
+          </div>
+          <div class="app-mapa">
+            <!-- Esquema de posiciones relativas, no una carta de navegación: su
+                 descripción remite a la tabla de abajo, que tiene el mismo dato
+                 (PAC-MED-005). -->
+            <svg
+              viewBox="0 0 800 400"
+              role="img"
+              [attr.aria-label]="
+                'Mapa esquemático con ' +
+                cuantos() +
+                ' puntos de atención marcados por posición relativa. La lista completa, con nombre y distancia en línea recta, está en la tabla debajo del mapa.'
+              "
+            >
+              <rect width="800" height="400" fill="var(--superficie-2, #f9f8f4)"></rect>
+              <g stroke="var(--borde-suave, #cdd9d5)" stroke-width="10" stroke-linecap="round">
+                <path d="M0 120h800M0 250h800M180 0v400M430 0v400M640 0v400"></path>
+              </g>
+              @for (lugar of lugares(); track lugar.codigo) {
+                <g>
+                  <circle [attr.cx]="lugar.x" [attr.cy]="lugar.y" r="15" fill="var(--acento, #4fb3a9)"></circle>
+                  <text
+                    [attr.x]="lugar.x"
+                    [attr.y]="lugar.y + 5"
+                    text-anchor="middle"
+                    font-size="13"
+                    font-weight="700"
+                    fill="#ffffff"
+                  >{{ lugar.codigo }}</text>
+                  <text [attr.x]="lugar.x + 22" [attr.y]="lugar.y + 5" font-size="13" fill="var(--texto-2, #4e5151)"
+                    >{{ lugar.nombre }} · {{ lugar.distancia }}</text
+                  >
+                </g>
+              }
+            </svg>
+            <p class="app-mapa__nota"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"></circle></svg> Las distancias son en línea recta, no de recorrido. El tiempo de viaje real depende del tráfico y AloVida no lo calcula.</p>
+          </div>
+        </section>
+
+        <section class="app-card">
+          <div class="app-card__cabecera"><h2>Los lugares, en orden de cercanía</h2></div>
+          <div class="tabla-envoltorio">
+            <table class="app-data-table" app-data-table="">
+              <caption class="solo-lectores">
+                Lugares cercanos ordenados por distancia en línea recta
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col"></th>
+                  <th scope="col">Lugar</th>
+                  <th scope="col">Qué es</th>
+                  <th scope="col">Distancia en línea recta</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (lugar of lugares(); track lugar.codigo) {
+                  <tr>
+                    <td><span class="col-codigo">{{ lugar.codigo }}</span></td>
+                    <td><a app-link="" [routerLink]="lugar.enlace">{{ lugar.nombre }}</a></td>
+                    <td>{{ lugar.queEs }}</td>
+                    <td><span class="num">{{ lugar.distancia }}</span></td>
+                    <td>
+                      <a app-button="" data-variante="secundario" data-tam="sm" [routerLink]="lugar.enlace">Ver</a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
-      <div data-estado="carga" hidden="">
+    }
+
+    @case ('consentimiento') {
+      <div data-estado="consentimiento" class="pila">
+        <section class="app-card">
+          <div class="app-card__cabecera"><h2>Para mostrarte lo que tenés cerca, necesitamos tu ubicación</h2></div>
+          <p class="caption">
+            Se usa una sola vez para calcular distancias y no se guarda. Tu ubicación no sale de este
+            dispositivo salvo que la compartas.
+          </p>
+          <div style="margin-top: var(--e5)">
+            <button app-button="" data-variante="primario" type="button" (click)="compartirUbicacion()">
+              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>
+              Compartir mi ubicación
+            </button>
+          </div>
+        </section>
+
+        <section class="app-card app-card--inset">
+          <div class="app-card__cabecera"><h2>O buscá por zona, sin dar tu ubicación</h2></div>
+          <p class="caption">Escribí tu barrio o tu zona —«Miraflores», «Equipetrol»— y el resultado es el mismo.</p>
+          <form (submit)="buscarPorZona($event)" style="margin-top: var(--e4)">
+            <label class="app-search-field" app-search-field="">
+              <span class="solo-lectores">Tu zona o barrio</span>
+              <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+              <input class="app-input" app-input="" type="search" name="zona" placeholder="Miraflores, Equipetrol, Sopocachi…" />
+            </label>
+          </form>
+        </section>
+      </div>
+    }
+
+    @case ('localizando') {
+      <div data-estado="localizando">
+        <section class="app-card">
+          <p class="caption" aria-live="polite">Esperando que tu navegador confirme la ubicación…</p>
+        </section>
+      </div>
+    }
+
+    @case ('carga') {
+      <div data-estado="carga">
         <section class="app-card">
           <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
-            <span class="solo-lectores">Cargando la ficha…</span>
+            <span class="solo-lectores">Buscando lo que tenés cerca…</span>
             <span class="app-skeleton app-skeleton--titulo"></span>
             <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
             <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
@@ -73,18 +143,62 @@
           </div>
         </section>
       </div>
-      <div data-estado="error" hidden="">
+    }
+
+    @case ('vacio') {
+      <div data-estado="vacio">
+        <div class="app-empty-state" app-empty-state="">
+          <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg></span>
+          <h2>Todavía no hay lugares con ubicación publicada cerca tuyo</h2>
+          <p>
+            Un lugar aparece en el mapa cuando publicó su ficha pública <em>y</em> cargó su
+            dirección con coordenadas. El directorio recién está cargando esa parte, así que hoy la
+            búsqueda por cercanía devuelve poco o nada aunque haya prestadores en tu zona. Buscalos
+            por nombre o por especialidad mientras tanto: esa búsqueda sí los encuentra.
+          </p>
+          <a app-button="" data-variante="secundario" routerLink="/buscar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Buscar por nombre o especialidad</a>
+        </div>
+      </div>
+    }
+
+    @case ('denegado') {
+      <div data-estado="denegado" class="pila">
+        <section class="app-card">
+          <div class="app-alert" app-alert="" data-tono="info" role="status">
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"></circle></svg>
+            <div class="app-alert__cuerpo">
+              <strong>Seguimos sin tu ubicación, y no hace falta.</strong>
+              <p>Escribí tu barrio o tu zona y el resultado es el mismo.</p>
+            </div>
+          </div>
+          <form (submit)="buscarPorZona($event)" style="margin-top: var(--e5)">
+            <label class="app-search-field" app-search-field="">
+              <span class="solo-lectores">Tu zona o barrio</span>
+              <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+              <input class="app-input" app-input="" type="search" name="zona" placeholder="Miraflores, Equipetrol, Sopocachi…" />
+            </label>
+          </form>
+        </section>
+      </div>
+    }
+
+    @case ('error') {
+      <div data-estado="error">
         <section class="app-card">
           <div class="app-alert" app-alert="" data-tono="error" role="alert">
             <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
             <div class="app-alert__cuerpo">
-              <strong>No pudimos abrir la ficha de los lugares cercanos.</strong>
-              <p>Puede que el perfil ya no sea público o que el directorio no esté respondiendo. Volvé a los resultados y probá de nuevo en un momento.</p>
+              <strong>No pudimos buscar lo que tenés cerca.</strong>
+              <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento.</p>
             </div>
           </div>
-          <div style="margin-top:var(--e5)">
-            <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+          <div style="margin-top: var(--e5)">
+            <button app-button="" data-variante="secundario" type="button" (click)="reintentar()">
+              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar
+            </button>
           </div>
         </section>
       </div>
-    </div>
+    }
+  }
+</div>

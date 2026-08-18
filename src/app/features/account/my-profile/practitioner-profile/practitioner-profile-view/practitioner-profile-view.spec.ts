@@ -111,8 +111,6 @@ const PERFIL: PerfilProfesionalVisible = {
   idiomas: [{ id: 'idi-es', nombre: 'Español', nivel: '', interpreta: true }],
   actividadActual: [afiliacion({ id: 'af-2', organizacion: 'Sede Central Sopocachi', hasta: null, actual: true })],
   experienciaHistorica: [afiliacion()],
-  perfilId: 'per-1',
-  personaId: 'per-1',
   desde: new Date('2014-02-01'),
 };
 
@@ -182,10 +180,41 @@ describe('PractitionerProfileView', () => {
     expect(portada?.textContent).toContain('Dra. Lucía Salas');
     expect(portada?.textContent).toContain('Médica cardióloga');
     expect(portada?.textContent).toContain('Cardiología');
-    expect(portada?.textContent).toContain('MED-7');
     expect(portada?.textContent).toContain('En ejercicio');
     // La presentación y las especialidades como tags viven en la cabecera.
     expect(portada?.textContent).toContain('Quince años en cardiología clínica.');
+  });
+
+  /* -- Feedback de la analista · F-01 / F-12 -------------------------------- */
+
+  it('quien abre la ficha desde la Guía no ve el código profesional', () => {
+    // Es vocabulario de sistema: al paciente no le dice nada (F-01, «Código:
+    // HRD-…»).
+    const portada = montar().querySelector('.profesional__portada');
+
+    expect(portada?.textContent).not.toContain('MED-7');
+    expect(portada?.textContent).not.toContain('Código profesional');
+  });
+
+  it('el dueño sí ve su código profesional: le sirve ante quien administra', () => {
+    const portada = montar(PERFIL, true).querySelector('.profesional__portada');
+
+    expect(portada?.textContent).toContain('MED-7');
+  });
+
+  it('el pie no muestra identificadores: sólo desde cuándo está en la plataforma', () => {
+    // F-12: al pie de las credenciales se veía «Perfil 87b6…» — un uuid crudo.
+    // Fuera para todos: quien tenga que reportar un problema lo busca en la
+    // consola de administración, no en la ficha.
+    const host = montar();
+
+    expect(host.querySelector('.profesional__ids')).toBeNull();
+    expect(host.textContent).not.toMatch(/Perfil\s+[0-9a-f-]{8,}|Persona\s+[0-9a-f-]{8,}/i);
+    // El mes lo decide el locale de la app y la zona horaria del runner; acá se
+    // fija la frase, no el formato.
+    expect(host.querySelector('.profesional__desde')?.textContent).toMatch(
+      /En la plataforma desde \S+ 2014/,
+    );
   });
 
   /** La jerarquía: la portada es la ÚNICA tarjeta elevada de la pantalla. */
@@ -263,6 +292,33 @@ describe('PractitionerProfileView', () => {
     const host = montar(PERFIL, false);
 
     expect(host.textContent).not.toContain('Agregar un vínculo');
+  });
+
+  /* -- I-D (F-31): la ayuda es de quien arma su perfil, no de quien lo mira -- */
+
+  it('el dueño ve la ayuda de cada pestaña', () => {
+    const host = montar(PERFIL, true);
+
+    expect(host.querySelector('app-tab-help-block')).not.toBeNull();
+    seleccionarPestana(host, 'Credenciales y verificaciones');
+    expect(host.textContent).toContain('Declarar no exige verificación previa');
+  });
+
+  it('un visitante no ve ninguna ayuda: le hablaba al dueño y a quien prueba', () => {
+    // Un paciente en la ficha de la Guía leía «en desarrollo/pruebas se puede
+    // usar todo el perfil sin esperar el trámite» (barrido del 18/08/2026).
+    const host = montar(PERFIL, false);
+
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
+    seleccionarPestana(host, 'Credenciales y verificaciones');
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
+    expect(host.textContent).not.toContain('en desarrollo/pruebas');
+  });
+
+  it('la vista previa tampoco la muestra: imita lo que ve el visitante', () => {
+    const host = montar(PERFIL, true, true);
+
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
   });
 
   /* -- Credenciales y verificaciones ----------------------------------------- */
