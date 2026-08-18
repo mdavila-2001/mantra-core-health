@@ -1,0 +1,91 @@
+.grupo__alerta {
+  display: block;
+  margin-bottom: var(--e3);
+}
+
+.grupo__resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  margin-bottom: var(--e4);
+}
+
+.grupo__meta,
+.grupo__estado {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.grupo__acciones {
+  display: flex;
+  gap: var(--e2);
+}
+
+.grupo__cuerpo {
+  display: grid;
+  gap: var(--e4);
+  /* Una columna en teléfono; el padrón baja al final en vez de comprimir el
+     muro, que es lo que la persona vino a leer. */
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 60rem) {
+  .grupo__cuerpo {
+    grid-template-columns: minmax(0, 68ch) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.grupo__muro,
+.grupo__lateral {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.grupo__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.grupo__lateral-titulo {
+  margin: 0 0 var(--e2);
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+}
+
+.grupo__padron {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.grupo__padron-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  color: var(--text-primary);
+}
+
+.grupo__padron-acciones {
+  display: flex;
+  gap: var(--e2);
+}
+
+.grupo__mas {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--e4);
+}
+
+.grupo__cargando {
+  color: var(--text-secondary);
+}

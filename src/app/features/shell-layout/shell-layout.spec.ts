@@ -132,15 +132,21 @@ describe('ShellLayout', () => {
       '/dashboard',
       // Los tutoriales tampoco exigen rol.
       '/tutorials',
+      // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
+      // perfil público de `community`, que es un dato de la cuenta.
+      '/messaging',
       // La **Guía de profesionales** ya no está: desde la corrección #2 del
       // 15/08/2026 declara `roles: ['PATIENT']` y excluyentes, y una sesión sin
       // roles no es una sesión de paciente. El directorio de laboratorios sí
       // sigue: es oferta publicada, no PHI, y lo consulta cualquiera que
       // necesite un estudio.
+      // Grupos y foros (P7): un grupo público lo lee cualquier sesión, y
+      // quién puede publicar en cada uno lo decide la API por membresía.
+      '/groups',
       '/laboratory-directory',
-      // El glosario tampoco: accesible por cada profesional, no sólo por
-      // quien administra.
-      '/glossary',
+      // El glosario ya NO está: desde el 18/08/2026 (feedback de la analista,
+      // F-03) declara los roles de quien atiende, y una sesión sin roles no es
+      // de nadie que atienda.
       '/my-account',
       '/my-account/appointments',
       // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que
@@ -150,9 +156,18 @@ describe('ShellLayout', () => {
       // Los resultados propios no exigen rol por lo mismo que los turnos: el
       // filtro real es tener perfil de paciente, que es un dato de la cuenta.
       '/my-account/diagnostic-results',
+      // Las órdenes propias, la otra mitad del mismo circuito. Tampoco exigen
+      // rol: el filtro real es tener perfil de paciente.
+      '/my-account/diagnostic-orders',
       // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
       // perfil de paciente, que es un dato de la cuenta y no un rol.
       '/my-account/questionnaires',
+      // Carril P1: el centro de notificaciones. Tampoco exige rol —cualquiera
+      // con sesión tiene bandeja, y el backend sólo devuelve la propia—, así
+      // que aparece también en una sesión sin roles.
+      // Carril P9: las preferencias de aviso, pegadas a la bandeja.
+      '/my-account/notification-preferences',
+      '/notification-center',
       '/my-account/identity/verify',
       '/my-account/identity/cases',
       '/design-system',
@@ -352,7 +367,9 @@ describe('ShellLayout', () => {
 
       // Con varias organizaciones la sesión no elige por su cuenta: marcar una
       // sería afirmar un contexto de datos que la persona no eligió.
-      expect(opcionesDeOrganizacion().filter((o) => o.getAttribute('aria-current'))).toHaveLength(0);
+      expect(opcionesDeOrganizacion().filter((o) => o.getAttribute('aria-current'))).toHaveLength(
+        0,
+      );
     });
 
     it('elegir una la marca, y sólo a ella', () => {

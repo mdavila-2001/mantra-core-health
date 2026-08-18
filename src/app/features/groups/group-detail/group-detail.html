@@ -1,0 +1,128 @@
+@if (noExiste()) {
+  <app-empty-state
+    title="No encontramos ese grupo"
+    description="Puede que no exista, o que sea un grupo al que no fuiste invitado."
+    variant="empty"
+  />
+} @else if (grupo(); as g) {
+  <app-page-header [title]="g.name" [subtitle]="g.description ?? ''" />
+
+  @if (error(); as mensaje) {
+    <app-alert tone="error" class="grupo__alerta">{{ mensaje }}</app-alert>
+  }
+  @if (aviso(); as mensaje) {
+    <app-alert tone="success" class="grupo__alerta">{{ mensaje }}</app-alert>
+  }
+
+  <div class="grupo__resumen">
+    <p class="grupo__meta">
+      {{ g.memberCount ?? 0 }} integrantes · {{ g.postCount ?? 0 }} publicaciones
+    </p>
+
+    <div class="grupo__acciones">
+      @if (puedeUnirse()) {
+        <button app-button (clicked)="unirse()">Unirme al grupo</button>
+      } @else if (esperandoAprobacion()) {
+        <span class="grupo__estado">Tu ingreso está en revisión</span>
+      } @else if (g.viewer.isMember) {
+        <button app-button variant="ghost" (clicked)="salir()">Salir del grupo</button>
+      }
+    </div>
+  </div>
+
+  <div class="grupo__cuerpo">
+    <section class="grupo__muro" aria-label="Muro del grupo">
+      @if (puedePublicar()) {
+        <app-card>
+          <app-group-composer [enviando]="enviando()" (publicado)="publicar($event)" />
+        </app-card>
+      }
+
+      @if (muroCerrado()) {
+        <!-- 403 en un grupo privado es la respuesta correcta, no una falla. -->
+        <app-empty-state
+          title="Este grupo es privado"
+          description="Pedí el ingreso para ver lo que se publica y participar."
+          variant="empty"
+        />
+      } @else if (publicaciones().length === 0 && !cargando()) {
+        <app-empty-state
+          title="Todavía no hay publicaciones"
+          description="Sé quien empiece la conversación."
+          variant="empty"
+        />
+      } @else {
+        <div class="grupo__lista">
+          @for (publicacion of publicaciones(); track publicacion.id) {
+            <app-group-post
+              [post]="publicacion"
+              [puedeResponder]="puedePublicar()"
+              [respondiendoA]="respondiendoA()"
+              (responder)="alternarRespuesta($event)"
+            >
+              @if (respondiendoA() === publicacion.id) {
+                <app-group-composer
+                  accion="Responder"
+                  placeholder="Escribí tu respuesta…"
+                  [cancelable]="true"
+                  [enviando]="enviando()"
+                  (publicado)="publicar($event)"
+                  (cancelado)="alternarRespuesta(publicacion.id)"
+                />
+              }
+            </app-group-post>
+          }
+        </div>
+
+        @if (hayMas()) {
+          <div class="grupo__mas">
+            <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
+              Ver más publicaciones
+            </button>
+          </div>
+        }
+      }
+    </section>
+
+    <aside class="grupo__lateral">
+      @if (administra() && pendientes().length > 0) {
+        <app-card>
+          <h2 class="grupo__lateral-titulo">Solicitudes de ingreso</h2>
+          <ul class="grupo__padron">
+            @for (solicitud of pendientes(); track solicitud.id) {
+              <li class="grupo__padron-fila">
+                <span>{{ etiqueta(solicitud) }}</span>
+                <span class="grupo__padron-acciones">
+                  <button app-button size="sm" (clicked)="aprobar(solicitud)">Aprobar</button>
+                  <button app-button size="sm" variant="ghost" (clicked)="rechazar(solicitud)">
+                    Rechazar
+                  </button>
+                </span>
+              </li>
+            }
+          </ul>
+        </app-card>
+      }
+
+      @if (integrantes().length > 0) {
+        <app-card>
+          <h2 class="grupo__lateral-titulo">Integrantes</h2>
+          <ul class="grupo__padron">
+            @for (integrante of integrantes(); track integrante.id) {
+              <li class="grupo__padron-fila">
+                <span>{{ etiqueta(integrante) }}</span>
+                @if (administra()) {
+                  <button app-button size="sm" variant="ghost" (clicked)="expulsar(integrante)">
+                    Dar de baja
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        </app-card>
+      }
+    </aside>
+  </div>
+} @else {
+  <p class="grupo__cargando" role="status">Cargando el grupo…</p>
+}

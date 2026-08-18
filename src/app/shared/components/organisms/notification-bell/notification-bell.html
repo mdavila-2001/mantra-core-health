@@ -1,0 +1,112 @@
+<div class="campana">
+  <button
+    class="campana__boton"
+    type="button"
+    data-testid="campana"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="abierto()"
+    aria-controls="panel-notificaciones"
+    [attr.aria-label]="etiqueta()"
+    (click)="alternar()"
+  >
+    <svg
+      class="icono"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+      <path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
+    </svg>
+
+    @if (hayPendientes()) {
+      <!-- El badge sólo aparece con algo que contar: un «0» permanente enseña a
+           no mirar la campana. -->
+      <app-badge
+        class="campana__badge"
+        variant="error"
+        size="sm"
+        [value]="sinLeer()"
+        label="notificaciones sin leer"
+        data-testid="campana-badge"
+      />
+    }
+  </button>
+
+  @if (abierto()) {
+    <div class="campana__panel" id="panel-notificaciones" role="menu">
+      <div class="campana__encabezado">
+        <p class="campana__titulo">Notificaciones</p>
+        @if (hayPendientes()) {
+          <button
+            class="campana__accion"
+            type="button"
+            data-testid="campana-marcar-todas"
+            (click)="marcarTodas()"
+          >
+            Marcar todas como leídas
+          </button>
+        }
+      </div>
+
+      @if (error(); as mensaje) {
+        <p class="campana__error" role="alert">{{ mensaje }}</p>
+      }
+
+      @if (avisos().length === 0) {
+        <p class="campana__vacio">No tenés notificaciones.</p>
+      } @else {
+        <ul class="campana__lista">
+          @for (aviso of avisos(); track aviso.fuente + aviso.id) {
+            <li>
+              <!-- Con destino es un botón que navega; sin destino es texto. Un
+                   enlace que no lleva a ningún lado se lee como producto roto,
+                   así que no se ofrece. -->
+              @if (aviso.ruta) {
+                <button
+                  class="campana__item"
+                  type="button"
+                  role="menuitem"
+                  data-testid="campana-item"
+                  [class.is-sin-leer]="aviso.sinLeer"
+                  (click)="abrir(aviso)"
+                >
+                  <span class="campana__item-titulo">{{ aviso.titulo }}</span>
+                  @if (aviso.detalle) {
+                    <span class="campana__item-detalle">{{ aviso.detalle }}</span>
+                  }
+                  <span class="campana__item-fecha">{{ aviso.fecha | date: 'short' }}</span>
+                </button>
+              } @else {
+                <p
+                  class="campana__item is-inerte"
+                  data-testid="campana-item"
+                  [class.is-sin-leer]="aviso.sinLeer"
+                >
+                  <span class="campana__item-titulo">{{ aviso.titulo }}</span>
+                  @if (aviso.detalle) {
+                    <span class="campana__item-detalle">{{ aviso.detalle }}</span>
+                  }
+                  <span class="campana__item-fecha">{{ aviso.fecha | date: 'short' }}</span>
+                </p>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      <a
+        class="campana__ver-todas"
+        routerLink="/notification-center"
+        data-testid="campana-ver-todas"
+        (click)="cerrar()"
+      >
+        Ver todas
+      </a>
+    </div>
+  }
+</div>

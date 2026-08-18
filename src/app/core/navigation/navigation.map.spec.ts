@@ -126,6 +126,22 @@ describe('APP_SECTIONS', () => {
     expect(isVisibleTo(guia, ['SUPERADMIN'])).toBe(false);
   });
 
+  /* -- Feedback de la analista · F-03 ---------------------------------------- */
+
+  it('el glosario no es del paciente: es herramienta de quien atiende', () => {
+    const glosario = APP_SECTIONS.find((s) => s.path === 'glossary')!;
+
+    // Nació sin `roles` («cada profesional») y por efecto colateral aparecía en
+    // el menú del paciente. Decidido el 18/08/2026: se le oculta. El comodín
+    // sigue valiendo —no es la Guía, no rompe la regla del registro—, así que
+    // quien administra lo recorre igual.
+    expect(isVisibleTo(glosario, ['USER', 'PATIENT'])).toBe(false);
+    expect(isVisibleTo(glosario, ['USER', 'PRACTITIONER'])).toBe(true);
+    expect(isVisibleTo(glosario, ['CLINICIAN'])).toBe(true);
+    expect(isVisibleTo(glosario, ['SECURITY_ADMIN'])).toBe(true);
+    expect(isVisibleTo(glosario, ['SUPERADMIN'])).toBe(true);
+  });
+
   it('sólo la Guía rompe el comodín: el resto del registro lo respeta', () => {
     // Si `exclusiveRoles` se empezara a repartir, el comodín dejaría de servir
     // para lo que existe —que quien administra pueda recorrer el sistema— y

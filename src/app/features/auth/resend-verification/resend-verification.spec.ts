@@ -42,6 +42,15 @@ describe('ResendVerification', () => {
     interno<() => void>('submit')();
   }
 
+  it('la ayuda del campo le habla a la persona, no en nombre del «sistema»', () => {
+    // «Eso lo decide el sistema» es vocabulario de quien lo construyó
+    // (barrido del 18/08/2026). Lo que a la persona le sirve saber es a dónde va.
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(texto).toContain('El enlace va al correo de tu cuenta');
+    expect(texto).not.toContain('lo decide el sistema');
+  });
+
   it('sin identificador no envía nada', () => {
     completar('');
     enviar();

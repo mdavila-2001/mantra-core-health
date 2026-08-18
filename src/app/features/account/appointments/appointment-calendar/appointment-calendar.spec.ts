@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { ComponentRef } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
@@ -143,5 +144,105 @@ describe('AppointmentCalendar', () => {
     const textos = eventos(fixture).map((evento) => evento.textContent ?? '');
     expect(textos[0]).toContain('Temprano');
     expect(textos[1]).toContain('Tarde');
+  });
+
+  /* ---- el calendario como punto de entrada a la reserva (F-10) ------------ */
+
+  /**
+   * Antes el calendario sólo servía para mirar: para pedir turno había que
+   * bajar al formulario y recorrer catorce días de horarios.
+   */
+  it('señalar un día emite su fecha para pedir turno ahí', () => {
+    const { fixture } = montar([]);
+    const dias: Date[] = [];
+    fixture.componentInstance.diaElegido.subscribe((dia) => dias.push(dia));
+
+    const hoy = new Date();
+    const boton = [...fixture.nativeElement.querySelectorAll('.calendario__numero--pedible')].find(
+      (b: HTMLButtonElement) => (b.textContent ?? '').trim() === String(hoy.getDate()),
+    ) as HTMLButtonElement;
+    boton.click();
+
+    expect(dias).toHaveLength(1);
+    expect(dias[0].getDate()).toBe(hoy.getDate());
+    expect(dias[0].getMonth()).toBe(hoy.getMonth());
+  });
+
+  /** Hacia atrás no hay horario que pedir: el día pasado se mira, no se ofrece. */
+  it('los días pasados no ofrecen pedir turno', () => {
+    const { fixture } = montar([]);
+
+    const anterior: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-testid="calendario-mes-anterior"]',
+    );
+    anterior.click();
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelectorAll('.calendario__numero--pedible').length,
+    ).toBe(0);
+  });
+
+  /** El botón dice de qué día es: un número suelto no se entiende leído en voz alta. */
+  it('el día accionable se anuncia con su fecha en palabras', () => {
+    const { fixture } = montar([]);
+
+    const boton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '.calendario__numero--pedible',
+    );
+    expect(boton.getAttribute('aria-label')).toContain('Ver horarios libres del');
+  });
+
+  /* ---- que la grilla no se deforme (F-08, F-09) --------------------------- */
+
+  /**
+   * F-08. Con varios turnos en un día, la celda tiene alto fijo y el contenido
+   * la estiraba: se deformaba la fila entera. Ahora los turnos viven en una
+   * caja propia que se desplaza, así que el bloque se ajusta a la celda y no
+   * al revés.
+   */
+  it('los turnos de un día viven en una caja acotada, no sueltos en la celda', () => {
+    const manana = new Date();
+    manana.setHours(9, 0, 0, 0);
+    const tarde = new Date();
+    tarde.setHours(16, 0, 0, 0);
+
+    const { fixture } = montar([
+      turno({ id: 'a', cuando: manana, titulo: 'Uno' }),
+      turno({ id: 'b', cuando: tarde, titulo: 'Dos' }),
+    ]);
+
+    // Una sola caja, la del día que tiene turnos: los días vacíos no la dibujan.
+    const cajas = fixture.nativeElement.querySelectorAll('.calendario__turnos');
+    expect(cajas.length).toBe(1);
+    expect(cajas[0].querySelectorAll('.calendario__turno').length).toBe(2);
+  });
+
+  /** El texto largo se trunca en pantalla, pero sigue disponible al apuntarlo. */
+  it('un turno con nombre largo ofrece su texto completo en el título', () => {
+    const { fixture } = montar([
+      turno({ titulo: 'Dra. María Fernanda Villarroel Antezana', estado: 'Confirmado' }),
+    ]);
+
+    const boton = fixture.nativeElement.querySelector('.calendario__turno');
+    expect(boton.getAttribute('title')).toContain('Dra. María Fernanda Villarroel Antezana');
+    expect(boton.getAttribute('title')).toContain('Confirmado');
+  });
+
+  /**
+   * F-09. Las iniciales de la semana usaban el mismo tamaño que el número del
+   * día y se perdían entre las fechas. Se lee del CSS porque la regla es
+   * visual: si alguien la vuelve a bajar a `caption`, esto se cae.
+   */
+  it('la cabecera de la semana no usa el tamaño del número del día', () => {
+    const css = readFileSync(
+      'src/app/features/account/appointments/appointment-calendar/appointment-calendar.css',
+      'utf8',
+    );
+    const cabecera = css.slice(css.indexOf('.calendario__encabezado {'));
+    const regla = cabecera.slice(0, cabecera.indexOf('}'));
+
+    expect(regla).toContain('--fs-h4');
+    expect(regla).not.toContain('--fs-caption');
   });
 });

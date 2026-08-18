@@ -53,11 +53,15 @@
   color: var(--text-secondary);
 }
 
+/* La cabecera de la semana se lee como cabecera.
+   Antes usaba el mismo tamaño y color que el número del día, así que las
+   iniciales se perdían entre las fechas: la analista pidió que igualaran al
+   rótulo del mes para que resalten. */
 .calendario__encabezado {
   padding: var(--sp-2);
-  font-size: var(--fs-caption);
+  font-size: var(--fs-h4);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   text-align: start;
 }
 
@@ -103,12 +107,25 @@
   color: var(--text-primary);
 }
 
+/* La caja de turnos del día: alto acotado y desplazamiento propio.
+   Es lo que impide que un día con varios turnos estire su celda y deforme la
+   fila entera del calendario (F-08). El alto sale del de la celda menos el
+   número del día. */
+.calendario__turnos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  max-block-size: 3.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .calendario__turno {
   display: flex;
   flex-direction: column;
   gap: 2px;
   width: 100%;
-  margin-top: var(--sp-1);
+  flex: 0 0 auto;
   padding: var(--sp-1) var(--sp-2);
   border: none;
   border-inline-start: 3px solid var(--border-strong);
@@ -177,4 +194,32 @@
   .calendario__dia {
     height: 7rem;
   }
+
+  /* La celda crece; la caja de turnos aprovecha lo que gana. */
+  .calendario__turnos {
+    max-block-size: 4.75rem;
+  }
+}
+
+/* El número del día, cuando además es el botón para pedir turno ese día.
+   Hereda el aspecto del número —no debe parecer otro control— y sólo se
+   anuncia como accionable al apuntarlo o al recibir el foco (F-10). */
+.calendario__numero--pedible {
+  inline-size: 100%;
+  border: none;
+  background: none;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+}
+
+.calendario__numero--pedible:hover {
+  background: var(--bg-hover, var(--bg-subtle));
+  color: var(--text-primary);
+}
+
+.calendario__numero--pedible:focus-visible {
+  outline: 2px solid var(--st-primary-border, var(--border-strong));
+  outline-offset: 1px;
 }

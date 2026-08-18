@@ -1,3 +1,12 @@
+<!-- Quien viene a atenderse ve SU panel, no el de quien administra.
+     El de abajo habla de organizaciones, secciones y estado del sistema: es el
+     tablero de quien trabaja acá, y a un paciente le decía cosas que no son
+     suyas (F-16 y F-17 de la analista). No se rediseña ninguno de los dos: se
+     separan. -->
+@if (esPaciente()) {
+  <app-patient-home />
+} @else {
+
 <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
      acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
 <app-page-header
@@ -206,3 +215,5 @@
     </app-view-state-host>
   </app-card>
 </div>
+
+}

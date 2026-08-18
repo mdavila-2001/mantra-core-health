@@ -21,6 +21,10 @@ import type { NavSection } from '../../shared/components/organisms/side-nav/side
 import type { TenantOption } from '../../shared/components/organisms/tenant-switcher/tenant-switcher.types';
 import { TutorialOverlay } from '../../shared/components/organisms/tutorial-overlay/tutorial-overlay';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
+// Carril P1: la campana. Es propiedad de P1 durante la tanda —el README lo
+// declara hotspot— y se monta acá porque el armazón es lo único que existe
+// exactamente una vez por sesión con interfaz.
+import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
 
@@ -49,6 +53,7 @@ import { TUTORIALS } from '../../core/tutorials/definitions';
     RedsatThemeToggleDirective,
     TutorialOverlay,
     TutorialTarget,
+    NotificationBell,
   ],
   templateUrl: './shell-layout.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

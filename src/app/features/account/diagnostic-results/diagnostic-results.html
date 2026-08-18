@@ -28,7 +28,7 @@
     @case ('ready') {
       <ul class="resultados__lista">
         @for (resultado of resultadosListos(); track resultado.reportId) {
-          <li class="resultados__item">
+          <li class="resultados__item" [id]="resultado.reportId">
             <header class="resultados__encabezado">
               <div>
                 <h2 class="resultados__titulo">{{ resultado.titulo }}</h2>
