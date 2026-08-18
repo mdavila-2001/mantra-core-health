@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-239 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+293 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -132,6 +132,7 @@ Archivo: `src/app/core/data-access/diagnostics/diagnostics.client.ts`
 | `GET` | `/diagnostic-results/me/:reportId/shares` |
 | `POST` | `/diagnostic-results/me/:reportId/shares` |
 | `POST` | `/diagnostic-results/me/:reportId/shares/:shareId/revoke` |
+| `GET` | `/diagnostic-results/me/orders` |
 | `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` |
 | `GET` | `/diagnostics/patients/:patientProfileId/orders` |
 | `GET` | `/diagnostics/work-orders` |
@@ -154,15 +155,37 @@ Archivo: `src/app/core/data-access/community/community.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `DELETE` | `/community/blocks` |
 | `GET` | `/community/blocks` |
+| `POST` | `/community/blocks` |
+| `DELETE` | `/community/bookmarks` |
 | `GET` | `/community/bookmarks` |
+| `POST` | `/community/bookmarks` |
 | `POST` | `/community/comments` |
 | `GET` | `/community/conversations` |
+| `POST` | `/community/conversations` |
 | `GET` | `/community/conversations/:conversationId/messages` |
+| `POST` | `/community/conversations/:conversationId/messages` |
+| `POST` | `/community/conversations/:conversationId/read` |
 | `GET` | `/community/feed` |
+| `DELETE` | `/community/follows` |
 | `GET` | `/community/follows` |
+| `POST` | `/community/follows` |
 | `GET` | `/community/groups` |
+| `POST` | `/community/groups` |
+| `GET` | `/community/groups/:groupId` |
 | `GET` | `/community/groups/:groupId/members` |
+| `POST` | `/community/groups/:groupId/members` |
+| `PATCH` | `/community/groups/:groupId/members/:memberId` |
+| `DELETE` | `/community/groups/:groupId/members/:memberProfileId` |
+| `GET` | `/community/groups/:groupId/posts` |
+| `POST` | `/community/groups/:groupId/posts` |
+| `GET` | `/community/moderation/appeals` |
+| `POST` | `/community/moderation/appeals/:appealId/resolve` |
+| `GET` | `/community/moderation/decisions` |
+| `POST` | `/community/moderation/decisions/:decisionId/appeal` |
+| `GET` | `/community/moderation/queue` |
+| `POST` | `/community/moderation/queue/:queueId/decision` |
 | `GET` | `/community/notifications` |
 | `GET` | `/community/polls/:pollId` |
 | `GET` | `/community/posts/:postId` |
@@ -172,9 +195,15 @@ Archivo: `src/app/core/data-access/community/community.client.ts`
 | `GET` | `/community/profiles/:profileId/posts` |
 | `POST` | `/community/profiles/:profileId/posts` |
 | `GET` | `/community/profiles/:profileId/reviews` |
+| `POST` | `/community/profiles/:profileId/reviews` |
+| `POST` | `/community/profiles/:profileId/reviews/:reviewId/responses` |
+| `GET` | `/community/profiles/by-slug/:slug` |
 | `GET` | `/community/profiles/me` |
 | `PUT` | `/community/profiles/me` |
+| `GET` | `/community/public/search/practitioners` |
 | `PUT` | `/community/reactions` |
+| `POST` | `/community/reports` |
+| `GET` | `/community/topics` |
 
 ## `ProceduresClient`
 
@@ -217,7 +246,9 @@ Archivo: `src/app/core/data-access/forms/forms.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `GET` | `/forms/instances` |
 | `POST` | `/forms/instances` |
+| `GET` | `/forms/instances/:instanceId` |
 | `POST` | `/forms/instances/:instanceId/close` |
 | `POST` | `/forms/instances/:instanceId/values` |
 
@@ -324,6 +355,18 @@ Archivo: `src/app/core/data-access/insurance/insurance.client.ts`
 | `GET` | `/insurance-carriers` |
 | `GET` | `/insurance-carriers/:id` |
 
+## `NotificationsClient`
+
+Archivo: `src/app/core/data-access/notifications/notifications.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/notifications/in-app/:id/read` |
+| `POST` | `/notifications/in-app/read-all` |
+| `GET` | `/notifications/me` |
+| `GET` | `/notifications/preferences/me` |
+| `PUT` | `/notifications/preferences/me` |
+
 ## `PharmaLabClient`
 
 Archivo: `src/app/core/data-access/pharma-lab/pharma-lab.client.ts`
@@ -410,6 +453,14 @@ Archivo: `src/app/core/data-access/public/public.client.ts`
 |---|---|
 | `GET` | `/public/directory` |
 
+## `PublicDirectoryClient`
+
+Archivo: `src/app/core/data-access/public-directory/public-directory.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/public/profiles/:prefijo/:slug` |
+
 ## `SchedulingClient`
 
 Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
@@ -422,17 +473,40 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 | `POST` | `/scheduling/bookings/:bookingId/:accion` |
 | `POST` | `/scheduling/bookings/:bookingId/cancel` |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` |
+| `POST` | `/scheduling/bookings/:bookingId/delay` |
 | `POST` | `/scheduling/bookings/:bookingId/reject` |
 | `POST` | `/scheduling/bookings/:bookingId/reschedule` |
 | `POST` | `/scheduling/holds/:holdToken/confirm` |
 | `POST` | `/scheduling/holds/:holdToken/request` |
 | `GET` | `/scheduling/resources` |
 | `POST` | `/scheduling/resources` |
+| `POST` | `/scheduling/resources/:resourceId/delay` |
 | `POST` | `/scheduling/resources/:resourceId/exceptions` |
 | `POST` | `/scheduling/resources/:resourceId/templates` |
 | `GET` | `/scheduling/slots` |
 | `POST` | `/scheduling/slots/:slotId/holds` |
 | `POST` | `/scheduling/templates/:templateId/generate-slots` |
+| `GET` | `/scheduling/waitlist` |
+| `POST` | `/scheduling/waitlist` |
+
+## `SurveysClient`
+
+Archivo: `src/app/core/data-access/surveys/surveys.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/surveys/assignments` |
+| `POST` | `/surveys/invitations` |
+| `GET` | `/surveys/me/invitations` |
+| `GET` | `/surveys/me/invitations/:invitationId` |
+| `POST` | `/surveys/me/invitations/:invitationId/responses` |
+| `GET` | `/surveys/templates` |
+| `POST` | `/surveys/templates` |
+| `GET` | `/surveys/templates/:surveyId` |
+| `POST` | `/surveys/templates/:surveyId/deactivate` |
+| `POST` | `/surveys/templates/:surveyId/questions` |
+| `GET` | `/surveys/templates/:surveyId/responses` |
+| `POST` | `/surveys/templates/:surveyId/versions/:versionNumber/publish` |
 
 ## `SystemContextClient`
 
@@ -451,6 +525,7 @@ Archivo: `src/app/core/data-access/terminology/terminology.client.ts`
 | `GET` | `/terminology/concepts` |
 | `GET` | `/terminology/concepts` |
 | `GET` | `/terminology/concepts` |
+| `GET` | `/terminology/concepts/:conceptId` |
 | `GET` | `/terminology/concepts/:conceptId` |
 | `GET` | `/terminology/value-sets` |
 | `GET` | `/terminology/value-sets/:valueSetId/$expand` |
