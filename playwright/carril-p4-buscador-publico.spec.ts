@@ -52,10 +52,21 @@ test.afterAll(async () => {
   await api.dispose();
 });
 
-/** Abre una ruta en una pestaña sin sesión y espera a que quede quieta. */
+/**
+ * Abre una ruta en una pestaña sin sesión y espera a que la aplicación pinte.
+ *
+ * **No usa `networkidle`.** Contra el servidor de desarrollo la red no se queda
+ * quieta nunca: el socket de recarga en vivo sigue abierto, así que la espera
+ * agota el tiempo y —peor— deja el contexto sin poder cerrarse, que sale como
+ * «Tearing down context exceeded the timeout» y parece un fallo del producto.
+ *
+ * Se espera a lo que de verdad importa: que el `<h1>` de la pantalla exista. Es
+ * determinista, vale igual contra el servidor SSR y contra el de desarrollo, y
+ * falla por el motivo correcto si la pantalla no pinta.
+ */
 async function abrirAnonimo(page: Page, ruta: string): Promise<void> {
-  await page.goto(ruta);
-  await page.waitForLoadState('networkidle');
+  await page.goto(ruta, { waitUntil: 'domcontentloaded' });
+  await page.locator('h1').first().waitFor({ state: 'visible' });
 }
 
 test.describe('P4-E2E-001 · buscar, encontrar y abrir una ficha, sin cuenta', () => {
@@ -150,10 +161,31 @@ test.describe('P4-E2E-002 · lo despublicado no se distingue de lo inexistente',
     expect(oculto.status()).toBe(404);
     expect(fantasma.status()).toBe(404);
 
-    const [a, b] = await Promise.all([oculto.json(), fantasma.json()]);
-    // `details.slug` devuelve el slug que mandó quien llama, así que difiere
-    // por construcción y no revela existencia; el resto tiene que coincidir.
-    expect({ ...a, details: undefined }).toEqual({ ...b, details: undefined });
+    const [a, b] = await Promise.all([
+      oculto.json() as Promise<Record<string, unknown>>,
+      fantasma.json() as Promise<Record<string, unknown>>,
+    ]);
+
+    // Lo que **tiene** que ser idéntico: el código y el mensaje. Es lo único
+    // que alguien puede leer para distinguir un caso del otro.
+    expect(a['code']).toBe(b['code']);
+    expect(a['message']).toBe(b['message']);
+    expect(a['code']).toBe('NOT_FOUND');
+
+    // Lo que difiere, y por qué ninguno revela existencia: `path` y
+    // `details.slug` son **eco de lo que mandó quien llama** —ya lo sabía—, y
+    // `correlationId` y `timestamp` son de la petición, no del recurso. Se
+    // afirma explícitamente en vez de excluirse en silencio: si mañana el
+    // filtro de excepciones agregara un campo que sí dependa del recurso, esta
+    // prueba tiene que ser la que lo note.
+    const dependeDelRecurso = (cuerpo: Record<string, unknown>): unknown[] =>
+      Object.entries(cuerpo)
+        .filter(([clave]) => !['code', 'message', 'correlationId', 'timestamp', 'path', 'details'].includes(clave))
+        .map(([, valor]) => valor);
+    expect(dependeDelRecurso(a)).toEqual(dependeDelRecurso(b));
+
+    expect(String(a['path'])).toContain(DESPUBLICADO);
+    expect(String(b['path'])).toContain(INEXISTENTE);
   });
 
   test('un prefijo de otro vertical da 404 y no redirige', async () => {
