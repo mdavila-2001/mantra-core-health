@@ -666,12 +666,54 @@ journeys hasta que se corrió el front por el proxy. No es un defecto: es la
 forma en que este sistema está diseñado, y conviene que quede escrita porque la
 evidencia por `curl` sola no la habría descubierto nunca.
 
-### Lo que no se ejecutó
+#### Cypress — el segundo adaptador, ejecutado
 
-`cypress/e2e/real/11-directorio-publico.cy.ts` está escrito pero **no se corrió**:
-su arnés construye el artefacto de producción y levanta su propio servidor, y
-con esta máquina en carga 30–40 la corrida no cabía en la tanda. El adaptador
-existe y es el mismo journey; queda pendiente de ejecución, no de escritura.
+```text
+6 passing (28s)   ·   Failing: 0
+```
+
+Corrió contra el mismo origen que Playwright. Dos obstáculos del entorno, ambos
+ajenos al producto y ambos con su moraleja:
+
+- **`ELECTRON_RUN_AS_NODE=1` estaba puesta en el entorno.** Electron arrancaba
+  como Node y rechazaba sus propios flags (`bad option: --no-sandbox`), y
+  Cypress lo reportaba como «Cypress failed to start … missing library or
+  dependency», que manda a buscar el problema al lado equivocado.
+- **`cypress/e2e/real/**` está excluido por omisión** salvo que se declare
+  `E2E_SUITE`. La propia configuración lo advierte: la exclusión gana sobre el
+  `--spec` que se pide por línea de comandos, y el mensaje —«no spec files were
+  found»— no menciona que hay una exclusión de por medio.
+
+#### Capturas
+
+Quince imágenes en `artifacts/p4/`, tomadas con
+`playwright/carril-p4-evidencia.spec.ts` sobre el mismo origen: los siete
+destinos del buscador, las dos fichas, los dos negativos, la maqueta todavía
+marcada, y dos a 390 px.
+
+**Una de esas capturas encontró un defecto que ninguna prueba veía.** Ver abajo.
+
+### D-P4-05 · el aviso de maqueta marcaba como falsa la superficie real
+
+La ficha pública de una profesional —nombre, especialidad y biografía traídos de
+la API— aparecía coronada por un cartel que decía «Referencia de diseño, no la
+aplicación… los filtros y botones no consultan la API» y ofrecía ir a «la
+pantalla que sí funciona».
+
+El aviso vive en el marco público y se pintaba siempre. Ese marco envuelve **dos
+cosas distintas**: las 126 pantallas portadas de la bóveda, que siguen siendo
+marcado estático, y la superficie de P4, que desde esta tanda lee la API. Para
+el aviso eran indistinguibles.
+
+Un aviso que marca lo real como falso es peor que no tenerlo: enseña a
+ignorarlo, y entonces deja de proteger a las pantallas para las que sí existe.
+
+Corregido con `data.pantallaReal` en la ruta —no con una lista de URL dentro del
+componente, que se desincroniza en la primera pantalla que alguien conecte sin
+acordarse de tacharla—. **Por omisión es maqueta**, así que una pantalla nueva
+de la bóveda queda marcada aunque nadie recuerde el aviso. Hay dos casos que lo
+fijan: que **no** esté en `/p/:slug` y que **sí** siga en
+`/buscar/buscador-listado`.
 
 ### Lo que falta para DONE
 
