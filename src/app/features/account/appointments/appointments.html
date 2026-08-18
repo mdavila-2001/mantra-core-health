@@ -347,6 +347,11 @@
         "
         class="turnos__filtro"
       >
+        <!-- FX-1 · F-24: «Ningún profesional coincide» hacía pensar que la
+             persona no existe. La lista sólo tiene a quienes YA publicaron
+             horarios, así que la causa más común de no encontrar a alguien es
+             que todavía no publicó. Se dicen las dos posibilidades en vez de
+             afirmar la que no sabemos. -->
         <app-reference-combobox
           [selected]="recursoSeleccionado()"
           [options]="opcionesBuscadas()"
@@ -354,8 +359,8 @@
           [placeholder]="esLaboratorio() ? 'Buscá por nombre del laboratorio' : 'Buscá por nombre'"
           [emptyMessage]="
             esLaboratorio()
-              ? 'Ningún laboratorio coincide con esa búsqueda'
-              : 'Ningún profesional coincide con esa búsqueda'
+              ? 'No encontramos ese laboratorio entre los que publicaron horarios. Puede que todavía no los haya publicado.'
+              : 'No encontramos ese profesional entre los que publicaron horarios. Puede que todavía no los haya publicado.'
           "
           (searched)="busquedaDeRecurso.set($event)"
           (selectionChange)="elegirRecurso($event?.value ?? null)"
