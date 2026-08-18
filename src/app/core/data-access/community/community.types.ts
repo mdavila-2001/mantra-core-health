@@ -475,6 +475,36 @@ export interface ConversationListItem {
   readonly messageCount?: number;
   readonly lastMessage?: ConversationPreviewMessage;
   readonly unreadCount: number;
+  /**
+   * Los demás participantes, sin el propio (carril P2).
+   *
+   * Sin esto la bandeja no puede decir con quién es cada conversación, y una
+   * lista de «Conversación · hace 2 h» es un registro de actividad, no una
+   * bandeja.
+   */
+  readonly peers: readonly ConversationPeer[];
+}
+
+/**
+ * Un resultado del buscador público de profesionales.
+ *
+ * Trae `slug` y **no** `profileId`: la superficie sin sesión no publica
+ * identificadores internos. Para escribirle hace falta resolverlo antes con
+ * `readProfileBySlug`.
+ */
+export interface PublicDirectoryResult {
+  readonly kind: string;
+  readonly slug: string;
+  readonly displayName: string;
+  readonly headline: string | null;
+  readonly city: string | null;
+  readonly verified: boolean;
+}
+
+/** El otro lado de una conversación. */
+export interface ConversationPeer {
+  readonly profileId: string;
+  readonly displayName?: string;
 }
 
 /** Una página de conversaciones. */
@@ -504,6 +534,40 @@ export interface DirectMessagePage {
   readonly count: number;
   readonly limit: number;
   readonly nextCursor: string | null;
+}
+
+/**
+ * Con quién se abre una conversación.
+ *
+ * `participantProfileIds` lleva **los dos**, el propio incluido: el backend no
+ * infiere al remitente del token porque un perfil público no está atado a una
+ * cuenta —el vínculo es polimórfico— y adivinarlo sería adivinar con qué
+ * identidad social está escribiendo alguien que tiene más de una.
+ */
+export interface NewConversation {
+  readonly participantProfileIds: readonly string[];
+  readonly conversationType?: 'DIRECT' | 'GROUP';
+  readonly groupId?: string;
+}
+
+/** Un mensaje a enviar. */
+export interface NewDirectMessage {
+  readonly senderProfileId: string;
+  readonly bodyText: string;
+  readonly replyToMessageId?: string;
+}
+
+/** El acuse de un mensaje enviado. */
+export interface SentMessage {
+  readonly id: string;
+  readonly conversationId: string;
+  readonly sentAt?: Date;
+}
+
+/** Hasta dónde se marcó leída una conversación. */
+export interface ConversationRead {
+  readonly receiptsRecorded: number;
+  readonly lastReadMessageId: string | null;
 }
 
 // ─── Encuestas ───────────────────────────────────────────────────────────────

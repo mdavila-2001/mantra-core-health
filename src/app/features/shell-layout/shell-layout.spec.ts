@@ -132,6 +132,9 @@ describe('ShellLayout', () => {
       '/dashboard',
       // Los tutoriales tampoco exigen rol.
       '/tutorials',
+      // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
+      // perfil público de `community`, que es un dato de la cuenta.
+      '/messaging',
       // La **Guía de profesionales** ya no está: desde la corrección #2 del
       // 15/08/2026 declara `roles: ['PATIENT']` y excluyentes, y una sesión sin
       // roles no es una sesión de paciente. El directorio de laboratorios sí
