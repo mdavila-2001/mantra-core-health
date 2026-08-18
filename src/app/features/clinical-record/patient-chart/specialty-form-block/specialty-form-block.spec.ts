@@ -17,6 +17,9 @@ import { SpecialtyFormBlock } from './specialty-form-block';
  *    cerrar — y limpia el formulario al terminar.
  * 5. **El `409` de una instancia repetida es un aviso, no un error rojo** —
  *    mismo criterio que el duplicado del diagnóstico.
+ * 6. **Con una instancia previa, el bloque entra en modo lectura**: muestra lo
+ *    respondido, no ofrece crear otra, y los valores enmascarados salen como
+ *    marcador — nunca el contenido.
  */
 
 const PLANTILLA = {
@@ -77,6 +80,46 @@ describe('SpecialtyFormBlock', () => {
     return http.expectOne((r) => r.url === '/charts/templates' && r.method === 'GET');
   }
 
+  function peticionDeRespuesta() {
+    return http.expectOne(
+      (r) =>
+        r.url === '/forms/instances' &&
+        r.method === 'GET' &&
+        r.params.get('encounter') === 'enc-1',
+    );
+  }
+
+  const LISTADO_VACIO = { encounterId: 'enc-1', items: [], limit: 50, truncated: false };
+
+  const INSTANCIA = {
+    id: 'inst-9',
+    resourceId: 'enc-1',
+    resourceTypeConceptId: 'rt-1',
+    schemaVersion: 1,
+    stateConceptId: 'st-cerrada',
+    closedAt: '2026-08-17T15:00:00.000Z',
+    createdAt: '2026-08-17T14:00:00.000Z',
+  };
+
+  const DETALLE = {
+    ...INSTANCIA,
+    values: [
+      { id: 'v-1', fieldId: 'f-1', dataType: 'string', value: 'Buena', ordinal: 0, masked: false },
+      { id: 'v-2', fieldId: 'f-2', dataType: 'boolean', value: 'SECRETO', ordinal: 1, masked: true },
+    ],
+  };
+
+  /** Deja el bloque en modo lectura: plantillas + una instancia ya respondida. */
+  function llegarAModoLectura() {
+    peticionDePlantillas().flush([PLANTILLA]);
+    fixture.detectChanges();
+    peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+    http
+      .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
+      .flush(DETALLE);
+    fixture.detectChanges();
+  }
+
   it('con una sola plantilla, la preselecciona', () => {
     peticionDePlantillas().flush([PLANTILLA]);
 
@@ -85,6 +128,8 @@ describe('SpecialtyFormBlock', () => {
 
   it('sin plantillas, lo dice y no ofrece formulario', () => {
     peticionDePlantillas().flush([]);
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
     fixture.detectChanges();
 
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -140,6 +185,9 @@ describe('SpecialtyFormBlock', () => {
     );
     cierre.flush({ ok: true });
 
+    // Tras guardar, el bloque relee lo respondido del backend.
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+
     expect(releido).toBe(1);
     expect(interno<() => Record<string, unknown>>('valores')()).toEqual({});
   });
@@ -158,6 +206,7 @@ describe('SpecialtyFormBlock', () => {
     captura.flush({ ids: ['v-1'] });
 
     http.expectOne('/forms/instances/inst-1/close').flush({ ok: true });
+    peticionDeRespuesta().flush(LISTADO_VACIO);
   });
 
   it('el 409 de una instancia repetida se cuenta como aviso, no como error', () => {
@@ -178,6 +227,8 @@ describe('SpecialtyFormBlock', () => {
         { status: 409, statusText: 'Conflict' },
       );
     fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
 
     expect(interno<() => string | null>('avisoDeDuplicado')()).toContain('ya se completó');
     expect(interno<() => string | null>('errorDeCompletado')()).toBeNull();
@@ -185,6 +236,60 @@ describe('SpecialtyFormBlock', () => {
     const html = fixture.nativeElement as HTMLElement;
     expect(html.querySelector('[data-testid="formulario-especialidad-duplicado"]')).not.toBeNull();
     expect(html.querySelector('[data-testid="formulario-especialidad-error"]')).toBeNull();
+  });
+
+  it('con una instancia previa entra en modo lectura y no ofrece captura', () => {
+    llegarAModoLectura();
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="formulario-respondido"]')).not.toBeNull();
+    // La captura no se ofrece: sin campos ni botón de completar.
+    expect(html.querySelector('[data-testid="campo-especialidad"]')).toBeNull();
+    expect(html.querySelector('form')).toBeNull();
+
+    const texto = html.textContent ?? '';
+    expect(texto).toContain('Ficha de cardiología');
+    expect(texto).toContain('Tolerancia al ejercicio');
+    expect(texto).toContain('Buena');
+    // `http.verify()` del afterEach certifica que no se disparó ningún POST.
+  });
+
+  it('un valor enmascarado muestra el marcador y jamás el contenido', () => {
+    llegarAModoLectura();
+
+    const html = fixture.nativeElement as HTMLElement;
+    const marcador = html.querySelector('[data-testid="respuesta-enmascarada"]');
+    expect(marcador).not.toBeNull();
+    expect(marcador?.textContent).toContain('No disponible por reglas de acceso');
+    // Aunque el backend mandara algo por error, el bloque no lo expone.
+    expect(html.textContent ?? '').not.toContain('SECRETO');
+  });
+
+  it('tras guardar con éxito, relee y pasa a modo lectura', () => {
+    peticionDePlantillas().flush([PLANTILLA]);
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+    interno<() => void>('completar')();
+
+    http
+      .expectOne((r) => r.url === '/forms/instances' && r.method === 'POST')
+      .flush({ id: 'inst-9', schemaVersion: 1, state: 'open' });
+    http.expectOne('/forms/instances/inst-9/values').flush({ ids: ['v-1'] });
+    http.expectOne('/forms/instances/inst-9/close').flush({ ok: true });
+
+    // La relectura posterior encuentra la instancia recién guardada.
+    peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+    http
+      .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
+      .flush(DETALLE);
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="formulario-respondido"]')).not.toBeNull();
+    expect(html.querySelector('form')).toBeNull();
   });
 
   it('elegirPlantilla vacía los valores de la anterior', () => {

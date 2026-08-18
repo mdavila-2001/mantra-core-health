@@ -30,3 +30,59 @@ export interface FieldValueInput {
   readonly unitConceptId?: string;
   readonly ordinal?: number;
 }
+
+/** Una instancia tal como aparece en `GET /forms/instances?encounter=`. */
+export interface FormInstanceListItem {
+  readonly id: string;
+  /** El recurso al que se adjuntó — acá, el encuentro. */
+  readonly resourceId: string;
+  readonly resourceTypeConceptId: string;
+  readonly schemaVersion: number;
+  /** Concept id del estado de la instancia, si lo tiene. */
+  readonly stateConceptId?: string;
+  /** ISO; presente cuando la instancia ya se cerró. */
+  readonly closedAt?: string;
+  /** ISO. */
+  readonly createdAt: string;
+}
+
+/** Respuesta de `GET /forms/instances?encounter=`. */
+export interface FormInstanceList {
+  readonly encounterId: string;
+  readonly items: readonly FormInstanceListItem[];
+  /** Tope aplicado al listado. */
+  readonly limit: number;
+  /** true si quedaron instancias fuera del tope. */
+  readonly truncated: boolean;
+}
+
+/**
+ * Un valor vigente de la instancia (`GET /forms/instances/:id`).
+ *
+ * `masked: true` significa que el campo tiene una regla de acceso que el
+ * backend hoy no puede evaluar y responde **sin el valor** (deny-by-default):
+ * `value` llega `null` y la pantalla muestra un marcador, nunca un hueco.
+ */
+export interface FormFieldValue {
+  readonly id: string;
+  readonly fieldId: string;
+  /** Tipo técnico del campo, si su definición sigue existiendo. */
+  readonly dataType?: string;
+  /**
+   * El valor único, resuelto de la columna `value[x]` por el backend. Ojo:
+   * `integer` llega como string (bigint) y las fechas como ISO.
+   */
+  readonly value: unknown;
+  readonly unitConceptId?: string;
+  readonly valueStatusConceptId?: string;
+  readonly valueVersion?: number;
+  readonly ordinal: number;
+  /** ISO, si el valor declara vigencia. */
+  readonly effectiveFrom?: string;
+  readonly masked: boolean;
+}
+
+/** Respuesta de `GET /forms/instances/:id`: la instancia con sus valores. */
+export interface FormInstanceDetail extends FormInstanceListItem {
+  readonly values: readonly FormFieldValue[];
+}

@@ -20,6 +20,62 @@
       El formulario clínico se completa dentro de la consulta que lo motivó. Registrá el encuentro
       acá arriba y el formulario aparece.
     </app-alert>
+  } @else if (buscandoRespuesta()) {
+    <p class="formulario-especialidad__estado" role="status">
+      Buscando el formulario de este encuentro…
+    </p>
+  } @else if (errorDeConsulta(); as mensaje) {
+    <!-- Sin saber si ya hay formulario no se ofrece la captura: fallar
+         cerrado es lo que evita el duplicado. -->
+    <app-alert
+      tone="error"
+      title="No pudimos revisar el formulario"
+      data-testid="formulario-consulta-error"
+    >
+      {{ mensaje }}
+    </app-alert>
+    <button app-button variant="outline" size="sm" (clicked)="reconsultarRespuesta()">
+      Reintentar
+    </button>
+  } @else if (formularioRespondido(); as detalle) {
+    <!-- Modo lectura: el encuentro ya tiene su formulario. No se ofrece crear
+         otro; se muestra lo respondido y se puede bajar en PDF. -->
+    <div class="formulario-especialidad__respondido" data-testid="formulario-respondido">
+      <p class="formulario-especialidad__completado">
+        {{ tituloDeLaRespuesta() }}
+        @if (fechaDeRespuesta(); as fecha) {
+          — completado el {{ fecha }}
+        }
+      </p>
+      <dl class="formulario-especialidad__respuestas">
+        @for (respuesta of respuestasVisibles(); track respuesta.id) {
+          <div class="formulario-especialidad__respuesta">
+            <dt>{{ respuesta.etiqueta }}</dt>
+            <dd>
+              @if (respuesta.masked) {
+                <em
+                  class="formulario-especialidad__enmascarado"
+                  data-testid="respuesta-enmascarada"
+                >
+                  {{ marcadorEnmascarado }}
+                </em>
+              } @else {
+                {{ respuesta.texto }}
+              }
+            </dd>
+          </div>
+        }
+      </dl>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        class="formulario-especialidad__pdf"
+        (clicked)="descargarPdf()"
+      >
+        Descargar PDF
+      </button>
+    </div>
   } @else if (opcionesDePlantilla().length === 0) {
     <app-alert tone="info" title="Sin plantillas todavía">
       Tu especialidad todavía no tiene una plantilla de formulario clínico. Un admin de

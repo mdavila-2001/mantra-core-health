@@ -102,3 +102,38 @@ export interface DocumentoDeAtencion {
   /** Diagnósticos, indicaciones, mediciones… ya traducidos. */
   readonly bloques: readonly DocumentoBloque[];
 }
+
+/**
+ * Una respuesta del formulario, ya en palabras.
+ *
+ * `masked` viaja como bandera y no como texto a propósito: el armador imprime
+ * el marcador él mismo y **descarta** `texto` cuando la bandera está puesta,
+ * para que un valor protegido no pueda colarse al papel por un descuido del
+ * llamador.
+ */
+export interface RespuestaDeFormulario {
+  /** El nombre del campo que se respondió. */
+  readonly etiqueta: string;
+  /** La respuesta, en palabras. Se ignora si `masked` es true. */
+  readonly texto: string;
+  /** El backend no expuso el valor por una regla de acceso. */
+  readonly masked: boolean;
+}
+
+/**
+ * Un **formulario clínico respondido** dentro de un encuentro (carril de
+ * consulta de formularios).
+ *
+ * Sin paciente ni profesional todavía: el bloque que hoy lo descarga vive
+ * dentro del expediente y no conoce esos datos resueltos; cuando el documento
+ * se arme desde una pantalla que los tenga, se agregan acá y el armador les da
+ * la misma cabecera que a la receta y la atención.
+ */
+export interface DocumentoDeFormulario {
+  readonly id: string;
+  /** El nombre de la plantilla, o un título genérico si no se pudo resolver. */
+  readonly titulo: string;
+  /** Cuándo se completó, si la instancia registró el cierre. */
+  readonly completadoEl?: Date;
+  readonly respuestas: readonly RespuestaDeFormulario[];
+}
