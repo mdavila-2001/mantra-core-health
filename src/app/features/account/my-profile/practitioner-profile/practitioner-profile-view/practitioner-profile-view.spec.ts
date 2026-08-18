@@ -265,6 +265,33 @@ describe('PractitionerProfileView', () => {
     expect(host.textContent).not.toContain('Agregar un vínculo');
   });
 
+  /* -- I-D (F-31): la ayuda es de quien arma su perfil, no de quien lo mira -- */
+
+  it('el dueño ve la ayuda de cada pestaña', () => {
+    const host = montar(PERFIL, true);
+
+    expect(host.querySelector('app-tab-help-block')).not.toBeNull();
+    seleccionarPestana(host, 'Credenciales y verificaciones');
+    expect(host.textContent).toContain('Declarar no exige verificación previa');
+  });
+
+  it('un visitante no ve ninguna ayuda: le hablaba al dueño y a quien prueba', () => {
+    // Un paciente en la ficha de la Guía leía «en desarrollo/pruebas se puede
+    // usar todo el perfil sin esperar el trámite» (barrido del 18/08/2026).
+    const host = montar(PERFIL, false);
+
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
+    seleccionarPestana(host, 'Credenciales y verificaciones');
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
+    expect(host.textContent).not.toContain('en desarrollo/pruebas');
+  });
+
+  it('la vista previa tampoco la muestra: imita lo que ve el visitante', () => {
+    const host = montar(PERFIL, true, true);
+
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
+  });
+
   /* -- Credenciales y verificaciones ----------------------------------------- */
 
   it('agrupa especialidades, formación y matrículas en declarado vs. verificado', () => {

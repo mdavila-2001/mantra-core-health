@@ -122,17 +122,21 @@
     <app-tabs [(selectedIndex)]="pestanaSeleccionada">
       <!-- 1. Trayectoria / historial profesional ------------------------- -->
       <app-tab label="Trayectoria" appTutorialTarget="perfil-trayectoria">
-        <app-tab-help-block helpId="perfil-trayectoria-ayuda" tutorialId="perfil-profesional">
-          <p>
-            Acá se arma la línea de tiempo profesional: dónde se formó, dónde ejerció antes y dónde
-            ejerce hoy. Es lo que un paciente ve en la Guía de profesionales antes de pedir una cita.
-          </p>
-          <p>
-            <strong>Ejemplo:</strong> formación en la Universidad Mayor de San Andrés (2010),
-            experiencia en el Hospital Obrero N.º 1 (2012–2016) y actividad actual en la Sede Central
-            Sopocachi.
-          </p>
-        </app-tab-help-block>
+        <!-- La ayuda le habla a quien arma su perfil, no a quien lo mira: en la
+             ficha de la Guía y en la vista previa no va (barrido del 18/08/2026). -->
+        @if (esPropio() && !previewMode()) {
+          <app-tab-help-block helpId="perfil-trayectoria-ayuda" tutorialId="perfil-profesional">
+            <p>
+              Acá se arma la línea de tiempo profesional: dónde se formó, dónde ejerció antes y dónde
+              ejerce hoy. Es lo que un paciente ve en la Guía de profesionales antes de pedir una cita.
+            </p>
+            <p>
+              <strong>Ejemplo:</strong> formación en la Universidad Mayor de San Andrés (2010),
+              experiencia en el Hospital Obrero N.º 1 (2012–2016) y actividad actual en la Sede
+              Central Sopocachi.
+            </p>
+          </app-tab-help-block>
+        }
 
         <!-- Actividad actual: primero y destacada, porque es lo más relevante hoy. -->
         <section class="profesional__fase">
@@ -254,18 +258,21 @@
 
       <!-- 2. Credenciales y verificaciones --------------------------------- -->
       <app-tab label="Credenciales y verificaciones" appTutorialTarget="perfil-credenciales">
-        <app-tab-help-block helpId="perfil-credenciales-ayuda" tutorialId="perfil-profesional">
-          <p>
-            Acá se separa lo que el profesional <strong>declaró</strong> de lo que ya fue
-            <strong>verificado</strong> contra una fuente — el colegio médico, el registro de
-            matrículas. Declarar no exige verificación previa: en desarrollo/pruebas se puede usar
-            todo el perfil sin esperar el trámite.
-          </p>
-          <p>
-            <strong>Ejemplo:</strong> un título de posgrado recién cargado aparece en "Declarado";
-            una vez que un administrador lo verifica contra una fuente, pasa a "Verificado".
-          </p>
-        </app-tab-help-block>
+        @if (esPropio() && !previewMode()) {
+          <app-tab-help-block helpId="perfil-credenciales-ayuda" tutorialId="perfil-profesional">
+            <p>
+              Acá se separa lo que el profesional <strong>declaró</strong> de lo que ya fue
+              <strong>verificado</strong> contra una fuente — el colegio médico, el registro de
+              matrículas. Declarar no exige verificación previa: en desarrollo/pruebas se puede
+              usar todo el perfil sin esperar el trámite.
+            </p>
+            <p>
+              <strong>Ejemplo:</strong> un título de posgrado recién cargado aparece en
+              "Declarado"; una vez que un administrador lo verifica contra una fuente, pasa a
+              "Verificado".
+            </p>
+          </app-tab-help-block>
+        }
 
         <div class="profesional__seguimiento">
           <div class="profesional__seguimiento-grupo">
