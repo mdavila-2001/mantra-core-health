@@ -236,12 +236,29 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // profesional", no sólo quien administra —, con una pantalla propia que no
     // expone el identificador.
     //
-    // Sin `roles` a propósito: el pedido fue explícito, y la lectura del
-    // catálogo tampoco los exige (UC-03-13).
+    // Los roles son los de quien atiende: la unión de las filas de este mismo
+    // grupo, más quien administra. Nació sin `roles` («cada profesional», y la
+    // lectura del catálogo tampoco los exige — UC-03-13), y por efecto
+    // colateral lo veía también el paciente: es una herramienta de trabajo, no
+    // una pantalla suya (feedback de la analista F-03, decidido el 18/08/2026).
+    // La ruta lo hace cumplir por `seccionRolesGuard`, hija incluida.
     path: 'glossary',
     label: 'Glosario',
     group: 'Atención',
     icon: 'orders',
+    roles: [
+      'PRACTITIONER',
+      'CLINICIAN',
+      'SCHEDULING_ADMIN',
+      'SCHEDULING_AGENT',
+      'SURGEON',
+      'ANESTHESIOLOGIST',
+      'PERIOP_NURSE',
+      'SURGERY_SCHEDULER',
+      'PERIOP_ADMIN',
+      'MEDICAL_VISITOR',
+      'SECURITY_ADMIN',
+    ],
     availability: 'disponible',
     summary: 'Buscá un término médico y su significado en lenguaje llano.',
     module: 'M03 terminology',

@@ -217,13 +217,15 @@ describe('Dashboard', () => {
     it('el resumen viaja en el tooltip y también en el nombre accesible', () => {
       abrirPanel(['PATIENT']);
 
-      const glosario = accesos().find((a) => a.dataset['ruta'] === '/glossary');
+      // Los tutoriales y no el glosario: desde F-03 (18/08/2026) el glosario es
+      // de quien atiende y el paciente ya no lo tiene entre sus accesos.
+      const tutoriales = accesos().find((a) => a.dataset['ruta'] === '/tutorials');
 
       // Dos caminos a propósito: el globo aparece con el puntero **y con el
       // foco** (lo garantiza `appTooltip`), y el `aria-label` cubre a quien
       // navega con lector de pantalla sin llegar a enfocar el enlace.
-      expect(glosario?.getAttribute('aria-label')).toBe(
-        'Glosario. Buscá un término médico y su significado en lenguaje llano.',
+      expect(tutoriales?.getAttribute('aria-label')).toBe(
+        'Tutoriales. Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
       );
     });
 
@@ -231,7 +233,9 @@ describe('Dashboard', () => {
       abrirPanel(['PATIENT']);
 
       const rotulos = accesos().map((a) => a.querySelector('.panel__acceso-nombre')?.textContent);
-      expect(rotulos).toContain('Glosario');
+      expect(rotulos).toContain('Tutoriales');
+      // Y el glosario no está: es herramienta de quien atiende (F-03).
+      expect(rotulos).not.toContain('Glosario');
     });
 
     it('cada acceso apunta a una ruta real del registro, no a un destino inventado', () => {
