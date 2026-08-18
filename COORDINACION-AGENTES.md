@@ -1623,7 +1623,60 @@ La matriz regenerada NO se commitea (el actor paciente del arnés no entra por e
 
 | # | Arreglo | Rama | Estado |
 |---|---|---|---|
-| 1 | Guards de rol en rutas hijas | `itzan/guards-rutas-operacion` | **PR #127 abierto** contra `dev`, espera review de otro (regla 2) — mergea PRIMERO, antes de las rutas de Pablo |
+| 1 | Guards de rol en rutas hijas | `itzan/guards-rutas-operacion` | **PR #127 mergeado** en `dev` (`23906b7`, 2026-08-17) |
 | 2 | H-05 `patient-merge` recarga (+ el cuestionario del paciente, misma clase) | `itzan/h05-patient-merge` | **PR #128 abierto** contra `dev`, espera review — independiente de #127 |
 | 3 | H-07 textos internos | `itzan/h07-textos-internos` | pendiente |
 | 4 | H-10 seeder verde (API) | `itzan/h10-seeder-verde` | pendiente — ojo: `cuenta-doctor-demo.mjs` mostró «emitir sin firmar → 200», hay que mirarlo antes de tocar la aserción |
+
+## Sesión 2026-08-17 · Carril C-E (Itzan) — arreglo 2: H-05 `patient-merge` recarga la página
+
+**Rama:** `itzan/h05-patient-merge` (worktree propio `../wt-itzan`, base `origin/dev` `1347bd3` tras rebase; nació en `234227b`) ·
+**Alcance:** sólo `mantra-core-health` · **Ficha:** `REGISTRO-DEFECTOS.md` de la API, H-05.
+Independiente del arreglo 1 (`itzan/guards-rutas-operacion`, PR #127): no comparten archivos de
+código; sí este bloque, que va al final — si chocan, aceptar las dos adiciones.
+
+### Causa raíz (confirmada ejecutando)
+
+`patient-merge.html` tenía `<form (ngSubmit)="fusionar()">` sin `FormsModule`/`ReactiveFormsModule`
+en el componente: sin `NgForm`, `(ngSubmit)` es un listener DOM que jamás dispara y nadie hace
+`preventDefault`. El botón «Fusionar» de `app-form-actions` es `type="submit"`: emite `submitted`
+(abre el confirm) **y** dispara el submit nativo → GET a la misma URL → recarga, query perdida,
+diálogo muerto. Los specs no lo veían porque llamaban a `fusionar()` directo, nunca por el DOM.
+
+**La ficha decía «única pantalla que quedó así» y eran dos:** `features/account/questionnaires/
+answer/answer.html:24` (cuestionario del **paciente**, carril 10) tenía el mismo `(ngSubmit)` sin
+`FormsModule` con botón `type="submit"` — el click en «Enviar respuestas» no producía ningún
+`POST /surveys/me/invitations/:id/responses` (0 peticiones en el arnés): el paciente no podía
+enviar el cuestionario desde la UI. Verificado que nadie lo tenía anotado (7 archivos del plan,
+este archivo, `REGISTRO-DEFECTOS.md`, PRs/issues abiertos, 59 ramas remotas — la única que toca
+`answer/`, `fix/alovida-c10-questionnaires-fe`, es byte-idéntica a `dev` ahí). Itzan decidió
+incluirlo en este PR por ser la misma clase de defecto.
+
+### Qué cambia (2 atributos de plantilla + 2 specs; ningún `.ts` de producción)
+
+- `patient-merge.html`: `(submit)="$event.preventDefault()"` — el patrón del repo para formularios
+  por signals con `app-form-actions` (`practitioner-profile-edit`, `clinical-forms`, `work-history`,
+  `specialty-form-block`); la acción sigue entrando por `(submitted)`.
+- `answer.html`: `(submit)="$event.preventDefault(); enviar()"` — no hay `app-form-actions`; click y
+  Enter comparten el único camino de envío.
+- `patient-merge.spec.ts` +2 pruebas por el DOM; `answer.spec.ts` **nuevo** (2 pruebas por el DOM).
+  Rojo→verde comprobado en las dos pantallas.
+
+### Verificación (CI caído → local)
+
+`lint` 0 · `typecheck` 0 · `build` OK · 6 scripts de chequeo del CI exit 0 · `test --watch=false`
+2 600/2 602 (los 2 rojos son timeouts en archivos ajenos por carga de la máquina; aislados pasan
+105/105; mis 2 specs 20/20). Navegador (admin, mismo script antes/después): antes → URL
+`…/merge?desde=listado&pagina=2` pasa a `/merge`, recarga, sin diálogo; después → URL idéntica,
+sin recarga, diálogo → fusión → **deshacer**, con la query intacta todo el tiempo. `answer` en
+navegador **no cubierto** (exige la vertical clínica completa hasta reserva COMPLETED); su
+evidencia queda en el arnés.
+
+### Estado
+
+**PR #128 abierto** contra `dev` (rebasado sobre `23906b7`, tras el merge de #127), espera review de otro (regla 2). Cuenta del carril: arreglo 1 = PR #127 (**mergeado**) · **arreglo 2 = PR #128 (abierto)** · arreglos 3 (H-07) y 4 (H-10) pendientes.
+
+### Lo que NO toco
+
+`answer.ts`, `patient-merge.ts`, `app-form-actions`, nada del backend. Deuda prettier preexistente
+en `patient-merge.html:28` y `patient-merge.spec.ts:108`, sin tocar (prettier no es gate del repo).

@@ -306,4 +306,35 @@ describe('PatientMerge', () => {
 
     expect(navegado).toEqual(['/administration/patients/pp-A']);
   });
+
+  /* ---- el envío no recarga la página (H-05) ------------------------------ */
+
+  /**
+   * El formulario no tiene `FormGroup` ni `FormsModule`: no hay `NgForm` que
+   * intercepte el envío. Si nadie corta el `submit` nativo, el botón
+   * «Fusionar» —que es `type="submit"`— manda un GET a la misma URL: la página
+   * recarga, la query string se pierde y la confirmación muere sin abrirse.
+   * Se prueba por el DOM, porque llamar a `fusionar()` directo no lo ve.
+   */
+  it('el submit nativo queda prevenido: la pantalla no recarga', () => {
+    const form = fixture.nativeElement.querySelector('form[data-testid="fusion-form"]');
+    const envio = new Event('submit', { bubbles: true, cancelable: true });
+
+    form.dispatchEvent(envio);
+
+    expect(envio.defaultPrevented).toBe(true);
+  });
+
+  it('el botón «Fusionar» llega a la confirmación por el DOM, no por el envío nativo', async () => {
+    // Sólo importa que el click llegó: la fusión en sí ya está probada arriba.
+    confirmar = false;
+    elegir('sobreviviente', 'pp-A');
+    elegir('absorbido', 'pp-B');
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('button[type="submit"]').click();
+    await fixture.whenStable();
+
+    expect(confirmaciones).toHaveLength(1);
+  });
 });
