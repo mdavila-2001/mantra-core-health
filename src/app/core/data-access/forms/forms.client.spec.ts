@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { FormsClient } from './forms.client';
-import type { FormInstance } from './forms.types';
+import type { FormInstance, FormInstanceDetail, FormInstanceList } from './forms.types';
 
 describe('FormsClient', () => {
   let client: FormsClient;
@@ -66,5 +66,80 @@ describe('FormsClient', () => {
 
     const req = http.expectOne((r) => r.url.includes('inst%2F..%2Fotro'));
     req.flush({ ids: [] });
+  });
+
+  it('listInstancesByEncounter pregunta por el encuentro con GET y query exactos', () => {
+    let recibido: FormInstanceList | undefined;
+    client.listInstancesByEncounter('enc-1', 10).subscribe((r) => (recibido = r));
+
+    const req = http.expectOne(
+      (r) =>
+        r.url === '/forms/instances' &&
+        r.method === 'GET' &&
+        r.params.get('encounter') === 'enc-1' &&
+        r.params.get('limit') === '10',
+    );
+
+    const listado: FormInstanceList = {
+      encounterId: 'enc-1',
+      items: [
+        {
+          id: 'inst-1',
+          resourceId: 'enc-1',
+          resourceTypeConceptId: 'rt-1',
+          schemaVersion: 1,
+          createdAt: '2026-08-17T14:00:00Z',
+        },
+      ],
+      limit: 10,
+      truncated: false,
+    };
+    req.flush(listado);
+    expect(recibido).toEqual(listado);
+  });
+
+  it('listInstancesByEncounter sin tope no manda limit', () => {
+    client.listInstancesByEncounter('enc-1').subscribe();
+
+    const req = http.expectOne(
+      (r) =>
+        r.url === '/forms/instances' &&
+        r.method === 'GET' &&
+        r.params.get('encounter') === 'enc-1' &&
+        !r.params.has('limit'),
+    );
+    req.flush({ encounterId: 'enc-1', items: [], limit: 50, truncated: false });
+  });
+
+  it('getInstance trae el detalle con sus valores, incluido el enmascarado sin valor', () => {
+    let recibido: FormInstanceDetail | undefined;
+    client.getInstance('inst-1').subscribe((r) => (recibido = r));
+
+    const req = http.expectOne(
+      (r) => r.url === '/forms/instances/inst-1' && r.method === 'GET',
+    );
+
+    req.flush({
+      id: 'inst-1',
+      resourceId: 'enc-1',
+      resourceTypeConceptId: 'rt-1',
+      schemaVersion: 1,
+      createdAt: '2026-08-17T14:00:00Z',
+      values: [
+        {
+          id: 'v-1',
+          fieldId: 'f-1',
+          dataType: 'string',
+          value: 'Buena',
+          ordinal: 0,
+          masked: false,
+        },
+        { id: 'v-2', fieldId: 'f-2', dataType: 'string', value: null, ordinal: 1, masked: true },
+      ],
+    });
+
+    expect(recibido?.values).toHaveLength(2);
+    expect(recibido?.values[1].masked).toBe(true);
+    expect(recibido?.values[1].value).toBeNull();
   });
 });

@@ -1,7 +1,17 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { DatePipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  PLATFORM_ID,
+  signal,
+} from '@angular/core';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+
+import { ActivatedRoute } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
@@ -93,6 +103,9 @@ export class DiagnosticResults {
   private readonly terminology = inject(TerminologyClient);
   private readonly files = inject(FilesClient);
   private readonly auth = inject(AuthService);
+  private readonly ruta = inject(ActivatedRoute);
+  private readonly documento = inject(DOCUMENT);
+  private readonly esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly dialogs = inject(DialogService);
   private readonly toast = inject(ToastService);
 
@@ -135,10 +148,41 @@ export class DiagnosticResults {
     return estado.status === 'empty' ? (estado.message ?? '') : '';
   });
 
+  /** El informe señalado en la URL, si se llegó desde «Ver resultado» (J1). */
+  private readonly senalado = signal<string | null>(null);
+
   constructor() {
     if (!this.sinPerfilDePaciente) {
       this.cargar();
     }
+
+    this.ruta.fragment.subscribe((f) => this.senalado.set(f));
+
+    // El `anchorScrolling` del router no alcanza acá: salta al terminar la
+    // navegación, y para entonces esta lista todavía la está trayendo el
+    // servidor, así que el ancla no existe. Se reintenta cuando los datos
+    // llegan, que es el único momento en que el elemento ya está en el DOM.
+    effect(() => {
+      const destino = this.senalado();
+      const listos = this.resultadosListos();
+      if (destino === null || listos.length === 0 || !this.esNavegador) {
+        return;
+      }
+      queueMicrotask(() => this.saltarA(destino));
+    });
+  }
+
+  /**
+   * Lleva la vista al informe señalado.
+   *
+   * Vive acá y no en la plantilla porque el enlace entrante viene de otra
+   * pantalla («Mis órdenes», J1) y el contrato es la URL: sin esto, tocar «Ver
+   * resultado» aterriza arriba de la lista entera y la persona tiene que buscar
+   * su informe a mano.
+   */
+  private saltarA(reportId: string): void {
+    const elemento = this.documento.getElementById(reportId);
+    elemento?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
 
   /* ---- lectura ------------------------------------------------------------- */
@@ -193,10 +237,7 @@ export class DiagnosticResults {
           this.toast.info('No tenés permiso para descargar este archivo.', 'Resultado');
           return;
         }
-        this.toast.error(
-          'No pudimos abrir el archivo. Reintentá en un momento.',
-          'Resultado',
-        );
+        this.toast.error('No pudimos abrir el archivo. Reintentá en un momento.', 'Resultado');
       },
     });
   }
@@ -218,8 +259,7 @@ export class DiagnosticResults {
       next: (items) => this.compartidos.set(items),
       // Un fallo acá no borra el resultado de la pantalla: la lista que se leyó
       // sigue siendo cierta aunque el panel no haya podido abrirse.
-      error: () =>
-        this.toast.info('No pudimos leer con quién está compartido.', 'Resultado'),
+      error: () => this.toast.info('No pudimos leer con quién está compartido.', 'Resultado'),
     });
   }
 

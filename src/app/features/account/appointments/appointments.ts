@@ -11,6 +11,7 @@ import type {
   AgendaResource,
   AgendaSlot,
   Booking,
+  WaitlistEntry,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type {
@@ -25,6 +26,8 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { Select } from '../../../shared/components/atoms/select/select';
+import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -101,6 +104,16 @@ const VISTA_POR_DEFECTO: VistaDeTurnos = 'lista';
 /** Clave del parámetro de la URL que recuerda la vista elegida. */
 const PARAM_DE_VISTA = 'vista';
 
+/**
+ * Clave del parámetro que abre un turno concreto (P8).
+ *
+ * Es lo que hace navegable un aviso: la notificación de demora, de cambio de
+ * estado o de recordatorio lleva `?turno=<id>` y el detalle se abre solo. Sin
+ * esto, un aviso deja a la persona buscando a mano el turno del que le acaban
+ * de hablar.
+ */
+const PARAM_DE_TURNO = 'turno';
+
 /** Un turno propio, ya listo para mostrarse. */
 interface TurnoVisible {
   readonly id: string;
@@ -128,6 +141,25 @@ interface TurnoVisible {
   readonly avisoDelCambio: string;
   /** Cuándo se hizo ese cambio, para fecharlo en pantalla. */
   readonly cambioCuando: Date | null;
+  /**
+   * La demora que informó el profesional, ya redactada (P8).
+   *
+   * Vacío cuando no informó ninguna. Se arma acá y no en la plantilla porque el
+   * mensaje del profesional es opcional y la frase cambia con él.
+   */
+  readonly avisoDeDemora: string;
+  /** Cuándo la informó, para fecharla en pantalla. */
+  readonly demoraCuando: Date | null;
+}
+
+/** Una espera activa, ya lista para mostrarse (P8). */
+interface EsperaVisible {
+  readonly id: string;
+  readonly resourceId: string;
+  readonly agenda: string;
+  readonly desde: Date | null;
+  readonly hasta: Date | null;
+  readonly anotadaEl: Date;
 }
 
 /** Un horario que se puede pedir. */
@@ -172,8 +204,8 @@ interface HorarioVisible {
     DatePipe,
     FormField,
     PageHeader,
+    ReferenceCombobox,
     RouterLink,
-    Select,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
@@ -241,7 +273,9 @@ export class Appointments {
    * mismas acciones. Dos detalles distintos serían dos implementaciones de lo
    * mismo, que es lo que la regla 3 del carril prohíbe.
    */
-  protected readonly seleccionado = signal<string | null>(null);
+  protected readonly seleccionado = signal<string | null>(
+    this.route.snapshot.queryParamMap.get(PARAM_DE_TURNO),
+  );
 
   protected elegirVista(vista: VistaDeTurnos): void {
     void this.router.navigate([], {
@@ -255,6 +289,23 @@ export class Appointments {
   /** Abre —o cierra, si ya estaba abierto— el detalle de un turno. */
   protected alternarDetalle(id: string): void {
     this.seleccionado.update((actual) => (actual === id ? null : id));
+  }
+
+  /**
+   * Se señaló un día en el calendario: se ofrecen los horarios libres de ese día.
+   *
+   * No navega ni cambia de vista: el calendario sigue a la vista y debajo
+   * aparece lo que hay ese día. Cambiar de pantalla en respuesta a un clic en
+   * un número obligaría a volver para probar con otro día, que es la queja que
+   * originó esto.
+   */
+  protected elegirDiaDeHorarios(dia: Date): void {
+    this.diaDeHorarios.set(dia);
+  }
+
+  /** Vuelve a ofrecer los horarios de toda la ventana. */
+  protected verTodosLosHorarios(): void {
+    this.diaDeHorarios.set(null);
   }
 
   /** Desde el calendario el clic siempre abre: nunca cierra por segunda vez. */
@@ -285,6 +336,27 @@ export class Appointments {
     return this.turnosListos().find((turno) => turno.id === id) ?? null;
   });
 
+  /* ---- lista de espera (P8) ----------------------------------------------- */
+
+  /**
+   * En qué esperas está el titular.
+   *
+   * Es una lista aparte y no un turno más: una espera **no** es un turno —no
+   * tiene hora ni compromiso— y mezclarlas haría creer que hay cita cuando lo
+   * que hay es una posición en una cola.
+   */
+  protected readonly esperas = signal<readonly EsperaVisible[]>([]);
+
+  /** La espera que se está dando de alta, para el `[isLoading]` del botón. */
+  protected readonly anotandose = signal(false);
+
+  /** Si el titular ya espera en la agenda elegida: no tiene sentido anotarse dos veces. */
+  protected readonly yaEnEspera = computed(() => {
+    const recurso = this.recursoElegido();
+    if (recurso === null) return false;
+    return this.esperas().some((espera) => espera.resourceId === recurso);
+  });
+
   /* ---- pedir un turno ----------------------------------------------------- */
 
   protected readonly recursos = signal<readonly AgendaResource[]>([]);
@@ -301,6 +373,40 @@ export class Appointments {
       label: etiquetaDeRecurso(recurso),
     })),
   );
+
+  /**
+   * Lo tecleado en el buscador de profesional.
+   *
+   * El listado ya está en memoria, así que filtrar es local: no se consulta a
+   * la API por cada letra. Vacío = se ofrecen todos, que es como se comportaba
+   * el desplegable.
+   */
+  protected readonly busquedaDeRecurso = signal('');
+
+  /**
+   * Las opciones del buscador, acotadas por lo tecleado.
+   *
+   * Con una organización de pocos profesionales daba igual, pero con un listado
+   * largo había que recorrerlo a mano hasta encontrar al propio (F-13). Se busca
+   * por lo que la persona conoce —el nombre— y también por el rótulo de la
+   * agenda, que suele traer sede o especialidad.
+   */
+  protected readonly opcionesBuscadas = computed<readonly ReferenceOption[]>(() => {
+    const termino = normalizar(this.busquedaDeRecurso());
+    const todas = this.opcionesDeRecurso().map((opcion) => ({
+      value: opcion.value,
+      label: opcion.label,
+    }));
+    if (termino === '') return todas;
+    return todas.filter((opcion) => normalizar(opcion.label).includes(termino));
+  });
+
+  /** El profesional elegido, con la forma que pide el buscador. */
+  protected readonly recursoSeleccionado = computed<ReferenceOption | null>(() => {
+    const id = this.recursoElegido();
+    if (id === null) return null;
+    return this.opcionesDeRecurso().find((opcion) => opcion.value === id) ?? null;
+  });
 
   /** La organización todavía no cargó ninguna agenda que ofrecer. */
   protected readonly sinRecursos = signal(false);
@@ -350,15 +456,38 @@ export class Appointments {
     return id === null ? null : (this.turnosListos().find((turno) => turno.id === id) ?? null);
   });
 
+  /**
+   * El día que se señaló en el calendario, o `null` si se miran los de la
+   * ventana entera.
+   *
+   * Antes el calendario sólo servía para mirar: para pedir turno había que
+   * bajar al formulario y recorrer catorce días de horarios, y para la semana
+   * siguiente, más scroll (F-10). Ahora el día se elige donde se lo está
+   * mirando, y esta señal es la que traduce ese gesto en un filtro.
+   */
+  protected readonly diaDeHorarios = signal<Date | null>(null);
+
+  /** El día elegido, dicho en palabras para el aviso que lo ofrece deshacer. */
+  protected readonly diaDeHorariosEnPalabras = computed(() => {
+    const dia = this.diaDeHorarios();
+    return dia === null
+      ? ''
+      : dia.toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long' });
+  });
+
   protected readonly horariosListos = computed<readonly HorarioVisible[]>(() => {
     const estado = this.horarios();
-    return estado.status === 'ready' ? estado.data : [];
+    const todos = estado.status === 'ready' ? estado.data : [];
+    const dia = this.diaDeHorarios();
+    if (dia === null) return todos;
+    return todos.filter((horario) => mismoDia(horario.desde, dia));
   });
 
   constructor() {
     if (this.perfil !== null) {
       this.cargarTurnos();
       this.cargarRecursos();
+      this.cargarEsperas();
     }
   }
 
@@ -469,6 +598,95 @@ export class Appointments {
         },
         error: (error: unknown) =>
           this.horarios.set(errorToViewState<readonly HorarioVisible[]>(error)),
+      });
+  }
+
+  /* ---- lista de espera (P8) ----------------------------------------------- */
+
+  /**
+   * Las esperas activas del titular.
+   *
+   * Un fallo no vacía la pantalla ni muestra un error: la lista de espera es
+   * información secundaria y perderla no justifica romper «mis turnos». Se
+   * queda sin bloque, que es exactamente lo que pasaba antes de que existiera.
+   */
+  protected cargarEsperas(): void {
+    const perfil = this.perfil;
+    if (perfil === null) {
+      return;
+    }
+
+    this.scheduling
+      .listWaitlist({ patientProfileId: perfil })
+      .pipe(catchError(() => of({ items: [] as readonly WaitlistEntry[] })))
+      .subscribe((pagina) => {
+        this.esperas.set(pagina.items.map((entrada) => this.aEsperaVisible(entrada)));
+      });
+  }
+
+  /**
+   * Anota al titular en la lista de espera de la agenda elegida.
+   *
+   * Es la salida del callejón: sin cupos, la pantalla ofrecía «probá con otra
+   * agenda» y nada más. Anotarse **no reserva** —cuando se libere un horario
+   * llega el aviso y se confirma por el flujo normal—, y el diálogo lo dice
+   * para que nadie se quede esperando una cita que no existe.
+   */
+  protected async anotarmeEnEspera(): Promise<void> {
+    const perfil = this.perfil;
+    const tenantId = this.organizacion();
+    const resourceId = this.recursoElegido();
+    if (perfil === null || tenantId === null || resourceId === null || this.anotandose()) {
+      return;
+    }
+
+    const agenda = this.nombreDeLaAgenda(resourceId);
+    const confirmado = await this.dialogs.confirm({
+      title: 'Anotarte en la lista de espera',
+      message:
+        agenda === ''
+          ? 'Te avisamos apenas se libere un horario. No reserva el turno: lo confirmás vos cuando llegue el aviso.'
+          : `Te avisamos apenas se libere un horario con ${agenda}. No reserva el turno: lo confirmás vos cuando llegue el aviso.`,
+      confirmLabel: 'Anotarme',
+      cancelLabel: 'Volver',
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    const desde = new Date();
+    const hasta = new Date(desde.getTime() + DIAS_DE_BUSQUEDA * 24 * 60 * 60 * 1000);
+
+    this.anotandose.set(true);
+    this.scheduling
+      .enrollWaitlist({
+        tenantId,
+        patientProfileId: perfil,
+        resourceId,
+        desiredFrom: desde,
+        desiredTo: hasta,
+      })
+      .subscribe({
+        next: () => {
+          this.anotandose.set(false);
+          this.toast.success(
+            'Te avisamos apenas se libere un horario.',
+            'Estás en lista de espera',
+          );
+          this.cargarEsperas();
+        },
+        error: (error: unknown) => {
+          this.anotandose.set(false);
+          const estado = errorToViewState<null>(error);
+          const detalle =
+            estado.status === 'forbidden' || estado.status === 'error'
+              ? (estado.message ?? '')
+              : '';
+          this.toast.error(
+            detalle === '' ? 'No pudimos anotarte en la lista de espera.' : detalle,
+            'Lista de espera',
+          );
+        },
       });
   }
 
@@ -787,6 +1005,21 @@ export class Appointments {
       motivo: cita.reasonText ?? '',
       avisoDelCambio: avisoDelCambio(cita),
       cambioCuando: cita.statusReason?.changedAt ?? null,
+      avisoDeDemora: avisoDeDemora(cita),
+      demoraCuando: cita.delayNotice?.announcedAt ?? null,
+    };
+  }
+
+  private aEsperaVisible(entrada: WaitlistEntry): EsperaVisible {
+    return {
+      id: entrada.id,
+      resourceId: entrada.resourceId ?? '',
+      // El servidor ya resuelve el nombre de la agenda: acá no hace falta
+      // cruzarlo con la lista de recursos, que además puede no incluirla.
+      agenda: entrada.resourceLabel,
+      desde: entrada.desiredFrom ?? null,
+      hasta: entrada.desiredTo ?? null,
+      anotadaEl: entrada.createdAt,
     };
   }
 
@@ -867,6 +1100,25 @@ function avisoDelCambio(cita: Booking): string {
 }
 
 /**
+ * Cómo se le cuenta al paciente la demora de su profesional (P8).
+ *
+ * Los minutos van siempre —son lo único que permite decidir si salir de casa— y
+ * el mensaje del profesional sólo si lo escribió: dejar «Motivo:» colgando
+ * cuando no hay motivo es peor que no decir nada.
+ *
+ * Devuelve `''` cuando nadie informó una demora, que es el caso corriente.
+ */
+function avisoDeDemora(cita: Booking): string {
+  const demora = cita.delayNotice;
+  if (demora === undefined || demora.delayMinutes <= 0) {
+    return '';
+  }
+  const base = `El profesional avisó que se demora unos ${demora.delayMinutes} minutos`;
+  const mensaje = demora.message?.trim() ?? '';
+  return mensaje === '' ? `${base}.` : `${base}: ${mensaje}`;
+}
+
+/**
  * La etiqueta del selector «¿con quién te querés atender?».
  *
  * La respuesta honesta es la persona; el nombre del recurso queda de respaldo
@@ -878,6 +1130,29 @@ function avisoDelCambio(cita: Booking): string {
  *
  * @param recurso - El recurso agendable tal como llegó de la API.
  */
+/** Si dos fechas caen el mismo día del calendario. */
+function mismoDia(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+/**
+ * Texto comparable: sin mayúsculas ni tildes.
+ *
+ * Quien busca a «Muñoz» escribe «munoz», y quien busca a «Peña» escribe «pena».
+ * Sin esto el buscador no encuentra a media guía por un acento.
+ */
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 export function etiquetaDeRecurso(recurso: {
   readonly name: string;
   readonly practitionerName?: string | null;

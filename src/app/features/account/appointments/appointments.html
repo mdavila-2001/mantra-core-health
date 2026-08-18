@@ -55,6 +55,7 @@
             [turnos]="turnosDeCalendario()"
             [seleccionado]="seleccionado()"
             (turnoElegido)="abrirDetalle($event)"
+            (diaElegido)="elegirDiaDeHorarios($event)"
           />
 
           @if (turnoEnDetalle(); as turno) {
@@ -81,6 +82,20 @@
                   @if (turno.cambioCuando !== null) {
                     <span class="turnos__aviso-fecha">
                       ({{ turno.cambioCuando | date: "d 'de' MMM, HH:mm" }})
+                    </span>
+                  }
+                </p>
+              }
+              @if (turno.avisoDeDemora !== '') {
+                <!-- P8: la demora se muestra con el turno y no sólo como aviso.
+                     El aviso in-app puede no haber llegado —cuenta sin portal,
+                     preferencia en contra, campana sin abrir— y el turno tiene
+                     que poder explicarse solo. -->
+                <p class="turnos__aviso-demora" data-testid="turnos-demora">
+                  {{ turno.avisoDeDemora }}
+                  @if (turno.demoraCuando !== null) {
+                    <span class="turnos__aviso-fecha">
+                      (avisada {{ turno.demoraCuando | date: "d 'de' MMM, HH:mm" }})
                     </span>
                   }
                 </p>
@@ -181,6 +196,18 @@
                     }
                   </p>
                 }
+                @if (turno.avisoDeDemora !== '') {
+                  <!-- P8 · «si el médico se demora, notificación con la
+                     información de la demora» (registro 3.5). -->
+                  <p class="turnos__aviso-demora" data-testid="turnos-motivo-demora">
+                    {{ turno.avisoDeDemora }}
+                    @if (turno.demoraCuando !== null) {
+                      <span class="turnos__aviso-fecha">
+                        (avisada {{ turno.demoraCuando | date: "d 'de' MMM, HH:mm" }})
+                      </span>
+                    }
+                  </p>
+                }
               </li>
             }
           </ul>
@@ -199,6 +226,36 @@
       }
     }
   </section>
+
+  <!-- ─── En lista de espera (P8) ─────────────────────────────────────────
+       Bloque aparte y no un turno más: una espera no tiene hora ni compromiso,
+       y mezclarla con los turnos haría creer que hay cita donde hay una cola. -->
+  @if (esperas().length > 0) {
+    <section class="turnos__bloque" aria-labelledby="turnos-espera">
+      <h2 id="turnos-espera" class="turnos__titulo">En lista de espera</h2>
+      <ul class="turnos__esperas" data-testid="turnos-esperas">
+        @for (espera of esperas(); track espera.id) {
+          <li class="turnos__espera">
+            <div class="turnos__cuando">
+              <span class="turnos__fecha">{{ espera.agenda }}</span>
+              @if (espera.desde !== null && espera.hasta !== null) {
+                <span class="turnos__hora">
+                  entre el {{ espera.desde | date: 'd MMM' }} y el
+                  {{ espera.hasta | date: 'd MMM' }}
+                </span>
+              }
+            </div>
+            <div class="turnos__acciones">
+              <app-badge variant="info">En espera</app-badge>
+            </div>
+            <p class="turnos__motivo">
+              Te avisamos apenas se libere un horario. La reserva la confirmás vos.
+            </p>
+          </li>
+        }
+      </ul>
+    </section>
+  }
 
   <section class="turnos__bloque" aria-labelledby="pedir-turno">
     <h2 id="pedir-turno" class="turnos__titulo">Pedir un turno</h2>
@@ -242,14 +299,65 @@
         probar más adelante.
       </app-alert>
     } @else {
-      <app-form-field label="¿Con quién te querés atender?" class="turnos__filtro">
-        <app-select
-          [options]="opcionesDeRecurso()"
-          [value]="recursoElegido() ?? ''"
-          placeholder="Elegí un profesional"
-          (valueChange)="elegirRecurso($event)"
+      <!-- Buscador y no desplegable: con una guía larga había que recorrerla
+           entera hasta dar con el profesional propio (F-13). Se escribe el
+           nombre y la lista se acota sola; en blanco los ofrece a todos. -->
+      <app-form-field
+        label="¿Con quién te querés atender?"
+        hint="Escribí su nombre para encontrarlo más rápido."
+        class="turnos__filtro"
+      >
+        <app-reference-combobox
+          [selected]="recursoSeleccionado()"
+          [options]="opcionesBuscadas()"
+          [minQueryLength]="0"
+          placeholder="Buscá por nombre"
+          emptyMessage="Ningún profesional coincide con esa búsqueda"
+          (searched)="busquedaDeRecurso.set($event)"
+          (selectionChange)="elegirRecurso($event?.value ?? null)"
         />
       </app-form-field>
+
+      <!-- Cuando se llegó acá señalando un día en el calendario, se dice cuál
+           es y se ofrece volver a verlos todos: si no, la lista parece corta
+           sin explicación (F-10). -->
+      @if (diaDeHorarios() !== null) {
+        <p class="turnos__filtro-dia" data-testid="turnos-dia-elegido">
+          <span>Horarios del <strong>{{ diaDeHorariosEnPalabras() }}</strong></span>
+          <button app-button variant="ghost" size="sm" (clicked)="verTodosLosHorarios()">
+            Ver todos los días
+          </button>
+        </p>
+      }
+
+      <!-- P8 · registro del cliente 3.4: «si no encontrás cita … podés recibir
+           una notificación de que un paciente desconfirmó». La salida del
+           callejón sin salida: antes, sin cupos, la pantalla sólo decía
+           «probá con otra agenda». -->
+      @if (recursoElegido() !== null) {
+        <div class="turnos__espera-accion">
+          @if (yaEnEspera()) {
+            <p class="turnos__estado" data-testid="turnos-ya-en-espera">
+              Ya estás en la lista de espera de esta agenda. Te avisamos apenas se libere un
+              horario.
+            </p>
+          } @else {
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              data-testid="turnos-anotarme-espera"
+              [isLoading]="anotandose()"
+              (clicked)="anotarmeEnEspera()"
+            >
+              Anotarme en la lista de espera
+            </button>
+            <p class="turnos__estado">
+              No reserva el turno: te avisamos cuando se libere uno y lo confirmás vos.
+            </p>
+          }
+        </div>
+      }
 
       @switch (horarios().status) {
         @case ('loading') {

@@ -71,7 +71,9 @@ export async function apiViva(api: APIRequestContext): Promise<boolean> {
 export function administrador(): Actor {
   return {
     rol: 'administrador',
-    identificador: process.env['E2E_ADMIN_EMAIL'] ?? 'admin@redesa.test',
+    identificador:
+      process.env['E2E_ADMIN_EMAIL'] ??
+      'cpacentropreparacionacademica@gmail.com',
     clave: process.env['E2E_ADMIN_PASSWORD'] ?? CLAVE,
     nombre: 'Administrador',
   };
@@ -89,7 +91,7 @@ export function administrador(): Actor {
 export function doctora(): Actor {
   return {
     rol: 'doctora',
-    identificador: process.env['E2E_DOCTOR_EMAIL'] ?? 'doctora.demo@redesa.test',
+    identificador: process.env['E2E_DOCTOR_EMAIL'] ?? 'pabliarca@gmail.com',
     clave: process.env['E2E_DOCTOR_PASSWORD'] ?? 'D3mo-passw0rd!',
     nombre: 'Dra. Valeria Fuentes Aramayo',
   };

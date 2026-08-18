@@ -10,6 +10,16 @@
     agenda de la organización. Si creés que debería estar habilitado para vos, pedíselo a quien
     gestiona los accesos.
   </app-alert>
+} @else if (sinPerfilProfesional()) {
+  <!-- ─── Profesional sin perfil en la sesión ───────────────────────────────
+       Publicar la agenda propia exige saber cuál es: el backend comprueba que
+       el recurso apunte al perfil profesional del actor. Si el token no lo
+       declara, no hay agenda propia que armar, y decirlo acá evita que la
+       persona complete cinco fases para chocar con un 403 en la primera. -->
+  <app-alert tone="warning" title="Tu sesión todavía no tiene perfil profesional">
+    Para publicar tu agenda hace falta que tu cuenta esté vinculada a tu perfil profesional. Volvé a
+    iniciar sesión; si sigue igual, pedí que revisen tu alta como profesional.
+  </app-alert>
 } @else if (sinOrganizacion()) {
   <!-- ─── Sin organización activa ───────────────────────────────────────────
        El recurso y la política se crean en una organización concreta: sin una

@@ -64,7 +64,16 @@
       "/visit-agenda",
       "/visit-requests",
       "/visit-records",
-      "/visit-surveys"
+      "/visit-surveys",
+      "/community",
+      "/notifications",
+      "/system-context",
+      "/insurance-carriers",
+      "/insurance-brokers",
+      "/cds",
+      "/billing/service-catalog",
+      "/diagnostics/patients",
+      "/diagnostics/work-orders"
     ],
     "target": "http://localhost:3000",
     "secure": false,

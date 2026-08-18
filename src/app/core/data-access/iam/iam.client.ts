@@ -118,7 +118,14 @@ export class IamClient {
     return this.http.post<RegisteredPractitioner>(this.url('/iam/auth/register-practitioner'), {
       email: registration.email,
       password: registration.password,
-      displayName: registration.displayName,
+      // El nombre viaja en partes y el backend compone el que se muestra: si el
+      // front lo compusiera, la base guardaría una versión y el contrato otra.
+      name: registration.name,
+      lastName: registration.lastName,
+      ...(registration.middleName === undefined ? {} : { middleName: registration.middleName }),
+      ...(registration.motherLastName === undefined
+        ? {}
+        : { motherLastName: registration.motherLastName }),
       licenseNumber: registration.licenseNumber,
       credentialNumber: registration.credentialNumber,
       ...(registration.professionalTitle === undefined
@@ -208,16 +215,24 @@ export class IamClient {
   /**
    * `POST /iam/users/assisted-registration` (C-18 / CAN-IDENT).
    *
-   * Una sola petición: el backend crea persona, perfil y cuenta **en la misma
-   * transacción** (regla 11 del modelo, registro CTI atómico). Por eso acá no
-   * hay orquestación ni reanudación que hacer — o quedó todo, o no quedó nada.
+   * Una sola petición y una sola transacción del lado del backend: o quedó la
+   * cuenta con su token de activación, o no quedó nada. Por eso acá no hay
+   * orquestación ni reanudación que hacer.
    */
   assistedRegistration(
     registration: AssistedPatientRegistration,
   ): Observable<AssistedRegistrationResult> {
     return this.http
       .post<AssistedRegistrationBody>(this.url('/iam/users/assisted-registration'), {
-        displayName: registration.displayName,
+        // El nombre viaja en partes y el backend compone el que se muestra: si
+        // el front lo compusiera, la cuenta guardaría una versión y el contrato
+        // otra.
+        name: registration.name,
+        lastName: registration.lastName,
+        ...(registration.middleName === undefined ? {} : { middleName: registration.middleName }),
+        ...(registration.motherLastName === undefined
+          ? {}
+          : { motherLastName: registration.motherLastName }),
         email: registration.email,
         reason: registration.reason,
         ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),

@@ -42,6 +42,7 @@ import { Link } from '../../shared/components/atoms/link/link';
 import { Select } from '../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { Switch } from '../../shared/components/atoms/switch/switch';
+import { Textarea } from '../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
@@ -173,11 +174,34 @@ const ROLES_QUE_ELIGEN_RECURSO = ROLES_QUE_OPERAN_CITAS;
 const ROLES_QUE_RESERVAN = [...ROLES_QUE_OPERAN_CITAS, 'PATIENT'];
 
 /**
- * Roles que pueden construir agenda (UC-41-01 → UC-41-04). Las cuatro fases de
- * configuración declaran `SCHEDULING_ADMIN`; `SUPERADMIN` es el comodín del
- * `RolesGuard`. Ni el agente de mostrador ni el profesional arman la grilla.
+ * Roles que pueden construir agenda (UC-41-01 → UC-41-04).
+ *
+ * El agente de mostrador no arma la grilla; el profesional **sí**, desde el
+ * autoservicio: las cinco escrituras del catálogo declaran
+ * `@Roles('SCHEDULING_ADMIN', 'PRACTITIONER')`, y el backend le acota el
+ * recurso al suyo. Dejarlo afuera escondía «Crear agenda» justo a quien la
+ * pantalla le está pidiendo que la publique.
  */
-const ROLES_QUE_CREAN_AGENDA = ['SCHEDULING_ADMIN', 'SUPERADMIN'];
+const ROLES_QUE_CREAN_AGENDA = ['SCHEDULING_ADMIN', 'SUPERADMIN', 'PRACTITIONER'];
+
+/**
+ * Las demoras que se ofrecen (P8 · registro del cliente 4.2).
+ *
+ * Una lista corta y no un campo libre: la demora se avisa **mientras** la
+ * consulta se corre, con el paciente siguiente esperando en la puerta, y en ese
+ * momento nadie escribe un número. Son los tramos con los que se habla —«voy
+ * veinte minutos atrasado»—, no una escala arbitraria.
+ *
+ * El backend acepta de 5 a 240 minutos; más que eso deja de ser una demora y se
+ * resuelve reprogramando, y por eso la lista no llega ahí.
+ */
+const DEMORAS = [10, 15, 20, 30, 45, 60, 90] as const;
+
+/** Cuál se ofrece puesta: la que más se avisa. */
+const DEMORA_POR_DEFECTO = '20';
+
+/** Tope del mensaje que acompaña la demora, el mismo que declara el DTO. */
+const MAX_MENSAJE_DE_DEMORA = 300;
 
 /** Una cita ya lista para pintar: sin uuid, con el recurso y el estado resueltos. */
 export interface CitaVisible {
@@ -297,6 +321,7 @@ export interface CupoVisible {
     Switch,
     Tab,
     Tabs,
+    Textarea,
   ],
   templateUrl: './agenda.html',
   styleUrl: './agenda.css',
@@ -685,6 +710,119 @@ export class Agenda {
     const roles = this.auth.roles();
     return ROLES_QUE_CREAN_AGENDA.some((rol) => roles.includes(rol));
   });
+
+  /* ---- «me demoro» (P8 · registro del cliente 4.2) ------------------------ */
+
+  /**
+   * Qué demora se está por avisar.
+   *
+   * `undefined` = el panel está cerrado. `null` = la demora es de toda la
+   * agenda del recurso («me demoro veinte minutos hoy»), que es como ocurre en
+   * la práctica. Un id = la demora alcanza sólo a esa cita.
+   */
+  protected readonly demoraDe = signal<string | null | undefined>(undefined);
+
+  protected readonly minutosDeDemora = signal<string>(DEMORA_POR_DEFECTO);
+  protected readonly mensajeDeDemora = signal<string>('');
+  protected readonly avisandoDemora = signal(false);
+  protected readonly maxMensajeDeDemora = MAX_MENSAJE_DE_DEMORA;
+
+  protected readonly panelDeDemoraAbierto = computed(
+    () => this.demoraDe() !== undefined,
+  );
+
+  /** Si el panel avisa de toda la agenda o de una cita concreta. */
+  protected readonly demoraDeTodaLaAgenda = computed(() => this.demoraDe() === null);
+
+  protected readonly opcionesDeDemora = computed<readonly SelectOption<string>[]>(() =>
+    DEMORAS.map((minutos) => ({ value: String(minutos), label: `${minutos} minutos` })),
+  );
+
+  /**
+   * Si se puede avisar una demora: hay a quién avisarle y quién la avisa.
+   *
+   * Exige recurso elegido porque la demora es **de una agenda**: sin saber cuál,
+   * el aviso no tiene destinatarios.
+   */
+  protected readonly puedeAvisarDemora = computed(
+    () => this.puedeAtender() && this.recursoElegido() !== null,
+  );
+
+  /** Abre el panel para avisar la demora de toda la agenda. */
+  protected abrirDemoraDeAgenda(): void {
+    this.demoraDe.set(null);
+    this.minutosDeDemora.set(DEMORA_POR_DEFECTO);
+    this.mensajeDeDemora.set('');
+  }
+
+  /** Abre el panel para avisar la demora de una cita concreta. */
+  protected abrirDemoraDeCita(cita: CitaVisible): void {
+    this.demoraDe.set(cita.id);
+    this.minutosDeDemora.set(DEMORA_POR_DEFECTO);
+    this.mensajeDeDemora.set('');
+  }
+
+  protected cerrarDemora(): void {
+    this.demoraDe.set(undefined);
+  }
+
+  /**
+   * Avisa la demora.
+   *
+   * No mueve ningún turno ni toca los cupos: el backend sólo la registra en el
+   * historial de las citas alcanzadas y emite el aviso. Por eso la agenda **no**
+   * se recarga como en las demás acciones —no hay nada distinto que leer— salvo
+   * para reflejar la demora en el detalle del turno.
+   */
+  protected confirmarDemora(): void {
+    const objetivo = this.demoraDe();
+    if (objetivo === undefined || this.avisandoDemora()) {
+      return;
+    }
+    const minutos = Number(this.minutosDeDemora());
+    if (!Number.isFinite(minutos) || minutos <= 0) {
+      return;
+    }
+    const mensaje = this.mensajeDeDemora().trim();
+
+    const recurso = this.recursoElegido();
+    if (objetivo === null && recurso === null) {
+      return;
+    }
+
+    this.avisandoDemora.set(true);
+    const peticion =
+      objetivo === null
+        ? this.scheduling.delayResource(recurso as string, {
+            delayMinutes: minutos,
+            ...(mensaje === '' ? {} : { message: mensaje }),
+          })
+        : this.scheduling.delayBooking(objetivo, {
+            delayMinutes: minutos,
+            ...(mensaje === '' ? {} : { message: mensaje }),
+          });
+
+    peticion.subscribe({
+      next: (resultado) => {
+        this.avisandoDemora.set(false);
+        this.demoraDe.set(undefined);
+        // Se dice cuántos pacientes se enteraron, no «listo»: un aviso que no
+        // llegó a nadie —porque nadie tiene cuenta de portal— no es un éxito
+        // y quien atiende necesita saberlo para avisar por otro medio.
+        this.toast.success(
+          resultado.affected === 0
+            ? 'No había turnos vigentes en el horario informado.'
+            : `Avisamos a ${resultado.notified} de ${resultado.affected} pacientes.`,
+          'Demora informada',
+        );
+        this.cargarAgenda();
+      },
+      error: (error: unknown) => {
+        this.avisandoDemora.set(false);
+        this.avisarFallo(error, 'No se pudo avisar la demora.');
+      },
+    });
+  }
 
   protected readonly columnasDeCitas = computed<readonly ColumnDef<CitaVisible>[]>(() => [
     { key: 'cuando', header: 'Fecha y hora', priority: 1, cell: this.celdaCuando() },

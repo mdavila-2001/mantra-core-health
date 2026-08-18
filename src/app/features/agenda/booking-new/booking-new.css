@@ -52,3 +52,12 @@ form,
   gap: var(--sp-3);
   margin-block-start: var(--sp-4);
 }
+
+/* El campo de motivo ocupa la fila entera del grid de la sección.
+   `form-section` pasa a dos columnas desde 780px y esta sección tiene un solo
+   campo: sin esto, un texto de hasta 500 caracteres se escribe en media caja
+   (F-05 de la analista). Se resuelve acá y no en el organismo porque es una
+   decisión de esta pantalla, no de todas las secciones del sistema. */
+.reserva__campo--ancho {
+  grid-column: 1 / -1;
+}

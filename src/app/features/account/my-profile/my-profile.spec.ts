@@ -3,8 +3,21 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { SessionStore } from '../../../core/auth/session.store';
 import { resolverEstadosDeCaso } from '../../../../testing/case-status';
 import { MyProfile } from './my-profile';
+
+/** base64url **sobre UTF-8**, como el token real. */
+function jwt(payload: Record<string, unknown>): string {
+  const b64 = (o: unknown) => {
+    const bytes = new TextEncoder().encode(JSON.stringify(o));
+    return btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  };
+  return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
+}
 
 /**
  * El resumen propio es la única pantalla de este lote que **no** pide rol: pide
@@ -149,6 +162,87 @@ describe('MyProfile', () => {
     expect(estado().status).toBe('forbidden');
     // El historial se respondió en el beforeEach: llegó y no lo tumbó el 403.
     expect(interno<() => readonly unknown[]>('casosOrdenados')()).toEqual([]);
+  });
+
+  /* -- H-07: la pantalla no filtra vocabulario de sistema ni ids internos ---- */
+
+  function responderResumen(): void {
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({
+      items: [],
+      count: 0,
+      limit: 50,
+    });
+    fixture.detectChanges();
+  }
+
+  it('«Tu acceso» nombra el rol en palabras, con el código sólo en data-role', () => {
+    // La sesión se abre después de crear la pantalla: las insignias derivan de
+    // una señal, así que reaccionan igual.
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] }),
+      refreshToken: 'r-1',
+    });
+    responderResumen();
+
+    const insignias = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.mi-perfil__roles app-badge'),
+    ];
+    expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Paciente']);
+    expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PATIENT']);
+  });
+
+  it('los identificadores del perfil y la persona ya no se muestran', () => {
+    responderResumen();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('.mi-perfil__ids')).toBeNull();
+    expect(raiz.textContent).not.toContain(RESUMEN.patientProfileId);
+    // El código de paciente sí: es la referencia que la persona puede dar.
+    expect(raiz.textContent).toContain(RESUMEN.patientCode);
+  });
+
+  /* -- I-D (F-18): el 403 por identidad es el estado normal, no un error ---- */
+
+  function alertaDeDatos(): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector(
+      '.mi-perfil__bloque app-view-state-host app-alert',
+    );
+  }
+
+  it('sin identidad verificada, «Tus datos» lo dice en neutro y con la salida a mano', () => {
+    // Todo paciente recién registrado pasa por acá: pintarlo como «No tenés
+    // acceso» en rojo lee como que algo se rompió, y el mensaje crudo del
+    // backend habla de usted (feedback de la analista, barrido del 18/08/2026).
+    http.expectOne('/profiles/patients/me/summary').flush(
+      { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verifique su identidad.' },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    fixture.detectChanges();
+
+    const alerta = alertaDeDatos();
+    expect(alerta?.classList.contains('alert--info')).toBe(true);
+    expect(alerta?.textContent).toContain('cuando tu identidad esté verificada');
+    expect(alerta?.textContent).not.toContain('No tenés acceso');
+    expect(alerta?.textContent).not.toContain('Verifique su identidad');
+    expect(alerta?.querySelector('a[href="/my-account/identity/verify"]')).not.toBeNull();
+  });
+
+  it('un 403 corriente sigue siendo un muro, y se pinta como tal', () => {
+    http
+      .expectOne('/profiles/patients/me/summary')
+      .flush(
+        { code: 'FORBIDDEN', message: 'No tenés acceso a este recurso.' },
+        { status: 403, statusText: 'Forbidden' },
+      );
+    fixture.detectChanges();
+
+    const alerta = alertaDeDatos();
+    expect(alerta?.classList.contains('alert--error')).toBe(true);
+    expect(alerta?.textContent).toContain('No tenés acceso a esta sección');
+    // El motivo que dio el backend se conserva, como lo haría el host de estados.
+    expect(alerta?.textContent).toContain('No tenés acceso a este recurso.');
+    expect(alerta?.querySelector('a')).toBeNull();
   });
 });
 

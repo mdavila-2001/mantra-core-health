@@ -16,6 +16,8 @@ import type {
   PatientDiagnosticResult,
   PatientDiagnosticResults,
   PatientDiagnostics,
+  PatientOrder,
+  PatientOwnOrders,
 } from './diagnostics.types';
 
 /**
@@ -174,6 +176,24 @@ export class DiagnosticsClient {
         params: topeDe(limit),
       })
       .pipe(map((body) => ({ ...body, items: body.items.map(toPatientResult) })));
+  }
+
+  /**
+   * `GET /diagnostic-results/me/orders` — las órdenes propias.
+   *
+   * Sólo laboratorio e imagenología, y de todas las organizaciones: el estudio
+   * que le pidieron en una clínica y el de otra son una sola lista. Cada orden
+   * trae su preparación —cuando algún centro la publicó— y si ya hay un
+   * resultado liberado que se pueda abrir.
+   *
+   * @param limit - Tope de órdenes. La API aplica 50 si se omite.
+   */
+  getOwnOrders(limit?: number): Observable<PatientOwnOrders> {
+    return this.http
+      .get<WirePatientOrders>(this.url('/diagnostic-results/me/orders'), {
+        params: topeDe(limit),
+      })
+      .pipe(map((body) => ({ ...body, items: body.items.map(toPatientOrder) })));
   }
 
   /**
@@ -370,6 +390,15 @@ interface WirePatientResults extends Omit<PatientDiagnosticResults, 'items'> {
   readonly items: readonly WirePatientResult[];
 }
 
+type WirePatientOrder = Fechas<PatientOrder, 'createdAt'> & {
+  // Toda orden tiene fecha de pedido: es lo que la ordena en la lista.
+  readonly createdAt: string;
+};
+
+interface WirePatientOrders extends Omit<PatientOwnOrders, 'items'> {
+  readonly items: readonly WirePatientOrder[];
+}
+
 type WireShare = Fechas<DiagnosticResultShare, 'validFrom' | 'validTo'> & {
   readonly validFrom: string;
 };
@@ -385,6 +414,10 @@ function toPatientResult({
   ...resto
 }: WirePatientResult): PatientDiagnosticResult {
   return { ...resto, ...fecha('issuedAt', issuedAt), releasedAt: new Date(releasedAt) };
+}
+
+function toPatientOrder({ createdAt, ...resto }: WirePatientOrder): PatientOrder {
+  return { ...resto, createdAt: new Date(createdAt) };
 }
 
 function toShare({ validFrom, validTo, ...resto }: WireShare): DiagnosticResultShare {

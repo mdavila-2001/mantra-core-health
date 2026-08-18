@@ -14,15 +14,36 @@ import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
 import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
+import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { authGuard } from './core/auth/auth.guard';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
   APP_TITLE,
+  ROLES_ROUTE_DATA,
   SECTION_ROUTE_DATA,
   titleOf,
   type AppSection,
 } from './core/navigation/navigation.types';
+
+/**
+ * Los roles de quien atiende, para las hijas de «Mi perfil» que son sólo suyas.
+ *
+ * Es la misma pareja que declaran «Archivo clínico» y «Laboratorio e imagen» en
+ * el registro (`navigation.map.ts`): la Guía es del paciente; configurar el
+ * perfil profesional, la vitrina pública y los artículos médicos son de quien
+ * atiende. Un paciente que escribía la dirección llegaba a una pantalla que le
+ * hablaba de «las personas que atendí» (feedback de la analista, 18/08/2026).
+ */
+const ROLES_DE_QUIEN_ATIENDE: readonly string[] = ['CLINICIAN', 'PRACTITIONER'];
+
+/** La declaración que cierra una hija de «Mi perfil» a quien atiende. */
+function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
+  return {
+    canActivate: [seccionRolesGuard],
+    data: { [ROLES_ROUTE_DATA]: ROLES_DE_QUIEN_ATIENDE },
+  };
+}
 
 /**
  * Qué componente pinta cada sección **que ya tiene pantalla**.
@@ -55,6 +76,27 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // el enlace guardado llega igual. Borrarla es una decisión de producto que el
   // cliente no pidió — dijo «sacar del perfil de paciente», no «eliminar».
   feed: () => import('./features/feed/feed').then((m) => m.Feed),
+  // Carril P1 · el centro de notificaciones. Diferido: la campana del header ya
+  // resuelve el 90 % de los casos —enterarse y saltar— y esta pantalla sólo la
+  // abre quien viene a revisar.
+  'notification-center': () =>
+    import('./features/notifications/notification-center').then(
+      (m) => m.NotificationCenter,
+    ),
+  // Carril P2 · la bandeja de mensajería. Diferida: no es la primera pantalla
+  // de nadie y arrastra el buscador del directorio.
+  messaging: () =>
+    import('./features/messaging/messaging').then((m) => m.Messaging),
+  // El directorio de grupos (P7). Diferido como el muro: no es la primera
+  // pantalla de nadie y arrastra la tarjeta de grupo con su alta.
+  groups: () => import('./features/groups/groups').then((m) => m.Groups),
+  // Carril P9 · las preferencias de aviso. Diferida: se abre una vez y se
+  // olvida, que es exactamente lo que una pantalla de preferencias debería
+  // conseguir.
+  'my-account/notification-preferences': () =>
+    import(
+      './features/account/notification-preferences/notification-preferences'
+    ).then((m) => m.NotificationPreferences),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
@@ -101,6 +143,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/accounting/accounting').then((m) => m.Accounting),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
+  'administration/moderation': () =>
+    import('./features/admin/moderation/moderation').then((m) => m.Moderation),
   tutorials: () =>
     import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
@@ -111,6 +155,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'my-account/diagnostic-results': () =>
     import('./features/account/diagnostic-results/diagnostic-results').then(
       (m) => m.DiagnosticResults,
+    ),
+  'my-account/diagnostic-orders': () =>
+    import('./features/account/diagnostic-orders/diagnostic-orders').then(
+      (m) => m.DiagnosticOrders,
     ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
@@ -186,6 +234,32 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * el guard nunca niega lo que la API permite. `app.routes.spec.ts` fija la regla.
  */
 const PANTALLAS_HIJAS: Routes = [
+  {
+    // Carril P2 · el hilo de una conversación. Cuelga de `messaging` y se llega
+    // desde la bandeja o desde una notificación de la campana, no desde el
+    // menú: es la ficha de una conversación concreta.
+    //
+    // Sin `seccionRolesGuard` explícito porque su sección no declara roles; el
+    // backend comprueba que quien lee participe del hilo, que es la única
+    // barrera que importa acá.
+    path: 'messaging/:conversationId',
+    title: `${APP_TITLE} - Conversación`,
+    loadComponent: () =>
+      import('./features/messaging/thread/thread')
+        .then((m) => m.Thread)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El grupo por dentro (P7). El directorio es la sección `groups`, que el
+    // registro declara; esto es la ficha a la que se llega desde una tarjeta,
+    // y por eso vive acá y no en el menú.
+    path: 'groups/:groupId',
+    title: `${APP_TITLE} - Grupo`,
+    loadComponent: () =>
+      import('./features/groups/group-detail/group-detail')
+        .then((m) => m.GroupDetail)
+        .catch(() => chunkFallido()),
+  },
   {
     // La ficha de una encuesta (carril 10): cuestionario, publicación y
     // respuestas. Se llega desde el listado, no desde el menú.
@@ -312,9 +386,11 @@ const PANTALLAS_HIJAS: Routes = [
   },
   {
     // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
-    // nunca desde el menú.
+    // nunca desde el menú. Y sólo la abre quien atiende: «Mi perfil» no
+    // declara roles, así que la restricción va en la ruta.
     path: 'my-account/edit',
     title: `${APP_TITLE} - Configurar tu perfil`,
+    ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
         .then((m) => m.PractitionerProfileEdit)
@@ -324,6 +400,7 @@ const PANTALLAS_HIJAS: Routes = [
     // La vitrina pública: se configura y se ve en la misma pantalla.
     path: 'my-account/preview',
     title: `${APP_TITLE} - Tu perfil público`,
+    ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/public-profile-preview/public-profile-preview')
         .then((m) => m.PublicProfilePreview)
@@ -334,6 +411,7 @@ const PANTALLAS_HIJAS: Routes = [
     // sin vitrina, no hay dónde publicar un artículo.
     path: 'my-account/articles',
     title: `${APP_TITLE} - Artículos médicos`,
+    ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/medical-articles/medical-articles')
         .then((m) => m.MedicalArticles)
@@ -397,9 +475,11 @@ const PANTALLAS_HIJAS: Routes = [
     // se comparte: «mirá qué quiere decir esto» es un enlace, y un panel no
     // tiene enlace. Cuelga de `/glossary`, así que el rastro de migas y la
     // sección marcada en el menú siguen diciendo «Glosario» sin que haya que
-    // tocar `navigation.map.ts`.
+    // tocar `navigation.map.ts`. Y hereda sus roles: un enlace compartido a un
+    // término no le abre al paciente lo que el listado le cierra.
     path: 'glossary/:conceptId',
     title: `${APP_TITLE} - Término del glosario`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/glossary/glossary-term')
         .then((m) => m.GlossaryTerm)
@@ -592,12 +672,167 @@ function rutasHeredadas(mapa: Readonly<Record<string, string>>): Routes {
   }));
 }
 
+/**
+ * Las cinco fichas públicas por slug, bajo el marco público del buscador.
+ *
+ * Se generan del mapa en vez de escribirse cinco veces porque las cinco son la
+ * misma pantalla con otro tipo esperado: lo único que cambia es el prefijo y el
+ * `kind`, y cinco bloques copiados serían cinco lugares donde arreglar el mismo
+ * defecto.
+ *
+ * Diferidas: quien entra por el buscador no necesita este fragmento hasta que
+ * abre una ficha, y quien llega directo de un enlace descarga sólo esto.
+ */
+function rutasDeFichasPublicas(): Routes {
+  const TIPOS = [
+    ['p', 'PRACTITIONER'],
+    ['o', 'ORGANIZATION'],
+    ['f', 'PHARMACY'],
+    ['l', 'DIAGNOSTIC_UNIT'],
+    ['s', 'INSURER'],
+  ] as const;
+
+  return TIPOS.map(([prefijo, kind]) => ({
+    path: prefijo,
+    loadComponent: () =>
+      import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+    children: [
+      {
+        path: ':slug',
+        data: { kind, pantallaReal: true },
+        resolve: { perfil: perfilPublicoResolver },
+        loadComponent: () =>
+          import('./features/public-profile/public-profile').then((m) => m.PublicProfile),
+      },
+    ],
+  }));
+}
+
+/**
+ * Las rutas públicas del buscador, con las URL que la ficha V65 declara.
+ *
+ * ## Por qué existen además de las que genera el portador de vistas
+ *
+ * `scripts/port-vistas-redsat.mjs` deriva el segmento del **nombre del archivo
+ * de la maqueta**, así que la portada quedó en `/buscar/buscador-listado` y los
+ * verticales en `/buscar/…-listado`. Sirve para recorrer la bóveda; no sirve
+ * como superficie pública. Estas URL son las que la ficha declara —`/buscar`,
+ * `/buscar/profesionales`, `/buscar/mapa`—, las que se pegan en un mensaje y
+ * las que un buscador indexa, y son cortas y estables porque un directorio
+ * público las cambia una sola vez.
+ *
+ * ## Por qué van antes de `REDSAT_ROUTES` y no dentro
+ *
+ * Porque `redsat.routes.ts` es un **archivo generado**: escribirlas ahí las
+ * borra la próxima vez que alguien porte una vista. Declaradas acá conviven
+ * con el bloque generado —el router prueba estas primero y retrocede al
+ * siguiente `buscar` cuando el segmento no coincide—, así que los enlaces de
+ * la bóveda que todavía apuntan a `/buscar/buscador-listado` siguen abriendo.
+ * Hay una prueba que resuelve las dos formas y falla si eso deja de ser cierto.
+ */
+function rutasDeBusquedaPublica(): Routes {
+  const VERTICALES = [
+    ['profesionales', 'Profesionales de salud — AloVida', 'profesionales-listado', 'BuscarProfesionalesListado'],
+    ['medicamentos', 'Medicamentos y farmacias — AloVida', 'medicamentos-listado', 'BuscarMedicamentosListado'],
+    ['organizaciones', 'Hospitales y clínicas — AloVida', 'hospitales-listado', 'BuscarHospitalesListado'],
+    ['diagnostico', 'Laboratorios e imagen — AloVida', 'laboratorios-listado', 'BuscarLaboratoriosListado'],
+    ['aseguradoras', 'Aseguradoras y convenios — AloVida', 'aseguradoras-listado', 'BuscarAseguradorasListado'],
+  ] as const;
+
+  return [
+    {
+      path: 'buscar',
+      loadComponent: () =>
+        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+      children: [
+        {
+          path: '',
+          pathMatch: 'full',
+          title: 'Buscar en AloVida — profesionales, medicamentos y centros de salud',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/buscador-listado/buscador-listado').then(
+              (m) => m.BuscarBuscadorListado,
+            ),
+        },
+        {
+          path: 'profesionales',
+          title: 'Profesionales de salud — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/profesionales-listado/profesionales-listado').then(
+              (m) => m.BuscarProfesionalesListado,
+            ),
+        },
+        {
+          path: 'medicamentos',
+          title: 'Medicamentos y farmacias — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/medicamentos-listado/medicamentos-listado').then(
+              (m) => m.BuscarMedicamentosListado,
+            ),
+        },
+        {
+          path: 'hospitales',
+          title: 'Hospitales y clínicas — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/hospitales-listado/hospitales-listado').then(
+              (m) => m.BuscarHospitalesListado,
+            ),
+        },
+        {
+          path: 'diagnostico',
+          title: 'Laboratorios e imagen — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/laboratorios-listado/laboratorios-listado').then(
+              (m) => m.BuscarLaboratoriosListado,
+            ),
+        },
+        {
+          path: 'aseguradoras',
+          title: 'Aseguradoras y convenios — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/aseguradoras-listado/aseguradoras-listado').then(
+              (m) => m.BuscarAseguradorasListado,
+            ),
+        },
+        {
+          // V65-12. `mapa` y no `cercania`: es el rótulo de la pestaña y el
+          // que la ficha declara.
+          path: 'mapa',
+          title: 'Cerca mío — AloVida',
+          data: { arquetipo: 'detalle', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/cercania-detalle/cercania-detalle').then(
+              (m) => m.BuscarCercaniaDetalle,
+            ),
+        },
+      ],
+    },
+  ];
+}
+
 export const routes: Routes = [
+  // La superficie pública del buscador con sus URL limpias. Va **antes** del
+  // bloque generado: las dos declaran `buscar`, y la primera que coincide gana.
+  ...rutasDeBusquedaPublica(),
   // Las pantallas portadas desde la bóveda, con su propio marco REDSAT. Van
   // primero y con segmento propio: no compiten con el armazón de abajo, que
   // vive en `path: ''`, así que ninguna de las dos depende de que el router
   // retroceda para encontrar a la otra.
   ...REDSAT_ROUTES,
+  // Las fichas públicas por slug. Van con el marco público y **sin guard**:
+  // son la superficie anónima, y el enlace que alguien pega en un mensaje.
+  //
+  // Los cinco prefijos son cortos por diseño —`/p/`, `/o/`, `/f/`, `/l/`,
+  // `/s/`— y cada uno promete un tipo de sujeto: la ruta lo declara en `data`
+  // y el cliente lo traduce al prefijo de la API, que devuelve 404 si el slug
+  // es de otra clase en vez de redirigir.
+  ...rutasDeFichasPublicas(),
   {
     // El armazón: header con el usuario, navegación y selector de organización.
     // El guard corre en el padre — S1 del M34: autorizar ANTES de pedir datos —

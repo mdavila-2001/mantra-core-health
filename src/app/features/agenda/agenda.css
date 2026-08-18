@@ -119,3 +119,49 @@
   gap: var(--sp-2);
   white-space: nowrap;
 }
+
+/* ---- avisar demora (P8) --------------------------------------------------
+   Una tarjeta al principio de la agenda, no un diálogo: la demora se avisa
+   entre dos pacientes y con la agenda a la vista, que es lo que dice a quién
+   alcanza. El filo de advertencia la separa de los filtros sin depender del
+   color solo: lleva además su propio título. */
+.agenda__demora {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-inline-start: 3px solid var(--st-warning-bd);
+  border-radius: var(--r-md);
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+  padding: var(--sp-4);
+}
+
+.agenda__demora-titulo {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin: 0;
+}
+
+.agenda__demora-ayuda {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  margin: 0;
+}
+
+.agenda__demora-campos {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.agenda__demora-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+@media (min-width: 40rem) {
+  .agenda__demora-campos {
+    align-items: start;
+    grid-template-columns: minmax(10rem, 14rem) 1fr;
+  }
+}

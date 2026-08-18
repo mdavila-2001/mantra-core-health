@@ -21,7 +21,13 @@
         </app-alert>
       }
 
-      <form class="responder__form" (ngSubmit)="enviar()" data-testid="responder-form">
+      <!-- Sin `FormGroup` no hay `NgForm`: el `submit` nativo se corta acá y el envío —click o
+           Enter— entra por el mismo camino, sin recargar la página. -->
+      <form
+        class="responder__form"
+        (submit)="$event.preventDefault(); enviar()"
+        data-testid="responder-form"
+      >
         @for (pregunta of estado.data.questions; track pregunta.id) {
           <app-card variant="outlined" padding="lg" class="responder__pregunta">
             <app-form-field

@@ -1,0 +1,54 @@
+/* «Mi salud» — el panel de quien viene a atenderse.
+   Mobile-first: una columna, y de 48rem para arriba la rejilla se abre. */
+
+:host {
+  display: block;
+}
+
+.mi-salud__tarjetas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-4);
+}
+
+.mi-salud__titulo {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  color: var(--text-primary);
+}
+
+.mi-salud__dato {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  /* La fecha llega en minúscula del pipe; acá encabeza la tarjeta. */
+  text-transform: capitalize;
+}
+
+.mi-salud__hora {
+  display: block;
+  color: var(--text-secondary);
+  text-transform: none;
+}
+
+.mi-salud__texto,
+.mi-salud__estado {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+}
+
+.mi-salud__accesos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-5);
+}
+
+@media (min-width: 48rem) {
+  .mi-salud__tarjetas {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

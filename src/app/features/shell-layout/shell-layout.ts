@@ -11,6 +11,7 @@ import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
 import { NavigationService } from '../../core/navigation/navigation.service';
@@ -20,6 +21,10 @@ import type { NavSection } from '../../shared/components/organisms/side-nav/side
 import type { TenantOption } from '../../shared/components/organisms/tenant-switcher/tenant-switcher.types';
 import { TutorialOverlay } from '../../shared/components/organisms/tutorial-overlay/tutorial-overlay';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
+// Carril P1: la campana. Es propiedad de P1 durante la tanda —el README lo
+// declara hotspot— y se monta acá porque el armazón es lo único que existe
+// exactamente una vez por sesión con interfaz.
+import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
 
@@ -48,6 +53,7 @@ import { TUTORIALS } from '../../core/tutorials/definitions';
     RedsatThemeToggleDirective,
     TutorialOverlay,
     TutorialTarget,
+    NotificationBell,
   ],
   templateUrl: './shell-layout.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -176,15 +182,22 @@ export class ShellLayout {
    *
    * La vitrina se agrega aparte porque **no es una sección del producto**: vive fuera del armazón,
    * no tiene módulo del modelo que la respalde y es una herramienta de quien construye. Meterla en
-   * el registro la volvería una sección más, con su ficha de vista inexistente.
+   * el registro la volvería una sección más, con su ficha de vista inexistente. Por lo mismo no se
+   * le ofrece al paciente: es una herramienta de desarrollo, no algo de su cuenta.
    */
-  protected readonly sections = computed<readonly NavSection[]>(() => [
-    ...this.navigation.menu(),
-    {
-      label: 'Herramientas',
-      items: [{ label: 'Sistema de diseño', route: '/design-system', icon: 'settings' }],
-    },
-  ]);
+  protected readonly sections = computed<readonly NavSection[]>(() => {
+    const menu = this.navigation.menu();
+    if (esPaciente(this.auth.roles())) {
+      return menu;
+    }
+    return [
+      ...menu,
+      {
+        label: 'Herramientas',
+        items: [{ label: 'Sistema de diseño', route: '/design-system', icon: 'settings' }],
+      },
+    ];
+  });
 
   /** Nombre de la organización activa, para el rótulo del selector. */
   protected readonly organizacionActiva = computed(() => {
@@ -202,8 +215,15 @@ export class ShellLayout {
       .join(''),
   );
 
-  /** Los roles del token, en una línea legible para el menú de la cuenta. */
-  protected readonly rolesLegibles = computed(() => this.user()?.roles.join(' · ') ?? '');
+  /**
+   * Los roles del token, en una línea legible para el menú de la cuenta.
+   *
+   * Van traducidos por el diccionario: el código crudo (`PATIENT`, `SECURITY_ADMIN`) es
+   * vocabulario de sistema, y un rol sin etiqueta se omite antes que pintarse crudo.
+   */
+  protected readonly rolesLegibles = computed(() =>
+    etiquetasDeRoles(this.user()?.roles ?? []).join(' · '),
+  );
 
   /**
    * El enlace de salto mueve el foco al contenido en vez de sólo desplazar la

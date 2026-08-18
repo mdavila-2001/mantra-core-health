@@ -177,8 +177,6 @@ function convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
     idiomas: idiomasDe(perfil, etiquetas),
     actividadActual: afiliaciones.actual,
     experienciaHistorica: afiliaciones.historica,
-    perfilId: perfil.profileId,
-    personaId: perfil.personId,
     desde: perfil.createdAt ?? null,
   };
 }

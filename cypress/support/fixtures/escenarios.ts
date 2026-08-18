@@ -138,6 +138,15 @@ export const ESCENARIOS = {
     descripcion: 'Respuestas demoradas: hay estado de carga que observar.',
     demoraMs: 900,
   },
+  'sesion-profesional': {
+    descripcion:
+      'Una sola organización, pero la sesión es de quien atiende: abre lo que al paciente se le esconde (glosario, agenda).',
+    claims: {
+      roles: ['USER', 'PRACTITIONER'],
+      tenants: ['t-1'],
+      tenantNames: { 't-1': 'Clínica Norte' },
+    },
+  },
 } as const satisfies Record<string, Escenario>;
 
 export type NombreEscenario = keyof typeof ESCENARIOS;

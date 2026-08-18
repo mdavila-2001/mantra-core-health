@@ -4,17 +4,23 @@ import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { rolesConEtiqueta } from '../../../core/auth/role-labels';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import type { OwnPatientSummary } from '../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import {
+  errorToViewState,
+  IDENTITY_VERIFICATION_ROUTE,
+} from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { Link } from '../../../shared/components/atoms/link/link';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
@@ -76,9 +82,11 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
 @Component({
   selector: 'app-my-profile',
   imports: [
+    Alert,
     Badge,
     Card,
     DatePipe,
+    Link,
     PageHeader,
     PractitionerProfile,
     RouterLink,
@@ -125,7 +133,37 @@ export class MyProfile {
 
   protected readonly datos = computed(() => dataOf(this.resumen()));
 
-  protected readonly roles = this.auth.roles;
+  /**
+   * Si «Tus datos» está cerrado **sólo** porque falta verificar la identidad.
+   *
+   * Es el estado normal de todo paciente recién registrado, no un error: el
+   * backend responde 403 con la puerta a verificarse. La tarjeta lo dice en
+   * neutro y con la salida a mano —una alerta roja «No tenés acceso» sobre la
+   * propia cuenta lee como que algo se rompió (feedback de la analista, barrido
+   * del 18/08/2026)—. Cualquier otro 403 sigue pintándose como lo que es.
+   */
+  protected readonly verificacionPendiente = computed(() => {
+    const estado = this.resumen();
+    return (
+      estado.status === 'forbidden' && estado.nextAction?.route === IDENTITY_VERIFICATION_ROUTE
+    );
+  });
+
+  protected readonly rutaDeVerificacion = IDENTITY_VERIFICATION_ROUTE;
+
+  /** El mensaje de un 403 que no es el de identidad: se muestra como lo haría el host. */
+  protected readonly motivoDelMuro = computed(() => {
+    const estado = this.resumen();
+    return estado.status === 'forbidden' ? (estado.message ?? null) : null;
+  });
+
+  /**
+   * Los roles con etiqueta, para las insignias de «Tu acceso».
+   *
+   * El código crudo no se pinta —es vocabulario de sistema— pero sigue viajando
+   * en `data-role` para quien lo lea por máquina; el rol sin etiqueta se omite.
+   */
+  protected readonly rolesLegibles = computed(() => rolesConEtiqueta(this.auth.roles()));
 
   protected readonly tenantName = computed(() => {
     const id = this.auth.activeTenantId();
