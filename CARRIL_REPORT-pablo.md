@@ -686,23 +686,26 @@ ajenos al producto y ambos con su moraleja:
 
 #### Capturas
 
-Quince imágenes, tomadas sobre el mismo origen que los journeys:
+Veintitrés imágenes, tomadas sobre el mismo origen que los journeys. Las dos
+suites y las capturas salen de **un solo comando**:
 
 ```bash
-E2E_BASE_URL=http://localhost:4250 npx playwright test carril-p4-evidencia
+yarn e2e:p4              # Playwright + capturas + Cypress, contra el mismo servidor
+yarn e2e:p4:playwright   # sólo Playwright
+yarn e2e:p4:cypress      # sólo Cypress
 ```
 
-| Archivo | Qué muestra |
+| Archivos | Qué muestran |
 | --- | --- |
-| `01-buscador-unificado` | `/buscar` con los dos perfiles reales |
-| `02-buscador-filtrado` | `/buscar?q=Mamani`, la lista acotada |
-| `03-profesionales` | el vertical con paginación y sellos «Declarado» |
-| `04`–`07` | los cuatro verticales vacíos, cada uno con **su** texto de la ficha V65 |
-| `08-mapa-consentimiento` | V65-12 pidiendo la ubicación, con la alternativa escrita |
+| `01`, `02` | `/buscar` con los dos perfiles reales, y `?q=Mamani` acotando |
+| `03` | el vertical con paginación y sellos «Declarado» |
+| `04`–`07`, `16`, `17` | los verticales vacíos, cada uno con **su** texto de la ficha V65 |
+| `08` | V65-12 pidiendo la ubicación, con la alternativa escrita |
 | `09`, `10` | las dos fichas públicas |
-| `11`, `12` | despublicado e inexistente: la misma pantalla |
-| `15-maqueta-sigue-marcada` | `/buscar/buscador-listado` **con** el aviso: la contracara de D-P4-05 |
-| `13`, `14` | buscador y ficha a 390 px |
+| `11`, `12`, `18`, `19` | despublicado e inexistente, para compararlos: indistinguibles |
+| `15` | `/buscar/buscador-listado` **con** el aviso: la contracara de D-P4-05 |
+| `20`, `21` | tema oscuro del buscador y de la ficha |
+| `13`, `14`, `22`, `23` | buscador, ficha, profesionales y mapa a **390 px** |
 
 **No se versionan**, y no es un olvido: `.gitignore` excluye `/artifacts/*` con su
 propio motivo escrito —«no tienen por qué vivir en la historia del
