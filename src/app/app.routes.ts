@@ -124,6 +124,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/medical-organization/medical-organization').then(
       (m) => m.MedicalOrganization,
     ),
+  // TP-1: la organización mirándose a sí misma. Diferida por lo mismo que sus
+  // hermanas de administración.
+  'administration/my-organization': () =>
+    import('./features/organization/organization-panel').then(
+      (m) => m.OrganizationPanel,
+    ),
   // Carril 16: la consola del laboratorio. Distinta de `laboratory-directory`,
   // que es la vitrina del paciente y sigue en pie sin cambios.
   'administration/medical-laboratory': () =>

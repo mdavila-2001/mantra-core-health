@@ -1,0 +1,139 @@
+<app-page-header
+  title="Tu organización"
+  subtitle="Sus datos, su gente y quiénes piden trabajar con ella."
+/>
+
+<app-view-state-host [state]="organizaciones()" (retry)="recargar()">
+  @if (elegida(); as org) {
+    <div class="organizacion">
+      <!-- Con más de una se ofrecen todas: hay quien recepciona en dos clínicas
+           del mismo grupo, y elegir por esa persona sería inventar cuál es «la»
+           suya. Con una sola no hay nada que elegir y el selector no aparece. -->
+      @if (hayVarias()) {
+        <nav class="organizacion__selector" aria-label="Elegí tu organización">
+          @for (candidata of lista(); track candidata.id) {
+            <button
+              app-button
+              type="button"
+              size="sm"
+              [variant]="candidata.id === org.id ? 'primary' : 'secondary'"
+              (clicked)="elegir(candidata.id)"
+            >
+              {{ candidata.tradeName || candidata.legalName }}
+            </button>
+          }
+        </nav>
+      }
+
+      @if (!estaVerificada()) {
+        <app-alert tone="warning" title="Todavía no está aprobada">
+          Mientras la plataforma no apruebe tu organización, no aparece en las búsquedas de
+          pacientes. Podés seguir cargando sus datos y su gente: cuando la aprueben, se publica
+          con lo que ya tengas.
+        </app-alert>
+      }
+
+      <!-- ─── Datos ─────────────────────────────────────────────────────── -->
+      <app-card variant="outlined" padding="lg" class="organizacion__bloque">
+        <header class="organizacion__encabezado">
+          <h2 class="organizacion__titulo">Datos de tu organización</h2>
+          @if (estaVerificada()) {
+            <app-badge variant="success">Aprobada</app-badge>
+          } @else {
+            <app-badge variant="warning">Pendiente de aprobación</app-badge>
+          }
+        </header>
+
+        @if (puedeAdministrar()) {
+          <form class="organizacion__formulario" (submit)="$event.preventDefault()">
+            <app-form-field
+              label="Razón social"
+              hint="El nombre legal, tal como figura en los papeles."
+            >
+              <app-input [(value)]="razonSocial" placeholder="Razón social" />
+            </app-form-field>
+
+            <app-form-field
+              label="Nombre comercial"
+              hint="Con el que la conocen los pacientes. Es el que se muestra en el directorio."
+            >
+              <app-input [(value)]="nombreComercial" placeholder="Nombre comercial" />
+            </app-form-field>
+
+            <app-form-field
+              label="Zona horaria"
+              hint="No es un detalle: es la zona en la que se leen los horarios de sus agendas."
+            >
+              <app-input [(value)]="zonaHoraria" placeholder="America/La_Paz" />
+            </app-form-field>
+
+            <app-form-actions
+              [pending]="guardando()"
+              submitLabel="Guardar datos"
+              (submitted)="guardarDatos()"
+            />
+          </form>
+        } @else {
+          <!-- El staff ve la organización y no la edita. Los campos no se
+               esconden: saber qué datos tiene su organización es parte de
+               trabajar en ella; lo que no aparece es la forma de cambiarlos. -->
+          <dl class="organizacion__datos">
+            <dt>Razón social</dt>
+            <dd>{{ org.legalName }}</dd>
+            <dt>Nombre comercial</dt>
+            <dd>{{ org.tradeName || '—' }}</dd>
+            <dt>Zona horaria</dt>
+            <dd>{{ org.timeZone || '—' }}</dd>
+          </dl>
+          <p class="organizacion__nota">
+            Para cambiar estos datos hace falta ser administrador de la organización.
+          </p>
+        }
+      </app-card>
+
+      <!-- ─── Su gente ──────────────────────────────────────────────────── -->
+      <app-card variant="outlined" padding="lg" class="organizacion__bloque">
+        <h2 class="organizacion__titulo">Su gente</h2>
+
+        <app-view-state-host [state]="gente()">
+          @if (gente().status === 'ready') {
+            @if (personas().length) {
+              <ul class="organizacion__gente">
+                @for (persona of personas(); track persona.id) {
+                  <li class="organizacion__persona">
+                    <span class="organizacion__persona-id">{{ persona.userId }}</span>
+                    <app-badge variant="secondary">{{ persona.tenantRoleConceptId }}</app-badge>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <app-empty-state
+                title="Todavía no hay nadie más"
+                description="Cuando sumes gente a tu organización, la vas a ver acá."
+              />
+            }
+          }
+        </app-view-state-host>
+      </app-card>
+
+      <!-- ─── Solicitudes de médicos ────────────────────────────────────────
+           El hueco que llena TP-2: los profesionales piden vincularse y la
+           organización aprueba o rechaza. Se deja anunciado y no oculto para
+           que quien administra sepa que existe y no lo busque en otro lado. -->
+      <app-card variant="outlined" padding="lg" class="organizacion__bloque">
+        <h2 class="organizacion__titulo">Solicitudes de médicos</h2>
+        <app-empty-state
+          title="Próximamente"
+          description="Acá vas a ver a los profesionales que pidan atender en tu organización, para aprobarlos o rechazarlos."
+        />
+      </app-card>
+    </div>
+  } @else {
+    <!-- Lista vacía: quien no pertenece a ninguna organización no tiene panel.
+         No es un error, así que no se dibuja como tal. -->
+    <app-empty-state
+      title="No administrás ninguna organización"
+      description="Esta sección es para clínicas, hospitales y centros de salud. Si trabajás en uno y no lo ves acá, pedile a quien lo administra que te sume."
+    />
+  }
+</app-view-state-host>

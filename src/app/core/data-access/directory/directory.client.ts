@@ -6,6 +6,8 @@ import { TENANT_HEADER } from '../../http/auth.interceptor';
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, sinNulos, type ConNulos } from '../wire';
 import type {
+  MyOrganization,
+  OrganizationEdit,
   BranchAssignmentList,
   BranchAssignmentListItem,
   BranchList,
@@ -190,6 +192,45 @@ export class DirectoryClient {
       );
   }
 
+  /**
+   * `GET /tenants/me` — las organizaciones del actor (TP-1).
+   *
+   * Es la puerta de entrada del panel de la organización: sin esto la pantalla
+   * necesitaba un identificador que sólo podía sacar de la propia ficha.
+   *
+   * **Sin cabecera de organización a propósito**: acá todavía no se sabe de
+   * cuál se habla —eso es justo lo que se está preguntando—, y el interceptor
+   * pone la de la sesión si la hay. Una lista vacía es una respuesta normal:
+   * quien no pertenece a ninguna organización no tiene panel, no tiene un error.
+   */
+  listMyOrganizations(): Observable<readonly MyOrganization[]> {
+    return this.http
+      .get<{ readonly items: readonly ConNulos<WireMyOrganization>[] }>(
+        this.url('/tenants/me'),
+      )
+      .pipe(map((body) => body.items.map(toMyOrganization)));
+  }
+
+  /**
+   * `PATCH /tenants/{id}` — la organización corrige sus propios datos (TP-1).
+   *
+   * Sólo owner o admin de esa organización; al resto la API responde 403. El
+   * logo no va acá: la imagen de una organización vive en su perfil público,
+   * que es la que se ve en el directorio.
+   */
+  updateOrganization(
+    tenantId: string,
+    cambios: OrganizationEdit,
+  ): Observable<TenantListItem> {
+    return this.http
+      .patch<ConNulos<WireTenantListItem>>(
+        this.url(`/tenants/${tenantId}`),
+        cambios,
+        { headers: deLaOrganizacion(tenantId) },
+      )
+      .pipe(map(toTenantListItem));
+  }
+
   /** `GET /tenants/{id}` — la ficha completa de una organización. */
   getTenant(tenantId: string): Observable<TenantListItem> {
     return this.http
@@ -222,6 +263,10 @@ function deLaOrganizacion(tenantId: string): HttpHeaders {
    normaliza acá, en la frontera, como manda `wire.ts`. */
 
 type WireTenantListItem = Omit<TenantListItem, 'createdAt'> & { readonly createdAt: string };
+
+type WireMyOrganization = Omit<MyOrganization, 'createdAt'> & {
+  readonly createdAt: string;
+};
 
 type RespuestaPagina = Omit<TenantPage, 'items'> & {
   readonly items: readonly ConNulos<WireTenantListItem>[];
@@ -334,4 +379,25 @@ function stripUndefined<T extends object>(source: T): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(source).filter(([, value]) => value !== undefined),
   );
+}
+
+/**
+ * Normaliza una organización del actor.
+ *
+ * Reusa la conversión de la ficha y le suma lo propio de TP-1 —el rol y el
+ * permiso—: son los mismos campos más dos, y duplicar la conversión entera
+ * garantizaría que un día se corrija uno solo de los dos lugares.
+ */
+function toMyOrganization(
+  body: ConNulos<WireMyOrganization>,
+): MyOrganization {
+  const ficha = toTenantListItem(body);
+  const limpio = sinNulos(body);
+  return {
+    ...ficha,
+    myRoleConceptId: limpio.myRoleConceptId,
+    canAdminister: limpio.canAdminister,
+    isVerified: limpio.isVerified,
+    timeZone: limpio.timeZone,
+  };
 }
