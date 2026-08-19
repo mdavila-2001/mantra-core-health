@@ -38,3 +38,14 @@
 .edicion__volver {
   margin: 0;
 }
+
+/* El aviso de catálogo caído: dice qué pasó y ofrece la salida en la misma
+   línea, para no empujar el resto del formulario hacia abajo. */
+.edicion__aviso {
+  align-items: center;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+}

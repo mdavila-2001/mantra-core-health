@@ -2,12 +2,16 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
 import type { OwnPractitionerProfile } from '../../../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
+import { Select } from '../../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -18,8 +22,7 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 
-/** Los campos de la especialidad, del catálogo dinámico. */
-const TARGET_ESPECIALIDAD = 'profiles.practitioner_specialties.specialty_concept_id';
+/** El campo de la jurisdicción, del catálogo dinámico. */
 const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_concept_id';
 
 /**
@@ -49,6 +52,7 @@ const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_conc
 @Component({
   selector: 'app-practitioner-profile-edit',
   imports: [
+    AppButton,
     Card,
     ConceptSelect,
     FormActions,
@@ -56,6 +60,7 @@ const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_conc
     Input,
     PageHeader,
     RouterLink,
+    Select,
     Switch,
     Textarea,
     ViewStateHost,
@@ -68,6 +73,7 @@ export class PractitionerProfileEdit {
   private readonly profiles = inject(ProfilesClient);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
+  private readonly catalogo = inject(MedicalSpecialtiesCatalog);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -92,7 +98,18 @@ export class PractitionerProfileEdit {
 
   /* -- Nueva especialidad ---------------------------------------------------- */
 
-  protected readonly targetEspecialidad = TARGET_ESPECIALIDAD;
+  /**
+   * Las especialidades elegibles (TJ-3 · F-19).
+   *
+   * Salen de `VS_MEDICAL_SPECIALTY` —las 36 del modelo, en castellano— y no del
+   * `app-concept-select` por campo destino, que resuelve a un conjunto de la
+   * API con una sola opción en inglés. Ver `MedicalSpecialtiesCatalog`.
+   */
+  protected readonly especialidades = signal<readonly SelectOption<string>[]>([]);
+
+  /** El catálogo no se pudo leer: se lo dice, no se ofrece un desplegable vacío. */
+  protected readonly catalogoCaido = signal(false);
+
   protected readonly nuevaEspecialidad = signal<string | null>(null);
   protected readonly nuevaEspecialidadPrincipal = signal(false);
   protected readonly nuevaEspecialidadCertificada = signal(false);
@@ -114,6 +131,41 @@ export class PractitionerProfileEdit {
 
   constructor() {
     this.cargar();
+    this.cargarEspecialidades();
+  }
+
+  /**
+   * Trae el catálogo de especialidades.
+   *
+   * Un fallo no rompe la pantalla: el resto —título, biografía, matrículas—
+   * sigue siendo editable, y el bloque de especialidad dice qué pasó y ofrece
+   * reintentar. Perder el catálogo no es perder el perfil.
+   */
+  protected cargarEspecialidades(): void {
+    this.catalogo.listar().subscribe({
+      next: (opciones) => {
+        this.catalogoCaido.set(false);
+        this.especialidades.set(
+          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+        );
+      },
+      error: () => {
+        this.especialidades.set([]);
+        this.catalogoCaido.set(true);
+      },
+    });
+  }
+
+  /**
+   * Reintenta la lectura del catálogo.
+   *
+   * Olvida lo cacheado antes de pedir: `shareReplay` guarda también el error,
+   * así que sin esto el botón «Reintentar» repetiría el mismo fallo sin llegar
+   * a tocar la red.
+   */
+  protected reintentarEspecialidades(): void {
+    this.catalogo.olvidar();
+    this.cargarEspecialidades();
   }
 
   protected recargar(): void {
@@ -227,7 +279,10 @@ export class PractitionerProfileEdit {
         },
         error: () => {
           this.guardandoEspecialidad.set(false);
-          this.toasts.error('No se pudo agregar la especialidad. Probá de nuevo.', 'Especialidades');
+          this.toasts.error(
+            'No se pudo agregar la especialidad. Probá de nuevo.',
+            'Especialidades',
+          );
         },
       });
   }
@@ -252,7 +307,10 @@ export class PractitionerProfileEdit {
           this.nuevaJurisdiccion.set(null);
           this.nuevoNumeroDeMatricula.set('');
           this.nuevaAutoridad.set('');
-          this.toasts.success('Se agregó la matrícula. Queda pendiente de verificación.', 'Matrículas');
+          this.toasts.success(
+            'Se agregó la matrícula. Queda pendiente de verificación.',
+            'Matrículas',
+          );
           this.cargar();
         },
         error: () => {

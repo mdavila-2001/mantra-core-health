@@ -1,4 +1,8 @@
+<!-- Marca de que ESTE panel es el que se dibujó. Con dos paneles según el rol,
+     una prueba de navegador necesita poder decir «llegué al del paciente» sin
+     depender del saludo, que lleva su nombre. -->
 <app-page-header
+  data-testid="mi-salud"
   [title]="nombre() === '' ? 'Mi salud' : 'Hola, ' + nombre()"
   subtitle="Tus turnos, tus recetas y tu historia, en un solo lugar."
 />

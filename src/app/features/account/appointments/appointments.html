@@ -363,9 +363,29 @@
               : 'No encontramos ese profesional entre los que publicaron horarios. Puede que todavía no los haya publicado.'
           "
           (searched)="busquedaDeRecurso.set($event)"
-          (selectionChange)="elegirRecurso($event?.value ?? null)"
+          (selectionChange)="elegirAgenda($event?.value ?? null)"
         />
       </app-form-field>
+
+      <!-- FX-6 · F-23: un profesional con más de un consultorio. La pregunta
+           sólo aparece cuando hay algo que elegir; con un solo lugar —hoy,
+           casi todos— la pantalla no cambia en nada. «Cualquier lugar» viene
+           puesto: quien pide un turno suele querer el horario más próximo, no
+           un consultorio en particular. -->
+      @if (preguntaPorSede()) {
+        <app-form-field
+          label="¿Dónde querés atenderte?"
+          hint="Atiende en más de un lugar. Podés ver todos los horarios juntos o mirar uno solo."
+          class="turnos__filtro"
+        >
+          <app-select
+            data-testid="turnos-sede"
+            [options]="opcionesDeSede()"
+            [value]="sedeElegida()"
+            (valueChange)="elegirSede($event)"
+          />
+        </app-form-field>
+      }
 
       <!-- Cuando se llegó acá señalando un día en el calendario, se dice cuál
            es y se ofrece volver a verlos todos: si no, la lista parece corta
@@ -385,7 +405,7 @@
            una notificación de que un paciente desconfirmó». La salida del
            callejón sin salida: antes, sin cupos, la pantalla sólo decía
            «probá con otra agenda». -->
-      @if (recursoElegido() !== null) {
+      @if (recursoParaEspera() !== null) {
         <div class="turnos__espera-accion">
           @if (yaEnEspera()) {
             <p class="turnos__estado" data-testid="turnos-ya-en-espera">
@@ -410,6 +430,13 @@
         </div>
       }
 
+      @if (horariosIncompletos()) {
+        <app-alert tone="warning" title="Faltan horarios de un lugar">
+          No pudimos traer los horarios de uno de sus consultorios. Los que ves son de los demás:
+          probá con un lugar en concreto para verlos todos.
+        </app-alert>
+      }
+
       @switch (horarios().status) {
         @case ('loading') {
           <p class="turnos__estado" role="status">Buscando horarios libres…</p>
@@ -423,6 +450,14 @@
                   <span class="turnos__hora">
                     {{ horario.desde | date: 'HH:mm' }} – {{ horario.hasta | date: 'HH:mm' }}
                   </span>
+                  <!-- Sólo cuando la lista mezcla lugares: si todos los huecos
+                       son del mismo consultorio, repetirlo en cada fila es
+                       ruido y esconde la hora, que es lo que se viene a leer. -->
+                  @if (horario.sede !== '') {
+                    <span class="turnos__sede" data-testid="turnos-horario-sede">{{
+                      horario.sede
+                    }}</span>
+                  }
                 </div>
                 @if (reprogramando() === null) {
                   <a

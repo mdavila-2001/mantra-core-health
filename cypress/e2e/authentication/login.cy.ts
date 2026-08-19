@@ -18,7 +18,8 @@ describe('Autenticación · inicio de sesión', () => {
     LoginPage.entrar(paciente());
 
     cy.location('pathname').should('match', /\/dashboard$/);
-    DashboardPage.esperarTitulo('Panel');
+    // Entra como paciente, así que el panel que le toca es «Mi salud».
+    DashboardPage.esperarPanelDelPaciente();
   });
 
   it('el documento de identidad también es un identificador válido', () => {

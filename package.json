@@ -32,7 +32,8 @@
     "e2e:p4:playwright": "node scripts/e2e-carril-p4.mjs --solo=playwright",
     "e2e:p4:cypress": "node scripts/e2e-carril-p4.mjs --solo=cypress",
     "e2e:vertical": "playwright test playwright/carril-j5-vertical-p0.spec.ts",
-    "audit:vistas": "node scripts/audit-design-views.mjs"
+    "audit:vistas": "node scripts/audit-design-views.mjs",
+    "e2e:auditoria": "playwright test playwright/auditoria-prompts.spec.ts --reporter=list"
   },
   "private": true,
   "packageManager": "yarn@4.18.0",
