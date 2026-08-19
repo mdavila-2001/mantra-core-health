@@ -477,9 +477,7 @@ export class SchedulingClient {
       tenantId: entry.tenantId,
       patientProfileId: entry.patientProfileId,
       ...(entry.resourceId === undefined ? {} : { resourceId: entry.resourceId }),
-      ...(entry.desiredFrom === undefined
-        ? {}
-        : { desiredFrom: entry.desiredFrom.toISOString() }),
+      ...(entry.desiredFrom === undefined ? {} : { desiredFrom: entry.desiredFrom.toISOString() }),
       ...(entry.desiredTo === undefined ? {} : { desiredTo: entry.desiredTo.toISOString() }),
       ...(entry.priority === undefined ? {} : { priority: entry.priority }),
     });
@@ -587,6 +585,7 @@ type WireBooking = Omit<
   | 'confirmedAt'
   | 'checkedInAt'
   | 'createdAt'
+  | 'rescheduledFrom'
   | 'statusReason'
   | 'delayNotice'
 > & {
@@ -595,6 +594,7 @@ type WireBooking = Omit<
   readonly confirmedAt?: string | null;
   readonly checkedInAt?: string | null;
   readonly createdAt: string;
+  readonly rescheduledFrom?: string | null;
   readonly statusReason?: WireStatusReason | null;
   readonly delayNotice?: WireDelayNotice | null;
 };
@@ -643,6 +643,7 @@ function toBooking({
   confirmedAt,
   checkedInAt,
   createdAt,
+  rescheduledFrom,
   statusReason,
   delayNotice,
   ...resto
@@ -653,6 +654,7 @@ function toBooking({
     ...optionalDate('endAt', endAt),
     ...optionalDate('confirmedAt', confirmedAt),
     ...optionalDate('checkedInAt', checkedInAt),
+    ...optionalDate('rescheduledFrom', rescheduledFrom),
     ...(statusReason === null || statusReason === undefined
       ? {}
       : {

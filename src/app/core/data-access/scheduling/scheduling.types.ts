@@ -164,6 +164,14 @@ export interface Booking {
    * cuando el último cambio no exigía motivo o la cita es anterior a la
    * corrección #14.
    */
+  /**
+   * De cuándo se movió, si la cita se reprogramó (TJ-2).
+   *
+   * Ausente cuando nunca se movió — que no es lo mismo que «se movió y no sé
+   * desde cuándo». Es el instante original, ya resuelto por el servidor.
+   */
+  readonly rescheduledFrom?: Date;
+
   readonly statusReason?: BookingStatusReason;
   /**
    * La demora que informó el profesional sobre este turno (P8).
