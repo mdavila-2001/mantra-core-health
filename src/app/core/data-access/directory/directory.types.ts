@@ -71,6 +71,51 @@ export interface PractitionerRequest {
   readonly createdAt: Date;
 }
 
+/**
+ * Una cita de la agenda de la organización (TP-5).
+ *
+ * ## Lo que no está, y es lo importante
+ *
+ * **El motivo de consulta.** Ni acá ni en el DTO del servidor: es del paciente
+ * y de su médico. Una recepción necesita saber quién viene, cuándo y con quién
+ * —eso es recibir a alguien— y no por qué viene, que es un dato clínico.
+ *
+ * El nombre del paciente sí: la organización lo recibe en la puerta.
+ */
+export interface TenantAgendaItem {
+  readonly bookingId: string;
+  readonly startAt: Date;
+  readonly endAt: Date;
+  readonly resourceId: string | null;
+  /** Nombre de la sede, ya resuelto por el servidor. */
+  readonly resourceName: string | null;
+  readonly practitionerProfileId: string | null;
+  readonly patientProfileId: string;
+  readonly patientName: string | null;
+  readonly statusConceptId: string;
+}
+
+/**
+ * La agenda de la organización en una ventana.
+ *
+ * `truncated` no es cosmético: una agenda a la que le faltan citas sin avisar
+ * se lee como una agenda más vacía de lo que está, que es la lectura contraria
+ * a la que una recepción necesita.
+ */
+export interface TenantAgenda {
+  readonly items: readonly TenantAgendaItem[];
+  readonly truncated: boolean;
+}
+
+/** Filtros de la agenda de la organización. */
+export interface TenantAgendaQuery {
+  readonly from: Date;
+  readonly to: Date;
+  /** Acotar a un profesional; se traduce a sus recursos EN esta organización. */
+  readonly practitionerProfileId?: string;
+  readonly limit?: number;
+}
+
 /** Campos que la organización edita de sí misma. Lo que no viene no se toca. */
 export interface OrganizationEdit {
   readonly legalName?: string;

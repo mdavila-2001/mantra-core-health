@@ -9,6 +9,9 @@ import type {
   MyOrganization,
   OrganizationEdit,
   PractitionerRequest,
+  TenantAgenda,
+  TenantAgendaItem,
+  TenantAgendaQuery,
   BranchAssignmentList,
   BranchAssignmentListItem,
   BranchList,
@@ -263,6 +266,43 @@ export class DirectoryClient {
     );
   }
 
+  /**
+   * `GET /tenants/{id}/agenda` — las citas de la organización (TP-5).
+   *
+   * Sólo para quien pertenece a ella; las de otra organización no llegan
+   * porque el filtro va en la consulta del servidor. El rango máximo es de 31
+   * días: pedir más responde 422.
+   */
+  getTenantAgenda(tenantId: string, query: TenantAgendaQuery): Observable<TenantAgenda> {
+    // Parámetro a parámetro y nunca con un objeto: el backend valida con
+    // `forbidNonWhitelisted`, y un opcional en `undefined` viaja como clave
+    // declarada y vuelve 400.
+    let params = new HttpParams()
+      .set('from', query.from.toISOString())
+      .set('to', query.to.toISOString());
+    if (query.practitionerProfileId !== undefined) {
+      params = params.set('practitionerProfileId', query.practitionerProfileId);
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+
+    return this.http
+      .get<{
+        readonly items: readonly WireAgendaItem[];
+        readonly truncated: boolean;
+      }>(this.url(`/tenants/${tenantId}/agenda`), {
+        params,
+        headers: deLaOrganizacion(tenantId),
+      })
+      .pipe(
+        map((body) => ({
+          truncated: body.truncated,
+          items: body.items.map(toAgendaItem),
+        })),
+      );
+  }
+
   /** `GET /tenants/{id}` — la ficha completa de una organización. */
   getTenant(tenantId: string): Observable<TenantListItem> {
     return this.http
@@ -298,6 +338,19 @@ type WireTenantListItem = Omit<TenantListItem, 'createdAt'> & { readonly created
 
 type WireMyOrganization = Omit<MyOrganization, 'createdAt'> & {
   readonly createdAt: string;
+};
+
+/**
+ * La cita como viaja.
+ *
+ * **No se envuelve en `ConNulos`**: el DTO del servidor ya declara cuáles de
+ * sus campos son nulos —sede, profesional, nombre del paciente— y cuáles
+ * siempre vienen. Envolverlo volvería nullable también a la hora y al
+ * identificador, que es afirmar algo falso sobre el contrato.
+ */
+type WireAgendaItem = Omit<TenantAgendaItem, 'startAt' | 'endAt'> & {
+  readonly startAt: string;
+  readonly endAt: string;
 };
 
 type WirePractitionerRequest = Omit<PractitionerRequest, 'startDate' | 'createdAt'> & {
@@ -447,5 +500,26 @@ function toPractitionerRequest(body: ConNulos<WirePractitionerRequest>): Practit
     practiceSiteId: body.practiceSiteId ?? null,
     startDate: new Date(startDate),
     createdAt: new Date(createdAt),
+  };
+}
+
+/**
+ * Normaliza una cita de la agenda.
+ *
+ * Los tres opcionales llegan como `null` explícito y se dejan así: distinguir
+ * «sin sede» de «no vino el dato» importa, y `sinNulos` los convertiría en
+ * `undefined` borrando esa diferencia.
+ */
+function toAgendaItem(body: WireAgendaItem): TenantAgendaItem {
+  return {
+    bookingId: body.bookingId,
+    startAt: new Date(body.startAt),
+    endAt: new Date(body.endAt),
+    resourceId: body.resourceId ?? null,
+    resourceName: body.resourceName ?? null,
+    practitionerProfileId: body.practitionerProfileId ?? null,
+    patientProfileId: body.patientProfileId,
+    patientName: body.patientName ?? null,
+    statusConceptId: body.statusConceptId,
   };
 }

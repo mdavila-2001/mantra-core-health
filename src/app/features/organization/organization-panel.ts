@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { DirectoryClient } from '../../core/data-access/directory/directory.client';
@@ -6,6 +7,7 @@ import type {
   MembershipListItem,
   MyOrganization,
   PractitionerRequest,
+  TenantAgendaItem,
 } from '../../core/data-access/directory/directory.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { loading, ready } from '../../core/view-state/view-state';
@@ -65,6 +67,7 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
     Badge,
     Card,
     DatePipe,
+    FormsModule,
     EmptyState,
     FormActions,
     FormField,
@@ -148,6 +151,7 @@ export class OrganizationPanel {
     if (org) this.sembrarFormulario(org);
     this.cargarGente(tenantId);
     this.cargarSolicitudes(tenantId);
+    this.cargarAgendaDelDia();
   }
 
   protected guardarDatos(): void {
@@ -193,6 +197,7 @@ export class OrganizationPanel {
           this.sembrarFormulario(org);
           this.cargarGente(org.id);
           this.cargarSolicitudes(org.id);
+          this.cargarAgendaDelDia();
         }
       },
       error: (error: unknown) =>
@@ -264,6 +269,91 @@ export class OrganizationPanel {
       error: (error: unknown) =>
         this.solicitudes.set(errorToViewState<readonly PractitionerRequest[]>(error)),
     });
+  }
+
+  /* -- La agenda de la organización (TP-5) ---------------------------------- */
+
+  protected readonly agenda = signal<ViewState<readonly TenantAgendaItem[]>>(loading());
+
+  /** Qué día se está mirando, en días desde hoy. */
+  protected readonly dia = signal(0);
+
+  /** Filtro rápido por nombre de paciente: «¿a qué hora viene X hoy?». */
+  protected readonly buscaPaciente = signal('');
+
+  /** Acotar a un profesional. Vacío = todos los de la organización. */
+  protected readonly filtroMedico = signal('');
+
+  protected readonly fechaVisible = computed(() => {
+    const hoy = new Date();
+    return new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + this.dia());
+  });
+
+  private readonly citas = computed<readonly TenantAgendaItem[]>(() => {
+    const estado = this.agenda();
+    return estado.status === 'ready' ? estado.data : [];
+  });
+
+  /**
+   * Las citas que se muestran, ya filtradas por nombre.
+   *
+   * El filtro por paciente es del lado del cliente y no una consulta más: la
+   * pregunta real de una recepción es «¿a qué hora viene X **hoy**?», y el día
+   * entero ya está cargado. Ir al servidor por cada tecla sería pedir de nuevo
+   * lo que ya está en la pantalla.
+   */
+  protected readonly citasVisibles = computed<readonly TenantAgendaItem[]>(() => {
+    const busca = this.buscaPaciente().trim().toLocaleLowerCase();
+    if (busca === '') return this.citas();
+    return this.citas().filter((cita) =>
+      (cita.patientName ?? '').toLocaleLowerCase().includes(busca),
+    );
+  });
+
+  /** Se buscó a alguien y no está en el día: distinto de «no hay citas». */
+  protected readonly sinCoincidencias = computed(
+    () =>
+      this.citas().length > 0 &&
+      this.citasVisibles().length === 0 &&
+      this.buscaPaciente().trim() !== '',
+  );
+
+  protected diaAnterior(): void {
+    this.dia.update((n) => n - 1);
+    this.cargarAgendaDelDia();
+  }
+
+  protected diaSiguiente(): void {
+    this.dia.update((n) => n + 1);
+    this.cargarAgendaDelDia();
+  }
+
+  /** Cambiar el médico recarga: el filtro lo aplica el servidor. */
+  protected filtrarPorMedico(profileId: string): void {
+    this.filtroMedico.set(profileId);
+    this.cargarAgendaDelDia();
+  }
+
+  protected cargarAgendaDelDia(): void {
+    const org = this.elegida();
+    if (!org) return;
+
+    const desde = this.fechaVisible();
+    const hasta = new Date(desde.getTime() + 24 * 60 * 60 * 1000);
+    const medico = this.filtroMedico().trim();
+
+    this.agenda.set(loading());
+    this.directory
+      .getTenantAgenda(org.id, {
+        from: desde,
+        to: hasta,
+        ...(medico === '' ? {} : { practitionerProfileId: medico }),
+      })
+      .subscribe({
+        next: (pagina) => this.agenda.set(ready(pagina.items)),
+        error: (error: unknown) =>
+          this.agenda.set(errorToViewState<readonly TenantAgendaItem[]>(error)),
+      });
   }
 
   /**

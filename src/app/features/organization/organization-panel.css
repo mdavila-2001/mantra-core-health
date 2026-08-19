@@ -161,3 +161,71 @@
     align-items: flex-start;
   }
 }
+
+/* La agenda de la organización (TP-5). */
+
+.organizacion__fecha {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-transform: capitalize;
+}
+
+.organizacion__agenda-controles {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-block-end: var(--space-4);
+}
+
+.organizacion__citas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tres columnas de ancho fijo para la hora y la sede: una agenda se lee de
+   arriba abajo por la columna de horas, y si esa columna baila con el largo del
+   nombre del paciente deja de poder recorrerse de un vistazo. */
+.organizacion__cita {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr 12rem;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--color-border-subtle);
+}
+
+.organizacion__cita:last-child {
+  border-block-end: none;
+}
+
+.organizacion__cita-hora {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.organizacion__cita-paciente {
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.organizacion__cita-sede {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 40rem) {
+  .organizacion__cita {
+    grid-template-columns: 4.5rem 1fr;
+  }
+
+  .organizacion__cita-sede {
+    grid-column: 2;
+  }
+}
