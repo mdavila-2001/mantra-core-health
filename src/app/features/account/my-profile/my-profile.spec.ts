@@ -178,9 +178,10 @@ describe('MyProfile', () => {
 
   it('«Tu acceso» nombra el rol en palabras, con el código sólo en data-role', () => {
     // La sesión se abre después de crear la pantalla: las insignias derivan de
-    // una señal, así que reaccionan igual.
+    // una señal, así que reaccionan igual. Con rol de trabajo, porque a quien
+    // viene a atenderse la tarjeta ya no se le muestra (F-22).
     TestBed.inject(SessionStore).start({
-      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] }),
+      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] }),
       refreshToken: 'r-1',
     });
     responderResumen();
@@ -188,8 +189,26 @@ describe('MyProfile', () => {
     const insignias = [
       ...(fixture.nativeElement as HTMLElement).querySelectorAll('.mi-perfil__roles app-badge'),
     ];
-    expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Paciente']);
-    expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PATIENT']);
+    expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Profesional sanitario']);
+    expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PRACTITIONER']);
+  });
+
+  /**
+   * F-22 (18/08/2026): «Organización: Care Default Tenant» y «Roles: Paciente»
+   * en una pantalla del paciente. No elige organización ni se concede roles: la
+   * tarjeta entera es vocabulario de gestión y no se le muestra.
+   */
+  it('a quien viene a atenderse no se le muestra «Tu acceso»', () => {
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] }),
+      refreshToken: 'r-1',
+    });
+    responderResumen();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(fixture.nativeElement.querySelector('[data-testid="mi-perfil-acceso"]')).toBeNull();
+    expect(texto).not.toContain('Organización');
+    expect(texto).not.toContain('Tu acceso');
   });
 
   it('los identificadores del perfil y la persona ya no se muestran', () => {

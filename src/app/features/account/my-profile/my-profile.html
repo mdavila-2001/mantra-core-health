@@ -137,8 +137,15 @@
        Organización y roles. Estaban sólo en el panel, que es otra pantalla, y
        son la respuesta a «¿por qué no veo tal cosa?». Los roles van en palabras:
        el código (`PATIENT`) es vocabulario de sistema y sólo viaja en
-       `data-role`, para quien lo lea por máquina. -->
-  <app-card class="mi-perfil__bloque" variant="outlined" padding="lg">
+       `data-role`, para quien lo lea por máquina.
+
+       **No para quien viene a atenderse** (F-22, 18/08/2026): a un paciente la
+       tarjeta le mostraba «Organización: Care Default Tenant» y «Roles:
+       Paciente» —vocabulario de gestión sobre una pantalla suya, y la cuarta
+       fuga de la misma regla—. No hay nada ahí que necesite: no elige
+       organización ni se concede roles. Para quien trabaja queda igual. -->
+  @if (!vieneAAtenderse()) {
+  <app-card class="mi-perfil__bloque" variant="outlined" padding="lg" data-testid="mi-perfil-acceso">
     <h2 class="mi-perfil__titulo">Tu acceso</h2>
 
     <dl class="mi-perfil__datos mi-perfil__datos--una">
@@ -164,6 +171,7 @@
       organización.
     </p>
   </app-card>
+  }
 
   <!-- El historial laboral (punto 9 del reclamo) ya no va acá: vive dentro de
        la pestaña Trayectoria de `app-practitioner-profile` (carril 05), con el

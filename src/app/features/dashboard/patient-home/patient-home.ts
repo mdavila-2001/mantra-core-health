@@ -17,6 +17,8 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
 import { MI_HISTORIA_ROUTE } from '../../account/medical-record/medical-record.routes';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 
 /** Cuántas filas se piden de la historia: acá sólo se muestra lo último. */
 const TOPE = 20;
@@ -58,7 +60,7 @@ interface Resumen {
  */
 @Component({
   selector: 'app-patient-home',
-  imports: [AppButtonLink, Card, DatePipe, PageHeader, RouterLink],
+  imports: [AppButtonLink, Card, DatePipe, NavIcon, PageHeader, RouterLink],
   templateUrl: './patient-home.html',
   styleUrl: './patient-home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,6 +75,47 @@ export class PatientHome {
   /** La guía es de los pacientes: es donde buscan con quién atenderse. */
   protected readonly laGuia = '/directory';
   protected readonly miCuenta = '/my-account';
+
+  /**
+   * Los lugares del paciente, con su ícono.
+   *
+   * Es una lista y no cuatro enlaces escritos a mano porque la rejilla los
+   * dibuja todos igual (F-21): agregar un destino es agregar una fila, no
+   * copiar un bloque de plantilla. El resumen no se muestra —el rótulo alcanza
+   * y el paciente no necesita una explicación por acceso—, pero viaja en el
+   * `aria-label`, que es donde hace falta.
+   */
+  protected readonly accesos: readonly {
+    readonly ruta: string;
+    readonly label: string;
+    readonly icono: NavIconName;
+    readonly resumen: string;
+  }[] = [
+    {
+      ruta: MIS_TURNOS_ROUTE,
+      label: 'Mis turnos',
+      icono: 'calendar',
+      resumen: 'Los turnos que pediste y los que ya pasaron.',
+    },
+    {
+      ruta: MI_HISTORIA_ROUTE,
+      label: 'Mi historia',
+      icono: 'results',
+      resumen: 'Tus consultas, tus recetas y tus estudios.',
+    },
+    {
+      ruta: '/directory',
+      label: 'Buscar un profesional',
+      icono: 'patients',
+      resumen: 'Todos los profesionales, agrupados por especialidad.',
+    },
+    {
+      ruta: '/my-account',
+      label: 'Mis datos',
+      icono: 'settings',
+      resumen: 'Tus datos personales y cómo querés que te avisemos.',
+    },
+  ];
 
   /** El nombre con el que saludar. Vacío si el token no lo trae. */
   protected readonly nombre = computed(() => this.auth.displayName() ?? '');

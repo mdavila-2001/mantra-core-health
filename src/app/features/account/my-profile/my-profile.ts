@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { rolesConEtiqueta } from '../../../core/auth/role-labels';
+import { rolesConEtiqueta, vieneAAtenderse } from '../../../core/auth/role-labels';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
@@ -164,6 +164,13 @@ export class MyProfile {
    * en `data-role` para quien lo lea por máquina; el rol sin etiqueta se omite.
    */
   protected readonly rolesLegibles = computed(() => rolesConEtiqueta(this.auth.roles()));
+
+  /**
+   * Si quien mira su perfil viene a atenderse: entonces «Tu acceso» no se
+   * dibuja (F-22). La regla vive en `role-labels` para que sea la misma que usa
+   * el panel y no una copia que se desincronice.
+   */
+  protected readonly vieneAAtenderse = computed(() => vieneAAtenderse(this.auth.roles()));
 
   protected readonly tenantName = computed(() => {
     const id = this.auth.activeTenantId();

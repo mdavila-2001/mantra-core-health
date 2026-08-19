@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { of } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -28,6 +28,7 @@ import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -215,6 +216,7 @@ interface HorarioVisible {
     PageHeader,
     ReferenceCombobox,
     RouterLink,
+    Select,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
@@ -416,15 +418,99 @@ export class Appointments {
 
   protected readonly recursoElegido = signal<string | null>(null);
 
+  /**
+   * Los recursos agrupados por profesional (F-23, 18/08/2026).
+   *
+   * Un doctor con dos consultorios tiene dos agendas, y el buscador lo ofrecía
+   * dos veces —el mismo nombre repetido, sin decir en qué se diferencian—. Se
+   * elige **a la persona**; el lugar es la pregunta siguiente, y sólo cuando
+   * hay más de uno.
+   *
+   * La clave es la referencia del recurso (el perfil profesional detrás) y cae
+   * al identificador propio cuando no hay ninguna: salas y equipos no se
+   * agrupan, que es lo correcto — dos boxes no son «el mismo lugar».
+   */
+  private readonly recursosPorProfesional = computed<ReadonlyMap<string, readonly AgendaResource[]>>(
+    () => {
+      const grupos = new Map<string, AgendaResource[]>();
+      for (const recurso of this.recursos()) {
+        // Sin referencia utilizable, cada recurso es su propio grupo: agrupar
+        // por un valor ausente juntaría agendas de personas distintas.
+        const referencia = recurso.resourceRefId ?? '';
+        const clave = referencia === '' ? recurso.id : referencia;
+        const grupo = grupos.get(clave) ?? [];
+        grupo.push(recurso);
+        grupos.set(clave, grupo);
+      }
+      return grupos;
+    },
+  );
+
+  /** El grupo al que pertenece la agenda elegida, con todas sus sedes. */
+  protected readonly sedesDelElegido = computed<readonly AgendaResource[]>(() => {
+    const elegido = this.recursoElegido();
+    if (elegido === null) return [];
+    for (const grupo of this.recursosPorProfesional().values()) {
+      if (grupo.some((recurso) => recurso.id === elegido)) return grupo;
+    }
+    return [];
+  });
+
+  /** Si hay que preguntar dónde: con una sola sede no se pregunta nada. */
+  protected readonly hayVariasSedes = computed(() => this.sedesDelElegido().length > 1);
+
+  /**
+   * La sede elegida, o `null` para «cualquier lugar».
+   *
+   * `null` no es «ninguna»: es el modo que Pablo pidió primero —ver todos los
+   * horarios sin importar el lugar— y es el que viene por defecto, porque quien
+   * busca turno suele querer el más próximo antes que el más cercano.
+   */
+  protected readonly sedeElegida = signal<string | null>(null);
+
+  protected readonly opcionesDeSede = computed<readonly SelectOption<string>[]>(() =>
+    this.sedesDelElegido().map((recurso) => ({
+      value: recurso.id,
+      label: recurso.site?.name ?? recurso.name,
+    })),
+  );
+
+  /** El nombre de la sede de un recurso, para rotular un horario. */
+  protected nombreDeSede(resourceId: string): string {
+    const recurso = this.catalogoDeRecursos().get(resourceId);
+    return recurso?.site?.name ?? recurso?.name ?? '';
+  }
+
+  /**
+   * Elige el lugar. `null` vuelve a «cualquier lugar».
+   *
+   * La agenda concreta pasa a ser la elegida —lo que reserva, lo que anota en
+   * lista de espera— porque a partir de acá la persona ya dijo dónde. En modo
+   * «cualquier lugar» se conserva la primera del grupo, que es la que el
+   * buscador había elegido.
+   */
+  protected elegirSede(resourceId: string | null): void {
+    this.sedeElegida.set(resourceId);
+    if (resourceId !== null) {
+      this.recursoElegido.set(resourceId);
+    }
+    this.cargarHorarios();
+  }
+
   protected readonly opcionesDeRecurso = computed<readonly SelectOption<string>[]>(() =>
-    this.recursos().map((recurso) => ({
+    [...this.recursosPorProfesional().values()].map(([recurso, ...otras]) => ({
       value: recurso.id,
       // La pregunta de la pantalla es «¿con quién te querés atender?»: la
       // respuesta honesta es la persona. El nombre del recurso queda de
       // respaldo para salas, equipos o perfiles que no resolvieron — que es
       // exactamente lo que esta opción mostraba siempre. Si el nombre interno
       // de la agenda agrega algo (sede, turno), va como aclaración.
-      label: etiquetaDeRecurso(recurso),
+      // Con varias sedes el rótulo de la agenda sobra —y confunde: la persona
+      // es la misma—. El lugar se pregunta después.
+      label:
+        otras.length > 0
+          ? (recurso.practitionerName ?? recurso.name)
+          : etiquetaDeRecurso(recurso),
     })),
   );
 
@@ -518,7 +604,14 @@ export class Appointments {
   protected readonly recursoSeleccionado = computed<ReferenceOption | null>(() => {
     const id = this.recursoElegido();
     if (id === null) return null;
-    return this.opcionesDeRecurso().find((opcion) => opcion.value === id) ?? null;
+    // Por grupo y no por identificador exacto: si se eligió una sede concreta,
+    // la opción del buscador sigue siendo la de la persona (F-23).
+    const delGrupo = new Set(this.sedesDelElegido().map((recurso) => recurso.id));
+    return (
+      this.opcionesDeRecurso().find(
+        (opcion) => opcion.value === id || delGrupo.has(opcion.value),
+      ) ?? null
+    );
   });
 
   /** La organización todavía no cargó ninguna agenda que ofrecer. */
@@ -694,6 +787,9 @@ export class Appointments {
    */
   protected elegirRecurso(id: string | null): void {
     this.recursoElegido.set(id);
+    // Cambiar de profesional vuelve a «cualquier lugar»: la sede anterior era
+    // de otra persona (F-23).
+    this.sedeElegida.set(null);
     if (id === null) {
       this.horarios.set(
         empty(this.elegirAgenda, 'Elegí con quién te querés atender para ver los horarios libres.'),
@@ -713,17 +809,38 @@ export class Appointments {
     const desde = new Date();
     const hasta = new Date(desde.getTime() + DIAS_DE_BUSQUEDA * 24 * 60 * 60 * 1000);
 
+    // «Cualquier lugar» pregunta por todas las agendas de la persona y junta lo
+    // que devuelvan (F-23): cada cupo ya sabe de qué recurso es, así que
+    // reservar sigue funcionando igual desde cualquiera de ellos.
+    const agendas =
+      this.sedeElegida() === null && this.sedesDelElegido().length > 1
+        ? this.sedesDelElegido().map((recurso) => recurso.id)
+        : [resourceId];
+
     this.horarios.set(loading());
-    this.scheduling
-      .listSlots({
-        resourceId,
-        from: desde,
-        to: hasta,
-        onlyAvailable: true,
-        limit: TOPE_DE_HORARIOS,
-      })
+    forkJoin(
+      agendas.map((id) =>
+        this.scheduling
+          .listSlots({
+            resourceId: id,
+            from: desde,
+            to: hasta,
+            onlyAvailable: true,
+            limit: TOPE_DE_HORARIOS,
+          })
+          // Una sede que falla no deja sin horarios a las demás: se muestra lo
+          // que hay. Si fallan todas, la lista queda vacía y el vacío lo dice.
+          .pipe(catchError(() => of({ items: [], count: 0 }))),
+      ),
+    )
       .subscribe({
-        next: (pagina) => {
+        next: (paginas) => {
+          const pagina = {
+            items: paginas
+              .flatMap((p) => p.items)
+              .sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
+              .slice(0, TOPE_DE_HORARIOS),
+          };
           const libres = pagina.items.filter((cupo) => cupo.remainingCapacity > 0);
           if (libres.length === 0) {
             this.horarios.set(

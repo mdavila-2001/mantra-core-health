@@ -100,21 +100,29 @@
       </div>
     }
 
-    <!-- Los cuatro lugares a los que un paciente va. La Guía entra acá porque
-         es suya: buscar profesional es lo que hace antes de pedir turno. -->
+    <!-- Los lugares a los que un paciente va. La Guía entra acá porque es suya:
+         buscar profesional es lo que hace antes de pedir turno.
+
+         Rejilla con ícono y no fila de botones fantasma (F-21, 18/08/2026):
+         J6 reemplazó el panel de administración por «Mi salud» y en el camino
+         los accesos perdieron los íconos que la gente ya reconocía. Es el mismo
+         dibujo del panel de gestión —tarjeta cuadrada, ícono arriba, rótulo
+         debajo—, con los destinos del paciente. -->
     <nav class="mi-salud__accesos" aria-label="Ir a lo tuyo">
-      <a app-button variant="ghost" data-testid="mi-salud-acceso" [routerLink]="misTurnos">
-        Mis turnos
-      </a>
-      <a app-button variant="ghost" data-testid="mi-salud-acceso" [routerLink]="miHistoria">
-        Mi historia
-      </a>
-      <a app-button variant="ghost" data-testid="mi-salud-acceso" [routerLink]="laGuia">
-        Buscar un profesional
-      </a>
-      <a app-button variant="ghost" data-testid="mi-salud-acceso" [routerLink]="miCuenta">
-        Mis datos
-      </a>
+      @for (acceso of accesos; track acceso.ruta) {
+        <a
+          class="mi-salud__acceso"
+          data-testid="mi-salud-acceso"
+          [attr.data-ruta]="acceso.ruta"
+          [routerLink]="acceso.ruta"
+          [attr.aria-label]="acceso.label + '. ' + acceso.resumen"
+        >
+          <span class="mi-salud__acceso-icono">
+            <app-nav-icon [name]="acceso.icono" />
+          </span>
+          <span class="mi-salud__acceso-nombre">{{ acceso.label }}</span>
+        </a>
+      }
     </nav>
   }
 }

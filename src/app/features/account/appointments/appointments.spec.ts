@@ -466,6 +466,96 @@ describe('Appointments', () => {
     expect(interno<() => readonly { id: string }[]>('horariosListos')()).toHaveLength(2);
   });
 
+  /* ---- elegir el lugar cuando hay más de uno (F-23) ----------------------- */
+
+  describe('dónde atenderse (F-23)', () => {
+    /** Dos consultorios del MISMO profesional: misma referencia, distinta sede. */
+    function dosConsultorios(): void {
+      crudo<{ set: (v: unknown) => void }>('recursos').set([
+        {
+          id: 'r-centro',
+          name: 'Agenda centro',
+          resourceRefId: 'per-1',
+          practitionerName: 'Dra. Ana Muñoz',
+          site: { id: 's-1', name: 'Consultorio centro' },
+        },
+        {
+          id: 'r-sur',
+          name: 'Agenda sur',
+          resourceRefId: 'per-1',
+          practitionerName: 'Dra. Ana Muñoz',
+          site: { id: 's-2', name: 'Consultorio sur' },
+        },
+      ]);
+    }
+
+    it('la persona se ofrece una sola vez, con sus dos consultorios detrás', () => {
+      montar();
+      responderArranque([]);
+      dosConsultorios();
+
+      const opciones = interno<() => readonly { value: string; label: string }[]>(
+        'opcionesDeRecurso',
+      )();
+
+      // Antes aparecía dos veces el mismo nombre, sin decir en qué se diferencian.
+      expect(opciones).toHaveLength(1);
+      expect(opciones[0].label).toBe('Dra. Ana Muñoz');
+    });
+
+    it('elegida la persona, pregunta dónde y junta los horarios de las dos sedes', () => {
+      montar();
+      responderArranque([]);
+      dosConsultorios();
+
+      interno<(id: string | null) => void>('elegirRecurso')('r-centro');
+
+      expect(interno<() => boolean>('hayVariasSedes')()).toBe(true);
+      expect(interno<() => readonly { label: string }[]>('opcionesDeSede')().map((o) => o.label))
+        .toEqual(['Consultorio centro', 'Consultorio sur']);
+
+      // «Cualquier lugar» es el modo por defecto: se piden las dos agendas.
+      const pedidos = http.match((r) => r.url === '/scheduling/slots');
+      expect(pedidos.map((p) => p.request.params.get('resourceId')).sort()).toEqual([
+        'r-centro',
+        'r-sur',
+      ]);
+      for (const pedido of pedidos) {
+        pedido.flush({ items: [], count: 0 });
+      }
+    });
+
+    it('elegido un lugar, sólo se piden los horarios de ese', () => {
+      montar();
+      responderArranque([]);
+      dosConsultorios();
+
+      interno<(id: string | null) => void>('elegirRecurso')('r-centro');
+      for (const pedido of http.match((r) => r.url === '/scheduling/slots')) {
+        pedido.flush({ items: [], count: 0 });
+      }
+
+      interno<(id: string | null) => void>('elegirSede')('r-sur');
+
+      const pedidos = http.match((r) => r.url === '/scheduling/slots');
+      expect(pedidos).toHaveLength(1);
+      expect(pedidos[0].request.params.get('resourceId')).toBe('r-sur');
+      pedidos[0].flush({ items: [], count: 0 });
+    });
+
+    it('con una sola sede no se pregunta nada', () => {
+      montar();
+      responderArranque([]);
+
+      interno<(id: string | null) => void>('elegirRecurso')('r-1');
+
+      expect(interno<() => boolean>('hayVariasSedes')()).toBe(false);
+      for (const pedido of http.match((r) => r.url === '/scheduling/slots')) {
+        pedido.flush({ items: [], count: 0 });
+      }
+    });
+  });
+
   /* ---- buscar al profesional en vez de recorrer la lista (F-13) ----------- */
 
   it('el buscador de profesional filtra por nombre, sin tildes ni mayúsculas', () => {

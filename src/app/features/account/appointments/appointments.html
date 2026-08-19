@@ -358,6 +358,26 @@
         />
       </app-form-field>
 
+      <!-- ¿Dónde? (F-23, 18/08/2026) — sólo si hay más de un lugar. Un doctor
+           con dos consultorios tenía dos entradas iguales en el buscador y
+           ninguna forma de elegir dónde atenderse. Los dos modos que pidió
+           Pablo: «cualquier lugar» —todos los horarios, que es el que viene
+           puesto— o una sede concreta. Con una sola sede no se pregunta nada. -->
+      @if (hayVariasSedes()) {
+        <app-form-field
+          label="¿Dónde querés atenderte?"
+          hint="Podés ver todos los horarios juntos o elegir un lugar."
+          class="turnos__filtro"
+        >
+          <app-select
+            [value]="sedeElegida()"
+            [options]="opcionesDeSede()"
+            placeholder="Cualquier lugar — ver todos los horarios"
+            (valueChange)="elegirSede($event)"
+          />
+        </app-form-field>
+      }
+
       <!-- Cuando se llegó acá señalando un día en el calendario, se dice cuál
            es y se ofrece volver a verlos todos: si no, la lista parece corta
            sin explicación (F-10). -->
@@ -414,6 +434,13 @@
                   <span class="turnos__hora">
                     {{ horario.desde | date: 'HH:mm' }} – {{ horario.hasta | date: 'HH:mm' }}
                   </span>
+                  <!-- Viendo todos los lugares juntos, un horario sin lugar no
+                       se puede elegir: hay que saber dónde es. -->
+                  @if (hayVariasSedes() && sedeElegida() === null) {
+                    <span class="turnos__lugar" data-testid="turnos-lugar">
+                      {{ nombreDeSede(horario.resourceId) }}
+                    </span>
+                  }
                 </div>
                 @if (reprogramando() === null) {
                   <a

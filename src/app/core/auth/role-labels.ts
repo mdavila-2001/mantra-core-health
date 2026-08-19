@@ -81,3 +81,32 @@ export function etiquetasDeRoles(codigos: readonly string[]): readonly string[] 
 export function esPaciente(codigos: readonly string[]): boolean {
   return codigos.includes('PATIENT');
 }
+
+/**
+ * Los roles con los que se viene a trabajar, no a atenderse.
+ *
+ * Vivía dentro del panel, y cada pantalla que necesitaba la misma distinción la
+ * volvía a escribir o —peor— preguntaba sólo por `PATIENT`, que no es lo mismo:
+ * quien atiende y además es paciente de la institución entra a trabajar.
+ */
+const ROLES_DE_TRABAJO: readonly string[] = [
+  'SUPERADMIN',
+  'SECURITY_ADMIN',
+  'SCHEDULING_ADMIN',
+  'SCHEDULING_AGENT',
+  'PRACTITIONER',
+  'CLINICIAN',
+];
+
+/**
+ * Si quien entra viene a atenderse y no a trabajar acá.
+ *
+ * Es la pregunta que decide qué NO se le muestra: el panel de la organización,
+ * la tarjeta «Tu acceso» con organización y roles (F-22), y en general todo lo
+ * que sea vocabulario de gestión. La regla de I-A se había filtrado cuatro
+ * veces por escribirla de nuevo en cada pantalla; ahora se pregunta acá.
+ */
+export function vieneAAtenderse(codigos: readonly string[]): boolean {
+  if (!codigos.includes('PATIENT')) return false;
+  return !ROLES_DE_TRABAJO.some((rol) => codigos.includes(rol));
+}

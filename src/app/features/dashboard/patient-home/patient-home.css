@@ -41,10 +41,53 @@
 }
 
 .mi-salud__accesos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--sp-3);
   margin-block-start: var(--sp-5);
+}
+
+/* Mismo dibujo que la rejilla del panel de gestión (F-21): cuadrado, ícono
+   arriba, rótulo debajo. El realce es un velo (`--bg-hover`) para que componga
+   igual en claro y en oscuro. */
+.mi-salud__acceso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-4) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+.mi-salud__acceso-icono {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  color: var(--text-secondary);
+}
+
+.mi-salud__acceso:hover .mi-salud__acceso-icono,
+.mi-salud__acceso:focus-visible .mi-salud__acceso-icono {
+  color: var(--text-primary);
+}
+
+.mi-salud__acceso:hover,
+.mi-salud__acceso:focus-visible {
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+.mi-salud__acceso:active {
+  background: var(--bg-active);
 }
 
 @media (min-width: 48rem) {

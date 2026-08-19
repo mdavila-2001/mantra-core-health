@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { rolesConEtiqueta } from '../../core/auth/role-labels';
+import { rolesConEtiqueta, vieneAAtenderse } from '../../core/auth/role-labels';
 import { IdentityClient } from '../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
@@ -31,21 +31,6 @@ import {
 } from '../identity-verification/case-status';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { PatientHome } from './patient-home/patient-home';
-
-/**
- * Los roles con los que se viene a trabajar, no a atenderse.
- *
- * Quien tiene alguno de estos ve el panel de la organización aunque además sea
- * paciente: entra a hacer su trabajo.
- */
-const ROLES_DE_TRABAJO: readonly string[] = [
-  'SUPERADMIN',
-  'SECURITY_ADMIN',
-  'SCHEDULING_ADMIN',
-  'SCHEDULING_AGENT',
-  'PRACTITIONER',
-  'CLINICIAN',
-];
 
 /**
  * Panel de inicio de la aplicación autenticada.
@@ -167,11 +152,7 @@ export class Dashboard {
    * siempre. Al revés dejaría a un profesional sin su tablero el día que alguien
    * le cargue una ficha de paciente.
    */
-  protected readonly esPaciente = computed(() => {
-    const roles = this.roles();
-    if (!roles.includes('PATIENT')) return false;
-    return !ROLES_DE_TRABAJO.some((rol) => roles.includes(rol));
-  });
+  protected readonly esPaciente = computed(() => vieneAAtenderse(this.roles()));
 
   protected readonly pacientes = signal<ViewState<PatientPageResumen>>(loading());
   protected readonly directory = signal<ViewState<PublicProjection>>(loading());
