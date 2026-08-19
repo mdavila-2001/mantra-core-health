@@ -54,6 +54,16 @@ describe('Dashboard', () => {
   });
 
   afterEach(() => {
+    // TJ-1 · el aviso del alta consulta el avance del profesional. Es
+    // accesorio: si no responde, el panel se pinta igual y el banner no
+    // aparece. Se descarta acá para que cada prueba siga hablando de lo suyo,
+    // y no de una lectura que no le importa. Su propia conducta la fijan las
+    // pruebas del banner, más abajo.
+    for (const pedido of http.match((request) =>
+      request.url.endsWith('/practitioners/me/onboarding'),
+    )) {
+      pedido.flush(null, { status: 422, statusText: 'Unprocessable Entity' });
+    }
     http.verify();
   });
 
@@ -73,9 +83,7 @@ describe('Dashboard', () => {
 
     // El historial de verificación se pide siempre, con o sin rol. Se responde
     // acá para que cada prueba hable de lo suyo y no de esta petición.
-    http
-      .expectOne((request) => request.url.endsWith('/identity/me/verification-cases'))
-      .flush([]);
+    http.expectOne((request) => request.url.endsWith('/identity/me/verification-cases')).flush([]);
     // Y el sello de ese trámite sale de terminología, por el mismo motivo.
     resolverEstadosDeCaso(http);
   }
@@ -86,12 +94,14 @@ describe('Dashboard', () => {
   }
 
   function responder(records: unknown[], refreshedAt: string | null) {
-    http.expectOne((request) => request.url.endsWith('/public/directory')).flush({
-      slug: 'directory',
-      records,
-      refreshedAt,
-      generatedAt: '2026-08-01T12:00:00.000Z',
-    });
+    http
+      .expectOne((request) => request.url.endsWith('/public/directory'))
+      .flush({
+        slug: 'directory',
+        records,
+        refreshedAt,
+        generatedAt: '2026-08-01T12:00:00.000Z',
+      });
   }
 
   it('pide el directorio al construirse y arranca en S2', () => {
@@ -158,20 +168,23 @@ describe('Dashboard', () => {
     crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
     responder([], null);
 
-    http.expectOne((request) => request.url.includes('/profiles/patients')).flush({
-      // Dos filas traídas y ciento cuarenta en la organización: si el total
-      // saliera de `items`, esto diría 2.
-      items: [
-        { profileId: 'p-1', personId: 'per-1', patientCode: 'PAC-1', deceased: false },
-        { profileId: 'p-2', personId: 'per-2', patientCode: 'PAC-2', deceased: false },
-      ],
-      count: 140,
-      limit: 5,
-      nextCursor: null,
-    });
+    http
+      .expectOne((request) => request.url.includes('/profiles/patients'))
+      .flush({
+        // Dos filas traídas y ciento cuarenta en la organización: si el total
+        // saliera de `items`, esto diría 2.
+        items: [
+          { profileId: 'p-1', personId: 'per-1', patientCode: 'PAC-1', deceased: false },
+          { profileId: 'p-2', personId: 'per-2', patientCode: 'PAC-2', deceased: false },
+        ],
+        count: 140,
+        limit: 5,
+        nextCursor: null,
+      });
 
-    const total = (component as unknown as { totalPacientes: () => number | null })
-      .totalPacientes();
+    const total = (
+      component as unknown as { totalPacientes: () => number | null }
+    ).totalPacientes();
     expect(total).toBe(140);
   });
 
@@ -183,8 +196,7 @@ describe('Dashboard', () => {
       .expectOne((request) => request.url.includes('/profiles/patients'))
       .flush({ items: [], count: 0, limit: 5, nextCursor: null });
 
-    const pacientes = (component as unknown as { pacientes: () => { status: string } })
-      .pacientes();
+    const pacientes = (component as unknown as { pacientes: () => { status: string } }).pacientes();
     expect(pacientes.status).toBe('empty');
   });
 
@@ -333,7 +345,10 @@ describe('Dashboard', () => {
   it('si el historial de verificación falla, el panel sigue en pie', () => {
     // Es información de contexto: romper el panel entero porque el módulo de
     // identidad no contestó sería peor que un panel sin ese dato.
-    session.start({ accessToken: jwt({ sub: 'u-1', roles: [], tenants: [] }), refreshToken: 'r-1' });
+    session.start({
+      accessToken: jwt({ sub: 'u-1', roles: [], tenants: [] }),
+      refreshToken: 'r-1',
+    });
     fixture = TestBed.createComponent(Dashboard);
     component = fixture.componentInstance;
 
@@ -346,5 +361,66 @@ describe('Dashboard', () => {
     expect(estado().status).toBe('ready');
     const sello = (component as unknown as { selloDeIdentidad: () => unknown }).selloDeIdentidad();
     expect(sello).toBeNull();
+  });
+
+  describe('el aviso del alta incompleta (TJ-1)', () => {
+    /** Responde el avance del alta con las etapas cumplidas que se pidan. */
+    function responderAlta(cumplidas: number, firstIncomplete: string): void {
+      const claves = ['professional-data', 'photo', 'organizations', 'schedule', 'review'];
+      http
+        .expectOne((request) => request.url.endsWith('/practitioners/me/onboarding'))
+        .flush({
+          practitionerProfileId: 'hp-1',
+          steps: claves.map((key, indice) => ({
+            key,
+            complete: indice < cumplidas,
+            missing: indice < cumplidas ? [] : ['algo'],
+          })),
+          firstIncomplete,
+        });
+      fixture.detectChanges();
+    }
+
+    it('un profesional con el alta a medias ve el aviso, con cuánto le falta', () => {
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+      responder([], null);
+      responderAlta(2, 'organizations');
+
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).toContain('Completá tu perfil');
+      expect(texto).toContain('2 de 5');
+    });
+
+    it('con el alta completa no hay aviso: no se le recuerda algo que ya hizo', () => {
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+      responder([], null);
+      responderAlta(5, 'done');
+
+      expect(fixture.nativeElement.textContent).not.toContain('Completá tu perfil');
+    });
+
+    it('si la lectura falla no inventa un aviso', () => {
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+      responder([], null);
+      http
+        .expectOne((request) => request.url.endsWith('/practitioners/me/onboarding'))
+        .flush(null, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      // Decirle a alguien que le falta algo sin saberlo es peor que no avisar.
+      expect(fixture.nativeElement.textContent).not.toContain('Completá tu perfil');
+    });
+
+    it('a quien no atiende no se le pregunta siquiera', () => {
+      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+      responder([], null);
+      // Este rol sí lista pacientes; se responde para que el `verify()` del
+      // teardown hable sólo de lo que esta prueba mira.
+      http
+        .expectOne((request) => request.url.includes('/profiles/patients'))
+        .flush({ items: [], count: 0, limit: 5, nextCursor: null });
+
+      http.expectNone((request) => request.url.endsWith('/practitioners/me/onboarding'));
+    });
   });
 });

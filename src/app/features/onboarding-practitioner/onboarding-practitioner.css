@@ -1,0 +1,62 @@
+/* ============================================================================
+    El alta del profesional, paso por paso.
+
+    Mobile-first como el resto: un médico completa esto entre pacientes, muchas
+    veces desde el teléfono. Cada etapa es una tarjeta que se lee entera y
+    termina en su acción — sin acordeones, porque esconder lo que falta detrás
+    de un clic es lo contrario de lo que esta pantalla viene a hacer.
+    ========================================================================== */
+
+.alta__estado {
+  color: var(--text-muted);
+  margin-block: var(--sp-4);
+}
+
+.alta__avance {
+  color: var(--text-secondary);
+  margin-block: 0 var(--sp-4);
+}
+
+.alta__lista {
+  display: grid;
+  gap: var(--sp-3);
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+}
+
+.alta__etapa {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  padding: var(--sp-4);
+}
+
+/* La etapa que toca ahora se distingue por el borde y no por el fondo: un
+   fondo de color compite con los avisos, que sí son excepcionales. */
+.alta__etapa--actual {
+  border-color: var(--border-strong);
+}
+
+.alta__encabezado {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: space-between;
+  width: 100%;
+}
+
+.alta__titulo {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  margin: 0;
+}
+
+.alta__explica {
+  color: var(--text-secondary);
+  margin: 0;
+}

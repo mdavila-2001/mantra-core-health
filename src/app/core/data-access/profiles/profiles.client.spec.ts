@@ -120,21 +120,23 @@ describe('ProfilesClient', () => {
     let filas: readonly { birthDate?: Date }[] = [];
     client.searchPatients().subscribe((pagina) => (filas = pagina.items));
 
-    http.expectOne((r) => r.url === '/profiles/patients').flush({
-      items: [
-        {
-          profileId: 'pp-1',
-          personId: 'p-1',
-          patientCode: 'PAC-1',
-          birthDate: '1985-03-14',
-          deceased: false,
-        },
-        { profileId: 'pp-2', personId: 'p-2', patientCode: 'PAC-2', deceased: true },
-      ],
-      count: 2,
-      limit: 50,
-      nextCursor: 'cur-3',
-    });
+    http
+      .expectOne((r) => r.url === '/profiles/patients')
+      .flush({
+        items: [
+          {
+            profileId: 'pp-1',
+            personId: 'p-1',
+            patientCode: 'PAC-1',
+            birthDate: '1985-03-14',
+            deceased: false,
+          },
+          { profileId: 'pp-2', personId: 'p-2', patientCode: 'PAC-2', deceased: true },
+        ],
+        count: 2,
+        limit: 50,
+        nextCursor: 'cur-3',
+      });
 
     expect(filas[0]?.birthDate).toBeInstanceOf(Date);
     // Sin fecha se devuelve `undefined`, no una `Invalid Date`: quien la
@@ -143,7 +145,8 @@ describe('ProfilesClient', () => {
   });
 
   it('getPatient convierte las cuatro fechas de la ficha', () => {
-    let ficha: { birthDate?: Date; deceasedAt?: Date; createdAt: Date; updatedAt: Date } | undefined;
+    let ficha:
+      { birthDate?: Date; deceasedAt?: Date; createdAt: Date; updatedAt: Date } | undefined;
     client.getPatient('pp-1').subscribe((f) => (ficha = f));
 
     http.expectOne('/profiles/patients/pp-1').flush({
@@ -173,23 +176,25 @@ describe('ProfilesClient', () => {
     let filas: readonly { birthDate?: Date }[] = [];
     client.searchPatients().subscribe((pagina) => (filas = pagina.items));
 
-    http.expectOne((r) => r.url === '/profiles/patients').flush({
-      items: [
-        {
-          profileId: 'pp-1',
-          personId: 'p-1',
-          patientCode: 'PAC-1',
-          displayName: 'Ana Paz',
-          // Tal cual lo devuelve el servidor.
-          birthDate: null,
-          personStatusConceptId: 'c-1',
-          deceased: false,
-        },
-      ],
-      count: 1,
-      limit: 50,
-      nextCursor: null,
-    });
+    http
+      .expectOne((r) => r.url === '/profiles/patients')
+      .flush({
+        items: [
+          {
+            profileId: 'pp-1',
+            personId: 'p-1',
+            patientCode: 'PAC-1',
+            displayName: 'Ana Paz',
+            // Tal cual lo devuelve el servidor.
+            birthDate: null,
+            personStatusConceptId: 'c-1',
+            deceased: false,
+          },
+        ],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
 
     // `new Date(null)` es 1970-01-01, no una fecha inválida: sin esto, un
     // paciente sin fecha de nacimiento figuraba nacido en 1969.
@@ -246,9 +251,7 @@ describe('ProfilesClient', () => {
 
   it('los contactos también se limpian: su vínculo puede venir en `null`', () => {
     let ficha: { relatedPersons: readonly Record<string, unknown>[] } | undefined;
-    client
-      .getPatient('pp-1')
-      .subscribe((f) => (ficha = f as unknown as typeof ficha));
+    client.getPatient('pp-1').subscribe((f) => (ficha = f as unknown as typeof ficha));
 
     http.expectOne('/profiles/patients/pp-1').flush({
       profileId: 'pp-1',
@@ -398,21 +401,23 @@ describe('ProfilesClient', () => {
     let filas: readonly { birthDate?: Date }[] = [];
     client.searchPatients().subscribe((pagina) => (filas = pagina.items));
 
-    http.expectOne((r) => r.url === '/profiles/patients').flush({
-      items: [
-        {
-          profileId: 'pp-1',
-          personId: 'p-1',
-          patientCode: 'PAC-1',
-          // Tal cual lo serializa el servidor para un `format: 'date'`.
-          birthDate: '1985-03-14T00:00:00.000Z',
-          deceased: false,
-        },
-      ],
-      count: 1,
-      limit: 50,
-      nextCursor: null,
-    });
+    http
+      .expectOne((r) => r.url === '/profiles/patients')
+      .flush({
+        items: [
+          {
+            profileId: 'pp-1',
+            personId: 'p-1',
+            patientCode: 'PAC-1',
+            // Tal cual lo serializa el servidor para un `format: 'date'`.
+            birthDate: '1985-03-14T00:00:00.000Z',
+            deceased: false,
+          },
+        ],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
 
     const fecha = filas[0]?.birthDate;
     // Se comprueban los componentes **locales**, que es lo que se pinta.
@@ -559,19 +564,21 @@ describe('ProfilesClient', () => {
     let pagina: { items: readonly { recordedAt: Date }[] } | undefined;
     client.listMergeEvents().subscribe((p) => (pagina = p));
 
-    http.expectOne((r) => r.url === '/profiles/patients/merge-events').flush({
-      items: [
-        {
-          id: 'ev-1',
-          survivingPatientProfileId: 'pp-A',
-          mergedPatientProfileId: 'pp-B',
-          decisionStatus: 'c-1',
-          recordedAt: '2026-08-08T02:05:00.000Z',
-        },
-      ],
-      count: 1,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/profiles/patients/merge-events')
+      .flush({
+        items: [
+          {
+            id: 'ev-1',
+            survivingPatientProfileId: 'pp-A',
+            mergedPatientProfileId: 'pp-B',
+            decisionStatus: 'c-1',
+            recordedAt: '2026-08-08T02:05:00.000Z',
+          },
+        ],
+        count: 1,
+        limit: 50,
+      });
 
     expect(pagina?.items[0]?.recordedAt).toBeInstanceOf(Date);
   });
@@ -677,7 +684,10 @@ describe('ProfilesClient', () => {
     client.listAffiliations().subscribe((p) => (items = p.items));
 
     http.expectOne('/profiles/practitioners/me/affiliations').flush({
-      items: [afiliacionEnCable(), afiliacionEnCable({ id: 'af-2', endDate: '2023-12-31', current: false })],
+      items: [
+        afiliacionEnCable(),
+        afiliacionEnCable({ id: 'af-2', endDate: '2023-12-31', current: false }),
+      ],
       count: 2,
     });
 
