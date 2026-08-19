@@ -39,23 +39,37 @@
       del recurso.
     </p>
 
+    <!-- FX-1 (continuación) · los identificadores sólo para quien administra el
+         catálogo. Al médico no le dicen nada —no los puede verificar ni usar— y
+         son la misma jerga que F-28 reclamaba en el paso 1: se sacó de ahí y
+         seguía apareciendo acá. Quien administra sí los necesita: opera varios
+         recursos y el id es lo que le permite distinguirlos. -->
     <dl class="agenda-create__summary">
       <div>
         <dt>Recurso</dt>
         <dd>
-          {{ resourceName() }} · <code>{{ resourceId() }}</code>
+          {{ resourceName() }}
+          @if (!publicaSoloLaPropia()) {
+            · <code>{{ resourceId() }}</code>
+          }
         </dd>
       </div>
       <div>
         <dt>Política</dt>
         <dd>
-          {{ policyCode() }} · <code>{{ policyId() }}</code>
+          {{ policyCode() }}
+          @if (!publicaSoloLaPropia()) {
+            · <code>{{ policyId() }}</code>
+          }
         </dd>
       </div>
       <div>
         <dt>Plantilla</dt>
         <dd>
-          {{ templateName() }} · <code>{{ templateId() }}</code>
+          {{ templateName() }}
+          @if (!publicaSoloLaPropia()) {
+            · <code>{{ templateId() }}</code>
+          }
         </dd>
       </div>
       @if (slotsResultado(); as slots) {
@@ -68,7 +82,10 @@
         <div>
           <dt>Excepción</dt>
           <dd>
-            {{ exc.blockedSlots }} cupos bloqueados · <code>{{ exc.id }}</code>
+            {{ exc.blockedSlots }} cupos bloqueados
+            @if (!publicaSoloLaPropia()) {
+              · <code>{{ exc.id }}</code>
+            }
           </dd>
         </div>
       }
@@ -85,8 +102,14 @@
     </app-alert>
   }
 
-  <!-- Lo ya capturado, visible en todo momento: los ids que encadenan las fases. -->
-  @if (resourceId() || policyId() || templateId()) {
+  <!-- Lo ya capturado, visible en todo momento: los ids que encadenan las fases.
+
+       Sólo para quien administra el catálogo. Al médico le aparecía un uuid
+       crudo en pantalla desde el paso 2 —lo encontré recorriendo el asistente
+       en el navegador, no leyendo el código— y es la misma jerga que F-28
+       reclamaba del paso 1: se sacó de ahí y seguía saliendo acá. Él no puede
+       verificarlos ni usarlos; quien opera varios recursos, sí. -->
+  @if (!publicaSoloLaPropia() && (resourceId() || policyId() || templateId())) {
     <dl class="agenda-create__captured">
       @if (resourceId(); as id) {
         <div>
