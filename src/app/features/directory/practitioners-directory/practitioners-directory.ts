@@ -99,12 +99,19 @@ export class PractitionersDirectory {
     }
     // Se filtran los profesionales y se descartan los grupos que quedan
     // vacíos: un encabezado de especialidad sin nadie debajo es ruido.
+    //
+    // Un grupo cuyo **encabezado** casa con lo buscado se conserva entero
+    // (F-19/F-27): quien escribe «cardio» está buscando la especialidad, no un
+    // apellido, y esconder a los cardiólogos porque su nombre no dice «cardio»
+    // es exactamente lo contrario de lo que pidió.
     return todos
       .map((grupo) => ({
         ...grupo,
-        profesionales: grupo.profesionales.filter((profesional) =>
-          coincide(profesional, busqueda),
-        ),
+        profesionales: grupo.nombre.toLowerCase().includes(busqueda)
+          ? grupo.profesionales
+          : grupo.profesionales.filter((profesional) =>
+              coincide(profesional, busqueda),
+            ),
       }))
       .filter((grupo) => grupo.profesionales.length > 0);
   });

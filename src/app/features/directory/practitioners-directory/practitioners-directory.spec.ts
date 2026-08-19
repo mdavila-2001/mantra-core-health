@@ -221,6 +221,23 @@ describe('PractitionersDirectory', () => {
     expect(grupos()[0].profesionales[0].title).toBe('Dra. Lucía Salas');
   });
 
+  /**
+   * F-19/F-27: la especialidad es el encabezado de la grilla, y buscarla tiene
+   * que traer a quienes la ejercen aunque su nombre no la mencione.
+   */
+  it('el buscador también encuentra por especialidad, con el grupo entero', () => {
+    montar();
+    responder([FILA, OTRA]);
+    responderConceptos();
+
+    senal<string>('filtro').set('cardio');
+
+    const encontrados = grupos();
+    expect(encontrados).toHaveLength(1);
+    expect(encontrados[0].nombre).toBe('Cardiología');
+    expect(encontrados[0].profesionales).toHaveLength(1);
+  });
+
   it('el buscador también encuentra por el título profesional', () => {
     montar();
     responder([FILA, OTRA]);
