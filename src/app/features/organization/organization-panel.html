@@ -116,6 +116,70 @@
         </app-view-state-host>
       </app-card>
 
+      <!-- ─── La agenda (TP-5) ──────────────────────────────────────────────
+           El tercer actor: la recepción que necesita saber quién viene hoy.
+           Sin esto, tenía que preguntarle a cada médico por su agenda, de a
+           uno. El motivo de consulta NO viene en el payload: es del paciente y
+           de su médico. -->
+      <app-card variant="outlined" padding="lg" class="organizacion__bloque">
+        <header class="organizacion__encabezado">
+          <h2 class="organizacion__titulo">Agenda</h2>
+          <p class="organizacion__fecha" aria-live="polite">
+            {{ fechaVisible() | date: "EEEE d 'de' MMMM" }}
+          </p>
+        </header>
+
+        <div class="organizacion__agenda-controles">
+          <button app-button type="button" size="sm" variant="secondary" (clicked)="diaAnterior()">
+            Día anterior
+          </button>
+          <button app-button type="button" size="sm" variant="secondary" (clicked)="diaSiguiente()">
+            Día siguiente
+          </button>
+
+          <!-- El caso real de uso: «¿a qué hora viene X hoy?». Filtra sobre lo
+               ya cargado, sin volver al servidor por cada tecla. -->
+          <app-form-field label="Buscar paciente">
+            <app-input [(value)]="buscaPaciente" placeholder="Nombre del paciente" />
+          </app-form-field>
+        </div>
+
+        <app-view-state-host [state]="agenda()" (retry)="cargarAgendaDelDia()">
+          @if (agenda().status === 'ready') {
+            @if (citasVisibles().length) {
+              <ul class="organizacion__citas">
+                @for (cita of citasVisibles(); track cita.bookingId) {
+                  <li class="organizacion__cita">
+                    <span class="organizacion__cita-hora">
+                      {{ cita.startAt | date: 'HH:mm' }}
+                    </span>
+                    <span class="organizacion__cita-paciente">
+                      {{ cita.patientName || 'Paciente sin nombre registrado' }}
+                    </span>
+                    <span class="organizacion__cita-sede">
+                      {{ cita.resourceName || '—' }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            } @else if (sinCoincidencias()) {
+              <!-- Distinto de «no hay citas»: sí las hay, pero ninguna es de
+                   quien se busca. Decir lo mismo en los dos casos haría creer
+                   que el día está vacío. -->
+              <app-empty-state
+                title="Nadie con ese nombre en este día"
+                description="Probá con otro nombre o mirá otro día."
+              />
+            } @else {
+              <app-empty-state
+                title="No hay citas en este día"
+                description="Cuando alguien reserve con tus profesionales, vas a verlo acá."
+              />
+            }
+          }
+        </app-view-state-host>
+      </app-card>
+
       <!-- ─── Solicitudes de médicos (TP-2) ─────────────────────────────────
            Nadie figura en una organización que no lo aceptó: acá es donde la
            organización acepta. Sólo quien la administra decide; al staff se le
