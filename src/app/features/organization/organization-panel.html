@@ -28,8 +28,8 @@
       @if (!estaVerificada()) {
         <app-alert tone="warning" title="Todavía no está aprobada">
           Mientras la plataforma no apruebe tu organización, no aparece en las búsquedas de
-          pacientes. Podés seguir cargando sus datos y su gente: cuando la aprueben, se publica
-          con lo que ya tengas.
+          pacientes. Podés seguir cargando sus datos y su gente: cuando la aprueben, se publica con
+          lo que ya tengas.
         </app-alert>
       }
 
@@ -116,16 +116,62 @@
         </app-view-state-host>
       </app-card>
 
-      <!-- ─── Solicitudes de médicos ────────────────────────────────────────
-           El hueco que llena TP-2: los profesionales piden vincularse y la
-           organización aprueba o rechaza. Se deja anunciado y no oculto para
-           que quien administra sepa que existe y no lo busque en otro lado. -->
+      <!-- ─── Solicitudes de médicos (TP-2) ─────────────────────────────────
+           Nadie figura en una organización que no lo aceptó: acá es donde la
+           organización acepta. Sólo quien la administra decide; al staff se le
+           muestra la lista, que es información legítima de su trabajo. -->
       <app-card variant="outlined" padding="lg" class="organizacion__bloque">
         <h2 class="organizacion__titulo">Solicitudes de médicos</h2>
-        <app-empty-state
-          title="Próximamente"
-          description="Acá vas a ver a los profesionales que pidan atender en tu organización, para aprobarlos o rechazarlos."
-        />
+
+        <app-view-state-host [state]="solicitudes()">
+          @if (solicitudes().status === 'ready') {
+            @if (pedidos().length) {
+              <ul class="organizacion__solicitudes">
+                @for (pedido of pedidos(); track pedido.id) {
+                  <li class="organizacion__solicitud">
+                    <div class="organizacion__solicitud-datos">
+                      <p class="organizacion__solicitud-cargo">{{ pedido.roleTitle }}</p>
+                      <p class="organizacion__solicitud-nota">
+                        {{ pedido.organizationName }} · desde
+                        {{ pedido.startDate | date: 'longDate' }}
+                      </p>
+                    </div>
+
+                    @if (puedeAdministrar()) {
+                      <div class="organizacion__solicitud-acciones">
+                        <button
+                          app-button
+                          type="button"
+                          size="sm"
+                          variant="primary"
+                          [disabled]="decidiendo() === pedido.id"
+                          (clicked)="aprobar(pedido)"
+                        >
+                          Aprobar
+                        </button>
+                        <button
+                          app-button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          [disabled]="decidiendo() === pedido.id"
+                          (clicked)="rechazar(pedido)"
+                        >
+                          Rechazar
+                        </button>
+                      </div>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <app-empty-state
+                title="No hay solicitudes pendientes"
+                description="Cuando un profesional pida atender en alguna de tus sedes, lo vas a ver acá."
+              />
+            }
+          }
+        </app-view-state-host>
       </app-card>
     </div>
   } @else {

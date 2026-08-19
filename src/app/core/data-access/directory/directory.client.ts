@@ -8,6 +8,7 @@ import { maybeDate, sinNulos, type ConNulos } from '../wire';
 import type {
   MyOrganization,
   OrganizationEdit,
+  PractitionerRequest,
   BranchAssignmentList,
   BranchAssignmentListItem,
   BranchList,
@@ -65,14 +66,12 @@ export class DirectoryClient {
       params = params.set('limit', String(query.limit));
     }
 
-    return this.http
-      .get<RespuestaPagina>(this.url('/admin/tenants'), { params })
-      .pipe(
-        map((body) => ({
-          ...body,
-          items: body.items.map(toTenantListItem),
-        })),
-      );
+    return this.http.get<RespuestaPagina>(this.url('/admin/tenants'), { params }).pipe(
+      map((body) => ({
+        ...body,
+        items: body.items.map(toTenantListItem),
+      })),
+    );
   }
 
   /**
@@ -143,10 +142,7 @@ export class DirectoryClient {
    * `GET /tenants/{id}/memberships/{mid}/branch-assignments` — a qué sucursales
    * llega una membresía (UC-04-03, cara de lectura). Tampoco pagina.
    */
-  listBranchAssignments(
-    tenantId: string,
-    membershipId: string,
-  ): Observable<BranchAssignmentList> {
+  listBranchAssignments(tenantId: string, membershipId: string): Observable<BranchAssignmentList> {
     return this.http
       .get<RespuestaAsignaciones>(
         this.url(`/tenants/${tenantId}/memberships/${membershipId}/branch-assignments`),
@@ -205,9 +201,7 @@ export class DirectoryClient {
    */
   listMyOrganizations(): Observable<readonly MyOrganization[]> {
     return this.http
-      .get<{ readonly items: readonly ConNulos<WireMyOrganization>[] }>(
-        this.url('/tenants/me'),
-      )
+      .get<{ readonly items: readonly ConNulos<WireMyOrganization>[] }>(this.url('/tenants/me'))
       .pipe(map((body) => body.items.map(toMyOrganization)));
   }
 
@@ -218,17 +212,55 @@ export class DirectoryClient {
    * logo no va acá: la imagen de una organización vive en su perfil público,
    * que es la que se ve en el directorio.
    */
-  updateOrganization(
-    tenantId: string,
-    cambios: OrganizationEdit,
-  ): Observable<TenantListItem> {
+  updateOrganization(tenantId: string, cambios: OrganizationEdit): Observable<TenantListItem> {
     return this.http
-      .patch<ConNulos<WireTenantListItem>>(
-        this.url(`/tenants/${tenantId}`),
-        cambios,
+      .patch<ConNulos<WireTenantListItem>>(this.url(`/tenants/${tenantId}`), cambios, {
+        headers: deLaOrganizacion(tenantId),
+      })
+      .pipe(map(toTenantListItem));
+  }
+
+  /**
+   * `GET /tenants/{id}/practitioner-requests` — quiénes piden atender acá (TP-2).
+   *
+   * Sólo para quien administra la organización; al resto la API responde 403.
+   * Las de otra organización no llegan: el filtro por sedes va en la consulta
+   * del servidor, no armado después.
+   */
+  listPractitionerRequests(tenantId: string): Observable<readonly PractitionerRequest[]> {
+    return this.http
+      .get<{ readonly items: readonly ConNulos<WirePractitionerRequest>[] }>(
+        this.url(`/tenants/${tenantId}/practitioner-requests`),
         { headers: deLaOrganizacion(tenantId) },
       )
-      .pipe(map(toTenantListItem));
+      .pipe(map((body) => body.items.map(toPractitionerRequest)));
+  }
+
+  /** `POST …/practitioner-requests/{id}/approve` — la organización lo acepta. */
+  approvePractitionerRequest(tenantId: string, affiliationId: string): Observable<void> {
+    return this.http.post<void>(
+      this.url(`/tenants/${tenantId}/practitioner-requests/${affiliationId}/approve`),
+      {},
+      { headers: deLaOrganizacion(tenantId) },
+    );
+  }
+
+  /**
+   * `POST …/practitioner-requests/{id}/reject` — la organización lo rechaza.
+   *
+   * El motivo es opcional: exigirlo produce motivos escritos para pasar el
+   * validador («no», «.») que no le dicen nada a nadie.
+   */
+  rejectPractitionerRequest(
+    tenantId: string,
+    affiliationId: string,
+    reason?: string,
+  ): Observable<void> {
+    return this.http.post<void>(
+      this.url(`/tenants/${tenantId}/practitioner-requests/${affiliationId}/reject`),
+      reason ? { reason } : {},
+      { headers: deLaOrganizacion(tenantId) },
+    );
   }
 
   /** `GET /tenants/{id}` — la ficha completa de una organización. */
@@ -268,6 +300,11 @@ type WireMyOrganization = Omit<MyOrganization, 'createdAt'> & {
   readonly createdAt: string;
 };
 
+type WirePractitionerRequest = Omit<PractitionerRequest, 'startDate' | 'createdAt'> & {
+  readonly startDate: string;
+  readonly createdAt: string;
+};
+
 type RespuestaPagina = Omit<TenantPage, 'items'> & {
   readonly items: readonly ConNulos<WireTenantListItem>[];
 };
@@ -299,10 +336,7 @@ interface RespuestaSucursales {
  * membresía sin fin es lo normal, no una anomalía. Se declara opcional acá
  * para que `sinNulos` la borre y `maybeDate` la reponga sólo si vino.
  */
-type WireMembershipListItem = Omit<
-  MembershipListItem,
-  'startDate' | 'endDate' | 'createdAt'
-> & {
+type WireMembershipListItem = Omit<MembershipListItem, 'startDate' | 'endDate' | 'createdAt'> & {
   readonly startDate?: string;
   readonly endDate?: string;
   readonly createdAt: string;
@@ -376,9 +410,7 @@ function toTenantCreated(body: WireTenantCreated): TenantCreated {
  * clave declarada.
  */
 function stripUndefined<T extends object>(source: T): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(source).filter(([, value]) => value !== undefined),
-  );
+  return Object.fromEntries(Object.entries(source).filter(([, value]) => value !== undefined));
 }
 
 /**
@@ -388,9 +420,7 @@ function stripUndefined<T extends object>(source: T): Record<string, unknown> {
  * permiso—: son los mismos campos más dos, y duplicar la conversión entera
  * garantizaría que un día se corrija uno solo de los dos lugares.
  */
-function toMyOrganization(
-  body: ConNulos<WireMyOrganization>,
-): MyOrganization {
+function toMyOrganization(body: ConNulos<WireMyOrganization>): MyOrganization {
   const ficha = toTenantListItem(body);
   const limpio = sinNulos(body);
   return {
@@ -399,5 +429,23 @@ function toMyOrganization(
     canAdminister: limpio.canAdminister,
     isVerified: limpio.isVerified,
     timeZone: limpio.timeZone,
+  };
+}
+
+/**
+ * Normaliza una solicitud de vínculo.
+ *
+ * `practiceSiteId` llega como `null` explícito cuando el vínculo no apunta a
+ * una sede, y se deja así: distinguir «sin sede» de «no vino el dato» importa,
+ * porque es justo lo que separa una línea de currículum de un pedido a esta
+ * organización.
+ */
+function toPractitionerRequest(body: ConNulos<WirePractitionerRequest>): PractitionerRequest {
+  const { startDate, createdAt, ...resto } = sinNulos<WirePractitionerRequest>(body);
+  return {
+    ...resto,
+    practiceSiteId: body.practiceSiteId ?? null,
+    startDate: new Date(startDate),
+    createdAt: new Date(createdAt),
   };
 }

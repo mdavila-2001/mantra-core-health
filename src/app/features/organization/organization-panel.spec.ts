@@ -57,16 +57,33 @@ describe('OrganizationPanel', () => {
     fixture.detectChanges();
   }
 
-  /** Responde «mis organizaciones» y, si hay alguna, su gente. */
-  function responder(items: unknown[]): void {
+  /** Responde «mis organizaciones» y, si hay alguna, su gente y su bandeja. */
+  function responder(items: unknown[], solicitudes: unknown[] = []): void {
     http.expectOne((r) => r.url === MIAS).flush({ items });
     fixture.detectChanges();
-    if (items.length > 0) {
-      http
-        .expectOne((r) => r.url.includes('/memberships'))
-        .flush({ items: [], count: 0, limit: 50, nextCursor: null });
-      fixture.detectChanges();
-    }
+    if (items.length === 0) return;
+
+    http
+      .expectOne((r) => r.url.includes('/memberships'))
+      .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: solicitudes });
+    fixture.detectChanges();
+  }
+
+  /** Una solicitud de vínculo esperando decisión. */
+  function solicitud(overrides: Record<string, unknown> = {}) {
+    return {
+      id: 'af-1',
+      practitionerProfileId: 'pp-1',
+      organizationName: 'Clínica del Centro',
+      roleTitle: 'Médico de planta',
+      practiceSiteId: 'sede-1',
+      startDate: '2026-03-01T00:00:00.000Z',
+      statusConceptId: 'st-pendiente',
+      createdAt: '2026-02-01T00:00:00.000Z',
+      ...overrides,
+    };
   }
 
   function texto(): string {
@@ -152,10 +169,7 @@ describe('OrganizationPanel', () => {
 
   it('con varias ofrece elegir entre todas', () => {
     montar();
-    responder([
-      organizacion(),
-      organizacion({ id: 'ten-2', tradeName: 'Centro Médico Norte' }),
-    ]);
+    responder([organizacion(), organizacion({ id: 'ten-2', tradeName: 'Centro Médico Norte' })]);
 
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('.organizacion__selector'),
@@ -163,11 +177,89 @@ describe('OrganizationPanel', () => {
     expect(texto()).toContain('Centro Médico Norte');
   });
 
-  /** El hueco que llena TP-2 se anuncia, para que nadie lo busque en otro lado. */
-  it('anuncia las solicitudes de médicos como lo que viene', () => {
+  /* -- Solicitudes de médicos (TP-2) ---------------------------------------- */
+
+  it('pide la bandeja de solicitudes de la organización elegida', () => {
+    montar();
+    http.expectOne((r) => r.url === MIAS).flush({ items: [organizacion()] });
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/memberships'))
+      .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    fixture.detectChanges();
+
+    const pedido = http.expectOne((r) => r.url.includes('/practitioner-requests'));
+    expect(pedido.request.url).toBe('/tenants/ten-1/practitioner-requests');
+    pedido.flush({ items: [] });
+    fixture.detectChanges();
+  });
+
+  it('sin solicitudes pendientes lo dice', () => {
     montar();
     responder([organizacion()]);
 
-    expect(texto()).toContain('Solicitudes de médicos');
+    expect(texto()).toContain('No hay solicitudes pendientes');
+  });
+
+  it('muestra cada solicitud con su cargo y desde cuándo', () => {
+    montar();
+    responder([organizacion()], [solicitud()]);
+
+    expect(texto()).toContain('Médico de planta');
+    expect(texto()).toContain('Aprobar');
+    expect(texto()).toContain('Rechazar');
+  });
+
+  /**
+   * El staff ve quién pidió trabajar ahí —es información legítima de su
+   * trabajo— pero no decide. La API igual lo rechazaría; acá se evita ofrecer
+   * un botón que va a fallar.
+   */
+  it('quien no administra ve las solicitudes pero no decide', () => {
+    montar();
+    responder([organizacion({ canAdminister: false })], [solicitud()]);
+
+    expect(texto()).toContain('Médico de planta');
+    expect(texto()).not.toContain('Aprobar');
+  });
+
+  it('aprobar manda la decisión y recarga la bandeja', () => {
+    montar();
+    responder([organizacion()], [solicitud()]);
+
+    const boton = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((b) => b.textContent?.includes('Aprobar'));
+    boton?.click();
+    fixture.detectChanges();
+
+    const decision = http.expectOne(
+      (r) => r.url === '/tenants/ten-1/practitioner-requests/af-1/approve',
+    );
+    expect(decision.request.method).toBe('POST');
+    decision.flush(null);
+    fixture.detectChanges();
+
+    // Se vuelve a pedir la bandeja en vez de sacar la fila a mano: si alguien
+    // más decidió mientras tanto, sacarla localmente mostraría algo que ya no
+    // está.
+    http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: [] });
+    fixture.detectChanges();
+  });
+
+  it('rechazar manda la decisión al endpoint de rechazo', () => {
+    montar();
+    responder([organizacion()], [solicitud()]);
+
+    const boton = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((b) => b.textContent?.includes('Rechazar'));
+    boton?.click();
+    fixture.detectChanges();
+
+    http.expectOne((r) => r.url === '/tenants/ten-1/practitioner-requests/af-1/reject').flush(null);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: [] });
+    fixture.detectChanges();
   });
 });

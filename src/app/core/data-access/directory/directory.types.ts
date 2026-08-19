@@ -51,6 +51,26 @@ export interface MyOrganization extends TenantListItem {
   readonly timeZone?: string;
 }
 
+/**
+ * Un profesional que pidió atender en una sede de la organización (TP-2).
+ *
+ * Trae lo justo para decidir: quién pide, para qué sede, con qué cargo y desde
+ * cuándo. Ningún dato clínico y nada del profesional más allá de su perfil
+ * profesional, que ya es público.
+ */
+export interface PractitionerRequest {
+  /** Con este id se aprueba o se rechaza. */
+  readonly id: string;
+  readonly practitionerProfileId: string;
+  /** Institución tal como la declaró el profesional. */
+  readonly organizationName: string;
+  readonly roleTitle: string;
+  readonly practiceSiteId: string | null;
+  readonly startDate: Date;
+  readonly statusConceptId: string;
+  readonly createdAt: Date;
+}
+
 /** Campos que la organización edita de sí misma. Lo que no viene no se toca. */
 export interface OrganizationEdit {
   readonly legalName?: string;
