@@ -1,11 +1,5 @@
 import { DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import type { GroupWallItem } from '../../../core/data-access/community/community.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -56,16 +50,10 @@ export class GroupPost {
   /** Pide abrir (o cerrar) la caja de respuesta de esta publicación. */
   readonly responder = output<string>();
 
-  protected readonly sangria = computed(() =>
-    Math.min(this.post().threadDepth ?? 0, MAX_SANGRIA),
-  );
+  protected readonly sangria = computed(() => Math.min(this.post().threadDepth ?? 0, MAX_SANGRIA));
 
   /** El autor, acortado. No es un nombre: es lo único que trae la lectura. */
-  protected readonly autor = computed(
-    () => `Perfil ${this.post().authorProfileId.slice(0, 8)}`,
-  );
+  protected readonly autor = computed(() => `Perfil ${this.post().authorProfileId.slice(0, 8)}`);
 
-  protected readonly esRespuestaAbierta = computed(
-    () => this.respondiendoA() === this.post().id,
-  );
+  protected readonly esRespuestaAbierta = computed(() => this.respondiendoA() === this.post().id);
 }

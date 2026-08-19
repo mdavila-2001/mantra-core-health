@@ -1,0 +1,249 @@
+<app-page-header
+  title="Tu organización"
+  subtitle="Sus datos, su gente y quiénes piden trabajar con ella."
+/>
+
+<app-view-state-host [state]="organizaciones()" (retry)="recargar()">
+  @if (elegida(); as org) {
+    <div class="organizacion">
+      <!-- Con más de una se ofrecen todas: hay quien recepciona en dos clínicas
+           del mismo grupo, y elegir por esa persona sería inventar cuál es «la»
+           suya. Con una sola no hay nada que elegir y el selector no aparece. -->
+      @if (hayVarias()) {
+        <nav class="organizacion__selector" aria-label="Elegí tu organización">
+          @for (candidata of lista(); track candidata.id) {
+            <button
+              app-button
+              type="button"
+              size="sm"
+              [variant]="candidata.id === org.id ? 'primary' : 'secondary'"
+              (clicked)="elegir(candidata.id)"
+            >
+              {{ candidata.tradeName || candidata.legalName }}
+            </button>
+          }
+        </nav>
+      }
+
+      @if (!estaVerificada()) {
+        <app-alert tone="warning" title="Todavía no está aprobada">
+          Mientras la plataforma no apruebe tu organización, no aparece en las búsquedas de
+          pacientes. Podés seguir cargando sus datos y su gente: cuando la aprueben, se publica con
+          lo que ya tengas.
+        </app-alert>
+      }
+
+      <!-- ─── Datos ─────────────────────────────────────────────────────── -->
+      <app-card variant="outlined" padding="lg" class="organizacion__bloque">
+        <header class="organizacion__encabezado">
+          <h2 class="organizacion__titulo">Datos de tu organización</h2>
+          @if (estaVerificada()) {
+            <app-badge variant="success">Aprobada</app-badge>
+          } @else {
+            <app-badge variant="warning">Pendiente de aprobación</app-badge>
+          }
+        </header>
+
+        @if (puedeAdministrar()) {
+          <form class="organizacion__formulario" (submit)="$event.preventDefault()">
+            <app-form-field
+              label="Razón social"
+              hint="El nombre legal, tal como figura en los papeles."
+            >
+              <app-input [(value)]="razonSocial" placeholder="Razón social" />
+            </app-form-field>
+
+            <app-form-field
+              label="Nombre comercial"
+              hint="Con el que la conocen los pacientes. Es el que se muestra en el directorio."
+            >
+              <app-input [(value)]="nombreComercial" placeholder="Nombre comercial" />
+            </app-form-field>
+
+            <app-form-field
+              label="Zona horaria"
+              hint="No es un detalle: es la zona en la que se leen los horarios de sus agendas."
+            >
+              <app-input [(value)]="zonaHoraria" placeholder="America/La_Paz" />
+            </app-form-field>
+
+            <app-form-actions
+              [pending]="guardando()"
+              submitLabel="Guardar datos"
+              (submitted)="guardarDatos()"
+            />
+          </form>
+        } @else {
+          <!-- El staff ve la organización y no la edita. Los campos no se
+               esconden: saber qué datos tiene su organización es parte de
+               trabajar en ella; lo que no aparece es la forma de cambiarlos. -->
+          <dl class="organizacion__datos">
+            <dt>Razón social</dt>
+            <dd>{{ org.legalName }}</dd>
+            <dt>Nombre comercial</dt>
+            <dd>{{ org.tradeName || '—' }}</dd>
+            <dt>Zona horaria</dt>
+            <dd>{{ org.timeZone || '—' }}</dd>
+          </dl>
+          <p class="organizacion__nota">
+            Para cambiar estos datos hace falta ser administrador de la organización.
+          </p>
+        }
+      </app-card>
+
+      <!-- ─── Su gente ──────────────────────────────────────────────────── -->
+      <app-card variant="outlined" padding="lg" class="organizacion__bloque">
+        <h2 class="organizacion__titulo">Su gente</h2>
+
+        <app-view-state-host [state]="gente()">
+          @if (gente().status === 'ready') {
+            @if (personas().length) {
+              <ul class="organizacion__gente">
+                @for (persona of personas(); track persona.id) {
+                  <li class="organizacion__persona">
+                    <span class="organizacion__persona-id">{{ persona.userId }}</span>
+                    <app-badge variant="secondary">{{ persona.tenantRoleConceptId }}</app-badge>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <app-empty-state
+                title="Todavía no hay nadie más"
+                description="Cuando sumes gente a tu organización, la vas a ver acá."
+              />
+            }
+          }
+        </app-view-state-host>
+      </app-card>
+
+      <!-- ─── La agenda (TP-5) ──────────────────────────────────────────────
+           El tercer actor: la recepción que necesita saber quién viene hoy.
+           Sin esto, tenía que preguntarle a cada médico por su agenda, de a
+           uno. El motivo de consulta NO viene en el payload: es del paciente y
+           de su médico. -->
+      <app-card variant="outlined" padding="lg" class="organizacion__bloque">
+        <header class="organizacion__encabezado">
+          <h2 class="organizacion__titulo">Agenda</h2>
+          <p class="organizacion__fecha" aria-live="polite">
+            {{ fechaVisible() | date: "EEEE d 'de' MMMM" }}
+          </p>
+        </header>
+
+        <div class="organizacion__agenda-controles">
+          <button app-button type="button" size="sm" variant="secondary" (clicked)="diaAnterior()">
+            Día anterior
+          </button>
+          <button app-button type="button" size="sm" variant="secondary" (clicked)="diaSiguiente()">
+            Día siguiente
+          </button>
+
+          <!-- El caso real de uso: «¿a qué hora viene X hoy?». Filtra sobre lo
+               ya cargado, sin volver al servidor por cada tecla. -->
+          <app-form-field label="Buscar paciente">
+            <app-input [(value)]="buscaPaciente" placeholder="Nombre del paciente" />
+          </app-form-field>
+        </div>
+
+        <app-view-state-host [state]="agenda()" (retry)="cargarAgendaDelDia()">
+          @if (agenda().status === 'ready') {
+            @if (citasVisibles().length) {
+              <ul class="organizacion__citas">
+                @for (cita of citasVisibles(); track cita.bookingId) {
+                  <li class="organizacion__cita">
+                    <span class="organizacion__cita-hora">
+                      {{ cita.startAt | date: 'HH:mm' }}
+                    </span>
+                    <span class="organizacion__cita-paciente">
+                      {{ cita.patientName || 'Paciente sin nombre registrado' }}
+                    </span>
+                    <span class="organizacion__cita-sede">
+                      {{ cita.resourceName || '—' }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            } @else if (sinCoincidencias()) {
+              <!-- Distinto de «no hay citas»: sí las hay, pero ninguna es de
+                   quien se busca. Decir lo mismo en los dos casos haría creer
+                   que el día está vacío. -->
+              <app-empty-state
+                title="Nadie con ese nombre en este día"
+                description="Probá con otro nombre o mirá otro día."
+              />
+            } @else {
+              <app-empty-state
+                title="No hay citas en este día"
+                description="Cuando alguien reserve con tus profesionales, vas a verlo acá."
+              />
+            }
+          }
+        </app-view-state-host>
+      </app-card>
+
+      <!-- ─── Solicitudes de médicos (TP-2) ─────────────────────────────────
+           Nadie figura en una organización que no lo aceptó: acá es donde la
+           organización acepta. Sólo quien la administra decide; al staff se le
+           muestra la lista, que es información legítima de su trabajo. -->
+      <app-card variant="outlined" padding="lg" class="organizacion__bloque">
+        <h2 class="organizacion__titulo">Solicitudes de médicos</h2>
+
+        <app-view-state-host [state]="solicitudes()">
+          @if (solicitudes().status === 'ready') {
+            @if (pedidos().length) {
+              <ul class="organizacion__solicitudes">
+                @for (pedido of pedidos(); track pedido.id) {
+                  <li class="organizacion__solicitud">
+                    <div class="organizacion__solicitud-datos">
+                      <p class="organizacion__solicitud-cargo">{{ pedido.roleTitle }}</p>
+                      <p class="organizacion__solicitud-nota">
+                        {{ pedido.organizationName }} · desde
+                        {{ pedido.startDate | date: 'longDate' }}
+                      </p>
+                    </div>
+
+                    @if (puedeAdministrar()) {
+                      <div class="organizacion__solicitud-acciones">
+                        <button
+                          app-button
+                          type="button"
+                          size="sm"
+                          variant="primary"
+                          [disabled]="decidiendo() === pedido.id"
+                          (clicked)="aprobar(pedido)"
+                        >
+                          Aprobar
+                        </button>
+                        <button
+                          app-button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          [disabled]="decidiendo() === pedido.id"
+                          (clicked)="rechazar(pedido)"
+                        >
+                          Rechazar
+                        </button>
+                      </div>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <app-empty-state
+                title="No hay solicitudes pendientes"
+                description="Cuando un profesional pida atender en alguna de tus sedes, lo vas a ver acá."
+              />
+            }
+          }
+        </app-view-state-host>
+      </app-card>
+    </div>
+  } @else {
+    <!-- Lista vacía: quien no pertenece a ninguna organización no tiene panel.
+         No es un error, así que no se dibuja como tal. -->
+    <app-empty-state
+      title="No administrás ninguna organización"
+      description="Esta sección es para clínicas, hospitales y centros de salud. Si trabajás en uno y no lo ves acá, pedile a quien lo administra que te sume."
+    />
+  }
+</app-view-state-host>

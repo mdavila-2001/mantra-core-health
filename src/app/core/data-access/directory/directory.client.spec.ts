@@ -34,9 +34,7 @@ describe('DirectoryClient', () => {
   });
 
   it('searchTenants traduce query a q y statusConceptId a status', () => {
-    client
-      .searchTenants({ query: 'farmacia', statusConceptId: 'c-activo', limit: 25 })
-      .subscribe();
+    client.searchTenants({ query: 'farmacia', statusConceptId: 'c-activo', limit: 25 }).subscribe();
 
     const req = http.expectOne((r) => r.url === '/admin/tenants');
     expect(req.request.params.get('q')).toBe('farmacia');

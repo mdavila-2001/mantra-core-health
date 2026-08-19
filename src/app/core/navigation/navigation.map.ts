@@ -788,4 +788,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Seguí el estado de tus trámites de verificación de identidad.',
     module: 'M27 identity_assurance',
   },
+  {
+    // TP-1: la organización como actor, no como dato.
+    //
+    // Distinta de «Organizaciones», que es el listado de la **plataforma**, y
+    // de «Organización médica», que administra la estructura clínica (sedes,
+    // quirófanos, consultorios). Ésta es la organización mirándose a sí misma:
+    // sus datos, su gente y quién pide trabajar con ella.
+    //
+    // **Sin `roles`, y no es un olvido.** El rol que importa acá —owner, admin
+    // o staff de la organización— es una membresía en `tenant_memberships`, no
+    // un rol global del token, así que el guard de roles no puede verlo. Quien
+    // no pertenece a ninguna organización recibe una lista vacía —que es la
+    // respuesta correcta de `GET /tenants/me`, no un 403— y la pantalla lo
+    // dice con todas las letras. Filtrar por un rol global dejaría fuera
+    // justamente a la recepcionista, que es de quien es esta pantalla.
+    path: 'administration/my-organization',
+    label: 'Tu organización',
+    group: 'Administración',
+    icon: 'settings',
+    availability: 'disponible',
+    summary: 'Los datos de tu organización, su gente y las solicitudes de médicos.',
+    module: 'M04 directory',
+  },
 ];
