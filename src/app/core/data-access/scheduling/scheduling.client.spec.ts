@@ -586,9 +586,7 @@ describe('SchedulingClient', () => {
   });
 
   it('listWaitlist declara includeClosed sólo cuando se pide', () => {
-    client
-      .listWaitlist({ patientProfileId: 'p-1', includeClosed: true, limit: 5 })
-      .subscribe();
+    client.listWaitlist({ patientProfileId: 'p-1', includeClosed: true, limit: 5 }).subscribe();
 
     const req = http.expectOne((r) => r.url === '/scheduling/waitlist');
     expect(req.request.params.get('includeClosed')).toBe('true');

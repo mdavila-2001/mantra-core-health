@@ -213,3 +213,11 @@
   gap: var(--sp-2);
   margin-block-end: var(--sp-3);
 }
+
+/* TJ-2 · «reprogramado desde…». Va con la agenda y no como aviso: no es una
+   alerta, es parte de la identidad del turno — sin esto, el turno movido se lee
+   como uno ajeno. */
+.turnos__reprogramado {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}

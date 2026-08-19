@@ -152,6 +152,15 @@
                        mostrar el identificador del recurso. -->
                     <span class="turnos__agenda">{{ turno.agenda }}</span>
                   }
+                  <!-- TJ-2 · quien ve su turno en un horario que no pidió
+                       necesita saber que ES el suyo, movido, y no uno nuevo que
+                       no reconoce. Sin esto, una reprogramación se lee como un
+                       turno ajeno. -->
+                  @if (turno.reprogramadoDesde; as desde) {
+                    <span class="turnos__reprogramado" data-testid="turnos-reprogramado">
+                      Reprogramado desde el {{ desde | date: "d 'de' MMMM 'a las' HH:mm" }}
+                    </span>
+                  }
                 </div>
                 <div class="turnos__acciones">
                   <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
