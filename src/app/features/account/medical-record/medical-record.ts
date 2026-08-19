@@ -20,6 +20,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -125,7 +126,7 @@ interface FormularioVisible {
  */
 @Component({
   selector: 'app-medical-record',
-  imports: [Alert, AppButton, Badge, DatePipe, PageHeader, RouterLink, ViewStateHost],
+  imports: [Alert, AppButton, AppButtonLink, Badge, DatePipe, PageHeader, RouterLink, ViewStateHost],
   templateUrl: './medical-record.html',
   styleUrl: './medical-record.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

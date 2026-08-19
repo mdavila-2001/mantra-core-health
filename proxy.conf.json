@@ -61,6 +61,8 @@
       "/diagnostic-units",
       "/diagnostic-results",
       "/pharma-labs",
+      "/pharmacy",
+      "/pharmacy-inventory",
       "/visit-agenda",
       "/visit-requests",
       "/visit-records",

@@ -271,6 +271,17 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Dónde comprar una receta (carril E3). Cuelga de «Mi historia clínica»:
+    // se llega desde el botón de cada receta, y la lectura pide el resumen
+    // clínico propio — sin receta no hay nada que comprar.
+    path: 'my-account/medical-record/where-to-buy/:requestId',
+    title: `${APP_TITLE} - Dónde comprar mi receta`,
+    loadComponent: () =>
+      import('./features/account/medical-record/where-to-buy/where-to-buy')
+        .then((m) => m.WhereToBuy)
+        .catch(() => chunkFallido()),
+  },
+  {
     // El expediente de una persona concreta. Cuelga de «Archivo clínico», que
     // es la pantalla que elige a quién se mira: sin paciente no hay expediente,
     // y las dos lecturas del backend piden el perfil en la ruta.

@@ -1,0 +1,312 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+
+import {
+  DISPONIBILIDAD_FIXTURE,
+  FIXTURE_IDS,
+  productosDelConcepto,
+} from '../../../../core/data-access/pharmacy/pharmacy.fixtures';
+import { SessionStore } from '../../../../core/auth/session.store';
+import { WhereToBuy } from './where-to-buy';
+
+/**
+ * Dónde comprar mi receta (carril E3).
+ *
+ * Lo que estas pruebas fijan:
+ *
+ * 1. **El recorrido de datos entero con el contrato E2**: resumen propio →
+ *    etiquetas → un producto por medicamento → disponibilidad, sin
+ *    coordenadas hasta que alguien las dé.
+ * 2. **La ubicación se pide, no se toma**: la API de geolocalización no se
+ *    toca al entrar; sólo la dispara el botón, y con ella la consulta lleva
+ *    `lat` y `lng`.
+ * 3. **Ningún uuid llega a la pantalla**: sedes, faltantes y renglones se
+ *    nombran por su etiqueta.
+ * 4. **Los caminos de compra están a la vista pero cerrados**: reservar y
+ *    delivery deshabilitados, con su «Próximamente».
+ */
+
+/** base64url **sobre UTF-8**, como el token real. */
+function jwt(payload: Record<string, unknown>): string {
+  const b64 = (o: unknown) => {
+    const bytes = new TextEncoder().encode(JSON.stringify(o));
+    return btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  };
+  return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
+}
+
+const RESUMEN = {
+  patientProfileId: 'pp-1',
+  conditions: [],
+  allergies: [],
+  medicationRequests: [
+    {
+      id: 'm-1',
+      medicationConceptId: FIXTURE_IDS.conceptoAmoxicilina,
+      statusConceptId: 'st-activa',
+      doseText: '500 mg',
+      frequencyText: 'cada 8 horas',
+      issuedAt: '2026-03-01T11:00:00.000Z',
+      createdAt: '2026-03-01T10:30:00.000Z',
+    },
+    {
+      id: 'm-2',
+      medicationConceptId: FIXTURE_IDS.conceptoIbuprofeno,
+      statusConceptId: 'st-activa',
+      doseText: '400 mg',
+      issuedAt: '2026-03-02T09:00:00.000Z',
+      createdAt: '2026-03-02T08:30:00.000Z',
+    },
+  ],
+  observations: [],
+  encounters: [],
+  careEpisodes: [],
+  limit: 50,
+  truncated: [],
+};
+
+const CONCEPTOS = {
+  items: [
+    {
+      conceptId: FIXTURE_IDS.conceptoAmoxicilina,
+      code: 'J01CA04',
+      display: 'Amoxicilina',
+      codeSystemVersionId: 'v1',
+    },
+    {
+      conceptId: FIXTURE_IDS.conceptoIbuprofeno,
+      code: 'M01AE01',
+      display: 'Ibuprofeno',
+      codeSystemVersionId: 'v1',
+    },
+  ],
+  count: 2,
+  limit: 200,
+};
+
+const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+describe('WhereToBuy', () => {
+  let harness: RouterTestingHarness;
+  let http: HttpTestingController;
+  let getCurrentPosition: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    // jsdom no trae geolocalización: se cuelga una espía para poder afirmar
+    // que NADIE la llama hasta que se aprieta el botón.
+    getCurrentPosition = vi.fn();
+    Object.defineProperty(window.navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([
+          { path: 'my-account/medical-record/where-to-buy/:requestId', component: WhereToBuy },
+        ]),
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  async function montar(requestId = 'm-1'): Promise<void> {
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'], pid: 'pp-1' }),
+      refreshToken: 'r-1',
+    });
+    harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl(`/my-account/medical-record/where-to-buy/${requestId}`, WhereToBuy);
+  }
+
+  /** Resuelve el recorrido completo hasta la consulta de disponibilidad. */
+  function responderHastaProductos(): void {
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/pharmacy/products' &&
+          r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
+      )
+      .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/pharmacy/products' &&
+          r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
+      )
+      .flush(productosDelConcepto(FIXTURE_IDS.conceptoIbuprofeno));
+    harness.detectChanges();
+  }
+
+  function texto(): string {
+    return harness.routeNativeElement?.textContent ?? '';
+  }
+
+  it('recorre el contrato E2 entero y pinta completas primero, sin coordenadas', async () => {
+    await montar();
+    responderHastaProductos();
+
+    const consulta = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+    expect(consulta.request.params.get('products')).toBe(
+      `${FIXTURE_IDS.productoAmoxicilina},${FIXTURE_IDS.productoIbuprofeno}`,
+    );
+    // Nadie dio una ubicación: la consulta no puede llevarla.
+    expect(consulta.request.params.has('lat')).toBe(false);
+    expect(consulta.request.params.has('lng')).toBe(false);
+    consulta.flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const sedes = harness.routeNativeElement?.querySelectorAll('.compra__sede') ?? [];
+    expect(sedes).toHaveLength(2);
+    // El orden es el del backend: la completa primero, con su total; la
+    // parcial dice qué le falta por su nombre y que el total no está.
+    expect(sedes[0]?.textContent).toContain('Sucursal Centro');
+    expect(sedes[0]?.textContent).toContain('Tiene todo');
+    expect(sedes[0]?.textContent).toContain('96.50 BOB');
+    expect(sedes[0]?.textContent).toContain('1,2 km');
+    expect(sedes[1]?.textContent).toContain('Le falta algo');
+    expect(sedes[1]?.textContent).toContain('Le falta: Amoxicilina');
+    expect(sedes[1]?.textContent).toContain('Total no disponible');
+  });
+
+  it('no muestra ningún identificador: todo viaja por nombre', async () => {
+    await montar();
+    responderHastaProductos();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    expect(texto()).not.toMatch(UUID);
+  });
+
+  it('ofrece reservar y delivery deshabilitados, con su «Próximamente»', async () => {
+    await montar();
+    responderHastaProductos();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const reservar = harness.routeNativeElement?.querySelectorAll(
+      '[data-testid="compra-cta-reservar"]',
+    );
+    const delivery = harness.routeNativeElement?.querySelectorAll(
+      '[data-testid="compra-cta-delivery"]',
+    );
+    expect(reservar).toHaveLength(2);
+    expect(delivery).toHaveLength(2);
+    for (const boton of [...(reservar ?? []), ...(delivery ?? [])]) {
+      // El deshabilitado del sistema es por `aria-disabled`, no el atributo nativo.
+      expect(boton.getAttribute('aria-disabled')).toBe('true');
+    }
+    expect(texto()).toContain('Próximamente');
+  });
+
+  it('no toca la geolocalización al entrar; el botón la pide y reconsulta con lat/lng', async () => {
+    await montar();
+    responderHastaProductos();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    // Entrar a la pantalla no dispara el diálogo de permisos del navegador.
+    expect(getCurrentPosition).not.toHaveBeenCalled();
+
+    getCurrentPosition.mockImplementation(
+      (exito: (posicion: { coords: { latitude: number; longitude: number } }) => void) =>
+        exito({ coords: { latitude: -17.7833, longitude: -63.1821 } }),
+    );
+    harness.routeNativeElement
+      ?.querySelector<HTMLButtonElement>('[data-testid="compra-compartir-ubicacion"]')
+      ?.click();
+    harness.detectChanges();
+
+    expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+    const consulta = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+    expect(consulta.request.params.get('lat')).toBe('-17.7833');
+    expect(consulta.request.params.get('lng')).toBe('-63.1821');
+    consulta.flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    expect(texto()).toContain('Distancias medidas desde tu ubicación actual');
+  });
+
+  it('destildar un renglón lo saca de la consulta', async () => {
+    await montar();
+    responderHastaProductos();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const casillas =
+      harness.routeNativeElement?.querySelectorAll<HTMLInputElement>(
+        '[data-testid="compra-items"] input[type="checkbox"]',
+      ) ?? [];
+    expect(casillas).toHaveLength(2);
+    casillas[1].checked = false;
+    casillas[1].dispatchEvent(new Event('change'));
+    harness.detectChanges();
+
+    const consulta = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+    expect(consulta.request.params.get('products')).toBe(FIXTURE_IDS.productoAmoxicilina);
+    consulta.flush(DISPONIBILIDAD_FIXTURE);
+  });
+
+  it('un medicamento sin producto publicado se dice, y ninguna sede queda completa', async () => {
+    await montar();
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/pharmacy/products' &&
+          r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
+      )
+      .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
+    // El directorio no publica nada para el ibuprofeno.
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/pharmacy/products' &&
+          r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
+      )
+      .flush({ items: [], limit: 1, truncated: false });
+    harness.detectChanges();
+
+    const consulta = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+    // Sólo viaja lo consultable.
+    expect(consulta.request.params.get('products')).toBe(FIXTURE_IDS.productoAmoxicilina);
+    consulta.flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    expect(texto()).toContain('No todo se pudo consultar');
+    expect(texto()).toContain('Ibuprofeno');
+    // La «completa» del backend no alcanza: la receta entera no se pudo
+    // consultar, así que nadie puede declararse con todo.
+    expect(texto()).not.toContain('Tiene todo');
+  });
+
+  it('una receta que no está en la historia no dispara ninguna consulta a farmacias', async () => {
+    await montar('m-inexistente');
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement?.querySelector('[data-testid="compra-items"]')).toBeNull();
+    // `http.verify()` del afterEach confirma que no salió nada más.
+  });
+});
