@@ -86,7 +86,7 @@ describe('Navegación', () => {
     cy.go('back');
 
     cy.location('pathname').should('match', /\/dashboard$/);
-    DashboardPage.esperarTitulo('Panel');
+    DashboardPage.esperarPanelDelPaciente();
   });
 
   it('la raíz redirige al panel cuando hay sesión', () => {

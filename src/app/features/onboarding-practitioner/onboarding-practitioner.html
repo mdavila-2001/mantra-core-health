@@ -1,0 +1,71 @@
+<app-page-header
+  title="Completá tu perfil"
+  subtitle="Cinco pasos para que un paciente pueda encontrarte y pedirte turno."
+/>
+
+@switch (estado().status) {
+  @case ('loading') {
+    <p class="alta__estado" role="status">Viendo qué te falta…</p>
+  }
+
+  @case ('ready') {
+    @if (completo()) {
+      <app-alert tone="success" title="Tu perfil está completo">
+        Ya aparecés en la guía y pueden pedirte turno. Podés seguir editando tus datos cuando
+        quieras desde tu perfil.
+        <a app-link [routerLink]="['/my-account']">Ir a mi perfil</a>
+      </app-alert>
+    } @else {
+      <p class="alta__avance" role="status">
+        Llevás <strong>{{ cumplidas() }} de 5</strong>. Podés dejarlo por acá y seguir después: se
+        guarda solo, porque lo que cuenta son tus datos y no un formulario a medio llenar.
+      </p>
+    }
+
+    <app-stepper [steps]="pasosDelIndicador()" label="Tu alta" />
+
+    <ol class="alta__lista">
+      @for (etapa of etapas(); track etapa.key) {
+        <li class="alta__etapa" [class.alta__etapa--actual]="etapa.actual">
+          <header class="alta__encabezado">
+            <h2 class="alta__titulo">{{ etapa.titulo }}</h2>
+            @if (etapa.completa) {
+              <app-badge variant="success">Listo</app-badge>
+            } @else if (etapa.actual) {
+              <app-badge variant="primary">Te toca</app-badge>
+            }
+          </header>
+
+          <p class="alta__explica">{{ etapa.explica }}</p>
+
+          <!-- Cada paso enlaza a la pantalla que ya sabe hacer ese trabajo: el
+               perfil editable o el asistente de agenda. Rehacer esos
+               formularios acá sería mantener dos veces las mismas
+               validaciones.
+
+               Los cumplidos siguen siendo navegables —volver a mirar lo que ya
+               cargaste no es un error— y el de la revisión final sólo se
+               ofrece cuando de verdad no falta nada. -->
+          @if (!etapa.completa || etapa.key !== 'review') {
+            <a
+              app-button
+              [variant]="etapa.actual ? 'primary' : 'secondary'"
+              [routerLink]="[etapa.ruta]"
+            >
+              {{ etapa.accion }}
+            </a>
+          }
+        </li>
+      }
+    </ol>
+  }
+
+  @default {
+    <!-- 422 incluido: una cuenta sin perfil profesional no es un fallo, es que
+         esta pantalla no le corresponde. -->
+    <app-alert tone="info" title="Esta sección es para profesionales">
+      Tu cuenta no tiene un perfil profesional, así que no hay un alta que completar.
+      <button app-button variant="secondary" size="sm" (clicked)="cargar()">Reintentar</button>
+    </app-alert>
+  }
+}

@@ -214,6 +214,13 @@
   margin-block-end: var(--sp-3);
 }
 
+/* F-23 · el lugar del horario, cuando la lista mezcla consultorios. Va debajo
+   de la hora y con menos peso: la hora sigue siendo lo que se viene a leer. */
+.turnos__sede {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
 /* TJ-2 · «reprogramado desde…». Va con la agenda y no como aviso: no es una
    alerta, es parte de la identidad del turno — sin esto, el turno movido se lee
    como uno ajeno. */
