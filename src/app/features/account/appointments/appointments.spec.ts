@@ -148,6 +148,70 @@ describe('Appointments', () => {
     fixture.detectChanges();
   }
 
+  /* ---- TJ-2 · la ventana y la reprogramación ------------------------------ */
+
+  describe('reglas finas de la cita (TJ-2)', () => {
+    it('un turno movido dice de cuándo, para que no se lea como ajeno', () => {
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({
+          items: [
+            {
+              id: 'b-1',
+              resourceId: 'r-1',
+              statusConceptId: 'c-conf',
+              startAt: '2026-09-01T13:00:00.000Z',
+              rescheduledFrom: '2026-08-20T19:30:00.000Z',
+            },
+          ],
+          count: 1,
+          limit: 50,
+          truncated: false,
+        });
+      http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
+      fixture.detectChanges();
+      responderTerminologia([]);
+
+      expect(fixture.nativeElement.textContent).toContain('Reprogramado desde el');
+    });
+
+    it('un turno que nunca se movió no dice nada de reprogramación', () => {
+      montar();
+      responderArranque([
+        {
+          id: 'b-1',
+          resourceId: 'r-1',
+          statusConceptId: 'c-conf',
+          startAt: '2026-09-01T13:00:00.000Z',
+        },
+      ]);
+      responderTerminologia([]);
+
+      expect(fixture.nativeElement.textContent).not.toContain('Reprogramado desde');
+    });
+
+    it('fuera de la ventana, se muestra lo que el servidor explica y NO se relee', () => {
+      montar();
+      responderArranque([]);
+
+      // El 422 de la ventana trae el plazo y qué hacer ahora. El texto genérico
+      // —«ya no se puede»— dejaba a la persona sin saber por qué ni qué le
+      // queda, y releer la lista sólo hacía parpadear lo mismo.
+      const aviso = interno<(e: unknown) => void>('avisarFalloCancelacion');
+      aviso({
+        status: 422,
+        error: {
+          message:
+            'Podés cancelar hasta 24 horas antes del turno. Si ya no podés asistir, comunicate con el consultorio.',
+        },
+      });
+      fixture.detectChanges();
+
+      http.expectNone((r) => r.url === '/scheduling/bookings');
+    });
+  });
+
   /* ---- J2 · pedir turno en un laboratorio --------------------------------- */
 
   describe('con quién se pide el turno (J2)', () => {
