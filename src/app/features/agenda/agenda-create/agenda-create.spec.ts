@@ -251,6 +251,46 @@ describe('AgendaCreate', () => {
     expect(acc.fase()).toBe(1);
   });
 
+  /**
+   * FX-1 (continuación). Encontrado mirando la pantalla, no leyendo el código:
+   * el paso 1 ya no pedía uuids, pero el resumen de los pasos siguientes los
+   * seguía imprimiendo. Al médico no le dicen nada y son la misma jerga que
+   * F-28 reclamaba.
+   */
+  it('al médico no le muestra el uuid de lo que va creando', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    acc.formRecurso.controls['name'].setValue('Consultorio Dra. Ríos');
+    acc.siguiente();
+    http
+      .expectOne('/scheduling/resources')
+      .flush({ id: 'res-1', name: 'Consultorio Dra. Ríos', stateConceptId: 'c' });
+    fixture.detectChanges();
+
+    // El uuid aparecía desde el paso 2, en el bloque de «lo ya capturado».
+    expect(fixture.nativeElement.textContent).not.toContain('res-1');
+    expect(fixture.nativeElement.querySelector('.agenda-create__captured')).toBeNull();
+  });
+
+  /** Pero quien administra sí los necesita: opera varios y el id los distingue. */
+  it('a quien administra el catálogo sí le muestra el uuid', () => {
+    crear(['SCHEDULING_ADMIN'], TENANT, null);
+
+    acc.formRecurso.controls['resourceType'].setValue('ROOM');
+    acc.formRecurso.controls['resourceRefType'].setValue('practice_sites');
+    acc.formRecurso.controls['resourceRefId'].setValue(REF);
+    acc.formRecurso.controls['name'].setValue('Box 3');
+    acc.siguiente();
+    http.expectOne('/scheduling/resources').flush({
+      id: 'res-9',
+      name: 'Box 3',
+      stateConceptId: 'c',
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('res-9');
+  });
+
   /** Sin perfil en la sesión no hay agenda propia: se dice antes de las 5 fases. */
   it('un profesional sin perfil en la sesión ve el aviso y no el formulario', () => {
     crear(['PRACTITIONER'], TENANT, null);
