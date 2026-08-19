@@ -71,6 +71,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // Carril P2 · la mensajería directa paciente↔doctor.
+    //
+    // Va en «General» y no en «Mi cuenta» porque no es un dato propio que se
+    // consulta: es una forma de comunicarse con otra persona, como la guía de
+    // profesionales. «Mi cuenta» es lo que uno mira de sí mismo.
+    //
+    // Sin `roles`: el filtro real es tener perfil público de `community`, que
+    // es un dato de la cuenta y no un rol —la misma razón por la que «Mis
+    // turnos» tampoco los declara—. La pantalla lo dice cuando falta, en vez
+    // de esconderse del menú.
+    path: 'messaging',
+    label: 'Mensajes',
+    group: 'General',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Escribile a tu médico y seguí la conversación.',
+    module: 'M19 community',
+  },
+  {
     // Carril R2-1 · punto 1 del reclamo. Acá estaba el **muro profesional**, y
     // el cliente pidió sacarlo del menú del paciente: «o cambiarle su enfoque:
     // debe mostrar una especie de guía telefónica de todos los doctores
@@ -103,6 +122,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Todos los profesionales, agrupados por especialidad.',
     module: 'M05 profiles',
+  },
+  {
+    // Grupos y foros (P7). Es la entrada **mínima** que el carril se permite en
+    // este archivo: sin ella la pantalla queda huérfana —el invariante de
+    // `app.routes.spec` exige que toda pantalla cuelgue de una sección— y
+    // `feed` ya no está declarada desde el carril R2-1.
+    //
+    // Sin `roles`, que significa «cualquier sesión» y no «nadie»: un grupo
+    // público lo puede leer cualquiera con sesión, y quién puede publicar en
+    // cada grupo lo decide la API por membresía, no el menú.
+    path: 'groups',
+    label: 'Grupos y foros',
+    group: 'General',
+    icon: 'home',
+    availability: 'disponible',
+    summary: 'Comunidades por tema y especialidad, con su muro y sus integrantes.',
+    module: 'M19 community',
   },
   {
     // Directorio de unidades publicadas del módulo 23. Es una sección distinta
@@ -236,12 +272,29 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // profesional", no sólo quien administra —, con una pantalla propia que no
     // expone el identificador.
     //
-    // Sin `roles` a propósito: el pedido fue explícito, y la lectura del
-    // catálogo tampoco los exige (UC-03-13).
+    // Los roles son los de quien atiende: la unión de las filas de este mismo
+    // grupo, más quien administra. Nació sin `roles` («cada profesional», y la
+    // lectura del catálogo tampoco los exige — UC-03-13), y por efecto
+    // colateral lo veía también el paciente: es una herramienta de trabajo, no
+    // una pantalla suya (feedback de la analista F-03, decidido el 18/08/2026).
+    // La ruta lo hace cumplir por `seccionRolesGuard`, hija incluida.
     path: 'glossary',
     label: 'Glosario',
     group: 'Atención',
     icon: 'orders',
+    roles: [
+      'PRACTITIONER',
+      'CLINICIAN',
+      'SCHEDULING_ADMIN',
+      'SCHEDULING_AGENT',
+      'SURGEON',
+      'ANESTHESIOLOGIST',
+      'PERIOP_NURSE',
+      'SURGERY_SCHEDULER',
+      'PERIOP_ADMIN',
+      'MEDICAL_VISITOR',
+      'SECURITY_ADMIN',
+    ],
     availability: 'disponible',
     summary: 'Buscá un término médico y su significado en lenguaje llano.',
     module: 'M03 terminology',
@@ -396,6 +449,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Consultá los catálogos que alimentan todos los selectores.',
     module: 'M03 terminology',
+  },
+  {
+    path: 'administration/moderation',
+    label: 'Moderación',
+    group: 'Administración',
+    icon: 'settings',
+    // `SECURITY_ADMIN` y sólo él: las tres lecturas exponen contenido
+    // reportado, el texto que escribió quien reportó y quién decidió qué. El
+    // servidor lo comprueba en cada una; esta guarda evita llegar a una
+    // pantalla que sólo devolvería 403.
+    roles: ['SECURITY_ADMIN'],
+    // Encendida con las lecturas de moderación (carril P6): antes se podía
+    // decidir sobre una entrada cuyo uuid ya se conociera, pero no había forma
+    // de saber qué entradas había. Una cola que no se puede leer no es una cola.
+    availability: 'disponible',
+    summary: 'Trabajá la cola de contenido reportado y las apelaciones.',
+    module: 'M19 community',
   },
   {
     // W5/M44. El backend tiene **una** lectura —`GET /health-context/contexts/
@@ -627,6 +697,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
+    // Carril J1, lado paciente. Va pegada a «Mis resultados» porque son las dos
+    // mitades del mismo circuito, pero es una entrada aparte y no una pestaña
+    // adentro: contestan preguntas de momentos distintos —«qué me pidieron» y
+    // «qué me volvió»— y la primera es la que tiene algo pendiente que hacer.
+    // Sin `roles` por lo mismo que su hermana: el filtro real es tener perfil
+    // de paciente, y la pantalla lo dice cuando falta.
+    path: 'my-account/diagnostic-orders',
+    label: 'Mis órdenes',
+    group: 'Mi cuenta',
+    icon: 'orders',
+    availability: 'disponible',
+    summary: 'Los estudios que te pidió un médico, con las indicaciones para hacértelos.',
+    module: 'M20 diagnostics',
+  },
+  {
     // Carril 10, lado paciente. Sin `roles` a propósito, por el mismo motivo
     // que «Mis turnos»: el filtro real es tener perfil de paciente, que no es
     // un rol sino un dato de la cuenta —el claim `pid` del token—, y la
@@ -640,6 +725,44 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Respondé los cuestionarios de las consultas que ya tuviste.',
     module: 'M-surveys',
+  },
+  {
+    // Carril P9 · qué avisos querés recibir.
+    //
+    // Va pegada al centro de notificaciones y en «Mi cuenta» por lo mismo: la
+    // bandeja y sus preferencias son de la persona. Sin `roles`, porque
+    // cualquiera con sesión tiene avisos que configurar y el backend sólo
+    // devuelve los propios.
+    path: 'my-account/notification-preferences',
+    label: 'Preferencias de avisos',
+    group: 'Mi cuenta',
+    icon: 'settings',
+    availability: 'disponible',
+    summary: 'Elegí de qué te avisamos y en qué horario no.',
+    module: 'M35 messaging',
+  },
+  {
+    // Carril P1 · el centro de notificaciones, el otro extremo de la campana.
+    //
+    // Va en «Mi cuenta» y no en «General» porque la bandeja es de la persona,
+    // no del producto: es la misma regla que pone «Mis turnos» y «Mi historia
+    // clínica» acá y no junto al panel.
+    //
+    // **La ruta no puede llamarse `notifications`.** El proxy enruta ese
+    // prefijo hacia la API (es donde vive `GET /notifications/me`), así que una
+    // ruta de Angular con ese nombre devolvería JSON en producción en lugar de
+    // la pantalla. Es el defecto #137 al revés, y por eso el nombre es
+    // `notification-center`.
+    //
+    // Sin `roles`: cualquiera con sesión tiene bandeja. El backend sólo
+    // devuelve la propia, así que no hay nada que filtrar por rol.
+    path: 'notification-center',
+    label: 'Notificaciones',
+    group: 'Mi cuenta',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Revisá todos tus avisos: recetas, consultas, turnos y mensajes.',
+    module: 'M35 messaging',
   },
   {
     // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino
@@ -664,5 +787,28 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Seguí el estado de tus trámites de verificación de identidad.',
     module: 'M27 identity_assurance',
+  },
+  {
+    // TP-1: la organización como actor, no como dato.
+    //
+    // Distinta de «Organizaciones», que es el listado de la **plataforma**, y
+    // de «Organización médica», que administra la estructura clínica (sedes,
+    // quirófanos, consultorios). Ésta es la organización mirándose a sí misma:
+    // sus datos, su gente y quién pide trabajar con ella.
+    //
+    // **Sin `roles`, y no es un olvido.** El rol que importa acá —owner, admin
+    // o staff de la organización— es una membresía en `tenant_memberships`, no
+    // un rol global del token, así que el guard de roles no puede verlo. Quien
+    // no pertenece a ninguna organización recibe una lista vacía —que es la
+    // respuesta correcta de `GET /tenants/me`, no un 403— y la pantalla lo
+    // dice con todas las letras. Filtrar por un rol global dejaría fuera
+    // justamente a la recepcionista, que es de quien es esta pantalla.
+    path: 'administration/my-organization',
+    label: 'Tu organización',
+    group: 'Administración',
+    icon: 'settings',
+    availability: 'disponible',
+    summary: 'Los datos de tu organización, su gente y las solicitudes de médicos.',
+    module: 'M04 directory',
   },
 ];

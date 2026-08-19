@@ -1,0 +1,54 @@
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.composer__aviso {
+  display: block;
+}
+
+.composer__contador {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  /* A la derecha para que no compita con la etiqueta del campo. */
+  text-align: end;
+}
+
+.composer__contador--excedido {
+  color: var(--danger-fg, var(--text-primary));
+  font-weight: 600;
+}
+
+.composer__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.composer__etiqueta {
+  color: var(--text-primary);
+}
+
+.composer__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.composer__pendiente {
+  flex: 1 1 auto;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.composer__error {
+  margin: 0;
+  color: var(--danger-fg, var(--text-primary));
+}

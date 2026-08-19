@@ -46,6 +46,13 @@ export interface AgendaResource {
   /** Tabla a la que apunta el recurso, p. ej. `health_practitioner_profiles`. */
   readonly resourceRefType: string;
   readonly resourceRefId: string;
+  /**
+   * Nombre del profesional detrás del recurso, cuando la referencia apunta a
+   * un perfil profesional y la persona pudo resolverse. `null` para salas,
+   * equipos, o si el nombre no se pudo resolver — en ese caso la pantalla cae
+   * a `name`, que es lo que mostraba siempre.
+   */
+  readonly practitionerName: string | null;
   readonly practiceId: string | null;
   /** Zona horaria del recurso, p. ej. `America/La_Paz`. */
   readonly timeZone: string | null;
@@ -158,7 +165,25 @@ export interface Booking {
    * corrección #14.
    */
   readonly statusReason?: BookingStatusReason;
+  /**
+   * La demora que informó el profesional sobre este turno (P8).
+   *
+   * Llega con la cita —y no sólo como notificación— a propósito: el aviso
+   * in-app puede no haberse entregado (cuenta sin portal, preferencia en
+   * contra, campana sin abrir) y el turno tiene que poder explicarse solo.
+   */
+  readonly delayNotice?: BookingDelayNotice;
   readonly createdAt: Date;
+}
+
+/** Una demora informada por el profesional (P8 · registro del cliente 3.5). */
+export interface BookingDelayNotice {
+  /** Minutos de demora estimados. */
+  readonly delayMinutes: number;
+  /** Lo que el profesional escribió, si escribió algo. */
+  readonly message?: string;
+  /** Cuándo la informó. */
+  readonly announcedAt: Date;
 }
 
 /** Desde qué lado del mostrador se hizo el cambio. */
@@ -434,4 +459,81 @@ export interface AvailabilityExceptionCreated {
   readonly id: string;
   /** Slots libres que quedaron bloqueados por la excepción. */
   readonly blockedSlots: number;
+}
+
+/* ==========================================================================
+   P8 · lista de espera y avisos de demora
+   ========================================================================== */
+
+/** Alta en la lista de espera (`POST /scheduling/waitlist`, UC-41-11). */
+export interface NewWaitlistEntry {
+  readonly tenantId: string;
+  readonly patientProfileId: string;
+  /** Agenda en la que se espera. Opcional: se puede esperar «con cualquiera». */
+  readonly resourceId?: string;
+  /** Desde cuándo sirve un cupo. */
+  readonly desiredFrom?: Date;
+  /** Hasta cuándo. */
+  readonly desiredTo?: Date;
+  /** A mayor valor, antes se promueve. */
+  readonly priority?: number;
+}
+
+/** Lo que devuelve el alta en la lista de espera. */
+export interface WaitlistEntryCreated {
+  readonly id: string;
+  readonly priority: number;
+  readonly statusConceptId: string;
+}
+
+/**
+ * Una espera activa, tal como la lee «Mis turnos».
+ *
+ * `resourceLabel` viene resuelto del servidor: la pantalla necesita decir con
+ * quién se espera, y un uuid no se lo dice a nadie.
+ */
+export interface WaitlistEntry {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly resourceId?: string;
+  readonly resourceLabel: string;
+  readonly desiredFrom?: Date;
+  readonly desiredTo?: Date;
+  readonly priority: number;
+  readonly statusConceptId: string;
+  readonly createdAt: Date;
+}
+
+/** Filtros de `GET /scheduling/waitlist`. */
+export interface WaitlistQuery {
+  readonly patientProfileId: string;
+  /** `true` para incluir también las esperas ya cubiertas o canceladas. */
+  readonly includeClosed?: boolean;
+  readonly limit?: number;
+}
+
+/** Página de esperas. */
+export interface WaitlistPage {
+  readonly items: readonly WaitlistEntry[];
+}
+
+/** Lo que el profesional informa al demorarse. */
+export interface DelayNotice {
+  /** Minutos de demora estimados (entre 5 y 240). */
+  readonly delayMinutes: number;
+  /** Mensaje opcional para el paciente. */
+  readonly message?: string;
+  /** Ventana afectada, sólo para la demora de toda la agenda. */
+  readonly from?: Date;
+  readonly to?: Date;
+}
+
+/** Resultado de informar una demora. */
+export interface DelayNoticeResult {
+  /** Pacientes que recibieron el aviso in-app. */
+  readonly notified: number;
+  /** Citas alcanzadas por la demora. */
+  readonly affected: number;
+  readonly bookingIds: readonly string[];
+  readonly detail: string;
 }

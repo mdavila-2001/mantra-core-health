@@ -1,4 +1,4 @@
-﻿<app-auth-split [claim]="claim()" [tagline]="tagline()">
+﻿<app-auth-split [claim]="claim()" [tagline]="tagline()" contentWidth="wide">
   <div class="registro">
     @if (registered()) {
       <div class="registro__header">
@@ -185,21 +185,58 @@
           data-testid="registro-form-profesional"
         >
           <app-form-field
-            label="Nombre completo"
+            label="Nombre"
             [required]="true"
             [errorMessage]="
-              formProfesional.controls.displayName.touched &&
-              formProfesional.controls.displayName.invalid
+              formProfesional.controls.name.touched && formProfesional.controls.name.invalid
                 ? 'Ingresá tu nombre.'
                 : ''
             "
           >
             <app-input
-              formControlName="displayName"
+              formControlName="name"
               type="text"
-              autocomplete="name"
-              placeholder="Dra. Ana Paz"
+              autocomplete="given-name"
+              placeholder="Ana"
               testId="registro-pro-nombre"
+            />
+          </app-form-field>
+
+          <app-form-field label="Segundo nombre" hint="Si no tenés, dejalo vacío.">
+            <app-input
+              formControlName="middleName"
+              type="text"
+              autocomplete="additional-name"
+              placeholder="Lucía"
+              testId="registro-pro-segundo-nombre"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Apellido paterno"
+            [required]="true"
+            [errorMessage]="
+              formProfesional.controls.lastName.touched && formProfesional.controls.lastName.invalid
+                ? 'Ingresá tu apellido paterno.'
+                : ''
+            "
+          >
+            <app-input
+              formControlName="lastName"
+              type="text"
+              autocomplete="family-name"
+              placeholder="Rojas"
+              testId="registro-pro-apellido-paterno"
+            />
+          </app-form-field>
+
+          <app-form-field label="Apellido materno" hint="Si no llevás, dejalo vacío.">
+            <app-input
+              formControlName="motherLastName"
+              type="text"
+              autocomplete="family-name"
+              placeholder="Paz"
+              testId="registro-pro-apellido-materno"
             />
           </app-form-field>
 

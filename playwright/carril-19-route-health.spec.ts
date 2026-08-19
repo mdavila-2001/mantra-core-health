@@ -124,7 +124,9 @@ async function medir(
  *
  * Salen del propio token y el panel ya los muestra, así que no cuesta ni una
  * petición más — y sobre todo no cuesta un ingreso más, que es el recurso
- * escaso acá (diez por minuto y por IP).
+ * escaso acá (diez por minuto y por IP). Se leen de `data-role` y no del texto:
+ * lo visible es la etiqueta en palabras («Paciente»), el código viaja en el
+ * atributo.
  */
 async function rolesDeLaSesion(page: Page): Promise<string[]> {
   await irA(page, '/dashboard');
@@ -132,8 +134,9 @@ async function rolesDeLaSesion(page: Page): Promise<string[]> {
   return page
     .getByTestId('panel-roles')
     .locator('app-badge')
-    .allInnerTexts()
-    .then((textos) => textos.map((t) => t.trim()).filter(Boolean));
+    .evaluateAll((insignias) =>
+      insignias.map((i) => i.getAttribute('data-role') ?? '').filter((codigo) => codigo !== ''),
+    );
 }
 
 /** La misma regla que el menú y el guard: roles declarados, comodín y exclusión. */

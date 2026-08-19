@@ -62,6 +62,12 @@ const CHECKS = [
     why: 'ninguna ruta del router empieza con un prefijo de la API',
   },
   {
+    name: 'clientes contra prefijos',
+    script: 'check-client-prefixes.mjs',
+    args: [],
+    why: 'toda llamada de core/data-access cae en un prefijo que el proxy enruta',
+  },
+  {
     name: 'tokens del sistema de diseño',
     script: 'check-tokens.mjs',
     args: [],

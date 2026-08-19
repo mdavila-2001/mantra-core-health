@@ -163,7 +163,7 @@ export interface AppSection {
 }
 
 /** Prefijo de todos los títulos de pestaña, tal como ya lo usaban las rutas. */
-export const APP_TITLE = 'Mantra Core Health';
+export const APP_TITLE = 'AloVida';
 
 /**
  * Clave con la que cada ruta lleva su sección en `data`.
@@ -173,6 +173,18 @@ export const APP_TITLE = 'Mantra Core Health';
  * vería.
  */
 export const SECTION_ROUTE_DATA = 'seccion';
+
+/**
+ * Clave con la que una pantalla hija declara en `data` **sus propios** roles.
+ *
+ * Es para las hijas que cuelgan de una sección sin roles pero que no son de
+ * cualquiera: «Configurar tu perfil», «Tu perfil público» y «Artículos médicos»
+ * viven bajo «Mi perfil», que abre todo el mundo, y son sólo de quien atiende.
+ * Sin esto la única forma de cerrarlas era inventarles una sección propia, que
+ * el menú habría ofrecido. `seccionRolesGuard` mira esta clave **antes** que la
+ * sección: la ruta manda sobre el prefijo.
+ */
+export const ROLES_ROUTE_DATA = 'roles';
 
 /** Ruta absoluta de una sección, que es como la consumen el router y el menú. */
 export function routeOf(section: AppSection): string {
@@ -216,6 +228,22 @@ export function isVisibleTo(section: AppSection, roles: readonly string[]): bool
     return required !== undefined && required.some((role) => roles.includes(role));
   }
 
+  return rolesAlcanzan(required, roles);
+}
+
+/**
+ * Si los roles de una sesión alcanzan una lista de roles requeridos, con la
+ * regla del comodín incluida.
+ *
+ * Es la misma pregunta que responde `isVisibleTo` para una sección, separada
+ * para que una pantalla hija que declara sus propios roles (`ROLES_ROUTE_DATA`)
+ * se juzgue con **la misma regla** y no con una copia: sin `required` pasa
+ * cualquiera; con `required`, alcanza con uno; `SUPERADMIN` siempre pasa.
+ */
+export function rolesAlcanzan(
+  required: readonly string[] | undefined,
+  roles: readonly string[],
+): boolean {
   if (roles.includes(WILDCARD_ROLE)) {
     return true;
   }

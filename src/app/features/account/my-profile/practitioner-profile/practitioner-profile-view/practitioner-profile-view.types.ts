@@ -116,7 +116,5 @@ export interface PerfilProfesionalVisible {
   readonly actividadActual: readonly AfiliacionVisible[];
   /** Hospitales/centros anteriores (UC-05-16, `endDate` presente). */
   readonly experienciaHistorica: readonly AfiliacionVisible[];
-  readonly perfilId: string;
-  readonly personaId: string;
   readonly desde: Date | null;
 }

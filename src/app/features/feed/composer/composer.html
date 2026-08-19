@@ -1,0 +1,96 @@
+<app-card variant="outlined" padding="md">
+  <!-- `(submit)` con `preventDefault` y un botón `type="button"`, como el resto
+       de los formularios del repo: `(ngSubmit)` necesita la directiva `NgForm`,
+       y sin `FormsModule` importado no se enlaza a nada — el formulario parecería
+       funcionar y no enviaría nunca. -->
+  <form class="composer" data-testid="post-composer" (submit)="$event.preventDefault()">
+    <!-- Punto de extensión P6: la advertencia de datos identificables de
+         pacientes. Vacío hoy, y por eso no se pinta nada: una advertencia
+         inventada acá diría que el sistema detecta algo que no detecta. -->
+    @if (avisoPii(); as aviso) {
+      <app-alert class="composer__aviso" tone="warning" title="Revisá antes de publicar">
+        {{ aviso }}
+      </app-alert>
+    }
+
+    <app-form-field
+      label="Qué querés compartir"
+      hint="Escribí #etiquetas dentro del texto y se guardan solas."
+      [errorMessage]="excedido() ? 'Te pasaste del largo permitido.' : ''"
+    >
+      <app-textarea
+        data-testid="post-composer-body"
+        [(value)]="cuerpo"
+        [rows]="4"
+        [maxRows]="14"
+        [autoResize]="true"
+        [hasError]="excedido()"
+        [disabled]="enviando()"
+        placeholder="Un caso, una lectura, una pregunta al resto."
+      />
+    </app-form-field>
+
+    <p class="composer__contador" [class.composer__contador--excedido]="excedido()">
+      <!-- Se muestra siempre, no sólo al acercarse al tope: quien escribe un
+           texto largo tiene que poder saber cuánto le queda antes de llegar. -->
+      {{ restantes() }} caracteres
+    </p>
+
+    @if (etiquetas().length > 0) {
+      <p class="composer__etiquetas">
+        Etiquetas:
+        @for (etiqueta of etiquetas(); track etiqueta) {
+          <span class="composer__etiqueta">#{{ etiqueta }}</span>
+        }
+      </p>
+    }
+
+    <app-form-field label="Quién puede leerla" [hint]="explicacion()">
+      <app-select
+        data-testid="post-composer-visibility"
+        [options]="opciones"
+        [value]="visibilidad()"
+        (valueChange)="cambiarVisibilidad($event)"
+        [disabled]="enviando()"
+        ariaLabel="Visibilidad de la publicación"
+      />
+    </app-form-field>
+
+    <footer class="composer__acciones">
+      <!-- Punto de extensión P5: el botón existe, se ve y está apagado, con el
+           motivo escrito. `NewPost` ya admite `media`, así que P5 llena el
+           arreglo y lo habilita sin reescribir este formulario. No hay selector
+           de archivos falso detrás. -->
+      <button
+        app-button
+        data-testid="post-composer-media"
+        type="button"
+        variant="ghost"
+        size="sm"
+        [disabled]="true"
+        aria-describedby="composer-imagenes-motivo"
+      >
+        Agregar imágenes
+      </button>
+      <p id="composer-imagenes-motivo" class="composer__pendiente">
+        Todavía no se pueden adjuntar imágenes.
+      </p>
+
+      <button
+        app-button
+        data-testid="post-composer-submit"
+        type="button"
+        variant="primary"
+        size="md"
+        [disabled]="!puedePublicar()"
+        (clicked)="publicar()"
+      >
+        {{ enviando() ? 'Publicando…' : 'Publicar' }}
+      </button>
+    </footer>
+
+    @if (error(); as mensaje) {
+      <p class="composer__error" role="alert">{{ mensaje }}</p>
+    }
+  </form>
+</app-card>

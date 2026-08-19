@@ -1,10 +1,10 @@
 import { inject } from '@angular/core';
-import { Router, type CanActivateFn } from '@angular/router';
+import { Router, type ActivatedRouteSnapshot, type CanActivateFn } from '@angular/router';
 
 import { SessionStore } from '../auth/session.store';
 import { tracedGuard } from '../observability/routing/guard-tracing';
 import { APP_SECTIONS } from './navigation.map';
-import { isVisibleTo, type AppSection } from './navigation.types';
+import { isVisibleTo, ROLES_ROUTE_DATA, rolesAlcanzan, type AppSection } from './navigation.types';
 
 /**
  * A dónde se manda a quien llega a una sección que su rol no alcanza.
@@ -44,28 +44,70 @@ export const SECCION_DENEGADA_ROUTE = '/dashboard';
  *
  * ## Dónde se aplica
  *
- * A **las rutas de sección**, que se construyen desde el registro, y a las
- * pantallas hijas que lo declaran explícitamente (`/directory/:profileId`, la
- * ficha de la Guía). No se cuelga del armazón entero a propósito: hay hijas
- * cuyo rol legítimo **no** es el de su sección —`administration/patients` es
+ * A **las rutas de sección**, que se construyen desde el registro; a **toda
+ * pantalla de operación** (`pantallaDeOperacion` en `app.routes.ts` lo pone por
+ * construcción); y a las pantallas hijas que lo declaran explícitamente
+ * (`/directory/:profileId`, `/administration/patients/new`…). Se declara ruta
+ * por ruta y no se cuelga del armazón entero a propósito: hay hijas cuyo rol
+ * legítimo **no** es el de su sección —`administration/patients` es
  * `SECURITY_ADMIN` en el menú, pero su alta asistida la usa también un
  * `CLINICIAN` que llega por su propio flujo—, y un guard por prefijo sobre todo
- * el árbol les cerraría la puerta sin que nadie lo hubiera pedido.
+ * el árbol les cerraría la puerta sin que nadie lo hubiera pedido. La regla
+ * «hija de sección con roles ⇒ guard, salvo excepción escrita» la fija
+ * `app.routes.spec.ts`.
+ *
+ * ## Cuando la hija declara sus propios roles
+ *
+ * Hay hijas al revés de las de arriba: cuelgan de una sección **sin** roles y
+ * son de un rol concreto. «Configurar tu perfil», «Tu perfil público» y
+ * «Artículos médicos» viven bajo «Mi perfil» —que abre cualquiera— y son de
+ * quien atiende: el paciente que escribía la dirección llegaba a una pantalla
+ * que le hablaba de su vitrina y de «las personas que atendí» (feedback de la
+ * analista, barrido del 18/08/2026). Esas hijas declaran sus roles en `data`
+ * (`ROLES_ROUTE_DATA`) y el guard los mira **antes** que la sección: la ruta
+ * manda sobre el prefijo, con la misma regla del comodín (`rolesAlcanzan`).
  */
-export const seccionRolesGuard: CanActivateFn = tracedGuard(
-  'seccionRolesGuard',
-  (_route, state) => {
-    const session = inject(SessionStore);
-    const router = inject(Router);
+export const seccionRolesGuard: CanActivateFn = tracedGuard('seccionRolesGuard', (route, state) => {
+  const session = inject(SessionStore);
+  const router = inject(Router);
 
-    const seccion = seccionDe(state.url);
-    if (seccion === null || isVisibleTo(seccion, session.roles())) {
-      return true;
-    }
+  if (alcanza(route, state.url, session.roles())) {
+    return true;
+  }
 
-    return router.createUrlTree([SECCION_DENEGADA_ROUTE]);
-  },
-);
+  return router.createUrlTree([SECCION_DENEGADA_ROUTE]);
+});
+
+function alcanza(route: ActivatedRouteSnapshot, url: string, roles: readonly string[]): boolean {
+  const propios = rolesDeLaRuta(route);
+  if (propios !== undefined) {
+    return rolesAlcanzan(propios, roles);
+  }
+
+  const seccion = seccionDe(url);
+  return seccion === null || isVisibleTo(seccion, roles);
+}
+
+/**
+ * Los roles que la ruta declara en `data`, o `undefined` si no declara ninguno.
+ *
+ * Se valida la forma porque `data` es `Record<string, unknown>`. Una ruta que
+ * declaró la clave con otra forma quiso restringirse y no se la puede leer:
+ * eso **cierra** (nadie salvo el comodín), no abre — un guard que ante un error
+ * de declaración dejara pasar a todos fallaría justo hacia el lado que existe
+ * para evitar. `app.routes.spec.ts` fija la forma en las rutas que la usan.
+ */
+function rolesDeLaRuta(route: ActivatedRouteSnapshot): readonly string[] | undefined {
+  const valor: unknown = route.data?.[ROLES_ROUTE_DATA];
+  if (valor === undefined) {
+    return undefined;
+  }
+  return esListaDeTextos(valor) ? valor : [];
+}
+
+function esListaDeTextos(valor: unknown): valor is readonly string[] {
+  return Array.isArray(valor) && valor.every((rol) => typeof rol === 'string');
+}
 
 /**
  * La sección a la que pertenece una URL, por la coincidencia **más larga**.

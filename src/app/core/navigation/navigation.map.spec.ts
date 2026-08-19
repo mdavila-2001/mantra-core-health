@@ -94,7 +94,7 @@ describe('APP_SECTIONS', () => {
   it('el título de pestaña deriva del rótulo, para que no se separen', () => {
     const panel = APP_SECTIONS[0];
 
-    expect(panel && titleOf(panel)).toBe('Mantra Core Health - Panel');
+    expect(panel && titleOf(panel)).toBe('AloVida - Panel');
   });
 
   /* -- Carril 02 · corrección #2 ------------------------------------------- */
@@ -124,6 +124,22 @@ describe('APP_SECTIONS', () => {
     // comodín, y por eso lo declara explícito en vez de que lo decida un guard.
     expect(guia.exclusiveRoles).toBe(true);
     expect(isVisibleTo(guia, ['SUPERADMIN'])).toBe(false);
+  });
+
+  /* -- Feedback de la analista · F-03 ---------------------------------------- */
+
+  it('el glosario no es del paciente: es herramienta de quien atiende', () => {
+    const glosario = APP_SECTIONS.find((s) => s.path === 'glossary')!;
+
+    // Nació sin `roles` («cada profesional») y por efecto colateral aparecía en
+    // el menú del paciente. Decidido el 18/08/2026: se le oculta. El comodín
+    // sigue valiendo —no es la Guía, no rompe la regla del registro—, así que
+    // quien administra lo recorre igual.
+    expect(isVisibleTo(glosario, ['USER', 'PATIENT'])).toBe(false);
+    expect(isVisibleTo(glosario, ['USER', 'PRACTITIONER'])).toBe(true);
+    expect(isVisibleTo(glosario, ['CLINICIAN'])).toBe(true);
+    expect(isVisibleTo(glosario, ['SECURITY_ADMIN'])).toBe(true);
+    expect(isVisibleTo(glosario, ['SUPERADMIN'])).toBe(true);
   });
 
   it('sólo la Guía rompe el comodín: el resto del registro lo respeta', () => {

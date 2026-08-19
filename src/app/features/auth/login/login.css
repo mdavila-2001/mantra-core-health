@@ -1,7 +1,8 @@
-/* La estructura partida (2 columnas) y el selector de tema son del organismo
-   `app-auth-split`. Acá va solo la jerarquía tipo "documento" de la columna del
-   formulario (familia expediente de los Stitch): membrete con regla, cuerpo y
-   pie separados por líneas, como un formulario oficial. Solo tokens REDSAT. */
+/* La estructura partida (2 columnas), el fondo vivo y el selector de tema son
+   del organismo `app-auth-split`. Acá va solo la tarjeta del formulario: un
+   cristal que flota sobre esa aurora, con la jerarquía tipo "documento" de la
+   familia expediente (membrete con regla, cuerpo y pie separados por líneas).
+   Solo tokens REDSAT. */
 
 /* Pantalla enrutada: el host es un custom element y sin `display` sería EN
    LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
@@ -10,17 +11,78 @@
   display: block;
 }
 
-/* Tarjeta elevada: en mobile el panel de `app-auth-split` es un fondo plano,
-   así que la elevación (borde + `--shadow-lg`) es lo único que hace flotar el
-   documento sobre él — no depende de que el panel tenga un tono distinto. */
+/* ==========================================================================
+    La tarjeta.
+
+    Cristal, no papel: la superficie deja pasar la aurora que se mueve detrás,
+    y por eso la pantalla se siente viva incluso mirando solo el formulario.
+
+    El 92 % NO es un número al azar. Es el punto en que el fondo se insinúa y
+    el contraste del texto sigue siendo el de los tokens: `--text-primary`
+    sobre `--bg-surface` mide 13,46:1 en el peor caso, y una capa al 8 % de una
+    mancha de marca —que además está desenfocada por el propio degradado— lo
+    deja por encima de 12:1, muy lejos del 7:1 de AAA. Bajarlo a 80 % ya sería
+    apostar el contraste a lo que haya debajo, y debajo hay algo que se mueve.
+
+    `backdrop-filter` es el efecto de vidrio real; donde no exista, la tarjeta
+    queda igual pero con el fondo nítido detrás, que también se lee.
+    ========================================================================== */
 .login {
+  position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-xl);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+  border-radius: var(--r-2xl);
   padding: var(--sp-6);
-  box-shadow: var(--shadow-lg);
+  /* La sombra del sistema, más un filo de luz interior arriba: es lo que hace
+     leer el borde como canto de vidrio y no como línea dibujada. */
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
+  /* Se inclina hacia el puntero. 1,1° es deliberadamente poco: lo suficiente
+     para que la tarjeta responda a la mano, no tanto como para que el texto de
+     un formulario clínico se vea en perspectiva.
+     Las variables vienen heredadas de `app-auth-split`, pero las pisa el
+     `appPointerScene` de esta misma tarjeta, que mide contra SU rectángulo: si
+     se usara el de la escena, el reflejo estaría corrido media pantalla. */
+  transform: perspective(1400px) rotateY(calc(var(--pointer-tilt-x, 0) * 1.1deg))
+    rotateX(calc(var(--pointer-tilt-y, 0) * -1.1deg));
+  transform-style: preserve-3d;
+}
+
+/* Mientras se escribe, la tarjeta se queda quieta. Un campo de texto que se
+   mueve cuando la mano va al teclado es exactamente el momento en que el
+   efecto pasa de gracioso a molesto. */
+.login:focus-within {
+  transform: none;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+/* Reflejo: una luz suave que sigue al puntero por encima de la tarjeta y se
+   apaga sola al salir (`--pointer-on` vuelve a 0 con suavizado). Va en un
+   pseudo-elemento y no en el fondo de `.login` para poder mezclarlo sin tocar
+   el color de la superficie. */
+.login::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    22rem 22rem at calc(var(--pointer-x, 0.5) * 100%) calc(var(--pointer-y, 0.5) * 100%),
+    color-mix(in srgb, var(--brand-secondary) 14%, transparent),
+    transparent 68%
+  );
+  opacity: var(--pointer-on, 0);
+}
+
+/* Todo el contenido va por encima del reflejo. */
+.login > * {
+  position: relative;
+  z-index: 1;
 }
 
 @media (min-width: 650px) {
@@ -34,6 +96,7 @@
 /* Sello de acceso: mismo par bg/fg que `btn--primary` (7,25 AAA peor caso),
    así que el contraste ya está validado — no es una combinación nueva. */
 .login__mark {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -44,6 +107,29 @@
   background: var(--brand-primary);
   color: var(--text-inverse);
   box-shadow: var(--shadow-sm), 0 10px 24px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+}
+
+/* Halo: un anillo que nace del sello y se disuelve, en el mismo compás lento
+   que el latido de la columna de marca. Es lo único que se mueve del lado del
+   formulario cuando nadie toca nada, y ata las dos mitades de la pantalla. */
+.login__mark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid var(--brand-primary);
+  animation: login-halo 3.6s cubic-bezier(0.2, 0, 0.2, 1) infinite;
+}
+
+@keyframes login-halo {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
 }
 
 .login__mark svg {
@@ -122,6 +208,24 @@ form {
   background: linear-gradient(270deg, var(--border-strong), transparent 75%);
 }
 
+/* El color del enlace vuelve al token de marca.
+   `styles/redsat.css` trae un `a[app-link] { color: var(--petroleo) }` global
+   que, por especificidad, le gana al `:host` del átomo `app-link`. En claro da
+   el mismo petróleo y no se nota; en OSCURO `--petroleo` es #12719F —un azul
+   que no se aclaró lo suficiente— y sobre la tarjeta queda en 2,4:1, por debajo
+   de cualquier umbral. `--brand-primary` es aguamarina en oscuro y sube a ~7:1.
+
+   Esto arregla la pantalla de acceso, no el problema: el mismo enlace está
+   flojo en toda la aplicación en modo oscuro. Queda anotado para el barrido del
+   puerto REDSAT, que es donde corresponde tocarlo. */
+.login__footer a[app-link] {
+  color: var(--brand-primary);
+}
+
+.login__footer a[app-link]:hover {
+  color: var(--brand-primary-hover);
+}
+
 .login__pie {
   margin: 0;
   text-align: center;
@@ -137,5 +241,64 @@ form {
   padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
-  background: var(--bg-surface-alt);
+  background: color-mix(in srgb, var(--bg-surface-alt) 70%, transparent);
+}
+
+/* ==========================================================================
+    Entrada en cascada.
+
+    `app-auth-split` ya hace aparecer la tarjeta entera; esto ordena lo de
+    adentro para que la pantalla se lea de arriba hacia abajo en vez de
+    aparecer de una. Los retardos son cortos y el último cae en 260 ms: el
+    formulario está utilizable antes de que la cascada termine, que es la única
+    condición que un acceso tiene que cumplir.
+    ========================================================================== */
+.login__header,
+form > *,
+.login__footer {
+  animation: login-cae var(--dur-slow) var(--ease-out) both;
+}
+
+form > *:nth-child(1) {
+  animation-delay: 60ms;
+}
+form > *:nth-child(2) {
+  animation-delay: 100ms;
+}
+form > *:nth-child(3) {
+  animation-delay: 140ms;
+}
+form > *:nth-child(n + 4) {
+  animation-delay: 180ms;
+}
+
+.login__footer {
+  animation-delay: 260ms;
+}
+
+@keyframes login-cae {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-2));
+  }
+}
+
+/* El bloque global de `prefers-reduced-motion` acorta las duraciones pero NO
+   toca los retardos: sin esto la cascada quedaría invisible el tiempo del
+   retardo y aparecería de golpe, que es peor que no animar. */
+@media (prefers-reduced-motion: reduce) {
+  .login__header,
+  form > *,
+  .login__footer {
+    animation-delay: 0ms !important;
+  }
+
+  .login__mark::after {
+    animation: none !important;
+    opacity: 0;
+  }
+
+  .login {
+    transform: none;
+  }
 }

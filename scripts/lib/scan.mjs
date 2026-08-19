@@ -187,13 +187,28 @@ export function scanEndpoints() {
     // verbo en líneas distintas para que quepa el `.pipe(map(...))` de abajo.
     const call =
       /this\.http\s*\.\s*(get|post|put|patch|delete)\s*(?:<[\s\S]*?>)?\(\s*(?:\/\*[\s\S]*?\*\/\s*|\/\/[^\n]*\n\s*)*(?:this\.url|apiUrl)\(\s*(?:this\.baseUrl,\s*)?[`']([^`']+)[`']/g;
+    // Un método puede armar la ruta en dos tramos: `const base = \u0060/community/…\u0060`
+    // y después `this.url(\u0060${base}/reviews/…\u0060)`. Leído solo el segundo, el
+    // endpoint sale sin su prefijo real —`:base/reviews/…`— y parece no estar
+    // ruteado por el proxy, que es lo único que compara `check-client-prefixes`.
+    const bases = [];
+    const declaracion = /const (\w+) = [`']([^`']+)[`'];/g;
+    let declaracionMatch;
+    while ((declaracionMatch = declaracion.exec(source)) !== null) {
+      bases.push({
+        index: declaracionMatch.index,
+        name: declaracionMatch[1],
+        value: declaracionMatch[2],
+      });
+    }
+
     let match;
     while ((match = call.exec(source)) !== null) {
       operations.push({
         client,
         path,
         method: match[1].toUpperCase(),
-        endpoint: normalizeEndpoint(match[2]),
+        endpoint: normalizeEndpoint(expandLocalBase(match[2], match.index, bases)),
       });
     }
   }
@@ -201,6 +216,22 @@ export function scanEndpoints() {
   return operations.sort(
     (a, b) => a.endpoint.localeCompare(b.endpoint) || a.method.localeCompare(b.method),
   );
+}
+
+/**
+ * `${base}/resto` → el valor de ese `const base` declarado antes en el archivo.
+ *
+ * Solo se resuelve la interpolación del comienzo, que es la que decide el
+ * prefijo; las de adentro las nombra `normalizeEndpoint`. Si el nombre no tiene
+ * declaración previa, la ruta se devuelve tal cual y el verificador la denuncia,
+ * que es el comportamiento seguro.
+ */
+function expandLocalBase(raw, index, bases) {
+  const inicio = /^\$\{(\w+)\}/.exec(raw);
+  if (!inicio) return raw;
+
+  const declarada = bases.filter((base) => base.name === inicio[1] && base.index < index).at(-1);
+  return declarada ? declarada.value + raw.slice(inicio[0].length) : raw;
 }
 
 /**

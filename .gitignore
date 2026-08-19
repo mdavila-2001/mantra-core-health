@@ -115,3 +115,17 @@ Thumbs.db
 # de `!.env.example` vuelve a ignorar la plantilla.
 # Artefacto de una corrida de Cypress, no fuente.
 /test-results/
+
+# Documentos de coordinación de carriles: material de proceso de cada sesión de
+# trabajo, no del producto. Reparten el trabajo entre quienes tocan el árbol a la
+# vez y dejan de significar algo cuando el carril cierra. Versionarlos ensucia la
+# raíz del repositorio y provoca conflictos en cada merge, siempre en el mismo
+# archivo y siempre sin nada que decidir.
+#
+# No afecta a `playwright/carril-*.spec.ts` ni a `scripts/e2e-carril-*.mjs`: eso
+# es código, y estas reglas llevan barra inicial, que ata el patrón a la raíz.
+/CARRIL-*.md
+/CARRILES-*.md
+/CARRIL_*.md
+/COORDINACION-AGENTES.md
+historia-paciente-*.pdf

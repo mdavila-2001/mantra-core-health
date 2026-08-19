@@ -30,6 +30,27 @@ cuál va en cada sitio.**
 > técnico vive en el código (`tenants[]`, `X-Tenant-Id`) y el de producto en las
 > pantallas.
 
+### Qué nunca ve el paciente
+
+La regla que hace de una pantalla del paciente una pantalla **suya**, y no la de un
+administrador con otro rol. Cada vez que faltó, volvió como captura de la analista
+(H-05, H-07, F-01, F-03, F-12, F-16, F-17). Un dato que la viola **se esconde por
+rol o se quita de la vista, nunca se borra del DTO**: a un administrador puede
+servirle.
+
+| Nunca en la vista del paciente | Ejemplo real | Qué se muestra en su lugar |
+|---|---|---|
+| Identificadores internos: uuid, `profileId`, `personId`, ids de fila | «Perfil 87b6…» al pie de la ficha del profesional (F-12) | Nada. Si hay que reclamar, el dato vive en la consola de administración |
+| Códigos de sistema: `SCREAMING_SNAKE`, códigos generados (`MED-…`, `HRD-…`, `HEALTH_PRACTITIONER_PROFILES_015`) | «Código: MED-05152397-1» en cada tarjeta de la Guía (F-01) | Nombre, título profesional, especialidad |
+| Roles, en código o en lista | «USER · PATIENT» en el menú de la cuenta (H-07) | Palabras: «Paciente» (`core/auth/role-labels.ts`) |
+| «Tenant», «organización activa», «estado del sistema», «secciones disponibles» | «Organizaciones: 1 — Tu única organización» en el panel (F-16/F-17) | La organización se nombra por su nombre cuando hace falta; el vocabulario de administración, no |
+| Herramientas de trabajo del profesional o del administrador: glosario, consolas, catálogos técnicos, vitrina de diseño | «Atención › Glosario» en el menú del paciente (F-03) | No se ofrecen: `roles` en `navigation.map.ts` y el guard de sección lo hacen cumplir, hijas incluidas |
+| Prosa que explica la implementación: «salen de tu token», «cruza el proxy» | tarjeta «Tu sesión» del panel (H-07) | Lo que la persona puede hacer y con quién |
+
+Cómo se comprueba: entrar como paciente y recorrer sus pantallas buscando
+uuids, mayúsculas con guion bajo, «Código», «Roles», «Organización» y «sistema».
+Es la lista que Justin convierte en E2E (J5).
+
 ## Los nueve estados del M34
 
 | Código | `status` | Qué significa | Campo obligatorio |

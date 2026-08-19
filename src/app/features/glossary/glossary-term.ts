@@ -12,7 +12,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
-import type { GlossaryTermDetail } from '../../core/data-access/terminology/terminology.types';
+import type {
+  GlossaryRelation,
+  GlossaryRelationType,
+  GlossaryTermDetail,
+} from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { loading, ready } from '../../core/view-state/view-state';
@@ -21,6 +25,30 @@ import { Chip } from '../../shared/components/atoms/chip/chip';
 import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { GlossaryCategoryIcon } from './glossary-category-icon';
+
+/**
+ * Rótulo en castellano de cada tipo de relación clínica, en el orden en que se
+ * agrupan en la ficha. `RELATED_TERM` va último: es el «ver también» genérico,
+ * y las relaciones con significado clínico concreto —enfermedad, procedimiento,
+ * tratamiento, anatomía, prueba diagnóstica— importan más para entender el
+ * término.
+ */
+const RELATION_GROUPS: readonly { readonly type: GlossaryRelationType; readonly label: string }[] =
+  [
+    { type: 'DISEASE', label: 'Enfermedades relacionadas' },
+    { type: 'PROCEDURE', label: 'Procedimientos relacionados' },
+    { type: 'TREATMENT', label: 'Tratamientos relacionados' },
+    { type: 'ANATOMY', label: 'Anatomía relacionada' },
+    { type: 'DIAGNOSTIC_TEST', label: 'Pruebas diagnósticas relacionadas' },
+    { type: 'RELATED_TERM', label: 'También se relaciona con' },
+  ];
+
+/** Un grupo de relaciones ya resuelto contra la ficha, listo para pintarse. */
+export interface GrupoDeRelaciones {
+  readonly label: string;
+  readonly relaciones: readonly GlossaryRelation[];
+}
 
 /**
  * La ficha de un término del glosario.
@@ -30,14 +58,27 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
  * Un término se comparte. «Mirá qué quiere decir esto» es un enlace, y un panel
  * no tiene enlace. Cuelga de `/glossary` como ruta hija (`glossary/:conceptId`),
  * así que el rastro de migas y la sección marcada en el menú siguen diciendo
- * «Glosario» sin tocar `navigation.map.ts`.
+ * «Glosario» sin tocar `navigation.map.ts`. La reconstrucción del glosario
+ * (carril 03) no toca este esquema de ruteo — sigue siendo `conceptId`, no
+ * `slug`: cambiarlo habría roto cualquier enlace ya compartido, y no es lo que
+ * el cliente pidió corregir.
  *
- * ## Qué muestra que la entrada de la lista no puede
+ * ## Qué trae la reconstrucción
  *
- * En la lista, la definición vive apretada al lado de las demás. Acá se lee
- * entera, con **todas** sus etiquetas y con sus otras denominaciones —incluido
- * el nombre original en inglés, que es justo lo que alguien puede necesitar para
- * buscar el término en la literatura—.
+ * - **Definición clínica extendida** (`clinicalDefinition`) y **explicación en
+ *   lenguaje llano** (`plainSummary`), como dos textos distintos y no uno solo:
+ *   son la diferencia entre lo que necesita quien atiende y lo que necesita
+ *   quien pregunta qué le dijeron.
+ * - **Categoría** (una sola, enlazada de vuelta a la grilla) y **etiquetas
+ *   clínicas** (0..N, informativas — ya no son un filtro navegable, ver
+ *   `glossary.ts`).
+ * - **Relaciones clínicas tipadas**: enfermedad, procedimiento, tratamiento,
+ *   anatomía, prueba diagnóstica y «ver también», cada una enlazando a la
+ *   ficha del término relacionado por su propio `conceptId`.
+ * - **Imagen médica**, si el término la tiene — hoy **ninguno** la tiene: el
+ *   backend documenta la decisión explícita de no sembrar imágenes sin una
+ *   política de licencias verificada. Por eso el ícono de la categoría hace de
+ *   marcador visual permanente, no un relleno temporal.
  *
  * Todo eso sale de **una sola llamada** (`GET /terminology/concepts/:id`). La
  * alternativa era `$lookup`, que se resuelve por `(sistema, código)` y habría
@@ -45,7 +86,7 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
  */
 @Component({
   selector: 'app-glossary-term',
-  imports: [Card, Chip, PageHeader, RouterLink, ViewStateHost],
+  imports: [Card, Chip, GlossaryCategoryIcon, PageHeader, RouterLink, ViewStateHost],
   templateUrl: './glossary-term.html',
   styleUrl: './glossary-term.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -99,6 +140,19 @@ export class GlossaryTerm {
     const code = this.ficha()?.code;
     if (code === undefined || code === '') return null;
     return code.includes(':') ? null : code;
+  });
+
+  /**
+   * Las relaciones de la ficha, agrupadas por tipo y en el orden clínico de
+   * {@link RELATION_GROUPS}. Los grupos sin ninguna relación no se muestran:
+   * un encabezado «Anatomía relacionada» seguido de nada no informa, confunde.
+   */
+  protected readonly gruposDeRelaciones = computed<readonly GrupoDeRelaciones[]>(() => {
+    const relaciones = this.ficha()?.relations ?? [];
+    return RELATION_GROUPS.map(({ type, label }) => ({
+      label,
+      relaciones: relaciones.filter((relacion) => relacion.type === type),
+    })).filter((grupo) => grupo.relaciones.length > 0);
   });
 
   constructor() {

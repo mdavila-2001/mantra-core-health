@@ -59,7 +59,14 @@
     </div>
   </div>
 } @else {
-  <form class="fusion__form" (ngSubmit)="fusionar()" novalidate data-testid="fusion-form">
+  <!-- Sin `FormGroup` no hay `NgForm` que intercepte el envío: el `submit` nativo se corta
+       acá y la acción entra por `(submitted)` de las acciones del formulario. -->
+  <form
+    class="fusion__form"
+    (submit)="$event.preventDefault()"
+    novalidate
+    data-testid="fusion-form"
+  >
     <app-form-section
       legend="Qué registro sobrevive"
       description="Conserva su historia y absorbe al otro. El orden no da lo mismo."

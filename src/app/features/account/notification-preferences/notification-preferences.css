@@ -1,0 +1,88 @@
+.prefs__alerta {
+  display: block;
+  margin-bottom: var(--e4);
+}
+
+.prefs__cargando {
+  color: var(--text-secondary);
+}
+
+.prefs__bloque {
+  margin-bottom: var(--e5);
+  max-inline-size: 68ch;
+}
+
+.prefs__titulo {
+  margin: 0 0 var(--e3);
+  font-size: 1.05rem;
+}
+
+.prefs__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prefs__fila {
+  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
+  border-radius: var(--radio-md, 0.75rem);
+  background: var(--surface-raised, #fff);
+}
+
+.prefs__control {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e2);
+  padding: var(--e3);
+  cursor: pointer;
+}
+
+.prefs__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.prefs__nombre {
+  font-weight: 600;
+}
+
+.prefs__detalle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.prefs__horas {
+  display: flex;
+  gap: var(--e3);
+  margin-top: var(--e3);
+  padding-inline-start: var(--e3);
+}
+
+.prefs__hora {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.prefs__hora input {
+  padding: var(--e2);
+  border: 1px solid var(--border-subtle, rgb(0 0 0 / 20%));
+  border-radius: var(--radio-sm, 0.5rem);
+  font: inherit;
+}
+
+.prefs__nota {
+  margin: var(--e2) 0 0 var(--e3);
+  color: var(--text-tertiary, var(--text-secondary));
+  font-size: 0.8rem;
+}
+
+.prefs__acciones {
+  display: flex;
+  gap: var(--e2);
+}

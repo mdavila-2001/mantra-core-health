@@ -70,6 +70,19 @@
   opacity: 0.8;
 }
 
+/* La demora se distingue del motivo del cambio con el filo de advertencia: son
+   dos cosas distintas —una explica un cambio ya hecho, la otra avisa de algo
+   que está pasando ahora— y compartir el estilo las haría leer como una sola.
+   El tono no es el único canal: el texto empieza diciendo que es una demora. */
+.turnos__aviso-demora {
+  margin: var(--sp-1) 0 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 3px solid var(--st-warning-bd);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption, var(--lh-body));
+  color: var(--text-secondary);
+}
+
 .turnos__titulo {
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
@@ -82,6 +95,7 @@
 }
 
 .turnos__lista,
+.turnos__esperas,
 .turnos__horarios {
   display: grid;
   gap: var(--sp-3);
@@ -91,6 +105,7 @@
 }
 
 .turnos__item,
+.turnos__espera,
 .turnos__horario {
   align-items: start;
   background: var(--bg-surface);
@@ -104,6 +119,7 @@
 /* El horario y su acción caben lado a lado apenas hay ancho. */
 @media (min-width: 32rem) {
   .turnos__item,
+  .turnos__espera,
   .turnos__horario {
     align-items: center;
     grid-template-columns: 1fr auto;
@@ -165,4 +181,42 @@
   display: block;
   margin-block-end: var(--sp-4);
   max-inline-size: 28rem;
+}
+
+/* El aviso de que la lista de horarios está acotada a un día del calendario.
+   Sin él, la lista se ve corta y no se entiende por qué (F-10). */
+.turnos__filtro-dia {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+/* La invitación a anotarse en la lista de espera vive junto al selector de
+   agenda: es la respuesta a «no hay horarios», y ponerla al final de la lista
+   la dejaría fuera de la pantalla justo cuando la lista está vacía. */
+.turnos__espera-accion {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  margin-block: var(--sp-3);
+}
+
+/* J2 · el selector de con quién se pide el turno. Dos botones y no un
+   desplegable: son dos opciones, y esconder la mitad detrás de un clic hace que
+   nadie descubra que se puede reservar en un laboratorio. */
+.turnos__tipo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
+}
+
+/* F-23 · el lugar del horario, cuando la lista mezcla consultorios. Va debajo
+   de la hora y con menos peso: la hora sigue siendo lo que se viene a leer. */
+.turnos__sede {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
 }

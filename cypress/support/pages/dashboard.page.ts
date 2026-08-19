@@ -18,27 +18,48 @@ export const DashboardPage = {
     cy.abrirEscenario(escenario, ruta);
   },
 
+  /**
+   * El panel de la ORGANIZACIÓN cargó.
+   *
+   * Desde que «Mi salud» existe, `/dashboard` dibuja dos pantallas distintas
+   * según el rol: quien trabaja ve este panel y quien viene a atenderse ve el
+   * suyo. Esto afirma el de la organización, así que la sesión de la prueba
+   * tiene que ser de trabajo — si no, lo que se dibuja es el otro.
+   */
   esperarCargada(): void {
     cy.porTestId('panel-sesion').should('be.visible');
   },
 
-  /** El identificador de la sesión, tal como lo declara el token. */
-  identificadorDeSesion(): Cypress.Chainable<string> {
-    return cy
-      .porTestId('panel-user-id')
-      .invoke('text')
-      .then((texto) => texto.trim());
+  /** El panel del PACIENTE cargó — «Mi salud». */
+  esperarPanelDelPaciente(): void {
+    cy.porTestId('mi-salud').should('be.visible');
   },
 
-  /** Roles mostrados como insignias. */
+  /**
+   * Llegó al panel, sea el que sea.
+   *
+   * Lo usa el ingreso, que no sabe con qué rol entra la prueba: lo que le
+   * importa es que la sesión terminó en una pantalla con contenido y no en un
+   * blanco.
+   */
+  esperarAlgunPanel(): void {
+    cy.get('[data-testid="panel-sesion"], [data-testid="mi-salud"]').should('be.visible');
+  },
+
+  /**
+   * Los códigos de rol de las insignias.
+   *
+   * Salen de `data-role`, no del texto: lo visible es la etiqueta en palabras
+   * («Paciente»), y el código del token sólo viaja en el atributo.
+   */
   rolesVisibles(): Cypress.Chainable<string[]> {
     return cy
       .get('[data-testid="panel-roles"] app-badge')
       .then(($insignias) =>
         $insignias
           .toArray()
-          .map((nodo) => (nodo.textContent ?? '').trim())
-          .filter((texto) => texto !== ''),
+          .map((nodo) => nodo.getAttribute('data-role') ?? '')
+          .filter((codigo) => codigo !== ''),
       );
   },
 

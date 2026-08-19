@@ -3,7 +3,13 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { TerminologyClient } from './terminology.client';
-import type { ValueSetExpansionPage, ValueSetOption } from './terminology.types';
+import type {
+  ConceptDetail,
+  GlossaryTermDetail,
+  GlossaryTermPage,
+  ValueSetExpansionPage,
+  ValueSetOption,
+} from './terminology.types';
 
 /**
  * Ruta del `$expand` de lectura. El `$` va literal: Express enruta sobre el path
@@ -168,6 +174,35 @@ describe('TerminologyClient', () => {
     req.flush({ items: [], count: 0, limit: 50 });
   });
 
+  // Sin `lang`, el endpoint devuelve el rótulo del sistema de codificación, que
+  // está en inglés: es lo que dejó «Academic degree credential» y «National
+  // jurisdiction» a la vista en el perfil del profesional, con la traducción ya
+  // cargada en el catálogo y nadie pidiéndola. Va con test propio porque el
+  // parámetro es invisible en pantalla hasta que alguien mira una etiqueta.
+  it('readConceptLabels pide las etiquetas en castellano', () => {
+    client.readConceptLabels(['c-A']).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts');
+    expect(req.request.params.get('lang')).toBe('ES');
+
+    req.flush({ items: [], count: 0, limit: 50 });
+  });
+
+  it('readConceptLabels pide el idioma también en cada tanda de una lectura grande', () => {
+    // El troceo es por el tope de 200 ids del backend: si el idioma se pusiera
+    // fuera del `map`, la segunda tanda saldría sin él y media pantalla
+    // quedaría en inglés — que es peor que toda, porque parece un dato roto.
+    const muchos = Array.from({ length: 250 }, (_, i) => `c-${i}`);
+    client.readConceptLabels(muchos).subscribe();
+
+    const reqs = http.match((r) => r.url === '/terminology/concepts');
+    expect(reqs.length).toBe(2);
+    for (const req of reqs) {
+      expect(req.request.params.get('lang')).toBe('ES');
+      req.flush({ items: [], count: 0, limit: 50 });
+    }
+  });
+
   it('readConceptLabels devuelve un mapa indexado por conceptId', () => {
     let etiquetas: ReadonlyMap<string, ValueSetOption> = new Map();
     client.readConceptLabels(['c-A']).subscribe((mapa) => (etiquetas = mapa));
@@ -245,15 +280,75 @@ describe('TerminologyClient', () => {
     req.flush({ items: [], count: 0, limit: 200 });
   });
 
-  it('searchConcepts sigue sin pedir idioma ni etiquetas', () => {
-    // La garantía de retrocompatibilidad, del lado del cliente: el catálogo de
-    // administración y `readConceptLabels` comparten esta URL, y ninguno debe
-    // empezar a recibir textos traducidos porque el glosario los necesite.
+  /* --- Reconstrucción del glosario (carril 03): categoría, etiquetas y
+     relaciones tipadas. El cliente no cambia ni un parámetro — todo lo nuevo
+     es forma de la respuesta, así que estas pruebas son sobre todo
+     documentación del contrato extendido, no lógica nueva del cliente. */
+
+  it('searchGlossary deja pasar la categoría, la definición breve y las etiquetas sin tocarlas', () => {
+    let pagina: GlossaryTermPage | undefined;
+    client.searchGlossary({ query: 'hiper' }).subscribe((p) => (pagina = p));
+
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [
+          {
+            conceptId: 'c-A',
+            code: 'I10',
+            display: 'Hipertensión esencial',
+            slug: 'hipertension-esencial',
+            translated: true,
+            category: { internalCode: 'glossary-category-disease', name: 'Enfermedades' },
+            shortDefinition: 'Presión arterial persistentemente alta.',
+            tags: ['Cardiovascular', 'Crónico'],
+            relationsCount: 2,
+            status: 'active',
+          },
+        ],
+        count: 1,
+        limit: 50,
+      });
+
+    const item = pagina?.items[0];
+    expect(item?.slug).toBe('hipertension-esencial');
+    expect(item?.category?.name).toBe('Enfermedades');
+    expect(item?.shortDefinition).toBe('Presión arterial persistentemente alta.');
+    expect(item?.tags).toEqual(['Cardiovascular', 'Crónico']);
+    expect(item?.relationsCount).toBe(2);
+    expect(item?.status).toBe('active');
+  });
+
+  it('searchConcepts pide castellano, porque quien lee la búsqueda es una persona', () => {
+    // Este test decía lo contrario: fijaba que `searchConcepts` NO pidiera
+    // idioma. Era la garantía de retrocompatibilidad de cuando `lang` se agregó
+    // para el glosario y ninguna otra lectura lo mandaba —incluida
+    // `readConceptLabels`, que por eso mismo pintaba el perfil del profesional
+    // en inglés (F-11)—.
+    //
+    // Esa garantía ya no aplica: `readConceptLabels` pide `lang=ES` desde el
+    // arreglo de F-11, y la decisión de producto del 18/08 es que todo va en
+    // castellano. Los cinco consumidores de esta búsqueda son elecciones de una
+    // persona, no lecturas de máquina.
     client.searchConcepts({ query: 'gender' }).subscribe();
 
     const req = http.expectOne((r) => r.url === '/terminology/concepts');
-    expect(req.request.params.has('lang')).toBe(false);
+    expect(req.request.params.get('lang')).toBe('ES');
+
+    req.flush({ items: [], count: 0, limit: 50 });
+  });
+
+  it('searchConcepts no pide conjuntos de valores: pedirlos sí cambiaría lo que encuentra', () => {
+    // La mitad que importa conservar. `lang` elige de qué designación sale el
+    // texto y degrada al rótulo original si falta la traducción, así que el
+    // conjunto de resultados es el mismo. `includeValueSets` es el que scopea,
+    // y por eso no se manda: con él, el buscador de medicamentos de la receta
+    // dejaría de encontrar el vademécum.
+    client.searchConcepts({ query: 'paracetamol' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts');
     expect(req.request.params.has('includeValueSets')).toBe(false);
+    expect(req.request.params.get('q')).toBe('paracetamol');
 
     req.flush({ items: [], count: 0, limit: 50 });
   });
@@ -268,9 +363,119 @@ describe('TerminologyClient', () => {
       conceptId: 'c-A',
       code: 'I10',
       display: 'Hipertension esencial',
+      slug: 'hipertension-esencial',
       codeSystemVersionId: 'csv-1',
       valueSets: [],
       synonyms: [],
+      category: null,
+      tags: [],
+      clinicalDefinition: { text: 'Persistently high blood pressure.', translated: false },
+      plainSummary: { text: 'Blood pressure that stays too high.', translated: false },
+      relations: [],
     });
+  });
+
+  it('readGlossaryTerm deja pasar la categoría, las etiquetas y las relaciones tipadas sin tocarlas', () => {
+    let ficha: GlossaryTermDetail | undefined;
+    client.readGlossaryTerm('c-A').subscribe((f) => (ficha = f));
+
+    http
+      .expectOne((r) => r.url === '/terminology/concepts/c-A')
+      .flush({
+        conceptId: 'c-A',
+        code: 'I10',
+        display: 'Hipertensión esencial',
+        slug: 'hipertension-esencial',
+        codeSystemVersionId: 'csv-1',
+        valueSets: [
+          { id: 'vs-1', internalCode: 'glossary-category-disease', name: 'Enfermedades' },
+        ],
+        synonyms: [],
+        category: {
+          valueSetId: 'vs-1',
+          internalCode: 'glossary-category-disease',
+          name: 'Enfermedades',
+        },
+        tags: [
+          {
+            valueSetId: 'vs-t1',
+            internalCode: 'glossary-tag-cardiovascular',
+            name: 'Cardiovascular',
+          },
+        ],
+        clinicalDefinition: { text: 'Presión arterial persistentemente alta.', translated: true },
+        plainSummary: {
+          text: 'La presión de la sangre está más alta de lo normal.',
+          translated: true,
+        },
+        relations: [
+          {
+            type: 'DISEASE',
+            conceptId: 'c-2',
+            slug: 'insuficiencia-cardiaca',
+            display: 'Insuficiencia cardíaca',
+          },
+        ],
+      });
+
+    expect(ficha?.category?.valueSetId).toBe('vs-1');
+    expect(ficha?.tags[0]?.name).toBe('Cardiovascular');
+    expect(ficha?.clinicalDefinition.text).toBe('Presión arterial persistentemente alta.');
+    expect(ficha?.plainSummary.translated).toBe(true);
+    expect(ficha?.relations).toEqual([
+      {
+        type: 'DISEASE',
+        conceptId: 'c-2',
+        slug: 'insuficiencia-cardiaca',
+        display: 'Insuficiencia cardíaca',
+      },
+    ]);
+    // Ningún término tiene imagen sembrada hoy: el campo tiene que poder faltar
+    // sin que el cliente lo reinterprete como un error.
+    expect(ficha?.image).toBeUndefined();
+  });
+
+  /* ---- readConceptDetail: la ficha cruda, con sus propiedades ------------- */
+
+  it('readConceptDetail pide la ficha SIN lang: un medicamento no es un término del glosario', () => {
+    let ficha: ConceptDetail | undefined;
+    client.readConceptDetail('c-vanco').subscribe((f) => (ficha = f));
+
+    const req = http.expectOne((r) => r.url === '/terminology/concepts/c-vanco');
+    // `lang=ES` scopea la lectura al value set paraguas del glosario, donde un
+    // medicamento no está: pedirlo devolvería 404.
+    expect(req.request.params.get('lang')).toBeNull();
+
+    req.flush({
+      conceptId: 'c-vanco',
+      code: 'J01XA01',
+      display: 'Vancomycin',
+      codeSystemVersionId: 'csv-vademecum',
+      properties: {
+        dose_forms: ['oral capsule'],
+        strengths: ['500 mg', '1 g'],
+        rxnorm_cui: '11124',
+      },
+    });
+
+    expect(ficha?.code).toBe('J01XA01');
+    // Las propiedades pasan tal cual: su forma la declara cada sistema de
+    // codificación y el cliente no la reinterpreta.
+    expect(ficha?.properties['strengths']).toEqual(['500 mg', '1 g']);
+    expect(ficha?.properties['rxnorm_cui']).toBe('11124');
+  });
+
+  it('readConceptDetail escapa el identificador en la ruta', () => {
+    client.readConceptDetail('c/raro?').subscribe();
+
+    http
+      .expectOne((r) => r.url === '/terminology/concepts/c%2Fraro%3F')
+      .flush({
+        conceptId: 'c/raro?',
+        code: 'X',
+        display: 'X',
+        codeSystemVersionId: 'csv-1',
+        properties: {},
+      });
   });
 });

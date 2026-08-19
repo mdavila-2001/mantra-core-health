@@ -71,6 +71,51 @@ const RESUMEN = {
   truncated: [],
 };
 
+/** El listado propio de formularios: una instancia respondida en la atención e-1. */
+const FORMULARIOS = {
+  items: [
+    {
+      id: 'fi-1',
+      resourceId: 'e-1',
+      resourceTypeConceptId: 'rt-1',
+      schemaVersion: 1,
+      closedAt: '2026-03-01T10:35:00.000Z',
+      createdAt: '2026-03-01T10:20:00.000Z',
+    },
+  ],
+  limit: 50,
+  truncated: false,
+};
+
+/** El detalle: una respuesta legible y una que el backend enmascaró. */
+const FORMULARIO_DETALLE = {
+  ...FORMULARIOS.items[0],
+  values: [
+    {
+      id: 'v-1',
+      fieldId: 'f-1',
+      dataType: 'string',
+      fieldName: 'Tolerancia al ejercicio',
+      value: 'Buena',
+      ordinal: 0,
+      masked: false,
+    },
+    {
+      id: 'v-2',
+      fieldId: 'f-2',
+      dataType: 'string',
+      fieldName: 'Serología',
+      // Un backend con un error jamás debería mandar el valor enmascarado;
+      // si igual lo mandara, la pantalla no puede mostrarlo.
+      value: 'SECRETO',
+      ordinal: 1,
+      masked: true,
+    },
+  ],
+};
+
+const SIN_FORMULARIOS = { items: [], limit: 50, truncated: false };
+
 const CONCEPTOS = {
   items: [
     {
@@ -121,6 +166,16 @@ describe('MedicalRecord', () => {
   function responder(resumen: object = RESUMEN, conceptos: object = CONCEPTOS): void {
     http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(resumen);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(conceptos);
+    responderFormularios();
+    harness.detectChanges();
+  }
+
+  /** Resuelve la lectura de formularios propios: listado y detalle de cada uno. */
+  function responderFormularios(listado: object = FORMULARIOS): void {
+    http.expectOne((r) => r.url === '/forms/me/instances').flush(listado);
+    if (listado === FORMULARIOS) {
+      http.expectOne((r) => r.url === '/forms/me/instances/fi-1').flush(FORMULARIO_DETALLE);
+    }
     harness.detectChanges();
   }
 
@@ -131,6 +186,12 @@ describe('MedicalRecord', () => {
     expect(req.request.params.get('limit')).toBe('50');
     req.flush(RESUMEN);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+
+    // Los formularios se piden por la ruta propia, sin ningún identificador
+    // de paciente: el servidor lo toma de la sesión.
+    const formularios = http.expectOne((r) => r.url === '/forms/me/instances');
+    expect(formularios.request.params.keys()).toEqual(['limit']);
+    formularios.flush(SIN_FORMULARIOS);
   });
 
   it('sin perfil de paciente no sale ninguna lectura', async () => {
@@ -181,6 +242,7 @@ describe('MedicalRecord', () => {
         medicationRequests: [],
         encounters: [],
       });
+    responderFormularios(SIN_FORMULARIOS);
     harness.detectChanges();
 
     expect(harness.routeNativeElement?.textContent).toContain('Todavía no hay atenciones');
@@ -195,6 +257,7 @@ describe('MedicalRecord', () => {
         { code: 'ERROR', message: 'Catálogo caído', timestamp: '', path: '' },
         { status: 500, statusText: 'Server Error' },
       );
+    responderFormularios(SIN_FORMULARIOS);
     harness.detectChanges();
 
     const texto = harness.routeNativeElement?.textContent ?? '';
@@ -210,5 +273,121 @@ describe('MedicalRecord', () => {
     responder({ ...RESUMEN, truncated: ['observations'] });
 
     expect(harness.routeNativeElement?.textContent).toContain('observations');
+  });
+
+  /* ---- J3 · la descarga de la historia completa --------------------------- */
+
+  it('no pide órdenes ni resultados al abrir la pantalla', async () => {
+    await montar();
+    responder();
+
+    // Son dos lecturas más que la mayoría de las visitas no necesita: pagarlas
+    // siempre para que un botón esté listo por si acaso es cobrarle a todos por
+    // lo que usan pocos.
+    http.expectNone((r) => r.url === '/diagnostic-results/me/orders');
+    http.expectNone((r) => r.url === '/diagnostic-results/me');
+  });
+
+  it('al pedir la historia completa trae órdenes y resultados', async () => {
+    await montar();
+    responder();
+
+    const boton = [
+      ...(harness.routeNativeElement?.querySelectorAll('button[app-button]') ?? []),
+    ].find((b) => (b.textContent ?? '').includes('historia completa')) as HTMLButtonElement;
+    expect(boton).toBeDefined();
+    boton.click();
+    harness.detectChanges();
+
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
+      .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me')
+      .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+  });
+
+  it('si las lecturas secundarias fallan, la descarga sigue en pie', async () => {
+    await montar();
+    responder();
+
+    const boton = [
+      ...(harness.routeNativeElement?.querySelectorAll('button[app-button]') ?? []),
+    ].find((b) => (b.textContent ?? '').includes('historia completa')) as HTMLButtonElement;
+    boton.click();
+    harness.detectChanges();
+
+    // Un PDF con las atenciones y sin las órdenes sigue sirviendo; negarle la
+    // descarga entera a alguien porque una lectura secundaria falló, no.
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me')
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement?.textContent).not.toContain('No pudimos armar');
+  });
+
+  /* ---- los formularios clínicos respondidos ------------------------------- */
+
+  it('muestra los formularios respondidos con sus etiquetas y valores legibles', async () => {
+    await montar();
+    responder();
+
+    const raiz = harness.routeNativeElement;
+    const seccion = raiz?.querySelector('[data-testid="historia-formularios"]');
+    expect(seccion).not.toBeNull();
+    const texto = seccion?.textContent ?? '';
+    expect(texto).toContain('Formulario clínico');
+    expect(texto).toContain('Tolerancia al ejercicio');
+    expect(texto).toContain('Buena');
+    // La sección es de sólo lectura: ningún formulario de captura ni envío.
+    expect(seccion?.querySelector('form')).toBeNull();
+    expect(seccion?.querySelector('input')).toBeNull();
+  });
+
+  it('el valor enmascarado muestra el marcador y jamás el contenido', async () => {
+    await montar();
+    responder();
+
+    const raiz = harness.routeNativeElement;
+    const marcador = raiz?.querySelector('[data-testid="historia-respuesta-enmascarada"]');
+    expect(marcador?.textContent).toContain('No disponible por reglas de acceso');
+    // Ni en la respuesta enmascarada ni en ningún otro lugar del documento.
+    expect(raiz?.textContent).not.toContain('SECRETO');
+  });
+
+  it('una cuenta sin formularios ve el vacío declarado', async () => {
+    await montar();
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    responderFormularios(SIN_FORMULARIOS);
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement?.textContent).toContain(
+      'Todavía no tenés formularios respondidos',
+    );
+  });
+
+  it('si los formularios fallan, la historia igual se muestra y se ofrece reintentar', async () => {
+    await montar();
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http
+      .expectOne((r) => r.url === '/forms/me/instances')
+      .flush(
+        { code: 'ERROR', message: 'Forms caído', timestamp: '', path: '' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    harness.detectChanges();
+
+    const raiz = harness.routeNativeElement;
+    const texto = raiz?.textContent ?? '';
+    // La historia sigue: un fallo de forms no se lleva puestas las atenciones.
+    expect(texto).toContain('Dolor de garganta');
+    expect(raiz?.querySelector('[data-testid="historia-formularios-error"]')).not.toBeNull();
+    expect(texto).toContain('Reintentar');
   });
 });

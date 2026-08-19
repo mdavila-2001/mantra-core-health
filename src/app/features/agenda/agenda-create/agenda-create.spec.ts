@@ -16,6 +16,8 @@ const REF = '22222222-2222-2222-2222-222222222222';
 /** Acceso a los miembros protegidos que el recorrido de prueba necesita mover. */
 interface Testable {
   readonly fase: WritableSignal<number>;
+  /** FX-1 · el interruptor del formulario técnico, para agendas ajenas. */
+  readonly publicarParaOtro: WritableSignal<boolean>;
   readonly finalizado: WritableSignal<boolean>;
   readonly resourceId: () => string | null;
   readonly policyId: () => string | null;
@@ -43,6 +45,7 @@ describe('AgendaCreate', () => {
   function crear(
     rolesIniciales: readonly string[] = ['SCHEDULING_ADMIN'],
     tenant: string | null = TENANT,
+    perfilProfesional: string | null = null,
   ): void {
     roles = signal<readonly string[]>(rolesIniciales);
     TestBed.configureTestingModule({
@@ -52,7 +55,12 @@ describe('AgendaCreate', () => {
         provideRouter([]),
         {
           provide: AuthService,
-          useValue: { roles, activeTenantId: signal<string | null>(tenant) },
+          useValue: {
+            roles,
+            activeTenantId: signal<string | null>(tenant),
+            practitionerProfileId: signal<string | null>(perfilProfesional),
+            displayName: signal<string | null>('Dra. Elena Salas'),
+          },
         },
         { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
       ],
@@ -137,6 +145,128 @@ describe('AgendaCreate', () => {
     // Ni el stepper ni el formulario: sólo el aviso de elegir organización.
     expect(fixture.debugElement.query(By.css('app-stepper'))).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Elegí una organización');
+    http.expectNone(() => true);
+  });
+
+  /* -- autoservicio del profesional ---------------------------------------- */
+
+  /**
+   * El aviso de la agenda invita al profesional a «Publicar mi agenda» y su CTA
+   * abre esta pantalla. Mientras el rol no estuvo en la lista, el viaje moría
+   * acá con «No tenés permiso», en el único camino que lo vuelve reservable.
+   */
+  it('un profesional puede abrir el asistente', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    expect(fixture.nativeElement.textContent).not.toContain('No tenés permiso');
+    expect(fixture.debugElement.query(By.css('app-stepper'))).not.toBeNull();
+    http.expectNone(() => true);
+  });
+
+  /**
+   * El backend le acota el recurso al suyo (`assertPuedeCrearRecurso`). Son tres
+   * datos que el profesional no tiene por qué saber —uno es un uuid—, así que la
+   * pantalla los aporta en vez de pedirlos.
+   */
+  it('al profesional le fija la identidad del recurso y no se la pide', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    const c = acc.formRecurso.controls;
+    expect(c['resourceType'].value).toBe('PRACTITIONER');
+    expect(c['resourceRefType'].value).toBe('practitioner_profiles');
+    expect(c['resourceRefId'].value).toBe(REF);
+    expect(c['resourceType'].disabled).toBe(true);
+    expect(c['resourceRefType'].disabled).toBe(true);
+    expect(c['resourceRefId'].disabled).toBe(true);
+    http.expectNone(() => true);
+  });
+
+  /**
+   * FX-1 · F-28. Deshabilitados no alcanzaba: seguían a la vista, y la pantalla
+   * le mostraba al médico «Tabla referenciada: practitioner_profiles» y un uuid.
+   * Ahora no se muestran; en su lugar va una frase que dice de quién es la
+   * agenda, que es lo único que necesita confirmar.
+   */
+  it('el médico NO ve la jerga técnica: ni tabla, ni uuid, ni zona horaria IANA', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('Tabla referenciada');
+    expect(texto).not.toContain('Id de la entidad referenciada');
+    expect(texto).not.toContain('IANA');
+    expect(texto).not.toContain(REF);
+    expect(texto).toContain('tu propia agenda');
+    expect(texto).toContain('Dra. Elena Salas');
+    http.expectNone(() => true);
+  });
+
+  /**
+   * F-29. El dueño del consultorio es médico **y** administra: la condición
+   * vieja exigía NO administrar, así que caía al formulario técnico y tenía que
+   * pegar su propio uuid para publicar su propia agenda.
+   */
+  it('quien administra y además atiende publica lo suyo sin escribir un uuid', () => {
+    crear(['PRACTITIONER', 'SCHEDULING_ADMIN'], TENANT, REF);
+
+    expect(acc.formRecurso.controls['resourceRefId'].value).toBe(REF);
+    expect(fixture.nativeElement.textContent).not.toContain('Id de la entidad referenciada');
+    http.expectNone(() => true);
+  });
+
+  /** Pero puede pedir el formulario técnico cuando la agenda es de otro. */
+  it('quien administra puede cambiar al formulario técnico para una agenda ajena', () => {
+    crear(['PRACTITIONER', 'SCHEDULING_ADMIN'], TENANT, REF);
+
+    acc.publicarParaOtro.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Id de la entidad referenciada');
+    http.expectNone(() => true);
+  });
+
+  /** La zona horaria deja de ser un campo IANA a completar a mano. */
+  it('la zona horaria se completa sola para el médico', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    expect(acc.formRecurso.controls['timeZone'].value).not.toBe('');
+  });
+
+  it('el profesional publica su agenda sin tocar los campos de identidad', () => {
+    crear(['PRACTITIONER'], TENANT, REF);
+
+    // Sólo completa lo suyo: el nombre. Lo demás ya está puesto.
+    acc.formRecurso.controls['name'].setValue('Dra. Ríos');
+    acc.siguiente();
+
+    const req = http.expectOne('/scheduling/resources');
+    // `getRawValue()` lee también los deshabilitados: el cuerpo va completo.
+    expect(req.request.body).toMatchObject({
+      tenantId: TENANT,
+      resourceType: 'PRACTITIONER',
+      resourceRefType: 'practitioner_profiles',
+      resourceRefId: REF,
+      name: 'Dra. Ríos',
+    });
+    req.flush({ id: 'res-1', name: 'Dra. Ríos', stateConceptId: 'c' });
+    expect(acc.fase()).toBe(1);
+  });
+
+  /** Sin perfil en la sesión no hay agenda propia: se dice antes de las 5 fases. */
+  it('un profesional sin perfil en la sesión ve el aviso y no el formulario', () => {
+    crear(['PRACTITIONER'], TENANT, null);
+
+    expect(fixture.debugElement.query(By.css('app-stepper'))).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('perfil profesional');
+    http.expectNone(() => true);
+  });
+
+  /** Quien administra el catálogo arma la agenda de cualquiera: nada se fija. */
+  it('a quien administra no le fija ni deshabilita nada', () => {
+    crear(['SCHEDULING_ADMIN'], TENANT, null);
+
+    const c = acc.formRecurso.controls;
+    expect(c['resourceType'].value).toBe('');
+    expect(c['resourceRefId'].enabled).toBe(true);
     http.expectNone(() => true);
   });
 

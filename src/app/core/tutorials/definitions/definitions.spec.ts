@@ -95,6 +95,14 @@ describe('Definiciones de tutoriales', () => {
    * La contrapartida de que el motor tolere un objetivo ausente: acá sí se
    * exige que exista, para que borrarlo se vea en el commit que lo borra.
    */
+  /*
+   * Timeout propio: recorrer `src/app` con `readdirSync`/`readFileSync` son unos
+   * 1 700 archivos leídos de forma síncrona. Aislada tarda ~3 s, pero con la
+   * suite completa compitiendo por CPU pasa de los 5 s por defecto de vitest y
+   * cae por tiempo — un rojo que no dice nada del catálogo de tutoriales. El
+   * arreglo es darle margen, no adelgazar la comprobación: leer el árbol es
+   * justamente lo que hace que esta prueba valga.
+   */
   it('cada objetivo de cada paso existe en alguna plantilla', () => {
     const { literales } = objetivosDeclarados();
     const faltantes: string[] = [];
@@ -111,7 +119,7 @@ describe('Definiciones de tutoriales', () => {
     }
 
     expect(faltantes).toEqual([]);
-  });
+  }, 30_000);
 
   /** Un solo tutorial puede abrirse solo: dos peleando por hacerlo es el caos. */
   it('sólo un tutorial arranca automáticamente', () => {

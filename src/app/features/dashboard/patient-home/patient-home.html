@@ -1,0 +1,135 @@
+<!-- Marca de que ESTE panel es el que se dibujó. Con dos paneles según el rol,
+     una prueba de navegador necesita poder decir «llegué al del paciente» sin
+     depender del saludo, que lleva su nombre. -->
+<app-page-header
+  data-testid="mi-salud"
+  [title]="nombre() === '' ? 'Mi salud' : 'Hola, ' + nombre()"
+  subtitle="Tus turnos, tus recetas y tu historia, en un solo lugar."
+/>
+
+@switch (estado().status) {
+  @case ('loading') {
+    <p class="mi-salud__estado" role="status">Cargando lo tuyo…</p>
+  }
+  @case ('empty') {
+    <!-- Cuenta sin ficha de paciente: no es un error, es que todavía no hay
+         nada que mostrarle. Se dice, en vez de dejar el panel en blanco. -->
+    <app-card variant="outlined" padding="md" data-testid="mi-salud-sin-ficha">
+      <p class="mi-salud__texto">
+        Tu cuenta todavía no tiene una ficha de paciente. Cuando te atiendas por primera vez, acá
+        vas a ver tu historia.
+      </p>
+    </app-card>
+  }
+  @case ('error') {
+    <app-card variant="outlined" padding="md">
+      <p class="mi-salud__estado">
+        No pudimos cargar tu información en este momento. Probá de nuevo en un rato.
+      </p>
+    </app-card>
+  }
+  @default {
+    @if (primeraVez()) {
+      <!-- Todavía no pasó nada: en vez de tres tarjetas vacías, la invitación a
+           empezar. Es la primera pantalla de quien recién se registró. -->
+      <app-card variant="outlined" padding="lg" data-testid="mi-salud-primera-vez">
+        <h2 class="mi-salud__titulo">Todavía no tenés turnos</h2>
+        <p class="mi-salud__texto">
+          Cuando pidas tu primer turno vas a ver acá cuándo es, y después de la consulta te van a
+          quedar tu receta y tu historia.
+        </p>
+        <a app-button variant="primary" [routerLink]="misTurnos">Pedir mi primer turno</a>
+      </app-card>
+    } @else {
+      <div class="mi-salud__tarjetas">
+        <!-- Lo primero que quiere saber quien entra: cuándo tengo que ir. -->
+        <app-card
+          variant="outlined"
+          padding="md"
+          data-testid="mi-salud-proximo-turno"
+          [attr.data-turno]="resumen().proximoTurno?.id ?? null"
+        >
+          <h2 class="mi-salud__titulo">Tu próximo turno</h2>
+          @if (resumen().proximoTurno; as turno) {
+            @if (turno.startAt) {
+              <p class="mi-salud__dato">
+                {{ turno.startAt | date: "EEEE d 'de' MMMM" }}
+                <span class="mi-salud__hora">a las {{ turno.startAt | date: 'HH:mm' }}</span>
+              </p>
+            }
+            <a app-button variant="outline" size="sm" [routerLink]="misTurnos">
+              Ver o reprogramar
+            </a>
+          } @else {
+            <p class="mi-salud__texto">No tenés turnos pedidos.</p>
+            <a app-button variant="primary" size="sm" [routerLink]="misTurnos">
+              Pedir un turno
+            </a>
+          }
+        </app-card>
+
+        <app-card variant="outlined" padding="md" data-testid="mi-salud-receta">
+          <h2 class="mi-salud__titulo">Tu última receta</h2>
+          @if (resumen().ultimaReceta; as cuando) {
+            <p class="mi-salud__dato">{{ cuando | date: "d 'de' MMMM, y" }}</p>
+            <a app-button variant="outline" size="sm" [routerLink]="miHistoria">
+              Ver y descargar
+            </a>
+          } @else {
+            <p class="mi-salud__texto">Todavía no te recetaron nada.</p>
+          }
+        </app-card>
+
+        <app-card variant="outlined" padding="md" data-testid="mi-salud-atencion">
+          <h2 class="mi-salud__titulo">Tu última atención</h2>
+          @if (resumen().ultimaAtencion; as cuando) {
+            <p class="mi-salud__dato">{{ cuando | date: "d 'de' MMMM, y" }}</p>
+            <a app-button variant="outline" size="sm" [routerLink]="miHistoria">
+              Ver mi historia
+            </a>
+          } @else {
+            <p class="mi-salud__texto">Todavía no tenés atenciones registradas.</p>
+          }
+        </app-card>
+
+        <!-- Lo que todavía no existe se dice, en vez de dejar el hueco: una
+             tarjeta ausente no se distingue de una función que no hay. -->
+        <app-card variant="outlined" padding="md" data-testid="mi-salud-proximamente">
+          <h2 class="mi-salud__titulo">Avisos y órdenes</h2>
+          <p class="mi-salud__texto">
+            Muy pronto vas a ver acá cuando tu receta esté lista y las órdenes de laboratorio que
+            te pida tu profesional.
+          </p>
+        </app-card>
+      </div>
+    }
+
+    <!-- Los lugares del paciente, como grilla de tarjetas con ícono: es la
+         forma que tenía el panel anterior y que la gente ya conocía (F-21).
+         El resumen vive en el globo —que aparece con el puntero **y con el
+         foco**— y también en el nombre accesible, así que quien navega con
+         lector de pantalla lo recibe sin depender del globo. -->
+    <nav class="mi-salud__accesos" aria-label="Ir a lo tuyo">
+      <ul class="mi-salud__accesos-lista">
+        @for (acceso of accesos(); track acceso.ruta) {
+          <li>
+            <a
+              class="mi-salud__acceso"
+              data-testid="mi-salud-acceso"
+              [attr.data-ruta]="acceso.ruta"
+              [routerLink]="acceso.ruta"
+              [attr.aria-label]="acceso.etiqueta + '. ' + acceso.resumen"
+              [appTooltip]="acceso.resumen"
+              appTooltipPosition="bottom"
+            >
+              <span class="mi-salud__acceso-icono">
+                <app-nav-icon [name]="acceso.icono" />
+              </span>
+              <span class="mi-salud__acceso-nombre">{{ acceso.etiqueta }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+  }
+}

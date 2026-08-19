@@ -2,8 +2,8 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
@@ -11,6 +11,7 @@ import type {
   AgendaResource,
   AgendaSlot,
   Booking,
+  WaitlistEntry,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type {
@@ -25,6 +26,8 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { Select } from '../../../shared/components/atoms/select/select';
+import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -101,6 +104,16 @@ const VISTA_POR_DEFECTO: VistaDeTurnos = 'lista';
 /** Clave del parámetro de la URL que recuerda la vista elegida. */
 const PARAM_DE_VISTA = 'vista';
 
+/**
+ * Clave del parámetro que abre un turno concreto (P8).
+ *
+ * Es lo que hace navegable un aviso: la notificación de demora, de cambio de
+ * estado o de recordatorio lleva `?turno=<id>` y el detalle se abre solo. Sin
+ * esto, un aviso deja a la persona buscando a mano el turno del que le acaban
+ * de hablar.
+ */
+const PARAM_DE_TURNO = 'turno';
+
 /** Un turno propio, ya listo para mostrarse. */
 interface TurnoVisible {
   readonly id: string;
@@ -128,6 +141,25 @@ interface TurnoVisible {
   readonly avisoDelCambio: string;
   /** Cuándo se hizo ese cambio, para fecharlo en pantalla. */
   readonly cambioCuando: Date | null;
+  /**
+   * La demora que informó el profesional, ya redactada (P8).
+   *
+   * Vacío cuando no informó ninguna. Se arma acá y no en la plantilla porque el
+   * mensaje del profesional es opcional y la frase cambia con él.
+   */
+  readonly avisoDeDemora: string;
+  /** Cuándo la informó, para fecharla en pantalla. */
+  readonly demoraCuando: Date | null;
+}
+
+/** Una espera activa, ya lista para mostrarse (P8). */
+interface EsperaVisible {
+  readonly id: string;
+  readonly resourceId: string;
+  readonly agenda: string;
+  readonly desde: Date | null;
+  readonly hasta: Date | null;
+  readonly anotadaEl: Date;
 }
 
 /** Un horario que se puede pedir. */
@@ -137,7 +169,39 @@ interface HorarioVisible {
   readonly hasta: Date;
   readonly resourceId: string;
   readonly lugaresLibres: number;
+  /**
+   * Dónde se atiende este hueco (F-23).
+   *
+   * Vacío cuando no hace falta decirlo —todos los horarios de la lista son del
+   * mismo lugar— o cuando el recurso no tiene sede registrada, que es un estado
+   * corriente y no un error.
+   */
+  readonly sede: string;
 }
+
+/**
+ * Las agendas de una misma persona, juntas (F-23).
+ *
+ * Un profesional que atiende en dos consultorios tiene **dos** recursos, y el
+ * listado los ofrecía como dos entradas con el mismo nombre: quien buscaba a su
+ * médico no sabía cuál elegir, y elegir mal escondía la mitad de los horarios.
+ * Acá el grupo es la persona, y el lugar pasa a ser una segunda pregunta —que
+ * sólo se hace cuando hay más de uno—.
+ */
+interface AgendaDeProfesional {
+  readonly clave: string;
+  readonly etiqueta: string;
+  readonly recursos: readonly AgendaResource[];
+}
+
+/**
+ * El valor con el que el selector de lugar dice «no me importa dónde».
+ *
+ * Es un centinela y no `null` porque el desplegable trata `null` como «todavía
+ * no elegí», y acá «cualquier lugar» es una elección legítima —de hecho, la
+ * que viene puesta—. Ninguna sede puede colisionar: sus claves son uuid.
+ */
+const SEDE_CUALQUIERA = 'cualquiera';
 
 /**
  * El portal de turnos del paciente (las vistas `PATIENT` de M41).
@@ -172,6 +236,7 @@ interface HorarioVisible {
     DatePipe,
     FormField,
     PageHeader,
+    ReferenceCombobox,
     RouterLink,
     Select,
   ],
@@ -241,7 +306,9 @@ export class Appointments {
    * mismas acciones. Dos detalles distintos serían dos implementaciones de lo
    * mismo, que es lo que la regla 3 del carril prohíbe.
    */
-  protected readonly seleccionado = signal<string | null>(null);
+  protected readonly seleccionado = signal<string | null>(
+    this.route.snapshot.queryParamMap.get(PARAM_DE_TURNO),
+  );
 
   protected elegirVista(vista: VistaDeTurnos): void {
     void this.router.navigate([], {
@@ -255,6 +322,23 @@ export class Appointments {
   /** Abre —o cierra, si ya estaba abierto— el detalle de un turno. */
   protected alternarDetalle(id: string): void {
     this.seleccionado.update((actual) => (actual === id ? null : id));
+  }
+
+  /**
+   * Se señaló un día en el calendario: se ofrecen los horarios libres de ese día.
+   *
+   * No navega ni cambia de vista: el calendario sigue a la vista y debajo
+   * aparece lo que hay ese día. Cambiar de pantalla en respuesta a un clic en
+   * un número obligaría a volver para probar con otro día, que es la queja que
+   * originó esto.
+   */
+  protected elegirDiaDeHorarios(dia: Date): void {
+    this.diaDeHorarios.set(dia);
+  }
+
+  /** Vuelve a ofrecer los horarios de toda la ventana. */
+  protected verTodosLosHorarios(): void {
+    this.diaDeHorarios.set(null);
   }
 
   /** Desde el calendario el clic siempre abre: nunca cierra por segunda vez. */
@@ -285,14 +369,214 @@ export class Appointments {
     return this.turnosListos().find((turno) => turno.id === id) ?? null;
   });
 
+  /* ---- lista de espera (P8) ----------------------------------------------- */
+
+  /**
+   * En qué esperas está el titular.
+   *
+   * Es una lista aparte y no un turno más: una espera **no** es un turno —no
+   * tiene hora ni compromiso— y mezclarlas haría creer que hay cita cuando lo
+   * que hay es una posición en una cola.
+   */
+  protected readonly esperas = signal<readonly EsperaVisible[]>([]);
+
+  /** La espera que se está dando de alta, para el `[isLoading]` del botón. */
+  protected readonly anotandose = signal(false);
+
+  /** Si el titular ya espera en la agenda elegida: no tiene sentido anotarse dos veces. */
+  protected readonly yaEnEspera = computed(() => {
+    const recurso = this.recursoParaEspera();
+    if (recurso === null) return false;
+    return this.esperas().some((espera) => espera.resourceId === recurso);
+  });
+
   /* ---- pedir un turno ----------------------------------------------------- */
 
+  /**
+   * Con quién se pide el turno: un profesional o un laboratorio.
+   *
+   * ## Por qué es la misma pantalla y no una nueva
+   *
+   * Porque el motor es el mismo —recurso, cupos, retener, confirmar— y lo único
+   * que cambia es qué recursos se ofrecen. Duplicar la pantalla duplicaría
+   * también la lista de espera, la reprogramación y la cancelación, que ya
+   * tienen sus reglas resueltas acá.
+   *
+   * ## Por qué hay que filtrar, y no es cosmético
+   *
+   * `GET /scheduling/resources` devuelve **todos** los recursos del tenant. Sin
+   * el filtro, en cuanto un laboratorio publique agenda aparecería en la lista
+   * de «¿con quién te querés atender?», y alguien pediría consulta médica en
+   * una sala de toma de muestras. El filtro existe en la API desde siempre;
+   * esta pantalla no lo estaba usando.
+   */
+  protected readonly tipoDeRecurso = signal<'PRACTITIONER' | 'ROOM'>('PRACTITIONER');
+
+  /** Se está pidiendo turno en un laboratorio, no con un profesional. */
+  protected readonly esLaboratorio = computed(() => this.tipoDeRecurso() === 'ROOM');
+
+  /**
+   * Los recursos que se OFRECEN para elegir: sólo los del tipo activo.
+   *
+   * Se vacía al cambiar de tipo, porque un profesional no es una opción válida
+   * cuando se está pidiendo turno en un laboratorio.
+   */
   protected readonly recursos = signal<readonly AgendaResource[]>([]);
-  protected readonly recursoElegido = signal<string | null>(null);
+
+  /**
+   * Todos los recursos vistos, para poder **rotular** los turnos ya reservados.
+   *
+   * Separado de {@link recursos} a propósito: los turnos de la persona incluyen
+   * los de profesional y los de laboratorio a la vez, así que el nombre de su
+   * agenda no puede salir de una lista que se filtra por el tipo que se está
+   * eligiendo ahora. Con una sola lista, entrar al modo laboratorio dejaba sin
+   * nombre a todos los turnos médicos ya sacados.
+   *
+   * Acumula y no reemplaza: un recurso que dejó de ofrecerse sigue siendo el
+   * nombre correcto de un turno viejo.
+   */
+  private readonly catalogoDeRecursos = signal<ReadonlyMap<string, AgendaResource>>(new Map());
+
+  /**
+   * Con quién se pide el turno: la **clave de la agenda agrupada**, no un id de
+   * recurso (F-23). Un médico con dos consultorios es una sola elección acá; el
+   * lugar se pregunta después.
+   */
+  protected readonly agendaElegida = signal<string | null>(null);
+
+  /**
+   * Dónde. `SEDE_CUALQUIERA` —lo que viene puesto— muestra los horarios de
+   * todos sus consultorios juntos, que es el primero de los dos modos que pidió
+   * Pablo; elegir una sede es el segundo.
+   */
+  protected readonly sedeElegida = signal<string>(SEDE_CUALQUIERA);
+
+  /** Las agendas del listado, una entrada por persona (o por sala/equipo). */
+  protected readonly agendas = computed<readonly AgendaDeProfesional[]>(() => {
+    const grupos = new Map<string, AgendaResource[]>();
+    for (const recurso of this.recursos()) {
+      const clave = claveDeAgenda(recurso);
+      const previos = grupos.get(clave);
+      if (previos === undefined) {
+        grupos.set(clave, [recurso]);
+      } else {
+        previos.push(recurso);
+      }
+    }
+    return [...grupos].map(([clave, recursos]) => ({
+      clave,
+      etiqueta: etiquetaDeAgenda(recursos),
+      recursos,
+    }));
+  });
+
+  /** La agenda elegida, con todos sus recursos. */
+  protected readonly agendaActual = computed<AgendaDeProfesional | null>(() => {
+    const clave = this.agendaElegida();
+    if (clave === null) return null;
+    return this.agendas().find((agenda) => agenda.clave === clave) ?? null;
+  });
 
   protected readonly opcionesDeRecurso = computed<readonly SelectOption<string>[]>(() =>
-    this.recursos().map((recurso) => ({ value: recurso.id, label: recurso.name })),
+    this.agendas().map((agenda) => ({ value: agenda.clave, label: agenda.etiqueta })),
   );
+
+  /**
+   * Los lugares donde atiende quien se eligió.
+   *
+   * Vacío a propósito cuando hay uno solo: preguntar «¿dónde?» con una única
+   * respuesta posible es hacerle trabajo a la persona para nada, y hoy es el
+   * caso de casi todas las agendas.
+   */
+  protected readonly opcionesDeSede = computed<readonly SelectOption<string>[]>(() => {
+    const agenda = this.agendaActual();
+    if (agenda === null || agenda.recursos.length < 2) return [];
+    const lugares = new Map<string, string>();
+    for (const recurso of agenda.recursos) {
+      lugares.set(claveDeSede(recurso), nombreDeSede(recurso));
+    }
+    if (lugares.size < 2) return [];
+    return [
+      { value: SEDE_CUALQUIERA, label: 'Cualquier lugar — ver todos los horarios' },
+      ...[...lugares].map(([value, label]) => ({ value, label })),
+    ];
+  });
+
+  /** Si hay que hacer la pregunta del lugar. */
+  protected readonly preguntaPorSede = computed(() => this.opcionesDeSede().length > 0);
+
+  /** Los recursos cuyos horarios se están mirando: la agenda, acotada al lugar. */
+  protected readonly recursosEnFoco = computed<readonly AgendaResource[]>(() => {
+    const agenda = this.agendaActual();
+    if (agenda === null) return [];
+    const sede = this.sedeElegida();
+    if (sede === SEDE_CUALQUIERA) return agenda.recursos;
+    const acotados = agenda.recursos.filter((recurso) => claveDeSede(recurso) === sede);
+    // Una sede que ya no está en la lista no deja la pantalla en blanco: se
+    // vuelve a mostrar todo, que es el estado del que se partió.
+    return acotados.length === 0 ? agenda.recursos : acotados;
+  });
+
+  /**
+   * El recurso concreto para la lista de espera, o `null` si se están mirando
+   * varios lugares a la vez.
+   *
+   * La espera es de **una** agenda —el backend anota contra un `resourceId`—,
+   * así que con «cualquier lugar» no hay a cuál anotarse: se pide elegir uno en
+   * vez de anotar a la persona en un consultorio que no eligió.
+   */
+  protected readonly recursoParaEspera = computed<string | null>(() => {
+    const enFoco = this.recursosEnFoco();
+    return enFoco.length === 1 ? enFoco[0].id : null;
+  });
+
+  /**
+   * Si los horarios tienen que decir de qué lugar es cada uno: sólo cuando
+   * vienen mezclados. Repetir la misma sede en cada fila sería ruido.
+   */
+  protected readonly mostrarSedeEnHorarios = computed(() => this.recursosEnFoco().length > 1);
+
+  /**
+   * Alguna de las sedes no contestó y su parte de los horarios falta.
+   *
+   * Se avisa en vez de mostrar la lista corta y callarse: una agenda a la que
+   * le faltan huecos sin decirlo se lee como una agenda con poco lugar.
+   */
+  protected readonly horariosIncompletos = signal(false);
+
+  /**
+   * Lo tecleado en el buscador de profesional.
+   *
+   * El listado ya está en memoria, así que filtrar es local: no se consulta a
+   * la API por cada letra. Vacío = se ofrecen todos, que es como se comportaba
+   * el desplegable.
+   */
+  protected readonly busquedaDeRecurso = signal('');
+
+  /**
+   * Las opciones del buscador, acotadas por lo tecleado.
+   *
+   * Con una organización de pocos profesionales daba igual, pero con un listado
+   * largo había que recorrerlo a mano hasta encontrar al propio (F-13). Se busca
+   * por lo que la persona conoce —el nombre— y también por el rótulo de la
+   * agenda, que suele traer sede o especialidad.
+   */
+  protected readonly opcionesBuscadas = computed<readonly ReferenceOption[]>(() => {
+    const termino = normalizar(this.busquedaDeRecurso());
+    const todas = this.opcionesDeRecurso().map((opcion) => ({
+      value: opcion.value,
+      label: opcion.label,
+    }));
+    if (termino === '') return todas;
+    return todas.filter((opcion) => normalizar(opcion.label).includes(termino));
+  });
+
+  /** El profesional elegido, con la forma que pide el buscador. */
+  protected readonly recursoSeleccionado = computed<ReferenceOption | null>(() => {
+    const id = this.agendaElegida();
+    if (id === null) return null;
+    return this.opcionesDeRecurso().find((opcion) => opcion.value === id) ?? null;
+  });
 
   /** La organización todavía no cargó ninguna agenda que ofrecer. */
   protected readonly sinRecursos = signal(false);
@@ -302,10 +586,10 @@ export class Appointments {
    * agenda. No lleva `route` porque el control ya está acá arriba, en la misma
    * vista: mandar a otra ruta para volver al mismo lugar sería un rodeo.
    */
-  private readonly elegirAgenda = { label: 'Elegí una agenda' } as const;
+  private readonly pasoElegirAgenda = { label: 'Elegí una agenda' } as const;
 
   protected readonly horarios = signal<ViewState<readonly HorarioVisible[]>>(
-    empty(this.elegirAgenda, 'Elegí con quién te querés atender para ver los horarios libres.'),
+    empty(this.pasoElegirAgenda, 'Elegí con quién te querés atender para ver los horarios libres.'),
   );
 
   /** El mensaje del vacío, que la plantilla no puede sacar del estado tipada. */
@@ -342,15 +626,38 @@ export class Appointments {
     return id === null ? null : (this.turnosListos().find((turno) => turno.id === id) ?? null);
   });
 
+  /**
+   * El día que se señaló en el calendario, o `null` si se miran los de la
+   * ventana entera.
+   *
+   * Antes el calendario sólo servía para mirar: para pedir turno había que
+   * bajar al formulario y recorrer catorce días de horarios, y para la semana
+   * siguiente, más scroll (F-10). Ahora el día se elige donde se lo está
+   * mirando, y esta señal es la que traduce ese gesto en un filtro.
+   */
+  protected readonly diaDeHorarios = signal<Date | null>(null);
+
+  /** El día elegido, dicho en palabras para el aviso que lo ofrece deshacer. */
+  protected readonly diaDeHorariosEnPalabras = computed(() => {
+    const dia = this.diaDeHorarios();
+    return dia === null
+      ? ''
+      : dia.toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long' });
+  });
+
   protected readonly horariosListos = computed<readonly HorarioVisible[]>(() => {
     const estado = this.horarios();
-    return estado.status === 'ready' ? estado.data : [];
+    const todos = estado.status === 'ready' ? estado.data : [];
+    const dia = this.diaDeHorarios();
+    if (dia === null) return todos;
+    return todos.filter((horario) => mismoDia(horario.desde, dia));
   });
 
   constructor() {
     if (this.perfil !== null) {
       this.cargarTurnos();
       this.cargarRecursos();
+      this.cargarEsperas();
     }
   }
 
@@ -372,7 +679,7 @@ export class Appointments {
       .subscribe({
         next: (pagina) => {
           if (pagina.items.length === 0) {
-            this.turnos.set(empty(this.elegirAgenda, 'Todavía no pediste ningún turno.'));
+            this.turnos.set(empty(this.pasoElegirAgenda, 'Todavía no pediste ningún turno.'));
             return;
           }
           this.traducirEstados(pagina.items);
@@ -390,15 +697,43 @@ export class Appointments {
    * que ser el mismo que viaja en `X-Tenant-Id`: si difieren, el interceptor de
    * tenant responde 403 antes de llegar al handler.
    */
+  /**
+   * Cambia entre pedir turno con un profesional o en un laboratorio.
+   *
+   * Limpia lo elegido antes de recargar: el recurso seleccionado pertenece a la
+   * lista anterior, y dejarlo puesto mostraría horarios de un profesional bajo
+   * el rótulo de laboratorio hasta que la lectura vuelva.
+   *
+   * @param tipo - Con quién se quiere pedir el turno.
+   */
+  protected cambiarTipoDeRecurso(tipo: 'PRACTITIONER' | 'ROOM'): void {
+    if (this.tipoDeRecurso() === tipo) {
+      return;
+    }
+    this.tipoDeRecurso.set(tipo);
+    this.agendaElegida.set(null);
+    this.sedeElegida.set(SEDE_CUALQUIERA);
+    this.recursos.set([]);
+    this.busquedaDeRecurso.set('');
+    this.cargarRecursos();
+  }
+
   private cargarRecursos(): void {
     const tenantId = this.organizacion();
     if (tenantId === null) {
       return;
     }
 
-    this.scheduling.listResources({ tenantId }).subscribe({
+    this.scheduling.listResources({ tenantId, resourceType: this.tipoDeRecurso() }).subscribe({
       next: (pagina) => {
         this.recursos.set(pagina.items);
+        this.catalogoDeRecursos.update((previo) => {
+          const mezcla = new Map(previo);
+          for (const recurso of pagina.items) {
+            mezcla.set(recurso.id, recurso);
+          }
+          return mezcla;
+        });
         this.sinRecursos.set(pagina.items.length === 0);
         // Los turnos pueden haberse pintado antes que esto: las dos lecturas
         // del arranque salen a la vez. Se rehacen para que tomen el nombre de
@@ -415,52 +750,199 @@ export class Appointments {
    * El `Select` emite `null` cuando se vuelve al placeholder. Eso no es elegir
    * una agenda: se vuelve al estado inicial en vez de pedir horarios de nadie.
    */
-  protected elegirRecurso(id: string | null): void {
-    this.recursoElegido.set(id);
-    if (id === null) {
+  protected elegirAgenda(clave: string | null): void {
+    this.agendaElegida.set(clave);
+    // Cada agenda tiene sus propios lugares: conservar el anterior mostraría
+    // «ningún horario» por una sede que este profesional no atiende.
+    this.sedeElegida.set(SEDE_CUALQUIERA);
+    if (clave === null) {
       this.horarios.set(
-        empty(this.elegirAgenda, 'Elegí con quién te querés atender para ver los horarios libres.'),
+        empty(
+          this.pasoElegirAgenda,
+          'Elegí con quién te querés atender para ver los horarios libres.',
+        ),
       );
       return;
     }
     this.cargarHorarios();
   }
 
-  /** Los huecos de las próximas dos semanas del recurso elegido. */
+  /**
+   * Se eligió dónde atenderse: se vuelven a pedir los horarios con ese recorte.
+   *
+   * @param sede - La clave del lugar, o `SEDE_CUALQUIERA` para verlos todos.
+   */
+  protected elegirSede(sede: string | null): void {
+    this.sedeElegida.set(sede ?? SEDE_CUALQUIERA);
+    this.diaDeHorarios.set(null);
+    this.cargarHorarios();
+  }
+
+  /**
+   * Los huecos de las próximas dos semanas de la agenda elegida.
+   *
+   * Con más de un consultorio en foco se consulta cada uno y se mezclan por
+   * hora: son horarios del mismo profesional y quien pide un turno los quiere
+   * ver en una sola lista ordenada, no en dos listas por lugar. Cada hueco se
+   * queda con el nombre de su sede para que la lista siga diciendo dónde es.
+   */
   protected cargarHorarios(): void {
-    const resourceId = this.recursoElegido();
-    if (resourceId === null) {
+    const enFoco = this.recursosEnFoco();
+    if (enFoco.length === 0) {
+      return;
+    }
+
+    const desde = new Date();
+    const hasta = new Date(desde.getTime() + DIAS_DE_BUSQUEDA * 24 * 60 * 60 * 1000);
+    const conSede = enFoco.length > 1;
+
+    this.horarios.set(loading());
+    this.horariosIncompletos.set(false);
+    // Se guarda el último fallo para poder distinguir un 403 de una caída de
+    // red si al final NINGUNA sede contestó; con una sola en foco es el mismo
+    // error de siempre, y la pantalla lo cuenta igual que antes.
+    let ultimoFallo: unknown = null;
+    forkJoin(
+      enFoco.map((recurso) =>
+        this.scheduling
+          .listSlots({
+            resourceId: recurso.id,
+            from: desde,
+            to: hasta,
+            onlyAvailable: true,
+            limit: TOPE_DE_HORARIOS,
+          })
+          .pipe(
+            map((pagina) =>
+              pagina.items
+                .filter((cupo) => cupo.remainingCapacity > 0)
+                .map((cupo) => this.aHorarioVisible(cupo, conSede ? nombreDeSede(recurso) : '')),
+            ),
+            // Que una sede no conteste no puede esconder los horarios de la
+            // otra: se anota la falla y se sigue con lo que sí llegó.
+            catchError((error: unknown) => {
+              ultimoFallo = error;
+              this.horariosIncompletos.set(true);
+              return of<readonly HorarioVisible[] | null>(null);
+            }),
+          ),
+      ),
+    ).subscribe({
+      next: (porRecurso) => {
+        if (porRecurso.every((lista) => lista === null)) {
+          // Ninguna contestó: eso no es «faltan algunos horarios», es que no
+          // hay horarios que mostrar. Se cuenta como error, no como lista corta.
+          this.horariosIncompletos.set(false);
+          this.horarios.set(errorToViewState<readonly HorarioVisible[]>(ultimoFallo));
+          return;
+        }
+        const libres = porRecurso
+          .filter((lista): lista is readonly HorarioVisible[] => lista !== null)
+          .flat()
+          .sort((a, b) => a.desde.getTime() - b.desde.getTime())
+          .slice(0, TOPE_DE_HORARIOS);
+        if (libres.length === 0) {
+          this.horarios.set(
+            empty(
+              { label: 'Probá con otra agenda' },
+              'No hay horarios libres en las próximas dos semanas.',
+            ),
+          );
+          return;
+        }
+        this.horarios.set(ready(libres));
+      },
+      error: (error: unknown) =>
+        this.horarios.set(errorToViewState<readonly HorarioVisible[]>(error)),
+    });
+  }
+
+  /* ---- lista de espera (P8) ----------------------------------------------- */
+
+  /**
+   * Las esperas activas del titular.
+   *
+   * Un fallo no vacía la pantalla ni muestra un error: la lista de espera es
+   * información secundaria y perderla no justifica romper «mis turnos». Se
+   * queda sin bloque, que es exactamente lo que pasaba antes de que existiera.
+   */
+  protected cargarEsperas(): void {
+    const perfil = this.perfil;
+    if (perfil === null) {
+      return;
+    }
+
+    this.scheduling
+      .listWaitlist({ patientProfileId: perfil })
+      .pipe(catchError(() => of({ items: [] as readonly WaitlistEntry[] })))
+      .subscribe((pagina) => {
+        this.esperas.set(pagina.items.map((entrada) => this.aEsperaVisible(entrada)));
+      });
+  }
+
+  /**
+   * Anota al titular en la lista de espera de la agenda elegida.
+   *
+   * Es la salida del callejón: sin cupos, la pantalla ofrecía «probá con otra
+   * agenda» y nada más. Anotarse **no reserva** —cuando se libere un horario
+   * llega el aviso y se confirma por el flujo normal—, y el diálogo lo dice
+   * para que nadie se quede esperando una cita que no existe.
+   */
+  protected async anotarmeEnEspera(): Promise<void> {
+    const perfil = this.perfil;
+    const tenantId = this.organizacion();
+    const resourceId = this.recursoParaEspera();
+    if (perfil === null || tenantId === null || resourceId === null || this.anotandose()) {
+      return;
+    }
+
+    const agenda = this.nombreDeLaAgenda(resourceId);
+    const confirmado = await this.dialogs.confirm({
+      title: 'Anotarte en la lista de espera',
+      message:
+        agenda === ''
+          ? 'Te avisamos apenas se libere un horario. No reserva el turno: lo confirmás vos cuando llegue el aviso.'
+          : `Te avisamos apenas se libere un horario con ${agenda}. No reserva el turno: lo confirmás vos cuando llegue el aviso.`,
+      confirmLabel: 'Anotarme',
+      cancelLabel: 'Volver',
+    });
+    if (!confirmado) {
       return;
     }
 
     const desde = new Date();
     const hasta = new Date(desde.getTime() + DIAS_DE_BUSQUEDA * 24 * 60 * 60 * 1000);
 
-    this.horarios.set(loading());
+    this.anotandose.set(true);
     this.scheduling
-      .listSlots({
+      .enrollWaitlist({
+        tenantId,
+        patientProfileId: perfil,
         resourceId,
-        from: desde,
-        to: hasta,
-        onlyAvailable: true,
-        limit: TOPE_DE_HORARIOS,
+        desiredFrom: desde,
+        desiredTo: hasta,
       })
       .subscribe({
-        next: (pagina) => {
-          const libres = pagina.items.filter((cupo) => cupo.remainingCapacity > 0);
-          if (libres.length === 0) {
-            this.horarios.set(
-              empty(
-                { label: 'Probá con otra agenda' },
-                'No hay horarios libres en las próximas dos semanas.',
-              ),
-            );
-            return;
-          }
-          this.horarios.set(ready(libres.map((cupo) => this.aHorarioVisible(cupo))));
+        next: () => {
+          this.anotandose.set(false);
+          this.toast.success(
+            'Te avisamos apenas se libere un horario.',
+            'Estás en lista de espera',
+          );
+          this.cargarEsperas();
         },
-        error: (error: unknown) =>
-          this.horarios.set(errorToViewState<readonly HorarioVisible[]>(error)),
+        error: (error: unknown) => {
+          this.anotandose.set(false);
+          const estado = errorToViewState<null>(error);
+          const detalle =
+            estado.status === 'forbidden' || estado.status === 'error'
+              ? (estado.message ?? '')
+              : '';
+          this.toast.error(
+            detalle === '' ? 'No pudimos anotarte en la lista de espera.' : detalle,
+            'Lista de espera',
+          );
+        },
       });
   }
 
@@ -603,8 +1085,18 @@ export class Appointments {
     }
 
     this.reprogramando.set(turno.id);
-    if (turno.resourceId !== '' && this.recursoElegido() !== turno.resourceId) {
-      this.elegirRecurso(turno.resourceId);
+    // El turno guarda el recurso; la pantalla ahora elige la agenda y el lugar.
+    // Se preselecciona su MISMO consultorio y no «cualquiera»: mover un turno
+    // es querer otro horario, no otro lugar.
+    const recurso = this.recursos().find((candidato) => candidato.id === turno.resourceId);
+    if (recurso !== undefined && this.recursoParaEspera() !== recurso.id) {
+      // Las dos señales se ponen juntas y se lee UNA vez: pasar por
+      // `elegirAgenda` y después por `elegirSede` pediría los cupos dos veces,
+      // y la primera tanda —la de todos los consultorios— se descartaría.
+      this.agendaElegida.set(claveDeAgenda(recurso));
+      this.sedeElegida.set(claveDeSede(recurso));
+      this.diaDeHorarios.set(null);
+      this.cargarHorarios();
     }
   }
 
@@ -779,6 +1271,21 @@ export class Appointments {
       motivo: cita.reasonText ?? '',
       avisoDelCambio: avisoDelCambio(cita),
       cambioCuando: cita.statusReason?.changedAt ?? null,
+      avisoDeDemora: avisoDeDemora(cita),
+      demoraCuando: cita.delayNotice?.announcedAt ?? null,
+    };
+  }
+
+  private aEsperaVisible(entrada: WaitlistEntry): EsperaVisible {
+    return {
+      id: entrada.id,
+      resourceId: entrada.resourceId ?? '',
+      // El servidor ya resuelve el nombre de la agenda: acá no hace falta
+      // cruzarlo con la lista de recursos, que además puede no incluirla.
+      agenda: entrada.resourceLabel,
+      desde: entrada.desiredFrom ?? null,
+      hasta: entrada.desiredTo ?? null,
+      anotadaEl: entrada.createdAt,
     };
   }
 
@@ -812,7 +1319,10 @@ export class Appointments {
     if (resourceId === '') {
       return '';
     }
-    return this.recursos().find((recurso) => recurso.id === resourceId)?.name ?? '';
+    // Del catálogo acumulado y no de la lista ofrecida: un turno médico
+    // conserva el nombre de su agenda aunque ahora se estén mirando
+    // laboratorios.
+    return this.catalogoDeRecursos().get(resourceId)?.name ?? '';
   }
 
   /**
@@ -827,13 +1337,14 @@ export class Appointments {
     return toBookingStatusPresentation(this.etiquetas().get(conceptId));
   }
 
-  private aHorarioVisible(cupo: AgendaSlot): HorarioVisible {
+  private aHorarioVisible(cupo: AgendaSlot, sede: string): HorarioVisible {
     return {
       id: cupo.id,
       desde: cupo.startAt,
       hasta: cupo.endAt,
       resourceId: cupo.resourceId,
       lugaresLibres: cupo.remainingCapacity,
+      sede,
     };
   }
 }
@@ -856,4 +1367,126 @@ function avisoDelCambio(cita: Booking): string {
   }
   const quien = cambio.actorKind === 'PATIENT' ? 'Indicaste' : 'El profesional indicó';
   return `${quien}: ${cambio.reasonText}`;
+}
+
+/**
+ * Cómo se le cuenta al paciente la demora de su profesional (P8).
+ *
+ * Los minutos van siempre —son lo único que permite decidir si salir de casa— y
+ * el mensaje del profesional sólo si lo escribió: dejar «Motivo:» colgando
+ * cuando no hay motivo es peor que no decir nada.
+ *
+ * Devuelve `''` cuando nadie informó una demora, que es el caso corriente.
+ */
+function avisoDeDemora(cita: Booking): string {
+  const demora = cita.delayNotice;
+  if (demora === undefined || demora.delayMinutes <= 0) {
+    return '';
+  }
+  const base = `El profesional avisó que se demora unos ${demora.delayMinutes} minutos`;
+  const mensaje = demora.message?.trim() ?? '';
+  return mensaje === '' ? `${base}.` : `${base}: ${mensaje}`;
+}
+
+/** Si dos fechas caen el mismo día del calendario. */
+function mismoDia(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+/**
+ * Texto comparable: sin mayúsculas ni tildes.
+ *
+ * Quien busca a «Muñoz» escribe «munoz», y quien busca a «Peña» escribe «pena».
+ * Sin esto el buscador no encuentra a media guía por un acento.
+ */
+function normalizar(texto: string): string {
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+/**
+ * Con qué clave se juntan las agendas de una misma persona (F-23).
+ *
+ * `resourceRefId` apunta al perfil profesional: los dos consultorios del mismo
+ * médico comparten ese id y difieren en la sede. Un recurso sin referencia —una
+ * sala, un equipo— es su propio grupo: no hay a quién agruparlo.
+ */
+export function claveDeAgenda(recurso: {
+  readonly id: string;
+  readonly resourceRefType?: string | null;
+  readonly resourceRefId?: string | null;
+}): string {
+  // Tolera que falten, igual que `etiquetaDeRecurso`: los dobles de prueba y
+  // las respuestas viejas de la API no traen la referencia. Sin ella el
+  // recurso es su propio grupo, que es el comportamiento de siempre.
+  const tabla = recurso.resourceRefType ?? '';
+  const referencia = recurso.resourceRefId ?? '';
+  if (tabla === '' || referencia === '') return `recurso:${recurso.id}`;
+  return `${tabla}:${referencia}`;
+}
+
+/**
+ * La clave con la que se distingue un lugar de otro dentro de una agenda.
+ *
+ * Un recurso sin sede registrada no se mezcla con los demás: se le da una
+ * clave propia para que siga siendo elegible por separado en vez de
+ * desaparecer detrás de otro consultorio.
+ */
+export function claveDeSede(recurso: AgendaResource): string {
+  return recurso.site?.id ?? `sin-sede:${recurso.id}`;
+}
+
+/**
+ * Cómo se nombra un lugar en el selector y al lado de un horario.
+ *
+ * La dirección va con el nombre porque «Consultorio 2» no le dice nada a quien
+ * tiene que llegar hasta ahí. Sin sede cargada se lo dice con todas las letras:
+ * el hueco vacío se lee como un dato que se perdió.
+ */
+export function nombreDeSede(recurso: AgendaResource): string {
+  const sede = recurso.site;
+  if (sede === null) return 'Sin consultorio registrado';
+  const direccion = sede.addressText ?? '';
+  return direccion === '' ? sede.name : `${sede.name} · ${direccion}`;
+}
+
+/**
+ * El rótulo de una agenda agrupada.
+ *
+ * Con un solo recurso se mantiene el rótulo de siempre —incluye el nombre
+ * interno, que suele aclarar sede o especialidad—. Con varios, ese nombre
+ * interno **estorba**: son justamente los que difieren entre sí, y repetirlos
+ * en una sola línea es el ruido que F-23 viene a sacar. Queda la persona.
+ */
+export function etiquetaDeAgenda(recursos: readonly AgendaResource[]): string {
+  const primero = recursos[0];
+  if (primero === undefined) return '';
+  if (recursos.length === 1) return etiquetaDeRecurso(primero);
+  const persona = primero.practitionerName ?? '';
+  return persona === '' ? primero.name : persona;
+}
+
+/**
+ * La etiqueta del selector «¿con quién te querés atender?».
+ *
+ * La respuesta honesta es la persona; el nombre del recurso queda de respaldo
+ * para salas, equipos o perfiles que no resolvieron —que es exactamente lo que
+ * la opción mostraba siempre—. Cuando el nombre interno de la agenda agrega
+ * algo (sede, turno), va como aclaración detrás del nombre. Tolera `undefined`
+ * además de `null` porque los dobles de prueba y las respuestas viejas de la
+ * API no traen el campo.
+ *
+ * @param recurso - El recurso agendable tal como llegó de la API.
+ */
+export function etiquetaDeRecurso(recurso: {
+  readonly name: string;
+  readonly practitionerName?: string | null;
+}): string {
+  const persona = recurso.practitionerName ?? null;
+  if (persona === null || persona === '') return recurso.name;
+  if (persona === recurso.name) return persona;
+  return `${persona} — ${recurso.name}`;
 }

@@ -16,6 +16,8 @@ import type {
   ConversationListItem,
   ConversationMessagesQuery,
   ConversationPage,
+  ConversationPeer,
+  ConversationRead,
   ConversationsQuery,
   DirectMessage,
   DirectMessagePage,
@@ -25,14 +27,44 @@ import type {
   FollowListItem,
   FollowPage,
   FollowsQuery,
+  GroupDetail,
   GroupMember,
+  GroupMemberChange,
   GroupMemberPage,
   GroupMembersQuery,
+  GroupMemberUpdated,
   GroupPage,
   GroupsQuery,
+  GroupWallItem,
+  GroupWallPage,
+  GroupWallQuery,
+  ModerationAppealItem,
+  ModerationAppealPage,
+  ModerationAppealsQuery,
+  ModerationDecisionItem,
+  ModerationDecisionPage,
+  ModerationDecisionsQuery,
+  ModerationQueueItem,
+  ModerationQueuePage,
+  ModerationQueueQuery,
+  NewAppeal,
+  NewBlock,
+  NewBookmark,
+  NewGroup,
+  NewGroupPost,
   NewComment,
+  NewConversation,
+  NewDirectMessage,
+  NewFollow,
+  NewModerationDecision,
+  NewReport,
+  NewReview,
+  NewReviewResponse,
+  ResolveAppeal,
   NewReaction,
   NewPost,
+  SocialRemoval,
+  TopicPage,
   NotificationPage,
   NotificationsQuery,
   OwnPublicProfile,
@@ -42,11 +74,13 @@ import type {
   PostListItem,
   PostPage,
   ProfilePostsQuery,
+  PublicDirectoryResult,
   PublicProfileDetail,
   ReactionSummary,
   ReviewsQuery,
   ServiceReview,
   ServiceReviewPage,
+  SentMessage,
   SocialNotification,
   UpsertOwnPublicProfile,
 } from './community.types';
@@ -280,6 +314,103 @@ export class CommunityClient {
   // ─── Seguimientos, marcadores y bloqueos ───────────────────────────────────
 
   /**
+   * `POST /community/follows` — seguir un perfil, tema, etiqueta o grupo.
+   *
+   * @param seguimiento - Quién sigue y qué.
+   * @returns El identificador del seguimiento.
+   */
+  follow(seguimiento: NewFollow): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/community/follows'),
+      seguimiento,
+    );
+  }
+
+  /**
+   * `DELETE /community/follows` — dejar de seguir.
+   *
+   * Va por query y no por el id del vínculo porque la pantalla sabe **a quién**
+   * dejó de seguir, no el uuid de la fila; pedirle ese uuid la obligaría a una
+   * lectura extra sólo para deshacer lo que acaba de hacer.
+   *
+   * @param seguimiento - Quién dejaba de seguir y qué.
+   * @returns Si esta llamada deshizo el seguimiento. `false` no es un error: el
+   *   estado final es el que se pedía.
+   */
+  unfollow(seguimiento: NewFollow): Observable<SocialRemoval> {
+    return this.http.delete<SocialRemoval>(this.url('/community/follows'), {
+      params: new HttpParams()
+        .set('followerProfileId', seguimiento.followerProfileId)
+        .set('followableType', seguimiento.followableType)
+        .set('followableRefId', seguimiento.followableRefId),
+    });
+  }
+
+  /**
+   * `POST /community/bookmarks` — guardar contenido en una colección.
+   *
+   * @param marcador - Quién guarda y qué.
+   * @returns El identificador del marcador.
+   */
+  bookmark(marcador: NewBookmark): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/community/bookmarks'),
+      marcador,
+    );
+  }
+
+  /**
+   * `DELETE /community/bookmarks` — quitar un marcador.
+   *
+   * @param marcador - Quién guardaba y qué.
+   * @returns Si esta llamada quitó el marcador.
+   */
+  unbookmark(marcador: NewBookmark): Observable<SocialRemoval> {
+    let params = new HttpParams()
+      .set('profileId', marcador.profileId)
+      .set('bookmarkableType', marcador.bookmarkableType)
+      .set('bookmarkableRefId', marcador.bookmarkableRefId);
+    if (marcador.collectionName !== undefined) {
+      params = params.set('collectionName', marcador.collectionName);
+    }
+
+    return this.http.delete<SocialRemoval>(this.url('/community/bookmarks'), {
+      params,
+    });
+  }
+
+  /**
+   * `POST /community/blocks` — bloquear a alguien.
+   *
+   * @param bloqueo - Quién bloquea a quién y por qué.
+   * @returns El identificador del bloqueo.
+   */
+  block(bloqueo: NewBlock): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/community/blocks'),
+      bloqueo,
+    );
+  }
+
+  /**
+   * `DELETE /community/blocks` — levantar un bloqueo.
+   *
+   * Levantar el bloqueo **no devuelve los seguimientos** que el bloqueo cortó:
+   * el servidor devuelve el permiso de volver a seguir, no la decisión de
+   * seguir. La pantalla no debe prometer lo contrario.
+   *
+   * @param bloqueo - Quién bloqueaba a quién.
+   * @returns Si esta llamada levantó el bloqueo.
+   */
+  unblock(bloqueo: NewBlock): Observable<SocialRemoval> {
+    return this.http.delete<SocialRemoval>(this.url('/community/blocks'), {
+      params: new HttpParams()
+        .set('blockerProfileId', bloqueo.blockerProfileId)
+        .set('blockedProfileId', bloqueo.blockedProfileId),
+    });
+  }
+
+  /**
    * `GET /community/follows` — a quién sigue un perfil.
    *
    * @param query - Quién sigue (obligatorio) y la paginación.
@@ -389,6 +520,203 @@ export class CommunityClient {
       .pipe(map(toReviewPage));
   }
 
+
+  // ─── Moderación (UC-19-08/09/10) ───────────────────────────────────────────
+  //
+  // Las tres lecturas exigen `SECURITY_ADMIN` en el servidor. El cliente no lo
+  // comprueba: si lo hiciera, habría dos verdades sobre quién puede leer y la
+  // del navegador sería la que se puede saltear.
+
+  /**
+   * `GET /community/moderation/queue` — la cola de trabajo.
+   *
+   * Los filtros van por **código** (`QUEUED`, `HIGH`), no por uuid de concepto:
+   * pedirle uuids a la pantalla la ataría a la semilla de terminología de cada
+   * ambiente.
+   *
+   * @param query - Filtros de trabajo y paginación.
+   * @returns Una página de la cola, con el reporte que originó cada entrada.
+   */
+  listModerationQueue(
+    query: ModerationQueueQuery = {},
+  ): Observable<ModerationQueuePage> {
+    let params = this.cursorParams(query, new HttpParams());
+    params = this.listaParam(params, 'status', query.status);
+    params = this.listaParam(params, 'priority', query.priority);
+    params = this.listaParam(params, 'contentType', query.contentType);
+    if (query.minAgeHours !== undefined) {
+      params = params.set('minAgeHours', String(query.minAgeHours));
+    }
+
+    return this.http
+      .get<WireModerationQueuePage>(this.url('/community/moderation/queue'), {
+        params,
+      })
+      .pipe(map(toModerationQueuePage));
+  }
+
+  /**
+   * `GET /community/moderation/decisions` — las decisiones tomadas.
+   *
+   * @param query - Filtros y paginación.
+   * @returns Una página de decisiones, de la más reciente hacia atrás.
+   */
+  listModerationDecisions(
+    query: ModerationDecisionsQuery = {},
+  ): Observable<ModerationDecisionPage> {
+    let params = this.cursorParams(query, new HttpParams());
+    params = this.listaParam(params, 'decision', query.decision);
+    if (query.moderationQueueId !== undefined) {
+      params = params.set('moderationQueueId', query.moderationQueueId);
+    }
+
+    return this.http
+      .get<WireModerationDecisionPage>(
+        this.url('/community/moderation/decisions'),
+        { params },
+      )
+      .pipe(map(toModerationDecisionPage));
+  }
+
+  /**
+   * `GET /community/moderation/appeals` — las apelaciones presentadas.
+   *
+   * @param query - Filtros y paginación.
+   * @returns Una página de apelaciones, con la decisión que cada una impugna.
+   */
+  listModerationAppeals(
+    query: ModerationAppealsQuery = {},
+  ): Observable<ModerationAppealPage> {
+    let params = this.cursorParams(query, new HttpParams());
+    params = this.listaParam(params, 'status', query.status);
+    if (query.appellantProfileId !== undefined) {
+      params = params.set('appellantProfileId', query.appellantProfileId);
+    }
+
+    return this.http
+      .get<WireModerationAppealPage>(
+        this.url('/community/moderation/appeals'),
+        { params },
+      )
+      .pipe(map(toModerationAppealPage));
+  }
+
+  /**
+   * `POST /community/reports` — reporta contenido y lo encola.
+   *
+   * @param reporte - Qué se reporta y por qué.
+   * @returns El id del reporte y la entrada de cola en la que cayó.
+   */
+  report(
+    reporte: NewReport,
+  ): Observable<{ readonly id: string; readonly moderationQueueId: string }> {
+    return this.http.post<{
+      readonly id: string;
+      readonly moderationQueueId: string;
+    }>(this.url('/community/reports'), reporte);
+  }
+
+  /**
+   * `POST /community/moderation/queue/:queueId/decision` — resuelve una entrada.
+   *
+   * @param queueId - Entrada de cola.
+   * @param decision - Decisión y su motivo, que es obligatorio.
+   * @returns El id de la decisión y el del strike, si emitió uno.
+   */
+  decideModeration(
+    queueId: string,
+    decision: NewModerationDecision,
+  ): Observable<ModerationDecisionResult> {
+    return this.http.post<ModerationDecisionResult>(
+      this.url(
+        `/community/moderation/queue/${encodeURIComponent(queueId)}/decision`,
+      ),
+      decision,
+    );
+  }
+
+  /**
+   * `POST /community/moderation/decisions/:decisionId/appeal` — apela.
+   *
+   * @param decisionId - Decisión impugnada.
+   * @param apelacion - Perfil que apela y motivo.
+   * @returns El id de la apelación.
+   */
+  appealDecision(
+    decisionId: string,
+    apelacion: NewAppeal,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(
+        `/community/moderation/decisions/${encodeURIComponent(decisionId)}/appeal`,
+      ),
+      apelacion,
+    );
+  }
+
+  /**
+   * `POST /community/moderation/appeals/:appealId/resolve` — cierra una apelación.
+   *
+   * @param appealId - Apelación abierta.
+   * @param resolucion - Qué se resuelve.
+   * @returns El id de la apelación resuelta.
+   */
+  resolveAppeal(
+    appealId: string,
+    resolucion: ResolveAppeal,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(
+        `/community/moderation/appeals/${encodeURIComponent(appealId)}/resolve`,
+      ),
+      resolucion,
+    );
+  }
+
+  // ─── Reseñas de servicio (UC-19-11) ────────────────────────────────────────
+
+  /**
+   * `POST /community/profiles/:profileId/reviews` — califica a un profesional.
+   *
+   * **Quién califica no viaja en el cuerpo**: lo resuelve el servidor desde la
+   * sesión. Lo que sí hay que mandar es la atención que respalda la reseña, y el
+   * servidor comprueba que sea de esa persona, con ese profesional, y terminada.
+   *
+   * @param profileId - Vitrina calificada.
+   * @param review - Calificación, atención que la respalda y dimensiones.
+   * @returns El id de la reseña y si quedó verificada.
+   */
+  publishReview(
+    profileId: string,
+    review: NewReview,
+  ): Observable<ReviewCreated> {
+    return this.http.post<ReviewCreated>(
+      this.url(`/community/profiles/${encodeURIComponent(profileId)}/reviews`),
+      review,
+    );
+  }
+
+  /**
+   * `POST /community/profiles/:profileId/reviews/:reviewId/responses` —
+   * el profesional contesta una reseña de su propia vitrina.
+   *
+   * @param profileId - Vitrina calificada, que tiene que ser la propia.
+   * @param reviewId - Reseña contestada.
+   * @param respuesta - Texto de la respuesta.
+   * @returns El id de la respuesta.
+   */
+  respondToReview(
+    profileId: string,
+    reviewId: string,
+    respuesta: NewReviewResponse,
+  ): Observable<{ readonly id: string }> {
+    const base = `/community/profiles/${encodeURIComponent(profileId)}`;
+    return this.http.post<{ readonly id: string }>(
+      this.url(`${base}/reviews/${encodeURIComponent(reviewId)}/responses`),
+      respuesta,
+    );
+  }
+
   // ─── Grupos ────────────────────────────────────────────────────────────────
 
   /**
@@ -398,10 +726,16 @@ export class CommunityClient {
    * @returns Una página de grupos.
    */
   listGroups(query: GroupsQuery): Observable<GroupPage> {
-    const params = this.cursorParams(
-      query,
-      new HttpParams().set('tenantId', query.tenantId),
-    );
+    let base = new HttpParams().set('tenantId', query.tenantId);
+    // Parámetro a parámetro y sólo si vinieron: el backend valida con
+    // `forbidNonWhitelisted` y un opcional en `undefined` vuelve 400.
+    if (query.topicId !== undefined) {
+      base = base.set('topicId', query.topicId);
+    }
+    if (query.q !== undefined && query.q !== '') {
+      base = base.set('q', query.q);
+    }
+    const params = this.cursorParams(query, base);
 
     return this.http
       .get<GroupPage>(this.url('/community/groups'), { params })
@@ -419,12 +753,169 @@ export class CommunityClient {
     groupId: string,
     query: GroupMembersQuery = {},
   ): Observable<GroupMemberPage> {
+    let base = this.actorParams(query);
+    if (query.joinStatus !== undefined) {
+      base = base.set('joinStatus', query.joinStatus);
+    }
+
     return this.http
       .get<WireGroupMemberPage>(
         this.url(`/community/groups/${encodeURIComponent(groupId)}/members`),
-        { params: this.cursorParams(query, this.actorParams(query)) },
+        { params: this.cursorParams(query, base) },
       )
       .pipe(map(toGroupMemberPage));
+  }
+
+  /**
+   * `GET /community/groups/:groupId` — la ficha del grupo.
+   *
+   * Trae `viewer`: si quien mira ya es integrante, si puede publicar y si
+   * administra. Con eso la pantalla se pinta una sola vez y bien.
+   *
+   * @param groupId - El grupo.
+   * @param query - Con qué perfil mira.
+   * @returns La ficha del grupo.
+   */
+  getGroup(groupId: string, query: GroupWallQuery = {}): Observable<GroupDetail> {
+    return this.http
+      .get<ConNulos<GroupDetail>>(
+        this.url(`/community/groups/${encodeURIComponent(groupId)}`),
+        { params: this.actorParams(query) },
+      )
+      .pipe(map((body) => sinNulos(body) as GroupDetail));
+  }
+
+  /**
+   * `POST /community/groups` — crea un grupo.
+   *
+   * La organización no viaja en el cuerpo: sale del contexto de tenant de la
+   * sesión, que es el mismo que decide qué directorio se está mirando.
+   *
+   * @param datos - Nombre, slug, visibilidad y tema.
+   * @returns El identificador del grupo creado.
+   */
+  createGroup(datos: NewGroup): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/community/groups'),
+      datos,
+    );
+  }
+
+  /**
+   * `POST /community/groups/:groupId/members` — unirse a un grupo.
+   *
+   * En un grupo público la membresía queda activa; en uno privado queda
+   * esperando que alguien la apruebe. Cuál de las dos pasó lo dice
+   * `joinStatus` de la respuesta, no el código HTTP.
+   *
+   * @param groupId - El grupo.
+   * @param memberProfileId - Qué perfil se une.
+   * @returns La membresía y su estado.
+   */
+  joinGroup(
+    groupId: string,
+    memberProfileId: string,
+  ): Observable<{ readonly id: string; readonly joinStatus: string }> {
+    return this.http.post<{ readonly id: string; readonly joinStatus: string }>(
+      this.url(`/community/groups/${encodeURIComponent(groupId)}/members`),
+      { memberProfileId },
+    );
+  }
+
+  /**
+   * `DELETE /community/groups/:groupId/members/:memberProfileId` — dejar el
+   * grupo, o dar de baja a alguien.
+   *
+   * Lleva el **perfil** y no el id de membresía porque quien se va conoce su
+   * perfil, no el uuid de su fila en el padrón.
+   *
+   * @param groupId - El grupo.
+   * @param memberProfileId - Quién deja el grupo.
+   * @returns La membresía con su estado final.
+   */
+  leaveGroup(
+    groupId: string,
+    memberProfileId: string,
+  ): Observable<GroupMemberUpdated> {
+    return this.http.delete<GroupMemberUpdated>(
+      this.url(
+        `/community/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberProfileId)}`,
+      ),
+    );
+  }
+
+  /**
+   * `PATCH /community/groups/:groupId/members/:memberId` — resolver un alta o
+   * cambiar un rol.
+   *
+   * @param groupId - El grupo.
+   * @param memberId - La membresía.
+   * @param cambio - Decisión y/o rol nuevo.
+   * @returns La membresía con su rol y estado resultantes.
+   */
+  updateGroupMember(
+    groupId: string,
+    memberId: string,
+    cambio: GroupMemberChange,
+  ): Observable<GroupMemberUpdated> {
+    return this.http.patch<GroupMemberUpdated>(
+      this.url(
+        `/community/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberId)}`,
+      ),
+      cambio,
+    );
+  }
+
+  /**
+   * `GET /community/groups/:groupId/posts` — el muro del grupo.
+   *
+   * @param groupId - El grupo.
+   * @param query - Quién mira, y la paginación.
+   * @returns Una página de publicaciones con sus respuestas.
+   */
+  listGroupWall(
+    groupId: string,
+    query: GroupWallQuery = {},
+  ): Observable<GroupWallPage> {
+    return this.http
+      .get<WireGroupWallPage>(
+        this.url(`/community/groups/${encodeURIComponent(groupId)}/posts`),
+        { params: this.cursorParams(query, this.actorParams(query)) },
+      )
+      .pipe(map(toGroupWallPage));
+  }
+
+  /**
+   * `POST /community/groups/:groupId/posts` — publicar en el muro, o responder.
+   *
+   * Publicar y responder son la misma llamada: lo único que las distingue es
+   * `parentCommentId`.
+   *
+   * @param groupId - El grupo.
+   * @param datos - Autor, cuerpo y publicación padre si es una respuesta.
+   * @returns La publicación creada.
+   */
+  publishGroupPost(
+    groupId: string,
+    datos: NewGroupPost,
+  ): Observable<GroupWallItem> {
+    return this.http
+      .post<WireGroupWallItem>(
+        this.url(`/community/groups/${encodeURIComponent(groupId)}/posts`),
+        datos,
+      )
+      .pipe(map(toGroupWallItem));
+  }
+
+  /**
+   * `GET /community/topics` — los temas de la comunidad.
+   *
+   * @returns El árbol de temas activos.
+   */
+  listTopics(): Observable<TopicPage> {
+    return this.http
+      .get<TopicPage>(this.url('/community/topics'))
+      .pipe(map((body) => ({ ...body, items: body.items.map(sinNulos) })));
   }
 
   // ─── Mensajería directa ────────────────────────────────────────────────────
@@ -475,6 +966,121 @@ export class CommunityClient {
       .pipe(map(toMessagePage));
   }
 
+  /**
+   * `GET /community/profiles/by-slug/:slug` — la ficha por su slug.
+   *
+   * Es el puente entre el buscador público —que devuelve `slug` y no uuid— y
+   * cualquier acción que necesite el `profileId`, «escribirle» la primera.
+   *
+   * @param slug - El slug estable del directorio.
+   * @returns La ficha, con su identificador.
+   */
+  readProfileBySlug(slug: string): Observable<PublicProfileDetail> {
+    return this.http
+      .get<WireProfile>(
+        this.url(`/community/profiles/by-slug/${encodeURIComponent(slug)}`),
+      )
+      .pipe(map(toProfile));
+  }
+
+  /**
+   * `GET /community/public/search/practitioners` — profesionales del directorio.
+   *
+   * Devuelve `slug`, no `profileId`: la superficie pública no expone
+   * identificadores internos. Para escribirle a alguien, este resultado se
+   * resuelve después con {@link readProfileBySlug}.
+   *
+   * @param q - Texto de búsqueda.
+   * @param limit - Tope de resultados.
+   * @returns Los profesionales que coinciden.
+   */
+  searchPractitioners(
+    q: string,
+    limit = 10,
+  ): Observable<readonly PublicDirectoryResult[]> {
+    let params = new HttpParams().set('limit', String(limit));
+    if (q !== '') {
+      params = params.set('q', q);
+    }
+    return this.http
+      .get<{ readonly items: readonly PublicDirectoryResult[] }>(
+        this.url('/community/public/search/practitioners'),
+        { params },
+      )
+      .pipe(map((body) => body.items));
+  }
+
+  /**
+   * `POST /community/conversations` — abre el hilo con alguien.
+   *
+   * **Devuelve el hilo que ya existe** si lo hay: desde el carril P2 el backend
+   * reutiliza la conversación directa entre los mismos dos perfiles. Por eso
+   * esta llamada se puede hacer cada vez que alguien pulsa «Escribir al
+   * doctor», sin que el cliente tenga que recordar si ya la abrió.
+   *
+   * @param datos - Los participantes (los dos, el propio incluido).
+   * @returns El identificador de la conversación.
+   */
+  createConversation(datos: NewConversation): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/community/conversations'),
+      datos,
+    );
+  }
+
+  /**
+   * `POST /community/conversations/:id/messages` — envía un mensaje.
+   *
+   * @param conversationId - El hilo.
+   * @param datos - Quién escribe y qué.
+   * @returns El mensaje creado, con su marca de envío.
+   */
+  sendMessage(
+    conversationId: string,
+    datos: NewDirectMessage,
+  ): Observable<SentMessage> {
+    return this.http
+      .post<ConNulos<{ id: string; conversationId: string; sentAt: string }>>(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}/messages`,
+        ),
+        datos,
+      )
+      .pipe(
+        map((body) => ({
+          id: body.id ?? '',
+          conversationId: body.conversationId ?? conversationId,
+          ...fecha('sentAt', body.sentAt),
+        })),
+      );
+  }
+
+  /**
+   * `POST /community/conversations/:id/read` — marca leído hasta el último.
+   *
+   * Sin `upToMessageId` el backend usa el mensaje más reciente, que es lo que
+   * quiere decir «abrí el hilo y lo leí».
+   *
+   * @param conversationId - El hilo.
+   * @param recipientProfileId - Quién lo leyó.
+   * @param upToMessageId - Hasta dónde, si no es hasta el final.
+   * @returns Cuántos recibos se asentaron y hasta qué mensaje.
+   */
+  markConversationRead(
+    conversationId: string,
+    recipientProfileId: string,
+    upToMessageId?: string,
+  ): Observable<ConversationRead> {
+    return this.http.post<ConversationRead>(
+      this.url(
+        `/community/conversations/${encodeURIComponent(conversationId)}/read`,
+      ),
+      upToMessageId === undefined
+        ? { recipientProfileId }
+        : { recipientProfileId, upToMessageId },
+    );
+  }
+
   // ─── Encuestas ─────────────────────────────────────────────────────────────
 
   /**
@@ -519,6 +1125,25 @@ export class CommunityClient {
     return params;
   }
 
+  /**
+   * Agrega un filtro de lista como valores separados por comas.
+   *
+   * Es la forma que el servidor acepta además del `?x=a&x=b` de Nest, y la que
+   * deja la URL legible cuando alguien la copia de la barra del navegador.
+   *
+   * Una lista vacía **no se manda**: `?status=` significaría «filtrá por el
+   * estado llamado cadena vacía», que no devuelve nada, en vez de «no filtres».
+   */
+  private listaParam(
+    params: HttpParams,
+    nombre: string,
+    valores: readonly string[] | undefined,
+  ): HttpParams {
+    return valores === undefined || valores.length === 0
+      ? params
+      : params.set(nombre, valores.join(','));
+  }
+
   /** Agrega `actorProfileId` sólo si vino. Sin él la lectura es la anónima. */
   private actorParams(query: { readonly actorProfileId?: string }): HttpParams {
     return query.actorProfileId === undefined
@@ -558,9 +1183,13 @@ type WireProfile = Omit<ConNulos<PublicProfileDetail>, 'badges' | 'prestige'> & 
   readonly prestige: WirePrestige | null;
 };
 
-type WirePost = Omit<ConNulos<PostListItem>, 'publishedAt' | 'editedAt'> & {
+type WirePost = Omit<
+  ConNulos<PostListItem>,
+  'publishedAt' | 'editedAt' | 'reactions'
+> & {
   readonly publishedAt: string | null;
   readonly editedAt: string | null;
+  readonly reactions: WireReactionSummary;
 };
 
 type WirePostDetail = WirePost & {
@@ -665,15 +1294,29 @@ interface WireGroupMemberPage extends Omit<GroupMemberPage, 'items'> {
   readonly items: readonly WireGroupMember[];
 }
 
+type WireGroupWallItem = Omit<
+  ConNulos<GroupWallItem>,
+  'createdAt' | 'replies'
+> & {
+  readonly createdAt: string;
+  readonly replies: readonly WireGroupWallItem[] | null;
+};
+
+interface WireGroupWallPage extends Omit<GroupWallPage, 'items'> {
+  readonly items: readonly WireGroupWallItem[];
+}
+
 type WireConversation = Omit<
   ConNulos<ConversationListItem>,
-  'lastMessageAt' | 'lastMessage' | 'unreadCount'
+  'lastMessageAt' | 'lastMessage' | 'unreadCount' | 'peers'
 > & {
   readonly lastMessageAt: string | null;
   readonly unreadCount: number;
   readonly lastMessage:
     | (Omit<ConNulos<PreviewLike>, 'sentAt'> & { readonly sentAt: string | null })
     | null;
+  /** Opcional en el transporte: un backend anterior a P2 no lo manda. */
+  readonly peers?: readonly ConNulos<ConversationPeer>[];
 };
 
 type PreviewLike = NonNullable<ConversationListItem['lastMessage']>;
@@ -714,11 +1357,165 @@ function toProfile({ badges, prestige, ...resto }: WireProfile): PublicProfileDe
   };
 }
 
-function toPost({ publishedAt, editedAt, ...resto }: WirePost): PostListItem {
+// ─── Moderación ──────────────────────────────────────────────────────────────
+
+/**
+ * Lo que devuelve decidir una moderación.
+ *
+ * `strikeId` es `null` cuando la decisión no sancionó a nadie —«desestimada», o
+ * una advertencia sin sujeto declarado—, no cuando falló algo.
+ */
+export interface ModerationDecisionResult {
+  readonly id: string;
+  readonly strikeId: string | null;
+  readonly decision: string;
+}
+
+/** Lo que devuelve publicar una reseña. */
+export interface ReviewCreated {
+  readonly id: string;
+  readonly overallRating: number;
+  readonly verified: boolean;
+  readonly dimensionCount: number;
+}
+
+/**
+ * El reporte tal como viaja.
+ *
+ * Sólo `detailText` puede ser nulo —quien reporta puede no escribir nada—; el
+ * id, la razón y la fecha siempre vienen, así que declararlos nulables obligaría
+ * a la pantalla a defenderse de un caso que el servidor no produce.
+ */
+interface WireQueueReport {
+  readonly id: string;
+  readonly reasonConceptId: string;
+  readonly detailText: string | null;
+  readonly createdAt: string;
+}
+
+type WireQueueItem = Omit<
+  ConNulos<ModerationQueueItem>,
+  'queuedAt' | 'report' | 'reportCount'
+> & {
+  readonly queuedAt: string | null;
+  readonly report: WireQueueReport | null;
+  readonly reportCount: number;
+};
+
+interface WireModerationQueuePage
+  extends Omit<ModerationQueuePage, 'items'> {
+  readonly items: readonly WireQueueItem[];
+}
+
+type WireDecisionItem = Omit<
+  ConNulos<ModerationDecisionItem>,
+  'decidedAt'
+> & { readonly decidedAt: string | null };
+
+interface WireModerationDecisionPage
+  extends Omit<ModerationDecisionPage, 'items'> {
+  readonly items: readonly WireDecisionItem[];
+}
+
+type WireAppealItem = Omit<
+  ConNulos<ModerationAppealItem>,
+  'createdAt' | 'resolvedAt' | 'decision'
+> & {
+  readonly createdAt: string;
+  readonly resolvedAt: string | null;
+  readonly decision: WireDecisionItem | null;
+};
+
+interface WireModerationAppealPage
+  extends Omit<ModerationAppealPage, 'items'> {
+  readonly items: readonly WireAppealItem[];
+}
+
+function toQueueItem({
+  queuedAt,
+  report,
+  ...resto
+}: WireQueueItem): ModerationQueueItem {
+  return {
+    ...sinNulos(resto),
+    ...fecha('queuedAt', queuedAt),
+    // `report` en `null` significa «esta entrada no nació de un reporte» —la
+    // abrió una apelación o un proceso automático—, no que falte el dato.
+    ...(report === null
+      ? {}
+      : {
+          report: {
+            id: report.id,
+            reasonConceptId: report.reasonConceptId,
+            createdAt: new Date(report.createdAt),
+            ...(report.detailText === null
+              ? {}
+              : { detailText: report.detailText }),
+          },
+        }),
+  };
+}
+
+function toModerationQueuePage(
+  body: WireModerationQueuePage,
+): ModerationQueuePage {
+  return { ...body, items: body.items.map(toQueueItem) };
+}
+
+function toDecisionItem({
+  decidedAt,
+  ...resto
+}: WireDecisionItem): ModerationDecisionItem {
+  return { ...sinNulos(resto), ...fecha('decidedAt', decidedAt) };
+}
+
+function toModerationDecisionPage(
+  body: WireModerationDecisionPage,
+): ModerationDecisionPage {
+  return { ...body, items: body.items.map(toDecisionItem) };
+}
+
+function toAppealItem({
+  createdAt,
+  resolvedAt,
+  decision,
+  ...resto
+}: WireAppealItem): ModerationAppealItem {
+  return {
+    ...sinNulos(resto),
+    createdAt: new Date(createdAt),
+    ...fecha('resolvedAt', resolvedAt),
+    ...(decision === null ? {} : { decision: toDecisionItem(decision) }),
+  };
+}
+
+function toModerationAppealPage(
+  body: WireModerationAppealPage,
+): ModerationAppealPage {
+  return { ...body, items: body.items.map(toAppealItem) };
+}
+
+function toPost({
+  publishedAt,
+  editedAt,
+  reactions,
+  ...resto
+}: WirePost): PostListItem {
   return {
     ...sinNulos(resto),
     ...fecha('publishedAt', publishedAt),
     ...fecha('editedAt', editedAt),
+    // El resumen anidado se normaliza aparte: `sinNulos` no entra en los
+    // objetos hijos, y el servidor manda `actorReactionTypeConceptId: null`
+    // para decir «no reaccionó». Para la pantalla los dos casos —no reaccionó y
+    // no se preguntó— se pintan igual: botón apagado.
+    //
+    // El `??` no es defensa contra un contrato incumplido: es que la API y el
+    // frontend se despliegan por separado, y una API anterior a este campo haría
+    // reventar el muro **entero** por una publicación sin recuento. Un cero es
+    // menos falso que una pantalla en blanco.
+    reactions: reactions == null ? { tallies: [], total: 0 } : sinNulos(reactions),
+    commentCount: resto.commentCount ?? 0,
   };
 }
 
@@ -840,6 +1637,20 @@ function toGroupMember({ joinedAt, ...resto }: WireGroupMember): GroupMember {
   return { ...sinNulos(resto), ...fecha('joinedAt', joinedAt) };
 }
 
+function toGroupWallItem(item: WireGroupWallItem): GroupWallItem {
+  const { createdAt, replies, ...resto } = item;
+  return {
+    ...sinNulos(resto),
+    createdAt: new Date(createdAt),
+    replies: (replies ?? []).map(toGroupWallItem),
+  } as GroupWallItem;
+}
+
+/** Una página del muro, ya con sus fechas convertidas. */
+function toGroupWallPage(body: WireGroupWallPage): GroupWallPage {
+  return { ...body, items: body.items.map(toGroupWallItem) };
+}
+
 function toGroupMemberPage(body: WireGroupMemberPage): GroupMemberPage {
   return { ...body, items: body.items.map(toGroupMember) };
 }
@@ -848,11 +1659,16 @@ function toConversation({
   lastMessageAt,
   lastMessage,
   unreadCount,
+  peers,
   ...resto
 }: WireConversation): ConversationListItem {
   return {
     ...sinNulos(resto),
     unreadCount,
+    // `peers` viaja siempre desde el carril P2, pero se defiende igual: un
+    // backend anterior devolvería la fila sin la clave, y una bandeja que
+    // explota al iterar `undefined` es peor que una sin nombres.
+    peers: (peers ?? []).map((peer) => sinNulos(peer)),
     ...fecha('lastMessageAt', lastMessageAt),
     ...(lastMessage === null
       ? {}

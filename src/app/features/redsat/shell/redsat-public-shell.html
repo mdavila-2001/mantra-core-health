@@ -4,16 +4,27 @@
      pública, así que va en el marco y no en cada vista. -->
 <div class="app-public-shell">
   <header class="app-public-header">
-    <a class="app-public-header__marca" routerLink="/buscar/buscador-listado">
+    <a class="app-public-header__marca" routerLink="/buscar">
       <img src="/redsat/imagenes/alovida-logo.svg" alt="" width="34" height="25" />
       <span>AloVida</span>
     </a>
 
-    <label class="app-search-field app-public-header__buscador">
-      <span class="solo-lectores">Buscá profesionales, medicamentos, hospitales, laboratorios o aseguradoras</span>
+    <!-- El buscador del marco: está en las 14 pantallas públicas, así que
+         navega a `/buscar?q=` en vez de tener estado propio. La pantalla de
+         resultados lee `?q=`; este componente no la conoce ni le habla. -->
+    <form class="app-search-field app-public-header__buscador" (submit)="buscar($event)">
+      <label class="solo-lectores" for="buscador-publico"
+        >Buscá profesionales, medicamentos, hospitales, laboratorios o aseguradoras</label
+      >
       <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-      <input class="app-input" type="search" placeholder="Buscá un médico, un remedio, un hospital…" />
-    </label>
+      <input
+        id="buscador-publico"
+        name="q"
+        class="app-input"
+        type="search"
+        placeholder="Buscá un médico, un remedio, un hospital…"
+      />
+    </form>
 
     <div class="app-public-header__acciones">
       <button class="app-theme-toggle" app-theme-toggle>

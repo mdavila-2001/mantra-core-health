@@ -1,0 +1,62 @@
+.publicacion {
+  padding: var(--e3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface, transparent);
+}
+
+.publicacion__cabecera {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.publicacion__autor {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.publicacion__fecha {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.publicacion__cuerpo {
+  margin: var(--e2) 0 0;
+  color: var(--text-primary);
+  /* Los saltos de línea que escribió su autor son parte del mensaje. */
+  white-space: pre-wrap;
+}
+
+.publicacion__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin-top: var(--e2);
+}
+
+.publicacion__conteo {
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+/* El hilo se marca con una línea y no sólo con margen: en un teléfono el
+   margen solo se confunde con el borde de la tarjeta. */
+.publicacion__hilo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin-top: var(--e3);
+  padding-inline-start: var(--e3);
+  border-inline-start: 2px solid var(--border);
+}
+
+/* A partir del cuarto nivel se deja de sangrar: si no, una discusión larga
+   termina en una columna de dos palabras de ancho. */
+.publicacion[data-nivel='3'] .publicacion__hilo {
+  padding-inline-start: 0;
+  border-inline-start: none;
+}

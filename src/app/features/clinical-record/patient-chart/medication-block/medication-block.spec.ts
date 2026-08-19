@@ -35,6 +35,12 @@ const BORRADOR: RecetaEnFicha = {
 
 const FIRMADA: RecetaEnFicha = { ...BORRADOR, id: 'rx-2', estado: 'Firmada', firmada: true };
 
+/**
+ * El medicamento tal como sale del buscador: uuid a persistir, denominación a
+ * mostrar y el código ATC como segunda línea.
+ */
+const VANCOMICINA = { value: 'med-vanco', label: 'Vancomycin', hint: 'J01XA01' };
+
 const CATALOGO = {
   code: 'medication',
   name: 'Medicamento',
@@ -546,5 +552,146 @@ describe('MedicationBlock', () => {
     expect(sello(BORRADOR)).toBe('pending');
     expect(sello(FIRMADA)).toBe('in-review');
     expect(sello({ ...FIRMADA, emitida: true })).toBe('approved');
+  });
+
+  /* ---- elegir del catálogo: buscar y componer la posología ---------------- */
+
+  /** Responde la ficha del concepto con las propiedades que se le pasen. */
+  function responderFicha(properties: Record<string, unknown>): void {
+    const req = http.expectOne(`/terminology/concepts/${VANCOMICINA.value}`);
+    req.flush({
+      conceptId: VANCOMICINA.value,
+      code: 'J01XA01',
+      display: 'Vancomycin',
+      codeSystemVersionId: 'csv-vademecum',
+      properties,
+    });
+  }
+
+  it('busca el medicamento por texto y ofrece el código para desambiguar', () => {
+    responderCatalogo();
+
+    interno<(texto: string) => void>('buscarMedicamento')('vanco');
+
+    const req = http.expectOne(
+      (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'vanco',
+    );
+    // Sin `codeSystemVersionId`: acotar a una versión ataría la pantalla a un
+    // uuid que un re-seed puede mover.
+    expect(req.request.params.get('codeSystemVersionId')).toBeNull();
+    req.flush({
+      items: [
+        {
+          conceptId: VANCOMICINA.value,
+          code: 'J01XA01',
+          display: 'Vancomycin',
+          codeSystemVersionId: 'csv-vademecum',
+        },
+      ],
+      count: 1,
+      limit: 20,
+    });
+
+    const opciones =
+      interno<() => readonly { value: string; label: string; hint?: string }[]>(
+        'opcionesDeMedicamento',
+      )();
+    expect(opciones).toEqual([{ value: VANCOMICINA.value, label: 'Vancomycin', hint: 'J01XA01' }]);
+  });
+
+  it('al elegir, lee la ficha y ofrece presentaciones y concentraciones', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({
+      dose_forms: ['oral capsule', 'oral solution'],
+      strengths: ['500 mg', '1 g'],
+      // Ruido del catálogo que esta pantalla no ofrece: no debe estorbar.
+      rxnorm_cui: '11124',
+    });
+
+    expect(interno<() => readonly { value: string }[]>('presentaciones')()).toEqual([
+      { value: 'oral capsule', label: 'oral capsule' },
+      { value: 'oral solution', label: 'oral solution' },
+    ]);
+    expect(interno<() => readonly { value: string }[]>('concentraciones')()).toEqual([
+      { value: '500 mg', label: '500 mg' },
+      { value: '1 g', label: '1 g' },
+    ]);
+    expect(interno<() => boolean>('hayPosologia')()).toBe(true);
+  });
+
+  it('compone doseText con lo elegido: concentración primero', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set(VANCOMICINA.value);
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ dose_forms: ['oral capsule'], strengths: ['1 g'] });
+
+    señal<string>('concentracion').set('1 g');
+    señal<string>('presentacion').set('oral capsule');
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    // El modelo no tiene columna para presentación ni concentración: viajan
+    // compuestas en el texto de posología que el contrato sí declara.
+    expect((req.request.body as Record<string, unknown>)['doseText']).toBe('1 g · oral capsule');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('un medicamento sin propiedades declaradas cae al texto libre de siempre', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set(VANCOMICINA.value);
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ rxnorm_cui: '11124' });
+
+    expect(interno<() => boolean>('hayPosologia')()).toBe(false);
+
+    señal<string>('dosis').set('500 mg');
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    expect((req.request.body as Record<string, unknown>)['doseText']).toBe('500 mg');
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * La ficha puede fallar —o traer una forma que esta pantalla no sabe leer— y
+   * eso no puede impedir prescribir: el medicamento ya está elegido y es lo
+   * único obligatorio. Se cae al texto libre, que es como funcionaba la
+   * pantalla entera antes de que el catálogo publicara presentaciones.
+   */
+  it('si la ficha falla, el medicamento sigue siendo prescribible', () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set(VANCOMICINA.value);
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    http
+      .expectOne(`/terminology/concepts/${VANCOMICINA.value}`)
+      .flush(
+        { code: 'NOT_FOUND', message: 'Concepto no encontrado', timestamp: '', path: '' },
+        { status: 404, statusText: 'Not Found' },
+      );
+
+    expect(interno<() => boolean>('hayPosologia')()).toBe(false);
+    expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
+  });
+
+  it('cambiar de medicamento descarta la posología del anterior', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ strengths: ['1 g'] });
+    señal<string>('concentracion').set('1 g');
+
+    // Borrar la elección: el combobox emite `null`.
+    interno<(o: unknown) => void>('onMedicamentoElegido')(null);
+
+    expect(interno<() => readonly unknown[]>('concentraciones')()).toEqual([]);
+    expect(interno<() => string | null>('concentracion')()).toBeNull();
+    expect(interno<() => boolean>('hayPosologia')()).toBe(false);
   });
 });

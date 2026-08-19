@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { rolesConEtiqueta } from '../../core/auth/role-labels';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
+import { Alert } from '../../shared/components/molecules/alert/alert';
 import { IdentityClient } from '../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
-import {
-  PublicClient,
-  type PublicProjection,
-} from '../../core/data-access/public/public.client';
+import { PublicClient, type PublicProjection } from '../../core/data-access/public/public.client';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import type { AppSection } from '../../core/navigation/navigation.types';
@@ -24,11 +24,24 @@ import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
-import {
-  CaseStatusCatalog,
-  toCaseStatusPresentation,
-} from '../identity-verification/case-status';
+import { CaseStatusCatalog, toCaseStatusPresentation } from '../identity-verification/case-status';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
+import { PatientHome } from './patient-home/patient-home';
+
+/**
+ * Los roles con los que se viene a trabajar, no a atenderse.
+ *
+ * Quien tiene alguno de estos ve el panel de la organización aunque además sea
+ * paciente: entra a hacer su trabajo.
+ */
+const ROLES_DE_TRABAJO: readonly string[] = [
+  'SUPERADMIN',
+  'SECURITY_ADMIN',
+  'SCHEDULING_ADMIN',
+  'SCHEDULING_AGENT',
+  'PRACTITIONER',
+  'CLINICIAN',
+];
 
 /**
  * Panel de inicio de la aplicación autenticada.
@@ -66,6 +79,8 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
     Badge,
     Card,
     NavIcon,
+    Alert,
+    AppButtonLink,
     PageHeader,
     RouterLink,
     Skeleton,
@@ -80,6 +95,7 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
     // reportando como import sin usar desde antes de este carril.
     TutorialTarget,
     ViewStateHost,
+    PatientHome,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -100,12 +116,19 @@ export class Dashboard {
   private readonly identity = inject(IdentityClient);
   private readonly navigation = inject(NavigationService);
 
-  protected readonly userId = this.auth.userId;
   protected readonly roles = this.auth.roles;
   protected readonly activeTenantId = this.auth.activeTenantId;
   protected readonly displayName = this.auth.displayName;
 
-  /** La organización activa por su nombre; el identificador queda para reportar. */
+  /**
+   * Los roles con etiqueta, para las insignias de «Tu cuenta».
+   *
+   * El código crudo no se pinta —es vocabulario de sistema— pero sigue viajando en
+   * `data-role` para quien lo lea por máquina; el rol sin etiqueta se omite.
+   */
+  protected readonly rolesLegibles = computed(() => rolesConEtiqueta(this.roles()));
+
+  /** La organización activa por su nombre. */
   protected readonly tenantName = computed(() => {
     const id = this.activeTenantId();
     return id === null ? null : this.auth.tenantName(id);
@@ -133,6 +156,59 @@ export class Dashboard {
 
   /** Sólo quien administra puede listar pacientes; al resto la API le responde 403. */
   protected readonly puedeVerPacientes = computed(() => this.roles().includes('SECURITY_ADMIN'));
+
+  /**
+   * Si quien entra viene a atenderse, y no a trabajar acá.
+   *
+   * Se pregunta por los roles de trabajo y no sólo por `PATIENT`: quien atiende
+   * y además es paciente del sistema entra a trabajar, y su panel es el de
+   * siempre. Al revés dejaría a un profesional sin su tablero el día que alguien
+   * le cargue una ficha de paciente.
+   */
+  /**
+   * Pregunta por el alta sólo si la sesión es de quien atiende.
+   *
+   * Se llama desde el constructor y no desde un `effect` porque es una lectura
+   * de arranque, no una reacción: los roles no cambian mientras la pantalla
+   * está abierta.
+   */
+  private cargarAltaPendiente(): void {
+    if (!this.roles().includes('PRACTITIONER')) return;
+
+    this.profiles.getOwnOnboarding().subscribe({
+      next: (avance) => {
+        if (avance.firstIncomplete === 'done') return;
+        this.altaPendiente.set({
+          cumplidas: avance.steps.filter((paso) => paso.complete).length,
+          total: avance.steps.length,
+        });
+      },
+      // Un fallo acá no muestra nada. El alta se puede completar igual desde el
+      // perfil; inventar un aviso porque una lectura secundaria falló sería
+      // decirle a alguien que le falta algo sin saberlo.
+      error: () => this.altaPendiente.set(null),
+    });
+  }
+
+  protected readonly esPaciente = computed(() => {
+    const roles = this.roles();
+    if (!roles.includes('PATIENT')) return false;
+    return !ROLES_DE_TRABAJO.some((rol) => roles.includes(rol));
+  });
+
+  /**
+   * Cuánto le falta al profesional para completar su alta (TJ-1).
+   *
+   * `null` = no aplica: la sesión no es de quien atiende, o ya terminó, o la
+   * lectura falló. En los tres casos el aviso no se muestra — un banner que
+   * aparece por un error de red sería peor que no avisar.
+   */
+  protected readonly altaPendiente = signal<{
+    /** Cuántas etapas cumplió. */
+    readonly cumplidas: number;
+    /** De cuántas. */
+    readonly total: number;
+  } | null>(null);
 
   protected readonly pacientes = signal<ViewState<PatientPageResumen>>(loading());
   protected readonly directory = signal<ViewState<PublicProjection>>(loading());
@@ -170,6 +246,7 @@ export class Dashboard {
   constructor() {
     this.loadDirectory();
     this.loadCasos();
+    this.cargarAltaPendiente();
     if (this.puedeVerPacientes()) {
       this.loadPacientes();
     }
@@ -202,8 +279,7 @@ export class Dashboard {
             : ready({ total: page.count, ultimos: page.items }),
         );
       },
-      error: (error: unknown) =>
-        this.pacientes.set(errorToViewState<PatientPageResumen>(error)),
+      error: (error: unknown) => this.pacientes.set(errorToViewState<PatientPageResumen>(error)),
     });
   }
 

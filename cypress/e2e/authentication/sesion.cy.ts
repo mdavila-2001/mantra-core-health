@@ -39,7 +39,7 @@ describe('Autenticación · sesión', () => {
     cy.recargar();
 
     cy.location('pathname').should('match', /\/dashboard$/);
-    DashboardPage.esperarTitulo('Panel');
+    DashboardPage.esperarPanelDelPaciente();
 
     /**
      * Que termine en el panel no alcanza: si el guard se volviera permisivo,
@@ -81,10 +81,13 @@ describe('Autenticación · sesión', () => {
     Header.nombreDeUsuario().should('equal', 'Ana Salas');
   });
 
-  it('el panel lee la identidad del propio token, sin pedirla a la API', () => {
-    iniciarSesion();
+  it('el panel lee los roles del propio token, sin pedirlos a la API', () => {
+    // Con sesión de trabajo: las insignias de rol viven en el panel de la
+    // organización, y desde «Mi salud» a un paciente no se le muestran —no son
+    // suyas, es vocabulario de sistema (F-22)—.
+    iniciarSesion({ escenario: 'sesion-profesional' });
 
-    DashboardPage.identificadorDeSesion().should('equal', 'u-e2e');
-    DashboardPage.rolesVisibles().should('include', 'PATIENT');
+    // El código viaja en `data-role`; lo visible es la etiqueta en palabras.
+    DashboardPage.rolesVisibles().should('include', 'PRACTITIONER');
   });
 });

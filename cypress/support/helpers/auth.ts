@@ -55,7 +55,9 @@ export function iniciarSesion(opciones: OpcionesSesion = {}): void {
   });
 
   cy.location('pathname').should('match', /\/dashboard$/);
-  DashboardPage.esperarCargada();
+  // Cuál de los dos paneles se dibuja depende del rol del escenario; el ingreso
+  // sólo afirma que se llegó a uno.
+  DashboardPage.esperarAlgunPanel();
 }
 
 /** Entra y se queda en la elección de organización, sin elegir ninguna. */

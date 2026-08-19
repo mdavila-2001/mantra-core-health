@@ -1,0 +1,108 @@
+/* El panel de la organización (TP-1).
+   Sólo tokens REDSAT: ningún hex suelto, porque el contraste AA lo garantiza
+   la paleta y un color a mano lo rompe sin que nadie se entere. */
+
+.organizacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.organizacion__selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.organizacion__bloque {
+  display: block;
+}
+
+.organizacion__encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-block-end: var(--space-4);
+}
+
+.organizacion__titulo {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.organizacion__formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.organizacion__datos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.organizacion__datos dt {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.organizacion__datos dd {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.organizacion__nota {
+  margin-block-start: var(--space-4);
+  margin-block-end: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.organizacion__gente {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.organizacion__persona {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--color-border-subtle);
+}
+
+.organizacion__persona:last-child {
+  border-block-end: none;
+}
+
+.organizacion__persona-id {
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono, monospace);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+/* En pantalla angosta los datos se apilan: dos columnas con un uuid adentro
+   desbordan y obligan a desplazar la página entera de lado. */
+@media (max-width: 40rem) {
+  .organizacion__datos {
+    grid-template-columns: 1fr;
+    gap: var(--space-1) 0;
+  }
+
+  .organizacion__persona {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

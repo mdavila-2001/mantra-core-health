@@ -1,3 +1,9 @@
+.muro__composer {
+  display: block;
+  margin-bottom: var(--e4);
+  max-inline-size: 68ch;
+}
+
 .muro__alerta {
   display: block;
   margin-bottom: var(--e4);

@@ -207,6 +207,21 @@ describe('PractitionersDirectory', () => {
     expect(interno<() => number>('total')()).toBe(1);
   });
 
+  it('el código interno del profesional no se muestra ni filtra: el paciente no lo conoce', () => {
+    // Feedback de la analista (F-01, 18/08/2026): las tarjetas decían
+    // «Código MED-…». Es un identificador de sistema; la Guía es sólo del
+    // paciente y no hay a quién mostrárselo por rol. El DTO lo sigue trayendo.
+    montar();
+    responder([FILA, OTRA]);
+    responderConceptos();
+
+    const lineas = grupos().flatMap((g) => g.profesionales.flatMap((p) => p.meta ?? []));
+    expect(lineas.some((linea) => /MED-|Código/.test(linea.text))).toBe(false);
+
+    senal<string>('filtro').set('med-1');
+    expect(interno<() => number>('total')()).toBe(0);
+  });
+
   /**
    * Sin coincidencias NO es lo mismo que sin guía: el estado vacío tiene que
    * poder decir cuál de los dos es.

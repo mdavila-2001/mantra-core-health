@@ -24,6 +24,40 @@ export interface TenantListItem {
   readonly createdAt: Date;
 }
 
+/**
+ * Una organización del actor, con qué puede hacer en ella (TP-1).
+ *
+ * `canAdminister` viene del servidor y no se deduce acá: el criterio de quién
+ * administra una organización vive en la API, y calcularlo otra vez en el front
+ * daría dos definiciones que se separan en cuanto una de las dos cambie.
+ *
+ * Sirve para dibujar, nunca para autorizar: la API vuelve a comprobarlo en cada
+ * escritura. Lo que evita es una pantalla que ofrece botones que fallan.
+ */
+export interface MyOrganization extends TenantListItem {
+  /** Concepto del rol de la membresía activa (owner/admin/staff). */
+  readonly myRoleConceptId: string;
+  /** Si puede editar los datos y gestionar la gente. */
+  readonly canAdminister: boolean;
+  /**
+   * Si la plataforma ya la aprobó.
+   *
+   * Resuelto por la API a propósito: el estado viaja como concepto —un uuid— y
+   * saber cuál significa «verificada» ataría la pantalla a un identificador
+   * sembrado. Importa porque sin aprobar no aparece en el directorio público.
+   */
+  readonly isVerified: boolean;
+  /** Zona horaria IANA declarada, si la hay. */
+  readonly timeZone?: string;
+}
+
+/** Campos que la organización edita de sí misma. Lo que no viene no se toca. */
+export interface OrganizationEdit {
+  readonly legalName?: string;
+  readonly tradeName?: string;
+  readonly timeZone?: string;
+}
+
 /** Página del listado. Sin total: la paginación es por cursor, a propósito. */
 export interface TenantPage {
   readonly items: readonly TenantListItem[];

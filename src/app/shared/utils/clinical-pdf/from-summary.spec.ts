@@ -190,4 +190,30 @@ describe('atencionDesdeResumen', () => {
 
     expect(atencion.bloques.find((b) => b.titulo === 'Observaciones')?.datos[0].valor).toBe('No');
   });
+
+  it('lleva los formularios que el llamador aporta, y sin ellos no agrega nada', () => {
+    const formularios = [
+      {
+        id: 'fi-1',
+        titulo: 'Formulario clínico',
+        respuestas: [{ etiqueta: 'Serología', texto: '', masked: true }],
+      },
+    ];
+
+    const conFormularios = atencionDesdeResumen(
+      ENCUENTRO,
+      resumen(),
+      CONTEXTO,
+      etiqueta,
+      formularios,
+    );
+    expect(conFormularios.formularios).toEqual(formularios);
+
+    // Sin el parámetro —o vacío— el documento es idéntico al de antes.
+    expect(atencionDesdeResumen(ENCUENTRO, resumen(), CONTEXTO, etiqueta).formularios)
+      .toBeUndefined();
+    expect(
+      atencionDesdeResumen(ENCUENTRO, resumen(), CONTEXTO, etiqueta, []).formularios,
+    ).toBeUndefined();
+  });
 });

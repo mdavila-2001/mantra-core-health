@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import {
-  FormArray,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -53,9 +54,28 @@ const FASES = [
   { clave: 'excepcion', label: 'Excepción' },
 ] as const;
 
-/** Roles que pueden construir una agenda. El backend exige `SCHEDULING_ADMIN`
- *  en las cuatro fases de configuración; `SUPERADMIN` es su comodín. */
-const ROLES_QUE_CREAN = ['SCHEDULING_ADMIN', 'SUPERADMIN'];
+/**
+ * Roles que pueden construir una agenda.
+ *
+ * `PRACTITIONER` entró con el autoservicio: las cinco escrituras del catálogo
+ * declaran `@Roles('SCHEDULING_ADMIN', 'PRACTITIONER')`. Mientras esta lista no
+ * lo incluyó, el aviso de la agenda invitaba al profesional a «Publicar mi
+ * agenda», el enlace abría este asistente y el asistente le respondía que no
+ * tenía permiso: un callejón sin salida en el único camino que lo vuelve
+ * reservable.
+ */
+const ROLES_QUE_CREAN = ['SCHEDULING_ADMIN', 'SUPERADMIN', 'PRACTITIONER'];
+
+/** Roles de catálogo: arman la agenda de cualquiera, no sólo la propia. */
+const ROLES_DE_CATALOGO = ['SCHEDULING_ADMIN', 'SUPERADMIN'];
+
+/**
+ * Tabla del perfil profesional, tal como la nombra `assertPuedeCrearRecurso`.
+ *
+ * El backend acepta `practitioner_profiles` o `health_practitioner_profiles`;
+ * se manda la primera porque es la que declara el modelo para el recurso.
+ */
+const TABLA_DE_PERFIL_PROFESIONAL = 'practitioner_profiles';
 
 /** Entero positivo o vacío: los numéricos opcionales viajan como texto. */
 const ENTERO_POSITIVO = /^\d+$/;
@@ -120,6 +140,39 @@ export class AgendaCreate {
   protected readonly puedeCrear = computed(() =>
     ROLES_QUE_CREAN.some((rol) => this.auth.roles().includes(rol)),
   );
+
+  /**
+   * Si quien entra sólo puede publicar **su propia** agenda.
+   *
+   * El backend lo comprueba fila por fila (`assertPuedeCrearRecurso`): a quien
+   * no administra el catálogo le exige que el recurso sea de tipo
+   * `PRACTITIONER`, que apunte a la tabla del perfil profesional y que el
+   * identificador sea el suyo. Son tres datos que el profesional no tiene por
+   * qué saber —el tercero es un uuid—, así que la pantalla los aporta en vez de
+   * pedirlos: ver {@link identidadDelRecurso}.
+   */
+  protected readonly publicaSoloLaPropia = computed(() => {
+    if (this.publicarParaOtro()) return false;
+    // Basta con TENER perfil profesional. Antes exigía además no administrar el
+    // catálogo, y eso dejaba al dueño del consultorio —que es médico y admin a
+    // la vez— pegando su propio uuid en el formulario técnico para publicar su
+    // propia agenda (F-29/F-28). Quien administra puede cambiarse al modo
+    // técnico con {@link publicarParaOtro} cuando la agenda es de otro.
+    return this.auth.practitionerProfileId() !== null;
+  });
+
+  /** Quien administra el catálogo puede publicar la agenda de otro recurso. */
+  protected readonly puedePublicarParaOtro = computed(() => {
+    const roles = this.auth.roles();
+    return ROLES_DE_CATALOGO.some((rol) => roles.includes(rol));
+  });
+
+  /**
+   * El administrador pidió el formulario técnico, para una agenda que no es la
+   * suya. Es opt-in: el camino por defecto —incluso para un admin que además
+   * atiende— es publicar la propia sin escribir un identificador.
+   */
+  protected readonly publicarParaOtro = signal(false);
 
   /* -- Recorrido ----------------------------------------------------------- */
 
@@ -220,6 +273,57 @@ export class AgendaCreate {
       validators: [Validators.pattern(ENTERO_POSITIVO)],
     }),
   });
+
+  /**
+   * Fija la identidad del recurso cuando el profesional publica la suya.
+   *
+   * Los tres campos que el backend comprueba dejan de pedirse: el tipo es
+   * `PRACTITIONER`, la tabla es la del perfil profesional y el identificador es
+   * el de su sesión. Se deshabilitan en vez de ocultarse para que se vea qué
+   * agenda se está publicando —es de él, y eso es justamente lo que la pantalla
+   * tiene que dejar claro—; `getRawValue()` sigue leyéndolos deshabilitados, así
+   * que el envío no cambia.
+   *
+   * Sin `practitionerProfileId` en la sesión no hay agenda propia que publicar.
+   * No se inventa un valor: el campo queda vacío y su `required` frena el envío,
+   * que es preferible a mandar un uuid que el backend va a rechazar con 403.
+   */
+  private readonly identidadDelRecurso = effect(() => {
+    if (!this.publicaSoloLaPropia()) return;
+
+    const propio = this.auth.practitionerProfileId();
+    this.formRecurso.controls.resourceType.setValue('PRACTITIONER');
+    this.formRecurso.controls.resourceRefType.setValue(TABLA_DE_PERFIL_PROFESIONAL);
+    if (propio) this.formRecurso.controls.resourceRefId.setValue(propio);
+
+    // La zona horaria del navegador: es la de la sede donde va a atender, y
+    // equivocarla le mueve todos los horarios. Sólo si no la eligió a mano.
+    if (this.formRecurso.controls.timeZone.value.trim() === '') {
+      const zona = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (zona) this.formRecurso.controls.timeZone.setValue(zona);
+    }
+
+    this.formRecurso.controls.resourceType.disable();
+    this.formRecurso.controls.resourceRefType.disable();
+    if (propio) this.formRecurso.controls.resourceRefId.disable();
+  });
+
+  /**
+   * «, Dra. Elena Salas» cuando la sesión trae el nombre; vacío si no.
+   *
+   * Va como sufijo de la frase y no como campo: confirma de quién es la agenda
+   * sin pedirle nada. Sin nombre en el token la frase sigue teniendo sentido
+   * («Vas a publicar tu propia agenda.»), así que no se inventa un relleno.
+   */
+  protected readonly nombreDelTitular = computed(() => {
+    const nombre = this.auth.displayName();
+    return nombre === null || nombre.trim() === '' ? '' : `, ${nombre}`;
+  });
+
+  /** Si la sesión no declara perfil profesional no hay agenda propia que armar. */
+  protected readonly sinPerfilProfesional = computed(
+    () => !this.puedePublicarParaOtro() && this.auth.practitionerProfileId() === null,
+  );
 
   /* -- Fase 2: política ---------------------------------------------------- */
 

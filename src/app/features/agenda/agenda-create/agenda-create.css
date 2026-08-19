@@ -5,118 +5,125 @@
     ========================================================================== */
 
 :host {
-    display: block;
+  display: block;
 }
 
 app-stepper {
-    display: block;
-    margin-block: var(--sp-4);
+  display: block;
+  margin-block: var(--sp-4);
 }
 
 .agenda-create__error {
-    display: block;
-    margin-bottom: var(--sp-4);
+  display: block;
+  margin-bottom: var(--sp-4);
 }
 
 /* ---- lo ya capturado ----------------------------------------------------- */
 
 .agenda-create__captured {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-2) var(--sp-6);
-    margin: 0 0 var(--sp-4);
-    padding: var(--sp-3) var(--sp-4);
-    background: var(--bg-surface-alt);
-    border-radius: var(--r-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-6);
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-surface-alt);
+  border-radius: var(--r-md);
 }
 
 .agenda-create__captured div {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .agenda-create__captured dt {
-    color: var(--text-muted);
-    font-size: var(--fs-caption);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
 }
 
 .agenda-create__captured dd {
-    margin: 0;
+  margin: 0;
 }
 
 .agenda-create__captured code,
 .agenda-create__summary code {
-    font-size: var(--fs-caption);
-    word-break: break-all;
+  font-size: var(--fs-caption);
+  word-break: break-all;
 }
 
 /* ---- el panel de la fase ------------------------------------------------- */
 
 .agenda-create__panel {
-    margin-bottom: var(--sp-4);
+  margin-bottom: var(--sp-4);
 }
 
 .agenda-create__note {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: var(--fs-caption);
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
 }
 
 /* ---- franjas ------------------------------------------------------------- */
 
 .agenda-create__rules {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
-    margin-bottom: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
 }
 
 .agenda-create__rule {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-3);
-    align-items: flex-end;
-    padding: var(--sp-3);
-    background: var(--bg-surface-alt);
-    border-radius: var(--r-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: flex-end;
+  padding: var(--sp-3);
+  background: var(--bg-surface-alt);
+  border-radius: var(--r-md);
 }
 
 /* ---- navegación ---------------------------------------------------------- */
 
 .agenda-create__nav {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--sp-3);
-    margin-top: var(--sp-4);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
 }
 
 /* ---- finalización -------------------------------------------------------- */
 
 .agenda-create__done-title {
-    margin: 0 0 var(--sp-2);
+  margin: 0 0 var(--sp-2);
 }
 
 .agenda-create__done-text {
-    margin: 0 0 var(--sp-4);
-    color: var(--text-secondary);
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
 }
 
 .agenda-create__summary {
-    display: grid;
-    gap: var(--sp-3);
-    margin: 0 0 var(--sp-4);
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
 }
 
 .agenda-create__summary div {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .agenda-create__summary dt {
-    color: var(--text-muted);
-    font-size: var(--fs-caption);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
 }
 
 .agenda-create__summary dd {
-    margin: 0;
+  margin: 0;
+}
+
+/* FX-1 · la frase que reemplaza a los tres campos técnicos cuando el médico
+   publica lo suyo. No es un campo: es la confirmación de de quién es la agenda. */
+.agenda-create__identidad {
+  color: var(--text-secondary);
+  margin: 0 0 var(--sp-3);
 }

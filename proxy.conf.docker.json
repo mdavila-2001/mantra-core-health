@@ -34,7 +34,16 @@
       "/visit-agenda",
       "/visit-requests",
       "/visit-records",
-      "/visit-surveys"
+      "/visit-surveys",
+      "/community",
+      "/notifications",
+      "/system-context",
+      "/insurance-carriers",
+      "/insurance-brokers",
+      "/cds",
+      "/billing/service-catalog",
+      "/diagnostics/patients",
+      "/diagnostics/work-orders"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,
