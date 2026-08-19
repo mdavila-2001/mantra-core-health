@@ -65,3 +65,17 @@ test('F-25 · ninguna tarjeta de la Guía muestra el nombre de otra', async ({ p
   expect(nombres.length, 'la guía debería traer profesionales').toBeGreaterThan(0);
   expect(cruces.map((c) => c.texto)).toEqual([]);
 });
+
+test('F-15 · el directorio de laboratorios tiene qué mostrar', async ({ page }) => {
+  const api = await contextoDeApi();
+  const paciente = await crearPaciente(api);
+  await api.dispose();
+
+  await entrar(page, paciente);
+  await irA(page, '/laboratory-directory');
+  await estable(page);
+
+  const texto = (await page.locator('app-root').textContent()) ?? '';
+  // Los nombres los siembra `tools/redesa/seed-diagnostic-units.mjs`.
+  expect(texto).toContain('Laboratorio');
+});
