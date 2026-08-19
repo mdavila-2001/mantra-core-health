@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { FilesClient } from '../../../core/data-access/files/files.client';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import type {
@@ -23,6 +24,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { conceptosDe } from '../../account/my-profile/practitioner-profile/practitioner-profile';
 import { PractitionerProfileView } from '../../account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view';
+import { PractitionerAvailability } from '../practitioner-availability/practitioner-availability';
 import type {
   AfiliacionVisible,
   EspecialidadVisible,
@@ -73,7 +75,7 @@ interface PerfilResuelto {
  */
 @Component({
   selector: 'app-practitioner-detail',
-  imports: [PageHeader, PractitionerProfileView, ViewStateHost],
+  imports: [PageHeader, PractitionerAvailability, PractitionerProfileView, ViewStateHost],
   templateUrl: './practitioner-detail.html',
   styleUrl: './practitioner-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,6 +95,18 @@ export class PractitionerDetail {
 
   protected readonly titulo = computed(() => this.visible()?.nombre ?? 'Profesional');
 
+  /**
+   * El perfil sobre el que se piden los horarios (TP-4).
+   *
+   * Sale del parámetro de la ruta y no del perfil resuelto: es el mismo valor,
+   * y esperarlo del perfil ataría la disponibilidad a que la ficha entera
+   * cargue bien — cuando son dos lecturas que pueden fallar por separado.
+   */
+  protected readonly profileIdVisible = signal('');
+
+  /** La organización desde la que se mira; decide qué agendas se listan. */
+  protected readonly tenantId = inject(AuthService).activeTenantId;
+
   private profileId: string | null = null;
 
   constructor() {
@@ -101,6 +115,10 @@ export class PractitionerDetail {
     // profesional anterior.
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.profileId = params.get('profileId');
+      // TP-4: la disponibilidad se pide por el perfil de la ruta, no por el
+      // perfil resuelto: es el mismo valor, y esperar a la ficha ataría dos
+      // lecturas que pueden fallar por separado.
+      this.profileIdVisible.set(this.profileId ?? '');
       this.cargar();
     });
   }
@@ -249,7 +267,9 @@ function idiomasDe(
     id: idioma.languageConceptId,
     nombre: label(etiquetas, idioma.languageConceptId),
     nivel:
-      idioma.proficiencyConceptId === undefined ? '' : label(etiquetas, idioma.proficiencyConceptId),
+      idioma.proficiencyConceptId === undefined
+        ? ''
+        : label(etiquetas, idioma.proficiencyConceptId),
     interpreta: idioma.clinicalInterpretationAllowed,
   }));
 }
