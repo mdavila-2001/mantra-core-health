@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
