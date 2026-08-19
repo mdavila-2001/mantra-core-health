@@ -101,9 +101,7 @@ export class PractitionersDirectory {
     return todos
       .map((grupo) => ({
         ...grupo,
-        profesionales: grupo.profesionales.filter((profesional) =>
-          coincide(profesional, busqueda),
-        ),
+        profesionales: grupo.profesionales.filter((profesional) => coincide(profesional, busqueda)),
       }))
       .filter((grupo) => grupo.profesionales.length > 0);
   });

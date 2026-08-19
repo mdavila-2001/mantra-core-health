@@ -6,3 +6,20 @@
 :host {
   display: block;
 }
+
+/* TP-4: los horarios van debajo de la ficha, con su propio encabezado. Es una
+   sección aparte y no una pestaña más del perfil porque responde otra
+   pregunta: la ficha dice quién es, esto dice cuándo se lo puede ver. */
+.ficha__horarios {
+  margin-block-start: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ficha__horarios-titulo {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}

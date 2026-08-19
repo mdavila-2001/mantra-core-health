@@ -1,0 +1,76 @@
+/* La mini-disponibilidad del profesional, sede por sede (TP-4).
+   Sólo tokens REDSAT: el contraste AA lo garantiza la paleta, y un hex a mano
+   lo rompe sin que nadie se entere. */
+
+.disponibilidad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.disponibilidad__semana {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.disponibilidad__rango {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.disponibilidad__sede {
+  display: block;
+}
+
+.disponibilidad__sede-nombre {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* Los cupos son una lista de verdad y no una fila de botones sueltos: quien
+   navega con lector oye «lista de 12 elementos» y sabe cuánto hay antes de
+   recorrerlos. */
+.disponibilidad__cupos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.disponibilidad__proximo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.disponibilidad__vacio {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* En pantalla angosta los dos botones de semana no caben a los lados del
+   rango; apilarlos es mejor que partir las etiquetas. */
+@media (max-width: 30rem) {
+  .disponibilidad__semana {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .disponibilidad__rango {
+    order: -1;
+    text-align: center;
+  }
+}

@@ -13,5 +13,17 @@
 <app-view-state-host [state]="estado()" (retry)="recargar()">
   @if (visible(); as perfil) {
     <app-practitioner-profile-view [perfil]="perfil" [esPropio]="false" />
+
+    <!-- TP-4: los horarios, donde se toma la decisión.
+         La ficha decía en qué sedes atiende, pero para saber CUÁNDO había que
+         salir de acá, entrar a la reserva y elegirlo de una lista. Quien
+         compara dos profesionales hacía ese viaje dos veces. -->
+    <section class="ficha__horarios">
+      <h2 class="ficha__horarios-titulo">Sedes y horarios</h2>
+      <app-practitioner-availability
+        [practitionerProfileId]="profileIdVisible()"
+        [tenantId]="tenantId()"
+      />
+    </section>
   }
 </app-view-state-host>
