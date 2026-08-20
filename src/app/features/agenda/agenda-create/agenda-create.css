@@ -191,3 +191,38 @@
   display: flex;
   gap: var(--sp-3);
 }
+
+/* ---- la vista previa -------------------------------------------------------- */
+
+.agenda-create__previa {
+  padding: var(--sp-3);
+  border: var(--stroke-1) dashed var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.agenda-create__previa-titulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.agenda-create__previa-dia {
+  margin: 0 0 var(--sp-1);
+}
+
+.agenda-create__previa-cuenta {
+  margin-right: var(--sp-2);
+}
+
+.agenda-create__previa-horas {
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda-create__previa-resto {
+  margin: 0 0 var(--sp-2);
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
