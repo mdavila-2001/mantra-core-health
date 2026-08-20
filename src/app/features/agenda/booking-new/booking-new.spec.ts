@@ -280,21 +280,23 @@ describe('BookingNew', () => {
 
     interno<(t: string) => void>('buscarPaciente')('ana');
 
-    http.expectOne((r) => r.url === '/profiles/patients').flush({
-      items: [
-        {
-          profileId: 'pp-1',
-          personId: 'p-1',
-          patientCode: 'PAC-1',
-          displayName: 'Ana Salas',
-          birthDate: null,
-          deceased: false,
-        },
-      ],
-      count: 1,
-      limit: 10,
-      nextCursor: null,
-    });
+    http
+      .expectOne((r) => r.url === '/profiles/patients')
+      .flush({
+        items: [
+          {
+            profileId: 'pp-1',
+            personId: 'p-1',
+            patientCode: 'PAC-1',
+            displayName: 'Ana Salas',
+            birthDate: null,
+            deceased: false,
+          },
+        ],
+        count: 1,
+        limit: 10,
+        nextCursor: null,
+      });
 
     expect(interno<() => readonly ReferenceOption[]>('candidatos')()).toEqual([
       { value: 'pp-1', label: 'Ana Salas', hint: 'PAC-1' },

@@ -1,0 +1,160 @@
+/* ============================================================================
+    El mes de ocupación del profesional.
+
+    Mobile-first: la grilla entra en el ancho del teléfono achicando la celda,
+    no haciendo scroll horizontal — un calendario que se desplaza de costado
+    deja de responder la pregunta «cómo viene el mes» de un vistazo.
+
+    Los tonos salen de los tríos `--st-*`. Ámbar NO se usa como estado: en este
+    sistema es el color de la acción única.
+    ========================================================================== */
+
+.mes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.mes__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.mes__titulo {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+/* Sólo la inicial: `capitalize` daría «Agosto De 2026». */
+.mes__titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.mes__grilla {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.mes__leyenda {
+  margin-bottom: var(--sp-2);
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+  text-align: start;
+}
+
+.mes__grilla th {
+  padding-bottom: var(--sp-1);
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.mes__grilla th abbr {
+  text-decoration: none;
+}
+
+.mes__celda {
+  padding: 1px;
+  vertical-align: top;
+}
+
+.mes__dia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  inline-size: 100%;
+  min-block-size: 3.25rem;
+  padding: var(--sp-1);
+  border: var(--stroke-1) solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg-default);
+  cursor: pointer;
+}
+
+.mes__dia:focus-visible {
+  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline-offset: 1px;
+}
+
+.mes__numero {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mes__numero--fuera {
+  display: block;
+  padding: var(--sp-1);
+  color: var(--fg-subtle);
+  text-align: center;
+}
+
+.mes__cuenta {
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.mes__motivo {
+  font-size: var(--fs-xs);
+  line-height: 1.1;
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ---- los cinco estados ------------------------------------------------------ */
+
+/* Sin agenda: apagado y sin número de turnos. El patrón laboral emerge solo. */
+[data-estado='sin-agenda'] .mes__dia {
+  background: var(--bg-surface-alt);
+  color: var(--fg-muted);
+}
+
+[data-estado='libre'] .mes__dia {
+  background: var(--st-success-bg);
+  border-color: var(--st-success-border);
+  color: var(--st-success-fg);
+}
+
+[data-estado='con-reservas'] .mes__dia {
+  background: var(--st-primary-bg);
+  border-color: var(--st-primary-border);
+  color: var(--st-primary-fg);
+}
+
+[data-estado='lleno'] .mes__dia {
+  background: var(--st-info-bg);
+  border-color: var(--st-info-border);
+  color: var(--st-info-fg);
+}
+
+/* Bloqueado: gris CON su motivo, que es lo que lo distingue de «sin agenda». */
+[data-estado='bloqueado'] .mes__dia {
+  background: var(--bg-surface-alt);
+  border-style: dashed;
+  border-color: var(--border-strong);
+  color: var(--fg-muted);
+}
+
+.mes__celda--hoy .mes__dia {
+  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline-offset: -2px;
+}
+
+.mes__celda--pasado .mes__dia {
+  opacity: 0.65;
+}
+
+@media (min-width: 40rem) {
+  .mes__dia {
+    min-block-size: 4.5rem;
+    padding: var(--sp-2);
+  }
+}

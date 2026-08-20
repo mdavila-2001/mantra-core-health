@@ -17,6 +17,15 @@ export const AGENDA_ROUTE = '/schedule';
 export const AGENDA_CREATE_ROUTE = `${AGENDA_ROUTE}/new`;
 
 /**
+ * «Mi agenda» (MAC-4): el horario publicado del profesional, en palabras.
+ *
+ * Cuelga de la sección igual que el alta. Es donde el médico vuelve a leer lo
+ * que publicó —posible recién desde que existe el `GET` de plantillas— y desde
+ * donde va a colgar el mes (MAC-5) y el día (MAC-6).
+ */
+export const AGENDA_MINE_ROUTE = `${AGENDA_ROUTE}/mine`;
+
+/**
  * La reserva de un cupo concreto (V41-09 → V41-05: hold → confirm).
  *
  * El cupo viaja en la ruta; el recurso y la franja van por query string
