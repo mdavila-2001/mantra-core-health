@@ -878,7 +878,7 @@ export const routes: Routes = [
       // las demás pantallas de operación. La autoridad sigue siendo el backend
       // (`SCHEDULING_ADMIN`); el guard de la sección sólo evita ofrecer la
       // pantalla a quien la API igual negaría.
-      pantallaDeOperacion('schedule', 'new', 'Crear agenda', () =>
+      pantallaDeOperacion('schedule', 'new', 'Publicar mi agenda', () =>
         import('./features/agenda/agenda-create/agenda-create').then((m) => m.AgendaCreate),
       ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
