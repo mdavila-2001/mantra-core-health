@@ -28,7 +28,11 @@ export interface Condition {
   readonly verificationStatusConceptId?: string;
   readonly severityConceptId?: string;
   readonly encounterId?: string;
+  /** Curso clínico: agudo/crónico/subagudo/recurrente (Patch v4.0.8). */
+  readonly clinicalCourseConceptId?: string;
   readonly onsetAt?: Date;
+  /** Fecha esperada de resolución o próxima revisión (Patch v4.0.8). */
+  readonly expectedResolutionAt?: Date;
   readonly resolvedAt?: Date;
   readonly createdAt: Date;
 }
@@ -395,21 +399,44 @@ export interface NewCondition {
   readonly categoryConceptId?: string;
   readonly severityConceptId?: string;
   readonly lateralityConceptId?: string;
+  /**
+   * Curso clínico (Patch v4.0.8). Sin declarar es un dato legítimo —el
+   * catálogo trae `CONDITION_COURSE_UNKNOWN` para eso—, no un olvido.
+   */
+  readonly clinicalCourseConceptId?: string;
   readonly onsetAt?: Date;
+  /** Fecha esperada de resolución. Sólo tiene sentido en curso agudo/subagudo. */
+  readonly expectedResolutionAt?: Date;
 }
 
 /**
  * La condición recién registrada.
  *
  * El backend fija el estado clínico y el de verificación —no los recibe— y los
- * devuelve para que la pantalla no tenga que suponerlos.
+ * devuelve para que la pantalla no tenga que suponerlos. El curso clínico sí
+ * se manda (es del alta) y por eso también vuelve.
  */
 export interface ConditionRegistration {
   readonly id: string;
   readonly patientProfileId: string;
   readonly clinicalStatus: string | null;
   readonly verificationStatus: string | null;
+  readonly clinicalCourse: string | null;
   readonly createdAt: Date;
+}
+
+/* ---- Patch v4.0.8: transición del estado clínico ------------------------- */
+
+/**
+ * Lo que hace falta para transicionar el estado clínico de una condición ya
+ * registrada (`POST /clinical/conditions/:id/change-status`).
+ *
+ * El motivo es obligatorio en el contrato: es el dato regulado que explica,
+ * después, por qué un diagnóstico dejó de contar como vigente.
+ */
+export interface ChangeConditionClinicalStatus {
+  readonly newClinicalStatusConceptId: string;
+  readonly reasonText: string;
 }
 
 /**

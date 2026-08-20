@@ -10,6 +10,7 @@ import type {
   CareEpisodeRegistration,
   CarePlan,
   CarePlanActivity,
+  ChangeConditionClinicalStatus,
   ChartDocument,
   ChartNote,
   ClinicalSummary,
@@ -314,7 +315,36 @@ export class ClinicalClient {
     return this.http
       .post<WireConditionRegistration>(
         this.url('/clinical/conditions'),
-        sinAusentes({ ...condicion, onsetAt: instanteDe(condicion.onsetAt) }),
+        sinAusentes({
+          ...condicion,
+          onsetAt: instanteDe(condicion.onsetAt),
+          expectedResolutionAt: instanteDe(condicion.expectedResolutionAt),
+        }),
+      )
+      .pipe(map(toConditionRegistration));
+  }
+
+  /**
+   * `POST /clinical/conditions/:id/change-status` — transiciona el estado
+   * clínico de un diagnóstico ya registrado (Patch v4.0.8).
+   *
+   * A diferencia del alta, esta escritura sí tiene un `422` que contar como
+   * precondición del negocio: la transición pedida puede no ser válida desde
+   * el estado actual, o puede tratarse de resolver una condición crónica. La
+   * pantalla que llame esto tiene que distinguirlo de un error real, igual
+   * que hace `issueMedicationRequest` con la política de firma.
+   *
+   * @param conditionId - Condición a transicionar.
+   * @param cambio - Estado destino y motivo (obligatorio).
+   */
+  changeConditionStatus(
+    conditionId: string,
+    cambio: ChangeConditionClinicalStatus,
+  ): Observable<ConditionRegistration> {
+    return this.http
+      .post<WireConditionRegistration>(
+        this.url(`/clinical/conditions/${encodeURIComponent(conditionId)}/change-status`),
+        cambio,
       )
       .pipe(map(toConditionRegistration));
   }
@@ -485,7 +515,10 @@ function topeDe(limit: number | undefined): HttpParams {
 
 type Fechas<T, K extends keyof T> = Omit<T, K> & Partial<Readonly<Record<K, string>>>;
 
-type WireCondition = Omit<Fechas<Condition, 'onsetAt' | 'resolvedAt'>, 'createdAt'> & {
+type WireCondition = Omit<
+  Fechas<Condition, 'onsetAt' | 'expectedResolutionAt' | 'resolvedAt'>,
+  'createdAt'
+> & {
   readonly createdAt: string;
 };
 
@@ -642,10 +675,17 @@ function toEncounterRegistration({
   };
 }
 
-function toCondition({ onsetAt, resolvedAt, createdAt, ...resto }: WireCondition): Condition {
+function toCondition({
+  onsetAt,
+  expectedResolutionAt,
+  resolvedAt,
+  createdAt,
+  ...resto
+}: WireCondition): Condition {
   return {
     ...resto,
     ...fecha('onsetAt', onsetAt),
+    ...fecha('expectedResolutionAt', expectedResolutionAt),
     ...fecha('resolvedAt', resolvedAt),
     createdAt: new Date(createdAt),
   };

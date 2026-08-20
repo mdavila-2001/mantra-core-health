@@ -318,3 +318,32 @@
     Descargar PDF
   </button>
 </ng-template>
+
+<!-- Patch v4.0.8: transicionar el estado clínico de un diagnóstico. El
+     selector ofrece los seis estados del value set; el backend es quien
+     decide si la transición pedida es válida desde el estado actual —no se
+     replica esa máquina acá, para no tener dos versiones de la misma regla. -->
+<ng-template #celdaAcciones let-fila>
+  <div class="expediente__accion-estado">
+    <app-concept-select
+      [target]="targetEstadoClinico"
+      [value]="destinoEstadoDe(fila.id)"
+      (valueChange)="elegirDestinoEstado(fila.id, $event)"
+      [labels]="etiquetasDeEstadoClinico"
+      placeholder="Cambiar a…"
+    />
+    @if (destinoEstadoDe(fila.id) !== null) {
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        data-testid="expediente-cambiar-estado"
+        [disabled]="cambiandoEstado() !== null"
+        (clicked)="cambiarEstadoClinico(fila)"
+      >
+        Aplicar
+      </button>
+    }
+  </div>
+</ng-template>
