@@ -32,11 +32,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import {
-  errorMessageOf,
-  UUID_ERROR,
-  UUID_PATTERN,
-} from '../../../shared/forms/form-support';
+import { errorMessageOf, UUID_ERROR, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /**
  * Roles que pueden construir una agenda.
@@ -299,9 +295,7 @@ export class AgendaCreate {
     }));
   });
 
-  protected readonly diasActivos = computed(() =>
-    this.diasVisibles().filter((dia) => dia.activo),
-  );
+  protected readonly diasActivos = computed(() => this.diasVisibles().filter((dia) => dia.activo));
 
   /** Sin un solo día encendido no hay horario que publicar. */
   protected readonly sinDias = computed(() => this.diasActivos().length === 0);
@@ -587,8 +581,7 @@ export class AgendaCreate {
 
   private cargarSedes(): void {
     this.organizaciones.listPractices().subscribe({
-      next: (practicas) =>
-        this.sedes.set(practicas.map((p) => ({ value: p.id, label: p.name }))),
+      next: (practicas) => this.sedes.set(practicas.map((p) => ({ value: p.id, label: p.name }))),
       // Sin sedes el campo simplemente no se ofrece: `practiceId` es opcional
       // en el contrato y no vale bloquear la publicación por una lectura
       // accesoria.
@@ -620,9 +613,7 @@ export class AgendaCreate {
       return v.desde === primero.desde && v.hasta === primero.hasta;
     });
 
-    const horario = mismoHorario
-      ? ` de ${enHoras(primero.desde)} a ${enHoras(primero.hasta)}`
-      : '';
+    const horario = mismoHorario ? ` de ${enHoras(primero.desde)} a ${enHoras(primero.hasta)}` : '';
     return `${dias}${horario}, consultas de ${primero.duracion} minutos`;
   });
 }

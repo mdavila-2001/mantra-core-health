@@ -577,3 +577,21 @@ export interface PublishedTemplatePage {
   readonly items: readonly PublishedTemplate[];
   readonly count: number;
 }
+
+/** Un bloqueo de disponibilidad ya publicado. */
+export interface PublishedException {
+  readonly id: string;
+  readonly exceptionTypeConceptId: string;
+  readonly startAt: string;
+  readonly endAt: string;
+  /** Por qué. Lo lee el profesional, no el paciente. */
+  readonly reason?: string;
+  /** `true` cuando la excepción ABRE disponibilidad en vez de cerrarla. */
+  readonly isAvailable?: boolean;
+}
+
+/** La respuesta del listado de excepciones de un recurso. */
+export interface AvailabilityExceptionPage {
+  readonly items: readonly PublishedException[];
+  readonly count: number;
+}

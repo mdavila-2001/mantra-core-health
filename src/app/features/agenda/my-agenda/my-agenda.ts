@@ -5,6 +5,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
   AgendaResource,
+  AgendaSlot,
   PublishedTemplate,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -13,8 +14,11 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
+import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { AGENDA_CREATE_ROUTE } from '../agenda.routes';
 
 /** Los días de la semana en el orden en que se leen; el índice es `dayOfWeek`. */
@@ -102,7 +106,7 @@ interface Patron {
  */
 @Component({
   selector: 'app-my-agenda',
-  imports: [Alert, AppButton, AppButtonLink, PageHeader, RouterLink, ViewStateHost],
+  imports: [Alert, AppButton, AppButtonLink, MonthView, PageHeader, RouterLink, ViewStateHost],
   templateUrl: './my-agenda.html',
   styleUrl: './my-agenda.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,6 +114,7 @@ interface Patron {
 export class MyAgenda {
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
+  private readonly dialogs = inject(DialogService);
 
   protected readonly rutaDePublicar = AGENDA_CREATE_ROUTE;
 
@@ -121,6 +126,18 @@ export class MyAgenda {
   /** Hasta cuándo llegan los cupos ya materializados. */
   protected readonly cuposHasta = signal<Date | null>(null);
   protected readonly generando = signal(false);
+
+  /* -- La solapa del mes ---------------------------------------------------- */
+
+  /** Qué se está mirando: el patrón o la ocupación. */
+  protected readonly solapa = signal<'patron' | 'mes'>('patron');
+
+  /** El mes visible; siempre su día 1. */
+  protected readonly mesVisible = signal(primerDiaDelMes(new Date()));
+
+  protected readonly cuposDelMes = signal<readonly AgendaSlot[]>([]);
+  protected readonly bloqueosDelMes = signal<readonly BloqueoDelMes[]>([]);
+  protected readonly cargandoMes = signal(false);
 
   /**
    * El horario, dicho en palabras.
@@ -265,6 +282,127 @@ export class MyAgenda {
    * Es el botón del aviso: extiende tres meses más desde donde terminan los
    * actuales. Sustituye al worker que todavía no existe.
    */
+  /**
+   * Bloquea un día desde el calendario.
+   *
+   * Es la fase 5 del alta vieja en su casa natural: bloquear un día se decide
+   * mirando el mes, no rellenando un formulario para poder terminar de
+   * publicar. El motivo es obligatorio porque es lo único que después
+   * distingue el día bloqueado del día en que sencillamente no atiende.
+   *
+   * El bloqueo va de medianoche a medianoche: la API cierra los cupos libres
+   * que se solapan y **no toca las citas ya reservadas** —eso lo decide el
+   * profesional una por una, no un bloqueo masivo—.
+   */
+  protected async bloquearDia(fecha: Date): Promise<void> {
+    const recurso = this.recurso();
+    if (recurso === null) return;
+
+    const cuando = fecha.toLocaleDateString('es-BO', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: `Bloquear el ${cuando}`,
+        message:
+          'Los turnos libres de ese día dejan de ofrecerse. Las citas ya reservadas no se tocan: ' +
+          'si querés cancelarlas, hacelo una por una.',
+        confirmLabel: 'Bloquear el día',
+      },
+      {
+        label: '¿Por qué?',
+        placeholder: 'Congreso, vacaciones, trámite…',
+        hint: 'Lo ves sólo vos, para acordarte cuando mires el mes.',
+        minLength: 3,
+        maxLength: 200,
+      },
+    );
+    if (motivo === null) return;
+
+    const desde = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    const hasta = new Date(desde);
+    hasta.setDate(hasta.getDate() + 1);
+
+    this.scheduling
+      .createException(recurso.id, {
+        exceptionType: 'ABSENCE',
+        startAt: desde.toISOString(),
+        endAt: hasta.toISOString(),
+        reason: motivo,
+      })
+      .subscribe({
+        // Se recarga el mes entero y no se agrega el bloqueo a mano: la API
+        // además cerró cupos, así que la ocupación cambió y no sólo la lista.
+        next: () => this.cargarMes(),
+        error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
+      });
+  }
+
+  /* -- El mes ---------------------------------------------------------------- */
+
+  /** Cambia de solapa; la del mes carga sus datos la primera vez. */
+  protected verSolapa(cual: 'patron' | 'mes'): void {
+    this.solapa.set(cual);
+    if (cual === 'mes' && this.cuposDelMes().length === 0) {
+      this.cargarMes();
+    }
+  }
+
+  protected cambiarMes(nuevo: Date): void {
+    this.mesVisible.set(nuevo);
+    this.cargarMes();
+  }
+
+  /**
+   * Los cupos y los bloqueos del mes visible, en dos llamadas.
+   *
+   * Una por mes y no una por día: agrupar en el cliente es barato y pedir
+   * treinta veces lo mismo no lo es. La ventana de un mes entra holgada en el
+   * tope de 92 días de la API.
+   */
+  private cargarMes(): void {
+    const recurso = this.recurso();
+    if (recurso === null) return;
+
+    const desde = this.mesVisible();
+    const hasta = sumarMeses(desde, 1);
+    this.cargandoMes.set(true);
+
+    this.scheduling
+      .listSlots({ resourceId: recurso.id, from: desde, to: hasta, limit: 500 })
+      .subscribe({
+        next: (pagina) => {
+          this.cuposDelMes.set(pagina.items);
+          this.cargandoMes.set(false);
+        },
+        error: () => {
+          this.cuposDelMes.set([]);
+          this.cargandoMes.set(false);
+        },
+      });
+
+    this.scheduling.listExceptions(recurso.id, { from: desde, to: hasta }).subscribe({
+      next: (pagina) =>
+        this.bloqueosDelMes.set(
+          pagina.items
+            // Las excepciones que ABREN disponibilidad no son bloqueos: pintarlas
+            // grises diría lo contrario de lo que pasa.
+            .filter((e) => e.isAvailable !== true)
+            .map((e) => ({
+              desde: new Date(e.startAt),
+              hasta: new Date(e.endAt),
+              motivo: e.reason ?? null,
+            })),
+        ),
+      // Sin los bloqueos el mes sigue sirviendo: muestra la ocupación y los
+      // bloqueados se ven como sin agenda. Peor sería no mostrar nada.
+      error: () => this.bloqueosDelMes.set([]),
+    });
+  }
+
   protected generarSiguientePeriodo(): void {
     const actual = this.estado();
     const hasta = this.cuposHasta();

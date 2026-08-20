@@ -70,12 +70,10 @@ describe('MyAgenda', () => {
 
   /** Responde la plantilla y, después, los cupos. */
   function conPlantilla(rules: unknown[], extra: Record<string, unknown> = {}): void {
-    http
-      .expectOne('/scheduling/resources/res-1/templates')
-      .flush({
-        items: [{ id: 'tpl-1', name: 'Horario', statusConceptId: 'c', rules, ...extra }],
-        count: 1,
-      });
+    http.expectOne('/scheduling/resources/res-1/templates').flush({
+      items: [{ id: 'tpl-1', name: 'Horario', statusConceptId: 'c', rules, ...extra }],
+      count: 1,
+    });
     fixture.detectChanges();
   }
 

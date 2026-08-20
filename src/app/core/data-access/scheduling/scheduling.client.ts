@@ -44,6 +44,7 @@ import type {
   WaitlistPage,
   WaitlistQuery,
   PublishedTemplatePage,
+  AvailabilityExceptionPage,
 } from './scheduling.types';
 
 /**
@@ -290,6 +291,27 @@ export class SchedulingClient {
    * disponibilidad (UC-41-04). Bloquea los slots libres que se solapan; las
    * citas ya reservadas no se tocan.
    */
+  /**
+   * `GET /scheduling/resources/:id/exceptions` — los bloqueos de una ventana.
+   *
+   * Es el hueco gemelo del de plantillas: se podían crear y no leer. Sin esto,
+   * el mes no puede distinguir un día **bloqueado** de un día **sin agenda**:
+   * los dos aparecen sin cupos, y la diferencia es justamente lo que hay que
+   * mostrarle al profesional.
+   */
+  listExceptions(
+    resourceId: string,
+    ventana: { from: Date; to: Date },
+  ): Observable<AvailabilityExceptionPage> {
+    const params = new HttpParams()
+      .set('from', ventana.from.toISOString())
+      .set('to', ventana.to.toISOString());
+    return this.http.get<AvailabilityExceptionPage>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/exceptions`),
+      { params },
+    );
+  }
+
   createException(
     resourceId: string,
     exception: NewAvailabilityException,

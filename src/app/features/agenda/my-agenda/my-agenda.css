@@ -68,3 +68,35 @@
 .mi-agenda__cupos {
   margin-top: var(--sp-4);
 }
+
+/* ---- las solapas ------------------------------------------------------------ */
+
+.mi-agenda__solapas {
+  display: flex;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-4);
+  border-bottom: var(--stroke-1) solid var(--border-subtle);
+}
+
+.mi-agenda__solapa {
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-bottom: var(--stroke-2) solid transparent;
+  background: none;
+  color: var(--fg-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mi-agenda__solapa:focus-visible {
+  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline-offset: -2px;
+}
+
+/* Activa: subrayado Y color. El subrayado sostiene el estado cuando el color
+   no se distingue. */
+.mi-agenda__solapa--activa {
+  border-bottom-color: var(--st-primary-border);
+  color: var(--fg-default);
+  font-weight: 600;
+}

@@ -5,6 +5,41 @@
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
   @if (patron(); as p) {
+    <!-- Dos preguntas distintas sobre la misma agenda: «qué horario tengo» y
+         «cómo viene mi carga». Activación manual: la solapa se elige, no se
+         carga sola al mover el foco. -->
+    <div class="mi-agenda__solapas" role="tablist" aria-label="Vistas de mi agenda">
+      <button
+        type="button"
+        role="tab"
+        class="mi-agenda__solapa"
+        [class.mi-agenda__solapa--activa]="solapa() === 'patron'"
+        [attr.aria-selected]="solapa() === 'patron'"
+        (click)="verSolapa('patron')"
+      >
+        Mi horario
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="mi-agenda__solapa"
+        [class.mi-agenda__solapa--activa]="solapa() === 'mes'"
+        [attr.aria-selected]="solapa() === 'mes'"
+        (click)="verSolapa('mes')"
+      >
+        Cómo viene el mes
+      </button>
+    </div>
+
+    @if (solapa() === 'mes') {
+      <app-month-view
+        [mes]="mesVisible()"
+        [cupos]="cuposDelMes()"
+        [bloqueos]="bloqueosDelMes()"
+        (mesElegido)="cambiarMes($event)"
+        (diaElegido)="bloquearDia($event)"
+      />
+    } @else {
     <section class="mi-agenda__tarjeta">
       <h2 class="mi-agenda__titulo">Atendés estos días</h2>
 
@@ -57,6 +92,7 @@
         Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
         >.
       </p>
+    }
     }
   }
 </app-view-state-host>
