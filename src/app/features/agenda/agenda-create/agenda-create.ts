@@ -6,6 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -17,6 +18,7 @@ import type {
   ScheduleRule,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { calcularTurnos, type Calculo } from './agenda-turnos';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -150,6 +152,7 @@ interface DiaVisible {
     PageHeader,
     RouterLink,
     Select,
+    TitleCasePipe,
   ],
   templateUrl: './agenda-create.html',
   styleUrl: './agenda-create.css',
@@ -302,6 +305,28 @@ export class AgendaCreate {
 
   /** Sin un solo día encendido no hay horario que publicar. */
   protected readonly sinDias = computed(() => this.diasActivos().length === 0);
+
+  /**
+   * Los turnos que van a salir, calculados en el navegador.
+   *
+   * Sin una sola petición: los cupos son una división —{@link calcularTurnos}—,
+   * y esperarlos del servidor para poder mostrarlos convertiría cada tecla en
+   * un viaje de red. El contraste contra lo que el backend generó de verdad se
+   * hace después de publicar, en {@link compararConLoGenerado}.
+   */
+  protected readonly vistaPrevia = computed<Calculo>(() =>
+    calcularTurnos(
+      this.diasActivos().map((dia) => {
+        const v = this.semana.at(dia.indice).getRawValue();
+        return {
+          dia: dia.largo.toLowerCase(),
+          desde: v.desde,
+          hasta: v.hasta,
+          duracion: v.duracion,
+        };
+      }),
+    ),
+  );
 
   /**
    * El nombre del recurso, derivado.
@@ -524,11 +549,36 @@ export class AgendaCreate {
       .subscribe({
         next: (resultado) => {
           this.cuposCreados.set(resultado.created);
+          this.compararConLoGenerado(resultado.created);
           this.estado.set(ready(null));
           this.publicado.set(true);
         },
         error: (error: unknown) => this.fallar(error),
       });
+  }
+
+  /**
+   * Detector de deriva entre la vista previa y el backend.
+   *
+   * La vista previa calcula turnos **por semana**; `generate-slots` los
+   * materializa sobre un horizonte de meses, así que los números no son
+   * comparables de frente: lo que tiene que cumplirse es que lo generado sea un
+   * múltiplo de lo previsto por semana. Si no lo es, alguno de los dos cambió
+   * de criterio —el caso temido es que el backend deje de truncar— y conviene
+   * enterarse por la consola antes que por un paciente.
+   *
+   * No bloquea ni molesta al médico: su agenda quedó publicada igual.
+   */
+  private compararConLoGenerado(generados: number): void {
+    const porSemana = this.vistaPrevia().total;
+    if (porSemana === 0 || generados === 0) return;
+    if (generados % porSemana === 0) return;
+
+    console.warn(
+      `[agenda] La vista previa calculó ${porSemana} turnos por semana y el ` +
+        `servidor generó ${generados}, que no es múltiplo. Puede haber cambiado ` +
+        'la regla del resto: ver calcularTurnos.',
+    );
   }
 
   private fallar(error: unknown): void {

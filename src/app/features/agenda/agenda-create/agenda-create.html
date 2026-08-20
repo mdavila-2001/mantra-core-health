@@ -103,6 +103,46 @@
           ↻ Repetir este horario en todos los días
         </button>
       }
+
+      <!-- La vista previa: los turnos que van a salir, sin llamar a la API.
+           Se recalcula sola al cambiar una hora o una duración. -->
+      @if (!sinDias()) {
+        <div class="agenda-create__previa" role="status">
+          <h3 class="agenda-create__previa-titulo">Así van a quedar tus turnos</h3>
+
+          @for (dia of vistaPrevia().porDia; track dia.dia) {
+            <p class="agenda-create__previa-dia">
+              <strong class="agenda-create__previa-cuenta"
+                >{{ dia.dia | titlecase }}: {{ dia.turnos.length }}
+                {{ dia.turnos.length === 1 ? 'turno' : 'turnos' }}</strong
+              >
+              @if (dia.turnos.length > 0) {
+                <span class="agenda-create__previa-horas">
+                  @for (turno of dia.turnos.slice(0, 3); track turno.desde) {
+                    {{ turno.desde }} ·
+                  }
+                  @if (dia.turnos.length > 4) {
+                    …·
+                  }
+                  @if (dia.turnos.length > 3) {
+                    {{ dia.turnos[dia.turnos.length - 1].desde }}
+                  }
+                </span>
+              }
+            </p>
+
+            <!-- El resto, dicho como información y no como pregunta: el backend
+                 trunca (verificado), así que no hay nada que decidir. -->
+            @if (dia.restoDesde !== null) {
+              <p class="agenda-create__previa-resto">
+                Te queda libre de {{ dia.restoDesde }} a
+                {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }} ({{ dia.resto }}
+                min): no alcanza para otra consulta.
+              </p>
+            }
+          }
+        </div>
+      }
     </section>
 
     <!-- ── La vigencia, preguntada en humano ─────────────────────────────── -->
