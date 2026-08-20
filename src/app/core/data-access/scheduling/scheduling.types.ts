@@ -157,6 +157,14 @@ export interface Booking {
   readonly checkedInAt?: Date;
   readonly reasonText?: string;
   /**
+   * Nombre del paciente.
+   *
+   * Viaja con la **misma regla que el motivo**: lo manda el servidor sólo al
+   * titular y al profesional que atiende en esa agenda. Ausente no significa
+   * «no tiene nombre», significa «no te corresponde verlo».
+   */
+  readonly patientName?: string;
+  /**
    * Por qué la cita está como está, cuando el último cambio lo explicó.
    *
    * Es lo que hace que una cancelación deje de ser un cartel mudo: el paciente

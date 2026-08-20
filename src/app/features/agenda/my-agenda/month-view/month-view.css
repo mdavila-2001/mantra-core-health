@@ -26,7 +26,11 @@
   margin: 0;
   font-size: var(--fs-md);
   font-weight: 600;
-  text-transform: capitalize;
+}
+
+/* Sólo la inicial: `capitalize` daría «Agosto De 2026». */
+.mes__titulo::first-letter {
+  text-transform: uppercase;
 }
 
 .mes__grilla {

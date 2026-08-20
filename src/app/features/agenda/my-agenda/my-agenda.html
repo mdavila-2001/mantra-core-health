@@ -32,13 +32,33 @@
     </div>
 
     @if (solapa() === 'mes') {
-      <app-month-view
-        [mes]="mesVisible()"
-        [cupos]="cuposDelMes()"
-        [bloqueos]="bloqueosDelMes()"
-        (mesElegido)="cambiarMes($event)"
-        (diaElegido)="bloquearDia($event)"
-      />
+      <!-- Tocar un día abre su detalle; bloquearlo es una acción de la vista
+           del día, no del mes: desde el mes no se ve qué se estaría tapando. -->
+      @if (diaAbierto(); as dia) {
+        <app-day-view
+          [dia]="dia"
+          [cupos]="cuposDelDia()"
+          [citas]="citasDelDia()"
+          [bloqueos]="bloqueosDelMes()"
+          [etiquetas]="estadosResueltos()"
+          [puedeRegistrarLlegada]="puedeRegistrarLlegada()"
+          (accionPedida)="ejecutar($event)"
+          (volver)="volverAlMes()"
+        />
+        <div class="mi-agenda__acciones-dia">
+          <button app-button variant="secondary" size="sm" type="button" (clicked)="bloquearDia(dia)">
+            Bloquear este día
+          </button>
+        </div>
+      } @else {
+        <app-month-view
+          [mes]="mesVisible()"
+          [cupos]="cuposDelMes()"
+          [bloqueos]="bloqueosDelMes()"
+          (mesElegido)="cambiarMes($event)"
+          (diaElegido)="abrirDia($event)"
+        />
+      }
     } @else {
     <section class="mi-agenda__tarjeta">
       <h2 class="mi-agenda__titulo">Atendés estos días</h2>

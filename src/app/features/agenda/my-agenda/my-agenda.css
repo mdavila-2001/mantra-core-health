@@ -100,3 +100,7 @@
   color: var(--fg-default);
   font-weight: 600;
 }
+
+.mi-agenda__acciones-dia {
+  margin-top: var(--sp-4);
+}
