@@ -6,6 +6,7 @@ import { SchedulingClient } from '../../../core/data-access/scheduling/schedulin
 import type {
   AgendaResource,
   AgendaSlot,
+  Booking,
   PublishedTemplate,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -15,9 +16,12 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
+import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
+import { DayView, type EstadoResuelto, type PedidoDeAccion } from './day-view/day-view';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { AGENDA_CREATE_ROUTE } from '../agenda.routes';
 
@@ -106,7 +110,16 @@ interface Patron {
  */
 @Component({
   selector: 'app-my-agenda',
-  imports: [Alert, AppButton, AppButtonLink, MonthView, PageHeader, RouterLink, ViewStateHost],
+  imports: [
+    Alert,
+    AppButton,
+    AppButtonLink,
+    DayView,
+    MonthView,
+    PageHeader,
+    RouterLink,
+    ViewStateHost,
+  ],
   templateUrl: './my-agenda.html',
   styleUrl: './my-agenda.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -115,6 +128,8 @@ export class MyAgenda {
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
+  private readonly terminology = inject(TerminologyClient);
+  private readonly toast = inject(ToastService);
 
   protected readonly rutaDePublicar = AGENDA_CREATE_ROUTE;
 
@@ -138,6 +153,35 @@ export class MyAgenda {
   protected readonly cuposDelMes = signal<readonly AgendaSlot[]>([]);
   protected readonly bloqueosDelMes = signal<readonly BloqueoDelMes[]>([]);
   protected readonly cargandoMes = signal(false);
+
+  /* -- La vista del día ------------------------------------------------------ */
+
+  /** El día abierto, o `null` si se está mirando el mes. */
+  protected readonly diaAbierto = signal<Date | null>(null);
+  protected readonly cuposDelDia = signal<readonly AgendaSlot[]>([]);
+  protected readonly citasDelDia = signal<readonly Booking[]>([]);
+
+  /**
+   * Los estados del catálogo, ya resueltos.
+   *
+   * `statusConceptId` es un uuid: traducirlo con un `switch` en la pantalla
+   * sería inventar el catálogo, que es del backend. Se piden **los que
+   * aparecieron**, no la tabla entera.
+   */
+  protected readonly estadosResueltos = signal<ReadonlyMap<string, EstadoResuelto>>(new Map());
+
+  /**
+   * Si la sesión puede registrar la llegada de un paciente.
+   *
+   * `POST /scheduling/bookings/:id/check-in` declara
+   * `@Roles('SCHEDULING_ADMIN', 'SCHEDULING_AGENT')` — **no** `PRACTITIONER`.
+   * Un médico solo, sin mostrador, hoy no puede marcarla; se le esconde el
+   * botón en vez de ofrecerle uno que devuelve «Rol insuficiente».
+   */
+  protected readonly puedeRegistrarLlegada = computed(() => {
+    const roles = this.auth.roles();
+    return roles.includes('SCHEDULING_ADMIN') || roles.includes('SCHEDULING_AGENT');
+  });
 
   /**
    * El horario, dicho en palabras.
@@ -401,6 +445,168 @@ export class MyAgenda {
       // bloqueados se ven como sin agenda. Peor sería no mostrar nada.
       error: () => this.bloqueosDelMes.set([]),
     });
+  }
+
+  /**
+   * Abre el día que se tocó en el mes.
+   *
+   * El mes emite el día; qué hacer con él lo decide esta pantalla, que es la
+   * que sabe si existe una vista de día a la que ir.
+   */
+  protected abrirDia(fecha: Date): void {
+    this.diaAbierto.set(fecha);
+    this.cargarDia(fecha);
+  }
+
+  protected volverAlMes(): void {
+    this.diaAbierto.set(null);
+  }
+
+  /**
+   * Los cupos y las citas de un día.
+   *
+   * Las citas se piden **acotadas por recurso**: sin filtro la API contesta 422
+   * —verificado en la auditoría TJ-4—, y es justo lo que esta pantalla necesita.
+   */
+  private cargarDia(fecha: Date): void {
+    const recurso = this.recurso();
+    if (recurso === null) return;
+
+    const desde = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    const hasta = new Date(desde);
+    hasta.setDate(hasta.getDate() + 1);
+
+    this.scheduling
+      .listSlots({ resourceId: recurso.id, from: desde, to: hasta, limit: 100 })
+      .subscribe({
+        next: (pagina) => this.cuposDelDia.set(pagina.items),
+        error: () => this.cuposDelDia.set([]),
+      });
+
+    this.scheduling
+      .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: 100 })
+      .subscribe({
+        next: (pagina: { items: readonly Booking[] }) => {
+          this.citasDelDia.set(pagina.items);
+          this.traducirEstados(pagina.items);
+        },
+        error: () => this.citasDelDia.set([]),
+      });
+  }
+
+  /** Pide las etiquetas de los estados que aparecieron, y sólo de ésos. */
+  private traducirEstados(citas: readonly Booking[]): void {
+    const ids = [...new Set(citas.map((cita) => cita.statusConceptId))];
+    if (ids.length === 0) return;
+
+    this.terminology.readConceptLabels(ids).subscribe({
+      next: (etiquetas) =>
+        this.estadosResueltos.set(
+          new Map(
+            [...etiquetas].map(([id, opcion]) => [
+              id,
+              { code: opcion.code, display: opcion.display },
+            ]),
+          ),
+        ),
+      // Si el catálogo no responde, las filas igual se muestran con su texto
+      // neutro: perder la etiqueta no justifica perder la agenda del día.
+      error: () => this.estadosResueltos.set(new Map()),
+    });
+  }
+
+  /**
+   * Ejecuta lo que se pidió desde una fila del día.
+   *
+   * Las tres acciones ya existen en la API; acá sólo se consumen. Cancelar y
+   * avisar demora piden texto porque el que lo recibe es el paciente: un aviso
+   * sin explicación es peor que ninguno.
+   */
+  protected async ejecutar(pedido: PedidoDeAccion): Promise<void> {
+    const dia = this.diaAbierto();
+    if (dia === null) return;
+
+    if (pedido.accion === 'llegó') {
+      this.scheduling.checkInBooking(pedido.bookingId).subscribe({
+        next: () => this.cargarDia(dia),
+        error: (error: unknown) => this.avisarFallo(error, 'registrar la llegada'),
+      });
+      return;
+    }
+
+    if (pedido.accion === 'demora') {
+      const mensaje = await this.dialogs.confirmWithReason(
+        {
+          title: 'Avisar una demora',
+          message: 'El paciente recibe el aviso en sus notificaciones.',
+          confirmLabel: 'Avisar',
+        },
+        {
+          label: '¿Qué le decimos?',
+          placeholder: 'Voy con unos minutos de retraso…',
+          hint: 'Lo lee el paciente, así que escribilo como se lo dirías.',
+          minLength: 3,
+          maxLength: 200,
+        },
+      );
+      if (mensaje === null) return;
+
+      this.scheduling
+        .delayBooking(pedido.bookingId, { delayMinutes: 15, message: mensaje })
+        .subscribe({
+          next: () => {
+            this.toast.success('Le avisamos al paciente.', 'Demora');
+            this.cargarDia(dia);
+          },
+          error: (error: unknown) => this.avisarFallo(error, 'avisar la demora'),
+        });
+      return;
+    }
+
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: 'Cancelar este turno',
+        message: 'El paciente recibe el aviso con el motivo que escribas.',
+        confirmLabel: 'Cancelar el turno',
+        cancelLabel: 'No, volver',
+      },
+      {
+        label: '¿Por qué?',
+        placeholder: 'Una urgencia, un imprevisto…',
+        hint: 'Lo lee el paciente. Un turno cancelado sin explicación se siente como un plantón.',
+        minLength: 3,
+        maxLength: 200,
+      },
+    );
+    if (motivo === null) return;
+
+    this.scheduling
+      .cancelBooking(pedido.bookingId, { cancelledBy: 'PROVIDER', reasonText: motivo })
+      .subscribe({
+        next: () => {
+          this.toast.success('El paciente recibe el aviso.', 'Turno cancelado');
+          this.cargarDia(dia);
+        },
+        error: (error: unknown) => this.avisarFallo(error, 'cancelar el turno'),
+      });
+  }
+
+  /**
+   * Un fallo de una acción avisa, pero **no** destruye la agenda del día.
+   *
+   * Lo que se leyó sigue siendo cierto aunque un botón haya fallado: reemplazar
+   * la pantalla entera por un cartel de error deja al profesional sin ver a
+   * quién tiene esperando. Es el mismo patrón que «Mis turnos».
+   */
+  private avisarFallo(error: unknown, queSeIntentaba: string): void {
+    const estado = errorToViewState<null>(error);
+    const mensaje =
+      estado.status === 'validation'
+        ? estado.issues.map((i) => i.message).join(' ')
+        : estado.status === 'forbidden'
+          ? 'No tenés permiso para esta operación.'
+          : '';
+    this.toast.error(mensaje === '' ? `No pudimos ${queSeIntentaba}.` : mensaje, 'No se pudo');
   }
 
   protected generarSiguientePeriodo(): void {
