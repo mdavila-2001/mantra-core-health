@@ -418,8 +418,13 @@ describe('PatientChart', () => {
       interno<() => readonly { clave: string; columnas: { key: string }[] }[]>('bloques')();
     const diagnosticos = bloques.find((b) => b.clave === 'diagnosticos');
     expect(diagnosticos?.columnas.some((c) => c.key === 'detalle')).toBe(false);
-    // Y las tres que siempre están, sí.
-    expect(diagnosticos?.columnas.map((c) => c.key)).toEqual(['principal', 'estado', 'cuando']);
+    // Las tres que siempre están, más `acciones` (Patch v4.0.8: sólo diagnósticos).
+    expect(diagnosticos?.columnas.map((c) => c.key)).toEqual([
+      'principal',
+      'estado',
+      'cuando',
+      'acciones',
+    ]);
   });
 
   it('el bloque que sí trae detalle la dibuja', () => {

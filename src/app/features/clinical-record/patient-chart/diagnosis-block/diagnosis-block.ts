@@ -42,6 +42,15 @@ export const TARGET_SEVERIDAD = 'clinical.conditions.severity_concept_id';
 export const TARGET_LATERALIDAD = 'clinical.conditions.laterality_concept_id';
 
 /**
+ * El curso clínico (Patch v4.0.8): agudo/crónico/subagudo/recurrente.
+ *
+ * Eje distinto del estado —que el backend sigue fijando en `ACTIVE` al
+ * nacer—: decide, más adelante, qué transiciones de estado van a ser válidas
+ * (una condición crónica no puede pasar a resuelta).
+ */
+export const TARGET_CURSO_CLINICO = 'clinical.conditions.clinical_course_concept_id';
+
+/**
  * Las categorías en castellano, por código estable.
  *
  * El catálogo trae su `display` en inglés técnico porque es terminología, no
@@ -67,16 +76,27 @@ const ETIQUETAS_DE_LATERALIDAD: Readonly<Record<string, string>> = {
   COND_LAT_BILATERAL: 'Bilateral',
 };
 
+/** Los cursos clínicos en castellano. Mismo criterio que {@link ETIQUETAS_DE_CATEGORIA}. */
+const ETIQUETAS_DE_CURSO: Readonly<Record<string, string>> = {
+  COND_COURSE_ACUTE: 'Aguda',
+  COND_COURSE_CHRONIC: 'Crónica',
+  COND_COURSE_SUBACUTE: 'Subaguda',
+  COND_COURSE_RECURRENT: 'Recurrente',
+  COND_COURSE_UNKNOWN: 'Sin determinar',
+};
+
 /**
  * **Diagnóstico** del expediente: registrar la condición — V08-08.
  *
  * ## Sólo el alta, sin lista propia
  *
- * A diferencia de la receta, una condición registrada no tiene acciones: el
- * backend la fija activa y confirmada al nacer y no hay endpoint para
- * resolverla. La lista ya la pinta la pestaña «Diagnósticos» del expediente, y
- * duplicarla acá sería tener dos verdades del mismo dato en la misma pantalla.
- * Por eso este bloque es el formulario y nada más.
+ * El backend fija el estado activo y confirmado al nacer; este bloque no lo
+ * pregunta. Desde el Patch v4.0.8 una condición sí puede cambiar de estado más
+ * adelante (`change-status`), pero esa acción vive en la fila de la pestaña
+ * «Diagnósticos» del expediente —donde está el registro sobre el que actúa—,
+ * no acá: duplicar la lista en este bloque sería tener dos verdades del mismo
+ * dato en la misma pantalla. Por eso este bloque sigue siendo el formulario y
+ * nada más.
  *
  * ## Vive dentro del encuentro abierto
  *
@@ -139,9 +159,11 @@ export class DiagnosisBlock {
   protected readonly targetCategoria = TARGET_CATEGORIA;
   protected readonly targetSeveridad = TARGET_SEVERIDAD;
   protected readonly targetLateralidad = TARGET_LATERALIDAD;
+  protected readonly targetCursoClinico = TARGET_CURSO_CLINICO;
   protected readonly etiquetasDeCategoria = ETIQUETAS_DE_CATEGORIA;
   protected readonly etiquetasDeSeveridad = ETIQUETAS_DE_SEVERIDAD;
   protected readonly etiquetasDeLateralidad = ETIQUETAS_DE_LATERALIDAD;
+  protected readonly etiquetasDeCurso = ETIQUETAS_DE_CURSO;
 
   /**
    * La organización bajo cuya custodia queda el registro.
@@ -157,7 +179,14 @@ export class DiagnosisBlock {
   protected readonly categoria = signal<string | null>(null);
   protected readonly severidad = signal<string | null>(null);
   protected readonly lateralidad = signal<string | null>(null);
+  protected readonly cursoClinico = signal<string | null>(null);
   protected readonly inicio = signal<Date | null>(null);
+  /**
+   * Sólo tiene sentido clínico en curso agudo/subagudo, pero se ofrece siempre:
+   * el contrato no exige la pareja, y una condición crónica sin fecha marcada
+   * es tan legítima como una aguda sin ella —quien registra decide.
+   */
+  protected readonly fechaEsperada = signal<Date | null>(null);
 
   /**
    * Si el catálogo del diagnóstico está disponible.
@@ -281,7 +310,9 @@ export class DiagnosisBlock {
     const categoria = this.categoria();
     const severidad = this.severidad();
     const lateralidad = this.lateralidad();
+    const cursoClinico = this.cursoClinico();
     const inicio = this.inicio();
+    const fechaEsperada = this.fechaEsperada();
 
     this.registrando.set(true);
     this.registro.set(loading());
@@ -297,7 +328,9 @@ export class DiagnosisBlock {
         ...(categoria === null ? {} : { categoryConceptId: categoria }),
         ...(severidad === null ? {} : { severityConceptId: severidad }),
         ...(lateralidad === null ? {} : { lateralityConceptId: lateralidad }),
+        ...(cursoClinico === null ? {} : { clinicalCourseConceptId: cursoClinico }),
         ...(inicio === null ? {} : { onsetAt: inicio }),
+        ...(fechaEsperada === null ? {} : { expectedResolutionAt: fechaEsperada }),
       })
       .subscribe({
         next: () => {
@@ -323,6 +356,8 @@ export class DiagnosisBlock {
     this.categoria.set(null);
     this.severidad.set(null);
     this.lateralidad.set(null);
+    this.cursoClinico.set(null);
     this.inicio.set(null);
+    this.fechaEsperada.set(null);
   }
 }

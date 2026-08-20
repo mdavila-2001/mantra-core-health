@@ -46,6 +46,7 @@ const RESPUESTA = {
   patientProfileId: 'p-1',
   clinicalStatus: 'st-activa',
   verificationStatus: 'st-confirmada',
+  clinicalCourse: null,
   createdAt: '2026-08-13T12:00:00.000Z',
 };
 
@@ -225,6 +226,22 @@ describe('DiagnosisBlock', () => {
     expect((req.request.body as Record<string, unknown>)['onsetAt']).toBe(
       '2026-07-01T00:00:00.000Z',
     );
+
+    req.flush(RESPUESTA);
+  });
+
+  it('manda el curso clínico y la fecha esperada de resolución cuando se eligieron', () => {
+    responderCatalogo();
+
+    señal<string>('diagnostico').set('dx-hta');
+    señal<string>('cursoClinico').set('curso-agudo');
+    señal<Date>('fechaEsperada').set(new Date('2026-08-01T00:00:00.000Z'));
+    interno<() => void>('registrar')();
+
+    const req = http.expectOne('/clinical/conditions');
+    const body = req.request.body as Record<string, unknown>;
+    expect(body['clinicalCourseConceptId']).toBe('curso-agudo');
+    expect(body['expectedResolutionAt']).toBe('2026-08-01T00:00:00.000Z');
 
     req.flush(RESPUESTA);
   });

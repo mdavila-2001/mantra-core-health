@@ -84,10 +84,29 @@
       </app-form-field>
 
       <app-form-field
+        label="Curso clínico"
+        hint="Opcional. Si es una condición aguda —con resolución esperada— o crónica —de seguimiento continuo—."
+      >
+        <app-concept-select
+          [target]="targetCursoClinico"
+          [(value)]="cursoClinico"
+          [labels]="etiquetasDeCurso"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field
         label="Inicio de la condición"
         hint="Opcional. Desde cuándo la persona la presenta."
       >
         <app-date-picker [(value)]="inicio" />
+      </app-form-field>
+
+      <app-form-field
+        label="Fecha esperada de resolución"
+        hint="Opcional. Tiene sentido sobre todo en curso agudo o subagudo."
+      >
+        <app-date-picker [(value)]="fechaEsperada" />
       </app-form-field>
 
       <app-form-actions
