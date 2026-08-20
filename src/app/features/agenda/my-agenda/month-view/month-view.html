@@ -1,0 +1,69 @@
+<div class="mes">
+  <header class="mes__barra">
+    <button app-button variant="ghost" size="sm" type="button" (clicked)="mesAnterior()">
+      ← Mes anterior
+    </button>
+    <h3 class="mes__titulo">{{ titulo() }}</h3>
+    <button app-button variant="ghost" size="sm" type="button" (clicked)="mesSiguiente()">
+      Mes siguiente →
+    </button>
+  </header>
+
+  <table class="mes__grilla">
+    <caption class="mes__leyenda">
+      Turnos reservados sobre turnos publicados, por día.
+    </caption>
+    <thead>
+      <tr>
+        @for (dia of encabezados; track dia.corto) {
+          <th scope="col"><abbr [title]="dia.largo">{{ dia.corto }}</abbr></th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (semana of semanas(); track $index) {
+        <tr>
+          @for (celda of semana; track celda.fecha.getTime()) {
+            <td
+              class="mes__celda"
+              [class.mes__celda--fuera]="!celda.delMes"
+              [class.mes__celda--hoy]="celda.esHoy"
+              [class.mes__celda--pasado]="celda.pasado"
+              [attr.data-estado]="celda.estado"
+            >
+              <!-- El día es un botón sólo cuando hay algo que mirar o que
+                   bloquear: una celda de relleno del mes vecino no lo es. -->
+              @if (celda.delMes) {
+                <button
+                  type="button"
+                  class="mes__dia"
+                  [attr.aria-label]="celda.etiqueta"
+                  (click)="elegir(celda)"
+                >
+                  <span class="mes__numero" aria-hidden="true">{{ celda.numero }}</span>
+
+                  <!-- El número SIEMPRE visible: el color solo no alcanza. -->
+                  @if (celda.estado === 'con-reservas' || celda.estado === 'lleno') {
+                    <span class="mes__cuenta" aria-hidden="true"
+                      >{{ celda.reservados }}/{{ celda.total }}</span
+                    >
+                  } @else if (celda.estado === 'libre') {
+                    <span class="mes__cuenta" aria-hidden="true">0/{{ celda.total }}</span>
+                  } @else if (celda.estado === 'bloqueado') {
+                    <span class="mes__motivo" aria-hidden="true">{{
+                      celda.motivo ?? 'Bloqueado'
+                    }}</span>
+                  }
+                </button>
+              } @else {
+                <span class="mes__numero mes__numero--fuera" aria-hidden="true">{{
+                  celda.numero
+                }}</span>
+              }
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,92 @@
+<div class="dia">
+  <header class="dia__barra">
+    <button app-button variant="ghost" size="sm" type="button" (clicked)="volver.emit()">
+      ← Volver al mes
+    </button>
+    <div>
+      <h3 class="dia__titulo">{{ titulo() }}</h3>
+      <p class="dia__resumen" role="status">{{ resumen() }}</p>
+    </div>
+  </header>
+
+  @if (filas().length === 0) {
+    <p class="dia__vacio">No atendés este día.</p>
+  } @else {
+    <ol class="dia__linea">
+      @for (fila of filas(); track fila.clave) {
+        <li class="dia__fila" [attr.data-tipo]="fila.tipo">
+          <span class="dia__hora">
+            {{ fila.desde | date: 'HH:mm' }}@if (fila.hasta) {–{{ fila.hasta | date: 'HH:mm' }}}
+          </span>
+
+          @switch (fila.tipo) {
+            @case ('cita') {
+              <div class="dia__cuerpo">
+                <p class="dia__paciente">{{ fila.paciente }}</p>
+                <!-- El motivo se muestra acá y NO en la agenda de la
+                     organización: para quien va a recibir a esa persona en diez
+                     minutos, saber por qué viene es el trabajo. La regla la
+                     aplica el servidor; esta pantalla muestra lo que le llega. -->
+                @if (fila.cita?.reasonText; as motivo) {
+                  <p class="dia__motivo">{{ motivo }}</p>
+                }
+              </div>
+
+              <app-badge variant="primary">{{ fila.estado }}</app-badge>
+
+              <div class="dia__acciones">
+                @if (puedeLlegar(fila)) {
+                  <button
+                    app-button
+                    variant="secondary"
+                    size="sm"
+                    type="button"
+                    (clicked)="pedir(fila, 'llegó')"
+                  >
+                    Llegó
+                  </button>
+                }
+                @if (puedeOperar(fila)) {
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    (clicked)="pedir(fila, 'demora')"
+                  >
+                    Avisar demora
+                  </button>
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    (clicked)="pedir(fila, 'cancelar')"
+                  >
+                    Cancelar
+                  </button>
+                }
+              </div>
+            }
+
+            @case ('bloqueado') {
+              <div class="dia__cuerpo">
+                <p class="dia__bloqueado">
+                  ⛔ Bloqueado@if (fila.motivo) { — {{ fila.motivo }}}
+                </p>
+              </div>
+            }
+
+            @default {
+              <!-- El hueco es una fila y no el espacio entre dos citas: es lo
+                   que hace visible cuándo hay lugar. -->
+              <div class="dia__cuerpo">
+                <p class="dia__libre">— libre —</p>
+              </div>
+            }
+          }
+        </li>
+      }
+    </ol>
+  }
+</div>

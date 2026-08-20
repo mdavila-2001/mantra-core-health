@@ -878,8 +878,14 @@ export const routes: Routes = [
       // las demás pantallas de operación. La autoridad sigue siendo el backend
       // (`SCHEDULING_ADMIN`); el guard de la sección sólo evita ofrecer la
       // pantalla a quien la API igual negaría.
-      pantallaDeOperacion('schedule', 'new', 'Crear agenda', () =>
+      pantallaDeOperacion('schedule', 'new', 'Publicar mi agenda', () =>
         import('./features/agenda/agenda-create/agenda-create').then((m) => m.AgendaCreate),
+      ),
+      // «Mi agenda» (MAC-4): el horario publicado, en palabras. Es la primera
+      // pantalla donde un médico ve lo que publicó — hasta que existió el GET
+      // de plantillas, no había forma de volver a leerlo.
+      pantallaDeOperacion('schedule', 'mine', 'Mi agenda', () =>
+        import('./features/agenda/my-agenda/my-agenda').then((m) => m.MyAgenda),
       ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
         import('./features/delegated-access/practitioner-delegate-form/practitioner-delegate-form').then(
