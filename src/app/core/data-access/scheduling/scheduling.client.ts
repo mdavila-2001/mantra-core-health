@@ -43,6 +43,7 @@ import type {
   WaitlistEntryCreated,
   WaitlistPage,
   WaitlistQuery,
+  PublishedTemplatePage,
 } from './scheduling.types';
 
 /**
@@ -255,6 +256,20 @@ export class SchedulingClient {
         ...(template.validFrom === undefined ? {} : { validFrom: template.validFrom }),
         ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
       },
+    );
+  }
+
+  /**
+   * `GET /scheduling/resources/:id/templates` — el horario publicado del recurso.
+   *
+   * Es la lectura que faltaba hasta MAC-4: `scheduling` sólo tenía los dos POST
+   * de plantilla, así que publicar un horario era escribirlo y no poder volver
+   * a verlo. Un recurso sin plantillas responde `[]` con 200 —existe y todavía
+   * no publicó—, y uno ajeno, 403.
+   */
+  listTemplates(resourceId: string): Observable<PublishedTemplatePage> {
+    return this.http.get<PublishedTemplatePage>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
     );
   }
 

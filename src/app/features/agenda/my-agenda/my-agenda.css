@@ -1,0 +1,70 @@
+/* ============================================================================
+    Mi agenda — la tarjeta del patrón semanal.
+
+    Mobile-first. Todo el color sale de los tokens del sistema.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.mi-agenda__tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-items: flex-start;
+  max-width: 40rem;
+  padding: var(--sp-4);
+  background: var(--bg-surface-alt);
+  border-radius: var(--r-md);
+}
+
+.mi-agenda__titulo {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.mi-agenda__semana {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* En lectura no es un botón: es un indicador. Mismo tamaño que el del
+   formulario para que se reconozca, sin cursor ni foco. */
+.mi-agenda__dia {
+  display: grid;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border: var(--stroke-2) solid var(--border-subtle);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--fg-muted);
+  font-weight: 600;
+}
+
+.mi-agenda__dia--activo {
+  background: var(--st-primary-bg);
+  border-color: var(--st-primary-border);
+  color: var(--st-primary-fg);
+}
+
+.mi-agenda__franjas {
+  margin: 0;
+  padding-left: var(--sp-5);
+}
+
+.mi-agenda__vigencia,
+.mi-agenda__cupos {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+.mi-agenda__cupos {
+  margin-top: var(--sp-4);
+}
