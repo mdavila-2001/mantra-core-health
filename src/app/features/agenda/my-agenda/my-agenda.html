@@ -5,6 +5,61 @@
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
   @if (patron(); as p) {
+    <!-- Dos preguntas distintas sobre la misma agenda: «qué horario tengo» y
+         «cómo viene mi carga». Activación manual: la solapa se elige, no se
+         carga sola al mover el foco. -->
+    <div class="mi-agenda__solapas" role="tablist" aria-label="Vistas de mi agenda">
+      <button
+        type="button"
+        role="tab"
+        class="mi-agenda__solapa"
+        [class.mi-agenda__solapa--activa]="solapa() === 'patron'"
+        [attr.aria-selected]="solapa() === 'patron'"
+        (click)="verSolapa('patron')"
+      >
+        Mi horario
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="mi-agenda__solapa"
+        [class.mi-agenda__solapa--activa]="solapa() === 'mes'"
+        [attr.aria-selected]="solapa() === 'mes'"
+        (click)="verSolapa('mes')"
+      >
+        Cómo viene el mes
+      </button>
+    </div>
+
+    @if (solapa() === 'mes') {
+      <!-- Tocar un día abre su detalle; bloquearlo es una acción de la vista
+           del día, no del mes: desde el mes no se ve qué se estaría tapando. -->
+      @if (diaAbierto(); as dia) {
+        <app-day-view
+          [dia]="dia"
+          [cupos]="cuposDelDia()"
+          [citas]="citasDelDia()"
+          [bloqueos]="bloqueosDelMes()"
+          [etiquetas]="estadosResueltos()"
+          [puedeRegistrarLlegada]="puedeRegistrarLlegada()"
+          (accionPedida)="ejecutar($event)"
+          (volver)="volverAlMes()"
+        />
+        <div class="mi-agenda__acciones-dia">
+          <button app-button variant="secondary" size="sm" type="button" (clicked)="bloquearDia(dia)">
+            Bloquear este día
+          </button>
+        </div>
+      } @else {
+        <app-month-view
+          [mes]="mesVisible()"
+          [cupos]="cuposDelMes()"
+          [bloqueos]="bloqueosDelMes()"
+          (mesElegido)="cambiarMes($event)"
+          (diaElegido)="abrirDia($event)"
+        />
+      }
+    } @else {
     <section class="mi-agenda__tarjeta">
       <h2 class="mi-agenda__titulo">Atendés estos días</h2>
 
@@ -57,6 +112,7 @@
         Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
         >.
       </p>
+    }
     }
   }
 </app-view-state-host>

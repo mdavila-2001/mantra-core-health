@@ -727,9 +727,7 @@ export class Agenda {
   protected readonly avisandoDemora = signal(false);
   protected readonly maxMensajeDeDemora = MAX_MENSAJE_DE_DEMORA;
 
-  protected readonly panelDeDemoraAbierto = computed(
-    () => this.demoraDe() !== undefined,
-  );
+  protected readonly panelDeDemoraAbierto = computed(() => this.demoraDe() !== undefined);
 
   /** Si el panel avisa de toda la agenda o de una cita concreta. */
   protected readonly demoraDeTodaLaAgenda = computed(() => this.demoraDe() === null);

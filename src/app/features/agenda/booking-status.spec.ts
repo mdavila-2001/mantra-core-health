@@ -78,7 +78,9 @@ describe('toBookingStatusPresentation', () => {
     expect(toBookingStatusPresentation(concepto('BOOKING_IN_PROGRESS'), '—').variant).toBe(
       'in-review',
     );
-    expect(toBookingStatusPresentation(concepto('BOOKING_COMPLETED'), '—').variant).toBe('approved');
+    expect(toBookingStatusPresentation(concepto('BOOKING_COMPLETED'), '—').variant).toBe(
+      'approved',
+    );
     expect(toBookingStatusPresentation(concepto('BOOKING_NO_SHOW'), '—').variant).toBe('expired');
   });
 

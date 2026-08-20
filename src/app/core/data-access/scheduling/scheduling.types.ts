@@ -157,6 +157,14 @@ export interface Booking {
   readonly checkedInAt?: Date;
   readonly reasonText?: string;
   /**
+   * Nombre del paciente.
+   *
+   * Viaja con la **misma regla que el motivo**: lo manda el servidor sólo al
+   * titular y al profesional que atiende en esa agenda. Ausente no significa
+   * «no tiene nombre», significa «no te corresponde verlo».
+   */
+  readonly patientName?: string;
+  /**
    * Por qué la cita está como está, cuando el último cambio lo explicó.
    *
    * Es lo que hace que una cancelación deje de ser un cartel mudo: el paciente
@@ -575,5 +583,23 @@ export interface PublishedTemplate {
 /** La respuesta del listado de plantillas de un recurso. */
 export interface PublishedTemplatePage {
   readonly items: readonly PublishedTemplate[];
+  readonly count: number;
+}
+
+/** Un bloqueo de disponibilidad ya publicado. */
+export interface PublishedException {
+  readonly id: string;
+  readonly exceptionTypeConceptId: string;
+  readonly startAt: string;
+  readonly endAt: string;
+  /** Por qué. Lo lee el profesional, no el paciente. */
+  readonly reason?: string;
+  /** `true` cuando la excepción ABRE disponibilidad en vez de cerrarla. */
+  readonly isAvailable?: boolean;
+}
+
+/** La respuesta del listado de excepciones de un recurso. */
+export interface AvailabilityExceptionPage {
+  readonly items: readonly PublishedException[];
   readonly count: number;
 }
