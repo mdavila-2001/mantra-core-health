@@ -870,4 +870,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Los datos de tu organización, su gente y las solicitudes de médicos.',
     module: 'M04 directory',
   },
+  {
+    // La bandeja del mostrador de farmacia (carril FAR-I3). Mismo criterio de
+    // acceso que «Tu organización»: la membresía manda (claim `tenants`), no
+    // un rol del token — no existe un rol de farmacia minorista, y
+    // owner/admin/staff son filas de `tenant_memberships` que el front no
+    // decodifica. El corte por TIPO de tenant (farmacia vs clínica) es del
+    // backend de FAR-E2: al leer, el front sólo tiene `tenantTypeConceptId`.
+    path: 'administration/pharmacy-orders',
+    roles: [ANY_ROLE],
+    label: 'Pedidos de farmacia',
+    group: 'Administración',
+    icon: 'orders',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'La bandeja del mostrador: pedidos que llegan, confirmaciones y retiros.',
+    module: 'M24 pharmacy',
+  },
 ];

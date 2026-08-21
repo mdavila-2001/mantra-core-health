@@ -1,0 +1,142 @@
+/* Mobile-first: las colas apiladas; el tablero de cuatro columnas aparece
+   con ancho de mostrador. El destaque del pedido nuevo pulsa una sola tanda
+   y respeta «reducir movimiento» — sin animación, el borde y el badge
+   siguen diciendo que es nuevo. */
+
+.bandeja__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.bandeja__demo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.bandeja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.bandeja__colas {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.bandeja__cola {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.bandeja__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.bandeja__conteo {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+}
+
+.bandeja__vacio {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.bandeja__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bandeja__tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.bandeja__tarjeta:hover {
+  border-color: var(--border-strong);
+}
+
+.bandeja__tarjeta--nueva {
+  border-color: var(--st-info-bd);
+  background: var(--st-info-bg);
+  animation: bandeja-pulso 1.2s ease-in-out 3;
+}
+
+.bandeja__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.bandeja__paciente {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bandeja__renglones {
+  color: var(--text-secondary);
+}
+
+.bandeja__pie {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.bandeja__vence {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+@keyframes bandeja-pulso {
+  50% {
+    box-shadow: 0 0 0 4px var(--st-info-bg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bandeja__tarjeta--nueva {
+    animation: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .bandeja__colas {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .bandeja__colas {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

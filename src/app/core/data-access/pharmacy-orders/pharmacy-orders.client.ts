@@ -1,13 +1,21 @@
-import { Injectable, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { DestroyRef, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { of, type Observable } from 'rxjs';
 
-import type {
-  BorradorDePedido,
-  EnvioDePedido,
-  EstadoDePedido,
-  PedidoFarmacia,
-  PropuestaDeSustitucion,
-  SimulacionDeFarmacia,
+import { SessionStore } from '../../auth/session.store';
+import {
+  ESTADOS_DE_PEDIDO,
+  type AjusteDeLinea,
+  type BorradorDePedido,
+  type EnvioDePedido,
+  type EstadoDePedido,
+  type HitoDeEnvio,
+  type LineaDePedido,
+  type PedidoFarmacia,
+  type PropuestaDeSustitucion,
+  type RegistroDeRetiro,
+  type ResultadoDeDispensa,
+  type SimulacionDeFarmacia,
 } from './pharmacy-orders.types';
 
 /** Cuántas horas vive la reserva desde que el pedido queda listo (contrato). */
@@ -24,6 +32,12 @@ const LARGO_DEL_CODIGO = 6;
 /** El motivo con que la simulación rechaza: honesto y accionable. */
 const MOTIVO_DE_RECHAZO_SIMULADO =
   'La sucursal no tiene stock suficiente para preparar tu pedido.';
+
+/**
+ * El canal que sincroniza el mock entre pestañas: la demo de dos ventanas
+ * (paciente en una, mostrador en la otra). Muere con el backend real.
+ */
+const CANAL_DE_DEMO = 'alovida.pharmacy-orders.demo';
 
 /** Qué simulación de farmacia es coherente desde cada estado. */
 const SIMULACIONES_POR_ESTADO: Readonly<
@@ -48,22 +62,31 @@ const ESTADO_POR_SIMULACION: Readonly<Record<SimulacionDeFarmacia, EstadoDePedid
 };
 
 /**
- * Cliente de pedidos de farmacia (carril FAR-I2), **contract-first y todavía
- * sin backend**.
+ * Cliente de pedidos de farmacia (carriles FAR-I2/FAR-I3), **contract-first
+ * y todavía sin backend**.
  *
  * ## Por qué un mock y no HTTP
  *
  * El contrato de la tanda existe (`POST /pharmacy/orders`,
- * `GET /pharmacy/orders/me`, `POST /pharmacy/orders/:id/confirm|reject|
- * accept-substitutions|ready|dispense|cancel`) pero FAR-E1 no lo implementó
- * aún. La regla de la casa es no esperar: este cliente guarda los pedidos en
- * memoria con las **firmas definitivas**, y las pantallas consumen
- * Observables como si el backend existiera.
+ * `GET /pharmacy/orders/me`, `GET /pharmacy/orders`,
+ * `POST /pharmacy/orders/:id/confirm|reject|accept-substitutions|ready|
+ * dispense|cancel`) pero FAR-E1/E2 no lo implementaron aún. La regla de la
+ * casa es no esperar: este cliente guarda los pedidos en memoria con las
+ * **firmas definitivas**, y las pantallas consumen Observables como si el
+ * backend existiera.
  *
- * TODO(FAR-E1): conectar cada método a su endpoint real (un solo commit: el
- * ajuste vive acá, las pantallas no se enteran). Mientras tanto los pedidos
+ * TODO(FAR-E1): conectar cada método del lado paciente a su endpoint real.
+ * TODO(FAR-E2/E3): ídem el lado del mostrador. Un solo commit por lado: el
+ * ajuste vive acá, las pantallas no se enteran. Mientras tanto los pedidos
  * viven lo que vive la sesión de la pestaña — y eso también es honesto: no
  * hay dónde persistirlos todavía.
+ *
+ * ## La demo de dos ventanas
+ *
+ * Cada mutación viaja por `BroadcastChannel` para que la bandeja del
+ * mostrador (FAR-I3) vea en su pestaña el pedido que el paciente envía en
+ * otra. Sin `localStorage` a propósito: nada promete una durabilidad que el
+ * backend todavía no da. El canal desaparece entero con FAR-E1/E2.
  *
  * ## La simulación es demo, no producto
  *
@@ -73,11 +96,25 @@ const ESTADO_POR_SIMULACION: Readonly<Record<SimulacionDeFarmacia, EstadoDePedid
  */
 @Injectable({ providedIn: 'root' })
 export class PharmacyOrdersClient {
+  private readonly session = inject(SessionStore);
+  private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly pedidos = signal<readonly PedidoFarmacia[]>([]);
   private readonly borrador = signal<BorradorDePedido | null>(null);
+  private readonly canal = this.abrirCanal();
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.canal?.close());
+  }
 
   /** El borrador que dejó «dónde comprar mi receta», si hay uno. */
   readonly borradorPreparado = this.borrador.asReadonly();
+
+  /**
+   * El mostrador de la demo, en vivo: la bandeja (FAR-I3) reacciona al
+   * instante a lo que llega por el canal de pestañas. Con FAR-E2 este
+   * signal se va y la bandeja queda sólo con su polling.
+   */
+  readonly pedidosEnVivo = this.pedidos.asReadonly();
 
   /** Deja el borrador listo para que la confirmación lo lea. */
   prepararBorrador(borrador: BorradorDePedido): void {
@@ -101,17 +138,25 @@ export class PharmacyOrdersClient {
       direccion: envio.borrador.direccion,
       modalidad: envio.modalidad,
       direccionDeEntrega: envio.direccionDeEntrega,
+      // En el backend real el nombre sale del token de quien envía; el mock
+      // hace lo mismo con la sesión. El prescriptor llega con el DTO de
+      // FAR-E2: acá sólo hay un uuid de perfil, y un uuid no se pinta.
+      paciente: this.session.displayName(),
+      prescriptor: null,
       lineas: envio.borrador.lineas,
       totalEstimado: envio.borrador.totalEstimado,
       moneda: envio.borrador.moneda,
       codigoDeRetiro: null,
       motivoDeRechazo: null,
       sustituciones: [],
+      envio: null,
+      entregas: [],
       requestId: envio.borrador.requestId,
       siteId: envio.borrador.siteId,
     };
     this.pedidos.set([pedido, ...this.pedidos()]);
     this.borrador.set(null);
+    this.publicar(pedido);
     return of(pedido);
   }
 
@@ -128,9 +173,22 @@ export class PharmacyOrdersClient {
     return of(this.pedidos().find((pedido) => pedido.id === id) ?? null);
   }
 
-  /** TODO(FAR-E1): `POST /pharmacy/orders/:id/accept-substitutions`. */
+  /**
+   * TODO(FAR-E1): `POST /pharmacy/orders/:id/accept-substitutions`.
+   *
+   * Aceptar aplica lo acordado a las líneas: el mostrador prepara y registra
+   * el genérico, no la marca que ya no va. La propuesta queda en
+   * `sustituciones` como historia.
+   */
   aceptarSustituciones(id: string): Observable<PedidoFarmacia | null> {
-    return of(this.transicionar(id, 'ACEPTACION_PENDIENTE', { estado: 'ACEPTADO' }));
+    const actual = this.pedidos().find((pedido) => pedido.id === id);
+    if (actual === undefined || actual.estado !== 'ACEPTACION_PENDIENTE') {
+      return of(actual ?? null);
+    }
+    const lineas = conSustitucionesAplicadas(actual);
+    return of(
+      this.actualizar(id, { estado: 'ACEPTADO', lineas, totalEstimado: totalDe(lineas) }),
+    );
   }
 
   /**
@@ -177,6 +235,147 @@ export class PharmacyOrdersClient {
     });
   }
 
+  /* ─── El lado del mostrador (FAR-I3) ─────────────────────────────────── */
+
+  /**
+   * TODO(FAR-E2): `GET /pharmacy/orders` — el recorte por organización lo
+   * hace el backend con `X-Tenant-Id`; el mock no tiene tenants y devuelve
+   * el mostrador completo de la demo.
+   */
+  pedidosDeFarmacia(): Observable<readonly PedidoFarmacia[]> {
+    return of(this.pedidos());
+  }
+
+  /**
+   * Abrir un pedido nuevo ES recepcionarlo: pasa a `EN_REVISION` y el
+   * paciente ve que la farmacia lo está mirando — el «visto» del mostrador.
+   * TODO(FAR-E2): el endpoint que E2 defina.
+   */
+  abrirRevision(id: string): Observable<PedidoFarmacia | null> {
+    return of(this.transicionar(id, 'ENVIADO', { estado: 'EN_REVISION' }));
+  }
+
+  /**
+   * TODO(FAR-E2): `POST /pharmacy/orders/:id/confirm`.
+   *
+   * Con al menos un genérico propuesto, el pedido queda esperando la
+   * decisión del paciente (`ACEPTACION_PENDIENTE`); sin propuestas queda
+   * `CONFIRMADO`. El total se recalcula con los renglones que siguen en pie
+   * y su precio original: la propuesta no toca el precio hasta que la
+   * persona la acepte.
+   */
+  confirmarPedido(
+    id: string,
+    ajustes: readonly AjusteDeLinea[],
+  ): Observable<PedidoFarmacia | null> {
+    const actual = this.pedidos().find((pedido) => pedido.id === id);
+    if (actual === undefined || !puedeConfirmarse(actual.estado)) {
+      return of(actual ?? null);
+    }
+    const lineas = actual.lineas.map((linea, indice) => {
+      const ajuste = ajustes.find((candidato) => candidato.indice === indice);
+      return ajuste?.decision === 'NO_DISPONIBLE' ? { ...linea, disponible: false } : linea;
+    });
+    const propuestas = ajustes
+      .filter(
+        (ajuste) => ajuste.decision === 'PROPONER_GENERICO' && ajuste.propuesta !== undefined,
+      )
+      .map((ajuste) => propuestaParaLinea(actual, ajuste));
+    return of(
+      this.actualizar(id, {
+        estado: propuestas.length > 0 ? 'ACEPTACION_PENDIENTE' : 'CONFIRMADO',
+        lineas,
+        totalEstimado: totalDe(lineas),
+        sustituciones: [...actual.sustituciones, ...propuestas],
+      }),
+    );
+  }
+
+  /** TODO(FAR-E2): `POST /pharmacy/orders/:id/reject` — motivo obligatorio. */
+  rechazarPedido(id: string, motivo: string): Observable<PedidoFarmacia | null> {
+    const texto = motivo.trim();
+    const actual = this.pedidos().find((pedido) => pedido.id === id);
+    if (actual === undefined || texto === '' || !puedeRechazarsePorFarmacia(actual.estado)) {
+      return of(actual ?? null);
+    }
+    return of(this.actualizar(id, { estado: 'RECHAZADO', motivoDeRechazo: texto }));
+  }
+
+  /**
+   * TODO(FAR-E2): `POST /pharmacy/orders/:id/ready`. Sólo para retiros: con
+   * envío no hay mostrador ni código — el cierre es `marcarEnvio`.
+   */
+  marcarListo(id: string): Observable<PedidoFarmacia | null> {
+    const actual = this.pedidos().find((pedido) => pedido.id === id);
+    if (actual === undefined || !puedePrepararse(actual.estado) || actual.modalidad !== 'RETIRO') {
+      return of(actual ?? null);
+    }
+    return of(this.actualizar(id, cambiosDeListo()));
+  }
+
+  /**
+   * TODO(FAR-E3): `POST /pharmacy/orders/:id/dispense`.
+   *
+   * El código se compara sin distinguir mayúsculas. La entrega puede ser
+   * parcial: el pedido sigue `LISTO_PARA_RETIRO` con la entrega en su
+   * historia, y pasa a `RETIRADO` cuando las entregas cubren todos los
+   * renglones que la farmacia tenía en pie.
+   */
+  dispensar(id: string, registro: RegistroDeRetiro): Observable<ResultadoDeDispensa> {
+    const actual = this.pedidos().find((pedido) => pedido.id === id);
+    if (actual === undefined || actual.estado !== 'LISTO_PARA_RETIRO') {
+      return of({ codigoValido: true, pedido: actual ?? null });
+    }
+    if (registro.codigo.trim().toUpperCase() !== actual.codigoDeRetiro) {
+      return of({ codigoValido: false, pedido: actual });
+    }
+    const previos = new Set(actual.entregas.flatMap((entrega) => entrega.indices));
+    const indices = registro.indices.filter(
+      (indice) => actual.lineas[indice]?.disponible === true && !previos.has(indice),
+    );
+    if (indices.length === 0) {
+      return of({ codigoValido: true, pedido: actual });
+    }
+    const entregas = [...actual.entregas, { momento: new Date(), indices }];
+    const entregados = new Set(entregas.flatMap((entrega) => entrega.indices));
+    const completo = actual.lineas.every(
+      (linea, indice) => !linea.disponible || entregados.has(indice),
+    );
+    return of({
+      codigoValido: true,
+      pedido: this.actualizar(id, completo ? { entregas, estado: 'RETIRADO' } : { entregas }),
+    });
+  }
+
+  /**
+   * El delivery artesanal (la costura de FAR-E4): la farmacia marca los
+   * hitos a mano y el texto es honesto — no hay courier real detrás.
+   * «Entregado» cierra el pedido: con envío no hay mostrador ni código.
+   * TODO(FAR-E4): el endpoint del puerto de delivery.
+   */
+  marcarEnvio(id: string, hito: HitoDeEnvio): Observable<PedidoFarmacia | null> {
+    const actual = this.pedidos().find((pedido) => pedido.id === id);
+    if (actual === undefined || actual.modalidad === 'RETIRO') {
+      return of(actual ?? null);
+    }
+    if (hito === 'EN_CAMINO') {
+      const permitido = puedePrepararse(actual.estado) && actual.envio === null;
+      return of(permitido ? this.actualizar(id, { envio: 'EN_CAMINO' }) : actual);
+    }
+    // Un pedido que terminó (cancelado en el camino, por ejemplo) no se
+    // resucita: la entrega sólo cierra lo que sigue en preparación.
+    if (actual.envio !== 'EN_CAMINO' || !puedePrepararse(actual.estado)) {
+      return of(actual);
+    }
+    return of(
+      this.actualizar(id, {
+        envio: 'ENTREGADO',
+        estado: 'RETIRADO',
+        entregas: [...actual.entregas, { momento: new Date(), indices: enPie(actual) }],
+      }),
+    );
+  }
+
   /** Qué pasos de farmacia puede simular la barra de demo desde este estado. */
   simulacionesPara(estado: EstadoDePedido): readonly SimulacionDeFarmacia[] {
     return SIMULACIONES_POR_ESTADO[estado] ?? [];
@@ -195,18 +394,50 @@ export class PharmacyOrdersClient {
 
     const cambios: Partial<PedidoFarmacia> = {
       estado: ESTADO_POR_SIMULACION[paso],
-      ...(paso === 'MARCAR_LISTO'
-        ? {
-            codigoDeRetiro: codigoDeRetiro(),
-            venceEl: new Date(Date.now() + HORAS_DE_RESERVA * 60 * 60 * 1000),
-          }
-        : {}),
+      ...(paso === 'MARCAR_LISTO' ? cambiosDeListo() : {}),
       ...(paso === 'RECHAZAR' ? { motivoDeRechazo: MOTIVO_DE_RECHAZO_SIMULADO } : {}),
       ...(paso === 'PROPONER_SUSTITUCION'
         ? { sustituciones: [...actual.sustituciones, propuestaDesde(actual)] }
         : {}),
     };
     return of(this.actualizar(id, cambios));
+  }
+
+  /**
+   * El puente de la demo de dos ventanas. Guardas dobles: bajo SSR no hay
+   * canal, y en un navegador sin `BroadcastChannel` la demo sigue andando
+   * en una sola pestaña.
+   */
+  private abrirCanal(): BroadcastChannel | null {
+    if (!this.esBrowser || typeof BroadcastChannel === 'undefined') {
+      return null;
+    }
+    const canal = new BroadcastChannel(CANAL_DE_DEMO);
+    canal.onmessage = (evento: MessageEvent<unknown>) => {
+      // El canal es público dentro del origen (otra versión de la app en
+      // otra pestaña durante un deploy, la consola): sólo entra lo que tiene
+      // la forma del contrato — un solo `null` en el store rompería cada
+      // `filter` de la bandeja para toda la sesión.
+      if (esPedidoDelCanal(evento.data)) {
+        this.recibir(evento.data);
+      }
+    };
+    return canal;
+  }
+
+  /** Upsert de un pedido que llegó desde otra pestaña. */
+  private recibir(pedido: PedidoFarmacia): void {
+    const actuales = this.pedidos();
+    const existe = actuales.some((candidato) => candidato.id === pedido.id);
+    this.pedidos.set(
+      existe
+        ? actuales.map((candidato) => (candidato.id === pedido.id ? pedido : candidato))
+        : [pedido, ...actuales],
+    );
+  }
+
+  private publicar(pedido: PedidoFarmacia): void {
+    this.canal?.postMessage(pedido);
   }
 
   /** Aplica cambios si el pedido existe y está en el estado esperado. */
@@ -236,6 +467,7 @@ export class PharmacyOrdersClient {
         return actualizado;
       }),
     );
+    this.publicar(actualizado);
     return actualizado;
   }
 }
@@ -255,6 +487,55 @@ export function esEstadoTerminal(estado: EstadoDePedido): boolean {
   );
 }
 
+/** El mostrador puede confirmar lo que todavía no revisó o está revisando. */
+export function puedeConfirmarse(estado: EstadoDePedido): boolean {
+  return estado === 'ENVIADO' || estado === 'EN_REVISION';
+}
+
+/**
+ * El mostrador puede rechazar mientras el pedido no cerró ni quedó listo:
+ * un pedido en el mostrador esperando a la persona ya no se rechaza — se
+ * dispensa o vence.
+ */
+export function puedeRechazarsePorFarmacia(estado: EstadoDePedido): boolean {
+  return !esEstadoTerminal(estado) && estado !== 'LISTO_PARA_RETIRO';
+}
+
+/** Confirmado o con la propuesta aceptada: en preparación. */
+export function puedePrepararse(estado: EstadoDePedido): boolean {
+  return estado === 'CONFIRMADO' || estado === 'ACEPTADO';
+}
+
+/**
+ * Un mensaje del canal de la demo es de fiar sólo con la forma del contrato:
+ * id, estado del value set y las tres colecciones. Alcanza para que ninguna
+ * pantalla lea propiedades de basura.
+ */
+export function esPedidoDelCanal(dato: unknown): dato is PedidoFarmacia {
+  if (typeof dato !== 'object' || dato === null) {
+    return false;
+  }
+  const pedido = dato as Partial<PedidoFarmacia>;
+  return (
+    typeof pedido.id === 'string' &&
+    typeof pedido.estado === 'string' &&
+    ESTADOS_DE_PEDIDO.includes(pedido.estado) &&
+    pedido.creadoEl instanceof Date &&
+    Array.isArray(pedido.lineas) &&
+    Array.isArray(pedido.sustituciones) &&
+    Array.isArray(pedido.entregas)
+  );
+}
+
+/** Los cambios de «quedó listo»: estado, código y las 48 h de reserva. */
+function cambiosDeListo(): Partial<PedidoFarmacia> {
+  return {
+    estado: 'LISTO_PARA_RETIRO',
+    codigoDeRetiro: codigoDeRetiro(),
+    venceEl: new Date(Date.now() + HORAS_DE_RESERVA * 60 * 60 * 1000),
+  };
+}
+
 /** Seis caracteres legibles en voz alta; la unicidad la dará el backend. */
 function codigoDeRetiro(): string {
   let codigo = '';
@@ -262,6 +543,77 @@ function codigoDeRetiro(): string {
     codigo += ALFABETO_DE_RETIRO[Math.floor(Math.random() * ALFABETO_DE_RETIRO.length)];
   }
   return codigo;
+}
+
+/** Índices de las líneas que la farmacia mantiene en pie. */
+function enPie(pedido: PedidoFarmacia): readonly number[] {
+  return pedido.lineas.flatMap((linea, indice) => (linea.disponible ? [indice] : []));
+}
+
+/**
+ * Total de los renglones en pie con su precio original, como texto exacto.
+ * `null` si no queda ninguno o si a alguno le falta el precio: un total a
+ * medias es peor que decir que no se puede calcular.
+ */
+function totalDe(lineas: readonly LineaDePedido[]): string | null {
+  const disponibles = lineas.filter((linea) => linea.disponible);
+  if (disponibles.length === 0) {
+    return null;
+  }
+  let total = 0;
+  for (const linea of disponibles) {
+    const precio = Number(linea.precio ?? Number.NaN);
+    if (!Number.isFinite(precio)) {
+      return null;
+    }
+    total += precio * linea.cantidad;
+  }
+  return total.toFixed(2);
+}
+
+/**
+ * Las líneas con las propuestas aceptadas aplicadas: el renglón pasa a ser
+ * el genérico acordado (nombre y precio); la presentación de la marca ya no
+ * describe lo que se entrega, así que se suelta. La propuesta más nueva por
+ * renglón manda. TODO(FAR-E2): el DTO real vincula propuesta↔renglón por
+ * índice; el mock sólo puede matchear por el nombre del original.
+ */
+function conSustitucionesAplicadas(pedido: PedidoFarmacia): readonly LineaDePedido[] {
+  const porOriginal = new Map<string, PropuestaDeSustitucion>();
+  for (const propuesta of pedido.sustituciones) {
+    porOriginal.set(propuesta.original.nombre, propuesta);
+  }
+  return pedido.lineas.map((linea) => {
+    const aplicada = porOriginal.get(linea.medicamento);
+    if (aplicada === undefined || !linea.disponible) {
+      return linea;
+    }
+    // Una propuesta ajusta un solo renglón, aunque dos se llamen igual.
+    porOriginal.delete(linea.medicamento);
+    return {
+      ...linea,
+      medicamento: aplicada.propuesta.nombre,
+      precio: aplicada.propuesta.precio,
+      presentacion: null,
+    };
+  });
+}
+
+/** La propuesta que la confirmación del mostrador arma para un renglón. */
+function propuestaParaLinea(
+  pedido: PedidoFarmacia,
+  ajuste: AjusteDeLinea,
+): PropuestaDeSustitucion {
+  const linea = pedido.lineas[ajuste.indice];
+  return {
+    id: crypto.randomUUID(),
+    original: { nombre: linea?.medicamento ?? 'Tu medicamento', precio: linea?.precio ?? null },
+    propuesta: {
+      nombre: ajuste.propuesta?.nombre ?? '',
+      precio: ajuste.propuesta?.precio ?? null,
+    },
+    moneda: linea?.moneda ?? pedido.moneda,
+  };
 }
 
 /**

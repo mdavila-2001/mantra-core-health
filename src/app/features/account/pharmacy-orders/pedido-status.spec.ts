@@ -1,5 +1,9 @@
 import type { PedidoFarmacia } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
-import { pasosDeLaLineaDeTiempo, toPedidoStatusPresentation } from './pedido-status';
+import {
+  pasosDeLaLineaDeTiempo,
+  presentacionDePedido,
+  toPedidoStatusPresentation,
+} from './pedido-status';
 
 /**
  * Lo que se fija acá: el estado siempre se dice **en palabras y con tono del
@@ -17,11 +21,15 @@ describe('pedido-status', () => {
     direccion: null,
     modalidad: 'RETIRO',
     direccionDeEntrega: null,
+    paciente: null,
+    prescriptor: null,
     lineas: [],
     totalEstimado: null,
     moneda: null,
     codigoDeRetiro: null,
     motivoDeRechazo: null,
+    envio: null,
+    entregas: [],
     sustituciones: Array.from({ length: sustituciones }, (_, i) => ({
       id: `s-${i}`,
       original: { nombre: 'Marca', precio: '60.00' },
@@ -86,5 +94,39 @@ describe('pedido-status', () => {
     expect(pasosDeLaLineaDeTiempo(pedido('RECHAZADO'))).toEqual([]);
     expect(pasosDeLaLineaDeTiempo(pedido('VENCIDO'))).toEqual([]);
     expect(pasosDeLaLineaDeTiempo(pedido('CANCELADO'))).toEqual([]);
+  });
+
+  it('con envío el tramo final es otro: en camino y entregado, sin mostrador', () => {
+    const enCamino: PedidoFarmacia = {
+      ...pedido('CONFIRMADO'),
+      modalidad: 'DOMICILIO',
+      envio: 'EN_CAMINO',
+    };
+    const pasos = pasosDeLaLineaDeTiempo(enCamino);
+
+    expect(pasos.map((p) => p.label)).toEqual([
+      'Enviado',
+      'En revisión',
+      'Confirmado',
+      'En camino',
+      'Entregado',
+    ]);
+    // El hito del envío manda: «En camino» es el paso actual aunque el
+    // estado del contrato siga siendo CONFIRMADO.
+    expect(pasos.find((p) => p.label === 'En camino')?.status).toBe('current');
+    expect(pasos.find((p) => p.label === 'Confirmado')?.status).toBe('complete');
+  });
+
+  it('el cierre de un envío se dice «Entregado», no «Retirado»', () => {
+    const entregado: PedidoFarmacia = {
+      ...pedido('RETIRADO'),
+      modalidad: 'DOMICILIO',
+      envio: 'ENTREGADO',
+    };
+    expect(presentacionDePedido(entregado).label).toBe('Entregado');
+    // En un retiro, la palabra de siempre.
+    expect(presentacionDePedido(pedido('RETIRADO')).label).toBe('Retirado');
+    const pasos = pasosDeLaLineaDeTiempo(entregado);
+    expect(pasos.every((p) => p.status === 'complete')).toBe(true);
   });
 });

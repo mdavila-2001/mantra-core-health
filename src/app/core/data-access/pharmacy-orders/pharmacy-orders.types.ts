@@ -45,6 +45,12 @@ export type ModalidadDeEntrega = (typeof MODALIDADES_DE_ENTREGA)[number];
 export interface LineaDePedido {
   /** El producto del directorio, o `null` si el medicamento no tiene uno. */
   readonly productId: string | null;
+  /**
+   * El concepto de terminología del medicamento, si el origen lo conocía.
+   * Es la llave para que la bandeja (FAR-I3) pueda ofrecer productos del
+   * mismo concepto cuando FAR-E2 publique el catálogo del tenant.
+   */
+  readonly conceptId?: string;
   readonly medicamento: string;
   /** «500 mg · caja x 20», o `null` si el directorio no lo publica. */
   readonly presentacion: string | null;
@@ -74,6 +80,21 @@ export interface PropuestaDeSustitucion {
   readonly moneda: string | null;
 }
 
+/**
+ * El hito de un envío artesanal (la costura de FAR-E4): la farmacia lo marca
+ * a mano y el texto es honesto — no hay tracking real detrás.
+ */
+export const HITOS_DE_ENVIO = ['EN_CAMINO', 'ENTREGADO'] as const;
+
+export type HitoDeEnvio = (typeof HITOS_DE_ENVIO)[number];
+
+/** Una entrega registrada en mostrador: cuándo y qué renglones se llevó. */
+export interface EntregaRegistrada {
+  readonly momento: Date;
+  /** Índices (base 0) de las líneas del pedido que salieron en esta entrega. */
+  readonly indices: readonly number[];
+}
+
 /** Un pedido de farmacia, tal como las pantallas lo leen. */
 export interface PedidoFarmacia {
   readonly id: string;
@@ -87,6 +108,17 @@ export interface PedidoFarmacia {
   readonly modalidad: ModalidadDeEntrega;
   /** Sólo con modalidad de envío: la dirección elegida, ya en texto. */
   readonly direccionDeEntrega: string | null;
+  /**
+   * Quién pidió, en palabras — lo que la bandeja de la farmacia muestra.
+   * En el backend real sale del token de la sesión que envió; el mock hace
+   * lo mismo con `SessionStore.displayName()`.
+   */
+  readonly paciente: string | null;
+  /**
+   * Quién prescribió. `null` hasta FAR-E2: el resumen clínico solo trae el
+   * uuid del perfil, y un uuid no se pinta ni se resuelve desde el front.
+   */
+  readonly prescriptor: string | null;
   readonly lineas: readonly LineaDePedido[];
   /** Total estimado como texto exacto, o `null` si falta algún precio. */
   readonly totalEstimado: string | null;
@@ -96,6 +128,10 @@ export interface PedidoFarmacia {
   /** El motivo, en palabras, cuando el estado es `RECHAZADO`. */
   readonly motivoDeRechazo: string | null;
   readonly sustituciones: readonly PropuestaDeSustitucion[];
+  /** El hito del envío artesanal, o `null` en retiros o sin salir aún. */
+  readonly envio: HitoDeEnvio | null;
+  /** La historia de dispensas: cada entrega parcial o total del mostrador. */
+  readonly entregas: readonly EntregaRegistrada[];
   /** La receta de origen: para re-pedir y para volver al mapa de sedes. */
   readonly requestId: string;
   readonly siteId: string;
@@ -140,3 +176,47 @@ export const SIMULACIONES_DE_FARMACIA = [
 ] as const;
 
 export type SimulacionDeFarmacia = (typeof SIMULACIONES_DE_FARMACIA)[number];
+
+/* ─── El lado del mostrador (carril FAR-I3, contrato de FAR-E2) ─────────── */
+
+/** Qué decide la farmacia sobre un renglón al confirmar el pedido. */
+export const DECISIONES_DE_LINEA = [
+  'TAL_CUAL',
+  'PROPONER_GENERICO',
+  'NO_DISPONIBLE',
+] as const;
+
+export type DecisionDeLinea = (typeof DECISIONES_DE_LINEA)[number];
+
+/**
+ * El ajuste de un renglón en la confirmación. Con `PROPONER_GENERICO` la
+ * propuesta es obligatoria — la pantalla no deja confirmar sin nombre; el
+ * precio puede faltar, y entonces la comparación se muestra sin ahorro.
+ */
+export interface AjusteDeLinea {
+  /** Índice (base 0) del renglón dentro de `PedidoFarmacia.lineas`. */
+  readonly indice: number;
+  readonly decision: DecisionDeLinea;
+  readonly propuesta?: {
+    readonly nombre: string;
+    readonly precio: string | null;
+  };
+}
+
+/** Lo que el mostrador registra al entregar: el código y qué renglones. */
+export interface RegistroDeRetiro {
+  /** El código que trae la persona (se compara sin distinguir mayúsculas). */
+  readonly codigo: string;
+  /** Índices de las líneas que se lleva en ESTA entrega (parcial o total). */
+  readonly indices: readonly number[];
+}
+
+/**
+ * El resultado de una dispensa. `codigoValido: false` no es un error del
+ * sistema: es la respuesta honesta cuando el código no coincide, y la
+ * pantalla lo dice en palabras. Con FAR-E3 será el 4xx del backend.
+ */
+export interface ResultadoDeDispensa {
+  readonly codigoValido: boolean;
+  readonly pedido: PedidoFarmacia | null;
+}

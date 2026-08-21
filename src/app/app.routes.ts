@@ -165,6 +165,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
+  'administration/pharmacy-orders': () =>
+    import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
+      (m) => m.PharmacyInbox,
+    ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
@@ -319,6 +323,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/order-detail/order-detail')
         .then((m) => m.OrderDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El mismo pedido, visto desde el mostrador (carril FAR-I3): la
+    // «recepción por un link» del registro del cliente. Hija de la bandeja;
+    // hereda por prefijo su regla de acceso por membresía.
+    path: 'administration/pharmacy-orders/:orderId',
+    title: `${APP_TITLE} - Pedido en el mostrador`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/organization/pharmacy-inbox/inbox-order/inbox-order')
+        .then((m) => m.InboxOrder)
         .catch(() => chunkFallido()),
   },
   {
