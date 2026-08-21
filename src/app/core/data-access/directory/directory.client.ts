@@ -482,6 +482,9 @@ function toMyOrganization(body: ConNulos<WireMyOrganization>): MyOrganization {
     canAdminister: limpio.canAdminister,
     isVerified: limpio.isVerified,
     timeZone: limpio.timeZone,
+    // Presente sólo si el tenant es `PAYER`: su presencia es la señal de que
+    // se trata de una aseguradora, sin decodificar `tenantTypeConceptId`.
+    payer: limpio.payer,
   };
 }
 

@@ -124,6 +124,52 @@ export interface RegisteredPractitioner {
 }
 
 /**
+ * Alta de una organización aseguradora por sí misma
+ * (`POST /iam/auth/register-organization`).
+ *
+ * A diferencia del paciente y del profesional, acá nacen **dos cosas a la
+ * vez**: el tenant `PAYER` y su usuario owner. El bloque `payer` es
+ * obligatorio porque el backend lo exige siempre que el tipo es `PAYER` —la
+ * misma regla que el alta administrativa (`NewTenant.payer`)—, y acá no hay
+ * otro tipo posible: esta pantalla sólo da de alta aseguradoras.
+ */
+export interface OrganizationRegistration {
+  readonly code: string;
+  readonly legalName: string;
+  readonly tradeName?: string;
+  readonly timeZone?: string;
+  readonly payer: {
+    readonly carrierCode: string;
+    readonly regulatorIdentifier: string;
+    readonly sigla: string;
+    readonly address: string;
+  };
+  readonly owner: {
+    readonly email: string;
+    readonly password: string;
+    /** Nombre de pila. */
+    readonly name: string;
+    /** Segundo nombre. Opcional: mucha gente no tiene. */
+    readonly middleName?: string;
+    /** Apellido paterno. */
+    readonly lastName: string;
+    /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
+    readonly motherLastName?: string;
+  };
+}
+
+/** Lo que devuelve el alta de organización: el tenant y su owner recién creados. */
+export interface RegisteredOrganization {
+  readonly tenantId: string;
+  readonly code: string;
+  readonly ownerUserId: string;
+  /** Concept id del estado del tenant, p. ej. `pending`. */
+  readonly status: string;
+  /** `false` cuando el owner no tiene correo pendiente de verificar: no es un fallo. */
+  readonly emailVerificationSent: boolean;
+}
+
+/**
  * Resultado de pedir la recuperación.
  *
  * El backend devuelve **siempre lo mismo**, exista o no la cuenta: decir «ese

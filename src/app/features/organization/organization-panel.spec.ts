@@ -216,6 +216,112 @@ describe('OrganizationPanel', () => {
     expect(texto()).toContain('Centro Médico Norte');
   });
 
+  /* -- Datos de aseguradora -------------------------------------------------- */
+
+  /** Una organización aseguradora: trae el bloque `payer`. */
+  function aseguradora(overrides: Record<string, unknown> = {}) {
+    return organizacion({
+      code: 'ANDINA',
+      legalName: 'Andina Salud S.A.',
+      tradeName: 'Andina Salud',
+      payer: {
+        carrierCode: 'CARRIER-AS',
+        regulatorIdentifier: 'NIT-123456',
+        sigla: 'ASEG-01',
+        address: 'Av. Siempre Viva 123',
+      },
+      ...overrides,
+    });
+  }
+
+  it('una organización sin bloque `payer` no muestra los campos de aseguradora', () => {
+    montar();
+    responder([organizacion()]);
+
+    expect(texto()).not.toContain('NIT');
+    expect(texto()).not.toContain('Código de aseguradora');
+  });
+
+  /**
+   * Los valores editables (sigla, NIT, dirección) viajan como el `value` de un
+   * `app-input`, que `textContent` no ve — por eso esta prueba usa el camino
+   * de sólo lectura (`canAdminister: false`), donde los cuatro datos se pintan
+   * como texto plano y sí son visibles para `textContent`.
+   */
+  it('una aseguradora muestra sigla, NIT, dirección y el código de aseguradora', () => {
+    montar();
+    responder([aseguradora({ canAdminister: false })]);
+
+    expect(texto()).toContain('ASEG-01');
+    expect(texto()).toContain('NIT-123456');
+    expect(texto()).toContain('Av. Siempre Viva 123');
+    expect(texto()).toContain('CARRIER-AS');
+    expect(texto()).not.toContain('Guardar datos');
+  });
+
+  it('guardar manda el bloque payer con sigla, dirección y NIT', () => {
+    montar();
+    responder([aseguradora()]);
+
+    (
+      fixture.componentInstance as unknown as {
+        sigla: { set(v: string): void };
+        nit: { set(v: string): void };
+        direccion: { set(v: string): void };
+        guardarDatos(): void;
+      }
+    ).sigla.set('ASN');
+    (fixture.componentInstance as unknown as { nit: { set(v: string): void } }).nit.set(
+      'NIT-999',
+    );
+    (
+      fixture.componentInstance as unknown as { direccion: { set(v: string): void } }
+    ).direccion.set('Calle Nueva 456');
+    (fixture.componentInstance as unknown as { guardarDatos(): void }).guardarDatos();
+
+    const req = http.expectOne((r) => r.url === '/tenants/ten-1');
+    expect(req.request.method).toBe('PATCH');
+    expect((req.request.body as { payer?: unknown }).payer).toEqual({
+      sigla: 'ASN',
+      address: 'Calle Nueva 456',
+      regulatorIdentifier: 'NIT-999',
+    });
+    // `carrierCode` no va: es de sólo lectura, esta pantalla no lo edita.
+    expect('carrierCode' in ((req.request.body as { payer?: object }).payer ?? {})).toBe(false);
+
+    req.flush({ ...aseguradora(), legalName: 'Andina Salud S.A.' });
+    http.expectOne((r) => r.url === MIAS).flush({ items: [aseguradora()] });
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/memberships'))
+      .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: [] });
+    fixture.detectChanges();
+    responderAgenda();
+  });
+
+  it('guardar de una organización que no es aseguradora no manda bloque payer', () => {
+    montar();
+    responder([organizacion()]);
+
+    (fixture.componentInstance as unknown as { guardarDatos(): void }).guardarDatos();
+
+    const req = http.expectOne((r) => r.url === '/tenants/ten-1');
+    expect('payer' in (req.request.body as object)).toBe(false);
+
+    req.flush(organizacion());
+    http.expectOne((r) => r.url === MIAS).flush({ items: [organizacion()] });
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/memberships'))
+      .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: [] });
+    fixture.detectChanges();
+    responderAgenda();
+  });
+
   /* -- Solicitudes de médicos (TP-2) ---------------------------------------- */
 
   it('pide la bandeja de solicitudes de la organización elegida', () => {
