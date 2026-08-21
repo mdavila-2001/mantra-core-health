@@ -448,6 +448,14 @@
     pointer-events: none;
     /* Contra el puntero: el dibujo es el plano de atrás. */
     translate: calc(var(--pointer-tilt-x) * -16px) calc(var(--pointer-tilt-y) * -11px);
+    /* Red de seguridad para la colisión con el texto: el dibujo entero se
+       apaga en gradiente antes de llegar a la franja donde vive
+       `.auth-split__brand-content` (el bloque está `align-items: flex-end`,
+       así que el texto siempre parte del borde inferior). No importa si el
+       claim es de una línea o de dos, o si cambia con `contentWidth`: el
+       desvanecido es un porcentaje del propio lienzo, no una coordenada fija
+       que haya que reajustar cada vez que cambia el texto. */
+    mask-image: linear-gradient(#000 58%, transparent 82%);
   }
 
   /* Latido: el mismo gesto que el logotipo, cruzando la columna justo encima
@@ -485,83 +493,85 @@
     }
   }
 
-  /* Constelación: cinco astros y cuatro hilos, arriba a la derecha. Dice
-     «conectada» sin pelear con el formulario, que es lo que la pantalla pide
-     mirar: los radios son de 1.8 a 3.4 sobre un lienzo de 400x520 y ninguno
-     pasa de 0.5 de opacidad.
+  /* Constelación: catorce astros y trece hilos formando una red de verdad —un
+     eje con cinco brazos y una cadena que serpentea hacia abajo—, no cinco
+     puntos sueltos sobre un lienzo de 400x520. Dice «conectada» sin pelear
+     con el formulario, que es lo que la pantalla pide mirar.
 
-     Solo se anima `opacity`. La versión anterior escalaba los círculos y
-     saltaban —`transform-box` por omisión es `view-box`, así que el origen era
-     el centro del SVG y no el del astro—; acá no hay `transform` que pueda
-     tomar el sistema de coordenadas equivocado. De paso es más barato: la
-     opacidad no invalida el layout ni el paint del resto de la capa. */
+     Cada hilo y cada astro trae su propio retardo desde el `style` del
+     marcado (`--d`, y `--v` en los hilos vivos) en vez de una lista de
+     `nth-of-type` acá: son las mismas catorce/trece constantes, pero puestas
+     una sola vez junto al nodo que animan y no repetidas en dos lugares. */
   .auth-split__hilo {
     stroke: #ffffff;
-    stroke-width: 0.75;
-    opacity: 0.1;
-    animation: auth-hilo-respira 9s ease-in-out infinite;
-  }
-
-  .auth-split__hilo:nth-of-type(2) {
-    animation-delay: 1.4s;
-  }
-
-  .auth-split__hilo:nth-of-type(3) {
-    animation-delay: 2.8s;
-  }
-
-  .auth-split__hilo:nth-of-type(4) {
-    animation-delay: 4.2s;
+    stroke-width: 0.85;
+    opacity: 0.14;
+    animation: auth-hilo-respira 8s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
   }
 
   @keyframes auth-hilo-respira {
     0%,
     100% {
-      opacity: 0.07;
+      opacity: 0.08;
     }
     50% {
-      opacity: 0.2;
+      opacity: 0.3;
     }
   }
 
+  /* Los dos hilos que salen del eje hacia los brazos principales van con el
+     aqua de marca en vez de blanco — el mismo acento que el trazo del latido
+     y los astros «brillantes», para que el ojo lea un solo recorrido de
+     energía cruzando la red y no adornos sueltos. */
+  .auth-split__hilo--vivo {
+    stroke: var(--c-aqua-300);
+  }
+
+  /* Astros: laten en escala Y opacidad, no solo opacidad. `transform-box:
+     fill-box` es lo que lo permite sin el defecto de la versión anterior —con
+     la caja puesta en el propio círculo, `scale()` origina en SU centro (el
+     que fija `transform-origin`) y no en el del `viewBox` completo, así que
+     cada astro late donde está en vez de dispararse en diagonal. */
   .auth-split__astro {
     fill: #ffffff;
-    opacity: 0.28;
-    animation: auth-astro-respira 6.5s ease-in-out infinite;
-  }
-
-  /* El del centro es el que sostiene los cuatro hilos: un punto más y con el
-     mismo halo aqua que el trazo del latido, para que las dos capas se lean
-     como un solo dibujo y no como dos adornos sueltos. */
-  .auth-split__astro--eje {
-    opacity: 0.5;
-    filter: drop-shadow(0 0 6px var(--c-aqua-300));
-  }
-
-  .auth-split__astro:nth-of-type(2) {
-    animation-delay: 0.8s;
-  }
-
-  .auth-split__astro:nth-of-type(3) {
-    animation-delay: 1.9s;
-  }
-
-  .auth-split__astro:nth-of-type(4) {
-    animation-delay: 3.1s;
-  }
-
-  .auth-split__astro:nth-of-type(5) {
-    animation-delay: 4.4s;
+    opacity: 0.3;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: auth-astro-respira 6s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
   }
 
   @keyframes auth-astro-respira {
     0%,
     100% {
-      opacity: 0.2;
+      opacity: 0.22;
+      transform: scale(1);
     }
     50% {
-      opacity: 0.45;
+      opacity: 0.55;
+      transform: scale(1.35);
     }
+  }
+
+  /* El eje sostiene los cinco brazos, y los «brillantes» son los nodos que
+     además dan nombre a un brazo: primer plano del cielo, con el mismo halo
+     aqua que el trazo del latido para que las dos capas se lean como un solo
+     dibujo y no como dos adornos sueltos. Sin ellos las catorce estrellas se
+     leen todas iguales y el dibujo pierde profundidad. */
+  .auth-split__astro--eje,
+  .auth-split__astro--brillante {
+    filter: drop-shadow(0 0 6px var(--c-aqua-300));
+  }
+
+  .auth-split__astro--eje {
+    opacity: 0.55;
+    animation-duration: 5.2s;
+  }
+
+  .auth-split__astro--brillante {
+    fill: var(--c-aqua-100);
+    animation-duration: 4.4s;
   }
 
   /* Escalonado: marca, titular y bajada entran en ese orden, con 70 ms entre
@@ -642,7 +652,7 @@
        no quitar el dibujo. */
     .auth-split__hilo,
     .auth-split__astro {
-      animation: none;
+      animation: none !important;
     }
 
     .auth-split__latido-base {

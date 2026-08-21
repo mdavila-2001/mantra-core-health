@@ -11,12 +11,196 @@
   display: block;
 }
 
+/* ==========================================================================
+    La tarjeta.
+
+    Mismo cristal que el login (`.login` en auth-split), para que las dos
+    pantallas de acceso se lean como una sola familia y no como dos pantallas
+    hechas en momentos distintos.
+
+    Sin `max-height`/scroll propio en mobile a propósito: en el teléfono el
+    teclado en pantalla reduce el alto útil, y encerrar el formulario en un
+    alto fijo ahí lo deja inalcanzable — la nota de `auth-split.css` sobre
+    por qué esa columna scrollea "normal" en mobile aplica igual acá. El
+    cuerpo con scroll propio (`.registro__body`) recién se activa desde 1024px,
+    que es donde `.auth-split__panel` también pasa a scrollear por dentro. */
+.registro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+  border-radius: var(--r-2xl);
+  padding: var(--sp-6);
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
+}
+
+@media (min-width: 650px) {
+  .registro {
+    padding: var(--sp-8);
+  }
+}
+
+/* Desde acá el alto de la tarjeta se fija y solo el cuerpo (los formularios)
+   scrollea por dentro: cambiar de Paciente a Profesional —siete campos contra
+   diez— ya no estira ni encoge la tarjeta entera, que es lo que se sentía
+   como que la pantalla "se deformaba" al tocar la pestaña. */
+@media (min-width: 1024px) {
+  .registro {
+    max-height: min(80dvh, 44rem);
+    overflow: hidden;
+  }
+
+  .registro__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Separa el contenido de la barra de scroll sin mover el resto de la
+       tarjeta, que no scrollea. */
+    margin-right: calc(var(--sp-2) * -1);
+    padding-right: var(--sp-2);
+  }
+}
+
 /* Membrete: título y bajada separados del cuerpo por una regla, como la cabecera
    de un expediente. Se usa en los dos estados (alta y confirmación). */
 .registro__header {
   margin-bottom: var(--sp-6);
   padding-bottom: var(--sp-4);
   border-bottom: 1px solid var(--border-default);
+}
+
+/* ==========================================================================
+    Pestañas Paciente / Profesional.
+
+    Reemplazan al grupo de radios: dos destinos claramente distintos (dos
+    formularios, dos endpoints) se leen mejor como pestañas con ícono que como
+    una elección de radio genérica — el ícono dice de qué se trata antes de
+    leer la palabra. */
+.registro__tabs-label {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.registro__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-1);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--bg-surface-alt) 70%, transparent);
+  border: 1px solid var(--border-default);
+}
+
+.registro__tab {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.registro__tab:hover {
+  background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
+}
+
+.registro__tab:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.registro__tab-icono {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  color: var(--brand-primary);
+  transition:
+    background var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.registro__tab-icono svg {
+  width: 21px;
+  height: 21px;
+}
+
+.registro__tab-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.registro__tab-titulo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.registro__tab-detalle {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  /* No empuja la tarjeta a lo ancho ni se corta a la mitad: en la pestaña más
+     angosta (mobile, dos columnas) el detalle envuelve en vez de desbordar. */
+  overflow-wrap: break-word;
+}
+
+.registro__tab--activo {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-sm), 0 8px 20px color-mix(in srgb, var(--brand-primary) 28%, transparent);
+}
+
+.registro__tab--activo .registro__tab-titulo,
+.registro__tab--activo .registro__tab-detalle {
+  color: var(--text-inverse);
+}
+
+.registro__tab--activo .registro__tab-detalle {
+  opacity: 0.85;
+}
+
+.registro__tab--activo .registro__tab-icono {
+  background: color-mix(in srgb, var(--text-inverse) 20%, transparent);
+  color: var(--text-inverse);
+}
+
+/* En una tarjeta angosta (mobile) el detalle sobra: la pestaña ya dice bastante
+   con ícono + título, y dos líneas de texto por botón compiten con el
+   formulario que sigue debajo. */
+@media (max-width: 460px) {
+  .registro__tab-detalle {
+    display: none;
+  }
+
+  .registro__tab {
+    justify-content: center;
+  }
 }
 
 .registro__title {
