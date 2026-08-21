@@ -1329,8 +1329,9 @@ type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt'> & {
   readonly sentAt: string | null;
 };
 
-interface WireMessagePage extends Omit<DirectMessagePage, 'items'> {
+interface WireMessagePage extends Omit<DirectMessagePage, 'items' | 'peerReadUpTo'> {
   readonly items: readonly WireMessage[];
+  readonly peerReadUpTo?: string | null;
 }
 
 type WirePoll = Omit<ConNulos<PollDetail>, 'closesAt' | 'options'> & {
@@ -1689,8 +1690,16 @@ function toMessage({ sentAt, ...resto }: WireMessage): DirectMessage {
   return { ...sinNulos(resto), ...fecha('sentAt', sentAt) };
 }
 
-function toMessagePage(body: WireMessagePage): DirectMessagePage {
-  return { ...body, items: body.items.map(toMessage) };
+function toMessagePage({
+  items,
+  peerReadUpTo,
+  ...resto
+}: WireMessagePage): DirectMessagePage {
+  return {
+    ...resto,
+    items: items.map(toMessage),
+    ...fecha('peerReadUpTo', peerReadUpTo ?? null),
+  };
 }
 
 function toPoll({ closesAt, options, ...resto }: WirePoll): PollDetail {

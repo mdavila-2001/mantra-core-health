@@ -52,6 +52,18 @@
   font-size: 0.75rem;
 }
 
+/* ✓ enviado, ✓✓ leído — el color solo no distingue nada para quien no lo
+   percibe, así que el texto de lector de pantalla al lado (`solo-lectores`)
+   dice lo mismo con palabras. */
+.hilo__ticks {
+  margin-inline-start: 0.25rem;
+  letter-spacing: -0.1em;
+}
+
+.hilo__ticks.is-leido {
+  color: var(--accent, #0e6690);
+}
+
 .hilo__composer {
   display: flex;
   align-items: flex-end;

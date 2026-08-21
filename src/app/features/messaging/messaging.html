@@ -1,6 +1,6 @@
 <app-page-header
-  title="Mensajes"
-  subtitle="Escribile a tu médico y seguí la conversación desde acá."
+  title="Chats"
+  subtitle="Escribile a tu médico y seguí la conversación, en vivo."
 />
 
 @if (error(); as mensaje) {
@@ -92,18 +92,29 @@
             data-testid="conversacion"
             [routerLink]="['/messaging', conversacion.id]"
           >
-            <span class="mensajeria__con-quien">{{ conQuien(conversacion) }}</span>
-            @if (conversacion.lastMessage?.bodyText; as vistaPrevia) {
-              <span class="mensajeria__vista-previa">{{ vistaPrevia }}</span>
-            }
+            <app-avatar
+              class="mensajeria__avatar"
+              [name]="conQuien(conversacion)"
+              size="md"
+            />
+            <span class="mensajeria__texto">
+              <span class="mensajeria__con-quien">{{ conQuien(conversacion) }}</span>
+              @if (conversacion.lastMessage?.bodyText; as vistaPrevia) {
+                <span class="mensajeria__vista-previa">{{ vistaPrevia }}</span>
+              }
+            </span>
             <span class="mensajeria__meta">
-              @if (conversacion.lastMessageAt) {
-                <span>{{ conversacion.lastMessageAt | date: 'short' }}</span>
+              @if (conversacion.lastMessageAt; as cuando) {
+                <span>{{ relativo(cuando) ?? (cuando | date: 'short') }}</span>
               }
               @if (conversacion.unreadCount > 0) {
-                <span class="app-badge" data-tono="info" data-testid="conversacion-sin-leer">
-                  {{ conversacion.unreadCount }}
-                </span>
+                <app-badge
+                  variant="info"
+                  [value]="conversacion.unreadCount"
+                  [max]="99"
+                  label="mensajes sin leer"
+                  data-testid="conversacion-sin-leer"
+                />
               }
             </span>
           </a>

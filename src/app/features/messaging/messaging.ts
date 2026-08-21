@@ -7,15 +7,20 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { CommunityClient } from '../../core/data-access/community/community.client';
+import { ChatSocketService } from '../../core/messaging/chat-socket.service';
 import type {
   ConversationListItem,
   PublicDirectoryResult,
 } from '../../core/data-access/community/community.types';
+import { tiempoRelativo } from '../../shared/date/tiempo-relativo';
+import { Avatar } from '../../shared/components/atoms/avatar/avatar';
+import { Badge } from '../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
@@ -41,17 +46,22 @@ const SONDEO_MS = 60_000;
  * es el propio. Quien todavía no lo creó ve una puerta —cómo crearlo—, no una
  * pantalla rota.
  *
- * ## Sondeo cada 60 s
+ * ## Sondeo cada 60 s, y ahora también WebSocket
  *
- * Sin WebSockets (decisión D2). Un minuto en la bandeja y 30 s en el hilo
- * abierto: la bandeja se mira de reojo, el hilo se mira de frente. Bajo SSR no
- * corre — el servidor pinta la lista que ya tiene y el navegador la refresca.
+ * La decisión D2 original rechazaba WebSockets; se reabre a pedido explícito
+ * para que la bandeja se entere en vivo de un mensaje nuevo. El socket es
+ * **aditivo**: el sondeo de 60 s sigue igual, como red de seguridad si el
+ * socket se cae — el minuto sigue siendo cuánto puede tardar en notarse un
+ * mensaje si el WS falló, no el mecanismo normal de entrega. Bajo SSR ninguno
+ * de los dos corre — el servidor pinta la lista que ya tiene.
  */
 @Component({
   selector: 'app-messaging',
   imports: [
     Alert,
     AppButton,
+    Avatar,
+    Badge,
     DatePipe,
     EmptyState,
     FormsModule,
@@ -64,6 +74,7 @@ const SONDEO_MS = 60_000;
 })
 export class Messaging {
   private readonly community = inject(CommunityClient);
+  private readonly chatSocket = inject(ChatSocketService);
   private readonly router = inject(Router);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -101,6 +112,7 @@ export class Messaging {
         if (propio) {
           this.cargar();
           this.agendar();
+          this.chatSocket.joinInbox(propio.id);
         }
       },
       error: () => {
@@ -108,6 +120,22 @@ export class Messaging {
         this.error.set('No pudimos saber si tenés perfil público.');
       },
     });
+
+    // Mensaje nuevo o conversación nueva: releer la bandeja. No se inserta a
+    // mano — el servidor decide unread/lastMessage/orden, releer es lo único
+    // que garantiza que la fila quede consistente con lo que pintaría un
+    // refresco de página.
+    this.chatSocket.onMessage
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.cargar());
+    this.chatSocket.onNewConversation
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.cargar());
+  }
+
+  /** «hace 2 min», o `null` si ya pasó más de una semana (cae al `date:'short'` del template). */
+  protected relativo(fecha: Date): string | null {
+    return tiempoRelativo(fecha);
   }
 
   /** Con quién es la conversación, en una línea. */

@@ -16,6 +16,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CommunityClient } from '../../../core/data-access/community/community.client';
 import { MessageTemplates } from '../../../core/messaging/message-templates';
+import { ChatSocketService } from '../../../core/messaging/chat-socket.service';
 import type { DirectMessage } from '../../../core/data-access/community/community.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -62,6 +63,7 @@ export class Thread {
   private readonly community = inject(CommunityClient);
   private readonly route = inject(ActivatedRoute);
   private readonly plantillas = inject(MessageTemplates);
+  private readonly chatSocket = inject(ChatSocketService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /** El textarea, para poder darle el foco al llegar desde una notificación. */
@@ -86,6 +88,12 @@ export class Thread {
 
   /** Con quién es la conversación, cuando se pudo resolver. */
   protected readonly conQuien = signal('Conversación');
+
+  /**
+   * Hasta qué `sentAt` leyó el otro lado — el doble check ✓✓. `null` si
+   * todavía no leyó nada, o si el hilo es de grupo (no hay «el otro lado»).
+   */
+  protected readonly peerReadUpTo = signal<Date | null>(null);
 
   protected readonly hayMas = computed(() => this.cursor() !== null);
   protected readonly vacio = computed(
@@ -161,18 +169,65 @@ export class Thread {
     });
 
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const anterior = this.conversationId;
+      if (anterior !== null) {
+        this.chatSocket.leaveConversation(anterior);
+      }
       this.conversationId = params.get('conversationId');
       this.yaMarcado = false;
       this.mensajes.set([]);
       this.cursor.set(null);
       this.cargoAlgunaVez.set(false);
+      this.peerReadUpTo.set(null);
       this.resolverPerfil();
     });
+
+    // Mensaje nuevo por WS: se agrega igual que un tic de sondeo, filtrado a
+    // este hilo — la bandeja y otros hilos abiertos en otras pestañas también
+    // reciben el evento, y no es asunto de este componente.
+    this.chatSocket.onMessage.pipe(takeUntilDestroyed()).subscribe((mensaje) => {
+      if (mensaje.conversationId === this.conversationId) {
+        this.mergeNuevos([mensaje]);
+      }
+    });
+
+    // Acuse de lectura por WS: mueve el doble check sin esperar el próximo tic.
+    this.chatSocket.onRead.pipe(takeUntilDestroyed()).subscribe((evento) => {
+      if (evento.conversationId !== this.conversationId) {
+        return;
+      }
+      const leido = this.mensajes().find((m) => m.id === evento.lastReadMessageId);
+      if (leido?.sentAt) {
+        this.peerReadUpTo.set(leido.sentAt);
+      }
+    });
+  }
+
+  /**
+   * Suma mensajes nuevos a los ya cargados, sin duplicar. Compartido por el
+   * tic de sondeo y por el empuje del socket: es la misma operación, «me
+   * enteré de mensajes que no tenía», sin importar por dónde llegó la noticia.
+   */
+  private mergeNuevos(items: readonly DirectMessage[]): void {
+    const conocidos = new Set(this.mensajes().map((m) => m.id));
+    const nuevos = items.filter((m) => !conocidos.has(m.id));
+    if (nuevos.length > 0) {
+      this.mensajes.update((lista) => [...nuevos, ...lista]);
+    }
   }
 
   /** `true` si el mensaje lo escribió quien mira. */
   protected esPropio(mensaje: DirectMessage): boolean {
     return mensaje.senderProfileId === this.perfil();
+  }
+
+  /** `true` si un mensaje propio ya lo leyó el otro lado — pinta ✓✓ en vez de ✓. */
+  protected leido(mensaje: DirectMessage): boolean {
+    const hasta = this.peerReadUpTo();
+    if (!this.esPropio(mensaje) || hasta === null || !mensaje.sentAt) {
+      return false;
+    }
+    return mensaje.sentAt.getTime() <= hasta.getTime();
   }
 
   protected verMas(): void {
@@ -232,6 +287,7 @@ export class Thread {
     if (this.perfil() !== null) {
       this.cargar();
       this.nombrarHilo(this.perfil()!);
+      this.unirseAlHilo(this.perfil()!);
       return;
     }
     this.community.getOwnProfile().subscribe({
@@ -242,6 +298,7 @@ export class Thread {
           this.cargar();
           this.agendar();
           this.nombrarHilo(propio.id);
+          this.unirseAlHilo(propio.id);
         }
       },
       error: () => {
@@ -249,6 +306,12 @@ export class Thread {
         this.error.set('No pudimos saber si tenés perfil público.');
       },
     });
+  }
+
+  private unirseAlHilo(profileId: string): void {
+    if (this.conversationId !== null) {
+      this.chatSocket.joinConversation(this.conversationId, profileId);
+    }
   }
 
   private nombrarHilo(profileId: string): void {
@@ -291,6 +354,7 @@ export class Thread {
           this.cargoAlgunaVez.set(true);
           this.cargando.set(false);
           this.error.set('');
+          this.peerReadUpTo.set(pagina.peerReadUpTo ?? null);
           this.marcarLeido(conversationId, propio);
         },
         error: () => {
@@ -332,11 +396,8 @@ export class Thread {
           .listMessages(conversationId, { profileId: propio, limit: PAGE_SIZE })
           .subscribe({
             next: (pagina) => {
-              const conocidos = new Set(this.mensajes().map((m) => m.id));
-              const nuevos = pagina.items.filter((m) => !conocidos.has(m.id));
-              if (nuevos.length > 0) {
-                this.mensajes.update((lista) => [...nuevos, ...lista]);
-              }
+              this.mergeNuevos(pagina.items);
+              this.peerReadUpTo.set(pagina.peerReadUpTo ?? null);
             },
             error: () => undefined,
           });
@@ -363,6 +424,9 @@ export class Thread {
     if (this.temporizador !== null) {
       clearTimeout(this.temporizador);
       this.temporizador = null;
+    }
+    if (this.conversationId !== null) {
+      this.chatSocket.leaveConversation(this.conversationId);
     }
   }
 }
