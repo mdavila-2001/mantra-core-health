@@ -56,7 +56,8 @@ export class NavigationService {
   /** Las secciones que esta sesión puede ver, sin agrupar. */
   readonly visibleSections = computed<readonly AppSection[]>(() => {
     const roles = this.auth.roles();
-    return APP_SECTIONS.filter((section) => isVisibleTo(section, roles));
+    const tenants = this.auth.tenants();
+    return APP_SECTIONS.filter((section) => isVisibleTo(section, roles, tenants));
   });
 
   /**

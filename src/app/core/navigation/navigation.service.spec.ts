@@ -48,8 +48,16 @@ describe('NavigationService', () => {
     router = TestBed.inject(Router);
   });
 
-  function abrirSesion(roles: readonly string[]) {
-    session.start({ accessToken: jwt({ sub: 'u-1', roles, tenants: ['t-1'] }), refreshToken: 'r' });
+  /**
+   * Abre una sesión con esos roles y esas organizaciones.
+   *
+   * Los `tenants` importan tanto como los roles desde F-31: hay secciones cuyo
+   * permiso real es una **membresía** y no un rol del token, y se filtran por
+   * este claim. Vacío = alguien que no pertenece a ninguna organización, que es
+   * el caso del paciente.
+   */
+  function abrirSesion(roles: readonly string[], tenants: readonly string[] = ['t-1']) {
+    session.start({ accessToken: jwt({ sub: 'u-1', roles, tenants }), refreshToken: 'r' });
   }
 
   function rutasDelMenu(): readonly string[] {
@@ -58,7 +66,9 @@ describe('NavigationService', () => {
 
   describe('el menú se arma con los roles del token', () => {
     it('una sesión sin roles solo ve lo que no exige ninguno', () => {
-      abrirSesion([]);
+      // Sin roles **y sin organización**: el paciente. «Tu organización» no
+      // pide rol pero sí membresía (F-31), así que sin `tenants` no aparece.
+      abrirSesion([], []);
 
       // Panel y autoservicio: lo que cualquiera puede hacer con su propia cuenta.
       // «Mis turnos» entra acá porque su filtro real es tener perfil de
@@ -158,14 +168,26 @@ describe('NavigationService', () => {
     });
 
     it('no quedan grupos vacíos: un rótulo sin ítems anuncia lo que no se puede ver', () => {
-      abrirSesion([]);
+      abrirSesion([], []);
 
       for (const grupo of service.menu()) {
         expect(grupo.items.length, grupo.label).toBeGreaterThan(0);
       }
       // «Atención» ya no aparece: su único ítem sin rol era el glosario, y desde
       // F-03 es de quien atiende. Para el paciente, sus cosas viven en «Mi cuenta».
+      // «Administración» tampoco: su único ítem sin rol —«Tu organización»— pide
+      // membresía desde F-31, y quien no pertenece a ninguna no ve el rótulo.
       expect(service.menu().map((g) => g.label)).toEqual(['General', 'Mi cuenta']);
+    });
+
+    it('con membresía pero sin rol global sí se ve «Tu organización»', () => {
+      // El caso que F-31 no podía romper: la recepcionista. Su permiso es una
+      // fila de `tenant_memberships`, no un rol del token — filtrar la sección
+      // por `roles` la habría dejado afuera de la pantalla que es suya.
+      abrirSesion([], ['t-1']);
+
+      expect(rutasDelMenu()).toContain('/administration/my-organization');
+      expect(service.menu().map((g) => g.label)).toContain('Administración');
     });
 
     it('los grupos salen en el orden declarado, no en el del registro', () => {

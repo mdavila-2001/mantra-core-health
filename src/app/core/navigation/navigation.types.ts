@@ -143,6 +143,25 @@ export interface AppSection {
    */
   readonly exclusiveRoles?: boolean;
 
+  /**
+   * La sección sólo tiene sentido si la sesión pertenece a **alguna**
+   * organización.
+   *
+   * Existe para las secciones cuyo permiso real no es un rol del token sino una
+   * **membresía** (`tenant_memberships`): «Tu organización» la usan owner,
+   * admin y staff, que son filas de esa tabla, no roles globales. Filtrarla por
+   * `roles` dejaría fuera a la recepcionista —de quien es la pantalla—, y no
+   * filtrarla por nada se la ofrecía a un paciente, que no tiene organización
+   * ninguna. La membresía sí viaja en el token, en el claim `tenants`, y es de
+   * primera clase: de ella salen el selector de organización y
+   * `needsTenantSelection`.
+   *
+   * **Es ortogonal al rol, comodín incluido**: no habla de permiso sino de que
+   * el dato exista. Un `SUPERADMIN` sin membresía tampoco tiene «su»
+   * organización que administrar.
+   */
+  readonly requiresTenant?: boolean;
+
   readonly availability: SectionAvailability;
 
   /**
@@ -218,8 +237,18 @@ const WILDCARD_ROLE = 'SUPERADMIN';
  * **No autoriza nada.** Filtrar el menú es cortesía: quien escriba la ruta a
  * mano llega igual, y quien la autoriza de verdad es el backend.
  */
-export function isVisibleTo(section: AppSection, roles: readonly string[]): boolean {
+export function isVisibleTo(
+  section: AppSection,
+  roles: readonly string[],
+  tenants: readonly string[] = [],
+): boolean {
   const required = section.roles;
+
+  // La membresía se pregunta **antes** que el rol y no la salva el comodín: no
+  // es permiso, es que el dato exista. Ver {@link AppSection.requiresTenant}.
+  if (section.requiresTenant === true && tenants.length === 0) {
+    return false;
+  }
 
   // Una sección con roles **excluyentes** ignora el comodín: es la excepción
   // que la corrección #2 pidió explícitamente, y por eso el `if` del comodín

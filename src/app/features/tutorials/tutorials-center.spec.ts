@@ -3,7 +3,11 @@ import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
 import { TutorialEngine } from '../../core/tutorials/tutorial.engine';
-import { TutorialProgressStore } from '../../core/tutorials/tutorial-progress.store';
+import {
+  TutorialProgressStore,
+  TUTORIAL_STORAGE,
+} from '../../core/tutorials/tutorial-progress.store';
+import { MemoriaDeTutoriales } from '../../../testing/tutorial-storage';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import type { TutorialDefinition } from '../../core/tutorials/tutorial.types';
 import { TutorialsCenter } from './tutorials-center';
@@ -53,7 +57,15 @@ describe('TutorialsCenter', () => {
   let progress: TutorialProgressStore;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    // Progreso en memoria, nuevo por prueba: bajo jsdom `localStorage` tira, y
+    // vaciarlo en el `afterEach` envenenaba el `TestBed` de los specs que
+    // siguieran en el mismo worker. Ver `src/testing/tutorial-storage.ts`.
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        { provide: TUTORIAL_STORAGE, useValue: new MemoriaDeTutoriales() },
+      ],
+    });
     TestBed.inject(SessionStore).start({
       accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] }),
       refreshToken: 'r-1',
@@ -61,8 +73,6 @@ describe('TutorialsCenter', () => {
     registry = TestBed.inject(TutorialRegistry);
     progress = TestBed.inject(TutorialProgressStore);
   });
-
-  afterEach(() => localStorage.clear());
 
   function montar(): void {
     componente = TestBed.createComponent(TutorialsCenter).componentInstance;
