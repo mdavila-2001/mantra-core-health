@@ -23,6 +23,22 @@
   color: var(--color-text-muted, #6b7280);
 }
 
+/* El aviso de «tu especialidad no tiene ficha propia»: es una situación
+   normal, así que va como nota al pie del formulario y NO como `app-alert`,
+   que grita. Barra a la izquierda para que se lea como acotación. */
+.formulario-especialidad__aviso {
+  margin: 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 2px solid var(--c-aqua-300);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.formulario-especialidad__ver-todas {
+  justify-self: start;
+}
+
 .formulario-especialidad__respondido {
   display: grid;
   gap: var(--sp-4);
