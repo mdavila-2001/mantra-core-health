@@ -7,22 +7,27 @@ import { TerminologyClient } from './terminology.client';
 import type { ValueSetOption } from './terminology.types';
 
 /**
- * El código interno del catálogo de departamentos de Bolivia (patch
- * `2026-08-20_v414_catalogo-geografico-y-ocupaciones-bo.sql`, backlog T-01).
+ * El código interno del catálogo de departamentos de Bolivia.
+ *
+ * **Era `VS_BO_DEPARTMENT` hasta el 21/08, y ese conjunto no existía.** Dos
+ * carriles declararon el mismo catálogo con nombres distintos: éste, que sólo
+ * vivía como constante en el frontend, y `vs_administrative_area` (v4.1.4), que
+ * sí está declarado en la bóveda y sembrado por el paquete con los 9
+ * departamentos y sus siglas. Se convergió en el que existe —crear el otro
+ * habría sido un segundo catálogo con los mismos nueve valores—, que además es
+ * el que `common.addresses.administrative_area_concept_id` ya referenciaba.
  */
-export const CODIGO_CATALOGO_DEPARTAMENTOS = 'VS_BO_DEPARTMENT';
+export const CODIGO_CATALOGO_DEPARTAMENTOS = 'VS_ADMINISTRATIVE_AREA';
 
 /**
  * Los 9 departamentos de Bolivia, para el desplegable de «departamento que
  * emitió el documento» y para el domicilio.
  *
- * Mismo criterio que `MedicalSpecialtiesCatalog`: `common.identifiers.
- * issuer_administrative_area_concept_id` y `common.addresses.
- * administrative_area_concept_id` no tienen enumeración dinámica declarada
- * —los conceptos de VS_BO_DEPARTMENT nacen con `gen_random_uuid()` en el
- * patch, no con un id determinista que un `DYNAMIC_ENUM_CATALOG` pudiera
- * fijar a mano—, así que el catálogo se lee por código de conjunto de
- * valores, no por campo destino.
+ * Mismo criterio que `MedicalSpecialtiesCatalog`: ni `common.identifiers.
+ * issuer_administrative_area_concept_id` ni `common.addresses.
+ * administrative_area_concept_id` tienen enumeración dinámica declarada, así
+ * que el catálogo se lee **por código de conjunto de valores**, no por campo
+ * destino. Pedirlo por `?target=` responde `404`.
  */
 @Injectable({ providedIn: 'root' })
 export class BoDepartmentsCatalog {

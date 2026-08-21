@@ -59,11 +59,11 @@ describe('RegisterPatient', () => {
     await fixture.whenStable();
 
     // El alta de profesional pide el catálogo de departamentos bolivianos al
-    // arrancar (`VS_BO_DEPARTMENT`, para el departamento que expidió el CI).
+    // arrancar (`VS_ADMINISTRATIVE_AREA`, el departamento que expidió el CI).
     // Se drena acá: no es lo que ninguna de estas pruebas mira, y sin drenarlo
     // el `http.verify()` del `afterEach` tumba el archivo entero.
     for (const pedido of http.match(
-      (r) => r.url === '/terminology/value-sets' && r.params.get('code') === 'VS_BO_DEPARTMENT',
+      (r) => r.url === '/terminology/value-sets' && r.params.get('code') === 'VS_ADMINISTRATIVE_AREA',
     )) {
       pedido.flush({ items: [] });
     }
