@@ -22,6 +22,18 @@ const local = `http://127.0.0.1:${process.env.REDEPLOY_PUERTO ?? 4200}/`;
 const navegador = await chromium.launch();
 const pagina = await navegador.newPage({ viewport: { width: 1280, height: 800 } });
 
+// La tercera captura es la que de verdad importa, y la que faltaba: pedir la
+// aplicación **con el hostname del túnel**. El SSR compara ese `Host` contra su
+// lista blanca y responde 400 en texto plano si no está — que es exactamente lo
+// que veía quien abría el enlace. Se resuelve ese nombre a 127.0.0.1 para
+// reproducir la petición del navegador sin tener que pasar por el borde (que
+// pide identidad de la organización antes de dejar entrar).
+const hostTunel = new URL(url).host;
+const navegadorTunel = await chromium.launch({
+  args: [`--host-resolver-rules=MAP ${hostTunel} 127.0.0.1`],
+});
+const paginaTunel = await navegadorTunel.newPage({ viewport: { width: 1280, height: 800 } });
+
 for (const [nombre, destino] of [
   ['01-frontend-local-por-nginx', local],
   ['02-tunel-permanente', url],
@@ -36,4 +48,18 @@ for (const [nombre, destino] of [
   await pagina.screenshot({ path: `${DIR}/${nombre}.png` });
 }
 
+try {
+  const puerto = process.env.REDEPLOY_PUERTO ?? 4200;
+  const r = await paginaTunel.goto(`http://${hostTunel}:${puerto}/`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 45_000,
+  });
+  await paginaTunel.waitForTimeout(4_000);
+  console.log('03-con-el-host-del-tunel ->', r?.status(), paginaTunel.url());
+} catch (e) {
+  console.log('03-con-el-host-del-tunel -> ERROR', e.message);
+}
+await paginaTunel.screenshot({ path: `${DIR}/03-con-el-host-del-tunel.png` });
+
+await navegadorTunel.close();
 await navegador.close();

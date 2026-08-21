@@ -46,6 +46,7 @@
 #   tools/redeploy/redeploy.sh start     # deja el vigilante en segundo plano
 #   tools/redeploy/redeploy.sh status    # qué hay vivo y en qué commit
 #   tools/redeploy/redeploy.sh url       # el enlace
+#   tools/redeploy/redeploy.sh web       # relanza sólo el frontend (sin reconstruir)
 #   tools/redeploy/redeploy.sh proxy     # relanza sólo nginx (sin reconstruir)
 #   tools/redeploy/redeploy.sh logs      # las últimas líneas del diario
 #   tools/redeploy/redeploy.sh stop      # baja vigilante, contenedores y túnel
@@ -168,8 +169,14 @@ asegurar_tunel() {
 # ─── La infraestructura ──────────────────────────────────────────────────────
 
 generar_nginx() {
-  local host_tunel
+  local host_tunel host_tunel_alterno dominio id
   host_tunel="$(sed -E 's#https?://##; s#/$##' "$URL_FILE" 2>/dev/null)"
+  # El túnel publica el enlace de dos formas —`<id>-<puerto>.<dominio>` y
+  # `<id>.<dominio>:<puerto>`— y las dos tienen que pasar el `server_name`, o el
+  # `default_server` que devuelve 421 se come una de ellas.
+  dominio="${host_tunel#*.}"
+  id="${host_tunel%%-*}"
+  [ -n "$host_tunel" ] && host_tunel_alterno="${id}.${dominio}"
 
   # Cuatro sustituciones sobre la configuración de producción, y ninguna más:
   #   · los dos `upstream` apuntan a puertos de loopback del host en vez de a
@@ -183,7 +190,7 @@ generar_nginx() {
       -e "s#^\( *\)server web:4000;#\1server 127.0.0.1:${PUERTO_WEB};#" \
       -e "s#^\( *\)listen 80 default_server;#\1listen 127.0.0.1:${PUERTO} default_server;#" \
       -e "s#^\( *\)listen 80;#\1listen 127.0.0.1:${PUERTO};#" \
-      -e "s#^\( *\)server_name localhost mantra-core-health.local;#\1server_name localhost 127.0.0.1 mantra-core-health.local ${host_tunel:-localhost};#" \
+      -e "s#^\( *\)server_name localhost mantra-core-health.local;#\1server_name localhost 127.0.0.1 mantra-core-health.local ${host_tunel:-localhost} ${host_tunel_alterno:-localhost};#" \
       "$RAIZ/deploy/nginx.conf" > "$NGINX_GEN"
 }
 
@@ -223,6 +230,30 @@ recargar_proxy() {
 }
 
 proxy_vivo() { [ -n "$(docker ps -q --filter "name=^${PROXY}$")" ]; }
+
+# Los hosts que el servidor de renderizado acepta atender.
+#
+# **Sin esto el enlace no sirve.** `AngularNodeAppEngine` compara el `Host` (y el
+# `x-forwarded-host`, que el borde del túnel añade) contra una lista blanca, y lo
+# que no está en ella se rechaza con un 400 en texto plano: «Header
+# "x-forwarded-host" … is not allowed». El artefacto trae sellados los de
+# `angular.json` —`localhost`, `127.0.0.1`, `mantra-core-health.local`—, que
+# alcanzan para probar en local y **no** para entrar por el túnel. Por eso el
+# dominio público se suma en ejecución, que es justo para lo que existe
+# `SSR_ALLOWED_HOSTS` (ver `src/server/allowed-hosts.ts`).
+#
+# Se declaran las dos formas del enlace, porque el túnel publica las dos:
+#   2ptbhqtv-4200.brs.devtunnels.ms   y   2ptbhqtv.brs.devtunnels.ms:4200
+hosts_ssr() {
+  local h dominio id
+  h="$(sed -E 's#https?://##; s#/$##' "$URL_FILE" 2>/dev/null)"
+  [ -n "$h" ] || { echo "localhost,127.0.0.1"; return; }
+  dominio="${h#*.}"          # brs.devtunnels.ms
+  id="${h%%-*}"              # 2ptbhqtv
+  # Con puerto y sin él: el `Host` que manda el navegador lo lleva cuando la URL
+  # lo lleva, y la comparación del SSR es literal.
+  echo "${h},${h}:${PUERTO},${id}.${dominio},${id}.${dominio}:${PUERTO},localhost,127.0.0.1"
+}
 
 # Qué hay del otro lado de los prefijos de la API. No corrige nada —no es su
 # trabajo levantar la API— pero lo deja dicho: un frontend que carga y no
@@ -273,6 +304,7 @@ lanzar_web() {
     -p "127.0.0.1:${PUERTO_WEB}:4000" \
     -e "NODE_OPTIONS=--max-old-space-size=${HEAP_WEB}" \
     -e PORT=4000 -e PUBLIC_API_BASE_URL= \
+    -e "SSR_ALLOWED_HOSTS=$(hosts_ssr)" \
     "$IMAGEN:$etiqueta" >/dev/null
 }
 
@@ -308,7 +340,8 @@ desplegar() {
         --memory "$MEM_WEB" --memory-swap "$MEM_WEB" \
         -p "127.0.0.1:${PUERTO_WEB}:4000" \
         -e "NODE_OPTIONS=--max-old-space-size=${HEAP_WEB}" \
-        -e PORT=4000 -e PUBLIC_API_BASE_URL= "$anterior" >/dev/null
+        -e PORT=4000 -e PUBLIC_API_BASE_URL= \
+        -e "SSR_ALLOWED_HOSTS=$(hosts_ssr)" "$anterior" >/dev/null
       esperar_sano
     fi
     proxy_vivo && recargar_proxy
@@ -316,6 +349,25 @@ desplegar() {
   fi
 
   if proxy_vivo; then recargar_proxy; else lanzar_proxy; fi
+
+  # Que el contenedor esté sano no basta: su `HEALTHCHECK` pide `/auth` con
+  # `Host: 127.0.0.1`, que SIEMPRE está permitido. Lo que hay que comprobar es
+  # la petición como llega por el enlace —con el host del túnel—, que es la
+  # única que puede chocar con la lista blanca del SSR.
+  local host_tunel codigo_tunel
+  host_tunel="$(sed -E 's#https?://##; s#/$##' "$URL_FILE" 2>/dev/null)"
+  if [ -n "$host_tunel" ]; then
+    codigo_tunel="$(curl -s -o /dev/null -w '%{http_code}' -m 15 \
+      -H "Host: $host_tunel" -H "x-forwarded-host: $host_tunel" \
+      "http://127.0.0.1:${PUERTO}/auth" 2>/dev/null)"
+    [ -n "$codigo_tunel" ] || codigo_tunel=000
+    if [ "$codigo_tunel" = "200" ]; then
+      log "ENLACE: /auth con el host del túnel responde 200"
+    else
+      log "ENLACE: ⚠ /auth con el host del túnel responde $codigo_tunel — el enlace NO sirve"
+      log "ENLACE:   suele ser SSR_ALLOWED_HOSTS: mirá 'docker logs $WEB'"
+    fi
+  fi
 
   comprobar_api
   echo "$commit" > "$ESTADO/COMMIT_DESPLEGADO"
@@ -413,6 +465,15 @@ case "${1:-once}" in
     # el puerto de la API sin volver a construir la imagen del frontend.
     asegurar_tunel
     lanzar_proxy && comprobar_api
+    ;;
+
+  web)
+    # Sólo el frontend, con la imagen que ya está: sirve para cambiarle el
+    # entorno (los hosts permitidos, el techo de memoria) sin reconstruir.
+    asegurar_tunel
+    lanzar_web "$(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || git -C "$RAIZ" rev-parse --short HEAD)"
+    esperar_sano && log "WEB: relanzado y sano" || log "WEB: ✗ no llegó a sano"
+    proxy_vivo && recargar_proxy
     ;;
 
   url)  cat "$URL_FILE" 2>/dev/null || url_del_tunel ;;

@@ -98,6 +98,7 @@ fast-forward es imposible.
 | `redeploy.sh stop` | baja vigilante, contenedores y túnel (el enlace vuelve intacto) |
 | `redeploy.sh status` | rama, commit desplegado, enlace, contenedores y memoria real |
 | `redeploy.sh url` | el enlace |
+| `redeploy.sh web` | relanza sólo el frontend con la imagen que ya está, sin reconstruir |
 | `redeploy.sh proxy` | relanza sólo nginx con la configuración regenerada, sin reconstruir |
 | `redeploy.sh logs [n]` | las últimas n líneas del diario |
 
@@ -108,6 +109,36 @@ Todo es configurable por entorno: `REDEPLOY_RAMA`, `REDEPLOY_TUNEL`,
 
 El estado —diario, PIDs, la configuración generada de nginx, el commit
 desplegado— vive en `estado/`, que no se versiona.
+
+## Los hosts permitidos: lo que rompe el enlace y no se ve en local
+
+`AngularNodeAppEngine` compara el `Host` de cada petición —y el
+`x-forwarded-host` que añade el borde del túnel— contra una lista blanca. Lo que
+no está en ella **no degrada: se rechaza**, con un 400 en texto plano:
+
+```
+Header "x-forwarded-host" with value "2ptbhqtv-4200.brs.devtunnels.ms" is not allowed.
+```
+
+El artefacto trae sellados los de `angular.json` (`localhost`, `127.0.0.1`,
+`mantra-core-health.local`), que alcanzan para probar en local y **no** para
+entrar por el túnel. Por eso el script le pasa al contenedor
+`SSR_ALLOWED_HOSTS` con las dos formas que publica el túnel —
+`<id>-<puerto>.<dominio>` y `<id>.<dominio>:<puerto>`, con puerto y sin él — y
+añade las mismas al `server_name` de nginx, que si no las rechazaría antes con
+un 421.
+
+Esto se paga caro si no se comprueba, porque **una prueba local pasa igual**: el
+`HEALTHCHECK` de la imagen pide `/auth` con `Host: 127.0.0.1`, que siempre está
+permitido. Por eso, después de cada despliegue, el script pide `/auth` *con el
+host del túnel* y lo deja escrito en el diario:
+
+```
+ENLACE: /auth con el host del túnel responde 200
+```
+
+Si ahí aparece cualquier otra cosa, el enlace no sirve aunque el contenedor esté
+sano y verde.
 
 ## Si algo va mal
 
