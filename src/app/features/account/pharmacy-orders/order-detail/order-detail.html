@@ -28,6 +28,14 @@
         <app-stepper [steps]="pasos()" label="Recorrido del pedido" />
       }
 
+      <!-- ─── El envío, cuando salió (FAR-I3) ────────────────────────────── -->
+      @if (abierto.envio === 'EN_CAMINO') {
+        <app-alert tone="info" title="Tu pedido está en camino">
+          La farmacia coordina la entrega — todavía sin seguimiento en tiempo
+          real.
+        </app-alert>
+      }
+
       <!-- ─── La decisión de sustitución ─────────────────────────────────── -->
       @if (propuestaPendiente(); as propuesta) {
         <section class="pedido__decision" aria-labelledby="pedido-decision" data-testid="pedido-decision">

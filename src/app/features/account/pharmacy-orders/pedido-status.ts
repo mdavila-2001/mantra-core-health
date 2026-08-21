@@ -82,6 +82,18 @@ export function toPedidoStatusPresentation(estado: EstadoDePedido): PedidoStatus
   return PRESENTACION_POR_ESTADO[estado];
 }
 
+/**
+ * La presentación del pedido completo (FAR-I3): con envío, el cierre no es
+ * «Retirado» — nadie pasó por el mostrador — sino «Entregado». Para todo lo
+ * demás delega en la tabla por estado.
+ */
+export function presentacionDePedido(pedido: PedidoFarmacia): PedidoStatusPresentation {
+  if (pedido.estado === 'RETIRADO' && pedido.modalidad !== 'RETIRO') {
+    return { tone: 'secondary', label: 'Entregado', descripcion: 'Tu pedido llegó.' };
+  }
+  return toPedidoStatusPresentation(pedido.estado);
+}
+
 const ETIQUETA_DE_MODALIDAD: Readonly<Record<ModalidadDeEntrega, string>> = Object.freeze({
   RETIRO: 'Retiro en la farmacia',
   DOMICILIO: 'Envío a domicilio',
@@ -112,6 +124,9 @@ export function pasosDeLaLineaDeTiempo(pedido: PedidoFarmacia): readonly Stepper
   }
 
   const conDecision = estado === 'ACEPTACION_PENDIENTE' || estado === 'ACEPTADO';
+  // Con envío el tramo final es otro (FAR-I3): no hay mostrador ni retiro —
+  // la farmacia marca «en camino» y la entrega cierra el pedido.
+  const esEnvio = pedido.modalidad !== 'RETIRO';
   const recorrido: readonly { readonly estados: readonly EstadoDePedido[]; readonly label: string }[] = [
     { estados: ['ENVIADO'], label: 'Enviado' },
     { estados: ['EN_REVISION'], label: 'En revisión' },
@@ -124,11 +139,23 @@ export function pasosDeLaLineaDeTiempo(pedido: PedidoFarmacia): readonly Stepper
           },
         ]
       : []),
-    { estados: ['LISTO_PARA_RETIRO'], label: 'Listo para retirar' },
-    { estados: ['RETIRADO'], label: 'Retirado' },
+    ...(esEnvio
+      ? [
+          // El hito «en camino» no es un estado del contrato: viaja aparte
+          // en `pedido.envio`, y por eso su paso no mapea a ningún estado.
+          { estados: [] as readonly EstadoDePedido[], label: 'En camino' },
+          { estados: ['RETIRADO'] as readonly EstadoDePedido[], label: 'Entregado' },
+        ]
+      : [
+          { estados: ['LISTO_PARA_RETIRO'] as readonly EstadoDePedido[], label: 'Listo para retirar' },
+          { estados: ['RETIRADO'] as readonly EstadoDePedido[], label: 'Retirado' },
+        ]),
   ];
 
-  const actual = recorrido.findIndex((paso) => paso.estados.includes(estado));
+  const actual =
+    esEnvio && pedido.envio === 'EN_CAMINO' && estado !== 'RETIRADO'
+      ? recorrido.findIndex((paso) => paso.label === 'En camino')
+      : recorrido.findIndex((paso) => paso.estados.includes(estado));
   return recorrido.map((paso, indice) => ({
     label: paso.label,
     status:
