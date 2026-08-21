@@ -82,11 +82,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // turnos» tampoco los declara—. La pantalla lo dice cuando falta, en vez
     // de esconderse del menú.
     path: 'messaging',
-    label: 'Mensajes',
+    label: 'Chats',
     group: 'General',
     icon: 'results',
     availability: 'disponible',
-    summary: 'Escribile a tu médico y seguí la conversación.',
+    summary: 'Escribile a tu médico y seguí la conversación, en vivo.',
     module: 'M19 community',
   },
   {
