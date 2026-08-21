@@ -37,6 +37,8 @@ const MAX_NOMBRE = 300;
 const MAX_ZONA_HORARIA = 100;
 const MAX_CODIGO_ASEGURADORA = 60;
 const MAX_REGULADOR = 100;
+const MAX_SIGLA = 20;
+const MAX_DIRECCION = 300;
 const MAX_CODIGO_CORREDOR = 60;
 const MAX_LICENCIA = 100;
 
@@ -157,6 +159,14 @@ export class OrganizationNew {
     regulatorIdentifier: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_REGULADOR)],
+    }),
+    sigla: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(MAX_SIGLA)],
+    }),
+    address: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
   });
 

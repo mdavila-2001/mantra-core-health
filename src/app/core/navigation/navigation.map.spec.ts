@@ -1,6 +1,13 @@
 import { IDENTITY_VERIFICATION_ROUTE } from '../http/error-to-view-state';
 import { APP_SECTIONS } from './navigation.map';
-import { isVisibleTo, routeOf, titleOf, NAV_GROUPS, NAV_ICON_NAMES } from './navigation.types';
+import {
+  ANY_ROLE,
+  isVisibleTo,
+  routeOf,
+  titleOf,
+  NAV_GROUPS,
+  NAV_ICON_NAMES,
+} from './navigation.types';
 
 /**
  * El registro es la única fuente de la navegación: si algo está mal acá, está
@@ -50,6 +57,43 @@ describe('APP_SECTIONS', () => {
     }
   });
 
+  it('cada sección declara sus roles: el olvido no se lee como «universal»', () => {
+    // El guardia de F-20 (18/08/2026). Tres veces seguidas una fila nueva llegó
+    // sin `roles` —el glosario, «Grupos y foros»— y el menú del paciente se
+    // llenó de herramientas que no son suyas. Omitir el campo y declararlo
+    // universal se veían igual en el archivo; ahora hay que escribirlo:
+    // `roles: [ANY_ROLE]` si de verdad la ve cualquier sesión.
+    //
+    // Se comprueba acá y no en el tipo a propósito: el mensaje de esta prueba
+    // dice qué fila falta y por qué importa, que es lo que necesita quien llega
+    // con una sección nueva. Un error del compilador diría menos.
+    const sinRoles = APP_SECTIONS.filter((s) => s.roles === undefined).map((s) => s.path);
+
+    expect(
+      sinRoles,
+      `Estas secciones no declaran \`roles\`: ${sinRoles.join(', ')}. Si la ve ` +
+        'cualquier sesión, declaralo con `roles: [ANY_ROLE]`; si no, poné los roles ' +
+        'del token que pueden verla.',
+    ).toEqual([]);
+  });
+
+  it('el rol universal se declara con ANY_ROLE y lo ve cualquier sesión', () => {
+    const universal = APP_SECTIONS.find((s) => s.roles?.includes(ANY_ROLE) === true);
+
+    expect(universal, 'alguna sección universal debería declarar ANY_ROLE').toBeDefined();
+    // Cualquier sesión, incluso una sin ningún rol conocido, la ve.
+    expect(isVisibleTo(universal!, [])).toBe(true);
+    expect(isVisibleTo(universal!, ['PATIENT'])).toBe(true);
+  });
+
+  it('«Grupos y foros» no es del paciente: son foros profesionales (F-20)', () => {
+    const grupos = APP_SECTIONS.find((s) => s.path === 'groups');
+
+    expect(grupos, 'la sección de grupos debería existir').toBeDefined();
+    expect(isVisibleTo(grupos!, ['PATIENT'])).toBe(false);
+    expect(isVisibleTo(grupos!, ['PRACTITIONER'])).toBe(true);
+  });
+
   it('cada sección explica de qué es: el vacío informativo depende de eso', () => {
     for (const section of APP_SECTIONS) {
       expect(section.summary.length, section.path).toBeGreaterThan(0);
@@ -89,9 +133,15 @@ describe('APP_SECTIONS', () => {
     // rol de gestión en «Mi cuenta» rompería la separación.
     expect(autoservicio.length).toBeGreaterThan(0);
     for (const section of autoservicio) {
-      if (section.roles !== undefined) {
-        expect(section.roles, section.path).toEqual(['PATIENT']);
-      }
+      // Declarados **siempre** (F-20): nunca por omisión, que es lo que hace
+      // que un olvido se lea como «la ve cualquiera».
+      //
+      // Y sólo dos formas posibles: universal —son los datos propios de la
+      // cuenta, así que las ve cualquier sesión— o restringida al propio
+      // paciente, como «Mis pedidos» (FAR-I2), cuyo contenido nace de una
+      // receta suya. Un rol de gestión acá rompería la separación.
+      expect(section.roles, section.path).toBeDefined();
+      expect([[ANY_ROLE], ['PATIENT']], section.path).toContainEqual(section.roles);
     }
   });
 

@@ -118,9 +118,19 @@
 
           <app-form-field
             label="Autoridad regulatoria"
-            hint="Opcional. El colegio o consejo emisor."
+            hint="Ministerio de Salud y Deportes, Colegio de Odontólogos, SEDES..."
           >
             <app-input [(value)]="nuevaAutoridad" placeholder="Colegio Médico de..." />
+          </app-form-field>
+
+          <app-form-field
+            label="Fecha de inscripción"
+            hint="Cuándo quedó registrada esta matrícula."
+          >
+            <app-date-picker
+              [(value)]="nuevaFechaInscripcion"
+              placeholder="Seleccionar fecha"
+            />
           </app-form-field>
 
           <app-form-actions
@@ -128,6 +138,53 @@
             [pending]="guardandoMatricula()"
             [disabled]="!puedeAgregarMatricula()"
             (submitted)="agregarMatricula()"
+          />
+        </form>
+      </app-card>
+
+      <!-- ─── Dirección ───────────────────────────────────────────────────
+           Mismo criterio: se agrega, no se edita. `POST /common/addresses`
+           todavía no tiene edición. -->
+      <app-card variant="outlined" padding="lg" class="edicion__bloque">
+        <h2 class="edicion__titulo">Dirección</h2>
+        <p class="edicion__nota">Dónde atendés o dónde te ubican tus pacientes.</p>
+
+        <form class="edicion__formulario" (submit)="$event.preventDefault()">
+          <app-form-field label="Dirección" [required]="true">
+            <app-input
+              [(value)]="nuevaLineaDireccion"
+              placeholder="Av. Siempre Viva 742, entre calles..."
+            />
+          </app-form-field>
+
+          <app-form-field label="Ciudad (opcional)">
+            <app-input [(value)]="nuevaCiudad" placeholder="Santa Cruz de la Sierra" />
+          </app-form-field>
+
+          @if (catalogoDepartamentosCaido()) {
+            <app-form-field label="Departamento">
+              <p class="edicion__aviso">
+                No pudimos traer el catálogo de departamentos.
+                <button app-button variant="ghost" size="sm" (clicked)="reintentarDepartamentos()">
+                  Reintentar
+                </button>
+              </p>
+            </app-form-field>
+          } @else {
+            <app-form-field label="Departamento (opcional)">
+              <app-select
+                [options]="opcionesDepartamento()"
+                [(value)]="nuevoDepartamentoDireccion"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+          }
+
+          <app-form-actions
+            submitLabel="Guardar dirección"
+            [pending]="guardandoDireccion()"
+            [disabled]="!puedeAgregarDireccion()"
+            (submitted)="agregarDireccion()"
           />
         </form>
       </app-card>

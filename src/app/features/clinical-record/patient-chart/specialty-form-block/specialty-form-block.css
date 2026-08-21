@@ -56,3 +56,39 @@
 .formulario-especialidad__pdf {
   justify-self: start;
 }
+
+/* ─── El odontograma dentro del formulario ─────────────────────────────────
+   Va sin borde ni caja propia: es un campo más del formulario, aunque ocupe
+   el ancho entero en vez de una etiqueta y un control al lado. */
+.formulario-especialidad__odontograma {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.formulario-especialidad__subtitulo {
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Los once estados de la OMS, envueltos: en el teléfono caen de a dos o tres
+   por fila y siguen siendo alcanzables con el pulgar. */
+.formulario-especialidad__estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.formulario-especialidad__ayuda {
+  margin: 0;
+  flex-basis: 100%;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

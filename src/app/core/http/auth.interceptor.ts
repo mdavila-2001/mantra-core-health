@@ -92,6 +92,17 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         return throwError(() => error);
       }
 
+      // Nadie había iniciado sesión: este 401 no dice «se te venció», dice
+      // «este endpoint pide sesión». Expulsar a quien nunca entró es lo que
+      // hacía **imposible registrarse**: la pantalla de alta pide los
+      // departamentos a terminología —sin token, porque todavía no hay
+      // cuenta—, el 401 disparaba esto, y al visitante lo mandaba al login
+      // antes de que pudiera escribir su nombre. El error se propaga igual y
+      // cada pantalla decide qué hacer con él.
+      if (session.accessToken() === null && session.refreshToken() === null) {
+        return throwError(() => error);
+      }
+
       // Sin refresh token no hay nada que renovar: se corta acá en vez de
       // gastar una petición que ya sabemos que va a fallar.
       if (session.refreshToken() === null) {

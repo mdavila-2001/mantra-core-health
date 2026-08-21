@@ -75,10 +75,19 @@ describe('PractitionerProfileEdit', () => {
    * resuelve el conjunto por su código interno y después se expande. Va en el
    * armado porque la pantalla las pide al construirse, y sin respuesta el
    * `http.verify()` del cierre falla en todas las pruebas.
+   *
+   * El conjunto se busca **por su código**: desde que la pantalla también pide
+   * el de departamentos bolivianos (`VS_ADMINISTRATIVE_AREA`) hay dos lecturas contra
+   * `/terminology/value-sets`, y un `expectOne` sin filtro las encuentra a las
+   * dos y falla. El de departamentos lo drena {@link responderDepartamentos}.
    */
   function responderCatalogo(opciones: readonly object[] = CATALOGO): void {
     http
-      .expectOne((r) => r.url === '/terminology/value-sets')
+      .expectOne(
+        (r) =>
+          r.url === '/terminology/value-sets' &&
+          r.params.get('code') === 'VS_MEDICAL_SPECIALTY',
+      )
       .flush({
         items: [
           {
@@ -103,10 +112,25 @@ describe('PractitionerProfileEdit', () => {
       });
   }
 
+  /**
+   * Drena el catálogo de departamentos bolivianos, que la pantalla pide al
+   * construirse para «departamento que expidió el documento». Ninguna de estas
+   * pruebas lo mira; sin drenarlo, el `http.verify()` del cierre falla.
+   */
+  function responderDepartamentos(): void {
+    for (const pedido of http.match(
+      (r) =>
+        r.url === '/terminology/value-sets' && r.params.get('code') === 'VS_ADMINISTRATIVE_AREA',
+    )) {
+      pedido.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    }
+  }
+
   function montarYCargar(perfil: object = {}): void {
     componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
     http.expectOne('/profiles/practitioners/me/summary').flush({ ...PERFIL_BASE, ...perfil });
     responderCatalogo();
+    responderDepartamentos();
   }
 
   function interno<T>(nombre: string): T {
@@ -243,9 +267,16 @@ describe('PractitionerProfileEdit', () => {
   it('si el catálogo se cae, el resto del perfil sigue siendo editable', () => {
     componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    // Se cae SÓLO el de especialidades: el de departamentos es otra lectura y
+    // se drena aparte, si no `expectOne` encuentra las dos.
     http
-      .expectOne((r) => r.url === '/terminology/value-sets')
+      .expectOne(
+        (r) =>
+          r.url === '/terminology/value-sets' &&
+          r.params.get('code') === 'VS_MEDICAL_SPECIALTY',
+      )
       .error(new ProgressEvent('error'), { status: 500 });
+    responderDepartamentos();
 
     // Perder el catálogo no es perder el perfil: se avisa en su bloque y el
     // formulario de presentación queda intacto.
@@ -258,8 +289,13 @@ describe('PractitionerProfileEdit', () => {
     componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
     http
-      .expectOne((r) => r.url === '/terminology/value-sets')
+      .expectOne(
+        (r) =>
+          r.url === '/terminology/value-sets' &&
+          r.params.get('code') === 'VS_MEDICAL_SPECIALTY',
+      )
       .error(new ProgressEvent('error'), { status: 500 });
+    responderDepartamentos();
 
     interno<() => void>('reintentarEspecialidades')();
     responderCatalogo();

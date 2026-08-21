@@ -289,6 +289,57 @@
             />
           </app-form-field>
 
+          <app-form-field label="Fecha de nacimiento (opcional)">
+            <app-date-picker
+              [(value)]="fechaNacimientoProfesional"
+              placeholder="Seleccionar fecha"
+            />
+          </app-form-field>
+
+          <div class="registro__row">
+            <app-form-field
+              label="Cédula de identidad (opcional)"
+              hint="Se guarda como tu documento oficial."
+              [errorMessage]="
+                formProfesional.controls.nationalId.touched &&
+                formProfesional.controls.nationalId.invalid
+                  ? 'Letras, números, punto y guion.'
+                  : ''
+              "
+            >
+              <app-input
+                formControlName="nationalId"
+                type="text"
+                autocomplete="off"
+                placeholder="1234567"
+                testId="registro-pro-documento"
+              />
+            </app-form-field>
+
+            @if (catalogoDepartamentosCaido()) {
+              <app-form-field label="Departamento de emisión">
+                <p class="registro__tabs-label">
+                  No pudimos traer el catálogo de departamentos.
+                  <button app-button variant="ghost" size="sm" (clicked)="cargarDepartamentos()">
+                    Reintentar
+                  </button>
+                </p>
+              </app-form-field>
+            } @else {
+              <app-form-field
+                label="Departamento de emisión"
+                hint="El «SC», «LP»... de tu cédula."
+              >
+                <app-select
+                  data-testid="registro-pro-departamento-ci"
+                  [options]="opcionesDepartamento()"
+                  [(value)]="departamentoEmisor"
+                  placeholder="Sin especificar"
+                />
+              </app-form-field>
+            }
+          </div>
+
           <app-form-field
             label="Correo profesional"
             hint="Con este correo vas a iniciar sesión."
@@ -347,6 +398,28 @@
                 autocomplete="off"
                 placeholder="TIT-6789"
                 testId="registro-pro-credencial"
+              />
+            </app-form-field>
+          </div>
+
+          <div class="registro__row">
+            <app-form-field
+              label="Autoridad reguladora (opcional)"
+              hint="Ministerio de Salud y Deportes, o Colegio de Odontólogos si tu especialidad es odontología."
+            >
+              <app-input
+                formControlName="regulatoryAuthority"
+                type="text"
+                autocomplete="off"
+                placeholder="Ministerio de Salud y Deportes"
+                testId="registro-pro-autoridad"
+              />
+            </app-form-field>
+
+            <app-form-field label="Fecha de inscripción de la matrícula (opcional)">
+              <app-date-picker
+                [(value)]="fechaInscripcionMatricula"
+                placeholder="Seleccionar fecha"
               />
             </app-form-field>
           </div>

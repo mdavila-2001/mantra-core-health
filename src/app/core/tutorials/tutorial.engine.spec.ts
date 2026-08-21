@@ -2,8 +2,9 @@ import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
+import { MemoriaDeTutoriales } from '../../../testing/tutorial-storage';
 import { TutorialEngine } from './tutorial.engine';
-import { TutorialProgressStore } from './tutorial-progress.store';
+import { TutorialProgressStore, TUTORIAL_STORAGE } from './tutorial-progress.store';
 import { TutorialRegistry } from './tutorial.registry';
 import type { TutorialDefinition } from './tutorial.types';
 
@@ -59,7 +60,13 @@ describe('TutorialEngine', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideRouter([{ path: 'dashboard', component: DestinoDePrueba }])],
+      providers: [
+        provideRouter([{ path: 'dashboard', component: DestinoDePrueba }]),
+        // Nuevo por prueba: el progreso arranca vacío sin tener que vaciar nada.
+        // Antes esto era `localStorage.clear()` en el `afterEach`, y bajo jsdom
+        // tiraba: ver `src/testing/tutorial-storage.ts`.
+        { provide: TUTORIAL_STORAGE, useValue: new MemoriaDeTutoriales() },
+      ],
     });
     engine = TestBed.inject(TutorialEngine);
     registry = TestBed.inject(TutorialRegistry);
@@ -71,7 +78,6 @@ describe('TutorialEngine', () => {
     for (const elemento of creados) {
       elemento.remove();
     }
-    localStorage.clear();
   });
 
   /** Pone en el documento un objetivo con el identificador dado. */

@@ -67,6 +67,27 @@
               <app-input [(value)]="zonaHoraria" placeholder="America/La_Paz" />
             </app-form-field>
 
+            @if (esAseguradora()) {
+              <app-form-field label="Sigla">
+                <app-input [(value)]="sigla" placeholder="Sigla" />
+              </app-form-field>
+
+              <app-form-field label="NIT">
+                <app-input [(value)]="nit" placeholder="NIT" />
+              </app-form-field>
+
+              <app-form-field label="Dirección">
+                <app-input [(value)]="direccion" placeholder="Dirección" />
+              </app-form-field>
+
+              <app-form-field
+                label="Código de aseguradora"
+                hint="El código interno con el que la plataforma la identifica. No se edita desde acá."
+              >
+                <p class="organizacion__dato-solo-lectura">{{ org.payer?.carrierCode }}</p>
+              </app-form-field>
+            }
+
             <app-form-actions
               [pending]="guardando()"
               submitLabel="Guardar datos"
@@ -84,6 +105,16 @@
             <dd>{{ org.tradeName || '—' }}</dd>
             <dt>Zona horaria</dt>
             <dd>{{ org.timeZone || '—' }}</dd>
+            @if (esAseguradora()) {
+              <dt>Sigla</dt>
+              <dd>{{ org.payer?.sigla || '—' }}</dd>
+              <dt>NIT</dt>
+              <dd>{{ org.payer?.regulatorIdentifier || '—' }}</dd>
+              <dt>Dirección</dt>
+              <dd>{{ org.payer?.address || '—' }}</dd>
+              <dt>Código de aseguradora</dt>
+              <dd>{{ org.payer?.carrierCode || '—' }}</dd>
+            }
           </dl>
           <p class="organizacion__nota">
             Para cambiar estos datos hace falta ser administrador de la organización.

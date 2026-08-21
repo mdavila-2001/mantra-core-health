@@ -118,8 +118,11 @@ export interface AppSection {
   readonly icon: NavIconName;
 
   /**
-   * Roles del token que pueden verla. **Omitirlo significa «cualquier sesión»**,
-   * no «nadie».
+   * Roles del token que pueden verla. **Se declara siempre**: si la ve
+   * cualquier sesión, se escribe `roles: [{@link ANY_ROLE}]` — omitir el campo
+   * lo hacía indistinguible de un olvido, que es exactamente cómo el paciente
+   * terminó con el glosario (F-03) y con «Grupos y foros» (F-20) en su menú. Lo
+   * hace cumplir el guardia de `navigation.map.spec`.
    *
    * Esconder un ítem no protege nada —la autoridad es la API, que valida en
    * cada petición—: es no ofrecer una puerta que va a estar cerrada.
@@ -142,6 +145,25 @@ export interface AppSection {
    * que rebota.
    */
   readonly exclusiveRoles?: boolean;
+
+  /**
+   * La sección sólo tiene sentido si la sesión pertenece a **alguna**
+   * organización.
+   *
+   * Existe para las secciones cuyo permiso real no es un rol del token sino una
+   * **membresía** (`tenant_memberships`): «Tu organización» la usan owner,
+   * admin y staff, que son filas de esa tabla, no roles globales. Filtrarla por
+   * `roles` dejaría fuera a la recepcionista —de quien es la pantalla—, y no
+   * filtrarla por nada se la ofrecía a un paciente, que no tiene organización
+   * ninguna. La membresía sí viaja en el token, en el claim `tenants`, y es de
+   * primera clase: de ella salen el selector de organización y
+   * `needsTenantSelection`.
+   *
+   * **Es ortogonal al rol, comodín incluido**: no habla de permiso sino de que
+   * el dato exista. Un `SUPERADMIN` sin membresía tampoco tiene «su»
+   * organización que administrar.
+   */
+  readonly requiresTenant?: boolean;
 
   readonly availability: SectionAvailability;
 
@@ -186,6 +208,19 @@ export const SECTION_ROUTE_DATA = 'seccion';
  */
 export const ROLES_ROUTE_DATA = 'roles';
 
+/**
+ * Si la sección **restringe** por rol, o si la ve cualquier sesión.
+ *
+ * Desde F-20 toda sección declara `roles`, así que «tiene `roles`» dejó de
+ * distinguir a las restringidas: la universal declara `[{@link ANY_ROLE}]`. Lo
+ * pregunta `app.routes.spec` para exigir `seccionRolesGuard` sólo donde hay
+ * algo que hacer cumplir — ponerlo en una sección universal sería un guard que
+ * nunca niega nada.
+ */
+export function restringePorRol(section: AppSection): boolean {
+  return section.roles !== undefined && !section.roles.includes(ANY_ROLE);
+}
+
 /** Ruta absoluta de una sección, que es como la consumen el router y el menú. */
 export function routeOf(section: AppSection): string {
   return `/${section.path}`;
@@ -209,6 +244,19 @@ export function titleOf(section: AppSection): string {
 const WILDCARD_ROLE = 'SUPERADMIN';
 
 /**
+ * Rol universal declarado: «esta sección la ve cualquier sesión», dicho a
+ * propósito y no por olvido.
+ *
+ * Existe por F-20 (18/08/2026), la tercera vez que una fila nueva del registro
+ * llegó sin `roles` y le filtró al paciente una herramienta que no es suya —el
+ * glosario (F-03) y ahora «Grupos y foros»—. Omitir el campo y declararlo
+ * universal se leían igual en el archivo y distinto en la intención; ahora sólo
+ * una de las dos formas pasa el guardia de `navigation.map.spec`, y la
+ * universalidad queda escrita donde se revisa el PR.
+ */
+export const ANY_ROLE = '*';
+
+/**
  * Si los roles de una sesión alcanzan para ver la sección.
  *
  * Una sección sin `roles` la ve cualquier sesión; con `roles`, alcanza con
@@ -218,8 +266,18 @@ const WILDCARD_ROLE = 'SUPERADMIN';
  * **No autoriza nada.** Filtrar el menú es cortesía: quien escriba la ruta a
  * mano llega igual, y quien la autoriza de verdad es el backend.
  */
-export function isVisibleTo(section: AppSection, roles: readonly string[]): boolean {
+export function isVisibleTo(
+  section: AppSection,
+  roles: readonly string[],
+  tenants: readonly string[] = [],
+): boolean {
   const required = section.roles;
+
+  // La membresía se pregunta **antes** que el rol y no la salva el comodín: no
+  // es permiso, es que el dato exista. Ver {@link AppSection.requiresTenant}.
+  if (section.requiresTenant === true && tenants.length === 0) {
+    return false;
+  }
 
   // Una sección con roles **excluyentes** ignora el comodín: es la excepción
   // que la corrección #2 pidió explícitamente, y por eso el `if` del comodín
@@ -245,6 +303,9 @@ export function rolesAlcanzan(
   roles: readonly string[],
 ): boolean {
   if (roles.includes(WILDCARD_ROLE)) {
+    return true;
+  }
+  if (required?.includes(ANY_ROLE) === true) {
     return true;
   }
   return required === undefined || required.some((role) => roles.includes(role));

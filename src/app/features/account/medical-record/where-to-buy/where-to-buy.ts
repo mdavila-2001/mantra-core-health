@@ -30,6 +30,8 @@ import { AppButtonLink } from '../../../../shared/components/atoms/button/button
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { AppMap } from '../../../../shared/components/organisms/map/map';
+import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
@@ -110,9 +112,9 @@ interface SedeVisible {
   readonly total: string | null;
   readonly retiro: boolean | null;
   readonly delivery: boolean | null;
-  /** Posición en el `viewBox` del mapa; `null` si la sede no tiene coordenadas. */
-  readonly x: number | null;
-  readonly y: number | null;
+  /** Coordenadas reales de la sede; `null` si el directorio no las publica. */
+  readonly lat: number | null;
+  readonly lng: number | null;
 }
 
 /** El resultado de la consulta, listo para pintarse. */
@@ -157,7 +159,7 @@ interface ResultadoDeSedes {
  */
 @Component({
   selector: 'app-where-to-buy',
-  imports: [AppButton, AppButtonLink, Badge, Checkbox, Alert, PageHeader, RouterLink, ViewStateHost],
+  imports: [AppButton, AppButtonLink, AppMap, Badge, Checkbox, Alert, PageHeader, RouterLink, ViewStateHost],
   templateUrl: './where-to-buy.html',
   styleUrl: './where-to-buy.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -212,10 +214,37 @@ export class WhereToBuy {
   /** Las sedes que el mapa puede ubicar: las que tienen coordenadas. */
   protected readonly sedesEnElMapa = computed(() =>
     (this.resultado()?.sedes ?? []).filter(
-      (sede): sede is SedeVisible & { x: number; y: number } =>
-        sede.x !== null && sede.y !== null,
+      (sede): sede is SedeVisible & { lat: number; lng: number } =>
+        sede.lat !== null && sede.lng !== null,
     ),
   );
+
+  /** La sede resaltada, compartida en two-way entre el mapa y las tarjetas. */
+  protected readonly sedeElegida = signal<string | null>(null);
+
+  /** Las sedes ubicables, traducidas al contrato del organismo de mapa. */
+  protected readonly pinesDeSedes = computed<readonly PinMapa[]>(() =>
+    this.sedesEnElMapa().map((sede) => ({
+      // La letra de la tarjeta es la referencia compartida: ningún uuid
+      // llega al mapa, la misma regla de cero identificadores visibles.
+      id: sede.codigo,
+      codigo: sede.codigo,
+      lat: sede.lat,
+      lng: sede.lng,
+      titulo: `${sede.farmacia} · ${sede.sede}`,
+      subtitulo: subtituloDePin(sede),
+      estado: sede.completa
+        ? { etiqueta: 'Tiene todo', tono: 'success' as const }
+        : { etiqueta: 'Le falta algo', tono: 'warning' as const },
+      ctaEtiqueta: 'Ver en la lista',
+    })),
+  );
+
+  protected readonly etiquetaDelMapa = computed(() => {
+    const cantidad = this.sedesEnElMapa().length;
+    const marcadas = cantidad === 1 ? '1 sucursal marcada' : `${cantidad} sucursales marcadas`;
+    return `${marcadas} en el mapa. La lista completa, con dirección y distancia en línea recta, está en las tarjetas debajo.`;
+  });
 
   constructor() {
     if (this.perfil === null) {
@@ -445,6 +474,20 @@ export class WhereToBuy {
     this.origen.set(null);
     this.consultar();
   }
+
+  /* ---- el mapa y las tarjetas hablan de la misma sede ---------------------- */
+
+  /** Lleva la vista a la tarjeta de la sede cuyo CTA se tocó en el popup. */
+  protected enfocarSede(codigo: string): void {
+    const tarjeta = this.documento.getElementById(`compra-sede-${codigo}`);
+    if (tarjeta === null) {
+      return;
+    }
+    const reducirMovimiento =
+      this.documento.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ??
+      false;
+    tarjeta.scrollIntoView({ behavior: reducirMovimiento ? 'auto' : 'smooth', block: 'center' });
+  }
 }
 
 /** Un renglón por medicamento: dos recetas del mismo remedio son una compra. */
@@ -477,6 +520,15 @@ function itemDe(
 
 function geoPuntoDe(punto: PuntoDeReferencia): GeoPoint {
   return { lat: punto.lat, lng: punto.lng };
+}
+
+/** El renglón secundario del pin: distancia rotulada y dirección, lo que haya. */
+function subtituloDePin(sede: SedeVisible): string | undefined {
+  const partes = [
+    sede.distancia === null ? null : `${sede.distancia} en línea recta`,
+    sede.direccion,
+  ].filter((parte): parte is string => parte !== null);
+  return partes.length === 0 ? undefined : partes.join(' · ');
 }
 
 /**
@@ -547,17 +599,15 @@ function presentacionDe(producto: AvailabilityProduct | undefined): string | nul
 }
 
 /**
- * Las sedes del backend, evaluadas contra la receta y proyectadas al mapa.
+ * Las sedes del backend, evaluadas contra la receta.
  *
  * La «completa» del backend habla de los productos consultados; acá se exige
  * además que ningún medicamento incluido haya quedado afuera por no tener
  * producto publicado — una sede no puede declararse completa sobre una
  * consulta que no pudo incluirlo todo. El orden del backend se conserva.
  *
- * La posición es una **proyección lineal del recuadro que ocupan las sedes**,
- * no una proyección cartográfica — mismo esquema que «Cerca mío» (P4): a
- * escala de ciudad la diferencia es de píxeles y el mapa es un esquema de
- * posiciones relativas, no una carta de navegación.
+ * Las coordenadas viajan crudas: la cartografía es del organismo de mapa
+ * (FAR-I1), no de esta pantalla.
  */
 function evaluar(
   respuesta: AvailabilityResult,
@@ -568,17 +618,6 @@ function evaluar(
     consultables.map((item) => [item.productId, item.medicamento]),
   );
 
-  const ubicadas = respuesta.items.filter(
-    (sede) => sede.latitude !== null && sede.longitude !== null,
-  );
-  const lats = ubicadas.map((sede) => sede.latitude ?? 0);
-  const lngs = ubicadas.map((sede) => sede.longitude ?? 0);
-  const [minLat, maxLat] = [Math.min(...lats), Math.max(...lats)];
-  const [minLng, maxLng] = [Math.min(...lngs), Math.max(...lngs)];
-
-  const proyecta = (valor: number, min: number, max: number, largo: number): number =>
-    max === min ? largo / 2 : 60 + ((valor - min) / (max - min)) * (largo - 120);
-
   const sedes = respuesta.items.map((sede, indice): SedeVisible => {
     const faltantes = [
       ...sede.missingProductIds.map(
@@ -586,7 +625,6 @@ function evaluar(
       ),
       ...sinProducto,
     ];
-    const conCoordenadas = sede.latitude !== null && sede.longitude !== null;
     return {
       siteId: sede.siteId,
       codigo: CODIGOS[indice] ?? String(indice + 1),
@@ -603,10 +641,8 @@ function evaluar(
           : `${sede.totalAmount} ${sede.currency?.code ?? ''}`.trim(),
       retiro: sede.pickupAvailable,
       delivery: sede.homeDeliveryAvailable,
-      x: conCoordenadas ? proyecta(sede.longitude ?? 0, minLng, maxLng, 800) : null,
-      // La latitud crece hacia el norte y la `y` del SVG hacia abajo: sin
-      // invertirla el mapa sale reflejado.
-      y: conCoordenadas ? 400 - proyecta(sede.latitude ?? 0, minLat, maxLat, 400) : null,
+      lat: sede.latitude,
+      lng: sede.longitude,
     };
   });
 

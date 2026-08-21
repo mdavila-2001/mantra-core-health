@@ -95,6 +95,42 @@
 
       @if (plantillaElegida(); as plantilla) {
         @for (campo of plantilla.fields; track campo.fieldId) {
+          <!-- El odontograma no entra en un `app-form-field`: no es un control
+               con etiqueta al lado sino una boca entera, con su propio panel de
+               estados debajo. -->
+          @if (esOdontograma(campo)) {
+            <fieldset class="formulario-especialidad__odontograma" data-testid="campo-odontograma">
+              <legend class="formulario-especialidad__subtitulo">{{ campo.name }}</legend>
+              <app-odontogram
+                [estados]="mapaDental(campo.fieldId)"
+                [seleccionada]="piezaAbierta()"
+                (pieza)="abrirPieza($event)"
+              />
+              @if (piezaAbierta(); as fdi) {
+                <div class="formulario-especialidad__estados">
+                  <p class="formulario-especialidad__ayuda" id="ayuda-estado-dental">
+                    Pieza {{ fdi }} — elegí su estado. Volver a elegir el mismo lo borra.
+                  </p>
+                  @for (estado of estadosDentales; track estado.codigo) {
+                    <button
+                      app-button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      aria-describedby="ayuda-estado-dental"
+                      (clicked)="fijarEstado(campo.fieldId, estado.codigo)"
+                    >
+                      {{ estado.codigo }} · {{ estado.etiqueta }}
+                    </button>
+                  }
+                </div>
+              } @else {
+                <p class="formulario-especialidad__ayuda">
+                  Elegí una pieza para registrar su estado.
+                </p>
+              }
+            </fieldset>
+          } @else {
           <app-form-field
             [label]="campo.name"
             [required]="campo.required"
@@ -137,6 +173,7 @@
               }
             }
           </app-form-field>
+          }
         }
       }
 

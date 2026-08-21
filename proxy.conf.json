@@ -91,5 +91,19 @@
     "pathRewrite": {
       "^/otel": ""
     }
+  },
+  {
+    "_comentario": [
+      "El gateway WS de mensajería (community-messaging.gateway.ts). Entrada",
+      "aparte porque necesita `ws: true` — sin eso el dev-server acepta el",
+      "handshake HTTP pero nunca hace el upgrade, y el socket nunca conecta."
+    ],
+    "context": [
+      "/socket.io"
+    ],
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "ws": true
   }
 ]

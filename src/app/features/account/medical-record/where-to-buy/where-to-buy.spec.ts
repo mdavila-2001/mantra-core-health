@@ -11,6 +11,8 @@ import {
 } from '../../../../core/data-access/pharmacy/pharmacy.fixtures';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { SessionStore } from '../../../../core/auth/session.store';
+import { CARGADOR_DE_LEAFLET } from '../../../../shared/components/organisms/map/map';
+import type { CargadorDeLeaflet } from '../../../../shared/components/organisms/map/map';
 import { borradorDePedido, WhereToBuy, type ItemDeReceta } from './where-to-buy';
 
 /**
@@ -97,6 +99,36 @@ const CONCEPTOS = {
 
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
+/**
+ * El organismo de mapa (FAR-I1) entra con Leaflet doblado: acá se prueba la
+ * pantalla, no la cartografía — el contrato del mapa tiene su propio spec.
+ */
+const marcadoresDelMapa: { alt: string; icono: HTMLElement }[] = [];
+
+function leafletDoblado(): unknown {
+  return {
+    map: () => ({
+      setView: () => undefined,
+      fitBounds: () => undefined,
+      remove: () => undefined,
+    }),
+    tileLayer: () => ({ addTo: () => undefined }),
+    layerGroup: () => ({ addTo: () => undefined, remove: () => undefined }),
+    marker: (_coordenadas: unknown, opciones: { icon: { html: HTMLElement }; alt: string }) => {
+      marcadoresDelMapa.push({ alt: opciones.alt, icono: opciones.icon.html });
+      const marcador = {
+        bindPopup: () => marcador,
+        on: () => marcador,
+        addTo: () => marcador,
+        getElement: () => document.createElement('div'),
+      };
+      return marcador;
+    },
+    divIcon: (opciones: unknown) => opciones,
+    latLngBounds: (limites: unknown) => limites,
+  };
+}
+
 describe('WhereToBuy', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
@@ -111,6 +143,7 @@ describe('WhereToBuy', () => {
       value: { getCurrentPosition },
     });
 
+    marcadoresDelMapa.length = 0;
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -118,6 +151,10 @@ describe('WhereToBuy', () => {
         provideRouter([
           { path: 'my-account/medical-record/where-to-buy/:requestId', component: WhereToBuy },
         ]),
+        {
+          provide: CARGADOR_DE_LEAFLET,
+          useValue: (() => Promise.resolve(leafletDoblado())) as CargadorDeLeaflet,
+        },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -184,6 +221,28 @@ describe('WhereToBuy', () => {
     expect(sedes[1]?.textContent).toContain('Le falta algo');
     expect(sedes[1]?.textContent).toContain('Le falta: Amoxicilina');
     expect(sedes[1]?.textContent).toContain('Total no disponible');
+  });
+
+  it('el mapa recibe un pin por sede ubicable, y la sede sin coordenadas lo dice', async () => {
+    await montar();
+    responderHastaProductos();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+    // El montaje de Leaflet es diferido: dos microtareas y otro render.
+    await Promise.resolve();
+    await Promise.resolve();
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement?.querySelector('app-map')).not.toBeNull();
+    // La fixture trae la sede Centro con coordenadas y la Sur sin: un solo pin.
+    expect(marcadoresDelMapa).toHaveLength(1);
+    expect(marcadoresDelMapa[0].alt).toContain('Sucursal Centro');
+    expect(marcadoresDelMapa[0].icono.textContent).toBe('A');
+    expect(texto()).toContain('Ubicación no disponible en el mapa');
+    // El rótulo normativo (PAC-MED-005) sigue al pie del mapa.
+    expect(texto()).toContain('en línea recta');
   });
 
   it('no muestra ningún identificador: todo viaja por nombre', async () => {
