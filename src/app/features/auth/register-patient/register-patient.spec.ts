@@ -27,6 +27,9 @@ class AlmacenFalso {
   }
 }
 
+/** Un concepto de `VS_BO_DEPARTMENT`: Santa Cruz, tal como lo siembra la API. */
+const DEPARTAMENTO_SANTA_CRUZ = '51fcbf8e-b4ea-5ba9-8aec-0df7be617c69';
+
 describe('RegisterPatient', () => {
   let fixture: ComponentFixture<RegisterPatient>;
   let component: RegisterPatient;
@@ -70,7 +73,7 @@ describe('RegisterPatient', () => {
   });
 
   /** La petición del catálogo de departamentos que dispara el constructor. */
-  const CATALOGO = '/terminology/value-sets?code=VS_ADMINISTRATIVE_AREA';
+  const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
 
   describe('catálogo de departamentos', () => {
     it('un 401 no rompe el registro: deja el aviso y el formulario usable', () => {
@@ -93,7 +96,7 @@ describe('RegisterPatient', () => {
       // Sin `olvidar()`, `shareReplay` replicaría el error sin pedir nada y
       // esta expectativa no encontraría petición alguna.
       http.expectOne(CATALOGO).flush({
-        items: [{ id: 'vs-1', internalCode: 'VS_ADMINISTRATIVE_AREA', name: 'Departamentos' }],
+        items: [{ id: 'vs-1', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
       });
       http.expectOne('/terminology/value-sets/vs-1/$expand?limit=200').flush({
         items: [{ conceptId: 'c-1', code: 'SC', display: 'Santa Cruz' }],
@@ -117,7 +120,7 @@ describe('RegisterPatient', () => {
   function completar(
     extra: Partial<Record<'email' | 'middleName' | 'motherLastName', string>> = {},
   ): void {
-    component.formPaciente.setValue({
+    component.formPaciente.patchValue({
       nationalId: '1234567',
       name: 'Ana',
       middleName: extra.middleName ?? '',
@@ -209,6 +212,53 @@ describe('RegisterPatient', () => {
     req.flush({ ...RESPUESTA, emailVerificationSent: true });
 
     expect(component.verificationSent()).toBe(true);
+  });
+
+  it('manda los datos clínicos y de contacto que la API acepta, solo si se completaron', () => {
+    completar();
+    component.formPaciente.patchValue({ phone: '+591 70012345', occupationFreeText: 'Docente' });
+    component.fechaNacimientoPaciente.set(new Date(1990, 4, 17));
+    component.departamentoEmisorPaciente.set(DEPARTAMENTO_SANTA_CRUZ);
+    component.generoPaciente.set('FEMALE');
+    component.sexoAlNacerPaciente.set('FEMALE');
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toMatchObject({
+      issuerAdministrativeAreaConceptId: DEPARTAMENTO_SANTA_CRUZ,
+      // Fecha local, no UTC: `new Date(1990, 4, 17).toISOString()` daría el 16
+      // en cualquier huso al oeste de Greenwich, que es donde está Bolivia.
+      birthDate: '1990-05-17',
+      phone: '+591 70012345',
+      gender: 'FEMALE',
+      sexAtBirth: 'FEMALE',
+      occupationFreeText: 'Docente',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  it('omite los campos nuevos que quedaron vacíos: `forbidNonWhitelisted` rechaza lo que sobra', () => {
+    completar();
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    const enviado = Object.keys(req.request.body as Record<string, unknown>);
+    expect(enviado).not.toContain('issuerAdministrativeAreaConceptId');
+    expect(enviado).not.toContain('birthDate');
+    expect(enviado).not.toContain('phone');
+    expect(enviado).not.toContain('gender');
+    expect(enviado).not.toContain('sexAtBirth');
+    expect(enviado).not.toContain('occupationFreeText');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('el departamento elegido como paciente no reaparece en el formulario de profesional', () => {
+    component.departamentoEmisorPaciente.set(DEPARTAMENTO_SANTA_CRUZ);
+    component.cambiarTipo('profesional');
+
+    expect(component.departamentoEmisor()).toBeNull();
   });
 
   it('tras registrar muestra la confirmación y NO inicia sesión sola', () => {
@@ -311,7 +361,7 @@ describe('RegisterPatient', () => {
 
   describe('validaciones', () => {
     it('no envía con el formulario incompleto', () => {
-      component.formPaciente.setValue({
+      component.formPaciente.patchValue({
         nationalId: '',
         name: '',
         middleName: '',
@@ -326,7 +376,7 @@ describe('RegisterPatient', () => {
     });
 
     it('rechaza un documento con caracteres que el backend no admite', () => {
-      component.formPaciente.setValue({
+      component.formPaciente.patchValue({
         nationalId: 'ABC 123',
         name: 'Ana',
         middleName: '',
@@ -341,7 +391,7 @@ describe('RegisterPatient', () => {
     });
 
     it('exige los 8 caracteres de contraseña que pide el backend', () => {
-      component.formPaciente.setValue({
+      component.formPaciente.patchValue({
         nationalId: '1234567',
         name: 'Ana',
         middleName: '',

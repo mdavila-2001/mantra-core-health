@@ -6,6 +6,8 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
+  AdministrativeGenderCode,
+  BirthSexCode,
   PatientRegistration,
   PractitionerRegistration,
 } from '../../../core/data-access/iam/iam.types';
@@ -37,6 +39,40 @@ const MIN_DOCUMENTO = 4;
 
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
+
+/** Dígitos, espacios, paréntesis, `+` y guion — el mismo `@Matches` del backend. */
+const TELEFONO_VALIDO = /^[+]?[0-9 ()-]{6,}$/;
+
+/** Tope de la ocupación en texto libre, el mismo `@MaxLength` del backend. */
+const MAX_OCUPACION = 200;
+
+/**
+ * Género administrativo y sexo al nacer, con sus etiquetas en castellano.
+ *
+ * Van como listas fijas y no como lectura de terminología —a diferencia de los
+ * departamentos— porque la API los recibe **por código legible**
+ * (`gender: 'FEMALE'`), no por uuid de concepto: pedir el catálogo sólo para
+ * pintar cuatro etiquetas agregaría una petición y un estado de fallo a una
+ * pantalla pública, sin ganar nada. Los códigos son los que valida el `@IsIn`
+ * del backend; el mapeo a concepto lo hace él.
+ *
+ * Son dos preguntas distintas a propósito: el género es cómo se identifica la
+ * persona y el sexo al nacer es dato clínico —dosis, valores de referencia,
+ * tamizajes—. Colapsarlos en un campo pierde uno de los dos.
+ */
+const OPCIONES_GENERO: readonly SelectOption<AdministrativeGenderCode>[] = [
+  { value: 'FEMALE', label: 'Femenino' },
+  { value: 'MALE', label: 'Masculino' },
+  { value: 'OTHER', label: 'Otro' },
+  { value: 'UNKNOWN', label: 'Prefiero no decirlo' },
+];
+
+const OPCIONES_SEXO_AL_NACER: readonly SelectOption<BirthSexCode>[] = [
+  { value: 'FEMALE', label: 'Femenino' },
+  { value: 'MALE', label: 'Masculino' },
+  { value: 'INTERSEX', label: 'Intersexual' },
+  { value: 'UNKNOWN', label: 'Prefiero no decirlo' },
+];
 
 /** Quién se está registrando. Define qué endpoint y qué campos. */
 type TipoCuenta = 'paciente' | 'profesional';
@@ -102,7 +138,41 @@ export class RegisterPatient {
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
     }),
     email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
+    // Mismo patrón que el backend (`@Matches` de `phone`): dígitos, espacios,
+    // paréntesis, `+` y guion. Validarlo acá evita un viaje a la API para
+    // enterarse de algo que se ve en el campo.
+    phone: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.pattern(TELEFONO_VALIDO)],
+    }),
+    // Ocupación en texto libre: ver `PatientRegistration.occupationFreeText`
+    // sobre por qué todavía no es un catálogo.
+    occupationFreeText: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(MAX_OCUPACION)],
+    }),
   });
+
+  /**
+   * Fecha de nacimiento, departamento emisor, género y sexo al nacer del
+   * paciente.
+   *
+   * Fuera del `FormGroup` porque `app-date-picker` y `app-select` trabajan con
+   * `model()` y no con `formControlName`, igual que ya hacen los del formulario
+   * de profesional.
+   *
+   * Y separados de los del profesional —no compartidos— porque las dos ramas
+   * conviven en el mismo componente: un valor elegido en una pestaña reaparecía
+   * en la otra al cambiar de tipo, que es un dato que nadie escribió ahí.
+   */
+  readonly fechaNacimientoPaciente = signal<Date | null>(null);
+  readonly departamentoEmisorPaciente = signal<string | null>(null);
+  readonly generoPaciente = signal<AdministrativeGenderCode | null>(null);
+  readonly sexoAlNacerPaciente = signal<BirthSexCode | null>(null);
+
+  /** Las listas fijas, expuestas a la plantilla. */
+  protected readonly opcionesGenero = OPCIONES_GENERO;
+  protected readonly opcionesSexoAlNacer = OPCIONES_SEXO_AL_NACER;
 
   readonly formProfesional = new FormGroup({
     // Mismas cuatro partes que el paciente: la persona se registra igual sea
@@ -140,7 +210,7 @@ export class RegisterPatient {
   readonly fechaNacimientoProfesional = signal<Date | null>(null);
   readonly fechaInscripcionMatricula = signal<Date | null>(null);
 
-  /** Departamento que emitió el documento (VS_ADMINISTRATIVE_AREA), y su catálogo. */
+  /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
   readonly departamentoEmisor = signal<string | null>(null);
   readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
@@ -296,22 +366,40 @@ export class RegisterPatient {
   }
 
   private datosPaciente(): PatientRegistration {
-    const { nationalId, name, middleName, lastName, motherLastName, password, email } =
-      this.formPaciente.getRawValue();
-    const correo = email.trim();
-    const segundoNombre = middleName.trim();
-    const apellidoMaterno = motherLastName.trim();
+    const raw = this.formPaciente.getRawValue();
+    const correo = raw.email.trim();
+    const segundoNombre = raw.middleName.trim();
+    const apellidoMaterno = raw.motherLastName.trim();
+    const documento = raw.nationalId.trim();
+    const telefono = raw.phone.trim();
+    const ocupacion = raw.occupationFreeText.trim();
+    const fechaNacimiento = this.fechaNacimientoPaciente();
+    const departamento = this.departamentoEmisorPaciente();
+    const genero = this.generoPaciente();
+    const sexoAlNacer = this.sexoAlNacerPaciente();
 
     return {
-      nationalId: nationalId.trim(),
-      name: name.trim(),
-      lastName: lastName.trim(),
+      nationalId: documento,
+      name: raw.name.trim(),
+      lastName: raw.lastName.trim(),
       ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
-      password,
+      password: raw.password,
       // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
       // y una cadena vacía no es lo mismo que la ausencia del campo.
       ...(correo === '' ? {} : { email: correo }),
+      // El departamento emisor viaja atado al documento: sin CI no hay
+      // identificador al que atarlo, y el backend lo escribe en la fila del
+      // identificador, no en la persona. Acá el documento es obligatorio, así
+      // que la única condición real es haber elegido departamento.
+      ...(departamento === null
+        ? {}
+        : { issuerAdministrativeAreaConceptId: departamento }),
+      ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
+      ...(telefono === '' ? {} : { phone: telefono }),
+      ...(genero === null ? {} : { gender: genero }),
+      ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
+      ...(ocupacion === '' ? {} : { occupationFreeText: ocupacion }),
     };
   }
 

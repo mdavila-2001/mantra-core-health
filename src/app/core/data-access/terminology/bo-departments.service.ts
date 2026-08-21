@@ -9,15 +9,25 @@ import type { ValueSetOption } from './terminology.types';
 /**
  * El código interno del catálogo de departamentos de Bolivia.
  *
- * **Era `VS_BO_DEPARTMENT` hasta el 21/08, y ese conjunto no existía.** Dos
- * carriles declararon el mismo catálogo con nombres distintos: éste, que sólo
- * vivía como constante en el frontend, y `vs_administrative_area` (v4.1.4), que
- * sí está declarado en la bóveda y sembrado por el paquete con los 9
- * departamentos y sus siglas. Se convergió en el que existe —crear el otro
- * habría sido un segundo catálogo con los mismos nueve valores—, que además es
- * el que `common.addresses.administrative_area_concept_id` ya referenciaba.
+ * **Vuelve a ser `VS_BO_DEPARTMENT`, que es el que la API sirve.** El 21/08 se
+ * cambió a `VS_ADMINISTRATIVE_AREA` dando por hecho que el paquete del modelo
+ * lo sembraba; no lo siembra, y ese cambio es justamente el que dejó el
+ * desplegable en «no pudimos traer el catálogo» de forma permanente. Contra la
+ * API en ejecución:
+ *
+ * - `GET /terminology/value-sets?code=VS_ADMINISTRATIVE_AREA` → `count: 0`. En
+ *   los 82 conjuntos sembrados no hay ninguno con ese código; el único que se
+ *   le parece es `administrative-gender`, que es el género.
+ * - `GET /terminology/value-sets?code=VS_BO_DEPARTMENT` → un conjunto con
+ *   `memberCount: 9`, y su expansión devuelve los nueve departamentos
+ *   (`geo:bo:department:CH`, `…:LP`, `…:CB`, …) en el orden del INE.
+ *
+ * Quien lo siembra es `BoGeographySeedService`, en la cadena de seeders de la
+ * API. Ese seeder entró por `origin/dev` un minuto después del cambio de acá,
+ * así que las dos mitades se cruzaron: el frontend dejó de pedir el catálogo
+ * que el backend acababa de empezar a sembrar.
  */
-export const CODIGO_CATALOGO_DEPARTAMENTOS = 'VS_ADMINISTRATIVE_AREA';
+export const CODIGO_CATALOGO_DEPARTAMENTOS = 'VS_BO_DEPARTMENT';
 
 /**
  * Los 9 departamentos de Bolivia, para el desplegable de «departamento que

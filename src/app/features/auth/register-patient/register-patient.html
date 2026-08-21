@@ -117,6 +117,31 @@
             />
           </app-form-field>
 
+          <!-- Pegado al documento porque es un dato DE ese documento: la
+               terminación «SC», «LP»… que distingue dos cédulas homónimas. -->
+          @if (catalogoDepartamentosCaido()) {
+            <app-form-field label="Departamento de emisión (opcional)">
+              <p class="registro__tabs-label">
+                No pudimos traer el catálogo de departamentos.
+                <button app-button variant="ghost" size="sm" (clicked)="cargarDepartamentos()">
+                  Reintentar
+                </button>
+              </p>
+            </app-form-field>
+          } @else {
+            <app-form-field
+              label="Departamento de emisión (opcional)"
+              hint="El «SC», «LP»... de tu cédula."
+            >
+              <app-select
+                data-testid="registro-departamento-ci"
+                [options]="opcionesDepartamento()"
+                [(value)]="departamentoEmisorPaciente"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+          }
+
           <app-form-field
             label="Nombre"
             [required]="true"
@@ -210,6 +235,70 @@
               testId="registro-correo"
             />
           </app-form-field>
+
+          <app-form-field
+            label="Fecha de nacimiento (opcional)"
+            hint="Sirve para calcular dosis y valores de referencia."
+          >
+            <app-date-picker
+              [(value)]="fechaNacimientoPaciente"
+              placeholder="Seleccionar fecha"
+            />
+          </app-form-field>
+
+          <div class="registro__row">
+            <!-- Dos preguntas distintas, no una: el género es cómo te
+                 identificás y el sexo al nacer es dato clínico. -->
+            <app-form-field label="Género (opcional)">
+              <app-select
+                data-testid="registro-genero"
+                [options]="opcionesGenero"
+                [(value)]="generoPaciente"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+
+            <app-form-field label="Sexo al nacer (opcional)">
+              <app-select
+                data-testid="registro-sexo-al-nacer"
+                [options]="opcionesSexoAlNacer"
+                [(value)]="sexoAlNacerPaciente"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+          </div>
+
+          <div class="registro__row">
+            <app-form-field
+              label="Teléfono (opcional)"
+              [errorMessage]="
+                formPaciente.controls.phone.touched && formPaciente.controls.phone.invalid
+                  ? 'Dígitos, espacios, paréntesis, + y guion.'
+                  : ''
+              "
+            >
+              <!-- `type="text"` y no `tel`: `INPUT_TYPES` del atom no declara
+                   `tel`, y el `autocomplete` ya le dice al navegador qué es.
+                   Mismo criterio que el teléfono del formulario de profesional. -->
+              <app-input
+                formControlName="phone"
+                type="text"
+                autocomplete="tel"
+                placeholder="+591 70012345"
+                testId="registro-telefono"
+              />
+            </app-form-field>
+
+            <app-form-field label="Ocupación (opcional)">
+              <app-input
+                formControlName="occupationFreeText"
+                type="text"
+                autocomplete="organization-title"
+                placeholder="Docente"
+                testId="registro-ocupacion"
+              />
+            </app-form-field>
+          </div>
 
           <button
             app-button
