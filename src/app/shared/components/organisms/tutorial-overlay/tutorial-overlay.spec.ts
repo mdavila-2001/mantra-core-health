@@ -2,7 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { MemoriaDeTutoriales } from '../../../../../testing/tutorial-storage';
 import { TutorialEngine } from '../../../../core/tutorials/tutorial.engine';
+import { TUTORIAL_STORAGE } from '../../../../core/tutorials/tutorial-progress.store';
 import { TutorialRegistry } from '../../../../core/tutorials/tutorial.registry';
 import type { TutorialDefinition } from '../../../../core/tutorials/tutorial.types';
 import { DialogService } from '../../molecules/dialog/dialog-service';
@@ -52,6 +54,10 @@ describe('TutorialOverlay', () => {
       providers: [
         provideRouter([]),
         { provide: DialogService, useValue: { confirm: confirmar } },
+        // Progreso en memoria, nuevo por prueba: bajo jsdom `localStorage`
+        // tira, y vaciarlo en el `afterEach` envenenaba el `TestBed` de los
+        // specs que siguieran en el mismo worker.
+        { provide: TUTORIAL_STORAGE, useValue: new MemoriaDeTutoriales() },
       ],
     });
     engine = TestBed.inject(TutorialEngine);
@@ -59,8 +65,6 @@ describe('TutorialOverlay', () => {
     fixture = TestBed.createComponent(TutorialOverlay);
     componente = fixture.componentInstance;
   });
-
-  afterEach(() => localStorage.clear());
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
