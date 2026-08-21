@@ -100,8 +100,18 @@ export interface PractitionerRegistration {
   readonly lastName: string;
   /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
   readonly motherLastName?: string;
+  /** Fecha en formato ISO `YYYY-MM-DD`, tal como la valida el backend. */
+  readonly birthDate?: string;
+  /** Documento de identidad. Se guarda como identificador oficial, no como login. */
+  readonly nationalId?: string;
+  /** Departamento boliviano que emitió el documento (catálogo VS_BO_DEPARTMENT). */
+  readonly issuerAdministrativeAreaConceptId?: string;
   readonly licenseNumber: string;
   readonly credentialNumber: string;
+  /** Autoridad que emitió la matrícula: Ministerio de Salud y Deportes, Colegio de Odontólogos, etc. */
+  readonly regulatoryAuthority?: string;
+  /** Fecha de inscripción de la matrícula, ISO `YYYY-MM-DD`. */
+  readonly licenseIssueDate?: string;
   readonly professionalTitle?: string;
   readonly phone?: string;
 }

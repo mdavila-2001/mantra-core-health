@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { AddressesClient } from '../../../../core/data-access/common/addresses.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import { BoDepartmentsCatalog } from '../../../../core/data-access/terminology/bo-departments.service';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
 import type { OwnPractitionerProfile } from '../../../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -18,12 +20,21 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 
 /** El campo de la jurisdicción, del catálogo dinámico. */
 const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_concept_id';
+
+/** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
+function fechaIso(fecha: Date): string {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
 
 /**
  * **Configurar el perfil profesional** — título, biografía, disponibilidad,
@@ -55,6 +66,7 @@ const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_conc
     AppButton,
     Card,
     ConceptSelect,
+    DatePicker,
     FormActions,
     FormField,
     Input,
@@ -71,9 +83,11 @@ const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_conc
 })
 export class PractitionerProfileEdit {
   private readonly profiles = inject(ProfilesClient);
+  private readonly addresses = inject(AddressesClient);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
   private readonly catalogo = inject(MedicalSpecialtiesCatalog);
+  private readonly departamentos = inject(BoDepartmentsCatalog);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -123,15 +137,33 @@ export class PractitionerProfileEdit {
   protected readonly nuevaJurisdiccion = signal<string | null>(null);
   protected readonly nuevoNumeroDeMatricula = signal('');
   protected readonly nuevaAutoridad = signal('');
+  protected readonly nuevaFechaInscripcion = signal<Date | null>(null);
   protected readonly guardandoMatricula = signal(false);
 
   protected readonly puedeAgregarMatricula = computed(
     () => this.nuevoNumeroDeMatricula().trim() !== '',
   );
 
+  /* -- Nueva dirección --------------------------------------------------------
+     Mismo criterio que arriba: se agrega, no se edita. `POST /common/addresses`
+     no tiene, hoy, un `PUT`/`PATCH` — corregir una dirección es cargar una
+     nueva, igual que declarar otra especialidad o otra matrícula. */
+
+  protected readonly nuevaLineaDireccion = signal('');
+  protected readonly nuevaCiudad = signal('');
+  protected readonly nuevoDepartamentoDireccion = signal<string | null>(null);
+  protected readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
+  protected readonly catalogoDepartamentosCaido = signal(false);
+  protected readonly guardandoDireccion = signal(false);
+
+  protected readonly puedeAgregarDireccion = computed(
+    () => this.nuevaLineaDireccion().trim() !== '',
+  );
+
   constructor() {
     this.cargar();
     this.cargarEspecialidades();
+    this.cargarDepartamentos();
   }
 
   /**
@@ -166,6 +198,33 @@ export class PractitionerProfileEdit {
   protected reintentarEspecialidades(): void {
     this.catalogo.olvidar();
     this.cargarEspecialidades();
+  }
+
+  /**
+   * Trae el catálogo de departamentos bolivianos, para el domicilio.
+   *
+   * Un fallo no rompe la pantalla, mismo criterio que las especialidades: el
+   * resto del formulario de dirección sigue usable, con departamento sin
+   * catálogo hasta que se reintente.
+   */
+  protected cargarDepartamentos(): void {
+    this.departamentos.listar().subscribe({
+      next: (opciones) => {
+        this.catalogoDepartamentosCaido.set(false);
+        this.opcionesDepartamento.set(
+          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+        );
+      },
+      error: () => {
+        this.opcionesDepartamento.set([]);
+        this.catalogoDepartamentosCaido.set(true);
+      },
+    });
+  }
+
+  protected reintentarDepartamentos(): void {
+    this.departamentos.olvidar();
+    this.cargarDepartamentos();
   }
 
   protected recargar(): void {
@@ -295,11 +354,13 @@ export class PractitionerProfileEdit {
     }
 
     this.guardandoMatricula.set(true);
+    const fechaInscripcion = this.nuevaFechaInscripcion();
     this.profiles
       .addJurisdictionAuthorization(profileId, {
         licenseNumber: numero,
         jurisdictionConceptId: this.nuevaJurisdiccion() ?? undefined,
         regulatoryAuthority: this.nuevaAutoridad().trim() || undefined,
+        validFrom: fechaInscripcion === null ? undefined : fechaIso(fechaInscripcion),
       })
       .subscribe({
         next: () => {
@@ -307,6 +368,7 @@ export class PractitionerProfileEdit {
           this.nuevaJurisdiccion.set(null);
           this.nuevoNumeroDeMatricula.set('');
           this.nuevaAutoridad.set('');
+          this.nuevaFechaInscripcion.set(null);
           this.toasts.success(
             'Se agregó la matrícula. Queda pendiente de verificación.',
             'Matrículas',
@@ -316,6 +378,43 @@ export class PractitionerProfileEdit {
         error: () => {
           this.guardandoMatricula.set(false);
           this.toasts.error('No se pudo agregar la matrícula. Probá de nuevo.', 'Matrículas');
+        },
+      });
+  }
+
+  protected agregarDireccion(): void {
+    const profileId = this.profileId();
+    const linea = this.nuevaLineaDireccion().trim();
+    if (profileId === null || linea === '' || this.guardandoDireccion()) {
+      return;
+    }
+
+    const ciudad = this.nuevaCiudad().trim();
+    this.guardandoDireccion.set(true);
+    this.addresses
+      .create({
+        // El backend no distingue todavía un `PRACTITIONER`: guarda el
+        // documento y el contacto del profesional bajo `PATIENT`, el mismo
+        // owner type genérico de «persona», y la dirección sigue ese criterio.
+        ownerType: 'PATIENT',
+        ownerId: profileId,
+        lines: [linea],
+        ...(ciudad === '' ? {} : { city: ciudad }),
+        ...(this.nuevoDepartamentoDireccion() === null
+          ? {}
+          : { administrativeAreaConceptId: this.nuevoDepartamentoDireccion()! }),
+      })
+      .subscribe({
+        next: () => {
+          this.guardandoDireccion.set(false);
+          this.nuevaLineaDireccion.set('');
+          this.nuevaCiudad.set('');
+          this.nuevoDepartamentoDireccion.set(null);
+          this.toasts.success('Se guardó tu dirección.', 'Dirección');
+        },
+        error: () => {
+          this.guardandoDireccion.set(false);
+          this.toasts.error('No se pudo guardar la dirección. Probá de nuevo.', 'Dirección');
         },
       });
   }
