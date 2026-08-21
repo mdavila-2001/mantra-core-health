@@ -104,6 +104,10 @@ PROXY=alovida-proxy
 IMAGEN=alovida-front
 DEVTUNNEL="${DEVTUNNEL_BIN:-$HOME/bin/devtunnel}"
 
+# La ruta resuelta del propio script: hace falta para relanzarse a sí mismo (ver
+# `recargarse_si_cambio`), y `$0` puede ser relativa a donde lo invocaron.
+RUTA="$RAIZ/tools/redeploy/redeploy.sh"
+
 LOG="$ESTADO/redeploy.log"
 URL_FILE="$ESTADO/URL"
 TUNEL_LOG="$ESTADO/devtunnel.log"
@@ -409,6 +413,26 @@ revisar_repo() {
 
 # ─── Órdenes ─────────────────────────────────────────────────────────────────
 
+# Bash no relee el archivo de un script en marcha: el vigilante se queda con el
+# código que tenía al arrancar. Y este script vive en una rama que **se rebasa
+# sola** cada vez que `dev` avanza, así que un arreglo recién commiteado no
+# entraba en vigor hasta que alguien se acordaba de reiniciar el vigilante —
+# entretanto seguía desplegando con la versión vieja. Pasó de verdad: un
+# despliegue automático deshizo un arreglo ya commiteado y el enlace se rompió
+# otra vez, con los contenedores sanos y verdes.
+#
+# `exec` conserva el PID, así que el archivo de PID sigue siendo válido.
+FIRMA="$(cksum "$RUTA" 2>/dev/null | awk '{print $1, $2}')"
+
+recargarse_si_cambio() {
+  local ahora
+  ahora="$(cksum "$RUTA" 2>/dev/null | awk '{print $1, $2}')"
+  [ -n "$ahora" ] || return 0
+  [ "$ahora" = "$FIRMA" ] && return 0
+  log "VIGILANTE: el script cambió en disco; recargándose"
+  exec "$RUTA" watch
+}
+
 ciclo() {
   asegurar_tunel
   proxy_vivo || { web_vivo && lanzar_proxy; }
@@ -427,14 +451,14 @@ case "${1:-once}" in
   watch)
     log "=== vigilante arriba · rama $RAMA · cada ${INTERVALO}s ==="
     trap 'log "=== vigilante detenido ==="; exit 0' INT TERM
-    while true; do ciclo; sleep "$INTERVALO"; done
+    while true; do recargarse_si_cambio; ciclo; sleep "$INTERVALO"; done
     ;;
 
   start)
     if [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null; then
       log "El vigilante ya corre (pid $(cat "$VIGILANTE_PID"))"; exit 0
     fi
-    setsid nohup "$0" watch >>"$ESTADO/vigilante.out" 2>&1 < /dev/null &
+    setsid nohup "$RUTA" watch >>"$ESTADO/vigilante.out" 2>&1 < /dev/null &
     echo $! > "$VIGILANTE_PID"
     log "Vigilante en segundo plano (pid $(cat "$VIGILANTE_PID"))"
     ;;

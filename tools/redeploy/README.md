@@ -140,6 +140,22 @@ ENLACE: /auth con el host del túnel responde 200
 Si ahí aparece cualquier otra cosa, el enlace no sirve aunque el contenedor esté
 sano y verde.
 
+## El vigilante se recarga solo
+
+Bash no relee el archivo de un script en marcha: el proceso se queda con el
+código que tenía al arrancar. Y este script vive en una rama que **se rebasa
+sola**, así que un arreglo recién commiteado no entraba en vigor hasta que
+alguien se acordaba de reiniciar el vigilante — mientras tanto seguía
+desplegando con la versión vieja.
+
+No es teórico: pasó. Un arreglo de `SSR_ALLOWED_HOSTS` quedó commiteado, el
+vigilante redesplegó dos veces por su cuenta con el código anterior, y el enlace
+volvió a romperse con los dos contenedores sanos y verdes.
+
+Ahora, en cada ciclo, compara la suma de comprobación del archivo con la que
+tenía al arrancar y se relanza con `exec` si cambió. `exec` conserva el PID, así
+que el archivo de PID sigue valiendo.
+
 ## Si algo va mal
 
 - **El enlace da 502/503** — no hay nadie hospedando el túnel o el proxy está
