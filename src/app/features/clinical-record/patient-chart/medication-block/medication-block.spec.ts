@@ -6,7 +6,14 @@ import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../../../../core/auth/session.store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
-import { MedicationBlock, TARGET_MEDICAMENTO, type RecetaEnFicha } from './medication-block';
+import { CASOS_RECETA_DEMO } from '../demo-presets';
+import {
+  MedicationBlock,
+  TARGET_MEDICAMENTO,
+  TARGET_UNIDAD,
+  TARGET_VIA,
+  type RecetaEnFicha,
+} from './medication-block';
 
 /**
  * Prescribir, firmar y emitir desde la ficha — V08-01. Lo que estas pruebas
@@ -306,6 +313,151 @@ describe('MedicationBlock', () => {
     expect(releido).toBe(1);
     expect(interno<() => string | null>('medicamento')()).toBeNull();
     expect(interno<() => string>('dosis')()).toBe('');
+    expect(interno<() => string>('indicacionesPaciente')()).toBe('');
+  });
+
+  it('manda inicio y fin de vigencia como fechas ISO cuando están configurados', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    señal<Date>('validFrom').set(new Date('2026-08-20T10:00:00.000Z'));
+    señal<Date>('validTo').set(new Date('2026-08-27T10:00:00.000Z'));
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    const body = req.request.body as Record<string, unknown>;
+    expect(body['validFrom']).toBe('2026-08-20T10:00:00.000Z');
+    expect(body['validTo']).toBe('2026-08-27T10:00:00.000Z');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('las indicaciones al paciente viajan separadas de la dosis (v4.1.3)', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    señal<string>('dosis').set('500 mg');
+    señal<string>('indicacionesPaciente').set('  Tomar con las comidas  ');
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    const body = req.request.body as Record<string, unknown>;
+    // La posología queda limpia —es lo que farmacia lee para dispensar—:
+    // concatenarle las indicaciones fue el interino que v4.1.3 retiró.
+    expect(body['doseText']).toBe('500 mg');
+    expect(body['patientInstructionsText']).toBe('Tomar con las comidas');
+
+    req.flush(RESPUESTA);
+  });
+
+  /* ---- pauta, duración y cantidad sugerida -------------------------------- */
+
+  it('la pauta sugiere la cantidad sin pisar lo tecleado a mano', () => {
+    responderCatalogo();
+
+    interno<(p: string) => void>('fijarFrecuenciaRapida')('Cada 8 horas');
+    interno<(d: number | null) => void>('fijarDuracion')(7);
+    expect(String(señal<string | number | null>('cantidad')())).toBe('21');
+
+    // Recalcula sobre su propia sugerencia…
+    interno<(d: number | null) => void>('fijarDuracion')(10);
+    expect(String(señal<string | number | null>('cantidad')())).toBe('30');
+
+    // …pero jamás sobre lo que quien receta tecleó.
+    señal<string | number | null>('cantidad').set('12');
+    interno<(d: number | null) => void>('fijarDuracion')(3);
+    expect(String(señal<string | number | null>('cantidad')())).toBe('12');
+  });
+
+  it('«Crónico» no aparece elegido al abrir, y al elegirlo borra el fin de vigencia', () => {
+    responderCatalogo();
+
+    // Sin elección no hay estado: `null === null` no es haber elegido crónico.
+    expect(interno<() => boolean>('esCronico')()).toBe(false);
+
+    interno<(d: number | null) => void>('fijarDuracion')(null);
+    expect(interno<() => boolean>('esCronico')()).toBe(true);
+    expect(interno<() => Date | null>('validTo')()).toBeNull();
+  });
+
+  /* ---- los casos de demostración ------------------------------------------ */
+
+  /**
+   * Lo que estas dos fijan: el caso resuelve vía y unidad a conceptId por
+   * código EXACTO —escribir el código en la señal fue el 400 de la primera
+   * versión— y SELECCIONA el medicamento buscado —buscar sin elegir dejaba
+   * `puedeRecetar()` en falso y el caso no era prescribible—. Y lo que el
+   * catálogo no tiene queda sin elegir, jamás «el primer resultado».
+   */
+  it('un caso de demostración resuelve los códigos y selecciona el medicamento', () => {
+    fixture.detectChanges();
+    http.expectOne((r) => r.params.get('target') === TARGET_MEDICAMENTO).flush(CATALOGO);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.params.get('target') === TARGET_VIA)
+      .flush({
+        ...CATALOGO,
+        options: [{ conceptId: 'via-oral', code: 'ROUTE_ORAL', display: 'Oral', ordinal: 1 }],
+      });
+    http
+      .expectOne((r) => r.params.get('target') === TARGET_UNIDAD)
+      .flush({
+        ...CATALOGO,
+        options: [{ conceptId: 'u-tab', code: 'UNIT_{tablet}', display: 'Tablet', ordinal: 1 }],
+      });
+
+    // Amoxicilina 500 mg · cada 8 horas · oral · 21 comprimidos · 7 días.
+    const caso = CASOS_RECETA_DEMO[0];
+    componente.aplicarCasoDemo(caso);
+
+    const busqueda = http.expectOne(
+      (r) => r.url === '/terminology/concepts' && r.params.get('q') === caso.medicamentoQuery,
+    );
+    busqueda.flush({
+      items: [
+        {
+          conceptId: 'med-amoxi',
+          code: 'J01CA04',
+          display: 'Amoxicilina',
+          codeSystemVersionId: 'csv-vademecum',
+        },
+      ],
+      count: 1,
+      limit: 20,
+    });
+    // Elegirlo lee la ficha, exactamente como una selección manual.
+    http.expectOne('/terminology/concepts/med-amoxi').flush({
+      conceptId: 'med-amoxi',
+      code: 'J01CA04',
+      display: 'Amoxicilina',
+      codeSystemVersionId: 'csv-vademecum',
+      properties: {},
+    });
+
+    expect(interno<() => string | null>('medicamento')()).toBe('med-amoxi');
+    expect(interno<() => string | null>('via')()).toBe('via-oral');
+    expect(interno<() => string | null>('unidad')()).toBe('u-tab');
+    expect(interno<() => string>('dosis')()).toBe(caso.dosis);
+    expect(interno<() => string>('frecuencia')()).toBe(caso.frecuencia);
+    expect(String(señal<string | number | null>('cantidad')())).toBe(String(caso.cantidad));
+    expect(interno<() => string>('indicacionesPaciente')()).toBe(caso.indicaciones);
+    expect(interno<() => Date | null>('validFrom')()).not.toBeNull();
+    expect(interno<() => Date | null>('validTo')()).not.toBeNull();
+    expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
+  });
+
+  it('si la búsqueda no trae el medicamento pedido, queda sin elegir', () => {
+    responderCatalogo();
+
+    componente.aplicarCasoDemo(CASOS_RECETA_DEMO[0]);
+
+    const busqueda = http.expectOne(
+      (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'Amoxicilina',
+    );
+    busqueda.flush({ items: [], count: 0, limit: 20 });
+
+    expect(interno<() => string | null>('medicamento')()).toBeNull();
+    expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
   });
 
   /* ---- el chequeo de interacciones ---------------------------------------- */

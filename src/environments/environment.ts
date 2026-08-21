@@ -26,6 +26,13 @@ export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
 
   /**
+   * Apagada por defecto: en producción la barra de demostración no existe
+   * salvo que el despliegue la pida (`PUBLIC_DEMO_PRESETS=true`, pensado para
+   * el staging de una demo).
+   */
+  demoPresets: envFromProcess.demoPresets ?? false,
+
+  /**
    * Telemetría **apagada** salvo que el despliegue la encienda.
    *
    * No es timidez: apagada significa que el fragmento del SDK ni se descarga,

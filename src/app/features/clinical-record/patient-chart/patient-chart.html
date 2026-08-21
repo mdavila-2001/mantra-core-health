@@ -181,6 +181,31 @@
       }
     </app-card>
 
+    <!-- ─── Escenarios de demostración ───────────────────────────────────
+         Un clic llena el diagnóstico Y su receta coherente. Existe sólo donde
+         `PUBLIC_DEMO_PRESETS` lo pidió; los bloques de abajo tienen además su
+         barra individual, con el mismo gate. -->
+    @if (demoActiva) {
+      <div
+        class="expediente__demo expediente__ancho"
+        data-testid="expediente-escenarios-demo"
+      >
+        <span class="expediente__demo-titulo">Escenarios de demostración</span>
+        <app-badge variant="info">Demo</app-badge>
+        @for (escenario of escenariosDemo; track escenario.label) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            (clicked)="aplicarEscenarioDemo(escenario)"
+          >
+            {{ escenario.label }}
+          </button>
+        }
+      </div>
+    }
+
     <!-- ─── La receta ────────────────────────────────────────────────────
          Pegada al encuentro y no dentro de las pestañas: el recorrido es
          check-in → ficha → recetar ahí mismo, y la pestaña de medicación es

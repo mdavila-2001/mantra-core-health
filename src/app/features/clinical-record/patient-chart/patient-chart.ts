@@ -64,6 +64,9 @@ import {
 import { AdmissionBlock, type InternacionEnFicha } from './admission-block/admission-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 import { AttachmentsBlock } from './attachments-block/attachments-block';
+import { environment } from '../../../../environments/environment';
+import { ESCENARIOS_CLINICOS_DEMO } from './demo-presets';
+import type { EscenarioClinicoDemo } from './demo-presets';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import { DiagnosticsBlock } from './diagnostics-block/diagnostics-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
@@ -252,6 +255,35 @@ export class PatientChart {
   /** Patch v4.0.8: sólo la usa el bloque `diagnosticos`, ver {@link columnasPara}. */
   private readonly celdaAcciones =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAcciones');
+
+  /* -- Escenarios de demostración ------------------------------------------- */
+
+  /**
+   * Los dos bloques de escritura, por referencia, para que un escenario de
+   * demostración los precargue juntos. No `required`: sólo existen cuando el
+   * expediente está listo y hay encuentro abierto.
+   */
+  private readonly bloqueDiagnostico = viewChild(DiagnosisBlock);
+  private readonly bloqueMedicacion = viewChild(MedicationBlock);
+
+  /** La barra existe sólo donde el despliegue la pidió (`PUBLIC_DEMO_PRESETS`). */
+  protected readonly demoActiva = environment.demoPresets;
+  protected readonly escenariosDemo = ESCENARIOS_CLINICOS_DEMO;
+
+  /**
+   * Un clic, los dos formularios: el diagnóstico y su receta coherente. Cada
+   * bloque resuelve sus códigos contra el catálogo y avisa lo suyo; acá sólo
+   * se coordina.
+   */
+  protected aplicarEscenarioDemo(escenario: EscenarioClinicoDemo): void {
+    const diagnostico = this.bloqueDiagnostico();
+    const medicacion = this.bloqueMedicacion();
+    if (diagnostico === undefined || medicacion === undefined) {
+      return;
+    }
+    diagnostico.aplicarCasoDemo(escenario.diagnostico);
+    medicacion.aplicarCasoDemo(escenario.receta);
+  }
 
   /**
    * El perfil que se está mirando, leído del segmento `:profileId`.
