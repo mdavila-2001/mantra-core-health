@@ -25,6 +25,13 @@ describe('rutaDeNotificacion', () => {
     );
   });
 
+  it('lleva el pedido de farmacia a su detalle, donde vive la decisión', () => {
+    // FAR-I2: «te proponen un genérico» se responde en la ficha del pedido.
+    expect(rutaDeNotificacion({ type: 'PHARMACY_ORDER', id: 'ped-1' })).toBe(
+      '/my-account/pharmacy-orders/ped-1',
+    );
+  });
+
   it('devuelve null cuando el tipo todavía no tiene pantalla', () => {
     expect(rutaDeNotificacion({ type: 'POST', id: 'p-1' })).toBeNull();
   });

@@ -1,0 +1,209 @@
+/* Mobile-first: todo apilado; la comparación se abre en dos columnas cuando
+   hay ancho. El QR va sobre blanco SIEMPRE (lo lee un lector de mostrador). */
+
+.pedido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.pedido__titulo {
+  margin: 0;
+  font-size: var(--fs-h2);
+}
+
+.pedido__subtitulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.pedido__estado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.pedido__estado-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.pedido__principal {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pedido__secundario {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* ─── La decisión de sustitución ─────────────────────────────────────────── */
+
+.pedido__decision {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pedido__comparacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.pedido__opcion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+}
+
+.pedido__opcion--propuesta {
+  border-color: var(--border-strong);
+  background: var(--bg-inset);
+}
+
+.pedido__ahorro {
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .pedido__comparacion {
+    flex-direction: row;
+  }
+
+  .pedido__opcion {
+    flex: 1;
+  }
+}
+
+/* ─── El código de retiro ────────────────────────────────────────────────── */
+
+.pedido__retiro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pedido__codigo {
+  margin: 0;
+  /* Grande de verdad: se lee desde el otro lado del mostrador. */
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+.pedido__qr {
+  /* Marco blanco fijo: el QR no participa del modo oscuro a propósito. */
+  padding: var(--sp-2);
+  border-radius: var(--r-sm);
+  background: #ffffff;
+  line-height: 0;
+}
+
+/* ─── Datos y líneas ─────────────────────────────────────────────────────── */
+
+.pedido__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.pedido__datos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+}
+
+.pedido__datos dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.pedido__datos dd {
+  margin: 0;
+}
+
+.pedido__lineas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pedido__linea {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pedido__linea-datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.pedido__linea-precio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-1);
+}
+
+.pedido__total {
+  margin: 0;
+}
+
+.pedido__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* ─── La barra de demostración ───────────────────────────────────────────── */
+
+.pedido__demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+}
+
+.pedido__demo-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import {
@@ -9,10 +9,11 @@ import {
   FIXTURE_IDS,
   productosDelConcepto,
 } from '../../../../core/data-access/pharmacy/pharmacy.fixtures';
+import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { SessionStore } from '../../../../core/auth/session.store';
 import { CARGADOR_DE_LEAFLET } from '../../../../shared/components/organisms/map/map';
 import type { CargadorDeLeaflet } from '../../../../shared/components/organisms/map/map';
-import { WhereToBuy } from './where-to-buy';
+import { borradorDePedido, WhereToBuy, type ItemDeReceta } from './where-to-buy';
 
 /**
  * Dónde comprar mi receta (carril E3).
@@ -27,8 +28,12 @@ import { WhereToBuy } from './where-to-buy';
  *    `lat` y `lng`.
  * 3. **Ningún uuid llega a la pantalla**: sedes, faltantes y renglones se
  *    nombran por su etiqueta.
- * 4. **Los caminos de compra están a la vista pero cerrados**: reservar y
- *    delivery deshabilitados, con su «Próximamente».
+ * 4. **El camino del pedido (FAR-I2)**: las pruebas corren con
+ *    `environment.development` → `demoPresets` encendido, así que el CTA está
+ *    habilitado, anunciado como demostración, y el clic arma el borrador y
+ *    navega a confirmarlo. El armado del borrador se ejercita además como
+ *    función pura; la rama sin demo (botón cerrado con «Próximamente») vive en
+ *    la plantilla y se verifica en runtime.
  */
 
 /** base64url **sobre UTF-8**, como el token real. */
@@ -251,7 +256,7 @@ describe('WhereToBuy', () => {
     expect(texto()).not.toMatch(UUID);
   });
 
-  it('ofrece reservar y delivery deshabilitados, con su «Próximamente»', async () => {
+  it('con la demo, «Enviar pedido» se anuncia, arma el borrador de la sede y lleva a confirmarlo', async () => {
     await montar();
     responderHastaProductos();
     http
@@ -259,19 +264,27 @@ describe('WhereToBuy', () => {
       .flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
 
-    const reservar = harness.routeNativeElement?.querySelectorAll(
-      '[data-testid="compra-cta-reservar"]',
+    // Un CTA habilitado por sede, con el aviso de que la farmacia se simula.
+    expect(
+      harness.routeNativeElement?.querySelector('[data-testid="compra-demo-aviso"]')?.textContent,
+    ).toContain('demostración');
+    const botones = harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>(
+      '[data-testid="compra-cta-pedido"]',
     );
-    const delivery = harness.routeNativeElement?.querySelectorAll(
-      '[data-testid="compra-cta-delivery"]',
-    );
-    expect(reservar).toHaveLength(2);
-    expect(delivery).toHaveLength(2);
-    for (const boton of [...(reservar ?? []), ...(delivery ?? [])]) {
-      // El deshabilitado del sistema es por `aria-disabled`, no el atributo nativo.
-      expect(boton.getAttribute('aria-disabled')).toBe('true');
+    expect(botones).toHaveLength(2);
+    for (const boton of botones ?? []) {
+      expect(boton.getAttribute('aria-disabled')).not.toBe('true');
     }
-    expect(texto()).toContain('Próximamente');
+
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    botones?.[0]?.click();
+    harness.detectChanges();
+
+    // El borrador queda en el cliente de pedidos — nada viaja por la URL.
+    const borrador = TestBed.inject(PharmacyOrdersClient).borradorPreparado();
+    expect(borrador?.farmacia).toBe('Farmacia Andina');
+    expect(borrador?.sede).toBe('Sucursal Centro');
+    expect(navegar).toHaveBeenCalledWith(['/my-account/pharmacy-orders/new']);
   });
 
   it('no toca la geolocalización al entrar; el botón la pide y reconsulta con lat/lng', async () => {
@@ -367,5 +380,78 @@ describe('WhereToBuy', () => {
 
     expect(harness.routeNativeElement?.querySelector('[data-testid="compra-items"]')).toBeNull();
     // `http.verify()` del afterEach confirma que no salió nada más.
+  });
+});
+
+describe('borradorDePedido (FAR-I2)', () => {
+  const CONSULTABLES: readonly (ItemDeReceta & { productId: string })[] = [
+    {
+      conceptId: FIXTURE_IDS.conceptoAmoxicilina,
+      medicamento: 'Amoxicilina',
+      indicacion: '500 mg · cada 8 horas',
+      emitida: true,
+      productId: FIXTURE_IDS.productoAmoxicilina,
+    },
+    {
+      conceptId: FIXTURE_IDS.conceptoIbuprofeno,
+      medicamento: 'Ibuprofeno',
+      indicacion: '400 mg',
+      emitida: true,
+      productId: FIXTURE_IDS.productoIbuprofeno,
+    },
+  ];
+
+  it('con la sede completa: cada renglón con su presentación, su precio y su moneda', () => {
+    const borrador = borradorDePedido('m-1', DISPONIBILIDAD_FIXTURE.items[0], CONSULTABLES, []);
+
+    expect(borrador.farmacia).toBe('Farmacia Andina');
+    expect(borrador.sede).toBe('Sucursal Centro');
+    expect(borrador.requestId).toBe('m-1');
+    expect(borrador.totalEstimado).toBe('96.50');
+    expect(borrador.moneda).toBe('BOB');
+    expect(borrador.lineas).toHaveLength(2);
+    expect(borrador.lineas[0]).toEqual({
+      productId: FIXTURE_IDS.productoAmoxicilina,
+      medicamento: 'Amoxicilina',
+      presentacion: '500 mg · Caja x 21 cápsulas',
+      cantidad: 1,
+      precio: '68.00',
+      moneda: 'BOB',
+      disponible: true,
+    });
+  });
+
+  it('con la sede parcial: lo que falta va igual, dicho claro y sin inventar precio', () => {
+    const borrador = borradorDePedido('m-1', DISPONIBILIDAD_FIXTURE.items[1], CONSULTABLES, []);
+
+    // La amoxicilina está en `missingProductIds`: viaja como no disponible.
+    const amoxicilina = borrador.lineas[0];
+    expect(amoxicilina.disponible).toBe(false);
+    expect(amoxicilina.precio).toBeNull();
+    // El ibuprofeno está, pero la sede no publica su precio: se dice, no se estima.
+    const ibuprofeno = borrador.lineas[1];
+    expect(ibuprofeno.disponible).toBe(true);
+    expect(ibuprofeno.precio).toBeNull();
+    expect(borrador.totalEstimado).toBeNull();
+  });
+
+  it('un medicamento sin producto publicado entra como renglón no disponible', () => {
+    const borrador = borradorDePedido(
+      'm-1',
+      DISPONIBILIDAD_FIXTURE.items[0],
+      CONSULTABLES,
+      ['Paracetamol'],
+    );
+
+    const suelto = borrador.lineas.at(-1);
+    expect(suelto).toEqual({
+      productId: null,
+      medicamento: 'Paracetamol',
+      presentacion: null,
+      cantidad: 1,
+      precio: null,
+      moneda: null,
+      disponible: false,
+    });
   });
 });

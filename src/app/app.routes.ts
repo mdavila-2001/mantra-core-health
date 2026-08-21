@@ -163,6 +163,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/diagnostic-orders/diagnostic-orders').then(
       (m) => m.DiagnosticOrders,
     ),
+  'my-account/pharmacy-orders': () =>
+    import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
@@ -291,6 +293,32 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/medical-record/where-to-buy/where-to-buy')
         .then((m) => m.WhereToBuy)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La confirmación del pedido de farmacia (carril FAR-I2). Cuelga de «Mis
+    // pedidos»; se llega desde «dónde comprar mi receta», que deja el borrador
+    // en el cliente — nada viaja por la URL. Con `seccionRolesGuard` porque su
+    // sección es la única de «Mi cuenta» que declara roles, y la regla de
+    // `app.routes.spec.ts` exige cumplirlos también en la hija.
+    path: 'my-account/pharmacy-orders/new',
+    title: `${APP_TITLE} - Confirmá tu pedido`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/new-order/new-order')
+        .then((m) => m.NewOrder)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La ficha de un pedido concreto: línea de tiempo, decisión de sustitución
+    // y código de retiro. `new` va declarada antes: el router prueba en orden
+    // y el parámetro se la tragaría.
+    path: 'my-account/pharmacy-orders/:orderId',
+    title: `${APP_TITLE} - Pedido de farmacia`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/order-detail/order-detail')
+        .then((m) => m.OrderDetail)
         .catch(() => chunkFallido()),
   },
   {

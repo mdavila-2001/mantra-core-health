@@ -1,17 +1,25 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
+import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
 import type {
+  AvailabilityProduct,
   AvailabilityResult,
+  AvailabilitySite,
   GeoPoint,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
+import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
+import type {
+  BorradorDePedido,
+  LineaDePedido,
+} from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -39,6 +47,13 @@ const CODIGOS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
 const SIN_DATO = 'Sin registrar';
+
+/**
+ * Un envase por renglón recetado: la receta no declara cantidades, y la
+ * confirmación del pedido las muestra tal cual — inventar más sería decidir
+ * por la persona.
+ */
+const CANTIDAD_POR_RENGLON = 1;
 
 /**
  * Puntos de referencia para medir distancias sin entregar la ubicación: las
@@ -82,6 +97,8 @@ interface ListaDeCompra {
 
 /** Una sede candidata, ya evaluada contra los renglones incluidos. */
 interface SedeVisible {
+  /** Identifica la sede al armar el borrador del pedido. Jamás se pinta. */
+  readonly siteId: string;
   readonly codigo: string;
   readonly farmacia: string;
   readonly sede: string;
@@ -152,7 +169,9 @@ export class WhereToBuy {
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly pharmacy = inject(PharmacyClient);
+  private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly documento = inject(DOCUMENT);
 
   private readonly requestId = this.route.snapshot.paramMap.get('requestId') ?? '';
@@ -161,6 +180,22 @@ export class WhereToBuy {
   protected readonly sinPerfilDePaciente = this.perfil === null;
   protected readonly rutaDeHistoria = MI_HISTORIA_ROUTE;
   protected readonly ciudades = CIUDADES;
+
+  /**
+   * El pedido (FAR-I2) corre hoy contra un mock del cliente de datos, así que
+   * sólo se ofrece donde la demostración está pedida — con su aviso. Sin el
+   * gate, el botón queda a la vista y cerrado, como estaba.
+   * TODO(FAR-E1): al conectar el backend real, el botón queda siempre activo
+   * y este gate desaparece.
+   */
+  protected readonly pedidoDisponible = environment.demoPresets;
+
+  /** La última respuesta cruda: el borrador necesita los precios por línea. */
+  private ultimaConsulta: {
+    readonly respuesta: AvailabilityResult;
+    readonly consultables: readonly (ItemDeReceta & { productId: string })[];
+    readonly sinProducto: readonly string[];
+  } | null = null;
 
   protected readonly lista = signal<ViewState<ListaDeCompra>>(loading());
   protected readonly resultados = signal<ViewState<ResultadoDeSedes>>(loading());
@@ -320,6 +355,7 @@ export class WhereToBuy {
   /* ---- la consulta -------------------------------------------------------- */
 
   protected consultar(): void {
+    this.ultimaConsulta = null;
     const incluidos = this.items().filter((item) => this.incluidos().has(item.conceptId));
     if (incluidos.length === 0) {
       this.resultados.set(
@@ -367,11 +403,33 @@ export class WhereToBuy {
             );
             return;
           }
+          this.ultimaConsulta = { respuesta, consultables, sinProducto };
           this.resultados.set(ready(evaluar(respuesta, consultables, sinProducto)));
         },
         error: (error: unknown) =>
           this.resultados.set(errorToViewState<ResultadoDeSedes>(error)),
       });
+  }
+
+  /* ---- el pedido (FAR-I2) -------------------------------------------------- */
+
+  /**
+   * Arma el borrador con la sede elegida y navega a la confirmación.
+   *
+   * El borrador viaja por el cliente de pedidos y no por la URL: renglones,
+   * precios y sede ya están acá, y repetir la consulta en la pantalla
+   * siguiente sería pedirle dos veces lo mismo al backend.
+   */
+  protected enviarPedido(sede: SedeVisible): void {
+    const consulta = this.ultimaConsulta;
+    const sitio = consulta?.respuesta.items.find((item) => item.siteId === sede.siteId);
+    if (consulta === null || sitio === undefined) {
+      return;
+    }
+    this.ordersClient.prepararBorrador(
+      borradorDePedido(this.requestId, sitio, consulta.consultables, consulta.sinProducto),
+    );
+    void this.router.navigate(['/my-account/pharmacy-orders/new']);
   }
 
   /* ---- la ubicación: se pide, no se toma ---------------------------------- */
@@ -474,6 +532,73 @@ function subtituloDePin(sede: SedeVisible): string | undefined {
 }
 
 /**
+ * El borrador del pedido (FAR-I2): los renglones incluidos, evaluados contra
+ * la sede elegida, con el precio que la sede publica.
+ *
+ * Exportada a propósito: es pura y el spec la ejercita directo — el clic que
+ * la dispara sólo existe con la demostración encendida.
+ */
+export function borradorDePedido(
+  requestId: string,
+  sitio: AvailabilitySite,
+  consultables: readonly (ItemDeReceta & { productId: string })[],
+  sinProducto: readonly string[],
+): BorradorDePedido {
+  const porProducto = new Map(sitio.products.map((producto) => [producto.productId, producto]));
+  const lineas: readonly LineaDePedido[] = [
+    ...consultables.map((item): LineaDePedido => {
+      const producto = porProducto.get(item.productId);
+      const disponible =
+        producto !== undefined && !sitio.missingProductIds.includes(item.productId);
+      const precio = producto?.price?.patientAmount ?? producto?.price?.unitAmount ?? null;
+      return {
+        productId: item.productId,
+        medicamento: item.medicamento,
+        presentacion: presentacionDe(producto),
+        cantidad: CANTIDAD_POR_RENGLON,
+        precio: disponible ? precio : null,
+        moneda:
+          disponible && precio !== null
+            ? (producto?.price?.currency?.code ?? sitio.currency?.code ?? null)
+            : null,
+        disponible,
+      };
+    }),
+    // Sin producto publicado nadie puede confirmarlo: viaja igual en el
+    // pedido, dicho claro, para que la farmacia sepa qué más pide la receta.
+    ...sinProducto.map(
+      (medicamento): LineaDePedido => ({
+        productId: null,
+        medicamento,
+        presentacion: null,
+        cantidad: CANTIDAD_POR_RENGLON,
+        precio: null,
+        moneda: null,
+        disponible: false,
+      }),
+    ),
+  ];
+  return {
+    requestId,
+    siteId: sitio.siteId,
+    farmacia: sitio.pharmacyName,
+    sede: sitio.siteName,
+    direccion: sitio.addressText,
+    lineas,
+    totalEstimado: sitio.totalAmount,
+    moneda: sitio.currency?.code ?? null,
+  };
+}
+
+/** «500 mg · caja x 20», con lo que el directorio publique. */
+function presentacionDe(producto: AvailabilityProduct | undefined): string | null {
+  const partes = [producto?.strengthText, producto?.packageSizeText].filter(
+    (parte): parte is string => typeof parte === 'string' && parte !== '',
+  );
+  return partes.length === 0 ? null : partes.join(' · ');
+}
+
+/**
  * Las sedes del backend, evaluadas contra la receta.
  *
  * La «completa» del backend habla de los productos consultados; acá se exige
@@ -501,6 +626,7 @@ function evaluar(
       ...sinProducto,
     ];
     return {
+      siteId: sede.siteId,
       codigo: CODIGOS[indice] ?? String(indice + 1),
       farmacia: sede.pharmacyName,
       sede: sede.siteName,

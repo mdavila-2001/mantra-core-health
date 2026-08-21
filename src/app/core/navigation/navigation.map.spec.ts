@@ -128,12 +128,20 @@ describe('APP_SECTIONS', () => {
     const autoservicio = APP_SECTIONS.filter((s) => s.group === 'Mi cuenta');
 
     // Regla del vault: «las rutas de autoservicio son del propio usuario sobre
-    // sus datos y no comparten navegación con las de gestión».
+    // sus datos y no comparten navegación con las de gestión». Una sección
+    // puede restringirse al propio paciente (FAR-I2: «Mis pedidos»), pero un
+    // rol de gestión en «Mi cuenta» rompería la separación.
     expect(autoservicio.length).toBeGreaterThan(0);
     for (const section of autoservicio) {
-      // Universal **declarado** (F-20): son los datos propios de la cuenta, así
-      // que las ve cualquier sesión — pero escrito, no por omisión.
-      expect(section.roles, section.path).toEqual([ANY_ROLE]);
+      // Declarados **siempre** (F-20): nunca por omisión, que es lo que hace
+      // que un olvido se lea como «la ve cualquiera».
+      //
+      // Y sólo dos formas posibles: universal —son los datos propios de la
+      // cuenta, así que las ve cualquier sesión— o restringida al propio
+      // paciente, como «Mis pedidos» (FAR-I2), cuyo contenido nace de una
+      // receta suya. Un rol de gestión acá rompería la separación.
+      expect(section.roles, section.path).toBeDefined();
+      expect([[ANY_ROLE], ['PATIENT']], section.path).toContainEqual(section.roles);
     }
   });
 

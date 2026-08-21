@@ -103,10 +103,11 @@
           title="No encontramos lo que buscás"
           description="Verificá la dirección o volvé al listado."
         >
-          @if (ausente.nextAction; as accion) {
-            @if (accion.route) {
-              <a app-link empty-actions [routerLink]="accion.route">{{ accion.label }}</a>
-            }
+          <!-- Un solo bloque con el <a> como raíz, igual que S3: un @if
+               anidado se proyecta al slot por defecto —que app-empty-state no
+               tiene— y la salida desaparecía del DOM. -->
+          @if (ausente.nextAction?.route; as ruta) {
+            <a app-link empty-actions [routerLink]="ruta">{{ ausente.nextAction?.label }}</a>
           }
         </app-empty-state>
       </ng-content>

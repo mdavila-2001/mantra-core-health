@@ -158,6 +158,19 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).not.toContain('/directory');
     });
 
+    it('«Mis pedidos» sólo aparece en el menú del paciente', () => {
+      // FAR-I2: la única sección de «Mi cuenta» con roles declarados — el
+      // pedido nace de una receta propia, y la guardia lo exige en la sección.
+      abrirSesion(['PATIENT']);
+      expect(rutasDelMenu()).toContain('/my-account/pharmacy-orders');
+
+      abrirSesion([]);
+      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy-orders');
+
+      abrirSesion(['PRACTITIONER', 'CLINICIAN']);
+      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy-orders');
+    });
+
     it('un rol clínico no ve administración, y un administrador no ve el archivo clínico', () => {
       abrirSesion(['CLINICIAN']);
       expect(rutasDelMenu()).toContain('/medical-records');

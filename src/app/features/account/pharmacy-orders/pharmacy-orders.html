@@ -1,0 +1,37 @@
+<app-page-header
+  title="Mis pedidos"
+  subtitle="Tus pedidos de farmacia, del envío al retiro, con su estado en palabras."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (sinPerfilDePaciente) {
+  <!-- Sesión válida de una cuenta que no es de un paciente: la pantalla no le
+       corresponde, y no es un error. -->
+  <app-alert tone="info" title="Esta sección es para pacientes">
+    Tu cuenta no tiene un perfil de paciente, así que no hay pedidos propios que mirar.
+  </app-alert>
+} @else {
+  <app-view-state-host [state]="pedidos()" (retry)="cargar()">
+    <ul class="pedidos" data-testid="pedidos-lista">
+      @for (pedido of lista(); track pedido.id) {
+        <li>
+          <a class="pedidos__fila" [routerLink]="['/my-account/pharmacy-orders', pedido.id]">
+            <div class="pedidos__datos">
+              <span class="pedidos__principal">{{ pedido.farmacia }} · {{ pedido.sede }}</span>
+              <span class="pedidos__secundario">
+                Enviado el {{ pedido.creadoEl | date: 'dd/MM/yyyy HH:mm' }} ·
+                {{ modalidadDe(pedido) }}
+              </span>
+              @if (pedido.totalEstimado !== null) {
+                <span class="pedidos__secundario">
+                  Total estimado: {{ pedido.totalEstimado }} {{ pedido.moneda }}
+                </span>
+              }
+            </div>
+            <app-badge [variant]="estadoDe(pedido).tone">{{ estadoDe(pedido).label }}</app-badge>
+          </a>
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
+}
