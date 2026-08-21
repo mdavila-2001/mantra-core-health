@@ -100,6 +100,32 @@
       cargadas sí funciona.
     </app-alert>
   } @else {
+    <!-- La barra de casos existe sólo donde `PUBLIC_DEMO_PRESETS` la pidió.
+         Su copy dice lo que es —precarga de demostración— sin disfrazarse de
+         vademécum: los fármacos son del catálogo real, los pacientes no. -->
+    @if (demoActiva) {
+      <div class="receta__presets" data-testid="receta-presets">
+        <div class="receta__presets-header">
+          <span class="receta__presets-titulo">Casos de demostración</span>
+          <app-badge variant="info">Demo</app-badge>
+        </div>
+        <div class="receta__presets-items">
+          @for (caso of casosDemo; track caso.label) {
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              (clicked)="aplicarCasoDemo(caso)"
+              [title]="caso.dosis + ' · ' + caso.frecuencia"
+            >
+              {{ caso.label }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
     <form class="receta__formulario" (submit)="$event.preventDefault()">
       <!-- Buscador y no desplegable: el catálogo de medicamentos no es una lista
            corta para desplegar entera, y buscar por nombre o por código ATC es
@@ -167,6 +193,21 @@
           placeholder="cada 8 horas"
           testId="receta-frecuencia"
         />
+        <!-- Los chips son atajos que estampan la pauta en el campo de arriba,
+             no un segundo control: el texto libre sigue mandando. -->
+        <div class="receta__chips-pauta">
+          @for (pauta of opcionesFrecuenciaRapida; track pauta) {
+            <app-chip
+              variant="primary"
+              size="sm"
+              selectable
+              [selected]="frecuencia() === pauta"
+              (selectedChange)="fijarFrecuenciaRapida(pauta)"
+            >
+              {{ pauta }}
+            </app-chip>
+          }
+        </div>
       </app-form-field>
 
       <!-- Vía y unidad son opcionales en el contrato, así que se ofrecen sin
@@ -197,6 +238,51 @@
           [(value)]="unidad"
           [labels]="etiquetasDeUnidad"
           placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Duración del tratamiento"
+        hint="Opcional. Días previstos de toma, o tratamiento continuo. Deriva el fin de vigencia y sugiere la cantidad."
+      >
+        <!-- «Crónico/Continuo» se distingue por `esCronico`, no por comparar
+             `null === null`: sin eso el chip aparecía activo con el formulario
+             recién abierto, cuando nadie eligió nada todavía. -->
+        <div class="receta__chips-pauta">
+          @for (opc of opcionesDuracionRapida; track opc.label) {
+            <app-chip
+              variant="primary"
+              size="sm"
+              selectable
+              [selected]="opc.dias === null ? esCronico() : !esCronico() && duracionDias() === opc.dias"
+              (selectedChange)="fijarDuracion(opc.dias)"
+            >
+              {{ opc.label }}
+            </app-chip>
+          }
+        </div>
+      </app-form-field>
+
+      <div class="receta__fechas-grid">
+        <app-form-field label="Inicio de vigencia" hint="Desde cuándo es válida la receta.">
+          <app-date-picker [(value)]="validFrom" />
+        </app-form-field>
+
+        <app-form-field label="Fin de vigencia" hint="Hasta cuándo es válida la dispensación.">
+          <app-date-picker [(value)]="validTo" />
+        </app-form-field>
+      </div>
+
+      <!-- Separadas de la dosis a propósito: la posología la lee farmacia para
+           dispensar, y esto es lo que el paciente se lleva impreso (v4.1.3). -->
+      <app-form-field
+        label="Indicaciones para el paciente"
+        hint="Opcional. Consejos de toma, advertencias o cuidados. Se imprimen en la receta."
+      >
+        <app-textarea
+          [(value)]="indicacionesPaciente"
+          [rows]="3"
+          placeholder="Tomar 30 minutos antes del desayuno con abundante agua"
         />
       </app-form-field>
 
