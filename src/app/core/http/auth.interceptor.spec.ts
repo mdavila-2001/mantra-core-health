@@ -112,6 +112,27 @@ describe('authInterceptor', () => {
       req.flush({});
     });
 
+    it('un 401 SIN sesión previa no expulsa al login: no hay sesión que vencer', () => {
+      // El bug que hacía imposible registrarse: la pantalla de alta pedía los
+      // departamentos a terminología —sin token, la cuenta todavía no existe—,
+      // el endpoint contestaba 401, y este interceptor lo leía como «sesión
+      // vencida»: limpiaba nada y mandaba al visitante al login antes de que
+      // pudiera escribir su nombre.
+      let fallo = false;
+      http.get('/terminology/value-sets?code=VS_BO_DEPARTMENT').subscribe({
+        error: () => (fallo = true),
+      });
+
+      backend
+        .expectOne('/terminology/value-sets?code=VS_BO_DEPARTMENT')
+        .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      // El error se propaga —la pantalla decide qué hacer con él—, pero nadie
+      // navega a ninguna parte.
+      expect(fallo).toBe(true);
+      expect(router.navegaciones).toEqual([]);
+    });
+
     it('sin sesión no agrega nada', () => {
       http.get('/clinical/encounters').subscribe();
 
