@@ -57,6 +57,16 @@ describe('RegisterPatient', () => {
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
     await fixture.whenStable();
+
+    // El alta de profesional pide el catálogo de departamentos bolivianos al
+    // arrancar (`VS_BO_DEPARTMENT`, para el departamento que expidió el CI).
+    // Se drena acá: no es lo que ninguna de estas pruebas mira, y sin drenarlo
+    // el `http.verify()` del `afterEach` tumba el archivo entero.
+    for (const pedido of http.match(
+      (r) => r.url === '/terminology/value-sets' && r.params.get('code') === 'VS_BO_DEPARTMENT',
+    )) {
+      pedido.flush({ items: [] });
+    }
   });
 
   afterEach(() => {
@@ -84,7 +94,15 @@ describe('RegisterPatient', () => {
 
   function completarProfesional(
     extra: Partial<
-      Record<'professionalTitle' | 'phone' | 'middleName' | 'motherLastName', string>
+      Record<
+        | 'professionalTitle'
+        | 'phone'
+        | 'middleName'
+        | 'motherLastName'
+        | 'nationalId'
+        | 'regulatoryAuthority',
+        string
+      >
     > = {},
   ): void {
     component.cambiarTipo('profesional');
@@ -93,10 +111,12 @@ describe('RegisterPatient', () => {
       middleName: extra.middleName ?? '',
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
+      nationalId: extra.nationalId ?? '',
       email: 'ana@hospital.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       credentialNumber: 'TIT-6789',
+      regulatoryAuthority: extra.regulatoryAuthority ?? '',
       professionalTitle: extra.professionalTitle ?? '',
       phone: extra.phone ?? '',
     });
@@ -226,10 +246,12 @@ describe('RegisterPatient', () => {
         middleName: '',
         lastName: 'Paz',
         motherLastName: '',
+        nationalId: '',
         email: 'ana@hospital.test',
         password: 'secreto12',
         licenseNumber: '',
         credentialNumber: '',
+        regulatoryAuthority: '',
         professionalTitle: '',
         phone: '',
       });
