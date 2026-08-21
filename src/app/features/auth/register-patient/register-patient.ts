@@ -140,7 +140,7 @@ export class RegisterPatient {
   readonly fechaNacimientoProfesional = signal<Date | null>(null);
   readonly fechaInscripcionMatricula = signal<Date | null>(null);
 
-  /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
+  /** Departamento que emitió el documento (VS_ADMINISTRATIVE_AREA), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
   readonly departamentoEmisor = signal<string | null>(null);
   readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);

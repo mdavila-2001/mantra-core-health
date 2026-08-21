@@ -77,7 +77,7 @@ describe('PractitionerProfileEdit', () => {
    * `http.verify()` del cierre falla en todas las pruebas.
    *
    * El conjunto se busca **por su código**: desde que la pantalla también pide
-   * el de departamentos bolivianos (`VS_BO_DEPARTMENT`) hay dos lecturas contra
+   * el de departamentos bolivianos (`VS_ADMINISTRATIVE_AREA`) hay dos lecturas contra
    * `/terminology/value-sets`, y un `expectOne` sin filtro las encuentra a las
    * dos y falla. El de departamentos lo drena {@link responderDepartamentos}.
    */
@@ -120,7 +120,7 @@ describe('PractitionerProfileEdit', () => {
   function responderDepartamentos(): void {
     for (const pedido of http.match(
       (r) =>
-        r.url === '/terminology/value-sets' && r.params.get('code') === 'VS_BO_DEPARTMENT',
+        r.url === '/terminology/value-sets' && r.params.get('code') === 'VS_ADMINISTRATIVE_AREA',
     )) {
       pedido.flush({ items: [], count: 0, limit: 50, nextCursor: null });
     }

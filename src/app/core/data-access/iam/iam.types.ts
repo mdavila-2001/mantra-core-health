@@ -104,7 +104,7 @@ export interface PractitionerRegistration {
   readonly birthDate?: string;
   /** Documento de identidad. Se guarda como identificador oficial, no como login. */
   readonly nationalId?: string;
-  /** Departamento boliviano que emitió el documento (catálogo VS_BO_DEPARTMENT). */
+  /** Departamento boliviano que emitió el documento (catálogo VS_ADMINISTRATIVE_AREA). */
   readonly issuerAdministrativeAreaConceptId?: string;
   readonly licenseNumber: string;
   readonly credentialNumber: string;
