@@ -57,16 +57,72 @@ describe('OrganizationPanel', () => {
     fixture.detectChanges();
   }
 
-  /** Responde «mis organizaciones» y, si hay alguna, su gente. */
-  function responder(items: unknown[]): void {
+  /** Responde «mis organizaciones» y, si hay alguna, su gente y su bandeja. */
+  function responder(items: unknown[], solicitudes: unknown[] = []): void {
     http.expectOne((r) => r.url === MIAS).flush({ items });
     fixture.detectChanges();
-    if (items.length > 0) {
-      http
-        .expectOne((r) => r.url.includes('/memberships'))
-        .flush({ items: [], count: 0, limit: 50, nextCursor: null });
-      fixture.detectChanges();
-    }
+    if (items.length === 0) return;
+
+    http
+      .expectOne((r) => r.url.includes('/memberships'))
+      .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: solicitudes });
+    fixture.detectChanges();
+    responderAgenda();
+  }
+
+  /** Contesta la agenda del día, que también se pide al elegir organización. */
+  function responderAgenda(citas: unknown[] = []): void {
+    http.expectOne((r) => r.url.includes('/agenda')).flush({ items: citas, truncated: false });
+    fixture.detectChanges();
+  }
+
+  /**
+   * Monta y contesta todo salvo la agenda, para las pruebas que quieren
+   * responderla con datos propios.
+   */
+  function hastaLaAgenda(): void {
+    montar();
+    http.expectOne((r) => r.url === MIAS).flush({ items: [organizacion()] });
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/memberships'))
+      .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: [] });
+    fixture.detectChanges();
+  }
+
+  /** Una cita tal como la devuelve la agenda de la organización. */
+  function cita(overrides: Record<string, unknown> = {}) {
+    return {
+      bookingId: 'bk-1',
+      startAt: '2026-08-19T14:00:00.000Z',
+      endAt: '2026-08-19T14:30:00.000Z',
+      resourceId: 'res-1',
+      resourceName: 'Consultorio Centro',
+      practitionerProfileId: 'hp-1',
+      patientProfileId: 'pac-1',
+      patientName: 'Marisol Quispe',
+      statusConceptId: 'st-confirmada',
+      ...overrides,
+    };
+  }
+
+  /** Una solicitud de vínculo esperando decisión. */
+  function solicitud(overrides: Record<string, unknown> = {}) {
+    return {
+      id: 'af-1',
+      practitionerProfileId: 'pp-1',
+      organizationName: 'Clínica del Centro',
+      roleTitle: 'Médico de planta',
+      practiceSiteId: 'sede-1',
+      startDate: '2026-03-01T00:00:00.000Z',
+      statusConceptId: 'st-pendiente',
+      createdAt: '2026-02-01T00:00:00.000Z',
+      ...overrides,
+    };
   }
 
   function texto(): string {
@@ -152,10 +208,7 @@ describe('OrganizationPanel', () => {
 
   it('con varias ofrece elegir entre todas', () => {
     montar();
-    responder([
-      organizacion(),
-      organizacion({ id: 'ten-2', tradeName: 'Centro Médico Norte' }),
-    ]);
+    responder([organizacion(), organizacion({ id: 'ten-2', tradeName: 'Centro Médico Norte' })]);
 
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('.organizacion__selector'),
@@ -163,11 +216,179 @@ describe('OrganizationPanel', () => {
     expect(texto()).toContain('Centro Médico Norte');
   });
 
-  /** El hueco que llena TP-2 se anuncia, para que nadie lo busque en otro lado. */
-  it('anuncia las solicitudes de médicos como lo que viene', () => {
+  /* -- Solicitudes de médicos (TP-2) ---------------------------------------- */
+
+  it('pide la bandeja de solicitudes de la organización elegida', () => {
+    montar();
+    http.expectOne((r) => r.url === MIAS).flush({ items: [organizacion()] });
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/memberships'))
+      .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    fixture.detectChanges();
+
+    const pedido = http.expectOne((r) => r.url.includes('/practitioner-requests'));
+    expect(pedido.request.url).toBe('/tenants/ten-1/practitioner-requests');
+    pedido.flush({ items: [] });
+    fixture.detectChanges();
+    responderAgenda();
+  });
+
+  it('sin solicitudes pendientes lo dice', () => {
     montar();
     responder([organizacion()]);
 
-    expect(texto()).toContain('Solicitudes de médicos');
+    expect(texto()).toContain('No hay solicitudes pendientes');
+  });
+
+  it('muestra cada solicitud con su cargo y desde cuándo', () => {
+    montar();
+    responder([organizacion()], [solicitud()]);
+
+    expect(texto()).toContain('Médico de planta');
+    expect(texto()).toContain('Aprobar');
+    expect(texto()).toContain('Rechazar');
+  });
+
+  /**
+   * El staff ve quién pidió trabajar ahí —es información legítima de su
+   * trabajo— pero no decide. La API igual lo rechazaría; acá se evita ofrecer
+   * un botón que va a fallar.
+   */
+  it('quien no administra ve las solicitudes pero no decide', () => {
+    montar();
+    responder([organizacion({ canAdminister: false })], [solicitud()]);
+
+    expect(texto()).toContain('Médico de planta');
+    expect(texto()).not.toContain('Aprobar');
+  });
+
+  it('aprobar manda la decisión y recarga la bandeja', () => {
+    montar();
+    responder([organizacion()], [solicitud()]);
+
+    const boton = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((b) => b.textContent?.includes('Aprobar'));
+    boton?.click();
+    fixture.detectChanges();
+
+    const decision = http.expectOne(
+      (r) => r.url === '/tenants/ten-1/practitioner-requests/af-1/approve',
+    );
+    expect(decision.request.method).toBe('POST');
+    decision.flush(null);
+    fixture.detectChanges();
+
+    // Se vuelve a pedir la bandeja en vez de sacar la fila a mano: si alguien
+    // más decidió mientras tanto, sacarla localmente mostraría algo que ya no
+    // está.
+    http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: [] });
+    fixture.detectChanges();
+  });
+
+  it('rechazar manda la decisión al endpoint de rechazo', () => {
+    montar();
+    responder([organizacion()], [solicitud()]);
+
+    const boton = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((b) => b.textContent?.includes('Rechazar'));
+    boton?.click();
+    fixture.detectChanges();
+
+    http.expectOne((r) => r.url === '/tenants/ten-1/practitioner-requests/af-1/reject').flush(null);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: [] });
+    fixture.detectChanges();
+  });
+
+  /* -- La agenda de la organización (TP-5) ---------------------------------- */
+
+  it('pide la agenda del día de la organización elegida', () => {
+    hastaLaAgenda();
+
+    const pedido = http.expectOne((r) => r.url.includes('/agenda'));
+    expect(pedido.request.url).toBe('/tenants/ten-1/agenda');
+    // Un día exacto: la pregunta de una recepción es «hoy», no «este mes».
+    const desde = new Date(pedido.request.params.get('from') ?? '');
+    const hasta = new Date(pedido.request.params.get('to') ?? '');
+    expect(hasta.getTime() - desde.getTime()).toBe(24 * 60 * 60 * 1000);
+    pedido.flush({ items: [], truncated: false });
+    fixture.detectChanges();
+  });
+
+  it('un día sin citas lo dice', () => {
+    montar();
+    responder([organizacion()]);
+
+    expect(texto()).toContain('No hay citas en este día');
+  });
+
+  it('muestra cada cita con su hora, su paciente y su sede', () => {
+    hastaLaAgenda();
+    responderAgenda([cita()]);
+
+    expect(texto()).toContain('Marisol Quispe');
+    expect(texto()).toContain('Consultorio Centro');
+  });
+
+  /**
+   * El criterio de privacidad del prompt, comprobado también del lado de la
+   * pantalla: aunque el servidor lo mandara por error, no se dibuja.
+   */
+  it('el motivo de consulta no aparece en ninguna parte', () => {
+    hastaLaAgenda();
+    responderAgenda([cita({ reasonText: 'Dolor de pecho' })]);
+
+    expect(texto()).not.toContain('Dolor de pecho');
+  });
+
+  /**
+   * «Nadie con ese nombre» y «no hay citas» son dos cosas distintas: decir lo
+   * mismo en los dos casos haría creer que el día está vacío.
+   */
+  it('buscar a alguien que no está se distingue de un día vacío', () => {
+    hastaLaAgenda();
+    responderAgenda([cita()]);
+
+    (
+      fixture.componentInstance as unknown as {
+        buscaPaciente: { set(v: string): void };
+      }
+    ).buscaPaciente.set('Ramírez');
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Nadie con ese nombre');
+    expect(texto()).not.toContain('No hay citas en este día');
+  });
+
+  /**
+   * El filtro por paciente es del cliente: el día entero ya está cargado, e ir
+   * al servidor por cada tecla sería pedir de nuevo lo que ya está en pantalla.
+   */
+  it('buscar un paciente no vuelve al servidor', () => {
+    montar();
+    responder([organizacion()]);
+
+    (
+      fixture.componentInstance as unknown as {
+        buscaPaciente: { set(v: string): void };
+      }
+    ).buscaPaciente.set('Marisol');
+    fixture.detectChanges();
+
+    http.expectNone((r) => r.url.includes('/agenda'));
+  });
+
+  /** Cambiar de día sí vuelve: son otras citas. */
+  it('cambiar de día pide la agenda de nuevo', () => {
+    montar();
+    responder([organizacion()]);
+
+    (fixture.componentInstance as unknown as { diaSiguiente(): void }).diaSiguiente();
+    fixture.detectChanges();
+
+    responderAgenda();
   });
 });

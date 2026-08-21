@@ -150,6 +150,14 @@ interface TurnoVisible {
   readonly avisoDeDemora: string;
   /** Cuándo la informó, para fecharla en pantalla. */
   readonly demoraCuando: Date | null;
+  /**
+   * De cuándo se movió el turno, si se reprogramó (TJ-2).
+   *
+   * `null` cuando nunca se movió. La tarjeta lo dice porque quien ve un turno
+   * en un horario que no pidió necesita saber que **es el suyo, movido**, y no
+   * uno nuevo que no reconoce.
+   */
+  readonly reprogramadoDesde: Date | null;
 }
 
 /** Una espera activa, ya lista para mostrarse (P8). */
@@ -1040,6 +1048,18 @@ export class Appointments {
       return;
     }
     if (estado.status === 'validation') {
+      // TJ-2 · la ventana de cancelación. El servidor explica hasta cuándo se
+      // podía y qué hacer ahora; descartarlo por el texto genérico dejaba a la
+      // persona con «ya no se puede» sin saber por qué ni qué le queda.
+      //
+      // Y no se relee la lista: el turno NO cambió —sigue confirmado—, así que
+      // recargar sólo haría parpadear la pantalla para mostrar lo mismo.
+      const delServidor = estado.issues.find((issue) => issue.message.trim() !== '')?.message;
+      if (delServidor !== undefined) {
+        this.toast.info(delServidor, 'Turno');
+        return;
+      }
+
       this.toast.info('Este turno ya no se puede cancelar. Actualizamos tu lista.', 'Turno');
       this.recargar();
       return;
@@ -1269,6 +1289,7 @@ export class Appointments {
       resourceId,
       agenda: this.nombreDeLaAgenda(resourceId),
       motivo: cita.reasonText ?? '',
+      reprogramadoDesde: cita.rescheduledFrom ?? null,
       avisoDelCambio: avisoDelCambio(cita),
       cambioCuando: cita.statusReason?.changedAt ?? null,
       avisoDeDemora: avisoDeDemora(cita),

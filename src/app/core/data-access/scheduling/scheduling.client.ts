@@ -43,6 +43,8 @@ import type {
   WaitlistEntryCreated,
   WaitlistPage,
   WaitlistQuery,
+  PublishedTemplatePage,
+  AvailabilityExceptionPage,
 } from './scheduling.types';
 
 /**
@@ -259,6 +261,20 @@ export class SchedulingClient {
   }
 
   /**
+   * `GET /scheduling/resources/:id/templates` — el horario publicado del recurso.
+   *
+   * Es la lectura que faltaba hasta MAC-4: `scheduling` sólo tenía los dos POST
+   * de plantilla, así que publicar un horario era escribirlo y no poder volver
+   * a verlo. Un recurso sin plantillas responde `[]` con 200 —existe y todavía
+   * no publicó—, y uno ajeno, 403.
+   */
+  listTemplates(resourceId: string): Observable<PublishedTemplatePage> {
+    return this.http.get<PublishedTemplatePage>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
+    );
+  }
+
+  /**
    * `POST /scheduling/templates/:id/generate-slots` — materializa los slots de
    * la plantilla en una ventana (UC-41-03). Idempotente: reejecutar no duplica,
    * los ya existentes vuelven como `skipped`.
@@ -275,6 +291,27 @@ export class SchedulingClient {
    * disponibilidad (UC-41-04). Bloquea los slots libres que se solapan; las
    * citas ya reservadas no se tocan.
    */
+  /**
+   * `GET /scheduling/resources/:id/exceptions` — los bloqueos de una ventana.
+   *
+   * Es el hueco gemelo del de plantillas: se podían crear y no leer. Sin esto,
+   * el mes no puede distinguir un día **bloqueado** de un día **sin agenda**:
+   * los dos aparecen sin cupos, y la diferencia es justamente lo que hay que
+   * mostrarle al profesional.
+   */
+  listExceptions(
+    resourceId: string,
+    ventana: { from: Date; to: Date },
+  ): Observable<AvailabilityExceptionPage> {
+    const params = new HttpParams()
+      .set('from', ventana.from.toISOString())
+      .set('to', ventana.to.toISOString());
+    return this.http.get<AvailabilityExceptionPage>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/exceptions`),
+      { params },
+    );
+  }
+
   createException(
     resourceId: string,
     exception: NewAvailabilityException,
@@ -477,9 +514,7 @@ export class SchedulingClient {
       tenantId: entry.tenantId,
       patientProfileId: entry.patientProfileId,
       ...(entry.resourceId === undefined ? {} : { resourceId: entry.resourceId }),
-      ...(entry.desiredFrom === undefined
-        ? {}
-        : { desiredFrom: entry.desiredFrom.toISOString() }),
+      ...(entry.desiredFrom === undefined ? {} : { desiredFrom: entry.desiredFrom.toISOString() }),
       ...(entry.desiredTo === undefined ? {} : { desiredTo: entry.desiredTo.toISOString() }),
       ...(entry.priority === undefined ? {} : { priority: entry.priority }),
     });
@@ -587,6 +622,7 @@ type WireBooking = Omit<
   | 'confirmedAt'
   | 'checkedInAt'
   | 'createdAt'
+  | 'rescheduledFrom'
   | 'statusReason'
   | 'delayNotice'
 > & {
@@ -595,6 +631,7 @@ type WireBooking = Omit<
   readonly confirmedAt?: string | null;
   readonly checkedInAt?: string | null;
   readonly createdAt: string;
+  readonly rescheduledFrom?: string | null;
   readonly statusReason?: WireStatusReason | null;
   readonly delayNotice?: WireDelayNotice | null;
 };
@@ -643,6 +680,7 @@ function toBooking({
   confirmedAt,
   checkedInAt,
   createdAt,
+  rescheduledFrom,
   statusReason,
   delayNotice,
   ...resto
@@ -653,6 +691,7 @@ function toBooking({
     ...optionalDate('endAt', endAt),
     ...optionalDate('confirmedAt', confirmedAt),
     ...optionalDate('checkedInAt', checkedInAt),
+    ...optionalDate('rescheduledFrom', rescheduledFrom),
     ...(statusReason === null || statusReason === undefined
       ? {}
       : {

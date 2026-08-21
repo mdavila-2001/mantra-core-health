@@ -1,9 +1,13 @@
+import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { DirectoryClient } from '../../core/data-access/directory/directory.client';
 import type {
   MembershipListItem,
   MyOrganization,
+  PractitionerRequest,
+  TenantAgendaItem,
 } from '../../core/data-access/directory/directory.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { loading, ready } from '../../core/view-state/view-state';
@@ -62,6 +66,8 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
     AppButton,
     Badge,
     Card,
+    DatePipe,
+    FormsModule,
     EmptyState,
     FormActions,
     FormField,
@@ -77,8 +83,7 @@ export class OrganizationPanel {
   private readonly directory = inject(DirectoryClient);
   private readonly toasts = inject(ToastService);
 
-  protected readonly organizaciones =
-    signal<ViewState<readonly MyOrganization[]>>(loading());
+  protected readonly organizaciones = signal<ViewState<readonly MyOrganization[]>>(loading());
 
   /** Cuál se está mirando. `null` mientras carga o si no hay ninguna. */
   protected readonly elegidaId = signal<string | null>(null);
@@ -96,9 +101,7 @@ export class OrganizationPanel {
   /** Hay más de una: la pantalla ofrece elegir. */
   protected readonly hayVarias = computed(() => this.lista().length > 1);
 
-  protected readonly puedeAdministrar = computed(
-    () => this.elegida()?.canAdminister === true,
-  );
+  protected readonly puedeAdministrar = computed(() => this.elegida()?.canAdminister === true);
 
   /**
    * Sin aprobar no aparece en el directorio público, y conviene decirlo.
@@ -107,9 +110,7 @@ export class OrganizationPanel {
    * concepto —un uuid— y el front no tiene forma de saber cuál de todos
    * significa «verificada» sin atarse a un identificador sembrado.
    */
-  protected readonly estaVerificada = computed(
-    () => this.elegida()?.isVerified === true,
-  );
+  protected readonly estaVerificada = computed(() => this.elegida()?.isVerified === true);
 
   /* -- Datos de la organización -------------------------------------------- */
 
@@ -120,8 +121,7 @@ export class OrganizationPanel {
 
   /* -- Su gente ------------------------------------------------------------- */
 
-  protected readonly gente =
-    signal<ViewState<readonly MembershipListItem[]>>(loading());
+  protected readonly gente = signal<ViewState<readonly MembershipListItem[]>>(loading());
 
   /**
    * Su gente ya resuelta, para que la plantilla no tenga que abrir el estado.
@@ -150,6 +150,8 @@ export class OrganizationPanel {
     const org = this.lista().find((candidata) => candidata.id === tenantId);
     if (org) this.sembrarFormulario(org);
     this.cargarGente(tenantId);
+    this.cargarSolicitudes(tenantId);
+    this.cargarAgendaDelDia();
   }
 
   protected guardarDatos(): void {
@@ -194,11 +196,164 @@ export class OrganizationPanel {
         if (org) {
           this.sembrarFormulario(org);
           this.cargarGente(org.id);
+          this.cargarSolicitudes(org.id);
+          this.cargarAgendaDelDia();
         }
       },
       error: (error: unknown) =>
         this.organizaciones.set(errorToViewState<readonly MyOrganization[]>(error)),
     });
+  }
+
+  /* -- Solicitudes de médicos (TP-2) ---------------------------------------- */
+
+  protected readonly solicitudes = signal<ViewState<readonly PractitionerRequest[]>>(loading());
+
+  protected readonly pedidos = computed<readonly PractitionerRequest[]>(() => {
+    const estado = this.solicitudes();
+    return estado.status === 'ready' ? estado.data : [];
+  });
+
+  /**
+   * Cuál se está decidiendo, para deshabilitar sus dos botones a la vez.
+   *
+   * Se guarda el id y no un booleano global: con un booleano, aprobar una
+   * solicitud deshabilitaría los botones de todas, y quien tiene diez en la
+   * bandeja vería la pantalla congelarse entera por cada decisión.
+   */
+  protected readonly decidiendo = signal<string | null>(null);
+
+  /** La organización acepta el vínculo. */
+  protected aprobar(solicitud: PractitionerRequest): void {
+    this.decidir(solicitud, true);
+  }
+
+  /** La organización lo rechaza. */
+  protected rechazar(solicitud: PractitionerRequest): void {
+    this.decidir(solicitud, false);
+  }
+
+  private decidir(solicitud: PractitionerRequest, acepta: boolean): void {
+    const org = this.elegida();
+    if (!org || this.decidiendo() !== null) return;
+
+    this.decidiendo.set(solicitud.id);
+    const decision = acepta
+      ? this.directory.approvePractitionerRequest(org.id, solicitud.id)
+      : this.directory.rejectPractitionerRequest(org.id, solicitud.id);
+
+    decision.subscribe({
+      next: () => {
+        this.decidiendo.set(null);
+        this.toasts.success(
+          acepta
+            ? 'El profesional ya forma parte de tu organización.'
+            : 'La solicitud quedó rechazada.',
+        );
+        // Se recarga la bandeja en vez de sacar la fila a mano: si alguien más
+        // decidió otra solicitud mientras tanto, sacarla localmente dejaría la
+        // pantalla mostrando algo que ya no está.
+        this.cargarSolicitudes(org.id);
+      },
+      error: () => {
+        this.decidiendo.set(null);
+        this.toasts.error('No se pudo registrar la decisión. Probá de nuevo.');
+      },
+    });
+  }
+
+  private cargarSolicitudes(tenantId: string): void {
+    this.solicitudes.set(loading());
+    this.directory.listPractitionerRequests(tenantId).subscribe({
+      next: (items) => this.solicitudes.set(ready(items)),
+      error: (error: unknown) =>
+        this.solicitudes.set(errorToViewState<readonly PractitionerRequest[]>(error)),
+    });
+  }
+
+  /* -- La agenda de la organización (TP-5) ---------------------------------- */
+
+  protected readonly agenda = signal<ViewState<readonly TenantAgendaItem[]>>(loading());
+
+  /** Qué día se está mirando, en días desde hoy. */
+  protected readonly dia = signal(0);
+
+  /** Filtro rápido por nombre de paciente: «¿a qué hora viene X hoy?». */
+  protected readonly buscaPaciente = signal('');
+
+  /** Acotar a un profesional. Vacío = todos los de la organización. */
+  protected readonly filtroMedico = signal('');
+
+  protected readonly fechaVisible = computed(() => {
+    const hoy = new Date();
+    return new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + this.dia());
+  });
+
+  private readonly citas = computed<readonly TenantAgendaItem[]>(() => {
+    const estado = this.agenda();
+    return estado.status === 'ready' ? estado.data : [];
+  });
+
+  /**
+   * Las citas que se muestran, ya filtradas por nombre.
+   *
+   * El filtro por paciente es del lado del cliente y no una consulta más: la
+   * pregunta real de una recepción es «¿a qué hora viene X **hoy**?», y el día
+   * entero ya está cargado. Ir al servidor por cada tecla sería pedir de nuevo
+   * lo que ya está en la pantalla.
+   */
+  protected readonly citasVisibles = computed<readonly TenantAgendaItem[]>(() => {
+    const busca = this.buscaPaciente().trim().toLocaleLowerCase();
+    if (busca === '') return this.citas();
+    return this.citas().filter((cita) =>
+      (cita.patientName ?? '').toLocaleLowerCase().includes(busca),
+    );
+  });
+
+  /** Se buscó a alguien y no está en el día: distinto de «no hay citas». */
+  protected readonly sinCoincidencias = computed(
+    () =>
+      this.citas().length > 0 &&
+      this.citasVisibles().length === 0 &&
+      this.buscaPaciente().trim() !== '',
+  );
+
+  protected diaAnterior(): void {
+    this.dia.update((n) => n - 1);
+    this.cargarAgendaDelDia();
+  }
+
+  protected diaSiguiente(): void {
+    this.dia.update((n) => n + 1);
+    this.cargarAgendaDelDia();
+  }
+
+  /** Cambiar el médico recarga: el filtro lo aplica el servidor. */
+  protected filtrarPorMedico(profileId: string): void {
+    this.filtroMedico.set(profileId);
+    this.cargarAgendaDelDia();
+  }
+
+  protected cargarAgendaDelDia(): void {
+    const org = this.elegida();
+    if (!org) return;
+
+    const desde = this.fechaVisible();
+    const hasta = new Date(desde.getTime() + 24 * 60 * 60 * 1000);
+    const medico = this.filtroMedico().trim();
+
+    this.agenda.set(loading());
+    this.directory
+      .getTenantAgenda(org.id, {
+        from: desde,
+        to: hasta,
+        ...(medico === '' ? {} : { practitionerProfileId: medico }),
+      })
+      .subscribe({
+        next: (pagina) => this.agenda.set(ready(pagina.items)),
+        error: (error: unknown) =>
+          this.agenda.set(errorToViewState<readonly TenantAgendaItem[]>(error)),
+      });
   }
 
   /**

@@ -225,3 +225,12 @@
   margin: 0 0 var(--sp-3);
   color: var(--text-secondary);
 }
+
+/* ── Patch v4.0.8: cambiar el estado clínico de un diagnóstico ────────────*/
+
+.expediente__accion-estado {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}

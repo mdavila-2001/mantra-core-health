@@ -132,9 +132,15 @@
   }
 }
 
-.login__mark svg {
-  width: 26px;
-  height: 26px;
+/* El glifo real de AloVida, no un ícono genérico de "acceso": misma técnica que
+   `.auth-split__marca-mini-glifo` (máscara sobre `currentColor`) para que sirva
+   en los dos temas con el único archivo de marca aprobado. */
+.login__mark-glifo {
+  width: 28px;
+  height: 21px;
+  background: currentColor;
+  -webkit-mask: url('/redsat/imagenes/alovida-logo.svg') no-repeat center / contain;
+  mask: url('/redsat/imagenes/alovida-logo.svg') no-repeat center / contain;
 }
 
 /* Membrete: título y bajada, cerrados por una regla que se apaga hacia la

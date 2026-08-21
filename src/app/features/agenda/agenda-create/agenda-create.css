@@ -1,129 +1,228 @@
 /* ============================================================================
-    Crear agenda — el recorrido por fases. El stepper arriba, un panel por
-    fase, y la navegación abajo. Se apoya en los tokens del sistema; no define
-    color propio salvo el de los rieles del stepper, que ya vive en su molécula.
+    Publicar mi agenda — una pantalla, dos decisiones.
+
+    Mobile-first: las columnas aparecen recién en pantallas anchas. Todo el
+    color sale de los tokens del sistema; acá no se define ninguno propio.
     ========================================================================== */
 
 :host {
   display: block;
 }
 
-app-stepper {
-  display: block;
-  margin-block: var(--sp-4);
-}
-
-.agenda-create__error {
-  display: block;
-  margin-bottom: var(--sp-4);
-}
-
-/* ---- lo ya capturado ----------------------------------------------------- */
-
-.agenda-create__captured {
+.agenda-create {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2) var(--sp-6);
-  margin: 0 0 var(--sp-4);
-  padding: var(--sp-3) var(--sp-4);
+  flex-direction: column;
+  gap: var(--sp-6);
+  max-width: 46rem;
+}
+
+.agenda-create__titular {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+.agenda-create__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
   background: var(--bg-surface-alt);
   border-radius: var(--r-md);
 }
 
-.agenda-create__captured div {
-  display: flex;
-  flex-direction: column;
-}
-
-.agenda-create__captured dt {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-}
-
-.agenda-create__captured dd {
+.agenda-create__titulo {
   margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 600;
 }
 
-.agenda-create__captured code,
-.agenda-create__summary code {
-  font-size: var(--fs-caption);
-  word-break: break-all;
-}
+/* ---- la semana ----------------------------------------------------------- */
 
-/* ---- el panel de la fase ------------------------------------------------- */
-
-.agenda-create__panel {
-  margin-bottom: var(--sp-4);
-}
-
-.agenda-create__note {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-}
-
-/* ---- franjas ------------------------------------------------------------- */
-
-.agenda-create__rules {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-3);
-}
-
-.agenda-create__rule {
+.agenda-create__semana {
   display: flex;
   flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* Cuadrado, con la altura del área táctil mínima: se toca con el pulgar. */
+.agenda-create__dia {
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border: var(--stroke-2) solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--fg-default);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.agenda-create__dia:hover {
+  border-color: var(--border-strong);
+}
+
+.agenda-create__dia:focus-visible {
+  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline-offset: 2px;
+}
+
+.agenda-create__dia--activo {
+  background: var(--st-primary-bg);
+  border-color: var(--st-primary-border);
+  color: var(--st-primary-fg);
+}
+
+.agenda-create__vacio {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+/* ---- una franja por día activo -------------------------------------------- */
+
+.agenda-create__franja {
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-3);
-  align-items: flex-end;
+  margin: 0;
   padding: var(--sp-3);
-  background: var(--bg-surface-alt);
+  border: var(--stroke-1) solid var(--border-subtle);
   border-radius: var(--r-md);
+  background: var(--bg-surface);
 }
 
-/* ---- navegación ---------------------------------------------------------- */
-
-.agenda-create__nav {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--sp-3);
-  margin-top: var(--sp-4);
+.agenda-create__franja-dia {
+  padding: 0 var(--sp-1);
+  font-weight: 600;
 }
 
-/* ---- finalización -------------------------------------------------------- */
-
-.agenda-create__done-title {
-  margin: 0 0 var(--sp-2);
-}
-
-.agenda-create__done-text {
-  margin: 0 0 var(--sp-4);
-  color: var(--text-secondary);
-}
-
-.agenda-create__summary {
+.agenda-create__horas {
   display: grid;
   gap: var(--sp-3);
-  margin: 0 0 var(--sp-4);
 }
 
-.agenda-create__summary div {
+@media (min-width: 30rem) {
+  .agenda-create__horas {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---- las fichas de duración ----------------------------------------------- */
+
+.agenda-create__duracion {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.agenda-create__duracion-label {
+  padding: 0;
+  margin-bottom: var(--sp-2);
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.agenda-create__fichas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.agenda-create__ficha {
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--stroke-1) solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--fg-default);
+  cursor: pointer;
+}
+
+.agenda-create__ficha:focus-visible {
+  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline-offset: 2px;
+}
+
+.agenda-create__ficha--activa {
+  background: var(--st-primary-bg);
+  border-color: var(--st-primary-border);
+  color: var(--st-primary-fg);
+  font-weight: 600;
+}
+
+/* ---- opciones y avanzadas -------------------------------------------------- */
+
+.agenda-create__opciones {
   display: flex;
   flex-direction: column;
+  gap: var(--sp-2);
 }
 
-.agenda-create__summary dt {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
+.agenda-create__opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
 }
 
-.agenda-create__summary dd {
+.agenda-create__avanzadas,
+.agenda-create__politica,
+.agenda-create__tecnico {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.agenda-create__politica,
+.agenda-create__tecnico {
+  padding: var(--sp-3);
+  border-left: var(--stroke-2) solid var(--border-subtle);
+}
+
+/* ---- resumen y cierre ------------------------------------------------------ */
+
+.agenda-create__resumen {
   margin: 0;
+  color: var(--fg-muted);
 }
 
-/* FX-1 · la frase que reemplaza a los tres campos técnicos cuando el médico
-   publica lo suyo. No es un campo: es la confirmación de de quién es la agenda. */
-.agenda-create__identidad {
-  color: var(--text-secondary);
-  margin: 0 0 var(--sp-3);
+.agenda-create__cupos {
+  margin: var(--sp-2) 0;
+}
+
+.agenda-create__acciones {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+/* ---- la vista previa -------------------------------------------------------- */
+
+.agenda-create__previa {
+  padding: var(--sp-3);
+  border: var(--stroke-1) dashed var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.agenda-create__previa-titulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.agenda-create__previa-dia {
+  margin: 0 0 var(--sp-1);
+}
+
+.agenda-create__previa-cuenta {
+  margin-right: var(--sp-2);
+}
+
+.agenda-create__previa-horas {
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda-create__previa-resto {
+  margin: 0 0 var(--sp-2);
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
 }

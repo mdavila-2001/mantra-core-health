@@ -65,6 +65,7 @@ const CONDICION_REGISTRADA = {
   patientProfileId: 'p-1',
   clinicalStatus: 'st-activa',
   verificationStatus: 'st-confirmada',
+  clinicalCourse: null,
   createdAt: '2026-08-13T12:00:00.000Z',
 };
 
@@ -447,6 +448,27 @@ describe('ClinicalClient', () => {
 
     expect(condicion?.clinicalStatus).toBe('st-activa');
     expect(condicion?.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('changeConditionStatus pega contra el segmento `change-status` con el motivo', () => {
+    let condicion: ConditionRegistration | undefined;
+    client
+      .changeConditionStatus('c-1', {
+        newClinicalStatusConceptId: 'st-inactiva',
+        reasonText: 'El paciente ya no presenta síntomas',
+      })
+      .subscribe((c) => (condicion = c));
+
+    const req = http.expectOne('/clinical/conditions/c-1/change-status');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      newClinicalStatusConceptId: 'st-inactiva',
+      reasonText: 'El paciente ya no presenta síntomas',
+    });
+
+    req.flush({ ...CONDICION_REGISTRADA, clinicalStatus: 'st-inactiva' });
+
+    expect(condicion?.clinicalStatus).toBe('st-inactiva');
   });
 
   /**

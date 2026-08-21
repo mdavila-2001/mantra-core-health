@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { CommunityClient } from '../../../core/data-access/community/community.client';
@@ -52,15 +46,7 @@ const MIEMBROS_VISIBLES = 20;
  */
 @Component({
   selector: 'app-group-detail',
-  imports: [
-    Alert,
-    AppButton,
-    Card,
-    EmptyState,
-    GroupComposer,
-    GroupPost,
-    PageHeader,
-  ],
+  imports: [Alert, AppButton, Card, EmptyState, GroupComposer, GroupPost, PageHeader],
   templateUrl: './group-detail.html',
   styleUrl: './group-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -96,20 +82,14 @@ export class GroupDetail {
 
   protected readonly hayMas = computed(() => this.cursor() !== null);
 
-  protected readonly puedePublicar = computed(
-    () => this.grupo()?.viewer.canPost === true,
-  );
+  protected readonly puedePublicar = computed(() => this.grupo()?.viewer.canPost === true);
 
-  protected readonly administra = computed(
-    () => this.grupo()?.viewer.canAdminister === true,
-  );
+  protected readonly administra = computed(() => this.grupo()?.viewer.canAdminister === true);
 
   /** Si la persona ya pidió entrar y su alta está esperando aprobación. */
   protected readonly esperandoAprobacion = computed(() => {
     const viewer = this.grupo()?.viewer;
-    return (
-      viewer !== undefined && !viewer.isMember && viewer.membershipId !== null
-    );
+    return viewer !== undefined && !viewer.isMember && viewer.membershipId !== null;
   });
 
   protected readonly puedeUnirse = computed(() => {
@@ -219,12 +199,10 @@ export class GroupDetail {
 
   /** Da de baja a un integrante. */
   protected expulsar(member: GroupMember): void {
-    this.community
-      .leaveGroup(this.groupIdRuta, member.memberProfileId)
-      .subscribe({
-        next: () => this.cargarFicha(),
-        error: () => this.error.set('No pudimos dar de baja a esa persona.'),
-      });
+    this.community.leaveGroup(this.groupIdRuta, member.memberProfileId).subscribe({
+      next: () => this.cargarFicha(),
+      error: () => this.error.set('No pudimos dar de baja a esa persona.'),
+    });
   }
 
   /** Trae la página siguiente del muro. */
@@ -241,16 +219,11 @@ export class GroupDetail {
 
   // --- Apoyo ---
 
-  private resolverAlta(
-    member: GroupMember,
-    decision: 'APPROVE' | 'REJECT',
-  ): void {
-    this.community
-      .updateGroupMember(this.groupIdRuta, member.id, { decision })
-      .subscribe({
-        next: () => this.cargarFicha(),
-        error: () => this.error.set('No pudimos resolver la solicitud.'),
-      });
+  private resolverAlta(member: GroupMember, decision: 'APPROVE' | 'REJECT'): void {
+    this.community.updateGroupMember(this.groupIdRuta, member.id, { decision }).subscribe({
+      next: () => this.cargarFicha(),
+      error: () => this.error.set('No pudimos resolver la solicitud.'),
+    });
   }
 
   /** El perfil con el que la persona es integrante, si lo es. */
@@ -275,9 +248,7 @@ export class GroupDetail {
         // 404 en un grupo secreto no significa «se rompió»: significa que para
         // quien mira ese grupo no existe, y decir otra cosa lo delataría.
         this.noExiste.set(fallo.status === 404);
-        this.error.set(
-          fallo.status === 404 ? '' : 'No pudimos cargar el grupo. Reintentá.',
-        );
+        this.error.set(fallo.status === 404 ? '' : 'No pudimos cargar el grupo. Reintentá.');
       },
     });
   }

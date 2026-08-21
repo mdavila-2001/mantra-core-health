@@ -1,0 +1,155 @@
+/* ============================================================================
+    Dónde comprar mi receta — carril E3.
+
+    Mobile-first, como la historia de la que cuelga: una columna, y en pantalla
+    ancha cada sucursal reparte datos y acciones en la fila. Quien compara
+    farmacias compara pocas cosas: cobertura, distancia y total.
+    ========================================================================== */
+
+.compra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.compra__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.compra__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.compra__nota {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.compra__proximamente {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.compra__items,
+.compra__sedes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.compra__item,
+.compra__sede {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.compra__item-detalle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  /* Alineado con el texto de la casilla, no con la casilla misma. */
+  padding-inline-start: var(--sp-6);
+}
+
+.compra__secundario {
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+}
+
+.compra__principal {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.compra__origen {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-primary);
+}
+
+.compra__ubicacion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.compra__mapa {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.compra__mapa svg {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.compra__codigo {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: var(--r-full);
+  background: var(--accent, #4fb3a9);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.compra__sede-datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.compra__faltantes {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+}
+
+.compra__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* En pantalla ancha la sucursal reparte la fila: letra, datos, acciones. */
+@media (min-width: 48rem) {
+  .compra__sede {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .compra__sede-datos {
+    flex: 1;
+  }
+}

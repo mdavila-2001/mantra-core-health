@@ -1,0 +1,111 @@
+@if (!haySesion()) {
+  <!-- `GET /scheduling/slots` exige sesión: prometer horarios y que la llamada
+       vuelva 401 sería peor que decirlo de entrada. -->
+  <app-empty-state
+    title="Entrá para ver los horarios"
+    description="Los turnos disponibles se ven con la sesión iniciada. Vas a volver a esta ficha."
+  />
+} @else if (tenantId() === null) {
+  <app-empty-state
+    title="Elegí una organización"
+    description="Los horarios dependen de la organización desde la que mirás."
+  />
+} @else {
+  <div class="disponibilidad">
+    <header class="disponibilidad__semana">
+      <button
+        app-button
+        type="button"
+        size="sm"
+        variant="secondary"
+        [disabled]="!puedeRetroceder()"
+        (clicked)="retroceder()"
+      >
+        Semana anterior
+      </button>
+
+      <p class="disponibilidad__rango" aria-live="polite">
+        {{ desde() | date: 'd MMM' }} – {{ hasta() | date: 'd MMM' }}
+      </p>
+
+      <button
+        app-button
+        type="button"
+        size="sm"
+        variant="secondary"
+        [disabled]="!puedeAvanzar()"
+        (clicked)="avanzar()"
+      >
+        Semana siguiente
+      </button>
+    </header>
+
+    <app-view-state-host [state]="estado()" (retry)="recargar()">
+      @if (estado().status === 'ready') {
+        @if (sedes().length === 0) {
+          <!-- Coherente con F-24: no publicó horarios no es lo mismo que estar
+               lleno, y decirlo mal hace que alguien deje de esperarlo. -->
+          <app-empty-state
+            title="Todavía no publicó horarios"
+            description="Este profesional aún no abrió su agenda. Volvé a mirar más adelante."
+          />
+        } @else {
+          @for (sede of sedes(); track sede.recurso.id) {
+            <app-card variant="outlined" padding="lg" class="disponibilidad__sede">
+              <h3 class="disponibilidad__sede-nombre">{{ sede.recurso.name }}</h3>
+
+              @if (sede.cupos.length > 0) {
+                <ul class="disponibilidad__cupos">
+                  @for (cupo of sede.cupos; track cupo.id) {
+                    <li>
+                      <!-- El `aria-label` lleva la fecha completa: «Lun 24 ·
+                           09:30» se lee de un vistazo pero no se escucha bien,
+                           y quien navega con lector necesita saber de qué día
+                           habla cada chip. -->
+                      <button
+                        app-button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        [attr.aria-label]="
+                          'Pedir turno el ' +
+                          (cupo.startAt | date: 'EEEE d \'de\' MMMM') +
+                          ' a las ' +
+                          (cupo.startAt | date: 'HH:mm') +
+                          ' en ' +
+                          sede.recurso.name
+                        "
+                        (clicked)="reservar(sede, cupo)"
+                      >
+                        {{ cupo.startAt | date: 'EEE d' }} ·
+                        {{ cupo.startAt | date: 'HH:mm' }}
+                      </button>
+                    </li>
+                  }
+                </ul>
+              } @else if (sede.proximo; as proximo) {
+                <p class="disponibilidad__proximo">
+                  Esta semana no tiene lugar. Próximo turno:
+                  <button
+                    app-button
+                    type="button"
+                    size="sm"
+                    variant="primary"
+                    (clicked)="reservar(sede, proximo)"
+                  >
+                    {{ proximo.startAt | date: 'EEE d MMM' }} ·
+                    {{ proximo.startAt | date: 'HH:mm' }}
+                  </button>
+                </p>
+              } @else {
+                <p class="disponibilidad__vacio">
+                  No tiene turnos disponibles en los próximos dos meses.
+                </p>
+              }
+            </app-card>
+          }
+        }
+      }
+    </app-view-state-host>
+  </div>
+}
