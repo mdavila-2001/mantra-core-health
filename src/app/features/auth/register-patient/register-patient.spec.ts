@@ -70,7 +70,7 @@ describe('RegisterPatient', () => {
   });
 
   /** La petición del catálogo de departamentos que dispara el constructor. */
-  const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
+  const CATALOGO = '/terminology/value-sets?code=VS_ADMINISTRATIVE_AREA';
 
   describe('catálogo de departamentos', () => {
     it('un 401 no rompe el registro: deja el aviso y el formulario usable', () => {
@@ -93,7 +93,7 @@ describe('RegisterPatient', () => {
       // Sin `olvidar()`, `shareReplay` replicaría el error sin pedir nada y
       // esta expectativa no encontraría petición alguna.
       http.expectOne(CATALOGO).flush({
-        items: [{ id: 'vs-1', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
+        items: [{ id: 'vs-1', internalCode: 'VS_ADMINISTRATIVE_AREA', name: 'Departamentos' }],
       });
       http.expectOne('/terminology/value-sets/vs-1/$expand?limit=200').flush({
         items: [{ conceptId: 'c-1', code: 'SC', display: 'Santa Cruz' }],
@@ -130,7 +130,15 @@ describe('RegisterPatient', () => {
 
   function completarProfesional(
     extra: Partial<
-      Record<'professionalTitle' | 'phone' | 'middleName' | 'motherLastName', string>
+      Record<
+        | 'professionalTitle'
+        | 'phone'
+        | 'middleName'
+        | 'motherLastName'
+        | 'nationalId'
+        | 'regulatoryAuthority',
+        string
+      >
     > = {},
   ): void {
     component.cambiarTipo('profesional');
@@ -139,12 +147,12 @@ describe('RegisterPatient', () => {
       middleName: extra.middleName ?? '',
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
+      nationalId: extra.nationalId ?? '',
       email: 'ana@hospital.test',
       password: 'secreto12',
-      nationalId: '',
       licenseNumber: 'MP-12345',
       credentialNumber: 'TIT-6789',
-      regulatoryAuthority: '',
+      regulatoryAuthority: extra.regulatoryAuthority ?? '',
       professionalTitle: extra.professionalTitle ?? '',
       phone: extra.phone ?? '',
     });
@@ -274,9 +282,9 @@ describe('RegisterPatient', () => {
         middleName: '',
         lastName: 'Paz',
         motherLastName: '',
+        nationalId: '',
         email: 'ana@hospital.test',
         password: 'secreto12',
-        nationalId: '',
         licenseNumber: '',
         credentialNumber: '',
         regulatoryAuthority: '',

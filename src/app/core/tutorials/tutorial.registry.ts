@@ -287,8 +287,11 @@ function hayCiclo(inicio: string, porId: ReadonlyMap<string, TutorialDefinition>
 }
 
 /** Expuesto para las pruebas del menú: qué secciones ve esta sesión. */
-export function seccionesVisibles(roles: readonly string[]): readonly string[] {
-  return APP_SECTIONS.filter((seccion) => isVisibleTo(seccion, roles)).map(
+export function seccionesVisibles(
+  roles: readonly string[],
+  tenants: readonly string[] = [],
+): readonly string[] {
+  return APP_SECTIONS.filter((seccion) => isVisibleTo(seccion, roles, tenants)).map(
     (seccion) => `/${seccion.path}`,
   );
 }

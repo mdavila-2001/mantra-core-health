@@ -57,7 +57,7 @@ const PUBLIC_PATHS: readonly string[] = [
  *
  * Hoy sólo el catálogo de terminología: `GET /terminology/value-sets` y
  * `GET /terminology/value-sets/{id}/$expand`. El registro público las pide para
- * su desplegable de departamentos (`VS_BO_DEPARTMENT`) antes de que exista una
+ * su desplegable de departamentos (`VS_ADMINISTRATIVE_AREA`) antes de que exista una
  * sesión, y el glosario y los formularios clínicos las piden ya dentro.
  *
  * Sin esta lista, el 401 del registro entraba por el camino reactivo de abajo
@@ -117,6 +117,17 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       // ofrece reintentar y deja seguir sin departamento—, y renovar o cerrar
       // la sesión por una lectura de catálogo sería confundir dos cosas.
       if (isOptionalAuth(request.url)) {
+        return throwError(() => error);
+      }
+
+      // Nadie había iniciado sesión: este 401 no dice «se te venció», dice
+      // «este endpoint pide sesión». Expulsar a quien nunca entró es lo que
+      // hacía **imposible registrarse**: la pantalla de alta pide los
+      // departamentos a terminología —sin token, porque todavía no hay
+      // cuenta—, el 401 disparaba esto, y al visitante lo mandaba al login
+      // antes de que pudiera escribir su nombre. El error se propaga igual y
+      // cada pantalla decide qué hacer con él.
+      if (session.accessToken() === null && session.refreshToken() === null) {
         return throwError(() => error);
       }
 

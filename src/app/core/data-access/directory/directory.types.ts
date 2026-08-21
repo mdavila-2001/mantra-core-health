@@ -49,6 +49,12 @@ export interface MyOrganization extends TenantListItem {
   readonly isVerified: boolean;
   /** Zona horaria IANA declarada, si la hay. */
   readonly timeZone?: string;
+  /**
+   * Datos de aseguradora. Presente **sólo** si el tenant es de tipo `PAYER`:
+   * su presencia es la señal de que se trata de una aseguradora, en vez de
+   * decodificar `tenantTypeConceptId` — mismo principio que `isVerified`.
+   */
+  readonly payer?: PayerProfile;
 }
 
 /**
@@ -121,6 +127,16 @@ export interface OrganizationEdit {
   readonly legalName?: string;
   readonly tradeName?: string;
   readonly timeZone?: string;
+  /**
+   * Sólo para aseguradoras: se manda cuando el tenant es `PAYER`. El backend
+   * rechaza este bloque en cualquier otro tipo, así que la pantalla lo arma
+   * sólo si `payer` vino en la lectura.
+   */
+  readonly payer?: {
+    readonly sigla?: string;
+    readonly address?: string;
+    readonly regulatorIdentifier?: string;
+  };
 }
 
 /** Página del listado. Sin total: la paginación es por cursor, a propósito. */
@@ -211,6 +227,10 @@ export interface PayerProfile {
   readonly carrierCode: string;
   readonly regulatorIdentifier: string;
   readonly jurisdictionConceptId?: string;
+  /** Sigla de la aseguradora. Hasta 20 caracteres. */
+  readonly sigla: string;
+  /** Dirección física. Hasta 300 caracteres. */
+  readonly address: string;
 }
 
 /** Datos de corredor. Mismo trato que {@link PayerProfile}, para `BROKER`. */

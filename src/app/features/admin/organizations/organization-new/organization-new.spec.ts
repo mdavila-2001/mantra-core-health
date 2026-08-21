@@ -137,6 +137,8 @@ describe('OrganizationNew', () => {
     interno<{ setValue: (v: unknown) => void }>('formPayer').setValue({
       carrierCode: 'ANDINA',
       regulatorIdentifier: 'APS-123',
+      sigla: 'AND',
+      address: 'Av. Siempre Viva 123',
     });
     enviar();
 
@@ -144,6 +146,8 @@ describe('OrganizationNew', () => {
     expect((req.request.body as { payer?: unknown }).payer).toEqual({
       carrierCode: 'ANDINA',
       regulatorIdentifier: 'APS-123',
+      sigla: 'AND',
+      address: 'Av. Siempre Viva 123',
     });
     expect('broker' in (req.request.body as object)).toBe(false);
     // No es territorial: aunque haya país elegido de un tipo anterior, no
@@ -151,6 +155,25 @@ describe('OrganizationNew', () => {
     expect('countryConceptId' in (req.request.body as object)).toBe(false);
 
     req.flush(RESPUESTA);
+  });
+
+  /**
+   * `sigla` y `address` son tan obligatorios como `carrierCode` y
+   * `regulatorIdentifier`: el backend los exige a los cuatro cuando el tipo
+   * es `PAYER`.
+   */
+  it('una aseguradora sin sigla o sin dirección tampoco se envía', () => {
+    completar();
+    crudo<{ set: (v: unknown) => void }>('tipo').set('PAYER');
+    interno<{ setValue: (v: unknown) => void }>('formPayer').setValue({
+      carrierCode: 'ANDINA',
+      regulatorIdentifier: 'APS-123',
+      sigla: '',
+      address: '',
+    });
+    enviar();
+
+    expect(interno<() => { status: string }>('state')().status).toBe('ready');
   });
 
   it('al crearla vuelve al listado', () => {

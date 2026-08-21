@@ -64,6 +64,14 @@
   font-size: var(--font-size-sm);
 }
 
+/* El código de aseguradora es de sólo lectura dentro del formulario editable:
+   se muestra como texto y no como input, para que no se lea como un campo
+   que se puede tocar. */
+.organizacion__dato-solo-lectura {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
 .organizacion__gente {
   list-style: none;
   margin: 0;
