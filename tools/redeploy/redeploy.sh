@@ -43,7 +43,9 @@
 # ## Uso
 #
 #   tools/redeploy/redeploy.sh once      # despliega una vez y sale
-#   tools/redeploy/redeploy.sh start     # deja el vigilante en segundo plano
+#   tools/redeploy/redeploy.sh una-vez   # una pasada del ciclo (lo que llama systemd)
+#   tools/redeploy/redeploy.sh systemd   # instala el temporizador: sobrevive a los reinicios
+#   tools/redeploy/redeploy.sh start     # deja el vigilante en segundo plano (sin systemd)
 #   tools/redeploy/redeploy.sh status    # qué hay vivo y en qué commit
 #   tools/redeploy/redeploy.sh url       # el enlace
 #   tools/redeploy/redeploy.sh web       # relanza sólo el frontend (sin reconstruir)
@@ -479,6 +481,49 @@ case "${1:-once}" in
     log "Vigilante en segundo plano (pid $(cat "$VIGILANTE_PID"))"
     ;;
 
+  una-vez)
+    # Una pasada y fuera. Es lo que invoca el temporizador de systemd, y es la forma
+    # en que este despliegue sobrevive a un apagón: `start` deja un proceso suelto que
+    # el reinicio se lleva —los contenedores vuelven por `restart=unless-stopped`, pero
+    # nadie vuelve a mirar `dev`, y el enlace se queda sirviendo la versión de ayer sin
+    # que nada parezca roto—. Un `oneshot` que el temporizador relanza cada minuto no
+    # tiene ese estado que perder.
+    #
+    # `flock` sin espera porque una construcción pasa de los dos minutos del ciclo: si
+    # la anterior sigue viva, esta se retira en silencio en vez de solaparse.
+    exec 9>"$ESTADO/una-vez.lock"
+    if ! flock -n 9; then
+      log "PASADA: ya hay una en curso; esta se retira"
+      exit 0
+    fi
+    ciclo
+    ;;
+
+  systemd)
+    # Deja el despliegue en manos del temporizador de usuario y retira el vigilante suelto:
+    # los dos a la vez construirían la misma imagen dos veces.
+    #
+    # `enable-linger` es la pieza que la gente olvida: sin él, las unidades de usuario sólo
+    # viven mientras haya sesión iniciada, así que un reinicio sin login deja el enlace
+    # servido por contenedores viejos y a nadie vigilando.
+    UNIDADES="$HOME/.config/systemd/user"
+    mkdir -p "$UNIDADES"
+    if [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null; then
+      kill -TERM "$(cat "$VIGILANTE_PID")" 2>/dev/null
+      rm -f "$VIGILANTE_PID"
+      log "SYSTEMD: vigilante suelto retirado; a partir de ahora manda el temporizador"
+    fi
+    ln -sf "$RAIZ/tools/redeploy/systemd/alovida-redeploy.service" "$UNIDADES/"
+    ln -sf "$RAIZ/tools/redeploy/systemd/alovida-redeploy.timer"   "$UNIDADES/"
+    systemctl --user daemon-reload
+    systemctl --user enable --now alovida-redeploy.timer >/dev/null 2>&1
+    loginctl enable-linger "$USER" >/dev/null 2>&1 \
+      && log "SYSTEMD: linger activo — el temporizador corre aunque nadie inicie sesión" \
+      || log "SYSTEMD: ⚠ no se pudo activar linger; sólo correrá con sesión iniciada"
+    log "SYSTEMD: temporizador instalado ($(systemctl --user is-active alovida-redeploy.timer))"
+    systemctl --user list-timers alovida-redeploy.timer --no-pager
+    ;;
+
   stop)
     [ -f "$VIGILANTE_PID" ] && kill -TERM "$(cat "$VIGILANTE_PID")" 2>/dev/null
     rm -f "$VIGILANTE_PID"
@@ -498,6 +543,9 @@ case "${1:-once}" in
     # mientras va bien, así que acá se dice siempre.
     echo "enlace sirve: $(comprobar_enlace silencioso >/dev/null 2>&1 && echo 'sí (200 con el host del túnel)' || echo '⚠ NO')"
     echo "API         : 127.0.0.1:$API_PUERTO → $(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:${API_PUERTO}/" 2>/dev/null)"
+    # Quién vigila. Con el temporizador puesto, «vigilante: parado» es lo correcto y no una
+    # avería: el bucle en segundo plano sobra, y decirlo aquí ahorra el susto de leerlo.
+    echo "temporizador: $(systemctl --user is-active alovida-redeploy.timer 2>/dev/null || echo 'sin instalar') $([ "$(systemctl --user is-active alovida-redeploy.timer 2>/dev/null)" = active ] && echo '(manda systemd; el vigilante suelto sobra)')"
     echo "vigilante   : $( { [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null && echo "pid $(cat "$VIGILANTE_PID")"; } || echo 'parado')"
     docker ps --filter "name=^${WEB}$" --filter "name=^${PROXY}$" \
       --format 'contenedor  : {{.Names}} · {{.Image}} · {{.Status}}'
