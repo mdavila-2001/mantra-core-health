@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
@@ -114,7 +114,29 @@ export class RegisterPatient {
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
 
-  readonly tipo = signal<TipoCuenta>('paciente');
+  /**
+   * Quién se está registrando, según la ruta por la que se entró.
+   *
+   * Antes lo decidía una pestaña dentro de esta misma pantalla; ahora lo decide
+   * la rejilla de `/auth/register`, y cada alta tiene su URL. El valor llega
+   * como dato de la ruta: sin ruta —en una prueba que monta el componente
+   * suelto— se cae en paciente, que es el alta más común.
+   */
+  readonly tipo = signal<TipoCuenta>(
+    inject(ActivatedRoute).snapshot.data['tipoDeCuenta'] === 'profesional'
+      ? 'profesional'
+      : 'paciente',
+  );
+
+  readonly titulo = computed(() =>
+    this.tipo() === 'paciente' ? 'Crear cuenta de paciente' : 'Crear cuenta de profesional',
+  );
+
+  readonly subtitulo = computed(() =>
+    this.tipo() === 'paciente'
+      ? 'Con tu documento de identidad. Te lleva un par de minutos.'
+      : 'Con tu matrícula y tu número de colegio profesional.',
+  );
 
   readonly formPaciente = new FormGroup({
     nationalId: new FormControl('', {

@@ -1,0 +1,34 @@
+<app-auth-split
+  claim="Tu salud, en un solo lugar"
+  tagline="Creá tu cuenta y empezá a usar AloVida en un par de minutos."
+  contentWidth="wide"
+>
+  <div class="tipos">
+    <div class="tipos__header">
+      <h1 class="tipos__title">Crear cuenta</h1>
+      <p class="tipos__subtitle">¿Qué tipo de cuenta necesitás?</p>
+    </div>
+
+    <!-- Una lista, y no un montón de enlaces sueltos: son tres opciones de lo
+         mismo, y el lector de pantalla anuncia «lista de 3 elementos» antes de
+         leerlas — que es justo el dato que hace falta para decidir. -->
+    <ul class="tipos__grid">
+      @for (tipo of tipos; track tipo.ruta) {
+        <li class="tipos__item">
+          <a class="tipos__card" [routerLink]="tipo.ruta" [attr.data-testid]="tipo.testId">
+            <span class="tipos__icon" aria-hidden="true">
+              <app-account-icon [name]="tipo.icono" />
+            </span>
+            <span class="tipos__card-title">{{ tipo.titulo }}</span>
+            <span class="tipos__card-detail">{{ tipo.detalle }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+
+    <p class="tipos__footer">
+      ¿Ya tenés cuenta?
+      <a app-link routerLink="/auth" data-testid="tipos-ir-login">Iniciá sesión</a>
+    </p>
+  </div>
+</app-auth-split>

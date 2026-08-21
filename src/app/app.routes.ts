@@ -4,6 +4,7 @@ import { Dashboard } from './features/dashboard/dashboard';
 import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
+import { RegisterAccountType } from './features/auth/register-account-type/register-account-type';
 import { RegisterPatient } from './features/auth/register-patient/register-patient';
 import { RegisterOrganization } from './features/auth/register-organization/register-organization';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
@@ -721,6 +722,7 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
 const RUTAS_HEREDADAS_PUBLICAS: Readonly<Record<string, string>> = {
   'auth/organizacion': '/auth/organization',
   'auth/registro': '/auth/register',
+  'auth/register-organization': '/auth/register/organization',
   'auth/verificar': '/auth/verify-email',
   'auth/recuperar': '/auth/forgot-password',
   'auth/nueva-clave': '/auth/reset-password',
@@ -1271,14 +1273,31 @@ export const routes: Routes = [
     title: 'AloVida - Elegí tu organización',
   },
   {
+    // La elección de tipo de cuenta. Cada alta cuelga de acá con URL propia, así
+    // que «registrate como doctor» se puede enlazar desde afuera.
     path: 'auth/register',
-    component: RegisterPatient,
+    component: RegisterAccountType,
+    pathMatch: 'full',
     title: 'AloVida - Crear cuenta',
+  },
+  {
+    path: 'auth/register/patient',
+    component: RegisterPatient,
+    // El tipo viaja como dato de la ruta y no leyendo el último segmento de la
+    // URL: si mañana la dirección cambia, cambia acá y no dentro del componente.
+    data: { tipoDeCuenta: 'paciente' },
+    title: 'AloVida - Crear cuenta de paciente',
+  },
+  {
+    path: 'auth/register/practitioner',
+    component: RegisterPatient,
+    data: { tipoDeCuenta: 'profesional' },
+    title: 'AloVida - Crear cuenta de profesional',
   },
   {
     // Signup público de una organización aseguradora: crea el tenant `PAYER`
     // y su usuario owner en la misma operación.
-    path: 'auth/register-organization',
+    path: 'auth/register/organization',
     component: RegisterOrganization,
     title: 'AloVida - Registrar aseguradora',
   },
