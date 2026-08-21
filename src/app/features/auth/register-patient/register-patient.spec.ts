@@ -60,7 +60,53 @@ describe('RegisterPatient', () => {
   });
 
   afterEach(() => {
+    // El catálogo de departamentos lo pide el constructor, así que aparece en
+    // TODAS las pruebas. Las que no hablan de él lo dan por atendido acá, para
+    // que `verify()` siga vigilando las peticiones que cada prueba sí afirma.
+    for (const pendiente of http.match((r) => r.url.startsWith('/terminology/'))) {
+      pendiente.flush({ items: [] });
+    }
     http.verify();
+  });
+
+  /** La petición del catálogo de departamentos que dispara el constructor. */
+  const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
+
+  describe('catálogo de departamentos', () => {
+    it('un 401 no rompe el registro: deja el aviso y el formulario usable', () => {
+      http.expectOne(CATALOGO).flush(null, { status: 401, statusText: 'Unauthorized' });
+      fixture.detectChanges();
+
+      expect(component.catalogoDepartamentosCaido()).toBe(true);
+      expect(component.opcionesDepartamento()).toEqual([]);
+      // El registro sigue en pie: el 401 del catálogo no navega a ningún lado.
+      expect(navegaciones).toEqual([]);
+    });
+
+    it('«Reintentar» vuelve a la red: el fallo cacheado no dura toda la sesión', () => {
+      http.expectOne(CATALOGO).flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      // Acceso por índice: el método es `protected` porque lo llama la
+      // plantilla, no una API pública del componente.
+      component['reintentarDepartamentos']();
+
+      // Sin `olvidar()`, `shareReplay` replicaría el error sin pedir nada y
+      // esta expectativa no encontraría petición alguna.
+      http.expectOne(CATALOGO).flush({
+        items: [{ id: 'vs-1', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
+      });
+      http.expectOne('/terminology/value-sets/vs-1/$expand?limit=200').flush({
+        items: [{ conceptId: 'c-1', code: 'SC', display: 'Santa Cruz' }],
+        count: 1,
+        limit: 200,
+        nextCursor: null,
+      });
+
+      expect(component.catalogoDepartamentosCaido()).toBe(false);
+      expect(component.opcionesDepartamento()).toEqual([
+        { value: 'c-1', label: 'Santa Cruz' },
+      ]);
+    });
   });
 
   /**
@@ -95,8 +141,10 @@ describe('RegisterPatient', () => {
       motherLastName: extra.motherLastName ?? '',
       email: 'ana@hospital.test',
       password: 'secreto12',
+      nationalId: '',
       licenseNumber: 'MP-12345',
       credentialNumber: 'TIT-6789',
+      regulatoryAuthority: '',
       professionalTitle: extra.professionalTitle ?? '',
       phone: extra.phone ?? '',
     });
@@ -228,8 +276,10 @@ describe('RegisterPatient', () => {
         motherLastName: '',
         email: 'ana@hospital.test',
         password: 'secreto12',
+        nationalId: '',
         licenseNumber: '',
         credentialNumber: '',
+        regulatoryAuthority: '',
         professionalTitle: '',
         phone: '',
       });

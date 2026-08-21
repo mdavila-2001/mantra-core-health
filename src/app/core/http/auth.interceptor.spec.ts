@@ -148,6 +148,52 @@ describe('authInterceptor', () => {
     });
   });
 
+  describe('catálogo de credencial opcional', () => {
+    it('sí manda la credencial cuando hay sesión: se lee igual desde dentro', () => {
+      session.start({ accessToken: UN_TENANT, refreshToken: 'r-1' });
+
+      http.get('/terminology/value-sets?code=VS_BO_DEPARTMENT').subscribe();
+
+      const req = backend.expectOne('/terminology/value-sets?code=VS_BO_DEPARTMENT');
+      expect(req.request.headers.get('Authorization')).toBe(`Bearer ${UN_TENANT}`);
+
+      req.flush({ items: [] });
+    });
+
+    it('el 401 del registro público NO cierra la sesión ni navega al login', () => {
+      // El registro se abre sin sesión: no hay token ni con qué renovarlo.
+      let fallo = false;
+      http
+        .get('/terminology/value-sets?code=VS_BO_DEPARTMENT')
+        .subscribe({ error: () => (fallo = true) });
+
+      backend
+        .expectOne('/terminology/value-sets?code=VS_BO_DEPARTMENT')
+        .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      expect(fallo).toBe(true);
+      expect(router.navegaciones).toEqual([]);
+    });
+
+    it('la expansión entra por prefijo, con el uuid dentro del camino', () => {
+      session.start({ accessToken: UN_TENANT, refreshToken: 'r-1' });
+
+      let fallo = false;
+      http
+        .get('/terminology/value-sets/vs-1/$expand')
+        .subscribe({ error: () => (fallo = true) });
+
+      backend
+        .expectOne('/terminology/value-sets/vs-1/$expand')
+        .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      expect(fallo).toBe(true);
+      // Ni refresco (verify() lo delataría) ni cierre de sesión.
+      expect(session.isAuthenticated()).toBe(true);
+      expect(router.navegaciones).toEqual([]);
+    });
+  });
+
   describe('401 en una ruta protegida', () => {
     it('refresca una vez y reintenta con el token nuevo', () => {
       session.start({ accessToken: UN_TENANT, refreshToken: 'r-1' });

@@ -87,6 +87,13 @@ describe('NavigationService', () => {
         // El glosario ya NO entra: desde el 18/08/2026 (feedback de la analista,
         // F-03) declara los roles de quien atiende, y una sesión sin roles no
         // es de nadie que atienda.
+        //
+        // «Tu organización» sí entra, y a propósito: el rol que la gobierna es
+        // una membresía en `tenant_memberships`, no un rol del token, así que
+        // `navigation.map.ts` la declara sin `roles` (ver el comentario de su
+        // entrada). Quien no pertenece a ninguna organización recibe la lista
+        // vacía que devuelve `GET /tenants/me` y la pantalla se lo dice.
+        '/administration/my-organization',
         '/my-account',
         '/my-account/appointments',
         // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
@@ -165,7 +172,14 @@ describe('NavigationService', () => {
       }
       // «Atención» ya no aparece: su único ítem sin rol era el glosario, y desde
       // F-03 es de quien atiende. Para el paciente, sus cosas viven en «Mi cuenta».
-      expect(service.menu().map((g) => g.label)).toEqual(['General', 'Mi cuenta']);
+      //
+      // «Administración» sí, con un solo ítem: «Tu organización», que se ofrece
+      // sin rol a propósito (ver el detalle en la prueba de arriba).
+      expect(service.menu().map((g) => g.label)).toEqual([
+        'General',
+        'Administración',
+        'Mi cuenta',
+      ]);
     });
 
     it('los grupos salen en el orden declarado, no en el del registro', () => {

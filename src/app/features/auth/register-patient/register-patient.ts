@@ -216,6 +216,19 @@ export class RegisterPatient {
   }
 
   /**
+   * Reintenta la lectura del catálogo.
+   *
+   * Olvida lo cacheado antes de pedir: `BoDepartmentsCatalog` comparte la
+   * lectura con `shareReplay`, que guarda también el error, así que sin esto
+   * «Reintentar» repetía el mismo fallo sin llegar a tocar la red. Mismo
+   * criterio que `practitioner-profile-edit`.
+   */
+  protected reintentarDepartamentos(): void {
+    this.departamentos.olvidar();
+    this.cargarDepartamentos();
+  }
+
+  /**
    * Cambiar de tipo limpia el error anterior: era de otro formulario.
    *
    * Acepta `null` porque el grupo de radios modela «sin elección»; se cae a
