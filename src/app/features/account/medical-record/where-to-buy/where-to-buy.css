@@ -102,11 +102,14 @@
   gap: var(--sp-2);
 }
 
-.compra__mapa svg {
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+.compra__mapa app-map {
+  min-block-size: 20rem;
+}
+
+/* La tarjeta y el pin hablan de la misma sede: el resalte es simétrico. */
+.compra__sede--elegida {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 1px var(--focus-ring);
 }
 
 .compra__codigo {

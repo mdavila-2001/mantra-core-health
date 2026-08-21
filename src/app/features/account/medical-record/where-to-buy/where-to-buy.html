@@ -106,38 +106,14 @@
 
             @if (sedesEnElMapa().length > 0) {
               <figure class="compra__mapa">
-                <!-- Mismo esquema que «Cerca mío» (P4): posiciones relativas,
-                     no una carta de navegación. El dato está en las tarjetas. -->
-                <svg
-                  viewBox="0 0 800 400"
-                  role="img"
-                  [attr.aria-label]="
-                    sedesEnElMapa().length +
-                    ' sucursales marcadas por posición relativa. La lista completa, con dirección y distancia en línea recta, está en las tarjetas debajo del mapa.'
-                  "
-                >
-                  <rect width="800" height="400" fill="var(--bg-muted, #f9f8f4)"></rect>
-                  <g stroke="var(--border-subtle, #e4e2da)" stroke-width="10">
-                    <path d="M0 120h800M0 250h800M180 0v400M430 0v400M640 0v400"></path>
-                  </g>
-                  @for (sede of sedesEnElMapa(); track sede.codigo) {
-                    <circle [attr.cx]="sede.x" [attr.cy]="sede.y" r="15" fill="var(--accent, #4fb3a9)"></circle>
-                    <text
-                      [attr.x]="sede.x"
-                      [attr.y]="sede.y + 5"
-                      text-anchor="middle"
-                      font-size="14"
-                      font-weight="700"
-                      fill="#ffffff"
-                    >{{ sede.codigo }}</text>
-                    <text
-                      [attr.x]="sede.x + 22"
-                      [attr.y]="sede.y + 5"
-                      font-size="13"
-                      fill="var(--text-secondary, #4e5151)"
-                    >{{ sede.distancia === null ? sede.farmacia : sede.farmacia + ' · ' + sede.distancia }}</text>
-                  }
-                </svg>
+                <!-- El organismo de mapa (FAR-I1): pines reales sobre OSM. El
+                     dato completo sigue en las tarjetas — el mapa es progresivo. -->
+                <app-map
+                  [pines]="pinesDeSedes()"
+                  [etiqueta]="etiquetaDelMapa()"
+                  [(seleccionado)]="sedeElegida"
+                  (pinElegido)="enfocarSede($event)"
+                />
                 <figcaption class="compra__nota">
                   Las distancias son en línea recta, no de recorrido: el tiempo real de viaje depende
                   del tráfico.
@@ -147,12 +123,20 @@
 
             <ul class="compra__sedes" data-testid="compra-sedes">
               @for (sede of datos.sedes; track sede.codigo) {
-                <li class="compra__sede">
+                <li
+                  class="compra__sede"
+                  [id]="'compra-sede-' + sede.codigo"
+                  [class.compra__sede--elegida]="sedeElegida() === sede.codigo"
+                  (mouseenter)="sedeElegida.set(sede.codigo)"
+                >
                   <span class="compra__codigo" aria-hidden="true">{{ sede.codigo }}</span>
                   <div class="compra__sede-datos">
                     <span class="compra__principal">{{ sede.farmacia }} · {{ sede.sede }}</span>
                     @if (sede.direccion !== null) {
                       <span class="compra__secundario">{{ sede.direccion }}</span>
+                    }
+                    @if (sedesEnElMapa().length > 0 && (sede.lat === null || sede.lng === null)) {
+                      <span class="compra__secundario">Ubicación no disponible en el mapa</span>
                     }
                     <span class="compra__secundario">
                       @if (sede.distancia !== null) {
