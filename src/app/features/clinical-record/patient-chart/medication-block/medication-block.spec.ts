@@ -54,7 +54,11 @@ const CATALOGO = {
   definitionId: 'def-1',
   valueSetId: 'vs-1',
   allowCustomValue: false,
-  options: [{ conceptId: 'med-amoxi', code: 'AMOXI', display: 'Amoxicilina', ordinal: 1 }],
+  options: [
+    { conceptId: 'med-amoxi', code: 'J01CA04', display: 'Amoxicilina', ordinal: 1 },
+    { conceptId: 'med-vanco', code: 'J01XA01', display: 'Vancomicina', ordinal: 2 },
+    { conceptId: 'med-losar', code: 'C09CA01', display: 'Losartán', ordinal: 3 },
+  ],
 };
 
 /** Vía y unidad: los dos catálogos opcionales del formulario. */
@@ -720,35 +724,52 @@ describe('MedicationBlock', () => {
     });
   }
 
-  it('busca el medicamento por texto y ofrece el código para desambiguar', () => {
+  it('busca dentro del vademécum, sin pedirle nada a la terminología', () => {
+    // Antes preguntaba a `searchConcepts` sin acotar y devolvía el mismo
+    // medicamento repetido —vademécum en inglés, catálogo de prescripción y
+    // glosario— más conceptos que no son medicamentos. Ahora filtra el catálogo
+    // que la pantalla ya cargó: lo que se ofrece y lo que el backend acepta son
+    // lo mismo, y no hay una petición por tecla.
     responderCatalogo();
 
     interno<(texto: string) => void>('buscarMedicamento')('vanco');
-
-    const req = http.expectOne(
-      (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'vanco',
-    );
-    // Sin `codeSystemVersionId`: acotar a una versión ataría la pantalla a un
-    // uuid que un re-seed puede mover.
-    expect(req.request.params.get('codeSystemVersionId')).toBeNull();
-    req.flush({
-      items: [
-        {
-          conceptId: VANCOMICINA.value,
-          code: 'J01XA01',
-          display: 'Vancomycin',
-          codeSystemVersionId: 'csv-vademecum',
-        },
-      ],
-      count: 1,
-      limit: 20,
-    });
 
     const opciones =
       interno<() => readonly { value: string; label: string; hint?: string }[]>(
         'opcionesDeMedicamento',
       )();
-    expect(opciones).toEqual([{ value: VANCOMICINA.value, label: 'Vancomycin', hint: 'J01XA01' }]);
+    expect(opciones).toEqual([{ value: 'med-vanco', label: 'Vancomicina', hint: 'J01XA01' }]);
+    // Ni una petición: si saliera, `http.verify()` la denunciaría.
+  });
+
+  it('encuentra sin tilde lo que el catálogo escribe con tilde', () => {
+    // Un médico teclea «losartan»; el catálogo dice «Losartán». Exigir el
+    // acento al escribir es exigir de más.
+    responderCatalogo();
+
+    interno<(texto: string) => void>('buscarMedicamento')('losartan');
+
+    expect(
+      interno<() => readonly { label: string }[]>('opcionesDeMedicamento')().map((o) => o.label),
+    ).toEqual(['Losartán']);
+  });
+
+  it('también busca por código ATC', () => {
+    responderCatalogo();
+
+    interno<(texto: string) => void>('buscarMedicamento')('J01CA04');
+
+    expect(
+      interno<() => readonly { label: string }[]>('opcionesDeMedicamento')().map((o) => o.label),
+    ).toEqual(['Amoxicilina']);
+  });
+
+  it('sin texto ofrece el catálogo entero, no una lista vacía', () => {
+    responderCatalogo();
+
+    interno<(texto: string) => void>('buscarMedicamento')('');
+
+    expect(interno<() => readonly unknown[]>('opcionesDeMedicamento')()).toHaveLength(3);
   });
 
   it('al elegir, lee la ficha y ofrece presentaciones y concentraciones', () => {
