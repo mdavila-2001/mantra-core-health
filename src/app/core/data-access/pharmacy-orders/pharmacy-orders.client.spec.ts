@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
+import { SessionStore } from '../../auth/session.store';
 import {
   esEstadoTerminal,
+  esPedidoDelCanal,
   PharmacyOrdersClient,
   puedeCancelarse,
 } from './pharmacy-orders.client';
@@ -250,6 +252,281 @@ describe('PharmacyOrdersClient', () => {
       expect(client.simulacionesPara('LISTO_PARA_RETIRO')).toEqual(['DISPENSAR', 'VENCER']);
       expect(client.simulacionesPara('RETIRADO')).toEqual([]);
       expect(client.simulacionesPara('CANCELADO')).toEqual([]);
+    });
+  });
+});
+
+/**
+ * El lado del mostrador del cliente de pedidos (FAR-I3). Lo que se fija: la
+ * recepción por apertura, la confirmación con ajustes por línea y su total,
+ * el rechazo con motivo obligatorio, el retiro parcial con historia y el
+ * delivery artesanal. El lado paciente ya está fijado por los specs de las
+ * pantallas de FAR-I2.
+ */
+
+const CODIGO_DE_RETIRO = /^[ACDEFHJKLMNPRTUVWXY34679]{6}$/;
+
+const BORRADOR: BorradorDePedido = {
+  requestId: 'rx-1',
+  siteId: 'f0e1d2c3-0000-4000-8000-000000000001',
+  farmacia: 'Farmacia Andina',
+  sede: 'Sucursal Centro',
+  direccion: 'Calle Libertad 245',
+  lineas: [
+    {
+      productId: 'f0e1d2c3-0000-4000-8000-000000000002',
+      medicamento: 'Amoxicilina',
+      presentacion: '500 mg · Caja x 21 cápsulas',
+      cantidad: 1,
+      precio: '60.00',
+      moneda: 'BOB',
+      disponible: true,
+    },
+    {
+      productId: 'f0e1d2c3-0000-4000-8000-000000000003',
+      medicamento: 'Ibuprofeno',
+      presentacion: '400 mg · Caja x 10 comprimidos',
+      cantidad: 2,
+      precio: '25.50',
+      moneda: 'BOB',
+      disponible: true,
+    },
+  ],
+  totalEstimado: '111.00',
+  moneda: 'BOB',
+};
+
+describe('PharmacyOrdersClient — el lado del mostrador', () => {
+  let client: PharmacyOrdersClient;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        // Sólo lo que el cliente estampa: el nombre de quien envía.
+        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez' } },
+      ],
+    });
+    client = TestBed.inject(PharmacyOrdersClient);
+  });
+
+  async function enviado(modalidad: 'RETIRO' | 'DOMICILIO' = 'RETIRO'): Promise<PedidoFarmacia> {
+    return firstValueFrom(
+      client.enviar({
+        borrador: BORRADOR,
+        modalidad,
+        direccionDeEntrega: modalidad === 'RETIRO' ? null : 'Av. Ejemplo 123',
+      }),
+    );
+  }
+
+  async function pedidoActual(id: string): Promise<PedidoFarmacia> {
+    const pedido = await firstValueFrom(client.pedido(id));
+    if (pedido === null) {
+      throw new Error('el pedido tendría que existir');
+    }
+    return pedido;
+  }
+
+  it('el envío estampa quién pidió, desde la sesión y en palabras', async () => {
+    const pedido = await enviado();
+    expect(pedido.paciente).toBe('Ana Pérez');
+    // El prescriptor llega con el DTO de FAR-E2: sin nombre no se inventa.
+    expect(pedido.prescriptor).toBeNull();
+  });
+
+  it('abrir un pedido nuevo es recepcionarlo: pasa a revisión una sola vez', async () => {
+    const pedido = await enviado();
+    const abierto = await firstValueFrom(client.abrirRevision(pedido.id));
+    expect(abierto?.estado).toBe('EN_REVISION');
+    // Reabrir no retrocede nada: la transición sale sólo desde ENVIADO.
+    const reabierto = await firstValueFrom(client.abrirRevision(pedido.id));
+    expect(reabierto?.estado).toBe('EN_REVISION');
+  });
+
+  it('confirmar sin propuestas deja el pedido confirmado y recalcula el total', async () => {
+    const pedido = await enviado();
+    const confirmado = await firstValueFrom(
+      client.confirmarPedido(pedido.id, [
+        { indice: 0, decision: 'TAL_CUAL' },
+        { indice: 1, decision: 'NO_DISPONIBLE' },
+      ]),
+    );
+    expect(confirmado?.estado).toBe('CONFIRMADO');
+    expect(confirmado?.lineas[1]?.disponible).toBe(false);
+    // Queda sólo la amoxicilina: 60.00, no los 111.00 del envío.
+    expect(confirmado?.totalEstimado).toBe('60.00');
+  });
+
+  it('confirmar con un genérico deja la decisión en manos del paciente', async () => {
+    const pedido = await enviado();
+    const confirmado = await firstValueFrom(
+      client.confirmarPedido(pedido.id, [
+        {
+          indice: 0,
+          decision: 'PROPONER_GENERICO',
+          propuesta: { nombre: 'Amoxicilina genérica', precio: '24.00' },
+        },
+        { indice: 1, decision: 'TAL_CUAL' },
+      ]),
+    );
+    expect(confirmado?.estado).toBe('ACEPTACION_PENDIENTE');
+    expect(confirmado?.sustituciones).toHaveLength(1);
+    expect(confirmado?.sustituciones[0]?.original.nombre).toBe('Amoxicilina');
+    expect(confirmado?.sustituciones[0]?.propuesta).toEqual({
+      nombre: 'Amoxicilina genérica',
+      precio: '24.00',
+    });
+    // El total no aplica la propuesta: la persona todavía no la aceptó.
+    expect(confirmado?.totalEstimado).toBe('111.00');
+  });
+
+  it('el rechazo exige motivo, y no alcanza a un pedido ya listo', async () => {
+    const pedido = await enviado();
+    const sinMotivo = await firstValueFrom(client.rechazarPedido(pedido.id, '   '));
+    expect(sinMotivo?.estado).toBe('ENVIADO');
+
+    const rechazado = await firstValueFrom(
+      client.rechazarPedido(pedido.id, 'No trabajamos con esa presentación.'),
+    );
+    expect(rechazado?.estado).toBe('RECHAZADO');
+    expect(rechazado?.motivoDeRechazo).toBe('No trabajamos con esa presentación.');
+
+    const listo = await enviado();
+    await firstValueFrom(client.confirmarPedido(listo.id, []));
+    await firstValueFrom(client.marcarListo(listo.id));
+    const intacto = await firstValueFrom(client.rechazarPedido(listo.id, 'tarde'));
+    expect(intacto?.estado).toBe('LISTO_PARA_RETIRO');
+  });
+
+  it('marcar listo genera el código legible y las 48 horas de reserva', async () => {
+    const pedido = await enviado();
+    await firstValueFrom(client.confirmarPedido(pedido.id, []));
+    const listo = await firstValueFrom(client.marcarListo(pedido.id));
+    expect(listo?.estado).toBe('LISTO_PARA_RETIRO');
+    expect(listo?.codigoDeRetiro).toMatch(CODIGO_DE_RETIRO);
+    expect(listo?.venceEl).not.toBeNull();
+  });
+
+  it('con envío no hay mostrador: marcar listo no aplica', async () => {
+    const pedido = await enviado('DOMICILIO');
+    await firstValueFrom(client.confirmarPedido(pedido.id, []));
+    const intacto = await firstValueFrom(client.marcarListo(pedido.id));
+    expect(intacto?.estado).toBe('CONFIRMADO');
+    expect(intacto?.codigoDeRetiro).toBeNull();
+  });
+
+  it('un código que no coincide se dice sin tocar nada', async () => {
+    const pedido = await enviado();
+    await firstValueFrom(client.confirmarPedido(pedido.id, []));
+    await firstValueFrom(client.marcarListo(pedido.id));
+    const resultado = await firstValueFrom(
+      client.dispensar(pedido.id, { codigo: 'NOPE99', indices: [0, 1] }),
+    );
+    expect(resultado.codigoValido).toBe(false);
+    expect(resultado.pedido?.estado).toBe('LISTO_PARA_RETIRO');
+    expect(resultado.pedido?.entregas).toHaveLength(0);
+  });
+
+  it('el retiro parcial deja historia, y el completo cierra el pedido', async () => {
+    const pedido = await enviado();
+    await firstValueFrom(client.confirmarPedido(pedido.id, []));
+    await firstValueFrom(client.marcarListo(pedido.id));
+    const codigo = (await pedidoActual(pedido.id)).codigoDeRetiro ?? '';
+
+    // Se lleva sólo el primer renglón — en minúsculas: el mostrador no
+    // debería fallar por cómo se tipeó el código.
+    const parcial = await firstValueFrom(
+      client.dispensar(pedido.id, { codigo: codigo.toLowerCase(), indices: [0] }),
+    );
+    expect(parcial.codigoValido).toBe(true);
+    expect(parcial.pedido?.estado).toBe('LISTO_PARA_RETIRO');
+    expect(parcial.pedido?.entregas).toHaveLength(1);
+    expect(parcial.pedido?.entregas[0]?.indices).toEqual([0]);
+
+    // Vuelve por el resto: ahora sí, retirado, con las dos entregas.
+    const completo = await firstValueFrom(
+      client.dispensar(pedido.id, { codigo, indices: [0, 1] }),
+    );
+    expect(completo.pedido?.estado).toBe('RETIRADO');
+    expect(completo.pedido?.entregas).toHaveLength(2);
+    expect(completo.pedido?.entregas[1]?.indices).toEqual([1]);
+  });
+
+  it('el delivery artesanal: en camino primero, entregado cierra', async () => {
+    const pedido = await enviado('DOMICILIO');
+    await firstValueFrom(client.confirmarPedido(pedido.id, []));
+
+    // Entregar sin haber salido no cierra nada.
+    const anticipado = await firstValueFrom(client.marcarEnvio(pedido.id, 'ENTREGADO'));
+    expect(anticipado?.estado).toBe('CONFIRMADO');
+
+    const enCamino = await firstValueFrom(client.marcarEnvio(pedido.id, 'EN_CAMINO'));
+    expect(enCamino?.envio).toBe('EN_CAMINO');
+    expect(enCamino?.estado).toBe('CONFIRMADO');
+
+    const entregado = await firstValueFrom(client.marcarEnvio(pedido.id, 'ENTREGADO'));
+    expect(entregado?.envio).toBe('ENTREGADO');
+    expect(entregado?.estado).toBe('RETIRADO');
+    expect(entregado?.entregas).toHaveLength(1);
+  });
+
+  it('en un retiro no hay hitos de envío que marcar', async () => {
+    const pedido = await enviado();
+    await firstValueFrom(client.confirmarPedido(pedido.id, []));
+    const intacto = await firstValueFrom(client.marcarEnvio(pedido.id, 'EN_CAMINO'));
+    expect(intacto?.envio).toBeNull();
+  });
+
+  it('registrar la entrega no resucita un pedido cancelado en el camino', async () => {
+    const pedido = await enviado('DOMICILIO');
+    await firstValueFrom(client.confirmarPedido(pedido.id, []));
+    await firstValueFrom(client.marcarEnvio(pedido.id, 'EN_CAMINO'));
+    // El paciente puede cancelar mientras el envío está en la calle: el
+    // pedido no terminó. La entrega posterior no puede deshacer un terminal.
+    await firstValueFrom(client.cancelar(pedido.id));
+
+    const intacto = await firstValueFrom(client.marcarEnvio(pedido.id, 'ENTREGADO'));
+    expect(intacto?.estado).toBe('CANCELADO');
+    expect(intacto?.entregas).toHaveLength(0);
+  });
+
+  it('aceptar la propuesta aplica el genérico: el mostrador prepara lo acordado', async () => {
+    const pedido = await enviado();
+    await firstValueFrom(
+      client.confirmarPedido(pedido.id, [
+        {
+          indice: 0,
+          decision: 'PROPONER_GENERICO',
+          propuesta: { nombre: 'Amoxicilina genérica', precio: '24.00' },
+        },
+        { indice: 1, decision: 'TAL_CUAL' },
+      ]),
+    );
+
+    const aceptado = await firstValueFrom(client.aceptarSustituciones(pedido.id));
+    expect(aceptado?.estado).toBe('ACEPTADO');
+    // El renglón pasa a ser lo acordado: lo que se prepara y se retira.
+    expect(aceptado?.lineas[0]?.medicamento).toBe('Amoxicilina genérica');
+    expect(aceptado?.lineas[0]?.precio).toBe('24.00');
+    // 24.00 + 2 × 25.50: el total ya refleja la aceptación.
+    expect(aceptado?.totalEstimado).toBe('75.00');
+    // La propuesta queda como historia, no se borra.
+    expect(aceptado?.sustituciones).toHaveLength(1);
+  });
+
+  describe('el canal de la demo', () => {
+    it('un mensaje malformado no pasa el guard: el store no se envenena', async () => {
+      expect(esPedidoDelCanal(null)).toBe(false);
+      expect(esPedidoDelCanal(undefined)).toBe(false);
+      expect(esPedidoDelCanal('pedido')).toBe(false);
+      expect(esPedidoDelCanal({ id: 'x' })).toBe(false);
+      const pedido = await enviado();
+      expect(esPedidoDelCanal({ ...pedido, estado: 'INVENTADO' })).toBe(false);
+      expect(esPedidoDelCanal({ ...pedido, lineas: 'no-es-lista' })).toBe(false);
+    });
+
+    it('un pedido con la forma del contrato pasa', async () => {
+      expect(esPedidoDelCanal(await enviado())).toBe(true);
     });
   });
 });

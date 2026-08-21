@@ -206,6 +206,31 @@ describe('OrderDetail', () => {
     expect(document.activeElement?.id).toBe('pedido-estado');
   });
 
+  it('con envío, el camino se avisa y el cierre se dice «Entregado»', async () => {
+    // El lado del mostrador (FAR-I3) marca los hitos; acá se ve el reflejo.
+    const pedido = await firstValueFrom(
+      client.enviar({
+        borrador: BORRADOR,
+        modalidad: 'DOMICILIO',
+        direccionDeEntrega: 'Av. Ejemplo 123',
+      }),
+    );
+    await firstValueFrom(client.confirmarPedido(pedido.id, []));
+    await firstValueFrom(client.marcarEnvio(pedido.id, 'EN_CAMINO'));
+    await montar(pedido.id);
+
+    expect(texto()).toContain('Tu pedido está en camino');
+    expect(texto()).toContain('En camino');
+
+    await firstValueFrom(client.marcarEnvio(pedido.id, 'ENTREGADO'));
+    // Un solo harness por test: se re-navega para que `paramMap` recargue.
+    await harness.navigateByUrl('/my-account/pharmacy-orders/no-existe', OrderDetail);
+    await harness.navigateByUrl(`/my-account/pharmacy-orders/${pedido.id}`, OrderDetail);
+    harness.detectChanges();
+    expect(texto()).toContain('Entregado');
+    expect(texto()).toContain('Tu pedido llegó.');
+  });
+
   it('si la persona se arrepiente en el diálogo, nada cambia', async () => {
     confirmar.mockResolvedValue(false);
     const pedido = await pedidoEn(['CONFIRMAR']);

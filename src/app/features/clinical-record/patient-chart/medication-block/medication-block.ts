@@ -350,7 +350,10 @@ export class MedicationBlock {
   ];
 
   /** Opciones de duración rápida del tratamiento. */
-  protected readonly opcionesDuracionRapida: readonly { readonly dias: number | null; readonly label: string }[] = [
+  protected readonly opcionesDuracionRapida: readonly {
+    readonly dias: number | null;
+    readonly label: string;
+  }[] = [
     { dias: 3, label: '3 días' },
     { dias: 5, label: '5 días' },
     { dias: 7, label: '7 días' },
@@ -459,6 +462,14 @@ export class MedicationBlock {
    * sin desplegar nada nuevo.
    */
   protected readonly catalogoListo = signal<boolean | null>(null);
+
+  /**
+   * El vademécum contra el que se prescribe, entero y en memoria.
+   *
+   * Son unas decenas de opciones que ya se piden al abrir la pantalla, así
+   * que buscar sobre ellas es instantáneo y no cuesta una petición por tecla.
+   */
+  private readonly catalogoDeMedicamentos = signal<readonly DynamicEnumOption[]>([]);
 
   protected readonly registrando = signal(false);
 
@@ -661,7 +672,10 @@ export class MedicationBlock {
     // El catálogo se pregunta una sola vez: el cliente memoiza por target, así
     // que esta llamada y la del selector son la misma petición.
     this.systemContext.dynamicEnum(TARGET_MEDICAMENTO).subscribe({
-      next: (enumeracion) => this.catalogoListo.set(enumeracion.options.length > 0),
+      next: (enumeracion) => {
+        this.catalogoDeMedicamentos.set(enumeracion.options);
+        this.catalogoListo.set(enumeracion.options.length > 0);
+      },
       // Sin binding declarado la API responde 404. No es un fallo transitorio
       // que convenga reintentar: es un dato que falta en el catálogo.
       error: () => this.catalogoListo.set(false),
@@ -706,29 +720,39 @@ export class MedicationBlock {
   /* -- Elegir el medicamento ----------------------------------------------- */
 
   /**
-   * Busca en el catálogo de terminología por texto (UC-03-13).
+   * Busca dentro del **vademécum**, no en toda la terminología.
    *
-   * Sin acotar a una versión de sistema de códigos a propósito: el vademécum es
-   * una versión más del catálogo y hardcodear su uuid acá ataría la pantalla a
-   * un identificador que un re-seed puede mover. Lo que garantiza que se elija
-   * algo válido no es el filtro sino el propio buscador, que sólo devuelve
-   * conceptos existentes y nunca acepta texto libre.
+   * Antes preguntaba a `searchConcepts` sin acotar, y devolvía cualquier
+   * concepto que casara: el mismo medicamento repetido tres veces —una por el
+   * vademécum en inglés, otra por el catálogo de prescripción y otra por el
+   * glosario del paciente— y hasta cosas que no son medicamentos, como los
+   * permisos del sistema. Con «paracetamol» el médico veía tres filas idénticas
+   * y ninguna forma de saber cuál elegir.
+   *
+   * Ahora filtra el catálogo que la pantalla ya cargó, que es exactamente el
+   * conjunto contra el que el backend valida la receta: lo que se ofrece y lo
+   * que se acepta pasan a ser lo mismo. Sin petición por tecla, y sin atar la
+   * pantalla al uuid de una versión del sistema de códigos.
    */
   protected buscarMedicamento(texto: string): void {
-    this.buscandoMedicamento.set(true);
-    this.terminology.searchConcepts({ query: texto, limit: TOPE_DE_LA_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        this.opcionesDeMedicamento.set(pagina.items.map(comoOpcionDeMedicamento));
-        this.buscandoMedicamento.set(false);
-      },
-      // Sin resultados y sin ruido: el combobox ya dice «sin resultados», y un
-      // aviso rojo por una búsqueda que falló mientras se teclea interrumpe algo
-      // que la siguiente pulsación puede resolver sola.
-      error: () => {
-        this.opcionesDeMedicamento.set([]);
-        this.buscandoMedicamento.set(false);
-      },
-    });
+    const buscado = normalizar(texto);
+    const catalogo = this.catalogoDeMedicamentos();
+
+    // Sin texto se ofrece el catálogo entero: abrir el desplegable y no ver nada
+    // hasta escribir esconde lo que hay.
+    const coincide =
+      buscado === ''
+        ? catalogo
+        : catalogo.filter(
+            (opcion) =>
+              normalizar(opcion.display).includes(buscado) ||
+              normalizar(opcion.code).includes(buscado),
+          );
+
+    this.opcionesDeMedicamento.set(
+      coincide.slice(0, TOPE_DE_LA_BUSQUEDA).map(comoOpcionDeMedicamento),
+    );
+    this.buscandoMedicamento.set(false);
   }
 
   /**
@@ -1328,6 +1352,20 @@ function aOpciones(textos: readonly string[]): readonly SelectOption<string>[] {
  * vademécum— desambigua dos denominaciones parecidas, que en un catálogo de
  * medicamentos es lo habitual.
  */
+/**
+ * Texto comparable: sin mayúsculas y sin tildes.
+ *
+ * Un médico escribe «losartan» y el catálogo dice «Losartán»; sin quitar la
+ * tilde no se encuentran, y exigir el acento al teclear es exigir de más.
+ */
+function normalizar(texto: string): string {
+  return texto
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+}
+
 function comoOpcionDeMedicamento(concepto: {
   readonly conceptId: string;
   readonly display: string;

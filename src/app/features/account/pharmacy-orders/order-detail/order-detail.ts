@@ -7,6 +7,7 @@ import {
   inject,
   PLATFORM_ID,
   signal,
+  untracked,
   viewChild,
   type ElementRef,
 } from '@angular/core';
@@ -37,7 +38,7 @@ import { ViewStateHost } from '../../../../shared/components/organisms/view-stat
 import {
   etiquetaDeModalidad,
   pasosDeLaLineaDeTiempo,
-  toPedidoStatusPresentation,
+  presentacionDePedido,
 } from '../pedido-status';
 
 /** A dónde vuelve quien llegó a un pedido que no existe. */
@@ -116,7 +117,8 @@ export class OrderDetail {
   protected readonly pedido = computed(() => dataOf(this.state()));
   protected readonly presentacion = computed(() => {
     const pedido = this.pedido();
-    return pedido === null ? null : toPedidoStatusPresentation(pedido.estado);
+    // Por pedido y no por estado: con envío, el cierre se dice «Entregado».
+    return pedido === null ? null : presentacionDePedido(pedido);
   });
   protected readonly pasos = computed(() => {
     const pedido = this.pedido();
@@ -191,6 +193,18 @@ export class OrderDetail {
       dibujarQr(lienzo.nativeElement, codigo, LADO_DEL_QR).catch(() =>
         this.qrDisponible.set(false),
       );
+    });
+
+    // El reflejo en vivo de la demo de dos ventanas (FAR-I3): si la farmacia
+    // mueve el pedido en otra pestaña, esta ficha se entera sin recargar.
+    // Con FAR-E1 esto será polling o la campana.
+    effect(() => {
+      const vivos = this.ordersClient.pedidosEnVivo();
+      const actual = untracked(() => this.pedido());
+      const fresco = actual === null ? undefined : vivos.find((p) => p.id === actual.id);
+      if (fresco !== undefined && fresco !== actual) {
+        this.state.set(ready(fresco));
+      }
     });
   }
 

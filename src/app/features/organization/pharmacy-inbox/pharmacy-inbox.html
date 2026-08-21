@@ -1,0 +1,113 @@
+<app-page-header
+  title="Pedidos de farmacia"
+  subtitle="La bandeja del mostrador: lo que llega, lo que espera y lo que sale."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- El aviso vive desde el primer render: una región viva que aparece con
+     el contenido no se anuncia. -->
+<p class="sr-only" role="status" data-testid="bandeja-aviso">{{ avisoDeNuevos() }}</p>
+
+<!-- El interruptor es además el primer gesto con la página: sin él, el
+     navegador bloquea el audio hasta que la persona interactúe. -->
+<div class="bandeja__controles">
+  <app-switch
+    label="Sonido de alarma"
+    data-testid="bandeja-sonido"
+    [ngModel]="alarma.sonidoActivo()"
+    (ngModelChange)="alarma.alternarSonido()"
+  />
+  @if (demoActiva) {
+    <p class="bandeja__demo" data-testid="bandeja-demo">
+      <app-badge variant="info">Demo</app-badge>
+      <span>
+        Bandeja de demostración: los pedidos llegan del recorrido del paciente,
+        sin conexión con un mostrador real todavía.
+      </span>
+    </p>
+  }
+</div>
+
+<app-view-state-host [state]="state()" (retry)="cargar()">
+  <div class="bandeja" data-testid="bandeja">
+    <!-- ─── Las cuatro colas a la vista ──────────────────────────────────── -->
+    <div class="bandeja__colas">
+      @for (cola of colas(); track cola.grupo) {
+        <section class="bandeja__cola" [attr.aria-label]="cola.etiqueta">
+          <h2 class="bandeja__titulo">
+            {{ cola.etiqueta }}
+            <span class="bandeja__conteo" aria-hidden="true">{{ cola.pedidos.length }}</span>
+          </h2>
+          @if (cola.pedidos.length === 0) {
+            <p class="bandeja__vacio">Nada por acá.</p>
+          }
+          <ul class="bandeja__lista">
+            @for (pedido of cola.pedidos; track pedido.id) {
+              <li>
+                <a
+                  class="bandeja__tarjeta"
+                  [class.bandeja__tarjeta--nueva]="esNuevo(pedido)"
+                  [routerLink]="[detalleRoute, pedido.id]"
+                  data-testid="bandeja-pedido"
+                >
+                  <span class="bandeja__fila">
+                    <span class="bandeja__paciente">{{ nombreDe(pedido) }}</span>
+                    <app-badge [variant]="presentacionDe(pedido).tone">
+                      {{ presentacionDe(pedido).label }}
+                    </app-badge>
+                  </span>
+                  <span class="bandeja__renglones">{{ resumenDe(pedido) }}</span>
+                  <span class="bandeja__fila bandeja__pie">
+                    <span class="cifras-tabulares">{{ totalDe(pedido) }}</span>
+                    @if (llegadaDe(pedido); as hace) {
+                      <span>{{ hace }}</span>
+                    } @else {
+                      <span>{{ pedido.creadoEl | date: 'dd/MM HH:mm' }}</span>
+                    }
+                  </span>
+                  @if (vencimientoDe(pedido); as vence) {
+                    <span class="bandeja__vence">{{ vence }}</span>
+                  }
+                </a>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+
+    <!-- ─── El resto, plegado ────────────────────────────────────────────── -->
+    <app-accordion>
+      @for (pliegue of plegados(); track pliegue.grupo) {
+        <app-accordion-panel [heading]="pliegue.etiqueta + ' (' + pliegue.pedidos.length + ')'">
+          @if (pliegue.pedidos.length === 0) {
+            <p class="bandeja__vacio">Nada por acá.</p>
+          }
+          <ul class="bandeja__lista">
+            @for (pedido of pliegue.pedidos; track pedido.id) {
+              <li>
+                <a
+                  class="bandeja__tarjeta"
+                  [routerLink]="[detalleRoute, pedido.id]"
+                  data-testid="bandeja-pedido"
+                >
+                  <span class="bandeja__fila">
+                    <span class="bandeja__paciente">{{ nombreDe(pedido) }}</span>
+                    <app-badge [variant]="presentacionDe(pedido).tone">
+                      {{ presentacionDe(pedido).label }}
+                    </app-badge>
+                  </span>
+                  <span class="bandeja__renglones">{{ resumenDe(pedido) }}</span>
+                  <span class="bandeja__fila bandeja__pie">
+                    <span class="cifras-tabulares">{{ totalDe(pedido) }}</span>
+                    <span>{{ pedido.creadoEl | date: 'dd/MM HH:mm' }}</span>
+                  </span>
+                </a>
+              </li>
+            }
+          </ul>
+        </app-accordion-panel>
+      }
+    </app-accordion>
+  </div>
+</app-view-state-host>

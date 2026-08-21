@@ -1,0 +1,141 @@
+/* ============================================================================
+    Elegir tipo de cuenta — MOBILE-FIRST (§0.1).
+
+    Una columna en teléfono y tres desde tablet. En una pantalla de tres
+    opciones excluyentes, la rejilla las pone en igualdad: apiladas en vertical
+    con distinto ancho, la primera parece la recomendada — y ninguna lo es.
+    ========================================================================== */
+
+.tipos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-6);
+}
+
+.tipos__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+}
+
+.tipos__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+    /* En tinta, no en color de marca: coherente con login y con el registro. */
+    color: var(--text-primary);
+}
+
+.tipos__subtitle {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-secondary);
+}
+
+.tipos__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (min-width: 48rem) {
+    .tipos__grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.tipos__item {
+    display: flex;
+}
+
+.tipos__card {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-2);
+    padding: var(--sp-5);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-xl);
+    background: var(--bg-surface);
+    text-decoration: none;
+    /* La tarjeta entera es el destino táctil: en un teléfono, apuntar sólo al
+       título deja la mitad del área muerta y se siente rota. */
+    cursor: pointer;
+    transition:
+        border-color var(--dur-base) var(--ease-out),
+        box-shadow var(--dur-base) var(--ease-out),
+        transform var(--dur-base) var(--ease-out);
+}
+
+.tipos__card:hover {
+    border-color: var(--brand-primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.tipos__card:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+}
+
+/* El movimiento es decoración: quien pidió menos movimiento no lo recibe. */
+@media (prefers-reduced-motion: reduce) {
+    .tipos__card {
+        transition: none;
+    }
+
+    .tipos__card:hover {
+        transform: none;
+    }
+}
+
+.tipos__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin-block-end: var(--sp-2);
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+    color: var(--brand-primary);
+    transition: background var(--dur-base) var(--ease-out);
+}
+
+.tipos__icon app-account-icon {
+    width: 26px;
+    height: 26px;
+}
+
+.tipos__card:hover .tipos__icon {
+    background: color-mix(in srgb, var(--brand-primary) 18%, transparent);
+}
+
+.tipos__card-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-h4, var(--fs-h3));
+    line-height: var(--lh-h4, var(--lh-h3));
+    color: var(--text-primary);
+}
+
+.tipos__card-detail {
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.tipos__footer {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}

@@ -291,3 +291,30 @@
     elegir en el popup avisa hacia afuera — la pantalla real hace scroll a la tarjeta.
   </p>
 </section>
+
+<!-- 14 · Formulario por partes ------------------------------------------------ -->
+<section class="og-block">
+  <h3>14 · Formulario por partes — el motor de páginas de cuatro campos</h3>
+
+  <p class="og-note">
+    Trece campos en una pantalla es lo que hace abandonar un registro a la mitad. El motor sirve
+    <strong>una página por vez</strong>, con un tope de cuatro campos, y no deja pasar a la
+    siguiente con algo mal: probá «Siguiente» sin escribir nada.
+  </p>
+
+  <div class="og-surface">
+    <app-paginated-form
+      [paginas]="paginasDemo"
+      [form]="formDemo"
+      label="Crear cuenta"
+      submitLabel="Crear cuenta"
+      (enviado)="registrarEnvioPaginado()"
+    />
+  </div>
+
+  <p class="og-note">
+    Enviado <strong>{{ enviosDemo() }}</strong> vez/veces. La barra cuenta páginas
+    <em>terminadas</em>: en el primer paso dice 0&nbsp;%, porque abrir una pantalla no es haber
+    avanzado.
+  </p>
+</section>

@@ -52,8 +52,44 @@ export interface PatientRegistration {
   readonly email?: string;
   /** Fecha en formato ISO `YYYY-MM-DD`, tal como la valida el backend. */
   readonly birthDate?: string;
+  /**
+   * Departamento boliviano que emitió el documento (catálogo VS_BO_DEPARTMENT).
+   *
+   * Va atado al identificador y no a la persona: es el «SC», «LP»… de ESA
+   * cédula, lo que distingue dos documentos homónimos de departamentos
+   * distintos. Sin `nationalId` no tiene a qué atarse.
+   */
+  readonly issuerAdministrativeAreaConceptId?: string;
+  /** Teléfono de contacto, en E.164 o formato nacional. */
+  readonly phone?: string;
+  /** Género administrativo (HL7 AdministrativeGender). */
+  readonly gender?: AdministrativeGenderCode;
+  /** Sexo asignado al nacer. Es dato clínico, distinto del género. */
+  readonly sexAtBirth?: BirthSexCode;
+  /**
+   * Ocupación en texto libre.
+   *
+   * Texto y no concepto porque el catálogo boliviano de ocupaciones
+   * (`VS_BO_OCCUPATION`) todavía no está sembrado: la API acepta
+   * `occupationConceptId`, pero hoy no hay de dónde sacar un uuid válido. El
+   * día que el catálogo exista, este campo pasa a ser el respaldo de «no está
+   * en la lista», que es como ya lo trata el backend.
+   */
+  readonly occupationFreeText?: string;
   readonly timeZone?: string;
 }
+
+/**
+ * Códigos de género administrativo que acepta la API.
+ *
+ * Códigos legibles y no uuid del catálogo: los formularios públicos no conocen
+ * los identificadores de terminología, y el backend los traduce
+ * (`ADMIN_GENDER_CONCEPT_BY_CODE`).
+ */
+export type AdministrativeGenderCode = 'MALE' | 'FEMALE' | 'OTHER' | 'UNKNOWN';
+
+/** Códigos de sexo al nacer que acepta la API. */
+export type BirthSexCode = 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN';
 
 export interface RegisteredPatient {
   readonly userId: string;
@@ -104,7 +140,7 @@ export interface PractitionerRegistration {
   readonly birthDate?: string;
   /** Documento de identidad. Se guarda como identificador oficial, no como login. */
   readonly nationalId?: string;
-  /** Departamento boliviano que emitió el documento (catálogo VS_ADMINISTRATIVE_AREA). */
+  /** Departamento boliviano que emitió el documento (catálogo VS_BO_DEPARTMENT). */
   readonly issuerAdministrativeAreaConceptId?: string;
   readonly licenseNumber: string;
   readonly credentialNumber: string;

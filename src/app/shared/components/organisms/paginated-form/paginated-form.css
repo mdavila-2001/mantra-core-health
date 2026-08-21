@@ -1,0 +1,86 @@
+/* ============================================================================
+    Formulario por partes — MOBILE-FIRST (§0.1).
+
+    La página es una columna en teléfono y sigue siéndolo en pantallas grandes:
+    con cuatro campos como tope, dos columnas dejarían una fila suelta y un
+    hueco, y la lectura en zigzag es justo lo que la paginación evita.
+    ========================================================================== */
+
+:host {
+    display: block;
+}
+
+.paginated-form__avance {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin-block-end: var(--sp-5);
+}
+
+.paginated-form__contador {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+/* El resumen para lector de pantalla. Fuera de la vista, pero NO con
+   `display: none`: eso lo saca también del árbol de accesibilidad y entonces no
+   lo anuncia nadie. */
+.paginated-form__anuncio {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.paginated-form__pagina {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.paginated-form__titulo {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    color: var(--text-default);
+}
+
+/* El título recibe el foco al cambiar de página; sin anillo, ese salto es
+   invisible para quien navega con teclado. */
+.paginated-form__titulo:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: var(--sp-1);
+    border-radius: var(--r-sm);
+}
+
+.paginated-form__hint {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.paginated-form__acciones {
+    display: flex;
+    align-items: center;
+    /* «Atrás» a la izquierda y el avance a la derecha, incluso cuando «Atrás»
+       no está: `space-between` con un solo hijo lo dejaría a la izquierda, y el
+       botón que hace avanzar tiene que estar siempre en el mismo sitio. */
+    justify-content: flex-end;
+    gap: var(--sp-3);
+    margin-block-start: var(--sp-6);
+}
+
+.paginated-form__acciones > :first-child:not(:last-child) {
+    margin-inline-end: auto;
+}

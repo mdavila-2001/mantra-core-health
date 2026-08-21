@@ -18,7 +18,7 @@ export interface NewAddress {
   /** Líneas de la dirección (calle, número, referencia). */
   readonly lines: readonly string[];
   readonly city?: string;
-  /** Departamento boliviano, miembro de `VS_ADMINISTRATIVE_AREA`. */
+  /** Departamento boliviano, miembro de `VS_BO_DEPARTMENT`. */
   readonly administrativeAreaConceptId?: string;
 }
 

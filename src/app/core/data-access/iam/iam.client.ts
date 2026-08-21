@@ -106,6 +106,24 @@ export class IamClient {
         : { motherLastName: registration.motherLastName }),
       ...(registration.email === undefined ? {} : { email: registration.email }),
       ...(registration.birthDate === undefined ? {} : { birthDate: registration.birthDate }),
+      // El cuerpo se re-proyecta campo por campo y no con un `...registration`
+      // a propósito: `forbidNonWhitelisted` del backend rechaza toda propiedad
+      // que el DTO no declare, así que lo que viaja es exactamente lo acordado
+      // y no lo que alguien haya dejado colgando del objeto de dominio. El
+      // precio es éste: un campo nuevo en `PatientRegistration` no llega solo,
+      // hay que listarlo acá.
+      ...(registration.issuerAdministrativeAreaConceptId === undefined
+        ? {}
+        : {
+            issuerAdministrativeAreaConceptId:
+              registration.issuerAdministrativeAreaConceptId,
+          }),
+      ...(registration.phone === undefined ? {} : { phone: registration.phone }),
+      ...(registration.gender === undefined ? {} : { gender: registration.gender }),
+      ...(registration.sexAtBirth === undefined ? {} : { sexAtBirth: registration.sexAtBirth }),
+      ...(registration.occupationFreeText === undefined
+        ? {}
+        : { occupationFreeText: registration.occupationFreeText }),
       ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
     });
   }
