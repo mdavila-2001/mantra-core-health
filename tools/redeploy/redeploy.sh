@@ -319,6 +319,29 @@ podar_imagenes() {
     | while read -r id _; do docker rmi "$id" >/dev/null 2>&1; done
 }
 
+# Que el contenedor esté sano no basta, y este despliegue ya se rompió así: el
+# `HEALTHCHECK` de la imagen pide `/auth` con `Host: 127.0.0.1`, que SIEMPRE está
+# permitido, de modo que el contenedor se declaraba sano mientras el único camino
+# que importa —la petición como llega por el enlace, con el host del túnel—
+# devolvía 400. Se comprueba ese camino, y en cada ciclo: si algo lo rompe, se
+# sabe en dos minutos y no cuando alguien abre el enlace.
+comprobar_enlace() {
+  local host_tunel codigo
+  host_tunel="$(sed -E 's#https?://##; s#/$##' "$URL_FILE" 2>/dev/null)"
+  [ -n "$host_tunel" ] || return 0
+  codigo="$(curl -s -o /dev/null -w '%{http_code}' -m 15 \
+    -H "Host: $host_tunel" -H "x-forwarded-host: $host_tunel" \
+    "http://127.0.0.1:${PUERTO}/" 2>/dev/null)"
+  [ -n "$codigo" ] || codigo=000
+  if [ "$codigo" = "200" ]; then
+    [ "${1:-}" = "silencioso" ] || log "ENLACE: la raíz con el host del túnel responde 200"
+    return 0
+  fi
+  log "ENLACE: ⚠ la raíz con el host del túnel responde $codigo — el enlace NO sirve"
+  log "ENLACE:   suele ser SSR_ALLOWED_HOSTS; mirá 'docker logs $WEB'"
+  return 1
+}
+
 desplegar() {
   local commit anterior
   commit="$(git -C "$RAIZ" rev-parse --short HEAD)"
@@ -354,24 +377,7 @@ desplegar() {
 
   if proxy_vivo; then recargar_proxy; else lanzar_proxy; fi
 
-  # Que el contenedor esté sano no basta: su `HEALTHCHECK` pide `/auth` con
-  # `Host: 127.0.0.1`, que SIEMPRE está permitido. Lo que hay que comprobar es
-  # la petición como llega por el enlace —con el host del túnel—, que es la
-  # única que puede chocar con la lista blanca del SSR.
-  local host_tunel codigo_tunel
-  host_tunel="$(sed -E 's#https?://##; s#/$##' "$URL_FILE" 2>/dev/null)"
-  if [ -n "$host_tunel" ]; then
-    codigo_tunel="$(curl -s -o /dev/null -w '%{http_code}' -m 15 \
-      -H "Host: $host_tunel" -H "x-forwarded-host: $host_tunel" \
-      "http://127.0.0.1:${PUERTO}/auth" 2>/dev/null)"
-    [ -n "$codigo_tunel" ] || codigo_tunel=000
-    if [ "$codigo_tunel" = "200" ]; then
-      log "ENLACE: /auth con el host del túnel responde 200"
-    else
-      log "ENLACE: ⚠ /auth con el host del túnel responde $codigo_tunel — el enlace NO sirve"
-      log "ENLACE:   suele ser SSR_ALLOWED_HOSTS: mirá 'docker logs $WEB'"
-    fi
-  fi
+  comprobar_enlace
 
   comprobar_api
   echo "$commit" > "$ESTADO/COMMIT_DESPLEGADO"
@@ -437,6 +443,16 @@ ciclo() {
   asegurar_tunel
   proxy_vivo || { web_vivo && lanzar_proxy; }
   web_vivo   || { log "WEB: el contenedor no está vivo; desplegando"; desplegar; }
+
+  # Si el enlace no sirve pero el contenedor vive, casi siempre es un frontend
+  # levantado sin los hosts permitidos. Relanzarlo con la imagen que ya está
+  # cuesta segundos y no toca el túnel; si aun así falla, el diario lo dice.
+  if web_vivo && ! comprobar_enlace silencioso; then
+    log "ENLACE: relanzando el frontend con el entorno correcto"
+    lanzar_web "$(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || git -C "$RAIZ" rev-parse --short HEAD)"
+    esperar_sano && comprobar_enlace
+  fi
+
   revisar_repo
 }
 
