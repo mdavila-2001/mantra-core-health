@@ -1,0 +1,303 @@
+<app-page-header
+  title="Pedido en el mostrador"
+  subtitle="Revisalo, confirmalo con lo que tenés y registrá la entrega."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="state()" (retry)="cargar()">
+  @if (pedido(); as abierto) {
+    <div class="mostrador" data-testid="mostrador-detalle">
+      <!-- ─── Quién y qué estado ─────────────────────────────────────────── -->
+      @if (presentacion(); as estado) {
+        <section class="mostrador__estado" aria-labelledby="mostrador-estado">
+          <h2 id="mostrador-estado" class="mostrador__titulo">
+            {{ abierto.paciente ?? 'Paciente' }}
+          </h2>
+          <p class="mostrador__estado-fila">
+            <app-badge [variant]="estado.tone" data-testid="mostrador-estado-badge">
+              {{ estado.label }}
+            </app-badge>
+            <span class="mostrador__secundario">{{ estado.descripcion }}</span>
+          </p>
+          <p class="mostrador__secundario">
+            Receta electrónica
+            @if (abierto.prescriptor !== null) {
+              — prescribió {{ abierto.prescriptor }}
+            }
+            · Llegó el {{ abierto.creadoEl | date: 'dd/MM HH:mm' }} ·
+            {{ abierto.sede }}
+          </p>
+        </section>
+      }
+
+      <!-- ─── La revisión: ajustes renglón por renglón ────────────────────── -->
+      @if (enRevision()) {
+        <section class="mostrador__bloque" aria-labelledby="mostrador-revision">
+          <h3 id="mostrador-revision" class="mostrador__subtitulo">Qué pidió</h3>
+          <ul class="mostrador__lineas">
+            @for (linea of abierto.lineas; track $index; let i = $index) {
+              <li class="mostrador__linea">
+                <div class="mostrador__linea-datos">
+                  <span class="mostrador__principal">{{ linea.medicamento }}</span>
+                  @if (linea.presentacion !== null) {
+                    <span class="mostrador__secundario">{{ linea.presentacion }}</span>
+                  }
+                  <span class="mostrador__secundario">Cantidad: {{ linea.cantidad }}</span>
+                  @if (linea.precio !== null) {
+                    <span class="cifras-tabulares">{{ linea.precio }} {{ linea.moneda }}</span>
+                  } @else {
+                    <span class="mostrador__secundario">Sin precio publicado</span>
+                  }
+                </div>
+                @if (ajustes()[i]; as ajuste) {
+                  <div class="mostrador__ajuste">
+                    <app-radio-group
+                      [attr.aria-label]="'Decisión para ' + linea.medicamento"
+                      [attr.data-testid]="'mostrador-decision-' + i"
+                      [value]="ajuste.decision"
+                      (valueChange)="cambiarDecision(i, $event)"
+                    >
+                      <app-radio value="TAL_CUAL" label="Tal cual" />
+                      <app-radio value="PROPONER_GENERICO" label="Proponer genérico" />
+                      <app-radio value="NO_DISPONIBLE" label="No disponible" />
+                    </app-radio-group>
+                    @if (ajuste.decision === 'PROPONER_GENERICO') {
+                      <!-- El selector de productos del mismo concepto llega con
+                           el catálogo del tenant (FAR-E2); mientras, se escribe. -->
+                      <div class="mostrador__generico">
+                        <app-form-field label="Qué proponés">
+                          <app-input
+                            autocomplete="off"
+                            [testId]="'mostrador-generico-nombre-' + i"
+                            [value]="ajuste.nombre"
+                            (valueChange)="cambiarNombre(i, $event)"
+                          />
+                        </app-form-field>
+                        <app-form-field
+                          label="Precio"
+                          hint="Vacío si no tiene precio publicado."
+                        >
+                          <app-input
+                            autocomplete="off"
+                            placeholder="24.00"
+                            [testId]="'mostrador-generico-precio-' + i"
+                            [value]="ajuste.precio"
+                            (valueChange)="cambiarPrecio(i, $event)"
+                          />
+                        </app-form-field>
+                      </div>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+          <p class="mostrador__total" data-testid="mostrador-total-vivo">
+            @if (totalEnVivo(); as total) {
+              {{ hayPropuestas() ? 'Total si acepta las propuestas:' : 'Total:' }}
+              <strong class="cifras-tabulares">{{ total }} {{ abierto.moneda }}</strong>
+            } @else {
+              Total no disponible: falta algún precio.
+            }
+          </p>
+          <div class="mostrador__acciones">
+            <button
+              app-button
+              variant="primary"
+              type="button"
+              data-testid="mostrador-confirmar"
+              [disabled]="!puedeConfirmar()"
+              [isLoading]="ocupado()"
+              (clicked)="confirmar()"
+            >
+              Confirmar pedido
+            </button>
+            <button
+              app-button
+              variant="danger"
+              type="button"
+              data-testid="mostrador-rechazar"
+              (clicked)="rechazar()"
+            >
+              Rechazar
+            </button>
+          </div>
+        </section>
+      } @else {
+        <!-- ─── Los renglones, ya decididos ───────────────────────────────── -->
+        <section class="mostrador__bloque" aria-labelledby="mostrador-renglones">
+          <h3 id="mostrador-renglones" class="mostrador__subtitulo">Qué pidió</h3>
+          <ul class="mostrador__lineas">
+            @for (linea of abierto.lineas; track $index) {
+              <li class="mostrador__linea">
+                <div class="mostrador__linea-datos">
+                  <span class="mostrador__principal">{{ linea.medicamento }}</span>
+                  @if (linea.presentacion !== null) {
+                    <span class="mostrador__secundario">{{ linea.presentacion }}</span>
+                  }
+                  <span class="mostrador__secundario">Cantidad: {{ linea.cantidad }}</span>
+                </div>
+                <div class="mostrador__linea-precio">
+                  @if (linea.precio !== null) {
+                    <span class="cifras-tabulares">{{ linea.precio }} {{ linea.moneda }}</span>
+                  }
+                  @if (!linea.disponible) {
+                    <app-badge variant="warning">No disponible</app-badge>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+          @if (abierto.totalEstimado !== null) {
+            <p class="mostrador__total">
+              Total:
+              <strong class="cifras-tabulares">
+                {{ abierto.totalEstimado }} {{ abierto.moneda }}
+              </strong>
+            </p>
+          }
+        </section>
+      }
+
+      <!-- ─── Esperando la decisión del paciente ─────────────────────────── -->
+      @if (abierto.estado === 'ACEPTACION_PENDIENTE') {
+        <app-alert tone="info" title="La decisión es del paciente">
+          Le propusiste una alternativa: puede aceptarla, quedarse con su receta
+          original o cancelar. La pantalla se actualiza cuando decida.
+        </app-alert>
+      }
+
+      <!-- ─── Preparación: marcar listo (retiros) o el envío (delivery) ──── -->
+      @if (puedeMarcarListo()) {
+        <div class="mostrador__acciones">
+          <button
+            app-button
+            variant="primary"
+            type="button"
+            data-testid="mostrador-listo"
+            [isLoading]="ocupado()"
+            (clicked)="marcarListo()"
+          >
+            Marcar listo para retirar
+          </button>
+        </div>
+      }
+      @if (muestraEnvio()) {
+        <section class="mostrador__bloque" aria-labelledby="mostrador-envio">
+          <h3 id="mostrador-envio" class="mostrador__subtitulo">Entrega a domicilio</h3>
+          <p class="mostrador__secundario">
+            {{ abierto.direccionDeEntrega ?? 'Sin dirección registrada' }} — la
+            coordina la farmacia, sin seguimiento en tiempo real.
+          </p>
+          @if (abierto.envio === 'EN_CAMINO') {
+            <app-badge variant="info">En camino</app-badge>
+          }
+          <div class="mostrador__acciones">
+            @if (puedeSalirEnCamino()) {
+              <button
+                app-button
+                variant="outline"
+                size="sm"
+                type="button"
+                data-testid="mostrador-encamino"
+                [isLoading]="ocupado()"
+                (clicked)="salirEnCamino()"
+              >
+                Salió en camino
+              </button>
+            }
+            @if (puedeEntregarse()) {
+              <button
+                app-button
+                variant="primary"
+                size="sm"
+                type="button"
+                data-testid="mostrador-entregar"
+                [isLoading]="ocupado()"
+                (clicked)="entregar()"
+              >
+                Registrar la entrega
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- ─── El retiro en mostrador ─────────────────────────────────────── -->
+      @if (enRetiro()) {
+        <section class="mostrador__bloque" aria-labelledby="mostrador-retiro">
+          <h3 id="mostrador-retiro" class="mostrador__subtitulo">Registrar retiro</h3>
+          @if (abierto.codigoDeRetiro !== null) {
+            <p class="mostrador__secundario">
+              El código que la persona muestra tiene que coincidir con el de la
+              reserva.
+            </p>
+          }
+          @if (codigoInvalido()) {
+            <app-alert tone="error" title="El código no coincide">
+              Pedile a la persona el código de su pedido — está en su pantalla,
+              en letras grandes, con su QR.
+            </app-alert>
+          }
+          <app-form-field label="Código que trae la persona">
+            <app-input
+              autocomplete="off"
+              placeholder="Por ejemplo: H7RNNM"
+              testId="mostrador-codigo"
+              [value]="codigo()"
+              (valueChange)="codigo.set($event === null ? '' : $event.toString())"
+            />
+          </app-form-field>
+          <fieldset class="mostrador__renglones-retiro">
+            <legend class="mostrador__secundario">Qué se lleva ahora</legend>
+            @for (indice of pendientes(); track indice) {
+              <app-checkbox
+                [attr.data-testid]="'mostrador-renglon-' + indice"
+                [label]="lineaDe(indice)"
+                [checked]="llevados().has(indice)"
+                (checkedChange)="alternarRenglon(indice, $event)"
+              />
+            }
+          </fieldset>
+          <div class="mostrador__acciones">
+            <button
+              app-button
+              variant="primary"
+              type="button"
+              data-testid="mostrador-retirar"
+              [disabled]="llevados().size === 0"
+              [isLoading]="ocupado()"
+              (clicked)="registrarRetiro()"
+            >
+              Registrar retiro
+            </button>
+          </div>
+        </section>
+      }
+
+      <!-- ─── Los finales y la historia ──────────────────────────────────── -->
+      @if (abierto.estado === 'RECHAZADO' && abierto.motivoDeRechazo !== null) {
+        <app-alert tone="error" title="Rechazado">
+          {{ abierto.motivoDeRechazo }}
+        </app-alert>
+      }
+      @if (abierto.entregas.length > 0) {
+        <section class="mostrador__bloque" aria-labelledby="mostrador-entregas">
+          <h3 id="mostrador-entregas" class="mostrador__subtitulo">Entregas registradas</h3>
+          <ul class="mostrador__entregas" data-testid="mostrador-entregas">
+            @for (entrega of abierto.entregas; track $index) {
+              <li>
+                {{ entrega.momento | date: 'dd/MM HH:mm' }} —
+                @for (indice of entrega.indices; track indice; let ultimo = $last) {
+                  {{ lineaDe(indice) }}@if (!ultimo) {, }
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <a app-button variant="ghost" [routerLink]="bandejaRoute">Volver a la bandeja</a>
+    </div>
+  }
+</app-view-state-host>
