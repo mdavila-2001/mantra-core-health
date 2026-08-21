@@ -1,0 +1,51 @@
+/* Mobile-first: una columna; la fila entera es el enlace al detalle. */
+
+.pedidos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pedidos__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.pedidos__fila:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+.pedidos__fila:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.pedidos__datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.pedidos__principal {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pedidos__secundario {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

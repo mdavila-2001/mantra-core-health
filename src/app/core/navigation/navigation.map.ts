@@ -789,6 +789,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M27 identity_assurance',
   },
   {
+    // Carril FAR-I2 · los pedidos de farmacia de la persona: del envío al
+    // retiro, con la decisión de sustitución en el medio.
+    //
+    // **Con `roles: ['PATIENT']`, a diferencia del resto de «Mi cuenta».** El
+    // pedido nace de una receta propia y la guardia del carril lo exige
+    // declarado en la sección, no sólo resuelto por la pantalla. Sin
+    // `exclusiveRoles`: el comodín de administración puede verla, y la
+    // pantalla igual se guarda por perfil de paciente, como «Mis órdenes».
+    path: 'my-account/pharmacy-orders',
+    label: 'Mis pedidos',
+    group: 'Mi cuenta',
+    icon: 'orders',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Seguí tus pedidos de farmacia: del envío al retiro.',
+    module: 'M24 pharmacy',
+  },
+  {
     // TP-1: la organización como actor, no como dato.
     //
     // Distinta de «Organizaciones», que es el listado de la **plataforma**, y

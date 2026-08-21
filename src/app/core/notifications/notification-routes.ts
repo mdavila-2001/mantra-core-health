@@ -31,6 +31,10 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
   ENCOUNTER: () => '/my-account/medical-record',
   DIAGNOSTIC_REPORT: () => '/my-account/diagnostic-results',
   APPOINTMENT: () => '/my-account/appointments',
+  // El pedido de farmacia (FAR-I2). La campana lleva directo al detalle
+  // porque es donde vive la única decisión que el aviso puede estar pidiendo:
+  // «te proponen un genérico» se responde ahí, no en la lista.
+  PHARMACY_ORDER: (id) => `/my-account/pharmacy-orders/${id}`,
   // Mensajería directa (carril P2). Con `?responder=1` (carril P9) el hilo
   // abre con el foco puesto en el textarea: llegar desde «te escribieron» y
   // tener que buscar dónde escribir rompe el gesto que la notificación empezó.
