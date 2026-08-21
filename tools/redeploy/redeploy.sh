@@ -13,8 +13,10 @@
 # que «no reiniciar nunca» era la única forma de conservarlo, y bastaba un corte
 # de red para perderlo.
 #
-# **2 · Se despliega solo.** Cada `INTERVALO` segundos se trae `origin/dev`. Si
-# avanzó, se reconstruye la imagen y se cambia el contenedor. El túnel apunta a
+# **2 · Se despliega solo.** Cada pasada se trae `origin/dev`. Si avanzó, se
+# reconstruye la imagen —desde un `git worktree` desprendido en ese commit, no
+# desde la copia de trabajo— y se cambia el contenedor. Lo que sirve el enlace es
+# exactamente `dev`: ni tu rama, ni lo que tengas sin guardar. El túnel apunta a
 # un puerto fijo del host y NO se toca en el cambio: el enlace sobrevive a
 # cualquier cantidad de despliegues.
 #
@@ -42,7 +44,7 @@
 #
 # ## Uso
 #
-#   tools/redeploy/redeploy.sh once      # despliega una vez y sale
+#   tools/redeploy/redeploy.sh once      # despliega el último commit de dev y sale
 #   tools/redeploy/redeploy.sh una-vez   # una pasada del ciclo (lo que llama systemd)
 #   tools/redeploy/redeploy.sh systemd   # instala el temporizador: sobrevive a los reinicios
 #   tools/redeploy/redeploy.sh start     # deja el vigilante en segundo plano (sin systemd)
@@ -64,6 +66,9 @@ ESTADO="$RAIZ/tools/redeploy/estado"
 mkdir -p "$ESTADO"
 
 RAMA="${REDEPLOY_RAMA:-dev}"
+
+# El worktree desprendido desde el que se construye. Se crea y se borra en cada despliegue.
+TRABAJO="$ESTADO/arbol"
 
 # El túnel ya existe y es de la organización. Su puerto publicado es el 4200, y
 # el número del puerto forma parte de la URL: cambiarlo acá cambiaría el enlace,
@@ -280,12 +285,12 @@ web_vivo()   { [ -n "$(docker ps -q --filter "name=^${WEB}$")" ]; }
 # ─── El despliegue ───────────────────────────────────────────────────────────
 
 construir() {
-  local etiqueta="$1"
+  local etiqueta="$1" contexto="${2:-$RAIZ}"
   log "BUILD: construyendo $IMAGEN:$etiqueta (esto tarda unos minutos)"
   # `PUBLIC_API_BASE_URL` vacía a propósito: rutas relativas, un solo origen,
   # sin CORS. Es la decisión que documenta el propio Dockerfile.
-  docker build -f "$RAIZ/Dockerfile" -t "$IMAGEN:$etiqueta" \
-    --build-arg PUBLIC_API_BASE_URL= "$RAIZ" >>"$LOG" 2>&1
+  docker build -f "$contexto/Dockerfile" -t "$IMAGEN:$etiqueta" \
+    --build-arg PUBLIC_API_BASE_URL= "$contexto" >>"$LOG" 2>&1
 }
 
 # Espera a que el contenedor se declare sano. El `HEALTHCHECK` de la imagen pide
@@ -345,16 +350,32 @@ comprobar_enlace() {
 }
 
 desplegar() {
-  local commit anterior
-  commit="$(git -C "$RAIZ" rev-parse --short HEAD)"
+  local sha commit anterior
+  # Lo que se despliega es el último commit de `dev`, no la copia de trabajo. Antes se rebasaba
+  # la rama local y se construía desde el árbol; eso hacía que un archivo sin guardar —una captura
+  # sin commitear bastaba— congelara el despliegue en silencio durante horas, y que lo servido
+  # fuese «dev más lo que hubiera por aquí», que no es lo que ve nadie más.
+  sha="${1:-$(git -C "$RAIZ" rev-parse "origin/$RAMA" 2>/dev/null)}"
+  commit="$(git -C "$RAIZ" rev-parse --short "$sha" 2>/dev/null)"
+  [ -n "$commit" ] || { log "BUILD: ✗ no sé qué commit desplegar"; return 1; }
   anterior="$(docker inspect --format '{{.Config.Image}}' "$WEB" 2>/dev/null)"
+
+  # Un worktree desprendido: el árbol de trabajo puede estar en otra rama y a medias, y esto ni
+  # lo mira. Se borra al terminar, salga bien o mal.
+  rm -rf "$TRABAJO"
+  git -C "$RAIZ" worktree prune >/dev/null 2>&1
+  git -C "$RAIZ" worktree add -q --detach "$TRABAJO" "$sha" 2>>"$LOG" || {
+    log "BUILD: ✗ no pude crear el worktree en $commit"; return 1; }
 
   # Se construye ANTES de tocar nada: mientras dura el build, el contenedor
   # viejo sigue sirviendo. Una construcción fallida no deja el enlace caído.
-  construir "$commit" || {
+  construir "$commit" "$TRABAJO" || {
     log "BUILD: ✗ falló; se conserva lo que está sirviendo ($anterior)"
+    git -C "$RAIZ" worktree remove --force "$TRABAJO" >/dev/null 2>&1
     return 1
   }
+  git -C "$RAIZ" worktree remove --force "$TRABAJO" >/dev/null 2>&1
+  git -C "$RAIZ" worktree prune >/dev/null 2>&1
 
   apagar_dev_server
   lanzar_web "$commit"
@@ -390,33 +411,28 @@ desplegar() {
 # ─── El disparador: un commit nuevo en dev ───────────────────────────────────
 
 revisar_repo() {
-  local antes remoto base
+  local remoto corto fallido
   git -C "$RAIZ" fetch --quiet origin "$RAMA" 2>/dev/null || {
     log "FETCH: sin red o sin remoto; se reintenta en el próximo ciclo"
     return 0
   }
   remoto="$(git -C "$RAIZ" rev-parse "origin/$RAMA" 2>/dev/null)" || return 0
-  base="$(git -C "$RAIZ" merge-base HEAD "origin/$RAMA" 2>/dev/null)"
-  [ "$base" = "$remoto" ] && return 0   # nada nuevo en dev
+  corto="$(git -C "$RAIZ" rev-parse --short "$remoto")"
+  [ "$corto" = "$(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null)" ] && return 0
 
-  # Con cambios sin guardar no se toca nada: rebasar encima se los llevaría por
-  # delante, y perder trabajo es peor que servir una versión de ayer.
-  if [ -n "$(git -C "$RAIZ" status --porcelain)" ]; then
-    log "FETCH: $RAMA avanzó pero el árbol tiene cambios sin guardar; NO se toca"
-    return 0
-  fi
+  # Un commit que ya demostró que no arranca no se reintenta cada dos minutos: sería reconstruir
+  # y deshacer en bucle para llegar siempre al mismo sitio. Se anota y se espera a que `dev`
+  # avance, que es lo único que puede arreglarlo.
+  fallido="$(cat "$ESTADO/COMMIT_FALLIDO" 2>/dev/null || echo '')"
+  [ "$corto" = "$fallido" ] && return 0
 
-  antes="$(git -C "$RAIZ" rev-parse --short HEAD)"
-  # `rebase` y no `merge --ff-only`: esta rama es `dev` MÁS el commit de estas
-  # herramientas. Rebasar la reapoya sobre el `dev` nuevo y conserva el commit
-  # arriba; un fast-forward sería imposible con ese commit de por medio.
-  if ! git -C "$RAIZ" rebase "origin/$RAMA" >>"$LOG" 2>&1; then
-    git -C "$RAIZ" rebase --abort >/dev/null 2>&1
-    log "FETCH: ✗ el rebase sobre origin/$RAMA chocó; se deja como está"
-    return 0
+  log "FETCH: $RAMA está en $corto y se sirve $(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || echo 'nada'); desplegando"
+  if desplegar "$remoto"; then
+    rm -f "$ESTADO/COMMIT_FALLIDO"
+  else
+    echo "$corto" > "$ESTADO/COMMIT_FALLIDO"
+    log "FETCH: anotado $corto como fallido; no se reintenta hasta que $RAMA avance"
   fi
-  log "FETCH: $RAMA avanzó $antes → $(git -C "$RAIZ" rev-parse --short "origin/$RAMA"); desplegando"
-  desplegar
 }
 
 # ─── Órdenes ─────────────────────────────────────────────────────────────────
@@ -451,7 +467,7 @@ ciclo() {
   # cuesta segundos y no toca el túnel; si aun así falla, el diario lo dice.
   if web_vivo && ! comprobar_enlace silencioso; then
     log "ENLACE: relanzando el frontend con el entorno correcto"
-    lanzar_web "$(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || git -C "$RAIZ" rev-parse --short HEAD)"
+    lanzar_web "$(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || git -C "$RAIZ" rev-parse --short "origin/$RAMA")"
     esperar_sano && comprobar_enlace
   fi
 
@@ -534,7 +550,7 @@ case "${1:-once}" in
     ;;
 
   status)
-    echo "rama        : $(git -C "$RAIZ" rev-parse --abbrev-ref HEAD) @ $(git -C "$RAIZ" rev-parse --short HEAD)"
+    echo "rama        : origin/$RAMA @ $(git -C "$RAIZ" rev-parse --short "origin/$RAMA" 2>/dev/null) (tu copia local no interviene)"
     echo "desplegado  : $(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || echo '—')"
     echo "enlace      : $(cat "$URL_FILE" 2>/dev/null || url_del_tunel)"
     echo "túnel       : $(tunel_proceso_vivo && echo 'hospedado' || echo 'sin hospedar')"
@@ -563,7 +579,7 @@ case "${1:-once}" in
     # Sólo el frontend, con la imagen que ya está: sirve para cambiarle el
     # entorno (los hosts permitidos, el techo de memoria) sin reconstruir.
     asegurar_tunel
-    lanzar_web "$(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || git -C "$RAIZ" rev-parse --short HEAD)"
+    lanzar_web "$(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || git -C "$RAIZ" rev-parse --short "origin/$RAMA")"
     esperar_sano && log "WEB: relanzado y sano" || log "WEB: ✗ no llegó a sano"
     proxy_vivo && recargar_proxy
     ;;
