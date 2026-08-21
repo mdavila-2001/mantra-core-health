@@ -141,6 +141,30 @@ describe('PractitionersDirectory', () => {
     expect(nombres).toEqual(['Cardiología', 'Pediatría']);
   });
 
+  /**
+   * F-25 (18/08/2026): tres tarjetas de la Guía mostraban como subtítulo el
+   * nombre de OTRO profesional. El dato cruzado lo arregla FX-4 en el seeder;
+   * este es el guardia de la vista, que no depende de eso.
+   */
+  it('una tarjeta nunca muestra el nombre de otro como subtítulo (F-25)', () => {
+    montar();
+    responder([
+      { ...FILA, displayName: 'Ana Lucía Flores', professionalTitle: 'Dr. Andrés Peña — Pediatría' },
+      OTRA,
+    ]);
+    responderConceptos();
+
+    const tarjetas = grupos().flatMap((g: GrupoDeEspecialidad) => g.profesionales);
+    const cruzada = tarjetas.find((t) => t.title === 'Ana Lucía Flores');
+
+    expect(cruzada, 'la tarjeta cruzada debería estar en la guía').toBeDefined();
+    // Sin subtítulo: más pobre, pero no miente sobre quién es quién.
+    expect(cruzada?.meta ?? []).toEqual([]);
+    // Y el resto conserva el suyo, que es legítimo.
+    const sana = tarjetas.find((t) => t.title === 'Dr. Andrés Peña');
+    expect(sana?.meta?.[0]?.text).toBe('Pediatra');
+  });
+
   /** Quien ejerce dos especialidades figura bajo las dos. */
   it('un profesional con dos especialidades aparece en las dos', () => {
     montar();
@@ -195,6 +219,23 @@ describe('PractitionersDirectory', () => {
 
     expect(grupos()).toHaveLength(1);
     expect(grupos()[0].profesionales[0].title).toBe('Dra. Lucía Salas');
+  });
+
+  /**
+   * F-19/F-27: la especialidad es el encabezado de la grilla, y buscarla tiene
+   * que traer a quienes la ejercen aunque su nombre no la mencione.
+   */
+  it('el buscador también encuentra por especialidad, con el grupo entero', () => {
+    montar();
+    responder([FILA, OTRA]);
+    responderConceptos();
+
+    senal<string>('filtro').set('cardio');
+
+    const encontrados = grupos();
+    expect(encontrados).toHaveLength(1);
+    expect(encontrados[0].nombre).toBe('Cardiología');
+    expect(encontrados[0].profesionales).toHaveLength(1);
   });
 
   it('el buscador también encuentra por el título profesional', () => {

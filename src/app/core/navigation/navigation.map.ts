@@ -1,3 +1,4 @@
+import { ANY_ROLE } from './navigation.types';
 import type { AppSection } from './navigation.types';
 
 /* ============================================================================
@@ -41,12 +42,37 @@ import type { AppSection } from './navigation.types';
  * en secciones distintas: es una ayuda visual, no un identificador, y va
  * `aria-hidden` con el rótulo al lado.
  */
+/**
+ * Todo rol que **no** es el paciente: quien ejerce, quien coordina y quien
+ * administra.
+ *
+ * Nació dos veces escrito igual —el glosario clínico y «Grupos y foros»— y las
+ * dos por el mismo motivo: son herramientas de trabajo, y ofrecérselas al
+ * paciente rompe la regla de I-A («cero jerga, cero herramientas ajenas» en su
+ * menú). Tenerlo una sola vez es lo que evita que la tercera sección de este
+ * tipo nazca con la lista a medias.
+ */
+const ROLES_QUE_EJERCEN_O_ADMINISTRAN = [
+  'PRACTITIONER',
+  'CLINICIAN',
+  'SCHEDULING_ADMIN',
+  'SCHEDULING_AGENT',
+  'SURGEON',
+  'ANESTHESIOLOGIST',
+  'PERIOP_NURSE',
+  'SURGERY_SCHEDULER',
+  'PERIOP_ADMIN',
+  'MEDICAL_VISITOR',
+  'SECURITY_ADMIN',
+] as const;
+
 export const APP_SECTIONS: readonly AppSection[] = [
   {
     path: 'dashboard',
     label: 'Panel',
     group: 'General',
     icon: 'home',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Tu punto de partida: la sesión activa y el estado del sistema.',
     module: 'M30 read_models',
@@ -65,6 +91,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Tutoriales',
     group: 'General',
     icon: 'results',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
     module: '—  ayuda en producto',
@@ -85,6 +112,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Chats',
     group: 'General',
     icon: 'results',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Escribile a tu médico y seguí la conversación, en vivo.',
     module: 'M19 community',
@@ -129,13 +157,18 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `app.routes.spec` exige que toda pantalla cuelgue de una sección— y
     // `feed` ya no está declarada desde el carril R2-1.
     //
-    // Sin `roles`, que significa «cualquier sesión» y no «nadie»: un grupo
-    // público lo puede leer cualquiera con sesión, y quién puede publicar en
-    // cada grupo lo decide la API por membresía, no el menú.
+    // `roles` de quien ejerce y de quien administra (F-20, 18/08/2026). La
+    // fila entró sin declararlos y el paciente terminó viendo «Grupos y foros»
+    // en su menú: son foros profesionales, no una herramienta suya. Es la misma
+    // regla de I-A que ya se había roto con el glosario (F-03), y por eso ahora
+    // la hace cumplir el guardia de `navigation.map.spec` y no la memoria de
+    // cada carril. Si algún día el producto quiere grupos de pacientes, se
+    // reabre con una decisión, no con una omisión.
     path: 'groups',
     label: 'Grupos y foros',
     group: 'General',
     icon: 'home',
+    roles: ROLES_QUE_EJERCEN_O_ADMINISTRAN,
     availability: 'disponible',
     summary: 'Comunidades por tema y especialidad, con su muro y sus integrantes.',
     module: 'M19 community',
@@ -148,6 +181,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Directorio de laboratorios',
     group: 'General',
     icon: 'results',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Laboratorios e imagenología, agrupados por categoría y con su oferta vigente.',
     module: 'M23 diagnostic_units',
@@ -282,19 +316,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Glosario',
     group: 'Atención',
     icon: 'orders',
-    roles: [
-      'PRACTITIONER',
-      'CLINICIAN',
-      'SCHEDULING_ADMIN',
-      'SCHEDULING_AGENT',
-      'SURGEON',
-      'ANESTHESIOLOGIST',
-      'PERIOP_NURSE',
-      'SURGERY_SCHEDULER',
-      'PERIOP_ADMIN',
-      'MEDICAL_VISITOR',
-      'SECURITY_ADMIN',
-    ],
+    roles: ROLES_QUE_EJERCEN_O_ADMINISTRAN,
     availability: 'disponible',
     summary: 'Buscá un término médico y su significado en lenguaje llano.',
     module: 'M03 terminology',
@@ -641,6 +663,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Mi perfil',
     group: 'Mi cuenta',
     icon: 'patients',
+    roles: [ANY_ROLE],
     // Encendida con V05-03: `GET /profiles/patients/me/summary` existe y no
     // pide rol, sólo identidad verificada — y ese 403 ya tiene su puerta.
     availability: 'disponible',
@@ -660,6 +683,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Mis turnos',
     group: 'Mi cuenta',
     icon: 'calendar',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Mirá tus turnos y pedí uno nuevo con los horarios disponibles.',
     module: 'M41 scheduling',
@@ -679,6 +703,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // atenciones, y el ícono de pacientes es el de «gente», que acá sería la
     // persona mirándose a sí misma.
     icon: 'results',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Tus atenciones y tus recetas, con la descarga en PDF de cada una.',
     module: 'M08 clinical',
@@ -692,6 +717,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Mis resultados',
     group: 'Mi cuenta',
     icon: 'results',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Mirá y descargá tus resultados, y compartilos por un tiempo con un profesional.',
     module: 'M20 diagnostics',
@@ -707,6 +733,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Mis órdenes',
     group: 'Mi cuenta',
     icon: 'orders',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Los estudios que te pidió un médico, con las indicaciones para hacértelos.',
     module: 'M20 diagnostics',
@@ -722,6 +749,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Mis cuestionarios',
     group: 'Mi cuenta',
     icon: 'orders',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Respondé los cuestionarios de las consultas que ya tuviste.',
     module: 'M-surveys',
@@ -737,6 +765,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Preferencias de avisos',
     group: 'Mi cuenta',
     icon: 'settings',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Elegí de qué te avisamos y en qué horario no.',
     module: 'M35 messaging',
@@ -760,6 +789,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Notificaciones',
     group: 'Mi cuenta',
     icon: 'results',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Revisá todos tus avisos: recetas, consultas, turnos y mensajes.',
     module: 'M35 messaging',
@@ -772,6 +802,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Verificar identidad',
     group: 'Mi cuenta',
     icon: 'patients',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Validá tu identidad, tu matrícula o una organización a tu cargo.',
     module: 'M27 identity_assurance',
@@ -784,6 +815,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Mis verificaciones',
     group: 'Mi cuenta',
     icon: 'patients',
+    roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Seguí el estado de tus trámites de verificación de identidad.',
     module: 'M27 identity_assurance',
@@ -808,6 +840,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // menú. La membresía viaja en el claim `tenants` del token, así que la
     // pregunta se puede hacer de este lado. Ficha F-31.
     path: 'administration/my-organization',
+    // `[ANY_ROLE]` y no la ausencia del campo: F-20 exige que toda sección
+    // declare sus roles, justamente para que un olvido no se lea como «la ve
+    // cualquiera». Acá la ve cualquiera **a propósito**, y así queda dicho.
+    roles: [ANY_ROLE],
     label: 'Tu organización',
     group: 'Administración',
     icon: 'settings',

@@ -250,8 +250,13 @@ const PANTALLAS_HIJAS: Routes = [
     // El grupo por dentro (P7). El directorio es la sección `groups`, que el
     // registro declara; esto es la ficha a la que se llega desde una tarjeta,
     // y por eso vive acá y no en el menú.
+    //
+    // Con guard desde F-20 (18/08/2026): su sección pasó a declarar los roles
+    // de quien ejerce o administra, y sin esto el enlace directo a un grupo
+    // seguiría entrando aunque el directorio del que cuelga rebote.
     path: 'groups/:groupId',
     title: `${APP_TITLE} - Grupo`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/groups/group-detail/group-detail')
         .then((m) => m.GroupDetail)
