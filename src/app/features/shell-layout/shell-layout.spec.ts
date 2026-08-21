@@ -139,6 +139,9 @@ describe('ShellLayout', () => {
       // El glosario ya NO está: desde el 18/08/2026 (feedback de la analista,
       // F-03) declara los roles de quien atiende, y una sesión sin roles no es
       // de nadie que atienda.
+      //
+      // «Tu organización» tampoco: no pide rol, pero sí membresía
+      // (`requiresTenant`, F-31), y esta sesión no pertenece a ninguna.
       '/my-account',
       '/my-account/appointments',
       // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que

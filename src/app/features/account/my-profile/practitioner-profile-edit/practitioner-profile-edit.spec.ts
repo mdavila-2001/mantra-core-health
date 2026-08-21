@@ -52,7 +52,19 @@ describe('PractitionerProfileEdit', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    // El catálogo de departamentos bolivianos lo pide el constructor y ninguna
+    // de estas pruebas habla de él. Se da por atendido acá para que `verify()`
+    // siga vigilando lo que cada prueba sí afirma, en vez de fallar en todas
+    // por una lectura que es de otra pantalla.
+    for (const pendiente of http.match((r) => r.url.startsWith('/terminology/'))) {
+      pendiente.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    }
+    http.verify();
+  });
+
+  /** El código interno del conjunto de especialidades (`MedicalSpecialtiesCatalog`). */
+  const CODIGO_ESPECIALIDADES = 'VS_MEDICAL_SPECIALTY';
 
   /** Las dos especialidades con las que se responde el catálogo (TJ-3). */
   const CATALOGO = [
@@ -71,6 +83,19 @@ describe('PractitionerProfileEdit', () => {
   ];
 
   /**
+   * La lectura del conjunto por su **código interno**.
+   *
+   * Discrimina por `?code=` y no sólo por la URL porque la pantalla lee dos
+   * catálogos distintos de la misma ruta —especialidades y departamentos
+   * bolivianos— y un `expectOne` por URL encuentra dos peticiones y falla.
+   */
+  function pedidoDeConjunto(codigo: string) {
+    return http.expectOne(
+      (r) => r.url === '/terminology/value-sets' && r.params.get('code') === codigo,
+    );
+  }
+
+  /**
    * Responde las DOS lecturas del catálogo de especialidades: primero se
    * resuelve el conjunto por su código interno y después se expande. Va en el
    * armado porque la pantalla las pide al construirse, y sin respuesta el
@@ -82,25 +107,19 @@ describe('PractitionerProfileEdit', () => {
    * dos y falla. El de departamentos lo drena {@link responderDepartamentos}.
    */
   function responderCatalogo(opciones: readonly object[] = CATALOGO): void {
-    http
-      .expectOne(
-        (r) =>
-          r.url === '/terminology/value-sets' &&
-          r.params.get('code') === 'VS_MEDICAL_SPECIALTY',
-      )
-      .flush({
-        items: [
-          {
-            id: 'vs-esp',
-            internalCode: 'VS_MEDICAL_SPECIALTY',
-            name: 'Especialidades',
-            defaultVersionId: 'v1',
-          },
-        ],
-        count: 1,
-        limit: 50,
-        nextCursor: null,
-      });
+    pedidoDeConjunto(CODIGO_ESPECIALIDADES).flush({
+      items: [
+        {
+          id: 'vs-esp',
+          internalCode: CODIGO_ESPECIALIDADES,
+          name: 'Especialidades',
+          defaultVersionId: 'v1',
+        },
+      ],
+      count: 1,
+      limit: 50,
+      nextCursor: null,
+    });
     http
       .expectOne((r) => r.url.includes('/terminology/value-sets/vs-esp/$expand'))
       .flush({
@@ -269,13 +288,7 @@ describe('PractitionerProfileEdit', () => {
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
     // Se cae SÓLO el de especialidades: el de departamentos es otra lectura y
     // se drena aparte, si no `expectOne` encuentra las dos.
-    http
-      .expectOne(
-        (r) =>
-          r.url === '/terminology/value-sets' &&
-          r.params.get('code') === 'VS_MEDICAL_SPECIALTY',
-      )
-      .error(new ProgressEvent('error'), { status: 500 });
+    pedidoDeConjunto(CODIGO_ESPECIALIDADES).error(new ProgressEvent('error'), { status: 500 });
     responderDepartamentos();
 
     // Perder el catálogo no es perder el perfil: se avisa en su bloque y el
@@ -288,13 +301,7 @@ describe('PractitionerProfileEdit', () => {
   it('reintentar vuelve a tocar la red: el fallo cacheado no dura la sesión', () => {
     componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
-    http
-      .expectOne(
-        (r) =>
-          r.url === '/terminology/value-sets' &&
-          r.params.get('code') === 'VS_MEDICAL_SPECIALTY',
-      )
-      .error(new ProgressEvent('error'), { status: 500 });
+    pedidoDeConjunto(CODIGO_ESPECIALIDADES).error(new ProgressEvent('error'), { status: 500 });
     responderDepartamentos();
 
     interno<() => void>('reintentarEspecialidades')();
