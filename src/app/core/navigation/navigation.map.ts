@@ -798,15 +798,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     //
     // **Sin `roles`, y no es un olvido.** El rol que importa acá —owner, admin
     // o staff de la organización— es una membresía en `tenant_memberships`, no
-    // un rol global del token, así que el guard de roles no puede verlo. Quien
-    // no pertenece a ninguna organización recibe una lista vacía —que es la
-    // respuesta correcta de `GET /tenants/me`, no un 403— y la pantalla lo
-    // dice con todas las letras. Filtrar por un rol global dejaría fuera
-    // justamente a la recepcionista, que es de quien es esta pantalla.
+    // un rol global del token, así que el guard de roles no puede verlo.
+    // Filtrar por un rol global dejaría fuera justamente a la recepcionista,
+    // que es de quien es esta pantalla.
+    //
+    // Lo que sí se filtra es la **membresía**, con `requiresTenant`: sin
+    // `roles` la sección se le ofrecía también a un paciente, que no pertenece
+    // a organización ninguna, y le pintaba un rótulo «Administración» en el
+    // menú. La membresía viaja en el claim `tenants` del token, así que la
+    // pregunta se puede hacer de este lado. Ficha F-31.
     path: 'administration/my-organization',
     label: 'Tu organización',
     group: 'Administración',
     icon: 'settings',
+    requiresTenant: true,
     availability: 'disponible',
     summary: 'Los datos de tu organización, su gente y las solicitudes de médicos.',
     module: 'M04 directory',
