@@ -17,7 +17,13 @@ describe('DesignSystemSample', () => {
   }
 
   function secciones(): string[] {
-    return [...root().querySelectorAll('h2')].map((titulo) => (titulo.textContent ?? '').trim());
+    // `.showroom-section > h2`, y no todos los `h2` del documento: desde que la
+    // galería muestra el formulario por partes, hay `h2` que son de un
+    // componente embebido —el título de su página actual— y no secciones de la
+    // vitrina. Contar por estructura mantiene la prueba mirando lo suyo.
+    return [...root().querySelectorAll('.showroom-section > h2')].map((titulo) =>
+      (titulo.textContent ?? '').trim(),
+    );
   }
 
   beforeEach(async () => {

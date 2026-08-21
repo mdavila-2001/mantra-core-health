@@ -25,62 +25,10 @@
       </button>
     } @else {
       <div class="registro__header">
-        <h1 class="registro__title">Crear cuenta</h1>
-        <p class="registro__subtitle">Elegí qué tipo de cuenta necesitás.</p>
+        <h1 class="registro__title">{{ titulo() }}</h1>
+        <p class="registro__subtitle">{{ subtitulo() }}</p>
       </div>
 
-      <p class="registro__tabs-label" id="registro-tabs-label">Me registro como</p>
-      <div class="registro__tabs" role="tablist" aria-labelledby="registro-tabs-label" data-testid="registro-tipo">
-        <button
-          type="button"
-          role="tab"
-          id="registro-tab-paciente"
-          aria-controls="registro-panel-paciente"
-          [attr.aria-selected]="tipo() === 'paciente'"
-          [tabindex]="tipo() === 'paciente' ? 0 : -1"
-          class="registro__tab"
-          [class.registro__tab--activo]="tipo() === 'paciente'"
-          (click)="cambiarTipo('paciente')"
-          data-testid="registro-tab-paciente"
-        >
-          <span class="registro__tab-icono" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="3.6" />
-              <path d="M4.5 20.2c1-3.9 4.2-6.1 7.5-6.1s6.5 2.2 7.5 6.1" />
-            </svg>
-          </span>
-          <span class="registro__tab-texto">
-            <span class="registro__tab-titulo">Paciente</span>
-            <span class="registro__tab-detalle">Historia clínica y turnos</span>
-          </span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          id="registro-tab-profesional"
-          aria-controls="registro-panel-profesional"
-          [attr.aria-selected]="tipo() === 'profesional'"
-          [tabindex]="tipo() === 'profesional' ? 0 : -1"
-          class="registro__tab"
-          [class.registro__tab--activo]="tipo() === 'profesional'"
-          (click)="cambiarTipo('profesional')"
-          data-testid="registro-tab-profesional"
-        >
-          <span class="registro__tab-icono" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5.5 3v6.2a4.5 4.5 0 0 0 9 0V3" />
-              <path d="M10 9.5v2a5 5 0 0 0 10 0V9" />
-              <circle cx="19.5" cy="7" r="1.6" />
-              <path d="M13 18a3.6 3.6 0 1 1-3.6-3.6" />
-            </svg>
-          </span>
-          <span class="registro__tab-texto">
-            <span class="registro__tab-titulo">Profesional</span>
-            <span class="registro__tab-detalle">Consultorio y pacientes</span>
-          </span>
-        </button>
-      </div>
 
       @if (errorMessage(); as mensaje) {
         <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{ mensaje }}</app-alert>
@@ -116,6 +64,31 @@
               testId="registro-documento"
             />
           </app-form-field>
+
+          <!-- Pegado al documento porque es un dato DE ese documento: la
+               terminación «SC», «LP»… que distingue dos cédulas homónimas. -->
+          @if (catalogoDepartamentosCaido()) {
+            <app-form-field label="Departamento de emisión (opcional)">
+              <p class="registro__tabs-label">
+                No pudimos traer el catálogo de departamentos.
+                <button app-button variant="ghost" size="sm" (clicked)="cargarDepartamentos()">
+                  Reintentar
+                </button>
+              </p>
+            </app-form-field>
+          } @else {
+            <app-form-field
+              label="Departamento de emisión (opcional)"
+              hint="El «SC», «LP»... de tu cédula."
+            >
+              <app-select
+                data-testid="registro-departamento-ci"
+                [options]="opcionesDepartamento()"
+                [(value)]="departamentoEmisorPaciente"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+          }
 
           <app-form-field
             label="Nombre"
@@ -210,6 +183,70 @@
               testId="registro-correo"
             />
           </app-form-field>
+
+          <app-form-field
+            label="Fecha de nacimiento (opcional)"
+            hint="Sirve para calcular dosis y valores de referencia."
+          >
+            <app-date-picker
+              [(value)]="fechaNacimientoPaciente"
+              placeholder="Seleccionar fecha"
+            />
+          </app-form-field>
+
+          <div class="registro__row">
+            <!-- Dos preguntas distintas, no una: el género es cómo te
+                 identificás y el sexo al nacer es dato clínico. -->
+            <app-form-field label="Género (opcional)">
+              <app-select
+                data-testid="registro-genero"
+                [options]="opcionesGenero"
+                [(value)]="generoPaciente"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+
+            <app-form-field label="Sexo al nacer (opcional)">
+              <app-select
+                data-testid="registro-sexo-al-nacer"
+                [options]="opcionesSexoAlNacer"
+                [(value)]="sexoAlNacerPaciente"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+          </div>
+
+          <div class="registro__row">
+            <app-form-field
+              label="Teléfono (opcional)"
+              [errorMessage]="
+                formPaciente.controls.phone.touched && formPaciente.controls.phone.invalid
+                  ? 'Dígitos, espacios, paréntesis, + y guion.'
+                  : ''
+              "
+            >
+              <!-- `type="text"` y no `tel`: `INPUT_TYPES` del atom no declara
+                   `tel`, y el `autocomplete` ya le dice al navegador qué es.
+                   Mismo criterio que el teléfono del formulario de profesional. -->
+              <app-input
+                formControlName="phone"
+                type="text"
+                autocomplete="tel"
+                placeholder="+591 70012345"
+                testId="registro-telefono"
+              />
+            </app-form-field>
+
+            <app-form-field label="Ocupación (opcional)">
+              <app-input
+                formControlName="occupationFreeText"
+                type="text"
+                autocomplete="organization-title"
+                placeholder="Docente"
+                testId="registro-ocupacion"
+              />
+            </app-form-field>
+          </div>
 
           <button
             app-button

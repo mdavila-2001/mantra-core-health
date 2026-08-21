@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 
 import {
   empty,
@@ -23,6 +26,7 @@ import type { PinMapa } from '../../../shared/components/organisms/map/pin-mapa.
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { Header } from '../../../shared/components/organisms/header/header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import type { PageHeaderAction } from '../../../shared/components/organisms/page-header/page-header';
 import { SideNav } from '../../../shared/components/organisms/side-nav/side-nav';
@@ -85,6 +89,7 @@ const PACIENTES: readonly PacienteDemo[] = [
     Header,
     Input,
     PageHeader,
+    PaginatedForm,
     SideNav,
     StatusSeal,
     TenantSwitcher,
@@ -274,6 +279,51 @@ export class OrganismsGallery {
 
   protected registrarPinElegido(id: string): void {
     this.ultimoPinElegido.set(id);
+  }
+
+  /**
+   * Los siete campos de la demostración, paginados por la misma función que usa
+   * el producto: la vitrina no arma las páginas a mano, porque entonces no
+   * estaría enseñando el motor sino una maqueta suya.
+   */
+  protected readonly formDemo = new FormGroup({
+    documento: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    nombre: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    apellido: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    nacimiento: new FormControl<Date | null>(null),
+    correo: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
+    telefono: new FormControl('', { nonNullable: true }),
+    clave: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(8)],
+    }),
+  });
+
+  protected readonly paginasDemo = paginarCampos([
+    {
+      titulo: 'Identidad',
+      hint: 'Como figura en tu documento.',
+      campos: [
+        { key: 'documento', label: 'Documento', control: 'text', required: true },
+        { key: 'nombre', label: 'Nombre', control: 'text', required: true },
+        { key: 'apellido', label: 'Apellido', control: 'text', required: true },
+        { key: 'nacimiento', label: 'Fecha de nacimiento', control: 'date' },
+      ],
+    },
+    {
+      titulo: 'Acceso',
+      campos: [
+        { key: 'correo', label: 'Correo', control: 'email' },
+        { key: 'telefono', label: 'Teléfono', control: 'tel', autocomplete: 'tel' },
+        { key: 'clave', label: 'Contraseña', control: 'password', required: true },
+      ],
+    },
+  ]);
+
+  protected readonly enviosDemo = signal(0);
+
+  protected registrarEnvioPaginado(): void {
+    this.enviosDemo.update((cuantos) => cuantos + 1);
   }
 
   protected registrarFiltros(filtros: Readonly<Record<string, string>>): void {

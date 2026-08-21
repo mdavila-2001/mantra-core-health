@@ -1,0 +1,118 @@
+<form [formGroup]="form()" (ngSubmit)="continuar()" novalidate>
+  <!-- El avance va arriba y siempre visible: es la respuesta a «¿cuánto me
+       falta?», que es lo que decide si alguien sigue o abandona. -->
+  <header class="paginated-form__avance">
+    <app-progress [value]="avance()" [label]="resumen()" size="sm" />
+
+    @if (mostrarPasos()) {
+      <app-stepper [steps]="pasos()" [label]="label()" />
+    } @else {
+      <p class="paginated-form__contador">Paso {{ posicion() }} de {{ total() }}</p>
+    }
+  </header>
+
+  <!-- El resumen, para quien no ve la barra. `polite`: interrumpir en cada paso
+       de un formulario largo es tan molesto como no decir nada. -->
+  <p class="paginated-form__anuncio" role="status" aria-live="polite">{{ resumen() }}</p>
+
+  @if (pagina(); as actual) {
+    <section class="paginated-form__pagina">
+      <!-- `tabindex="-1"`: recibe el foco al cambiar de página sin entrar en el
+           orden de tabulación. -->
+      <h2 #titulo tabindex="-1" class="paginated-form__titulo">{{ actual.titulo }}</h2>
+
+      @if (actual.hint) {
+        <p class="paginated-form__hint">{{ actual.hint }}</p>
+      }
+
+      @for (campo of actual.campos; track campo.key) {
+        @if (campo.control === 'custom') {
+          <app-form-field
+            [label]="campo.label"
+            [hint]="campo.hint ?? ''"
+            [required]="campo.required ?? false"
+            [errorMessage]="errorDe(campo)"
+          >
+            @if (plantillaDe(campo); as plantilla) {
+              <ng-container [ngTemplateOutlet]="plantilla" />
+            }
+          </app-form-field>
+        } @else {
+          <app-form-field
+            [label]="campo.label"
+            [hint]="campo.hint ?? ''"
+            [required]="campo.required ?? false"
+            [errorMessage]="errorDe(campo)"
+          >
+            @switch (campo.control) {
+              @case ('select') {
+                <app-select
+                  [formControlName]="campo.key"
+                  [options]="campo.options ?? []"
+                  [placeholder]="campo.placeholder ?? 'Seleccionar opción'"
+                  [hasError]="errorDe(campo) !== ''"
+                />
+              }
+              @case ('checkbox') {
+                <app-checkbox [formControlName]="campo.key" />
+              }
+              @case ('textarea') {
+                <app-textarea
+                  [formControlName]="campo.key"
+                  [placeholder]="campo.placeholder ?? ''"
+                  [hasError]="errorDe(campo) !== ''"
+                />
+              }
+              @case ('date') {
+                <!-- Sin `formControlName`: `app-date-picker` trabaja con
+                     `model()`. El puente escribe en el mismo control. -->
+                <app-date-picker
+                  [value]="fechaDe(campo)"
+                  (valueChange)="escribirFecha(campo, $event)"
+                  [placeholder]="campo.placeholder ?? 'Seleccionar fecha'"
+                  [hasError]="errorDe(campo) !== ''"
+                />
+              }
+              @default {
+                <app-input
+                  [formControlName]="campo.key"
+                  [type]="tipoDeInput(campo)"
+                  [autocomplete]="campo.autocomplete ?? null"
+                  [placeholder]="campo.placeholder ?? ''"
+                  [hasError]="errorDe(campo) !== ''"
+                  [testId]="'campo-' + campo.key"
+                />
+              }
+            }
+          </app-form-field>
+        }
+      }
+    </section>
+  }
+
+  <nav class="paginated-form__acciones" aria-label="Avance del formulario">
+    @if (!esPrimera()) {
+      <button
+        app-button
+        variant="ghost"
+        type="button"
+        (clicked)="retroceder()"
+        data-testid="paginated-form-atras"
+      >
+        Atrás
+      </button>
+    }
+
+    <!-- El botón dice lo que hace. «Siguiente» en el último paso esconde que lo
+         que viene es enviar, y eso se descubre cuando ya se envió. -->
+    <button
+      app-button
+      type="submit"
+      [isLoading]="pending()"
+      [disabled]="pending()"
+      data-testid="paginated-form-continuar"
+    >
+      {{ esUltima() ? submitLabel() : 'Siguiente' }}
+    </button>
+  </nav>
+</form>
