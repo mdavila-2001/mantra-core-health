@@ -1,0 +1,422 @@
+#!/usr/bin/env bash
+# Redespliegue del frontend en cada commit nuevo de `dev`, detrás de un enlace
+# que no cambia nunca.
+#
+# ## Las tres cosas que resuelve
+#
+# **1 · El enlace es fijo.** El túnel es un *dev tunnel* de Microsoft con
+# identidad propia (`atlas-alovida.brs`): la URL sale del identificador del
+# túnel, no del proceso que lo hospeda. Se puede matar el proceso, reiniciar la
+# máquina o reconstruir todos los contenedores — la URL sigue siendo la misma.
+# Es la diferencia con el *quick tunnel* de `trycloudflare` que usaba el
+# supervisor anterior: aquel sorteaba un hostname nuevo en cada arranque, así
+# que «no reiniciar nunca» era la única forma de conservarlo, y bastaba un corte
+# de red para perderlo.
+#
+# **2 · Se despliega solo.** Cada `INTERVALO` segundos se trae `origin/dev`. Si
+# avanzó, se reconstruye la imagen y se cambia el contenedor. El túnel apunta a
+# un puerto fijo del host y NO se toca en el cambio: el enlace sobrevive a
+# cualquier cantidad de despliegues.
+#
+# **3 · Gasta poca memoria.** Sirve el artefacto de producción (el Express de
+# `dist/…/server/server.mjs`), no `ng serve`. La diferencia no es de matiz:
+#
+#   · `ng serve` en watch (docker-compose.yml)  → techo de 3 GB, y los usa
+#   · este despliegue: SSR + nginx              → ~250 MB entre los dos
+#
+# El precio es que un cambio ya no se ve en caliente: hay que reconstruir. Para
+# un enlace de demostración —que es lo que esto es— ese precio es el correcto,
+# y es lo que permite tenerlo levantado sin ahogar a la base de datos.
+#
+# ## La forma
+#
+#   dev tunnel  →  127.0.0.1:4200  →  nginx (48 MB)  ┬─ /iam, /public, …  →  127.0.0.1:3010 (API)
+#                                                    └─ /                 →  127.0.0.1:4000 (SSR)
+#
+# nginx está por la misma razón que en producción: los prefijos de la API tienen
+# que salir del MISMO origen que la aplicación. Con `PUBLIC_API_BASE_URL` vacía
+# el navegador pide `/iam/...` relativo, y sin nadie que enrute esos prefijos la
+# petición muere en el servidor de renderizado. La configuración se genera a
+# partir de `deploy/nginx.conf` —la de producción— cambiándole sólo los dos
+# `upstream`: así lo que se demuestra es lo que se despliega.
+#
+# ## Uso
+#
+#   tools/redeploy/redeploy.sh once      # despliega una vez y sale
+#   tools/redeploy/redeploy.sh start     # deja el vigilante en segundo plano
+#   tools/redeploy/redeploy.sh status    # qué hay vivo y en qué commit
+#   tools/redeploy/redeploy.sh url       # el enlace
+#   tools/redeploy/redeploy.sh proxy     # relanza sólo nginx (sin reconstruir)
+#   tools/redeploy/redeploy.sh logs      # las últimas líneas del diario
+#   tools/redeploy/redeploy.sh stop      # baja vigilante, contenedores y túnel
+#
+# Todo se puede cambiar por entorno: REDEPLOY_RAMA, REDEPLOY_TUNEL,
+# REDEPLOY_PUERTO, REDEPLOY_PUERTO_WEB, REDEPLOY_API_PUERTO, REDEPLOY_INTERVALO,
+# REDEPLOY_MEM_WEB, REDEPLOY_HEAP_WEB, REDEPLOY_MEM_PROXY.
+
+set -uo pipefail
+
+RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ESTADO="$RAIZ/tools/redeploy/estado"
+mkdir -p "$ESTADO"
+
+RAMA="${REDEPLOY_RAMA:-dev}"
+
+# El túnel ya existe y es de la organización. Su puerto publicado es el 4200, y
+# el número del puerto forma parte de la URL: cambiarlo acá cambiaría el enlace,
+# que es justo lo que no puede pasar.
+TUNEL="${REDEPLOY_TUNEL:-atlas-alovida.brs}"
+PUERTO="${REDEPLOY_PUERTO:-4200}"
+
+# Puerto del host donde escucha la API. 3000 es el que dan por supuesto el resto
+# de piezas del repositorio (`BACKEND_ORIGIN` del compose, `proxy.conf.json`).
+#
+# **Se comprueba antes de creerle.** Esta máquina comparte puertos con otros
+# proyectos: el 3010 —donde esta API estuvo alguna vez— hoy lo ocupa un front de
+# Next.js de ATLAS, y apuntarle los prefijos clínicos a un desconocido es peor
+# que no apuntarlos a nada. `comprobar_api` deja en el diario qué contestó.
+#
+# Se alcanza por `127.0.0.1` y no por `host.docker.internal` porque **esta
+# máquina filtra el tráfico que entra desde los puentes de Docker**: un servicio
+# del host que escucha en `0.0.0.0` no lo alcanza un contenedor ni por
+# `172.17.0.1` ni por la puerta de su propia red — se comprobó, y da timeout.
+# Por eso nginx corre en la red del host: desde ahí `127.0.0.1:$API_PUERTO` es la
+# API, sin firewall de por medio y sin tocar ninguna regla del sistema.
+API_PUERTO="${REDEPLOY_API_PUERTO:-3000}"
+
+INTERVALO="${REDEPLOY_INTERVALO:-120}"
+
+# Techos de memoria. `--memory-swap` igual a `--memory` le prohíbe al contenedor
+# usar swap: en esta máquina el swap ya está caliente, y un proceso que se va a
+# swap no se muere — se arrastra, y arrastra a todo lo demás con él.
+MEM_WEB="${REDEPLOY_MEM_WEB:-768m}"
+HEAP_WEB="${REDEPLOY_HEAP_WEB:-512}"   # heap de Node, por debajo del techo
+MEM_PROXY="${REDEPLOY_MEM_PROXY:-48m}"
+
+# El puerto del SSR en el host, sólo en loopback: es el que nginx tiene como
+# `upstream frontend`. Fijo a propósito — así el proxy no depende de la IP que
+# Docker le dé al contenedor y sobrevive a los cambios sin recargar nada.
+PUERTO_WEB="${REDEPLOY_PUERTO_WEB:-4000}"
+
+WEB=alovida-web
+PROXY=alovida-proxy
+IMAGEN=alovida-front
+DEVTUNNEL="${DEVTUNNEL_BIN:-$HOME/bin/devtunnel}"
+
+LOG="$ESTADO/redeploy.log"
+URL_FILE="$ESTADO/URL"
+TUNEL_LOG="$ESTADO/devtunnel.log"
+TUNEL_PID="$ESTADO/devtunnel.pid"
+VIGILANTE_PID="$ESTADO/vigilante.pid"
+NGINX_GEN="$ESTADO/nginx.generado.conf"
+
+log() { printf '%s | %s\n' "$(date -Is)" "$*" >> "$LOG"; printf '%s\n' "$*"; }
+
+# ─── El túnel ────────────────────────────────────────────────────────────────
+
+url_del_tunel() {
+  # La URL no se «descubre» leyendo un log como con los quick tunnels: es un
+  # dato del túnel y se puede consultar aunque no haya nadie hospedándolo.
+  "$DEVTUNNEL" show "$TUNEL" 2>/dev/null \
+    | grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.devtunnels\.ms/?' | head -1
+}
+
+tunel_proceso_vivo() {
+  local pid
+  [ -f "$TUNEL_PID" ] || return 1
+  pid="$(cat "$TUNEL_PID" 2>/dev/null)" || return 1
+  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+}
+
+# El proceso puede estar vivo y el borde no servir. Se comprueba el borde, que
+# es lo que ve quien abre el enlace. 401/302 cuentan como servido: el túnel pide
+# identidad de la organización antes de dejar pasar.
+tunel_responde() {
+  local url codigo
+  url="$(cat "$URL_FILE" 2>/dev/null)"
+  [ -n "$url" ] || return 1
+  codigo="$(curl -s -o /dev/null -w '%{http_code}' -m 20 "$url" 2>/dev/null)"
+  [ -n "$codigo" ] || codigo=000
+  case "$codigo" in
+    000|502|503|504) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+arrancar_tunel() {
+  # `--host-header` se deja en su valor por defecto (reescribe a `localhost`):
+  # así el `server_name localhost` de la configuración de nginx sirve tal cual.
+  setsid nohup "$DEVTUNNEL" host "$TUNEL" >>"$TUNEL_LOG" 2>&1 < /dev/null &
+  echo $! > "$TUNEL_PID"
+  sleep 5
+  url_del_tunel > "$URL_FILE"
+  log "TÚNEL: hospedando $TUNEL → $(cat "$URL_FILE") (local :$PUERTO)"
+}
+
+asegurar_tunel() {
+  if ! tunel_proceso_vivo; then
+    log "TÚNEL: no hay proceso; arrancando"
+    arrancar_tunel
+  elif ! tunel_responde; then
+    log "TÚNEL: el proceso vive pero el borde no sirve; se rehospeda (el enlace NO cambia)"
+    kill -TERM "$(cat "$TUNEL_PID")" 2>/dev/null
+    sleep 3
+    arrancar_tunel
+  fi
+}
+
+# ─── La infraestructura ──────────────────────────────────────────────────────
+
+generar_nginx() {
+  local host_tunel
+  host_tunel="$(sed -E 's#https?://##; s#/$##' "$URL_FILE" 2>/dev/null)"
+
+  # Cuatro sustituciones sobre la configuración de producción, y ninguna más:
+  #   · los dos `upstream` apuntan a puertos de loopback del host en vez de a
+  #     servicios de un compose;
+  #   · los dos `listen` bajan del 80 al puerto del túnel — nginx corre en la red
+  #     del host, así que el puerto que escucha ES el del host;
+  #   · el `server_name` acepta además el hostname del túnel y `127.0.0.1`, para
+  #     que una comprobación por IP no choque con el `default_server` que
+  #     devuelve 421.
+  sed -e "s#^\( *\)server api:3000;#\1server 127.0.0.1:${API_PUERTO};#" \
+      -e "s#^\( *\)server web:4000;#\1server 127.0.0.1:${PUERTO_WEB};#" \
+      -e "s#^\( *\)listen 80 default_server;#\1listen 127.0.0.1:${PUERTO} default_server;#" \
+      -e "s#^\( *\)listen 80;#\1listen 127.0.0.1:${PUERTO};#" \
+      -e "s#^\( *\)server_name localhost mantra-core-health.local;#\1server_name localhost 127.0.0.1 mantra-core-health.local ${host_tunel:-localhost};#" \
+      "$RAIZ/deploy/nginx.conf" > "$NGINX_GEN"
+}
+
+# El compose de desarrollo publica el MISMO puerto 4200 y levanta un `ng serve`
+# de 3 GB. Si está vivo, no hay despliegue posible: el puerto está tomado y la
+# memoria también.
+apagar_dev_server() {
+  local viejo=mantra-core-health-dev
+  if [ -n "$(docker ps -q --filter "name=^${viejo}$")" ]; then
+    log "DEV: el contenedor de desarrollo ($viejo) tiene el puerto $PUERTO y 3 GB; se para"
+    docker stop -t 10 "$viejo" >/dev/null 2>&1
+  fi
+}
+
+lanzar_proxy() {
+  generar_nginx
+  docker rm -f "$PROXY" >/dev/null 2>&1
+  # Red del host: es lo que le permite hablar con la API por loopback (ver la
+  # nota de API_PUERTO). La configuración generada escucha en
+  # `127.0.0.1:$PUERTO`, así que sigue sin quedar expuesto a la red local — el
+  # único que tiene que alcanzarlo es el proceso del túnel, que corre acá mismo.
+  docker run -d --name "$PROXY" --network host --restart unless-stopped \
+    --memory "$MEM_PROXY" --memory-swap "$MEM_PROXY" \
+    -v "$NGINX_GEN:/etc/nginx/conf.d/default.conf:ro" \
+    -v "$RAIZ/deploy/api-proxy.conf:/etc/nginx/api-proxy.conf:ro" \
+    nginx:1.27-alpine >/dev/null || return 1
+  log "PROXY: nginx en 127.0.0.1:$PUERTO (API → 127.0.0.1:$API_PUERTO · SSR → 127.0.0.1:$PUERTO_WEB)"
+}
+
+recargar_proxy() {
+  # El `upstream` es un puerto fijo del host, así que un cambio de contenedor no
+  # obliga a recargar. Se recarga igual por si la configuración se regeneró
+  # —cambió el hostname del túnel, por ejemplo—: es instantáneo y no suelta el
+  # puerto, así que el túnel ni se entera.
+  generar_nginx
+  docker exec "$PROXY" nginx -s reload >/dev/null 2>&1
+}
+
+proxy_vivo() { [ -n "$(docker ps -q --filter "name=^${PROXY}$")" ]; }
+
+# Qué hay del otro lado de los prefijos de la API. No corrige nada —no es su
+# trabajo levantar la API— pero lo deja dicho: un frontend que carga y no
+# autentica se diagnostica en dos segundos si el diario ya lo cuenta.
+comprobar_api() {
+  local codigo
+  codigo="$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:${API_PUERTO}/" 2>/dev/null)"
+  [ -n "$codigo" ] || codigo=000
+  if [ "$codigo" = "000" ]; then
+    log "API: nada escucha en 127.0.0.1:$API_PUERTO — el frontend cargará, pero no autentica."
+    log "API:   levantá la API y, si no es el 3000, relanzá con REDEPLOY_API_PUERTO=<puerto>"
+  else
+    log "API: 127.0.0.1:$API_PUERTO responde $codigo"
+  fi
+}
+web_vivo()   { [ -n "$(docker ps -q --filter "name=^${WEB}$")" ]; }
+
+# ─── El despliegue ───────────────────────────────────────────────────────────
+
+construir() {
+  local etiqueta="$1"
+  log "BUILD: construyendo $IMAGEN:$etiqueta (esto tarda unos minutos)"
+  # `PUBLIC_API_BASE_URL` vacía a propósito: rutas relativas, un solo origen,
+  # sin CORS. Es la decisión que documenta el propio Dockerfile.
+  docker build -f "$RAIZ/Dockerfile" -t "$IMAGEN:$etiqueta" \
+    --build-arg PUBLIC_API_BASE_URL= "$RAIZ" >>"$LOG" 2>&1
+}
+
+# Espera a que el contenedor se declare sano. El `HEALTHCHECK` de la imagen pide
+# `/auth`, así que comprueba que el proceso responde Y que el paquete del
+# navegador está donde el servidor lo busca.
+esperar_sano() {
+  local i estado
+  for i in $(seq 1 60); do
+    estado="$(docker inspect --format '{{.State.Health.Status}}' "$WEB" 2>/dev/null)"
+    [ "$estado" = "healthy" ] && return 0
+    [ "$estado" = "unhealthy" ] && return 1
+    sleep 3
+  done
+  return 1
+}
+
+lanzar_web() {
+  local etiqueta="$1"
+  docker rm -f "$WEB" >/dev/null 2>&1
+  docker run -d --name "$WEB" --restart unless-stopped \
+    --memory "$MEM_WEB" --memory-swap "$MEM_WEB" \
+    -p "127.0.0.1:${PUERTO_WEB}:4000" \
+    -e "NODE_OPTIONS=--max-old-space-size=${HEAP_WEB}" \
+    -e PORT=4000 -e PUBLIC_API_BASE_URL= \
+    "$IMAGEN:$etiqueta" >/dev/null
+}
+
+# Deja como mucho dos imágenes nuestras: la que sirve y la anterior, que es a la
+# que se vuelve si un despliegue sale mal. El resto es disco muerto.
+podar_imagenes() {
+  docker images "$IMAGEN" --format '{{.ID}} {{.Tag}}' | tail -n +3 \
+    | while read -r id _; do docker rmi "$id" >/dev/null 2>&1; done
+}
+
+desplegar() {
+  local commit anterior
+  commit="$(git -C "$RAIZ" rev-parse --short HEAD)"
+  anterior="$(docker inspect --format '{{.Config.Image}}' "$WEB" 2>/dev/null)"
+
+  # Se construye ANTES de tocar nada: mientras dura el build, el contenedor
+  # viejo sigue sirviendo. Una construcción fallida no deja el enlace caído.
+  construir "$commit" || {
+    log "BUILD: ✗ falló; se conserva lo que está sirviendo ($anterior)"
+    return 1
+  }
+
+  apagar_dev_server
+  lanzar_web "$commit"
+
+  if ! esperar_sano; then
+    log "DESPLIEGUE: ✗ $commit no llegó a sano"
+    docker logs --tail 30 "$WEB" >> "$LOG" 2>&1
+    if [ -n "$anterior" ] && [ "$anterior" != "$IMAGEN:$commit" ]; then
+      log "DESPLIEGUE: volviendo a $anterior"
+      docker rm -f "$WEB" >/dev/null 2>&1
+      docker run -d --name "$WEB" --restart unless-stopped \
+        --memory "$MEM_WEB" --memory-swap "$MEM_WEB" \
+        -p "127.0.0.1:${PUERTO_WEB}:4000" \
+        -e "NODE_OPTIONS=--max-old-space-size=${HEAP_WEB}" \
+        -e PORT=4000 -e PUBLIC_API_BASE_URL= "$anterior" >/dev/null
+      esperar_sano
+    fi
+    proxy_vivo && recargar_proxy
+    return 1
+  fi
+
+  if proxy_vivo; then recargar_proxy; else lanzar_proxy; fi
+
+  comprobar_api
+  echo "$commit" > "$ESTADO/COMMIT_DESPLEGADO"
+  podar_imagenes
+  log "DESPLIEGUE: ✓ $commit sirviendo en $(cat "$URL_FILE" 2>/dev/null)"
+}
+
+# ─── El disparador: un commit nuevo en dev ───────────────────────────────────
+
+revisar_repo() {
+  local antes remoto base
+  git -C "$RAIZ" fetch --quiet origin "$RAMA" 2>/dev/null || {
+    log "FETCH: sin red o sin remoto; se reintenta en el próximo ciclo"
+    return 0
+  }
+  remoto="$(git -C "$RAIZ" rev-parse "origin/$RAMA" 2>/dev/null)" || return 0
+  base="$(git -C "$RAIZ" merge-base HEAD "origin/$RAMA" 2>/dev/null)"
+  [ "$base" = "$remoto" ] && return 0   # nada nuevo en dev
+
+  # Con cambios sin guardar no se toca nada: rebasar encima se los llevaría por
+  # delante, y perder trabajo es peor que servir una versión de ayer.
+  if [ -n "$(git -C "$RAIZ" status --porcelain)" ]; then
+    log "FETCH: $RAMA avanzó pero el árbol tiene cambios sin guardar; NO se toca"
+    return 0
+  fi
+
+  antes="$(git -C "$RAIZ" rev-parse --short HEAD)"
+  # `rebase` y no `merge --ff-only`: esta rama es `dev` MÁS el commit de estas
+  # herramientas. Rebasar la reapoya sobre el `dev` nuevo y conserva el commit
+  # arriba; un fast-forward sería imposible con ese commit de por medio.
+  if ! git -C "$RAIZ" rebase "origin/$RAMA" >>"$LOG" 2>&1; then
+    git -C "$RAIZ" rebase --abort >/dev/null 2>&1
+    log "FETCH: ✗ el rebase sobre origin/$RAMA chocó; se deja como está"
+    return 0
+  fi
+  log "FETCH: $RAMA avanzó $antes → $(git -C "$RAIZ" rev-parse --short "origin/$RAMA"); desplegando"
+  desplegar
+}
+
+# ─── Órdenes ─────────────────────────────────────────────────────────────────
+
+ciclo() {
+  asegurar_tunel
+  proxy_vivo || { web_vivo && lanzar_proxy; }
+  web_vivo   || { log "WEB: el contenedor no está vivo; desplegando"; desplegar; }
+  revisar_repo
+}
+
+case "${1:-once}" in
+  once)
+    log "=== despliegue puntual · rama $RAMA · túnel $TUNEL ==="
+    asegurar_tunel
+    apagar_dev_server
+    desplegar
+    ;;
+
+  watch)
+    log "=== vigilante arriba · rama $RAMA · cada ${INTERVALO}s ==="
+    trap 'log "=== vigilante detenido ==="; exit 0' INT TERM
+    while true; do ciclo; sleep "$INTERVALO"; done
+    ;;
+
+  start)
+    if [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null; then
+      log "El vigilante ya corre (pid $(cat "$VIGILANTE_PID"))"; exit 0
+    fi
+    setsid nohup "$0" watch >>"$ESTADO/vigilante.out" 2>&1 < /dev/null &
+    echo $! > "$VIGILANTE_PID"
+    log "Vigilante en segundo plano (pid $(cat "$VIGILANTE_PID"))"
+    ;;
+
+  stop)
+    [ -f "$VIGILANTE_PID" ] && kill -TERM "$(cat "$VIGILANTE_PID")" 2>/dev/null
+    rm -f "$VIGILANTE_PID"
+    [ -f "$TUNEL_PID" ] && kill -TERM "$(cat "$TUNEL_PID")" 2>/dev/null
+    rm -f "$TUNEL_PID"
+    docker rm -f "$PROXY" "$WEB" >/dev/null 2>&1
+    log "Todo abajo. El enlace $(cat "$URL_FILE" 2>/dev/null) vuelve intacto con 'start'."
+    ;;
+
+  status)
+    echo "rama        : $(git -C "$RAIZ" rev-parse --abbrev-ref HEAD) @ $(git -C "$RAIZ" rev-parse --short HEAD)"
+    echo "desplegado  : $(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || echo '—')"
+    echo "enlace      : $(cat "$URL_FILE" 2>/dev/null || url_del_tunel)"
+    echo "túnel       : $(tunel_proceso_vivo && echo 'hospedado' || echo 'sin hospedar')"
+    echo "API         : 127.0.0.1:$API_PUERTO → $(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:${API_PUERTO}/" 2>/dev/null)"
+    echo "vigilante   : $( { [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null && echo "pid $(cat "$VIGILANTE_PID")"; } || echo 'parado')"
+    docker ps --filter "name=^${WEB}$" --filter "name=^${PROXY}$" \
+      --format 'contenedor  : {{.Names}} · {{.Image}} · {{.Status}}'
+    docker stats --no-stream --format 'memoria     : {{.Name}} · {{.MemUsage}}' "$WEB" "$PROXY" 2>/dev/null
+    ;;
+
+  proxy)
+    # Sólo el proxy: regenera la configuración y lo relanza. Sirve para cambiar
+    # el puerto de la API sin volver a construir la imagen del frontend.
+    asegurar_tunel
+    lanzar_proxy && comprobar_api
+    ;;
+
+  url)  cat "$URL_FILE" 2>/dev/null || url_del_tunel ;;
+  logs) tail -n "${2:-40}" "$LOG" ;;
+
+  *) sed -n '2,60p' "$0"; exit 1 ;;
+esac
