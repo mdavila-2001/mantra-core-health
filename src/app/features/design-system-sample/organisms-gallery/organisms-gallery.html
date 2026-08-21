@@ -251,3 +251,43 @@
     romper la pantalla.
   </p>
 </section>
+
+<!-- 13 · Mapa ----------------------------------------------------------------- -->
+<section class="og-block">
+  <h3>13 · Mapa — Leaflet + OSM, sin clave de API</h3>
+  <p class="og-note">
+    Leaflet entra <strong>lazy y solo en el navegador</strong>: bajo SSR esta sección
+    prerenderiza el aviso «Cargando el mapa…» y el bundle inicial no crece. Los pines dicen su
+    estado <strong>con palabras</strong> (tríos <code>--st-*</code>) y llevan el
+    <strong>código corto</strong> de la tarjeta (A/B/C) — en el mapa jamás viaja un uuid. El
+    teclado navega por la <em>lista</em>, no por los pines: el mapa es progresivo, la lista
+    siempre tiene el dato.
+  </p>
+
+  <div class="og-controls">
+    @for (pin of pinesDemo; track pin.id) {
+      <button app-button size="sm" variant="outline" (clicked)="pinSeleccionado.set(pin.id)">
+        Resaltar {{ pin.codigo }}
+      </button>
+    }
+    <span class="og-note">
+      Seleccionado: <strong>{{ pinSeleccionado() ?? '—' }}</strong> · último elegido desde el
+      popup: <strong>{{ ultimoPinElegido() }}</strong>
+    </span>
+  </div>
+
+  <div class="og-surface">
+    <app-map
+      [pines]="pinesDemo"
+      etiqueta="Sucursales de farmacia cerca del punto de partida"
+      [(seleccionado)]="pinSeleccionado"
+      (pinElegido)="registrarPinElegido($event)"
+    />
+  </div>
+
+  <p class="og-note">
+    La selección es <strong>de ida y vuelta</strong>: resaltar desde afuera agranda el pin sin
+    mover el encuadre ni abrir el popup (un hover en la lista no puede sacudir el mapa), y
+    elegir en el popup avisa hacia afuera — la pantalla real hace scroll a la tarjeta.
+  </p>
+</section>

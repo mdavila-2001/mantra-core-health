@@ -41,6 +41,11 @@ export { FormSection } from './form-section/form-section';
 export { Header } from './header/header';
 export type { HeaderUser } from './header/header.types';
 
+export { AppMap, CARGADOR_DE_LEAFLET, construirPopup } from './map/map';
+export type { CargadorDeLeaflet } from './map/map';
+export { distanciaEnLineaRectaKm, ordenarPorCercania } from './map/geo';
+export type { EstadoDePin, PinMapa, PuntoGeo } from './map/pin-mapa.types';
+
 export { PageHeader } from './page-header/page-header';
 export type { PageHeaderAction } from './page-header/page-header';
 

@@ -1,6 +1,7 @@
 import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { CARGADOR_DE_LEAFLET } from '../../shared/components/organisms/map/map';
 import { DesignSystemSample } from './design-system-sample';
 
 /**
@@ -22,8 +23,12 @@ describe('DesignSystemSample', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DesignSystemSample],
-      // El breadcrumb usa `routerLink`: sin router, la vitrina ni se crea.
-      providers: [provideRouter([])],
+      providers: [
+        // El breadcrumb usa `routerLink`: sin router, la vitrina ni se crea.
+        provideRouter([]),
+        // El mapa de la galería queda esperando: jsdom jamás carga Leaflet real.
+        { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DesignSystemSample);
