@@ -126,8 +126,21 @@ export class IamClient {
       ...(registration.motherLastName === undefined
         ? {}
         : { motherLastName: registration.motherLastName }),
+      ...(registration.birthDate === undefined ? {} : { birthDate: registration.birthDate }),
+      ...(registration.nationalId === undefined ? {} : { nationalId: registration.nationalId }),
+      ...(registration.issuerAdministrativeAreaConceptId === undefined
+        ? {}
+        : {
+            issuerAdministrativeAreaConceptId: registration.issuerAdministrativeAreaConceptId,
+          }),
       licenseNumber: registration.licenseNumber,
       credentialNumber: registration.credentialNumber,
+      ...(registration.regulatoryAuthority === undefined
+        ? {}
+        : { regulatoryAuthority: registration.regulatoryAuthority }),
+      ...(registration.licenseIssueDate === undefined
+        ? {}
+        : { licenseIssueDate: registration.licenseIssueDate }),
       ...(registration.professionalTitle === undefined
         ? {}
         : { professionalTitle: registration.professionalTitle }),
