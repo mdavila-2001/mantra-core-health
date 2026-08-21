@@ -14,8 +14,6 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
-import { Radio } from '@shared/components/molecules/radio/radio';
-import { RadioGroup } from '@shared/components/molecules/radio-group/radio-group';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
@@ -54,8 +52,6 @@ type TipoCuenta = 'paciente' | 'profesional';
     AppButton,
     Input,
     Link,
-    Radio,
-    RadioGroup,
     FormField,
     Alert,
     AuthSplit, AnnounceOnAppear],
