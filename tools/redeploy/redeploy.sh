@@ -493,6 +493,10 @@ case "${1:-once}" in
     echo "desplegado  : $(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || echo '—')"
     echo "enlace      : $(cat "$URL_FILE" 2>/dev/null || url_del_tunel)"
     echo "túnel       : $(tunel_proceso_vivo && echo 'hospedado' || echo 'sin hospedar')"
+    # Lo que de verdad se pregunta cuando se pregunta por el estado: si la
+    # petición COMO LLEGA POR EL ENLACE funciona. En el ciclo esto es silencioso
+    # mientras va bien, así que acá se dice siempre.
+    echo "enlace sirve: $(comprobar_enlace silencioso >/dev/null 2>&1 && echo 'sí (200 con el host del túnel)' || echo '⚠ NO')"
     echo "API         : 127.0.0.1:$API_PUERTO → $(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:${API_PUERTO}/" 2>/dev/null)"
     echo "vigilante   : $( { [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null && echo "pid $(cat "$VIGILANTE_PID")"; } || echo 'parado')"
     docker ps --filter "name=^${WEB}$" --filter "name=^${PROXY}$" \
