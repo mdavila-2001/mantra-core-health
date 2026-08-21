@@ -133,11 +133,24 @@ url_del_tunel() {
     | grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.devtunnels\.ms/?' | head -1
 }
 
-tunel_proceso_vivo() {
+# El túnel lo hospeda `atlas-devtunnel@atlas-alovida.service`, igual que los tres de ATLAS: un
+# `oneshot` no puede ser el padre del proceso, porque systemd mata el cgroup del servicio al
+# terminar la pasada y el enlace se quedaba muerto hasta el siguiente disparo del temporizador.
+# Por eso el proceso se busca por su línea de órdenes y no sólo por el PID que dejamos escrito:
+# el que manda puede haberlo arrancado systemd, y su PID cambia en cada reinicio suyo.
+UNIDAD_TUNEL="atlas-devtunnel@${TUNEL%.brs}.service"
+
+tunel_pid() {
   local pid
-  [ -f "$TUNEL_PID" ] || return 1
-  pid="$(cat "$TUNEL_PID" 2>/dev/null)" || return 1
-  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+  if [ -f "$TUNEL_PID" ]; then
+    pid="$(cat "$TUNEL_PID" 2>/dev/null)"
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then printf '%s\n' "$pid"; return 0; fi
+  fi
+  pgrep -f "devtunnel host ${TUNEL%.brs}" | head -1
+}
+
+tunel_proceso_vivo() {
+  [ -n "$(tunel_pid)" ]
 }
 
 # El proceso puede estar vivo y el borde no servir. Se comprueba el borde, que
@@ -171,9 +184,18 @@ asegurar_tunel() {
     arrancar_tunel
   elif ! tunel_responde; then
     log "TÚNEL: el proceso vive pero el borde no sirve; se rehospeda (el enlace NO cambia)"
-    kill -TERM "$(cat "$TUNEL_PID")" 2>/dev/null
-    sleep 3
-    arrancar_tunel
+    # Si lo hospeda systemd, rehospedar es reiniciar su unidad: matar el proceso a mano dejaría a
+    # `Restart=always` levantando otro por su cuenta y a este script hospedando un duplicado.
+    if systemctl --user is-active --quiet "$UNIDAD_TUNEL" 2>/dev/null; then
+      systemctl --user restart "$UNIDAD_TUNEL"
+      sleep 5
+      url_del_tunel > "$URL_FILE"
+      log "TÚNEL: rehospedado por $UNIDAD_TUNEL → $(cat "$URL_FILE") (local :$PUERTO)"
+    else
+      kill -TERM "$(tunel_pid)" 2>/dev/null
+      sleep 3
+      arrancar_tunel
+    fi
   fi
 }
 

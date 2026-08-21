@@ -23,6 +23,21 @@ Es la diferencia con el supervisor anterior, que usaba un *quick tunnel* de
 `trycloudflare`: aquel sorteaba un hostname nuevo en cada arranque del proceso,
 así que conservarlo dependía de que el proceso no muriera nunca.
 
+Lo hospeda `atlas-devtunnel@atlas-alovida.service` —la misma unidad plantilla
+que los tres túneles de ATLAS, con `Restart=always`— y no este script:
+
+```
+systemctl --user enable --now atlas-devtunnel@atlas-alovida.service
+```
+
+Hospedarlo desde aquí no podía funcionar. El servicio del redespliegue es un
+`oneshot`, y systemd mata el cgroup del servicio al terminar la pasada: el
+`setsid nohup` se iba con ella y el enlace quedaba muerto hasta el siguiente
+disparo del temporizador, con un `TÚNEL: no hay proceso; arrancando` cada dos
+minutos en el diario. El script sigue asegurándolo en cada pasada —si nadie lo
+hospeda, lo arranca él—, pero busca el proceso por su línea de órdenes y no sólo
+por el PID que él escribió, porque el que manda puede haberlo arrancado systemd.
+
 El acceso está restringido a la organización de GitHub `mantra-core-technologies`
 (`Access control: +GitHub Org (mantra-core-technologies)`). Quien abra el enlace
 se identifica primero; no es un enlace público. Para volverlo público haría falta
