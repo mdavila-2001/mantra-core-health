@@ -1,0 +1,17 @@
+# Cada dos minutos, el mismo intervalo que tenía el vigilante en su bucle.
+#
+# `Persistent=false` es deliberado: si la máquina estuvo apagada no interesa recuperar las pasadas
+# perdidas — sólo importa el último commit de `dev`, y la primera pasada tras el arranque ya lo
+# despliega. `OnBootSec` le da margen a docker para tener los contenedores en pie antes de mirar.
+[Unit]
+Description=Vigila dev y redespliega el front de ALOVIDA cuando hay commits nuevos
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+AccuracySec=15s
+Persistent=false
+Unit=alovida-redeploy.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,21 @@
+# Una pasada del redespliegue del frontend. La dispara el temporizador hermano.
+#
+# `oneshot` y no un demonio con `redeploy.sh watch` a propósito. El vigilante en segundo plano
+# tenía dos formas de morir en silencio: un apagón —los contenedores vuelven solos por
+# `restart=unless-stopped`, pero nadie vuelve a mirar `dev`— y una construcción colgada, que deja
+# el bucle esperando para siempre. Con un `oneshot`, lo peor que pasa es que una pasada falle: la
+# del minuto siguiente sale limpia. El `flock` del script impide que dos se solapen.
+[Unit]
+Description=Redespliegue del front de ALOVIDA ante commits nuevos en dev
+Documentation=file:///home/pablo/Documents/GitHub/ALOVIDA/mantra-core-health/tools/redeploy/README.md
+After=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/pablo/Documents/GitHub/ALOVIDA/mantra-core-health
+ExecStart=/home/pablo/Documents/GitHub/ALOVIDA/mantra-core-health/tools/redeploy/redeploy.sh una-vez
+# Una construcción del SSR desde cero pasa de los diez minutos; con caché son segundos.
+TimeoutStartSec=45min
+StandardOutput=journal
+StandardError=journal
