@@ -1,0 +1,43 @@
+<!-- Una boca vista de frente: arriba las dos filas superiores, abajo las dos
+     inferiores. Agrupado con `fieldset` y no con `role="group"`: son controles
+     y el elemento nativo lo anuncia en todo lector, sin depender del rol. La
+     leyenda nombra el grupo antes de que se recorran las 32 piezas. -->
+<fieldset class="odontograma">
+  <legend class="sr-only">Odontograma, notación FDI</legend>
+  @for (cuadrante of cuadrantes(); track cuadrante.nombre) {
+    <div class="odontograma__cuadrante">
+      @for (pieza of cuadrante.piezas; track pieza.fdi) {
+        <button
+          type="button"
+          [class]="pieza.clases"
+          [disabled]="readonly()"
+          [attr.aria-pressed]="readonly() ? null : pieza.seleccionada"
+          [attr.aria-label]="pieza.anuncio"
+          [appTooltip]="pieza.anuncio"
+          (click)="elegir(pieza.fdi)"
+        >
+          <span class="odontograma__numero">{{ pieza.fdi }}</span>
+          <!-- El código encima del tono: el color nunca cuenta el dato solo. -->
+          <span class="odontograma__codigo" aria-hidden="true">
+            {{ pieza.estado ? pieza.estado.codigo : '·' }}
+          </span>
+          @if (pieza.marcas > 0) {
+            <app-badge
+              class="odontograma__marca"
+              variant="info"
+              size="sm"
+              [value]="pieza.marcas"
+              [label]="'tratamientos de la pieza ' + pieza.fdi"
+            />
+          }
+        </button>
+      }
+    </div>
+  }
+</fieldset>
+
+@if (!hayRegistro()) {
+  <p class="odontograma__vacio">
+    Todavía no hay nada registrado en esta boca.
+  </p>
+}

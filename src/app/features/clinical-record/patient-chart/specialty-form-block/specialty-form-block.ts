@@ -21,6 +21,8 @@ import type {
   FieldValueInput,
   FormInstanceDetail,
 } from '../../../../core/data-access/forms/forms.types';
+import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import type { PractitionerSpecialty } from '../../../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -40,9 +42,21 @@ import {
   VALOR_ENMASCARADO,
 } from '../../../../shared/utils/clinical-pdf/clinical-pdf';
 import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
+import { Odontogram } from '../odontogram/odontogram';
+import { ESTADOS_DENTALES, recuentoCpod } from '../odontogram/odontogram.types';
+import type { MapaDental } from '../odontogram/odontogram.types';
 
 /** Los tipos de dato que este bloque sabe dibujar como campo de captura. */
 type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string';
+
+/**
+ * El código del campo que se dibuja como odontograma.
+ *
+ * Va sin el prefijo del formulario: en la plantilla el código completo es
+ * `ODONTO_ODONTOGRAMA_OMS.odontograma_fdi`, porque las definiciones de campo
+ * son una tabla global y el prefijo es lo que las hace únicas.
+ */
+const CODIGO_ODONTOGRAMA = 'odontograma_fdi';
 
 /** Una respuesta ya lista para leerse: etiqueta, texto y si está protegida. */
 interface RespuestaVisible {
@@ -111,6 +125,7 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
     FormActions,
     FormField,
     Input,
+    Odontogram,
     Select,
   ],
   templateUrl: './specialty-form-block.html',
@@ -120,6 +135,7 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
 export class SpecialtyFormBlock {
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly forms = inject(FormsClient);
+  private readonly profiles = inject(ProfilesClient);
   private readonly toasts = inject(ToastService);
 
   /**
@@ -143,6 +159,16 @@ export class SpecialtyFormBlock {
   protected readonly plantillas = signal<ViewState<readonly ChartTemplate[]>>(loading());
   protected readonly plantillaId = signal<string | null>(null);
 
+  /**
+   * La especialidad con la que se presenta quien atiende, como `conceptId`.
+   *
+   * Sale de su perfil profesional y es el mismo concepto del que cuelgan las
+   * plantillas —los dos salen de `VS_MEDICAL_SPECIALTY`—, que es lo que hace
+   * posible el match. `null` mientras no se sabe, o si la cuenta no tiene
+   * perfil profesional.
+   */
+  private readonly especialidad = signal<string | null>(null);
+
   protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => {
     const state = this.plantillas();
     return state.status === 'ready' ? state.data.map((t) => ({ value: t.id, label: t.name })) : [];
@@ -154,13 +180,24 @@ export class SpecialtyFormBlock {
     return state.data.find((t) => t.id === this.plantillaId()) ?? null;
   });
 
+  /**
+   * Si quien atiende ya eligió una plantilla a mano.
+   *
+   * La preselección por especialidad es una comodidad, no una regla: en cuanto
+   * alguien elige, su elección manda y ninguna respuesta que llegue después la
+   * pisa.
+   */
+  private readonly eleccionManual = signal(false);
+
   protected elegirPlantilla(id: string | null): void {
+    this.eleccionManual.set(true);
     this.plantillaId.set(id);
     this.valores.set({});
   }
 
   constructor() {
     this.cargarPlantillas();
+    this.resolverEspecialidad();
     // Cada vez que el expediente informa otro encuentro, se vuelve a preguntar
     // si ya tiene un formulario respondido.
     effect(() => {
@@ -178,14 +215,62 @@ export class SpecialtyFormBlock {
     this.chartTemplates.listTemplates().subscribe({
       next: (lista) => {
         this.plantillas.set(ready(lista));
-        // Con una sola plantilla no hace falta elegir: se preselecciona sola.
-        if (lista.length === 1) {
-          this.plantillaId.set(lista[0].id);
-        }
+        this.preseleccionar();
       },
       error: (error: unknown) =>
         this.plantillas.set(errorToViewState<readonly ChartTemplate[]>(error)),
     });
+  }
+
+  /**
+   * Pregunta con qué especialidad se presenta quien atiende.
+   *
+   * Falla en silencio a propósito: una cuenta sin perfil profesional —una
+   * recepcionista, un administrador— no tiene especialidad y eso no es un
+   * error que quepa contarle a nadie. Sin especialidad no hay preselección y
+   * el selector sigue estando, que es como funcionaba hasta ahora.
+   */
+  private resolverEspecialidad(): void {
+    this.profiles.getOwnPractitionerProfile().subscribe({
+      next: (perfil) => {
+        this.especialidad.set(especialidadVigente(perfil.specialties));
+        this.preseleccionar();
+      },
+      error: () => this.especialidad.set(null),
+    });
+  }
+
+  /**
+   * Elige la plantilla de la especialidad de quien atiende.
+   *
+   * Corre al llegar cada una de las dos respuestas —plantillas y perfil— sin
+   * saber cuál llegó primero: la que falte deja la preselección para la otra.
+   *
+   * Preselecciona, **no filtra**: las transversales —consentimiento,
+   * epicrisis— no son de ninguna especialidad y tienen que seguir estando, y
+   * un profesional con dos especialidades vigentes necesita poder cambiar. Por
+   * eso el selector se sigue dibujando con el catálogo entero.
+   */
+  private preseleccionar(): void {
+    if (this.eleccionManual() || this.plantillaId() !== null) return;
+
+    const state = this.plantillas();
+    if (state.status !== 'ready') return;
+
+    const especialidad = this.especialidad();
+    const propia =
+      especialidad === null
+        ? undefined
+        : state.data.find(
+            (plantilla) => plantilla.specialtyConceptId === especialidad,
+          );
+
+    // Sin plantilla de la especialidad, la vieja regla sigue valiendo: con una
+    // sola en el catálogo no hay nada que elegir.
+    const elegida = propia ?? (state.data.length === 1 ? state.data[0] : undefined);
+    if (elegida !== undefined) {
+      this.plantillaId.set(elegida.id);
+    }
   }
 
   /* -- Lo ya respondido para este encuentro ----------------------------------*/
@@ -396,6 +481,91 @@ export class SpecialtyFormBlock {
     return 'string';
   }
 
+  /* -- El odontograma ------------------------------------------------------ */
+
+  /**
+   * Si un campo es EL odontograma.
+   *
+   * Se reconoce por el sufijo de su código y no por el `dataType`: `json` es
+   * el tipo de todo lo que no cabe en una columna, y dibujar una boca sobre
+   * cualquier objeto sería adivinar. El catálogo del backend sólo admite `json`
+   * para los códigos que tienen un control como éste.
+   */
+  protected esOdontograma(campo: ChartTemplateField): boolean {
+    return campo.code.endsWith(`.${CODIGO_ODONTOGRAMA}`);
+  }
+
+  /** El mapa de piezas que hay cargado, o vacío. */
+  protected mapaDental(fieldId: string): MapaDental {
+    const valor = this.valores()[fieldId];
+    return esMapa(valor) ? (valor as MapaDental) : {};
+  }
+
+  /** La pieza sobre la que está abierto el panel de estados, por campo. */
+  protected readonly piezaAbierta = signal<string | null>(null);
+
+  protected readonly estadosDentales = ESTADOS_DENTALES;
+
+  protected abrirPieza(fdi: string): void {
+    this.piezaAbierta.set(this.piezaAbierta() === fdi ? null : fdi);
+  }
+
+  /**
+   * Fija el estado de la pieza abierta, o lo borra si se vuelve a elegir el
+   * mismo: es la forma de deshacer sin un botón aparte.
+   */
+  protected fijarEstado(fieldId: string, codigo: string): void {
+    const fdi = this.piezaAbierta();
+    if (fdi === null) return;
+
+    const mapa = { ...this.mapaDental(fieldId) };
+    if (mapa[fdi] === codigo) {
+      delete mapa[fdi];
+    } else {
+      mapa[fdi] = codigo;
+    }
+
+    this.actualizarValor(fieldId, mapa);
+    this.piezaAbierta.set(null);
+    this.sugerirIndices(mapa);
+  }
+
+  /**
+   * Rellena los conteos del CPO-D desde el odontograma.
+   *
+   * Sugiere, no impone: sólo escribe sobre un campo vacío o sobre su propia
+   * sugerencia anterior, así que un número tecleado a mano nunca se pisa. Es
+   * el mismo trato que la cantidad a dispensar de la receta.
+   */
+  private sugerirIndices(mapa: MapaDental): void {
+    const plantilla = this.plantillaElegida();
+    if (plantilla === null) return;
+
+    const recuento = recuentoCpod(mapa);
+    const porCodigo: Readonly<Record<string, number>> = {
+      dientes_cariados: recuento.cariados,
+      dientes_perdidos: recuento.perdidos,
+      dientes_obturados: recuento.obturados,
+      indice_cpod: recuento.cpod,
+    };
+
+    for (const campo of plantilla.fields) {
+      const codigo = campo.code.split('.').pop() ?? '';
+      const sugerido = porCodigo[codigo];
+      if (sugerido === undefined) continue;
+
+      const actual = this.valores()[campo.fieldId];
+      const anterior = this.ultimoSugerido.get(campo.fieldId);
+      if (!esVacio(actual) && actual !== anterior) continue;
+
+      this.actualizarValor(campo.fieldId, sugerido);
+      this.ultimoSugerido.set(campo.fieldId, sugerido);
+    }
+  }
+
+  /** Lo último que se sugirió por campo, para distinguirlo de lo tecleado. */
+  private readonly ultimoSugerido = new Map<string, number>();
+
   private readonly camposObligatoriosCompletos = computed(() => {
     const plantilla = this.plantillaElegida();
     if (!plantilla) return false;
@@ -518,5 +688,34 @@ export class SpecialtyFormBlock {
 }
 
 function esVacio(valor: unknown): boolean {
-  return valor === undefined || valor === null || valor === '';
+  return (
+    valor === undefined ||
+    valor === null ||
+    valor === '' ||
+    // Un odontograma sin ninguna pieza tocada es un mapa vacío: es «no lo
+    // llené», no un dato. Sin esto viajaría un `{}` y contaría como respuesta.
+    (esMapa(valor) && Object.keys(valor).length === 0)
+  );
+}
+
+/** Si el valor es un objeto plano —el mapa del odontograma, hoy—. */
+function esMapa(valor: unknown): valor is Record<string, unknown> {
+  return typeof valor === 'object' && valor !== null && !(valor instanceof Date);
+}
+
+/**
+ * La especialidad con la que un profesional se presenta.
+ *
+ * La primaria vigente si la hay; si no, la primera vigente. Una especialidad
+ * con `validTo` es una que dejó de ejercer y no debería decidir qué ficha se
+ * le ofrece hoy.
+ */
+function especialidadVigente(
+  especialidades: readonly PractitionerSpecialty[],
+): string | null {
+  const vigentes = especialidades.filter(
+    (especialidad) => especialidad.validTo === undefined,
+  );
+  const principal = vigentes.find((especialidad) => especialidad.isPrimary);
+  return (principal ?? vigentes[0])?.specialtyConceptId ?? null;
 }

@@ -212,11 +212,26 @@ describe('PatientChart', () => {
     }
   }
 
+  /**
+   * El perfil profesional de quien atiende, que el bloque de formularios pide
+   * para preseleccionar la plantilla de su especialidad. Responde 404 —la
+   * sesión de las pruebas no ejerce ninguna—, que es el caso que el bloque ya
+   * sabe manejar sin romperse.
+   */
+  function responderPerfilProfesional(): void {
+    for (const req of http.match(
+      (r) => r.url === '/profiles/practitioners/me/summary',
+    )) {
+      req.flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+    }
+  }
+
   afterEach(() => {
     responderCatalogoDeMedicacion();
     responderCircuitoDiagnostico();
     responderHistoricoDeProcedimientos();
     responderPlantillasDeEspecialidad();
+    responderPerfilProfesional();
     http.verify();
   });
 

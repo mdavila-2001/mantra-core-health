@@ -36,6 +36,7 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { Odontogram } from '../odontogram/odontogram';
 
 /**
  * Cuántos casos quirúrgicos se traen, y de cuántos se pide el detalle.
@@ -54,6 +55,15 @@ const SIN_DATO = 'Sin registrar';
 
 /** Largo máximo de la nota, el mismo que valida el backend. */
 const TOPE_DE_NOTA = 4000;
+
+/**
+ * Con qué prefija el catálogo los códigos de pieza (`FDI_16`).
+ *
+ * El odontograma habla en números de pieza a secas porque es lo que se escribe
+ * en una ficha; el catálogo los publica prefijados para que no se confundan con
+ * cualquier otro código de dos dígitos.
+ */
+const PREFIJO_FDI = 'FDI_';
 
 /** Largo máximo de la precisión del sitio, el mismo que valida el backend. */
 const TOPE_DE_CARA = 200;
@@ -130,6 +140,7 @@ export interface TratamientoEnPantalla {
     DatePipe,
     FormActions,
     FormField,
+    Odontogram,
     Select,
     Textarea,
   ],
@@ -145,6 +156,17 @@ export class ProceduresBlock {
 
   /** La persona cuyo histórico se muestra. Mismo nombre que sus hermanos. */
   readonly patientProfileId = input.required<string>();
+
+  /**
+   * El encuentro en curso, o `null` si no hay ninguno abierto.
+   *
+   * El histórico es de la persona y se lee sin encuentro —por eso este bloque
+   * no lo exige, a diferencia del diagnóstico y la receta—, pero lo que SÍ se
+   * escribe desde acá, el tratamiento odontológico, es un acto de una consulta.
+   * El contrato acepta `encounterId` y hasta ahora se perdía: una vez cerrado
+   * el encuentro ya no hay forma de saber en cuál se hizo.
+   */
+  readonly encounterId = input<string | null>(null);
 
   /* -- Lo quirúrgico ------------------------------------------------------- */
 
@@ -242,6 +264,66 @@ export class ProceduresBlock {
       ? this.totalOdontologico() - TOPE_ODONTOLOGICO
       : 0,
   );
+
+  /* -- El odontograma ------------------------------------------------------ */
+
+  /**
+   * El código FDI de cada concepto de pieza, para poder ir del histórico —que
+   * habla en `conceptId`— al dibujo, que habla en números de pieza.
+   *
+   * El mapeo sale del catálogo del servidor y no de una tabla escrita acá: los
+   * uuid de los conceptos son derivados y un re-seed puede moverlos, mientras
+   * que el código (`FDI_16`) es estable. Los cuadrantes quedan fuera: el
+   * odontograma dibuja piezas, y un tratamiento sobre un cuadrante entero se
+   * sigue viendo en la lista de abajo.
+   */
+  private readonly fdiPorConcepto = computed<ReadonlyMap<string, string>>(() => {
+    const dientes = this.catalogo()?.teeth ?? [];
+    return new Map(
+      dientes.map((diente) => [
+        diente.conceptId,
+        diente.code.replace(PREFIJO_FDI, ''),
+      ]),
+    );
+  });
+
+  /** Cuántos tratamientos tiene registrada cada pieza, por código FDI. */
+  protected readonly marcasPorPieza = computed<Readonly<Record<string, number>>>(
+    () => {
+      const porConcepto = this.fdiPorConcepto();
+      const cuenta: Record<string, number> = {};
+      for (const tratamiento of dataOf(this.odontologico()) ?? []) {
+        for (const sitio of tratamiento.sites) {
+          const fdi = porConcepto.get(sitio.bodySiteConceptId);
+          if (fdi === undefined) continue;
+          cuenta[fdi] = (cuenta[fdi] ?? 0) + 1;
+        }
+      }
+      return cuenta;
+    },
+  );
+
+  /** La pieza elegida, en código FDI, para que el dibujo la marque. */
+  protected readonly piezaElegidaFdi = computed<string | null>(() => {
+    const elegida = this.pieza();
+    if (elegida === null) return null;
+    return this.fdiPorConcepto().get(elegida) ?? null;
+  });
+
+  /**
+   * Elegir una pieza en el dibujo la carga en el formulario de alta.
+   *
+   * El `<select>` de sitio se queda igual y sigue siendo la única forma de
+   * elegir un cuadrante: el odontograma es un atajo sobre las piezas, no su
+   * reemplazo.
+   */
+  protected elegirPieza(fdi: string): void {
+    const diente = (this.catalogo()?.teeth ?? []).find(
+      (pieza) => pieza.code === `${PREFIJO_FDI}${fdi}`,
+    );
+    if (diente === undefined) return;
+    this.pieza.set(diente.conceptId);
+  }
 
   /* -- El alta odontológica ------------------------------------------------ */
 
@@ -365,6 +447,7 @@ export class ProceduresBlock {
     const pieza = this.pieza();
     const cara = String(this.cara() ?? '').trim();
     const nota = this.nota().trim();
+    const encuentro = this.encounterId();
 
     this.registrando.set(true);
     this.registro.set(loading());
@@ -379,6 +462,9 @@ export class ProceduresBlock {
         ...(pieza === null ? {} : { toothSiteConceptId: pieza }),
         ...(cara === '' ? {} : { siteDetail: cara }),
         ...(nota === '' ? {} : { noteText: nota }),
+        ...(encuentro === null || encuentro === ''
+          ? {}
+          : { encounterId: encuentro }),
       })
       .subscribe({
         next: () => {
