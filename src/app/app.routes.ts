@@ -5,6 +5,7 @@ import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterPatient } from './features/auth/register-patient/register-patient';
+import { RegisterOrganization } from './features/auth/register-organization/register-organization';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
@@ -1224,6 +1225,13 @@ export const routes: Routes = [
     path: 'auth/register',
     component: RegisterPatient,
     title: 'AloVida - Crear cuenta',
+  },
+  {
+    // Signup público de una organización aseguradora: crea el tenant `PAYER`
+    // y su usuario owner en la misma operación.
+    path: 'auth/register-organization',
+    component: RegisterOrganization,
+    title: 'AloVida - Registrar aseguradora',
   },
   {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…

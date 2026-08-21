@@ -112,12 +112,25 @@ export class OrganizationPanel {
    */
   protected readonly estaVerificada = computed(() => this.elegida()?.isVerified === true);
 
+  /**
+   * Es una aseguradora. La señal es la presencia del bloque `payer` en la
+   * lectura, **no** decodificar `tenantTypeConceptId`: mismo principio que
+   * `estaVerificada` con `isVerified` ya resuelto por la API.
+   */
+  protected readonly esAseguradora = computed(() => this.elegida()?.payer !== undefined);
+
   /* -- Datos de la organización -------------------------------------------- */
 
   protected readonly razonSocial = signal('');
   protected readonly nombreComercial = signal('');
   protected readonly zonaHoraria = signal('');
   protected readonly guardando = signal(false);
+
+  /* -- Datos de aseguradora, sólo si `esAseguradora()` -------------------- */
+
+  protected readonly sigla = signal('');
+  protected readonly nit = signal('');
+  protected readonly direccion = signal('');
 
   /* -- Su gente ------------------------------------------------------------- */
 
@@ -164,6 +177,18 @@ export class OrganizationPanel {
         legalName: this.razonSocial().trim(),
         tradeName: this.nombreComercial().trim(),
         timeZone: this.zonaHoraria().trim() || undefined,
+        // Sólo para aseguradoras: el backend rechaza el bloque `payer` en
+        // cualquier otro tipo. `carrierCode` no va acá: es de sólo lectura,
+        // esta pantalla no lo edita.
+        ...(this.esAseguradora()
+          ? {
+              payer: {
+                sigla: this.sigla().trim(),
+                address: this.direccion().trim(),
+                regulatorIdentifier: this.nit().trim(),
+              },
+            }
+          : {}),
       })
       .subscribe({
         next: () => {
@@ -367,6 +392,12 @@ export class OrganizationPanel {
     this.razonSocial.set(org.legalName);
     this.nombreComercial.set(org.tradeName ?? '');
     this.zonaHoraria.set(org.timeZone ?? '');
+
+    if (org.payer) {
+      this.sigla.set(org.payer.sigla);
+      this.nit.set(org.payer.regulatorIdentifier);
+      this.direccion.set(org.payer.address);
+    }
   }
 
   private cargarGente(tenantId: string): void {

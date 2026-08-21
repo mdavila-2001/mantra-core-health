@@ -12,12 +12,14 @@ import type {
   CreatedUser,
   LoginCredentials,
   NewUser,
+  OrganizationRegistration,
   PasswordReset,
   PasswordResetRequested,
   VerificationResent,
   PasswordResetResult,
   PatientRegistration,
   PractitionerRegistration,
+  RegisteredOrganization,
   RegisteredPatient,
   RegisteredPractitioner,
   Session,
@@ -132,6 +134,49 @@ export class IamClient {
         ? {}
         : { professionalTitle: registration.professionalTitle }),
       ...(registration.phone === undefined ? {} : { phone: registration.phone }),
+    });
+  }
+
+  /**
+   * `POST /iam/auth/register-organization`. Auto-registro de una organización
+   * aseguradora: crea el tenant `PAYER` y su usuario owner en la misma
+   * operación.
+   *
+   * El tipo del tenant viaja **fijo** en `'PAYER'`: esta pantalla sólo da de
+   * alta aseguradoras, así que no hay nada que elegir — a diferencia del alta
+   * administrativa (`DirectoryClient.createTenant`), que sirve a los diez
+   * tipos y por eso sí lo pide.
+   */
+  registerOrganization(registration: OrganizationRegistration): Observable<RegisteredOrganization> {
+    return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
+      organization: {
+        code: registration.code,
+        legalName: registration.legalName,
+        ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
+        tenantType: 'PAYER',
+        ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
+        payer: {
+          carrierCode: registration.payer.carrierCode,
+          regulatorIdentifier: registration.payer.regulatorIdentifier,
+          sigla: registration.payer.sigla,
+          address: registration.payer.address,
+        },
+      },
+      owner: {
+        email: registration.owner.email,
+        password: registration.owner.password,
+        // El nombre viaja en partes y el backend compone el que se muestra: si
+        // el front lo compusiera, la base guardaría una versión y el contrato
+        // otra.
+        name: registration.owner.name,
+        lastName: registration.owner.lastName,
+        ...(registration.owner.middleName === undefined
+          ? {}
+          : { middleName: registration.owner.middleName }),
+        ...(registration.owner.motherLastName === undefined
+          ? {}
+          : { motherLastName: registration.owner.motherLastName }),
+      },
     });
   }
 
