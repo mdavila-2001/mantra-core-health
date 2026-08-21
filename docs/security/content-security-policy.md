@@ -13,7 +13,7 @@ respuestas, y la política se arma en `src/server/security-headers.ts`.
 | `X-Content-Type-Options` | ✅ `nosniff` |
 | `Referrer-Policy` | ✅ `strict-origin-when-cross-origin` |
 | `X-Frame-Options` | ✅ `DENY`, más `frame-ancestors 'none'` en la CSP |
-| `Permissions-Policy` | ✅ `camera=(), microphone=(), geolocation=()` |
+| `Permissions-Policy` | ✅ `camera=(), microphone=(), geolocation=(self)` — «dónde comprar mi receta» pide la posición con permiso del navegador |
 | `Strict-Transport-Security` | ✅ `max-age=63072000; includeSubDomains` |
 
 ```bash
@@ -74,7 +74,7 @@ Inventariado del código, no supuesto:
 | Estilos | Propios | `styles.css` + los de componente |
 | Estilos en línea | Angular los genera | **Necesita `'unsafe-inline'` o nonce** |
 | Tipografías | **Propias** (`@fontsource*`) | Autoalojadas: **no hace falta abrir ningún CDN** |
-| Imágenes | Propias (favicon) + `data:` | Los SVG son en línea |
+| Imágenes | Propias + `data:` + `tile.openstreetmap.org` | Los SVG son en línea; los tiles del mapa (Leaflet sin clave de API) van directo del navegador |
 | Conexiones | La API | `'self'`, o el dominio de la API si va en otro |
 | Marcos | **Ninguno** | |
 | Objetos | **Ninguno** | |
@@ -89,7 +89,7 @@ default-src 'self';
 script-src 'self' 'sha256-…' (uno por script en línea del artefacto);
 style-src 'self' 'unsafe-inline';
 font-src 'self';
-img-src 'self' data:;
+img-src 'self' data: https://tile.openstreetmap.org;
 connect-src 'self' (+ el origen de la API si vive en otro dominio);
 frame-ancestors 'none';
 object-src 'none';
@@ -104,7 +104,10 @@ upgrade-insecure-requests
 línea; sin esto la aplicación se ve sin estilos. Es un riesgo mucho menor que en
 `script-src` —que la política **no** concede— y es lo habitual en Angular.
 
-**Nada más.** No se abre ningún CDN: las tipografías están autoalojadas, así que
+**Y una tercera, solo de imágenes: los tiles de OpenStreetMap.** El mapa
+(Leaflet, sin clave de API) los pide directo del navegador; sin ese origen el
+mapa queda gris. Es `img-src` y nada más: ni scripts, ni conexiones, ni
+tipografías salen a terceros — las tipografías están autoalojadas, así que
 `font-src 'self'` alcanza.
 
 ### `connect-src` sigue a la configuración
