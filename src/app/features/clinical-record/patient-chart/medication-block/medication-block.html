@@ -127,6 +127,26 @@
     }
 
     <form class="receta__formulario" (submit)="$event.preventDefault()">
+      <!-- Los favoritos van ARRIBA porque su lugar en el flujo es antes de
+           escribir: elegir uno rellena el resto. Sólo aparece si hay alguno —
+           la lista arranca vacía y un desplegable sin opciones es un control
+           que promete algo que no puede dar. Cuando la cuenta no tiene perfil
+           profesional (403) `favoritosAplican` queda en falso y no se dibuja
+           nada: no es un error, es que no aplica. -->
+      @if (hayFavoritos()) {
+        <app-form-field
+          label="Usar un favorito"
+          hint="Rellena el formulario con una de tus indicaciones guardadas. Podés ajustarla antes de prescribir."
+        >
+          <app-select
+            [value]="favoritoElegido()"
+            [options]="opcionesDeFavorito()"
+            placeholder="Elegí uno de tus favoritos"
+            (valueChange)="aplicarFavorito($event)"
+          />
+        </app-form-field>
+      }
+
       <!-- Buscador y no desplegable: el catálogo de medicamentos no es una lista
            corta para desplegar entera, y buscar por nombre o por código ATC es
            como se elige un medicamento. Sigue sin haber texto libre: lo que se
@@ -286,12 +306,47 @@
         />
       </app-form-field>
 
+      <!-- Para qué es la receta (v4.1.6). Opcional de verdad: una prescripción
+           sintomática o profiláctica no tiene diagnóstico detrás, y por eso la
+           opción vacía es la primera y la de por omisión. -->
+      <app-form-field
+        label="¿Para qué es esta receta?"
+        hint="Opcional. El diagnóstico que la motiva, de los registrados en esta historia."
+      >
+        <app-select
+          [(value)]="indicacion"
+          [options]="opcionesDeIndicacion()"
+          placeholder="Sin diagnóstico asociado"
+        />
+      </app-form-field>
+
+      @if (errorDelFavorito(); as motivo) {
+        <app-alert tone="error" [title]="'No se pudo guardar el favorito'">
+          {{ motivo }}
+        </app-alert>
+      }
+
       <app-form-actions
         submitLabel="Prescribir"
         [pending]="registrando()"
         [disabled]="!puedeRecetar()"
         (submitted)="recetar()"
-      />
+      >
+        <!-- Guardar es un gesto secundario y va junto a prescribir, no en otro
+             lado: lo que se guarda es exactamente lo que está cargado acá. -->
+        @if (puedeGuardarFavorito()) {
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            [isLoading]="guardandoFavorito()"
+            (click)="guardarFavorito()"
+          >
+            Guardar como favorito
+          </button>
+        }
+      </app-form-actions>
     </form>
   }
 </app-card>
