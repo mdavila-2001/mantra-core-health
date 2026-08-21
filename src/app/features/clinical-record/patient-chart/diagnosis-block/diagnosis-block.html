@@ -37,6 +37,32 @@
       pantalla: hay que declarar el catálogo del lado del servidor.
     </app-alert>
   } @else {
+    <!-- La barra de casos existe sólo donde `PUBLIC_DEMO_PRESETS` la pidió.
+         Su copy dice lo que es —precarga de demostración— sin disfrazarse de
+         catálogo: los códigos son reales, los pacientes no. -->
+    @if (demoActiva) {
+      <div class="diagnostico__presets" data-testid="diagnostico-presets">
+        <div class="diagnostico__presets-header">
+          <span class="diagnostico__presets-titulo">Casos de demostración</span>
+          <app-badge variant="info">Demo</app-badge>
+        </div>
+        <div class="diagnostico__presets-items">
+          @for (caso of casosDemo; track caso.code) {
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              (clicked)="aplicarCasoDemo(caso)"
+              [title]="'Precarga el formulario con ' + caso.label + ' (' + caso.code + ')'"
+            >
+              {{ caso.label }} ({{ caso.code }})
+            </button>
+          }
+        </div>
+      </div>
+    }
+
     <form class="diagnostico__formulario" (submit)="$event.preventDefault()">
       <app-form-field
         label="Diagnóstico"
@@ -84,10 +110,40 @@
       </app-form-field>
 
       <app-form-field
+        label="Curso clínico"
+        hint="Opcional. Si es una condición aguda —con resolución esperada— o crónica —de seguimiento continuo—."
+      >
+        <app-concept-select
+          [target]="targetCursoClinico"
+          [(value)]="cursoClinico"
+          [labels]="etiquetasDeCurso"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field
         label="Inicio de la condición"
         hint="Opcional. Desde cuándo la persona la presenta."
       >
         <app-date-picker [(value)]="inicio" />
+      </app-form-field>
+
+      <app-form-field
+        label="Fecha esperada de resolución"
+        hint="Opcional. Tiene sentido sobre todo en curso agudo o subagudo."
+      >
+        <app-date-picker [(value)]="fechaEsperada" />
+      </app-form-field>
+
+      <app-form-field
+        label="Hallazgos clínicos y observaciones"
+        hint="Opcional. Semiología, justificación diagnóstica o notas de quien registra."
+      >
+        <app-textarea
+          [(value)]="notasClinicas"
+          [rows]="3"
+          placeholder="Faringe eritematosa sin exudado, sin adenopatías palpables"
+        />
       </app-form-field>
 
       <app-form-actions

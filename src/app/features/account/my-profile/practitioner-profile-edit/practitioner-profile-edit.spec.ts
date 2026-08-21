@@ -54,11 +54,83 @@ describe('PractitionerProfileEdit', () => {
 
   afterEach(() => http.verify());
 
+  /** Las dos especialidades con las que se responde el catálogo (TJ-3). */
+  const CATALOGO = [
+    {
+      conceptId: 'esp-cardio',
+      code: 'CARDIOLOGIA',
+      display: 'Cardiología',
+      codeSystemVersionId: 'csv-1',
+    },
+    {
+      conceptId: 'esp-pediatria',
+      code: 'PEDIATRIA',
+      display: 'Pediatría',
+      codeSystemVersionId: 'csv-1',
+    },
+  ];
+
+  /**
+   * Responde las DOS lecturas del catálogo de especialidades: primero se
+   * resuelve el conjunto por su código interno y después se expande. Va en el
+   * armado porque la pantalla las pide al construirse, y sin respuesta el
+   * `http.verify()` del cierre falla en todas las pruebas.
+   *
+   * El conjunto se busca **por su código**: desde que la pantalla también pide
+   * el de departamentos bolivianos (`VS_ADMINISTRATIVE_AREA`) hay dos lecturas contra
+   * `/terminology/value-sets`, y un `expectOne` sin filtro las encuentra a las
+   * dos y falla. El de departamentos lo drena {@link responderDepartamentos}.
+   */
+  function responderCatalogo(opciones: readonly object[] = CATALOGO): void {
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/terminology/value-sets' &&
+          r.params.get('code') === 'VS_MEDICAL_SPECIALTY',
+      )
+      .flush({
+        items: [
+          {
+            id: 'vs-esp',
+            internalCode: 'VS_MEDICAL_SPECIALTY',
+            name: 'Especialidades',
+            defaultVersionId: 'v1',
+          },
+        ],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
+    http
+      .expectOne((r) => r.url.includes('/terminology/value-sets/vs-esp/$expand'))
+      .flush({
+        valueSetId: 'vs-esp',
+        items: opciones,
+        count: opciones.length,
+        limit: 200,
+        nextCursor: null,
+      });
+  }
+
+  /**
+   * Drena el catálogo de departamentos bolivianos, que la pantalla pide al
+   * construirse para «departamento que expidió el documento». Ninguna de estas
+   * pruebas lo mira; sin drenarlo, el `http.verify()` del cierre falla.
+   */
+  function responderDepartamentos(): void {
+    for (const pedido of http.match(
+      (r) =>
+        r.url === '/terminology/value-sets' && r.params.get('code') === 'VS_ADMINISTRATIVE_AREA',
+    )) {
+      pedido.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    }
+  }
+
   function montarYCargar(perfil: object = {}): void {
     componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
-    http
-      .expectOne('/profiles/practitioners/me/summary')
-      .flush({ ...PERFIL_BASE, ...perfil });
+    http.expectOne('/profiles/practitioners/me/summary').flush({ ...PERFIL_BASE, ...perfil });
+    responderCatalogo();
+    responderDepartamentos();
   }
 
   function interno<T>(nombre: string): T {
@@ -178,5 +250,57 @@ describe('PractitionerProfileEdit', () => {
     req.flush({ id: 'ja-1' });
 
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+  });
+
+  /* -- Catálogo de especialidades (TJ-3 · F-19) ----------------------------- */
+
+  it('ofrece las especialidades del catálogo del modelo, en castellano', () => {
+    montarYCargar();
+
+    // Antes esto pedía el catálogo por CAMPO DESTINO y llegaba una sola opción
+    // («General medicine specialty»), que además no la usa ninguna fila.
+    const opciones = interno<() => readonly { value: string; label: string }[]>('especialidades')();
+    expect(opciones.map((o) => o.label)).toEqual(['Cardiología', 'Pediatría']);
+    expect(interno<() => boolean>('catalogoCaido')()).toBe(false);
+  });
+
+  it('si el catálogo se cae, el resto del perfil sigue siendo editable', () => {
+    componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    // Se cae SÓLO el de especialidades: el de departamentos es otra lectura y
+    // se drena aparte, si no `expectOne` encuentra las dos.
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/terminology/value-sets' &&
+          r.params.get('code') === 'VS_MEDICAL_SPECIALTY',
+      )
+      .error(new ProgressEvent('error'), { status: 500 });
+    responderDepartamentos();
+
+    // Perder el catálogo no es perder el perfil: se avisa en su bloque y el
+    // formulario de presentación queda intacto.
+    expect(interno<() => boolean>('catalogoCaido')()).toBe(true);
+    expect(interno<() => readonly unknown[]>('especialidades')()).toHaveLength(0);
+    expect(señal<string>('titulo')()).toBe(PERFIL_BASE.professionalTitle);
+  });
+
+  it('reintentar vuelve a tocar la red: el fallo cacheado no dura la sesión', () => {
+    componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/terminology/value-sets' &&
+          r.params.get('code') === 'VS_MEDICAL_SPECIALTY',
+      )
+      .error(new ProgressEvent('error'), { status: 500 });
+    responderDepartamentos();
+
+    interno<() => void>('reintentarEspecialidades')();
+    responderCatalogo();
+
+    expect(interno<() => boolean>('catalogoCaido')()).toBe(false);
+    expect(interno<() => readonly unknown[]>('especialidades')()).toHaveLength(2);
   });
 });

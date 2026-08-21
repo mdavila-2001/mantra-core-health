@@ -7,6 +7,16 @@
   <app-alert tone="error" class="grupos__alerta">{{ mensaje }}</app-alert>
 }
 
+<!-- El servidor manda su código justamente para que acá haya una salida y no
+     otro «reintentá»: lo que resuelve este caso es ir a completar el perfil. -->
+@if (perfilIncompleto()) {
+  <app-alert tone="warning" class="grupos__alerta" title="Te falta el perfil público">
+    Para crear un grupo público necesitás tu perfil público completo: nombre visible, foto y el
+    perfil en público.
+    <a app-link [routerLink]="['/my-account/preview']"> Configurar mi perfil público </a>
+  </app-alert>
+}
+
 @if (tenantId() === null) {
   <!-- Una puerta, no un error: el directorio de grupos es por organización y
        elegir por la persona mostraría los de la organización equivocada. -->
@@ -63,18 +73,26 @@
         Dirección: <code>{{ slug() || '—' }}</code>
       </p>
 
+      <!-- TP-3 · regla 06: con el perfil incompleto, «público» queda
+           **deshabilitado y a la vista**, no escondido. Ocultarlo dejaría a la
+           persona sin saber que la opción existe ni por qué no la tiene; así
+           ve qué le falta y cómo conseguirlo. -->
       <app-switch
         [(checked)]="privado"
+        [disabled]="!perfilListoParaPublico()"
         label="Grupo privado (hay que aprobar cada ingreso)"
       />
 
+      @if (!perfilListoParaPublico()) {
+        <p class="grupos__aviso-perfil">
+          Para crear un grupo <strong>público</strong> necesitás tu perfil público completo: nombre
+          visible, foto y el perfil en público.
+          <a app-link [routerLink]="['/my-account/preview']"> Configurar mi perfil público </a>
+        </p>
+      }
+
       <div class="grupos__alta-acciones">
-        <button
-          app-button
-          [disabled]="!puedeCrear()"
-          [isLoading]="guardando()"
-          (clicked)="crear()"
-        >
+        <button app-button [disabled]="!puedeCrear()" [isLoading]="guardando()" (clicked)="crear()">
           Crear grupo
         </button>
       </div>
@@ -96,9 +114,7 @@
             @if (grupo.description) {
               <p class="grupos__descripcion">{{ grupo.description }}</p>
             }
-            <p class="grupos__meta">
-              {{ grupo.memberCount ?? 0 }} integrantes
-            </p>
+            <p class="grupos__meta">{{ grupo.memberCount ?? 0 }} integrantes</p>
           </app-card>
         </a>
       }

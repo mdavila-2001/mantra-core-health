@@ -65,7 +65,46 @@ describe('SpecialtyFormBlock', () => {
     fixture.componentRef.setInput('encounterId', 'enc-1');
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    // El bloque pregunta con qué especialidad se presenta quien atiende para
+    // preseleccionar su plantilla. La mayoría de los casos no la ejerce, así
+    // que se drena acá: sin perfil profesional —lo que responde el 404— el
+    // bloque sigue funcionando con el selector de siempre.
+    for (const perfil of http.match(
+      (r) => r.url === '/profiles/practitioners/me/summary',
+    )) {
+      if (!perfil.cancelled) {
+        perfil.flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+      }
+    }
+    http.verify();
+  });
+
+  /** La especialidad de quien atiende, para los casos que la ejercen. */
+  function responderEspecialidad(specialtyConceptId: string): void {
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
+      .flush({
+        profileId: 'hp-1',
+        personId: 'per-1',
+        practitionerCode: 'MP-1',
+        specialties: [
+          {
+            id: 'sp-1',
+            specialtyConceptId,
+            isPrimary: true,
+            boardCertified: false,
+            verificationStatusConceptId: 'vs-1',
+          },
+        ],
+        credentials: [],
+        licenses: [],
+        languages: [],
+        affiliations: [],
+        activity: {},
+        createdAt: '2026-08-17T14:00:00.000Z',
+      });
+  }
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
@@ -305,5 +344,198 @@ describe('SpecialtyFormBlock', () => {
 
     interno<(id: string) => void>('elegirPlantilla')('tpl-2');
     expect(interno<() => Record<string, unknown>>('valores')()).toEqual({});
+  });
+
+  /* ---- la plantilla de tu especialidad ------------------------------------ */
+
+  it('preselecciona la plantilla de la especialidad de quien atiende', () => {
+    const odonto = { ...PLANTILLA, id: 'tpl-odo', specialtyConceptId: 'sp-odo' };
+    peticionDePlantillas().flush([PLANTILLA, odonto]);
+    // Con dos plantillas y sin especialidad todavía, no se elige ninguna.
+    expect(interno<() => string | null>('plantillaId')()).toBeNull();
+
+    responderEspecialidad('sp-odo');
+
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-odo');
+  });
+
+  it('el selector sigue ofreciendo el catálogo entero: preselecciona, no filtra', () => {
+    const odonto = { ...PLANTILLA, id: 'tpl-odo', specialtyConceptId: 'sp-odo' };
+    peticionDePlantillas().flush([PLANTILLA, odonto]);
+    responderEspecialidad('sp-odo');
+
+    // Las transversales y las de otras especialidades siguen a mano.
+    expect(interno<() => readonly unknown[]>('opcionesDePlantilla')()).toHaveLength(2);
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-odo');
+  });
+
+  it('una elección manual no la pisa la especialidad que llega después', () => {
+    const odonto = { ...PLANTILLA, id: 'tpl-odo', specialtyConceptId: 'sp-odo' };
+    peticionDePlantillas().flush([PLANTILLA, odonto]);
+
+    interno<(id: string) => void>('elegirPlantilla')('tpl-1');
+    responderEspecialidad('sp-odo');
+
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-1');
+  });
+
+  it('sin perfil profesional no rompe: queda el selector de siempre', () => {
+    peticionDePlantillas().flush([PLANTILLA, { ...PLANTILLA, id: 'tpl-2' }]);
+
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
+      .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+
+    expect(interno<() => string | null>('plantillaId')()).toBeNull();
+    expect(interno<() => readonly unknown[]>('opcionesDePlantilla')()).toHaveLength(2);
+  });
+
+  it('una especialidad que ya no ejerce no decide la plantilla', () => {
+    peticionDePlantillas().flush([PLANTILLA, { ...PLANTILLA, id: 'tpl-2' }]);
+
+    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush({
+      profileId: 'hp-1',
+      personId: 'per-1',
+      practitionerCode: 'MP-1',
+      specialties: [
+        {
+          id: 'sp-vieja',
+          specialtyConceptId: 'sp-1',
+          isPrimary: true,
+          boardCertified: false,
+          verificationStatusConceptId: 'vs-1',
+          // Dejó de ejercerla: no puede decidir qué ficha se le ofrece hoy.
+          validTo: '2025-01-01',
+        },
+      ],
+      credentials: [],
+      licenses: [],
+      languages: [],
+      affiliations: [],
+      activity: {},
+      createdAt: '2026-08-17T14:00:00.000Z',
+    });
+
+    expect(interno<() => string | null>('plantillaId')()).toBeNull();
+  });
+
+  /* ---- el odontograma ------------------------------------------------------ */
+
+  /** La plantilla del odontograma, con su campo json y los conteos del CPO-D. */
+  const PLANTILLA_ODONTO = {
+    ...PLANTILLA,
+    id: 'tpl-odo',
+    code: 'ODONTO_ODONTOGRAMA_OMS',
+    name: 'Odontograma OMS',
+    fields: [
+      {
+        assignmentId: 'as-o',
+        fieldId: 'f-odo',
+        code: 'ODONTO_ODONTOGRAMA_OMS.odontograma_fdi',
+        name: 'Odontograma',
+        dataType: 'json',
+        required: false,
+      },
+      {
+        assignmentId: 'as-c',
+        fieldId: 'f-car',
+        code: 'ODONTO_ODONTOGRAMA_OMS.dientes_cariados',
+        name: 'Cariados',
+        dataType: 'integer',
+        required: false,
+      },
+      {
+        assignmentId: 'as-i',
+        fieldId: 'f-cpod',
+        code: 'ODONTO_ODONTOGRAMA_OMS.indice_cpod',
+        name: 'CPO-D',
+        dataType: 'decimal',
+        required: false,
+      },
+    ],
+  };
+
+  it('reconoce el campo del odontograma por su código, no por el tipo', () => {
+    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+
+    const esOdontograma = interno<(campo: unknown) => boolean>('esOdontograma');
+    expect(esOdontograma(PLANTILLA_ODONTO.fields[0])).toBe(true);
+    // Otro campo `json` cualquiera NO se dibuja como una boca.
+    expect(
+      esOdontograma({ ...PLANTILLA_ODONTO.fields[0], code: 'X.otra_cosa' }),
+    ).toBe(false);
+  });
+
+  it('registrar el estado de una pieza arma el mapa y sugiere los índices', () => {
+    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+
+    interno<(fdi: string) => void>('abrirPieza')('16');
+    interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
+
+    const valores = interno<() => Record<string, unknown>>('valores')();
+    expect(valores['f-odo']).toEqual({ '16': '1' });
+    // Una cariada: el conteo y el índice se rellenan solos.
+    expect(valores['f-car']).toBe(1);
+    expect(valores['f-cpod']).toBe(1);
+  });
+
+  it('volver a elegir el mismo estado lo borra', () => {
+    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+
+    interno<(fdi: string) => void>('abrirPieza')('16');
+    interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
+    interno<(fdi: string) => void>('abrirPieza')('16');
+    interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
+
+    expect(interno<() => Record<string, unknown>>('valores')()['f-odo']).toEqual({});
+  });
+
+  it('la sugerencia no pisa un conteo tecleado a mano', () => {
+    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+
+    interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-car', 7);
+    interno<(fdi: string) => void>('abrirPieza')('16');
+    interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
+
+    const valores = interno<() => Record<string, unknown>>('valores')();
+    expect(valores['f-car']).toBe(7);
+    // El que estaba vacío sí se sugiere.
+    expect(valores['f-cpod']).toBe(1);
+  });
+
+  it('un odontograma sin ninguna pieza tocada no viaja', () => {
+    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+
+    interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-odo', {});
+    interno<() => void>('completar')();
+
+    // Sin ningún valor que mandar, `completar` ni siquiera abre la instancia.
+    http.expectNone((r) => r.url === '/forms/instances' && r.method === 'POST');
+  });
+
+  it('el mapa del odontograma viaja como json', () => {
+    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+
+    interno<(fdi: string) => void>('abrirPieza')('16');
+    interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
+    interno<() => void>('completar')();
+
+    const apertura = http.expectOne(
+      (r) => r.url === '/forms/instances' && r.method === 'POST',
+    );
+    apertura.flush(INSTANCIA);
+
+    const captura = http.expectOne(
+      (r) => r.url === '/forms/instances/inst-9/values' && r.method === 'POST',
+    );
+    const body = captura.request.body as { values: { fieldId: string; dataType: string; value: unknown }[] };
+    const odontograma = body.values.find((valor) => valor.fieldId === 'f-odo')!;
+    expect(odontograma.dataType).toBe('json');
+    expect(odontograma.value).toEqual({ '16': '1' });
+
+    captura.flush({ ids: ['v-1'] });
+    http.expectOne((r) => r.url === '/forms/instances/inst-9/close').flush({});
+    // Tras guardar, el bloque relee para pasar a modo lectura.
+    peticionDeRespuesta().flush(LISTADO_VACIO);
   });
 });

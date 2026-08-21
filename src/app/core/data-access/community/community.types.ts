@@ -86,6 +86,16 @@ export interface PublicProfileDetail {
 export type ProfileVisibility = 'PUBLIC' | 'PRIVATE';
 
 /** La vitrina pública propia, tal como la ve su titular. */
+/**
+ * El código con el que el servidor rechaza crear un grupo público sin el perfil
+ * completo (TP-3, regla 06).
+ *
+ * Viaja en el cuerpo del 422 junto al texto. Comparar contra el código y no
+ * contra el mensaje es lo que hace que reescribir el texto del servidor no
+ * rompa la pantalla.
+ */
+export const PERFIL_PUBLICO_REQUERIDO = 'PUBLIC_PROFILE_REQUIRED';
+
 export interface OwnPublicProfile {
   readonly id: string;
   readonly tenantId: string;
@@ -104,6 +114,14 @@ export interface OwnPublicProfile {
    * pantalla no tiene que decidir esa regla por su cuenta.
    */
   readonly visibility: ProfileVisibility;
+  /**
+   * La foto de la vitrina, si subió alguna.
+   *
+   * Es una de las tres condiciones de un perfil «completo» para presentar un
+   * grupo público (TP-3): sin este dato la pantalla no puede anticipar el
+   * rechazo y tendría que dejar que la persona llene el formulario entero.
+   */
+  readonly avatarFileId?: string;
   /** Lo otorga la plataforma; se muestra, no se declara. */
   readonly verificationStatusConceptId?: string;
   readonly statusConceptId: string;
@@ -669,6 +687,14 @@ export interface DirectMessagePage {
   readonly count: number;
   readonly limit: number;
   readonly nextCursor: string | null;
+  /**
+   * Hasta qué `sentAt` leyó el otro lado, en una conversación DIRECT.
+   *
+   * `undefined` si es de grupo, o si el peer no marcó nada como leído
+   * todavía. Con esto se pinta ✓✓ en los mensajes propios cuyo `sentAt` sea
+   * anterior o igual a esta marca.
+   */
+  readonly peerReadUpTo?: Date;
 }
 
 /**
@@ -853,13 +879,7 @@ export type ReactableType = (typeof REACTABLE_TYPES)[number];
  * que `reactionTypeConceptId`, que es lo que devuelven las lecturas—. Es una
  * asimetría real del backend: se escribe con la palabra y se lee con el uuid.
  */
-export const REACTION_TYPES = [
-  'LIKE',
-  'LOVE',
-  'INSIGHTFUL',
-  'CELEBRATE',
-  'SUPPORT',
-] as const;
+export const REACTION_TYPES = ['LIKE', 'LOVE', 'INSIGHTFUL', 'CELEBRATE', 'SUPPORT'] as const;
 
 /** Una reacción. */
 export type ReactionType = (typeof REACTION_TYPES)[number];
@@ -922,19 +942,10 @@ export type ModerationQueueStatus = 'QUEUED' | 'IN_REVIEW' | 'RESOLVED';
 export type ModerationPriority = 'LOW' | 'NORMAL' | 'HIGH';
 
 /** Tipos de contenido moderable. */
-export type ModerableContentType =
-  | 'POST'
-  | 'COMMENT'
-  | 'PROFILE'
-  | 'MESSAGE'
-  | 'REVIEW';
+export type ModerableContentType = 'POST' | 'COMMENT' | 'PROFILE' | 'MESSAGE' | 'REVIEW';
 
 /** Las cuatro decisiones que un moderador puede tomar. */
-export type ModerationDecisionCode =
-  | 'REMOVED'
-  | 'RESTRICTED'
-  | 'WARNED'
-  | 'DISMISSED';
+export type ModerationDecisionCode = 'REMOVED' | 'RESTRICTED' | 'WARNED' | 'DISMISSED';
 
 /** Estados de una apelación. `OPEN` no es una resolución. */
 export type AppealStatus = 'OPEN' | 'UPHELD' | 'OVERTURNED' | 'PARTIAL';
@@ -1054,13 +1065,7 @@ export interface ModerationAppealsQuery {
  * Son el enum del DTO del servidor, no etiquetas inventadas para la pantalla:
  * cualquier otro valor es un 400.
  */
-export const REPORT_REASONS = [
-  'SPAM',
-  'ABUSE',
-  'MISINFORMATION',
-  'PHI',
-  'OTHER',
-] as const;
+export const REPORT_REASONS = ['SPAM', 'ABUSE', 'MISINFORMATION', 'PHI', 'OTHER'] as const;
 
 /** Un motivo de reporte. */
 export type ReportReason = (typeof REPORT_REASONS)[number];
@@ -1115,11 +1120,7 @@ export interface NewReview {
   readonly reviewText?: string;
   readonly displayMode?: 'REAL_NAME' | 'ANONYMOUS';
   readonly dimensions?: readonly {
-    readonly dimension:
-      | 'COMMUNICATION'
-      | 'PUNCTUALITY'
-      | 'CLEANLINESS'
-      | 'OUTCOME';
+    readonly dimension: 'COMMUNICATION' | 'PUNCTUALITY' | 'CLEANLINESS' | 'OUTCOME';
     readonly score: number;
   }[];
 }

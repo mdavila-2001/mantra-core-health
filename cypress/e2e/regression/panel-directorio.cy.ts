@@ -11,7 +11,7 @@ import { DashboardPage } from '../../support/pages/dashboard.page';
  */
 describe('Regresión · directorio del panel', () => {
   it('sin registros, la lectura termina y no deja el esqueleto puesto', () => {
-    iniciarSesion();
+    iniciarSesion({ escenario: 'sesion-profesional' });
 
     DashboardPage.esperarDirectorio();
     // El conteo solo aparece con registros; lo que no puede quedar es el
@@ -44,12 +44,12 @@ describe('Regresión · directorio del panel', () => {
   });
 
   it('con la API demorada se ve el estado de carga antes que los datos', () => {
-    iniciarSesion({ escenario: 'api-lenta' });
+    iniciarSesion({ escenario: 'directorio-lento' });
 
     // No se afirma sobre el instante exacto: se afirma que la lectura termina.
     // Un estado de carga que no se resuelve es el defecto que importa.
     DashboardPage.esperarDirectorio();
     DashboardPage.esperarSinEsqueleto();
-    DashboardPage.esperarTitulo('Panel');
+    DashboardPage.esperarCargada();
   });
 });

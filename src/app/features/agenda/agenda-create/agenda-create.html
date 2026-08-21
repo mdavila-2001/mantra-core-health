@@ -1,367 +1,283 @@
 <app-page-header
-  title="Crear agenda"
-  subtitle="Cada paso se guarda antes de seguir: recurso, política, plantilla, cupos y excepciones."
+  title="Publicá tu agenda"
+  subtitle="Elegí qué días atendés y cuánto dura una consulta. El resto lo completamos nosotros."
   [breadcrumbs]="breadcrumbs()"
 />
 
 @if (!puedeCrear()) {
-  <app-alert tone="error" title="No tenés permiso para crear agenda">
-    Construir una agenda —recursos, políticas, plantillas y cupos— es tarea de quien administra la
-    agenda de la organización. Si creés que debería estar habilitado para vos, pedíselo a quien
-    gestiona los accesos.
-  </app-alert>
-} @else if (sinPerfilProfesional()) {
-  <!-- ─── Profesional sin perfil en la sesión ───────────────────────────────
-       Publicar la agenda propia exige saber cuál es: el backend comprueba que
-       el recurso apunte al perfil profesional del actor. Si el token no lo
-       declara, no hay agenda propia que armar, y decirlo acá evita que la
-       persona complete cinco fases para chocar con un 403 en la primera. -->
-  <app-alert tone="warning" title="Tu sesión todavía no tiene perfil profesional">
-    Para publicar tu agenda hace falta que tu cuenta esté vinculada a tu perfil profesional. Volvé a
-    iniciar sesión; si sigue igual, pedí que revisen tu alta como profesional.
+  <app-alert tone="info" title="Esta sección es para quien publica agenda">
+    Tu cuenta no tiene permiso para configurar agendas. Si atendés pacientes y creés que es un
+    error, escribinos.
   </app-alert>
 } @else if (sinOrganizacion()) {
-  <!-- ─── Sin organización activa ───────────────────────────────────────────
-       El recurso y la política se crean en una organización concreta: sin una
-       elegida no hay `tenantId` que enviar. Se dice así, y no se ofrece un
-       campo para teclearlo, porque elegir organización es cambiar el contexto
-       de la sesión —lo hace el selector del encabezado—, no rellenar un UUID. -->
-  <app-alert tone="info" title="Elegí una organización">
-    Una agenda pertenece a una organización concreta. Elegí una en el selector del encabezado para
-    poder crear su recurso, su política y su plantilla.
+  <app-alert tone="warning" title="Elegí una organización primero">
+    Una agenda pertenece a una organización. Elegí en cuál vas a atender desde el selector de
+    arriba y volvé.
   </app-alert>
-} @else if (finalizado()) {
-  <!-- ─── Finalización ──────────────────────────────────────────────────── -->
-  <div class="agenda-create__done">
-    <h2 appAnuncio [asertivo]="false" class="agenda-create__done-title">La agenda quedó creada</h2>
-    <p class="agenda-create__done-text">
-      Las cinco fases se guardaron contra el servidor. Ya podés ver los cupos generados en la
-      agenda del recurso.
+} @else if (sinPerfilProfesional()) {
+  <app-alert tone="info" title="Esta sección es para profesionales">
+    Tu cuenta no tiene un perfil profesional, así que no hay una agenda propia que publicar.
+  </app-alert>
+} @else if (publicado()) {
+  <app-alert tone="success" title="Listo, tu agenda ya está publicada">
+    <p appAnuncio>
+      Publicaste: <strong>{{ resumen() }}</strong
+      >. Los pacientes ya pueden reservar.
     </p>
-
-    <dl class="agenda-create__summary">
-      <div>
-        <dt>Recurso</dt>
-        <dd>{{ resourceName() }} · <code>{{ resourceId() }}</code></dd>
-      </div>
-      <div>
-        <dt>Política</dt>
-        <dd>{{ policyCode() }} · <code>{{ policyId() }}</code></dd>
-      </div>
-      <div>
-        <dt>Plantilla</dt>
-        <dd>{{ templateName() }} · <code>{{ templateId() }}</code></dd>
-      </div>
-      @if (slotsResultado(); as slots) {
-        <div>
-          <dt>Cupos generados</dt>
-          <dd>{{ slots.created }} nuevos · {{ slots.skipped }} ya existían</dd>
-        </div>
-      }
-      @if (excepcionResultado(); as exc) {
-        <div>
-          <dt>Excepción</dt>
-          <dd>{{ exc.blockedSlots }} cupos bloqueados · <code>{{ exc.id }}</code></dd>
-        </div>
-      }
-    </dl>
-
-    <a app-button variant="primary" routerLink="/schedule">Ir a la agenda</a>
-  </div>
+    @if (cuposCreados(); as cupos) {
+      <p class="agenda-create__cupos">
+        Se abrieron <strong>{{ cupos }}</strong> turnos para los próximos meses.
+      </p>
+    }
+    <a app-button [routerLink]="['/my-account']">Ver mi perfil</a>
+  </app-alert>
 } @else {
-  <app-stepper [steps]="pasos()" label="Crear agenda" />
+  <form class="agenda-create" (ngSubmit)="publicar()" [formGroup]="formGeneral">
+    @if (publicaSoloLaPropia()) {
+      <p class="agenda-create__titular">
+        Vas a publicar tu propia agenda@if (nombreDelTitular()) {, {{ nombreDelTitular() }}}.
+      </p>
+    }
 
-  @if (errorMessage(); as mensaje) {
-    <app-alert appAnuncio tone="error" class="agenda-create__error" title="No se pudo guardar">
-      {{ mensaje }}
-    </app-alert>
-  }
+    <!-- ── Decisión 1 · qué días y en qué horario ────────────────────────── -->
+    <section class="agenda-create__bloque">
+      <h2 class="agenda-create__titulo">¿Qué días atendés?</h2>
 
-  <!-- Lo ya capturado, visible en todo momento: los ids que encadenan las fases. -->
-  @if (resourceId() || policyId() || templateId()) {
-    <dl class="agenda-create__captured">
-      @if (resourceId(); as id) {
-        <div><dt>Recurso</dt><dd><code>{{ id }}</code></dd></div>
-      }
-      @if (policyId(); as id) {
-        <div><dt>Política</dt><dd><code>{{ id }}</code></dd></div>
-      }
-      @if (templateId(); as id) {
-        <div><dt>Plantilla</dt><dd><code>{{ id }}</code></dd></div>
-      }
-    </dl>
-  }
+      <div class="agenda-create__semana" role="group" aria-label="Días que atendés">
+        @for (dia of diasVisibles(); track dia.indice) {
+          <button
+            type="button"
+            class="agenda-create__dia"
+            [class.agenda-create__dia--activo]="dia.activo"
+            [attr.aria-pressed]="dia.activo"
+            [attr.aria-label]="dia.largo"
+            (click)="alternarDia(dia.indice)"
+          >
+            {{ dia.corto }}
+          </button>
+        }
+      </div>
 
-  <div class="agenda-create__panel">
-    @switch (fase()) {
-      <!-- ─── Fase 1: recurso ─────────────────────────────────────────── -->
-      @case (0) {
-        <form [formGroup]="formRecurso" novalidate>
-          <!-- ─── F-28: lo técnico no se le pide al médico ──────────────────
-               Tipo de recurso, tabla referenciada e identificador son los tres
-               datos que el backend comprueba, y los tres los sabe la pantalla:
-               es su agenda. Se mostraban deshabilitados «para que se vea qué se
-               está publicando», pero lo que se veía era «Tabla referenciada:
-               practitioner_profiles» y un UUID — de ahí el «no se entiende» de
-               la recorrida. Ahora se dice en una línea, y los campos quedan
-               sólo para quien arma la agenda de otros. -->
-          @if (publicaSoloLaPropia()) {
-            <app-form-section
-              legend="Tu agenda"
-              description="Estás publicando tu propia agenda: los datos del profesional los completamos nosotros."
-            >
-              <app-form-field label="Nombre" [required]="true" hint="Cómo vas a reconocerla, p. ej. «Consultorio centro»."
-                [errorMessage]="formRecurso.controls.name.touched && formRecurso.controls.name.invalid ? 'Escribí un nombre (máx. 200).' : ''">
-                <app-input formControlName="name" type="text" />
-              </app-form-field>
-            </app-form-section>
-
-            <app-form-section legend="Ajustes" description="Opcionales: desde dónde atendés y cuántas personas a la vez.">
-              <app-form-field label="Zona horaria" hint="La de tu equipo, ya cargada. Cambiala si atendés desde otra.">
-                <app-input formControlName="timeZone" type="text" />
-              </app-form-field>
-
-              <app-form-field label="Capacidad" hint="Cuántas atenciones a la vez (1 si atendés de a una)."
-                [errorMessage]="formRecurso.controls.capacity.touched && formRecurso.controls.capacity.invalid ? 'Ingresá un entero sin signo.' : ''">
-                <app-input formControlName="capacity" type="text" />
-              </app-form-field>
-            </app-form-section>
-          } @else {
-            <app-form-section
-              legend="Recurso agendable"
-              description="La agenda de un profesional, un box o un equipo. Es sobre lo que se cuelga todo lo demás."
-            >
-              <app-form-field label="Tipo de recurso" [required]="true"
-                [errorMessage]="formRecurso.controls.resourceType.touched && formRecurso.controls.resourceType.invalid ? 'Elegí el tipo de recurso.' : ''">
-                <app-select formControlName="resourceType" [options]="opcionesTipoRecurso" placeholder="Elegí un tipo" />
-              </app-form-field>
-
-              <app-form-field label="Tabla referenciada" [required]="true" hint="Ej.: practitioner_profiles, practice_sites."
-                [errorMessage]="formRecurso.controls.resourceRefType.touched && formRecurso.controls.resourceRefType.invalid ? 'Indicá la tabla referenciada (máx. 100).' : ''">
-                <app-input formControlName="resourceRefType" type="text" />
-              </app-form-field>
-
-              <app-form-field label="Id de la entidad referenciada" [required]="true" hint="El identificador del profesional, box o equipo (UUID)."
-                [errorMessage]="formRecurso.controls.resourceRefId.touched && formRecurso.controls.resourceRefId.invalid ? uuidError : ''">
-                <app-input formControlName="resourceRefId" type="text" />
-              </app-form-field>
-
-              <app-form-field label="Nombre" [required]="true"
-                [errorMessage]="formRecurso.controls.name.touched && formRecurso.controls.name.invalid ? 'Escribí un nombre (máx. 200).' : ''">
-                <app-input formControlName="name" type="text" />
-              </app-form-field>
-            </app-form-section>
-
-            <app-form-section legend="Ajustes" description="Opcionales: práctica, zona horaria y cuántas atenciones simultáneas admite.">
-              <app-form-field label="Práctica" hint="Identificador de la práctica (UUID)."
-                [errorMessage]="formRecurso.controls.practiceId.touched && formRecurso.controls.practiceId.invalid ? uuidError : ''">
-                <app-input formControlName="practiceId" type="text" />
-              </app-form-field>
-
-              <app-form-field label="Zona horaria" hint="IANA, p. ej. America/La_Paz.">
-                <app-input formControlName="timeZone" type="text" />
-              </app-form-field>
-
-              <app-form-field label="Capacidad" hint="Atenciones simultáneas (entero ≥ 1)."
-                [errorMessage]="formRecurso.controls.capacity.touched && formRecurso.controls.capacity.invalid ? 'Ingresá un entero sin signo.' : ''">
-                <app-input formControlName="capacity" type="text" />
-              </app-form-field>
-            </app-form-section>
-          }
-        </form>
+      @if (sinDias()) {
+        <p class="agenda-create__vacio">Tocá los días en los que atendés para cargar su horario.</p>
       }
 
-      <!-- ─── Fase 2: política ────────────────────────────────────────── -->
-      @case (1) {
-        <form [formGroup]="formPolitica" novalidate>
-          <app-form-section legend="Política de reserva" description="Las reglas de antelación, cancelación y retención que después usa la plantilla.">
-            <app-form-field label="Código" [required]="true" hint="Único dentro de la organización."
-              [errorMessage]="formPolitica.controls.code.touched && formPolitica.controls.code.invalid ? 'Indicá un código (máx. 100).' : ''">
-              <app-input formControlName="code" type="text" />
+      @for (dia of diasActivos(); track dia.indice) {
+        <fieldset class="agenda-create__franja" [formGroup]="grupoDe(dia.indice)">
+          <legend class="agenda-create__franja-dia">{{ dia.largo }}</legend>
+
+          <div class="agenda-create__horas">
+            <app-form-field label="Desde" hint="HH:MM — a qué hora empezás">
+              <app-input formControlName="desde" />
             </app-form-field>
-
-            <app-form-field label="Nombre" [required]="true"
-              [errorMessage]="formPolitica.controls.name.touched && formPolitica.controls.name.invalid ? 'Escribí un nombre (máx. 200).' : ''">
-              <app-input formControlName="name" type="text" />
+            <app-form-field label="Hasta" hint="HH:MM — a qué hora terminás">
+              <app-input formControlName="hasta" />
             </app-form-field>
-          </app-form-section>
+          </div>
 
-          <app-form-section legend="Reglas" description="Todas opcionales; el backend aplica sus valores por defecto si se dejan vacías.">
-            <app-form-field label="Antelación mínima (minutos)"
-              [errorMessage]="formPolitica.controls.minNoticeMinutes.touched && formPolitica.controls.minNoticeMinutes.invalid ? 'Ingresá un entero sin signo.' : ''">
-              <app-input formControlName="minNoticeMinutes" type="text" />
-            </app-form-field>
-
-            <app-form-field label="Antelación máxima (días)"
-              [errorMessage]="formPolitica.controls.maxAdvanceDays.touched && formPolitica.controls.maxAdvanceDays.invalid ? 'Ingresá un entero sin signo.' : ''">
-              <app-input formControlName="maxAdvanceDays" type="text" />
-            </app-form-field>
-
-            <app-form-field label="Ventana de cancelación (minutos)"
-              [errorMessage]="formPolitica.controls.cancellationWindowMinutes.touched && formPolitica.controls.cancellationWindowMinutes.invalid ? 'Ingresá un entero sin signo.' : ''">
-              <app-input formControlName="cancellationWindowMinutes" type="text" />
-            </app-form-field>
-
-            <app-form-field label="Cargo por inasistencia" hint="Un importe, como 50.00."
-              [errorMessage]="formPolitica.controls.noShowFeeAmount.touched && formPolitica.controls.noShowFeeAmount.invalid ? numberStringError : ''">
-              <app-input formControlName="noShowFeeAmount" type="text" />
-            </app-form-field>
-
-            <app-form-field label="Citas activas por paciente"
-              [errorMessage]="formPolitica.controls.maxActivePerPatient.touched && formPolitica.controls.maxActivePerPatient.invalid ? 'Ingresá un entero sin signo.' : ''">
-              <app-input formControlName="maxActivePerPatient" type="text" />
-            </app-form-field>
-
-            <app-form-field label="Vigencia de la retención (segundos)" hint="Cuánto vive un hold. Por defecto 300."
-              [errorMessage]="formPolitica.controls.holdTtlSeconds.touched && formPolitica.controls.holdTtlSeconds.invalid ? 'Ingresá un entero sin signo.' : ''">
-              <app-input formControlName="holdTtlSeconds" type="text" />
-            </app-form-field>
-          </app-form-section>
-        </form>
-      }
-
-      <!-- ─── Fase 3: plantilla ───────────────────────────────────────── -->
-      @case (2) {
-        <form [formGroup]="formPlantilla" novalidate>
-          <app-form-section legend="Plantilla de agenda" description="Las franjas semanales que después se materializan en cupos.">
-            <app-form-field label="Nombre" [required]="true"
-              [errorMessage]="formPlantilla.controls.name.touched && formPlantilla.controls.name.invalid ? 'Escribí un nombre (máx. 200).' : ''">
-              <app-input formControlName="name" type="text" />
-            </app-form-field>
-
-            <app-form-field label="Duración por defecto del slot (minutos)" hint="Si una franja no la fija, se usa esta. Por defecto 30."
-              [errorMessage]="formPlantilla.controls.slotMinutes.touched && formPlantilla.controls.slotMinutes.invalid ? 'Ingresá un entero sin signo.' : ''">
-              <app-input formControlName="slotMinutes" type="text" />
-            </app-form-field>
-
-            @if (policyId()) {
-              <p class="agenda-create__note">Se vincula la política creada en el paso anterior.</p>
-            }
-          </app-form-section>
-
-          <app-form-section legend="Franjas semanales" description="Al menos una. Día, hora de inicio y de fin; el resto es opcional.">
-            <div formArrayName="rules" class="agenda-create__rules">
-              @for (regla of franjas.controls; track regla; let i = $index) {
-                <div [formGroupName]="i" class="agenda-create__rule">
-                  <app-form-field label="Día">
-                    <app-select formControlName="dayOfWeek" [options]="opcionesDia" />
-                  </app-form-field>
-
-                  <app-form-field label="Inicio" hint="HH:MM"
-                    [errorMessage]="regla.controls.startTime.touched && regla.controls.startTime.invalid ? 'Hora HH:MM.' : ''">
-                    <app-input formControlName="startTime" type="text" />
-                  </app-form-field>
-
-                  <app-form-field label="Fin" hint="HH:MM"
-                    [errorMessage]="regla.controls.endTime.touched && regla.controls.endTime.invalid ? 'Hora HH:MM.' : ''">
-                    <app-input formControlName="endTime" type="text" />
-                  </app-form-field>
-
-                  <app-form-field label="Min/slot"
-                    [errorMessage]="regla.controls.slotMinutes.touched && regla.controls.slotMinutes.invalid ? 'Entero.' : ''">
-                    <app-input formControlName="slotMinutes" type="text" />
-                  </app-form-field>
-
-                  <app-form-field label="Cupos/slot"
-                    [errorMessage]="regla.controls.capacityPerSlot.touched && regla.controls.capacityPerSlot.invalid ? 'Entero.' : ''">
-                    <app-input formControlName="capacityPerSlot" type="text" />
-                  </app-form-field>
-
-                  @if (franjas.length > 1) {
-                    <button app-button variant="ghost" size="sm" type="button" (clicked)="quitarFranja(i)">
-                      Quitar
-                    </button>
-                  }
-                </div>
+          <!-- Decisión 2 · la duración, como fichas: es una elección entre
+               pocas opciones conocidas, no un número que haya que pensar. -->
+          <fieldset class="agenda-create__duracion">
+            <legend class="agenda-create__duracion-label">¿Cuánto dura una consulta?</legend>
+            <div class="agenda-create__fichas">
+              @for (minutos of duraciones; track minutos) {
+                <button
+                  type="button"
+                  class="agenda-create__ficha"
+                  [class.agenda-create__ficha--activa]="
+                    grupoDe(dia.indice).controls.duracion.value === minutos
+                  "
+                  [attr.aria-pressed]="grupoDe(dia.indice).controls.duracion.value === minutos"
+                  (click)="elegirDuracion(dia.indice, minutos)"
+                >
+                  {{ minutos }} min
+                </button>
               }
             </div>
-
-            <button app-button variant="outline" size="sm" type="button" (clicked)="agregarFranja()">
-              Agregar franja
-            </button>
-          </app-form-section>
-
-          <app-form-section legend="Vigencia" description="Opcional: desde y hasta cuándo rige la plantilla.">
-            <app-form-field label="Válida desde">
-              <app-date-picker mode="date-time" [(value)]="validFrom" [disabled]="cargando()" />
-            </app-form-field>
-            <app-form-field label="Válida hasta">
-              <app-date-picker mode="date-time" [(value)]="validTo" [disabled]="cargando()" />
-            </app-form-field>
-          </app-form-section>
-        </form>
+          </fieldset>
+        </fieldset>
       }
 
-      <!-- ─── Fase 4: generar cupos ───────────────────────────────────── -->
-      @case (3) {
-        <app-form-section legend="Generar cupos" description="Materializa la plantilla en una ventana. Es idempotente: reejecutar no duplica.">
-          <app-form-field label="Desde" [required]="true">
-            <app-date-picker mode="date-time" [(value)]="desde" [disabled]="cargando()" />
-          </app-form-field>
-          <app-form-field label="Hasta" [required]="true">
-            <app-date-picker mode="date-time" [(value)]="hasta" [disabled]="cargando()" />
-          </app-form-field>
-
-          @if (ventanaTocada() && ventanaInvalida()) {
-            <app-alert tone="warning">
-              Indicá una ventana válida: el fin tiene que ser posterior al inicio.
-            </app-alert>
-          }
-        </app-form-section>
+      @if (diasActivos().length > 1) {
+        <button app-button variant="ghost" size="sm" type="button" (clicked)="repetirElPrimero()">
+          ↻ Repetir este horario en todos los días
+        </button>
       }
 
-      <!-- ─── Fase 5: excepción ───────────────────────────────────────── -->
-      @case (4) {
-        <form [formGroup]="formExcepcion" novalidate>
-          <app-form-section legend="Excepción de disponibilidad" description="Una ausencia, un feriado o disponibilidad extra. Bloquea los cupos libres que se solapan.">
-            <app-form-field label="Tipo" [required]="true"
-              [errorMessage]="formExcepcion.controls.exceptionType.touched && formExcepcion.controls.exceptionType.invalid ? 'Elegí el tipo de excepción.' : ''">
-              <app-select formControlName="exceptionType" [options]="opcionesExcepcion" placeholder="Elegí un tipo" />
-            </app-form-field>
+      <!-- La vista previa: los turnos que van a salir, sin llamar a la API.
+           Se recalcula sola al cambiar una hora o una duración. -->
+      @if (!sinDias()) {
+        <div class="agenda-create__previa" role="status">
+          <h3 class="agenda-create__previa-titulo">Así van a quedar tus turnos</h3>
 
-            <app-form-field label="Desde" [required]="true">
-              <app-date-picker mode="date-time" [(value)]="excStart" [disabled]="cargando()" />
-            </app-form-field>
-            <app-form-field label="Hasta" [required]="true">
-              <app-date-picker mode="date-time" [(value)]="excEnd" [disabled]="cargando()" />
-            </app-form-field>
+          @for (dia of vistaPrevia().porDia; track dia.dia) {
+            <p class="agenda-create__previa-dia">
+              <strong class="agenda-create__previa-cuenta"
+                >{{ dia.dia | titlecase }}: {{ dia.turnos.length }}
+                {{ dia.turnos.length === 1 ? 'turno' : 'turnos' }}</strong
+              >
+              @if (dia.turnos.length > 0) {
+                <span class="agenda-create__previa-horas">
+                  @for (turno of dia.turnos.slice(0, 3); track turno.desde) {
+                    {{ turno.desde }} ·
+                  }
+                  @if (dia.turnos.length > 4) {
+                    …·
+                  }
+                  @if (dia.turnos.length > 3) {
+                    {{ dia.turnos[dia.turnos.length - 1].desde }}
+                  }
+                </span>
+              }
+            </p>
 
-            @if (rangoTocado() && rangoInvalido()) {
-              <app-alert tone="warning">
-                Indicá un rango válido: el fin tiene que ser posterior al inicio.
-              </app-alert>
+            <!-- El resto, dicho como información y no como pregunta: el backend
+                 trunca (verificado), así que no hay nada que decidir. -->
+            @if (dia.restoDesde !== null) {
+              <p class="agenda-create__previa-resto">
+                Te queda libre de {{ dia.restoDesde }} a
+                {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }} ({{ dia.resto }}
+                min): no alcanza para otra consulta.
+              </p>
             }
-
-            <app-form-field label="Motivo" hint="Visible en la agenda (máx. 500)."
-              [errorMessage]="formExcepcion.controls.reason.touched && formExcepcion.controls.reason.invalid ? 'Máximo 500 caracteres.' : ''">
-              <app-textarea formControlName="reason" [rows]="3" />
-            </app-form-field>
-
-            <app-form-field label="Suma disponibilidad extraordinaria" hint="Activá si esta excepción añade horario en vez de bloquearlo.">
-              <app-switch formControlName="isAvailable" />
-            </app-form-field>
-          </app-form-section>
-        </form>
+          }
+        </div>
       }
-    }
-  </div>
+    </section>
 
-  <!-- ─── Navegación de fases ───────────────────────────────────────────── -->
-  <div class="agenda-create__nav">
-    @if (fase() > 0) {
-      <button app-button variant="ghost" type="button" [disabled]="cargando()" (clicked)="atras()">
-        Atrás
+    <!-- ── La vigencia, preguntada en humano ─────────────────────────────── -->
+    <section class="agenda-create__bloque">
+      <h2 class="agenda-create__titulo">¿Este horario tiene fecha de fin?</h2>
+
+      <div class="agenda-create__opciones" role="radiogroup" aria-label="Vigencia del horario">
+        <label class="agenda-create__opcion">
+          <input type="radio" formControlName="tieneFin" value="no" />
+          <span>No, hasta nuevo aviso</span>
+        </label>
+        <label class="agenda-create__opcion">
+          <input type="radio" formControlName="tieneFin" value="si" />
+          <span>Sí, hasta una fecha</span>
+        </label>
+      </div>
+
+      @if (formGeneral.controls.tieneFin.value === 'si') {
+        <app-date-picker
+          label="Último día con este horario"
+          [value]="fechaDeFin()"
+          (valueChange)="fechaDeFin.set($event)"
+        />
+      }
+    </section>
+
+    <!-- ── Todo lo demás ─────────────────────────────────────────────────── -->
+    <section class="agenda-create__bloque">
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        [attr.aria-expanded]="avanzadasAbiertas()"
+        (clicked)="avanzadasAbiertas.set(!avanzadasAbiertas())"
+      >
+        {{ avanzadasAbiertas() ? 'Ocultar' : 'Mostrar' }} opciones avanzadas
       </button>
+
+      @if (avanzadasAbiertas()) {
+        <div class="agenda-create__avanzadas">
+          @if (sedes().length > 1) {
+            <app-form-field label="¿En qué sede atendés?" hint="Si atendés en varias, elegí una">
+              <app-select formControlName="practiceId" [options]="sedes()" />
+            </app-form-field>
+          }
+
+          <app-form-field
+            label="¿Cuántos pacientes por turno?"
+            hint="Casi siempre es 1. Poné más sólo si atendés en grupo."
+          >
+            <app-input type="number" formControlName="capacidadPorTurno" />
+          </app-form-field>
+
+          <app-form-field
+            label="Zona horaria"
+            hint="La detectamos sola. Cambiala sólo si atendés en otro huso."
+          >
+            <app-input formControlName="timeZone" />
+          </app-form-field>
+
+          <label class="agenda-create__opcion">
+            <input
+              type="checkbox"
+              [checked]="usarPolitica()"
+              (change)="usarPolitica.set(!usarPolitica())"
+            />
+            <span>Poner reglas de reserva (anticipación, cancelación…)</span>
+          </label>
+
+          @if (usarPolitica()) {
+            <div class="agenda-create__politica" [formGroup]="formPolitica">
+              <app-form-field
+                label="Anticipación mínima"
+                hint="Minutos antes del turno hasta cuándo se puede pedir"
+              >
+                <app-input type="number" formControlName="minNoticeMinutes" />
+              </app-form-field>
+              <app-form-field label="Se puede reservar con hasta" hint="Días de anticipación">
+                <app-input type="number" formControlName="maxAdvanceDays" />
+              </app-form-field>
+              <app-form-field
+                label="Se puede cancelar hasta"
+                hint="Minutos antes del turno"
+              >
+                <app-input type="number" formControlName="cancellationWindowMinutes" />
+              </app-form-field>
+              <app-form-field label="Turnos activos por paciente" hint="Máximo simultáneo">
+                <app-input type="number" formControlName="maxActivePerPatient" />
+              </app-form-field>
+            </div>
+          }
+
+          @if (puedePublicarParaOtro()) {
+            <label class="agenda-create__opcion">
+              <input
+                type="checkbox"
+                [checked]="publicarParaOtro()"
+                (change)="publicarParaOtro.set(!publicarParaOtro())"
+              />
+              <span>Publicar la agenda de otro recurso (formulario técnico)</span>
+            </label>
+          }
+
+          @if (!publicaSoloLaPropia()) {
+            <div class="agenda-create__tecnico" [formGroup]="formTecnico">
+              <app-form-field label="Nombre del recurso">
+                <app-input formControlName="name" />
+              </app-form-field>
+              <app-form-field label="Tabla del perfil">
+                <app-input formControlName="resourceRefType" />
+              </app-form-field>
+              <app-form-field label="Identificador del recurso" [errorMessage]="uuidError">
+                <app-input formControlName="resourceRefId" />
+              </app-form-field>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    @if (!sinDias()) {
+      <p class="agenda-create__resumen" role="status">
+        Vas a publicar: <strong>{{ resumen() }}</strong>
+      </p>
     }
-    <button
-      app-button
-      variant="primary"
-      type="button"
-      [isLoading]="cargando()"
-      [disabled]="cargando()"
-      (clicked)="siguiente()"
-    >
-      {{ etiquetaPrimaria() }}
-    </button>
-  </div>
+
+    @if (errorMessage(); as mensaje) {
+      <app-alert tone="error" title="No se pudo publicar">{{ mensaje }}</app-alert>
+    }
+
+    <div class="agenda-create__acciones">
+      <button app-button type="submit" [isLoading]="cargando()" [disabled]="sinDias()">
+        Publicar mi agenda
+      </button>
+    </div>
+  </form>
 }

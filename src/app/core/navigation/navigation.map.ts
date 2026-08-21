@@ -109,12 +109,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // turnos» tampoco los declara—. La pantalla lo dice cuando falta, en vez
     // de esconderse del menú.
     path: 'messaging',
-    label: 'Mensajes',
+    label: 'Chats',
     group: 'General',
     icon: 'results',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Escribile a tu médico y seguí la conversación.',
+    summary: 'Escribile a tu médico y seguí la conversación, en vivo.',
     module: 'M19 community',
   },
   {
@@ -819,5 +819,37 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Seguí el estado de tus trámites de verificación de identidad.',
     module: 'M27 identity_assurance',
+  },
+  {
+    // TP-1: la organización como actor, no como dato.
+    //
+    // Distinta de «Organizaciones», que es el listado de la **plataforma**, y
+    // de «Organización médica», que administra la estructura clínica (sedes,
+    // quirófanos, consultorios). Ésta es la organización mirándose a sí misma:
+    // sus datos, su gente y quién pide trabajar con ella.
+    //
+    // **Sin `roles`, y no es un olvido.** El rol que importa acá —owner, admin
+    // o staff de la organización— es una membresía en `tenant_memberships`, no
+    // un rol global del token, así que el guard de roles no puede verlo.
+    // Filtrar por un rol global dejaría fuera justamente a la recepcionista,
+    // que es de quien es esta pantalla.
+    //
+    // Lo que sí se filtra es la **membresía**, con `requiresTenant`: sin
+    // `roles` la sección se le ofrecía también a un paciente, que no pertenece
+    // a organización ninguna, y le pintaba un rótulo «Administración» en el
+    // menú. La membresía viaja en el claim `tenants` del token, así que la
+    // pregunta se puede hacer de este lado. Ficha F-31.
+    path: 'administration/my-organization',
+    // `[ANY_ROLE]` y no la ausencia del campo: F-20 exige que toda sección
+    // declare sus roles, justamente para que un olvido no se lea como «la ve
+    // cualquiera». Acá la ve cualquiera **a propósito**, y así queda dicho.
+    roles: [ANY_ROLE],
+    label: 'Tu organización',
+    group: 'Administración',
+    icon: 'settings',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Los datos de tu organización, su gente y las solicitudes de médicos.',
+    module: 'M04 directory',
   },
 ];

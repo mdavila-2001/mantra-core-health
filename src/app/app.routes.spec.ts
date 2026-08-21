@@ -72,7 +72,15 @@ describe('rutas del armazón', () => {
      * pantalla que no esté en ella y no cuelgue de una sección sigue siendo un
      * error.
      */
-    const sinSeccionAProposito = ['feed'];
+    const sinSeccionAProposito = [
+      'feed',
+      // TJ-1 · el alta del profesional. No es una sección porque no es un lugar
+      // al que se vuelve: es una tarea con principio y fin, y una vez completa
+      // no tiene nada que mostrar. Se llega por el aviso del panel, no por el
+      // menú — una entrada permanente a algo que se hace una vez sería ruido
+      // para todos los médicos que ya lo completaron.
+      'onboarding',
+    ];
 
     const huerfanas = hijas.filter((r) => {
       const path = r.path ?? '';

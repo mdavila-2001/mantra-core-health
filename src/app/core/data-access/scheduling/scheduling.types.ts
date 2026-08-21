@@ -157,6 +157,14 @@ export interface Booking {
   readonly checkedInAt?: Date;
   readonly reasonText?: string;
   /**
+   * Nombre del paciente.
+   *
+   * Viaja con la **misma regla que el motivo**: lo manda el servidor sólo al
+   * titular y al profesional que atiende en esa agenda. Ausente no significa
+   * «no tiene nombre», significa «no te corresponde verlo».
+   */
+  readonly patientName?: string;
+  /**
    * Por qué la cita está como está, cuando el último cambio lo explicó.
    *
    * Es lo que hace que una cancelación deje de ser un cartel mudo: el paciente
@@ -164,6 +172,14 @@ export interface Booking {
    * cuando el último cambio no exigía motivo o la cita es anterior a la
    * corrección #14.
    */
+  /**
+   * De cuándo se movió, si la cita se reprogramó (TJ-2).
+   *
+   * Ausente cuando nunca se movió — que no es lo mismo que «se movió y no sé
+   * desde cuándo». Es el instante original, ya resuelto por el servidor.
+   */
+  readonly rescheduledFrom?: Date;
+
   readonly statusReason?: BookingStatusReason;
   /**
    * La demora que informó el profesional sobre este turno (P8).
@@ -536,4 +552,54 @@ export interface DelayNoticeResult {
   readonly affected: number;
   readonly bookingIds: readonly string[];
   readonly detail: string;
+}
+
+/**
+ * Una franja publicada, tal como la devuelve el `GET` de plantillas.
+ *
+ * La hora viene de pared —`09:00:00`— y no como instante: la regla dice «los
+ * lunes de nueve a una», y convertirla obligaría a elegir un lunes concreto.
+ */
+export interface PublishedRule {
+  readonly dayOfWeek: number;
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly slotMinutes?: number;
+  readonly capacityPerSlot?: number;
+}
+
+/** Una plantilla publicada, con sus franjas. */
+export interface PublishedTemplate {
+  readonly id: string;
+  readonly name: string;
+  readonly rules: readonly PublishedRule[];
+  readonly slotMinutes?: number;
+  readonly validFrom?: string;
+  readonly validTo?: string;
+  readonly bookingPolicyId?: string;
+  readonly statusConceptId: string;
+}
+
+/** La respuesta del listado de plantillas de un recurso. */
+export interface PublishedTemplatePage {
+  readonly items: readonly PublishedTemplate[];
+  readonly count: number;
+}
+
+/** Un bloqueo de disponibilidad ya publicado. */
+export interface PublishedException {
+  readonly id: string;
+  readonly exceptionTypeConceptId: string;
+  readonly startAt: string;
+  readonly endAt: string;
+  /** Por qué. Lo lee el profesional, no el paciente. */
+  readonly reason?: string;
+  /** `true` cuando la excepción ABRE disponibilidad en vez de cerrarla. */
+  readonly isAvailable?: boolean;
+}
+
+/** La respuesta del listado de excepciones de un recurso. */
+export interface AvailabilityExceptionPage {
+  readonly items: readonly PublishedException[];
+  readonly count: number;
 }

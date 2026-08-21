@@ -134,17 +134,12 @@
   </app-card>
 
   <!-- ─── Acceso ────────────────────────────────────────────────────────────
-       Organización y roles. Estaban sólo en el panel, que es otra pantalla, y
-       son la respuesta a «¿por qué no veo tal cosa?». Los roles van en palabras:
-       el código (`PATIENT`) es vocabulario de sistema y sólo viaja en
-       `data-role`, para quien lo lea por máquina.
-
-       **No para quien viene a atenderse** (F-22, 18/08/2026): a un paciente la
-       tarjeta le mostraba «Organización: Care Default Tenant» y «Roles:
-       Paciente» —vocabulario de gestión sobre una pantalla suya, y la cuarta
-       fuga de la misma regla—. No hay nada ahí que necesite: no elige
-       organización ni se concede roles. Para quien trabaja queda igual. -->
-  @if (!vieneAAtenderse()) {
+       Organización y roles. Son la respuesta a «¿por qué no veo tal cosa?»,
+       una pregunta que se hace quien trabaja acá. **A un paciente no se le
+       muestra** (F-22): no tiene secciones que le falten, y «Organización» y
+       «Roles» son vocabulario de sistema en su vista. Los roles van en
+       palabras: el código (`PATIENT`) sólo viaja en `data-role`. -->
+  @if (muestraElAcceso()) {
   <app-card class="mi-perfil__bloque" variant="outlined" padding="lg" data-testid="mi-perfil-acceso">
     <h2 class="mi-perfil__titulo">Tu acceso</h2>
 

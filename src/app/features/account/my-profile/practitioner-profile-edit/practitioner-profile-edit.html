@@ -12,9 +12,7 @@
            reemplaza. -->
       <app-card variant="outlined" padding="lg" class="edicion__bloque">
         <h2 class="edicion__titulo">Presentación</h2>
-        <p class="edicion__nota">
-          Cómo te ven las personas que consultan tu perfil.
-        </p>
+        <p class="edicion__nota">Cómo te ven las personas que consultan tu perfil.</p>
 
         <form class="edicion__formulario" (submit)="$event.preventDefault()">
           <app-form-field label="Título profesional" hint="«Médica cardióloga», «Kinesiólogo».">
@@ -56,15 +54,33 @@
         </p>
 
         <form class="edicion__formulario" (submit)="$event.preventDefault()">
-          <app-form-field label="Especialidad" [required]="true">
-            <app-concept-select
-              [target]="targetEspecialidad"
-              [(value)]="nuevaEspecialidad"
-              placeholder="Elegí una especialidad"
-            />
-          </app-form-field>
+          <!-- TJ-3 · F-19: las 36 especialidades del modelo, en castellano. Antes
+               esto pedía el catálogo por campo destino y llegaba una sola opción
+               («General medicine specialty»), que además no la usa ninguna fila. -->
+          @if (catalogoCaido()) {
+            <app-form-field label="Especialidad">
+              <p class="edicion__aviso" data-testid="especialidades-caidas">
+                No pudimos traer el catálogo de especialidades.
+                <button app-button variant="ghost" size="sm" (clicked)="reintentarEspecialidades()">
+                  Reintentar
+                </button>
+              </p>
+            </app-form-field>
+          } @else {
+            <app-form-field label="Especialidad" [required]="true">
+              <app-select
+                data-testid="especialidad-select"
+                [options]="especialidades()"
+                [(value)]="nuevaEspecialidad"
+                placeholder="Elegí una especialidad"
+              />
+            </app-form-field>
+          }
 
-          <app-switch [(checked)]="nuevaEspecialidadPrincipal" label="Es mi especialidad principal" />
+          <app-switch
+            [(checked)]="nuevaEspecialidadPrincipal"
+            label="Es mi especialidad principal"
+          />
           <app-switch
             [(checked)]="nuevaEspecialidadCertificada"
             label="Tengo certificación de junta (board certified)"
@@ -100,8 +116,21 @@
             <app-input [(value)]="nuevoNumeroDeMatricula" placeholder="Nº de licencia" />
           </app-form-field>
 
-          <app-form-field label="Autoridad regulatoria" hint="Opcional. El colegio o consejo emisor.">
+          <app-form-field
+            label="Autoridad regulatoria"
+            hint="Ministerio de Salud y Deportes, Colegio de Odontólogos, SEDES..."
+          >
             <app-input [(value)]="nuevaAutoridad" placeholder="Colegio Médico de..." />
+          </app-form-field>
+
+          <app-form-field
+            label="Fecha de inscripción"
+            hint="Cuándo quedó registrada esta matrícula."
+          >
+            <app-date-picker
+              [(value)]="nuevaFechaInscripcion"
+              placeholder="Seleccionar fecha"
+            />
           </app-form-field>
 
           <app-form-actions
@@ -109,6 +138,53 @@
             [pending]="guardandoMatricula()"
             [disabled]="!puedeAgregarMatricula()"
             (submitted)="agregarMatricula()"
+          />
+        </form>
+      </app-card>
+
+      <!-- ─── Dirección ───────────────────────────────────────────────────
+           Mismo criterio: se agrega, no se edita. `POST /common/addresses`
+           todavía no tiene edición. -->
+      <app-card variant="outlined" padding="lg" class="edicion__bloque">
+        <h2 class="edicion__titulo">Dirección</h2>
+        <p class="edicion__nota">Dónde atendés o dónde te ubican tus pacientes.</p>
+
+        <form class="edicion__formulario" (submit)="$event.preventDefault()">
+          <app-form-field label="Dirección" [required]="true">
+            <app-input
+              [(value)]="nuevaLineaDireccion"
+              placeholder="Av. Siempre Viva 742, entre calles..."
+            />
+          </app-form-field>
+
+          <app-form-field label="Ciudad (opcional)">
+            <app-input [(value)]="nuevaCiudad" placeholder="Santa Cruz de la Sierra" />
+          </app-form-field>
+
+          @if (catalogoDepartamentosCaido()) {
+            <app-form-field label="Departamento">
+              <p class="edicion__aviso">
+                No pudimos traer el catálogo de departamentos.
+                <button app-button variant="ghost" size="sm" (clicked)="reintentarDepartamentos()">
+                  Reintentar
+                </button>
+              </p>
+            </app-form-field>
+          } @else {
+            <app-form-field label="Departamento (opcional)">
+              <app-select
+                [options]="opcionesDepartamento()"
+                [(value)]="nuevoDepartamentoDireccion"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+          }
+
+          <app-form-actions
+            submitLabel="Guardar dirección"
+            [pending]="guardandoDireccion()"
+            [disabled]="!puedeAgregarDireccion()"
+            (submitted)="agregarDireccion()"
           />
         </form>
       </app-card>

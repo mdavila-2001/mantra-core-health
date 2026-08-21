@@ -93,25 +93,22 @@ export class PractitionersDirectory {
 
   protected readonly grupos = computed<readonly GrupoDeEspecialidad[]>(() => {
     const todos = dataOf(this.estado()) ?? [];
-    const busqueda = this.filtro().trim().toLowerCase();
+    const busqueda = normalizar(this.filtro());
     if (busqueda === '') {
       return todos;
     }
     // Se filtran los profesionales y se descartan los grupos que quedan
     // vacíos: un encabezado de especialidad sin nadie debajo es ruido.
-    //
-    // Un grupo cuyo **encabezado** casa con lo buscado se conserva entero
-    // (F-19/F-27): quien escribe «cardio» está buscando la especialidad, no un
-    // apellido, y esconder a los cardiólogos porque su nombre no dice «cardio»
-    // es exactamente lo contrario de lo que pidió.
     return todos
       .map((grupo) => ({
         ...grupo,
-        profesionales: grupo.nombre.toLowerCase().includes(busqueda)
+        // Buscar «cardiología» tiene que traer a los cardiólogos, no a nadie:
+        // el placeholder promete buscar por especialidad, y la especialidad es
+        // el ENCABEZADO, no un dato de la tarjeta. Si el texto casa con el
+        // grupo, el grupo entra entero (TJ-3).
+        profesionales: normalizar(grupo.nombre).includes(busqueda)
           ? grupo.profesionales
-          : grupo.profesionales.filter((profesional) =>
-              coincide(profesional, busqueda),
-            ),
+          : grupo.profesionales.filter((profesional) => coincide(profesional, busqueda)),
       }))
       .filter((grupo) => grupo.profesionales.length > 0);
   });
@@ -184,12 +181,22 @@ export class PractitionersDirectory {
   }
 }
 
+/**
+ * Texto comparable: sin mayúsculas ni tildes.
+ *
+ * Sin esto, «cardiologia» no encuentra «Cardiología» y media guía queda
+ * inalcanzable para quien no pone el acento —que es casi todo el mundo—.
+ */
+function normalizar(texto: string): string {
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
 /** Si el profesional casa con el texto del filtro. */
 function coincide(profesional: SearchResultItem, busqueda: string): boolean {
-  if (profesional.title.toLowerCase().includes(busqueda)) {
+  if (normalizar(profesional.title).includes(busqueda)) {
     return true;
   }
-  return (profesional.meta ?? []).some((linea) => linea.text.toLowerCase().includes(busqueda));
+  return (profesional.meta ?? []).some((linea) => normalizar(linea.text).includes(busqueda));
 }
 
 /** Todos los conceptos de la guía, para pedir el catálogo una sola vez. */

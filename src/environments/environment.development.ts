@@ -21,6 +21,13 @@ export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
 
   /**
+   * Encendida por defecto en desarrollo: quien levanta la app local ve la
+   * barra de casos de demostración sin configurar nada. Se apaga con
+   * `PUBLIC_DEMO_PRESETS=false` en el `.env`.
+   */
+  demoPresets: envFromProcess.demoPresets ?? true,
+
+  /**
    * También apagada por defecto en desarrollo, y por un motivo práctico: sin un
    * Collector escuchando, cada lote de spans sería una petición fallida cada
    * cinco segundos en la consola de quien esté trabajando en otra cosa.

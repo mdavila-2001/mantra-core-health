@@ -32,7 +32,8 @@
     "e2e:p4:playwright": "node scripts/e2e-carril-p4.mjs --solo=playwright",
     "e2e:p4:cypress": "node scripts/e2e-carril-p4.mjs --solo=cypress",
     "e2e:vertical": "playwright test playwright/carril-j5-vertical-p0.spec.ts",
-    "audit:vistas": "node scripts/audit-design-views.mjs"
+    "audit:vistas": "node scripts/audit-design-views.mjs",
+    "e2e:auditoria": "playwright test playwright/auditoria-prompts.spec.ts --reporter=list"
   },
   "private": true,
   "packageManager": "yarn@4.18.0",
@@ -57,7 +58,9 @@
     "@opentelemetry/semantic-conventions": "1.43.0",
     "express": "^5.1.0",
     "jspdf": "^4.2.1",
+    "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",
+    "socket.io-client": "^4",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
@@ -67,6 +70,7 @@
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
     "@types/express": "^5.0.1",
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^20.17.19",
     "@vitest/coverage-v8": "^4.1.10",
     "angular-eslint": "^22.1.0",

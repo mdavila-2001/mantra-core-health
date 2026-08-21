@@ -1,0 +1,118 @@
+<app-page-header
+  title="Mi agenda"
+  subtitle="El horario que tenés publicado y hasta cuándo hay turnos abiertos."
+/>
+
+<app-view-state-host [state]="estado()" (retry)="cargar()">
+  @if (patron(); as p) {
+    <!-- Dos preguntas distintas sobre la misma agenda: «qué horario tengo» y
+         «cómo viene mi carga». Activación manual: la solapa se elige, no se
+         carga sola al mover el foco. -->
+    <div class="mi-agenda__solapas" role="tablist" aria-label="Vistas de mi agenda">
+      <button
+        type="button"
+        role="tab"
+        class="mi-agenda__solapa"
+        [class.mi-agenda__solapa--activa]="solapa() === 'patron'"
+        [attr.aria-selected]="solapa() === 'patron'"
+        (click)="verSolapa('patron')"
+      >
+        Mi horario
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="mi-agenda__solapa"
+        [class.mi-agenda__solapa--activa]="solapa() === 'mes'"
+        [attr.aria-selected]="solapa() === 'mes'"
+        (click)="verSolapa('mes')"
+      >
+        Cómo viene el mes
+      </button>
+    </div>
+
+    @if (solapa() === 'mes') {
+      <!-- Tocar un día abre su detalle; bloquearlo es una acción de la vista
+           del día, no del mes: desde el mes no se ve qué se estaría tapando. -->
+      @if (diaAbierto(); as dia) {
+        <app-day-view
+          [dia]="dia"
+          [cupos]="cuposDelDia()"
+          [citas]="citasDelDia()"
+          [bloqueos]="bloqueosDelMes()"
+          [etiquetas]="estadosResueltos()"
+          [puedeRegistrarLlegada]="puedeRegistrarLlegada()"
+          (accionPedida)="ejecutar($event)"
+          (volver)="volverAlMes()"
+        />
+        <div class="mi-agenda__acciones-dia">
+          <button app-button variant="secondary" size="sm" type="button" (clicked)="bloquearDia(dia)">
+            Bloquear este día
+          </button>
+        </div>
+      } @else {
+        <app-month-view
+          [mes]="mesVisible()"
+          [cupos]="cuposDelMes()"
+          [bloqueos]="bloqueosDelMes()"
+          (mesElegido)="cambiarMes($event)"
+          (diaElegido)="abrirDia($event)"
+        />
+      }
+    } @else {
+    <section class="mi-agenda__tarjeta">
+      <h2 class="mi-agenda__titulo">Atendés estos días</h2>
+
+      <!-- La misma semanita del formulario, en modo lectura: se reconoce de
+           inmediato porque es la que se usó para publicar. -->
+      <ul class="mi-agenda__semana" aria-label="Días que atendés">
+        @for (dia of p.semana; track dia.numero) {
+          <li
+            class="mi-agenda__dia"
+            [class.mi-agenda__dia--activo]="dia.activo"
+            [attr.aria-label]="dia.activo ? dia.largo + ': atendés' : dia.largo + ': no atendés'"
+          >
+            <span aria-hidden="true">{{ dia.corto }}</span>
+          </li>
+        }
+      </ul>
+
+      <ul class="mi-agenda__franjas">
+        @for (franja of p.franjas; track franja.texto) {
+          <li>{{ franja.texto }}</li>
+        }
+      </ul>
+
+      @if (p.vigencia) {
+        <p class="mi-agenda__vigencia">{{ p.vigencia }}</p>
+      } @else {
+        <p class="mi-agenda__vigencia">Sin fecha de fin: rige hasta que lo cambies.</p>
+      }
+
+      <a app-button variant="secondary" [routerLink]="[rutaDePublicar]">Cambiar mi horario</a>
+    </section>
+
+    <!-- El parche manual del horizonte rodante: nadie regenera cupos todavía,
+         así que una agenda se vacía en silencio si no se avisa. -->
+    @if (seAgotan()) {
+      <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
+        Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
+        >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga publicado.
+        <button
+          app-button
+          size="sm"
+          [isLoading]="generando()"
+          (clicked)="generarSiguientePeriodo()"
+        >
+          Abrir tres meses más
+        </button>
+      </app-alert>
+    } @else if (cuposHastaTexto()) {
+      <p class="mi-agenda__cupos" role="status">
+        Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
+        >.
+      </p>
+    }
+    }
+  }
+</app-view-state-host>

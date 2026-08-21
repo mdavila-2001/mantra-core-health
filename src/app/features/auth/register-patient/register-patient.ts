@@ -3,6 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
   PatientRegistration,
@@ -12,14 +13,23 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
-import { Radio } from '@shared/components/molecules/radio/radio';
-import { RadioGroup } from '@shared/components/molecules/radio-group/radio-group';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
+
+/** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
+function fechaIso(fecha: Date): string {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
 
 /** Mínimos que exigen los DTO del backend. */
 const MIN_PASSWORD = 8;
@@ -52,10 +62,10 @@ type TipoCuenta = 'paciente' | 'profesional';
     ReactiveFormsModule,
     RouterLink,
     AppButton,
+    DatePicker,
     Input,
     Link,
-    Radio,
-    RadioGroup,
+    Select,
     FormField,
     Alert,
     AuthSplit, AnnounceOnAppear],
@@ -109,11 +119,32 @@ export class RegisterPatient {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
     }),
+    // Documento de identidad: opcional para el profesional (se guarda como
+    // identificador oficial, no como login — eso lo sigue siendo el correo).
+    nationalId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.pattern(DOCUMENTO_VALIDO)],
+    }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     credentialNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    // Quién emitió la matrícula: Ministerio de Salud y Deportes para la
+    // mayoría de las especialidades médicas, o el Colegio de Odontólogos para
+    // quien ejerce odontología. Texto libre porque no todas las jurisdicciones
+    // ni todos los colegios departamentales caben en un catálogo cerrado.
+    regulatoryAuthority: new FormControl('', { nonNullable: true }),
     professionalTitle: new FormControl('', { nonNullable: true }),
     phone: new FormControl('', { nonNullable: true }),
   });
+
+  /** Fecha de nacimiento y fechas de emisión: van con `app-date-picker`, no con `FormControl`. */
+  readonly fechaNacimientoProfesional = signal<Date | null>(null);
+  readonly fechaInscripcionMatricula = signal<Date | null>(null);
+
+  /** Departamento que emitió el documento (VS_ADMINISTRATIVE_AREA), y su catálogo. */
+  private readonly departamentos = inject(BoDepartmentsCatalog);
+  readonly departamentoEmisor = signal<string | null>(null);
+  readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
+  readonly catalogoDepartamentosCaido = signal(false);
 
   readonly state = signal<ViewState<null>>(ready(null));
   readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -156,6 +187,33 @@ export class RegisterPatient {
     }
     return null;
   });
+
+  constructor() {
+    this.cargarDepartamentos();
+  }
+
+  /**
+   * Trae el catálogo de departamentos bolivianos, para «departamento que
+   * emitió tu documento».
+   *
+   * Un fallo no bloquea el registro: el campo es opcional, así que sin
+   * catálogo la persona sigue pudiendo crear su cuenta y completar el dato
+   * después desde su perfil.
+   */
+  protected cargarDepartamentos(): void {
+    this.departamentos.listar().subscribe({
+      next: (opciones) => {
+        this.catalogoDepartamentosCaido.set(false);
+        this.opcionesDepartamento.set(
+          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+        );
+      },
+      error: () => {
+        this.opcionesDepartamento.set([]);
+        this.catalogoDepartamentosCaido.set(true);
+      },
+    });
+  }
 
   /**
    * Cambiar de tipo limpia el error anterior: era de otro formulario.
@@ -250,6 +308,11 @@ export class RegisterPatient {
     const telefono = raw.phone.trim();
     const segundoNombre = raw.middleName.trim();
     const apellidoMaterno = raw.motherLastName.trim();
+    const documento = raw.nationalId.trim();
+    const autoridad = raw.regulatoryAuthority.trim();
+    const fechaNacimiento = this.fechaNacimientoProfesional();
+    const fechaInscripcion = this.fechaInscripcionMatricula();
+    const departamento = this.departamentoEmisor();
 
     return {
       email: raw.email.trim(),
@@ -258,8 +321,17 @@ export class RegisterPatient {
       lastName: raw.lastName.trim(),
       ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
+      ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
+      ...(documento === '' ? {} : { nationalId: documento }),
+      // Sólo tiene sentido con documento: sin CI no hay identificador al que
+      // atarle un departamento de emisión.
+      ...(documento === '' || departamento === null
+        ? {}
+        : { issuerAdministrativeAreaConceptId: departamento }),
       licenseNumber: raw.licenseNumber.trim(),
       credentialNumber: raw.credentialNumber.trim(),
+      ...(autoridad === '' ? {} : { regulatoryAuthority: autoridad }),
+      ...(fechaInscripcion === null ? {} : { licenseIssueDate: fechaIso(fechaInscripcion) }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
       ...(telefono === '' ? {} : { phone: telefono }),
     };

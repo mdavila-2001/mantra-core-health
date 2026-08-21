@@ -7,6 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import type { WritableSignal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -18,6 +19,8 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Badge } from '../../../../shared/components/atoms/badge/badge';
+import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
@@ -29,8 +32,14 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
+import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
+import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
+import { environment } from '../../../../../environments/environment';
+import { CASOS_RECETA_DEMO, conceptIdPorCodigo } from '../demo-presets';
+import type { CasoRecetaDemo } from '../demo-presets';
 
 /**
  * La columna que gobierna el medicamento.
@@ -179,14 +188,18 @@ export interface RecetaEnFicha {
   imports: [
     Alert,
     AppButton,
+    Badge,
     AppInput,
     Card,
+    Chip,
     ConceptSelect,
+    DatePicker,
     FormActions,
     FormField,
     ReferenceCombobox,
     Select,
     StatusSeal,
+    Textarea,
   ],
   templateUrl: './medication-block.html',
   styleUrl: './medication-block.css',
@@ -251,6 +264,34 @@ export class MedicationBlock {
   protected readonly etiquetasDeVia = ETIQUETAS_DE_VIA;
   protected readonly etiquetasDeUnidad = ETIQUETAS_DE_UNIDAD;
 
+  /* -- Casos de demostración ------------------------------------------------ */
+
+  /** La barra existe sólo donde el despliegue la pidió (`PUBLIC_DEMO_PRESETS`). */
+  protected readonly demoActiva = environment.demoPresets;
+  protected readonly casosDemo = CASOS_RECETA_DEMO;
+
+  /** Opciones de pautas rápidas de dosificación. */
+  protected readonly opcionesFrecuenciaRapida: readonly string[] = [
+    'Cada 8 horas',
+    'Cada 12 horas',
+    'Cada 24 horas (1 vez al día)',
+    'Cada 6 horas',
+    'En ayunas',
+    'Antes de dormir',
+    'Según necesidad (SOS)',
+  ];
+
+  /** Opciones de duración rápida del tratamiento. */
+  protected readonly opcionesDuracionRapida: readonly { readonly dias: number | null; readonly label: string }[] = [
+    { dias: 3, label: '3 días' },
+    { dias: 5, label: '5 días' },
+    { dias: 7, label: '7 días' },
+    { dias: 10, label: '10 días' },
+    { dias: 14, label: '14 días' },
+    { dias: 30, label: '30 días' },
+    { dias: null, label: 'Crónico / Continuo' },
+  ];
+
   /**
    * La organización bajo la que se receta.
    *
@@ -268,6 +309,31 @@ export class MedicationBlock {
   protected readonly cantidad = signal<string | number | null>('');
   protected readonly via = signal<string | null>(null);
   protected readonly unidad = signal<string | null>(null);
+
+  /* -- Vigencia y duración estructurada ------------------------------------- */
+
+  protected readonly validFrom = signal<Date | null>(null);
+  protected readonly validTo = signal<Date | null>(null);
+  protected readonly duracionDias = signal<number | null>(null);
+  protected readonly esCronico = signal(false);
+
+  /** Indicaciones al paciente. Viajan como `patientInstructionsText` (v4.1.3). */
+  protected readonly indicacionesPaciente = signal<string>('');
+
+  /**
+   * La última cantidad que sugirió la pauta. Distinguirla de una tecleada a
+   * mano es lo que permite recalcularla al cambiar de chip sin pisar jamás lo
+   * que quien receta escribió.
+   */
+  private ultimaCantidadSugerida: string | null = null;
+
+  /**
+   * Las opciones de vía y unidad, guardadas para resolver los casos de
+   * demostración por **código**. Mismas peticiones que ya hacen los selectores:
+   * el cliente memoiza por target.
+   */
+  private readonly opcionesVia = signal<readonly DynamicEnumOption[]>([]);
+  private readonly opcionesUnidad = signal<readonly DynamicEnumOption[]>([]);
 
   /* -- Buscar el medicamento en el catálogo -------------------------------- */
 
@@ -424,6 +490,19 @@ export class MedicationBlock {
       // que convenga reintentar: es un dato que falta en el catálogo.
       error: () => this.catalogoListo.set(false),
     });
+    this.cargarOpciones(TARGET_VIA, this.opcionesVia);
+    this.cargarOpciones(TARGET_UNIDAD, this.opcionesUnidad);
+  }
+
+  /** Guarda las opciones de un catálogo. Sin catálogo, lista vacía y ya. */
+  private cargarOpciones(
+    target: string,
+    destino: WritableSignal<readonly DynamicEnumOption[]>,
+  ): void {
+    this.systemContext.dynamicEnum(target).subscribe({
+      next: (enumeracion) => destino.set(enumeracion.options),
+      error: () => destino.set([]),
+    });
   }
 
   /* -- Elegir el medicamento ----------------------------------------------- */
@@ -441,15 +520,7 @@ export class MedicationBlock {
     this.buscandoMedicamento.set(true);
     this.terminology.searchConcepts({ query: texto, limit: TOPE_DE_LA_BUSQUEDA }).subscribe({
       next: (pagina) => {
-        this.opcionesDeMedicamento.set(
-          pagina.items.map((concepto) => ({
-            value: concepto.conceptId,
-            label: concepto.display,
-            // El código —el ATC, en el vademécum— desambigua dos denominaciones
-            // parecidas, que en un catálogo de medicamentos es lo habitual.
-            hint: concepto.code,
-          })),
-        );
+        this.opcionesDeMedicamento.set(pagina.items.map(comoOpcionDeMedicamento));
         this.buscandoMedicamento.set(false);
       },
       // Sin resultados y sin ruido: el combobox ya dice «sin resultados», y un
@@ -517,6 +588,141 @@ export class MedicationBlock {
       .join(SEPARADOR_DE_DOSIS);
   }
 
+  /**
+   * Fija la duración del tratamiento y deriva la fecha de fin de vigencia.
+   *
+   * `null` significa tratamiento crónico/continuo: sin fecha de fin, y el chip
+   * lo refleja vía {@link esCronico}.
+   */
+  protected fijarDuracion(dias: number | null): void {
+    this.duracionDias.set(dias);
+    if (dias === null) {
+      this.esCronico.set(true);
+      this.validTo.set(null);
+    } else {
+      this.esCronico.set(false);
+      const inicio = this.validFrom() ?? new Date();
+      if (this.validFrom() === null) {
+        this.validFrom.set(inicio);
+      }
+      const fin = new Date(inicio);
+      fin.setDate(fin.getDate() + dias);
+      this.validTo.set(fin);
+    }
+    this.sugerirCantidad();
+  }
+
+  /** Fija una pauta rápida de frecuencia y recalcula la cantidad sugerida. */
+  protected fijarFrecuenciaRapida(pauta: string): void {
+    this.frecuencia.set(pauta);
+    this.sugerirCantidad();
+  }
+
+  /**
+   * Sugiere la cantidad a dispensar cuando la pauta la determina: con
+   * frecuencia «Cada N horas» y duración en días, son `24/N` tomas diarias por
+   * los días del tratamiento. Nunca pisa una cantidad tecleada a mano —solo el
+   * campo vacío o la sugerencia anterior—: es un ahorro de tecleo, no una
+   * regla, y la cantidad la decide quien receta.
+   */
+  private sugerirCantidad(): void {
+    const horas = horasDeFrecuencia(this.frecuencia());
+    const dias = this.duracionDias();
+    if (horas === null || dias === null) {
+      return;
+    }
+    const sugerida = String(Math.ceil((24 / horas) * dias));
+    const actual = String(this.cantidad() ?? '').trim();
+    if (actual === '' || actual === this.ultimaCantidadSugerida) {
+      this.cantidad.set(sugerida);
+      this.ultimaCantidadSugerida = sugerida;
+    }
+  }
+
+  /**
+   * Precarga el formulario con un caso de demostración.
+   *
+   * La vía y la unidad se resuelven al `conceptId` del catálogo por código
+   * EXACTO; el medicamento se busca en terminología y se selecciona sólo si el
+   * resultado coincide con lo pedido. Lo que no resuelve queda sin elegir y se
+   * avisa — nunca se cae a «la primera opción de la lista».
+   *
+   * Pública a propósito: los escenarios combinados del expediente la invocan.
+   */
+  aplicarCasoDemo(caso: CasoRecetaDemo): void {
+    const faltantes: string[] = [];
+    const via = conceptIdPorCodigo(this.opcionesVia(), caso.viaCodigo);
+    if (via === null) {
+      faltantes.push(`vía (${caso.viaCodigo})`);
+    }
+    const unidad = conceptIdPorCodigo(this.opcionesUnidad(), caso.unidadCodigo);
+    if (unidad === null) {
+      faltantes.push(`unidad (${caso.unidadCodigo})`);
+    }
+
+    this.via.set(via);
+    this.unidad.set(unidad);
+    this.dosis.set(caso.dosis);
+    this.frecuencia.set(caso.frecuencia);
+    this.indicacionesPaciente.set(caso.indicaciones);
+    this.validFrom.set(new Date());
+    this.fijarDuracion(caso.diasTratamiento);
+    this.cantidad.set(String(caso.cantidad));
+
+    this.seleccionarMedicamentoDelCaso(caso, faltantes);
+  }
+
+  /**
+   * Busca el medicamento del caso y lo elige si el catálogo lo tiene.
+   *
+   * La selección exige que el `display` coincida con lo pedido (exacto, o como
+   * prefijo): elegir «el primer resultado» de una búsqueda es cómo se receta
+   * otra cosa. El aviso del caso sale recién acá, porque hasta que la búsqueda
+   * no responde no se sabe si quedó completo.
+   */
+  private seleccionarMedicamentoDelCaso(caso: CasoRecetaDemo, faltantes: string[]): void {
+    const query = caso.medicamentoQuery;
+    this.buscandoMedicamento.set(true);
+    this.terminology.searchConcepts({ query, limit: TOPE_DE_LA_BUSQUEDA }).subscribe({
+      next: (pagina) => {
+        const opciones = pagina.items.map(comoOpcionDeMedicamento);
+        this.opcionesDeMedicamento.set(opciones);
+        this.buscandoMedicamento.set(false);
+
+        const buscado = query.toLowerCase();
+        const elegido =
+          opciones.find((opcion) => opcion.label.toLowerCase() === buscado) ??
+          opciones.find((opcion) => opcion.label.toLowerCase().startsWith(buscado)) ??
+          null;
+        if (elegido === null) {
+          faltantes.push(`medicamento («${query}»)`);
+        } else {
+          this.medicamento.set(elegido.value);
+          this.onMedicamentoElegido(elegido);
+        }
+        this.avisarCasoAplicado(caso.label, faltantes);
+      },
+      error: () => {
+        this.opcionesDeMedicamento.set([]);
+        this.buscandoMedicamento.set(false);
+        faltantes.push(`medicamento («${query}» — la búsqueda no respondió)`);
+        this.avisarCasoAplicado(caso.label, faltantes);
+      },
+    });
+  }
+
+  /** Cuenta cómo quedó el caso: completo, o con lo que no resolvió. */
+  private avisarCasoAplicado(label: string, faltantes: readonly string[]): void {
+    if (faltantes.length > 0) {
+      this.toasts.warning(
+        `Sin correspondencia en el catálogo: ${faltantes.join(', ')}. Elegilos a mano.`,
+        `Caso «${label}» aplicado parcialmente`,
+      );
+    } else {
+      this.toasts.info('Revisá y prescribí cuando quieras.', `Caso «${label}» aplicado`);
+    }
+  }
+
   /* -- Las tres escrituras ------------------------------------------------- */
 
   /**
@@ -550,11 +756,18 @@ export class MedicationBlock {
       return;
     }
 
+    // La posología y las indicaciones viajan SEPARADAS a propósito: `doseText`
+    // lo lee farmacia para dispensar, y las indicaciones al paciente tienen su
+    // columna propia desde v4.1.3. Concatenarlas fue el interino que v4.1.3
+    // vino a retirar.
     const dosis = this.posologia();
+    const indicaciones = this.indicacionesPaciente().trim();
     const frecuencia = this.frecuencia().trim();
     const cantidad = cantidadDe(this.cantidad());
     const via = this.via();
     const unidad = this.unidad();
+    const validFrom = this.validFrom() ?? undefined;
+    const validTo = this.validTo() ?? undefined;
 
     this.registrando.set(true);
     this.registro.set(loading());
@@ -573,6 +786,9 @@ export class MedicationBlock {
         ...(cantidad === null ? {} : { quantityDecimal: cantidad }),
         ...(via === null ? {} : { routeConceptId: via }),
         ...(unidad === null ? {} : { unitConceptId: unidad }),
+        ...(validFrom === undefined ? {} : { validFrom }),
+        ...(validTo === undefined ? {} : { validTo }),
+        ...(indicaciones === '' ? {} : { patientInstructionsText: indicaciones }),
       })
       .subscribe({
         next: () => {
@@ -740,12 +956,37 @@ export class MedicationBlock {
     this.cantidad.set('');
     this.via.set(null);
     this.unidad.set(null);
+    this.validFrom.set(new Date());
+    this.validTo.set(null);
+    this.duracionDias.set(null);
+    this.esCronico.set(false);
+    this.indicacionesPaciente.set('');
+    this.ultimaCantidadSugerida = null;
   }
 }
 
 /** Textos del catálogo como opciones de un desplegable, tal como vienen. */
 function aOpciones(textos: readonly string[]): readonly SelectOption<string>[] {
   return textos.map((texto) => ({ value: texto, label: texto }));
+}
+
+/**
+ * Un concepto del catálogo como opción del buscador. El código —el ATC, en el
+ * vademécum— desambigua dos denominaciones parecidas, que en un catálogo de
+ * medicamentos es lo habitual.
+ */
+function comoOpcionDeMedicamento(concepto: {
+  readonly conceptId: string;
+  readonly display: string;
+  readonly code: string;
+}): ReferenceOption {
+  return { value: concepto.conceptId, label: concepto.display, hint: concepto.code };
+}
+
+/** Las horas de una pauta «Cada N horas», o `null` si la pauta no las fija. */
+function horasDeFrecuencia(pauta: string): number | null {
+  const partes = /^cada (\d+) horas/i.exec(pauta.trim());
+  return partes === null ? null : Number(partes[1]);
 }
 
 /**

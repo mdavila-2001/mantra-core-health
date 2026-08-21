@@ -18,6 +18,8 @@ import type {
 } from '../../../shared/components/organisms/data-table/data-table.types';
 import { FilterBar } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import type { FilterDef } from '../../../shared/components/organisms/filter-bar/filter-bar';
+import { AppMap } from '../../../shared/components/organisms/map/map';
+import type { PinMapa } from '../../../shared/components/organisms/map/pin-mapa.types';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { Header } from '../../../shared/components/organisms/header/header';
@@ -66,13 +68,14 @@ const PACIENTES: readonly PacienteDemo[] = [
 ];
 
 /**
- * Los 11 organismos en un solo lugar. La vitrina es la superficie de
+ * Los 12 organismos en un solo lugar. La vitrina es la superficie de
  * observación del sistema: si una pieza no se muestra acá, deja de mirarse.
  */
 @Component({
   selector: 'app-organisms-gallery',
   imports: [
     AppButton,
+    AppMap,
     AuthLayout,
     DataTable,
     FilterBar,
@@ -184,6 +187,46 @@ export class OrganismsGallery {
   ];
   protected readonly ultimosFiltros = signal('—');
 
+  /* ---- mapa ---------------------------------------------------------------- */
+
+  // Los ids son los códigos que la pantalla real pinta en las tarjetas (A/B/C):
+  // en el mapa jamás viaja un uuid.
+  protected readonly pinesDemo: readonly PinMapa[] = [
+    {
+      id: 'A',
+      codigo: 'A',
+      lat: -17.7837,
+      lng: -63.1812,
+      titulo: 'Farmacia Central · Sucursal 24 de Septiembre',
+      subtitulo: 'a 0,4 km en línea recta',
+      estado: { etiqueta: 'Tiene todo', tono: 'success' },
+      ctaEtiqueta: 'Ver en la lista',
+    },
+    {
+      id: 'B',
+      codigo: 'B',
+      lat: -17.771,
+      lng: -63.195,
+      titulo: 'Farmacia del Sur · Sucursal Equipetrol',
+      subtitulo: 'a 2,1 km en línea recta',
+      estado: { etiqueta: 'Le falta algo', tono: 'warning' },
+      ctaEtiqueta: 'Ver en la lista',
+    },
+    {
+      id: 'C',
+      codigo: 'C',
+      lat: -17.832,
+      lng: -63.123,
+      titulo: 'Farmacia Vida · Sucursal Plan 3000',
+      subtitulo: 'a 8,7 km en línea recta',
+      estado: { etiqueta: 'Tiene todo', tono: 'success' },
+      ctaEtiqueta: 'Ver en la lista',
+    },
+  ];
+
+  protected readonly pinSeleccionado = signal<string | null>(null);
+  protected readonly ultimoPinElegido = signal('—');
+
   /* ---- acciones ----------------------------------------------------------- */
 
   protected siguienteEstado(): void {
@@ -227,6 +270,10 @@ export class OrganismsGallery {
 
   protected registrarSeleccion(filas: readonly PacienteDemo[]): void {
     this.seleccionados.set(filas.length);
+  }
+
+  protected registrarPinElegido(id: string): void {
+    this.ultimoPinElegido.set(id);
   }
 
   protected registrarFiltros(filtros: Readonly<Record<string, string>>): void {

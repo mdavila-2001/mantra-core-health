@@ -212,11 +212,26 @@ describe('PatientChart', () => {
     }
   }
 
+  /**
+   * El perfil profesional de quien atiende, que el bloque de formularios pide
+   * para preseleccionar la plantilla de su especialidad. Responde 404 —la
+   * sesión de las pruebas no ejerce ninguna—, que es el caso que el bloque ya
+   * sabe manejar sin romperse.
+   */
+  function responderPerfilProfesional(): void {
+    for (const req of http.match(
+      (r) => r.url === '/profiles/practitioners/me/summary',
+    )) {
+      req.flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+    }
+  }
+
   afterEach(() => {
     responderCatalogoDeMedicacion();
     responderCircuitoDiagnostico();
     responderHistoricoDeProcedimientos();
     responderPlantillasDeEspecialidad();
+    responderPerfilProfesional();
     http.verify();
   });
 
@@ -418,8 +433,13 @@ describe('PatientChart', () => {
       interno<() => readonly { clave: string; columnas: { key: string }[] }[]>('bloques')();
     const diagnosticos = bloques.find((b) => b.clave === 'diagnosticos');
     expect(diagnosticos?.columnas.some((c) => c.key === 'detalle')).toBe(false);
-    // Y las tres que siempre están, sí.
-    expect(diagnosticos?.columnas.map((c) => c.key)).toEqual(['principal', 'estado', 'cuando']);
+    // Las tres que siempre están, más `acciones` (Patch v4.0.8: sólo diagnósticos).
+    expect(diagnosticos?.columnas.map((c) => c.key)).toEqual([
+      'principal',
+      'estado',
+      'cuando',
+      'acciones',
+    ]);
   });
 
   it('el bloque que sí trae detalle la dibuja', () => {

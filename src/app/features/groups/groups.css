@@ -76,3 +76,12 @@
   justify-content: center;
   margin-top: var(--e5);
 }
+
+/* TP-3 · regla 06: lo que falta para poder crear un grupo público. Va junto al
+   interruptor deshabilitado, no como error arriba: es una condición del campo,
+   no un fallo de la operación. */
+.grupos__aviso-perfil {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}

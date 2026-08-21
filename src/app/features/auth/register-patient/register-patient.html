@@ -29,23 +29,69 @@
         <p class="registro__subtitle">Elegí qué tipo de cuenta necesitás.</p>
       </div>
 
-      <app-form-field label="Me registro como">
-        <app-radio-group
-          data-testid="registro-tipo"
-          [value]="tipo()"
-          (valueChange)="cambiarTipo($event)"
+      <p class="registro__tabs-label" id="registro-tabs-label">Me registro como</p>
+      <div class="registro__tabs" role="tablist" aria-labelledby="registro-tabs-label" data-testid="registro-tipo">
+        <button
+          type="button"
+          role="tab"
+          id="registro-tab-paciente"
+          aria-controls="registro-panel-paciente"
+          [attr.aria-selected]="tipo() === 'paciente'"
+          [tabindex]="tipo() === 'paciente' ? 0 : -1"
+          class="registro__tab"
+          [class.registro__tab--activo]="tipo() === 'paciente'"
+          (click)="cambiarTipo('paciente')"
+          data-testid="registro-tab-paciente"
         >
-          <app-radio value="paciente" label="Paciente" />
-          <app-radio value="profesional" label="Profesional de salud" />
-        </app-radio-group>
-      </app-form-field>
+          <span class="registro__tab-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="3.6" />
+              <path d="M4.5 20.2c1-3.9 4.2-6.1 7.5-6.1s6.5 2.2 7.5 6.1" />
+            </svg>
+          </span>
+          <span class="registro__tab-texto">
+            <span class="registro__tab-titulo">Paciente</span>
+            <span class="registro__tab-detalle">Historia clínica y turnos</span>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          id="registro-tab-profesional"
+          aria-controls="registro-panel-profesional"
+          [attr.aria-selected]="tipo() === 'profesional'"
+          [tabindex]="tipo() === 'profesional' ? 0 : -1"
+          class="registro__tab"
+          [class.registro__tab--activo]="tipo() === 'profesional'"
+          (click)="cambiarTipo('profesional')"
+          data-testid="registro-tab-profesional"
+        >
+          <span class="registro__tab-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5.5 3v6.2a4.5 4.5 0 0 0 9 0V3" />
+              <path d="M10 9.5v2a5 5 0 0 0 10 0V9" />
+              <circle cx="19.5" cy="7" r="1.6" />
+              <path d="M13 18a3.6 3.6 0 1 1-3.6-3.6" />
+            </svg>
+          </span>
+          <span class="registro__tab-texto">
+            <span class="registro__tab-titulo">Profesional</span>
+            <span class="registro__tab-detalle">Consultorio y pacientes</span>
+          </span>
+        </button>
+      </div>
 
       @if (errorMessage(); as mensaje) {
         <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{ mensaje }}</app-alert>
       }
 
+      <div class="registro__body">
       @if (tipo() === 'paciente') {
         <form
+          id="registro-panel-paciente"
+          role="tabpanel"
+          aria-labelledby="registro-tab-paciente"
           [formGroup]="formPaciente"
           (ngSubmit)="submit()"
           novalidate
@@ -179,6 +225,9 @@
         </form>
       } @else {
         <form
+          id="registro-panel-profesional"
+          role="tabpanel"
+          aria-labelledby="registro-tab-profesional"
           [formGroup]="formProfesional"
           (ngSubmit)="submit()"
           novalidate
@@ -239,6 +288,57 @@
               testId="registro-pro-apellido-materno"
             />
           </app-form-field>
+
+          <app-form-field label="Fecha de nacimiento (opcional)">
+            <app-date-picker
+              [(value)]="fechaNacimientoProfesional"
+              placeholder="Seleccionar fecha"
+            />
+          </app-form-field>
+
+          <div class="registro__row">
+            <app-form-field
+              label="Cédula de identidad (opcional)"
+              hint="Se guarda como tu documento oficial."
+              [errorMessage]="
+                formProfesional.controls.nationalId.touched &&
+                formProfesional.controls.nationalId.invalid
+                  ? 'Letras, números, punto y guion.'
+                  : ''
+              "
+            >
+              <app-input
+                formControlName="nationalId"
+                type="text"
+                autocomplete="off"
+                placeholder="1234567"
+                testId="registro-pro-documento"
+              />
+            </app-form-field>
+
+            @if (catalogoDepartamentosCaido()) {
+              <app-form-field label="Departamento de emisión">
+                <p class="registro__tabs-label">
+                  No pudimos traer el catálogo de departamentos.
+                  <button app-button variant="ghost" size="sm" (clicked)="cargarDepartamentos()">
+                    Reintentar
+                  </button>
+                </p>
+              </app-form-field>
+            } @else {
+              <app-form-field
+                label="Departamento de emisión"
+                hint="El «SC», «LP»... de tu cédula."
+              >
+                <app-select
+                  data-testid="registro-pro-departamento-ci"
+                  [options]="opcionesDepartamento()"
+                  [(value)]="departamentoEmisor"
+                  placeholder="Sin especificar"
+                />
+              </app-form-field>
+            }
+          </div>
 
           <app-form-field
             label="Correo profesional"
@@ -303,6 +403,28 @@
           </div>
 
           <div class="registro__row">
+            <app-form-field
+              label="Autoridad reguladora (opcional)"
+              hint="Ministerio de Salud y Deportes, o Colegio de Odontólogos si tu especialidad es odontología."
+            >
+              <app-input
+                formControlName="regulatoryAuthority"
+                type="text"
+                autocomplete="off"
+                placeholder="Ministerio de Salud y Deportes"
+                testId="registro-pro-autoridad"
+              />
+            </app-form-field>
+
+            <app-form-field label="Fecha de inscripción de la matrícula (opcional)">
+              <app-date-picker
+                [(value)]="fechaInscripcionMatricula"
+                placeholder="Seleccionar fecha"
+              />
+            </app-form-field>
+          </div>
+
+          <div class="registro__row">
             <app-form-field label="Título profesional (opcional)">
               <app-input
                 formControlName="professionalTitle"
@@ -355,6 +477,7 @@
           </button>
         </form>
       }
+      </div>
 
       <div class="registro__footer">
         <p class="registro__pie">

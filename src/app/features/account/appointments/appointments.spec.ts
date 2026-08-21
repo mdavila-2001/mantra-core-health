@@ -1,5 +1,9 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+  type TestRequest,
+} from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -144,6 +148,70 @@ describe('Appointments', () => {
     fixture.detectChanges();
   }
 
+  /* ---- TJ-2 · la ventana y la reprogramación ------------------------------ */
+
+  describe('reglas finas de la cita (TJ-2)', () => {
+    it('un turno movido dice de cuándo, para que no se lea como ajeno', () => {
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({
+          items: [
+            {
+              id: 'b-1',
+              resourceId: 'r-1',
+              statusConceptId: 'c-conf',
+              startAt: '2026-09-01T13:00:00.000Z',
+              rescheduledFrom: '2026-08-20T19:30:00.000Z',
+            },
+          ],
+          count: 1,
+          limit: 50,
+          truncated: false,
+        });
+      http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
+      fixture.detectChanges();
+      responderTerminologia([]);
+
+      expect(fixture.nativeElement.textContent).toContain('Reprogramado desde el');
+    });
+
+    it('un turno que nunca se movió no dice nada de reprogramación', () => {
+      montar();
+      responderArranque([
+        {
+          id: 'b-1',
+          resourceId: 'r-1',
+          statusConceptId: 'c-conf',
+          startAt: '2026-09-01T13:00:00.000Z',
+        },
+      ]);
+      responderTerminologia([]);
+
+      expect(fixture.nativeElement.textContent).not.toContain('Reprogramado desde');
+    });
+
+    it('fuera de la ventana, se muestra lo que el servidor explica y NO se relee', () => {
+      montar();
+      responderArranque([]);
+
+      // El 422 de la ventana trae el plazo y qué hacer ahora. El texto genérico
+      // —«ya no se puede»— dejaba a la persona sin saber por qué ni qué le
+      // queda, y releer la lista sólo hacía parpadear lo mismo.
+      const aviso = interno<(e: unknown) => void>('avisarFalloCancelacion');
+      aviso({
+        status: 422,
+        error: {
+          message:
+            'Podés cancelar hasta 24 horas antes del turno. Si ya no podés asistir, comunicate con el consultorio.',
+        },
+      });
+      fixture.detectChanges();
+
+      http.expectNone((r) => r.url === '/scheduling/bookings');
+    });
+  });
+
   /* ---- J2 · pedir turno en un laboratorio --------------------------------- */
 
   describe('con quién se pide el turno (J2)', () => {
@@ -159,44 +227,6 @@ describe('Appointments', () => {
       // médica en una sala de toma de muestras.
       expect(pedido.request.params.get('resourceType')).toBe('PRACTITIONER');
       pedido.flush({ items: [], count: 0 });
-    });
-
-    /**
-     * F-24 (18/08/2026): buscar a un profesional que existe pero todavía no
-     * publicó agenda respondía «ningún profesional coincide con esa búsqueda»,
-     * que manda a corregir un nombre bien escrito. El desplegable ofrece
-     * agendas; la Guía sabe quién existe, y de ahí sale el mensaje verdadero.
-     */
-    it('si la Guía lo conoce, dice que todavía no publicó sus horarios', () => {
-      montar();
-      responderArranque([]);
-
-      crudo<{ set: (v: string) => void }>('busquedaDeRecurso').set('mercado');
-      fixture.detectChanges();
-
-      http
-        .expectOne((r) => r.url === '/profiles/practitioners')
-        .flush({ items: [{ profileId: 'per-9', displayName: 'Dr. Andrés Mercado' }], count: 1 });
-      fixture.detectChanges();
-
-      expect(interno<() => string>('mensajeSinCoincidencias')()).toBe(
-        'Dr. Andrés Mercado todavía no publicó sus horarios',
-      );
-    });
-
-    it('si nadie con ese nombre existe, el mensaje sigue siendo el genérico', () => {
-      montar();
-      responderArranque([]);
-
-      crudo<{ set: (v: string) => void }>('busquedaDeRecurso').set('zzz');
-      fixture.detectChanges();
-
-      http.expectOne((r) => r.url === '/profiles/practitioners').flush({ items: [], count: 0 });
-      fixture.detectChanges();
-
-      expect(interno<() => string>('mensajeSinCoincidencias')()).toBe(
-        'Ningún profesional coincide con esa búsqueda',
-      );
     });
 
     it('al cambiar a laboratorio, vuelve a preguntar por recursos de tipo ROOM', () => {
@@ -218,13 +248,13 @@ describe('Appointments', () => {
       montar();
       responderArranque([]);
 
-      crudo<{ set: (v: string | null) => void }>('recursoElegido').set('r-1');
+      crudo<{ set: (v: string | null) => void }>('agendaElegida').set('recurso:r-1');
       interno<(tipo: string) => void>('cambiarTipoDeRecurso')('ROOM');
       fixture.detectChanges();
 
       // Dejarlo puesto mostraría horarios de un profesional bajo el rótulo de
       // laboratorio hasta que la lectura vuelva.
-      expect(crudo<() => string | null>('recursoElegido')()).toBeNull();
+      expect(crudo<() => string | null>('agendaElegida')()).toBeNull();
       http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
     });
 
@@ -416,7 +446,7 @@ describe('Appointments', () => {
     montar();
     responderArranque([]);
 
-    interno<(id: string | null) => void>('elegirRecurso')(null);
+    interno<(clave: string | null) => void>('elegirAgenda')(null);
     fixture.detectChanges();
 
     // El `http.verify()` del afterEach falla si se pidieron cupos.
@@ -466,96 +496,6 @@ describe('Appointments', () => {
     expect(interno<() => readonly { id: string }[]>('horariosListos')()).toHaveLength(2);
   });
 
-  /* ---- elegir el lugar cuando hay más de uno (F-23) ----------------------- */
-
-  describe('dónde atenderse (F-23)', () => {
-    /** Dos consultorios del MISMO profesional: misma referencia, distinta sede. */
-    function dosConsultorios(): void {
-      crudo<{ set: (v: unknown) => void }>('recursos').set([
-        {
-          id: 'r-centro',
-          name: 'Agenda centro',
-          resourceRefId: 'per-1',
-          practitionerName: 'Dra. Ana Muñoz',
-          site: { id: 's-1', name: 'Consultorio centro' },
-        },
-        {
-          id: 'r-sur',
-          name: 'Agenda sur',
-          resourceRefId: 'per-1',
-          practitionerName: 'Dra. Ana Muñoz',
-          site: { id: 's-2', name: 'Consultorio sur' },
-        },
-      ]);
-    }
-
-    it('la persona se ofrece una sola vez, con sus dos consultorios detrás', () => {
-      montar();
-      responderArranque([]);
-      dosConsultorios();
-
-      const opciones = interno<() => readonly { value: string; label: string }[]>(
-        'opcionesDeRecurso',
-      )();
-
-      // Antes aparecía dos veces el mismo nombre, sin decir en qué se diferencian.
-      expect(opciones).toHaveLength(1);
-      expect(opciones[0].label).toBe('Dra. Ana Muñoz');
-    });
-
-    it('elegida la persona, pregunta dónde y junta los horarios de las dos sedes', () => {
-      montar();
-      responderArranque([]);
-      dosConsultorios();
-
-      interno<(id: string | null) => void>('elegirRecurso')('r-centro');
-
-      expect(interno<() => boolean>('hayVariasSedes')()).toBe(true);
-      expect(interno<() => readonly { label: string }[]>('opcionesDeSede')().map((o) => o.label))
-        .toEqual(['Consultorio centro', 'Consultorio sur']);
-
-      // «Cualquier lugar» es el modo por defecto: se piden las dos agendas.
-      const pedidos = http.match((r) => r.url === '/scheduling/slots');
-      expect(pedidos.map((p) => p.request.params.get('resourceId')).sort()).toEqual([
-        'r-centro',
-        'r-sur',
-      ]);
-      for (const pedido of pedidos) {
-        pedido.flush({ items: [], count: 0 });
-      }
-    });
-
-    it('elegido un lugar, sólo se piden los horarios de ese', () => {
-      montar();
-      responderArranque([]);
-      dosConsultorios();
-
-      interno<(id: string | null) => void>('elegirRecurso')('r-centro');
-      for (const pedido of http.match((r) => r.url === '/scheduling/slots')) {
-        pedido.flush({ items: [], count: 0 });
-      }
-
-      interno<(id: string | null) => void>('elegirSede')('r-sur');
-
-      const pedidos = http.match((r) => r.url === '/scheduling/slots');
-      expect(pedidos).toHaveLength(1);
-      expect(pedidos[0].request.params.get('resourceId')).toBe('r-sur');
-      pedidos[0].flush({ items: [], count: 0 });
-    });
-
-    it('con una sola sede no se pregunta nada', () => {
-      montar();
-      responderArranque([]);
-
-      interno<(id: string | null) => void>('elegirRecurso')('r-1');
-
-      expect(interno<() => boolean>('hayVariasSedes')()).toBe(false);
-      for (const pedido of http.match((r) => r.url === '/scheduling/slots')) {
-        pedido.flush({ items: [], count: 0 });
-      }
-    });
-  });
-
   /* ---- buscar al profesional en vez de recorrer la lista (F-13) ----------- */
 
   it('el buscador de profesional filtra por nombre, sin tildes ni mayúsculas', () => {
@@ -574,13 +514,200 @@ describe('Appointments', () => {
 
     buscar.set('munoz');
     expect(opciones()).toHaveLength(1);
-    expect(opciones()[0].value).toBe('r-1');
+    // El valor es la clave de la agenda AGRUPADA (F-23), no el id del recurso:
+    // sin referencia a un perfil, cada recurso es su propio grupo.
+    expect(opciones()[0].value).toBe('recurso:r-1');
 
     buscar.set('PEÑA');
-    expect(opciones()[0].value).toBe('r-2');
+    expect(opciones()[0].value).toBe('recurso:r-2');
 
     buscar.set('');
     expect(opciones()).toHaveLength(2);
+  });
+
+  /* ---- elegir el lugar cuando atiende en varios (FX-6 · F-23) ------------- */
+
+  /**
+   * Lo que estas pruebas fijan, y que un refactor no puede romper en silencio:
+   *
+   * 1. **Un profesional es UNA entrada** aunque tenga dos consultorios. Antes
+   *    salía dos veces con el mismo nombre y elegir mal escondía la mitad de
+   *    los horarios: ése es el defecto que reportó Pablo.
+   * 2. **La pregunta del lugar sólo aparece si hay algo que elegir.** Con un
+   *    consultorio —hoy, casi todas las agendas— la pantalla no cambia.
+   * 3. **«Cualquier lugar» consulta las dos agendas y mezcla por hora**, y cada
+   *    hueco dice de dónde es; acotado a una sede se consulta sólo ésa y el
+   *    rótulo desaparece, porque sería el mismo en todas las filas.
+   */
+  const DOS_CONSULTORIOS = [
+    {
+      id: 'r-centro',
+      name: 'Cardiología · Centro',
+      practitionerName: 'Dra. Ana Muñoz',
+      resourceRefType: 'health_practitioner_profiles',
+      resourceRefId: 'perfil-ana',
+      site: { id: 'sede-centro', name: 'Sede Centro', code: 'C', addressText: 'Av. Siempreviva 1' },
+    },
+    {
+      id: 'r-norte',
+      name: 'Cardiología · Norte',
+      practitionerName: 'Dra. Ana Muñoz',
+      resourceRefType: 'health_practitioner_profiles',
+      resourceRefId: 'perfil-ana',
+      site: { id: 'sede-norte', name: 'Sede Norte', code: 'N', addressText: null },
+    },
+  ];
+
+  /** Dos horas del mismo dia, para fijar que la lista se ORDENA y no se concatena. */
+  const HORA_TEMPRANO = '2026-09-02T09:00:00.000Z';
+  const HORA_TARDE = '2026-09-02T15:00:00.000Z';
+
+  /** La clave con la que la pantalla agrupa las dos agendas de Ana. */
+  const AGENDA_DE_ANA = 'health_practitioner_profiles:perfil-ana';
+
+  /** Los cupos que devuelve cada sede, indexados por el recurso que se pidió. */
+  function cuposPorRecurso(): Map<string | null, TestRequest> {
+    return new Map(
+      http
+        .match((r) => r.url === '/scheduling/slots')
+        .map((pedido) => [pedido.request.params.get('resourceId'), pedido]),
+    );
+  }
+
+  function paginaDeCupos(items: readonly unknown[]) {
+    return { items, count: items.length, limit: 100, truncated: false };
+  }
+
+  function cupo(id: string, resourceId: string, inicio: string) {
+    return {
+      id,
+      resourceId,
+      startAt: inicio,
+      endAt: inicio,
+      capacity: 1,
+      remainingCapacity: 1,
+      statusConceptId: 's-libre',
+    };
+  }
+
+  it('agrupa los dos consultorios de la misma profesional en una sola opción', () => {
+    montar();
+    responderArranque([]);
+
+    crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
+
+    const opciones = interno<() => readonly { value: string; label: string }[]>('opcionesBuscadas');
+    expect(opciones()).toHaveLength(1);
+    // El nombre interno de cada agenda es justo lo que las distingue: repetirlo
+    // ací sería el ruido que F-23 viene a sacar. Queda la persona.
+    expect(opciones()[0].label).toBe('Dra. Ana Muñoz');
+  });
+
+  it('con un solo consultorio no pregunta dónde', () => {
+    montar();
+    responderArranque([]);
+
+    crudo<{ set: (v: unknown) => void }>('recursos').set([DOS_CONSULTORIOS[0]]);
+    interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+
+    expect(interno<() => boolean>('preguntaPorSede')()).toBe(false);
+    http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
+  });
+
+  it('«cualquier lugar» pide las dos agendas, mezcla por hora y dice de dónde es cada hueco', () => {
+    montar();
+    responderArranque([]);
+
+    crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
+    interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+
+    expect(interno<() => boolean>('preguntaPorSede')()).toBe(true);
+    // «Cualquier lugar» + las dos sedes.
+    expect(
+      interno<() => readonly { value: string; label: string }[]>('opcionesDeSede')(),
+    ).toHaveLength(3);
+
+    const pedidos = cuposPorRecurso();
+    expect(pedidos.size).toBe(2);
+    // El de la sede Norte contesta PRIMERO y con hora POSTERIOR: si la pantalla
+    // concatenara en vez de ordenar, quedaría arriba y la lista mentiría.
+    pedidos.get('r-norte')?.flush(paginaDeCupos([cupo('h-norte', 'r-norte', HORA_TARDE)]));
+    pedidos.get('r-centro')?.flush(paginaDeCupos([cupo('h-centro', 'r-centro', HORA_TEMPRANO)]));
+
+    const listos = interno<() => readonly { id: string; sede: string }[]>('horariosListos')();
+    expect(listos.map((h) => h.id)).toEqual(['h-centro', 'h-norte']);
+    expect(listos[0].sede).toBe('Sede Centro · Av. Siempreviva 1');
+    // Sin dirección cargada va el nombre solo, no un separador colgado.
+    expect(listos[1].sede).toBe('Sede Norte');
+  });
+
+  it('elegir un lugar consulta sólo ése y deja de rotular la sede en cada fila', () => {
+    montar();
+    responderArranque([]);
+
+    crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
+    interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+    for (const pedido of cuposPorRecurso().values()) {
+      pedido.flush(paginaDeCupos([]));
+    }
+
+    interno<(sede: string | null) => void>('elegirSede')('sede-centro');
+
+    const pedidos = cuposPorRecurso();
+    expect(pedidos.size).toBe(1);
+    pedidos.get('r-centro')?.flush(paginaDeCupos([cupo('h-centro', 'r-centro', HORA_TEMPRANO)]));
+
+    expect(interno<() => boolean>('mostrarSedeEnHorarios')()).toBe(false);
+    expect(interno<() => readonly { sede: string }[]>('horariosListos')()[0].sede).toBe('');
+  });
+
+  it('si una sede no contesta, muestra los horarios de la otra y lo avisa', () => {
+    montar();
+    responderArranque([]);
+
+    crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
+    interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+
+    const pedidos = cuposPorRecurso();
+    pedidos.get('r-norte')?.error(new ProgressEvent('error'), { status: 500 });
+    pedidos.get('r-centro')?.flush(paginaDeCupos([cupo('h-centro', 'r-centro', HORA_TEMPRANO)]));
+
+    // Callarse dejaría una lista corta, que se lee como «tiene poco lugar».
+    expect(interno<() => boolean>('horariosIncompletos')()).toBe(true);
+    expect(interno<() => readonly { id: string }[]>('horariosListos')()).toHaveLength(1);
+  });
+
+  it('si NINGUNA sede contesta es un error, no una lista corta', () => {
+    montar();
+    responderArranque([]);
+
+    crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
+    interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+
+    for (const pedido of cuposPorRecurso().values()) {
+      pedido.error(new ProgressEvent('error'), { status: 500 });
+    }
+
+    expect(interno<() => boolean>('horariosIncompletos')()).toBe(false);
+    expect(interno<() => { status: string }>('horarios')().status).toBe('error');
+  });
+
+  it('con varios lugares en foco no ofrece la lista de espera: es de UNA agenda', () => {
+    montar();
+    responderArranque([]);
+
+    crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
+    interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+    for (const pedido of cuposPorRecurso().values()) {
+      pedido.flush(paginaDeCupos([]));
+    }
+
+    expect(interno<() => string | null>('recursoParaEspera')()).toBeNull();
+
+    interno<(sede: string | null) => void>('elegirSede')('sede-norte');
+    http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
+
+    expect(interno<() => string | null>('recursoParaEspera')()).toBe('r-norte');
   });
 });
 
@@ -753,7 +880,7 @@ function api(comp: Appointments) {
     cancelarReprogramacion(): void;
     reprogramarA(h: unknown): Promise<void>;
     reprogramando(): string | null;
-    elegirRecurso(id: string | null): void;
+    elegirAgenda(clave: string | null): void;
     turnosListos(): readonly { id: string; codigo: string; resourceId: string; estado: string }[];
   };
 }
@@ -1022,7 +1149,7 @@ describe('Appointments · reprogramar turno propio', () => {
       labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
       ...GRILLA,
     });
-    api(comp).elegirRecurso('r-1');
+    api(comp).elegirAgenda('recurso:r-1');
     fixture.detectChanges();
 
     const ancla = fixture.nativeElement.querySelector('.turnos__horario a');
@@ -1380,7 +1507,7 @@ describe('Appointments · el motivo del cambio llega al paciente', () => {
 /** Acceso tipado a lo que las pruebas de P8 ejercen. */
 function p8(comp: Appointments) {
   return comp as unknown as {
-    elegirRecurso(id: string | null): void;
+    elegirAgenda(clave: string | null): void;
     anotarmeEnEspera(): Promise<void>;
     yaEnEspera(): boolean;
     esperas(): readonly { id: string; agenda: string }[];
@@ -1429,7 +1556,7 @@ describe('Appointments · lista de espera (P8)', () => {
       resources: [{ id: 'r-1', name: 'Consultorio Cardiología' }],
     });
 
-    p8(comp).elegirRecurso('r-1');
+    p8(comp).elegirAgenda('recurso:r-1');
     await p8(comp).anotarmeEnEspera();
 
     expect(confirm).toHaveBeenCalled();
@@ -1452,7 +1579,7 @@ describe('Appointments · lista de espera (P8)', () => {
       resources: [{ id: 'r-1', name: 'Consultorio Cardiología' }],
     });
 
-    p8(comp).elegirRecurso('r-1');
+    p8(comp).elegirAgenda('recurso:r-1');
     await p8(comp).anotarmeEnEspera();
 
     expect(enrollWaitlist).not.toHaveBeenCalled();
@@ -1479,7 +1606,7 @@ describe('Appointments · lista de espera (P8)', () => {
       waitlist: [esperaMock('r-1')],
     });
 
-    p8(comp).elegirRecurso('r-1');
+    p8(comp).elegirAgenda('recurso:r-1');
     fixture.detectChanges();
 
     expect(p8(comp).yaEnEspera()).toBe(true);

@@ -35,6 +35,7 @@ import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { ConceptSelect } from '../../../shared/components/molecules/concept-select/concept-select';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
@@ -63,6 +64,9 @@ import {
 import { AdmissionBlock, type InternacionEnFicha } from './admission-block/admission-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 import { AttachmentsBlock } from './attachments-block/attachments-block';
+import { environment } from '../../../../environments/environment';
+import { ESCENARIOS_CLINICOS_DEMO } from './demo-presets';
+import type { EscenarioClinicoDemo } from './demo-presets';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import { DiagnosticsBlock } from './diagnostics-block/diagnostics-block';
 import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
@@ -86,6 +90,25 @@ const NOMBRE_DE_BLOQUE: Readonly<Record<string, string>> = {
   notes: 'notas',
   carePlans: 'planes de cuidados',
   documents: 'documentos',
+};
+
+/**
+ * Patch v4.0.8: el campo de estado clínico que gobierna la transición
+ * (`POST /clinical/conditions/:id/change-status`). Mismo target que usa el
+ * catálogo del alta en `diagnosis-block`, así que comparten la única petición
+ * memoizada por `SystemContextClient` — abrir la acción en varias filas a la
+ * vez no dispara una consulta por fila.
+ */
+const TARGET_ESTADO_CLINICO = 'clinical.conditions.clinical_status_concept_id';
+
+/** Los estados clínicos en castellano. Mismo criterio que `diagnosis-block`. */
+const ETIQUETAS_DE_ESTADO_CLINICO: Readonly<Record<string, string>> = {
+  COND_ACTIVE: 'Activa',
+  COND_RECURRENCE: 'Recurrencia',
+  COND_RELAPSE: 'Recaída',
+  COND_INACTIVE: 'Inactiva',
+  COND_REMISSION: 'En remisión',
+  COND_RESOLVED: 'Resuelta',
 };
 
 /** Largo máximo del motivo de consulta. El backend no lo acota; la legibilidad sí. */
@@ -174,6 +197,7 @@ interface Expediente {
     AppButton,
     Badge,
     Card,
+    ConceptSelect,
     DataTable,
     DatePipe,
     AttachmentsBlock,
@@ -228,6 +252,38 @@ export class PatientChart {
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaCuando');
   private readonly celdaDocumento =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaDocumento');
+  /** Patch v4.0.8: sólo la usa el bloque `diagnosticos`, ver {@link columnasPara}. */
+  private readonly celdaAcciones =
+    viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAcciones');
+
+  /* -- Escenarios de demostración ------------------------------------------- */
+
+  /**
+   * Los dos bloques de escritura, por referencia, para que un escenario de
+   * demostración los precargue juntos. No `required`: sólo existen cuando el
+   * expediente está listo y hay encuentro abierto.
+   */
+  private readonly bloqueDiagnostico = viewChild(DiagnosisBlock);
+  private readonly bloqueMedicacion = viewChild(MedicationBlock);
+
+  /** La barra existe sólo donde el despliegue la pidió (`PUBLIC_DEMO_PRESETS`). */
+  protected readonly demoActiva = environment.demoPresets;
+  protected readonly escenariosDemo = ESCENARIOS_CLINICOS_DEMO;
+
+  /**
+   * Un clic, los dos formularios: el diagnóstico y su receta coherente. Cada
+   * bloque resuelve sus códigos contra el catálogo y avisa lo suyo; acá sólo
+   * se coordina.
+   */
+  protected aplicarEscenarioDemo(escenario: EscenarioClinicoDemo): void {
+    const diagnostico = this.bloqueDiagnostico();
+    const medicacion = this.bloqueMedicacion();
+    if (diagnostico === undefined || medicacion === undefined) {
+      return;
+    }
+    diagnostico.aplicarCasoDemo(escenario.diagnostico);
+    medicacion.aplicarCasoDemo(escenario.receta);
+  }
 
   /**
    * El perfil que se está mirando, leído del segmento `:profileId`.
@@ -526,6 +582,32 @@ export class PatientChart {
   /** El encuentro en curso que se está cerrando, o `null`. */
   protected readonly cerrando = signal<string | null>(null);
 
+  /* -- Patch v4.0.8: cambiar el estado clínico de un diagnóstico ----------- */
+
+  protected readonly targetEstadoClinico = TARGET_ESTADO_CLINICO;
+  protected readonly etiquetasDeEstadoClinico = ETIQUETAS_DE_ESTADO_CLINICO;
+
+  /**
+   * El estado destino elegido para cada fila, por `conditionId`.
+   *
+   * Un registro por fila —no una señal compartida— porque el expediente puede
+   * tener varios diagnósticos listados a la vez y elegir el destino de uno no
+   * debe pisar lo que se venía eligiendo en otro.
+   */
+  private readonly destinosDeEstado = signal<Readonly<Record<string, string | null>>>({});
+
+  /** La condición cuyo cambio de estado está en vuelo, o `null`. */
+  protected readonly cambiandoEstado = signal<string | null>(null);
+
+  /** El destino elegido para esa fila, o `null` si no se eligió ninguno. */
+  protected destinoEstadoDe(conditionId: string): string | null {
+    return this.destinosDeEstado()[conditionId] ?? null;
+  }
+
+  protected elegirDestinoEstado(conditionId: string, destino: string | null): void {
+    this.destinosDeEstado.update((actual) => ({ ...actual, [conditionId]: destino }));
+  }
+
   /**
    * El fallo de la escritura, en palabras.
    *
@@ -688,6 +770,19 @@ export class PatientChart {
             } satisfies ColumnDef<FilaClinica>,
           ]
         : []),
+      // Patch v4.0.8: sólo `diagnosticos` transiciona de estado. Antes del
+      // patch ninguna fila clínica tenía una acción de escritura propia —el
+      // registro nacía activo y ahí se quedaba para siempre—.
+      ...(clave === 'diagnosticos'
+        ? [
+            {
+              key: 'acciones',
+              header: 'Cambiar estado',
+              priority: 2,
+              cell: this.celdaAcciones(),
+            } satisfies ColumnDef<FilaClinica>,
+          ]
+        : []),
     ];
   }
 
@@ -824,6 +919,85 @@ export class PatientChart {
         this.registro.set(errorToViewState<null>(error));
       },
     });
+  }
+
+  /**
+   * Patch v4.0.8: transiciona el estado clínico de un diagnóstico ya
+   * registrado (`POST /clinical/conditions/:id/change-status`).
+   *
+   * Con motivo obligatorio y confirmación —`confirmWithReason`, la misma
+   * pieza que ya usa el resto de la aplicación para exigirlo— porque es un
+   * dato regulado: la auditoría clínica necesita saber no sólo que cambió,
+   * sino por qué.
+   *
+   * ## El `422` es la máquina de estados, no un fallo
+   *
+   * El backend rechaza una transición que no es válida desde el estado actual
+   * —o resolver una condición crónica— con `PRECONDITION_FAILED`. No es un
+   * error de la interfaz: es la regla de negocio contándolo, y el toast la
+   * muestra tal cual la explica el servidor.
+   */
+  protected async cambiarEstadoClinico(fila: FilaClinica): Promise<void> {
+    const destino = this.destinoEstadoDe(fila.id);
+    if (destino === null || this.cambiandoEstado() !== null) {
+      return;
+    }
+
+    const etiquetaDestino = this.etiquetasDeEstadoClinico[destino] ?? 'ese estado';
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: '¿Cambiar el estado clínico?',
+        message: `«${fila.principal}» pasa a "${etiquetaDestino}". El motivo queda en la historia clínica.`,
+        confirmLabel: 'Cambiar estado',
+      },
+      {
+        label: 'Motivo del cambio',
+        hint: 'Explicá brevemente por qué deja de contar con el estado anterior.',
+      },
+    );
+    if (motivo === null) {
+      return;
+    }
+
+    this.cambiandoEstado.set(fila.id);
+
+    this.clinical
+      .changeConditionStatus(fila.id, { newClinicalStatusConceptId: destino, reasonText: motivo })
+      .subscribe({
+        next: () => {
+          this.cambiandoEstado.set(null);
+          this.elegirDestinoEstado(fila.id, null);
+          this.toasts.success(`Ahora figura como "${etiquetaDestino}".`, 'Estado clínico actualizado');
+          this.cargar();
+        },
+        error: (error: unknown) => {
+          this.cambiandoEstado.set(null);
+          this.toasts.error(this.mensajeDeErrorDeEstado(error), 'No se pudo cambiar el estado');
+        },
+      });
+  }
+
+  /** El fallo del cambio de estado, en palabras — mismo criterio que el resto de la app. */
+  private mensajeDeErrorDeEstado(error: unknown): string {
+    const state = errorToViewState<null>(error);
+    if (state.status === 'forbidden') {
+      return state.message ?? 'Tu rol no permite cambiar el estado clínico.';
+    }
+    if (state.status === 'not-found') {
+      return 'La condición ya no existe. Recargá la pantalla.';
+    }
+    if (state.status === 'offline') {
+      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    }
+    if (state.status === 'validation') {
+      return (
+        state.issues.map((issue) => issue.message).join(' ') || 'Esa transición no es válida.'
+      );
+    }
+    if (state.status === 'error') {
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+    }
+    return 'Ocurrió un error inesperado.';
   }
 
   /* -- Los documentos que se llevan en papel (corrección #16) --------------

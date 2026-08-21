@@ -49,6 +49,15 @@
             @if (mensaje.sentAt) {
               {{ mensaje.sentAt | date: 'short' }}
             }
+            @if (esPropio(mensaje)) {
+              <span
+                class="hilo__ticks"
+                [class.is-leido]="leido(mensaje)"
+                data-testid="hilo-ticks"
+                aria-hidden="true"
+              >{{ leido(mensaje) ? '✓✓' : '✓' }}</span>
+              <span class="solo-lectores">{{ leido(mensaje) ? 'Leído' : 'Enviado' }}</span>
+            }
           </p>
         </li>
       }

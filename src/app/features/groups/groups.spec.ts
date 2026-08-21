@@ -41,12 +41,45 @@ describe('Groups', () => {
 
   /** Contesta el listado de temas, que se pide siempre al montar. */
   const responderTemas = (): void => {
-    http.expectOne((r) => r.url === '/community/topics').flush({
-      items: [{ id: 'top-1', code: 'CARDIO', name: 'Cardiología', parentTopicId: null, specialtyConceptId: null }],
-      count: 1,
-      limit: 200,
-    });
+    http
+      .expectOne((r) => r.url === '/community/topics')
+      .flush({
+        items: [
+          {
+            id: 'top-1',
+            code: 'CARDIO',
+            name: 'Cardiología',
+            parentTopicId: null,
+            specialtyConceptId: null,
+          },
+        ],
+        count: 1,
+        limit: 200,
+      });
   };
+
+  /**
+   * Contesta la vitrina propia, que también se pide al montar (TP-3).
+   *
+   * Por defecto está completa: la mayoría de estas pruebas no hablan del
+   * perfil, y montarlo incompleto les cambiaría el formulario por debajo.
+   */
+  const responderPerfil = (perfil: object = perfilCompleto()): void => {
+    http.expectOne((r) => r.url === '/community/profiles/me').flush(perfil);
+  };
+
+  /** Una vitrina que sí puede presentar un grupo público. */
+  const perfilCompleto = (overrides: Record<string, unknown> = {}) => ({
+    id: 'pp-1',
+    tenantId: 't-1',
+    targetId: 'tg-1',
+    slug: 'lucia-salas',
+    displayName: 'Dra. Lucía Salas',
+    avatarFileId: 'file-1',
+    visibility: 'PUBLIC',
+    statusConceptId: 'st-1',
+    ...overrides,
+  });
 
   const montar = (): void => {
     fixture = TestBed.createComponent(Groups);
@@ -75,6 +108,7 @@ describe('Groups', () => {
     tenantId.set(null);
     montar();
     responderTemas();
+    responderPerfil();
 
     http.expectNone((r) => r.url === '/community/groups');
     expect(texto()).toContain('Elegí una organización');
@@ -83,6 +117,7 @@ describe('Groups', () => {
   it('pide el directorio de la organización activa y lo pinta', () => {
     montar();
     responderTemas();
+    responderPerfil();
 
     const req = http.expectOne((r) => r.url === '/community/groups');
     expect(req.request.params.get('tenantId')).toBe('t-1');
@@ -99,6 +134,7 @@ describe('Groups', () => {
   it('un directorio vacío es un estado, no un error', () => {
     montar();
     responderTemas();
+    responderPerfil();
     http.expectOne((r) => r.url === '/community/groups').flush(paginaVacia);
     fixture.detectChanges();
 
@@ -108,6 +144,7 @@ describe('Groups', () => {
   it('buscar reinicia la paginación y manda el texto', () => {
     montar();
     responderTemas();
+    responderPerfil();
     http
       .expectOne((r) => r.url === '/community/groups')
       .flush({ ...paginaVacia, items: [grupo('g-1', 'Cardiología')], count: 1, nextCursor: 'c-2' });
@@ -128,6 +165,7 @@ describe('Groups', () => {
   it('el tema se alterna: volver a tocarlo lo quita', () => {
     montar();
     responderTemas();
+    responderPerfil();
     http.expectOne((r) => r.url === '/community/groups').flush(paginaVacia);
     fixture.detectChanges();
 
@@ -153,6 +191,7 @@ describe('Groups', () => {
   it('la dirección del grupo sale del nombre, sin tildes ni espacios', () => {
     montar();
     responderTemas();
+    responderPerfil();
     http.expectOne((r) => r.url === '/community/groups').flush(paginaVacia);
     fixture.detectChanges();
 
@@ -168,6 +207,7 @@ describe('Groups', () => {
   it('un slug repetido se explica, no se traga', () => {
     montar();
     responderTemas();
+    responderPerfil();
     http.expectOne((r) => r.url === '/community/groups').flush(paginaVacia);
     fixture.detectChanges();
 
@@ -184,5 +224,68 @@ describe('Groups', () => {
     fixture.detectChanges();
 
     expect(texto()).toContain('Ya hay un grupo con esa dirección');
+  });
+
+  /* -- TP-3 · regla 06: el perfil público con el que se crea ---------------- */
+
+  /** El formulario de alta arranca cerrado; el aviso vive adentro. */
+  const abrirAlta = (): void => {
+    (fixture.componentInstance as unknown as { alternarAlta(): void }).alternarAlta();
+    fixture.detectChanges();
+  };
+
+  /**
+   * Deshabilitado y a la vista, no escondido: ocultarlo dejaría a la persona
+   * sin saber que la opción existe ni por qué no la tiene.
+   */
+  it('con el perfil incompleto avisa qué falta para un grupo público', () => {
+    montar();
+    responderTemas();
+    responderPerfil(perfilCompleto({ avatarFileId: undefined }));
+    http.expectOne((r) => r.url === '/community/groups').flush(paginaVacia);
+    fixture.detectChanges();
+    abrirAlta();
+
+    expect(texto()).toContain('Configurar mi perfil público');
+  });
+
+  it('con el perfil completo no avisa nada', () => {
+    montar();
+    responderTemas();
+    responderPerfil();
+    http.expectOne((r) => r.url === '/community/groups').flush(paginaVacia);
+    fixture.detectChanges();
+    abrirAlta();
+
+    expect(texto()).not.toContain('Configurar mi perfil público');
+  });
+
+  /** Sin vitrina configurada, tampoco se puede presentar un grupo público. */
+  it('sin vitrina propia avisa igual', () => {
+    montar();
+    responderTemas();
+    http.expectOne((r) => r.url === '/community/profiles/me').flush(null);
+    http.expectOne((r) => r.url === '/community/groups').flush(paginaVacia);
+    fixture.detectChanges();
+    abrirAlta();
+
+    expect(texto()).toContain('Configurar mi perfil público');
+  });
+
+  /**
+   * Que la lectura del perfil falle no es motivo para bloquear la opción: se
+   * asume que puede, y si no, el servidor lo dirá.
+   */
+  it('si la lectura del perfil falla, la pantalla no bloquea nada de más', () => {
+    montar();
+    responderTemas();
+    http.expectOne((r) => r.url === '/community/profiles/me').error(new ProgressEvent('error'));
+    http.expectOne((r) => r.url === '/community/groups').flush(paginaVacia);
+    fixture.detectChanges();
+    abrirAlta();
+
+    // Sin perfil resuelto se trata como incompleto, que es lo conservador:
+    // ofrecer «público» y que falle sería peor que ofrecer sólo privado.
+    expect(texto()).toContain('Configurar mi perfil público');
   });
 });

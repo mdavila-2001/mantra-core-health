@@ -20,6 +20,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -125,7 +126,7 @@ interface FormularioVisible {
  */
 @Component({
   selector: 'app-medical-record',
-  imports: [Alert, AppButton, Badge, DatePipe, PageHeader, RouterLink, ViewStateHost],
+  imports: [Alert, AppButton, AppButtonLink, Badge, DatePipe, PageHeader, RouterLink, ViewStateHost],
   templateUrl: './medical-record.html',
   styleUrl: './medical-record.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -202,13 +203,32 @@ export class MedicalRecord {
     })),
   );
 
+  /**
+   * Patch v4.0.8: el estado clínico y, cuando aplica, que es de seguimiento
+   * continuo. Antes de este patch todo diagnóstico llegaba "activo" para
+   * siempre —no había cómo cerrarlo—; ahora `secundario` refleja el estado
+   * real, incluida una condición ya resuelta o en remisión.
+   *
+   * El curso clínico se cuenta como texto y no como campo aparte: `FilaVisible`
+   * es la fila genérica de las tres listas de sólo lectura, y agregarle un
+   * campo que sólo llena diagnósticos dejaría a alergias y resultados con una
+   * columna vacía en toda la tabla.
+   */
   protected readonly diagnosticos = computed<readonly FilaVisible[]>(() =>
-    (this.datos()?.conditions ?? []).map((fila) => ({
-      id: fila.id,
-      principal: this.label(fila.codeConceptId),
-      secundario: this.label(fila.clinicalStatusConceptId),
-      cuando: fila.onsetAt ?? fila.createdAt,
-    })),
+    (this.datos()?.conditions ?? []).map((fila) => {
+      const estado = this.label(fila.clinicalStatusConceptId);
+      // Se branchea por `code` —nunca por `display`—: el rótulo es presentación
+      // y puede cambiar sin aviso, el código estable no.
+      const esCronica =
+        this.etiquetas().get(fila.clinicalCourseConceptId ?? '')?.code ===
+        'COND_COURSE_CHRONIC';
+      return {
+        id: fila.id,
+        principal: this.label(fila.codeConceptId),
+        secundario: esCronica ? `${estado} · Seguimiento continuo` : estado,
+        cuando: fila.onsetAt ?? fila.createdAt,
+      };
+    }),
   );
 
   protected readonly alergias = computed<readonly FilaVisible[]>(() =>
@@ -515,7 +535,11 @@ export class MedicalRecord {
 /** Los conceptos que hay que traducir para pintar la historia. */
 function conceptosDe(resumen: ClinicalSummary): readonly string[] {
   const ids = [
-    ...resumen.conditions.flatMap((fila) => [fila.codeConceptId, fila.clinicalStatusConceptId]),
+    ...resumen.conditions.flatMap((fila) => [
+      fila.codeConceptId,
+      fila.clinicalStatusConceptId,
+      fila.clinicalCourseConceptId,
+    ]),
     ...resumen.allergies.flatMap((fila) => [fila.substanceConceptId, fila.criticalityConceptId]),
     ...resumen.medicationRequests.flatMap((fila: MedicationRequest) => [
       fila.medicationConceptId,

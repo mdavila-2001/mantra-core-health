@@ -31,6 +31,8 @@
       "/diagnostic-units",
       "/diagnostic-results",
       "/pharma-labs",
+      "/pharmacy",
+      "/pharmacy-inventory",
       "/visit-agenda",
       "/visit-requests",
       "/visit-records",
@@ -59,5 +61,14 @@
     "pathRewrite": {
       "^/otel": ""
     }
+  },
+  {
+    "context": [
+      "/socket.io"
+    ],
+    "target": "__BACKEND_ORIGIN__",
+    "secure": false,
+    "changeOrigin": true,
+    "ws": true
   }
 ]

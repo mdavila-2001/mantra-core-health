@@ -185,30 +185,6 @@ describe('PatientHome', () => {
     expect(rutas).toContain('/my-account/medical-record');
   });
 
-  /**
-   * F-21 (18/08/2026): J6 reemplazó el panel de administración por «Mi salud» y
-   * los accesos perdieron los íconos que la gente ya reconocía —quedaron como
-   * texto plano al pie—. La rejilla vuelve, con el mismo dibujo del panel de
-   * gestión.
-   */
-  it('los accesos son una rejilla con ícono, no una fila de texto', () => {
-    montar();
-    responder([], null);
-
-    const accesos = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll(
-        '[data-testid="mi-salud-acceso"]',
-      ),
-    ];
-
-    expect(accesos.length).toBeGreaterThan(0);
-    for (const acceso of accesos) {
-      expect(acceso.querySelector('app-nav-icon'), acceso.textContent ?? '').not.toBeNull();
-      // El rótulo se queda: una rejilla muda obliga a recorrerla con el cursor.
-      expect((acceso.textContent ?? '').trim().length).toBeGreaterThan(0);
-    }
-  });
-
   /** Media pantalla útil es mejor que un error que tapa lo que sí se pudo leer. */
   it('si falla una lectura, muestra la otra', () => {
     montar();

@@ -7,6 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import type { WritableSignal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
@@ -14,6 +15,9 @@ import { SystemContextClient } from '../../../../core/data-access/system-context
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Badge } from '../../../../shared/components/atoms/badge/badge';
+import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
@@ -21,6 +25,10 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
+import { environment } from '../../../../../environments/environment';
+import { CASOS_DIAGNOSTICO_DEMO, conceptIdPorCodigo } from '../demo-presets';
+import type { CasoDiagnosticoDemo } from '../demo-presets';
 
 /**
  * La columna que gobierna el diagnóstico.
@@ -40,6 +48,15 @@ export const TARGET_SEVERIDAD = 'clinical.conditions.severity_concept_id';
 
 /** La lateralidad. Mismo trato que la categoría. */
 export const TARGET_LATERALIDAD = 'clinical.conditions.laterality_concept_id';
+
+/**
+ * El curso clínico (Patch v4.0.8): agudo/crónico/subagudo/recurrente.
+ *
+ * Eje distinto del estado —que el backend sigue fijando en `ACTIVE` al
+ * nacer—: decide, más adelante, qué transiciones de estado van a ser válidas
+ * (una condición crónica no puede pasar a resuelta).
+ */
+export const TARGET_CURSO_CLINICO = 'clinical.conditions.clinical_course_concept_id';
 
 /**
  * Las categorías en castellano, por código estable.
@@ -67,16 +84,34 @@ const ETIQUETAS_DE_LATERALIDAD: Readonly<Record<string, string>> = {
   COND_LAT_BILATERAL: 'Bilateral',
 };
 
+/** Los cursos clínicos en castellano. Mismo criterio que {@link ETIQUETAS_DE_CATEGORIA}. */
+const ETIQUETAS_DE_CURSO: Readonly<Record<string, string>> = {
+  COND_COURSE_ACUTE: 'Aguda',
+  COND_COURSE_CHRONIC: 'Crónica',
+  COND_COURSE_SUBACUTE: 'Subaguda',
+  COND_COURSE_RECURRENT: 'Recurrente',
+  COND_COURSE_UNKNOWN: 'Sin determinar',
+};
+
+/** La fecha de hoy corrida `dias` hacia adelante. */
+function enDias(dias: number): Date {
+  const fecha = new Date();
+  fecha.setDate(fecha.getDate() + dias);
+  return fecha;
+}
+
 /**
  * **Diagnóstico** del expediente: registrar la condición — V08-08.
  *
  * ## Sólo el alta, sin lista propia
  *
- * A diferencia de la receta, una condición registrada no tiene acciones: el
- * backend la fija activa y confirmada al nacer y no hay endpoint para
- * resolverla. La lista ya la pinta la pestaña «Diagnósticos» del expediente, y
- * duplicarla acá sería tener dos verdades del mismo dato en la misma pantalla.
- * Por eso este bloque es el formulario y nada más.
+ * El backend fija el estado activo y confirmado al nacer; este bloque no lo
+ * pregunta. Desde el Patch v4.0.8 una condición sí puede cambiar de estado más
+ * adelante (`change-status`), pero esa acción vive en la fila de la pestaña
+ * «Diagnósticos» del expediente —donde está el registro sobre el que actúa—,
+ * no acá: duplicar la lista en este bloque sería tener dos verdades del mismo
+ * dato en la misma pantalla. Por eso este bloque sigue siendo el formulario y
+ * nada más.
  *
  * ## Vive dentro del encuentro abierto
  *
@@ -110,7 +145,7 @@ const ETIQUETAS_DE_LATERALIDAD: Readonly<Record<string, string>> = {
  */
 @Component({
   selector: 'app-diagnosis-block',
-  imports: [Alert, Card, ConceptSelect, DatePicker, FormActions, FormField],
+  imports: [Alert, AppButton, Badge, Card, ConceptSelect, DatePicker, FormActions, FormField, Textarea],
   templateUrl: './diagnosis-block.html',
   styleUrl: './diagnosis-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -139,9 +174,17 @@ export class DiagnosisBlock {
   protected readonly targetCategoria = TARGET_CATEGORIA;
   protected readonly targetSeveridad = TARGET_SEVERIDAD;
   protected readonly targetLateralidad = TARGET_LATERALIDAD;
+  protected readonly targetCursoClinico = TARGET_CURSO_CLINICO;
   protected readonly etiquetasDeCategoria = ETIQUETAS_DE_CATEGORIA;
   protected readonly etiquetasDeSeveridad = ETIQUETAS_DE_SEVERIDAD;
   protected readonly etiquetasDeLateralidad = ETIQUETAS_DE_LATERALIDAD;
+  protected readonly etiquetasDeCurso = ETIQUETAS_DE_CURSO;
+
+  /* -- Casos de demostración ------------------------------------------------ */
+
+  /** La barra existe sólo donde el despliegue la pidió (`PUBLIC_DEMO_PRESETS`). */
+  protected readonly demoActiva = environment.demoPresets;
+  protected readonly casosDemo = CASOS_DIAGNOSTICO_DEMO;
 
   /**
    * La organización bajo cuya custodia queda el registro.
@@ -157,7 +200,29 @@ export class DiagnosisBlock {
   protected readonly categoria = signal<string | null>(null);
   protected readonly severidad = signal<string | null>(null);
   protected readonly lateralidad = signal<string | null>(null);
+  protected readonly cursoClinico = signal<string | null>(null);
   protected readonly inicio = signal<Date | null>(null);
+  /**
+   * Sólo tiene sentido clínico en curso agudo/subagudo, pero se ofrece siempre:
+   * el contrato no exige la pareja, y una condición crónica sin fecha marcada
+   * es tan legítima como una aguda sin ella —quien registra decide.
+   */
+  protected readonly fechaEsperada = signal<Date | null>(null);
+
+  /** Hallazgos y justificación clínica. Viaja como `noteText` (Patch v4.1.3). */
+  protected readonly notasClinicas = signal<string>('');
+
+  /**
+   * Las opciones de cada catálogo, guardadas para resolver los casos de
+   * demostración por **código**. Cargarlas no cuesta peticiones extra: el
+   * cliente memoiza por target, así que cada una es la misma petición que ya
+   * hace el `ConceptSelect` correspondiente.
+   */
+  protected readonly opcionesDiagnostico = signal<readonly DynamicEnumOption[]>([]);
+  private readonly opcionesCategoria = signal<readonly DynamicEnumOption[]>([]);
+  private readonly opcionesSeveridad = signal<readonly DynamicEnumOption[]>([]);
+  private readonly opcionesLateralidad = signal<readonly DynamicEnumOption[]>([]);
+  private readonly opcionesCurso = signal<readonly DynamicEnumOption[]>([]);
 
   /**
    * Si el catálogo del diagnóstico está disponible.
@@ -249,11 +314,78 @@ export class DiagnosisBlock {
     // El catálogo se pregunta una sola vez: el cliente memoiza por target, así
     // que esta llamada y la del selector son la misma petición.
     this.systemContext.dynamicEnum(TARGET_DIAGNOSTICO).subscribe({
-      next: (enumeracion) => this.catalogoListo.set(enumeracion.options.length > 0),
+      next: (enumeracion) => {
+        this.opcionesDiagnostico.set(enumeracion.options);
+        this.catalogoListo.set(enumeracion.options.length > 0);
+      },
       // Sin binding declarado la API responde 404. No es un fallo transitorio
       // que convenga reintentar: es un dato que falta en el catálogo.
       error: () => this.catalogoListo.set(false),
     });
+    this.cargarOpciones(TARGET_CATEGORIA, this.opcionesCategoria);
+    this.cargarOpciones(TARGET_SEVERIDAD, this.opcionesSeveridad);
+    this.cargarOpciones(TARGET_LATERALIDAD, this.opcionesLateralidad);
+    this.cargarOpciones(TARGET_CURSO_CLINICO, this.opcionesCurso);
+  }
+
+  /** Guarda las opciones de un catálogo. Sin catálogo, lista vacía y ya. */
+  private cargarOpciones(
+    target: string,
+    destino: WritableSignal<readonly DynamicEnumOption[]>,
+  ): void {
+    this.systemContext.dynamicEnum(target).subscribe({
+      next: (enumeracion) => destino.set(enumeracion.options),
+      error: () => destino.set([]),
+    });
+  }
+
+  /**
+   * Precarga el formulario con un caso de demostración.
+   *
+   * Cada código se resuelve al `conceptId` del catálogo por coincidencia
+   * EXACTA; lo que no resuelve queda sin elegir y se avisa. Nunca se cae a
+   * «la primera opción»: autocompletar un diagnóstico equivocado en una
+   * historia clínica es peor que dejar el campo vacío.
+   *
+   * Pública a propósito: los escenarios combinados del expediente la invocan.
+   */
+  aplicarCasoDemo(caso: CasoDiagnosticoDemo): void {
+    const faltantes: string[] = [];
+    const resolver = (
+      opciones: readonly DynamicEnumOption[],
+      codigo: string,
+      etiqueta: string,
+    ): string | null => {
+      const conceptId = conceptIdPorCodigo(opciones, codigo);
+      if (conceptId === null) {
+        faltantes.push(`${etiqueta} (${codigo})`);
+      }
+      return conceptId;
+    };
+
+    this.diagnostico.set(resolver(this.opcionesDiagnostico(), caso.code, 'diagnóstico'));
+    this.categoria.set(resolver(this.opcionesCategoria(), caso.categoria, 'categoría'));
+    this.severidad.set(resolver(this.opcionesSeveridad(), caso.severidad, 'severidad'));
+    this.lateralidad.set(
+      caso.lateralidad === undefined
+        ? null
+        : resolver(this.opcionesLateralidad(), caso.lateralidad, 'lateralidad'),
+    );
+    this.cursoClinico.set(resolver(this.opcionesCurso(), caso.cursoClinico, 'curso clínico'));
+    this.inicio.set(new Date());
+    this.fechaEsperada.set(
+      caso.diasResolucion === undefined ? null : enDias(caso.diasResolucion),
+    );
+    this.notasClinicas.set(caso.notas);
+
+    if (faltantes.length > 0) {
+      this.toasts.warning(
+        `Sin correspondencia en el catálogo: ${faltantes.join(', ')}. Elegilos a mano.`,
+        `Caso «${caso.label}» aplicado parcialmente`,
+      );
+    } else {
+      this.toasts.info(`Revisá y registrá cuando quieras.`, `Caso «${caso.label}» aplicado`);
+    }
   }
 
   /**
@@ -281,7 +413,10 @@ export class DiagnosisBlock {
     const categoria = this.categoria();
     const severidad = this.severidad();
     const lateralidad = this.lateralidad();
+    const cursoClinico = this.cursoClinico();
     const inicio = this.inicio();
+    const fechaEsperada = this.fechaEsperada();
+    const notas = this.notasClinicas().trim();
 
     this.registrando.set(true);
     this.registro.set(loading());
@@ -297,7 +432,10 @@ export class DiagnosisBlock {
         ...(categoria === null ? {} : { categoryConceptId: categoria }),
         ...(severidad === null ? {} : { severityConceptId: severidad }),
         ...(lateralidad === null ? {} : { lateralityConceptId: lateralidad }),
+        ...(cursoClinico === null ? {} : { clinicalCourseConceptId: cursoClinico }),
         ...(inicio === null ? {} : { onsetAt: inicio }),
+        ...(fechaEsperada === null ? {} : { expectedResolutionAt: fechaEsperada }),
+        ...(notas === '' ? {} : { noteText: notas }),
       })
       .subscribe({
         next: () => {
@@ -323,6 +461,9 @@ export class DiagnosisBlock {
     this.categoria.set(null);
     this.severidad.set(null);
     this.lateralidad.set(null);
+    this.cursoClinico.set(null);
     this.inicio.set(null);
+    this.fechaEsperada.set(null);
+    this.notasClinicas.set('');
   }
 }

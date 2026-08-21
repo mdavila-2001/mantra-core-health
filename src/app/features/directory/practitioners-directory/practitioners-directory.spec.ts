@@ -248,6 +248,43 @@ describe('PractitionersDirectory', () => {
     expect(interno<() => number>('total')()).toBe(1);
   });
 
+  it('el buscador encuentra por ESPECIALIDAD, que es el encabezado y no un dato de la tarjeta', () => {
+    montar();
+    responder([FILA, OTRA]);
+    responderConceptos();
+
+    // El placeholder promete buscar por especialidad. Antes no la miraba: la
+    // especialidad es el encabezado del grupo, no una línea de la tarjeta, así
+    // que «pediatría» sólo encontraba a quien lo tuviera en el título libre.
+    senal<string>('filtro').set('pediatría');
+
+    expect(grupos()).toHaveLength(1);
+    expect(grupos()[0].nombre).toBe('Pediatría');
+    expect(grupos()[0].profesionales).toHaveLength(1);
+  });
+
+  it('el buscador ignora las tildes: nadie las escribe', () => {
+    montar();
+    responder([FILA, OTRA]);
+    responderConceptos();
+
+    senal<string>('filtro').set('cardiologia');
+
+    expect(grupos()).toHaveLength(1);
+    expect(grupos()[0].nombre).toBe('Cardiología');
+  });
+
+  it('el grupo que casa entra ENTERO, aunque nadie coincida por nombre', () => {
+    montar();
+    // Dos cardiólogos con nombres que no tienen nada que ver con «cardio».
+    responder([FILA, { ...FILA, profileId: 'per-3', displayName: 'Dr. Juan Vera' }]);
+    responderConceptos();
+
+    senal<string>('filtro').set('cardio');
+
+    expect(interno<() => number>('total')()).toBe(2);
+  });
+
   it('el código interno del profesional no se muestra ni filtra: el paciente no lo conoce', () => {
     // Feedback de la analista (F-01, 18/08/2026): las tarjetas decían
     // «Código MED-…». Es un identificador de sistema; la Guía es sólo del

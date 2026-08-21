@@ -77,15 +77,25 @@ export function recetaDesdeResumen(
     creadaEl: indicacion.createdAt,
     ...(indicacion.signedAt === undefined ? {} : { firmadaEl: indicacion.signedAt }),
     ...(indicacion.issuedAt === undefined ? {} : { emitidaEl: indicacion.issuedAt }),
-    medicamentos: [
-      {
-        medicamento: etiqueta(indicacion.medicationConceptId),
-        ...(indicacion.doseText === undefined ? {} : { dosis: indicacion.doseText }),
-        ...(indicacion.frequencyText === undefined ? {} : { frecuencia: indicacion.frequencyText }),
-        ...(vigenciaDe(indicacion) === undefined ? {} : { vigencia: vigenciaDe(indicacion) }),
-        estado: etiqueta(indicacion.statusConceptId),
-      },
-    ],
+    medicamentos: [medicamentoDe(indicacion, etiqueta)],
+    // Las indicaciones al paciente (v4.1.3) van en la sección «Indicaciones»
+    // del papel, no dentro de la línea del medicamento: son lo que el paciente
+    // lee, no lo que farmacia dispensa.
+    ...(indicacion.patientInstructionsText === undefined
+      ? {}
+      : { indicaciones: indicacion.patientInstructionsText }),
+  };
+}
+
+/** La línea del medicamento, con su vigencia calculada una sola vez. */
+function medicamentoDe(indicacion: MedicationRequest, etiqueta: ResolverEtiqueta) {
+  const vigencia = vigenciaDe(indicacion);
+  return {
+    medicamento: etiqueta(indicacion.medicationConceptId),
+    ...(indicacion.doseText === undefined ? {} : { dosis: indicacion.doseText }),
+    ...(indicacion.frequencyText === undefined ? {} : { frecuencia: indicacion.frequencyText }),
+    ...(vigencia === undefined ? {} : { vigencia }),
+    estado: etiqueta(indicacion.statusConceptId),
   };
 }
 
@@ -139,7 +149,11 @@ export function atencionDesdeResumen(
         titulo: 'Medicación indicada',
         datos: resumen.medicationRequests.map((fila) => ({
           etiqueta: etiqueta(fila.medicationConceptId),
-          valor: [fila.doseText, fila.frequencyText].filter(Boolean).join(' · '),
+          // La vigencia entra a la línea igual que en la receta: una indicación
+          // «cada 8 horas» sin su «hasta cuándo» obliga a adivinar.
+          valor: [fila.doseText, fila.frequencyText, vigenciaDe(fila)]
+            .filter(Boolean)
+            .join(' · '),
         })),
       },
       {

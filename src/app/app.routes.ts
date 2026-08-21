@@ -5,6 +5,7 @@ import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterPatient } from './features/auth/register-patient/register-patient';
+import { RegisterOrganization } from './features/auth/register-organization/register-organization';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
@@ -80,13 +81,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // resuelve el 90 % de los casos —enterarse y saltar— y esta pantalla sólo la
   // abre quien viene a revisar.
   'notification-center': () =>
-    import('./features/notifications/notification-center').then(
-      (m) => m.NotificationCenter,
-    ),
+    import('./features/notifications/notification-center').then((m) => m.NotificationCenter),
   // Carril P2 · la bandeja de mensajería. Diferida: no es la primera pantalla
   // de nadie y arrastra el buscador del directorio.
-  messaging: () =>
-    import('./features/messaging/messaging').then((m) => m.Messaging),
+  messaging: () => import('./features/messaging/messaging').then((m) => m.Messaging),
   // El directorio de grupos (P7). Diferido como el muro: no es la primera
   // pantalla de nadie y arrastra la tarjeta de grupo con su alta.
   groups: () => import('./features/groups/groups').then((m) => m.Groups),
@@ -94,9 +92,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // olvida, que es exactamente lo que una pantalla de preferencias debería
   // conseguir.
   'my-account/notification-preferences': () =>
-    import(
-      './features/account/notification-preferences/notification-preferences'
-    ).then((m) => m.NotificationPreferences),
+    import('./features/account/notification-preferences/notification-preferences').then(
+      (m) => m.NotificationPreferences,
+    ),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
@@ -127,6 +125,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/medical-organization/medical-organization').then(
       (m) => m.MedicalOrganization,
     ),
+  // TP-1: la organización mirándose a sí misma. Diferida por lo mismo que sus
+  // hermanas de administración.
+  'administration/my-organization': () =>
+    import('./features/organization/organization-panel').then(
+      (m) => m.OrganizationPanel,
+    ),
   // Carril 16: la consola del laboratorio. Distinta de `laboratory-directory`,
   // que es la vitrina del paciente y sigue en pie sin cambios.
   'administration/medical-laboratory': () =>
@@ -145,8 +149,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'administration/moderation': () =>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
-  tutorials: () =>
-    import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
+  tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
@@ -195,17 +198,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // distinto —el administrador del laboratorio, el visitador y el doctor— y
   // ninguna es el destino del login de nadie.
   'administration/pharma-lab': () =>
-    import('./features/pharma-lab/pharma-lab-home/pharma-lab-home').then(
-      (m) => m.PharmaLabHome,
-    ),
+    import('./features/pharma-lab/pharma-lab-home/pharma-lab-home').then((m) => m.PharmaLabHome),
   'my-visits': () =>
-    import('./features/pharma-lab/visitor-visits/visitor-visits').then(
-      (m) => m.VisitorVisits,
-    ),
+    import('./features/pharma-lab/visitor-visits/visitor-visits').then((m) => m.VisitorVisits),
   'lab-visits': () =>
-    import('./features/pharma-lab/doctor-visits/doctor-visits').then(
-      (m) => m.DoctorVisits,
-    ),
+    import('./features/pharma-lab/doctor-visits/doctor-visits').then((m) => m.DoctorVisits),
 };
 
 /**
@@ -283,6 +280,17 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/questionnaires/answer/answer')
         .then((m) => m.QuestionnaireAnswer)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Dónde comprar una receta (carril E3). Cuelga de «Mi historia clínica»:
+    // se llega desde el botón de cada receta, y la lectura pide el resumen
+    // clínico propio — sin receta no hay nada que comprar.
+    path: 'my-account/medical-record/where-to-buy/:requestId',
+    title: `${APP_TITLE} - Dónde comprar mi receta`,
+    loadComponent: () =>
+      import('./features/account/medical-record/where-to-buy/where-to-buy')
+        .then((m) => m.WhereToBuy)
         .catch(() => chunkFallido()),
   },
   {
@@ -393,6 +401,18 @@ const PANTALLAS_HIJAS: Routes = [
     // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
     // nunca desde el menú. Y sólo la abre quien atiende: «Mi perfil» no
     // declara roles, así que la restricción va en la ruta.
+    // TJ-1 · el alta del profesional. Se cuelga fuera de «Mi cuenta» porque no
+    // es un dato que se consulta: es una tarea con principio y fin. Sólo la abre
+    // quien atiende — a un paciente no le corresponde.
+    path: 'onboarding',
+    title: `${APP_TITLE} - Completá tu perfil`,
+    ...soloDeQuienAtiende(),
+    loadComponent: () =>
+      import('./features/onboarding-practitioner/onboarding-practitioner')
+        .then((m) => m.OnboardingPractitioner)
+        .catch(() => chunkFallido()),
+  },
+  {
     path: 'my-account/edit',
     title: `${APP_TITLE} - Configurar tu perfil`,
     ...soloDeQuienAtiende(),
@@ -857,21 +877,26 @@ export const routes: Routes = [
         // directo, que es lo que el comentario decía que pasaba.
         path: 'feed',
         title: 'Muro profesional',
-        loadComponent: () =>
-          import('./features/feed/feed').then((m) => m.Feed),
+        loadComponent: () => import('./features/feed/feed').then((m) => m.Feed),
       },
       // Alta de agenda por fases (UC-41-01 → UC-41-04). Cuelga de la sección
       // `schedule`: se llega desde la propia agenda, no desde el menú, igual que
       // las demás pantallas de operación. La autoridad sigue siendo el backend
       // (`SCHEDULING_ADMIN`); el guard de la sección sólo evita ofrecer la
       // pantalla a quien la API igual negaría.
-      pantallaDeOperacion('schedule', 'new', 'Crear agenda', () =>
+      pantallaDeOperacion('schedule', 'new', 'Publicar mi agenda', () =>
         import('./features/agenda/agenda-create/agenda-create').then((m) => m.AgendaCreate),
       ),
+      // «Mi agenda» (MAC-4): el horario publicado, en palabras. Es la primera
+      // pantalla donde un médico ve lo que publicó — hasta que existió el GET
+      // de plantillas, no había forma de volver a leerlo.
+      pantallaDeOperacion('schedule', 'mine', 'Mi agenda', () =>
+        import('./features/agenda/my-agenda/my-agenda').then((m) => m.MyAgenda),
+      ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
-        import(
-          './features/delegated-access/practitioner-delegate-form/practitioner-delegate-form'
-        ).then((m) => m.PractitionerDelegateForm),
+        import('./features/delegated-access/practitioner-delegate-form/practitioner-delegate-form').then(
+          (m) => m.PractitionerDelegateForm,
+        ),
       ),
       pantallaDeAccesoDelegado('delegations/revoke', 'Revocar delegación', () =>
         import('./features/delegated-access/delegation-revocation/delegation-revocation').then(
@@ -897,9 +922,9 @@ export const routes: Routes = [
         ),
       ),
       pantallaDeAccesoDelegado('requests/resolve', 'Resolver solicitud de acceso', () =>
-        import(
-          './features/delegated-access/access-request-resolution/access-request-resolution'
-        ).then((m) => m.AccessRequestResolution),
+        import('./features/delegated-access/access-request-resolution/access-request-resolution').then(
+          (m) => m.AccessRequestResolution,
+        ),
       ),
       pantallaDeAccesoDelegado('permission-sets/new', 'Publicar set de permisos', () =>
         import('./features/delegated-access/permission-set-form/permission-set-form').then(
@@ -920,9 +945,7 @@ export const routes: Routes = [
         import('./features/delegated-access/expiry-sweep/expiry-sweep').then((m) => m.ExpirySweep),
       ),
       pantallaDeProveedoresDeIdentidad('providers/new', 'Registrar proveedor de identidad', () =>
-        import('./features/auth-providers/provider-form/provider-form').then(
-          (m) => m.ProviderForm,
-        ),
+        import('./features/auth-providers/provider-form/provider-form').then((m) => m.ProviderForm),
       ),
       pantallaDeProveedoresDeIdentidad(
         'providers/protocol',
@@ -932,10 +955,13 @@ export const routes: Routes = [
             (m) => m.ProtocolConfigForm,
           ),
       ),
-      pantallaDeProveedoresDeIdentidad('providers/attribute-mappings', 'Fijar mapeo de atributos', () =>
-        import('./features/auth-providers/attribute-mappings-form/attribute-mappings-form').then(
-          (m) => m.AttributeMappingsForm,
-        ),
+      pantallaDeProveedoresDeIdentidad(
+        'providers/attribute-mappings',
+        'Fijar mapeo de atributos',
+        () =>
+          import('./features/auth-providers/attribute-mappings-form/attribute-mappings-form').then(
+            (m) => m.AttributeMappingsForm,
+          ),
       ),
       pantallaDeProveedoresDeIdentidad(
         'providers/provisioning-rule',
@@ -978,36 +1004,33 @@ export const routes: Routes = [
           (m) => m.AccountLinkRequestForm,
         ),
       ),
-      pantallaDeProveedoresDeIdentidad(
-        'accounts/complete',
-        'Completar vinculación de cuenta',
-        () =>
-          import(
-            './features/auth-providers/account-link-complete-form/account-link-complete-form'
-          ).then((m) => m.AccountLinkCompleteForm),
+      pantallaDeProveedoresDeIdentidad('accounts/complete', 'Completar vinculación de cuenta', () =>
+        import('./features/auth-providers/account-link-complete-form/account-link-complete-form').then(
+          (m) => m.AccountLinkCompleteForm,
+        ),
       ),
-      pantallaDeProveedoresDeIdentidad(
-        'accounts/unlink',
-        'Desvincular identidad federada',
-        () =>
-          import('./features/auth-providers/identity-unlink-form/identity-unlink-form').then(
-            (m) => m.IdentityUnlinkForm,
-          ),
+      pantallaDeProveedoresDeIdentidad('accounts/unlink', 'Desvincular identidad federada', () =>
+        import('./features/auth-providers/identity-unlink-form/identity-unlink-form').then(
+          (m) => m.IdentityUnlinkForm,
+        ),
       ),
       pantallaDeVerificacionIdentidad('authorities/new', 'Registrar autoridad de identidad', () =>
         import('./features/identity-assurance/authority-form/authority-form').then(
           (m) => m.AuthorityForm,
         ),
       ),
-      pantallaDeVerificacionIdentidad('authorities/endpoint', 'Publicar endpoint de autoridad', () =>
-        import(
-          './features/identity-assurance/authority-endpoint-form/authority-endpoint-form'
-        ).then((m) => m.AuthorityEndpointForm),
+      pantallaDeVerificacionIdentidad(
+        'authorities/endpoint',
+        'Publicar endpoint de autoridad',
+        () =>
+          import('./features/identity-assurance/authority-endpoint-form/authority-endpoint-form').then(
+            (m) => m.AuthorityEndpointForm,
+          ),
       ),
       pantallaDeVerificacionIdentidad('policies/new', 'Crear política de verificación', () =>
-        import(
-          './features/identity-assurance/verification-policy-form/verification-policy-form'
-        ).then((m) => m.VerificationPolicyForm),
+        import('./features/identity-assurance/verification-policy-form/verification-policy-form').then(
+          (m) => m.VerificationPolicyForm,
+        ),
       ),
       // La cola va primero: es la lectura desde la que se llega a las demás.
       pantallaDeVerificacionIdentidad('queue', 'Cola de revisión de identidad', () =>
@@ -1087,9 +1110,7 @@ export const routes: Routes = [
         import('./features/health-context/source-form/source-form').then((m) => m.SourceForm),
       ),
       pantallaDeContextoSanitario('schedules/new', 'Nueva agenda de recolección', () =>
-        import('./features/health-context/schedule-form/schedule-form').then(
-          (m) => m.ScheduleForm,
-        ),
+        import('./features/health-context/schedule-form/schedule-form').then((m) => m.ScheduleForm),
       ),
       pantallaDeContextoSanitario('collection-runs/new', 'Iniciar corrida', () =>
         import('./features/health-context/collection-run-form/collection-run-form').then(
@@ -1167,10 +1188,8 @@ export const routes: Routes = [
       pantallaDeGeolocalizacion('subjects/last-position', 'Última posición', () =>
         import('./features/geo/last-position/last-position').then((m) => m.LastPosition),
       ),
-      pantallaDeGeolocalizacion(
-        'subjects/last-position/:trackedSubjectId',
-        'Última posición',
-        () => import('./features/geo/last-position/last-position').then((m) => m.LastPosition),
+      pantallaDeGeolocalizacion('subjects/last-position/:trackedSubjectId', 'Última posición', () =>
+        import('./features/geo/last-position/last-position').then((m) => m.LastPosition),
       ),
       // Las direcciones viejas van **últimas**, después de toda pantalla real.
       // Hoy no podrían tapar a ninguna —son textos distintos y van con
@@ -1211,6 +1230,13 @@ export const routes: Routes = [
     path: 'auth/register',
     component: RegisterPatient,
     title: 'AloVida - Crear cuenta',
+  },
+  {
+    // Signup público de una organización aseguradora: crea el tenant `PAYER`
+    // y su usuario owner en la misma operación.
+    path: 'auth/register-organization',
+    component: RegisterOrganization,
+    title: 'AloVida - Registrar aseguradora',
   },
   {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…

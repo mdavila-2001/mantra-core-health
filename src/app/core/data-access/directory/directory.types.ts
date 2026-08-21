@@ -24,6 +24,121 @@ export interface TenantListItem {
   readonly createdAt: Date;
 }
 
+/**
+ * Una organización del actor, con qué puede hacer en ella (TP-1).
+ *
+ * `canAdminister` viene del servidor y no se deduce acá: el criterio de quién
+ * administra una organización vive en la API, y calcularlo otra vez en el front
+ * daría dos definiciones que se separan en cuanto una de las dos cambie.
+ *
+ * Sirve para dibujar, nunca para autorizar: la API vuelve a comprobarlo en cada
+ * escritura. Lo que evita es una pantalla que ofrece botones que fallan.
+ */
+export interface MyOrganization extends TenantListItem {
+  /** Concepto del rol de la membresía activa (owner/admin/staff). */
+  readonly myRoleConceptId: string;
+  /** Si puede editar los datos y gestionar la gente. */
+  readonly canAdminister: boolean;
+  /**
+   * Si la plataforma ya la aprobó.
+   *
+   * Resuelto por la API a propósito: el estado viaja como concepto —un uuid— y
+   * saber cuál significa «verificada» ataría la pantalla a un identificador
+   * sembrado. Importa porque sin aprobar no aparece en el directorio público.
+   */
+  readonly isVerified: boolean;
+  /** Zona horaria IANA declarada, si la hay. */
+  readonly timeZone?: string;
+  /**
+   * Datos de aseguradora. Presente **sólo** si el tenant es de tipo `PAYER`:
+   * su presencia es la señal de que se trata de una aseguradora, en vez de
+   * decodificar `tenantTypeConceptId` — mismo principio que `isVerified`.
+   */
+  readonly payer?: PayerProfile;
+}
+
+/**
+ * Un profesional que pidió atender en una sede de la organización (TP-2).
+ *
+ * Trae lo justo para decidir: quién pide, para qué sede, con qué cargo y desde
+ * cuándo. Ningún dato clínico y nada del profesional más allá de su perfil
+ * profesional, que ya es público.
+ */
+export interface PractitionerRequest {
+  /** Con este id se aprueba o se rechaza. */
+  readonly id: string;
+  readonly practitionerProfileId: string;
+  /** Institución tal como la declaró el profesional. */
+  readonly organizationName: string;
+  readonly roleTitle: string;
+  readonly practiceSiteId: string | null;
+  readonly startDate: Date;
+  readonly statusConceptId: string;
+  readonly createdAt: Date;
+}
+
+/**
+ * Una cita de la agenda de la organización (TP-5).
+ *
+ * ## Lo que no está, y es lo importante
+ *
+ * **El motivo de consulta.** Ni acá ni en el DTO del servidor: es del paciente
+ * y de su médico. Una recepción necesita saber quién viene, cuándo y con quién
+ * —eso es recibir a alguien— y no por qué viene, que es un dato clínico.
+ *
+ * El nombre del paciente sí: la organización lo recibe en la puerta.
+ */
+export interface TenantAgendaItem {
+  readonly bookingId: string;
+  readonly startAt: Date;
+  readonly endAt: Date;
+  readonly resourceId: string | null;
+  /** Nombre de la sede, ya resuelto por el servidor. */
+  readonly resourceName: string | null;
+  readonly practitionerProfileId: string | null;
+  readonly patientProfileId: string;
+  readonly patientName: string | null;
+  readonly statusConceptId: string;
+}
+
+/**
+ * La agenda de la organización en una ventana.
+ *
+ * `truncated` no es cosmético: una agenda a la que le faltan citas sin avisar
+ * se lee como una agenda más vacía de lo que está, que es la lectura contraria
+ * a la que una recepción necesita.
+ */
+export interface TenantAgenda {
+  readonly items: readonly TenantAgendaItem[];
+  readonly truncated: boolean;
+}
+
+/** Filtros de la agenda de la organización. */
+export interface TenantAgendaQuery {
+  readonly from: Date;
+  readonly to: Date;
+  /** Acotar a un profesional; se traduce a sus recursos EN esta organización. */
+  readonly practitionerProfileId?: string;
+  readonly limit?: number;
+}
+
+/** Campos que la organización edita de sí misma. Lo que no viene no se toca. */
+export interface OrganizationEdit {
+  readonly legalName?: string;
+  readonly tradeName?: string;
+  readonly timeZone?: string;
+  /**
+   * Sólo para aseguradoras: se manda cuando el tenant es `PAYER`. El backend
+   * rechaza este bloque en cualquier otro tipo, así que la pantalla lo arma
+   * sólo si `payer` vino en la lectura.
+   */
+  readonly payer?: {
+    readonly sigla?: string;
+    readonly address?: string;
+    readonly regulatorIdentifier?: string;
+  };
+}
+
 /** Página del listado. Sin total: la paginación es por cursor, a propósito. */
 export interface TenantPage {
   readonly items: readonly TenantListItem[];
@@ -112,6 +227,10 @@ export interface PayerProfile {
   readonly carrierCode: string;
   readonly regulatorIdentifier: string;
   readonly jurisdictionConceptId?: string;
+  /** Sigla de la aseguradora. Hasta 20 caracteres. */
+  readonly sigla: string;
+  /** Dirección física. Hasta 300 caracteres. */
+  readonly address: string;
 }
 
 /** Datos de corredor. Mismo trato que {@link PayerProfile}, para `BROKER`. */

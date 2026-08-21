@@ -5,7 +5,15 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../../../../core/auth/session.store';
-import { DiagnosisBlock, TARGET_DIAGNOSTICO } from './diagnosis-block';
+import { CASOS_DIAGNOSTICO_DEMO } from '../demo-presets';
+import {
+  DiagnosisBlock,
+  TARGET_CATEGORIA,
+  TARGET_CURSO_CLINICO,
+  TARGET_DIAGNOSTICO,
+  TARGET_LATERALIDAD,
+  TARGET_SEVERIDAD,
+} from './diagnosis-block';
 
 /**
  * Registrar el diagnóstico desde la ficha — V08-08. Lo que estas pruebas fijan:
@@ -46,6 +54,7 @@ const RESPUESTA = {
   patientProfileId: 'p-1',
   clinicalStatus: 'st-activa',
   verificationStatus: 'st-confirmada',
+  clinicalCourse: null,
   createdAt: '2026-08-13T12:00:00.000Z',
 };
 
@@ -229,6 +238,22 @@ describe('DiagnosisBlock', () => {
     req.flush(RESPUESTA);
   });
 
+  it('manda el curso clínico y la fecha esperada de resolución cuando se eligieron', () => {
+    responderCatalogo();
+
+    señal<string>('diagnostico').set('dx-hta');
+    señal<string>('cursoClinico').set('curso-agudo');
+    señal<Date>('fechaEsperada').set(new Date('2026-08-01T00:00:00.000Z'));
+    interno<() => void>('registrar')();
+
+    const req = http.expectOne('/clinical/conditions');
+    const body = req.request.body as Record<string, unknown>;
+    expect(body['clinicalCourseConceptId']).toBe('curso-agudo');
+    expect(body['expectedResolutionAt']).toBe('2026-08-01T00:00:00.000Z');
+
+    req.flush(RESPUESTA);
+  });
+
   it('tras registrar avisa para releer y limpia el formulario', () => {
     responderCatalogo();
 
@@ -243,6 +268,68 @@ describe('DiagnosisBlock', () => {
     expect(releido).toBe(1);
     expect(interno<() => string | null>('diagnostico')()).toBeNull();
     expect(interno<() => string | null>('severidad')()).toBeNull();
+    expect(interno<() => string>('notasClinicas')()).toBe('');
+  });
+
+  it('las notas clínicas viajan como noteText, recortadas', () => {
+    responderCatalogo();
+
+    señal<string>('diagnostico').set('dx-hta');
+    señal<string>('notasClinicas').set('  Faringe eritematosa sin exudado.  ');
+    interno<() => void>('registrar')();
+
+    const req = http.expectOne('/clinical/conditions');
+    expect((req.request.body as Record<string, unknown>)['noteText']).toBe(
+      'Faringe eritematosa sin exudado.',
+    );
+
+    req.flush(RESPUESTA);
+  });
+
+  /* ---- los casos de demostración ------------------------------------------ */
+
+  /**
+   * Lo que estas dos fijan: un caso NO escribe códigos en señales que viajan
+   * como conceptId —eso fue el 400 de la primera versión—, sino que resuelve
+   * cada código contra su catálogo; y lo que el catálogo no tiene queda sin
+   * elegir, jamás «la primera opción de la lista».
+   */
+  it('un caso de demostración resuelve cada código a su conceptId del catálogo', () => {
+    fixture.detectChanges();
+    const responder = (target: string, conceptId: string, code: string): void => {
+      http
+        .expectOne((r) => r.params.get('target') === target)
+        .flush({ ...CATALOGO, options: [{ conceptId, code, display: code, ordinal: 1 }] });
+    };
+    responder(TARGET_DIAGNOSTICO, 'dx-hta', 'I10');
+    responder(TARGET_CATEGORIA, 'cat-dx', 'COND_DIAGNOSIS');
+    responder(TARGET_SEVERIDAD, 'sev-mod', 'COND_SEV_MODERATE');
+    responder(TARGET_LATERALIDAD, 'lat-izq', 'COND_LAT_LEFT');
+    responder(TARGET_CURSO_CLINICO, 'curso-cronico', 'COND_COURSE_CHRONIC');
+
+    // Hipertensión: I10, crónica, moderada, sin lateralidad ni resolución.
+    componente.aplicarCasoDemo(CASOS_DIAGNOSTICO_DEMO[1]);
+
+    expect(interno<() => string | null>('diagnostico')()).toBe('dx-hta');
+    expect(interno<() => string | null>('categoria')()).toBe('cat-dx');
+    expect(interno<() => string | null>('severidad')()).toBe('sev-mod');
+    expect(interno<() => string | null>('cursoClinico')()).toBe('curso-cronico');
+    expect(interno<() => string | null>('lateralidad')()).toBeNull();
+    expect(interno<() => Date | null>('inicio')()).not.toBeNull();
+    expect(interno<() => Date | null>('fechaEsperada')()).toBeNull();
+    expect(interno<() => string>('notasClinicas')()).toBe(CASOS_DIAGNOSTICO_DEMO[1].notas);
+  });
+
+  it('lo que el catálogo no tiene queda sin elegir: jamás la primera opción', () => {
+    // El catálogo sólo trae I10 y COND_SEV_MILD; Diabetes (E11.9, moderada)
+    // no resuelve nada.
+    responderCatalogo();
+
+    componente.aplicarCasoDemo(CASOS_DIAGNOSTICO_DEMO[2]);
+
+    expect(interno<() => string | null>('diagnostico')()).toBeNull();
+    expect(interno<() => string | null>('severidad')()).toBeNull();
+    expect(interno<() => string | null>('cursoClinico')()).toBeNull();
   });
 
   /* ---- el 409 del duplicado ------------------------------------------------ */

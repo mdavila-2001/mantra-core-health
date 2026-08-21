@@ -136,6 +136,20 @@
       </app-alert>
     }
     @default {
+      <!-- El odontograma va primero: la boca entera de un vistazo, y de ahí se
+           baja al detalle. Sin catálogo no se dibuja —los conceptos de pieza
+           salen de ahí— y la lista de abajo sigue contándolo todo igual. -->
+      @if (opcionesDeSitio().length > 0) {
+        <app-odontogram
+          [marcas]="marcasPorPieza()"
+          [seleccionada]="piezaElegidaFdi()"
+          (pieza)="elegirPieza($event)"
+        />
+        <p class="procedimientos__secundario">
+          Elegí una pieza para cargarla en el formulario de abajo.
+        </p>
+      }
+
       @if (tratamientos().length === 0) {
         <p class="procedimientos__vacio" data-testid="sin-odontologia">
           Sin tratamientos odontológicos registrados para esta persona.

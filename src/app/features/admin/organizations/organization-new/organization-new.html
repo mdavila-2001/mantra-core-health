@@ -133,12 +133,13 @@
         </app-form-field>
 
         <app-form-field
-          label="Identificador ante el regulador"
+          label="NIT"
+          hint="Identificador ante el regulador."
           [required]="true"
           [errorMessage]="
             formPayer.controls.regulatorIdentifier.touched &&
             formPayer.controls.regulatorIdentifier.invalid
-              ? 'Escribí el identificador ante el regulador (hasta 100 caracteres).'
+              ? 'Escribí el NIT (hasta 100 caracteres).'
               : ''
           "
         >
@@ -147,6 +148,30 @@
             type="text"
             testId="alta-organizacion-regulador"
           />
+        </app-form-field>
+
+        <app-form-field
+          label="Sigla"
+          [required]="true"
+          [errorMessage]="
+            formPayer.controls.sigla.touched && formPayer.controls.sigla.invalid
+              ? 'Escribí la sigla (hasta 20 caracteres).'
+              : ''
+          "
+        >
+          <app-input formControlName="sigla" type="text" testId="alta-organizacion-sigla" />
+        </app-form-field>
+
+        <app-form-field
+          label="Dirección"
+          [required]="true"
+          [errorMessage]="
+            formPayer.controls.address.touched && formPayer.controls.address.invalid
+              ? 'Escribí la dirección (hasta 300 caracteres).'
+              : ''
+          "
+        >
+          <app-input formControlName="address" type="text" testId="alta-organizacion-direccion" />
         </app-form-field>
       </app-form-section>
     }

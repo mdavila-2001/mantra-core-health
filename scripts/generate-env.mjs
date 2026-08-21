@@ -113,6 +113,19 @@ const MANIFEST = [
     literal: true,
     validate: validateRatio,
   },
+
+  // --- Demostración ---------------------------------------------------------
+  //
+  // Enciende la barra de casos de demostración de la ficha clínica. No es un
+  // secreto: solo decide si esa UI se pinta. Apagada en producción salvo
+  // decisión explícita del despliegue (el default de desarrollo lo pone
+  // `environment.development.ts`).
+  {
+    key: 'PUBLIC_DEMO_PRESETS',
+    field: 'demoPresets',
+    literal: true,
+    validate: validateBoolean,
+  },
 ];
 
 /**

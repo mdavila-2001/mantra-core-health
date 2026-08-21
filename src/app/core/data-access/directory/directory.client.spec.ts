@@ -34,9 +34,7 @@ describe('DirectoryClient', () => {
   });
 
   it('searchTenants traduce query a q y statusConceptId a status', () => {
-    client
-      .searchTenants({ query: 'farmacia', statusConceptId: 'c-activo', limit: 25 })
-      .subscribe();
+    client.searchTenants({ query: 'farmacia', statusConceptId: 'c-activo', limit: 25 }).subscribe();
 
     const req = http.expectOne((r) => r.url === '/admin/tenants');
     expect(req.request.params.get('q')).toBe('farmacia');
@@ -118,14 +116,24 @@ describe('DirectoryClient', () => {
         legalName: 'Aseguradora Andina S.A.',
         ownerUserId: 'u-2',
         tenantType: 'PAYER',
-        payer: { carrierCode: 'ANDINA', regulatorIdentifier: 'APS-123' },
+        payer: {
+          carrierCode: 'ANDINA',
+          regulatorIdentifier: 'APS-123',
+          sigla: 'AND',
+          address: 'Av. Siempre Viva 123',
+        },
       })
       .subscribe((tenant) => (creado = tenant));
 
     const req = http.expectOne('/admin/tenants');
     expect(req.request.body).toEqual(
       expect.objectContaining({
-        payer: { carrierCode: 'ANDINA', regulatorIdentifier: 'APS-123' },
+        payer: {
+          carrierCode: 'ANDINA',
+          regulatorIdentifier: 'APS-123',
+          sigla: 'AND',
+          address: 'Av. Siempre Viva 123',
+        },
       }),
     );
 
