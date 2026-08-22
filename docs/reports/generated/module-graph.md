@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-783 archivos TypeScript bajo `src/` y 3025 importaciones internas.
+889 archivos TypeScript bajo `src/` y 3576 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -14,9 +14,14 @@ Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.jso
 Se excluyen los puntos de entrada del framework y las pruebas.
 
 - `src/app/core/observability/browser/telemetry-browser.bootstrap.ts`
+- `src/app/features/account/questionnaires/questionnaires.ts`
 - `src/app/features/accounting/accounting.ts`
 - `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
 - `src/app/features/diagnostics/diagnostics.routes.ts`
+- `src/app/features/interventions/interventions.routes.ts`
+- `src/app/features/interventions/interventions.ts`
+- `src/app/features/questionnaires/questionnaires.ts`
+- `src/app/features/questionnaires/survey-detail/survey-detail.ts`
 - `src/app/features/redsat/accesos/acceso-de-emergencia-formulario/acceso-de-emergencia-formulario.ts`
 - `src/app/features/redsat/accesos/accesos-clinicos-del-paciente-formulario/accesos-clinicos-del-paciente-formulario.ts`
 - `src/app/features/redsat/accesos/accesos-clinicos-del-paciente-listado/accesos-clinicos-del-paciente-listado.ts`
@@ -61,6 +66,7 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/redsat/buscar/perfil-organizacion-detalle/perfil-organizacion-detalle.ts`
 - `src/app/features/redsat/buscar/perfil-profesional-detalle/perfil-profesional-detalle.ts`
 - `src/app/features/redsat/buscar/profesionales-listado/profesionales-listado.ts`
+- `src/app/features/redsat/buscar/profesionales-listado/profesionales-listado.types.ts`
 - `src/app/features/redsat/buscar/seguidos-y-guardados-listado/seguidos-y-guardados-listado.ts`
 - `src/app/features/redsat/datos-compartidos/archivos-eliminar/archivos-eliminar.ts`
 - `src/app/features/redsat/datos-compartidos/archivos-formulario/archivos-formulario.ts`
@@ -97,19 +103,6 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/redsat/directorio/sucursales-listado/sucursales-listado.ts`
 - `src/app/features/redsat/directorio/transferencias-formulario/transferencias-formulario.ts`
 - `src/app/features/redsat/inicio/portada/portada.ts`
-- `src/app/features/redsat/organizaciones/asignaciones-de-sucursal-formulario/asignaciones-de-sucursal-formulario.ts`
-- `src/app/features/redsat/organizaciones/membresias-dar-de-baja/membresias-dar-de-baja.ts`
-- `src/app/features/redsat/organizaciones/membresias-formulario/membresias-formulario.ts`
-- `src/app/features/redsat/organizaciones/membresias-listado/membresias-listado.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-formulario/organizaciones-formulario.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-hijas-formulario/organizaciones-hijas-formulario.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-listado/organizaciones-listado.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-suspender/organizaciones-suspender.ts`
-- `src/app/features/redsat/organizaciones/organizaciones-verificar/organizaciones-verificar.ts`
-- `src/app/features/redsat/organizaciones/roles-formulario/roles-formulario.ts`
-- `src/app/features/redsat/organizaciones/sucursales-formulario/sucursales-formulario.ts`
-- `src/app/features/redsat/organizaciones/sucursales-listado/sucursales-listado.ts`
-- `src/app/features/redsat/organizaciones/transferencias-formulario/transferencias-formulario.ts`
 - `src/app/features/redsat/personas/apoderados-de-portal-formulario/apoderados-de-portal-formulario.ts`
 - `src/app/features/redsat/personas/apoderados-de-portal-listado/apoderados-de-portal-listado.ts`
 - `src/app/features/redsat/personas/autorizaciones-de-jurisdiccion-formulario/autorizaciones-de-jurisdiccion-formulario.ts`
@@ -158,6 +151,7 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/redsat/terminologia/versiones-publicar/versiones-publicar.ts`
 - `src/app/shared/index.ts`
 - `src/environments/environment.development.ts`
+- `src/testing/acceptance/core/contracts/ui.contract.ts`
 
 ## Mayor centralidad (fan-in)
 
@@ -166,50 +160,50 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/core/view-state/view-state.types.ts` | 133 |
-| `src/app/core/view-state/view-state.ts` | 118 |
-| `src/app/core/http/error-to-view-state.ts` | 112 |
-| `src/app/shared/components/atoms/button/button.ts` | 111 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 108 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 104 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 104 |
-| `src/app/core/navigation/navigation.service.ts` | 98 |
-| `src/app/shared/components/atoms/input/input.ts` | 91 |
+| `src/app/core/view-state/view-state.types.ts` | 151 |
+| `src/app/shared/components/atoms/button/button.ts` | 139 |
+| `src/app/core/view-state/view-state.ts` | 136 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 132 |
+| `src/app/core/http/error-to-view-state.ts` | 130 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 121 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 114 |
+| `src/app/core/navigation/navigation.service.ts` | 105 |
+| `src/app/shared/components/atoms/input/input.ts` | 95 |
 | `src/app/shared/components/organisms/form-actions/form-actions.ts` | 80 |
 | `src/app/shared/a11y/announce-on-appear.ts` | 78 |
 | `src/app/shared/components/organisms/form-section/form-section.ts` | 68 |
 | `src/app/shared/forms/form-support.ts` | 62 |
-| `src/app/shared/components/molecules/card/card.ts` | 46 |
-| `src/app/shared/components/atoms/textarea/textarea.ts` | 36 |
-| `src/app/core/auth/session.store.ts` | 34 |
-| `src/app/shared/components/molecules/radio-group/radio-group.ts` | 32 |
-| `src/app/shared/components/molecules/radio/radio.ts` | 31 |
-| `src/app/core/auth/auth.service.ts` | 29 |
-| `src/app/shared/components/atoms/link/link.ts` | 28 |
+| `src/app/shared/components/molecules/card/card.ts` | 60 |
+| `src/app/shared/components/atoms/textarea/textarea.ts` | 46 |
+| `src/app/core/auth/auth.service.ts` | 45 |
+| `src/app/core/auth/session.store.ts` | 40 |
+| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 36 |
+| `src/app/core/data-access/api.ts` | 35 |
+| `src/app/shared/components/atoms/badge/badge.ts` | 35 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 724 |
-| `@angular/common` | 386 |
-| `@angular/router` | 351 |
-| `@angular/forms` | 90 |
-| `rxjs` | 78 |
-| `node:fs` | 14 |
+| `@angular/core` | 822 |
+| `@angular/common` | 477 |
+| `@angular/router` | 389 |
+| `rxjs` | 112 |
+| `@angular/forms` | 95 |
+| `node:fs` | 15 |
 | `@opentelemetry/api` | 12 |
 | `@opentelemetry/sdk-trace-web` | 9 |
+| `@angular/platform-browser` | 8 |
 | `@opentelemetry/semantic-conventions` | 7 |
-| `@angular/platform-browser` | 6 |
 | `@angular/ssr` | 3 |
 | `@opentelemetry/core` | 3 |
 | `express` | 3 |
 | `node:path` | 3 |
 | `@opentelemetry/exporter-trace-otlp-http` | 2 |
 | `@opentelemetry/resources` | 2 |
+| `jspdf` | 2 |
 | `@opentelemetry/sdk-trace-node` | 1 |
 | `axe-core` | 1 |
-| `jspdf` | 1 |
 | `node:crypto` | 1 |
 | `node:http` | 1 |
 | `node:https` | 1 |

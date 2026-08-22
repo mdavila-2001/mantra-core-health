@@ -28,8 +28,23 @@
             }
           </div>
 
-          <!-- Una receta emitida no ofrece nada: es inmutable, y un botón que
-               siempre responde 422 es una trampa, no una acción. -->
+          <div class="receta__acciones">
+            <!-- La receta en papel (corrección #16). Está siempre, también
+                 sobre una emitida —que es cuando más se pide— y sobre una sin
+                 emitir, donde el documento se declara copia de trabajo. -->
+            <button
+              app-button
+              variant="ghost"
+              type="button"
+              data-testid="receta-descargar"
+              (clicked)="descargar.emit(receta)"
+            >
+              Descargar PDF
+            </button>
+          </div>
+
+          <!-- Una receta emitida no ofrece nada más: es inmutable, y un botón
+               que siempre responde 422 es una trampa, no una acción. -->
           @if (!receta.emitida) {
             <div class="receta__acciones">
               @if (!receta.firmada) {
@@ -71,8 +86,8 @@
     </app-alert>
   } @else if (!hayEncuentro()) {
     <app-alert tone="info" title="Abrí el encuentro para recetar">
-      La receta se registra dentro de la consulta que la motivó. Registrá el encuentro acá abajo y el
-      formulario aparece.
+      La receta se registra dentro de la consulta que la motivó. Registrá el encuentro acá abajo y
+      el formulario aparece.
     </app-alert>
   } @else if (catalogoListo() === false) {
     <!-- El selector no cae a texto libre por diseño: un uuid tecleado a mano es
@@ -85,30 +100,110 @@
       cargadas sí funciona.
     </app-alert>
   } @else {
+    <!-- La barra de casos existe sólo donde `PUBLIC_DEMO_PRESETS` la pidió.
+         Su copy dice lo que es —precarga de demostración— sin disfrazarse de
+         vademécum: los fármacos son del catálogo real, los pacientes no. -->
+    @if (demoActiva) {
+      <div class="receta__presets" data-testid="receta-presets">
+        <div class="receta__presets-header">
+          <span class="receta__presets-titulo">Casos de demostración</span>
+          <app-badge variant="info">Demo</app-badge>
+        </div>
+        <div class="receta__presets-items">
+          @for (caso of casosDemo; track caso.label) {
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              (clicked)="aplicarCasoDemo(caso)"
+              [title]="caso.dosis + ' · ' + caso.frecuencia"
+            >
+              {{ caso.label }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
     <form class="receta__formulario" (submit)="$event.preventDefault()">
+      <!-- Los favoritos van ARRIBA porque su lugar en el flujo es antes de
+           escribir: elegir uno rellena el resto. Sólo aparece si hay alguno —
+           la lista arranca vacía y un desplegable sin opciones es un control
+           que promete algo que no puede dar. Cuando la cuenta no tiene perfil
+           profesional (403) `favoritosAplican` queda en falso y no se dibuja
+           nada: no es un error, es que no aplica. -->
+      @if (hayFavoritos()) {
+        <app-form-field
+          label="Usar un favorito"
+          hint="Rellena el formulario con una de tus indicaciones guardadas. Podés ajustarla antes de prescribir."
+        >
+          <app-select
+            [value]="favoritoElegido()"
+            [options]="opcionesDeFavorito()"
+            placeholder="Elegí uno de tus favoritos"
+            (valueChange)="aplicarFavorito($event)"
+          />
+        </app-form-field>
+      }
+
+      <!-- Buscador y no desplegable: el catálogo de medicamentos no es una lista
+           corta para desplegar entera, y buscar por nombre o por código ATC es
+           como se elige un medicamento. Sigue sin haber texto libre: lo que se
+           guarda es el `conceptId` de lo elegido. -->
       <app-form-field
         label="Medicamento"
-        hint="Del catálogo de terminología. Es lo único obligatorio."
+        hint="Buscá por nombre o código. Es lo único obligatorio."
         [required]="true"
       >
-        <app-concept-select
-          [target]="targetMedicamento"
+        <app-reference-combobox
           [(value)]="medicamento"
-          placeholder="Elegí un medicamento"
+          [selected]="medicamentoElegido()"
+          [options]="opcionesDeMedicamento()"
+          [loading]="buscandoMedicamento()"
+          placeholder="Buscá un medicamento"
+          emptyMessage="Ningún medicamento coincide"
+          (searched)="buscarMedicamento($event)"
+          (selectionChange)="onMedicamentoElegido($event)"
         />
       </app-form-field>
 
-      <!-- Dosis y frecuencia son texto libre del contrato: no hay value set
-           detrás, y un selector inventado empobrecería la indicación. -->
-      <app-form-field label="Dosis" hint="Opcional. En tus palabras: «500 mg».">
-        <app-input
-          type="text"
-          autocomplete="off"
-          [(value)]="dosis"
-          placeholder="500 mg"
-          testId="receta-dosis"
-        />
-      </app-form-field>
+      @if (hayPosologia()) {
+        <!-- El medicamento elegido publica sus presentaciones y concentraciones:
+             se eligen en vez de escribirse, y viajan compuestas en `doseText`
+             —el modelo no tiene una columna para cada una—. -->
+        @if (concentraciones().length > 0) {
+          <app-form-field label="Concentración" hint="Opcional. Las que declara el catálogo.">
+            <app-select
+              [options]="concentraciones()"
+              [(value)]="concentracion"
+              placeholder="Sin especificar"
+            />
+          </app-form-field>
+        }
+
+        @if (presentaciones().length > 0) {
+          <app-form-field label="Presentación" hint="Opcional. La forma farmacéutica.">
+            <app-select
+              [options]="presentaciones()"
+              [(value)]="presentacion"
+              placeholder="Sin especificar"
+            />
+          </app-form-field>
+        }
+      } @else {
+        <!-- Sin listas en el catálogo, la dosis sigue siendo texto libre del
+             contrato: es como funcionaba esta pantalla entera hasta ahora. -->
+        <app-form-field label="Dosis" hint="Opcional. En tus palabras: «500 mg».">
+          <app-input
+            type="text"
+            autocomplete="off"
+            [(value)]="dosis"
+            placeholder="500 mg"
+            testId="receta-dosis"
+          />
+        </app-form-field>
+      }
 
       <app-form-field label="Frecuencia" hint="Opcional. En tus palabras: «cada 8 horas».">
         <app-input
@@ -118,6 +213,21 @@
           placeholder="cada 8 horas"
           testId="receta-frecuencia"
         />
+        <!-- Los chips son atajos que estampan la pauta en el campo de arriba,
+             no un segundo control: el texto libre sigue mandando. -->
+        <div class="receta__chips-pauta">
+          @for (pauta of opcionesFrecuenciaRapida; track pauta) {
+            <app-chip
+              variant="primary"
+              size="sm"
+              selectable
+              [selected]="frecuencia() === pauta"
+              (selectedChange)="fijarFrecuenciaRapida(pauta)"
+            >
+              {{ pauta }}
+            </app-chip>
+          }
+        </div>
       </app-form-field>
 
       <!-- Vía y unidad son opcionales en el contrato, así que se ofrecen sin
@@ -151,12 +261,92 @@
         />
       </app-form-field>
 
+      <app-form-field
+        label="Duración del tratamiento"
+        hint="Opcional. Días previstos de toma, o tratamiento continuo. Deriva el fin de vigencia y sugiere la cantidad."
+      >
+        <!-- «Crónico/Continuo» se distingue por `esCronico`, no por comparar
+             `null === null`: sin eso el chip aparecía activo con el formulario
+             recién abierto, cuando nadie eligió nada todavía. -->
+        <div class="receta__chips-pauta">
+          @for (opc of opcionesDuracionRapida; track opc.label) {
+            <app-chip
+              variant="primary"
+              size="sm"
+              selectable
+              [selected]="opc.dias === null ? esCronico() : !esCronico() && duracionDias() === opc.dias"
+              (selectedChange)="fijarDuracion(opc.dias)"
+            >
+              {{ opc.label }}
+            </app-chip>
+          }
+        </div>
+      </app-form-field>
+
+      <div class="receta__fechas-grid">
+        <app-form-field label="Inicio de vigencia" hint="Desde cuándo es válida la receta.">
+          <app-date-picker [(value)]="validFrom" />
+        </app-form-field>
+
+        <app-form-field label="Fin de vigencia" hint="Hasta cuándo es válida la dispensación.">
+          <app-date-picker [(value)]="validTo" />
+        </app-form-field>
+      </div>
+
+      <!-- Separadas de la dosis a propósito: la posología la lee farmacia para
+           dispensar, y esto es lo que el paciente se lleva impreso (v4.1.3). -->
+      <app-form-field
+        label="Indicaciones para el paciente"
+        hint="Opcional. Consejos de toma, advertencias o cuidados. Se imprimen en la receta."
+      >
+        <app-textarea
+          [(value)]="indicacionesPaciente"
+          [rows]="3"
+          placeholder="Tomar 30 minutos antes del desayuno con abundante agua"
+        />
+      </app-form-field>
+
+      <!-- Para qué es la receta (v4.1.6). Opcional de verdad: una prescripción
+           sintomática o profiláctica no tiene diagnóstico detrás, y por eso la
+           opción vacía es la primera y la de por omisión. -->
+      <app-form-field
+        label="¿Para qué es esta receta?"
+        hint="Opcional. El diagnóstico que la motiva, de los registrados en esta historia."
+      >
+        <app-select
+          [(value)]="indicacion"
+          [options]="opcionesDeIndicacion()"
+          placeholder="Sin diagnóstico asociado"
+        />
+      </app-form-field>
+
+      @if (errorDelFavorito(); as motivo) {
+        <app-alert tone="error" [title]="'No se pudo guardar el favorito'">
+          {{ motivo }}
+        </app-alert>
+      }
+
       <app-form-actions
         submitLabel="Prescribir"
         [pending]="registrando()"
         [disabled]="!puedeRecetar()"
         (submitted)="recetar()"
-      />
+      >
+        <!-- Guardar es un gesto secundario y va junto a prescribir, no en otro
+             lado: lo que se guarda es exactamente lo que está cargado acá. -->
+        @if (puedeGuardarFavorito()) {
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            [isLoading]="guardandoFavorito()"
+            (click)="guardarFavorito()"
+          >
+            Guardar como favorito
+          </button>
+        }
+      </app-form-actions>
     </form>
   }
 </app-card>

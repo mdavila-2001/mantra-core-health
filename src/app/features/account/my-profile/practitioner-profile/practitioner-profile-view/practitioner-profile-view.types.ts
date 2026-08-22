@@ -24,6 +24,12 @@ export interface FormacionVisible {
   readonly sello: StatusSealVariant;
   /** Si venció. Se muestra igual: la formación cursada no deja de existir. */
   readonly vencida: boolean;
+  /**
+   * Contra qué se comprobó. Presente **sólo** si se verificó — el backend lo
+   * exige al verificar — así que es la señal más directa de «esto pasó de
+   * declarado a verificado», más confiable que inferirlo del sello.
+   */
+  readonly fuenteVerificacion?: string;
 }
 
 /** Una especialidad, ya traducida. */
@@ -36,6 +42,18 @@ export interface EspecialidadVisible {
   readonly desde: Date | null;
   readonly hasta: Date | null;
   readonly estado: string;
+  readonly sello: StatusSealVariant;
+}
+
+/** Un vínculo laboral, ya traducido — historial de dónde ejerció (UC-05-16). */
+export interface AfiliacionVisible {
+  readonly id: string;
+  readonly organizacion: string;
+  readonly cargo: string;
+  readonly area: string;
+  readonly desde: Date;
+  readonly hasta: Date | null;
+  readonly actual: boolean;
 }
 
 /** Una matrícula, ya traducida. */
@@ -94,7 +112,9 @@ export interface PerfilProfesionalVisible {
   readonly formacion: readonly FormacionVisible[];
   readonly matriculas: readonly MatriculaVisible[];
   readonly idiomas: readonly IdiomaVisible[];
-  readonly perfilId: string;
-  readonly personaId: string;
+  /** Hospitales/centros donde ejerce ahora (UC-05-16, `endDate` ausente). */
+  readonly actividadActual: readonly AfiliacionVisible[];
+  /** Hospitales/centros anteriores (UC-05-16, `endDate` presente). */
+  readonly experienciaHistorica: readonly AfiliacionVisible[];
   readonly desde: Date | null;
 }

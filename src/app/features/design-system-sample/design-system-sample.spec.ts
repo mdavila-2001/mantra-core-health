@@ -1,6 +1,7 @@
 import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { CARGADOR_DE_LEAFLET } from '../../shared/components/organisms/map/map';
 import { DesignSystemSample } from './design-system-sample';
 
 /**
@@ -16,14 +17,24 @@ describe('DesignSystemSample', () => {
   }
 
   function secciones(): string[] {
-    return [...root().querySelectorAll('h2')].map((titulo) => (titulo.textContent ?? '').trim());
+    // `.showroom-section > h2`, y no todos los `h2` del documento: desde que la
+    // galería muestra el formulario por partes, hay `h2` que son de un
+    // componente embebido —el título de su página actual— y no secciones de la
+    // vitrina. Contar por estructura mantiene la prueba mirando lo suyo.
+    return [...root().querySelectorAll('.showroom-section > h2')].map((titulo) =>
+      (titulo.textContent ?? '').trim(),
+    );
   }
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DesignSystemSample],
-      // El breadcrumb usa `routerLink`: sin router, la vitrina ni se crea.
-      providers: [provideRouter([])],
+      providers: [
+        // El breadcrumb usa `routerLink`: sin router, la vitrina ni se crea.
+        provideRouter([]),
+        // El mapa de la galería queda esperando: jsdom jamás carga Leaflet real.
+        { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DesignSystemSample);

@@ -15,47 +15,97 @@
   <a app-button variant="primary" [routerLink]="rutaDeAgenda">Ir a la agenda</a>
 } @else {
   <section class="turnos__bloque" aria-labelledby="turnos-propios">
-    <h2 id="turnos-propios" class="turnos__titulo">Tus turnos</h2>
+    <div class="turnos__cabecera">
+      <h2 id="turnos-propios" class="turnos__titulo">Tus turnos</h2>
+
+      <!-- Lista y calendario son la MISMA colección vista de dos formas
+           (corrección #10). La elegida vive en la URL, así que el enlace se
+           comparte con la vista puesta y «atrás» la deshace. -->
+      <div class="turnos__vistas" role="group" aria-label="Cómo ver tus turnos">
+        <button
+          app-button
+          size="sm"
+          data-testid="turnos-vista-lista"
+          [variant]="enCalendario() ? 'ghost' : 'primary'"
+          [attr.aria-pressed]="!enCalendario()"
+          (clicked)="elegirVista('lista')"
+        >
+          Lista
+        </button>
+        <button
+          app-button
+          size="sm"
+          data-testid="turnos-vista-calendario"
+          [variant]="enCalendario() ? 'primary' : 'ghost'"
+          [attr.aria-pressed]="enCalendario()"
+          (clicked)="elegirVista('calendario')"
+        >
+          Calendario
+        </button>
+      </div>
+    </div>
 
     @switch (turnos().status) {
       @case ('loading') {
         <p class="turnos__estado" role="status">Buscando tus turnos…</p>
       }
       @case ('ready') {
-        <ul class="turnos__lista">
-          @for (turno of turnosListos(); track turno.id) {
-            <li class="turnos__item">
-              <div class="turnos__cuando">
+        @if (enCalendario()) {
+          <app-appointment-calendar
+            [turnos]="turnosDeCalendario()"
+            [seleccionado]="seleccionado()"
+            (turnoElegido)="abrirDetalle($event)"
+            (diaElegido)="elegirDiaDeHorarios($event)"
+          />
+
+          @if (turnoEnDetalle(); as turno) {
+            <!-- El mismo detalle que abre la lista: un turno elegido en el
+                 calendario ofrece exactamente las mismas acciones. -->
+            <article class="turnos__detalle" data-testid="turnos-detalle">
+              <h3 class="turnos__detalle-titulo">
                 @if (turno.cuando !== null) {
-                  <span class="turnos__fecha">{{ turno.cuando | date: 'EEEE d MMM' }}</span>
-                  <span class="turnos__hora">
-                    {{ turno.cuando | date: 'HH:mm' }}
-                    @if (turno.hasta !== null) {
-                      – {{ turno.hasta | date: 'HH:mm' }}
-                    }
-                  </span>
+                  {{ turno.cuando | date: "EEEE d 'de' MMM 'a las' HH:mm" }}
                 } @else {
-                  <!-- La cita existe pero perdió su cupo: el contrato declara
-                       `startAt` opcional justamente por esto. -->
-                  <span class="turnos__fecha">Sin horario asignado</span>
+                  Turno sin horario asignado
                 }
-                @if (turno.agenda !== '') {
-                  <!-- Con quién es el turno. Va acá dentro y no como hermano
-                       del badge: el item es una grilla de dos columnas, y un
-                       tercer hermano correría el badge a la fila siguiente.
-                       Se omite mientras no se sepa, en vez de dejar un hueco o
-                       mostrar el identificador del recurso. -->
-                  <span class="turnos__agenda">{{ turno.agenda }}</span>
-                }
-              </div>
+              </h3>
+              @if (turno.agenda !== '') {
+                <p class="turnos__detalle-agenda">{{ turno.agenda }}</p>
+              }
+              <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
+              @if (turno.motivo !== '') {
+                <p class="turnos__motivo">Motivo de consulta: {{ turno.motivo }}</p>
+              }
+              @if (turno.avisoDelCambio !== '') {
+                <p class="turnos__aviso-cambio">
+                  {{ turno.avisoDelCambio }}
+                  @if (turno.cambioCuando !== null) {
+                    <span class="turnos__aviso-fecha">
+                      ({{ turno.cambioCuando | date: "d 'de' MMM, HH:mm" }})
+                    </span>
+                  }
+                </p>
+              }
+              @if (turno.avisoDeDemora !== '') {
+                <!-- P8: la demora se muestra con el turno y no sólo como aviso.
+                     El aviso in-app puede no haber llegado —cuenta sin portal,
+                     preferencia en contra, campana sin abrir— y el turno tiene
+                     que poder explicarse solo. -->
+                <p class="turnos__aviso-demora" data-testid="turnos-demora">
+                  {{ turno.avisoDeDemora }}
+                  @if (turno.demoraCuando !== null) {
+                    <span class="turnos__aviso-fecha">
+                      (avisada {{ turno.demoraCuando | date: "d 'de' MMM, HH:mm" }})
+                    </span>
+                  }
+                </p>
+              }
               <div class="turnos__acciones">
-                <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
                 @if (esReprogramable(turno)) {
                   <button
                     app-button
                     variant="ghost"
                     size="sm"
-                    class="turnos__reprogramar"
                     [isLoading]="operando() === turno.id"
                     (clicked)="iniciarReprogramacion(turno)"
                   >
@@ -67,7 +117,6 @@
                     app-button
                     variant="ghost"
                     size="sm"
-                    class="turnos__cancelar"
                     [isLoading]="operando() === turno.id"
                     (clicked)="cancelarTurno(turno)"
                   >
@@ -75,12 +124,103 @@
                   </button>
                 }
               </div>
-              @if (turno.motivo !== '') {
-                <p class="turnos__motivo">{{ turno.motivo }}</p>
-              }
-            </li>
+            </article>
           }
-        </ul>
+        } @else {
+          <ul class="turnos__lista">
+            @for (turno of turnosListos(); track turno.id) {
+              <li class="turnos__item">
+                <div class="turnos__cuando">
+                  @if (turno.cuando !== null) {
+                    <span class="turnos__fecha">{{ turno.cuando | date: 'EEEE d MMM' }}</span>
+                    <span class="turnos__hora">
+                      {{ turno.cuando | date: 'HH:mm' }}
+                      @if (turno.hasta !== null) {
+                        – {{ turno.hasta | date: 'HH:mm' }}
+                      }
+                    </span>
+                  } @else {
+                    <!-- La cita existe pero perdió su cupo: el contrato declara
+                       `startAt` opcional justamente por esto. -->
+                    <span class="turnos__fecha">Sin horario asignado</span>
+                  }
+                  @if (turno.agenda !== '') {
+                    <!-- Con quién es el turno. Va acá dentro y no como hermano
+                       del badge: el item es una grilla de dos columnas, y un
+                       tercer hermano correría el badge a la fila siguiente.
+                       Se omite mientras no se sepa, en vez de dejar un hueco o
+                       mostrar el identificador del recurso. -->
+                    <span class="turnos__agenda">{{ turno.agenda }}</span>
+                  }
+                  <!-- TJ-2 · quien ve su turno en un horario que no pidió
+                       necesita saber que ES el suyo, movido, y no uno nuevo que
+                       no reconoce. Sin esto, una reprogramación se lee como un
+                       turno ajeno. -->
+                  @if (turno.reprogramadoDesde; as desde) {
+                    <span class="turnos__reprogramado" data-testid="turnos-reprogramado">
+                      Reprogramado desde el {{ desde | date: "d 'de' MMMM 'a las' HH:mm" }}
+                    </span>
+                  }
+                </div>
+                <div class="turnos__acciones">
+                  <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
+                  @if (esReprogramable(turno)) {
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      class="turnos__reprogramar"
+                      [isLoading]="operando() === turno.id"
+                      (clicked)="iniciarReprogramacion(turno)"
+                    >
+                      Reprogramar
+                    </button>
+                  }
+                  @if (esCancelable(turno)) {
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      class="turnos__cancelar"
+                      [isLoading]="operando() === turno.id"
+                      (clicked)="cancelarTurno(turno)"
+                    >
+                      Cancelar
+                    </button>
+                  }
+                </div>
+                @if (turno.motivo !== '') {
+                  <p class="turnos__motivo">{{ turno.motivo }}</p>
+                }
+                @if (turno.avisoDelCambio !== '') {
+                  <!-- El motivo del último cambio (corrección #14): antes la cita
+                     decía «cancelada» y no decía por qué, así que el cambio
+                     llegaba sin explicación. -->
+                  <p class="turnos__aviso-cambio" data-testid="turnos-motivo-cambio">
+                    {{ turno.avisoDelCambio }}
+                    @if (turno.cambioCuando !== null) {
+                      <span class="turnos__aviso-fecha">
+                        ({{ turno.cambioCuando | date: "d 'de' MMM, HH:mm" }})
+                      </span>
+                    }
+                  </p>
+                }
+                @if (turno.avisoDeDemora !== '') {
+                  <!-- P8 · «si el médico se demora, notificación con la
+                     información de la demora» (registro 3.5). -->
+                  <p class="turnos__aviso-demora" data-testid="turnos-motivo-demora">
+                    {{ turno.avisoDeDemora }}
+                    @if (turno.demoraCuando !== null) {
+                      <span class="turnos__aviso-fecha">
+                        (avisada {{ turno.demoraCuando | date: "d 'de' MMM, HH:mm" }})
+                      </span>
+                    }
+                  </p>
+                }
+              </li>
+            }
+          </ul>
+        }
       }
       @case ('empty') {
         <app-alert tone="info" title="Todavía no tenés turnos">
@@ -95,6 +235,36 @@
       }
     }
   </section>
+
+  <!-- ─── En lista de espera (P8) ─────────────────────────────────────────
+       Bloque aparte y no un turno más: una espera no tiene hora ni compromiso,
+       y mezclarla con los turnos haría creer que hay cita donde hay una cola. -->
+  @if (esperas().length > 0) {
+    <section class="turnos__bloque" aria-labelledby="turnos-espera">
+      <h2 id="turnos-espera" class="turnos__titulo">En lista de espera</h2>
+      <ul class="turnos__esperas" data-testid="turnos-esperas">
+        @for (espera of esperas(); track espera.id) {
+          <li class="turnos__espera">
+            <div class="turnos__cuando">
+              <span class="turnos__fecha">{{ espera.agenda }}</span>
+              @if (espera.desde !== null && espera.hasta !== null) {
+                <span class="turnos__hora">
+                  entre el {{ espera.desde | date: 'd MMM' }} y el
+                  {{ espera.hasta | date: 'd MMM' }}
+                </span>
+              }
+            </div>
+            <div class="turnos__acciones">
+              <app-badge variant="info">En espera</app-badge>
+            </div>
+            <p class="turnos__motivo">
+              Te avisamos apenas se libere un horario. La reserva la confirmás vos.
+            </p>
+          </li>
+        }
+      </ul>
+    </section>
+  }
 
   <section class="turnos__bloque" aria-labelledby="pedir-turno">
     <h2 id="pedir-turno" class="turnos__titulo">Pedir un turno</h2>
@@ -127,22 +297,154 @@
       <app-alert tone="warning" title="Elegí una organización">
         <!-- El selector vive en el encabezado: decir sólo «elegí una» sin decir
              dónde dejaba a la persona buscando un control que acá no está. -->
-        Elegí una organización desde el selector del encabezado para ver los horarios
-        disponibles.
-      </app-alert>
-    } @else if (sinRecursos()) {
-      <app-alert tone="info" title="Todavía no hay agendas publicadas">
-        Esta organización no tiene horarios cargados. Volvé a probar más adelante.
+        Elegí una organización desde el selector del encabezado para ver los horarios disponibles.
       </app-alert>
     } @else {
-      <app-form-field label="¿Con quién te querés atender?" class="turnos__filtro">
-        <app-select
-          [options]="opcionesDeRecurso()"
-          [value]="recursoElegido() ?? ''"
-          placeholder="Elegí una agenda"
-          (valueChange)="elegirRecurso($event)"
+      <!-- J2 · con quién se pide el turno. Va ANTES del buscador porque decide
+           qué lista se busca: elegirlo después sería buscar en el conjunto
+           equivocado. Dos opciones y no un desplegable — son dos, y un
+           desplegable de dos esconde la mitad. -->
+      <div class="turnos__tipo" role="group" aria-label="Con quién querés el turno">
+        <button
+          app-button
+          [variant]="esLaboratorio() ? 'ghost' : 'primary'"
+          size="sm"
+          data-testid="turnos-tipo-profesional"
+          [attr.aria-pressed]="!esLaboratorio()"
+          (clicked)="cambiarTipoDeRecurso('PRACTITIONER')"
+        >
+          Con un profesional
+        </button>
+        <button
+          app-button
+          [variant]="esLaboratorio() ? 'primary' : 'ghost'"
+          size="sm"
+          data-testid="turnos-tipo-laboratorio"
+          [attr.aria-pressed]="esLaboratorio()"
+          (clicked)="cambiarTipoDeRecurso('ROOM')"
+        >
+          En un laboratorio
+        </button>
+      </div>
+    }
+
+    @if (organizacion() !== null && sinRecursos()) {
+      @if (esLaboratorio()) {
+        <app-alert tone="info" title="Todavía no hay laboratorios con horarios">
+          Ningún laboratorio de esta organización publicó horarios todavía. Podés llevar tu orden al
+          mostrador mientras tanto.
+        </app-alert>
+      } @else {
+        <app-alert tone="info" title="Todavía no hay profesionales con horarios">
+          <!-- Antes decía «no hay agendas publicadas», que es la jerga interna:
+               para quien pide un turno, lo que falta son profesionales entre los
+               cuales elegir. -->
+          Ningún profesional de esta organización publicó horarios todavía. Volvé a probar más
+          adelante.
+        </app-alert>
+      }
+    } @else if (organizacion() !== null) {
+      <!-- Buscador y no desplegable: con una guía larga había que recorrerla
+           entera hasta dar con el profesional propio (F-13). Se escribe el
+           nombre y la lista se acota sola; en blanco los ofrece a todos. -->
+      <app-form-field
+        [label]="esLaboratorio() ? '¿En qué laboratorio?' : '¿Con quién te querés atender?'"
+        [hint]="
+          esLaboratorio()
+            ? 'Escribí el nombre del laboratorio para encontrarlo más rápido.'
+            : 'Escribí su nombre para encontrarlo más rápido.'
+        "
+        class="turnos__filtro"
+      >
+        <!-- FX-1 · F-24: «Ningún profesional coincide» hacía pensar que la
+             persona no existe. La lista sólo tiene a quienes YA publicaron
+             horarios, así que la causa más común de no encontrar a alguien es
+             que todavía no publicó. Se dicen las dos posibilidades en vez de
+             afirmar la que no sabemos. -->
+        <app-reference-combobox
+          [selected]="recursoSeleccionado()"
+          [options]="opcionesBuscadas()"
+          [minQueryLength]="0"
+          [placeholder]="esLaboratorio() ? 'Buscá por nombre del laboratorio' : 'Buscá por nombre'"
+          [emptyMessage]="
+            esLaboratorio()
+              ? 'No encontramos ese laboratorio entre los que publicaron horarios. Puede que todavía no los haya publicado.'
+              : 'No encontramos ese profesional entre los que publicaron horarios. Puede que todavía no los haya publicado.'
+          "
+          (searched)="busquedaDeRecurso.set($event)"
+          (selectionChange)="elegirAgenda($event?.value ?? null)"
         />
       </app-form-field>
+
+      <!-- FX-6 · F-23: un profesional con más de un consultorio. La pregunta
+           sólo aparece cuando hay algo que elegir; con un solo lugar —hoy,
+           casi todos— la pantalla no cambia en nada. «Cualquier lugar» viene
+           puesto: quien pide un turno suele querer el horario más próximo, no
+           un consultorio en particular. -->
+      @if (preguntaPorSede()) {
+        <app-form-field
+          label="¿Dónde querés atenderte?"
+          hint="Atiende en más de un lugar. Podés ver todos los horarios juntos o mirar uno solo."
+          class="turnos__filtro"
+        >
+          <app-select
+            data-testid="turnos-sede"
+            [options]="opcionesDeSede()"
+            [value]="sedeElegida()"
+            (valueChange)="elegirSede($event)"
+          />
+        </app-form-field>
+      }
+
+      <!-- Cuando se llegó acá señalando un día en el calendario, se dice cuál
+           es y se ofrece volver a verlos todos: si no, la lista parece corta
+           sin explicación (F-10). -->
+      @if (diaDeHorarios() !== null) {
+        <p class="turnos__filtro-dia" data-testid="turnos-dia-elegido">
+          <span
+            >Horarios del <strong>{{ diaDeHorariosEnPalabras() }}</strong></span
+          >
+          <button app-button variant="ghost" size="sm" (clicked)="verTodosLosHorarios()">
+            Ver todos los días
+          </button>
+        </p>
+      }
+
+      <!-- P8 · registro del cliente 3.4: «si no encontrás cita … podés recibir
+           una notificación de que un paciente desconfirmó». La salida del
+           callejón sin salida: antes, sin cupos, la pantalla sólo decía
+           «probá con otra agenda». -->
+      @if (recursoParaEspera() !== null) {
+        <div class="turnos__espera-accion">
+          @if (yaEnEspera()) {
+            <p class="turnos__estado" data-testid="turnos-ya-en-espera">
+              Ya estás en la lista de espera de esta agenda. Te avisamos apenas se libere un
+              horario.
+            </p>
+          } @else {
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              data-testid="turnos-anotarme-espera"
+              [isLoading]="anotandose()"
+              (clicked)="anotarmeEnEspera()"
+            >
+              Anotarme en la lista de espera
+            </button>
+            <p class="turnos__estado">
+              No reserva el turno: te avisamos cuando se libere uno y lo confirmás vos.
+            </p>
+          }
+        </div>
+      }
+
+      @if (horariosIncompletos()) {
+        <app-alert tone="warning" title="Faltan horarios de un lugar">
+          No pudimos traer los horarios de uno de sus consultorios. Los que ves son de los demás:
+          probá con un lugar en concreto para verlos todos.
+        </app-alert>
+      }
 
       @switch (horarios().status) {
         @case ('loading') {
@@ -157,6 +459,14 @@
                   <span class="turnos__hora">
                     {{ horario.desde | date: 'HH:mm' }} – {{ horario.hasta | date: 'HH:mm' }}
                   </span>
+                  <!-- Sólo cuando la lista mezcla lugares: si todos los huecos
+                       son del mismo consultorio, repetirlo en cada fila es
+                       ruido y esconde la hora, que es lo que se viene a leer. -->
+                  @if (horario.sede !== '') {
+                    <span class="turnos__sede" data-testid="turnos-horario-sede">{{
+                      horario.sede
+                    }}</span>
+                  }
                 </div>
                 @if (reprogramando() === null) {
                   <a

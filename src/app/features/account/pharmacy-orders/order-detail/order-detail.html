@@ -1,0 +1,236 @@
+<app-page-header
+  title="Pedido de farmacia"
+  subtitle="El recorrido completo: del envío al retiro, con cada decisión en tus manos."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="state()" (retry)="cargar()">
+  @if (pedido(); as abierto) {
+    <div class="pedido" data-testid="pedido-detalle">
+      <!-- ─── El estado, en palabras ─────────────────────────────────────── -->
+      @if (presentacion(); as estado) {
+        <section class="pedido__estado" aria-labelledby="pedido-estado">
+          <!-- tabindex -1: recibe el foco por código tras decidir o cancelar. -->
+          <h2 id="pedido-estado" class="pedido__titulo" tabindex="-1">
+            {{ abierto.farmacia }} · {{ abierto.sede }}
+          </h2>
+          <p class="pedido__estado-fila">
+            <app-badge [variant]="estado.tone" data-testid="pedido-estado-badge">
+              {{ estado.label }}
+            </app-badge>
+            <span class="pedido__secundario">{{ estado.descripcion }}</span>
+          </p>
+        </section>
+      }
+
+      <!-- ─── La línea de tiempo (sólo mientras el recorrido sigue) ──────── -->
+      @if (pasos().length > 0) {
+        <app-stepper [steps]="pasos()" label="Recorrido del pedido" />
+      }
+
+      <!-- ─── El envío, cuando salió (FAR-I3) ────────────────────────────── -->
+      @if (abierto.envio === 'EN_CAMINO') {
+        <app-alert tone="info" title="Tu pedido está en camino">
+          La farmacia coordina la entrega — todavía sin seguimiento en tiempo
+          real.
+        </app-alert>
+      }
+
+      <!-- ─── La decisión de sustitución ─────────────────────────────────── -->
+      @if (propuestaPendiente(); as propuesta) {
+        <section class="pedido__decision" aria-labelledby="pedido-decision" data-testid="pedido-decision">
+          <h3 id="pedido-decision" class="pedido__subtitulo">La farmacia te propone una alternativa</h3>
+          <div class="pedido__comparacion">
+            <div class="pedido__opcion pedido__opcion--propuesta">
+              <span class="pedido__secundario">Te proponen</span>
+              <span class="pedido__principal">{{ propuesta.propuesta.nombre }}</span>
+              @if (propuesta.propuesta.precio !== null) {
+                <span class="cifras-tabulares">{{ propuesta.propuesta.precio }} {{ propuesta.moneda }}</span>
+              } @else {
+                <span class="pedido__secundario">Sin precio publicado</span>
+              }
+            </div>
+            <div class="pedido__opcion">
+              <span class="pedido__secundario">En lugar de</span>
+              <span class="pedido__principal">{{ propuesta.original.nombre }}</span>
+              @if (propuesta.original.precio !== null) {
+                <span class="cifras-tabulares">{{ propuesta.original.precio }} {{ propuesta.moneda }}</span>
+              } @else {
+                <span class="pedido__secundario">Sin precio publicado</span>
+              }
+            </div>
+          </div>
+          @if (ahorro(); as diferencia) {
+            <p class="pedido__ahorro" data-testid="pedido-ahorro">
+              Te ahorrás <strong class="cifras-tabulares">{{ diferencia }}</strong>
+            </p>
+          }
+          <div class="pedido__acciones">
+            <button app-button variant="primary" size="sm" type="button" data-testid="pedido-aceptar"
+              [isLoading]="ocupado()" (clicked)="aceptarPropuesta()">
+              Aceptar propuesta
+            </button>
+            <button app-button variant="outline" size="sm" type="button" data-testid="pedido-preferir"
+              (clicked)="preferirOriginal()">
+              Prefiero la receta original
+            </button>
+            <button app-button variant="danger" size="sm" type="button" (clicked)="cancelar()">
+              Cancelar pedido
+            </button>
+          </div>
+        </section>
+      }
+
+      <!-- ─── El código de retiro ────────────────────────────────────────── -->
+      @if (abierto.estado === 'LISTO_PARA_RETIRO' && abierto.codigoDeRetiro !== null) {
+        <section class="pedido__retiro" aria-labelledby="pedido-retiro" data-testid="pedido-retiro">
+          <h3 id="pedido-retiro" class="pedido__subtitulo">Tu código de retiro</h3>
+          <p class="pedido__codigo cifras-tabulares" data-testid="pedido-codigo">
+            {{ abierto.codigoDeRetiro }}
+          </p>
+          @if (qrDisponible()) {
+            <!-- Es el mismo código en QR, para el lector del mostrador: para
+                 quien escucha la pantalla es un duplicado, y por eso se oculta. -->
+            <div class="pedido__qr" aria-hidden="true">
+              <canvas #lienzoQr [width]="ladoDelQr" [height]="ladoDelQr"></canvas>
+            </div>
+          }
+          <p>
+            Mostralo en {{ abierto.farmacia }}
+            @if (abierto.venceEl !== null) {
+              — vence el {{ abierto.venceEl | date: 'dd/MM' }} a las
+              {{ abierto.venceEl | date: 'HH:mm' }}
+            }
+          </p>
+          <p class="pedido__secundario">
+            @if (pagado()) {
+              Es un código de identificación. Tu pedido ya está pagado: solo mostralo.
+            } @else {
+              Es un código de identificación, no un pago: pagás al retirar, en la farmacia.
+            }
+          </p>
+        </section>
+      }
+
+      <!-- ─── El pago (FAR-I5): mostrador real, QR sólo con su gate ──────── -->
+      @if (muestraPago()) {
+        <app-order-payment [pedido]="abierto" [ocupado]="ocupado()" (pagoSimulado)="simularPago()" />
+        @if (pagado()) {
+          <div class="pedido__acciones">
+            <a app-button variant="secondary" size="sm" [routerLink]="rutaDelComprobante(abierto)"
+              data-testid="pedido-comprobante">
+              Ver comprobante
+            </a>
+          </div>
+        }
+      }
+
+      <!-- ─── Los finales anticipados y sus salidas ──────────────────────── -->
+      @if (abierto.estado === 'VENCIDO') {
+        <app-alert tone="warning" title="Tu reserva venció">
+          Pasaron las 48 horas y el mostrador liberó tu pedido. ¿Lo pedimos de nuevo?
+        </app-alert>
+        <div class="pedido__acciones">
+          <button app-button variant="primary" size="sm" type="button" data-testid="pedido-repedir"
+            [isLoading]="ocupado()" (clicked)="rePedir()">
+            Pedir de nuevo
+          </button>
+        </div>
+      }
+      @if (abierto.estado === 'RECHAZADO') {
+        <app-alert tone="error" title="La farmacia no pudo tomar tu pedido">
+          {{ abierto.motivoDeRechazo ?? 'La farmacia no indicó el motivo.' }}
+        </app-alert>
+        <div class="pedido__acciones">
+          <a app-button variant="primary" size="sm" [routerLink]="rutaDeAlternativas(abierto)"
+            data-testid="pedido-alternativas">
+            Ver farmacias alternativas
+          </a>
+        </div>
+      }
+
+      <!-- ─── Los datos del pedido ───────────────────────────────────────── -->
+      <section class="pedido__bloque" aria-labelledby="pedido-datos">
+        <h3 id="pedido-datos" class="pedido__subtitulo">Qué pediste</h3>
+        <dl class="pedido__datos">
+          @if (abierto.direccion !== null) {
+            <dt>Sucursal</dt>
+            <dd>{{ abierto.direccion }}</dd>
+          }
+          <dt>Enviado</dt>
+          <dd>{{ abierto.creadoEl | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          <dt>Entrega</dt>
+          <dd>
+            {{ modalidad() }}
+            @if (abierto.direccionDeEntrega !== null) {
+              — {{ abierto.direccionDeEntrega }}
+            }
+          </dd>
+        </dl>
+        <ul class="pedido__lineas" data-testid="pedido-lineas">
+          @for (linea of abierto.lineas; track $index) {
+            <li class="pedido__linea">
+              <div class="pedido__linea-datos">
+                <span class="pedido__principal">{{ linea.medicamento }}</span>
+                @if (linea.presentacion !== null) {
+                  <span class="pedido__secundario">{{ linea.presentacion }}</span>
+                }
+                <span class="pedido__secundario">Cantidad: {{ linea.cantidad }}</span>
+              </div>
+              <div class="pedido__linea-precio">
+                @if (linea.precio !== null) {
+                  <span class="cifras-tabulares">{{ linea.precio }} {{ linea.moneda }}</span>
+                } @else {
+                  <span class="pedido__secundario">Sin precio publicado</span>
+                }
+                @if (!linea.disponible) {
+                  <app-badge variant="warning">La farmacia no la tiene</app-badge>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+        <p class="pedido__total">
+          @if (abierto.totalEstimado !== null) {
+            Total estimado:
+            <strong class="cifras-tabulares">{{ abierto.totalEstimado }} {{ abierto.moneda }}</strong>
+          } @else {
+            Total no disponible: falta algún precio publicado.
+          }
+        </p>
+      </section>
+
+      <!-- ─── Cancelar, mientras el estado lo permite ────────────────────── -->
+      @if (puedeCancelar()) {
+        <div class="pedido__acciones">
+          <button app-button variant="danger" size="sm" type="button" data-testid="pedido-cancelar"
+            (clicked)="cancelar()">
+            Cancelar pedido
+          </button>
+        </div>
+      }
+
+      <!-- ─── Escenarios de demostración ─────────────────────────────────── -->
+      <!-- La contraparte (FAR-E1) no existe: estos botones hacen lo que haría
+           la farmacia, sólo donde `PUBLIC_DEMO_PRESETS` lo pidió. -->
+      @if (demoActiva && simulaciones().length > 0) {
+        <section class="pedido__demo" aria-labelledby="pedido-demo" data-testid="pedido-demo">
+          <p class="pedido__demo-titulo">
+            <span id="pedido-demo">Escenarios de demostración — lo que haría la farmacia</span>
+            <app-badge variant="info">Demo</app-badge>
+          </p>
+          <div class="pedido__acciones">
+            @for (paso of simulaciones(); track paso) {
+              <button app-button variant="outline" size="sm" type="button"
+                [attr.data-testid]="'pedido-demo-' + paso" (clicked)="simular(paso)">
+                {{ etiquetaDeSimulacion(paso) }}
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      <a app-button variant="ghost" [routerLink]="listaRoute">Volver a mis pedidos</a>
+    </div>
+  }
+</app-view-state-host>

@@ -1,0 +1,159 @@
+<app-page-header
+  [title]="conQuien()"
+  subtitle="Conversación directa"
+  [breadcrumbs]="[{ label: 'Mensajes', routerLink: '/messaging' }]"
+/>
+
+@if (error(); as mensaje) {
+  <app-alert tone="error" class="hilo__alerta">{{ mensaje }}</app-alert>
+}
+
+@if (!perfilResuelto()) {
+  <p class="hilo__cargando" role="status">Abriendo la conversación…</p>
+} @else if (perfil() === null) {
+  <app-empty-state
+    title="Todavía no tenés perfil público"
+    description="La mensajería usa tu perfil de la red social. Se crea desde «Mi perfil»."
+    variant="empty"
+  />
+} @else {
+  @if (hayMas()) {
+    <div class="hilo__mas">
+      <!-- Hacia arriba: en un hilo, «ver más» es ver lo anterior. -->
+      <button app-button variant="ghost" size="sm" [isLoading]="cargando()" (clicked)="verMas()">
+        Ver mensajes anteriores
+      </button>
+    </div>
+  }
+
+  @if (vacio()) {
+    <app-empty-state
+      title="Todavía no se escribieron nada"
+      description="Escribí el primer mensaje abajo."
+      variant="empty"
+    />
+  } @else {
+    <!-- `log` y no `list`: un hilo de mensajes es una región viva, y lo que
+         llega por sondeo tiene que anunciarse a quien no lo ve. -->
+    <ol class="hilo__mensajes" role="log" aria-label="Mensajes de la conversación">
+      @for (mensaje of enOrden(); track mensaje.id) {
+        <li
+          class="hilo__burbuja"
+          data-testid="mensaje"
+          [class.is-propio]="esPropio(mensaje)"
+          [attr.data-propio]="esPropio(mensaje)"
+        >
+          <p class="hilo__texto">{{ mensaje.bodyText }}</p>
+          <p class="hilo__meta">
+            <span class="solo-lectores">{{ esPropio(mensaje) ? 'Vos' : conQuien() }}, </span>
+            @if (mensaje.sentAt) {
+              {{ mensaje.sentAt | date: 'short' }}
+            }
+            @if (esPropio(mensaje)) {
+              <span
+                class="hilo__ticks"
+                [class.is-leido]="leido(mensaje)"
+                data-testid="hilo-ticks"
+                aria-hidden="true"
+              >{{ leido(mensaje) ? '✓✓' : '✓' }}</span>
+              <span class="solo-lectores">{{ leido(mensaje) ? 'Leído' : 'Enviado' }}</span>
+            }
+          </p>
+        </li>
+      }
+    </ol>
+  }
+
+  <!-- Carril P9 · las plantillas del profesional. Van sobre el composer y no
+       dentro: es una ayuda para escribir, no un campo del formulario. -->
+  <div class="hilo__plantillas">
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      data-testid="hilo-plantillas"
+      [attr.aria-expanded]="plantillasAbiertas()"
+      (clicked)="alternarPlantillas()"
+    >
+      {{ plantillasAbiertas() ? 'Cerrar plantillas' : 'Usar una plantilla' }}
+    </button>
+
+    @if (plantillasAbiertas()) {
+      <ul class="hilo__plantillas-lista">
+        @for (plantilla of plantillasDisponibles(); track plantilla) {
+          <li class="hilo__plantilla">
+            <button
+              class="hilo__plantilla-texto"
+              type="button"
+              data-testid="hilo-plantilla"
+              (click)="usarPlantilla(plantilla)"
+            >
+              {{ plantilla }}
+            </button>
+            @if (esPropia(plantilla)) {
+              <button
+                class="hilo__plantilla-quitar"
+                type="button"
+                [attr.aria-label]="'Quitar la plantilla: ' + plantilla"
+                (click)="olvidarPlantilla(plantilla)"
+              >
+                Quitar
+              </button>
+            }
+          </li>
+        }
+      </ul>
+
+      <div class="hilo__plantilla-nueva">
+        <label class="hilo__campo">
+          <span class="solo-lectores">Nueva plantilla</span>
+          <input
+            type="text"
+            data-testid="hilo-plantilla-nueva"
+            placeholder="Guardar una frase que uses seguido"
+            [ngModel]="plantillaNueva()"
+            (ngModelChange)="plantillaNueva.set($event)"
+            name="plantillaNueva"
+          />
+        </label>
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="hilo-plantilla-guardar"
+          (clicked)="guardarPlantilla()"
+        >
+          Guardar
+        </button>
+      </div>
+    }
+  </div>
+
+  <form class="hilo__composer" (submit)="$event.preventDefault(); enviar()">
+    <label class="hilo__campo">
+      <span class="solo-lectores">Escribí tu mensaje</span>
+      <textarea
+        #composer
+        data-testid="hilo-texto"
+        rows="2"
+        placeholder="Escribí tu mensaje. Enter envía, Shift+Enter hace salto de línea."
+        [ngModel]="borrador()"
+        (ngModelChange)="borrador.set($event)"
+        name="borrador"
+        (keydown)="alTeclear($event)"
+      ></textarea>
+    </label>
+    <button
+      app-button
+      type="submit"
+      variant="primary"
+      data-testid="hilo-enviar"
+      [disabled]="!puedeEnviar()"
+      [isLoading]="enviando()"
+    >
+      Enviar
+    </button>
+  </form>
+}

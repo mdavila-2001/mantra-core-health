@@ -76,7 +76,26 @@ export interface PublicProfileDetail {
 
 // ─── Vitrina propia ──────────────────────────────────────────────────────────
 
+/**
+ * Si una vitrina se lista en el directorio público.
+ *
+ * Publicarse es **opt-in explícito**: el directorio es anónimo y atraviesa
+ * todos los tenants, así que nada se publica por omisión ni por herencia de un
+ * valor ausente.
+ */
+export type ProfileVisibility = 'PUBLIC' | 'PRIVATE';
+
 /** La vitrina pública propia, tal como la ve su titular. */
+/**
+ * El código con el que el servidor rechaza crear un grupo público sin el perfil
+ * completo (TP-3, regla 06).
+ *
+ * Viaja en el cuerpo del 422 junto al texto. Comparar contra el código y no
+ * contra el mensaje es lo que hace que reescribir el texto del servidor no
+ * rompa la pantalla.
+ */
+export const PERFIL_PUBLICO_REQUERIDO = 'PUBLIC_PROFILE_REQUIRED';
+
 export interface OwnPublicProfile {
   readonly id: string;
   readonly tenantId: string;
@@ -87,6 +106,22 @@ export interface OwnPublicProfile {
   readonly headline?: string;
   readonly biography?: string;
   readonly acceptsReviews?: boolean;
+  /**
+   * Si la vitrina está listada en el directorio público anónimo.
+   *
+   * Siempre viene, nunca `null`: el servidor resuelve la columna nula —las
+   * vitrinas anteriores a que el campo existiera— como `PRIVATE`, así que la
+   * pantalla no tiene que decidir esa regla por su cuenta.
+   */
+  readonly visibility: ProfileVisibility;
+  /**
+   * La foto de la vitrina, si subió alguna.
+   *
+   * Es una de las tres condiciones de un perfil «completo» para presentar un
+   * grupo público (TP-3): sin este dato la pantalla no puede anticipar el
+   * rechazo y tendría que dejar que la persona llene el formulario entero.
+   */
+  readonly avatarFileId?: string;
   /** Lo otorga la plataforma; se muestra, no se declara. */
   readonly verificationStatusConceptId?: string;
   readonly statusConceptId: string;
@@ -103,6 +138,15 @@ export interface UpsertOwnPublicProfile {
   readonly headline?: string;
   readonly biography?: string;
   readonly acceptsReviews?: boolean;
+  /**
+   * Si listar la vitrina en el directorio público.
+   *
+   * **Omitirlo conserva lo que haya.** No es lo mismo que mandar `'PRIVATE'`:
+   * una pantalla que edita el nombre sin tocar el interruptor no debe
+   * despublicar la vitrina, y una que la crea sin mencionarlo no debe
+   * publicarla.
+   */
+  readonly visibility?: ProfileVisibility;
 }
 
 // ─── Publicaciones ───────────────────────────────────────────────────────────
@@ -140,6 +184,17 @@ export interface PostListItem {
   readonly commentsEnabled?: boolean;
   readonly publishedAt?: Date;
   readonly editedAt?: Date;
+  /**
+   * Reacciones de la publicación, con la propia del lector si tiene perfil.
+   *
+   * **Viene con la fila.** Antes había que pedir
+   * `GET /posts/:id/reactions` una vez por tarjeta, así que en la práctica no se
+   * pedía y el contador de la pantalla era el del gesto que el usuario acababa
+   * de hacer: al recargar volvía a cero aunque la reacción estuviera guardada.
+   */
+  readonly reactions: ReactionSummary;
+  /** Comentarios vigentes del hilo completo, raíces y respuestas. */
+  readonly commentCount: number;
 }
 
 /** Una publicación abierta, con sus medios, etiquetas y menciones. */
@@ -157,10 +212,19 @@ export interface PostPage {
   readonly nextCursor: string | null;
 }
 
+/**
+ * Quién puede leer una publicación.
+ *
+ * Los tres códigos son los del enum del DTO del servidor; omitir el campo
+ * equivale a `PUBLIC`, que es como se leen las publicaciones anteriores a que el
+ * campo existiera.
+ */
+export type PostVisibility = 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE';
+
 /** Lo que se manda a `POST /community/profiles/:profileId/posts` para publicar. */
 export interface NewPost {
   readonly bodyText: string;
-  readonly visibility?: 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE';
+  readonly visibility?: PostVisibility;
   readonly commentsEnabled?: boolean;
   readonly hashtags?: readonly string[];
 }
@@ -209,6 +273,13 @@ export interface NewComment {
 /** Cuántas reacciones de un tipo tiene una publicación. */
 export interface ReactionTally {
   readonly reactionTypeConceptId: string;
+  /**
+   * El código del tipo, el mismo con el que se escribe.
+   *
+   * Ausente sólo si la fila guarda un concepto que no está en el enum del
+   * módulo: en ese caso no se pudo resolver, y la pantalla no debe inventarlo.
+   */
+  readonly reactionType?: ReactionType;
   readonly count: number;
 }
 
@@ -223,6 +294,13 @@ export interface ReactionSummary {
   readonly tallies: readonly ReactionTally[];
   readonly total: number;
   readonly actorReactionTypeConceptId?: string;
+  /**
+   * El código de la reacción propia, resuelto del concepto por el servidor.
+   *
+   * Es lo que permite pintar activo el botón correcto **después de recargar**,
+   * sin resolver terminología en cada render.
+   */
+  readonly actorReactionType?: ReactionType;
 }
 
 // ─── Seguimientos, marcadores y bloqueos ─────────────────────────────────────
@@ -422,6 +500,115 @@ export interface GroupMemberPage {
   readonly nextCursor: string | null;
 }
 
+/**
+ * Cómo se para quien mira frente a un grupo.
+ *
+ * Viene dentro de la ficha y no en una llamada aparte: la pantalla necesita
+ * saber al mismo tiempo qué grupo es y si ya se está adentro. Sin eso, el botón
+ * «unirse» aparece por un instante delante de quien ya es integrante.
+ */
+export interface GroupViewerMembership {
+  readonly isMember: boolean;
+  readonly canAdminister: boolean;
+  readonly canPost: boolean;
+  readonly membershipId: string | null;
+  readonly memberRoleConceptId: string | null;
+  readonly joinStatusConceptId: string | null;
+}
+
+/** La ficha de un grupo. */
+export interface GroupDetail {
+  readonly id: string;
+  readonly tenantId?: string;
+  readonly slug: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly visibilityConceptId: string;
+  readonly groupTypeConceptId: string;
+  readonly topicId?: string;
+  readonly ownerProfileId?: string;
+  readonly coverFileId?: string;
+  readonly memberCount?: number;
+  readonly postCount?: number;
+  /** Altas esperando aprobación. Sólo llega a quien administra. */
+  readonly pendingCount?: number;
+  readonly statusConceptId: string;
+  readonly viewer: GroupViewerMembership;
+}
+
+/**
+ * Una publicación del muro de un grupo, con sus respuestas.
+ *
+ * El tipo es recursivo porque el hilo lo es, igual que en los comentarios de
+ * una publicación del feed.
+ */
+export interface GroupWallItem {
+  readonly id: string;
+  readonly authorProfileId: string;
+  readonly bodyText: string;
+  readonly parentCommentId?: string;
+  readonly threadDepth?: number;
+  readonly replyCount?: number;
+  readonly createdAt: Date;
+  readonly replies: readonly GroupWallItem[];
+}
+
+/** Una página del muro de un grupo. */
+export interface GroupWallPage {
+  readonly items: readonly GroupWallItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Lo que hace falta para crear un grupo. */
+export interface NewGroup {
+  readonly slug: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly visibility?: 'PUBLIC' | 'PRIVATE' | 'SECRET';
+  readonly groupType?: 'GENERAL' | 'SUPPORT';
+  readonly topicId?: string;
+  readonly ownerProfileId?: string;
+}
+
+/** Lo que hace falta para publicar en el muro de un grupo. */
+export interface NewGroupPost {
+  readonly authorProfileId: string;
+  readonly bodyText: string;
+  readonly parentCommentId?: string;
+}
+
+/** Lo que un administrador cambia de una membresía. */
+export interface GroupMemberChange {
+  readonly role?: 'MEMBER' | 'MODERATOR' | 'ADMIN';
+  readonly decision?: 'APPROVE' | 'REJECT';
+  readonly actorProfileId?: string;
+}
+
+/** Cómo quedó una membresía después de administrarla. */
+export interface GroupMemberUpdated {
+  readonly id: string;
+  readonly memberRoleConceptId: string;
+  readonly joinStatusConceptId: string;
+}
+
+/** Un tema con el que se clasifican grupos y publicaciones. */
+export interface Topic {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly parentTopicId?: string;
+  readonly specialtyConceptId?: string;
+}
+
+/** El árbol de temas. No pagina: son decenas, y alimenta un selector. */
+export interface TopicPage {
+  readonly items: readonly Topic[];
+  readonly count: number;
+  readonly limit: number;
+}
+
 // ─── Mensajería directa ──────────────────────────────────────────────────────
 
 /** El último mensaje de una conversación, para pintar la lista. */
@@ -441,6 +628,36 @@ export interface ConversationListItem {
   readonly messageCount?: number;
   readonly lastMessage?: ConversationPreviewMessage;
   readonly unreadCount: number;
+  /**
+   * Los demás participantes, sin el propio (carril P2).
+   *
+   * Sin esto la bandeja no puede decir con quién es cada conversación, y una
+   * lista de «Conversación · hace 2 h» es un registro de actividad, no una
+   * bandeja.
+   */
+  readonly peers: readonly ConversationPeer[];
+}
+
+/**
+ * Un resultado del buscador público de profesionales.
+ *
+ * Trae `slug` y **no** `profileId`: la superficie sin sesión no publica
+ * identificadores internos. Para escribirle hace falta resolverlo antes con
+ * `readProfileBySlug`.
+ */
+export interface PublicDirectoryResult {
+  readonly kind: string;
+  readonly slug: string;
+  readonly displayName: string;
+  readonly headline: string | null;
+  readonly city: string | null;
+  readonly verified: boolean;
+}
+
+/** El otro lado de una conversación. */
+export interface ConversationPeer {
+  readonly profileId: string;
+  readonly displayName?: string;
 }
 
 /** Una página de conversaciones. */
@@ -470,6 +687,48 @@ export interface DirectMessagePage {
   readonly count: number;
   readonly limit: number;
   readonly nextCursor: string | null;
+  /**
+   * Hasta qué `sentAt` leyó el otro lado, en una conversación DIRECT.
+   *
+   * `undefined` si es de grupo, o si el peer no marcó nada como leído
+   * todavía. Con esto se pinta ✓✓ en los mensajes propios cuyo `sentAt` sea
+   * anterior o igual a esta marca.
+   */
+  readonly peerReadUpTo?: Date;
+}
+
+/**
+ * Con quién se abre una conversación.
+ *
+ * `participantProfileIds` lleva **los dos**, el propio incluido: el backend no
+ * infiere al remitente del token porque un perfil público no está atado a una
+ * cuenta —el vínculo es polimórfico— y adivinarlo sería adivinar con qué
+ * identidad social está escribiendo alguien que tiene más de una.
+ */
+export interface NewConversation {
+  readonly participantProfileIds: readonly string[];
+  readonly conversationType?: 'DIRECT' | 'GROUP';
+  readonly groupId?: string;
+}
+
+/** Un mensaje a enviar. */
+export interface NewDirectMessage {
+  readonly senderProfileId: string;
+  readonly bodyText: string;
+  readonly replyToMessageId?: string;
+}
+
+/** El acuse de un mensaje enviado. */
+export interface SentMessage {
+  readonly id: string;
+  readonly conversationId: string;
+  readonly sentAt?: Date;
+}
+
+/** Hasta dónde se marcó leída una conversación. */
+export interface ConversationRead {
+  readonly receiptsRecorded: number;
+  readonly lastReadMessageId: string | null;
 }
 
 // ─── Encuestas ───────────────────────────────────────────────────────────────
@@ -562,10 +821,26 @@ export type ReviewsQuery = CursorQuery;
 /** Filtros de `GET /community/groups`. `tenantId` es obligatorio. */
 export interface GroupsQuery extends CursorQuery {
   readonly tenantId: string;
+  /** Acota el directorio a un tema. */
+  readonly topicId?: string;
+  /** Busca en nombre y descripción. */
+  readonly q?: string;
 }
 
 /** Filtros de `GET /community/groups/:groupId/members`. */
-export interface GroupMembersQuery extends CursorQuery, ActorQuery {}
+export interface GroupMembersQuery extends CursorQuery, ActorQuery {
+  /**
+   * Estado de membresía que se pide.
+   *
+   * `PENDING` es lo que dibuja la cola de solicitudes de un grupo privado; sin
+   * el filtro habría que traer el padrón entero para encontrar las tres que
+   * esperan.
+   */
+  readonly joinStatus?: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'LEFT' | 'REMOVED';
+}
+
+/** Filtros de `GET /community/groups/:groupId/posts`. */
+export interface GroupWallQuery extends CursorQuery, ActorQuery {}
 
 /**
  * Filtros de `GET /community/conversations`. `profileId` es obligatorio.
@@ -604,13 +879,7 @@ export type ReactableType = (typeof REACTABLE_TYPES)[number];
  * que `reactionTypeConceptId`, que es lo que devuelven las lecturas—. Es una
  * asimetría real del backend: se escribe con la palabra y se lee con el uuid.
  */
-export const REACTION_TYPES = [
-  'LIKE',
-  'LOVE',
-  'INSIGHTFUL',
-  'CELEBRATE',
-  'SUPPORT',
-] as const;
+export const REACTION_TYPES = ['LIKE', 'LOVE', 'INSIGHTFUL', 'CELEBRATE', 'SUPPORT'] as const;
 
 /** Una reacción. */
 export type ReactionType = (typeof REACTION_TYPES)[number];
@@ -622,9 +891,241 @@ export type ReactionType = (typeof REACTION_TYPES)[number];
  * reacción, no agrega una segunda. Por eso `actorProfileId` es obligatorio —es
  * la mitad de la clave— y no se toma de la sesión.
  */
+/** Lo que se manda a `POST /community/follows` y a su `DELETE`. */
+export interface NewFollow {
+  readonly followerProfileId: string;
+  readonly followableType: 'PROFILE' | 'TOPIC' | 'HASHTAG' | 'GROUP';
+  readonly followableRefId: string;
+  readonly notificationLevel?: 'ALL' | 'HIGHLIGHTS' | 'NONE';
+}
+
+/** Lo que se manda a `POST /community/bookmarks` y a su `DELETE`. */
+export interface NewBookmark {
+  readonly profileId: string;
+  readonly bookmarkableType: 'POST' | 'COMMENT' | 'REVIEW';
+  readonly bookmarkableRefId: string;
+  readonly collectionName?: string;
+}
+
+/** Lo que se manda a `POST /community/blocks` y a su `DELETE`. */
+export interface NewBlock {
+  readonly blockerProfileId: string;
+  readonly blockedProfileId: string;
+  readonly reason?: 'HARASSMENT' | 'SPAM' | 'OTHER';
+}
+
+/**
+ * Lo que contestan los `DELETE` del grafo social.
+ *
+ * `removed: false` no es un error: dejar de seguir, quitar un marcador y
+ * desbloquear son conmutadores, y si el vínculo ya no estaba, el estado final es
+ * el que se pedía. Se distingue igual para no anunciar «dejaste de seguir»
+ * cuando no seguía.
+ */
+export interface SocialRemoval {
+  readonly removed: boolean;
+}
+
 export interface NewReaction {
   readonly actorProfileId: string;
   readonly reactableType: ReactableType;
   readonly reactableRefId: string;
   readonly reactionType: ReactionType;
+}
+
+// ─── Moderación (UC-19-08/09/10) ─────────────────────────────────────────────
+
+/** Estados de la cola de moderación, tal como los filtra la pantalla. */
+export type ModerationQueueStatus = 'QUEUED' | 'IN_REVIEW' | 'RESOLVED';
+
+/** Prioridades de la cola. */
+export type ModerationPriority = 'LOW' | 'NORMAL' | 'HIGH';
+
+/** Tipos de contenido moderable. */
+export type ModerableContentType = 'POST' | 'COMMENT' | 'PROFILE' | 'MESSAGE' | 'REVIEW';
+
+/** Las cuatro decisiones que un moderador puede tomar. */
+export type ModerationDecisionCode = 'REMOVED' | 'RESTRICTED' | 'WARNED' | 'DISMISSED';
+
+/** Estados de una apelación. `OPEN` no es una resolución. */
+export type AppealStatus = 'OPEN' | 'UPHELD' | 'OVERTURNED' | 'PARTIAL';
+
+/** Las tres resoluciones posibles de una apelación. */
+export type AppealResolution = 'UPHELD' | 'OVERTURNED' | 'PARTIAL';
+
+/** El reporte que originó una entrada de cola, como contexto del moderador. */
+export interface QueueReportContext {
+  readonly id: string;
+  readonly reasonConceptId: string;
+  /** Texto libre de quien reportó. Puede mencionar a terceros. */
+  readonly detailText?: string;
+  readonly createdAt: Date;
+}
+
+/** Una entrada de la cola de moderación. */
+export interface ModerationQueueItem {
+  readonly id: string;
+  readonly contentTypeConceptId: string;
+  readonly contentRefId: string;
+  readonly sourceConceptId: string;
+  readonly priorityConceptId?: string;
+  readonly statusConceptId: string;
+  readonly assignedToUserId?: string;
+  readonly queuedAt?: Date;
+  /**
+   * Cuántos reportes acumula el contenido.
+   *
+   * La cola deduplica por contenido: sin este número, una entrada reportada por
+   * diez personas se ve igual que una reportada por una.
+   */
+  readonly reportCount: number;
+  readonly report?: QueueReportContext;
+}
+
+/** Una página de la cola. */
+export interface ModerationQueuePage {
+  readonly items: readonly ModerationQueueItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Una decisión ya tomada. */
+export interface ModerationDecisionItem {
+  readonly id: string;
+  readonly moderationQueueId: string;
+  readonly decisionConceptId: string;
+  readonly policyConceptId: string;
+  readonly rationaleText?: string;
+  readonly actionTakenConceptId?: string;
+  readonly decidedByUserId: string;
+  readonly decidedAt?: Date;
+}
+
+/** Una página de decisiones. */
+export interface ModerationDecisionPage {
+  readonly items: readonly ModerationDecisionItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Una apelación, con la decisión que impugna resuelta. */
+export interface ModerationAppealItem {
+  readonly id: string;
+  readonly moderationDecisionId: string;
+  readonly appellantProfileId: string;
+  readonly reasonText: string;
+  readonly statusConceptId: string;
+  readonly resolutionConceptId?: string;
+  readonly reviewedByUserId?: string;
+  readonly resolvedAt?: Date;
+  readonly createdAt: Date;
+  readonly decision?: ModerationDecisionItem;
+}
+
+/** Una página de apelaciones. */
+export interface ModerationAppealPage {
+  readonly items: readonly ModerationAppealItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Filtros de la cola de moderación. */
+export interface ModerationQueueQuery {
+  readonly status?: readonly ModerationQueueStatus[];
+  readonly priority?: readonly ModerationPriority[];
+  readonly contentType?: readonly ModerableContentType[];
+  /** Antigüedad mínima en horas: «qué lleva más de N horas sin decisión». */
+  readonly minAgeHours?: number;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Filtros del historial de decisiones. */
+export interface ModerationDecisionsQuery {
+  readonly moderationQueueId?: string;
+  readonly decision?: readonly ModerationDecisionCode[];
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Filtros de las apelaciones. */
+export interface ModerationAppealsQuery {
+  readonly status?: readonly AppealStatus[];
+  readonly appellantProfileId?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/**
+ * Los cinco motivos de reporte del contrato.
+ *
+ * Son el enum del DTO del servidor, no etiquetas inventadas para la pantalla:
+ * cualquier otro valor es un 400.
+ */
+export const REPORT_REASONS = ['SPAM', 'ABUSE', 'MISINFORMATION', 'PHI', 'OTHER'] as const;
+
+/** Un motivo de reporte. */
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
+/** Lo que se manda a `POST /community/reports`. */
+export interface NewReport {
+  readonly targetType: ModerableContentType;
+  readonly targetId: string;
+  readonly reason: ReportReason;
+  readonly detailText?: string;
+}
+
+/**
+ * Lo que se manda a `POST /community/moderation/queue/:id/decision`.
+ *
+ * `rationaleText` es **obligatorio**: una decisión sin motivo deja al sancionado
+ * sin nada que leer cuando apela y al equipo sin nada que auditar.
+ */
+export interface NewModerationDecision {
+  readonly decision: ModerationDecisionCode;
+  readonly rationaleText: string;
+  readonly subjectProfileId?: string;
+  readonly strikeSeverity?: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+/** Lo que se manda a `POST /community/moderation/decisions/:id/appeal`. */
+export interface NewAppeal {
+  readonly appellantProfileId: string;
+  readonly reasonText: string;
+}
+
+/**
+ * Lo que se manda a `POST /community/moderation/appeals/:id/resolve`.
+ *
+ * Sin motivo, y no por olvido: `moderation_appeals` no tiene columna donde
+ * guardarlo. Está declarado como bloqueo de esquema en el carril P6.
+ */
+export interface ResolveAppeal {
+  readonly resolution: AppealResolution;
+}
+
+/** Lo que se manda a `POST /community/profiles/:id/reviews`. */
+export interface NewReview {
+  /**
+   * La atención que respalda la reseña. **Obligatoria.**
+   *
+   * El servidor comprueba que sea de quien reseña, con quien se califica, y que
+   * esté terminada. Quién reseña **no** viaja en el cuerpo: sale del token.
+   */
+  readonly verifiedEncounterId: string;
+  readonly overallRating: number;
+  readonly reviewText?: string;
+  readonly displayMode?: 'REAL_NAME' | 'ANONYMOUS';
+  readonly dimensions?: readonly {
+    readonly dimension: 'COMMUNICATION' | 'PUNCTUALITY' | 'CLEANLINESS' | 'OUTCOME';
+    readonly score: number;
+  }[];
+}
+
+/** Lo que se manda al responder una reseña. */
+export interface NewReviewResponse {
+  readonly responseText: string;
 }

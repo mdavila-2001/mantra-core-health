@@ -5,6 +5,7 @@ import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import type {
   OwnPractitionerProfile,
+  PractitionerAffiliation,
   PractitionerCredential,
   PractitionerLanguage,
   PractitionerLicense,
@@ -19,6 +20,7 @@ import type { StatusSealVariant } from '../../../../shared/components/organisms/
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { PractitionerProfileView } from './practitioner-profile-view/practitioner-profile-view';
 import type {
+  AfiliacionVisible,
   EspecialidadVisible,
   FormacionVisible,
   IdiomaVisible,
@@ -141,6 +143,7 @@ export class PractitionerProfile {
   private convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
     const { perfil, etiquetas, fotoUrl } = resuelto;
     const especialidades = this.especialidades(perfil, etiquetas);
+    const afiliaciones = afiliacionesDe(perfil);
     return {
       nombre: perfil.displayName || SIN_DATO,
       titulo: perfil.professionalTitle ?? '',
@@ -169,8 +172,8 @@ export class PractitionerProfile {
       formacion: this.formacion(perfil, etiquetas),
       matriculas: this.matriculas(perfil, etiquetas),
       idiomas: this.idiomas(perfil, etiquetas),
-      perfilId: perfil.profileId,
-      personaId: perfil.personId,
+      actividadActual: afiliaciones.actual,
+      experienciaHistorica: afiliaciones.historica,
       desde: perfil.createdAt ?? null,
     };
   }
@@ -188,6 +191,7 @@ export class PractitionerProfile {
       desde: especialidad.validFrom ?? null,
       hasta: especialidad.validTo ?? null,
       estado: label(etiquetas, especialidad.verificationStatusConceptId),
+      sello: sello(etiquetas, especialidad.verificationStatusConceptId),
     }));
   }
 
@@ -224,6 +228,7 @@ export class PractitionerProfile {
               ? ('approved' as StatusSealVariant)
               : sello(etiquetas, credencial.stateConceptId),
           vencida,
+          fuenteVerificacion: credencial.verificationSourceUri,
         };
       });
   }
@@ -308,6 +313,34 @@ function especialidadPrincipal(especialidades: readonly EspecialidadVisible[]): 
 /** Milisegundos de una fecha opcional; las ausentes van al fondo del orden. */
 function fecha(valor: Date | undefined): number {
   return valor?.getTime() ?? 0;
+}
+
+/**
+ * El historial laboral (UC-05-16), separado en fase actual e histórica.
+ *
+ * `current` ya viene derivado del backend por `endDate`: acá sólo se traduce
+ * al contrato de la vista y se reparte en los dos grupos que pide la pestaña
+ * Trayectoria — «actividad actual» primero, por ser lo más relevante hoy.
+ */
+function afiliacionesDe(perfil: OwnPractitionerProfile): {
+  readonly actual: readonly AfiliacionVisible[];
+  readonly historica: readonly AfiliacionVisible[];
+} {
+  const visibles = [...perfil.affiliations]
+    .sort((a, b) => fecha(b.startDate) - fecha(a.startDate))
+    .map((afiliacion: PractitionerAffiliation) => ({
+      id: afiliacion.id,
+      organizacion: afiliacion.organizationName,
+      cargo: afiliacion.roleTitle,
+      area: afiliacion.departmentText ?? '',
+      desde: afiliacion.startDate,
+      hasta: afiliacion.endDate,
+      actual: afiliacion.current,
+    }));
+  return {
+    actual: visibles.filter((afiliacion) => afiliacion.actual),
+    historica: visibles.filter((afiliacion) => !afiliacion.actual),
+  };
 }
 
 /**

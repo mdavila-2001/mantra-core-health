@@ -50,7 +50,10 @@ const PACIENTE: ReferenceOption = { value: 'pp-1', label: 'Ana Salas', hint: 'PA
  */
 const RECURSO = {
   id: 'r-1',
-  name: 'Dra. Quispe',
+  // El rótulo de la agenda y la persona son dos cosas distintas: el resumen
+  // muestra la segunda, que es con quien la paciente se va a atender.
+  name: 'Agenda Dra. Quispe',
+  practitionerName: 'Dra. Ana Quispe',
   resourceTypeConceptId: 'c-prof',
   resourceRefType: 'health_practitioner_profiles',
   resourceRefId: 'prac-1',
@@ -70,6 +73,10 @@ const RECURSO = {
 const RUTA =
   '/schedule/book/s-1?recurso=r-1&desde=2026-08-12T13:00:00.000Z&hasta=2026-08-12T13:30:00.000Z';
 
+/** La misma reserva, entrada por el portal del paciente. */
+const RUTA_PORTAL =
+  '/my-account/book/s-1?recurso=r-1&desde=2026-08-12T13:00:00.000Z&hasta=2026-08-12T13:30:00.000Z';
+
 describe('BookingNew', () => {
   let harness: RouterTestingHarness;
   let componente: BookingNew;
@@ -83,6 +90,14 @@ describe('BookingNew', () => {
         provideHttpClientTesting(),
         provideRouter([
           { path: 'schedule/book/:slotId', component: BookingNew },
+          // La misma pantalla entrada por el portal: `data.entrada` es lo único
+          // que las distingue, y de ahí sale el texto con el que se le habla a
+          // quien reserva.
+          {
+            path: 'my-account/book/:slotId',
+            component: BookingNew,
+            data: { entrada: 'PORTAL' },
+          },
           { path: '**', children: [] },
         ]),
       ],
@@ -265,21 +280,23 @@ describe('BookingNew', () => {
 
     interno<(t: string) => void>('buscarPaciente')('ana');
 
-    http.expectOne((r) => r.url === '/profiles/patients').flush({
-      items: [
-        {
-          profileId: 'pp-1',
-          personId: 'p-1',
-          patientCode: 'PAC-1',
-          displayName: 'Ana Salas',
-          birthDate: null,
-          deceased: false,
-        },
-      ],
-      count: 1,
-      limit: 10,
-      nextCursor: null,
-    });
+    http
+      .expectOne((r) => r.url === '/profiles/patients')
+      .flush({
+        items: [
+          {
+            profileId: 'pp-1',
+            personId: 'p-1',
+            patientCode: 'PAC-1',
+            displayName: 'Ana Salas',
+            birthDate: null,
+            deceased: false,
+          },
+        ],
+        count: 1,
+        limit: 10,
+        nextCursor: null,
+      });
 
     expect(interno<() => readonly ReferenceOption[]>('candidatos')()).toEqual([
       { value: 'pp-1', label: 'Ana Salas', hint: 'PAC-1' },
@@ -309,5 +326,66 @@ describe('BookingNew', () => {
 
     expect(interno<() => unknown>('sede')()).toBeNull();
     expect(interno<() => { status: string }>('cupo')().status).toBe('ready');
+  });
+
+  /* ---- lo que la analista pidió ver antes de confirmar (F-04, F-06, F-07) -- */
+
+  /**
+   * F-07. El resumen decía cuándo y dónde, pero no **con quién**: se confirmaba
+   * a ciegas respecto de lo único que la persona eligió a mano.
+   */
+  it('muestra con quién es el turno, con el nombre de la persona y no el de la agenda', async () => {
+    await montar();
+    responderCupo();
+
+    const texto = harness.routeNativeElement?.textContent ?? '';
+    expect(interno<() => string>('profesional')()).toBe('Dra. Ana Quispe');
+    expect(texto).toContain('Con quién');
+    expect(texto).toContain('Dra. Ana Quispe');
+  });
+
+  /** Un box o un equipo no tienen persona: el renglón no se dibuja vacío. */
+  it('no dibuja «con quién» cuando el recurso no es de un profesional', async () => {
+    await montar(RUTA, { ...RECURSO, practitionerName: null });
+    responderCupo();
+
+    expect(interno<() => string>('profesional')()).toBe('');
+    expect(
+      harness.routeNativeElement?.querySelector('[data-testid="reserva-profesional"]'),
+    ).toBeNull();
+  });
+
+  /** F-06: «franja» es vocabulario del sistema, no de quien reserva. */
+  it('llama a las cosas por su nombre: «fecha de reserva», no «franja»', async () => {
+    await montar();
+    responderCupo();
+
+    const texto = harness.routeNativeElement?.textContent ?? '';
+    expect(texto).toContain('Fecha de reserva');
+    expect(texto).not.toContain('Franja');
+  });
+
+  /**
+   * F-04: «Opcional. Acompaña a la cita» no decía ni para qué sirve ni quién lo
+   * lee. Desde el portal se le habla a quien se atiende…
+   */
+  it('desde el portal, le explica al paciente para qué sirve el motivo', async () => {
+    await montar(RUTA_PORTAL);
+    responderCupo();
+
+    const ayuda = crudo<string>('ayudaDelMotivo');
+    expect(ayuda).toContain('Contale al profesional');
+    expect(ayuda).toContain('opcional');
+    expect(ayuda).not.toContain('Acompaña a la cita');
+  });
+
+  /** …y desde el mostrador se le habla a quien anota lo que el paciente cuenta. */
+  it('desde el mostrador, el texto del motivo habla del paciente en tercera persona', async () => {
+    await montar();
+    responderCupo();
+
+    const ayuda = crudo<string>('ayudaDelMotivo');
+    expect(ayuda).toContain('Lo que cuenta el paciente');
+    expect(ayuda).not.toContain('Acompaña a la cita');
   });
 });

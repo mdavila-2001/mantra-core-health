@@ -1,0 +1,81 @@
+/* Mobile-first: bloques apilados; el precio acompaña a su renglón. */
+
+.confirmacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.confirmacion__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.confirmacion__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.confirmacion__principal {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.confirmacion__secundario {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.confirmacion__lineas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.confirmacion__linea {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.confirmacion__linea-datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.confirmacion__linea-precio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-1);
+}
+
+.confirmacion__total {
+  margin: 0;
+}
+
+.confirmacion__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.confirmacion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

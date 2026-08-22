@@ -3,7 +3,12 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import type { ChartTemplate, CreateChartTemplateInput } from './chart-templates.types';
+import type {
+  AssignTemplateInput,
+  ChartTemplate,
+  ChartTemplateAssignment,
+  CreateChartTemplateInput,
+} from './chart-templates.types';
 
 /**
  * Cliente de `chart.specialty_chart_templates`: crear, listar y leer las
@@ -44,6 +49,25 @@ export class ChartTemplatesClient {
   /** `POST /charts/templates` — crea una plantilla con su esquema de campos. */
   createTemplate(input: CreateChartTemplateInput): Observable<ChartTemplate> {
     return this.http.post<ChartTemplate>(this.url('/charts/templates'), input);
+  }
+
+  /**
+   * `POST /charts/templates/:id/assignments` — pone una plantilla en uso
+   * (UC-15-12).
+   *
+   * El endpoint existía desde antes que este cliente y no tenía envoltorio
+   * porque no había ninguna plantilla que asignar: la lista arrancaba vacía.
+   * Con el catálogo de formularios estándar sembrado (carril R2-5), «usar esta
+   * plantilla tal cual» es exactamente esta llamada.
+   */
+  assignTemplate(
+    templateId: string,
+    input: AssignTemplateInput = {},
+  ): Observable<ChartTemplateAssignment> {
+    return this.http.post<ChartTemplateAssignment>(
+      this.url(`/charts/templates/${encodeURIComponent(templateId)}/assignments`),
+      input,
+    );
   }
 
   private url(path: string): string {

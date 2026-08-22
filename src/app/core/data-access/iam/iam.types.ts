@@ -52,8 +52,44 @@ export interface PatientRegistration {
   readonly email?: string;
   /** Fecha en formato ISO `YYYY-MM-DD`, tal como la valida el backend. */
   readonly birthDate?: string;
+  /**
+   * Departamento boliviano que emitió el documento (catálogo VS_BO_DEPARTMENT).
+   *
+   * Va atado al identificador y no a la persona: es el «SC», «LP»… de ESA
+   * cédula, lo que distingue dos documentos homónimos de departamentos
+   * distintos. Sin `nationalId` no tiene a qué atarse.
+   */
+  readonly issuerAdministrativeAreaConceptId?: string;
+  /** Teléfono de contacto, en E.164 o formato nacional. */
+  readonly phone?: string;
+  /** Género administrativo (HL7 AdministrativeGender). */
+  readonly gender?: AdministrativeGenderCode;
+  /** Sexo asignado al nacer. Es dato clínico, distinto del género. */
+  readonly sexAtBirth?: BirthSexCode;
+  /**
+   * Ocupación en texto libre.
+   *
+   * Texto y no concepto porque el catálogo boliviano de ocupaciones
+   * (`VS_BO_OCCUPATION`) todavía no está sembrado: la API acepta
+   * `occupationConceptId`, pero hoy no hay de dónde sacar un uuid válido. El
+   * día que el catálogo exista, este campo pasa a ser el respaldo de «no está
+   * en la lista», que es como ya lo trata el backend.
+   */
+  readonly occupationFreeText?: string;
   readonly timeZone?: string;
 }
+
+/**
+ * Códigos de género administrativo que acepta la API.
+ *
+ * Códigos legibles y no uuid del catálogo: los formularios públicos no conocen
+ * los identificadores de terminología, y el backend los traduce
+ * (`ADMIN_GENDER_CONCEPT_BY_CODE`).
+ */
+export type AdministrativeGenderCode = 'MALE' | 'FEMALE' | 'OTHER' | 'UNKNOWN';
+
+/** Códigos de sexo al nacer que acepta la API. */
+export type BirthSexCode = 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN';
 
 export interface RegisteredPatient {
   readonly userId: string;
@@ -92,9 +128,26 @@ export interface ActivationResult {
 export interface PractitionerRegistration {
   readonly email: string;
   readonly password: string;
-  readonly displayName: string;
+  /** Nombre de pila. */
+  readonly name: string;
+  /** Segundo nombre. Opcional: mucha gente no tiene. */
+  readonly middleName?: string;
+  /** Apellido paterno. */
+  readonly lastName: string;
+  /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
+  readonly motherLastName?: string;
+  /** Fecha en formato ISO `YYYY-MM-DD`, tal como la valida el backend. */
+  readonly birthDate?: string;
+  /** Documento de identidad. Se guarda como identificador oficial, no como login. */
+  readonly nationalId?: string;
+  /** Departamento boliviano que emitió el documento (catálogo VS_BO_DEPARTMENT). */
+  readonly issuerAdministrativeAreaConceptId?: string;
   readonly licenseNumber: string;
   readonly credentialNumber: string;
+  /** Autoridad que emitió la matrícula: Ministerio de Salud y Deportes, Colegio de Odontólogos, etc. */
+  readonly regulatoryAuthority?: string;
+  /** Fecha de inscripción de la matrícula, ISO `YYYY-MM-DD`. */
+  readonly licenseIssueDate?: string;
   readonly professionalTitle?: string;
   readonly phone?: string;
 }
@@ -104,6 +157,52 @@ export interface RegisteredPractitioner {
   readonly personId: string;
   readonly practitionerProfileId: string;
   readonly practitionerCode: string;
+}
+
+/**
+ * Alta de una organización aseguradora por sí misma
+ * (`POST /iam/auth/register-organization`).
+ *
+ * A diferencia del paciente y del profesional, acá nacen **dos cosas a la
+ * vez**: el tenant `PAYER` y su usuario owner. El bloque `payer` es
+ * obligatorio porque el backend lo exige siempre que el tipo es `PAYER` —la
+ * misma regla que el alta administrativa (`NewTenant.payer`)—, y acá no hay
+ * otro tipo posible: esta pantalla sólo da de alta aseguradoras.
+ */
+export interface OrganizationRegistration {
+  readonly code: string;
+  readonly legalName: string;
+  readonly tradeName?: string;
+  readonly timeZone?: string;
+  readonly payer: {
+    readonly carrierCode: string;
+    readonly regulatorIdentifier: string;
+    readonly sigla: string;
+    readonly address: string;
+  };
+  readonly owner: {
+    readonly email: string;
+    readonly password: string;
+    /** Nombre de pila. */
+    readonly name: string;
+    /** Segundo nombre. Opcional: mucha gente no tiene. */
+    readonly middleName?: string;
+    /** Apellido paterno. */
+    readonly lastName: string;
+    /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
+    readonly motherLastName?: string;
+  };
+}
+
+/** Lo que devuelve el alta de organización: el tenant y su owner recién creados. */
+export interface RegisteredOrganization {
+  readonly tenantId: string;
+  readonly code: string;
+  readonly ownerUserId: string;
+  /** Concept id del estado del tenant, p. ej. `pending`. */
+  readonly status: string;
+  /** `false` cuando el owner no tiene correo pendiente de verificar: no es un fallo. */
+  readonly emailVerificationSent: boolean;
 }
 
 /**
@@ -180,7 +279,14 @@ export interface CreatedUser {
  * alguien haya creado una cuenta a nombre de otra persona.
  */
 export interface AssistedPatientRegistration {
-  readonly displayName: string;
+  /** Nombre de pila. */
+  readonly name: string;
+  /** Segundo nombre. Opcional: mucha gente no tiene. */
+  readonly middleName?: string;
+  /** Apellido paterno. */
+  readonly lastName: string;
+  /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
+  readonly motherLastName?: string;
   readonly email: string;
   readonly reason: string;
   readonly timeZone?: string;

@@ -1,0 +1,168 @@
+/* ============================================================================
+    El mapa compartido (FAR-I1).
+
+    Encapsulación None: Leaflet arma pines, popups y controles fuera del
+    template de Angular y las reglas emuladas no lo alcanzarían. Para no
+    derramar nada, TODO selector vive bajo `.mapa` (o `app-map`).
+    ========================================================================== */
+
+app-map {
+  display: block;
+}
+
+.mapa {
+  position: relative;
+  display: block;
+  min-height: 320px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--bg-inset);
+}
+
+.mapa__lienzo {
+  position: absolute;
+  inset: 0;
+  /* Antes de montar, el lienzo no debe tapar el aviso de espera. */
+  z-index: 0;
+}
+
+.mapa__espera {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+}
+
+/* --- Pines ---------------------------------------------------------------- *
+   La receta de tono es la de Badge/Chip: fondo claro + texto oscuro del
+   mismo trío `--st-*`. `tone.css` no sirve acá porque sus reglas son
+   `:host(...)` y la cara del pin la crea Leaflet, no un componente.        */
+
+.mapa__marcador {
+  background: transparent;
+  border: 0;
+}
+
+.mapa__pin {
+  display: inline-flex;
+  inline-size: 30px;
+  block-size: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-full);
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--tono-bg, var(--bg-inset));
+  color: var(--tono-fg, var(--text-secondary));
+  border: 1.5px solid var(--tono-bd, var(--border-default));
+  box-shadow: var(--shadow-sm);
+}
+
+.mapa__pin--primary { --tono-bg: var(--st-primary-bg); --tono-fg: var(--st-primary-fg); --tono-bd: var(--st-primary-bd); }
+.mapa__pin--secondary { --tono-bg: var(--st-secondary-bg); --tono-fg: var(--st-secondary-fg); --tono-bd: var(--st-secondary-bd); }
+.mapa__pin--success { --tono-bg: var(--st-success-bg); --tono-fg: var(--st-success-fg); --tono-bd: var(--st-success-bd); }
+.mapa__pin--warning { --tono-bg: var(--st-warning-bg); --tono-fg: var(--st-warning-fg); --tono-bd: var(--st-warning-bd); }
+.mapa__pin--error { --tono-bg: var(--st-error-bg); --tono-fg: var(--st-error-fg); --tono-bd: var(--st-error-bd); }
+.mapa__pin--info { --tono-bg: var(--st-info-bg); --tono-fg: var(--st-info-fg); --tono-bd: var(--st-info-bd); }
+
+.mapa__pin--activo {
+  transform: scale(1.2);
+  box-shadow:
+    0 0 0 3px var(--bg-surface),
+    0 0 0 6px var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mapa__pin {
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+}
+
+/* --- Popup ---------------------------------------------------------------- */
+
+.mapa__popup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 12rem;
+}
+
+.mapa__popup-titulo {
+  color: var(--text-primary);
+}
+
+.mapa__popup-detalle {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+}
+
+.mapa__popup-estado {
+  align-self: flex-start;
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-full);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  background: var(--tono-bg, var(--bg-inset));
+  color: var(--tono-fg, var(--text-secondary));
+  border: 1px solid var(--tono-bd, var(--border-default));
+}
+
+.mapa__popup-estado--primary { --tono-bg: var(--st-primary-bg); --tono-fg: var(--st-primary-fg); --tono-bd: var(--st-primary-bd); }
+.mapa__popup-estado--secondary { --tono-bg: var(--st-secondary-bg); --tono-fg: var(--st-secondary-fg); --tono-bd: var(--st-secondary-bd); }
+.mapa__popup-estado--success { --tono-bg: var(--st-success-bg); --tono-fg: var(--st-success-fg); --tono-bd: var(--st-success-bd); }
+.mapa__popup-estado--warning { --tono-bg: var(--st-warning-bg); --tono-fg: var(--st-warning-fg); --tono-bd: var(--st-warning-bd); }
+.mapa__popup-estado--error { --tono-bg: var(--st-error-bg); --tono-fg: var(--st-error-fg); --tono-bd: var(--st-error-bd); }
+.mapa__popup-estado--info { --tono-bg: var(--st-info-bg); --tono-fg: var(--st-info-fg); --tono-bd: var(--st-info-bd); }
+
+.mapa__popup-cta {
+  align-self: flex-start;
+  margin-block-start: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mapa__popup-cta:focus-visible {
+  outline: 4px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+/* --- Leaflet con los tokens del tema -------------------------------------- *
+   El CSS de Leaflet asume fondo blanco; en modo oscuro el tema manda.       */
+
+.mapa .leaflet-popup-content-wrapper,
+.mapa .leaflet-popup-tip {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.mapa .leaflet-container {
+  font: inherit;
+}
+
+.mapa .leaflet-control-zoom a {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.mapa .leaflet-control-attribution {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.mapa .leaflet-control-attribution a {
+  color: var(--text-secondary);
+}

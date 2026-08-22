@@ -74,7 +74,40 @@ const { DocumentoFalso } = vi.hoisted(() => {
 
 vi.mock('jspdf', () => ({ jsPDF: DocumentoFalso }));
 
-import { buildPdfDocument, exportElementToPdf } from './pdf-export';
+/**
+ * El sujeto se importa **dentro de cada prueba**, no arriba del archivo.
+ *
+ * ## El defecto que esto cierra
+ *
+ * `pdf-export.ts` hace `import { jsPDF } from 'jspdf'` y resuelve ese binding
+ * **una sola vez, cuando el módulo se evalúa**. Con un `import` estático acá,
+ * quien evalúe `pdf-export.ts` primero decide con qué jsPDF se queda para toda
+ * la corrida — y este archivo no es el único que lo arrastra:
+ *
+ * ```
+ * clinical-pdf.spec.ts → clinical-pdf.ts → pdf-export.ts → jspdf REAL
+ * ```
+ *
+ * `clinical-pdf.spec.ts` y `pdf-export-button.spec.ts` ejercitan jsPDF de
+ * verdad **a propósito** —comprueban que el documento se genera, que es el
+ * criterio del contrato de receta— así que no lo mockean. Si alguno de los dos
+ * corre antes que éste en el mismo trabajador, `pdf-export.ts` ya está en el
+ * caché con el jsPDF real y `vi.mock` llega tarde: las siete pruebas de este
+ * archivo fallan con «Ningún documento se construyó».
+ *
+ * Se midió: pasa en la suite completa, según cómo Vitest reparta los archivos
+ * entre trabajadores, y no se reproduce corriendo estos archivos sueltos
+ * —cuando son pocos, cada uno recibe su propio entorno—. O sea: **rojo
+ * intermitente que no se puede reproducir a demanda**, que es la peor clase.
+ *
+ * ## Por qué así y no mockeando en los otros dos
+ *
+ * Porque el mock allá borraría justo lo que esas pruebas existen para
+ * comprobar. El problema no es de ellas: es que este archivo dependía de ser el
+ * primero. Con `resetModules` + import dinámico deja de depender de nadie.
+ */
+let buildPdfDocument: typeof import('./pdf-export').buildPdfDocument;
+let exportElementToPdf: typeof import('./pdf-export').exportElementToPdf;
 
 /** Un elemento con encabezado, párrafo y una tabla de dos filas. */
 function elementoDeEjemplo(): HTMLElement {
@@ -99,8 +132,14 @@ function ultimoDocumento(): InstanceType<typeof DocumentoFalso> {
   return doc;
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   DocumentoFalso.instancias = [];
+
+  // `resetModules` vacía el registro y el `import()` de abajo vuelve a evaluar
+  // `pdf-export.ts` — esta vez con el `vi.mock` de arriba ya registrado, corra
+  // lo que corra antes en este trabajador.
+  vi.resetModules();
+  ({ buildPdfDocument, exportElementToPdf } = await import('./pdf-export'));
 });
 
 describe('buildPdfDocument', () => {

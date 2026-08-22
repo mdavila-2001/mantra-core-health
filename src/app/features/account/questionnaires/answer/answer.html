@@ -1,0 +1,117 @@
+@if (vista(); as estado) {
+  <app-page-header
+    [title]="estado.status === 'ready' ? estado.data.title : 'Cuestionario'"
+    subtitle="Tus respuestas son privadas: solo las ve el profesional que te atendió."
+    [breadcrumbs]="breadcrumbs()"
+  />
+}
+
+<app-view-state-host [state]="vista()" (retry)="cargar()">
+  <div vsh-skeleton><app-skeleton variant="text" [lines]="6" /></div>
+
+  @if (vista(); as estado) {
+    @if (estado.status === 'ready') {
+      @if (estado.data.description) {
+        <p class="responder__consigna">{{ estado.data.description }}</p>
+      }
+
+      @if (avisoFaltantes()) {
+        <app-alert tone="error" class="responder__aviso" data-testid="responder-faltantes">
+          {{ avisoFaltantes() }}
+        </app-alert>
+      }
+
+      <!-- Sin `FormGroup` no hay `NgForm`: el `submit` nativo se corta acá y el envío —click o
+           Enter— entra por el mismo camino, sin recargar la página. -->
+      <form
+        class="responder__form"
+        (submit)="$event.preventDefault(); enviar()"
+        data-testid="responder-form"
+      >
+        @for (pregunta of estado.data.questions; track pregunta.id) {
+          <app-card variant="outlined" padding="lg" class="responder__pregunta">
+            <app-form-field
+              [label]="pregunta.position + '. ' + pregunta.questionText"
+              [required]="pregunta.required"
+              [errorMessage]="falta(pregunta.id) ? 'Esta pregunta es obligatoria.' : ''"
+            >
+              @switch (pregunta.answerType) {
+                @case ('TEXT') {
+                  <app-textarea
+                    [value]="textoDe(pregunta.id)"
+                    (valueChange)="responder(pregunta.id, $event)"
+                    [hasError]="falta(pregunta.id)"
+                    autoResize
+                    [attr.data-testid]="'q-' + pregunta.id"
+                  />
+                }
+
+                @case ('SCALE') {
+                  <app-radio-group
+                    [value]="seleccionDe(pregunta.id)"
+                    (valueChange)="responder(pregunta.id, $event)"
+                    [hasError]="falta(pregunta.id)"
+                    [attr.data-testid]="'q-' + pregunta.id"
+                  >
+                    @for (punto of escalaDe(pregunta); track punto) {
+                      <app-radio [value]="punto" [label]="'' + punto" />
+                    }
+                  </app-radio-group>
+                }
+
+                @case ('BOOLEAN') {
+                  <app-radio-group
+                    [value]="seleccionDe(pregunta.id)"
+                    (valueChange)="responder(pregunta.id, $event)"
+                    [hasError]="falta(pregunta.id)"
+                    [attr.data-testid]="'q-' + pregunta.id"
+                  >
+                    <app-radio [value]="true" label="Sí" />
+                    <app-radio [value]="false" label="No" />
+                  </app-radio-group>
+                }
+
+                @case ('SINGLE_CHOICE') {
+                  <app-radio-group
+                    [value]="seleccionDe(pregunta.id)"
+                    (valueChange)="responder(pregunta.id, $event)"
+                    [hasError]="falta(pregunta.id)"
+                    [attr.data-testid]="'q-' + pregunta.id"
+                  >
+                    @for (opcion of pregunta.options ?? []; track opcion) {
+                      <app-radio [value]="opcion" [label]="opcion" />
+                    }
+                  </app-radio-group>
+                }
+
+                @case ('MULTIPLE_CHOICE') {
+                  <div class="responder__opciones" [attr.data-testid]="'q-' + pregunta.id">
+                    @for (opcion of pregunta.options ?? []; track opcion) {
+                      <app-checkbox
+                        [checked]="marcada(pregunta.id, opcion)"
+                        (checkedChange)="alternar(pregunta.id, opcion, $event)"
+                        [label]="opcion"
+                      />
+                    }
+                  </div>
+                }
+              }
+            </app-form-field>
+          </app-card>
+        }
+
+        <div class="responder__acciones">
+          <button
+            app-button
+            type="submit"
+            variant="primary"
+            [isLoading]="enviando()"
+            data-testid="responder-enviar"
+          >
+            Enviar respuestas
+          </button>
+        </div>
+      </form>
+    }
+  }
+</app-view-state-host>

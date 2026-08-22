@@ -46,6 +46,13 @@ export interface AgendaResource {
   /** Tabla a la que apunta el recurso, p. ej. `health_practitioner_profiles`. */
   readonly resourceRefType: string;
   readonly resourceRefId: string;
+  /**
+   * Nombre del profesional detrás del recurso, cuando la referencia apunta a
+   * un perfil profesional y la persona pudo resolverse. `null` para salas,
+   * equipos, o si el nombre no se pudo resolver — en ese caso la pantalla cae
+   * a `name`, que es lo que mostraba siempre.
+   */
+  readonly practitionerName: string | null;
   readonly practiceId: string | null;
   /** Zona horaria del recurso, p. ej. `America/La_Paz`. */
   readonly timeZone: string | null;
@@ -149,7 +156,61 @@ export interface Booking {
   readonly confirmedAt?: Date;
   readonly checkedInAt?: Date;
   readonly reasonText?: string;
+  /**
+   * Nombre del paciente.
+   *
+   * Viaja con la **misma regla que el motivo**: lo manda el servidor sólo al
+   * titular y al profesional que atiende en esa agenda. Ausente no significa
+   * «no tiene nombre», significa «no te corresponde verlo».
+   */
+  readonly patientName?: string;
+  /**
+   * Por qué la cita está como está, cuando el último cambio lo explicó.
+   *
+   * Es lo que hace que una cancelación deje de ser un cartel mudo: el paciente
+   * ve que su médico la canceló **y** por qué, sin salir de su lista. Ausente
+   * cuando el último cambio no exigía motivo o la cita es anterior a la
+   * corrección #14.
+   */
+  /**
+   * De cuándo se movió, si la cita se reprogramó (TJ-2).
+   *
+   * Ausente cuando nunca se movió — que no es lo mismo que «se movió y no sé
+   * desde cuándo». Es el instante original, ya resuelto por el servidor.
+   */
+  readonly rescheduledFrom?: Date;
+
+  readonly statusReason?: BookingStatusReason;
+  /**
+   * La demora que informó el profesional sobre este turno (P8).
+   *
+   * Llega con la cita —y no sólo como notificación— a propósito: el aviso
+   * in-app puede no haberse entregado (cuenta sin portal, preferencia en
+   * contra, campana sin abrir) y el turno tiene que poder explicarse solo.
+   */
+  readonly delayNotice?: BookingDelayNotice;
   readonly createdAt: Date;
+}
+
+/** Una demora informada por el profesional (P8 · registro del cliente 3.5). */
+export interface BookingDelayNotice {
+  /** Minutos de demora estimados. */
+  readonly delayMinutes: number;
+  /** Lo que el profesional escribió, si escribió algo. */
+  readonly message?: string;
+  /** Cuándo la informó. */
+  readonly announcedAt: Date;
+}
+
+/** Desde qué lado del mostrador se hizo el cambio. */
+export type BookingActorKind = 'PATIENT' | 'PROVIDER';
+
+/** El motivo del último cambio de una cita, tal como lo devuelve la API. */
+export interface BookingStatusReason {
+  readonly reasonText: string;
+  readonly actorKind?: BookingActorKind;
+  readonly toStateConceptId?: string;
+  readonly changedAt: Date;
 }
 
 /** Una ventana de citas. */
@@ -206,6 +267,15 @@ export interface BookingConfirmation {
   readonly reasonText?: string;
 }
 
+/**
+ * Cuerpo de la **solicitud** (corrección #11).
+ *
+ * Mismo cuerpo que el confirm menos los recordatorios: la cita nace pendiente
+ * de que el profesional la acepte, y recordar un turno que todavía puede
+ * rechazarse sería prometer algo que nadie comprometió.
+ */
+export type BookingRequest = BookingConfirmation;
+
 /** La cita recién confirmada. */
 export interface BookingConfirmed {
   readonly id: string;
@@ -223,6 +293,12 @@ export interface BookingConfirmed {
 export interface BookingCancellation {
   readonly cancelledBy: 'PATIENT' | 'PROVIDER';
   readonly isNoShow?: boolean;
+  /**
+   * **Obligatorio** (corrección #14): el servidor rechaza la cancelación sin
+   * motivo, y con relleno («na», «prueba») también. Se le muestra a la otra
+   * parte en el detalle de su cita.
+   */
+  readonly reasonText: string;
 }
 
 export interface BookingCancelled {
@@ -241,13 +317,30 @@ export interface BookingCancelled {
  */
 export interface BookingReschedule {
   readonly toSlotId: string;
-  readonly reasonText?: string;
+  /**
+   * **Obligatorio** (corrección #14): mover un turno le cambia el día a alguien,
+   * y esa persona ve el motivo en el detalle de su cita.
+   */
+  readonly reasonText: string;
 }
 
 export interface BookingRescheduled {
   readonly bookingId: string;
   readonly fromSlotId: string;
   readonly toSlotId: string;
+}
+
+/**
+ * Lo que devuelven aceptar, iniciar y completar (correcciones #11 y #15).
+ *
+ * Los tres son la misma clase de acto —una transición que decide el
+ * profesional— y quien los llama hace lo mismo con la respuesta: releer.
+ */
+export interface BookingDecision {
+  readonly bookingId: string;
+  /** Estado en el que quedó la cita. */
+  readonly statusConceptId: string;
+  readonly occurredAt: Date;
 }
 
 /** Resultado del check-in (UC-41-10). */
@@ -382,4 +475,131 @@ export interface AvailabilityExceptionCreated {
   readonly id: string;
   /** Slots libres que quedaron bloqueados por la excepción. */
   readonly blockedSlots: number;
+}
+
+/* ==========================================================================
+   P8 · lista de espera y avisos de demora
+   ========================================================================== */
+
+/** Alta en la lista de espera (`POST /scheduling/waitlist`, UC-41-11). */
+export interface NewWaitlistEntry {
+  readonly tenantId: string;
+  readonly patientProfileId: string;
+  /** Agenda en la que se espera. Opcional: se puede esperar «con cualquiera». */
+  readonly resourceId?: string;
+  /** Desde cuándo sirve un cupo. */
+  readonly desiredFrom?: Date;
+  /** Hasta cuándo. */
+  readonly desiredTo?: Date;
+  /** A mayor valor, antes se promueve. */
+  readonly priority?: number;
+}
+
+/** Lo que devuelve el alta en la lista de espera. */
+export interface WaitlistEntryCreated {
+  readonly id: string;
+  readonly priority: number;
+  readonly statusConceptId: string;
+}
+
+/**
+ * Una espera activa, tal como la lee «Mis turnos».
+ *
+ * `resourceLabel` viene resuelto del servidor: la pantalla necesita decir con
+ * quién se espera, y un uuid no se lo dice a nadie.
+ */
+export interface WaitlistEntry {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly resourceId?: string;
+  readonly resourceLabel: string;
+  readonly desiredFrom?: Date;
+  readonly desiredTo?: Date;
+  readonly priority: number;
+  readonly statusConceptId: string;
+  readonly createdAt: Date;
+}
+
+/** Filtros de `GET /scheduling/waitlist`. */
+export interface WaitlistQuery {
+  readonly patientProfileId: string;
+  /** `true` para incluir también las esperas ya cubiertas o canceladas. */
+  readonly includeClosed?: boolean;
+  readonly limit?: number;
+}
+
+/** Página de esperas. */
+export interface WaitlistPage {
+  readonly items: readonly WaitlistEntry[];
+}
+
+/** Lo que el profesional informa al demorarse. */
+export interface DelayNotice {
+  /** Minutos de demora estimados (entre 5 y 240). */
+  readonly delayMinutes: number;
+  /** Mensaje opcional para el paciente. */
+  readonly message?: string;
+  /** Ventana afectada, sólo para la demora de toda la agenda. */
+  readonly from?: Date;
+  readonly to?: Date;
+}
+
+/** Resultado de informar una demora. */
+export interface DelayNoticeResult {
+  /** Pacientes que recibieron el aviso in-app. */
+  readonly notified: number;
+  /** Citas alcanzadas por la demora. */
+  readonly affected: number;
+  readonly bookingIds: readonly string[];
+  readonly detail: string;
+}
+
+/**
+ * Una franja publicada, tal como la devuelve el `GET` de plantillas.
+ *
+ * La hora viene de pared —`09:00:00`— y no como instante: la regla dice «los
+ * lunes de nueve a una», y convertirla obligaría a elegir un lunes concreto.
+ */
+export interface PublishedRule {
+  readonly dayOfWeek: number;
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly slotMinutes?: number;
+  readonly capacityPerSlot?: number;
+}
+
+/** Una plantilla publicada, con sus franjas. */
+export interface PublishedTemplate {
+  readonly id: string;
+  readonly name: string;
+  readonly rules: readonly PublishedRule[];
+  readonly slotMinutes?: number;
+  readonly validFrom?: string;
+  readonly validTo?: string;
+  readonly bookingPolicyId?: string;
+  readonly statusConceptId: string;
+}
+
+/** La respuesta del listado de plantillas de un recurso. */
+export interface PublishedTemplatePage {
+  readonly items: readonly PublishedTemplate[];
+  readonly count: number;
+}
+
+/** Un bloqueo de disponibilidad ya publicado. */
+export interface PublishedException {
+  readonly id: string;
+  readonly exceptionTypeConceptId: string;
+  readonly startAt: string;
+  readonly endAt: string;
+  /** Por qué. Lo lee el profesional, no el paciente. */
+  readonly reason?: string;
+  /** `true` cuando la excepción ABRE disponibilidad en vez de cerrarla. */
+  readonly isAvailable?: boolean;
+}
+
+/** La respuesta del listado de excepciones de un recurso. */
+export interface AvailabilityExceptionPage {
+  readonly items: readonly PublishedException[];
+  readonly count: number;
 }

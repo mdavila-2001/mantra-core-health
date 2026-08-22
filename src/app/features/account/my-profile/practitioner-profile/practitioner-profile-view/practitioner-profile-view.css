@@ -263,18 +263,51 @@
   min-inline-size: 0;
 }
 
-/* ── Identificadores ───────────────────────────────────────────────────────*/
+/* ── Fases de la pestaña Trayectoria (carril 05) ────────────────────────────
+   Actividad actual, experiencia histórica y formación son tres preguntas
+   distintas contadas con el mismo dibujo de línea de tiempo — el espaciado
+   entre fases es lo único que hace falta acá, todo lo demás ya lo resuelven
+   `.profesional__linea`/`.profesional__hito`. */
 
-.profesional__ids {
+.profesional__fase {
+  margin-block-start: var(--sp-5);
+}
+
+.profesional__fase:first-of-type {
+  margin-block-start: 0;
+}
+
+.profesional__fase-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+/* ── Declarado vs. verificado (pestaña Credenciales, carril 05) ────────────
+   Dos columnas cuando entran, apiladas cuando no: es una comparación, no una
+   trayectoria, así que acá sí conviene leerlas una junto a la otra. */
+
+.profesional__seguimiento {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-5);
+}
+
+/* ── Antigüedad ────────────────────────────────────────────────────────────*/
+
+/* Sin `text-transform`: el mes va en minúscula en español, y el pie ya no lleva
+   identificadores que hubiera que proteger de él. */
+.profesional__desde {
   margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
-  text-transform: capitalize;
 }
 
-/* `anywhere` y no `break-all`: un uuid no tiene puntos de corte naturales y sin
-   esto desborda la tarjeta en pantallas angostas. */
+/* `anywhere` y no `break-all`: una matrícula o un número de estudio no tienen
+   puntos de corte naturales y sin esto desbordan la tarjeta en pantallas angostas. */
 .profesional__cifra {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;

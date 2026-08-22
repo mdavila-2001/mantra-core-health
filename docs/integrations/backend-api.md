@@ -288,7 +288,7 @@ y no sólo un `SECURITY_ADMIN`.
 Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
 catálogo — mismo motivo: no existe «la práctica del usuario».
 
-### `SchedulingClient` — 14 operaciones
+### `SchedulingClient` — 17 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -306,6 +306,16 @@ catálogo — mismo motivo: no existe «la práctica del usuario».
 | `POST` | `/scheduling/bookings/:bookingId/cancel` | `Agenda` (V41-02·A, UC-41-09) |
 | `POST` | `/scheduling/bookings/:bookingId/check-in` | `Agenda` (V41-02·A, UC-41-10) |
 | `POST` | `/scheduling/bookings/:bookingId/reschedule` | `Appointments` (mi cuenta: mover el turno a otro cupo) |
+| `POST` | `/scheduling/holds/:holdToken/request` | `BookingNew` (el paciente solicita, no confirma) |
+| `POST` | `/scheduling/bookings/:bookingId/reject` | `Agenda` (el doctor rechaza una solicitud) |
+| `POST` | `/scheduling/bookings/:bookingId/:accion` | `Agenda` (acepta/atiende: la acción va en la ruta) |
+
+> **Las tres últimas se declaran acá al resolver el conflicto del carril 13/16,
+> no por sus autores.** Entraron a `dev` con los carriles 06 y 07 sin pasar por
+> esta página, y eso deja `check-api-contract-drift` en rojo para todo el que
+> abra un PR después — el verificador no distingue «lo agregó otro» de «lo
+> agregué yo». Si algún consumidor quedó mal atribuido, corregilo: se dedujo de
+> quién importa el cliente.
 
 **La construcción de agenda es de cinco fases encadenadas por id** (`AgendaCreate`,
 `/schedule/new`, sólo `SCHEDULING_ADMIN`). El alta del recurso devuelve el
@@ -627,6 +637,50 @@ de `/diagnostics`: lista laboratorios e imagenología y abre su perfil público.
 | `GET` | `/diagnostic-units` | `LaboratoryDirectory` |
 | `GET` | `/diagnostic-units/:id` | `LaboratoryDetail` |
 
+### `DiagnosticUnitsAdminClient` — 2 operaciones · carril 16
+
+La **consola de administración** del laboratorio (M23), no su vitrina.
+
+Es un cliente aparte de `DiagnosticUnitsClient` porque responde otra pregunta y
+la contesta con otros datos. Aquél sirve el directorio que un paciente usa para
+elegir dónde hacerse un estudio: filtra a unidades activas **y** verificadas,
+ofertas activas y precios de cronogramas marcados como públicos. Éste devuelve
+el mismo dominio **sin** esos filtros —para poder terminar de configurar lo que
+todavía no se publicó— y agrega dos cosas que a la vitrina no le corresponden:
+el personal con sus permisos de validación y firma, y los números de serie del
+equipamiento.
+
+Las dos operaciones exigen `SECURITY_ADMIN`, y una unidad de otro tenant
+responde el mismo `404` que una inexistente.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostic-units/administration` | `MedicalLaboratory` |
+| `GET` | `/diagnostic-units/:id/administration` | `MedicalLaboratory` |
+
+### `MedicalOrganizationClient` — 2 operaciones · carril 13
+
+La consola del administrador de organización médica (M14 `practice`).
+
+`GET /practices/:practiceId/organization` devuelve **el árbol completo en una
+lectura**: sedes, áreas, infraestructura, servicios, plantilla, documentación
+legal e inventario. Es una sola respuesta y no siete endpoints porque las siete
+listas cuelgan del mismo identificador y se miran juntas; pedirlas por separado
+obligaría a la pantalla a encadenar siete peticiones y a manejar siete estados
+de carga para un único ámbito.
+
+Existe porque el módulo tenía once operaciones de escritura y tres lecturas: se
+daban de alta sedes, áreas, quirófanos, consultorios, servicios, personal,
+acreditaciones e inventario, y ninguna operación los volvía a mencionar.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practices` | `MedicalOrganization` (elige qué organización se administra) |
+| `GET` | `/practices/:practiceId/organization` | `MedicalOrganization` |
+
+> `GET /practices` ya lo consumía `AccountingClient` para elegir de qué práctica
+> son los libros. Se reusa el mismo endpoint: no se forkea el contrato.
+
 ### `DiagnosticsClient` — 4 operaciones · carril 4
 
 Laboratorios e imagenología (M52).
@@ -673,6 +727,45 @@ tiene que promoverlo al `.puml` primero.
 
 Es firmada y vence. Emitir una por adjunto al pintar la lista dejaría veinte
 enlaces vivos a datos clínicos de los que diecinueve nadie abrió.
+
+### `PublicDirectoryClient` — 9 lecturas anónimas
+
+El directorio público del buscador V65 (carril P4). Es **otra superficie**, no
+otras rutas de `CommunityClient`: aquélla habla con la red social **con
+sesión** y sus respuestas traen `tenantId`, ids de concepto y de archivo; ésta
+es anónima, y el servidor arma cada respuesta con una lista blanca de campos.
+
+Una petición de este cliente **no lleva `Authorization`**. No es una omisión
+sino el contrato: el resultado no depende de quién mira, y mandar un token
+ataría una respuesta cacheada `public, max-age=60` a una sesión.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/public/search` | `BuscarBuscadorListado` (`/buscar`) |
+| `GET` | `/public/search/practitioners` | `BuscarProfesionalesListado` |
+| `GET` | `/public/search/medications` | `BuscarMedicamentosListado` |
+| `GET` | `/public/search/organizations` | `BuscarHospitalesListado` |
+| `GET` | `/public/search/diagnostic-units` | `BuscarLaboratoriosListado` |
+| `GET` | `/public/search/insurers` | `BuscarAseguradorasListado` |
+| `GET` | `/public/search/pharmacies` | — (sin pantalla propia todavía) |
+| `GET` | `/public/nearby` | `BuscarCercaniaDetalle` (`/buscar/mapa`) |
+| `GET` | `/public/profiles/:prefijo/:slug` | `perfilPublicoResolver` (`/p/:slug`…) |
+
+**La ficha se pide por `/public/profiles/…` y no por `/p/:slug`**, aunque la
+API sirva las dos. `/p/:slug` es también **la URL de la pantalla**, y las dos
+no pueden convivir del lado del navegador: el proxy enruta comparando el
+comienzo de la ruta, así que mandar `/p` a la API se come la ruta del router, y
+no mandarla deja la llamada pidiéndole `/p/:slug` al servidor de Angular, que
+responde el `index.html` con **200** — el cliente recibe HTML donde espera
+JSON. Las cinco rutas cortas siguen siendo el contrato público para quien las
+llame directo.
+
+**Los filtros que existen son `q`, `cursor`, `limit` y `verified`.** El
+contrato de la API declara además `city`, `specialty`, `form`, `inStock`,
+`kind`, `study`, `planKind` y `open`, y el controlador **no los lee**: están
+marcados como *previstos* en `openapi/CONTRATO-PUBLICO.md` §2. Por eso las
+pantallas no dibujan esos filtros — uno que no filtra le dice a quien lo usó,
+sin decírselo, que todos los resultados cumplen su criterio.
 
 ### `CommunityClient` — 20 operaciones
 
@@ -763,6 +856,89 @@ encendieron las altas de perfil, y las vistas de verificación de identidad
 No es código muerto: todas tienen prueba y son la mitad de un flujo cuya
 interfaz todavía no se escribió.
 Ver [el mapa de integraciones §3](../architecture/integration-map.md#3--operaciones-sin-consumidor).
+
+### `DiagnosticsClient` — lecturas del paciente · carril 11
+
+Lo que el paciente ve de sus propios estudios: el resultado, su descarga y con
+quién lo compartió. No es la cola clínica, que sigue en `/diagnostics`.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostic-results/me` | `DiagnosticResults` |
+| `GET` | `/diagnostic-results/me/:reportId` | `DiagnosticResults` |
+| `GET` | `/diagnostic-results/me/:reportId/shares` | `DiagnosticResults` |
+| `POST` | `/diagnostic-results/me/:reportId/shares` | `DiagnosticResults` |
+| `POST` | `/diagnostic-results/me/:reportId/shares/:shareId/revoke` | `DiagnosticResults` |
+| `GET` | `/diagnostic-units/search` | `LaboratoryDirectory` |
+
+### `InsuranceClient` — 5 operaciones · carril 14
+
+La superficie de lectura de aseguradoras y corredores (M26). Solo la relación
+comercial: ni el corredor ni la aseguradora ven historial médico.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/insurance-carriers` | `InsuranceCatalog` |
+| `GET` | `/insurance-carriers/:id` | `InsuranceCatalog` |
+| `GET` | `/insurance-brokers` | `BrokerDirectory` |
+| `GET` | `/insurance-brokers/:id` | `BrokerDetail` |
+| `GET` | `/insurance-brokers/:id/clients` | `BrokerDetail` |
+
+### `PharmaLabClient` — 21 operaciones · carril 17
+
+Laboratorio farmacéutico, visitadores médicos y visitas (M62 `pharma_lab`).
+
+**No hay ninguna ruta clínica en esta tabla y no puede haberla**: la
+especificación le prohíbe al visitador el acceso a pacientes, recetas y
+diagnósticos (5316-5318), y que su cliente no las nombre es la mitad de esa
+garantía — la otra la pone la API, que revalida cada petición.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/pharma-labs` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/staff` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/medical-visitors` | `PharmaLabHome` |
+| `POST` | `/pharma-labs/:pharmaLabId/medical-visitors/:medicalVisitorId/unlink` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/products` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/materials` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/pharmacovigilance/reports` | `PharmaLabHome` |
+| `GET` | `/pharma-labs/:pharmaLabId/regulatory-documents` | `PharmaLabHome` |
+| `GET` | `/visit-agenda/me` | `DoctorVisits` |
+| `PUT` | `/visit-agenda/me` | `DoctorVisits` |
+| `GET` | `/visit-agenda/doctors/:doctorUserId` | `VisitorVisits` |
+| `POST` | `/visit-requests` | `VisitorVisits` |
+| `GET` | `/visit-requests/mine` | `VisitorVisits` |
+| `GET` | `/visit-requests/inbox` | `DoctorVisits` |
+| `POST` | `/visit-requests/:visitRequestId/accept` | `DoctorVisits` |
+| `POST` | `/visit-requests/:visitRequestId/reject` | `DoctorVisits` |
+| `POST` | `/visit-requests/:visitRequestId/cancel` | `VisitorVisits` · `DoctorVisits` |
+| `GET` | `/visit-records/inbox` | `DoctorVisits` |
+| `GET` | `/visit-records/labs/:pharmaLabId` | `PharmaLabHome` |
+| `GET` | `/visit-records/labs/:pharmaLabId/rating-summary` | `PharmaLabHome` |
+
+### `PharmaLabConcepts` — 1 operación · carril 17
+
+El diccionario que traduce cada `*_concept_id` del carril a su rótulo. Existe
+porque recalcular en el navegador el UUID determinista del backend obligaría a
+duplicar su función de derivación —dos implementaciones de la misma regla, que
+se separan en cuanto una cambia— y pintar el identificador crudo no le dice nada
+a nadie. Se pide una vez por sesión y se comparte.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/pharma-labs/reference/concepts` | `PharmaLabHome` · `VisitorVisits` · `DoctorVisits` |
+
+### Operaciones que suman otros carriles
+
+Entradas sueltas que amplían clientes ya documentados más arriba.
+
+| Método | Ruta | Cliente | Consumidor |
+|---|---|---|---|
+| `GET` | `/procedure-cases/:caseId/team-members` | `ProceduresClient` | `Interventions` (carril 12) |
+| `POST` | `/procedure-cases/:caseId/team-members/:memberId/accept` | `ProceduresClient` | `Interventions` |
+| `POST` | `/procedure-cases/:caseId/team-members/:memberId/respond` | `ProceduresClient` | `Interventions` |
+| `POST` | `/charts/templates/:templateId/assignments` | `ChartTemplatesClient` | `ClinicalForms` (R2-5) |
 
 ---
 

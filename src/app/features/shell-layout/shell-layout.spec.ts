@@ -132,12 +132,37 @@ describe('ShellLayout', () => {
       '/dashboard',
       // Los tutoriales tampoco exigen rol.
       '/tutorials',
-      '/directory',
-      // El glosario tampoco: accesible por cada profesional, no sólo por
-      // quien administra.
-      '/glossary',
+      // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
+      // perfil público de `community`, que es un dato de la cuenta.
+      '/messaging',
+      '/laboratory-directory',
+      // El glosario ya NO está: desde el 18/08/2026 (feedback de la analista,
+      // F-03) declara los roles de quien atiende, y una sesión sin roles no es
+      // de nadie que atienda.
+      //
+      // «Tu organización» tampoco: no pide rol, pero sí membresía
+      // (`requiresTenant`, F-31), y esta sesión no pertenece a ninguna.
       '/my-account',
       '/my-account/appointments',
+      // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que
+      // «Mis turnos»: el filtro real es tener perfil de paciente, que es un
+      // dato de la cuenta y no un rol.
+      '/my-account/medical-record',
+      // Los resultados propios no exigen rol por lo mismo que los turnos: el
+      // filtro real es tener perfil de paciente, que es un dato de la cuenta.
+      '/my-account/diagnostic-results',
+      // Las órdenes propias, la otra mitad del mismo circuito. Tampoco exigen
+      // rol: el filtro real es tener perfil de paciente.
+      '/my-account/diagnostic-orders',
+      // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
+      // perfil de paciente, que es un dato de la cuenta y no un rol.
+      '/my-account/questionnaires',
+      // Carril P1: el centro de notificaciones. Tampoco exige rol —cualquiera
+      // con sesión tiene bandeja, y el backend sólo devuelve la propia—, así
+      // que aparece también en una sesión sin roles.
+      // Carril P9: las preferencias de aviso, pegadas a la bandeja.
+      '/my-account/notification-preferences',
+      '/notification-center',
       '/my-account/identity/verify',
       '/my-account/identity/cases',
       '/design-system',
@@ -154,6 +179,23 @@ describe('ShellLayout', () => {
 
   it('la vitrina queda al final: es herramienta de quien construye, no del producto', () => {
     expect(rutasDelMenu().at(-1)).toBe('/design-system');
+  });
+
+  function rotulosDelMenu(): readonly string[] {
+    const secciones =
+      interno<() => readonly { items: readonly { label: string }[] }[]>('sections')();
+    return secciones.flatMap((s) => [...s.items].map((i) => i.label));
+  }
+
+  it('al paciente no se le ofrece la vitrina; a quien administra, sí', () => {
+    // H-07: el paciente nunca ve vocabulario de sistema, y «Sistema de diseño»
+    // es una herramienta de desarrollo, no algo de su cuenta.
+    abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+    expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
+    expect(rutasDelMenu()).not.toContain('/design-system');
+
+    abrirSesion({ sub: 'u-2', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+    expect(rotulosDelMenu()).toContain('Sistema de diseño');
   });
 
   /**
@@ -320,7 +362,9 @@ describe('ShellLayout', () => {
 
       // Con varias organizaciones la sesión no elige por su cuenta: marcar una
       // sería afirmar un contexto de datos que la persona no eligió.
-      expect(opcionesDeOrganizacion().filter((o) => o.getAttribute('aria-current'))).toHaveLength(0);
+      expect(opcionesDeOrganizacion().filter((o) => o.getAttribute('aria-current'))).toHaveLength(
+        0,
+      );
     });
 
     it('elegir una la marca, y sólo a ella', () => {
@@ -341,6 +385,16 @@ describe('ShellLayout', () => {
       abrirSesion({ sub: 'u-1', name: 'Rocío Salazar', roles: [], tenants: ['t-1'] });
 
       expect(raiz().querySelector('[data-testid="header-cuenta"]')?.textContent?.trim()).toBe('RS');
+    });
+
+    it('el menú de la cuenta nombra el rol en palabras, nunca con el código del token', () => {
+      // H-07: «USER · PATIENT» era vocabulario de sistema a la vista del paciente.
+      abrirSesion({ sub: 'u-1', name: 'Ana Salas', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+
+      const resumen = raiz().querySelector('.app-header__account-summary')?.textContent ?? '';
+      expect(resumen).toContain('Paciente');
+      expect(resumen).not.toContain('PATIENT');
+      expect(resumen).not.toContain('USER');
     });
   });
 

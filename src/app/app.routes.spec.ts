@@ -1,5 +1,14 @@
+import { Location } from '@angular/common';
+import { TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
-import { SECTION_ROUTE_DATA, titleOf } from './core/navigation/navigation.types';
+import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import {
+  ROLES_ROUTE_DATA,
+  SECTION_ROUTE_DATA,
+  restringePorRol,
+  titleOf,
+} from './core/navigation/navigation.types';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes } from './app.routes';
 
@@ -52,15 +61,123 @@ describe('rutas del armazón', () => {
    */
   it('toda pantalla hija pertenece a una sección del registro', () => {
     const declaradas = APP_SECTIONS.map((s) => s.path);
+
+    /**
+     * Pantallas que a propósito no cuelgan de ninguna sección.
+     *
+     * El muro salió del menú con R2-1 —el ítem del paciente pasó a ser la guía
+     * de doctores— pero la pantalla sigue en pie y se alcanza por enlace
+     * directo. Es una decisión de producto, no un olvido: por eso figura acá y
+     * no como sección, y por eso esta lista es explícita y corta. Cualquier
+     * pantalla que no esté en ella y no cuelgue de una sección sigue siendo un
+     * error.
+     */
+    const sinSeccionAProposito = [
+      'feed',
+      // TJ-1 · el alta del profesional. No es una sección porque no es un lugar
+      // al que se vuelve: es una tarea con principio y fin, y una vez completa
+      // no tiene nada que mostrar. Se llega por el aviso del panel, no por el
+      // menú — una entrada permanente a algo que se hace una vez sería ruido
+      // para todos los médicos que ya lo completaron.
+      'onboarding',
+    ];
+
     const huerfanas = hijas.filter((r) => {
       const path = r.path ?? '';
-      if (path === '' || r.redirectTo !== undefined) {
+      if (path === '' || r.redirectTo !== undefined || sinSeccionAProposito.includes(path)) {
         return false;
       }
       return !declaradas.some((seccion) => path === seccion || path.startsWith(`${seccion}/`));
     });
 
     expect(huerfanas.map((r) => r.path)).toEqual([]);
+  });
+
+  /**
+   * El rol de la sección se hace cumplir también en sus hijas.
+   *
+   * Sin esto, la sección rebota a quien no tiene el rol y su formulario lo deja
+   * pasar: un paciente que escriba `/administration/geolocation/trips/new`
+   * llega a la pantalla aunque `/administration/geolocation` lo devuelva al
+   * panel. La API responde 403 y no hay fuga, pero la pantalla no debería
+   * ofrecerse.
+   *
+   * La regla se comprueba contra el árbol y no contra una lista de rutas: la
+   * próxima hija que alguien cuelgue de una sección con `roles` sin ponerle el
+   * guard hace fallar esto, que es exactamente lo que se quiere.
+   *
+   * Las excepciones se nombran una por una y se explican en `app.routes.ts`:
+   * son hijas cuyo endpoint acepta un rol que la sección no declara, y el
+   * guard nunca niega lo que la API permite.
+   */
+  describe('el guard de rol de la sección', () => {
+    const SIN_GUARD_A_PROPOSITO: readonly string[] = [
+      'administration/patients/assisted-registration',
+      'administration/brokers/:brokerId',
+      'administration/organizations/:tenantId',
+    ];
+
+    const seccionDe = (path: string) =>
+      APP_SECTIONS.filter((s) => path.startsWith(`${s.path}/`)).sort(
+        (a, b) => b.path.length - a.path.length,
+      )[0];
+
+    const hijasDeSeccionConRoles = hijas.filter((r) => {
+      const path = r.path ?? '';
+      if (path === '' || r.redirectTo !== undefined) {
+        return false;
+      }
+      const section = seccionDe(path);
+      return section !== undefined && restringePorRol(section);
+    });
+
+    it('lo lleva toda pantalla hija cuya sección declara roles', () => {
+      const destapadas = hijasDeSeccionConRoles
+        .filter((r) => !SIN_GUARD_A_PROPOSITO.includes(r.path ?? ''))
+        .filter((r) => !(r.canActivate ?? []).includes(seccionRolesGuard));
+
+      expect(destapadas.map((r) => r.path)).toEqual([]);
+    });
+
+    it('las excepciones existen, cuelgan de una sección con roles y siguen sin guard', () => {
+      for (const path of SIN_GUARD_A_PROPOSITO) {
+        const ruta = hijas.find((r) => r.path === path);
+
+        expect(ruta, path).toBeDefined();
+        const section = seccionDe(path);
+        expect(section, path).toBeDefined();
+        expect(restringePorRol(section!), path).toBe(true);
+        expect((ruta?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(false);
+      }
+    });
+
+    it('cubre a las pantallas de operación, que salen todas de la misma fábrica', () => {
+      const operacion = hijasDeSeccionConRoles.filter((r) =>
+        (r.path ?? '').startsWith('administration/geolocation/'),
+      );
+
+      expect(operacion.length).toBeGreaterThan(0);
+      expect(operacion.every((r) => (r.canActivate ?? []).includes(seccionRolesGuard))).toBe(true);
+    });
+
+    /**
+     * El caso inverso: hijas de una sección **sin** roles que son de un rol
+     * concreto. «Mi perfil» la abre cualquiera; configurar el perfil
+     * profesional, la vitrina pública y los artículos médicos son de quien
+     * atiende, y lo declaran en `data` para que el mismo guard las cierre
+     * (feedback de la analista, barrido del 18/08/2026).
+     */
+    it('las hijas de «Mi perfil» que son de quien atiende lo declaran y llevan el guard', () => {
+      const DE_QUIEN_ATIENDE = ['my-account/edit', 'my-account/preview', 'my-account/articles'];
+
+      for (const path of DE_QUIEN_ATIENDE) {
+        const ruta = hijas.find((r) => r.path === path);
+
+        expect(ruta, path).toBeDefined();
+        expect((ruta?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(true);
+        expect(ruta?.data?.[ROLES_ROUTE_DATA], path).toEqual(['CLINICIAN', 'PRACTITIONER']);
+      }
+    });
   });
 
   /**
@@ -160,7 +277,10 @@ describe('rutas del armazón', () => {
             r.path !== rama.slice(0, -1),
         );
 
-      expect(fijasDespues.map((r) => r.path), parametrica.path).toEqual([]);
+      expect(
+        fijasDespues.map((r) => r.path),
+        parametrica.path,
+      ).toEqual([]);
     }
   });
 
@@ -176,6 +296,15 @@ describe('rutas del armazón', () => {
    * La prueba que de verdad importa: **`disponible` tiene que significar que hay
    * pantalla**. Comprobar que existe `loadComponent` no alcanza — el placeholder
    * también lo tiene—, así que se resuelve la carga y se mira qué llegó.
+   *
+   * ## Por qué lleva techo propio
+   *
+   * Resuelve un `import()` por cada sección disponible, y hoy son dos docenas:
+   * es de las pocas pruebas del repo cuyo costo **crece con el producto**. Con
+   * los cinco segundos por defecto pasaba aislada y se agotaba dentro de la
+   * suite completa —donde compite por CPU con otras 2 400—, y el síntoma era un
+   * timeout que no dice nada sobre las rutas. Aumentar el techo acá no tapa
+   * ningún defecto: no hay aserción que dependa de cuánto tarde.
    */
   it('una sección disponible NO cae en el placeholder', async () => {
     for (const section of APP_SECTIONS.filter((s) => s.availability === 'disponible')) {
@@ -188,7 +317,7 @@ describe('rutas del armazón', () => {
       // rompería sin que nada esté mal.
       expect(componente, section.path).not.toBe(SectionPlaceholder);
     }
-  });
+  }, 30_000);
 
   it('una sección planificada cae en el placeholder, y diferido', async () => {
     for (const section of APP_SECTIONS.filter((s) => s.availability === 'planificada')) {
@@ -205,5 +334,118 @@ describe('rutas del armazón', () => {
     // El ítem «Sistema de diseño» lo agrega el armazón a mano porque no es una
     // sección del producto; su ruta tiene que existir igual.
     expect(routes.some((route) => route.path === 'design-system')).toBe(true);
+  });
+});
+
+/**
+ * Lo que esta prueba fija.
+ *
+ * La superficie pública del buscador declara `buscar` en `app.routes.ts` y el
+ * archivo **generado** `redsat.routes.ts` declara otro `buscar` con los
+ * segmentos derivados del nombre de archivo de cada maqueta. Los dos conviven
+ * porque el router prueba el primero y **retrocede** al siguiente cuando ningún
+ * hijo coincide.
+ *
+ * Eso es un comportamiento del router, no una garantía que este repositorio
+ * controle, y de él dependen dos cosas a la vez: que las URL limpias sean las
+ * que se indexan, y que los enlaces de la bóveda que todavía apuntan a
+ * `/buscar/buscador-listado` no se rompan. Si el retroceso dejara de ocurrir,
+ * media superficie pública devolvería la pantalla equivocada **sin ningún
+ * error**: el router simplemente no navegaría.
+ */
+describe('rutas públicas del buscador', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  /** Navega y devuelve si el router aceptó la URL. */
+  async function resuelve(url: string): Promise<boolean> {
+    const ok = await router.navigateByUrl(url);
+    return ok !== false && location.path().split('?')[0] === url.split('?')[0];
+  }
+
+  // ─── Las URL que la ficha V65 declara ──────────────────────────────────────
+
+  it.each([
+    ['/buscar'],
+    ['/buscar/profesionales'],
+    ['/buscar/medicamentos'],
+    ['/buscar/hospitales'],
+    ['/buscar/diagnostico'],
+    ['/buscar/aseguradoras'],
+    ['/buscar/mapa'],
+  ])('%s resuelve', async (url) => {
+    expect(await resuelve(url)).toBe(true);
+  });
+
+  // ─── Las fichas por slug, sin guard ────────────────────────────────────────
+
+  it.each([['/p/una'], ['/o/una'], ['/f/una'], ['/l/una'], ['/s/una']])(
+    '%s resuelve sin sesión',
+    async (url) => {
+      expect(await resuelve(url)).toBe(true);
+    },
+  );
+
+  // ─── El retroceso del router ───────────────────────────────────────────────
+
+  /**
+   * El segmento no existe en el bloque de URL limpias, así que el router tiene
+   * que retroceder al `buscar` generado para encontrarlo. Es el supuesto del
+   * que depende que las dos formas convivan.
+   */
+  it('las URL de la bóveda siguen abriendo, por retroceso al bloque generado', async () => {
+    expect(await resuelve('/buscar/buscador-listado')).toBe(true);
+    expect(await resuelve('/buscar/perfil-profesional-detalle')).toBe(true);
+  });
+
+  // ─── El texto buscado viaja en la URL ──────────────────────────────────────
+
+  it('`?q=` sobrevive a la navegación: una búsqueda se puede pegar en un mensaje', async () => {
+    await router.navigateByUrl('/buscar?q=cardiolog%C3%ADa');
+
+    expect(location.path()).toContain('q=cardiolog');
+  });
+});
+
+/**
+ * El comprobante (FAR-I5) vive en `…/:orderId/receipt`, declarado DESPUÉS del
+ * paramétrico `…/:orderId`: que resuelva depende del retroceso del router —
+ * el mismo supuesto que el bloque del buscador fija arriba. Los guards se
+ * neutralizan a propósito: acá se prueba el matching, no la sesión (el guard
+ * ya lo cubre el bloque de cobertura de roles).
+ */
+describe('la ruta del comprobante de farmacia (FAR-I5)', () => {
+  let router: Router;
+  let location: Location;
+
+  /**
+   * Vacía los guards en TODO el árbol (la ruta vive como hija del shell y
+   * lleva el suyo propio), sólo donde había: una ruta `redirectTo` no admite
+   * `canActivate` ni vacío (NG04014).
+   */
+  function sinGuards(arbol: typeof routes): typeof routes {
+    return arbol.map((ruta) => ({
+      ...ruta,
+      ...(ruta.canActivate === undefined ? {} : { canActivate: [] }),
+      ...(ruta.children === undefined ? {} : { children: sinGuards(ruta.children) }),
+    }));
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(sinGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  it('`/:orderId/receipt` no se la traga el paramétrico del detalle', async () => {
+    const ok = await router.navigateByUrl('/my-account/pharmacy-orders/abc/receipt');
+    expect(ok).not.toBe(false);
+    expect(location.path()).toBe('/my-account/pharmacy-orders/abc/receipt');
   });
 });

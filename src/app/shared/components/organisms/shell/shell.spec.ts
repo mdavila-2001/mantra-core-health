@@ -81,8 +81,8 @@ describe('Shell', () => {
       imports: [HostComponent],
       providers: [
         provideRouter([
-          { path: '', component: VistaPrueba, title: 'Inicio · Mantra Core Health' },
-          { path: 'pacientes', component: OtraVista, title: 'Pacientes · Mantra Core Health' },
+          { path: '', component: VistaPrueba, title: 'Inicio · AloVida' },
+          { path: 'pacientes', component: OtraVista, title: 'Pacientes · AloVida' },
         ]),
         ...extraProviders,
       ],
@@ -153,7 +153,7 @@ describe('Shell', () => {
       await fixture.whenStable();
 
       const region = root().querySelector('output[aria-live="polite"]');
-      expect(region?.textContent?.trim()).toBe('Pacientes · Mantra Core Health');
+      expect(region?.textContent?.trim()).toBe('Pacientes · AloVida');
     });
 
     it('el foco vuelve al main tras navegar', async () => {

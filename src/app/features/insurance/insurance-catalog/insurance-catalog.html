@@ -1,0 +1,160 @@
+<app-page-header
+  title="Aseguradora"
+  subtitle="Tu catálogo de aseguramiento y la red de prestadores con la que se cubre."
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (carrier(); as aseguradora) {
+    <div class="catalog">
+      <app-card variant="outlined" padding="lg" class="catalog__card catalog__card--wide">
+        <h2 card-header>{{ aseguradora.legalName }}</h2>
+        <dl class="catalog__facts">
+          <div>
+            <dt>Código</dt>
+            <dd>{{ aseguradora.carrierCode }}</dd>
+          </div>
+          <div>
+            <dt>Registro ante el regulador</dt>
+            <dd>{{ aseguradora.regulatorIdentifier ?? 'Sin registrar' }}</dd>
+          </div>
+          <div>
+            <dt>Jurisdicción</dt>
+            <dd>{{ aseguradora.jurisdiction?.display ?? 'Sin registrar' }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{{ aseguradora.status.display }}</dd>
+          </div>
+        </dl>
+        <!-- Declarado y verificado se muestran por separado a propósito: que una
+             aseguradora diga tener un registro no es que la plataforma lo haya
+             contrastado. -->
+        <p class="catalog__verification">
+          <app-status-seal
+            [variant]="verificationVariant(aseguradora.verification.code)"
+            [label]="aseguradora.verification.display"
+          />
+        </p>
+      </app-card>
+
+      @if (aseguradora.products.length === 0) {
+        <app-card variant="outlined" padding="lg" class="catalog__card catalog__card--wide">
+          <h2 card-header>Productos</h2>
+          <p class="catalog__hollow">
+            Todavía no hay productos activos. Se dan de alta desde la administración del catálogo.
+          </p>
+        </app-card>
+      } @else {
+        @for (producto of aseguradora.products; track producto.id) {
+          <app-card variant="outlined" padding="lg" class="catalog__card catalog__card--wide">
+            <h2 card-header>{{ producto.name }}</h2>
+            <p class="catalog__product-meta">
+              <app-chip variant="neutral" size="sm">{{ producto.productCode }}</app-chip>
+              <app-chip variant="info" size="sm">{{ producto.productType.display }}</app-chip>
+              @if (producto.marketSegment) {
+                <app-chip variant="neutral" size="sm">{{ producto.marketSegment.display }}</app-chip>
+              }
+            </p>
+
+            @if (producto.plans.length === 0) {
+              <p class="catalog__hollow">Este producto todavía no tiene planes activos.</p>
+            } @else {
+              @for (plan of producto.plans; track plan.id) {
+                <section class="catalog__plan" [attr.aria-labelledby]="'plan-' + plan.id">
+                  <h3 class="catalog__plan-title" [id]="'plan-' + plan.id">
+                    {{ plan.name }}
+                    <span class="catalog__plan-code">{{ plan.planCode }}</span>
+                  </h3>
+                  <p class="catalog__plan-validity">
+                    @if (plan.effectiveFrom) {
+                      Vigente desde {{ plan.effectiveFrom | date: 'longDate' }}
+                    } @else {
+                      Sin fecha de inicio registrada
+                    }
+                    @if (plan.effectiveTo) {
+                      · hasta {{ plan.effectiveTo | date: 'longDate' }}
+                    }
+                  </p>
+
+                  @if (plan.benefits.length === 0) {
+                    <p class="catalog__hollow">Sin coberturas cargadas.</p>
+                  } @else {
+                    <table class="catalog__benefits">
+                      <caption class="catalog__benefits-caption">
+                        Coberturas de {{ plan.name }}
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">Prestación</th>
+                          <th scope="col">Cobertura</th>
+                          <th scope="col">Copago</th>
+                          <th scope="col">Deducible</th>
+                          <th scope="col">Tope anual</th>
+                          <th scope="col">Autorización previa</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (beneficio of plan.benefits; track beneficio.id) {
+                          <tr>
+                            <th scope="row">
+                              {{ beneficio.service?.display ?? beneficio.category.display }}
+                            </th>
+                            <!-- Los importes se pintan tal como llegan: son
+                                 `numeric` en la base y redondearlos acá cambiaría
+                                 lo que la póliza dice. -->
+                            <td>
+                              {{ beneficio.coveragePercent ? beneficio.coveragePercent + '%' : '—' }}
+                            </td>
+                            <td>{{ beneficio.copayAmount ?? '—' }}</td>
+                            <td>{{ beneficio.deductibleAmount ?? '—' }}</td>
+                            <td>{{ beneficio.annualLimitAmount ?? '—' }}</td>
+                            <td>
+                              @switch (beneficio.requiresPriorAuthorization) {
+                                @case (true) {
+                                  Sí
+                                }
+                                @case (false) {
+                                  No
+                                }
+                                @default {
+                                  Sin definir
+                                }
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  }
+                </section>
+              }
+            }
+          </app-card>
+        }
+      }
+
+      <app-card variant="outlined" padding="lg" class="catalog__card catalog__card--wide">
+        <h2 card-header>Red de prestadores</h2>
+        @if (aseguradora.networks.length === 0) {
+          <p class="catalog__hollow">Todavía no hay redes activas.</p>
+        } @else {
+          <ul class="catalog__networks">
+            @for (red of aseguradora.networks; track red.id) {
+              <li class="catalog__network">
+                <span class="catalog__network-name">{{ red.name }}</span>
+                <span class="catalog__network-code">{{ red.networkCode }}</span>
+                @if (red.networkType) {
+                  <app-chip variant="neutral" size="sm">{{ red.networkType.display }}</app-chip>
+                }
+                <span class="catalog__network-members">
+                  {{ red.memberCount }}
+                  {{ red.memberCount === 1 ? 'prestador' : 'prestadores' }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </app-card>
+    </div>
+  }
+</app-view-state-host>

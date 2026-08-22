@@ -9,8 +9,10 @@ import type {
   AvailabilityExceptionCreated,
   Booking,
   BookingPolicyCreated,
+  DelayNoticeResult,
   ScheduleTemplateCreated,
   SlotsGenerated,
+  WaitlistPage,
 } from './scheduling.types';
 
 const DESDE = new Date('2026-08-08T00:00:00.000Z');
@@ -169,9 +171,7 @@ describe('SchedulingClient', () => {
 
   it('placeHold convierte el vencimiento de la retención en fecha', () => {
     let retencion: { expiresAt: Date } | undefined;
-    client
-      .placeHold('s-1', { patientProfileId: 'pp-1' })
-      .subscribe((hold) => (retencion = hold));
+    client.placeHold('s-1', { patientProfileId: 'pp-1' }).subscribe((hold) => (retencion = hold));
 
     const req = http.expectOne('/scheduling/slots/s-1/holds');
     expect(req.request.body).toEqual({ patientProfileId: 'pp-1' });
@@ -211,34 +211,148 @@ describe('SchedulingClient', () => {
     });
   });
 
-  it('cancelBooking no manda isNoShow si nadie lo marcó', () => {
-    client.cancelBooking('b-1', { cancelledBy: 'PROVIDER' }).subscribe();
+  it('cancelBooking manda el motivo y no manda isNoShow si nadie lo marcó', () => {
+    client
+      .cancelBooking('b-1', { cancelledBy: 'PROVIDER', reasonText: 'El profesional se enfermó' })
+      .subscribe();
 
     const req = http.expectOne('/scheduling/bookings/b-1/cancel');
     // `isNoShow` es lo que dispara el cargo de la política: mandarlo en falso
     // es distinto de no mandarlo sólo para quien lea el cuerpo, pero mandarlo
-    // en `undefined` es un 400 seguro.
-    expect(req.request.body).toEqual({ cancelledBy: 'PROVIDER' });
+    // en `undefined` es un 400 seguro. `reasonText` sí va siempre: el servidor
+    // lo exige desde la corrección #14.
+    expect(req.request.body).toEqual({
+      cancelledBy: 'PROVIDER',
+      reasonText: 'El profesional se enfermó',
+    });
 
     req.flush({ bookingId: 'b-1', capacityReleased: true });
   });
 
-  it('rescheduleBooking manda toSlotId y omite reasonText si nadie lo dio', () => {
+  it('rescheduleBooking manda toSlotId y el motivo obligatorio', () => {
     let resultado: { bookingId: string } | undefined;
-    client.rescheduleBooking('b-1', { toSlotId: 's-2' }).subscribe((r) => (resultado = r));
+    client
+      .rescheduleBooking('b-1', { toSlotId: 's-2', reasonText: 'Se superpone con una cirugía' })
+      .subscribe((r) => (resultado = r));
 
     const req = http.expectOne('/scheduling/bookings/b-1/reschedule');
     expect(req.request.method).toBe('POST');
-    // Mismo criterio que `cancelBooking`: el opcional ausente no viaja, porque
-    // en `undefined` es un 400 seguro (`forbidNonWhitelisted`).
-    expect(req.request.body).toEqual({ toSlotId: 's-2' });
+    expect(req.request.body).toEqual({
+      toSlotId: 's-2',
+      reasonText: 'Se superpone con una cirugía',
+    });
 
     req.flush({ bookingId: 'b-1', fromSlotId: 's-1', toSlotId: 's-2' });
     expect(resultado?.bookingId).toBe('b-1');
   });
 
+  it('requestHold pide el turno por la ruta de solicitud, no por la de confirmación', () => {
+    let resultado: { statusConceptId: string } | undefined;
+    client
+      .requestHold('tok-1', {
+        tenantId: 't-1',
+        patientProfileId: 'pp-1',
+        channel: 'PORTAL',
+        reasonText: 'Control anual',
+      })
+      .subscribe((r) => (resultado = r));
+
+    const req = http.expectOne('/scheduling/holds/tok-1/request');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      tenantId: 't-1',
+      patientProfileId: 'pp-1',
+      channel: 'PORTAL',
+      reasonText: 'Control anual',
+    });
+
+    req.flush({
+      id: 'b-9',
+      bookableSlotId: 's-1',
+      statusConceptId: 'c-pend',
+      remindersScheduled: 0,
+    });
+    expect(resultado?.statusConceptId).toBe('c-pend');
+  });
+
+  it('aceptar manda el cuerpo vacío y convierte el instante de la decisión', () => {
+    let decision: { statusConceptId: string; occurredAt: Date } | undefined;
+    client.acceptBooking('b-1').subscribe((d) => (decision = d));
+
+    const req = http.expectOne('/scheduling/bookings/b-1/accept');
+    expect(req.request.method).toBe('POST');
+    // Sin recordatorios pedidos no viaja la clave: en `undefined` sería un 400.
+    expect(req.request.body).toEqual({});
+
+    req.flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c-conf',
+      occurredAt: '2026-08-15T12:00:00.000Z',
+    });
+    expect(decision?.occurredAt).toEqual(new Date('2026-08-15T12:00:00.000Z'));
+  });
+
+  it('aceptar con recordatorios los manda', () => {
+    client.acceptBooking('b-1', [1440, 120]).subscribe();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/accept');
+    expect(req.request.body).toEqual({ reminderOffsetsMinutes: [1440, 120] });
+    req.flush({ bookingId: 'b-1', statusConceptId: 'c', occurredAt: '2026-08-15T12:00:00.000Z' });
+  });
+
+  it('rechazar manda el motivo obligatorio', () => {
+    client.rejectBooking('b-1', 'La agenda de ese día se cerró').subscribe();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/reject');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ reasonText: 'La agenda de ese día se cerró' });
+    req.flush({ bookingId: 'b-1', capacityReleased: true });
+  });
+
+  it('iniciar y completar pegan a su propia ruta, sin datos de fecha', () => {
+    client.startBooking('b-1').subscribe();
+    const inicio = http.expectOne('/scheduling/bookings/b-1/start');
+    // Ningún dato de reloj viaja: la corrección #15 es que la fecha no decide.
+    expect(inicio.request.body).toEqual({});
+    inicio.flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c',
+      occurredAt: '2026-08-15T12:00:00.000Z',
+    });
+
+    client.completeBooking('b-1').subscribe();
+    const cierre = http.expectOne('/scheduling/bookings/b-1/complete');
+    expect(cierre.request.body).toEqual({});
+    cierre.flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c',
+      occurredAt: '2026-08-15T12:30:00.000Z',
+    });
+  });
+
+  it('una cita con motivo de cambio lo entrega con la fecha convertida', () => {
+    let recibida: { statusReason?: { reasonText: string; changedAt: Date } } | undefined;
+    client.getBooking('b-1').subscribe((b) => (recibida = b));
+
+    http.expectOne('/scheduling/bookings/b-1').flush({
+      id: 'b-1',
+      statusConceptId: 'c-canc',
+      createdAt: '2026-08-01T10:00:00.000Z',
+      statusReason: {
+        reasonText: 'El profesional se enfermó',
+        actorKind: 'PROVIDER',
+        changedAt: '2026-08-02T09:00:00.000Z',
+      },
+    });
+
+    expect(recibida?.statusReason?.reasonText).toBe('El profesional se enfermó');
+    expect(recibida?.statusReason?.changedAt).toEqual(new Date('2026-08-02T09:00:00.000Z'));
+  });
+
   it('rescheduleBooking incluye reasonText cuando se dio', () => {
-    client.rescheduleBooking('b-1', { toSlotId: 's-2', reasonText: 'Cambio de horario' }).subscribe();
+    client
+      .rescheduleBooking('b-1', { toSlotId: 's-2', reasonText: 'Cambio de horario' })
+      .subscribe();
 
     const req = http.expectOne('/scheduling/bookings/b-1/reschedule');
     expect(req.request.method).toBe('POST');
@@ -405,5 +519,147 @@ describe('SchedulingClient', () => {
 
     req.flush({ id: 'exc-1', blockedSlots: 6 });
     expect(creada?.blockedSlots).toBe(6);
+  });
+
+  /* ======================================================================
+     P8 · lista de espera y avisos de demora
+     ====================================================================== */
+
+  it('enrollWaitlist omite los opcionales ausentes y manda las fechas en ISO', () => {
+    client
+      .enrollWaitlist({
+        tenantId: 't-1',
+        patientProfileId: 'p-1',
+        resourceId: 'r-1',
+        desiredFrom: DESDE,
+        desiredTo: HASTA,
+      })
+      .subscribe();
+
+    const req = http.expectOne('/scheduling/waitlist');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      tenantId: 't-1',
+      patientProfileId: 'p-1',
+      resourceId: 'r-1',
+      desiredFrom: DESDE.toISOString(),
+      desiredTo: HASTA.toISOString(),
+    });
+    // `priority` no viaja: con `forbidNonWhitelisted`, una clave en `undefined`
+    // vuelve 400.
+    expect(Object.keys(req.request.body as object)).not.toContain('priority');
+
+    req.flush({ id: 'w-1', priority: 0, statusConceptId: 'c-activa' });
+  });
+
+  it('listWaitlist pide sólo las activas por omisión y convierte las fechas', () => {
+    let pagina: WaitlistPage | undefined;
+    client.listWaitlist({ patientProfileId: 'p-1' }).subscribe((p) => (pagina = p));
+
+    const req = http.expectOne((r) => r.url === '/scheduling/waitlist');
+    expect(req.request.params.get('patientProfileId')).toBe('p-1');
+    expect(req.request.params.has('includeClosed')).toBe(false);
+    expect(req.request.params.has('limit')).toBe(false);
+
+    req.flush({
+      items: [
+        {
+          id: 'w-1',
+          patientProfileId: 'p-1',
+          resourceId: 'r-1',
+          resourceLabel: 'Dra. Rivas',
+          desiredFrom: '2026-08-18T00:00:00.000Z',
+          desiredTo: null,
+          priority: 0,
+          statusConceptId: 'c-activa',
+          createdAt: '2026-08-17T10:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(pagina?.items[0].resourceLabel).toBe('Dra. Rivas');
+    expect(pagina?.items[0].desiredFrom).toEqual(new Date('2026-08-18T00:00:00.000Z'));
+    // `null` se normaliza a ausencia, como en las citas: un `null` conviviendo
+    // con `undefined` obliga a comprobar los dos en cada pantalla.
+    expect(pagina?.items[0].desiredTo).toBeUndefined();
+    expect(pagina?.items[0].createdAt).toEqual(new Date('2026-08-17T10:00:00.000Z'));
+  });
+
+  it('listWaitlist declara includeClosed sólo cuando se pide', () => {
+    client.listWaitlist({ patientProfileId: 'p-1', includeClosed: true, limit: 5 }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/scheduling/waitlist');
+    expect(req.request.params.get('includeClosed')).toBe('true');
+    expect(req.request.params.get('limit')).toBe('5');
+
+    req.flush({ items: [] });
+  });
+
+  it('delayBooking escapa el id y omite el mensaje vacío', () => {
+    let resultado: DelayNoticeResult | undefined;
+    client
+      .delayBooking('bk/1', { delayMinutes: 20, message: '' })
+      .subscribe((r) => (resultado = r));
+
+    const req = http.expectOne('/scheduling/bookings/bk%2F1/delay');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ delayMinutes: 20 });
+
+    req.flush({ notified: 1, affected: 1, bookingIds: ['bk/1'], detail: 'ok' });
+    expect(resultado?.notified).toBe(1);
+  });
+
+  it('delayResource manda la ventana en ISO cuando se acota', () => {
+    client
+      .delayResource('r-1', {
+        delayMinutes: 30,
+        message: 'Estoy en una urgencia',
+        from: DESDE,
+        to: HASTA,
+      })
+      .subscribe();
+
+    const req = http.expectOne('/scheduling/resources/r-1/delay');
+    expect(req.request.body).toEqual({
+      delayMinutes: 30,
+      message: 'Estoy en una urgencia',
+      from: DESDE.toISOString(),
+      to: HASTA.toISOString(),
+    });
+
+    req.flush({ notified: 0, affected: 0, bookingIds: [], detail: 'ok' });
+  });
+
+  it('la cita trae la demora informada con su instante convertido', () => {
+    let recibida: Booking | undefined;
+    client.getBooking('b-1').subscribe((b) => (recibida = b));
+
+    http.expectOne('/scheduling/bookings/b-1').flush({
+      id: 'b-1',
+      statusConceptId: 'c-confirmada',
+      createdAt: '2026-08-17T10:00:00.000Z',
+      delayNotice: {
+        delayMinutes: 20,
+        message: 'Estoy en una urgencia',
+        announcedAt: '2026-08-20T13:40:00.000Z',
+      },
+    });
+
+    expect(recibida?.delayNotice?.delayMinutes).toBe(20);
+    expect(recibida?.delayNotice?.announcedAt).toEqual(new Date('2026-08-20T13:40:00.000Z'));
+  });
+
+  it('una cita sin demora no inventa el campo', () => {
+    let recibida: Booking | undefined;
+    client.getBooking('b-1').subscribe((b) => (recibida = b));
+
+    http.expectOne('/scheduling/bookings/b-1').flush({
+      id: 'b-1',
+      statusConceptId: 'c-confirmada',
+      createdAt: '2026-08-17T10:00:00.000Z',
+      delayNotice: null,
+    });
+
+    expect(recibida?.delayNotice).toBeUndefined();
   });
 });

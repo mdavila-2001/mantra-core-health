@@ -1,0 +1,424 @@
+@let ficha = organizacion();
+@let listado = practicas();
+@let estado = consola();
+
+<app-page-header
+  [title]="ficha?.name ?? 'Organización médica'"
+  subtitle="Sedes, áreas, infraestructura, servicios, plantilla, legajo e inventario de la organización."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- El selector sólo aparece con más de una organización: ofrecer una lista de
+     un elemento es ruido, y el caso mayoritario es tener una sola. -->
+@if (listado.status === 'ready' && listado.data.length > 1) {
+  <section class="organizacion-medica__selector">
+    <label for="practica-elegida">Organización</label>
+    <select
+      id="practica-elegida"
+      [value]="practicaElegida()"
+      (change)="elegirPractica($any($event.target).value)"
+    >
+      @for (practica of listado.data; track practica.id) {
+        <option [value]="practica.id">{{ practica.name }} ({{ practica.code }})</option>
+      }
+    </select>
+  </section>
+}
+
+<!-- Ficha de ámbito: la práctica es el asunto de la pantalla, no un filtro. Va
+     arriba una sola vez y no se repite como columna en ninguna tabla. -->
+@switch (estado.status) {
+  @case ('ready') {
+    @if (ficha) {
+      <section class="organizacion-medica__ambito" aria-label="Organización">
+        <dl class="organizacion-medica__datos">
+          <div>
+            <dt>Código</dt>
+            <dd class="organizacion-medica__codigo">{{ ficha.code }}</dd>
+          </div>
+          <div>
+            <dt>Tipo</dt>
+            <dd>{{ etiquetaDe(ficha.type) }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>
+              <app-badge [variant]="varianteDe(ficha.status)">
+                {{ etiquetaDe(ficha.status) }}
+              </app-badge>
+            </dd>
+          </div>
+          @if (ficha.timeZone) {
+            <div>
+              <dt>Zona horaria</dt>
+              <dd>{{ ficha.timeZone }}</dd>
+            </div>
+          }
+          @if (ficha.currency) {
+            <div>
+              <dt>Moneda</dt>
+              <dd>{{ etiquetaDe(ficha.currency) }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+    }
+
+    <!-- Avisos que la especificación pide explícitos: documentación por vencer
+         e insumos en el punto de reposición. Salen de datos ya calculados por
+         el servidor, no de una cuenta hecha acá. -->
+    @if (documentosPorVencer().length > 0 || insumosEnFalta().length > 0) {
+      <section class="organizacion-medica__avisos" role="status">
+        @if (documentosPorVencer().length > 0) {
+          <p>
+            <strong>{{ documentosPorVencer().length }}</strong> documento(s) del legajo
+            vencidos o por vencer dentro del mes.
+          </p>
+        }
+        @if (insumosEnFalta().length > 0) {
+          <p>
+            <strong>{{ insumosEnFalta().length }}</strong> insumo(s) en el punto de
+            reposición o por debajo.
+          </p>
+        }
+      </section>
+    }
+  }
+  @case ('empty') {
+    <section class="organizacion-medica__ambito organizacion-medica__ambito--vacio">
+      <p>{{ estado.message ?? 'No hay ninguna organización que administrar.' }}</p>
+    </section>
+  }
+  @case ('error') {
+    <!-- Un 403 acá significa «no administrás esta organización» y un 404, «no
+         existe». El backend los distingue a propósito para que el código de
+         error no sirva de sonda; la pantalla los muestra tal cual llegan. -->
+    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
+      <p>{{ estado.message ?? 'No se pudo cargar la organización.' }}</p>
+      <button app-button variant="secondary" type="button" (click)="recargar()">
+        Reintentar
+      </button>
+    </section>
+  }
+  @case ('forbidden') {
+    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
+      <p>{{ estado.message ?? 'No administrás esta organización.' }}</p>
+    </section>
+  }
+  @case ('not-found') {
+    <!-- Mismo texto tanto si no existe como si existe y está oculta: cualquier
+         diferencia confirmaría que el identificador es real. -->
+    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
+      <p>No encontramos esa organización.</p>
+    </section>
+  }
+  @case ('offline') {
+    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
+      <p>No pudimos comunicarnos con el servidor.</p>
+      <button app-button variant="secondary" type="button" (click)="recargar()">
+        Reintentar
+      </button>
+    </section>
+  }
+  @default {
+    <section class="organizacion-medica__ambito" aria-busy="true">
+      <p class="organizacion-medica__cargando">Cargando la organización…</p>
+    </section>
+  }
+}
+
+<app-tabs>
+  <app-tab label="Sedes">
+    <app-data-table
+      [state]="sedes()"
+      [columns]="columnasDeSede()"
+      [trackBy]="porId"
+      caption="Sedes de la organización"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Áreas">
+    <app-data-table
+      [state]="areas()"
+      [columns]="columnasDeArea()"
+      [trackBy]="porId"
+      caption="Áreas y departamentos de la organización"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Infraestructura">
+    <app-data-table
+      [state]="espacios()"
+      [columns]="columnasDeEspacio()"
+      [trackBy]="porId"
+      caption="Quirófanos, consultorios y demás espacios"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Servicios">
+    <app-data-table
+      [state]="servicios()"
+      [columns]="columnasDeServicio()"
+      [trackBy]="porId"
+      caption="Servicios de salud de la organización"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Plantilla">
+    <app-data-table
+      [state]="plantilla()"
+      [columns]="columnasDePlantilla()"
+      [trackBy]="porId"
+      caption="Profesionales vinculados a la organización"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Legajo">
+    <app-data-table
+      [state]="legajo()"
+      [columns]="columnasDeLegajo()"
+      [trackBy]="porId"
+      caption="Documentación legal y acreditaciones"
+      (retry)="recargar()"
+    />
+  </app-tab>
+
+  <app-tab label="Inventario">
+    <app-data-table
+      [state]="inventario()"
+      [columns]="columnasDeInventario()"
+      [trackBy]="porId"
+      caption="Insumos y equipamiento"
+      (retry)="recargar()"
+    />
+  </app-tab>
+</app-tabs>
+
+<!-- Cobertura declarada, no simulada. El carril 13 abarca además contabilidad,
+     red social, foros, encuestas y notificaciones de la organización. Esos
+     dominios tienen módulo y carril propios; construir una segunda versión acá
+     sería la duplicación que el carril prohíbe, y dibujar pestañas que no
+     persisten sería peor. Se dice dónde vive cada cosa. -->
+<section class="organizacion-medica__cobertura" aria-labelledby="cobertura-titulo">
+  <h2 id="cobertura-titulo">Qué administra esta pantalla y qué no</h2>
+  <dl>
+    <div>
+      <dt>Acá</dt>
+      <dd>
+        Sedes, áreas, infraestructura, servicios, plantilla profesional,
+        documentación legal e inventario — módulo 14 (<code>practice</code>).
+      </dd>
+    </div>
+    <div>
+      <dt>Contabilidad de la organización</dt>
+      <dd>
+        Vive en <strong>Contabilidad</strong> (módulo 16). Esta pantalla no
+        duplica sus libros.
+      </dd>
+    </div>
+    <div>
+      <dt>Publicaciones, foros y encuestas</dt>
+      <dd>
+        Dependen de los módulos de comunidad (19) y formularios (9), con sus
+        propios carriles. Todavía no tienen consola de organización.
+      </dd>
+    </div>
+    <div>
+      <dt>Notificaciones programadas</dt>
+      <dd>
+        Dependen del módulo de mensajería (25). No se declaran acá para no
+        prometer envíos que nadie despacha.
+      </dd>
+    </div>
+  </dl>
+</section>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+
+<ng-template #celdaSede let-sede>
+  <span class="organizacion-medica__nombre">{{ sede.name }}</span>
+  @if (sede.timeZone) {
+    <span class="organizacion-medica__secundario">{{ sede.timeZone }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstadoSede let-sede>
+  <app-badge [variant]="varianteDe(sede.status)">{{ etiquetaDe(sede.status) }}</app-badge>
+  @if (sede.operationalStatus) {
+    <span class="organizacion-medica__secundario">
+      {{ etiquetaDe(sede.operationalStatus) }}
+    </span>
+  }
+</ng-template>
+
+<ng-template #celdaEstructuraSede let-sede>
+  {{ sede.clinicalUnitCount }} área(s) · {{ sede.careSpaceCount }} espacio(s)
+</ng-template>
+
+<ng-template #celdaArea let-area>
+  <span class="organizacion-medica__nombre">{{ area.name }}</span>
+  @if (area.specialty) {
+    <span class="organizacion-medica__secundario">{{ etiquetaDe(area.specialty) }}</span>
+  }
+</ng-template>
+
+<!-- El contrato devuelve `siteId` crudo; el nombre legible lo resuelve la
+     pantalla contra las sedes que ya cargó en la misma respuesta. -->
+<ng-template #celdaSedeDelArea let-area>
+  {{ sedeDe(area.siteId) ?? 'sede no encontrada' }}
+</ng-template>
+
+<ng-template #celdaEstadoArea let-area>
+  <app-badge [variant]="varianteDe(area.status)">{{ etiquetaDe(area.status) }}</app-badge>
+</ng-template>
+
+<ng-template #celdaEspacio let-espacio>
+  <span class="organizacion-medica__nombre">{{ espacio.name }}</span>
+  <span class="organizacion-medica__secundario">
+    {{ etiquetaDe(espacio.type) }}
+    @if (espacio.capacity !== null) {
+      · capacidad {{ espacio.capacity }}
+    }
+  </span>
+</ng-template>
+
+<ng-template #celdaUbicacionEspacio let-espacio>
+  {{ sedeDe(espacio.siteId) ?? 'sede no encontrada' }}
+  @if (areaDe(espacio.clinicalUnitId); as area) {
+    <span class="organizacion-medica__secundario">{{ area }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaDisponibilidadEspacio let-espacio>
+  @if (espacio.operationalStatus) {
+    <app-badge [variant]="varianteDe(espacio.operationalStatus)">
+      {{ etiquetaDe(espacio.operationalStatus) }}
+    </app-badge>
+  } @else {
+    <app-badge [variant]="varianteDe(espacio.status)">
+      {{ etiquetaDe(espacio.status) }}
+    </app-badge>
+  }
+</ng-template>
+
+<ng-template #celdaServicio let-servicio>
+  <span class="organizacion-medica__nombre">{{ etiquetaDe(servicio.service) }}</span>
+  @if (servicio.specialty) {
+    <span class="organizacion-medica__secundario">{{ etiquetaDe(servicio.specialty) }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaCondicionesServicio let-servicio>
+  @if (servicio.appointmentRequired) {
+    <span>Con turno previo</span>
+  }
+  @if (servicio.referralRequired) {
+    <span class="organizacion-medica__secundario">Requiere derivación</span>
+  }
+  @if (servicio.telehealthAvailable) {
+    <span class="organizacion-medica__secundario">Admite teleconsulta</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstadoServicio let-servicio>
+  <app-badge [variant]="varianteDe(servicio.status)">
+    {{ etiquetaDe(servicio.status) }}
+  </app-badge>
+</ng-template>
+
+<!-- El nombre puede faltar: un perfil profesional sin persona registrada es un
+     estado real. Se dice, y no se sustituye por el uuid, que no informa nada. -->
+<ng-template #celdaProfesional let-integrante>
+  <span class="organizacion-medica__nombre">
+    {{ integrante.practitionerName ?? 'Profesional sin nombre registrado' }}
+  </span>
+  <span class="organizacion-medica__secundario">
+    {{ etiquetaDe(integrante.role) }}
+    @if (integrante.isPrimary) {
+      · vínculo principal
+    }
+  </span>
+</ng-template>
+
+<ng-template #celdaDestinoProfesional let-integrante>
+  {{ sedeDe(integrante.siteId) ?? 'toda la organización' }}
+  @if (areaDe(integrante.clinicalUnitId); as area) {
+    <span class="organizacion-medica__secundario">{{ area }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaVigencia let-integrante>
+  @if (integrante.validFrom) {
+    {{ integrante.validFrom }}
+    @if (integrante.validTo) {
+      — {{ integrante.validTo }}
+    } @else {
+      <span class="organizacion-medica__secundario">sin fecha de fin</span>
+    }
+  } @else {
+    —
+  }
+</ng-template>
+
+<ng-template #celdaEstadoVinculo let-integrante>
+  <app-badge [variant]="varianteDe(integrante.status)">
+    {{ etiquetaDe(integrante.status) }}
+  </app-badge>
+</ng-template>
+
+<ng-template #celdaDocumento let-documento>
+  <span class="organizacion-medica__nombre">{{ etiquetaDe(documento.type) }}</span>
+  @if (documento.number) {
+    <span class="organizacion-medica__secundario">Nº {{ documento.number }}</span>
+  }
+</ng-template>
+
+<!-- El vencimiento se dice en palabras: «-14» obliga a interpretar un signo, y
+     quien lee el aviso necesita saber si tiene que actuar hoy. -->
+<ng-template #celdaVencimiento let-documento>
+  <app-badge [variant]="varianteDeVencimiento(documento.daysToExpiry)">
+    {{ vencimientoEnPalabras(documento.daysToExpiry) }}
+  </app-badge>
+  @if (documento.validTo) {
+    <span class="organizacion-medica__secundario">{{ documento.validTo }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstadoDocumento let-documento>
+  <app-badge [variant]="varianteDe(documento.verificationStatus)">
+    {{ etiquetaDe(documento.verificationStatus) }}
+  </app-badge>
+</ng-template>
+
+<ng-template #celdaInsumo let-insumo>
+  <span class="organizacion-medica__nombre">{{ insumo.name }}</span>
+  @if (insumo.lotNumber) {
+    <span class="organizacion-medica__secundario">
+      Lote {{ insumo.lotNumber }}
+      @if (insumo.expiryDate) {
+        · vence {{ insumo.expiryDate }}
+      }
+    </span>
+  }
+</ng-template>
+
+<ng-template #celdaExistencias let-insumo>
+  <span class="organizacion-medica__nombre">
+    {{ insumo.quantityOnHand }}
+    @if (insumo.unit) {
+      {{ etiquetaDe(insumo.unit) }}
+    }
+  </span>
+  @if (insumo.belowReorderLevel) {
+    <app-badge variant="warning">Reponer</app-badge>
+  }
+</ng-template>
+
+<ng-template #celdaEstadoInsumo let-insumo>
+  <app-badge [variant]="varianteDe(insumo.status)">{{ etiquetaDe(insumo.status) }}</app-badge>
+</ng-template>

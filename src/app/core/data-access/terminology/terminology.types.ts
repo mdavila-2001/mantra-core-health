@@ -70,6 +70,68 @@ export interface ConceptSearchPage {
   readonly limit: number;
 }
 
+/**
+ * La ficha de un concepto del catálogo, con sus propiedades declaradas.
+ *
+ * Es la lectura que hace falta **después** de elegir en un buscador: la
+ * búsqueda devuelve identidad (código y denominación) y la ficha agrega lo que
+ * cada sistema de codificación publica de suyo.
+ *
+ * No se reutiliza `GlossaryTermDetail` aunque sea la misma URL: aquélla pide
+ * `lang=ES` y describe un término del glosario —definición clínica, resumen
+ * llano, relaciones tipadas—, que es otro contrato. Mezclarlas obligaría a esta
+ * lectura a arrastrar campos del glosario que el catálogo crudo no tiene.
+ */
+export interface ConceptDetail {
+  readonly conceptId: string;
+  readonly code: string;
+  readonly display: string;
+  readonly definition?: string;
+  readonly selectable?: boolean;
+  readonly codeSystemVersionId: string;
+  /**
+   * Lo que el sistema de codificación declara de este concepto, por código.
+   *
+   * Deliberadamente `unknown`: el valor es el `value_json` tal como se guardó
+   * —un texto, una lista o un objeto, según la propiedad— y el modelo no acota
+   * su forma. Quien la consuma debe estrecharla; para las listas de texto está
+   * {@link listaDeTextos}.
+   *
+   * El vademécum publica acá `dose_forms`, `strengths` y `routes`, que es lo
+   * que la receta necesita para ofrecer presentación y concentración en vez de
+   * pedirlas tecleadas.
+   */
+  readonly properties: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Lee una propiedad de concepto como lista de textos.
+ *
+ * Devuelve vacío ante cualquier otra forma en lugar de lanzar: `properties` es
+ * `value_json` libre, así que una propiedad con la forma inesperada es un dato
+ * del catálogo que este consumidor no sabe mostrar — no una falla de la
+ * pantalla. Vacío significa «no hay lista que ofrecer», que es exactamente lo
+ * que la receta necesita saber para caer a su campo de texto.
+ *
+ * @param propiedades - Las propiedades de la ficha.
+ * @param codigo - Código de la propiedad, como `dose_forms`.
+ * @returns Los textos no vacíos, sin repetir y en el orden del catálogo.
+ */
+export function listaDeTextos(
+  propiedades: Readonly<Record<string, unknown>> | undefined,
+  codigo: string,
+): readonly string[] {
+  const valor = propiedades?.[codigo];
+  if (!Array.isArray(valor)) {
+    return [];
+  }
+  const textos = valor
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter((item) => item !== '');
+  return [...new Set(textos)];
+}
+
 /** Parámetros de la búsqueda de conceptos (UC-03-13). */
 export interface ConceptSearchQuery {
   /** Texto a buscar en el código o la denominación. */
@@ -142,22 +204,125 @@ export interface GlossaryTermTag {
   readonly name: string;
 }
 
+/* ---------------------------------------------------------------------------
+   Reconstrucción del glosario (carril 03): diccionario por categorías, con
+   relaciones clínicas tipadas.
+
+   `CatalogConcepts` es una tabla compartida por **todos** los enums de la
+   plataforma; lo que hace que una fila sea «un término del glosario» es
+   pertenecer al value set paraguas `glossary-all-terms` — el backend lo aplica
+   scopeando automáticamente cualquier lectura hecha con `lang=ES`, que es como
+   este cliente llama siempre a `searchGlossary`/`readGlossaryTerm`. Acá no hace
+   falta pedirlo explícitamente: no cambia ni un parámetro, sólo lo que el
+   backend devuelve dentro del mismo contrato.
+   --------------------------------------------------------------------------- */
+
+/** Los seis tipos de relación clínica tipada entre dos términos del glosario. */
+export const GLOSSARY_RELATION_TYPES = [
+  'RELATED_TERM',
+  'DISEASE',
+  'PROCEDURE',
+  'TREATMENT',
+  'ANATOMY',
+  'DIAGNOSTIC_TEST',
+] as const;
+export type GlossaryRelationType = (typeof GLOSSARY_RELATION_TYPES)[number];
+
 /**
- * Una entrada del glosario: el término, qué significa y bajo qué categorías cae.
+ * Una relación clínica dirigida hacia otro término del glosario.
  *
- * `translated` en `false` significa que el catálogo **no tiene** ese término en
- * castellano y lo que se muestra es el original del sistema de codificación. Se
- * publica para poder decirlo en pantalla: dejar el hueco en blanco o mostrar el
- * inglés como si fuera lo pedido son las dos formas de mentir acá.
+ * Trae ya lo necesario para enlazar (`conceptId`) y para mostrar (`display`,
+ * `slug`) sin una segunda lectura: la ficha las pinta agrupadas por `type`.
  */
-export interface GlossaryTerm {
+export interface GlossaryRelation {
+  readonly type: GlossaryRelationType;
+  readonly conceptId: string;
+  readonly slug: string;
+  readonly display: string;
+}
+
+/**
+ * Un texto con su bandera de traducción — el mismo patrón que ya usaba
+ * `translated` a nivel de término, aplicado ahora a un campo puntual.
+ *
+ * `translated` en `false` significa que el catálogo no tiene ese texto en
+ * castellano y lo que llega es el original (ES es obligatorio en el seed, así
+ * que esto sólo puede pasar del lado que hoy no se siembra en todos los
+ * términos). Se muestra igual, marcado — nunca en blanco.
+ */
+export interface GlossaryLocalizedText {
+  readonly text: string;
+  readonly translated: boolean;
+}
+
+/** La categoría de un término, tal como la nombra un resultado de búsqueda. */
+export interface GlossaryCategoryRef {
+  readonly internalCode: string;
+  readonly name: string;
+}
+
+/** La misma referencia, con el uuid del value set — la que trae la ficha completa. */
+export interface GlossaryCategoryDetailRef extends GlossaryCategoryRef {
+  readonly valueSetId: string;
+}
+
+/**
+ * Estado editorial de un término publicado.
+ *
+ * Hoy sólo existe `'active'`: el endpoint público filtra `stateConceptId =
+ * TERM_ACTIVE` y nunca deja pasar un borrador. El tipo no es un enum cerrado a
+ * un solo valor por capricho — es lo que el contrato declara hoy, y el día que
+ * el backend publique otro estado público, esta unión es el lugar donde se lo
+ * suma.
+ */
+export type GlossaryTermStatus = 'active';
+
+/**
+ * Licencia y atribución de una imagen médica del glosario.
+ *
+ * Ningún término la trae hoy — el backend documenta la decisión explícita de
+ * no sembrar ninguna hasta que exista una política de licencias verificada
+ * para imágenes externas (ver `glossary-reconstruction-spec.md`). El campo
+ * existe igual porque el contrato lo declara: cuando un futuro carril suba una
+ * imagen con su licencia, esta pantalla ya sabe mostrarla.
+ */
+export interface GlossaryImage {
+  readonly source: string;
+  readonly license: string;
+  readonly attribution: string;
+  readonly alt: string;
+  readonly status: string;
+}
+
+/** Identidad compartida entre el resultado de búsqueda y la ficha completa. */
+interface GlossaryTermBase {
   readonly conceptId: string;
   /** Código dentro de su sistema, como `I10`. */
   readonly code: string;
   readonly display: string;
-  readonly definition?: string;
+  /** Identificador legible y estable del término, para enlazar entre sí. */
+  readonly slug: string;
   readonly translated?: boolean;
   readonly valueSets?: readonly GlossaryTermTag[];
+}
+
+/**
+ * Una entrada del glosario: el término, su categoría, su definición breve y
+ * sus etiquetas — la fila de la tabla de resultados o del listado de una
+ * categoría.
+ *
+ * `category` es **una sola** (o `null`, si el catálogo no la declaró); `tags`
+ * son las etiquetas clínicas, 0..N. Son dos conjuntos de value sets distintos
+ * del backend (`glossary-category-*` y `glossary-tag-*`) y por eso no se
+ * mezclan en un solo array como antes.
+ */
+export interface GlossaryTerm extends GlossaryTermBase {
+  readonly category: GlossaryCategoryRef | null;
+  readonly shortDefinition: string;
+  readonly tags: readonly string[];
+  /** Cuántas relaciones clínicas tiene. La lista completa vive en la ficha. */
+  readonly relationsCount: number;
+  readonly status: GlossaryTermStatus;
 }
 
 /** Una página de términos del glosario. */
@@ -186,9 +351,24 @@ export interface GlossarySynonym {
   readonly preferred?: boolean;
 }
 
-/** La ficha completa de un término, que es lo que se abre al hacerle clic. */
-export interface GlossaryTermDetail extends GlossaryTerm {
+/**
+ * La ficha completa de un término, que es lo que se abre al hacerle clic.
+ *
+ * No extiende `GlossaryTerm`: `category` y `tags` tienen ahí una forma más
+ * liviana (pensada para una fila de tabla) que acá, donde la ficha trae el uuid
+ * del value set de la categoría y el objeto completo de cada etiqueta.
+ * Forzar la misma forma en las dos hubiera significado mentir en una de las
+ * dos, o ensanchar la fila de la tabla con datos que nunca pinta.
+ */
+export interface GlossaryTermDetail extends GlossaryTermBase {
   readonly codeSystemVersionId: string;
   readonly valueSets: readonly GlossaryTermTag[];
   readonly synonyms: readonly GlossarySynonym[];
+  readonly category: GlossaryCategoryDetailRef | null;
+  readonly tags: readonly GlossaryCategoryDetailRef[];
+  readonly clinicalDefinition: GlossaryLocalizedText;
+  readonly plainSummary: GlossaryLocalizedText;
+  readonly relations: readonly GlossaryRelation[];
+  /** Ausente en todos los términos sembrados hoy — ver {@link GlossaryImage}. */
+  readonly image?: GlossaryImage;
 }

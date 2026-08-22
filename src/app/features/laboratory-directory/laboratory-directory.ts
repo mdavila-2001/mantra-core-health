@@ -1,12 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { DiagnosticUnitsClient } from '../../core/data-access/diagnostic-units/diagnostic-units.client';
-import type { DiagnosticUnitDirectoryItem } from '../../core/data-access/diagnostic-units/diagnostic-units.types';
+import type {
+  DiagnosticUnitSearchItem,
+  DiagnosticUnitSearchQuery,
+} from '../../core/data-access/diagnostic-units/diagnostic-units.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { SearchResult } from '../../shared/components/molecules/search-result/search-result';
 import type { SearchResultItem } from '../../shared/components/molecules/search-result/search-result.types';
+import { FilterBar } from '../../shared/components/organisms/filter-bar/filter-bar';
+import type { FilterDef } from '../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 
@@ -16,10 +21,84 @@ export interface LaboratoryCategoryGroup {
   readonly units: readonly SearchResultItem[];
 }
 
-/** Directorio del módulo 23; no comparte datos ni función con `/diagnostics`. */
+/**
+ * Los filtros que la barra ofrece.
+ *
+ * Son selectores cerrados y no texto libre porque es lo que el organismo exige,
+ * y porque un texto libre sobre «acepta órdenes externas» no puede resolverse a
+ * nada. El término de búsqueda libre viaja aparte, bajo `q`, y el backend lo
+ * aplica sobre el nombre y el código del centro.
+ *
+ * **Faltan tres de la especificación** —estudio, aseguradora y precio máximo— y
+ * no por olvido: el endpoint los acepta, pero dibujarlos como selector exige un
+ * catálogo de estudios y uno de aseguradoras que hoy no tienen lectura de
+ * colección. Un campo de texto donde va un identificador sería pedirle a la
+ * persona que escriba un uuid.
+ */
+const FILTROS: readonly FilterDef[] = [
+  {
+    key: 'kind',
+    label: 'Tipo de centro',
+    options: [
+      { value: 'LABORATORY', label: 'Laboratorio clínico' },
+      { value: 'IMAGING', label: 'Imagenología' },
+    ],
+  },
+  {
+    key: 'homeCollection',
+    label: 'Toma a domicilio',
+    options: [
+      { value: 'true', label: 'Sí toma a domicilio' },
+      { value: 'false', label: 'No toma a domicilio' },
+    ],
+  },
+  {
+    key: 'walkIn',
+    label: 'Sin cita',
+    options: [
+      { value: 'true', label: 'Atiende sin cita' },
+      { value: 'false', label: 'Sólo con cita' },
+    ],
+  },
+  {
+    key: 'minRating',
+    label: 'Calificación',
+    options: [
+      { value: '4.5', label: '4,5 o más' },
+      { value: '4', label: '4 o más' },
+      { value: '3', label: '3 o más' },
+    ],
+  },
+];
+
+/**
+ * El buscador de centros de diagnóstico, laboratorio e imagen.
+ *
+ * ## Por qué busca y no lista
+ *
+ * Antes pedía `GET /diagnostic-units`, que devuelve el directorio **de la
+ * organización de la sesión** y sin filtros. Eso contesta «qué laboratorios
+ * tiene mi institución», que es una pregunta del personal. La que trae acá a un
+ * paciente es otra: «dónde me hago este estudio», entre todos los centros
+ * publicados y acotando por lo que le importa. La contesta
+ * `GET /diagnostic-units/search`, que no se acota al tenant y sí acepta filtros.
+ *
+ * ## La URL manda
+ *
+ * El filtrado vive en los query params, no en una copia local: recargar o
+ * compartir el enlace reproduce exactamente la misma búsqueda, y el `back` del
+ * navegador no deja la barra mostrando algo distinto de lo que se consultó. Lo
+ * resuelve `FilterBar`; esta pantalla sólo reacciona a lo que emite.
+ *
+ * ## Sin reseñas no es cero
+ *
+ * Un centro recién publicado no tiene calificación, y eso no es una nota baja.
+ * La tarjeta lo dice con palabras («sin calificaciones») en vez de mostrar un
+ * cero que el centro no se ganó.
+ */
 @Component({
   selector: 'app-laboratory-directory',
-  imports: [PageHeader, SearchResult, ViewStateHost],
+  imports: [FilterBar, PageHeader, SearchResult, ViewStateHost],
   templateUrl: './laboratory-directory.html',
   styleUrl: './laboratory-directory.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,8 +106,16 @@ export interface LaboratoryCategoryGroup {
 export class LaboratoryDirectory {
   private readonly units = inject(DiagnosticUnitsClient);
 
+  protected readonly filtros = FILTROS;
+
   protected readonly state = signal<ViewState<readonly LaboratoryCategoryGroup[]>>(loading());
   protected readonly groups = computed(() => dataOf(this.state()) ?? []);
+
+  /** Cuántos centros casan con el filtro, según el servidor. */
+  protected readonly total = signal(0);
+
+  /** Los filtros vigentes, tal como los emitió la barra. */
+  private activos: Readonly<Record<string, string>> = {};
 
   constructor() {
     this.load();
@@ -38,17 +125,26 @@ export class LaboratoryDirectory {
     this.load();
   }
 
+  /** La barra cambió: se rehace la búsqueda con lo que quedó activo. */
+  protected filtrar(activos: Readonly<Record<string, string>>): void {
+    this.activos = activos;
+    this.load();
+  }
+
   private load(): void {
     this.state.set(loading());
-    this.units.list().subscribe({
-      next: (directory) => {
+    this.units.search(aConsulta(this.activos)).subscribe({
+      next: (pagina) => {
+        this.total.set(pagina.total);
         this.state.set(
-          directory.items.length === 0
+          pagina.items.length === 0
             ? empty(
                 { label: 'Volver al panel', route: '/dashboard' },
-                'Todavía no hay unidades verificadas para esta organización.',
+                hayFiltros(this.activos)
+                  ? 'Ningún centro verificado coincide con esa búsqueda. Probá quitando algún filtro.'
+                  : 'Todavía no hay centros verificados publicados.',
               )
-            : ready(groupUnits(directory.items)),
+            : ready(groupUnits(pagina.items)),
         );
       },
       error: (error: unknown) =>
@@ -57,10 +153,49 @@ export class LaboratoryDirectory {
   }
 }
 
+/** ¿Quedó algún filtro puesto? Decide qué texto muestra el vacío. */
+function hayFiltros(activos: Readonly<Record<string, string>>): boolean {
+  return Object.values(activos).some((valor) => valor !== '');
+}
+
+/**
+ * Los filtros de la barra como consulta del buscador.
+ *
+ * Las claves coinciden con las del contrato a propósito —`kind`, `walkIn`,
+ * `homeCollection`, `minRating`, `q`— así que la traducción es sólo de tipo: el
+ * organismo entrega texto y el cliente pide booleanos y números. Una clave que
+ * no se reconoce se descarta en vez de viajar: el backend valida con
+ * `forbidNonWhitelisted` y la rechazaría con un 400.
+ */
+export function aConsulta(
+  activos: Readonly<Record<string, string>>,
+): DiagnosticUnitSearchQuery {
+  const consulta: {
+    -readonly [K in keyof DiagnosticUnitSearchQuery]: DiagnosticUnitSearchQuery[K];
+  } = {};
+  if (activos['q'] !== undefined && activos['q'] !== '') {
+    consulta.q = activos['q'];
+  }
+  if (activos['kind'] === 'LABORATORY' || activos['kind'] === 'IMAGING') {
+    consulta.kind = activos['kind'];
+  }
+  for (const clave of ['homeCollection', 'walkIn'] as const) {
+    const valor = activos[clave];
+    if (valor === 'true' || valor === 'false') {
+      consulta[clave] = valor === 'true';
+    }
+  }
+  const nota = Number(activos['minRating']);
+  if (activos['minRating'] !== undefined && activos['minRating'] !== '' && !Number.isNaN(nota)) {
+    consulta.minRating = nota;
+  }
+  return consulta;
+}
+
 export function groupUnits(
-  units: readonly DiagnosticUnitDirectoryItem[],
+  units: readonly DiagnosticUnitSearchItem[],
 ): readonly LaboratoryCategoryGroup[] {
-  const groups = new Map<string, DiagnosticUnitDirectoryItem[]>();
+  const groups = new Map<string, DiagnosticUnitSearchItem[]>();
   for (const unit of units) {
     const current = groups.get(unit.type.code) ?? [];
     current.push(unit);
@@ -81,7 +216,7 @@ export function categoryName(code: string, fallback: string): string {
   return fallback;
 }
 
-function toSearchResult(unit: DiagnosticUnitDirectoryItem): SearchResultItem {
+function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
   const seals = [];
   if (unit.walkInAvailable) seals.push({ label: 'Atención sin cita', tone: 'ok' as const });
   if (unit.homeCollectionAvailable) {
@@ -101,9 +236,24 @@ function toSearchResult(unit: DiagnosticUnitDirectoryItem): SearchResultItem {
       { text: `${unit.siteCount} ${unit.siteCount === 1 ? 'sede' : 'sedes'}` },
       { text: `${unit.studyCount} ${unit.studyCount === 1 ? 'estudio' : 'estudios'}` },
       { text: `${unit.equipmentCount} ${unit.equipmentCount === 1 ? 'equipo' : 'equipos'}` },
+      { text: calificacion(unit) },
     ],
     seals,
   };
+}
+
+/**
+ * Cómo se dice la calificación.
+ *
+ * «Sin calificaciones» y no «0»: un centro recién publicado no tiene una nota
+ * mala, tiene ninguna, y mostrarlo como cero lo castigaría por ser nuevo.
+ */
+function calificacion(unit: DiagnosticUnitSearchItem): string {
+  if (unit.rating === null || unit.ratingCount === 0) {
+    return 'Sin calificaciones';
+  }
+  const nota = unit.rating.toFixed(1).replace('.', ',');
+  return `${nota} · ${unit.ratingCount} ${unit.ratingCount === 1 ? 'reseña' : 'reseñas'}`;
 }
 
 function initials(name: string): string {

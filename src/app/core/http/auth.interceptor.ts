@@ -51,6 +51,26 @@ const PUBLIC_PATHS: readonly string[] = [
 ];
 
 /**
+ * Rutas de **credencial opcional**: la API las declara `@Public()`, pero se
+ * piden tanto con sesión como sin ella, así que la credencial sí viaja cuando
+ * existe — lo que no puede pasar es que su 401 se lleve la sesión por delante.
+ *
+ * Hoy sólo el catálogo de terminología: `GET /terminology/value-sets` y
+ * `GET /terminology/value-sets/{id}/$expand`. El registro público las pide para
+ * su desplegable de departamentos (`VS_ADMINISTRATIVE_AREA`) antes de que exista una
+ * sesión, y el glosario y los formularios clínicos las piden ya dentro.
+ *
+ * Sin esta lista, el 401 del registro entraba por el camino reactivo de abajo
+ * y, como en esa pantalla no hay refresh token, terminaba en `endSession()`:
+ * limpiaba la sesión y navegaba a `/auth`. Abrir el registro expulsaba del
+ * registro.
+ *
+ * Van por prefijo y no por igualdad porque la expansión lleva el identificador
+ * del conjunto en el camino.
+ */
+const OPTIONAL_AUTH_PREFIXES: readonly string[] = ['/terminology/value-sets'];
+
+/**
  * Añade la credencial a cada petición y renueva la sesión **una sola vez**
  * cuando la API responde 401.
  *
@@ -89,6 +109,25 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   return next(withCredentials(request, session)).pipe(
     catchError((error: unknown) => {
       if (!isUnauthorized(error)) {
+        return throwError(() => error);
+      }
+
+      // Catálogo de credencial opcional: su 401 no dice nada de la sesión, así
+      // que sube tal cual. Quien lo pidió ya sabe qué hacer sin él —el registro
+      // ofrece reintentar y deja seguir sin departamento—, y renovar o cerrar
+      // la sesión por una lectura de catálogo sería confundir dos cosas.
+      if (isOptionalAuth(request.url)) {
+        return throwError(() => error);
+      }
+
+      // Nadie había iniciado sesión: este 401 no dice «se te venció», dice
+      // «este endpoint pide sesión». Expulsar a quien nunca entró es lo que
+      // hacía **imposible registrarse**: la pantalla de alta pide los
+      // departamentos a terminología —sin token, porque todavía no hay
+      // cuenta—, el 401 disparaba esto, y al visitante lo mandaba al login
+      // antes de que pudiera escribir su nombre. El error se propaga igual y
+      // cada pantalla decide qué hacer con él.
+      if (session.accessToken() === null && session.refreshToken() === null) {
         return throwError(() => error);
       }
 
@@ -155,6 +194,12 @@ function endSession(session: SessionStore, router: Router, error: unknown) {
 function isPublic(url: string): boolean {
   const path = pathOf(url);
   return PUBLIC_PATHS.includes(path) || path.startsWith('/public/');
+}
+
+/** Igual que `isPublic`, pero por prefijo y sin quitarle la credencial. */
+function isOptionalAuth(url: string): boolean {
+  const path = pathOf(url);
+  return OPTIONAL_AUTH_PREFIXES.some((prefijo) => path.startsWith(prefijo));
 }
 
 function pathOf(url: string): string {

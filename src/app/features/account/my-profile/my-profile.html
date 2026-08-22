@@ -26,6 +26,31 @@
       <h2 class="mi-perfil__titulo">Tus datos</h2>
 
       <app-view-state-host [state]="resumen()" (retry)="recargar()">
+        <!-- El 403 por identidad es el estado normal de un paciente nuevo, no un
+             error: se dice en neutro y con la salida a mano. Cualquier otro 403
+             sigue siendo un muro y se pinta como tal. -->
+        <ng-container vsh-forbidden>
+          @if (verificacionPendiente()) {
+            <app-alert
+              tone="info"
+              title="Tus datos aparecen acá cuando tu identidad esté verificada"
+            >
+              Es un trámite único: subís tu documento, lo revisamos y a partir de ahí ves acá tu
+              código de paciente y tus datos.
+              <div alert-actions>
+                <a app-link [routerLink]="rutaDeVerificacion">Verificar identidad</a>
+              </div>
+            </app-alert>
+          } @else {
+            <app-alert tone="error" title="No tenés acceso a esta sección">
+              {{
+                motivoDelMuro() ??
+                  'Tu rol o el propósito de uso declarado no alcanzan para ver este contenido.'
+              }}
+            </app-alert>
+          }
+        </ng-container>
+
         @if (datos(); as resumen) {
           <dl class="mi-perfil__datos">
             <div class="mi-perfil__dato">
@@ -54,14 +79,6 @@
               <dd>{{ estado() }}</dd>
             </div>
           </dl>
-
-          <!-- Los identificadores van visibles y al final: no le dicen nada a la
-             persona hasta que tiene que reportar un problema, y entonces son lo
-             único que sirve. -->
-          <p class="mi-perfil__ids">
-            Perfil <span class="mi-perfil__cifra">{{ resumen.patientProfileId }}</span> · Persona
-            <span class="mi-perfil__cifra">{{ resumen.personId }}</span>
-          </p>
         }
       </app-view-state-host>
     </app-card>
@@ -117,22 +134,26 @@
   </app-card>
 
   <!-- ─── Acceso ────────────────────────────────────────────────────────────
-       Organización y roles. Estaban sólo en el panel, que es otra pantalla, y
-       son la respuesta a «¿por qué no veo tal cosa?». -->
-  <app-card class="mi-perfil__bloque" variant="outlined" padding="lg">
+       Organización y roles. Son la respuesta a «¿por qué no veo tal cosa?»,
+       una pregunta que se hace quien trabaja acá. **A un paciente no se le
+       muestra** (F-22): no tiene secciones que le falten, y «Organización» y
+       «Roles» son vocabulario de sistema en su vista. Los roles van en
+       palabras: el código (`PATIENT`) sólo viaja en `data-role`. -->
+  @if (muestraElAcceso()) {
+  <app-card class="mi-perfil__bloque" variant="outlined" padding="lg" data-testid="mi-perfil-acceso">
     <h2 class="mi-perfil__titulo">Tu acceso</h2>
 
     <dl class="mi-perfil__datos mi-perfil__datos--una">
       <div class="mi-perfil__dato">
-        <dt>Organización activa</dt>
+        <dt>Organización</dt>
         <dd>{{ tenantName() ?? 'Sin organización activa' }}</dd>
       </div>
 
       <div class="mi-perfil__dato">
         <dt>Roles</dt>
         <dd class="mi-perfil__roles">
-          @for (rol of roles(); track rol) {
-            <app-badge variant="info" [value]="rol" />
+          @for (rol of rolesLegibles(); track rol.codigo) {
+            <app-badge variant="info" [value]="rol.etiqueta" [attr.data-role]="rol.codigo" />
           } @empty {
             <span class="mi-perfil__vacio">Sin roles declarados.</span>
           }
@@ -141,15 +162,14 @@
     </dl>
 
     <p class="mi-perfil__nota">
-      Los roles deciden qué secciones ves. Salen de tu token de acceso; para cambiarlos, pedíselo a
-      quien administra la organización.
+      Tu acceso decide qué secciones ves. Para cambiarlo, pedíselo a quien administra la
+      organización.
     </p>
   </app-card>
+  }
 
-  <!-- ─── Historial laboral ─────────────────────────────────────────────────
-       Punto 9 del reclamo: los hospitales y entidades donde ejerció. El bloque
-       decide por sí mismo si corresponde dibujarse — para una cuenta sin perfil
-       profesional no renderiza nada. El `id` es el destino del enlace
-       «Trayectoria laboral» de la portada del perfil profesional (R2-4). -->
-  <app-work-history id="trayectoria-laboral" class="mi-perfil__bloque" />
+  <!-- El historial laboral (punto 9 del reclamo) ya no va acá: vive dentro de
+       la pestaña Trayectoria de `app-practitioner-profile` (carril 05), con el
+       mismo formulario en modo "timeline". Montarlo también acá sería el mismo
+       dato dos veces con dos formas distintas. -->
 </div>

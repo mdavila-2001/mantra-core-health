@@ -174,6 +174,23 @@ describe('ViewStateHost', () => {
       expect(textoVisible()).not.toContain('permiso');
       expect(textoVisible()).toContain('No encontramos lo que buscás');
     });
+
+    it('cuando trae próxima acción con ruta, la salida se pinta como enlace', async () => {
+      await conEstado(notFound({ label: 'Volver al listado', route: '/pacientes' }));
+
+      const accion = root().querySelector<HTMLAnchorElement>('a[app-link]');
+      expect(accion?.textContent?.trim()).toBe('Volver al listado');
+      expect(accion?.getAttribute('href')).toBe('/pacientes');
+    });
+
+    it('le habla a una persona: «la dirección», no «el identificador»', async () => {
+      // «Identificador» es vocabulario de sistema; quien llegó por un enlace
+      // roto no tiene ningún identificador que verificar (barrido del 18/08/2026).
+      await conEstado(notFound());
+
+      expect(textoVisible()).toContain('Verificá la dirección');
+      expect(textoVisible()).not.toContain('identificador');
+    });
   });
 
   describe('S7 · dato viejo', () => {

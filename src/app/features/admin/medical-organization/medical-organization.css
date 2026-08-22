@@ -1,0 +1,155 @@
+/* ============================================================================
+    Consola de organización médica — CARRIL 13.
+
+    Sólo la ficha de ámbito, el selector, los avisos, la nota de cobertura y las
+    dos líneas de celda: todo lo demás lo ponen los organismos del banco. Ni un
+    color, ni un radio, ni un espaciado que no salga de los tokens
+    (`--sp-*`, `--fs-*`/`--lh-*`, `--r-*`, `--text-*`, `--bg-*`, `--border-*`,
+    `--st-*-bg`/`--st-*-fg`/`--st-*-bd`).
+    ========================================================================== */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+/* El selector de organización. Sólo se dibuja con más de una, así que no compite
+   con la ficha: es una línea, no un panel. */
+.organizacion-medica__selector {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.organizacion-medica__selector label {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.organizacion-medica__selector select {
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  font: inherit;
+}
+
+/* Ficha compacta de la práctica cuyo id gobierna las siete pestañas. Fondo
+   inset —no tarjeta— para que se lea como ámbito y no como una sección más. */
+.organizacion-medica__ambito {
+  padding: var(--sp-6);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.organizacion-medica__ambito--error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+  border-color: var(--st-error-bd);
+}
+
+.organizacion-medica__ambito--vacio {
+  color: var(--text-secondary);
+}
+
+.organizacion-medica__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-5);
+  margin: 0;
+}
+
+.organizacion-medica__datos dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.organizacion-medica__datos dd {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-primary);
+}
+
+/* Cifras tabulares en todo código: es lo que deja comparar dos filas de un
+   vistazo sin que los dígitos bailen. */
+.organizacion-medica__codigo {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Avisos de vencimiento y reposición. Tono de advertencia y no de error: son
+   cosas que hay que atender, no cosas que ya fallaron. */
+.organizacion-medica__avisos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-5);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-md);
+}
+
+.organizacion-medica__avisos p {
+  margin: 0;
+}
+
+.organizacion-medica__cargando {
+  color: var(--text-secondary);
+}
+
+/* Segunda línea de una celda: el dato que acompaña sin competir. */
+.organizacion-medica__nombre {
+  display: block;
+  font-weight: 500;
+}
+
+.organizacion-medica__secundario {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* La declaración de cobertura. Va al pie y en tono secundario: informa el
+   alcance, no compite con el contenido que sí se administra acá. */
+.organizacion-medica__cobertura {
+  padding: var(--sp-6);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.organizacion-medica__cobertura h2 {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.organizacion-medica__cobertura dl {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.organizacion-medica__cobertura dt {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.organizacion-medica__cobertura dd {
+  margin: var(--sp-1) 0 0;
+}

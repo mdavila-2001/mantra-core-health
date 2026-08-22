@@ -1,5 +1,6 @@
-/* Glosario. Una columna que se hojea: categorías, buscador, índice y entradas.
-   Sólo distribución — ni un color ni una tipografía que el sistema no tenga ya. */
+/* Glosario. Grilla de categorías en la landing, tabla al buscar o al entrar a
+   una categoría. Sólo distribución — ni un color ni una tipografía que el
+   sistema no tenga ya. */
 
 :host {
   display: block;
@@ -18,34 +19,6 @@
   color: var(--text-secondary);
 }
 
-/* --- Etiquetas ---------------------------------------------------------- */
-
-.glosario__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.glosario__chips--entrada {
-  margin-block-start: var(--sp-2);
-}
-
-/* El conteo va dentro del chip pero no compite con el nombre: es el dato de
-   apoyo que dice si vale la pena entrar. */
-.glosario__conteo {
-  margin-inline-start: var(--sp-1);
-  opacity: 0.7;
-  font-variant-numeric: tabular-nums;
-}
-
-.glosario__filtro {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
 /* --- Buscador ----------------------------------------------------------- */
 
 .glosario__buscador {
@@ -54,45 +27,64 @@
   max-inline-size: 32rem;
 }
 
-/* --- Índice alfabético -------------------------------------------------- */
+/* --- Grilla de categorías ------------------------------------------------ */
 
-.glosario__indice {
+.glosario__grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.glosario__categoria {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
 }
 
-.glosario__letra {
-  min-inline-size: 2rem;
-  padding: var(--sp-1) var(--sp-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: transparent;
+.glosario__categoria:hover,
+.glosario__categoria:focus-visible {
+  border-color: var(--border-strong);
+}
+
+.glosario__categoria-icono {
   color: var(--text-secondary);
-  font: inherit;
-  cursor: pointer;
+  inline-size: 2rem;
+  block-size: 2rem;
 }
 
-.glosario__letra:hover:not(:disabled) {
-  border-color: var(--border-strong);
-  color: var(--text-primary);
+.glosario__categoria-icono svg {
+  inline-size: 100%;
+  block-size: 100%;
 }
 
-.glosario__letra--activa {
-  border-color: var(--border-strong);
-  color: var(--text-primary);
+.glosario__categoria-nombre {
   font-weight: 600;
+  color: var(--text-primary);
 }
 
-/* Una letra sin entradas se muestra apagada y no se esconde: que la Ñ esté
-   vacía es información, no un motivo para que la fila cambie de largo. */
-.glosario__letra:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+.glosario__categoria-conteo {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
 }
 
-/* --- Entradas ----------------------------------------------------------- */
+/* --- Tabla de resultados -------------------------------------------------- */
+
+.glosario__filtro {
+  margin: 0;
+  color: var(--text-secondary);
+}
 
 .glosario__aviso {
   margin: 0;
@@ -100,51 +92,13 @@
   font-size: var(--fs-caption);
 }
 
-.glosario__grupo + .glosario__grupo {
-  margin-block-start: var(--sp-5);
-}
-
-.glosario__inicial {
-  margin: 0 0 var(--sp-3);
-  padding-block-end: var(--sp-1);
-  border-block-end: 1px solid var(--border-subtle);
-  font-size: var(--fs-h3);
-  font-weight: 700;
-}
-
-.glosario__entradas {
-  display: grid;
-  gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.glosario__termino {
-  margin: 0;
-  font-size: var(--fs-body);
-  font-weight: 600;
-}
-
-.glosario__definicion {
-  margin: var(--sp-2) 0 0;
-  max-inline-size: 68ch;
-  color: var(--text-secondary);
-}
-
-.glosario__definicion--ausente,
-.glosario__sin-traducir {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-  font-style: italic;
-}
-
-.glosario__sin-traducir {
-  margin: var(--sp-1) 0 0;
-}
-
-/* Botón que se lee como enlace: quitar un filtro es una acción menor y no
+/* Botón que se lee como enlace: volver a la grilla es una acción menor y no
    merece el peso visual de un botón del sistema. */
+.glosario__volver,
+.glosario__quitar {
+  margin: 0;
+}
+
 .glosario__quitar {
   padding: 0;
   border: 0;
@@ -155,14 +109,38 @@
   cursor: pointer;
 }
 
-/* --- Ayuda -------------------------------------------------------------- */
+/* --- Celdas de la tabla --------------------------------------------------- */
 
-.glosario__ayuda {
-  display: block;
-  max-inline-size: 68ch;
+.glosario__termino-enlace {
+  font-weight: 600;
 }
 
-.glosario__ayuda-texto {
-  margin: 0;
+.glosario__marca-sin-traducir {
+  display: block;
+  margin-block-start: var(--sp-1);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  font-style: italic;
+}
+
+.glosario__definicion-breve {
   color: var(--text-secondary);
+}
+
+.glosario__sin-datos {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.glosario__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.glosario__chips--fila {
+  gap: var(--sp-1);
 }

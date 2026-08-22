@@ -6,9 +6,12 @@ import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../../../../core/auth/session.store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import { CASOS_RECETA_DEMO } from '../demo-presets';
 import {
   MedicationBlock,
   TARGET_MEDICAMENTO,
+  TARGET_UNIDAD,
+  TARGET_VIA,
   type RecetaEnFicha,
 } from './medication-block';
 
@@ -39,6 +42,12 @@ const BORRADOR: RecetaEnFicha = {
 
 const FIRMADA: RecetaEnFicha = { ...BORRADOR, id: 'rx-2', estado: 'Firmada', firmada: true };
 
+/**
+ * El medicamento tal como sale del buscador: uuid a persistir, denominación a
+ * mostrar y el código ATC como segunda línea.
+ */
+const VANCOMICINA = { value: 'med-vanco', label: 'Vancomycin', hint: 'J01XA01' };
+
 const CATALOGO = {
   code: 'medication',
   name: 'Medicamento',
@@ -46,7 +55,9 @@ const CATALOGO = {
   valueSetId: 'vs-1',
   allowCustomValue: false,
   options: [
-    { conceptId: 'med-amoxi', code: 'AMOXI', display: 'Amoxicilina', ordinal: 1 },
+    { conceptId: 'med-amoxi', code: 'J01CA04', display: 'Amoxicilina', ordinal: 1 },
+    { conceptId: 'med-vanco', code: 'J01XA01', display: 'Vancomicina', ordinal: 2 },
+    { conceptId: 'med-losar', code: 'C09CA01', display: 'Losartán', ordinal: 3 },
   ],
 };
 
@@ -114,6 +125,12 @@ describe('MedicationBlock', () => {
   afterEach(() => {
     for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
       opcional.flush(CATALOGO_OPCIONAL);
+    }
+    // El bloque pide sus favoritos al montarse (v4.1.7). Es una lectura de
+    // conveniencia que no condiciona nada del alta, así que se drena vacía en
+    // los casos que no la afirman; el que sí la ejercita la responde antes.
+    for (const favoritos of http.match((r) => r.url === '/prescription-favorites')) {
+      favoritos.flush([]);
     }
     http.verify();
   });
@@ -221,6 +238,145 @@ describe('MedicationBlock', () => {
     req.flush(RESPUESTA);
   });
 
+  /* ── v4.1.6 · la indicación diagnóstica ───────────────────────────────── */
+
+  it('manda el diagnóstico elegido como indicación de la receta', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    señal<string | null>('indicacion').set('cond-1');
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    expect((req.request.body as Record<string, unknown>)['indicationConditionId']).toBe('cond-1');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('sin diagnóstico elegido la clave no viaja: la receta sintomática es legítima', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    expect(Object.keys(req.request.body as object)).not.toContain('indicationConditionId');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('ofrece los diagnósticos de la ficha, con la opción vacía primero', () => {
+    responderCatalogo();
+
+    fixture.componentRef.setInput('diagnosticos', [
+      { id: 'cond-1', etiqueta: 'Faringitis aguda' },
+      { id: 'cond-2', etiqueta: 'Hipertensión · Resuelto' },
+    ]);
+    fixture.detectChanges();
+
+    const opciones = interno<() => readonly { value: string | null; label: string }[]>(
+      'opcionesDeIndicacion',
+    )();
+    expect(opciones[0].value).toBeNull();
+    expect(opciones.map((o) => o.value)).toEqual([null, 'cond-1', 'cond-2']);
+  });
+
+  /* ── v4.1.7 · los favoritos de prescripción ───────────────────────────── */
+
+  it('aplicar un favorito rellena el formulario sin prescribir nada', async () => {
+    responderCatalogo();
+    http.expectOne('/prescription-favorites').flush([
+      {
+        id: 'fav-1',
+        name: 'ATB post extracción',
+        medicationConceptId: 'med-amoxi',
+        doseText: '500 mg',
+        frequencyText: 'cada 8 horas',
+        patientInstructionsText: 'Con las comidas',
+      },
+    ]);
+
+    await interno<(id: string | null) => Promise<void>>('aplicarFavorito')('fav-1');
+
+    expect(señal<string | null>('medicamento')()).toBe('med-amoxi');
+    expect(señal<string>('dosis')()).toBe('500 mg');
+    expect(señal<string>('frecuencia')()).toBe('cada 8 horas');
+    expect(señal<string>('indicacionesPaciente')()).toBe('Con las comidas');
+    // Rellenar no es prescribir: no salió ninguna petición de alta.
+    http.expectNone('/clinical/medication-requests');
+  });
+
+  it('no pisa lo ya cargado sin confirmarlo', async () => {
+    responderCatalogo();
+    http.expectOne('/prescription-favorites').flush([
+      { id: 'fav-1', name: 'ATB post extracción', medicationConceptId: 'med-amoxi' },
+    ]);
+
+    señal<string>('dosis').set('lo que venía escribiendo');
+    let preguntó = false;
+    TestBed.inject(DialogService).confirm = () => {
+      preguntó = true;
+      return Promise.resolve(false);
+    };
+
+    await interno<(id: string | null) => Promise<void>>('aplicarFavorito')('fav-1');
+
+    expect(preguntó).toBe(true);
+    expect(señal<string>('dosis')()).toBe('lo que venía escribiendo');
+    expect(señal<string | null>('medicamento')()).toBeNull();
+  });
+
+  it('guardar como favorito manda el rótulo y lo cargado', async () => {
+    responderCatalogo();
+    http.expectOne('/prescription-favorites').flush([]);
+
+    señal<string>('medicamento').set('med-amoxi');
+    señal<string>('dosis').set('500 mg');
+    TestBed.inject(DialogService).confirmWithReason = () =>
+      Promise.resolve('ATB post extracción');
+
+    await interno<() => Promise<void>>('guardarFavorito')();
+
+    const req = http.expectOne(
+      (r) => r.url === '/prescription-favorites' && r.method === 'POST',
+    );
+    const body = req.request.body as Record<string, unknown>;
+    expect(body['name']).toBe('ATB post extracción');
+    expect(body['medicationConceptId']).toBe('med-amoxi');
+    expect(body['doseText']).toBe('500 mg');
+
+    req.flush({ id: 'fav-9', name: 'ATB post extracción', medicationConceptId: 'med-amoxi' });
+  });
+
+  it('un rótulo repetido se explica y no se traga', async () => {
+    responderCatalogo();
+    http.expectOne('/prescription-favorites').flush([]);
+
+    señal<string>('medicamento').set('med-amoxi');
+    TestBed.inject(DialogService).confirmWithReason = () =>
+      Promise.resolve('ATB post extracción');
+    await interno<() => Promise<void>>('guardarFavorito')();
+
+    http
+      .expectOne((r) => r.url === '/prescription-favorites' && r.method === 'POST')
+      .flush(
+        { code: 'CONFLICT', message: 'Ya tenés un favorito con ese nombre' },
+        { status: 409, statusText: 'Conflict' },
+      );
+
+    expect(señal<string | null>('errorDelFavorito')()).toContain('Probá con otro');
+  });
+
+  it('una cuenta sin perfil profesional no ve la sección ni un error', () => {
+    responderCatalogo();
+    http
+      .expectOne('/prescription-favorites')
+      .flush({ code: 'FORBIDDEN', message: 'sin perfil' }, { status: 403, statusText: 'Forbidden' });
+
+    expect(interno<() => boolean>('hayFavoritos')()).toBe(false);
+    expect(señal<string | null>('errorDelFavorito')()).toBeNull();
+  });
+
   it('manda dosis, frecuencia y cantidad cuando se cargaron', async () => {
     responderCatalogo();
 
@@ -306,6 +462,151 @@ describe('MedicationBlock', () => {
     expect(releido).toBe(1);
     expect(interno<() => string | null>('medicamento')()).toBeNull();
     expect(interno<() => string>('dosis')()).toBe('');
+    expect(interno<() => string>('indicacionesPaciente')()).toBe('');
+  });
+
+  it('manda inicio y fin de vigencia como fechas ISO cuando están configurados', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    señal<Date>('validFrom').set(new Date('2026-08-20T10:00:00.000Z'));
+    señal<Date>('validTo').set(new Date('2026-08-27T10:00:00.000Z'));
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    const body = req.request.body as Record<string, unknown>;
+    expect(body['validFrom']).toBe('2026-08-20T10:00:00.000Z');
+    expect(body['validTo']).toBe('2026-08-27T10:00:00.000Z');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('las indicaciones al paciente viajan separadas de la dosis (v4.1.3)', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    señal<string>('dosis').set('500 mg');
+    señal<string>('indicacionesPaciente').set('  Tomar con las comidas  ');
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    const body = req.request.body as Record<string, unknown>;
+    // La posología queda limpia —es lo que farmacia lee para dispensar—:
+    // concatenarle las indicaciones fue el interino que v4.1.3 retiró.
+    expect(body['doseText']).toBe('500 mg');
+    expect(body['patientInstructionsText']).toBe('Tomar con las comidas');
+
+    req.flush(RESPUESTA);
+  });
+
+  /* ---- pauta, duración y cantidad sugerida -------------------------------- */
+
+  it('la pauta sugiere la cantidad sin pisar lo tecleado a mano', () => {
+    responderCatalogo();
+
+    interno<(p: string) => void>('fijarFrecuenciaRapida')('Cada 8 horas');
+    interno<(d: number | null) => void>('fijarDuracion')(7);
+    expect(String(señal<string | number | null>('cantidad')())).toBe('21');
+
+    // Recalcula sobre su propia sugerencia…
+    interno<(d: number | null) => void>('fijarDuracion')(10);
+    expect(String(señal<string | number | null>('cantidad')())).toBe('30');
+
+    // …pero jamás sobre lo que quien receta tecleó.
+    señal<string | number | null>('cantidad').set('12');
+    interno<(d: number | null) => void>('fijarDuracion')(3);
+    expect(String(señal<string | number | null>('cantidad')())).toBe('12');
+  });
+
+  it('«Crónico» no aparece elegido al abrir, y al elegirlo borra el fin de vigencia', () => {
+    responderCatalogo();
+
+    // Sin elección no hay estado: `null === null` no es haber elegido crónico.
+    expect(interno<() => boolean>('esCronico')()).toBe(false);
+
+    interno<(d: number | null) => void>('fijarDuracion')(null);
+    expect(interno<() => boolean>('esCronico')()).toBe(true);
+    expect(interno<() => Date | null>('validTo')()).toBeNull();
+  });
+
+  /* ---- los casos de demostración ------------------------------------------ */
+
+  /**
+   * Lo que estas dos fijan: el caso resuelve vía y unidad a conceptId por
+   * código EXACTO —escribir el código en la señal fue el 400 de la primera
+   * versión— y SELECCIONA el medicamento buscado —buscar sin elegir dejaba
+   * `puedeRecetar()` en falso y el caso no era prescribible—. Y lo que el
+   * catálogo no tiene queda sin elegir, jamás «el primer resultado».
+   */
+  it('un caso de demostración resuelve los códigos y selecciona el medicamento', () => {
+    fixture.detectChanges();
+    http.expectOne((r) => r.params.get('target') === TARGET_MEDICAMENTO).flush(CATALOGO);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.params.get('target') === TARGET_VIA)
+      .flush({
+        ...CATALOGO,
+        options: [{ conceptId: 'via-oral', code: 'ROUTE_ORAL', display: 'Oral', ordinal: 1 }],
+      });
+    http
+      .expectOne((r) => r.params.get('target') === TARGET_UNIDAD)
+      .flush({
+        ...CATALOGO,
+        options: [{ conceptId: 'u-tab', code: 'UNIT_{tablet}', display: 'Tablet', ordinal: 1 }],
+      });
+
+    // Amoxicilina 500 mg · cada 8 horas · oral · 21 comprimidos · 7 días.
+    const caso = CASOS_RECETA_DEMO[0];
+    componente.aplicarCasoDemo(caso);
+
+    const busqueda = http.expectOne(
+      (r) => r.url === '/terminology/concepts' && r.params.get('q') === caso.medicamentoQuery,
+    );
+    busqueda.flush({
+      items: [
+        {
+          conceptId: 'med-amoxi',
+          code: 'J01CA04',
+          display: 'Amoxicilina',
+          codeSystemVersionId: 'csv-vademecum',
+        },
+      ],
+      count: 1,
+      limit: 20,
+    });
+    // Elegirlo lee la ficha, exactamente como una selección manual.
+    http.expectOne('/terminology/concepts/med-amoxi').flush({
+      conceptId: 'med-amoxi',
+      code: 'J01CA04',
+      display: 'Amoxicilina',
+      codeSystemVersionId: 'csv-vademecum',
+      properties: {},
+    });
+
+    expect(interno<() => string | null>('medicamento')()).toBe('med-amoxi');
+    expect(interno<() => string | null>('via')()).toBe('via-oral');
+    expect(interno<() => string | null>('unidad')()).toBe('u-tab');
+    expect(interno<() => string>('dosis')()).toBe(caso.dosis);
+    expect(interno<() => string>('frecuencia')()).toBe(caso.frecuencia);
+    expect(String(señal<string | number | null>('cantidad')())).toBe(String(caso.cantidad));
+    expect(interno<() => string>('indicacionesPaciente')()).toBe(caso.indicaciones);
+    expect(interno<() => Date | null>('validFrom')()).not.toBeNull();
+    expect(interno<() => Date | null>('validTo')()).not.toBeNull();
+    expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
+  });
+
+  it('si la búsqueda no trae el medicamento pedido, queda sin elegir', () => {
+    responderCatalogo();
+
+    componente.aplicarCasoDemo(CASOS_RECETA_DEMO[0]);
+
+    const busqueda = http.expectOne(
+      (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'Amoxicilina',
+    );
+    busqueda.flush({ items: [], count: 0, limit: 20 });
+
+    expect(interno<() => string | null>('medicamento')()).toBeNull();
+    expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
   });
 
   /* ---- el chequeo de interacciones ---------------------------------------- */
@@ -333,9 +634,7 @@ describe('MedicationBlock', () => {
     señal<string>('medicamento').set('med-amoxi');
     const prescribiendo = interno<() => Promise<void>>('recetar')();
 
-    http
-      .expectOne('/cds/check-interactions')
-      .flush({ alerts: [], count: 0 });
+    http.expectOne('/cds/check-interactions').flush({ alerts: [], count: 0 });
     await prescribiendo;
 
     http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
@@ -391,10 +690,12 @@ describe('MedicationBlock', () => {
     señal<string>('medicamento').set('med-amoxi');
     const prescribiendo = interno<() => Promise<void>>('recetar')();
 
-    http.expectOne('/cds/check-interactions').flush(
-      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '' },
-      { status: 500, statusText: 'Internal Server Error' },
-    );
+    http
+      .expectOne('/cds/check-interactions')
+      .flush(
+        { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '' },
+        { status: 500, statusText: 'Internal Server Error' },
+      );
     await prescribiendo;
 
     http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
@@ -473,9 +774,7 @@ describe('MedicationBlock', () => {
     );
     fixture.detectChanges();
 
-    expect(interno<() => string | null>('avisoDePrecondicion')()).toContain(
-      'necesita tu firma',
-    );
+    expect(interno<() => string | null>('avisoDePrecondicion')()).toContain('necesita tu firma');
     // Y no se pinta además en rojo: sería decir dos veces lo mismo con dos
     // tonos que se contradicen.
     expect(interno<() => string | null>('errorDeLaReceta')()).toBeNull();
@@ -510,15 +809,41 @@ describe('MedicationBlock', () => {
     expect(interno<() => string | null>('errorDeLaReceta')()).toContain('Recargá el expediente');
   });
 
-  it('una receta emitida no ofrece acciones: es inmutable', () => {
+  it('una receta emitida no ofrece firmar ni emitir: es inmutable', () => {
     fixture.componentRef.setInput('recetas', [
       { ...BORRADOR, firmada: true, emitida: true, estado: 'Emitida' },
     ]);
     responderCatalogo();
     fixture.detectChanges();
 
-    const acciones = (fixture.nativeElement as HTMLElement).querySelector('.receta__acciones');
-    expect(acciones).toBeNull();
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).not.toContain('Firmar');
+    expect(texto).not.toContain('Emitir');
+  });
+
+  /**
+   * La descarga es lo único que una receta emitida sí ofrece (corrección #16):
+   * es justamente el momento en que se pide en papel.
+   */
+  it('la receta emitida sí se puede descargar, y avisa cuál', () => {
+    fixture.componentRef.setInput('recetas', [
+      { ...BORRADOR, firmada: true, emitida: true, estado: 'Emitida' },
+    ]);
+    responderCatalogo();
+    fixture.detectChanges();
+
+    const pedidas: { id: string }[] = [];
+    fixture.componentInstance.descargar.subscribe((receta) => pedidas.push(receta));
+
+    const boton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="receta-descargar"]',
+    );
+    expect(boton).not.toBeNull();
+    boton?.click();
+
+    // El bloque no arma el documento: dice cuál se pidió y el expediente lo
+    // construye desde los datos persistidos.
+    expect(pedidas.map((receta) => receta.id)).toEqual([BORRADOR.id]);
   });
 
   it('el sello distingue las tres etapas del ciclo', () => {
@@ -528,5 +853,163 @@ describe('MedicationBlock', () => {
     expect(sello(BORRADOR)).toBe('pending');
     expect(sello(FIRMADA)).toBe('in-review');
     expect(sello({ ...FIRMADA, emitida: true })).toBe('approved');
+  });
+
+  /* ---- elegir del catálogo: buscar y componer la posología ---------------- */
+
+  /** Responde la ficha del concepto con las propiedades que se le pasen. */
+  function responderFicha(properties: Record<string, unknown>): void {
+    const req = http.expectOne(`/terminology/concepts/${VANCOMICINA.value}`);
+    req.flush({
+      conceptId: VANCOMICINA.value,
+      code: 'J01XA01',
+      display: 'Vancomycin',
+      codeSystemVersionId: 'csv-vademecum',
+      properties,
+    });
+  }
+
+  it('busca dentro del vademécum, sin pedirle nada a la terminología', () => {
+    // Antes preguntaba a `searchConcepts` sin acotar y devolvía el mismo
+    // medicamento repetido —vademécum en inglés, catálogo de prescripción y
+    // glosario— más conceptos que no son medicamentos. Ahora filtra el catálogo
+    // que la pantalla ya cargó: lo que se ofrece y lo que el backend acepta son
+    // lo mismo, y no hay una petición por tecla.
+    responderCatalogo();
+
+    interno<(texto: string) => void>('buscarMedicamento')('vanco');
+
+    const opciones =
+      interno<() => readonly { value: string; label: string; hint?: string }[]>(
+        'opcionesDeMedicamento',
+      )();
+    expect(opciones).toEqual([{ value: 'med-vanco', label: 'Vancomicina', hint: 'J01XA01' }]);
+    // Ni una petición: si saliera, `http.verify()` la denunciaría.
+  });
+
+  it('encuentra sin tilde lo que el catálogo escribe con tilde', () => {
+    // Un médico teclea «losartan»; el catálogo dice «Losartán». Exigir el
+    // acento al escribir es exigir de más.
+    responderCatalogo();
+
+    interno<(texto: string) => void>('buscarMedicamento')('losartan');
+
+    expect(
+      interno<() => readonly { label: string }[]>('opcionesDeMedicamento')().map((o) => o.label),
+    ).toEqual(['Losartán']);
+  });
+
+  it('también busca por código ATC', () => {
+    responderCatalogo();
+
+    interno<(texto: string) => void>('buscarMedicamento')('J01CA04');
+
+    expect(
+      interno<() => readonly { label: string }[]>('opcionesDeMedicamento')().map((o) => o.label),
+    ).toEqual(['Amoxicilina']);
+  });
+
+  it('sin texto ofrece el catálogo entero, no una lista vacía', () => {
+    responderCatalogo();
+
+    interno<(texto: string) => void>('buscarMedicamento')('');
+
+    expect(interno<() => readonly unknown[]>('opcionesDeMedicamento')()).toHaveLength(3);
+  });
+
+  it('al elegir, lee la ficha y ofrece presentaciones y concentraciones', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({
+      dose_forms: ['oral capsule', 'oral solution'],
+      strengths: ['500 mg', '1 g'],
+      // Ruido del catálogo que esta pantalla no ofrece: no debe estorbar.
+      rxnorm_cui: '11124',
+    });
+
+    expect(interno<() => readonly { value: string }[]>('presentaciones')()).toEqual([
+      { value: 'oral capsule', label: 'oral capsule' },
+      { value: 'oral solution', label: 'oral solution' },
+    ]);
+    expect(interno<() => readonly { value: string }[]>('concentraciones')()).toEqual([
+      { value: '500 mg', label: '500 mg' },
+      { value: '1 g', label: '1 g' },
+    ]);
+    expect(interno<() => boolean>('hayPosologia')()).toBe(true);
+  });
+
+  it('compone doseText con lo elegido: concentración primero', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set(VANCOMICINA.value);
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ dose_forms: ['oral capsule'], strengths: ['1 g'] });
+
+    señal<string>('concentracion').set('1 g');
+    señal<string>('presentacion').set('oral capsule');
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    // El modelo no tiene columna para presentación ni concentración: viajan
+    // compuestas en el texto de posología que el contrato sí declara.
+    expect((req.request.body as Record<string, unknown>)['doseText']).toBe('1 g · oral capsule');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('un medicamento sin propiedades declaradas cae al texto libre de siempre', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set(VANCOMICINA.value);
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ rxnorm_cui: '11124' });
+
+    expect(interno<() => boolean>('hayPosologia')()).toBe(false);
+
+    señal<string>('dosis').set('500 mg');
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    expect((req.request.body as Record<string, unknown>)['doseText']).toBe('500 mg');
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * La ficha puede fallar —o traer una forma que esta pantalla no sabe leer— y
+   * eso no puede impedir prescribir: el medicamento ya está elegido y es lo
+   * único obligatorio. Se cae al texto libre, que es como funcionaba la
+   * pantalla entera antes de que el catálogo publicara presentaciones.
+   */
+  it('si la ficha falla, el medicamento sigue siendo prescribible', () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set(VANCOMICINA.value);
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    http
+      .expectOne(`/terminology/concepts/${VANCOMICINA.value}`)
+      .flush(
+        { code: 'NOT_FOUND', message: 'Concepto no encontrado', timestamp: '', path: '' },
+        { status: 404, statusText: 'Not Found' },
+      );
+
+    expect(interno<() => boolean>('hayPosologia')()).toBe(false);
+    expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
+  });
+
+  it('cambiar de medicamento descarta la posología del anterior', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ strengths: ['1 g'] });
+    señal<string>('concentracion').set('1 g');
+
+    // Borrar la elección: el combobox emite `null`.
+    interno<(o: unknown) => void>('onMedicamentoElegido')(null);
+
+    expect(interno<() => readonly unknown[]>('concentraciones')()).toEqual([]);
+    expect(interno<() => string | null>('concentracion')()).toBeNull();
+    expect(interno<() => boolean>('hayPosologia')()).toBe(false);
   });
 });

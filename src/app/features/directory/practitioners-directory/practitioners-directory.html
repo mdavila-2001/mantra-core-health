@@ -10,7 +10,7 @@
   class="guia__filtro"
   [(value)]="filtro"
   label="Buscar en la guía"
-  placeholder="Nombre, especialidad o código"
+  placeholder="Nombre o especialidad"
 />
 
 <app-view-state-host [state]="estado()" (retry)="recargar()">
@@ -25,8 +25,7 @@
     <!-- Hay guía, pero el filtro no dejó a nadie: es distinto de no haber
          guía, y el estado vacío tiene que decir cuál de los dos es. -->
     <p class="guia__vacio">
-      Ningún profesional coincide con «{{ filtro() }}». Probá con otro nombre o con la
-      especialidad.
+      Ningún profesional coincide con «{{ filtro() }}». Probá con otro nombre o con la especialidad.
     </p>
   } @else {
     <p class="guia__cuenta">

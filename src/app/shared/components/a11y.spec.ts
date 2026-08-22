@@ -1,4 +1,5 @@
 import { Component, signal } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
@@ -24,6 +25,7 @@ import { RadioGroup } from './molecules/radio-group/radio-group';
 import { Tab } from './molecules/tabs/tab/tab';
 import { Tabs } from './molecules/tabs/tabs';
 import { DataTable } from './organisms/data-table/data-table';
+import { PaginatedForm } from './organisms/paginated-form/paginated-form';
 import { StatusSeal } from './organisms/status-seal/status-seal';
 
 /**
@@ -242,6 +244,34 @@ class Tabla {
  * el nombre de la prueba ya dice cuál es y no hay que leer el índice.
  */
 
+@Component({
+  imports: [PaginatedForm],
+  template: `<app-paginated-form [paginas]="paginas" [form]="form" label="Crear cuenta" />`,
+})
+class FormularioPorPartes {
+  readonly form = new FormGroup({
+    documento: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    correo: new FormControl('', { nonNullable: true }),
+  });
+  readonly paginas = [
+    {
+      titulo: 'Identidad',
+      hint: 'Los datos de tu documento.',
+      campos: [
+        { key: 'documento', label: 'Documento', control: 'text' as const, required: true },
+        { key: 'correo', label: 'Correo', control: 'email' as const },
+      ],
+    },
+    { titulo: 'Acceso', campos: [] },
+  ];
+
+  constructor() {
+    // Con el campo tocado e inválido: es el estado con las tres asociaciones
+    // ARIA vivas (nombre, descripción y error), que es donde se rompen.
+    this.form.controls.documento.markAsTouched();
+  }
+}
+
 const CASOS: readonly { nombre: string; host: unknown }[] = [
   { nombre: 'campo con error, ayuda y obligatoriedad', host: CampoConError },
   { nombre: 'campo de texto largo con contador', host: CampoDeTexto },
@@ -257,6 +287,7 @@ const CASOS: readonly { nombre: string; host: unknown }[] = [
   { nombre: 'confirmación destructiva', host: Confirmacion },
   { nombre: 'tabla con datos y una columna ordenada', host: Tabla },
   { nombre: 'sello de estado con detalle', host: SelloDeEstado },
+  { nombre: 'formulario por partes, con un campo en error', host: FormularioPorPartes },
 ];
 
 describe('Accesibilidad del sistema de diseño (axe)', () => {

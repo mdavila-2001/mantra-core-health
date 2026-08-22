@@ -1,0 +1,247 @@
+<app-page-header
+  title="Moderación"
+  subtitle="La cola de contenido reportado y las apelaciones presentadas."
+/>
+
+<nav class="moderacion__pestanias" aria-label="Secciones de moderación">
+  <button
+    app-button
+    data-testid="moderation-queue-tab"
+    variant="ghost"
+    [attr.aria-pressed]="pestania() === 'cola'"
+    (clicked)="verCola()"
+  >
+    Cola
+  </button>
+  <button
+    app-button
+    data-testid="moderation-appeals-tab"
+    variant="ghost"
+    [attr.aria-pressed]="pestania() === 'apelaciones'"
+    (clicked)="verApelaciones()"
+  >
+    Apelaciones abiertas
+  </button>
+</nav>
+
+@if (error(); as mensaje) {
+  <app-alert tone="error" class="moderacion__alerta">{{ mensaje }}</app-alert>
+}
+@if (aviso(); as mensaje) {
+  <app-alert tone="success" class="moderacion__alerta">{{ mensaje }}</app-alert>
+}
+
+@if (pestania() === 'cola') {
+  <section class="moderacion__filtros" aria-label="Filtros de la cola">
+    @for (estado of estados; track estado.code) {
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        [attr.aria-pressed]="estaFiltrado(estado.code)"
+        (clicked)="alternarEstado(estado.code)"
+      >
+        {{ estado.label }}
+      </button>
+    }
+    <!-- La antigüedad es el filtro con el que se trabaja de verdad: «qué lleva
+         más de N horas sin decisión». -->
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      [attr.aria-pressed]="filtroHoras() === 24"
+      (clicked)="alternarAntiguedad(24)"
+    >
+      Más de 24 h
+    </button>
+  </section>
+}
+
+@if (!cargoAlgunaVez() && cargando()) {
+  <p class="moderacion__cargando" role="status">Cargando…</p>
+} @else if (vacio()) {
+  <app-empty-state
+    [title]="pestania() === 'cola' ? 'No hay nada en la cola' : 'No hay apelaciones abiertas'"
+    [description]="
+      pestania() === 'cola'
+        ? 'Con los filtros elegidos no quedó contenido esperando decisión.'
+        : 'Cuando alguien apele una decisión, va a aparecer acá.'
+    "
+    variant="empty"
+  />
+} @else if (pestania() === 'cola') {
+  <ul class="moderacion__lista">
+    @for (entrada of entradas(); track entrada.id) {
+      <li [attr.data-testid]="'moderation-queue-row-' + entrada.contentRefId">
+        <app-card variant="outlined" padding="md">
+          <header class="entrada__cabecera">
+            <!-- Se muestra el identificador del contenido y no su texto: la cola
+                 trae la referencia, no la publicación. Resolverla sería una
+                 lectura por fila, y el endpoint puede negarla por visibilidad. -->
+            <p class="entrada__ref">Contenido {{ entrada.contentRefId.slice(0, 8) }}</p>
+            @if (entrada.reportCount > 1) {
+              <app-badge variant="warning" size="sm">
+                {{ entrada.reportCount }} reportes
+              </app-badge>
+            }
+            @if (entrada.queuedAt; as fecha) {
+              <p class="entrada__fecha">
+                En cola desde
+                <time [attr.datetime]="fecha.toISOString()">
+                  {{ fecha | date: 'd MMM y, HH:mm' }}
+                </time>
+              </p>
+            }
+          </header>
+
+          @if (entrada.report; as reporte) {
+            <p class="entrada__motivo">
+              <!-- El texto lo escribió quien reportó: puede mencionar a
+                   terceros, y por eso esta lectura exige rol de moderación. -->
+              {{ reporte.detailText || 'Reportado sin detalle escrito.' }}
+            </p>
+          } @else {
+            <p class="entrada__motivo entrada__motivo--sin">
+              Esta entrada no nació de un reporte de usuario.
+            </p>
+          }
+
+          @if (decidiendo() === entrada.id) {
+            <div class="decision">
+              <div class="decision__opciones" role="group" aria-label="Decisión">
+                @for (opcion of decisiones; track opcion.code) {
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    [attr.aria-pressed]="decisionElegida() === opcion.code"
+                    (clicked)="elegirDecision(opcion.code)"
+                  >
+                    {{ opcion.label }}
+                  </button>
+                }
+              </div>
+
+              <app-form-field
+                label="Motivo"
+                hint="Es lo que va a leer quien apele, y lo que queda para auditar."
+              >
+                <app-textarea
+                  data-testid="moderation-rationale"
+                  [(value)]="motivo"
+                  [rows]="3"
+                  [autoResize]="true"
+                  [disabled]="guardando()"
+                  placeholder="Por qué se toma esta decisión"
+                />
+              </app-form-field>
+
+              <div class="decision__acciones">
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  [disabled]="!puedeConfirmar()"
+                  (clicked)="confirmarDecision()"
+                >
+                  {{ guardando() ? 'Guardando…' : 'Confirmar decisión' }}
+                </button>
+                <button app-button variant="ghost" size="sm" (clicked)="cancelar()">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          } @else {
+            <button app-button variant="secondary" size="sm" (clicked)="decidir(entrada.id)">
+              Decidir
+            </button>
+          }
+        </app-card>
+      </li>
+    }
+  </ul>
+} @else {
+  <ul class="moderacion__lista">
+    @for (apelacion of apelaciones(); track apelacion.id) {
+      <li [attr.data-testid]="'moderation-appeal-row-' + apelacion.id">
+        <app-card variant="outlined" padding="md">
+          <header class="entrada__cabecera">
+            <p class="entrada__ref">
+              Apelación de {{ apelacion.appellantProfileId.slice(0, 8) }}
+            </p>
+            <p class="entrada__fecha">
+              <time [attr.datetime]="apelacion.createdAt.toISOString()">
+                {{ apelacion.createdAt | date: 'd MMM y, HH:mm' }}
+              </time>
+            </p>
+          </header>
+
+          <p class="entrada__motivo">{{ apelacion.reasonText }}</p>
+
+          @if (apelacion.decision; as decision) {
+            <p class="entrada__decision">
+              <!-- Resolver una apelación sin leer qué se decidió y por qué es
+                   resolverla a ciegas. Por eso la decisión viaja embebida. -->
+              Se decidió:
+              {{ decision.rationaleText || 'sin motivo registrado (decisión anterior al requisito)' }}
+            </p>
+          }
+
+          @if (resolviendo() === apelacion.id) {
+            <div class="decision">
+              <div class="decision__opciones" role="group" aria-label="Resolución">
+                @for (opcion of resoluciones; track opcion.code) {
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    [attr.aria-pressed]="resolucionElegida() === opcion.code"
+                    (clicked)="elegirResolucion(opcion.code)"
+                  >
+                    {{ opcion.label }}
+                  </button>
+                }
+              </div>
+
+              <!-- No hay campo de motivo: `moderation_appeals` no tiene columna
+                   donde guardarlo. Está declarado como bloqueo de esquema en el
+                   carril; pedirlo acá sería pedir algo que se descarta. -->
+              <p class="decision__nota">
+                Revertir deja constancia de que la apelación prosperó; no
+                restituye el contenido ni anula el strike.
+              </p>
+
+              <div class="decision__acciones">
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  [disabled]="resolucionElegida() === null || guardando()"
+                  (clicked)="confirmarResolucion()"
+                >
+                  {{ guardando() ? 'Guardando…' : 'Confirmar resolución' }}
+                </button>
+                <button app-button variant="ghost" size="sm" (clicked)="cancelar()">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          } @else {
+            <button app-button variant="secondary" size="sm" (clicked)="resolver(apelacion.id)">
+              Resolver
+            </button>
+          }
+        </app-card>
+      </li>
+    }
+  </ul>
+}
+
+@if (hayMas()) {
+  <div class="moderacion__mas">
+    <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
+      Ver más
+    </button>
+  </div>
+}

@@ -54,6 +54,16 @@ describe('Dashboard', () => {
   });
 
   afterEach(() => {
+    // TJ-1 · el aviso del alta consulta el avance del profesional. Es
+    // accesorio: si no responde, el panel se pinta igual y el banner no
+    // aparece. Se descarta acá para que cada prueba siga hablando de lo suyo,
+    // y no de una lectura que no le importa. Su propia conducta la fijan las
+    // pruebas del banner, más abajo.
+    for (const pedido of http.match((request) =>
+      request.url.endsWith('/practitioners/me/onboarding'),
+    )) {
+      pedido.flush(null, { status: 422, statusText: 'Unprocessable Entity' });
+    }
     http.verify();
   });
 
@@ -73,9 +83,7 @@ describe('Dashboard', () => {
 
     // El historial de verificación se pide siempre, con o sin rol. Se responde
     // acá para que cada prueba hable de lo suyo y no de esta petición.
-    http
-      .expectOne((request) => request.url.endsWith('/identity/me/verification-cases'))
-      .flush([]);
+    http.expectOne((request) => request.url.endsWith('/identity/me/verification-cases')).flush([]);
     // Y el sello de ese trámite sale de terminología, por el mismo motivo.
     resolverEstadosDeCaso(http);
   }
@@ -86,12 +94,14 @@ describe('Dashboard', () => {
   }
 
   function responder(records: unknown[], refreshedAt: string | null) {
-    http.expectOne((request) => request.url.endsWith('/public/directory')).flush({
-      slug: 'directory',
-      records,
-      refreshedAt,
-      generatedAt: '2026-08-01T12:00:00.000Z',
-    });
+    http
+      .expectOne((request) => request.url.endsWith('/public/directory'))
+      .flush({
+        slug: 'directory',
+        records,
+        refreshedAt,
+        generatedAt: '2026-08-01T12:00:00.000Z',
+      });
   }
 
   it('pide el directorio al construirse y arranca en S2', () => {
@@ -158,20 +168,23 @@ describe('Dashboard', () => {
     crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
     responder([], null);
 
-    http.expectOne((request) => request.url.includes('/profiles/patients')).flush({
-      // Dos filas traídas y ciento cuarenta en la organización: si el total
-      // saliera de `items`, esto diría 2.
-      items: [
-        { profileId: 'p-1', personId: 'per-1', patientCode: 'PAC-1', deceased: false },
-        { profileId: 'p-2', personId: 'per-2', patientCode: 'PAC-2', deceased: false },
-      ],
-      count: 140,
-      limit: 5,
-      nextCursor: null,
-    });
+    http
+      .expectOne((request) => request.url.includes('/profiles/patients'))
+      .flush({
+        // Dos filas traídas y ciento cuarenta en la organización: si el total
+        // saliera de `items`, esto diría 2.
+        items: [
+          { profileId: 'p-1', personId: 'per-1', patientCode: 'PAC-1', deceased: false },
+          { profileId: 'p-2', personId: 'per-2', patientCode: 'PAC-2', deceased: false },
+        ],
+        count: 140,
+        limit: 5,
+        nextCursor: null,
+      });
 
-    const total = (component as unknown as { totalPacientes: () => number | null })
-      .totalPacientes();
+    const total = (
+      component as unknown as { totalPacientes: () => number | null }
+    ).totalPacientes();
     expect(total).toBe(140);
   });
 
@@ -183,15 +196,159 @@ describe('Dashboard', () => {
       .expectOne((request) => request.url.includes('/profiles/patients'))
       .flush({ items: [], count: 0, limit: 5, nextCursor: null });
 
-    const pacientes = (component as unknown as { pacientes: () => { status: string } })
-      .pacientes();
+    const pacientes = (component as unknown as { pacientes: () => { status: string } }).pacientes();
     expect(pacientes.status).toBe('empty');
+  });
+
+  /* -- Carril 02 · corrección #1: «Tus accesos» son íconos ------------------ */
+
+  describe('Tus accesos', () => {
+    function accesos(): readonly HTMLAnchorElement[] {
+      fixture.detectChanges();
+      return [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
+          '[data-testid="panel-acceso"]',
+        ),
+      ];
+    }
+
+    function abrirPanel(roles: readonly string[]): void {
+      crear({ sub: 'u-1', roles, tenants: ['t-1'] });
+      responder([], null);
+    }
+
+    it('cada acceso es un ícono, no una tarjeta con la descripción pegada', () => {
+      // Un rol de trabajo: desde J6 el paciente tiene su propio panel y este
+      // no lo ve. Lo que se prueba acá es la forma del acceso, no el rol.
+      abrirPanel(['PRACTITIONER']);
+
+      const primero = accesos()[0];
+      expect(primero.querySelector('app-nav-icon svg')).not.toBeNull();
+      // El resumen ya no se pinta como texto permanente: vive en el tooltip.
+      expect(primero.querySelector('.panel__acceso-resumen')).toBeNull();
+    });
+
+    it('el resumen viaja en el tooltip y también en el nombre accesible', () => {
+      abrirPanel(['PRACTITIONER']);
+
+      // Los tutoriales y no el glosario: desde F-03 (18/08/2026) el glosario es
+      // de quien atiende y el paciente ya no lo tiene entre sus accesos.
+      const tutoriales = accesos().find((a) => a.dataset['ruta'] === '/tutorials');
+
+      // Dos caminos a propósito: el globo aparece con el puntero **y con el
+      // foco** (lo garantiza `appTooltip`), y el `aria-label` cubre a quien
+      // navega con lector de pantalla sin llegar a enfocar el enlace.
+      expect(tutoriales?.getAttribute('aria-label')).toBe(
+        'Tutoriales. Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
+      );
+    });
+
+    it('el rótulo se queda: una rejilla de íconos mudos se recorre a ciegas', () => {
+      abrirPanel(['PRACTITIONER']);
+
+      const rotulos = accesos().map((a) => a.querySelector('.panel__acceso-nombre')?.textContent);
+      expect(rotulos).toContain('Tutoriales');
+      // El glosario sí está, y debe estar: este panel se abre con un rol de
+      // trabajo y F-03 (18/08/2026) hizo del glosario justamente la herramienta
+      // de quien atiende. Que el paciente no lo vea lo fija el registro de
+      // navegación —la sección declara `roles`— y lo prueba
+      // `navigation.service.spec.ts`, no esta rejilla.
+      expect(rotulos).toContain('Glosario');
+    });
+
+    it('cada acceso apunta a una ruta real del registro, no a un destino inventado', () => {
+      abrirPanel(['PRACTITIONER']);
+
+      for (const acceso of accesos()) {
+        expect(acceso.getAttribute('href')).toBe(acceso.dataset['ruta']);
+      }
+    });
+
+    it('lo que está en construcción no se ofrece como si se pudiera entrar', () => {
+      abrirPanel(['BILLING']);
+
+      const planificados = (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '[data-testid="panel-acceso-planificado"]',
+      );
+
+      // Ni ancla ni tooltip: un globo pide foco, y esto no es enfocable
+      // justamente porque no se puede entrar.
+      for (const planificado of planificados) {
+        expect(planificado.tagName.toLowerCase()).not.toBe('a');
+        expect(planificado.getAttribute('aria-describedby')).toBeNull();
+      }
+    });
+
+    it('la Guía de profesionales no está entre los accesos de la doctora', () => {
+      // Corrección #2. El panel sale de `NavigationService`, el mismo origen
+      // que el menú, así que esto también fija que no se puedan desincronizar.
+      abrirPanel(['PRACTITIONER', 'CLINICIAN']);
+
+      expect(accesos().map((a) => a.dataset['ruta'])).not.toContain('/directory');
+    });
+
+    /**
+     * La garantía sigue en pie, pero cambió de pantalla: desde J6 el paciente
+     * no ve este panel, y la Guía es uno de los cuatro accesos de «Mi salud».
+     * La prueba vive ahora en `patient-home.spec.ts`.
+     */
+    it('la Guía es de los pacientes, y por eso no está acá', () => {
+      abrirPanel(['PRACTITIONER', 'CLINICIAN']);
+
+      expect(accesos().map((a) => a.dataset['ruta'])).not.toContain('/directory');
+    });
+  });
+
+  /* -- H-07: la tarjeta «Tu cuenta» no filtra vocabulario de sistema --------- */
+
+  describe('Tu cuenta', () => {
+    const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+    function tarjeta(): HTMLElement {
+      fixture.detectChanges();
+      const raiz = fixture.nativeElement as HTMLElement;
+      return raiz.querySelector<HTMLElement>('[data-testid="panel-sesion"]') as HTMLElement;
+    }
+
+    it('nombra el rol en palabras y no muestra ningún identificador ni habla del token', () => {
+      crear({
+        sub: '11111111-1111-4111-8111-111111111111',
+        roles: ['USER', 'PRACTITIONER'],
+        tenants: ['22222222-2222-4222-8222-222222222222'],
+        tenantNames: { '22222222-2222-4222-8222-222222222222': 'Clínica Norte' },
+      });
+      responder([], null);
+
+      const texto = tarjeta().textContent ?? '';
+      expect(texto).not.toMatch(UUID);
+      expect(texto).not.toMatch(/token/i);
+      expect(texto).not.toContain('PRACTITIONER');
+      expect(texto).not.toContain('USER');
+      expect(texto).toContain('Clínica Norte');
+
+      // El código sigue disponible para las pruebas de extremo a extremo, pero
+      // fuera del texto: en `data-role`.
+      const insignias = [...tarjeta().querySelectorAll('[data-testid="panel-roles"] app-badge')];
+      expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Profesional sanitario']);
+      expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PRACTITIONER']);
+    });
+
+    it('sin roles sigue diciendo que no hay ninguno', () => {
+      crear({ sub: 'u-1', roles: [], tenants: ['t-1'] });
+      responder([], null);
+
+      expect(tarjeta().querySelectorAll('app-badge')).toHaveLength(0);
+      expect(tarjeta().querySelector('[data-testid="panel-roles"] .panel__vacio')).not.toBeNull();
+    });
   });
 
   it('si el historial de verificación falla, el panel sigue en pie', () => {
     // Es información de contexto: romper el panel entero porque el módulo de
     // identidad no contestó sería peor que un panel sin ese dato.
-    session.start({ accessToken: jwt({ sub: 'u-1', roles: [], tenants: [] }), refreshToken: 'r-1' });
+    session.start({
+      accessToken: jwt({ sub: 'u-1', roles: [], tenants: [] }),
+      refreshToken: 'r-1',
+    });
     fixture = TestBed.createComponent(Dashboard);
     component = fixture.componentInstance;
 
@@ -204,5 +361,66 @@ describe('Dashboard', () => {
     expect(estado().status).toBe('ready');
     const sello = (component as unknown as { selloDeIdentidad: () => unknown }).selloDeIdentidad();
     expect(sello).toBeNull();
+  });
+
+  describe('el aviso del alta incompleta (TJ-1)', () => {
+    /** Responde el avance del alta con las etapas cumplidas que se pidan. */
+    function responderAlta(cumplidas: number, firstIncomplete: string): void {
+      const claves = ['professional-data', 'photo', 'organizations', 'schedule', 'review'];
+      http
+        .expectOne((request) => request.url.endsWith('/practitioners/me/onboarding'))
+        .flush({
+          practitionerProfileId: 'hp-1',
+          steps: claves.map((key, indice) => ({
+            key,
+            complete: indice < cumplidas,
+            missing: indice < cumplidas ? [] : ['algo'],
+          })),
+          firstIncomplete,
+        });
+      fixture.detectChanges();
+    }
+
+    it('un profesional con el alta a medias ve el aviso, con cuánto le falta', () => {
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+      responder([], null);
+      responderAlta(2, 'organizations');
+
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).toContain('Completá tu perfil');
+      expect(texto).toContain('2 de 5');
+    });
+
+    it('con el alta completa no hay aviso: no se le recuerda algo que ya hizo', () => {
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+      responder([], null);
+      responderAlta(5, 'done');
+
+      expect(fixture.nativeElement.textContent).not.toContain('Completá tu perfil');
+    });
+
+    it('si la lectura falla no inventa un aviso', () => {
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+      responder([], null);
+      http
+        .expectOne((request) => request.url.endsWith('/practitioners/me/onboarding'))
+        .flush(null, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      // Decirle a alguien que le falta algo sin saberlo es peor que no avisar.
+      expect(fixture.nativeElement.textContent).not.toContain('Completá tu perfil');
+    });
+
+    it('a quien no atiende no se le pregunta siquiera', () => {
+      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+      responder([], null);
+      // Este rol sí lista pacientes; se responde para que el `verify()` del
+      // teardown hable sólo de lo que esta prueba mira.
+      http
+        .expectOne((request) => request.url.includes('/profiles/patients'))
+        .flush({ items: [], count: 0, limit: 5, nextCursor: null });
+
+      http.expectNone((request) => request.url.endsWith('/practitioners/me/onboarding'));
+    });
   });
 });

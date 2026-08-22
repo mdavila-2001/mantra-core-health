@@ -123,6 +123,8 @@ export interface PractitionerCredential {
   readonly stateConceptId: string;
   /** Ausente = «sin verificar todavía», que no es «rechazada». */
   readonly verifiedAt?: Date;
+  /** Contra qué se comprobó. Ausente antes de verificar. */
+  readonly verificationSourceUri?: string;
 }
 
 /** Una matrícula: dónde está habilitado a ejercer y con qué número. */
@@ -180,6 +182,8 @@ export interface OwnPractitionerProfile {
   readonly credentials: readonly PractitionerCredential[];
   readonly licenses: readonly PractitionerLicense[];
   readonly languages: readonly PractitionerLanguage[];
+  /** Historial laboral (UC-05-16), del más reciente al más antiguo. */
+  readonly affiliations: readonly PractitionerAffiliation[];
   readonly activity: PractitionerActivity;
   readonly createdAt: Date;
 }
@@ -491,4 +495,32 @@ export interface PractitionerDirectoryPage {
   readonly count: number;
   readonly limit: number;
   readonly nextCursor: string | null;
+}
+
+/**
+ * Una etapa del alta del profesional (TJ-1).
+ *
+ * `missing` viene en claves estables y no en prosa: el texto que lee la persona
+ * es del front, y la API dice **qué** falta, no cómo pedírselo.
+ */
+export interface OnboardingStep {
+  readonly key: OnboardingStepKey;
+  readonly complete: boolean;
+  readonly missing: readonly string[];
+}
+
+/** Las cinco etapas, en el orden en que se recorren. */
+export type OnboardingStepKey =
+  'professional-data' | 'photo' | 'organizations' | 'schedule' | 'review';
+
+/**
+ * En qué punto del alta está el profesional.
+ *
+ * No hay «paso guardado»: el servidor lo **deriva** de los datos que ya
+ * existen, así que volver a entrar recalcula y aterriza donde corresponde.
+ */
+export interface PractitionerOnboarding {
+  readonly practitionerProfileId: string;
+  readonly steps: readonly OnboardingStep[];
+  readonly firstIncomplete: OnboardingStepKey | 'done';
 }

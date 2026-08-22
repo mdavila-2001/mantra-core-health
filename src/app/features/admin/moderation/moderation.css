@@ -1,0 +1,99 @@
+.moderacion__pestanias {
+  display: flex;
+  gap: var(--e2);
+  margin-bottom: var(--e4);
+}
+
+.moderacion__alerta {
+  display: block;
+  margin-bottom: var(--e4);
+}
+
+.moderacion__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin-bottom: var(--e4);
+}
+
+.moderacion__cargando {
+  color: var(--text-secondary);
+}
+
+.moderacion__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* Ancho de lectura: el motivo de un reporte es texto corrido y una línea que
+     cruza una pantalla ancha entera se lee peor. */
+  max-inline-size: 76ch;
+}
+
+.moderacion__mas {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--e5);
+}
+
+.entrada__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--e3);
+  margin-bottom: var(--e2);
+}
+
+.entrada__ref {
+  margin: 0;
+  font-weight: 600;
+}
+
+.entrada__fecha {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.entrada__motivo {
+  margin: 0 0 var(--e3);
+  white-space: pre-wrap;
+}
+
+.entrada__motivo--sin,
+.entrada__decision {
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.entrada__decision {
+  margin: 0 0 var(--e3);
+}
+
+.decision {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-top: var(--e3);
+  padding-top: var(--e3);
+  border-top: 1px solid var(--border-subtle, var(--text-secondary));
+}
+
+.decision__opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.decision__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.decision__acciones {
+  display: flex;
+  gap: var(--e2);
+}

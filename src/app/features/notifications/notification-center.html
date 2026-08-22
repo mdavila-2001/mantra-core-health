@@ -1,0 +1,83 @@
+<app-page-header
+  title="Notificaciones"
+  subtitle="Lo que pasó con tus recetas, tus consultas, tus turnos y tus mensajes."
+/>
+
+@if (error(); as mensaje) {
+  <app-alert tone="error" class="avisos__alerta">{{ mensaje }}</app-alert>
+}
+
+<div class="avisos__barra">
+  <button
+    app-button
+    variant="outline"
+    size="sm"
+    data-testid="avisos-filtro"
+    [attr.aria-pressed]="soloSinLeer()"
+    (clicked)="alternarFiltro()"
+  >
+    {{ soloSinLeer() ? 'Ver todas' : 'Ver sólo las no leídas' }}
+  </button>
+
+  @if (sinLeer() > 0) {
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      data-testid="avisos-marcar-todas"
+      (clicked)="marcarTodas()"
+    >
+      Marcar todas como leídas ({{ sinLeer() }})
+    </button>
+  }
+</div>
+
+@if (vacio()) {
+  <app-empty-state
+    [title]="soloSinLeer() ? 'No tenés notificaciones sin leer' : 'Todavía no tenés notificaciones'"
+    description="Acá van a aparecer los avisos de tus recetas, tus consultas, tus turnos y tus mensajes."
+    variant="empty"
+  />
+} @else {
+  <ul class="avisos__lista">
+    @for (aviso of avisos(); track aviso.id) {
+      <li class="avisos__fila" [class.is-sin-leer]="aviso.unread">
+        <!-- Con destino, la fila entera es el control que lleva ahí. Sin
+             destino es texto: un enlace que no lleva a ningún lado se lee como
+             producto roto. -->
+        @if (rutaDe(aviso)) {
+          <button
+            class="avisos__item"
+            type="button"
+            data-testid="aviso"
+            (click)="abrir(aviso)"
+          >
+            <span class="avisos__titulo">{{ aviso.subject }}</span>
+            @if (aviso.bodyText) {
+              <span class="avisos__detalle">{{ aviso.bodyText }}</span>
+            }
+            <span class="avisos__fecha">{{ aviso.availableAt | date: 'medium' }}</span>
+          </button>
+        } @else {
+          <div class="avisos__item is-inerte" data-testid="aviso">
+            <span class="avisos__titulo">{{ aviso.subject }}</span>
+            @if (aviso.bodyText) {
+              <span class="avisos__detalle">{{ aviso.bodyText }}</span>
+            }
+            <span class="avisos__fecha">{{ aviso.availableAt | date: 'medium' }}</span>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+
+  @if (hayMas()) {
+    <div class="avisos__mas">
+      <!-- «Ver más» y no «página 3 de 47»: el contrato no da totales, así que
+           un número de páginas sería inventado. -->
+      <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
+        Ver más notificaciones
+      </button>
+    </div>
+  }
+}

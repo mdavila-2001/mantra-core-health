@@ -1,0 +1,68 @@
+<app-page-header
+  title="Mis cuestionarios"
+  subtitle="Respondé los cuestionarios de las consultas que ya tuviste."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (pendientes() > 0) {
+  <p class="cuestionarios__resumen" data-testid="cuestionarios-pendientes">
+    Tenés {{ pendientes() }}
+    {{ pendientes() === 1 ? 'cuestionario pendiente' : 'cuestionarios pendientes' }}.
+  </p>
+}
+
+<app-view-state-host [state]="vista()" (retry)="cargar()">
+  <div vsh-skeleton><app-skeleton variant="text" [lines]="4" /></div>
+
+  @if (vista(); as estado) {
+    @if (estado.status === 'ready') {
+      <ul class="cuestionarios__lista" data-testid="cuestionarios-lista">
+        @for (cuestionario of estado.data; track cuestionario.id) {
+          <li>
+            <app-card variant="outlined" padding="lg">
+              <div class="cuestionarios__fila">
+                <div class="cuestionarios__datos">
+                  <h2 class="cuestionarios__titulo">{{ cuestionario.titulo }}</h2>
+
+                  @if (cuestionario.consigna) {
+                    <p class="cuestionarios__consigna">{{ cuestionario.consigna }}</p>
+                  }
+
+                  @if (cuestionario.estado === 'PENDING' && cuestionario.vence) {
+                    <p class="cuestionarios__plazo">
+                      Podés responderlo hasta el
+                      {{ cuestionario.vence | date: 'd MMM y' }}.
+                    </p>
+                  } @else if (cuestionario.estado === 'ANSWERED' && cuestionario.respondido) {
+                    <p class="cuestionarios__plazo">
+                      Respondido el {{ cuestionario.respondido | date: 'd MMM y' }}.
+                    </p>
+                  } @else if (cuestionario.estado === 'EXPIRED' && cuestionario.vence) {
+                    <p class="cuestionarios__plazo">
+                      El plazo venció el {{ cuestionario.vence | date: 'd MMM y' }}.
+                    </p>
+                  }
+                </div>
+
+                <div class="cuestionarios__acciones">
+                  <app-badge [variant]="cuestionario.tono">{{ cuestionario.palabra }}</app-badge>
+
+                  @if (cuestionario.sePuedeResponder) {
+                    <a
+                      app-button-link
+                      variant="primary"
+                      [routerLink]="cuestionario.ruta"
+                      [attr.data-testid]="'responder-' + cuestionario.id"
+                    >
+                      Responder
+                    </a>
+                  }
+                </div>
+              </div>
+            </app-card>
+          </li>
+        }
+      </ul>
+    }
+  }
+</app-view-state-host>

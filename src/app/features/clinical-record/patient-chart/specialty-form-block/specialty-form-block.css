@@ -17,3 +17,94 @@
   gap: var(--sp-4);
   max-inline-size: 40rem;
 }
+
+.formulario-especialidad__estado {
+  margin: 0;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* El aviso de «tu especialidad no tiene ficha propia»: es una situación
+   normal, así que va como nota al pie del formulario y NO como `app-alert`,
+   que grita. Barra a la izquierda para que se lea como acotación. */
+.formulario-especialidad__aviso {
+  margin: 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 2px solid var(--c-aqua-300);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.formulario-especialidad__ver-todas {
+  justify-self: start;
+}
+
+.formulario-especialidad__respondido {
+  display: grid;
+  gap: var(--sp-4);
+  max-inline-size: 40rem;
+}
+
+.formulario-especialidad__completado {
+  margin: 0;
+  font-weight: 600;
+}
+
+.formulario-especialidad__respuestas {
+  margin: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.formulario-especialidad__respuesta dt {
+  font-weight: 600;
+}
+
+.formulario-especialidad__respuesta dd {
+  margin: 0;
+}
+
+.formulario-especialidad__enmascarado {
+  font-style: italic;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.formulario-especialidad__pdf {
+  justify-self: start;
+}
+
+/* ─── El odontograma dentro del formulario ─────────────────────────────────
+   Va sin borde ni caja propia: es un campo más del formulario, aunque ocupe
+   el ancho entero en vez de una etiqueta y un control al lado. */
+.formulario-especialidad__odontograma {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.formulario-especialidad__subtitulo {
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Los once estados de la OMS, envueltos: en el teléfono caen de a dos o tres
+   por fila y siguen siendo alcanzables con el pulgar. */
+.formulario-especialidad__estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.formulario-especialidad__ayuda {
+  margin: 0;
+  flex-basis: 100%;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

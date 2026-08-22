@@ -1,0 +1,124 @@
+/* ============================================================================
+    El día del profesional — la línea de tiempo con huecos.
+
+    Mobile-first: es LA pantalla del teléfono, la que se mira entre paciente y
+    paciente. Una columna, filas táctiles; en escritorio la hora se corre a un
+    costado y las acciones se alinean a la derecha.
+    ========================================================================== */
+
+.dia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.dia__barra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+}
+
+.dia__titulo {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+/* Sólo la inicial. `text-transform: capitalize` pone mayúscula en CADA palabra
+   y deja «Martes, 1 De Septiembre», que no es castellano. */
+.dia__titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.dia__resumen,
+.dia__vacio {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+.dia__linea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dia__fila {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: var(--stroke-1) solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.dia__hora {
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.dia__cuerpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.dia__paciente {
+  margin: 0;
+  font-weight: 600;
+}
+
+.dia__motivo {
+  margin: var(--sp-1) 0 0;
+  color: var(--fg-muted);
+}
+
+/* El hueco se ve distinto sin gritar: es información, no una alarma. */
+[data-tipo='libre'] {
+  border-style: dashed;
+  background: var(--bg-surface-alt);
+}
+
+.dia__libre {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+[data-tipo='bloqueado'] {
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: var(--bg-surface-alt);
+}
+
+.dia__bloqueado {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+.dia__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+@media (min-width: 40rem) {
+  .dia__barra {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-4);
+  }
+
+  .dia__fila {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-4);
+  }
+
+  .dia__hora {
+    flex: 0 0 8.5rem;
+  }
+}

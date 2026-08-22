@@ -1,0 +1,225 @@
+/* ============================================================================
+    Calendario de turnos del paciente — vista de mes.
+
+    Mobile-first: en pantalla chica la grilla scrollea horizontalmente dentro de
+    su contenedor en vez de encoger las celdas hasta que no entre ni la hora.
+    Un mes tiene siete columnas siempre; achicarlas más allá de cierto punto no
+    lo hace legible, lo hace ilegible en menos espacio.
+    ========================================================================== */
+
+.calendario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.calendario__barra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.calendario__mes {
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  font-weight: 600;
+  color: var(--text-primary);
+  /* El nombre del mes llega en minúscula del pipe; acá es un título. */
+  text-transform: capitalize;
+}
+
+.calendario__hoy {
+  flex: none;
+}
+
+/* El scroll horizontal vive acá y no en el `<body>`: la página nunca scrollea
+   de costado, la tabla sí. */
+.calendario__grilla {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 0;
+}
+
+.calendario__leyenda {
+  text-align: start;
+  padding-bottom: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* La cabecera de la semana se lee como cabecera.
+   Antes usaba el mismo tamaño y color que el número del día, así que las
+   iniciales se perdían entre las fechas: la analista pidió que igualaran al
+   rótulo del mes para que resalten. */
+.calendario__encabezado {
+  padding: var(--sp-2);
+  font-size: var(--fs-h4);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: start;
+}
+
+.calendario__encabezado abbr {
+  text-decoration: none;
+}
+
+.calendario__dia {
+  vertical-align: top;
+  width: calc(100% / 7);
+  min-width: 6.5rem;
+  height: 5.5rem;
+  padding: var(--sp-1);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+/* Los días de relleno existen para que la grilla cierre, no para leerse. */
+.calendario__dia--fuera {
+  background: var(--bg-muted, var(--bg-page));
+}
+
+.calendario__dia--fuera .calendario__numero {
+  color: var(--text-disabled, var(--text-secondary));
+  opacity: 0.6;
+}
+
+.calendario__dia--hoy {
+  /* Dos canales, no solo el color: el borde marca y el número se destaca. */
+  outline: 2px solid var(--c-aqua-500, var(--border-strong));
+  outline-offset: -2px;
+}
+
+.calendario__numero {
+  display: block;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 0 var(--sp-1);
+}
+
+.calendario__dia--hoy .calendario__numero {
+  color: var(--text-primary);
+}
+
+/* La caja de turnos del día: alto acotado y desplazamiento propio.
+   Es lo que impide que un día con varios turnos estire su celda y deforme la
+   fila entera del calendario (F-08). El alto sale del de la celda menos el
+   número del día. */
+.calendario__turnos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  max-block-size: 3.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.calendario__turno {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  flex: 0 0 auto;
+  padding: var(--sp-1) var(--sp-2);
+  border: none;
+  border-inline-start: 3px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle, var(--bg-page));
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.calendario__turno:hover {
+  background: var(--bg-hover, var(--bg-subtle));
+}
+
+.calendario__turno:focus-visible {
+  outline: 2px solid var(--c-aqua-500, var(--border-strong));
+  outline-offset: 1px;
+}
+
+.calendario__turno--activo {
+  background: var(--bg-hover, var(--bg-subtle));
+  font-weight: 600;
+}
+
+/* El tono del estado, en el filo: el mismo mapa que usa el badge de la lista.
+   Ámbar queda fuera a propósito — es el color de la acción única del sistema. */
+.calendario__turno[data-tono='success'] {
+  border-inline-start-color: var(--st-success-fg, var(--c-mint-600));
+}
+
+.calendario__turno[data-tono='warning'] {
+  border-inline-start-color: var(--st-warning-fg, var(--c-sage-600));
+}
+
+.calendario__turno[data-tono='error'] {
+  border-inline-start-color: var(--st-error-fg, var(--c-error-600));
+}
+
+.calendario__turno[data-tono='info'] {
+  border-inline-start-color: var(--st-info-fg, var(--c-petrol-600));
+}
+
+.calendario__hora {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.calendario__titulo,
+.calendario__estado {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  /* Un nombre largo no puede empujar la columna del día siguiente. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendario__aviso {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+@media (min-width: 48rem) {
+  .calendario__dia {
+    height: 7rem;
+  }
+
+  /* La celda crece; la caja de turnos aprovecha lo que gana. */
+  .calendario__turnos {
+    max-block-size: 4.75rem;
+  }
+}
+
+/* El número del día, cuando además es el botón para pedir turno ese día.
+   Hereda el aspecto del número —no debe parecer otro control— y sólo se
+   anuncia como accionable al apuntarlo o al recibir el foco (F-10). */
+.calendario__numero--pedible {
+  inline-size: 100%;
+  border: none;
+  background: none;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+}
+
+.calendario__numero--pedible:hover {
+  background: var(--bg-hover, var(--bg-subtle));
+  color: var(--text-primary);
+}
+
+.calendario__numero--pedible:focus-visible {
+  outline: 2px solid var(--st-primary-border, var(--border-strong));
+  outline-offset: 1px;
+}

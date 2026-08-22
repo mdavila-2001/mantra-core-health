@@ -96,11 +96,17 @@
 }
 
 /* ── Accesos ──────────────────────────────────────────────────────────────
-   Dos o tres columnas según entre: son entre cinco y once ítems, y en una sola
-   columna la tarjeta se vuelve una lista larguísima que empuja todo abajo. */
+   Corrección #1: rejilla de acciones con ícono, no tarjetas con la descripción
+   pegada debajo.
+
+   El mínimo baja de 16rem a 9rem porque lo que hay que acomodar ahora es un
+   ícono con su rótulo, no un párrafo: con 16rem quedaban tres columnas
+   larguísimas medio vacías. Con 9rem entran cinco o seis por fila y las once
+   secciones de la doctora caben en dos, que es lo que convierte «Tus accesos»
+   en algo que se abarca de un vistazo. */
 .panel__accesos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
   gap: var(--sp-3);
   margin: 0;
   padding: 0;
@@ -110,16 +116,34 @@
 .panel__acceso {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sp-2);
   height: 100%;
-  padding: var(--sp-3);
+  padding: var(--sp-4) var(--sp-3);
   border: 1px solid var(--border-default);
   border-radius: var(--r-sm);
+  text-align: center;
   text-decoration: none;
   color: inherit;
   transition:
     background-color var(--dur-fast) var(--ease-standard),
     border-color var(--dur-fast) var(--ease-standard);
+}
+
+/* El ícono a tamaño de acción, no de adorno: es lo primero que se busca cuando
+   la rejilla se recorre con la vista. `currentColor` en el trazo hace que
+   acompañe al realce del enlace sin declarar un color propio. */
+.panel__acceso-icono {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  color: var(--text-secondary);
+}
+
+a.panel__acceso:hover .panel__acceso-icono,
+a.panel__acceso:focus-visible .panel__acceso-icono {
+  color: var(--text-primary);
 }
 
 /* El realce es un VELO (`--bg-hover`), no un color opaco: se compone con la
@@ -142,17 +166,14 @@ a.panel__acceso:active {
   opacity: 0.72;
 }
 
+/* El rótulo se queda —la corrección pide reemplazar la **descripción** por el
+   tooltip, no dejar la rejilla muda—. Un panel de íconos sin nombre obliga a
+   recorrerlos con el cursor uno por uno para saber cuál es cuál. */
 .panel__acceso-nombre {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-weight: 600;
-}
-
-.panel__acceso-resumen {
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
-  color: var(--text-secondary);
+  font-weight: 600;
+  text-wrap: balance;
 }
 
 /* ── Listas y datos ───────────────────────────────────────────────────────*/

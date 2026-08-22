@@ -103,6 +103,11 @@
     </header>
 
     <main class="app-main__inner">
+      <!-- Carril 01: el marco declara que lo de adentro es una maqueta. Va acá y
+           no en cada una de las 111 pantallas de sesión porque el generador de
+           `port-vistas-redsat.mjs` pisa el marcado de las pantallas y no el del
+           marco. -->
+      <app-redsat-design-notice />
       <router-outlet />
     </main>
   </div>

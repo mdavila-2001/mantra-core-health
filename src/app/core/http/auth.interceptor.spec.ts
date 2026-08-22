@@ -112,6 +112,27 @@ describe('authInterceptor', () => {
       req.flush({});
     });
 
+    it('un 401 SIN sesión previa no expulsa al login: no hay sesión que vencer', () => {
+      // El bug que hacía imposible registrarse: la pantalla de alta pedía los
+      // departamentos a terminología —sin token, la cuenta todavía no existe—,
+      // el endpoint contestaba 401, y este interceptor lo leía como «sesión
+      // vencida»: limpiaba nada y mandaba al visitante al login antes de que
+      // pudiera escribir su nombre.
+      let fallo = false;
+      http.get('/terminology/value-sets?code=VS_ADMINISTRATIVE_AREA').subscribe({
+        error: () => (fallo = true),
+      });
+
+      backend
+        .expectOne('/terminology/value-sets?code=VS_ADMINISTRATIVE_AREA')
+        .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      // El error se propaga —la pantalla decide qué hacer con él—, pero nadie
+      // navega a ninguna parte.
+      expect(fallo).toBe(true);
+      expect(router.navegaciones).toEqual([]);
+    });
+
     it('sin sesión no agrega nada', () => {
       http.get('/clinical/encounters').subscribe();
 
@@ -145,6 +166,52 @@ describe('authInterceptor', () => {
       expect(fallo).toBe(true);
       // Si hubiera intentado refrescar, verify() encontraría la petición pendiente.
       expect(session.isAuthenticated()).toBe(true);
+    });
+  });
+
+  describe('catálogo de credencial opcional', () => {
+    it('sí manda la credencial cuando hay sesión: se lee igual desde dentro', () => {
+      session.start({ accessToken: UN_TENANT, refreshToken: 'r-1' });
+
+      http.get('/terminology/value-sets?code=VS_ADMINISTRATIVE_AREA').subscribe();
+
+      const req = backend.expectOne('/terminology/value-sets?code=VS_ADMINISTRATIVE_AREA');
+      expect(req.request.headers.get('Authorization')).toBe(`Bearer ${UN_TENANT}`);
+
+      req.flush({ items: [] });
+    });
+
+    it('el 401 del registro público NO cierra la sesión ni navega al login', () => {
+      // El registro se abre sin sesión: no hay token ni con qué renovarlo.
+      let fallo = false;
+      http
+        .get('/terminology/value-sets?code=VS_ADMINISTRATIVE_AREA')
+        .subscribe({ error: () => (fallo = true) });
+
+      backend
+        .expectOne('/terminology/value-sets?code=VS_ADMINISTRATIVE_AREA')
+        .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      expect(fallo).toBe(true);
+      expect(router.navegaciones).toEqual([]);
+    });
+
+    it('la expansión entra por prefijo, con el uuid dentro del camino', () => {
+      session.start({ accessToken: UN_TENANT, refreshToken: 'r-1' });
+
+      let fallo = false;
+      http
+        .get('/terminology/value-sets/vs-1/$expand')
+        .subscribe({ error: () => (fallo = true) });
+
+      backend
+        .expectOne('/terminology/value-sets/vs-1/$expand')
+        .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      expect(fallo).toBe(true);
+      // Ni refresco (verify() lo delataría) ni cierre de sesión.
+      expect(session.isAuthenticated()).toBe(true);
+      expect(router.navegaciones).toEqual([]);
     });
   });
 

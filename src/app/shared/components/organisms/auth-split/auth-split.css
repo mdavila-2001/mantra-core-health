@@ -9,32 +9,259 @@
 /* Mobile-first: una columna y la página scrollea normal, que es lo que hay que
    hacer en el teléfono (el teclado en pantalla reduce el alto útil y encerrar
    el formulario en un alto fijo lo deja inalcanzable).
-   La columna de marca aparece recién en pantalla ancha, donde sobra espacio. */
+   La columna de marca aparece recién en pantalla ancha, donde sobra espacio.
+
+   Las tres capas van en la MISMA celda de la grilla y se ordenan con `z-index`
+   (aurora 0 · panel 1). Apiladas con `position: absolute` en cambio, la aurora
+   dejaría de estirar la fila y en teléfono —donde el alto lo pone el
+   contenido— se cortaría a la altura de la ventana.
+
+   `overflow: hidden` recorta los velos, que a propósito se salen del cuadro por
+   los cuatro lados: si terminaran adentro se verían como tres círculos y no
+   como un fondo. Vertical no recorta nada, porque en teléfono la fila crece con
+   el contenido. */
 .auth-split {
+  position: relative;
   display: grid;
   min-height: 100dvh;
   grid-template-columns: 1fr;
+  overflow: hidden;
+  background: var(--bg-surface);
+
+  /* Reposo de la escena. `appPointerScene` PISA estas variables mientras el
+     puntero está encima, y no las escribe nunca en teléfono ni con «reducir
+     movimiento»: el reposo lo define esta hoja, así que la escena sin
+     JavaScript se ve igual que la escena quieta. */
+  --pointer-x: 0.5;
+  --pointer-y: 0.5;
+  --pointer-tilt-x: 0;
+  --pointer-tilt-y: 0;
+  --pointer-on: 0;
 }
 
 .auth-split__brand {
   display: none;
 }
 
+.auth-split__aurora--panel,
 .auth-split__panel {
+  grid-area: 1 / 1 / 2 / 2;
+}
+
+.auth-split__panel {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   padding: var(--sp-4);
-  /* `--bg-surface` sola es plana (en claro es igual a `--bg-base`, #fff sobre
-     #fff), y ahí es donde flota la tarjeta de `login`/`register`. Los dos
-     lavados radiales dan un fondo con aire sin tocar el contraste de texto:
-     son manchas de marca al 6-10%, no superficies — nada se lee encima. */
-  background:
-    radial-gradient(circle at 12% -8%, color-mix(in srgb, var(--brand-secondary) 10%, transparent), transparent 42%),
-    radial-gradient(circle at 100% 108%, color-mix(in srgb, var(--brand-primary) 7%, transparent), transparent 46%),
-    var(--bg-surface);
+  /* Sin fondo propio: lo que se ve debajo es la aurora, y detrás de ella el
+     `--bg-surface` de `.auth-split`. Antes acá había dos degradados radiales
+     fijos; ahora esas mismas manchas se mueven y reaccionan al puntero. */
+  background: transparent;
 }
 
-/* El selector de tema arriba a la derecha, sin empujar el formulario. */
+/* ==========================================================================
+    Aurora — el fondo vivo.
+
+    Tres masas de color enormes, muy difusas, que derivan solas en ciclos
+    largos y desparejos (21 s, 26 s, 34 s: primos entre sí, así el conjunto no
+    se repite a ojo) y que además se corren con el puntero, cada una a su
+    profundidad.
+
+    El difuminado sale del propio `radial-gradient` y NO de `filter: blur()`:
+    un desenfoque real sobre seis cajas de media pantalla se recalcula en cada
+    cuadro y es lo que convierte un fondo bonito en un ventilador encendido.
+    ========================================================================== */
+.auth-split__aurora {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.auth-split__velo {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, var(--velo-color), transparent 74%);
+  animation: auth-velo-deriva var(--velo-dur) ease-in-out infinite;
+  animation-delay: var(--velo-retardo, 0s);
+  /* La deriva usa `transform` y el paralaje usa `translate`: son propiedades
+     distintas y el navegador las compone, así que una animación infinita y una
+     posición escrita desde JavaScript conviven sin pisarse. Con las dos en
+     `transform` habría que elegir. */
+  translate: calc(var(--pointer-tilt-x) * var(--velo-paralaje))
+    calc(var(--pointer-tilt-y) * var(--velo-paralaje));
+}
+
+.auth-split__velo--a {
+  top: -14%;
+  left: -12%;
+  width: 76%;
+  --velo-dur: 26s;
+  --velo-paralaje: 34px;
+}
+
+.auth-split__velo--b {
+  right: -16%;
+  bottom: -20%;
+  width: 86%;
+  --velo-dur: 34s;
+  --velo-retardo: -9s;
+  --velo-paralaje: 20px;
+}
+
+.auth-split__velo--c {
+  top: 26%;
+  left: 20%;
+  width: 66%;
+  --velo-dur: 21s;
+  --velo-retardo: -14s;
+  --velo-paralaje: 48px;
+}
+
+@keyframes auth-velo-deriva {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(7%, -9%, 0) scale(1.14);
+  }
+  66% {
+    transform: translate3d(-8%, 6%, 0) scale(0.9);
+  }
+}
+
+/* En la columna del formulario los velos se corren hacia los bordes: el centro
+   lo tapa la tarjeta, y una mancha debajo de ella no se ve. Lo que se ve son
+   las bandas que quedan a los costados y abajo, y ahí es donde tienen que
+   pasar las cosas. */
+.auth-split__aurora--panel .auth-split__velo--a {
+  left: -26%;
+}
+
+.auth-split__aurora--panel .auth-split__velo--b {
+  right: -24%;
+}
+
+.auth-split__aurora--panel .auth-split__velo--c {
+  top: 58%;
+  left: 34%;
+  width: 62%;
+}
+
+/* Sobre la superficie clara los velos TIÑEN, y con tokens semánticos: así el
+   fondo cambia de aguamarina a menta al pasar a oscuro, siguiendo al tema en
+   vez de quedarse en un color pegado.
+
+   Los tres tonos son de MEDIA rampa a propósito (`--st-…-bd` es petrol-200 en
+   claro y petrol-400 en oscuro; menta-300 y menta-600). Con los tonos plenos
+   —petróleo 500— el velo no se lee como color sino como una mancha gris sobre
+   el blanco, que es justo lo que hay que evitar: el fondo tiene que ser un
+   degradado de marca, no una sombra sucia.
+
+   Aun así son manchas muy por debajo de lo que movería el contraste del texto
+   que va encima, que en todos los casos viaja dentro de una tarjeta opaca. */
+.auth-split__aurora--panel {
+  /* Base tibia debajo de los velos: sin esto el punto de partida es blanco
+     puro y las manchas quedan flotando sobre un vacío. */
+  background:
+    radial-gradient(
+      120% 90% at 6% 0%,
+      color-mix(in srgb, var(--brand-secondary) 32%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      110% 85% at 100% 100%,
+      color-mix(in srgb, var(--brand-primary) 24%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(90% 70% at 100% 4%, var(--st-secondary-bd), transparent 58%);
+}
+
+.auth-split__aurora--panel .auth-split__velo--a {
+  --velo-color: color-mix(in srgb, var(--brand-secondary) 62%, transparent);
+}
+
+.auth-split__aurora--panel .auth-split__velo--b {
+  --velo-color: var(--st-primary-bd);
+}
+
+.auth-split__aurora--panel .auth-split__velo--c {
+  --velo-color: var(--st-secondary-bd);
+}
+
+/* Foco de luz: sigue al puntero por toda la columna del formulario y se apaga
+   solo cuando el puntero se va (`--pointer-on` vuelve a 0 con el mismo
+   suavizado con que llegó). Es lo que hace que la pantalla se sienta viva al
+   mover el ratón, no solo al cargar. */
+.auth-split__aurora--panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    38rem 38rem at calc(var(--local-x) * 100%) calc(var(--local-y) * 100%),
+    color-mix(in srgb, var(--brand-secondary) 16%, transparent),
+    transparent 70%
+  );
+  opacity: var(--pointer-on);
+  /* En teléfono la columna del formulario ES toda la escena, así que la
+     posición del puntero ya viene en las coordenadas correctas. En escritorio
+     ocupa la mitad derecha y hay que remapear el 0,5–1 de la escena al 0–1 de
+     la columna; si no, el foco va al doble de velocidad que la mano. */
+  --local-x: var(--pointer-x);
+  --local-y: var(--pointer-y);
+}
+
+/* El selector de tema arriba a la derecha, sin empujar el formulario, con la
+   marca del producto a la izquierda. */
+.auth-split__chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+/* La marca en la columna del formulario existe por el teléfono: ahí la columna
+   de la izquierda no se muestra y la pantalla de acceso no decía de qué
+   producto era. El glifo se pinta con `mask` sobre `currentColor` en vez de ir
+   como `<img>`: el archivo es petróleo fijo y en modo oscuro desaparecería
+   contra la superficie: con máscara toma el color del tema y basta un archivo. */
+.auth-split__marca-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-1) var(--sp-3) var(--sp-1) var(--sp-2);
+  border-radius: var(--r-full);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  /* La marca va sobre su propia superficie y no directamente sobre la aurora.
+     No es adorno: en oscuro los velos son colores CLAROS —los tokens de marca
+     se aclaran para poder leerse sobre el petróleo— y el velo de arriba a la
+     izquierda cae justo debajo de esta línea, dejando marfil sobre menta a
+     2,2:1. Con la píldora el texto vuelve a apoyarse en `--bg-surface` y mide
+     por encima de 8:1 en los dos temas, sin tener que apagar el fondo. */
+  background: color-mix(in srgb, var(--bg-surface) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--border-default) 45%, transparent);
+}
+
+.auth-split__marca-mini-glifo {
+  width: 30px;
+  height: 22px;
+  background: var(--brand-primary);
+  -webkit-mask: url('/redsat/imagenes/alovida-logo.svg') no-repeat center / contain;
+  mask: url('/redsat/imagenes/alovida-logo.svg') no-repeat center / contain;
+}
+
+/* El ícono del modo activo crece apenas: con tres botones chicos y sin texto,
+   el cambio de fondo solo no alcanza para ver cuál quedó elegido. */
 .auth-split__theme {
   display: flex;
   justify-content: flex-end;
@@ -42,8 +269,6 @@
   flex-wrap: wrap;
 }
 
-/* El ícono del modo activo crece apenas: con tres botones chicos y sin texto,
-   el cambio de fondo solo no alcanza para ver cuál quedó elegido. */
 .auth-split__theme svg {
   transition: transform var(--dur-base) var(--ease-spring);
 }
@@ -62,17 +287,24 @@
   min-height: 0;
 }
 
-/* El contenido proyectado se limita solo, para que el formulario no se estire
-   en pantallas anchas.
+/* El hueco del formulario se limita solo, para que no se estire en pantallas
+   anchas.
    Se centra con `margin-block: auto` y NO con `align-items: center`: cuando el
    formulario es más alto que la columna, centrarlo deja su parte de arriba
    fuera de alcance —no hay forma de scrollear hacia ella—. Con márgenes
    automáticos se centra si sobra lugar y se apoya arriba si falta. */
-.auth-split__content > * {
+.auth-split__slot {
   width: 100%;
   max-width: 27rem;
   margin-block: auto;
   animation: auth-entra var(--dur-slow) var(--ease-out) both;
+}
+
+/* Ver `AuthSplit.contentWidth`: el alta agrupa campos cortos de a dos por fila
+   desde 780 px de ventana, y a 27 rem esas dos columnas quedan en menos de
+   200 px cada una. */
+.auth-split__slot--wide {
+  max-width: 40rem;
 }
 
 /* Entrada: sube un poco mientras aparece. El desplazamiento es corto porque
@@ -89,11 +321,26 @@
    los retardos. Sin esto, lo escalonado quedaría invisible el tiempo del
    retardo y después aparecería de golpe: peor que no animar. */
 @media (prefers-reduced-motion: reduce) {
-  .auth-split__content > *,
+  .auth-split__slot,
   .auth-split__wordmark,
   .auth-split__claim,
   .auth-split__tagline {
     animation-delay: 0ms !important;
+  }
+
+  /* El fondo vivo es movimiento continuo, no una entrada: acortar el delay no
+     alcanza, hay que apagar la animación entera y dejar una composición fija.
+     El latido no tiene un fotograma de reposo con sentido (es puro
+     movimiento), así que se oculta en vez de congelarse a mitad de camino. El
+     velo SÍ se queda: quieto es un degradado, y sin él la pantalla pierde el
+     fondo entero en vez de perder la animación. */
+  .auth-split__velo {
+    animation: none !important;
+  }
+
+  .auth-split__latido-trazo {
+    animation: none !important;
+    opacity: 0;
   }
 }
 
@@ -105,10 +352,25 @@
        ventana y nada más. La página deja de scrollear como un todo —que era lo
        que hacía viajar a la marca— y scrollea solo la columna del formulario. */
     height: 100dvh;
-    overflow: hidden;
   }
 
   .auth-split__brand {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+
+  .auth-split__aurora--panel,
+  .auth-split__panel {
+    grid-area: 1 / 2 / 2 / 3;
+  }
+
+  /* Ver la nota de `--local-x`: la columna es la mitad derecha de la escena. */
+  .auth-split__aurora--panel::after {
+    --local-x: calc((var(--pointer-x) - 0.5) * 2);
+  }
+
+  .auth-split__brand {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: flex-end;
     padding: var(--sp-8);
@@ -120,39 +382,228 @@
        y el aqua —acento de marca— sube a la esquina opuesta (arriba-derecha), sin
        texto. Así se cumple la regla REDSAT «nada de blanco sobre aqua»
        (identidad-visual.md 8.1) en toda la superficie del texto. */
-    /* El brillo radial es blanco literal (no un token) a propósito: vive
-       arriba-derecha, lejos del rincón abajo-izquierda que sostiene el
-       contraste de texto documentado abajo, y a 14% de opacidad no mueve ese
-       cálculo — es sheen, no una superficie que alguien tenga que leer. */
-    background:
-      radial-gradient(circle at 82% 10%, rgba(255, 255, 255, 0.14), transparent 40%),
-      linear-gradient(
-        150deg,
-        var(--c-aqua-500),
-        var(--c-petrol-500) 45%,
-        var(--c-petrol-800)
-      );
+    background: linear-gradient(
+      150deg,
+      var(--c-aqua-500),
+      var(--c-petrol-500) 45%,
+      var(--c-petrol-800)
+    );
     color: #ffffff;
-    /* Ya no hace falta `position: sticky`: la columna mide lo que la ventana y
-       la ventana no se mueve. */
     min-height: 0;
-    overflow-y: auto;
+    /* Recorta el fondo vivo contra el borde de la columna. Ya no es `auto`: lo
+       único que podría desbordar es decoración, y una barra de scroll en una
+       columna `aria-hidden` no la usa nadie. */
+    overflow: hidden;
+  }
+
+  /* La aurora de la marca ocupa la columna entera, por detrás del dibujo. */
+  .auth-split__aurora--brand {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Acá los velos ACLARAN en vez de teñir, y van con rampas fijas y no con
+     tokens semánticos: igual que el degradado de abajo, la columna de marca
+     tiene que verse IGUAL en claro y en oscuro —es el escenario fijo detrás del
+     texto blanco, no una superficie del tema—. */
+  .auth-split__aurora--brand .auth-split__velo {
+    mix-blend-mode: screen;
+  }
+
+  .auth-split__aurora--brand .auth-split__velo--a {
+    --velo-color: color-mix(in srgb, var(--c-aqua-400) 62%, transparent);
+  }
+
+  .auth-split__aurora--brand .auth-split__velo--b {
+    --velo-color: color-mix(in srgb, var(--c-mint-300) 40%, transparent);
+  }
+
+  .auth-split__aurora--brand .auth-split__velo--c {
+    --velo-color: color-mix(in srgb, var(--c-petrol-200) 46%, transparent);
   }
 
   .auth-split__brand-content {
+    position: relative;
+    z-index: 2;
     max-width: 26rem;
+    /* Paralaje corto y en el MISMO sentido que el puntero, al revés que el
+       lienzo: dos planos que se cruzan es lo que da la sensación de fondo. */
+    translate: calc(var(--pointer-tilt-x) * 9px) calc(var(--pointer-tilt-y) * 6px);
+  }
+
+  /* ==========================================================================
+      Lienzo vivo — "tu salud, conectada" en forma: un latido que cruza la
+      columna sobre las auroras que derivan detrás. Es `aria-hidden` y vive en
+      `#ffffff` y rampas fijas, por el mismo motivo que los velos de esta
+      columna. Cruza muy por encima del rincón abajo-izquierda documentado
+      arriba (petrol-800 bajo el texto): nada acá se acerca al 12:1 que
+      sostiene esa lectura. ========================================================================== */
+  .auth-split__pulse {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    /* Contra el puntero: el dibujo es el plano de atrás. */
+    translate: calc(var(--pointer-tilt-x) * -16px) calc(var(--pointer-tilt-y) * -11px);
+    /* Red de seguridad para la colisión con el texto: el dibujo entero se
+       apaga en gradiente antes de llegar a la franja donde vive
+       `.auth-split__brand-content` (el bloque está `align-items: flex-end`,
+       así que el texto siempre parte del borde inferior). No importa si el
+       claim es de una línea o de dos, o si cambia con `contentWidth`: el
+       desvanecido es un porcentaje del propio lienzo, no una coordenada fija
+       que haya que reajustar cada vez que cambia el texto. */
+    mask-image: linear-gradient(#000 58%, transparent 82%);
+  }
+
+  /* Latido: el mismo gesto que el logotipo, cruzando la columna justo encima
+     del texto. Van dos trazos sobre la misma curva — uno tenue que la deja
+     insinuada de punta a punta, y otro brillante y corto que la recorre. Con
+     `pathLength="1000"` en el marcado, el guion se mide en milésimas del largo
+     real: 120 encendidas y 880 apagadas, sin que nadie mida la curva. */
+  .auth-split__latido-base,
+  .auth-split__latido-trazo {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .auth-split__latido-base {
+    stroke: currentColor;
+    stroke-width: 1.25;
+    opacity: 0.14;
+  }
+
+  .auth-split__latido-trazo {
+    stroke: #ffffff;
+    stroke-width: 2.5;
+    stroke-dasharray: 165 835;
+    filter: drop-shadow(0 0 7px var(--c-aqua-300));
+    animation: auth-latido 7s linear infinite;
+  }
+
+  @keyframes auth-latido {
+    from {
+      stroke-dashoffset: 1000;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* Constelación: catorce astros y trece hilos formando una red de verdad —un
+     eje con cinco brazos y una cadena que serpentea hacia abajo—, no cinco
+     puntos sueltos sobre un lienzo de 400x520. Dice «conectada» sin pelear
+     con el formulario, que es lo que la pantalla pide mirar.
+
+     Cada hilo y cada astro trae su propio retardo desde el `style` del
+     marcado (`--d`, y `--v` en los hilos vivos) en vez de una lista de
+     `nth-of-type` acá: son las mismas catorce/trece constantes, pero puestas
+     una sola vez junto al nodo que animan y no repetidas en dos lugares. */
+  .auth-split__hilo {
+    stroke: #ffffff;
+    stroke-width: 0.85;
+    opacity: 0.14;
+    animation: auth-hilo-respira 8s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
+  }
+
+  @keyframes auth-hilo-respira {
+    0%,
+    100% {
+      opacity: 0.08;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+
+  /* Los dos hilos que salen del eje hacia los brazos principales van con el
+     aqua de marca en vez de blanco — el mismo acento que el trazo del latido
+     y los astros «brillantes», para que el ojo lea un solo recorrido de
+     energía cruzando la red y no adornos sueltos. */
+  .auth-split__hilo--vivo {
+    stroke: var(--c-aqua-300);
+  }
+
+  /* Astros: laten en escala Y opacidad, no solo opacidad. `transform-box:
+     fill-box` es lo que lo permite sin el defecto de la versión anterior —con
+     la caja puesta en el propio círculo, `scale()` origina en SU centro (el
+     que fija `transform-origin`) y no en el del `viewBox` completo, así que
+     cada astro late donde está en vez de dispararse en diagonal. */
+  .auth-split__astro {
+    fill: #ffffff;
+    opacity: 0.3;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: auth-astro-respira 6s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
+  }
+
+  @keyframes auth-astro-respira {
+    0%,
+    100% {
+      opacity: 0.22;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.55;
+      transform: scale(1.35);
+    }
+  }
+
+  /* El eje sostiene los cinco brazos, y los «brillantes» son los nodos que
+     además dan nombre a un brazo: primer plano del cielo, con el mismo halo
+     aqua que el trazo del latido para que las dos capas se lean como un solo
+     dibujo y no como dos adornos sueltos. Sin ellos las catorce estrellas se
+     leen todas iguales y el dibujo pierde profundidad. */
+  .auth-split__astro--eje,
+  .auth-split__astro--brillante {
+    filter: drop-shadow(0 0 6px var(--c-aqua-300));
+  }
+
+  .auth-split__astro--eje {
+    opacity: 0.55;
+    animation-duration: 5.2s;
+  }
+
+  .auth-split__astro--brillante {
+    fill: var(--c-aqua-100);
+    animation-duration: 4.4s;
   }
 
   /* Escalonado: marca, titular y bajada entran en ese orden, con 70 ms entre
      medio. Es lo que hace que la columna se lea como una frase y no como un
      bloque que apareció. */
   .auth-split__wordmark {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
     margin: 0 0 var(--sp-6);
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     font-size: var(--fs-body);
     animation: auth-entra var(--dur-slow) var(--ease-out) both;
+  }
+
+  .auth-split__wordmark img {
+    /* Respira despacio, como el resto de la columna. */
+    animation: auth-marca-respira 5.5s ease-in-out infinite;
+  }
+
+  @keyframes auth-marca-respira {
+    0%,
+    100% {
+      opacity: 0.85;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.06);
+    }
   }
 
   .auth-split__claim {
@@ -185,5 +636,32 @@
     padding: var(--sp-6);
     min-height: 0;
     overflow-y: auto;
+  }
+
+  .auth-split__marca-mini {
+    display: none;
+  }
+
+  .auth-split__chrome {
+    justify-content: flex-end;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* La constelación se queda quieta en su valor medio: sigue dibujada, deja
+       de respirar. Es la lectura correcta de la preferencia —quitar movimiento,
+       no quitar el dibujo. */
+    .auth-split__hilo,
+    .auth-split__astro {
+      animation: none !important;
+    }
+
+    .auth-split__latido-base {
+      opacity: 0.22;
+    }
+
+    .auth-split__wordmark img {
+      animation: none !important;
+      opacity: 1;
+    }
   }
 }

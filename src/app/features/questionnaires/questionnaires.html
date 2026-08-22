@@ -1,0 +1,107 @@
+<app-page-header
+  title="Encuestas"
+  subtitle="Creá encuestas para tus pacientes y revisá lo que respondieron."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <button
+    app-button
+    variant="primary"
+    type="button"
+    (click)="alternarFormulario()"
+    data-testid="encuestas-nueva"
+  >
+    {{ formularioAbierto() ? 'Cancelar' : 'Nueva encuesta' }}
+  </button>
+</app-page-header>
+
+@if (formularioAbierto()) {
+  <app-card variant="outlined" padding="lg" class="encuestas__alta">
+    <form [formGroup]="formulario" (ngSubmit)="crear()" data-testid="encuestas-form">
+      <app-form-field
+        label="Título"
+        hint="Lo primero que ve el paciente. Por ejemplo: «Satisfacción post-consulta»."
+        [required]="true"
+      >
+        <app-input formControlName="title" data-testid="encuesta-titulo" />
+      </app-form-field>
+
+      <app-form-field
+        label="Consigna"
+        hint="Opcional. Se muestra antes de las preguntas para orientar al paciente."
+      >
+        <app-textarea formControlName="description" autoResize data-testid="encuesta-consigna" />
+      </app-form-field>
+
+      <app-form-field
+        label="Plazo para responder (días)"
+        hint="Desde que se le ofrece el cuestionario al paciente. Se congela al emitirlo."
+        [required]="true"
+      >
+        <app-input
+          type="number"
+          formControlName="responseWindowDays"
+          data-testid="encuesta-plazo"
+        />
+      </app-form-field>
+
+      <div class="encuestas__acciones">
+        <button
+          app-button
+          type="submit"
+          variant="primary"
+          [isLoading]="creando()"
+          data-testid="encuesta-crear"
+        >
+          Crear encuesta
+        </button>
+      </div>
+    </form>
+  </app-card>
+}
+
+<app-view-state-host [state]="vista()" (retry)="cargar()">
+  <div vsh-skeleton><app-skeleton variant="text" [lines]="4" /></div>
+
+  @if (vista(); as estado) {
+    @if (estado.status === 'ready') {
+      <ul class="encuestas__lista" data-testid="encuestas-lista">
+        @for (encuesta of estado.data; track encuesta.id) {
+          <li>
+            <app-card variant="outlined" padding="lg">
+              <div class="encuestas__fila">
+                <div class="encuestas__datos">
+                  <h2 class="encuestas__titulo">{{ encuesta.title }}</h2>
+
+                  @if (encuesta.description) {
+                    <p class="encuestas__consigna">{{ encuesta.description }}</p>
+                  }
+
+                  <p class="encuestas__meta">
+                    Versión {{ encuesta.latestVersionNumber }} ·
+                    {{ encuesta.questionCount }}
+                    {{ encuesta.questionCount === 1 ? 'pregunta' : 'preguntas' }}
+                    @if (!encuesta.published) {
+                      · sin publicar
+                    }
+                  </p>
+                </div>
+
+                <div class="encuestas__acciones-fila">
+                  <app-badge [variant]="encuesta.tono">{{ encuesta.palabra }}</app-badge>
+                  <a
+                    app-button-link
+                    variant="secondary"
+                    [routerLink]="encuesta.ruta"
+                    [attr.data-testid]="'abrir-' + encuesta.id"
+                  >
+                    Abrir
+                  </a>
+                </div>
+              </div>
+            </app-card>
+          </li>
+        }
+      </ul>
+    }
+  }
+</app-view-state-host>

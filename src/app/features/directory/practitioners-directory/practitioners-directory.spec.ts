@@ -141,6 +141,30 @@ describe('PractitionersDirectory', () => {
     expect(nombres).toEqual(['Cardiología', 'Pediatría']);
   });
 
+  /**
+   * F-25 (18/08/2026): tres tarjetas de la Guía mostraban como subtítulo el
+   * nombre de OTRO profesional. El dato cruzado lo arregla FX-4 en el seeder;
+   * este es el guardia de la vista, que no depende de eso.
+   */
+  it('una tarjeta nunca muestra el nombre de otro como subtítulo (F-25)', () => {
+    montar();
+    responder([
+      { ...FILA, displayName: 'Ana Lucía Flores', professionalTitle: 'Dr. Andrés Peña — Pediatría' },
+      OTRA,
+    ]);
+    responderConceptos();
+
+    const tarjetas = grupos().flatMap((g: GrupoDeEspecialidad) => g.profesionales);
+    const cruzada = tarjetas.find((t) => t.title === 'Ana Lucía Flores');
+
+    expect(cruzada, 'la tarjeta cruzada debería estar en la guía').toBeDefined();
+    // Sin subtítulo: más pobre, pero no miente sobre quién es quién.
+    expect(cruzada?.meta ?? []).toEqual([]);
+    // Y el resto conserva el suyo, que es legítimo.
+    const sana = tarjetas.find((t) => t.title === 'Dr. Andrés Peña');
+    expect(sana?.meta?.[0]?.text).toBe('Pediatra');
+  });
+
   /** Quien ejerce dos especialidades figura bajo las dos. */
   it('un profesional con dos especialidades aparece en las dos', () => {
     montar();
@@ -197,6 +221,23 @@ describe('PractitionersDirectory', () => {
     expect(grupos()[0].profesionales[0].title).toBe('Dra. Lucía Salas');
   });
 
+  /**
+   * F-19/F-27: la especialidad es el encabezado de la grilla, y buscarla tiene
+   * que traer a quienes la ejercen aunque su nombre no la mencione.
+   */
+  it('el buscador también encuentra por especialidad, con el grupo entero', () => {
+    montar();
+    responder([FILA, OTRA]);
+    responderConceptos();
+
+    senal<string>('filtro').set('cardio');
+
+    const encontrados = grupos();
+    expect(encontrados).toHaveLength(1);
+    expect(encontrados[0].nombre).toBe('Cardiología');
+    expect(encontrados[0].profesionales).toHaveLength(1);
+  });
+
   it('el buscador también encuentra por el título profesional', () => {
     montar();
     responder([FILA, OTRA]);
@@ -205,6 +246,58 @@ describe('PractitionersDirectory', () => {
     senal<string>('filtro').set('pediatra');
 
     expect(interno<() => number>('total')()).toBe(1);
+  });
+
+  it('el buscador encuentra por ESPECIALIDAD, que es el encabezado y no un dato de la tarjeta', () => {
+    montar();
+    responder([FILA, OTRA]);
+    responderConceptos();
+
+    // El placeholder promete buscar por especialidad. Antes no la miraba: la
+    // especialidad es el encabezado del grupo, no una línea de la tarjeta, así
+    // que «pediatría» sólo encontraba a quien lo tuviera en el título libre.
+    senal<string>('filtro').set('pediatría');
+
+    expect(grupos()).toHaveLength(1);
+    expect(grupos()[0].nombre).toBe('Pediatría');
+    expect(grupos()[0].profesionales).toHaveLength(1);
+  });
+
+  it('el buscador ignora las tildes: nadie las escribe', () => {
+    montar();
+    responder([FILA, OTRA]);
+    responderConceptos();
+
+    senal<string>('filtro').set('cardiologia');
+
+    expect(grupos()).toHaveLength(1);
+    expect(grupos()[0].nombre).toBe('Cardiología');
+  });
+
+  it('el grupo que casa entra ENTERO, aunque nadie coincida por nombre', () => {
+    montar();
+    // Dos cardiólogos con nombres que no tienen nada que ver con «cardio».
+    responder([FILA, { ...FILA, profileId: 'per-3', displayName: 'Dr. Juan Vera' }]);
+    responderConceptos();
+
+    senal<string>('filtro').set('cardio');
+
+    expect(interno<() => number>('total')()).toBe(2);
+  });
+
+  it('el código interno del profesional no se muestra ni filtra: el paciente no lo conoce', () => {
+    // Feedback de la analista (F-01, 18/08/2026): las tarjetas decían
+    // «Código MED-…». Es un identificador de sistema; la Guía es sólo del
+    // paciente y no hay a quién mostrárselo por rol. El DTO lo sigue trayendo.
+    montar();
+    responder([FILA, OTRA]);
+    responderConceptos();
+
+    const lineas = grupos().flatMap((g) => g.profesionales.flatMap((p) => p.meta ?? []));
+    expect(lineas.some((linea) => /MED-|Código/.test(linea.text))).toBe(false);
+
+    senal<string>('filtro').set('med-1');
+    expect(interno<() => number>('total')()).toBe(0);
   });
 
   /**

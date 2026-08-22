@@ -1,0 +1,219 @@
+<app-page-header
+  title="Encuesta"
+  subtitle="Componé el cuestionario, publicalo, asociálo a un servicio y leé lo que respondieron."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="vista()" (retry)="cargar()">
+  @if (encuesta(); as encuesta) {
+    <div class="encuesta">
+      <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
+        <h2 card-header>{{ encuesta.title }}</h2>
+        @if (encuesta.description) {
+          <p class="encuesta__consigna">{{ encuesta.description }}</p>
+        }
+        <dl class="encuesta__datos">
+          <div>
+            <dt>Versión</dt>
+            <dd>{{ encuesta.latestVersionNumber }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>
+              <app-badge [variant]="encuesta.published ? 'success' : 'warning'">
+                {{ encuesta.published ? 'Publicada' : 'Borrador' }}
+              </app-badge>
+            </dd>
+          </div>
+          <div>
+            <dt>Preguntas</dt>
+            <dd>{{ encuesta.questionCount }}</dd>
+          </div>
+          <div>
+            <dt>Plazo para responder</dt>
+            <dd>{{ encuesta.responseWindowDays }} días</dd>
+          </div>
+          <div>
+            <dt>Vigencia</dt>
+            <dd>
+              @if (encuesta.effectiveFrom) {
+                Desde {{ encuesta.effectiveFrom | date: 'longDate' }}
+              } @else {
+                Sin fecha de inicio
+              }
+              @if (encuesta.effectiveTo) {
+                · hasta {{ encuesta.effectiveTo | date: 'longDate' }}
+              }
+            </dd>
+          </div>
+        </dl>
+      </app-card>
+
+      <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
+        <h2 card-header>Cuestionario</h2>
+        @if (encuesta.questions.length === 0) {
+          <p class="encuesta__vacio">
+            Todavía no tiene preguntas. Agregá la primera con el formulario de abajo.
+          </p>
+        } @else {
+          <ol class="encuesta__preguntas">
+            @for (pregunta of encuesta.questions; track pregunta.id) {
+              <li class="encuesta__pregunta">
+                <span class="encuesta__pregunta-texto">{{ pregunta.questionText }}</span>
+                <span class="encuesta__pregunta-tipo">{{ etiquetaDe(pregunta.answerType) }}</span>
+                @if (pregunta.required) {
+                  <app-badge variant="info" size="sm">Obligatoria</app-badge>
+                }
+                @if (pregunta.options?.length) {
+                  <span class="encuesta__pregunta-opciones">
+                    {{ pregunta.options?.join(' · ') }}
+                  </span>
+                }
+                @if (pregunta.answerType === 'SCALE') {
+                  <span class="encuesta__pregunta-opciones">
+                    De {{ pregunta.scaleMin }} a {{ pregunta.scaleMax }}
+                  </span>
+                }
+              </li>
+            }
+          </ol>
+        }
+      </app-card>
+
+      @if (editable()) {
+        <app-card variant="outlined" padding="lg" class="encuesta__card">
+          <h2 card-header>Agregar una pregunta</h2>
+          <form [formGroup]="formularioPregunta" (ngSubmit)="agregarPregunta()">
+            <app-form-field
+              label="Pregunta"
+              hint="Cómo la va a leer el paciente."
+              [required]="true"
+            >
+              <app-input formControlName="questionText" data-testid="pregunta-texto" />
+            </app-form-field>
+
+            <app-form-field label="Tipo de respuesta" [required]="true">
+              <app-select formControlName="answerType" [options]="tipos" />
+            </app-form-field>
+
+            @if (pideOpciones()) {
+              <app-form-field
+                label="Opciones"
+                hint="Una por línea. Hacen falta al menos dos."
+                [required]="true"
+              >
+                <app-input formControlName="options" data-testid="pregunta-opciones" />
+              </app-form-field>
+            }
+
+            @if (pideEscala()) {
+              <div class="encuesta__escala">
+                <app-form-field label="Mínimo" [required]="true">
+                  <app-input type="number" formControlName="scaleMin" />
+                </app-form-field>
+                <app-form-field label="Máximo" [required]="true">
+                  <app-input type="number" formControlName="scaleMax" />
+                </app-form-field>
+              </div>
+            }
+
+            <app-checkbox formControlName="required" label="Obligatoria" />
+
+            <div class="encuesta__acciones">
+              <button
+                app-button
+                type="submit"
+                variant="primary"
+                [disabled]="guardandoPregunta()"
+                data-testid="pregunta-guardar"
+              >
+                {{ guardandoPregunta() ? 'Agregando…' : 'Agregar pregunta' }}
+              </button>
+            </div>
+          </form>
+        </app-card>
+
+        <app-card variant="outlined" padding="lg" class="encuesta__card">
+          <h2 card-header>Publicar</h2>
+          <!-- El aviso va antes del botón, no después del error: publicar cierra
+               la versión y una respuesta vieja se tiene que poder seguir
+               interpretando. -->
+          <app-alert tone="warning" title="Publicar es definitivo">
+            Una versión publicada ya no acepta preguntas. Si después hace falta cambiar el
+            cuestionario, se crea una versión nueva y las respuestas anteriores quedan atadas a la
+            que respondieron.
+          </app-alert>
+          <div class="encuesta__acciones">
+            <button
+              app-button
+              type="button"
+              variant="primary"
+              [disabled]="publicando() || encuesta.questions.length === 0"
+              (click)="publicar()"
+              data-testid="encuesta-publicar"
+            >
+              {{ publicando() ? 'Publicando…' : 'Publicar versión ' + encuesta.latestVersionNumber }}
+            </button>
+          </div>
+        </app-card>
+      }
+
+      @if (publicada()) {
+        <app-card variant="outlined" padding="lg" class="encuesta__card">
+          <h2 card-header>Asociar a un servicio</h2>
+          <form [formGroup]="formularioAsignacion" (ngSubmit)="asignar()">
+            <app-form-field
+              label="Servicio de salud"
+              hint="Se le ofrecerá al paciente al cerrar una consulta de ese servicio."
+              [required]="true"
+            >
+              <app-input formControlName="targetId" data-testid="asignacion-servicio" />
+            </app-form-field>
+            <div class="encuesta__acciones">
+              <button
+                app-button
+                type="submit"
+                variant="primary"
+                [disabled]="asignando()"
+                data-testid="asignacion-guardar"
+              >
+                {{ asignando() ? 'Asociando…' : 'Asociar' }}
+              </button>
+              <button app-button type="button" variant="outline" (click)="desactivar()">
+                Desactivar encuesta
+              </button>
+            </div>
+          </form>
+        </app-card>
+
+        <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
+          <h2 card-header>Respuestas recibidas</h2>
+          @if (cargandoRespuestas()) {
+            <app-skeleton />
+          } @else if (respuestas().length === 0) {
+            <p class="encuesta__vacio">Todavía no respondió nadie.</p>
+          } @else {
+            <ul class="encuesta__respuestas">
+              @for (respuesta of respuestas(); track respuesta.id) {
+                <li class="encuesta__respuesta">
+                  <span class="encuesta__respuesta-fecha">
+                    @if (respuesta.submittedAt) {
+                      {{ respuesta.submittedAt | date: 'short' }}
+                    } @else {
+                      Sin enviar
+                    }
+                  </span>
+                  <ul class="encuesta__answers">
+                    @for (answer of respuesta.answers; track answer.questionId) {
+                      <li>{{ valorDe(answer) }}</li>
+                    }
+                  </ul>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      }
+    </div>
+  }
+</app-view-state-host>

@@ -1,0 +1,125 @@
+<app-page-header
+  title="Chats"
+  subtitle="Escribile a tu médico y seguí la conversación, en vivo."
+/>
+
+@if (error(); as mensaje) {
+  <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
+}
+
+@if (!perfilResuelto()) {
+  <p class="mensajeria__cargando" role="status">Cargando tus conversaciones…</p>
+} @else if (perfil() === null) {
+  <!-- Una puerta, no un error: la mensajería necesita el perfil público de
+       `community`, que es una entidad aparte del perfil de paciente del token. -->
+  <app-empty-state
+    title="Todavía no tenés perfil público"
+    description="La mensajería usa tu perfil de la red social, y para eso hace falta tener el tuyo. Se crea desde «Mi perfil»."
+    variant="empty"
+  />
+} @else {
+  <div class="mensajeria__barra">
+    <button
+      app-button
+      variant="primary"
+      size="sm"
+      data-testid="mensajeria-nueva"
+      (clicked)="alternarBusqueda()"
+    >
+      {{ buscando() ? 'Cancelar' : 'Escribirle a un profesional' }}
+    </button>
+  </div>
+
+  @if (buscando()) {
+    <div class="mensajeria__buscador">
+      <label class="mensajeria__campo">
+        <span class="solo-lectores">Buscar profesional</span>
+        <input
+          type="search"
+          data-testid="mensajeria-consulta"
+          placeholder="Nombre o especialidad"
+          [ngModel]="consulta()"
+          (ngModelChange)="consulta.set($event)"
+          (keydown.enter)="buscar()"
+        />
+      </label>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        data-testid="mensajeria-buscar"
+        [isLoading]="buscandoAhora()"
+        (clicked)="buscar()"
+      >
+        Buscar
+      </button>
+
+      @if (resultados().length > 0) {
+        <ul class="mensajeria__resultados">
+          @for (resultado of resultados(); track resultado.slug) {
+            <li>
+              <button
+                class="mensajeria__resultado"
+                type="button"
+                data-testid="mensajeria-resultado"
+                [disabled]="abriendo()"
+                (click)="escribirA(resultado)"
+              >
+                <span class="mensajeria__resultado-nombre">{{ resultado.displayName }}</span>
+                @if (resultado.headline) {
+                  <span class="mensajeria__resultado-detalle">{{ resultado.headline }}</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  @if (vacio()) {
+    <app-empty-state
+      title="No tenés conversaciones"
+      description="Cuando le escribas a un profesional —o alguien te escriba— la conversación va a aparecer acá."
+      variant="empty"
+    />
+  } @else {
+    <ul class="mensajeria__lista">
+      @for (conversacion of conversaciones(); track conversacion.id) {
+        <li class="mensajeria__fila" [class.is-sin-leer]="conversacion.unreadCount > 0">
+          <a
+            class="mensajeria__item"
+            data-testid="conversacion"
+            [routerLink]="['/messaging', conversacion.id]"
+          >
+            <app-avatar
+              class="mensajeria__avatar"
+              [name]="conQuien(conversacion)"
+              size="md"
+            />
+            <span class="mensajeria__texto">
+              <span class="mensajeria__con-quien">{{ conQuien(conversacion) }}</span>
+              @if (conversacion.lastMessage?.bodyText; as vistaPrevia) {
+                <span class="mensajeria__vista-previa">{{ vistaPrevia }}</span>
+              }
+            </span>
+            <span class="mensajeria__meta">
+              @if (conversacion.lastMessageAt; as cuando) {
+                <span>{{ relativo(cuando) ?? (cuando | date: 'short') }}</span>
+              }
+              @if (conversacion.unreadCount > 0) {
+                <app-badge
+                  variant="info"
+                  [value]="conversacion.unreadCount"
+                  [max]="99"
+                  label="mensajes sin leer"
+                  data-testid="conversacion-sin-leer"
+                />
+              }
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+}

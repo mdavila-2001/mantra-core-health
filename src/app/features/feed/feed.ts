@@ -12,7 +12,9 @@ import { AppButton } from '../../shared/components/atoms/button/button';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
+import { Composer } from './composer/composer';
 import { PostCard } from './post-card/post-card';
+import { ReportPost } from './report-post/report-post';
 
 /** Cuántas publicaciones se piden por página. */
 const PAGE_SIZE = 20;
@@ -49,7 +51,15 @@ const PAGE_SIZE = 20;
  */
 @Component({
   selector: 'app-feed',
-  imports: [Alert, AppButton, EmptyState, PageHeader, PostCard],
+  imports: [
+    Alert,
+    AppButton,
+    Composer,
+    EmptyState,
+    PageHeader,
+    PostCard,
+    ReportPost,
+  ],
   templateUrl: './feed.html',
   styleUrl: './feed.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -76,6 +86,16 @@ export class Feed {
   /** Si ya se sabe si hay perfil o no. Antes de eso no se puede decidir nada. */
   protected readonly perfilResuelto = signal(false);
 
+  /**
+   * La publicación que se está reportando, si hay alguna.
+   *
+   * El formulario **reemplaza** a la tarjeta en vez de abrirse debajo: reportar
+   * es una acción deliberada y dejar la publicación a la vista mientras se
+   * elige el motivo invita a seguir leyéndola en lugar de terminar el reporte.
+   * Se guarda uno solo: dos formularios abiertos a la vez no tienen sentido.
+   */
+  protected readonly reportando = signal<string | null>(null);
+
   protected readonly hayMas = computed(() => this.cursor() !== null);
   protected readonly vacio = computed(
     () => this.cargoAlgunaVez() && this.entradas().length === 0,
@@ -95,12 +115,34 @@ export class Feed {
     });
   }
 
-  /** Trae la primera página, descartando lo que hubiera. */
+  /**
+   * Trae la primera página, descartando lo que hubiera.
+   *
+   * Es también lo que se hace al publicar: la publicación propia entra al muro
+   * por el fan-out del worker, no por una inserción del cliente, así que la única
+   * forma honesta de mostrarla es volver a pedir la página.
+   */
   protected recargar(): void {
     this.entradas.set([]);
     this.cursor.set(null);
     this.cargoAlgunaVez.set(false);
     this.cargar();
+  }
+
+  /** Abre el formulario de reporte de una publicación. */
+  protected abrirReporte(postId: string): void {
+    this.reportando.set(postId);
+  }
+
+  /**
+   * Cierra el formulario, haya reportado o no.
+   *
+   * No se recarga el muro: reportar **no** baja la publicación —eso lo decide
+   * una persona en la cola de moderación—, así que hacerla desaparecer acá
+   * prometería algo que no pasó.
+   */
+  protected cerrarReporte(): void {
+    this.reportando.set(null);
   }
 
   /** Trae la página siguiente y la agrega al final. */

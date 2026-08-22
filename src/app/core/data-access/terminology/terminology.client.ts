@@ -4,6 +4,7 @@ import { expand, forkJoin, map, of, reduce, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
+  ConceptDetail,
   ConceptLabels,
   ConceptSearchPage,
   ConceptSearchQuery,
@@ -18,13 +19,16 @@ import type {
 } from './terminology.types';
 
 /**
- * Idioma en el que el glosario pide el catálogo.
+ * Idioma en el que se pide el catálogo.
  *
  * Constante y no configurable: es el idioma del producto. El día que haya que
  * elegirlo, sale de la sesión y no de aquí — pero mientras no exista esa
  * elección, un parámetro que nadie cambia es una pregunta sin dueño.
+ *
+ * Lo usan el glosario y {@link TerminologyClient.readConceptLabels}, que es por
+ * donde piden sus etiquetas las diecisiete pantallas que muestran conceptos.
  */
-const IDIOMA_DEL_GLOSARIO = 'ES';
+const IDIOMA_DEL_CATALOGO = 'ES';
 
 /**
  * Tope de páginas que `readAllOptions` recorre.
@@ -176,7 +180,21 @@ export class TerminologyClient {
     // Parámetro a parámetro y no con un objeto: el backend valida con
     // `forbidNonWhitelisted`, así que un opcional presente en `undefined`
     // viajaría como clave declarada y la petición volvería con 400.
-    let params = new HttpParams();
+    //
+    // `lang` va siempre, por lo mismo que en `readConceptLabels`: sin él la
+    // respuesta trae el rótulo del sistema de codificación, que está en inglés
+    // a propósito porque es el catálogo. Los cinco consumidores de esta
+    // búsqueda son elecciones de una persona —el buscador de medicamentos de la
+    // receta, el catálogo de terminología, los selectores de formularios
+    // clínicos y de alta de organización, la consulta por prefijo de
+    // verificación—, o sea interfaz, no catálogo.
+    //
+    // **No acota el conjunto de resultados**, que es la duda razonable acá:
+    // `lang` solo elige de qué designación sale el texto y degrada al rótulo
+    // original cuando falta la traducción. Quien scopea es `includeValueSets`,
+    // que es otro parámetro y no se manda. Por eso el buscador de medicamentos
+    // sigue encontrando el vademécum entero.
+    let params = new HttpParams().set('lang', IDIOMA_DEL_CATALOGO);
     if (query.query !== undefined && query.query !== '') {
       params = params.set('q', query.query);
     }
@@ -188,6 +206,28 @@ export class TerminologyClient {
     }
 
     return this.http.get<ConceptSearchPage>(this.url('/terminology/concepts'), { params });
+  }
+
+  /**
+   * `GET /terminology/concepts/:conceptId` — la ficha del concepto elegido.
+   *
+   * Es el paso siguiente a {@link searchConcepts}: la búsqueda alcanza para
+   * *elegir* —código y denominación—, pero no trae lo que cada sistema de
+   * codificación declara de suyo. El vademécum publica ahí `dose_forms`,
+   * `strengths` y `routes`, que es lo que la receta necesita para ofrecer
+   * presentación y concentración en lugar de pedirlas tecleadas.
+   *
+   * **Sin `lang`**, a diferencia de {@link readGlossaryTerm}: pedirlo scopea la
+   * lectura al value set paraguas del glosario y un medicamento no está ahí. Son
+   * dos contratos sobre la misma URL — ver el comentario de arriba.
+   *
+   * @param conceptId - Concepto a leer.
+   * @returns La ficha con sus propiedades declaradas.
+   */
+  readConceptDetail(conceptId: string): Observable<ConceptDetail> {
+    return this.http.get<ConceptDetail>(
+      this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}`),
+    );
   }
 
   readConceptLabels(conceptIds: readonly string[]): Observable<ConceptLabels> {
@@ -202,8 +242,21 @@ export class TerminologyClient {
     // queda sin etiquetas por culpa del id doscientos uno.
     const tandas = trocear(sinRepetir, MAX_IDS_POR_LECTURA).map((tanda) =>
       this.http.get<ConceptSearchPage>(this.url('/terminology/concepts'), {
-        // El backend los espera separados por coma, no repitiendo la clave.
-        params: new HttpParams().set('ids', tanda.join(',')),
+        params: new HttpParams()
+          // El backend los espera separados por coma, no repitiendo la clave.
+          .set('ids', tanda.join(','))
+          // Sin `lang`, esta lectura devuelve el rótulo del **sistema de
+          // codificación**, que está en inglés a propósito: es el catálogo, no
+          // la interfaz. Con él, devuelve la designación en castellano cuando el
+          // concepto la tiene, y si no la tiene degrada al rótulo original en
+          // vez de venir vacía.
+          //
+          // Faltaba, y es lo que la analista funcional vio en el perfil del
+          // profesional: «Academic degree credential», «National jurisdiction»,
+          // «Specialty verification pending». Las tres estaban traducidas en el
+          // catálogo desde siempre —«Título académico», «Jurisdicción nacional»,
+          // «Especialidad pendiente de verificación»— y nadie las pedía.
+          .set('lang', IDIOMA_DEL_CATALOGO),
       }),
     );
 
@@ -285,7 +338,7 @@ export class TerminologyClient {
    * @returns La página de términos, ya ordenada alfabéticamente por el backend.
    */
   searchGlossary(query: GlossaryQuery = {}): Observable<GlossaryTermPage> {
-    let params = new HttpParams().set('lang', IDIOMA_DEL_GLOSARIO).set('includeValueSets', 'true');
+    let params = new HttpParams().set('lang', IDIOMA_DEL_CATALOGO).set('includeValueSets', 'true');
     if (query.query !== undefined && query.query !== '') {
       params = params.set('q', query.query);
     }
@@ -313,7 +366,7 @@ export class TerminologyClient {
   readGlossaryTerm(conceptId: string): Observable<GlossaryTermDetail> {
     return this.http.get<GlossaryTermDetail>(
       this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}`),
-      { params: new HttpParams().set('lang', IDIOMA_DEL_GLOSARIO) },
+      { params: new HttpParams().set('lang', IDIOMA_DEL_CATALOGO) },
     );
   }
 

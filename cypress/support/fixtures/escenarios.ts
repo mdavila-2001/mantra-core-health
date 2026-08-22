@@ -112,10 +112,14 @@ export const ESCENARIOS = {
   },
   'directorio-poblado': {
     descripcion: 'El directorio público devuelve registros: el panel los cuenta.',
+    // Persona de trabajo: la tarjeta del directorio vive en el panel de la
+    // organización, y desde «Mi salud» un paciente ve el suyo.
+    claims: { roles: ['USER', 'PRACTITIONER'] },
     registrosDirectorio: 3,
   },
   'directorio-caido': {
     descripcion: 'El directorio responde 503: el panel ofrece reintentar.',
+    claims: { roles: ['USER', 'PRACTITIONER'] },
     directorioCaido: true,
   },
   'registro-duplicado': {
@@ -137,6 +141,21 @@ export const ESCENARIOS = {
   'api-lenta': {
     descripcion: 'Respuestas demoradas: hay estado de carga que observar.',
     demoraMs: 900,
+  },
+  'directorio-lento': {
+    descripcion:
+      'El panel de la organización con respuestas demoradas: hay estado de carga que observar.',
+    claims: { roles: ['USER', 'PRACTITIONER'] },
+    demoraMs: 900,
+  },
+  'sesion-profesional': {
+    descripcion:
+      'Una sola organización, pero la sesión es de quien atiende: abre lo que al paciente se le esconde (glosario, agenda).',
+    claims: {
+      roles: ['USER', 'PRACTITIONER'],
+      tenants: ['t-1'],
+      tenantNames: { 't-1': 'Clínica Norte' },
+    },
   },
 } as const satisfies Record<string, Escenario>;
 

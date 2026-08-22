@@ -4,17 +4,23 @@ import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { rolesConEtiqueta } from '../../../core/auth/role-labels';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import type { OwnPatientSummary } from '../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import {
+  errorToViewState,
+  IDENTITY_VERIFICATION_ROUTE,
+} from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { Link } from '../../../shared/components/atoms/link/link';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
@@ -24,7 +30,6 @@ import {
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
-import { WorkHistory } from './work-history/work-history';
 
 /**
  * Resumen propio — vista **V05-03** de `SALUD/Vistas/V05 profiles`
@@ -58,14 +63,6 @@ import { WorkHistory } from './work-history/work-history';
  * 3. **Con qué credenciales está entrando** — organización y roles. Estaban sólo
  *    en el panel, que es otra pantalla.
  *
- * ## Dos perfiles, una pantalla — y un bloque mas, tambien del profesional
- *
- * `app-work-history` agrega **dónde trabajó** (punto 9 del reclamo): la
- * trayectoria de `app-practitioner-profile` dice qué puede ejercer y dónde se
- * formó; ésta, en qué hospitales estuvo. Va como tarjeta aparte y no dentro de
- * aquélla porque es lo único de esta pantalla que **se escribe**, y decide por
- * sí mismo si corresponde dibujarse: sin perfil profesional no renderiza nada.
- *
  * ## Dos perfiles, una pantalla
  *
  * Esta pantalla llamaba a `GET /profiles/patients/me/summary` para **todo el
@@ -82,18 +79,35 @@ import { WorkHistory } from './work-history/work-history';
  * Los dos últimos bloques —verificación de identidad y acceso— son de la
  * **cuenta**, no del perfil, así que se muestran en los dos casos.
  */
+/**
+ * Los roles con los que se viene a trabajar, no a atenderse.
+ *
+ * Mismo criterio que el panel: quien tiene alguno de estos ve «Tu acceso»
+ * aunque además sea paciente, porque para él la pregunta que responde esa
+ * tarjeta sí existe.
+ */
+const ROLES_DE_TRABAJO: readonly string[] = [
+  'SUPERADMIN',
+  'SECURITY_ADMIN',
+  'SCHEDULING_ADMIN',
+  'SCHEDULING_AGENT',
+  'PRACTITIONER',
+  'CLINICIAN',
+];
+
 @Component({
   selector: 'app-my-profile',
   imports: [
+    Alert,
     Badge,
     Card,
     DatePipe,
+    Link,
     PageHeader,
     PractitionerProfile,
     RouterLink,
     StatusSeal,
     ViewStateHost,
-    WorkHistory,
   ],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
@@ -135,7 +149,59 @@ export class MyProfile {
 
   protected readonly datos = computed(() => dataOf(this.resumen()));
 
-  protected readonly roles = this.auth.roles;
+  /**
+   * Si «Tus datos» está cerrado **sólo** porque falta verificar la identidad.
+   *
+   * Es el estado normal de todo paciente recién registrado, no un error: el
+   * backend responde 403 con la puerta a verificarse. La tarjeta lo dice en
+   * neutro y con la salida a mano —una alerta roja «No tenés acceso» sobre la
+   * propia cuenta lee como que algo se rompió (feedback de la analista, barrido
+   * del 18/08/2026)—. Cualquier otro 403 sigue pintándose como lo que es.
+   */
+  protected readonly verificacionPendiente = computed(() => {
+    const estado = this.resumen();
+    return (
+      estado.status === 'forbidden' && estado.nextAction?.route === IDENTITY_VERIFICATION_ROUTE
+    );
+  });
+
+  protected readonly rutaDeVerificacion = IDENTITY_VERIFICATION_ROUTE;
+
+  /** El mensaje de un 403 que no es el de identidad: se muestra como lo haría el host. */
+  protected readonly motivoDelMuro = computed(() => {
+    const estado = this.resumen();
+    return estado.status === 'forbidden' ? (estado.message ?? null) : null;
+  });
+
+  /**
+   * Los roles con etiqueta, para las insignias de «Tu acceso».
+   *
+   * El código crudo no se pinta —es vocabulario de sistema— pero sigue viajando
+   * en `data-role` para quien lo lea por máquina; el rol sin etiqueta se omite.
+   */
+  protected readonly rolesLegibles = computed(() => rolesConEtiqueta(this.auth.roles()));
+
+  /**
+   * Si se muestra la tarjeta «Tu acceso» (F-22).
+   *
+   * A quien viene a atenderse no le dice nada: «Organización: Care Default
+   * Tenant» y «Roles: Paciente» son la respuesta a «¿por qué no veo tal cosa?»,
+   * una pregunta que se hace quien trabaja acá y tiene secciones que le faltan.
+   * Un paciente no tiene secciones que le falten: tiene lo suyo. Es la cuarta
+   * fuga de la misma regla —cero organización, roles ni jerga en su vista— y
+   * los barridos anteriores no alcanzaron esta pantalla.
+   *
+   * Se oculta en vez de reemplazarse: lo que iría en su lugar —su código de
+   * paciente— todavía no tiene formato decidido (H-04).
+   *
+   * Se pregunta por los roles de trabajo, igual que el panel: quien atiende y
+   * además es paciente entra a trabajar, y la tarjeta le sirve.
+   */
+  protected readonly muestraElAcceso = computed(() => {
+    const roles = this.auth.roles();
+    if (!roles.includes('PATIENT')) return true;
+    return ROLES_DE_TRABAJO.some((rol) => roles.includes(rol));
+  });
 
   protected readonly tenantName = computed(() => {
     const id = this.auth.activeTenantId();

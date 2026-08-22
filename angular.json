@@ -28,6 +28,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "leaflet.css",
+                "input": "node_modules/leaflet/dist",
+                "output": "assets/leaflet"
               }
             ],
             "styles": [
@@ -94,7 +99,9 @@
               "localhost",
               "127.0.0.1",
               ".devtunnels.ms",
-              "all"
+              ".trycloudflare.com",
+              ".ngrok-free.app",
+              ".loca.lt"
             ]
           },
           "configurations": {
@@ -103,6 +110,10 @@
             },
             "development": {
               "buildTarget": "mantra-core-health:build:development"
+            },
+            "lan": {
+              "buildTarget": "mantra-core-health:build:development",
+              "allowedHosts": true
             }
           },
           "defaultConfiguration": "development"

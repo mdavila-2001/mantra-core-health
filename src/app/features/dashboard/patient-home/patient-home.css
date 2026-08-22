@@ -1,0 +1,103 @@
+/* «Mi salud» — el panel de quien viene a atenderse.
+   Mobile-first: una columna, y de 48rem para arriba la rejilla se abre. */
+
+:host {
+  display: block;
+}
+
+.mi-salud__tarjetas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-4);
+}
+
+.mi-salud__titulo {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  color: var(--text-primary);
+}
+
+.mi-salud__dato {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  /* La fecha llega en minúscula del pipe; acá encabeza la tarjeta. */
+  text-transform: capitalize;
+}
+
+.mi-salud__hora {
+  display: block;
+  color: var(--text-secondary);
+  text-transform: none;
+}
+
+.mi-salud__texto,
+.mi-salud__estado {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+}
+
+/* Los accesos, con la misma forma que tenían en el panel anterior: tarjeta
+   cuadrada con ícono arriba y rótulo abajo (F-21). Se copian los valores del
+   panel de la organización a propósito —es el mismo patrón visual, y dos
+   grillas de accesos que se ven distinto serían dos productos—. */
+.mi-salud__accesos {
+  margin-block-start: var(--sp-5);
+}
+
+.mi-salud__accesos-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mi-salud__acceso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-4) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+.mi-salud__acceso-icono {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  color: var(--text-secondary);
+}
+
+.mi-salud__acceso:hover .mi-salud__acceso-icono,
+.mi-salud__acceso:focus-visible .mi-salud__acceso-icono {
+  color: var(--text-primary);
+}
+
+/* El realce es un VELO (`--bg-hover`), no un color opaco: se compone con lo que
+   hay debajo y funciona igual en claro y en oscuro. */
+.mi-salud__acceso:hover,
+.mi-salud__acceso:focus-visible {
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+.mi-salud__acceso:active {
+  background: var(--bg-active);
+}
+
+@media (min-width: 48rem) {
+  .mi-salud__tarjetas {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -1,4 +1,4 @@
-<app-card variant="outlined" padding="md">
+<app-card variant="outlined" padding="md" [attr.data-testid]="'post-card-' + post().id">
   <header class="publicacion__cabecera">
     <p class="publicacion__autor">Perfil {{ autor() }}</p>
     @if (post().publishedAt; as fecha) {
@@ -13,38 +13,136 @@
 
   <p class="publicacion__cuerpo">{{ post().bodyText }}</p>
 
+  <!-- Punto de extensión P5: los medios de la publicación se pintan acá cuando
+       el carril de medios los habilite. `PostListItem` no los trae todavía y no
+       se simula ninguno. -->
+
   <footer class="publicacion__acciones">
-    @if (puedeReaccionar()) {
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        [attr.aria-pressed]="reaccionPropia() === 'LIKE'"
-        (clicked)="reaccionar('LIKE')"
-      >
-        Me sirve
-      </button>
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        [attr.aria-pressed]="reaccionPropia() === 'INSIGHTFUL'"
-        (clicked)="reaccionar('INSIGHTFUL')"
-      >
-        Me hizo pensar
-      </button>
+    @if (puedeEscribir()) {
+      @for (reaccion of reacciones; track reaccion.tipo) {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          [attr.aria-pressed]="reaccionPropia() === reaccion.tipo"
+          (clicked)="reaccionar(reaccion.tipo)"
+        >
+          {{ reaccion.label }}
+        </button>
+      }
     } @else {
-      <!-- Sin perfil público no se puede reaccionar: el contrato exige el
-           perfil y no lo deduce de la sesión. Se dice, no se esconde el pie. -->
+      <!-- Sin perfil público no se puede escribir: el contrato exige el perfil y
+           no lo deduce de la sesión. Se dice, no se esconde el pie. -->
       <p class="publicacion__sin-perfil">
-        Creá tu perfil público para reaccionar.
+        Creá tu perfil público para reaccionar y comentar.
       </p>
     }
 
-    @if (reacciones() > 0) {
-      <span class="publicacion__conteo">{{ reacciones() }}</span>
+    @if (totalReacciones() > 0) {
+      <span class="publicacion__conteo" data-testid="post-reaction-count">
+        {{ totalReacciones() }} {{ totalReacciones() === 1 ? 'reacción' : 'reacciones' }}
+      </span>
+    }
+
+    @if (admiteComentarios()) {
+      <button
+        app-button
+        data-testid="post-comments-toggle"
+        variant="ghost"
+        size="sm"
+        (clicked)="alternarHilo()"
+      >
+        {{ hiloAbierto() ? 'Ocultar' : 'Comentarios' }}
+        (<span data-testid="post-comment-count">{{ totalComentarios() }}</span>)
+      </button>
+    } @else {
+      <span class="publicacion__cerrado">Comentarios cerrados</span>
+    }
+
+    @if (puedeEscribir()) {
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        [attr.aria-pressed]="guardado() === true"
+        (clicked)="alternarGuardado()"
+      >
+        {{ guardado() === true ? 'Guardada' : 'Guardar' }}
+      </button>
+    }
+
+    <!-- Punto de extensión P6: la acción sólo aparece si quien contiene la
+         tarjeta la habilita explícitamente. Un botón «Reportar» que no reporta
+         nada es peor que ninguno. -->
+    @if (puedeReportar()) {
+      <button app-button variant="ghost" size="sm" (clicked)="reportar.emit(post().id)">
+        Reportar
+      </button>
     }
   </footer>
+
+  @if (hiloAbierto()) {
+    <section class="publicacion__hilo" aria-label="Comentarios">
+      @if (cargandoHilo()) {
+        <p class="publicacion__cargando">Cargando comentarios…</p>
+      } @else if (comentarios().length === 0) {
+        <p class="publicacion__cargando">Todavía no hay comentarios.</p>
+      } @else {
+        <ul class="hilo">
+          @for (comentario of comentarios(); track comentario.id) {
+            <li class="hilo__item">
+              <p class="hilo__autor">Perfil {{ comentario.authorProfileId.slice(0, 8) }}</p>
+              <p class="hilo__cuerpo">{{ comentario.bodyText }}</p>
+              @if (comentario.replies.length > 0) {
+                <ul class="hilo hilo--anidado">
+                  @for (respuesta of comentario.replies; track respuesta.id) {
+                    <li class="hilo__item">
+                      <p class="hilo__autor">
+                        Perfil {{ respuesta.authorProfileId.slice(0, 8) }}
+                      </p>
+                      <p class="hilo__cuerpo">{{ respuesta.bodyText }}</p>
+                    </li>
+                  }
+                </ul>
+              }
+              @if ((comentario.replyCount ?? 0) > comentario.replies.length) {
+                <!-- El servidor acota cuántas respuestas trae. Se dice cuántas
+                     quedaron afuera en vez de dar el hilo por completo. -->
+                <p class="hilo__mas">
+                  Hay más respuestas en este hilo
+                  ({{ comentario.replyCount }} en total).
+                </p>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      @if (puedeEscribir()) {
+        <form class="hilo__form" (submit)="$event.preventDefault()">
+          <app-textarea
+            data-testid="post-comment-body"
+            [(value)]="nuevoComentario"
+            [rows]="2"
+            [autoResize]="true"
+            [disabled]="comentando()"
+            placeholder="Escribí un comentario"
+          />
+          <button
+            app-button
+            data-testid="post-comment-submit"
+            type="button"
+            variant="secondary"
+            size="sm"
+            [disabled]="comentando() || nuevoComentario().trim().length === 0"
+            (clicked)="comentar()"
+          >
+            {{ comentando() ? 'Enviando…' : 'Comentar' }}
+          </button>
+        </form>
+      }
+    </section>
+  }
 
   @if (error(); as mensaje) {
     <p class="publicacion__error" role="alert">{{ mensaje }}</p>

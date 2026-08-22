@@ -2,23 +2,24 @@
 
 # Inventario de rutas
 
-Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 13 entradas declaradas.
+Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 14 entradas declaradas.
 
 | URL | Destino | Acceso | Render en servidor | Título |
 |---|---|---|---|---|
 | `/` | `ShellLayout` | Protegida (`authGuard`) | Client | — |
 | `/` | redirige a `dashboard` | Protegida (`authGuard`) | Client | — |
-| `/design-system` | `DesignSystemSample` (diferida) | Pública | Prerender | Mantra Core Health - Vitrina de Diseño |
-| `/auth` | `Login` | Pública | Prerender | Mantra Core Health - Iniciar sesión |
-| `/auth/organization` | `TenantSelection` | Pública | Client | Mantra Core Health - Elegí tu organización |
-| `/auth/register` | `RegisterPatient` | Pública | Prerender | Mantra Core Health - Crear cuenta |
-| `/auth/verify-email` | `VerifyEmail` | Pública | Client | Mantra Core Health - Verificar correo |
-| `/auth/forgot-password` | `ForgotPassword` | Pública | Prerender | Mantra Core Health - Recuperar contraseña |
-| `/auth/activate` | `ActivateAccount` | Pública | Client | Mantra Core Health - Activar cuenta |
-| `/auth/resend-verification` | `ResendVerification` | Pública | Client | Mantra Core Health - Reenviar verificación |
-| `/auth/reset-password` | `ResetPassword` | Pública | Client | Mantra Core Health - Nueva contraseña |
-| `/error` | `ErrorRecovery` | Pública | Client | Mantra Core Health |
-| `/**` | `NotFound` | Pública | Client | Mantra Core Health - Página no encontrada |
+| `/feed` | `Feed` (diferida) | Protegida (`authGuard`) | Client | Muro profesional |
+| `/design-system` | `DesignSystemSample` (diferida) | Pública | Prerender | AloVida - Vitrina de Diseño |
+| `/auth` | `Login` | Pública | Prerender | AloVida - Iniciar sesión |
+| `/auth/organization` | `TenantSelection` | Pública | Client | AloVida - Elegí tu organización |
+| `/auth/register` | `RegisterPatient` | Pública | Prerender | AloVida - Crear cuenta |
+| `/auth/verify-email` | `VerifyEmail` | Pública | Client | AloVida - Verificar correo |
+| `/auth/forgot-password` | `ForgotPassword` | Pública | Prerender | AloVida - Recuperar contraseña |
+| `/auth/activate` | `ActivateAccount` | Pública | Client | AloVida - Activar cuenta |
+| `/auth/resend-verification` | `ResendVerification` | Pública | Client | AloVida - Reenviar verificación |
+| `/auth/reset-password` | `ResetPassword` | Pública | Client | AloVida - Nueva contraseña |
+| `/error` | `ErrorRecovery` | Pública | Client | AloVida |
+| `/**` | `NotFound` | Pública | Client | AloVida - Página no encontrada |
 
 ## Modo de render
 

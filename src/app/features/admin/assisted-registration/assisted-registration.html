@@ -84,15 +84,43 @@
       description="Lo mínimo para crear la cuenta; el resto lo completa su filiación."
     >
       <app-form-field
-        label="Nombre visible"
+        label="Nombre"
         [required]="true"
         [errorMessage]="
-          form.controls.displayName.touched && form.controls.displayName.invalid
+          form.controls.name.touched && form.controls.name.invalid
             ? 'Escribí el nombre del paciente.'
             : ''
         "
       >
-        <app-input formControlName="displayName" type="text" testId="alta-paciente-nombre" />
+        <app-input formControlName="name" type="text" testId="alta-paciente-nombre" />
+      </app-form-field>
+
+      <app-form-field label="Segundo nombre" hint="Si no tiene, dejalo vacío.">
+        <app-input
+          formControlName="middleName"
+          type="text"
+          testId="alta-paciente-segundo-nombre"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Apellido paterno"
+        [required]="true"
+        [errorMessage]="
+          form.controls.lastName.touched && form.controls.lastName.invalid
+            ? 'Escribí el apellido paterno del paciente.'
+            : ''
+        "
+      >
+        <app-input formControlName="lastName" type="text" testId="alta-paciente-apellido-paterno" />
+      </app-form-field>
+
+      <app-form-field label="Apellido materno" hint="Si no lleva, dejalo vacío.">
+        <app-input
+          formControlName="motherLastName"
+          type="text"
+          testId="alta-paciente-apellido-materno"
+        />
       </app-form-field>
 
       <app-form-field

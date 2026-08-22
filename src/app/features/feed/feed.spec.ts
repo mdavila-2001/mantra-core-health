@@ -49,6 +49,8 @@ describe('Feed', () => {
       commentsEnabled: null,
       publishedAt: '2026-08-14T09:00:00.000Z',
       editedAt: null,
+      reactions: { tallies: [], total: 0, actorReactionTypeConceptId: null },
+      commentCount: 0,
     },
   });
 

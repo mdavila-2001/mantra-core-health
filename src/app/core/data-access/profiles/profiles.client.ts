@@ -33,6 +33,7 @@ import type {
   PractitionerSpecialty,
   RelatedPerson,
   RelatedPersonCreated,
+  PractitionerOnboarding,
 } from './profiles.types';
 
 /** Las mismas respuestas, con las fechas como viajan: texto. */
@@ -83,14 +84,12 @@ export class ProfilesClient {
       params = params.set('limit', String(query.limit));
     }
 
-    return this.http
-      .get<RespuestaPagina>(this.url('/profiles/patients'), { params })
-      .pipe(
-        map((body) => ({
-          ...body,
-          items: body.items.map(toPatientListItem),
-        })),
-      );
+    return this.http.get<RespuestaPagina>(this.url('/profiles/patients'), { params }).pipe(
+      map((body) => ({
+        ...body,
+        items: body.items.map(toPatientListItem),
+      })),
+    );
   }
 
   /**
@@ -126,14 +125,12 @@ export class ProfilesClient {
    * un estado con salida hacia la verificación en vez de un muro.
    */
   getOwnSummary(): Observable<OwnPatientSummary> {
-    return this.http
-      .get<RespuestaResumen>(this.url('/profiles/patients/me/summary'))
-      .pipe(
-        map((body) => {
-          const limpio = sinNulos<WireOwnSummary>(body);
-          return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
-        }),
-      );
+    return this.http.get<RespuestaResumen>(this.url('/profiles/patients/me/summary')).pipe(
+      map((body) => {
+        const limpio = sinNulos<WireOwnSummary>(body);
+        return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
+      }),
+    );
   }
 
   /**
@@ -154,6 +151,17 @@ export class ProfilesClient {
     return this.http
       .get<ConNulos<WireOwnPractitioner>>(this.url('/profiles/practitioners/me/summary'))
       .pipe(map((body) => this.traducirPerfilPropio(body)));
+  }
+
+  /**
+   * `GET /profiles/practitioners/me/onboarding` — qué le falta al profesional.
+   *
+   * El servidor lo calcula mirando sus datos; acá no se guarda ni se deduce
+   * nada. Responde **422** si la sesión no tiene perfil profesional, que es un
+   * caso normal —una cuenta administrativa, un paciente— y no un fallo.
+   */
+  getOwnOnboarding(): Observable<PractitionerOnboarding> {
+    return this.http.get<PractitionerOnboarding>(this.url('/profiles/practitioners/me/onboarding'));
   }
 
   /**
@@ -276,6 +284,9 @@ export class ProfilesClient {
         validFrom: maybeDate(matricula.validFrom),
         validTo: maybeDate(matricula.validTo),
       })),
+      // Mismo mapeo que `listAffiliations`/`addAffiliation`: una sola función,
+      // reutilizada en vez de reimplementar la conversión de fechas acá.
+      affiliations: limpio.affiliations.map(toAffiliation),
     };
   }
 
@@ -352,10 +363,7 @@ export class ProfilesClient {
    * Es el único endpoint de este módulo **sin `@Roles`**: lo puede ejercer
    * cualquier sesión autenticada.
    */
-  addRelatedPerson(
-    profileId: string,
-    person: NewRelatedPerson,
-  ): Observable<RelatedPersonCreated> {
+  addRelatedPerson(profileId: string, person: NewRelatedPerson): Observable<RelatedPersonCreated> {
     return this.http
       .post<Wire<RelatedPersonCreated>>(
         this.url(`/profiles/patients/${encodeURIComponent(profileId)}/related-persons`),
@@ -410,9 +418,7 @@ export class ProfilesClient {
    * @param afiliacion - Institución, cargo y período.
    * @returns El vínculo registrado, ya con su `current` derivado.
    */
-  addAffiliation(
-    afiliacion: NewPractitionerAffiliation,
-  ): Observable<PractitionerAffiliation> {
+  addAffiliation(afiliacion: NewPractitionerAffiliation): Observable<PractitionerAffiliation> {
     return this.http
       .post<WireAffiliation>(
         this.url('/profiles/practitioners/me/affiliations'),
@@ -431,10 +437,7 @@ export class ProfilesClient {
    * agregar una nueva — vigente y sin tocar las anteriores, que siguen contando
    * como trayectoria.
    */
-  addSpecialty(
-    profileId: string,
-    especialidad: NewSpecialty,
-  ): Observable<{ readonly id: string }> {
+  addSpecialty(profileId: string, especialidad: NewSpecialty): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(
       this.url(`/profiles/practitioners/${profileId}/specialties`),
       stripUndefined(especialidad),
@@ -464,7 +467,11 @@ export class ProfilesClient {
    * `POST /profiles/persons/:personId/account-links`. Ata una cuenta de acceso
    * a una persona ya registrada.
    */
-  linkAccount(personId: string, userId: string, linkTypeConceptId?: string): Observable<AccountLink> {
+  linkAccount(
+    personId: string,
+    userId: string,
+    linkTypeConceptId?: string,
+  ): Observable<AccountLink> {
     return this.http
       .post<Wire<AccountLink>>(this.url(`/profiles/persons/${personId}/account-links`), {
         userId,
@@ -512,7 +519,7 @@ type WirePractitionerDirectoryPage = PractitionerDirectoryPage;
 
 type WireOwnPractitioner = Omit<
   OwnPractitionerProfile,
-  'createdAt' | 'specialties' | 'credentials' | 'licenses'
+  'createdAt' | 'specialties' | 'credentials' | 'licenses' | 'affiliations'
 > & {
   readonly createdAt: string;
   readonly specialties: readonly WireDates<PractitionerSpecialty, 'validFrom' | 'validTo'>[];
@@ -521,6 +528,7 @@ type WireOwnPractitioner = Omit<
     'issueDate' | 'expiryDate' | 'verifiedAt'
   >[];
   readonly licenses: readonly WireDates<PractitionerLicense, 'validFrom' | 'validTo'>[];
+  readonly affiliations: readonly WireAffiliation[];
 };
 
 /* Lo que de verdad llega por el cable: la misma forma, con `null` donde el
@@ -546,10 +554,7 @@ type RespuestaResumen = ConNulos<WireOwnSummary>;
  * un vínculo laboral que empieza el 1 de marzo se leería como del 28 de
  * febrero. `createdAt` sí es un instante y va por el camino directo.
  */
-type WireAffiliation = Omit<
-  PractitionerAffiliation,
-  'startDate' | 'endDate' | 'createdAt'
-> & {
+type WireAffiliation = Omit<PractitionerAffiliation, 'startDate' | 'endDate' | 'createdAt'> & {
   readonly startDate: string;
   readonly endDate: string | null;
   readonly createdAt: string;
@@ -600,7 +605,5 @@ function toPatientListItem(item: ConNulos<WirePatientListItem>): PatientListItem
  * clave declarada: mejor no mandarla.
  */
 function stripUndefined<T extends object>(source: T): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(source).filter(([, value]) => value !== undefined),
-  );
+  return Object.fromEntries(Object.entries(source).filter(([, value]) => value !== undefined));
 }

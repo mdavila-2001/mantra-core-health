@@ -13,6 +13,7 @@ import { SearchResult } from '../../../shared/components/molecules/search-result
 import type { SearchResultItem } from '../../../shared/components/molecules/search-result/search-result.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { subtituloProfesional } from '../subtitulo-profesional';
 
 /** Tope por página del backend. La guía las junta todas. */
 const POR_PAGINA = 50;
@@ -92,7 +93,7 @@ export class PractitionersDirectory {
 
   protected readonly grupos = computed<readonly GrupoDeEspecialidad[]>(() => {
     const todos = dataOf(this.estado()) ?? [];
-    const busqueda = this.filtro().trim().toLowerCase();
+    const busqueda = normalizar(this.filtro());
     if (busqueda === '') {
       return todos;
     }
@@ -101,9 +102,13 @@ export class PractitionersDirectory {
     return todos
       .map((grupo) => ({
         ...grupo,
-        profesionales: grupo.profesionales.filter((profesional) =>
-          coincide(profesional, busqueda),
-        ),
+        // Buscar «cardiología» tiene que traer a los cardiólogos, no a nadie:
+        // el placeholder promete buscar por especialidad, y la especialidad es
+        // el ENCABEZADO, no un dato de la tarjeta. Si el texto casa con el
+        // grupo, el grupo entra entero (TJ-3).
+        profesionales: normalizar(grupo.nombre).includes(busqueda)
+          ? grupo.profesionales
+          : grupo.profesionales.filter((profesional) => coincide(profesional, busqueda)),
       }))
       .filter((grupo) => grupo.profesionales.length > 0);
   });
@@ -176,12 +181,22 @@ export class PractitionersDirectory {
   }
 }
 
+/**
+ * Texto comparable: sin mayúsculas ni tildes.
+ *
+ * Sin esto, «cardiologia» no encuentra «Cardiología» y media guía queda
+ * inalcanzable para quien no pone el acento —que es casi todo el mundo—.
+ */
+function normalizar(texto: string): string {
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
 /** Si el profesional casa con el texto del filtro. */
 function coincide(profesional: SearchResultItem, busqueda: string): boolean {
-  if (profesional.title.toLowerCase().includes(busqueda)) {
+  if (normalizar(profesional.title).includes(busqueda)) {
     return true;
   }
-  return (profesional.meta ?? []).some((linea) => linea.text.toLowerCase().includes(busqueda));
+  return (profesional.meta ?? []).some((linea) => normalizar(linea.text).includes(busqueda));
 }
 
 /** Todos los conceptos de la guía, para pedir el catálogo una sola vez. */
@@ -203,6 +218,13 @@ function agrupar(
 ): readonly GrupoDeEspecialidad[] {
   const porEspecialidad = new Map<string, { nombre: string; filas: PractitionerListItem[] }>();
   const sinEspecialidad: PractitionerListItem[] = [];
+  // Los nombres de toda la respuesta, para que ninguna tarjeta pueda mostrar el
+  // de otra como subtítulo (F-25). Se calculan una vez: es la comprobación
+  // exacta, y la heurística de `subtituloProfesional` sólo cubre lo que esta no
+  // puede ver.
+  const nombres = filas
+    .map((fila) => fila.displayName)
+    .filter((nombre): nombre is string => nombre !== undefined && nombre !== '');
 
   for (const fila of filas) {
     if (fila.specialties.length === 0) {
@@ -224,7 +246,7 @@ function agrupar(
     .map(([conceptId, grupo]) => ({
       conceptId,
       nombre: grupo.nombre,
-      profesionales: grupo.filas.map(toResultado).sort(porNombre),
+      profesionales: grupo.filas.map((fila) => toResultado(fila, nombres)).sort(porNombre),
     }))
     // Alfabético por especialidad: es como se hojea una guía, no por cuántos
     // tenga cada una.
@@ -234,7 +256,7 @@ function agrupar(
     grupos.push({
       conceptId: 'sin-especialidad',
       nombre: SIN_ESPECIALIDAD,
-      profesionales: sinEspecialidad.map(toResultado).sort(porNombre),
+      profesionales: sinEspecialidad.map((fila) => toResultado(fila, nombres)).sort(porNombre),
     });
   }
   return grupos;
@@ -249,14 +271,24 @@ function porNombre(a: SearchResultItem, b: SearchResultItem): number {
  *
  * La tarjeta no conoce al dominio a propósito (ver `search-result.types.ts`):
  * recibe figura, título, líneas de contexto y sellos, y quien la usa traduce.
+ *
+ * El `practitionerCode` no se muestra: es un identificador de sistema, y la
+ * Guía es sólo del paciente (`navigation.map.ts`, `exclusiveRoles`), así que
+ * no hay a quién mostrárselo por rol (feedback de la analista F-01, 18/08/2026).
+ * Sigue viajando en el DTO por si una consola de administración lo necesita.
  */
-function toResultado(fila: PractitionerListItem): SearchResultItem {
+function toResultado(
+  fila: PractitionerListItem,
+  nombresDeOtros: readonly string[] = [],
+): SearchResultItem {
   const nombre = fila.displayName ?? 'Profesional sin nombre registrado';
   const meta = [];
-  if (fila.professionalTitle !== undefined && fila.professionalTitle !== '') {
-    meta.push({ text: fila.professionalTitle });
+  // El subtítulo pasa por el guardia de F-25: una tarjeta sin subtítulo es más
+  // pobre, una con el nombre de otro es una guía que miente.
+  const subtitulo = subtituloProfesional(fila.professionalTitle, nombre, nombresDeOtros);
+  if (subtitulo !== undefined) {
+    meta.push({ text: subtitulo });
   }
-  meta.push({ text: `Código ${fila.practitionerCode}` });
 
   const sellos = [];
   // Disponibilidad con palabras: es lo que decide si quien busca puede pedir

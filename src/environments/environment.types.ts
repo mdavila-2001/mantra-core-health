@@ -108,6 +108,29 @@ export interface Environment {
 
   /** Ver {@link TelemetryEnvironment}. */
   readonly telemetry: TelemetryEnvironment;
+
+  /**
+   * Enciende la barra de casos de demostración de la ficha clínica.
+   *
+   * Es un interruptor de despliegue, no de compilación: un entorno de staging
+   * armado para una demo lo enciende con `PUBLIC_DEMO_PRESETS=true` sin
+   * recompilar distinto. En producción queda apagado por defecto para que
+   * ningún médico cargue datos de demostración en una historia real.
+   */
+  readonly demoPresets: boolean;
+
+  /**
+   * Enciende la pestaña «QR» SIMULADA de la pantalla de pago del pedido de
+   * farmacia (carril FAR-I5).
+   *
+   * La pasarela de pago real no existe: con este interruptor la demo muestra
+   * el ciclo completo (QR con el monto → «simular pago aprobado» →
+   * comprobante) siempre con el chip «DEMO» fijo. Apagado, la pestaña no se
+   * renderiza y queda sólo el camino real de hoy: pagar en el mostrador.
+   * Mismo carácter que `demoPresets`: interruptor de despliegue, no de
+   * compilación.
+   */
+  readonly paymentDemo: boolean;
 }
 
 /**
@@ -121,4 +144,6 @@ export interface Environment {
 export interface EnvironmentOverrides {
   readonly apiBaseUrl?: string;
   readonly telemetry?: Partial<TelemetryEnvironment>;
+  readonly demoPresets?: boolean;
+  readonly paymentDemo?: boolean;
 }

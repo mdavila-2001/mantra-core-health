@@ -188,3 +188,41 @@ export interface PatientHistoryQuery {
   /** Tope de la página. La API aplica 50 si se omite. */
   readonly limit?: number;
 }
+
+/**
+ * Filtros de la **agenda quirúrgica**, la otra lectura de `GET
+ * /procedure-cases`.
+ *
+ * Distinta de {@link PatientHistoryQuery} y no un supertipo suyo: aquélla es la
+ * de la ficha de una persona y **exige** el paciente, ésta es la del profesional
+ * y no lo admite como obligatorio. Fundirlas dejaría `patientProfileId`
+ * opcional en la ficha, que es donde no puede faltar.
+ */
+export interface SurgicalAgendaQuery {
+  readonly patientProfileId?: string;
+  readonly primarySurgeonProfileId?: string;
+  readonly operatingRoomId?: string;
+  readonly statusConceptId?: string;
+  /** Inicio de la ventana temporal, inclusive. */
+  readonly from?: Date;
+  /** Fin de la ventana temporal. */
+  readonly to?: Date;
+  readonly limit?: number;
+  readonly offset?: number;
+}
+
+/**
+ * Lo que el integrante contesta cuando **no** acepta (spec 164).
+ *
+ * Aceptar tiene camino propio porque es lo único que hace avanzar el caso;
+ * estas tres comparten endpoint y se distinguen por el motivo que las acompaña.
+ */
+export type TeamParticipationResponse = 'DECLINE' | 'REQUEST_CHANGE' | 'UNAVAILABLE';
+
+/** Lo que devuelve aceptar o responder a la participación. */
+export interface TeamMemberResponse {
+  readonly id: string;
+  readonly procedureCaseId: string;
+  readonly statusConceptId: string;
+  readonly teamSize: number;
+}

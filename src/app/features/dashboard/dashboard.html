@@ -1,198 +1,237 @@
-<!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
-     acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
-<app-page-header
-  title="Panel"
-  subtitle="Tu organización, tus accesos y el estado del sistema."
-  appTutorialTarget="panel-titulo"
-/>
+<!-- Quien viene a atenderse ve SU panel, no el de quien administra.
+     El de abajo habla de organizaciones, secciones y estado del sistema: es el
+     tablero de quien trabaja acá, y a un paciente le decía cosas que no son
+     suyas (F-16 y F-17 de la analista). No se rediseña ninguno de los dos: se
+     separan. -->
+@if (esPaciente()) {
+  <app-patient-home />
+} @else {
+  <!-- TJ-1 · el aviso del alta incompleta. Va arriba de todo porque es lo único
+     de este panel que le impide al médico recibir pacientes.
 
-<!-- ─── Cifras ──────────────────────────────────────────────────────────────
+     Es un aviso y NO un redirect forzado: el prompt pedía encerrarlo en el
+     asistente hasta terminar, y eso rompería a todos los médicos que se
+     registraron antes de que existiera. Puede operar con lo que tiene; lo que
+     falta es que sepa qué le falta. -->
+  @if (altaPendiente(); as alta) {
+    <app-alert tone="warning" title="Completá tu perfil para recibir pacientes">
+      Llevás {{ alta.cumplidas }} de {{ alta.total }} pasos. Hasta terminarlos no aparecés cuando
+      alguien busca un profesional.
+      <a app-button variant="primary" size="sm" [routerLink]="['/onboarding']">
+        Ver qué me falta
+      </a>
+    </app-alert>
+  }
+
+  <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
+     acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
+  <app-page-header
+    title="Panel"
+    subtitle="Tu organización, tus accesos y el estado del sistema."
+    appTutorialTarget="panel-titulo"
+  />
+
+  <!-- ─── Cifras ──────────────────────────────────────────────────────────────
      Cuatro tarjetas angostas en una fila propia. Van arriba porque son la
      respuesta más corta a «¿cómo está esto hoy?», y separadas del resto porque
      mezclarlas con las tarjetas de contenido las volvería una más. -->
-<section class="panel__cifras" aria-label="Resumen" appStaggerList>
-  @if (puedeVerPacientes()) {
-    <app-card variant="outlined" padding="md" data-testid="panel-cifra-pacientes">
-      <p class="panel__cifra-rotulo">Pacientes registrados</p>
-      <p class="panel__cifra-valor">
-        @if (totalPacientes(); as total) {
-          {{ total }}
+  <section class="panel__cifras" aria-label="Resumen" appStaggerList>
+    @if (puedeVerPacientes()) {
+      <app-card variant="outlined" padding="md" data-testid="panel-cifra-pacientes">
+        <p class="panel__cifra-rotulo">Pacientes registrados</p>
+        <p class="panel__cifra-valor">
+          @if (totalPacientes(); as total) {
+            {{ total }}
+          } @else {
+            <span class="panel__cifra-esperando">—</span>
+          }
+        </p>
+        <p class="panel__cifra-pie">En {{ tenantName() ?? 'esta organización' }}</p>
+      </app-card>
+    }
+
+    <app-card variant="outlined" padding="md" data-testid="panel-cifra-secciones">
+      <p class="panel__cifra-rotulo">Secciones disponibles</p>
+      <p class="panel__cifra-valor">{{ seccionesDisponibles().length }}</p>
+      <p class="panel__cifra-pie">{{ seccionesPlanificadas().length }} más en construcción</p>
+    </app-card>
+
+    <app-card variant="outlined" padding="md" data-testid="panel-cifra-organizaciones">
+      <p class="panel__cifra-rotulo">Organizaciones</p>
+      <p class="panel__cifra-valor">{{ tenantCount() }}</p>
+      <p class="panel__cifra-pie">
+        @if (tenantCount() > 1) {
+          Podés cambiar desde el encabezado
         } @else {
-          <span class="panel__cifra-esperando">—</span>
+          Tu única organización
         }
       </p>
-      <p class="panel__cifra-pie">En {{ tenantName() ?? 'esta organización' }}</p>
     </app-card>
-  }
 
-  <app-card variant="outlined" padding="md" data-testid="panel-cifra-secciones">
-    <p class="panel__cifra-rotulo">Secciones disponibles</p>
-    <p class="panel__cifra-valor">{{ seccionesDisponibles().length }}</p>
-    <p class="panel__cifra-pie">
-      {{ seccionesPlanificadas().length }} más en construcción
-    </p>
-  </app-card>
-
-  <app-card variant="outlined" padding="md" data-testid="panel-cifra-organizaciones">
-    <p class="panel__cifra-rotulo">Organizaciones</p>
-    <p class="panel__cifra-valor">{{ tenantCount() }}</p>
-    <p class="panel__cifra-pie">
-      @if (tenantCount() > 1) {
-        Podés cambiar desde el encabezado
-      } @else {
-        Tu única organización
-      }
-    </p>
-  </app-card>
-
-  <app-card variant="outlined" padding="md" data-testid="panel-cifra-identidad">
-    <p class="panel__cifra-rotulo">Tu identidad</p>
-    <!-- El sello y no una cifra: el estado de un trámite no es un número, y
+    <app-card variant="outlined" padding="md" data-testid="panel-cifra-identidad">
+      <p class="panel__cifra-rotulo">Tu identidad</p>
+      <!-- El sello y no una cifra: el estado de un trámite no es un número, y
          forzarlo a serlo obligaría a inventar una escala que no existe. -->
-    <div class="panel__cifra-sello">
-      @if (selloDeIdentidad(); as sello) {
-        <app-status-seal [variant]="sello.variant" [label]="sello.label" />
-      } @else {
-        <app-status-seal variant="pending" label="Sin verificar" />
-      }
-    </div>
-    <p class="panel__cifra-pie">
-      <a routerLink="/my-account/identity/verify">Ver el trámite</a>
-    </p>
-  </app-card>
-</section>
+      <div class="panel__cifra-sello">
+        @if (selloDeIdentidad(); as sello) {
+          <app-status-seal [variant]="sello.variant" [label]="sello.label" />
+        } @else {
+          <app-status-seal variant="pending" label="Sin verificar" />
+        }
+      </div>
+      <p class="panel__cifra-pie">
+        <a routerLink="/my-account/identity/verify">Ver el trámite</a>
+      </p>
+    </app-card>
+  </section>
 
-<div class="panel__grid" appStaggerList>
-  <!-- ─── Accesos ───────────────────────────────────────────────────────────
+  <div class="panel__grid" appStaggerList>
+    <!-- ─── Accesos ───────────────────────────────────────────────────────────
        La lista sale de `NavigationService`, el mismo origen del menú lateral:
        una sección nueva aparece acá sola, y una que se apaga desaparece de los
        dos lados a la vez. Con el resumen al lado, que el menú no tiene espacio
        para mostrar. -->
-  <app-card variant="outlined" padding="lg" class="panel__bloque--ancho" data-testid="panel-accesos">
-    <h2 class="panel__card-title">Tus accesos</h2>
-    <p class="panel__nota">
-      Lo que tus roles habilitan en esta organización. Las secciones en
-      construcción se muestran para que sepas qué viene, no para entrar.
-    </p>
+    <app-card
+      variant="outlined"
+      padding="lg"
+      class="panel__bloque--ancho"
+      data-testid="panel-accesos"
+    >
+      <h2 class="panel__card-title">Tus accesos</h2>
+      <p class="panel__nota">
+        Lo que tu cuenta habilita en esta organización. Pasá el cursor o llegá con el tabulador para
+        ver qué hace cada una.
+      </p>
 
-    <ul class="panel__accesos" appTutorialTarget="panel-accesos">
-      @for (seccion of seccionesDisponibles(); track seccion.path) {
-        <li>
-          <a class="panel__acceso" [routerLink]="'/' + seccion.path">
-            <span class="panel__acceso-nombre">{{ seccion.label }}</span>
-            <span class="panel__acceso-resumen">{{ seccion.summary }}</span>
-          </a>
-        </li>
-      }
+      <!-- Corrección #1: acciones visuales, no tarjetas con descripción pegada.
+         El resumen vive en el tooltip —que aparece con el puntero **y con el
+         foco**— y además en el `aria-label`, así que quien navega con lector de
+         pantalla recibe rótulo y explicación sin depender del globo. -->
+      <ul class="panel__accesos" appTutorialTarget="panel-accesos">
+        @for (seccion of seccionesDisponibles(); track seccion.path) {
+          <li>
+            <a
+              class="panel__acceso"
+              data-testid="panel-acceso"
+              [attr.data-ruta]="'/' + seccion.path"
+              [routerLink]="'/' + seccion.path"
+              [attr.aria-label]="seccion.label + '. ' + seccion.summary"
+              [appTooltip]="seccion.summary"
+              appTooltipPosition="bottom"
+            >
+              <span class="panel__acceso-icono">
+                <app-nav-icon [name]="seccion.icon" />
+              </span>
+              <span class="panel__acceso-nombre">{{ seccion.label }}</span>
+            </a>
+          </li>
+        }
 
-      @for (seccion of seccionesPlanificadas(); track seccion.path) {
-        <li>
-          <!-- Sin enlace: lleva al placeholder y prometer una pantalla que no
-               existe es peor que decir que falta. -->
-          <div class="panel__acceso panel__acceso--planificada">
-            <span class="panel__acceso-nombre">
-              {{ seccion.label }}
+        @for (seccion of seccionesPlanificadas(); track seccion.path) {
+          <li>
+            <!-- Sin enlace: lleva al placeholder y prometer una pantalla que no
+               existe es peor que decir que falta. Tampoco lleva tooltip: un
+               globo pide foco, y esto no es enfocable justamente porque no se
+               puede entrar. Lo que hay que saber —que está en construcción— se
+               dice con el sello, a la vista y sin interacción. -->
+            <div
+              class="panel__acceso panel__acceso--planificada"
+              data-testid="panel-acceso-planificado"
+              [attr.aria-label]="seccion.label + '. En construcción. ' + seccion.summary"
+            >
+              <span class="panel__acceso-icono">
+                <app-nav-icon [name]="seccion.icon" />
+              </span>
+              <span class="panel__acceso-nombre">{{ seccion.label }}</span>
               <app-badge variant="secondary" value="En construcción" />
-            </span>
-            <span class="panel__acceso-resumen">{{ seccion.summary }}</span>
-          </div>
-        </li>
-      }
-    </ul>
-  </app-card>
+            </div>
+          </li>
+        }
+      </ul>
+    </app-card>
 
-  <!-- ─── Últimos pacientes ─────────────────────────────────────────────────
+    <!-- ─── Últimos pacientes ─────────────────────────────────────────────────
        Sólo para quien administra: al resto la API le responde 403, así que
        pedirlo sería provocar un error para después esconderlo. -->
-  @if (puedeVerPacientes()) {
-    <app-card variant="outlined" padding="lg" data-testid="panel-ultimos-pacientes">
-      <h2 class="panel__card-title">Últimos pacientes</h2>
+    @if (puedeVerPacientes()) {
+      <app-card variant="outlined" padding="lg" data-testid="panel-ultimos-pacientes">
+        <h2 class="panel__card-title">Últimos pacientes</h2>
 
-      <app-view-state-host [state]="pacientes()" (retry)="loadPacientes()">
-        <div vsh-skeleton>
-          <app-skeleton variant="text" [lines]="5" />
-        </div>
+        <app-view-state-host [state]="pacientes()" (retry)="loadPacientes()">
+          <div vsh-skeleton>
+            <app-skeleton variant="text" [lines]="5" />
+          </div>
 
-        <ul class="panel__lista">
-          @for (paciente of ultimosPacientes(); track paciente.profileId) {
-            <li class="panel__fila">
-              <a [routerLink]="rutaDeLaFicha(paciente.profileId)" class="panel__fila-nombre">
-                {{ paciente.displayName ?? paciente.patientCode }}
-              </a>
-              <code class="panel__id">{{ paciente.patientCode }}</code>
-            </li>
-          }
-        </ul>
+          <ul class="panel__lista">
+            @for (paciente of ultimosPacientes(); track paciente.profileId) {
+              <li class="panel__fila">
+                <a [routerLink]="rutaDeLaFicha(paciente.profileId)" class="panel__fila-nombre">
+                  {{ paciente.displayName ?? paciente.patientCode }}
+                </a>
+                <code class="panel__id">{{ paciente.patientCode }}</code>
+              </li>
+            }
+          </ul>
 
-        <p class="panel__nota">
-          <a routerLink="/administration/patients">Ver el listado completo</a>
-        </p>
-      </app-view-state-host>
-    </app-card>
-  }
+          <p class="panel__nota">
+            <a routerLink="/administration/patients">Ver el listado completo</a>
+          </p>
+        </app-view-state-host>
+      </app-card>
+    }
 
-  <!-- ─── Sesión ────────────────────────────────────────────────────────────
+    <!-- ─── Cuenta ────────────────────────────────────────────────────────────
        Todo sale del access token: ninguna petición de por medio, porque la API
-       no expone `/me` y el token ya trae `sub`, `roles` y `tenants`. -->
-  <app-card variant="outlined" padding="lg" data-testid="panel-sesion">
-    <h2 class="panel__card-title">Tu sesión</h2>
+       no expone `/me` y el token ya trae `sub`, `roles` y `tenants`. Se muestra
+       sólo lo que le dice algo a la persona: ni identificadores internos ni el
+       código de los roles —el paciente no tiene por qué leer `PATIENT`—. El
+       código viaja en `data-role`, para quien lo necesite leer por máquina. -->
+    <app-card variant="outlined" padding="lg" data-testid="panel-sesion">
+      <h2 class="panel__card-title">Tu cuenta</h2>
 
-    <dl class="panel__datos">
-      <dt>Identificador</dt>
-      <dd><code class="panel__id" data-testid="panel-user-id">{{ userId() ?? '—' }}</code></dd>
+      <dl class="panel__datos">
+        <dt>Roles</dt>
+        <dd class="panel__roles" data-testid="panel-roles">
+          @for (rol of rolesLegibles(); track rol.codigo) {
+            <app-badge variant="info" [value]="rol.etiqueta" [attr.data-role]="rol.codigo" />
+          } @empty {
+            <span class="panel__vacio">Tu cuenta no tiene ningún rol asignado.</span>
+          }
+        </dd>
 
-      <dt>Roles</dt>
-      <dd class="panel__roles" data-testid="panel-roles">
-        @for (role of roles(); track role) {
-          <app-badge variant="info" [value]="role" />
-        } @empty {
-          <span class="panel__vacio">El token no declara ningún rol.</span>
-        }
-      </dd>
+        <dt>Organización</dt>
+        <dd>
+          @if (tenantName(); as nombre) {
+            {{ nombre }}
+          } @else {
+            <span class="panel__vacio">Sin organización activa.</span>
+          }
+        </dd>
+      </dl>
+    </app-card>
 
-      <dt>Organización activa</dt>
-      <dd>
-        @if (tenantName(); as nombre) {
-          {{ nombre }}
-          <br />
-          <code class="panel__id">{{ activeTenantId() }}</code>
-        } @else {
-          <span class="panel__vacio">Sin organización activa.</span>
-        }
-      </dd>
-    </dl>
-
-    <p class="panel__nota">
-      Estos datos salen del propio token de acceso. No hay ninguna petición detrás.
-    </p>
-  </app-card>
-
-  <!-- ─── Directorio ────────────────────────────────────────────────────────
+    <!-- ─── Directorio ────────────────────────────────────────────────────────
        Era la mitad del panel y ahora es una tarjeta más: sigue siendo la
        comprobación de punta a punta de que hay API del otro lado, pero eso le
        importa a quien desarrolla, no a quien entra a trabajar. -->
-  <app-card variant="outlined" padding="lg" data-testid="panel-directorio">
-    <h2 class="panel__card-title">Directorio público</h2>
+    <app-card variant="outlined" padding="lg" data-testid="panel-directorio">
+      <h2 class="panel__card-title">Directorio público</h2>
 
-    <app-view-state-host
-      [state]="directory()"
-      (retry)="loadDirectory()"
-      (refresh)="loadDirectory()"
-    >
-      <div vsh-skeleton>
-        <app-skeleton variant="text" [lines]="3" />
-      </div>
+      <app-view-state-host
+        [state]="directory()"
+        (retry)="loadDirectory()"
+        (refresh)="loadDirectory()"
+      >
+        <div vsh-skeleton>
+          <app-skeleton variant="text" [lines]="3" />
+        </div>
 
-      @if (recordCount(); as total) {
-        <p class="panel__conteo" data-testid="panel-directorio-conteo">
-          {{ total }} registro(s) publicados.
-        </p>
-      }
-    </app-view-state-host>
-
-    <p class="panel__nota">
-      Lectura real de <code>GET /public/directory</code>: cruza el proxy, el interceptor y la
-      traducción de errores.
-    </p>
-  </app-card>
-</div>
+        @if (recordCount(); as total) {
+          <p class="panel__conteo" data-testid="panel-directorio-conteo">
+            {{ total }} registro(s) publicados.
+          </p>
+        }
+      </app-view-state-host>
+    </app-card>
+  </div>
+}

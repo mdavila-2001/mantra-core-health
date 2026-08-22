@@ -27,6 +27,9 @@ class AlmacenFalso {
   }
 }
 
+/** Un concepto de `VS_BO_DEPARTMENT`: Santa Cruz, tal como lo siembra la API. */
+const DEPARTAMENTO_SANTA_CRUZ = '51fcbf8e-b4ea-5ba9-8aec-0df7be617c69';
+
 describe('RegisterPatient', () => {
   let fixture: ComponentFixture<RegisterPatient>;
   let component: RegisterPatient;
@@ -60,7 +63,53 @@ describe('RegisterPatient', () => {
   });
 
   afterEach(() => {
+    // El catálogo de departamentos lo pide el constructor, así que aparece en
+    // TODAS las pruebas. Las que no hablan de él lo dan por atendido acá, para
+    // que `verify()` siga vigilando las peticiones que cada prueba sí afirma.
+    for (const pendiente of http.match((r) => r.url.startsWith('/terminology/'))) {
+      pendiente.flush({ items: [] });
+    }
     http.verify();
+  });
+
+  /** La petición del catálogo de departamentos que dispara el constructor. */
+  const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
+
+  describe('catálogo de departamentos', () => {
+    it('un 401 no rompe el registro: deja el aviso y el formulario usable', () => {
+      http.expectOne(CATALOGO).flush(null, { status: 401, statusText: 'Unauthorized' });
+      fixture.detectChanges();
+
+      expect(component.catalogoDepartamentosCaido()).toBe(true);
+      expect(component.opcionesDepartamento()).toEqual([]);
+      // El registro sigue en pie: el 401 del catálogo no navega a ningún lado.
+      expect(navegaciones).toEqual([]);
+    });
+
+    it('«Reintentar» vuelve a la red: el fallo cacheado no dura toda la sesión', () => {
+      http.expectOne(CATALOGO).flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      // Acceso por índice: el método es `protected` porque lo llama la
+      // plantilla, no una API pública del componente.
+      component['reintentarDepartamentos']();
+
+      // Sin `olvidar()`, `shareReplay` replicaría el error sin pedir nada y
+      // esta expectativa no encontraría petición alguna.
+      http.expectOne(CATALOGO).flush({
+        items: [{ id: 'vs-1', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
+      });
+      http.expectOne('/terminology/value-sets/vs-1/$expand?limit=200').flush({
+        items: [{ conceptId: 'c-1', code: 'SC', display: 'Santa Cruz' }],
+        count: 1,
+        limit: 200,
+        nextCursor: null,
+      });
+
+      expect(component.catalogoDepartamentosCaido()).toBe(false);
+      expect(component.opcionesDepartamento()).toEqual([
+        { value: 'c-1', label: 'Santa Cruz' },
+      ]);
+    });
   });
 
   /**
@@ -71,7 +120,7 @@ describe('RegisterPatient', () => {
   function completar(
     extra: Partial<Record<'email' | 'middleName' | 'motherLastName', string>> = {},
   ): void {
-    component.formPaciente.setValue({
+    component.formPaciente.patchValue({
       nationalId: '1234567',
       name: 'Ana',
       middleName: extra.middleName ?? '',
@@ -82,14 +131,31 @@ describe('RegisterPatient', () => {
     });
   }
 
-  function completarProfesional(extra: Partial<Record<'professionalTitle' | 'phone', string>> = {}): void {
+  function completarProfesional(
+    extra: Partial<
+      Record<
+        | 'professionalTitle'
+        | 'phone'
+        | 'middleName'
+        | 'motherLastName'
+        | 'nationalId'
+        | 'regulatoryAuthority',
+        string
+      >
+    > = {},
+  ): void {
     component.cambiarTipo('profesional');
     component.formProfesional.setValue({
-      displayName: 'Dra. Ana Paz',
+      name: 'Ana',
+      middleName: extra.middleName ?? '',
+      lastName: 'Paz',
+      motherLastName: extra.motherLastName ?? '',
+      nationalId: extra.nationalId ?? '',
       email: 'ana@hospital.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       credentialNumber: 'TIT-6789',
+      regulatoryAuthority: extra.regulatoryAuthority ?? '',
       professionalTitle: extra.professionalTitle ?? '',
       phone: extra.phone ?? '',
     });
@@ -148,6 +214,53 @@ describe('RegisterPatient', () => {
     expect(component.verificationSent()).toBe(true);
   });
 
+  it('manda los datos clínicos y de contacto que la API acepta, solo si se completaron', () => {
+    completar();
+    component.formPaciente.patchValue({ phone: '+591 70012345', occupationFreeText: 'Docente' });
+    component.fechaNacimientoPaciente.set(new Date(1990, 4, 17));
+    component.departamentoEmisorPaciente.set(DEPARTAMENTO_SANTA_CRUZ);
+    component.generoPaciente.set('FEMALE');
+    component.sexoAlNacerPaciente.set('FEMALE');
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toMatchObject({
+      issuerAdministrativeAreaConceptId: DEPARTAMENTO_SANTA_CRUZ,
+      // Fecha local, no UTC: `new Date(1990, 4, 17).toISOString()` daría el 16
+      // en cualquier huso al oeste de Greenwich, que es donde está Bolivia.
+      birthDate: '1990-05-17',
+      phone: '+591 70012345',
+      gender: 'FEMALE',
+      sexAtBirth: 'FEMALE',
+      occupationFreeText: 'Docente',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  it('omite los campos nuevos que quedaron vacíos: `forbidNonWhitelisted` rechaza lo que sobra', () => {
+    completar();
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    const enviado = Object.keys(req.request.body as Record<string, unknown>);
+    expect(enviado).not.toContain('issuerAdministrativeAreaConceptId');
+    expect(enviado).not.toContain('birthDate');
+    expect(enviado).not.toContain('phone');
+    expect(enviado).not.toContain('gender');
+    expect(enviado).not.toContain('sexAtBirth');
+    expect(enviado).not.toContain('occupationFreeText');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('el departamento elegido como paciente no reaparece en el formulario de profesional', () => {
+    component.departamentoEmisorPaciente.set(DEPARTAMENTO_SANTA_CRUZ);
+    component.cambiarTipo('profesional');
+
+    expect(component.departamentoEmisor()).toBeNull();
+  });
+
   it('tras registrar muestra la confirmación y NO inicia sesión sola', () => {
     completar();
     component.submit();
@@ -176,14 +289,27 @@ describe('RegisterPatient', () => {
 
       const req = http.expectOne('/iam/auth/register-practitioner');
       expect(req.request.method).toBe('POST');
-      // El identificador de acceso es el correo, no el documento.
+      // El identificador de acceso es el correo, no el documento. El nombre va
+      // en partes, igual que en el alta de paciente.
       expect(req.request.body).toEqual({
-        displayName: 'Dra. Ana Paz',
+        name: 'Ana',
+        lastName: 'Paz',
         email: 'ana@hospital.test',
         password: 'secreto12',
         licenseNumber: 'MP-12345',
         credentialNumber: 'TIT-6789',
       });
+
+      req.flush({ userId: 'u', personId: 'p', practitionerProfileId: 'pp', practitionerCode: 'PRO-1' });
+    });
+
+    it('agrega segundo nombre y apellido materno solo si se completaron', () => {
+      completarProfesional({ middleName: 'Lucía', motherLastName: 'Rojas' });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.middleName).toBe('Lucía');
+      expect(req.request.body.motherLastName).toBe('Rojas');
 
       req.flush({ userId: 'u', personId: 'p', practitionerProfileId: 'pp', practitionerCode: 'PRO-1' });
     });
@@ -202,11 +328,16 @@ describe('RegisterPatient', () => {
     it('exige matrícula y credencial: sin habilitación no hay alta', () => {
       component.cambiarTipo('profesional');
       component.formProfesional.setValue({
-        displayName: 'Ana',
+        name: 'Ana',
+        middleName: '',
+        lastName: 'Paz',
+        motherLastName: '',
+        nationalId: '',
         email: 'ana@hospital.test',
         password: 'secreto12',
         licenseNumber: '',
         credentialNumber: '',
+        regulatoryAuthority: '',
         professionalTitle: '',
         phone: '',
       });
@@ -230,7 +361,7 @@ describe('RegisterPatient', () => {
 
   describe('validaciones', () => {
     it('no envía con el formulario incompleto', () => {
-      component.formPaciente.setValue({
+      component.formPaciente.patchValue({
         nationalId: '',
         name: '',
         middleName: '',
@@ -245,7 +376,7 @@ describe('RegisterPatient', () => {
     });
 
     it('rechaza un documento con caracteres que el backend no admite', () => {
-      component.formPaciente.setValue({
+      component.formPaciente.patchValue({
         nationalId: 'ABC 123',
         name: 'Ana',
         middleName: '',
@@ -260,7 +391,7 @@ describe('RegisterPatient', () => {
     });
 
     it('exige los 8 caracteres de contraseña que pide el backend', () => {
-      component.formPaciente.setValue({
+      component.formPaciente.patchValue({
         nationalId: '1234567',
         name: 'Ana',
         middleName: '',

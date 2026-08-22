@@ -26,6 +26,7 @@ import { DataTable } from '../../../shared/components/organisms/data-table/data-
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { FormsCatalog } from './forms-catalog';
 
 /**
  * Los tipos de dato que este editor ofrece.
@@ -95,6 +96,7 @@ function campoVacio(): CampoEnEdicion {
     DataTable,
     FormActions,
     FormField,
+    FormsCatalog,
     Input,
     PageHeader,
     ReferenceCombobox,
@@ -253,6 +255,41 @@ export class ClinicalForms {
     this.campos.set([campoVacio()]);
   }
 
+  /* -- Duplicar un formulario del catálogo ---------------------------------- */
+
+  /**
+   * Precarga el alta con los campos de un formulario del catálogo — carril R2-5.
+   *
+   * Duplicar es esto y nada más: el motor de alta ya sabe crear una plantilla
+   * con su esquema, y ahora hay contenido que copiar. No hay endpoint de
+   * duplicación del lado del servidor, y no hace falta uno.
+   *
+   * El código se sufija para no chocar con el del catálogo, que es único; el
+   * admin lo cambia si quiere. La especialidad viaja tal cual: duplicar la
+   * ficha de cardiología para otra especialidad sería otra cosa, y se elige a
+   * mano.
+   */
+  protected duplicarDelCatalogo(plantilla: ChartTemplate): void {
+    this.especialidad.set(plantilla.specialtyConceptId);
+    this.codigo.set(`${plantilla.code}_ADAPTADA`);
+    this.nombre.set(`${plantilla.name} (adaptada)`);
+    this.campos.set(
+      plantilla.fields.length === 0
+        ? [campoVacio()]
+        : plantilla.fields.map((campo) => ({
+            ...campoVacio(),
+            // El código viene prefijado con el de la plantilla de origen porque
+            // `dynamic_field_definitions` es una tabla global; para el admin lo
+            // útil es el código pelado.
+            code: sinPrefijo(campo.code, plantilla.code),
+            name: campo.name,
+            dataType: campo.dataType,
+            required: campo.required,
+          })),
+    );
+    this.cargarPlantillas();
+  }
+
   /* -- Las plantillas ya creadas ---------------------------------------------*/
 
   protected readonly plantillas = signal<ViewState<readonly ChartTemplate[]>>(loading());
@@ -287,4 +324,17 @@ export class ClinicalForms {
 /** De concepto de terminología a opción del buscador de referencia. */
 function aOpcionDeReferencia(concepto: ValueSetOption): ReferenceOption {
   return { value: concepto.conceptId, label: concepto.display };
+}
+
+/**
+ * Le saca a un código de campo el prefijo de su plantilla, si lo trae.
+ *
+ * El catálogo sembrado prefija cada código con el de la plantilla porque
+ * `forms.dynamic_field_definitions` es una tabla global y quince formularios
+ * comparten nombres de campo. Al duplicar, lo que el admin edita es el código
+ * pelado: el prefijo lo vuelve a poner el backend si hace falta.
+ */
+function sinPrefijo(code: string, codigoDePlantilla: string): string {
+  const prefijo = `${codigoDePlantilla}.`;
+  return code.startsWith(prefijo) ? code.slice(prefijo.length) : code;
 }

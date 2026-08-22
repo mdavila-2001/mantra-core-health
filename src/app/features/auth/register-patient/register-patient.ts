@@ -1,10 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
+  AdministrativeGenderCode,
+  BirthSexCode,
   PatientRegistration,
   PractitionerRegistration,
 } from '../../../core/data-access/iam/iam.types';
@@ -12,14 +15,23 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
-import { Radio } from '@shared/components/molecules/radio/radio';
-import { RadioGroup } from '@shared/components/molecules/radio-group/radio-group';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
+
+/** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
+function fechaIso(fecha: Date): string {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
 
 /** Mínimos que exigen los DTO del backend. */
 const MIN_PASSWORD = 8;
@@ -27,6 +39,40 @@ const MIN_DOCUMENTO = 4;
 
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
+
+/** Dígitos, espacios, paréntesis, `+` y guion — el mismo `@Matches` del backend. */
+const TELEFONO_VALIDO = /^[+]?[0-9 ()-]{6,}$/;
+
+/** Tope de la ocupación en texto libre, el mismo `@MaxLength` del backend. */
+const MAX_OCUPACION = 200;
+
+/**
+ * Género administrativo y sexo al nacer, con sus etiquetas en castellano.
+ *
+ * Van como listas fijas y no como lectura de terminología —a diferencia de los
+ * departamentos— porque la API los recibe **por código legible**
+ * (`gender: 'FEMALE'`), no por uuid de concepto: pedir el catálogo sólo para
+ * pintar cuatro etiquetas agregaría una petición y un estado de fallo a una
+ * pantalla pública, sin ganar nada. Los códigos son los que valida el `@IsIn`
+ * del backend; el mapeo a concepto lo hace él.
+ *
+ * Son dos preguntas distintas a propósito: el género es cómo se identifica la
+ * persona y el sexo al nacer es dato clínico —dosis, valores de referencia,
+ * tamizajes—. Colapsarlos en un campo pierde uno de los dos.
+ */
+const OPCIONES_GENERO: readonly SelectOption<AdministrativeGenderCode>[] = [
+  { value: 'FEMALE', label: 'Femenino' },
+  { value: 'MALE', label: 'Masculino' },
+  { value: 'OTHER', label: 'Otro' },
+  { value: 'UNKNOWN', label: 'Prefiero no decirlo' },
+];
+
+const OPCIONES_SEXO_AL_NACER: readonly SelectOption<BirthSexCode>[] = [
+  { value: 'FEMALE', label: 'Femenino' },
+  { value: 'MALE', label: 'Masculino' },
+  { value: 'INTERSEX', label: 'Intersexual' },
+  { value: 'UNKNOWN', label: 'Prefiero no decirlo' },
+];
 
 /** Quién se está registrando. Define qué endpoint y qué campos. */
 type TipoCuenta = 'paciente' | 'profesional';
@@ -52,10 +98,10 @@ type TipoCuenta = 'paciente' | 'profesional';
     ReactiveFormsModule,
     RouterLink,
     AppButton,
+    DatePicker,
     Input,
     Link,
-    Radio,
-    RadioGroup,
+    Select,
     FormField,
     Alert,
     AuthSplit, AnnounceOnAppear],
@@ -68,7 +114,29 @@ export class RegisterPatient {
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
 
-  readonly tipo = signal<TipoCuenta>('paciente');
+  /**
+   * Quién se está registrando, según la ruta por la que se entró.
+   *
+   * Antes lo decidía una pestaña dentro de esta misma pantalla; ahora lo decide
+   * la rejilla de `/auth/register`, y cada alta tiene su URL. El valor llega
+   * como dato de la ruta: sin ruta —en una prueba que monta el componente
+   * suelto— se cae en paciente, que es el alta más común.
+   */
+  readonly tipo = signal<TipoCuenta>(
+    inject(ActivatedRoute).snapshot.data['tipoDeCuenta'] === 'profesional'
+      ? 'profesional'
+      : 'paciente',
+  );
+
+  readonly titulo = computed(() =>
+    this.tipo() === 'paciente' ? 'Crear cuenta de paciente' : 'Crear cuenta de profesional',
+  );
+
+  readonly subtitulo = computed(() =>
+    this.tipo() === 'paciente'
+      ? 'Con tu documento de identidad. Te lleva un par de minutos.'
+      : 'Con tu matrícula y tu número de colegio profesional.',
+  );
 
   readonly formPaciente = new FormGroup({
     nationalId: new FormControl('', {
@@ -92,10 +160,49 @@ export class RegisterPatient {
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
     }),
     email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
+    // Mismo patrón que el backend (`@Matches` de `phone`): dígitos, espacios,
+    // paréntesis, `+` y guion. Validarlo acá evita un viaje a la API para
+    // enterarse de algo que se ve en el campo.
+    phone: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.pattern(TELEFONO_VALIDO)],
+    }),
+    // Ocupación en texto libre: ver `PatientRegistration.occupationFreeText`
+    // sobre por qué todavía no es un catálogo.
+    occupationFreeText: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(MAX_OCUPACION)],
+    }),
   });
 
+  /**
+   * Fecha de nacimiento, departamento emisor, género y sexo al nacer del
+   * paciente.
+   *
+   * Fuera del `FormGroup` porque `app-date-picker` y `app-select` trabajan con
+   * `model()` y no con `formControlName`, igual que ya hacen los del formulario
+   * de profesional.
+   *
+   * Y separados de los del profesional —no compartidos— porque las dos ramas
+   * conviven en el mismo componente: un valor elegido en una pestaña reaparecía
+   * en la otra al cambiar de tipo, que es un dato que nadie escribió ahí.
+   */
+  readonly fechaNacimientoPaciente = signal<Date | null>(null);
+  readonly departamentoEmisorPaciente = signal<string | null>(null);
+  readonly generoPaciente = signal<AdministrativeGenderCode | null>(null);
+  readonly sexoAlNacerPaciente = signal<BirthSexCode | null>(null);
+
+  /** Las listas fijas, expuestas a la plantilla. */
+  protected readonly opcionesGenero = OPCIONES_GENERO;
+  protected readonly opcionesSexoAlNacer = OPCIONES_SEXO_AL_NACER;
+
   readonly formProfesional = new FormGroup({
-    displayName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    // Mismas cuatro partes que el paciente: la persona se registra igual sea
+    // cual sea el perfil, y el backend compone con ellas el nombre que muestra.
+    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    middleName: new FormControl('', { nonNullable: true }),
+    lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    motherLastName: new FormControl('', { nonNullable: true }),
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
@@ -104,11 +211,32 @@ export class RegisterPatient {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
     }),
+    // Documento de identidad: opcional para el profesional (se guarda como
+    // identificador oficial, no como login — eso lo sigue siendo el correo).
+    nationalId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.pattern(DOCUMENTO_VALIDO)],
+    }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     credentialNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    // Quién emitió la matrícula: Ministerio de Salud y Deportes para la
+    // mayoría de las especialidades médicas, o el Colegio de Odontólogos para
+    // quien ejerce odontología. Texto libre porque no todas las jurisdicciones
+    // ni todos los colegios departamentales caben en un catálogo cerrado.
+    regulatoryAuthority: new FormControl('', { nonNullable: true }),
     professionalTitle: new FormControl('', { nonNullable: true }),
     phone: new FormControl('', { nonNullable: true }),
   });
+
+  /** Fecha de nacimiento y fechas de emisión: van con `app-date-picker`, no con `FormControl`. */
+  readonly fechaNacimientoProfesional = signal<Date | null>(null);
+  readonly fechaInscripcionMatricula = signal<Date | null>(null);
+
+  /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
+  private readonly departamentos = inject(BoDepartmentsCatalog);
+  readonly departamentoEmisor = signal<string | null>(null);
+  readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
+  readonly catalogoDepartamentosCaido = signal(false);
 
   readonly state = signal<ViewState<null>>(ready(null));
   readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -151,6 +279,46 @@ export class RegisterPatient {
     }
     return null;
   });
+
+  constructor() {
+    this.cargarDepartamentos();
+  }
+
+  /**
+   * Trae el catálogo de departamentos bolivianos, para «departamento que
+   * emitió tu documento».
+   *
+   * Un fallo no bloquea el registro: el campo es opcional, así que sin
+   * catálogo la persona sigue pudiendo crear su cuenta y completar el dato
+   * después desde su perfil.
+   */
+  protected cargarDepartamentos(): void {
+    this.departamentos.listar().subscribe({
+      next: (opciones) => {
+        this.catalogoDepartamentosCaido.set(false);
+        this.opcionesDepartamento.set(
+          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+        );
+      },
+      error: () => {
+        this.opcionesDepartamento.set([]);
+        this.catalogoDepartamentosCaido.set(true);
+      },
+    });
+  }
+
+  /**
+   * Reintenta la lectura del catálogo.
+   *
+   * Olvida lo cacheado antes de pedir: `BoDepartmentsCatalog` comparte la
+   * lectura con `shareReplay`, que guarda también el error, así que sin esto
+   * «Reintentar» repetía el mismo fallo sin llegar a tocar la red. Mismo
+   * criterio que `practitioner-profile-edit`.
+   */
+  protected reintentarDepartamentos(): void {
+    this.departamentos.olvidar();
+    this.cargarDepartamentos();
+  }
 
   /**
    * Cambiar de tipo limpia el error anterior: era de otro formulario.
@@ -220,22 +388,40 @@ export class RegisterPatient {
   }
 
   private datosPaciente(): PatientRegistration {
-    const { nationalId, name, middleName, lastName, motherLastName, password, email } =
-      this.formPaciente.getRawValue();
-    const correo = email.trim();
-    const segundoNombre = middleName.trim();
-    const apellidoMaterno = motherLastName.trim();
+    const raw = this.formPaciente.getRawValue();
+    const correo = raw.email.trim();
+    const segundoNombre = raw.middleName.trim();
+    const apellidoMaterno = raw.motherLastName.trim();
+    const documento = raw.nationalId.trim();
+    const telefono = raw.phone.trim();
+    const ocupacion = raw.occupationFreeText.trim();
+    const fechaNacimiento = this.fechaNacimientoPaciente();
+    const departamento = this.departamentoEmisorPaciente();
+    const genero = this.generoPaciente();
+    const sexoAlNacer = this.sexoAlNacerPaciente();
 
     return {
-      nationalId: nationalId.trim(),
-      name: name.trim(),
-      lastName: lastName.trim(),
+      nationalId: documento,
+      name: raw.name.trim(),
+      lastName: raw.lastName.trim(),
       ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
-      password,
+      password: raw.password,
       // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
       // y una cadena vacía no es lo mismo que la ausencia del campo.
       ...(correo === '' ? {} : { email: correo }),
+      // El departamento emisor viaja atado al documento: sin CI no hay
+      // identificador al que atarlo, y el backend lo escribe en la fila del
+      // identificador, no en la persona. Acá el documento es obligatorio, así
+      // que la única condición real es haber elegido departamento.
+      ...(departamento === null
+        ? {}
+        : { issuerAdministrativeAreaConceptId: departamento }),
+      ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
+      ...(telefono === '' ? {} : { phone: telefono }),
+      ...(genero === null ? {} : { gender: genero }),
+      ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
+      ...(ocupacion === '' ? {} : { occupationFreeText: ocupacion }),
     };
   }
 
@@ -243,13 +429,32 @@ export class RegisterPatient {
     const raw = this.formProfesional.getRawValue();
     const titulo = raw.professionalTitle.trim();
     const telefono = raw.phone.trim();
+    const segundoNombre = raw.middleName.trim();
+    const apellidoMaterno = raw.motherLastName.trim();
+    const documento = raw.nationalId.trim();
+    const autoridad = raw.regulatoryAuthority.trim();
+    const fechaNacimiento = this.fechaNacimientoProfesional();
+    const fechaInscripcion = this.fechaInscripcionMatricula();
+    const departamento = this.departamentoEmisor();
 
     return {
       email: raw.email.trim(),
       password: raw.password,
-      displayName: raw.displayName.trim(),
+      name: raw.name.trim(),
+      lastName: raw.lastName.trim(),
+      ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
+      ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
+      ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
+      ...(documento === '' ? {} : { nationalId: documento }),
+      // Sólo tiene sentido con documento: sin CI no hay identificador al que
+      // atarle un departamento de emisión.
+      ...(documento === '' || departamento === null
+        ? {}
+        : { issuerAdministrativeAreaConceptId: departamento }),
       licenseNumber: raw.licenseNumber.trim(),
       credentialNumber: raw.credentialNumber.trim(),
+      ...(autoridad === '' ? {} : { regulatoryAuthority: autoridad }),
+      ...(fechaInscripcion === null ? {} : { licenseIssueDate: fechaIso(fechaInscripcion) }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
       ...(telefono === '' ? {} : { phone: telefono }),
     };

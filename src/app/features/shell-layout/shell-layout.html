@@ -87,18 +87,27 @@
 
   <div class="app-main">
     <header class="app-header" app-header>
-      <label class="app-search-field app-header__buscador">
-        <span class="solo-lectores">Buscá en toda la organización</span>
-        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-        <input
-          class="app-input"
-          type="search"
-          placeholder="Buscá en toda la organización"
-          appTutorialTarget="shell-busqueda"
-        />
-      </label>
+      <!-- Acá había un buscador «en toda la organización» **sin un solo
+           manejador**: ni `(input)`, ni `(keydown.enter)`, ni formulario. Se
+           escribía, se apretaba Enter, y no pasaba nada. Y el tutorial del
+           armazón lo señalaba prometiendo «desde acá llegás a personas y
+           registros sin pasar por el menú», que era una promesa que el control
+           no podía cumplir.
+
+           Carril 19: se retira el control y su paso de tutorial. El buscador
+           global es una funcionalidad que no existe todavía —vive maquetada en
+           `features/redsat/`, que es donde vive el diseño— y dejar su caja en
+           el producto es exactamente la «pantalla que aparenta funcionar» que
+           la corrección #7 prohíbe. Cuando el buscador se construya, vuelve
+           acá con su manejador y con su paso. -->
 
       <div class="app-header__derecha">
+        <!-- Carril P1 · la campana. Va primera de las acciones —antes del
+             selector de organización y del tema— porque es la única que trae
+             información nueva: las otras dos son preferencias, y una preferencia
+             no compite por la atención con «tu receta está lista». -->
+        <app-notification-bell />
+
         @if (tenants().length > 1) {
           <div class="menu-anclaje">
             <button

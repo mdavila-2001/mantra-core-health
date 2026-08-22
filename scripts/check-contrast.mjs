@@ -15,6 +15,18 @@
  * ignoran, se **esperan**. Si una deja de incumplir, esto lo dice — porque una
  * excepción que ya no hace falta es deuda documental.
  *
+ * Mide **las dos hojas**, no una:
+ *
+ *   · `src/styles.css`        — REDSAT v1.0, el banco de componentes Angular.
+ *   · `src/styles/redsat.css` — REDSAT v1.1, la hoja de la bóveda. Pinta el
+ *     armazón de TODAS las pantallas y las 141 portadas de `features/redsat/`.
+ *
+ * La segunda no se medía, y ahí reapareció un defecto que la primera ya había
+ * corregido: ámbar-700 sobre ámbar-50 da 4,46:1 y no llega a AA. En v1.0 lo
+ * cazó este mismo script y se subió al 800; en la hoja de la bóveda vivió sin
+ * que nadie lo viera, pintando badges de 11,5 px. Un guardarraíl que sólo mira
+ * una de las dos hojas del sistema de diseño no es un guardarraíl.
+ *
  * Uso: node scripts/check-contrast.mjs
  */
 
@@ -23,6 +35,7 @@ import { join } from 'node:path';
 import { read, REPO_ROOT } from './lib/scan.mjs';
 
 const CSS = read(join(REPO_ROOT, 'src/styles.css'));
+const CSS_REDSAT = read(join(REPO_ROOT, 'src/styles/redsat.css'));
 
 // --- lectura de los tokens --------------------------------------------------
 
@@ -34,12 +47,12 @@ const CSS = read(join(REPO_ROOT, 'src/styles.css'));
  * manual. Los dos últimos están duplicados a propósito —CSS plano no permite
  * derivar uno del otro— y por eso se miden **los dos**.
  */
-function bloque(desde, hasta) {
-  const inicio = CSS.indexOf(desde);
+function bloque(desde, hasta, css = CSS) {
+  const inicio = css.indexOf(desde);
   if (inicio === -1) return new Map();
 
-  const fin = hasta === null ? CSS.length : CSS.indexOf(hasta, inicio);
-  const cuerpo = CSS.slice(inicio, fin === -1 ? CSS.length : fin);
+  const fin = hasta === null ? css.length : css.indexOf(hasta, inicio);
+  const cuerpo = css.slice(inicio, fin === -1 ? css.length : fin);
 
   const tokens = new Map();
   const declaracion = /(--[\w-]+)\s*:\s*([^;]+);/g;
@@ -167,46 +180,125 @@ const TEMAS = [
   { nombre: 'oscuro · manual', tokens: OSCURO_MANUAL },
 ];
 
+// --- la hoja de la bóveda (REDSAT v1.1) -------------------------------------
+
+/* El bloque claro es el `:root` de la sección «1 · Tokens»; el oscuro es el
+   gemelo [data-theme="dark"] que sync-redsat.mjs genera. El oscuro se apila
+   sobre el claro porque redeclara los colores pero no las medidas. */
+const REDSAT_CLARO = bloque(':root {', '/* --- 2 · Base', CSS_REDSAT);
+const REDSAT_OSCURO = new Map([
+  ...REDSAT_CLARO,
+  ...bloque(':root[data-theme="dark"] {', '/* La imagen de fondo', CSS_REDSAT),
+]);
+
+/**
+ * Los pares de la hoja de la bóveda.
+ *
+ * A diferencia de v1.0, la tinta se mide contra **las tres superficies** y no
+ * sólo contra la tarjeta: es la lección que `identidad-visual.md` Parte 8 deja
+ * escrita —«un token se mide contra *todas* las superficies, no contra la
+ * base»— y es la que destapa que `--tinta-3` sobre marfil está peor que sobre
+ * blanco.
+ *
+ * `R1` y `R2` son las excepciones propias de esta hoja, de la misma clase que
+ * las `E1` y `E3` de v1.0: texto terciario y borde de control en oscuro.
+ *
+ * `R3` no es de esa clase y no debería envejecer como las otras — ver abajo.
+ */
+
+/* R3 · `--petroleo` en OSCURO está sobrecargado y no tiene solución de un valor.
+   El token hace dos trabajos con umbrales que se mueven en sentido contrario:
+
+     · es la TINTA de `a[app-link]`      → necesita ≥4,5:1 contra la superficie
+     · es el RELLENO del botón primario  → necesita ≥4,5:1 con #fff encima
+
+   Hoy vale #12719F: 3,41:1 sobre la página y 3,09:1 sobre la tarjeta (falla como
+   enlace), con 5,40:1 de blanco encima (cumple como botón). Medido: en cuanto se
+   aclara hasta que el enlace pasa (~#1E8CC4, 4,46:1 sobre tarjeta) el blanco del
+   botón ya cayó a 3,75:1. **No hay un valor que cumpla los dos.**
+
+   La salida no es un tono, es partir el token en dos —uno de tinta y uno de
+   relleno—, y eso es decisión del diseñador sobre la hoja de la bóveda, no de
+   este repo. Por eso se registra como excepción y se avisa, que es literalmente
+   la política que fija identidad-visual.md: «si un par no llega al umbral WCAG,
+   no se ajusta el tono — se registra como excepción y se avisa al diseñador».
+
+   A diferencia de R1 y R2, ésta se espera que DESAPAREZCA: no es un límite
+   aceptado del sistema, es una tarea abierta. */
+const PARES_REDSAT = [
+  { tinta: '--tinta', fondo: '--sup-tarjeta', nivel: 4.5 },
+  { tinta: '--tinta', fondo: '--sup-pagina', nivel: 4.5 },
+  { tinta: '--tinta', fondo: '--sup-inset', nivel: 4.5 },
+  { tinta: '--tinta-2', fondo: '--sup-tarjeta', nivel: 4.5 },
+  { tinta: '--tinta-2', fondo: '--sup-pagina', nivel: 4.5 },
+  { tinta: '--tinta-3', fondo: '--sup-tarjeta', nivel: 4.5, excepcion: { claro: 'R1' } },
+  { tinta: '--tinta-3', fondo: '--sup-pagina', nivel: 4.5, excepcion: { claro: 'R1' } },
+  { tinta: '--tinta-marca', fondo: '--sup-tarjeta', nivel: 4.5 },
+  { tinta: '--petroleo', fondo: '--sup-pagina', nivel: 4.5, excepcion: { oscuro: 'R3' } },
+  { tinta: '--petroleo', fondo: '--sup-tarjeta', nivel: 4.5, excepcion: { oscuro: 'R3' } },
+  { tinta: '--borde-ctrl', fondo: '--sup-tarjeta', nivel: 3, excepcion: { oscuro: 'R2' } },
+  { tinta: '--borde-ctrl', fondo: '--sup-inset', nivel: 3, excepcion: { oscuro: 'R2' } },
+  { tinta: '--ok-tinta', fondo: '--ok-bg', nivel: 4.5 },
+  { tinta: '--aviso-tinta', fondo: '--aviso-bg', nivel: 4.5 },
+  { tinta: '--error-tinta', fondo: '--error-bg', nivel: 4.5 },
+  { tinta: '--info-tinta', fondo: '--info-bg', nivel: 4.5 },
+  { tinta: '--neutro-tinta', fondo: '--neutro-bg', nivel: 4.5 },
+];
+
+const TEMAS_REDSAT = [
+  { nombre: 'claro', tokens: REDSAT_CLARO },
+  { nombre: 'oscuro', tokens: REDSAT_OSCURO },
+];
+
+const HOJAS = [
+  { nombre: 'src/styles.css · REDSAT v1.0', temas: TEMAS, pares: PARES },
+  { nombre: 'src/styles/redsat.css · REDSAT v1.1 (bóveda)', temas: TEMAS_REDSAT, pares: PARES_REDSAT },
+];
+
 // --- comprobación -----------------------------------------------------------
 
 const fallos = [];
 const excepcionesResueltas = [];
 const filas = [];
 
-for (const tema of TEMAS) {
-  for (const par of PARES) {
-    const fondoRgb = aRgb(resolver(tema.tokens.get(par.fondo), tema.tokens));
-    let tintaRgb = aRgb(resolver(tema.tokens.get(par.tinta), tema.tokens));
+for (const hoja of HOJAS) {
+  filas.push('', `  ── ${hoja.nombre}`);
+  for (const tema of hoja.temas) {
+    for (const par of hoja.pares) {
+      const donde = `${hoja.nombre} · ${tema.nombre}`;
+      const fondoRgb = aRgb(resolver(tema.tokens.get(par.fondo), tema.tokens));
+      let tintaRgb = aRgb(resolver(tema.tokens.get(par.tinta), tema.tokens));
 
-    if (fondoRgb === null || tintaRgb === null) {
-      fallos.push(`${tema.nombre} · ${par.tinta} sobre ${par.fondo}: token ilegible`);
-      continue;
-    }
+      if (fondoRgb === null || tintaRgb === null) {
+        fallos.push(`${donde} · ${par.tinta} sobre ${par.fondo}: token ilegible`);
+        continue;
+      }
 
-    tintaRgb = componer(tintaRgb, fondoRgb);
-    const ratio = contraste(tintaRgb, fondoRgb);
-    const cumple = ratio >= par.nivel;
-    const excepcion = par.excepcion?.[tema.nombre];
+      tintaRgb = componer(tintaRgb, fondoRgb);
+      const ratio = contraste(tintaRgb, fondoRgb);
+      const cumple = ratio >= par.nivel;
+      const excepcion = par.excepcion?.[tema.nombre];
 
-    filas.push(
-      `  ${cumple ? '✓' : excepcion ? '·' : '✗'} ${tema.nombre.padEnd(18)} ` +
-        `${par.tinta.padEnd(20)} sobre ${par.fondo.padEnd(20)} ` +
-        `${ratio.toFixed(2).padStart(6)}:1  (mín. ${par.nivel})` +
-        (excepcion ? `  ← ${excepcion}` : ''),
-    );
-
-    if (!cumple && excepcion === undefined) {
-      fallos.push(
-        `${tema.nombre} · ${par.tinta} sobre ${par.fondo}: ` +
-          `${ratio.toFixed(2)}:1, por debajo de ${par.nivel}:1`,
+      filas.push(
+        `  ${cumple ? '✓' : excepcion ? '·' : '✗'} ${tema.nombre.padEnd(18)} ` +
+          `${par.tinta.padEnd(20)} sobre ${par.fondo.padEnd(20)} ` +
+          `${ratio.toFixed(2).padStart(6)}:1  (mín. ${par.nivel})` +
+          (excepcion ? `  ← ${excepcion}` : ''),
       );
-    }
 
-    if (cumple && excepcion !== undefined) {
-      excepcionesResueltas.push(
-        `${tema.nombre} · ${par.tinta} sobre ${par.fondo}: ${ratio.toFixed(2)}:1 ` +
-          `ya cumple — la excepción ${excepcion} sobra`,
-      );
+      if (!cumple && excepcion === undefined) {
+        fallos.push(
+          `${donde} · ${par.tinta} sobre ${par.fondo}: ` +
+            `${ratio.toFixed(2)}:1, por debajo de ${par.nivel}:1`,
+        );
+      }
+
+      if (cumple && excepcion !== undefined) {
+        excepcionesResueltas.push(
+          `${donde} · ${par.tinta} sobre ${par.fondo}: ${ratio.toFixed(2)}:1 ` +
+            `ya cumple — la excepción ${excepcion} sobra`,
+        );
+      }
     }
   }
 }
@@ -230,5 +322,11 @@ if (fallos.length > 0) {
 
 console.log('');
 console.log(
-  `  ${filas.length} combinaciones medidas · las excepciones E1–E3 se esperan, no se ignoran`,
+  `  ${filas.filter((f) => f.startsWith('  ✓') || f.startsWith('  ·') || f.startsWith('  ✗')).length} ` +
+    `combinaciones medidas en ${HOJAS.length} hojas · ` +
+    `las excepciones E1–E3 (v1.0) y R1–R2 (bóveda) se esperan, no se ignoran`,
+);
+console.log(
+  '  R3 NO es un límite aceptado: --petroleo en oscuro está sobrecargado ' +
+    '(enlace y relleno de botón) y hay que partirlo en dos. Es tarea abierta del diseñador.',
 );

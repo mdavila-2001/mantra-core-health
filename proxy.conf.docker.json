@@ -10,6 +10,7 @@
       "/scheduling",
       "/charts",
       "/forms",
+      "/surveys",
       "/clinical",
       "/authz",
       "/practitioners",
@@ -27,7 +28,24 @@
       "/geo",
       "/procedure-cases",
       "/dental-procedures",
-      "/diagnostic-units"
+      "/diagnostic-units",
+      "/diagnostic-results",
+      "/pharma-labs",
+      "/pharmacy",
+      "/pharmacy-inventory",
+      "/visit-agenda",
+      "/visit-requests",
+      "/visit-records",
+      "/visit-surveys",
+      "/community",
+      "/notifications",
+      "/system-context",
+      "/insurance-carriers",
+      "/insurance-brokers",
+      "/cds",
+      "/billing/service-catalog",
+      "/diagnostics/patients",
+      "/diagnostics/work-orders"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,
@@ -43,5 +61,14 @@
     "pathRewrite": {
       "^/otel": ""
     }
+  },
+  {
+    "context": [
+      "/socket.io"
+    ],
+    "target": "__BACKEND_ORIGIN__",
+    "secure": false,
+    "changeOrigin": true,
+    "ws": true
   }
 ]

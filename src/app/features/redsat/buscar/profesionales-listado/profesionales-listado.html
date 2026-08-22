@@ -2,150 +2,59 @@
       <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg></span>
       <div class="app-page-header__texto">
         <div class="app-page-header__titulo"><h1>Profesionales de salud</h1></div>
-        <p class="caption">Buscá por especialidad, zona, modalidad, obra social, precio y calificación. El sello de verificación cubre matrícula e identidad: lo que el profesional declaró sin verificar se muestra rotulado como declarado, nunca mezclado con lo verificado.</p>
+        <p class="caption">Buscá por nombre, especialidad u organización. El sello de verificación cubre matrícula e identidad: lo que el profesional declaró sin verificar se muestra rotulado como declarado, nunca mezclado con lo verificado.</p>
       </div>
 
     </div>
     <div role="tablist" class="app-tabs" app-tabs="" aria-label="Qué estás buscando">
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/buscador-listado">Todo</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar">Todo</a>
       <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Profesionales</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/medicamentos-listado">Medicamentos</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/hospitales-listado">Hospitales y clínicas</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/laboratorios-listado">Laboratorios e imagen</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/aseguradoras-listado">Aseguradoras</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/medicamentos">Medicamentos</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/hospitales">Hospitales y clínicas</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/diagnostico">Laboratorios e imagen</a>
+      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/aseguradoras">Aseguradoras</a>
     </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
       <label class="app-search-field" app-search-field="">
         <span class="solo-lectores">Buscá por nombre, especialidad u organización</span>
         <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-        <input class="app-input" app-input="" type="search" placeholder="Buscá por nombre, especialidad u organización">
+        <input
+          class="app-input"
+          app-input=""
+          type="search"
+          name="q"
+          placeholder="Buscá por nombre, especialidad u organización"
+          [value]="busqueda.texto()"
+          (input)="alEscribir($any($event.target).value)"
+        />
       </label>
       <div class="app-filter-bar__fila">
       <div class="app-form-field" app-form-field="">
-        <label class="app-form-field__label" for="f-esp">Especialidad</label>
-        <span class="app-select-envoltorio">
-          <select class="app-select" app-select="" id="f-esp">
-            <option>Todas</option>
-            <option>Cardiología</option>
-            <option>Pediatría</option>
-            <option>Ginecología y obstetricia</option>
-            <option>Traumatología</option>
-            <option>Dermatología</option>
-            <option>Medicina interna</option>
-            <option>Psiquiatría</option>
-          </select>
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-        </span>
-      </div>
-      <div class="app-form-field" app-form-field="">
-        <label class="app-form-field__label" for="f-ciudad">Dónde</label>
-        <span class="app-select-envoltorio">
-          <select class="app-select" app-select="" id="f-ciudad">
-            <option>La Paz</option>
-            <option>El Alto</option>
-            <option>Santa Cruz de la Sierra</option>
-            <option>Cochabamba</option>
-            <option>Sucre</option>
-            <option>Tarija</option>
-          </select>
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-        </span>
-      </div>
-      <div class="app-form-field" app-form-field="">
-        <label class="app-form-field__label" for="f-mod">Modalidad</label>
-        <span class="app-select-envoltorio">
-          <select class="app-select" app-select="" id="f-mod">
-            <option>Cualquiera</option>
-            <option>Presencial</option>
-            <option>Virtual</option>
-            <option>A domicilio</option>
-          </select>
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-        </span>
-      </div>
-      <div class="app-form-field" app-form-field="">
-        <label class="app-form-field__label" for="f-org">Organización</label>
-        <span class="app-select-envoltorio">
-          <select class="app-select" app-select="" id="f-org">
-            <option>Todas</option>
-            <option>Clínica Los Olivos</option>
-            <option>Hospital Arco Iris</option>
-            <option>Clínica Foianini</option>
-            <option>Consulta independiente</option>
-          </select>
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-        </span>
-      </div>
-      <div class="app-form-field" app-form-field="">
-        <label class="app-form-field__label" for="f-disp">Disponibilidad</label>
-        <span class="app-select-envoltorio">
-          <select class="app-select" app-select="" id="f-disp">
-            <option>Cualquiera</option>
-            <option>Atiende hoy</option>
-            <option>Esta semana</option>
-            <option>Este mes</option>
-          </select>
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-        </span>
-      </div>
-      <div class="app-form-field" app-form-field="">
-        <label class="app-form-field__label" for="f-precio">Precio hasta</label>
-        <span class="app-select-envoltorio">
-          <select class="app-select" app-select="" id="f-precio">
-            <option>Sin límite</option>
-            <option>Bs 150</option>
-            <option>Bs 250</option>
-            <option>Bs 350</option>
-            <option>Bs 500</option>
-          </select>
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-        </span>
-      </div>
-      <div class="app-form-field" app-form-field="">
-        <label class="app-form-field__label" for="f-cal">Calificación mínima</label>
-        <span class="app-select-envoltorio">
-          <select class="app-select" app-select="" id="f-cal">
-            <option>Cualquiera</option>
-            <option>4,0</option>
-            <option>4,5</option>
-            <option>4,8</option>
-          </select>
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-        </span>
-      </div>
-      <div class="app-form-field" app-form-field="">
-        <label class="app-form-field__label" for="f-idioma">Idioma de atención</label>
-        <span class="app-select-envoltorio">
-          <select class="app-select" app-select="" id="f-idioma">
-            <option>Cualquiera</option>
-            <option>Español</option>
-            <option>Aymara</option>
-            <option>Quechua</option>
-            <option>Guaraní</option>
-            <option>Inglés</option>
-          </select>
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-        </span>
+        <label class="app-form-field__label" for="f-verificados">
+          <input
+            id="f-verificados"
+            type="checkbox"
+            [checked]="soloVerificados()"
+            (change)="alConmutarVerificados($any($event.target).checked)"
+          />
+          Sólo verificados
+        </label>
       </div>
       </div>
     </section>
     <section class="app-view-state-host" app-view-state-host="">
+      @switch (busqueda.estado()) {
+        @case ('datos') {
       <div data-estado="datos">
       <ul class="app-resultado-lista">
-        @for (p of profesionales(); track p.resultado.id) {
-          <li app-search-result [resultado]="p.resultado">
+        @for (tarjeta of tarjetas(); track tarjeta.id) {
+          <li app-search-result [resultado]="tarjeta">
             <div class="app-resultado__lado">
-              <span class="app-resultado__precio"
-                >{{ p.precio }}<small>{{ p.precioNota }}</small></span
-              >
-              <span class="app-badge" [attr.data-tono]="p.disponibilidadTono">{{
-                p.disponibilidad
-              }}</span>
               <a
                 app-button
                 data-variante="secundario"
                 data-tam="sm"
-                [routerLink]="p.resultado.link"
+                [routerLink]="tarjeta.link"
                 >Ver perfil</a
               >
             </div>
@@ -153,20 +62,38 @@
         }
       </ul>
       <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
-        <p class="app-pagination__nota">5 de 96 profesionales · 25 por página</p>
-        <button app-button="" data-variante="secundario" data-tam="sm" type="button" aria-disabled="true"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
-        <button app-button="" data-variante="secundario" data-tam="sm" type="button">Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
+        <p class="app-pagination__nota">{{ busqueda.rotuloDePagina() }}</p>
+        <button
+          app-button=""
+          data-variante="secundario"
+          data-tam="sm"
+          type="button"
+          [disabled]="!busqueda.hayAnteriores()"
+          (click)="busqueda.anterior()"
+        ><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Anteriores</button>
+        <button
+          app-button=""
+          data-variante="secundario"
+          data-tam="sm"
+          type="button"
+          [disabled]="!busqueda.haySiguientes()"
+          (click)="busqueda.siguiente()"
+        >Siguientes<svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></button>
       </nav>
       </div>
-      <div data-estado="vacio" hidden="">
+        }
+        @case ('vacio') {
+      <div data-estado="vacio">
       <div class="app-empty-state" app-empty-state="">
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg></span>
         <h2>Ningún profesional coincide con esos filtros</h2>
         <p>Un profesional aparece acá cuando tiene perfil público activo y al menos una especialidad registrada. Si buscabas por obra social, probá sacando ese filtro: el convenio se acuerda por sede, y puede estar cargado en la organización y no en la ficha del médico.</p>
-        <a app-button="" data-variante="secundario" aria-disabled="true" data-sin-destino=""><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+        <a app-button="" data-variante="secundario" routerLink="/buscar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
       </div>
       </div>
-      <div data-estado="carga" hidden="">
+        }
+        @case ('carga') {
+      <div data-estado="carga">
       <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
         <span class="solo-lectores">Buscando…</span>
         <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
@@ -176,7 +103,9 @@
         <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
       </div>
       </div>
-      <div data-estado="error" hidden="">
+        }
+        @case ('error') {
+      <div data-estado="error">
       <div style="padding:var(--e6)">
         <div class="app-alert" app-alert="" data-tono="error" role="alert">
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
@@ -186,8 +115,10 @@
           </div>
         </div>
         <div style="margin-top:var(--e5)">
-          <button app-button="" data-variante="secundario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+          <button app-button="" data-variante="secundario" type="button" (click)="busqueda.reintentar()"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
         </div>
       </div>
       </div>
+        }
+      }
     </section>

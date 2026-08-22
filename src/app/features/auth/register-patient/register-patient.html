@@ -1,4 +1,4 @@
-﻿<app-auth-split [claim]="claim()" [tagline]="tagline()">
+﻿<app-auth-split [claim]="claim()" [tagline]="tagline()" contentWidth="wide">
   <div class="registro">
     @if (registered()) {
       <div class="registro__header">
@@ -25,27 +25,21 @@
       </button>
     } @else {
       <div class="registro__header">
-        <h1 class="registro__title">Crear cuenta</h1>
-        <p class="registro__subtitle">Elegí qué tipo de cuenta necesitás.</p>
+        <h1 class="registro__title">{{ titulo() }}</h1>
+        <p class="registro__subtitle">{{ subtitulo() }}</p>
       </div>
 
-      <app-form-field label="Me registro como">
-        <app-radio-group
-          data-testid="registro-tipo"
-          [value]="tipo()"
-          (valueChange)="cambiarTipo($event)"
-        >
-          <app-radio value="paciente" label="Paciente" />
-          <app-radio value="profesional" label="Profesional de salud" />
-        </app-radio-group>
-      </app-form-field>
 
       @if (errorMessage(); as mensaje) {
         <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{ mensaje }}</app-alert>
       }
 
+      <div class="registro__body">
       @if (tipo() === 'paciente') {
         <form
+          id="registro-panel-paciente"
+          role="tabpanel"
+          aria-labelledby="registro-tab-paciente"
           [formGroup]="formPaciente"
           (ngSubmit)="submit()"
           novalidate
@@ -70,6 +64,31 @@
               testId="registro-documento"
             />
           </app-form-field>
+
+          <!-- Pegado al documento porque es un dato DE ese documento: la
+               terminación «SC», «LP»… que distingue dos cédulas homónimas. -->
+          @if (catalogoDepartamentosCaido()) {
+            <app-form-field label="Departamento de emisión (opcional)">
+              <p class="registro__tabs-label">
+                No pudimos traer el catálogo de departamentos.
+                <button app-button variant="ghost" size="sm" (clicked)="cargarDepartamentos()">
+                  Reintentar
+                </button>
+              </p>
+            </app-form-field>
+          } @else {
+            <app-form-field
+              label="Departamento de emisión (opcional)"
+              hint="El «SC», «LP»... de tu cédula."
+            >
+              <app-select
+                data-testid="registro-departamento-ci"
+                [options]="opcionesDepartamento()"
+                [(value)]="departamentoEmisorPaciente"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+          }
 
           <app-form-field
             label="Nombre"
@@ -165,6 +184,70 @@
             />
           </app-form-field>
 
+          <app-form-field
+            label="Fecha de nacimiento (opcional)"
+            hint="Sirve para calcular dosis y valores de referencia."
+          >
+            <app-date-picker
+              [(value)]="fechaNacimientoPaciente"
+              placeholder="Seleccionar fecha"
+            />
+          </app-form-field>
+
+          <div class="registro__row">
+            <!-- Dos preguntas distintas, no una: el género es cómo te
+                 identificás y el sexo al nacer es dato clínico. -->
+            <app-form-field label="Género (opcional)">
+              <app-select
+                data-testid="registro-genero"
+                [options]="opcionesGenero"
+                [(value)]="generoPaciente"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+
+            <app-form-field label="Sexo al nacer (opcional)">
+              <app-select
+                data-testid="registro-sexo-al-nacer"
+                [options]="opcionesSexoAlNacer"
+                [(value)]="sexoAlNacerPaciente"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+          </div>
+
+          <div class="registro__row">
+            <app-form-field
+              label="Teléfono (opcional)"
+              [errorMessage]="
+                formPaciente.controls.phone.touched && formPaciente.controls.phone.invalid
+                  ? 'Dígitos, espacios, paréntesis, + y guion.'
+                  : ''
+              "
+            >
+              <!-- `type="text"` y no `tel`: `INPUT_TYPES` del atom no declara
+                   `tel`, y el `autocomplete` ya le dice al navegador qué es.
+                   Mismo criterio que el teléfono del formulario de profesional. -->
+              <app-input
+                formControlName="phone"
+                type="text"
+                autocomplete="tel"
+                placeholder="+591 70012345"
+                testId="registro-telefono"
+              />
+            </app-form-field>
+
+            <app-form-field label="Ocupación (opcional)">
+              <app-input
+                formControlName="occupationFreeText"
+                type="text"
+                autocomplete="organization-title"
+                placeholder="Docente"
+                testId="registro-ocupacion"
+              />
+            </app-form-field>
+          </div>
+
           <button
             app-button
             type="submit"
@@ -179,29 +262,120 @@
         </form>
       } @else {
         <form
+          id="registro-panel-profesional"
+          role="tabpanel"
+          aria-labelledby="registro-tab-profesional"
           [formGroup]="formProfesional"
           (ngSubmit)="submit()"
           novalidate
           data-testid="registro-form-profesional"
         >
           <app-form-field
-            label="Nombre completo"
+            label="Nombre"
             [required]="true"
             [errorMessage]="
-              formProfesional.controls.displayName.touched &&
-              formProfesional.controls.displayName.invalid
+              formProfesional.controls.name.touched && formProfesional.controls.name.invalid
                 ? 'Ingresá tu nombre.'
                 : ''
             "
           >
             <app-input
-              formControlName="displayName"
+              formControlName="name"
               type="text"
-              autocomplete="name"
-              placeholder="Dra. Ana Paz"
+              autocomplete="given-name"
+              placeholder="Ana"
               testId="registro-pro-nombre"
             />
           </app-form-field>
+
+          <app-form-field label="Segundo nombre" hint="Si no tenés, dejalo vacío.">
+            <app-input
+              formControlName="middleName"
+              type="text"
+              autocomplete="additional-name"
+              placeholder="Lucía"
+              testId="registro-pro-segundo-nombre"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Apellido paterno"
+            [required]="true"
+            [errorMessage]="
+              formProfesional.controls.lastName.touched && formProfesional.controls.lastName.invalid
+                ? 'Ingresá tu apellido paterno.'
+                : ''
+            "
+          >
+            <app-input
+              formControlName="lastName"
+              type="text"
+              autocomplete="family-name"
+              placeholder="Rojas"
+              testId="registro-pro-apellido-paterno"
+            />
+          </app-form-field>
+
+          <app-form-field label="Apellido materno" hint="Si no llevás, dejalo vacío.">
+            <app-input
+              formControlName="motherLastName"
+              type="text"
+              autocomplete="family-name"
+              placeholder="Paz"
+              testId="registro-pro-apellido-materno"
+            />
+          </app-form-field>
+
+          <app-form-field label="Fecha de nacimiento (opcional)">
+            <app-date-picker
+              [(value)]="fechaNacimientoProfesional"
+              placeholder="Seleccionar fecha"
+            />
+          </app-form-field>
+
+          <div class="registro__row">
+            <app-form-field
+              label="Cédula de identidad (opcional)"
+              hint="Se guarda como tu documento oficial."
+              [errorMessage]="
+                formProfesional.controls.nationalId.touched &&
+                formProfesional.controls.nationalId.invalid
+                  ? 'Letras, números, punto y guion.'
+                  : ''
+              "
+            >
+              <app-input
+                formControlName="nationalId"
+                type="text"
+                autocomplete="off"
+                placeholder="1234567"
+                testId="registro-pro-documento"
+              />
+            </app-form-field>
+
+            @if (catalogoDepartamentosCaido()) {
+              <app-form-field label="Departamento de emisión">
+                <p class="registro__tabs-label">
+                  No pudimos traer el catálogo de departamentos.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarDepartamentos()">
+                    Reintentar
+                  </button>
+                </p>
+              </app-form-field>
+            } @else {
+              <app-form-field
+                label="Departamento de emisión"
+                hint="El «SC», «LP»... de tu cédula."
+              >
+                <app-select
+                  data-testid="registro-pro-departamento-ci"
+                  [options]="opcionesDepartamento()"
+                  [(value)]="departamentoEmisor"
+                  placeholder="Sin especificar"
+                />
+              </app-form-field>
+            }
+          </div>
 
           <app-form-field
             label="Correo profesional"
@@ -266,6 +440,28 @@
           </div>
 
           <div class="registro__row">
+            <app-form-field
+              label="Autoridad reguladora (opcional)"
+              hint="Ministerio de Salud y Deportes, o Colegio de Odontólogos si tu especialidad es odontología."
+            >
+              <app-input
+                formControlName="regulatoryAuthority"
+                type="text"
+                autocomplete="off"
+                placeholder="Ministerio de Salud y Deportes"
+                testId="registro-pro-autoridad"
+              />
+            </app-form-field>
+
+            <app-form-field label="Fecha de inscripción de la matrícula (opcional)">
+              <app-date-picker
+                [(value)]="fechaInscripcionMatricula"
+                placeholder="Seleccionar fecha"
+              />
+            </app-form-field>
+          </div>
+
+          <div class="registro__row">
             <app-form-field label="Título profesional (opcional)">
               <app-input
                 formControlName="professionalTitle"
@@ -318,6 +514,7 @@
           </button>
         </form>
       }
+      </div>
 
       <div class="registro__footer">
         <p class="registro__pie">

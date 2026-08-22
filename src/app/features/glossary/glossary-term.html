@@ -15,32 +15,62 @@
           </p>
         }
 
-        <!-- Las etiquetas, arriba y navegables: desde la ficha se vuelve a la
-             categoría, que es cómo se sigue hojeando. -->
-        @if (termino.valueSets.length > 0) {
-          <nav class="termino__etiquetas" aria-label="Categorías de este término">
-            <ul class="termino__chips">
-              @for (etiqueta of termino.valueSets; track etiqueta.id) {
-                <li>
-                  <a
-                    class="termino__etiqueta"
-                    [routerLink]="['/glossary']"
-                    [queryParams]="{ etiqueta: etiqueta.internalCode }"
-                  >
-                    <app-chip size="sm" [label]="etiqueta.name">{{ etiqueta.name }}</app-chip>
-                  </a>
-                </li>
+        <!-- Categoría y etiquetas: la categoría es navegable —vuelve a la
+             grilla filtrada—, las etiquetas son informativas. La búsqueda por
+             etiqueta ya no es una puerta de entrada del glosario (ver
+             `glossary.ts`), así que acá no llevan enlace. -->
+        <div class="termino__clasificacion">
+          @if (termino.category; as categoria) {
+            <a
+              class="termino__categoria"
+              [routerLink]="['/glossary']"
+              [queryParams]="{ category: categoria.internalCode }"
+            >
+              <app-glossary-category-icon [category]="categoria.internalCode" />
+              {{ categoria.name }}
+            </a>
+          }
+
+          @if (termino.tags.length > 0) {
+            <ul class="termino__chips" aria-label="Etiquetas clínicas de este término">
+              @for (etiqueta of termino.tags; track etiqueta.valueSetId) {
+                <li><app-chip size="sm" [label]="etiqueta.name">{{ etiqueta.name }}</app-chip></li>
               }
             </ul>
-          </nav>
+          }
+        </div>
+
+        <!-- Imagen médica, si la tiene, con su fuente y licencia visibles —
+             nunca sin atribución. Ningún término la trae hoy: el backend no
+             siembra imágenes sin una política de licencias verificada, así que
+             el ícono de la categoría hace de marcador visual permanente y no
+             de relleno temporal. -->
+        @if (termino.image; as imagen) {
+          <figure class="termino__imagen">
+            <img [src]="imagen.source" [alt]="imagen.alt" />
+            <figcaption class="termino__imagen-atribucion">
+              {{ imagen.attribution }} — licencia {{ imagen.license }}
+            </figcaption>
+          </figure>
+        } @else {
+          <div class="termino__imagen-marcador" aria-hidden="true">
+            <app-glossary-category-icon [category]="termino.category?.internalCode ?? ''" />
+          </div>
         }
 
         <h2 class="termino__subtitulo">Qué significa</h2>
-        @if (termino.definition) {
-          <p class="termino__definicion">{{ termino.definition }}</p>
-        } @else {
-          <p class="termino__definicion termino__definicion--ausente">
-            Este término todavía no tiene una explicación cargada en el catálogo.
+        <p class="termino__definicion">{{ termino.clinicalDefinition.text }}</p>
+        @if (termino.clinicalDefinition.translated === false) {
+          <p class="termino__sin-traducir-parcial">
+            Definición en su idioma original: todavía no tiene traducción al castellano cargada.
+          </p>
+        }
+
+        <h2 class="termino__subtitulo">Explicado simple</h2>
+        <p class="termino__definicion">{{ termino.plainSummary.text }}</p>
+        @if (termino.plainSummary.translated === false) {
+          <p class="termino__sin-traducir-parcial">
+            Explicación en su idioma original: todavía no tiene traducción al castellano cargada.
           </p>
         }
 
@@ -53,6 +83,20 @@
                 @if (sinonimo.language) {
                   <span class="termino__idioma">({{ sinonimo.language }})</span>
                 }
+              </li>
+            }
+          </ul>
+        }
+
+        <!-- Relaciones clínicas tipadas, agrupadas por tipo. Cada una enlaza a
+             la ficha del término relacionado por su propio conceptId: es la
+             misma pantalla, así que seguir la relación es sólo navegar. -->
+        @for (grupo of gruposDeRelaciones(); track grupo.label) {
+          <h2 class="termino__subtitulo">{{ grupo.label }}</h2>
+          <ul class="termino__relaciones">
+            @for (relacion of grupo.relaciones; track relacion.conceptId) {
+              <li>
+                <a [routerLink]="['/glossary', relacion.conceptId]">{{ relacion.display }}</a>
               </li>
             }
           </ul>

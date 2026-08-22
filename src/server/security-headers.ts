@@ -49,6 +49,21 @@ export interface SecurityHeadersOptions {
    * Se calculan del HTML servido, no se declaran a mano.
    */
   readonly inlineScriptHashes?: readonly string[];
+  /**
+   * Si la respuesta lleva `upgrade-insecure-requests`. Por omisión, sí.
+   *
+   * La directiva solo tiene sentido cuando la página ya viaja por HTTPS: ahí
+   * corrige un `http://` suelto en un subrecurso. Servida **por HTTP**, hace lo
+   * contrario de proteger: el navegador pide todos los subrecursos por `https`
+   * contra un servidor que no habla TLS y la página queda sin estilos, sin
+   * JavaScript y sin imágenes, con `ERR_SSL_PROTOCOL_ERROR` en la consola.
+   *
+   * `localhost` no lo sufre —los navegadores lo eximen del ascenso—, así que el
+   * modo de fallo aparece recién cuando alguien abre el servidor de desarrollo
+   * desde otra máquina de la red. Por eso se decide por petición, mirando el
+   * protocolo real, y no por entorno.
+   */
+  readonly upgradeInsecureRequests?: boolean;
 }
 
 /**
@@ -150,6 +165,7 @@ function originOf(url: string | undefined): string | null {
 export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): string {
   const apiOrigin = originOf(options.apiBaseUrl);
   const scriptHashes = options.inlineScriptHashes ?? [];
+  const upgrade = options.upgradeInsecureRequests ?? true;
 
   return [
     "default-src 'self'",
@@ -158,14 +174,16 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     "style-src 'self' 'unsafe-inline'",
     // Las tipografías están autoalojadas: no hace falta abrir ningún CDN.
     "font-src 'self'",
-    // `data:` cubre los SVG en línea del sistema de diseño.
-    "img-src 'self' data:",
+    // `data:` cubre los SVG en línea del sistema de diseño. Los tiles de
+    // OpenStreetMap son el único origen de imagen ajeno: el mapa (Leaflet, sin
+    // clave de API) los pide directo del navegador y sin ellos queda gris.
+    "img-src 'self' data: https://tile.openstreetmap.org",
     `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    'upgrade-insecure-requests',
+    ...(upgrade ? ['upgrade-insecure-requests'] : []),
   ].join('; ');
 }
 
@@ -187,8 +205,11 @@ export function securityHeaders(
     'X-Frame-Options': 'DENY',
     // Una URL con identificadores no debe viajar a otro sitio en el `Referer`.
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    // La aplicación no usa ninguna de las tres. Declararlo lo hace cumplir.
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    // Cámara y micrófono no se usan. La ubicación sí: «dónde comprar mi
+    // receta» la pide con permiso explícito del navegador para ordenar
+    // sucursales por cercanía — `geolocation=()` la apagaba para toda la
+    // aplicación. `(self)` la permite solo al propio origen, jamás a un iframe.
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
     'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
   };
 }

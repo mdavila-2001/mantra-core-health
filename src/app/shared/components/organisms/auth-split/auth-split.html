@@ -1,14 +1,99 @@
-<div class="auth-split">
+<!-- `appPointerScene` publica en este nodo las variables `--pointer-*`. Van acá
+     arriba y no en cada capa para que TODA la escena mida contra el mismo
+     rectángulo: si cada velo midiera contra el suyo, el paralaje tiraría de
+     cada uno para un lado distinto y se perdería la sensación de profundidad. -->
+<div class="auth-split" appPointerScene>
   <!-- Columna de marca. `aria-hidden` porque es decorativa: lo que importa está
        en el formulario, y anunciarla duplicaría el mensaje.
        El diseño original lleva una fotografía; usamos un degradado de marca
        porque el archivo no está aprobado todavía y así no dependemos de él. -->
   <aside class="auth-split__brand" aria-hidden="true">
+    <!-- Auroras: masas de color enormes y muy desenfocadas que derivan solas y
+         además se corren con el puntero. Son el fondo VIVO; lo de abajo (red y
+         latido) es el dibujo que va encima. -->
+    <div class="auth-split__aurora auth-split__aurora--brand">
+      <span class="auth-split__velo auth-split__velo--a"></span>
+      <span class="auth-split__velo auth-split__velo--b"></span>
+      <span class="auth-split__velo auth-split__velo--c"></span>
+    </div>
+
+    <!-- Lienzo vivo: la constelación y el trazo de latido, ver auth-split.css.
+         Solo escritorio (el propio `.auth-split__brand` está oculto antes de
+         eso), así que no anima nada en mobile. Todo el grupo lleva una
+         máscara de desvanecido hacia abajo (ver `.auth-split__pulse` en el
+         CSS): así el dibujo se apaga solo antes de llegar a la franja del
+         texto, sea cual sea el largo del claim, en vez de depender de que las
+         coordenadas de cada elemento nunca lo toquen. -->
+    <svg class="auth-split__pulse" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid slice" focusable="false">
+      <!-- Constelación: la parte «conectada» del claim, dicha en dibujo. Una
+           red de verdad —un eje con cinco brazos y una cadena que serpentea
+           hacia abajo— y no cinco puntos sueltos, para que se lea como cielo y
+           no como decoración de relleno. Vive arriba, lejos del texto.
+
+           `transform-box: fill-box` en el CSS arregla, esta vez de raíz, el
+           defecto que obligaba a animar solo opacidad: con la caja de
+           transformación puesta en el propio elemento, `scale()` origina en
+           SU centro y no en el del viewBox, así que cada astro puede latir
+           (escala + opacidad) donde está sin dispararse en diagonal. -->
+      <g class="auth-split__constelacion">
+        <line class="auth-split__hilo" pathLength="100" style="--d:0s" x1="300" y1="90" x2="222" y2="48" />
+        <line class="auth-split__hilo" pathLength="100" style="--d:.9s" x1="300" y1="90" x2="354" y2="54" />
+        <line class="auth-split__hilo" pathLength="100" style="--d:1.8s" x1="300" y1="90" x2="366" y2="140" />
+        <line class="auth-split__hilo" pathLength="100" style="--d:2.6s" x1="300" y1="90" x2="246" y2="150" />
+        <line class="auth-split__hilo auth-split__hilo--vivo" pathLength="100" style="--d:3.3s" x1="300" y1="90" x2="176" y2="100" />
+        <line class="auth-split__hilo" pathLength="100" style="--d:4.1s" x1="176" y1="100" x2="150" y2="180" />
+        <line class="auth-split__hilo" pathLength="100" style="--d:4.9s" x1="150" y1="180" x2="210" y2="220" />
+        <line class="auth-split__hilo auth-split__hilo--vivo" pathLength="100" style="--d:5.6s" x1="210" y1="220" x2="290" y2="210" />
+        <line class="auth-split__hilo" pathLength="100" style="--d:6.2s" x1="290" y1="210" x2="330" y2="250" />
+        <line class="auth-split__hilo" pathLength="100" style="--d:1.3s" x1="176" y1="100" x2="120" y2="60" />
+        <line class="auth-split__hilo" pathLength="100" style="--d:2.1s" x1="366" y1="140" x2="380" y2="210" />
+        <line class="auth-split__hilo" pathLength="100" style="--d:5s" x1="190" y1="30" x2="222" y2="48" />
+        <line class="auth-split__hilo" pathLength="100" style="--d:3.7s" x1="150" y1="180" x2="100" y2="140" />
+
+        <circle class="auth-split__astro auth-split__astro--eje" style="--d:0s" cx="300" cy="90" r="3.6" />
+        <circle class="auth-split__astro auth-split__astro--brillante" style="--d:.7s" cx="222" cy="48" r="2.4" />
+        <circle class="auth-split__astro" style="--d:1.4s" cx="354" cy="54" r="2" />
+        <circle class="auth-split__astro auth-split__astro--brillante" style="--d:2.1s" cx="366" cy="140" r="2.8" />
+        <circle class="auth-split__astro" style="--d:2.8s" cx="246" cy="150" r="2.2" />
+        <circle class="auth-split__astro" style="--d:3.5s" cx="176" cy="100" r="1.8" />
+        <circle class="auth-split__astro" style="--d:.35s" cx="150" cy="180" r="2" />
+        <circle class="auth-split__astro" style="--d:1.05s" cx="210" cy="220" r="1.6" />
+        <circle class="auth-split__astro auth-split__astro--brillante" style="--d:1.75s" cx="290" cy="210" r="1.8" />
+        <circle class="auth-split__astro" style="--d:2.45s" cx="330" cy="250" r="2.4" />
+        <circle class="auth-split__astro" style="--d:3.15s" cx="120" cy="60" r="1.4" />
+        <circle class="auth-split__astro" style="--d:3.85s" cx="380" cy="210" r="1.6" />
+        <circle class="auth-split__astro" style="--d:4.55s" cx="190" cy="30" r="1.3" />
+        <circle class="auth-split__astro" style="--d:5.25s" cx="100" cy="140" r="1.5" />
+      </g>
+
+      <!-- Latido: el mismo gesto que el logotipo de AloVida, cruzando la
+           columna por encima del texto (subido respecto de la versión
+           anterior, y con la máscara de desvanecido como red de seguridad).
+           `pathLength="1000"` normaliza el largo real del trazo, así el CSS
+           puede animar el guion en centésimas sin que nadie tenga que medir
+           la curva. -->
+      <g class="auth-split__latido">
+        <path
+          class="auth-split__latido-base"
+          pathLength="1000"
+          d="M-20 300 H92 l13-7 l10 15 l13-62 l15 101 l13-48 l11 12 H232 l11-5 l8 9 l9-32 l11 47 l9-19 H420"
+        />
+        <path
+          class="auth-split__latido-trazo"
+          pathLength="1000"
+          d="M-20 300 H92 l13-7 l10 15 l13-62 l15 101 l13-48 l11 12 H232 l11-5 l8 9 l9-32 l11 47 l9-19 H420"
+        />
+      </g>
+    </svg>
+
     <!-- `@for … track` sobre el propio texto: al cambiar de paciente a
          profesional el nodo se rehace y la animación de entrada vuelve a
          correr, en vez de que el titular se reemplace de golpe. -->
     <div class="auth-split__brand-content">
-      <p class="auth-split__wordmark">REDSAT</p>
+      <p class="auth-split__wordmark">
+        <img src="/redsat/imagenes/alovida-logo-blanco.svg" alt="" width="38" height="28" />
+        <span>AloVida</span>
+      </p>
       @for (texto of claimKeyed(); track texto) {
         <h2 class="auth-split__claim">{{ texto }}</h2>
       }
@@ -18,57 +103,85 @@
     </div>
   </aside>
 
+  <!-- Gemelo claro de la aurora, para la columna del formulario. Es una capa
+       aparte y no la misma estirada porque los dos fondos son opuestos: sobre
+       el degradado oscuro los velos ACLARAN (`screen`), y sobre la superficie
+       clara tiñen. Un solo elemento no puede hacer las dos cosas. -->
+  <div class="auth-split__aurora auth-split__aurora--panel" aria-hidden="true">
+    <span class="auth-split__velo auth-split__velo--a"></span>
+    <span class="auth-split__velo auth-split__velo--b"></span>
+    <span class="auth-split__velo auth-split__velo--c"></span>
+  </div>
+
   <main class="auth-split__panel">
-    <!-- El selector de tema va fuera del formulario: es chrome, no contenido.
-         Solo íconos: tres palabras sueltas arriba de una pantalla de acceso se
-         leían como texto perdido en vez de como un control. El nombre va en
-         `aria-label` —que es lo que anuncia un lector— y en `title` para quien
-         pase el puntero. `aria-pressed` dice cuál está activo sin depender del
-         color, que es lo único que distinguía al elegido. -->
-    <div class="auth-split__theme" role="group" aria-label="Tema de la interfaz">
-      @for (option of themeOptions; track option.mode) {
-        <button
-          app-button
-          size="sm"
-          iconOnly
-          [variant]="theme() === option.mode ? 'secondary' : 'ghost'"
-          [attr.aria-pressed]="theme() === option.mode"
-          [attr.aria-label]="option.label"
-          [attr.title]="option.label"
-          (clicked)="setTheme(option.mode)"
-        >
-          @switch (option.mode) {
-            @case ('light') {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                <circle cx="12" cy="12" r="4" />
-                <path
-                  stroke-linecap="round"
-                  d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
-                />
-              </svg>
+    <div class="auth-split__chrome">
+      <!-- La marca también acá, y no solo en la columna de la izquierda: en
+           teléfono esa columna no existe y la pantalla de acceso quedaba sin
+           decir de qué producto es. Se pinta con `mask` sobre `currentColor`
+           (ver CSS) para que sirva en los dos temas con un solo archivo. -->
+      <p class="auth-split__marca-mini">
+        <span class="auth-split__marca-mini-glifo" aria-hidden="true"></span>
+        AloVida
+      </p>
+
+      <!-- El selector de tema va fuera del formulario: es chrome, no contenido.
+           Solo íconos: tres palabras sueltas arriba de una pantalla de acceso se
+           leían como texto perdido en vez de como un control. El nombre va en
+           `aria-label` —que es lo que anuncia un lector— y en `title` para quien
+           pase el puntero. `aria-pressed` dice cuál está activo sin depender del
+           color, que es lo único que distinguía al elegido. -->
+      <div class="auth-split__theme" role="group" aria-label="Tema de la interfaz">
+        @for (option of themeOptions; track option.mode) {
+          <button
+            app-button
+            size="sm"
+            iconOnly
+            [variant]="theme() === option.mode ? 'secondary' : 'ghost'"
+            [attr.aria-pressed]="theme() === option.mode"
+            [attr.aria-label]="option.label"
+            [attr.title]="option.label"
+            (clicked)="setTheme(option.mode)"
+          >
+            @switch (option.mode) {
+              @case ('light') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                  <circle cx="12" cy="12" r="4" />
+                  <path
+                    stroke-linecap="round"
+                    d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+                  />
+                </svg>
+              }
+              @case ('dark') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"
+                  />
+                </svg>
+              }
+              @default {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                  <rect x="2.5" y="4" width="19" height="12.5" rx="2" />
+                  <path stroke-linecap="round" d="M9 20h6m-3-3.5V20" />
+                </svg>
+              }
             }
-            @case ('dark') {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"
-                />
-              </svg>
-            }
-            @default {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                <rect x="2.5" y="4" width="19" height="12.5" rx="2" />
-                <path stroke-linecap="round" d="M9 20h6m-3-3.5V20" />
-              </svg>
-            }
-          }
-        </button>
-      }
+          </button>
+        }
+      </div>
     </div>
 
+    <!-- El ancho, el centrado y la entrada viven en `__slot` —un elemento de
+         ESTA plantilla— y no en el contenido proyectado. Con encapsulación
+         emulada, una regla como `.auth-split__content > *` se compila con el
+         atributo de este componente y no alcanza a un hijo que viene del
+         componente de la pantalla: la limitación de ancho no se aplicaba. -->
     <div class="auth-split__content">
-      <ng-content />
+      <div class="auth-split__slot" [class.auth-split__slot--wide]="contentWidth() === 'wide'">
+        <ng-content />
+      </div>
     </div>
   </main>
 </div>

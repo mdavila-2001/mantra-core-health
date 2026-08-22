@@ -1,0 +1,156 @@
+/* ============================================================================
+    Mi historia clínica — el archivo del paciente.
+
+    Mobile-first: una columna, y en pantalla ancha los datos y las acciones se
+    reparten la fila. La densidad clínica del expediente del profesional no
+    aplica acá: quien lee su propia historia lee poco y de a una cosa.
+    ========================================================================== */
+
+.historia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.historia__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.historia__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.historia__vacio {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.historia__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.historia__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* Las listas de sólo lectura no tienen acciones: no necesitan el mismo aire. */
+.historia__lista--simple .historia__item {
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.historia__datos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.historia__principal {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.historia__secundario {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.historia__acciones {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* ---- los formularios respondidos ------------------------------------------
+   El item lleva sus respuestas adentro, así que no se acuesta en fila ancha:
+   una definición por renglón se lee mejor que una tabla apretada. */
+
+.historia__item--formulario {
+  align-items: stretch;
+}
+
+.historia__respuestas {
+  margin: var(--sp-2) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.historia__respuesta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  font-size: var(--fs-body);
+}
+
+.historia__respuesta dt {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.historia__respuesta dt::after {
+  content: ':';
+}
+
+.historia__respuesta dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.historia__respuesta em {
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 48rem) {
+  .historia__item {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .historia__item--formulario {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .historia__acciones {
+    flex: none;
+  }
+}
+
+/* La descarga completa encabeza la pantalla: es lo que el registro del cliente
+   pide poder hacer, y quien viene a eso no debería recorrer todo primero. */
+.historia__descarga-total {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  margin-block-end: var(--sp-5);
+}
+
+.historia__descarga-nota {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  margin: 0;
+}
