@@ -39,91 +39,12 @@
     <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section legend="Qué autoridad" description="Cómo se identifica el registro oficial.">
-      <app-form-field
-        label="Código de la autoridad"
-        [required]="true"
-        hint="Único; hasta 100 caracteres. Por ejemplo, RENAPER."
-        [errorMessage]="
-          form.controls.authorityCode.touched && form.controls.authorityCode.invalid
-            ? 'Ingresá el código (hasta 100 caracteres).'
-            : ''
-        "
-      >
-        <app-input formControlName="authorityCode" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Nombre"
-        [required]="true"
-        [errorMessage]="
-          form.controls.name.touched && form.controls.name.invalid
-            ? 'Ingresá el nombre (hasta 200 caracteres).'
-            : ''
-        "
-      >
-        <app-input formControlName="name" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section legend="Alcance" description="Para qué organización rige y de qué tipo es.">
-      <app-form-field
-        label="Organización"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.tenantId.touched && form.controls.tenantId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="tenantId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Tipo de autoridad (concepto)"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.authorityTypeConceptId.touched &&
-          form.controls.authorityTypeConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="authorityTypeConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Jurisdicción (concepto)"
-        hint="Opcional: dónde rige la autoridad."
-        [errorMessage]="
-          form.controls.jurisdictionConceptId.touched &&
-          form.controls.jurisdictionConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="jurisdictionConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Marco de aseguramiento (concepto)"
-        hint="Opcional: bajo qué marco emite sus niveles."
-        [errorMessage]="
-          form.controls.assuranceFrameworkConceptId.touched &&
-          form.controls.assuranceFrameworkConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="assuranceFrameworkConceptId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Registrar autoridad"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Registrar autoridad de identidad"
+  submitLabel="Registrar autoridad"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

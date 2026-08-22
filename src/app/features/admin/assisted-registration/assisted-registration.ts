@@ -7,7 +7,7 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
@@ -20,14 +20,11 @@ import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
-import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Largos que exige `AssistedRegistrationDto` en el backend. */
@@ -69,19 +66,14 @@ const MAX_PARTE_NOMBRE = 100;
 @Component({
   selector: 'app-assisted-registration',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
     DatePipe,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     Link,
     PageHeader,
+    PaginatedForm,
     RouterLink,
-    Textarea,
   ],
   templateUrl: './assisted-registration.html',
   styleUrl: './assisted-registration.css',
@@ -93,6 +85,34 @@ export class AssistedRegistration {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Datos del paciente',
+      hint: 'Lo mínimo para crear la cuenta; el resto lo completa su filiación.',
+      campos: [
+        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escribí el nombre del paciente.' },
+        { key: 'middleName', label: 'Segundo nombre', hint: 'Si no tiene, dejalo vacío.', control: 'text' },
+        { key: 'lastName', label: 'Apellido paterno', control: 'text', required: true, mensajeDeError: 'Escribí el apellido paterno del paciente.' },
+        { key: 'motherLastName', label: 'Apellido materno', hint: 'Si no lleva, dejalo vacío.', control: 'text' },
+        { key: 'email', label: 'Correo', hint: 'Con este correo va a activar la cuenta e iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
+      ],
+    },
+    {
+      titulo: 'Justificación',
+      hint: 'Estás creando una cuenta a nombre de otra persona: queda registrado quién y por qué.',
+      campos: [
+        { key: 'reason', label: 'Motivo del registro asistido', hint: 'Queda en la trazabilidad. Máximo 500 caracteres.', control: 'textarea', required: true, mensajeDeError: 'Explicá por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     // El nombre va en sus cuatro partes, no en un campo libre: es como lo emite

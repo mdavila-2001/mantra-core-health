@@ -53,6 +53,19 @@
                   [hasError]="errorDe(campo) !== ''"
                 />
               }
+              @case ('radio') {
+                <!-- El grupo es el `ControlValueAccessor`, no cada opción: el
+                     formulario ve un control con un valor, que es lo que la
+                     persona percibe. -->
+                <app-radio-group [formControlName]="campo.key">
+                  @for (opcion of campo.options ?? []; track opcion.value) {
+                    <app-radio [value]="opcion.value" [label]="opcion.label" />
+                  }
+                </app-radio-group>
+              }
+              @case ('switch') {
+                <app-switch [formControlName]="campo.key" [label]="campo.label" />
+              }
               @case ('checkbox') {
                 <app-checkbox [formControlName]="campo.key" />
               }
@@ -70,6 +83,15 @@
                   [value]="fechaDe(campo)"
                   (valueChange)="escribirFecha(campo, $event)"
                   [placeholder]="campo.placeholder ?? 'Seleccionar fecha'"
+                  [hasError]="errorDe(campo) !== ''"
+                />
+              }
+              @case ('datetime') {
+                <app-date-picker
+                  mode="date-time"
+                  [value]="fechaDe(campo)"
+                  (valueChange)="escribirFecha(campo, $event)"
+                  [placeholder]="campo.placeholder ?? 'Seleccionar fecha y hora'"
                   [hasError]="errorDe(campo) !== ''"
                 />
               }

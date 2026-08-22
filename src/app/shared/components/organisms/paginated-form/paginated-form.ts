@@ -28,9 +28,12 @@ import { Checkbox } from '../../atoms/checkbox/checkbox';
 import { Input } from '../../atoms/input/input';
 import type { InputType } from '../../atoms/input/input.types';
 import { Progress } from '../../atoms/progress/progress';
+import { Switch } from '../../atoms/switch/switch';
 import { Select } from '../../atoms/select/select';
 import { Textarea } from '../../atoms/textarea/textarea';
 import { FormField } from '../../molecules/form-field/form-field';
+import { Radio } from '../../molecules/radio/radio';
+import { RadioGroup } from '../../molecules/radio-group/radio-group';
 import { Stepper } from '../../molecules/stepper/stepper';
 import type { StepperStep } from '../../molecules/stepper/stepper.types';
 import { DatePicker } from '../date-picker/date-picker';
@@ -100,8 +103,11 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
     FormField,
     Input,
     Progress,
+    Radio,
+    RadioGroup,
     Select,
     Stepper,
+    Switch,
     Textarea,
   ],
   templateUrl: './paginated-form.html',

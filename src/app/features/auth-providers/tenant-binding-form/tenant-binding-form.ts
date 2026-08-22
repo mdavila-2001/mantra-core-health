@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { AuthProvidersClient } from '../../../core/data-access/auth-providers/auth-providers.client';
 import type {
@@ -12,13 +12,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import {
   errorMessageOf,
   UUID_ERROR,
@@ -37,16 +34,11 @@ import {
 @Component({
   selector: 'app-tenant-binding-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Switch,
+    PaginatedForm,
   ],
   templateUrl: './tenant-binding-form.html',
   styleUrl: '../m40.css',
@@ -59,6 +51,32 @@ export class TenantBindingForm {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué se vincula',
+      hint: 'El proveedor y la organización que va a poder usarlo.',
+      campos: [
+        { key: 'providerId', label: 'Identificador del proveedor', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'tenantId', label: 'Identificador de la organización', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Aprovisionamiento',
+      hint: 'Qué pasa cuando llega alguien de esa organización sin usuario local.',
+      campos: [
+        { key: 'defaultRoleConceptId', label: 'Rol con el que se aprovisiona (concepto)', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'allowedEmailDomains', label: 'Dominios de correo admitidos', hint: 'Separados por coma. Vacío, no viaja.', control: 'text', mensajeDeError: 'Hasta 500 caracteres.' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     providerId: new FormControl('', {
