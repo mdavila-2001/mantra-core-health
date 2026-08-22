@@ -856,6 +856,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M24 pharmacy',
   },
   {
+    // La billetera de fidelidad (FAR-I6). Mismo criterio que «Mis pedidos»:
+    // rol de paciente declarado en la sección, sin `exclusiveRoles`, y la
+    // pantalla igual se guarda por perfil de paciente.
+    //
+    // Aparece siempre, incluso sin programa activo: el cliente pidió que el
+    // módulo esté disponible, y una sección que desaparece según el entorno
+    // enseña una navegación que cambia sola. Sin programa, la pantalla lo dice.
+    // El catálogo de iconos tiene siete y ninguno es «puntos». `orders` ya lo
+    // usa «Mis pedidos» en este mismo grupo y repetirlo rompería el escaneo,
+    // así que va `billing`, el de valor acumulado. Un icono propio es del
+    // dueño del sistema de iconos, no de este carril.
+    path: 'my-account/loyalty',
+    label: 'Mis puntos',
+    group: 'Mi cuenta',
+    icon: 'billing',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Tus puntos: lo que sumaste con tus compras y cómo canjearlo.',
+    module: 'M51 promotions',
+  },
+  {
     // TP-1: la organización como actor, no como dato.
     //
     // Distinta de «Organizaciones», que es el listado de la **plataforma**, y
