@@ -59,6 +59,10 @@ const EXCEPCIONES = new Map([
     'app/shared/components/organisms/paginated-form/paginated-form.html',
     'es el motor: sus controles son los que dibuja para otros',
   ],
+  [
+    'app/features/auth-providers/attribute-mappings-editor/attribute-mappings-editor.html',
+    'es un repetidor: cada fila es una tarjeta con sus campos y se agrega a mano. La pantalla que lo usa sí pasa por el motor, con el editor como campo `custom`',
+  ],
 ]);
 
 /** Los controles que cuentan como «un campo que hay que contestar». */
