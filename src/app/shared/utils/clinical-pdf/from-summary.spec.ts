@@ -11,6 +11,15 @@ import { atencionDesdeResumen, recetaDesdeResumen } from './from-summary';
 
 const CONTEXTO = { paciente: 'Ana Quispe', profesional: 'Dra. Salas' };
 
+/** La sesión que sí sabe con qué matrícula y desde qué organización se firma. */
+const CONTEXTO_COMPLETO = {
+  paciente: 'Ana Quispe',
+  documentoDelPaciente: '1234567 LP',
+  profesional: 'Dra. Salas',
+  matricula: 'MP 4821',
+  organizacion: 'Hospital Central',
+};
+
 /** Traductor de catálogo de mentira, con lo justo para estas pruebas. */
 const ETIQUETAS: Readonly<Record<string, string>> = {
   'med-amoxi': 'Amoxicilina',
@@ -86,6 +95,47 @@ describe('recetaDesdeResumen', () => {
     expect(
       recetaDesdeResumen(INDICACION, CONTEXTO, etiqueta).medicamentos[0].vigencia,
     ).toBeUndefined();
+  });
+});
+
+/**
+ * Quién firma y desde dónde.
+ *
+ * El motor sabe imprimir «Matrícula:» y «Organización:» desde el primer día;
+ * lo que faltaba era que alguien se los pasara. Se prueba acá —en el mapeo— y
+ * no en el motor porque es donde el dato se perdía: el contexto llegaba con
+ * paciente y profesional y nada más.
+ */
+describe('la firma del documento', () => {
+  it('la matrícula y la organización llegan a la receta y a la atención', () => {
+    const receta = recetaDesdeResumen(INDICACION, CONTEXTO_COMPLETO, etiqueta);
+
+    expect(receta.profesional.matricula).toBe('MP 4821');
+    expect(receta.organizacion).toBe('Hospital Central');
+    expect(receta.paciente.documento).toBe('1234567 LP');
+
+    const atencion = atencionDesdeResumen(ENCUENTRO, resumen(), CONTEXTO_COMPLETO, etiqueta);
+
+    expect(atencion.profesional.matricula).toBe('MP 4821');
+    expect(atencion.organizacion).toBe('Hospital Central');
+  });
+
+  /**
+   * Ausente es **ausente**, no vacío: el motor decide imprimir la línea por la
+   * presencia de la clave, así que una cadena vacía sacaría un renglón
+   * «Matrícula: » que afirma que no la tiene.
+   */
+  it('sin matrícula ni organización no viaja la clave, así no hay línea vacía', () => {
+    const receta = recetaDesdeResumen(INDICACION, CONTEXTO, etiqueta);
+
+    expect(receta.profesional).not.toHaveProperty('matricula');
+    expect(receta).not.toHaveProperty('organizacion');
+    expect(receta.paciente).not.toHaveProperty('documento');
+
+    const atencion = atencionDesdeResumen(ENCUENTRO, resumen(), CONTEXTO, etiqueta);
+
+    expect(atencion.profesional).not.toHaveProperty('matricula');
+    expect(atencion).not.toHaveProperty('organizacion');
   });
 });
 

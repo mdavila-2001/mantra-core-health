@@ -58,6 +58,23 @@ type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'stri
  */
 const CODIGO_ODONTOGRAMA = 'odontograma_fdi';
 
+/**
+ * El prefijo con el que el catálogo sembrado nombra sus formularios
+ * transversales — los que no son de ninguna especialidad: anamnesis general,
+ * examen físico, consentimiento informado, epicrisis.
+ *
+ * Se usa **sólo para descubrir el concepto**, no para clasificar fila por fila.
+ * Ver {@link SpecialtyFormBlock.conceptoTransversal}.
+ */
+const PREFIJO_TRANSVERSAL = 'TRANSV_';
+
+/**
+ * La ficha a la que se cae cuando la especialidad de quien atiende todavía no
+ * tiene una propia. Es la más general del catálogo: sirve para cualquier
+ * consulta.
+ */
+const CODIGO_ANAMNESIS_GENERAL = 'TRANSV_ANAMNESIS_GENERAL';
+
 /** Una respuesta ya lista para leerse: etiqueta, texto y si está protegida. */
 interface RespuestaVisible {
   readonly id: string;
@@ -82,11 +99,20 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
  * El objetivo final es «el formulario asignado a la especialidad del
  * encuentro activo», pero hoy el frontend no tiene de dónde leer esa
  * especialidad —el encuentro no la trae y no hay binding declarado para
- * derivarla del profesional que atiende—. Mientras esa pieza no exista, el
- * bloque ofrece las plantillas existentes en un selector y quien atiende
- * elige la suya; con una sola plantilla, se preselecciona sola. El día que
- * haya una especialidad resoluble por encuentro, este selector se reemplaza
- * por un filtro automático sin tocar el resto del bloque.
+ * derivarla del profesional que atiende—. Mientras esa pieza no exista, la
+ * especialidad sale del perfil de quien atiende, que es la mejor
+ * aproximación disponible.
+ *
+ * El catálogo entero son hoy **43 plantillas** (36 especialidades + las
+ * transversales + extras), así que ofrecerlas todas en un desplegable es
+ * inusable: quien atiende necesita una o dos. El selector se dibuja con las
+ * de **su** especialidad primero y las **transversales** después —anamnesis
+ * general, examen físico, consentimiento, epicrisis: sirven para cualquier
+ * consulta y por eso nunca se esconden—, y un interruptor «Ver todas las
+ * especialidades» devuelve el catálogo completo para el caso raro
+ * —interconsulta, segunda especialidad no cargada en el perfil—. El filtrado
+ * es sobre lo ya traído: la lista se pide **una sola vez**, sin `specialtyId`,
+ * porque acotarla en el backend dejaría al interruptor sin nada que mostrar.
  *
  * ## Cómo se guarda
  *
@@ -169,10 +195,166 @@ export class SpecialtyFormBlock {
    */
   private readonly especialidad = signal<string | null>(null);
 
-  protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => {
+  /** El catálogo tal como llegó, o vacío mientras no se sepa. */
+  private readonly catalogo = computed<readonly ChartTemplate[]>(() => {
     const state = this.plantillas();
-    return state.status === 'ready' ? state.data.map((t) => ({ value: t.id, label: t.name })) : [];
+    return state.status === 'ready' ? state.data : [];
   });
+
+  /**
+   * El concepto de especialidad bajo el que cuelgan las plantillas
+   * transversales, deducido del propio catálogo.
+   *
+   * **Por qué se deduce y no se codifica:** el concepto es un uuid de
+   * `vs_medical_specialty` que se siembra por entorno; escribirlo acá sería un
+   * literal mágico que caduca en la próxima base.
+   *
+   * **Por qué por prefijo y después por concepto:** el catálogo sembrado
+   * nombra sus cuatro transversales `TRANSV_*` y las cuelga a todas del mismo
+   * concepto (`TRANSVERSAL`, «todas las especialidades»). Con el prefijo se
+   * encuentra **una** y de ella se saca el concepto; la pertenencia se decide
+   * después por `specialtyConceptId`. El orden importa: clasificar fila por
+   * fila con el prefijo dejaría afuera una plantilla que un admin arme sobre
+   * esa misma especialidad sin respetar la convención de códigos, y esa
+   * plantilla es transversal igual.
+   */
+  private readonly conceptoTransversal = computed<string | null>(() => {
+    const sembrada = this.catalogo().find((plantilla) =>
+      plantilla.code.startsWith(PREFIJO_TRANSVERSAL),
+    );
+    return sembrada?.specialtyConceptId ?? null;
+  });
+
+  /** Las fichas de la especialidad de quien atiende. Vacío si no se sabe cuál es. */
+  private readonly plantillasPropias = computed<readonly ChartTemplate[]>(() => {
+    const especialidad = this.especialidad();
+    if (especialidad === null) return [];
+    return this.catalogo().filter(
+      (plantilla) =>
+        plantilla.specialtyConceptId === especialidad &&
+        plantilla.specialtyConceptId !== this.conceptoTransversal(),
+    );
+  });
+
+  /** Las que sirven para cualquier consulta. Nunca se esconden. */
+  private readonly plantillasTransversales = computed<readonly ChartTemplate[]>(() => {
+    const concepto = this.conceptoTransversal();
+    if (concepto === null) return [];
+    return this.catalogo().filter((plantilla) => plantilla.specialtyConceptId === concepto);
+  });
+
+  /**
+   * Lo que se le ofrece a quien atiende: primero lo suyo, después lo
+   * transversal.
+   *
+   * Se cae al catálogo entero en dos casos, los dos por lo mismo —filtrar sin
+   * criterio esconde más de lo que ayuda—:
+   *
+   * 1. **No se sabe la especialidad.** Una cuenta sin perfil profesional
+   *    —recepción, administración— o un perfil que no respondió. Dejar sólo
+   *    las transversales le escondería las 36 fichas de especialidad sin
+   *    saber siquiera si le corresponden.
+   * 2. **El filtro no deja nada.** Su especialidad no tiene ficha y el
+   *    catálogo tampoco tiene transversales: un desplegable vacío sobre un
+   *    catálogo que sí tiene fichas.
+   */
+  private readonly plantillasSugeridas = computed<readonly ChartTemplate[]>(() => {
+    if (this.especialidad() === null) return this.catalogo();
+
+    const sugeridas = [...this.plantillasPropias(), ...this.plantillasTransversales()];
+    return sugeridas.length > 0 ? sugeridas : this.catalogo();
+  });
+
+  /** Si hay algo escondido, y por lo tanto algo que el interruptor pueda revelar. */
+  protected readonly puedeVerTodas = computed(
+    () => this.catalogo().length > this.plantillasSugeridas().length,
+  );
+
+  /** El interruptor «Ver todas las especialidades». Apagado, manda el filtro. */
+  protected readonly verTodas = signal(false);
+
+  protected alternarVerTodas(activado: boolean): void {
+    this.verTodas.set(activado);
+  }
+
+  private readonly plantillasVisibles = computed<readonly ChartTemplate[]>(() => {
+    const visibles = this.verTodas() ? this.catalogo() : this.plantillasSugeridas();
+
+    // Lo ya elegido no se escamotea: si alguien eligió una ficha de otra
+    // especialidad con el interruptor puesto y después lo apaga, el
+    // desplegable seguiría dibujando sus campos debajo mientras muestra el
+    // placeholder. Se la deja en la lista hasta que elija otra cosa.
+    const elegida = this.plantillaElegida();
+    if (elegida !== null && !visibles.includes(elegida)) {
+      return [elegida, ...visibles];
+    }
+    return visibles;
+  });
+
+  protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() =>
+    this.plantillasVisibles().map((plantilla) => ({
+      value: plantilla.id,
+      label: plantilla.name,
+    })),
+  );
+
+  /**
+   * No hay ninguna plantilla cargada en el sistema. Es un problema de datos:
+   * alguien tiene que sembrar el catálogo o crear una a mano.
+   */
+  protected readonly catalogoVacio = computed(
+    () => this.plantillas().status === 'ready' && this.catalogo().length === 0,
+  );
+
+  /** El catálogo todavía viaja. Ni hay qué ofrecer ni hay nada que explicar. */
+  protected readonly buscandoPlantillas = computed(
+    () => this.plantillas().status === 'loading',
+  );
+
+  /**
+   * Por qué no se pudo traer el catálogo.
+   *
+   * Sin este estado, un `403` o una caída de red dejaban el formulario dibujado
+   * y hueco —sin campos, sin selector y sin una palabra—, indistinguible de
+   * «tu especialidad no tiene nada que completar». Un fallo de lectura se dice
+   * y se ofrece reintentar; nunca se calla.
+   */
+  protected readonly errorDePlantillas = computed<string | null>(() => {
+    const state = this.plantillas();
+    if (state.status === 'offline') {
+      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    }
+    if (state.status === 'forbidden') {
+      return state.message ?? 'Tu rol no permite ver las plantillas de formulario.';
+    }
+    if (state.status === 'not-found') {
+      return 'No encontramos el catálogo de plantillas.';
+    }
+    if (state.status === 'validation') {
+      return state.issues.map((issue) => issue.message).join(' ') || 'No pudimos traerlas.';
+    }
+    if (state.status === 'error') {
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+    }
+    return null;
+  });
+
+  /**
+   * La especialidad de quien atiende todavía no tiene ficha propia **y hay
+   * fichas generales para ofrecerle en su lugar**. No es un error: se completa
+   * una general y se sigue.
+   *
+   * Las dos condiciones van juntas porque el aviso promete algo concreto. Si el
+   * catálogo no tuviera ninguna transversal, {@link plantillasSugeridas} cae al
+   * catálogo entero y no hay ninguna ficha general que ofrecer: avisar ahí sería
+   * prometer una anamnesis que no existe.
+   */
+  protected readonly sinFichaPropia = computed(
+    () =>
+      this.especialidad() !== null &&
+      this.plantillasPropias().length === 0 &&
+      this.plantillasTransversales().length > 0,
+  );
 
   protected readonly plantillaElegida = computed<ChartTemplate | null>(() => {
     const state = this.plantillas();
@@ -241,15 +423,25 @@ export class SpecialtyFormBlock {
   }
 
   /**
+   * La ficha general a la que se cae: la anamnesis si está, si no la primera
+   * transversal que haya.
+   */
+  private readonly anamnesisGeneral = computed<ChartTemplate | undefined>(() => {
+    const transversales = this.plantillasTransversales();
+    return (
+      transversales.find((plantilla) => plantilla.code === CODIGO_ANAMNESIS_GENERAL) ??
+      transversales[0]
+    );
+  });
+
+  /**
    * Elige la plantilla de la especialidad de quien atiende.
    *
    * Corre al llegar cada una de las dos respuestas —plantillas y perfil— sin
    * saber cuál llegó primero: la que falte deja la preselección para la otra.
    *
-   * Preselecciona, **no filtra**: las transversales —consentimiento,
-   * epicrisis— no son de ninguna especialidad y tienen que seguir estando, y
-   * un profesional con dos especialidades vigentes necesita poder cambiar. Por
-   * eso el selector se sigue dibujando con el catálogo entero.
+   * Nunca pisa una elección manual ni una plantilla ya fijada: la preselección
+   * es una comodidad, no una regla.
    */
   private preseleccionar(): void {
     if (this.eleccionManual() || this.plantillaId() !== null) return;
@@ -257,19 +449,27 @@ export class SpecialtyFormBlock {
     const state = this.plantillas();
     if (state.status !== 'ready') return;
 
-    const especialidad = this.especialidad();
-    const propia =
-      especialidad === null
-        ? undefined
-        : state.data.find(
-            (plantilla) => plantilla.specialtyConceptId === especialidad,
-          );
+    const propia = this.plantillasPropias()[0];
+    if (propia !== undefined) {
+      this.plantillaId.set(propia.id);
+      return;
+    }
 
-    // Sin plantilla de la especialidad, la vieja regla sigue valiendo: con una
-    // sola en el catálogo no hay nada que elegir.
-    const elegida = propia ?? (state.data.length === 1 ? state.data[0] : undefined);
-    if (elegida !== undefined) {
-      this.plantillaId.set(elegida.id);
+    // Su especialidad no tiene ficha propia: la anamnesis general sirve para
+    // cualquier consulta y es mejor que dejarlo buscándola entre 43 opciones.
+    // Sólo cuando la especialidad se conoce: sin perfil profesional no hay a
+    // quién caerle y el selector se ofrece entero, como siempre.
+    if (this.especialidad() !== null) {
+      const general = this.anamnesisGeneral();
+      if (general !== undefined) {
+        this.plantillaId.set(general.id);
+        return;
+      }
+    }
+
+    // Con una sola en el catálogo no hay nada que elegir.
+    if (state.data.length === 1) {
+      this.plantillaId.set(state.data[0].id);
     }
   }
 
@@ -706,16 +906,40 @@ function esMapa(valor: unknown): valor is Record<string, unknown> {
 /**
  * La especialidad con la que un profesional se presenta.
  *
- * La primaria vigente si la hay; si no, la primera vigente. Una especialidad
- * con `validTo` es una que dejó de ejercer y no debería decidir qué ficha se
- * le ofrece hoy.
+ * La primaria vigente si la hay; si no, la primera vigente.
+ *
+ * **Vigente es una ventana, no una bandera** —mismo criterio que la matrícula
+ * que firma el papel en el expediente—: sin `validTo` no caduca, y con
+ * `validTo` en el futuro sigue ejerciendo. Tratar toda especialidad con fecha
+ * de vencimiento como abandonada le escondería su propia ficha justo a quien
+ * tiene la certificación en regla —una recertificación real declara hasta
+ * cuándo vale—, y lo dejaría completando la anamnesis general. Vencida sí se
+ * descarta: no debería decidir qué ficha se le ofrece hoy.
  */
 function especialidadVigente(
   especialidades: readonly PractitionerSpecialty[],
 ): string | null {
-  const vigentes = especialidades.filter(
-    (especialidad) => especialidad.validTo === undefined,
+  const ahora = Date.now();
+  const vigentes = especialidades.filter((especialidad) =>
+    dentroDeLaVentana(especialidad.validFrom, especialidad.validTo, ahora),
   );
   const principal = vigentes.find((especialidad) => especialidad.isPrimary);
   return (principal ?? vigentes[0])?.specialtyConceptId ?? null;
+}
+
+/**
+ * Si una vigencia declarada cubre el instante dado.
+ *
+ * Los dos extremos son opcionales y la ausencia de cada uno significa «no
+ * empieza» y «no termina», que es cómo el contrato declara sus ventanas.
+ */
+function dentroDeLaVentana(
+  desde: Date | undefined,
+  hasta: Date | undefined,
+  instante: number,
+): boolean {
+  if (desde !== undefined && desde.getTime() > instante) {
+    return false;
+  }
+  return hasta === undefined || hasta.getTime() > instante;
 }

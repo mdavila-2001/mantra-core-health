@@ -126,6 +126,12 @@ describe('MedicationBlock', () => {
     for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
       opcional.flush(CATALOGO_OPCIONAL);
     }
+    // El bloque pide sus favoritos al montarse (v4.1.7). Es una lectura de
+    // conveniencia que no condiciona nada del alta, así que se drena vacía en
+    // los casos que no la afirman; el que sí la ejercita la responde antes.
+    for (const favoritos of http.match((r) => r.url === '/prescription-favorites')) {
+      favoritos.flush([]);
+    }
     http.verify();
   });
 
@@ -230,6 +236,145 @@ describe('MedicationBlock', () => {
     expect((req.request.body as Record<string, unknown>)['custodianTenantId']).toBe('t-1');
 
     req.flush(RESPUESTA);
+  });
+
+  /* ── v4.1.6 · la indicación diagnóstica ───────────────────────────────── */
+
+  it('manda el diagnóstico elegido como indicación de la receta', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    señal<string | null>('indicacion').set('cond-1');
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    expect((req.request.body as Record<string, unknown>)['indicationConditionId']).toBe('cond-1');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('sin diagnóstico elegido la clave no viaja: la receta sintomática es legítima', async () => {
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    await interno<() => Promise<void>>('recetar')();
+
+    const req = http.expectOne('/clinical/medication-requests');
+    expect(Object.keys(req.request.body as object)).not.toContain('indicationConditionId');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('ofrece los diagnósticos de la ficha, con la opción vacía primero', () => {
+    responderCatalogo();
+
+    fixture.componentRef.setInput('diagnosticos', [
+      { id: 'cond-1', etiqueta: 'Faringitis aguda' },
+      { id: 'cond-2', etiqueta: 'Hipertensión · Resuelto' },
+    ]);
+    fixture.detectChanges();
+
+    const opciones = interno<() => readonly { value: string | null; label: string }[]>(
+      'opcionesDeIndicacion',
+    )();
+    expect(opciones[0].value).toBeNull();
+    expect(opciones.map((o) => o.value)).toEqual([null, 'cond-1', 'cond-2']);
+  });
+
+  /* ── v4.1.7 · los favoritos de prescripción ───────────────────────────── */
+
+  it('aplicar un favorito rellena el formulario sin prescribir nada', async () => {
+    responderCatalogo();
+    http.expectOne('/prescription-favorites').flush([
+      {
+        id: 'fav-1',
+        name: 'ATB post extracción',
+        medicationConceptId: 'med-amoxi',
+        doseText: '500 mg',
+        frequencyText: 'cada 8 horas',
+        patientInstructionsText: 'Con las comidas',
+      },
+    ]);
+
+    await interno<(id: string | null) => Promise<void>>('aplicarFavorito')('fav-1');
+
+    expect(señal<string | null>('medicamento')()).toBe('med-amoxi');
+    expect(señal<string>('dosis')()).toBe('500 mg');
+    expect(señal<string>('frecuencia')()).toBe('cada 8 horas');
+    expect(señal<string>('indicacionesPaciente')()).toBe('Con las comidas');
+    // Rellenar no es prescribir: no salió ninguna petición de alta.
+    http.expectNone('/clinical/medication-requests');
+  });
+
+  it('no pisa lo ya cargado sin confirmarlo', async () => {
+    responderCatalogo();
+    http.expectOne('/prescription-favorites').flush([
+      { id: 'fav-1', name: 'ATB post extracción', medicationConceptId: 'med-amoxi' },
+    ]);
+
+    señal<string>('dosis').set('lo que venía escribiendo');
+    let preguntó = false;
+    TestBed.inject(DialogService).confirm = () => {
+      preguntó = true;
+      return Promise.resolve(false);
+    };
+
+    await interno<(id: string | null) => Promise<void>>('aplicarFavorito')('fav-1');
+
+    expect(preguntó).toBe(true);
+    expect(señal<string>('dosis')()).toBe('lo que venía escribiendo');
+    expect(señal<string | null>('medicamento')()).toBeNull();
+  });
+
+  it('guardar como favorito manda el rótulo y lo cargado', async () => {
+    responderCatalogo();
+    http.expectOne('/prescription-favorites').flush([]);
+
+    señal<string>('medicamento').set('med-amoxi');
+    señal<string>('dosis').set('500 mg');
+    TestBed.inject(DialogService).confirmWithReason = () =>
+      Promise.resolve('ATB post extracción');
+
+    await interno<() => Promise<void>>('guardarFavorito')();
+
+    const req = http.expectOne(
+      (r) => r.url === '/prescription-favorites' && r.method === 'POST',
+    );
+    const body = req.request.body as Record<string, unknown>;
+    expect(body['name']).toBe('ATB post extracción');
+    expect(body['medicationConceptId']).toBe('med-amoxi');
+    expect(body['doseText']).toBe('500 mg');
+
+    req.flush({ id: 'fav-9', name: 'ATB post extracción', medicationConceptId: 'med-amoxi' });
+  });
+
+  it('un rótulo repetido se explica y no se traga', async () => {
+    responderCatalogo();
+    http.expectOne('/prescription-favorites').flush([]);
+
+    señal<string>('medicamento').set('med-amoxi');
+    TestBed.inject(DialogService).confirmWithReason = () =>
+      Promise.resolve('ATB post extracción');
+    await interno<() => Promise<void>>('guardarFavorito')();
+
+    http
+      .expectOne((r) => r.url === '/prescription-favorites' && r.method === 'POST')
+      .flush(
+        { code: 'CONFLICT', message: 'Ya tenés un favorito con ese nombre' },
+        { status: 409, statusText: 'Conflict' },
+      );
+
+    expect(señal<string | null>('errorDelFavorito')()).toContain('Probá con otro');
+  });
+
+  it('una cuenta sin perfil profesional no ve la sección ni un error', () => {
+    responderCatalogo();
+    http
+      .expectOne('/prescription-favorites')
+      .flush({ code: 'FORBIDDEN', message: 'sin perfil' }, { status: 403, statusText: 'Forbidden' });
+
+    expect(interno<() => boolean>('hayFavoritos')()).toBe(false);
+    expect(señal<string | null>('errorDelFavorito')()).toBeNull();
   });
 
   it('manda dosis, frecuencia y cantidad cuando se cargaron', async () => {

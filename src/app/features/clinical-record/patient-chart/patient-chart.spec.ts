@@ -6,8 +6,18 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import {
+  bloquesDeAtencion,
+  bloquesDeReceta,
+} from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import {
+  atencionDesdeResumen,
+  recetaDesdeResumen,
+  type ContextoDelDocumento,
+} from '../../../shared/utils/clinical-pdf/from-summary';
 import { PatientChart } from './patient-chart';
 
 /**
@@ -132,6 +142,18 @@ describe('PatientChart', () => {
    * sus propias pruebas: acá sólo importa que no se cuelen como peticiones
    * huérfanas del expediente.
    */
+  /**
+   * Los favoritos que el bloque de medicación pide al montarse (v4.1.7).
+   *
+   * Se drenan vacíos: son una comodidad de captura del profesional y no
+   * intervienen en nada de lo que esta pantalla afirma.
+   */
+  function responderFavoritosDeReceta(): void {
+    for (const req of http.match((r) => r.url === '/prescription-favorites')) {
+      req.flush([]);
+    }
+  }
+
   function responderCatalogoDeMedicacion(): void {
     for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
       req.flush(
@@ -226,12 +248,27 @@ describe('PatientChart', () => {
     }
   }
 
+  /**
+   * El mismo perfil, pero **respondido**: es de donde sale la matrícula que
+   * firma el papel. Contesta todas las peticiones pendientes a ese recurso —el
+   * expediente pide la suya y el bloque de formularios la propia— con el mismo
+   * cuerpo, que es lo que haría el backend.
+   */
+  function responderPerfilPropio(perfil: Record<string, unknown>): void {
+    const pedidos = http.match((r) => r.url === '/profiles/practitioners/me/summary');
+    expect(pedidos.length).toBeGreaterThan(0);
+    for (const req of pedidos) {
+      req.flush(perfil);
+    }
+  }
+
   afterEach(() => {
     responderCatalogoDeMedicacion();
     responderCircuitoDiagnostico();
     responderHistoricoDeProcedimientos();
     responderPlantillasDeEspecialidad();
     responderPerfilProfesional();
+    responderFavoritosDeReceta();
     http.verify();
   });
 
@@ -791,5 +828,237 @@ describe('PatientChart', () => {
     });
 
     expect(interno<() => string | null>('encuentroParaRecetar')()).toBe('e-1');
+  });
+
+  /* ---- quién firma el papel ----------------------------------------------
+     El motor del PDF sabe imprimir «Matrícula:» y «Organización:» desde el
+     primer día: sólo las imprime si le llegan, y el contexto de esta pantalla
+     viajaba con paciente y profesional y nada más. Se prueba sobre el texto
+     del documento —no sobre el objeto de contexto— porque lo que estaba mal
+     era el papel, y `jsPDF` no participa: `bloquesDeReceta` decide qué dice el
+     documento y el render tiene sus propias pruebas. */
+
+  /** La indicación ya convertida, tal como la deja el cliente HTTP. */
+  const INDICACION_GUARDADA = {
+    id: 'rx-1',
+    medicationConceptId: 'con-diabetes',
+    statusConceptId: 'st-activa',
+    doseText: '500 mg',
+    frequencyText: 'cada 8 horas',
+    createdAt: new Date('2026-03-01T10:30:00.000Z'),
+  };
+
+  /** El perfil profesional de quien mira el expediente, con su matrícula. */
+  function perfilConMatriculas(licenses: readonly Record<string, unknown>[]) {
+    return {
+      profileId: 'hp-1',
+      personId: 'per-9',
+      practitionerCode: 'PRAC-1',
+      displayName: 'Dra. Salas',
+      practitionerCategoryConceptId: 'cat-1',
+      verificationStatusConceptId: 'st-activa',
+      practiceStatusConceptId: 'st-activa',
+      acceptsNewPatients: true,
+      telehealthAvailable: false,
+      specialties: [],
+      credentials: [],
+      licenses,
+      languages: [],
+      affiliations: [],
+      activity: { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 },
+      createdAt: '2026-01-01T00:00:00.000Z',
+    };
+  }
+
+  const MATRICULA_VIGENTE = {
+    id: 'lic-1',
+    jurisdictionConceptId: 'st-activa',
+    licenseNumber: 'MP 4821',
+    stateConceptId: 'st-activa',
+  };
+
+  /** El texto entero de la receta que esta pantalla genera. */
+  function papelDeLaReceta(): string {
+    const contexto = interno<() => ContextoDelDocumento>('contextoDelDocumento')();
+    return bloquesDeReceta(
+      recetaDesdeResumen(INDICACION_GUARDADA, contexto, (id) => id ?? ''),
+    )
+      .map((bloque) => bloque.text)
+      .join('\n');
+  }
+
+  it('la receta imprime la matrícula del profesional y la organización', () => {
+    abrirSesion({
+      hpid: 'hp-1',
+      name: 'Dra. Salas',
+      tenantNames: { 't-1': 'Hospital Central' },
+    });
+    TestBed.tick(); // el perfil propio se pide en un effect, al abrirse la sesión
+    responderPerfilPropio(perfilConMatriculas([MATRICULA_VIGENTE]));
+    responderNombre();
+    responderExpediente();
+
+    const texto = papelDeLaReceta();
+    expect(texto).toContain('Profesional: Dra. Salas');
+    expect(texto).toContain('Matrícula: MP 4821');
+    expect(texto).toContain('Organización: Hospital Central');
+    expect(texto).not.toContain('undefined');
+  });
+
+  /**
+   * La historia de la atención comparte el contexto con la receta, así que la
+   * cabecera tiene que decir lo mismo: el mismo hecho clínico no puede salir
+   * firmado en un papel y anónimo en el otro.
+   */
+  it('la historia de la atención lleva la misma firma que la receta', () => {
+    abrirSesion({
+      hpid: 'hp-1',
+      name: 'Dra. Salas',
+      tenantNames: { 't-1': 'Hospital Central' },
+    });
+    TestBed.tick();
+    responderPerfilPropio(perfilConMatriculas([MATRICULA_VIGENTE]));
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        encounters: [{ id: 'e-1', statusConceptId: 'st-activa', startAt: HACE_UNA_HORA }],
+      },
+    });
+
+    const contexto = interno<() => ContextoDelDocumento>('contextoDelDocumento')();
+    const datos = interno<() => { resumen: ClinicalSummary } | null>('datos')();
+    const encuentro = datos!.resumen.encounters[0]!;
+    const texto = bloquesDeAtencion(
+      atencionDesdeResumen(encuentro, datos!.resumen, contexto, (id) => id ?? ''),
+    )
+      .map((bloque) => bloque.text)
+      .join('\n');
+
+    expect(texto).toContain('Matrícula: MP 4821');
+    expect(texto).toContain('Organización: Hospital Central');
+  });
+
+  /**
+   * Sin el dato no hay renglón: ni «Matrícula: » colgando ni un `undefined`
+   * impreso. Y sin nombre de organización tampoco se imprime su identificador
+   * —un uuid en un papel clínico no le dice nada a quien lo lee—.
+   */
+  it('sin matrícula ni nombre de organización no imprime renglones vacíos', () => {
+    abrirSesion({ hpid: 'hp-1', name: 'Dra. Salas' });
+    TestBed.tick();
+    responderPerfilPropio(perfilConMatriculas([]));
+    responderNombre();
+    responderExpediente();
+
+    const texto = papelDeLaReceta();
+    expect(texto).toContain('Profesional: Dra. Salas');
+    expect(texto).not.toContain('Matrícula');
+    expect(texto).not.toContain('Organización');
+    expect(texto).not.toContain('undefined');
+    // El tenant activo existe, pero el token no trae su nombre: se calla.
+    expect(texto).not.toContain('t-1');
+  });
+
+  /**
+   * Vigente es una ventana, no una bandera: una matrícula real se renueva y por
+   * eso declara vencimiento. Descartarla por traerlo dejaría sin firma justo a
+   * quien la tiene en regla.
+   */
+  it('una matrícula con vencimiento futuro sigue firmando el papel', () => {
+    abrirSesion({ hpid: 'hp-1', name: 'Dra. Salas' });
+    TestBed.tick();
+    responderPerfilPropio(
+      perfilConMatriculas([{ ...MATRICULA_VIGENTE, validTo: '2030-12-31T00:00:00.000Z' }]),
+    );
+    responderNombre();
+    responderExpediente();
+
+    expect(papelDeLaReceta()).toContain('Matrícula: MP 4821');
+  });
+
+  /** Una matrícula caducada no habilita a nadie: firmar con ella es peor que no firmar. */
+  it('una matrícula vencida no firma el papel', () => {
+    abrirSesion({ hpid: 'hp-1', name: 'Dra. Salas' });
+    TestBed.tick();
+    responderPerfilPropio(
+      perfilConMatriculas([{ ...MATRICULA_VIGENTE, validTo: '2025-12-31T00:00:00.000Z' }]),
+    );
+    responderNombre();
+    responderExpediente();
+
+    expect(papelDeLaReceta()).not.toContain('Matrícula');
+  });
+
+  /**
+   * La ventana tiene dos extremos. Una matrícula ya cargada pero que habilita
+   * recién dentro de un mes no habilita hoy: imprimirla afirma una habilitación
+   * que todavía no existe, que es el mismo daño que firmar con una vencida.
+   */
+  it('una matrícula que todavía no entró en vigencia no firma el papel', () => {
+    abrirSesion({ hpid: 'hp-1', name: 'Dra. Salas' });
+    TestBed.tick();
+    responderPerfilPropio(
+      perfilConMatriculas([{ ...MATRICULA_VIGENTE, validFrom: '2030-01-01T00:00:00.000Z' }]),
+    );
+    responderNombre();
+    responderExpediente();
+
+    expect(papelDeLaReceta()).not.toContain('Matrícula');
+  });
+
+  /** Y la que ya empezó y todavía no termina sí: es el caso normal con fechas. */
+  it('una matrícula con la ventana abierta firma el papel', () => {
+    abrirSesion({ hpid: 'hp-1', name: 'Dra. Salas' });
+    TestBed.tick();
+    responderPerfilPropio(
+      perfilConMatriculas([
+        {
+          ...MATRICULA_VIGENTE,
+          validFrom: '2020-01-01T00:00:00.000Z',
+          validTo: '2030-12-31T00:00:00.000Z',
+        },
+      ]),
+    );
+    responderNombre();
+    responderExpediente();
+
+    expect(papelDeLaReceta()).toContain('Matrícula: MP 4821');
+  });
+
+  /**
+   * Con varias cargadas gana la primera **vigente**, no la primera a secas: si
+   * la vencida encabezara la lista, el papel saldría firmado con ella.
+   */
+  it('entre varias matrículas elige la vigente, no la primera', () => {
+    abrirSesion({ hpid: 'hp-1', name: 'Dra. Salas' });
+    TestBed.tick();
+    responderPerfilPropio(
+      perfilConMatriculas([
+        { ...MATRICULA_VIGENTE, id: 'lic-0', licenseNumber: 'MP 1', validTo: '2025-01-01T00:00:00.000Z' },
+        { ...MATRICULA_VIGENTE, id: 'lic-1', licenseNumber: 'MP 4821' },
+      ]),
+    );
+    responderNombre();
+    responderExpediente();
+
+    const texto = papelDeLaReceta();
+    expect(texto).toContain('Matrícula: MP 4821');
+    expect(texto).not.toContain('Matrícula: MP 1');
+  });
+
+  /**
+   * Una cuenta sin perfil profesional —recepción, administración— sigue
+   * pudiendo descargar el papel: lo que no hace es inventarle una matrícula.
+   */
+  it('una cuenta sin perfil profesional no imprime matrícula', () => {
+    abrirSesion({ tenantNames: { 't-1': 'Hospital Central' } });
+    TestBed.tick();
+    responderNombre();
+    responderExpediente();
+
+    const texto = papelDeLaReceta();
+    expect(texto).toContain('Profesional: No registrado');
+    expect(texto).not.toContain('Matrícula');
+    expect(texto).toContain('Organización: Hospital Central');
   });
 });
