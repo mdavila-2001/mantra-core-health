@@ -247,11 +247,34 @@ describe('PharmacyOrdersClient', () => {
       expect(puedeCancelarse('RETIRADO')).toBe(false);
     });
 
-    it('la barra de demo sólo ofrece pasos coherentes con el estado', () => {
-      expect(client.simulacionesPara('ENVIADO')).toEqual(['REVISAR', 'CONFIRMAR', 'RECHAZAR']);
-      expect(client.simulacionesPara('LISTO_PARA_RETIRO')).toEqual(['DISPENSAR', 'VENCER']);
-      expect(client.simulacionesPara('RETIRADO')).toEqual([]);
-      expect(client.simulacionesPara('CANCELADO')).toEqual([]);
+    it('la barra de demo sólo ofrece pasos coherentes con el pedido', async () => {
+      const base = await enviado();
+      expect(client.simulacionesPara(base)).toEqual(['REVISAR', 'CONFIRMAR', 'RECHAZAR']);
+      expect(client.simulacionesPara({ ...base, estado: 'LISTO_PARA_RETIRO' })).toEqual([
+        'DISPENSAR',
+        'VENCER',
+      ]);
+      expect(client.simulacionesPara({ ...base, estado: 'RETIRADO' })).toEqual([]);
+      expect(client.simulacionesPara({ ...base, estado: 'CANCELADO' })).toEqual([]);
+    });
+
+    it('sobre un pedido pagado el precio está cerrado: ni genérico, ni rechazo, ni vencer', async () => {
+      const base = await enviado();
+      const pagado = {
+        estado: 'PAGADO' as const,
+        origen: 'QR_DEMO' as const,
+        pagadoEl: new Date(),
+        total: '60.00',
+        moneda: 'BOB',
+      };
+      // En revisión, la propuesta y el rechazo desaparecen; queda confirmar.
+      expect(
+        client.simulacionesPara({ ...base, estado: 'EN_REVISION', pago: pagado }),
+      ).toEqual(['CONFIRMAR']);
+      // Listo en el mostrador, la reserva pagada no se deja vencer: se entrega.
+      expect(
+        client.simulacionesPara({ ...base, estado: 'LISTO_PARA_RETIRO', pago: pagado }),
+      ).toEqual(['DISPENSAR']);
     });
   });
 });
@@ -523,10 +546,191 @@ describe('PharmacyOrdersClient — el lado del mostrador', () => {
       const pedido = await enviado();
       expect(esPedidoDelCanal({ ...pedido, estado: 'INVENTADO' })).toBe(false);
       expect(esPedidoDelCanal({ ...pedido, lineas: 'no-es-lista' })).toBe(false);
+      // Una pestaña con la app vieja manda pedidos sin `pago`: contrato
+      // distinto, afuera — mejor perder ese eco que romper el comprobante.
+      const { pago: _pago, ...sinPago } = pedido;
+      expect(esPedidoDelCanal(sinPago)).toBe(false);
+      expect(esPedidoDelCanal({ ...pedido, pago: { estado: 'INVENTADO' } })).toBe(false);
+      // Un PAGADO con fecha-string pasaría la pantalla y reventaría el PDF.
+      expect(
+        esPedidoDelCanal({
+          ...pedido,
+          pago: {
+            estado: 'PAGADO',
+            origen: 'QR_DEMO',
+            pagadoEl: '2026-08-21',
+            total: '60.00',
+            moneda: 'BOB',
+          },
+        }),
+      ).toBe(false);
+      expect(
+        esPedidoDelCanal({
+          ...pedido,
+          pago: {
+            estado: 'PAGADO',
+            origen: 'TARJETA_INVENTADA',
+            pagadoEl: new Date(),
+            total: '60.00',
+            moneda: 'BOB',
+          },
+        }),
+      ).toBe(false);
+    });
+
+    it('un pedido pagado con la forma del contrato pasa', async () => {
+      const pedido = await enviado();
+      expect(
+        esPedidoDelCanal({
+          ...pedido,
+          pago: {
+            estado: 'PAGADO',
+            origen: 'MOSTRADOR',
+            pagadoEl: new Date(),
+            total: '111.00',
+            moneda: 'BOB',
+          },
+        }),
+      ).toBe(true);
     });
 
     it('un pedido con la forma del contrato pasa', async () => {
       expect(esPedidoDelCanal(await enviado())).toBe(true);
+    });
+  });
+
+  describe('el pago (FAR-I5)', () => {
+    async function confirmadoTalCual(): Promise<PedidoFarmacia> {
+      const pedido = await enviado();
+      const confirmado = await firstValueFrom(
+        client.confirmarPedido(pedido.id, [
+          { indice: 0, decision: 'TAL_CUAL' },
+          { indice: 1, decision: 'TAL_CUAL' },
+        ]),
+      );
+      return confirmado ?? pedido;
+    }
+
+    it('todo pedido nace con el pago pendiente: hoy se paga al retirar', async () => {
+      const pedido = await enviado();
+      expect(pedido.pago).toEqual({
+        estado: 'PENDIENTE',
+        origen: null,
+        pagadoEl: null,
+        total: null,
+        moneda: null,
+      });
+    });
+
+    it('cerrar la dispensa en mostrador ES el cobro, con el monto congelado', async () => {
+      const pedido = await confirmadoTalCual();
+      const listo = await firstValueFrom(client.marcarListo(pedido.id));
+      const resultado = await firstValueFrom(
+        client.dispensar(pedido.id, { codigo: listo?.codigoDeRetiro ?? '', indices: [0, 1] }),
+      );
+      expect(resultado.pedido?.estado).toBe('RETIRADO');
+      expect(resultado.pedido?.pago?.estado).toBe('PAGADO');
+      expect(resultado.pedido?.pago?.origen).toBe('MOSTRADOR');
+      expect(resultado.pedido?.pago?.pagadoEl).toBeInstanceOf(Date);
+      // 60.00 + 2 × 25.50: lo cobrado queda escrito en el pago mismo.
+      expect(resultado.pedido?.pago?.total).toBe('111.00');
+      expect(resultado.pedido?.pago?.moneda).toBe('BOB');
+    });
+
+    it('la PRIMERA entrega, aunque sea parcial, ya cobra el pedido en pie', async () => {
+      const pedido = await confirmadoTalCual();
+      const listo = await firstValueFrom(client.marcarListo(pedido.id));
+      const parcial = await firstValueFrom(
+        client.dispensar(pedido.id, { codigo: listo?.codigoDeRetiro ?? '', indices: [0] }),
+      );
+      // Sigue en el mostrador esperando el resto — pero la plata ya pasó.
+      expect(parcial.pedido?.estado).toBe('LISTO_PARA_RETIRO');
+      expect(parcial.pedido?.pago?.origen).toBe('MOSTRADOR');
+      expect(parcial.pedido?.pago?.total).toBe('111.00');
+    });
+
+    it('registrar la entrega a domicilio también cobra', async () => {
+      const pedido = await enviado('DOMICILIO');
+      await firstValueFrom(
+        client.confirmarPedido(pedido.id, [
+          { indice: 0, decision: 'TAL_CUAL' },
+          { indice: 1, decision: 'TAL_CUAL' },
+        ]),
+      );
+      await firstValueFrom(client.marcarEnvio(pedido.id, 'EN_CAMINO'));
+      const entregado = await firstValueFrom(client.marcarEnvio(pedido.id, 'ENTREGADO'));
+      expect(entregado?.pago?.origen).toBe('MOSTRADOR');
+    });
+
+    it('el QR de la demo paga un pedido confirmado, y el cierre no lo pisa', async () => {
+      const pedido = await confirmadoTalCual();
+      const pagado = await firstValueFrom(client.confirmarPagoDemo(pedido.id));
+      expect(pagado?.pago?.estado).toBe('PAGADO');
+      expect(pagado?.pago?.origen).toBe('QR_DEMO');
+      expect(pagado?.pago?.total).toBe('111.00');
+
+      // El retiro posterior conserva el pago del QR: nadie cobra dos veces.
+      const listo = await firstValueFrom(client.marcarListo(pedido.id));
+      const resultado = await firstValueFrom(
+        client.dispensar(pedido.id, { codigo: listo?.codigoDeRetiro ?? '', indices: [0, 1] }),
+      );
+      expect(resultado.pedido?.pago?.origen).toBe('QR_DEMO');
+      expect(resultado.pedido?.pago?.pagadoEl).toEqual(pagado?.pago?.pagadoEl);
+    });
+
+    it('el QR no paga lo que la farmacia todavía no fijó, ni paga dos veces', async () => {
+      const pedido = await enviado();
+      // ENVIADO: el total puede cambiar en la confirmación — no se paga.
+      const intacto = await firstValueFrom(client.confirmarPagoDemo(pedido.id));
+      expect(intacto?.pago?.estado).toBe('PENDIENTE');
+
+      await firstValueFrom(
+        client.confirmarPedido(pedido.id, [
+          { indice: 0, decision: 'TAL_CUAL' },
+          { indice: 1, decision: 'TAL_CUAL' },
+        ]),
+      );
+      const pagado = await firstValueFrom(client.confirmarPagoDemo(pedido.id));
+      const rePagado = await firstValueFrom(client.confirmarPagoDemo(pedido.id));
+      expect(rePagado?.pago?.pagadoEl).toEqual(pagado?.pago?.pagadoEl);
+    });
+
+    it('pagar cierra el precio: la propuesta de genérico ya no existe para ese pedido', async () => {
+      const pedido = await confirmadoTalCual();
+      await firstValueFrom(client.confirmarPagoDemo(pedido.id));
+
+      // La simulación no lo ofrece y, si alguien lo fuerza, no hace nada.
+      const intacto = await firstValueFrom(client.simular(pedido.id, 'PROPONER_SUSTITUCION'));
+      expect(intacto?.estado).toBe('CONFIRMADO');
+      expect(intacto?.sustituciones).toHaveLength(0);
+      expect(intacto?.pago?.total).toBe('111.00');
+    });
+
+    it('un pedido pagado no se cancela ni se rechaza: la devolución es de FAR-E4', async () => {
+      const pedido = await confirmadoTalCual();
+      await firstValueFrom(client.confirmarPagoDemo(pedido.id));
+
+      const trasCancelar = await firstValueFrom(client.cancelar(pedido.id));
+      expect(trasCancelar?.estado).toBe('CONFIRMADO');
+      const trasRechazo = await firstValueFrom(client.rechazarPedido(pedido.id, 'Sin stock'));
+      expect(trasRechazo?.estado).toBe('CONFIRMADO');
+      expect(trasRechazo?.pago?.estado).toBe('PAGADO');
+    });
+
+    it('un final sin cobro suelta el pago a null: no queda nada pendiente que mostrar', async () => {
+      const cancelado = await firstValueFrom(client.cancelar((await enviado()).id));
+      expect(cancelado?.pago).toBeNull();
+
+      const rechazado = await firstValueFrom(
+        client.rechazarPedido((await enviado()).id, 'Sin stock'),
+      );
+      expect(rechazado?.pago).toBeNull();
+
+      const porVencer = await confirmadoTalCual();
+      await firstValueFrom(client.marcarListo(porVencer.id));
+      const vencido = await firstValueFrom(client.simular(porVencer.id, 'VENCER'));
+      expect(vencido?.estado).toBe('VENCIDO');
+      expect(vencido?.pago).toBeNull();
     });
   });
 });
