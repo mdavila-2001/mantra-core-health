@@ -136,6 +136,16 @@ const MANIFEST = [
     literal: true,
     validate: validateBoolean,
   },
+
+  // Siembra los datos de demostración de la billetera de puntos (FAR-I6). No
+  // decide si la pantalla existe —existe siempre— sino si hay una membresía
+  // sembrada que mostrar. Apagada, la billetera dice que no hay programa activo.
+  {
+    key: 'PUBLIC_LOYALTY_DEMO',
+    field: 'loyaltyDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
 ];
 
 /**

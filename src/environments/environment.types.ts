@@ -131,6 +131,21 @@ export interface Environment {
    * compilación.
    */
   readonly paymentDemo: boolean;
+
+  /**
+   * Siembra los datos de demostración de la billetera de puntos (carril
+   * FAR-I6): una membresía con saldo, nivel y movimientos.
+   *
+   * **No decide si la pantalla existe** — el cliente pidió que el módulo esté
+   * disponible, y lo está. Decide si hay algo sembrado que mostrar. Apagado, la
+   * billetera se pinta igual y dice la verdad: que todavía no hay un programa
+   * de puntos activo. Lo que no hace nunca es inventar un saldo sin marca.
+   *
+   * Se apaga solo cuando existan las lecturas reales del backend (el pedido
+   * está en `COORDINACION-AGENTES.md`): ahí los datos vienen de la API y este
+   * interruptor se retira.
+   */
+  readonly loyaltyDemo: boolean;
 }
 
 /**
@@ -146,4 +161,5 @@ export interface EnvironmentOverrides {
   readonly telemetry?: Partial<TelemetryEnvironment>;
   readonly demoPresets?: boolean;
   readonly paymentDemo?: boolean;
+  readonly loyaltyDemo?: boolean;
 }

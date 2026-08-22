@@ -35,6 +35,14 @@ export const environment: Environment = {
   paymentDemo: envFromProcess.paymentDemo ?? true,
 
   /**
+   * Encendida por defecto: sin ella la billetera de puntos se ve vacía en
+   * desarrollo, que es correcto pero no deja probar nada. Se apaga con
+   * `PUBLIC_LOYALTY_DEMO=false` — y ese apagado es justamente la prueba de que
+   * el estado vacío está bien hecho.
+   */
+  loyaltyDemo: envFromProcess.loyaltyDemo ?? true,
+
+  /**
    * También apagada por defecto en desarrollo, y por un motivo práctico: sin un
    * Collector escuchando, cada lote de spans sería una petición fallida cada
    * cinco segundos en la consola de quien esté trabajando en otra cosa.

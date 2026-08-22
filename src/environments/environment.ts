@@ -40,6 +40,14 @@ export const environment: Environment = {
   paymentDemo: envFromProcess.paymentDemo ?? false,
 
   /**
+   * Apagada por defecto: en producción no hay de dónde leer una membresía
+   * todavía, así que la billetera dice que no hay programa activo en vez de
+   * mostrar un saldo sembrado. El staging de una demo la enciende con
+   * `PUBLIC_LOYALTY_DEMO=true`.
+   */
+  loyaltyDemo: envFromProcess.loyaltyDemo ?? false,
+
+  /**
    * Telemetría **apagada** salvo que el despliegue la encienda.
    *
    * No es timidez: apagada significa que el fragmento del SDK ni se descarga,
