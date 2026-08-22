@@ -1,0 +1,84 @@
+/* ============================================================================
+    Notificaciones. Sólo la disposición: los colores, tipos y espacios salen
+    de los tokens de REDSAT, nunca de valores literales acá.
+    ========================================================================== */
+
+.explicacion {
+  margin-bottom: var(--e5);
+}
+
+.explicacion p {
+  margin: 0 0 var(--e2);
+}
+
+.explicacion p:last-child {
+  margin-bottom: 0;
+}
+
+.titulo-de-seccion {
+  margin: var(--e6) 0 var(--e3);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.lista-de-preferencias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.fila-de-preferencia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e4);
+}
+
+.etiqueta-no-configurado {
+  margin-left: var(--e2);
+  color: var(--tinta-3);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.sin-canales {
+  color: var(--tinta-3);
+  font-size: 13px;
+}
+
+.bandeja {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.notificacion {
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-card);
+  padding: var(--e3) var(--e4);
+}
+
+.notificacion.no-leida {
+  border-color: var(--filete);
+}
+
+.asunto {
+  margin: 0 0 var(--e1);
+  font-weight: 600;
+}
+
+.cuerpo {
+  margin: 0 0 var(--e1);
+}
+
+.meta {
+  margin: 0;
+  color: var(--tinta-3);
+  font-size: 12px;
+}
