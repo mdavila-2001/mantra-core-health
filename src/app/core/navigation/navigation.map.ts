@@ -691,6 +691,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M16 accounting',
   },
 
+  {
+    // Carril 18. Autoservicio: el profesional pide vincularse a una
+    // organización y ve el estado de sus vinculaciones. No cuelga de
+    // `/organizaciones` porque el proxy desvía todo lo que empieza con `/org`
+    // a la API (ver `docs/design-system/port-redsat.md`); tampoco de
+    // `/practices` ni `/practitioners`, reservados igual en `proxy.conf.json`.
+    path: 'my-organizations',
+    label: 'Mis organizaciones',
+    group: 'Administración',
+    icon: 'settings',
+    roles: ['PRACTITIONER'],
+    availability: 'disponible',
+    summary:
+      'Vinculate a una organización y seguí el estado de tus vinculaciones.',
+    module: 'M14 practice',
+  },
+
+  {
+    // Carril 18. Preferencias/bandeja propias: cualquier sesión autenticada,
+    // sin roles — es autoservicio sobre datos de la propia persona, igual que
+    // «Mi perfil». `my-notifications`, no `notifications`: el cliente llama a
+    // `/notifications/*` de la API, y ese prefijo ya está reservado en
+    // `proxy.conf.json` — una ruta del router con el mismo nombre se comería
+    // sus propias peticiones (ver `docs/design-system/port-redsat.md`).
+    path: 'my-notifications',
+    label: 'Notificaciones',
+    group: 'General',
+    icon: 'results',
+    availability: 'disponible',
+    summary: 'Tu bandeja y tus preferencias de canal y categoría.',
+    module: 'M35 messaging',
+  },
+
   /* -- Mi cuenta · autoservicio, con navegación propia --------------------
      El vault lo pide separado: son datos de la persona sobre sí misma, no
      registros que administra. Sin roles, porque nadie necesita permiso para

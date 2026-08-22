@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { SpecialtyFormBlock } from './specialty-form-block';
+import { SpecialtyFormBlock, PLANTILLA_HOJA_LIBRE } from './specialty-form-block';
 
 /**
  * Completar la plantilla de la especialidad dentro del encuentro — carril 2,
@@ -63,6 +63,7 @@ describe('SpecialtyFormBlock', () => {
     fixture = TestBed.createComponent(SpecialtyFormBlock);
     componente = fixture.componentInstance;
     fixture.componentRef.setInput('encounterId', 'enc-1');
+    fixture.componentRef.setInput('patientProfileId', 'pac-1');
   });
 
   afterEach(() => {
@@ -113,6 +114,27 @@ describe('SpecialtyFormBlock', () => {
 
   function señal<T>(nombre: string): { set: (v: T) => void } {
     return (componente as unknown as Record<string, { set: (v: T) => void }>)[nombre];
+  }
+
+  /** Lo que el desplegable ofrece hoy, en orden. */
+  /**
+   * Las **plantillas** que ofrece el desplegable.
+   *
+   * Deja fuera la hoja en blanco a propósito: no es una plantilla sino la
+   * opción de no usar ninguna, y siempre está. Si contara, cada prueba sobre
+   * qué fichas se ofrecen tendría que sumarle uno, y el número dejaría de decir
+   * lo que la prueba quiere decir. Que la hoja esté, y esté primera, lo fija su
+   * propia prueba.
+   */
+  function etiquetasOfrecidas(): string[] {
+    return opcionesCrudas()
+      .filter((opcion) => opcion.value !== PLANTILLA_HOJA_LIBRE)
+      .map((opcion) => opcion.label);
+  }
+
+  /** El desplegable tal cual, con la hoja en blanco incluida. */
+  function opcionesCrudas(): readonly { value: string; label: string }[] {
+    return interno<() => readonly { value: string; label: string }[]>('opcionesDePlantilla')();
   }
 
   function peticionDePlantillas() {
@@ -172,7 +194,7 @@ describe('SpecialtyFormBlock', () => {
     fixture.detectChanges();
 
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('todavía no tiene una plantilla');
+    expect(texto).toContain('no hay ninguna plantilla');
   });
 
   it('sin encuentro abierto no deja completar', () => {
@@ -359,13 +381,19 @@ describe('SpecialtyFormBlock', () => {
     expect(interno<() => string | null>('plantillaId')()).toBe('tpl-odo');
   });
 
-  it('el selector sigue ofreciendo el catálogo entero: preselecciona, no filtra', () => {
-    const odonto = { ...PLANTILLA, id: 'tpl-odo', specialtyConceptId: 'sp-odo' };
+  it('el selector esconde las fichas de otras especialidades', () => {
+    const odonto = {
+      ...PLANTILLA,
+      id: 'tpl-odo',
+      specialtyConceptId: 'sp-odo',
+      code: 'ODONTO_FICHA',
+      name: 'Ficha odontológica',
+    };
     peticionDePlantillas().flush([PLANTILLA, odonto]);
     responderEspecialidad('sp-odo');
 
-    // Las transversales y las de otras especialidades siguen a mano.
-    expect(interno<() => readonly unknown[]>('opcionesDePlantilla')()).toHaveLength(2);
+    // La de cardiología no le sirve a quien atiende en odontología.
+    expect(etiquetasOfrecidas()).toEqual(['Ficha odontológica']);
     expect(interno<() => string | null>('plantillaId')()).toBe('tpl-odo');
   });
 
@@ -387,7 +415,7 @@ describe('SpecialtyFormBlock', () => {
       .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
 
     expect(interno<() => string | null>('plantillaId')()).toBeNull();
-    expect(interno<() => readonly unknown[]>('opcionesDePlantilla')()).toHaveLength(2);
+    expect(etiquetasOfrecidas()).toHaveLength(2);
   });
 
   it('una especialidad que ya no ejerce no decide la plantilla', () => {
@@ -417,6 +445,375 @@ describe('SpecialtyFormBlock', () => {
     });
 
     expect(interno<() => string | null>('plantillaId')()).toBeNull();
+  });
+
+  /**
+   * Vigente es una ventana, no una bandera —el mismo criterio con el que la
+   * matrícula firma el papel—. Una recertificación real declara hasta cuándo
+   * vale; tomar esa fecha como «ya no la ejerce» le escondería su propia ficha
+   * justo a quien tiene la certificación en regla.
+   */
+  it('una especialidad con recertificación futura sigue decidiendo la plantilla', () => {
+    peticionDePlantillas().flush([PLANTILLA, { ...PLANTILLA, id: 'tpl-2' }]);
+
+    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush({
+      profileId: 'hp-1',
+      personId: 'per-1',
+      practitionerCode: 'MP-1',
+      specialties: [
+        {
+          id: 'sp-vigente',
+          specialtyConceptId: 'sp-1',
+          isPrimary: true,
+          boardCertified: true,
+          verificationStatusConceptId: 'vs-1',
+          validFrom: '2020-01-01',
+          validTo: '2030-01-01',
+        },
+      ],
+      credentials: [],
+      licenses: [],
+      languages: [],
+      affiliations: [],
+      activity: {},
+      createdAt: '2026-08-17T14:00:00.000Z',
+    });
+
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-1');
+  });
+
+  /** Y la que todavía no entró en vigencia tampoco decide nada. */
+  it('una especialidad que todavía no empezó no decide la plantilla', () => {
+    peticionDePlantillas().flush([PLANTILLA, { ...PLANTILLA, id: 'tpl-2' }]);
+
+    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush({
+      profileId: 'hp-1',
+      personId: 'per-1',
+      practitionerCode: 'MP-1',
+      specialties: [
+        {
+          id: 'sp-futura',
+          specialtyConceptId: 'sp-1',
+          isPrimary: true,
+          boardCertified: false,
+          verificationStatusConceptId: 'vs-1',
+          validFrom: '2030-01-01',
+        },
+      ],
+      credentials: [],
+      licenses: [],
+      languages: [],
+      affiliations: [],
+      activity: {},
+      createdAt: '2026-08-17T14:00:00.000Z',
+    });
+
+    expect(interno<() => string | null>('plantillaId')()).toBeNull();
+  });
+
+  /* ---- filtrar 43 plantillas a las que sirven ------------------------------ */
+
+  /**
+   * El catálogo real son 43 plantillas: 36 especialidades, 4 transversales y
+   * extras. Estas pruebas usan un catálogo chico con la misma forma —dos
+   * especialidades y dos transversales— porque lo que se fija es la regla, no
+   * el tamaño.
+   *
+   * Las transversales se reconocen por el `specialtyConceptId` que comparten,
+   * y ese concepto se descubre por el prefijo `TRANSV_` de los códigos
+   * sembrados. Por eso `TRANSVERSAL` acá es un uuid cualquiera: el componente
+   * no puede tenerlo escrito.
+   */
+  const TRANSVERSAL = 'sp-transversal';
+
+  const ANAMNESIS = {
+    ...PLANTILLA,
+    id: 'tpl-anamnesis',
+    specialtyConceptId: TRANSVERSAL,
+    code: 'TRANSV_ANAMNESIS_GENERAL',
+    name: 'Anamnesis / Historia clínica general',
+  };
+
+  const CONSENTIMIENTO = {
+    ...PLANTILLA,
+    id: 'tpl-consentimiento',
+    specialtyConceptId: TRANSVERSAL,
+    code: 'TRANSV_CONSENTIMIENTO_INFORMADO',
+    name: 'Consentimiento informado',
+  };
+
+  const DERMATOLOGIA = {
+    ...PLANTILLA,
+    id: 'tpl-derma',
+    specialtyConceptId: 'sp-derma',
+    code: 'DERMA_EXAMEN',
+    name: 'Examen dermatológico',
+  };
+
+  /** Cardiología, dermatología y las dos transversales. */
+  const CATALOGO = [PLANTILLA, DERMATOLOGIA, ANAMNESIS, CONSENTIMIENTO];
+
+  it('ofrece la ficha de su especialidad y las transversales, en ese orden', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    responderEspecialidad('sp-1');
+
+    expect(etiquetasOfrecidas()).toEqual([
+      'Ficha de cardiología',
+      'Anamnesis / Historia clínica general',
+      'Consentimiento informado',
+    ]);
+  });
+
+  it('reconoce las transversales por su concepto, no por el prefijo de cada código', () => {
+    // Una transversal que un admin armó a mano: cuelga del mismo concepto pero
+    // su código no respeta la convención `TRANSV_`. Es transversal igual.
+    const aMano = {
+      ...PLANTILLA,
+      id: 'tpl-mano',
+      specialtyConceptId: TRANSVERSAL,
+      code: 'HOJA_DE_EGRESO',
+      name: 'Hoja de egreso',
+    };
+    peticionDePlantillas().flush([...CATALOGO, aMano]);
+    responderEspecialidad('sp-1');
+
+    expect(etiquetasOfrecidas()).toContain('Hoja de egreso');
+    expect(etiquetasOfrecidas()).not.toContain('Examen dermatológico');
+  });
+
+  it('sin especialidad conocida no filtra nada ni ofrece el interruptor', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
+      .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+
+    // Sin perfil profesional no hay por qué filtrar: queda el catálogo entero.
+    expect(etiquetasOfrecidas()).toHaveLength(4);
+    expect(interno<() => boolean>('puedeVerTodas')()).toBe(false);
+  });
+
+  /* ---- el interruptor «Ver todas las especialidades» ------------------------ */
+
+  it('el interruptor devuelve el catálogo entero y volver a apagarlo lo filtra', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    responderEspecialidad('sp-1');
+
+    expect(interno<() => boolean>('puedeVerTodas')()).toBe(true);
+    expect(etiquetasOfrecidas()).toHaveLength(3);
+
+    interno<(v: boolean) => void>('alternarVerTodas')(true);
+    expect(etiquetasOfrecidas()).toHaveLength(4);
+    expect(etiquetasOfrecidas()).toContain('Examen dermatológico');
+
+    interno<(v: boolean) => void>('alternarVerTodas')(false);
+    expect(etiquetasOfrecidas()).toHaveLength(3);
+    expect(etiquetasOfrecidas()).not.toContain('Examen dermatológico');
+  });
+
+  it('el interruptor no pide plantillas de nuevo: filtra sobre lo ya traído', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    responderEspecialidad('sp-1');
+
+    interno<(v: boolean) => void>('alternarVerTodas')(true);
+
+    // `http.verify()` del afterEach reventaría ante un GET de más; esto lo
+    // dice explícito.
+    http.expectNone((r) => r.url === '/charts/templates');
+  });
+
+  it('lo elegido con el interruptor puesto no desaparece al apagarlo', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    responderEspecialidad('sp-1');
+
+    interno<(v: boolean) => void>('alternarVerTodas')(true);
+    interno<(id: string) => void>('elegirPlantilla')('tpl-derma');
+    interno<(v: boolean) => void>('alternarVerTodas')(false);
+
+    // Sin esto el desplegable mostraría el placeholder mientras dibuja los
+    // campos de la dermatológica debajo.
+    expect(etiquetasOfrecidas()).toContain('Examen dermatológico');
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-derma');
+  });
+
+  it('el interruptor aparece en pantalla sólo cuando hay algo escondido', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    responderEspecialidad('sp-1');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    const interruptor = html.querySelector('[data-testid="ver-todas-especialidades"]');
+    expect(interruptor).not.toBeNull();
+    expect(interruptor?.textContent).toContain('Ver todas las especialidades');
+  });
+
+  /* ---- la especialidad sin ficha propia ------------------------------------ */
+
+  it('sin ficha de su especialidad, preselecciona la anamnesis general', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    responderEspecialidad('sp-sin-ficha');
+
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-anamnesis');
+    // Sólo le quedan las transversales.
+    expect(etiquetasOfrecidas()).toEqual([
+      'Anamnesis / Historia clínica general',
+      'Consentimiento informado',
+    ]);
+  });
+
+  it('sin anamnesis en el catálogo, cae a la primera transversal que haya', () => {
+    peticionDePlantillas().flush([PLANTILLA, DERMATOLOGIA, CONSENTIMIENTO]);
+    responderEspecialidad('sp-sin-ficha');
+
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-consentimiento');
+  });
+
+  it('el fallback no pisa una elección manual anterior', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    interno<(id: string) => void>('elegirPlantilla')('tpl-derma');
+    responderEspecialidad('sp-sin-ficha');
+
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-derma');
+  });
+
+  it('con ficha propia no hay fallback ni aviso', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    responderEspecialidad('sp-1');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    expect(interno<() => boolean>('sinFichaPropia')()).toBe(false);
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-1');
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="sin-ficha-propia"]')).toBeNull();
+  });
+
+  /* ---- los dos copys, que no dicen lo mismo -------------------------------- */
+
+  it('«tu especialidad no tiene ficha» se avisa discreto y el formulario sigue', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    responderEspecialidad('sp-sin-ficha');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    const aviso = html.querySelector('[data-testid="sin-ficha-propia"]');
+    expect(aviso).not.toBeNull();
+    expect(aviso?.textContent).toContain('no tiene una ficha específica');
+    expect(aviso?.textContent).toContain('fichas generales');
+
+    // Es una situación normal, no un problema de datos: ni el copy del
+    // catálogo vacío ni un `app-alert` que grite.
+    expect(html.querySelector('[data-testid="catalogo-vacio"]')).toBeNull();
+    expect(aviso?.tagName).toBe('P');
+    // Y se puede completar igual: el formulario está ahí, con su plantilla.
+    expect(html.querySelector('form')).not.toBeNull();
+    expect(interno<() => boolean>('sinFichaPropia')()).toBe(true);
+  });
+
+  /**
+   * El aviso promete algo concreto —«te ofrecemos las fichas generales»—, así
+   * que sólo aparece cuando esas fichas existen. Sin ninguna transversal el
+   * filtro cae al catálogo entero, y avisar ahí sería prometer una anamnesis
+   * que nadie sembró.
+   */
+  it('sin fichas generales en el catálogo no promete una que no existe', () => {
+    peticionDePlantillas().flush([PLANTILLA, DERMATOLOGIA]);
+    responderEspecialidad('sp-sin-ficha');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    expect(interno<() => boolean>('sinFichaPropia')()).toBe(false);
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="sin-ficha-propia"]')).toBeNull();
+    // Sin criterio para filtrar queda el catálogo entero, no un desplegable vacío.
+    expect(etiquetasOfrecidas()).toHaveLength(2);
+  });
+
+  it('la hoja en blanco encabeza el desplegable, aun sin ninguna plantilla', () => {
+    // Es la salida para quien no quiere completar campos: enterrada al final de
+    // cuarenta y cuatro fichas equivale a no tenerla, y con el catálogo vacío es
+    // lo único que queda.
+    peticionDePlantillas().flush([]);
+    responderEspecialidad('sp-1');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    const opciones = opcionesCrudas();
+    expect(opciones[0].value).toBe(PLANTILLA_HOJA_LIBRE);
+    expect(opciones[0].label).toContain('Hoja en blanco');
+  });
+
+  it('elegir la hoja en blanco esconde los campos y saca el botón de completar', () => {
+    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+    responderEspecialidad('sp-odonto');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_HOJA_LIBRE);
+    fixture.detectChanges();
+
+    expect(interno<() => boolean>('hojaLibre')()).toBe(true);
+    // No hay plantilla elegida, así que no hay campos que dibujar ni formulario
+    // que enviar: la hoja guarda por su cuenta contra la nota clínica.
+    expect(interno<() => unknown>('plantillaElegida')()).toBeNull();
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('app-form-actions')).toBeNull();
+  });
+
+  it('«el catálogo está vacío» es otro caso, y no habla de tu especialidad', () => {
+    peticionDePlantillas().flush([]);
+    responderEspecialidad('sp-1');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    const vacio = html.querySelector('[data-testid="catalogo-vacio"]');
+    expect(vacio).not.toBeNull();
+    expect(vacio?.textContent).toContain('no hay ninguna plantilla');
+    // El error es de datos: nadie sembró el catálogo. No es culpa de su
+    // especialidad y el copy no se lo achaca.
+    expect(html.querySelector('[data-testid="sin-ficha-propia"]')).toBeNull();
+    expect(interno<() => boolean>('catalogoVacio')()).toBe(true);
+    expect(interno<() => boolean>('sinFichaPropia')()).toBe(false);
+    expect(html.querySelector('form')).toBeNull();
+  });
+
+  /* ---- cuando el catálogo no se pudo leer ---------------------------------- */
+
+  /**
+   * Un fallo de lectura no es un catálogo vacío ni una especialidad sin ficha.
+   * Sin este estado quedaba un formulario dibujado y hueco —sin campos, sin
+   * selector y sin una palabra—, que se lee como «no hay nada que completar».
+   */
+  it('si el catálogo no se pudo traer, lo dice y ofrece reintentar', () => {
+    peticionDePlantillas().flush(
+      { code: 'FORBIDDEN', message: 'Tu rol no permite verlas.', timestamp: '', path: '' },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="plantillas-error"]')).not.toBeNull();
+    expect(html.querySelector('form')).toBeNull();
+    expect(html.querySelector('[data-testid="catalogo-vacio"]')).toBeNull();
+
+    // Y el reintento es una salida real, no un botón de adorno.
+    interno<() => void>('recargarPlantillas')();
+    peticionDePlantillas().flush([PLANTILLA]);
+    fixture.detectChanges();
+
+    expect(html.querySelector('[data-testid="plantillas-error"]')).toBeNull();
+    expect(html.querySelector('form')).not.toBeNull();
   });
 
   /* ---- el odontograma ------------------------------------------------------ */

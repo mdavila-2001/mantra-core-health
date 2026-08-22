@@ -126,6 +126,16 @@ const MANIFEST = [
     literal: true,
     validate: validateBoolean,
   },
+
+  // Enciende la pestaña «QR» simulada de la pantalla de pago de farmacia
+  // (FAR-I5). Tampoco es un secreto: decide si esa pestaña —siempre con su
+  // chip DEMO— se pinta. Apagada en producción salvo decisión del despliegue.
+  {
+    key: 'PUBLIC_PAYMENT_DEMO',
+    field: 'paymentDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
 ];
 
 /**

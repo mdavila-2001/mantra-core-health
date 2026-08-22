@@ -412,3 +412,40 @@ describe('rutas públicas del buscador', () => {
     expect(location.path()).toContain('q=cardiolog');
   });
 });
+
+/**
+ * El comprobante (FAR-I5) vive en `…/:orderId/receipt`, declarado DESPUÉS del
+ * paramétrico `…/:orderId`: que resuelva depende del retroceso del router —
+ * el mismo supuesto que el bloque del buscador fija arriba. Los guards se
+ * neutralizan a propósito: acá se prueba el matching, no la sesión (el guard
+ * ya lo cubre el bloque de cobertura de roles).
+ */
+describe('la ruta del comprobante de farmacia (FAR-I5)', () => {
+  let router: Router;
+  let location: Location;
+
+  /**
+   * Vacía los guards en TODO el árbol (la ruta vive como hija del shell y
+   * lleva el suyo propio), sólo donde había: una ruta `redirectTo` no admite
+   * `canActivate` ni vacío (NG04014).
+   */
+  function sinGuards(arbol: typeof routes): typeof routes {
+    return arbol.map((ruta) => ({
+      ...ruta,
+      ...(ruta.canActivate === undefined ? {} : { canActivate: [] }),
+      ...(ruta.children === undefined ? {} : { children: sinGuards(ruta.children) }),
+    }));
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(sinGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  it('`/:orderId/receipt` no se la traga el paramétrico del detalle', async () => {
+    const ok = await router.navigateByUrl('/my-account/pharmacy-orders/abc/receipt');
+    expect(ok).not.toBe(false);
+    expect(location.path()).toBe('/my-account/pharmacy-orders/abc/receipt');
+  });
+});

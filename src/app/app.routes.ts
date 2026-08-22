@@ -138,6 +138,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/insurance/broker-directory/broker-directory').then((m) => m.BrokerDirectory),
   'administration/accounting': () =>
     import('./features/accounting/accounting').then((m) => m.Accounting),
+  'my-organizations': () =>
+    import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
+  'my-notifications': () =>
+    import('./features/notifications/notifications').then((m) => m.Notifications),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'administration/moderation': () =>
@@ -322,6 +326,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/order-detail/order-detail')
         .then((m) => m.OrderDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El comprobante interno del pago (carril FAR-I5). Es el destino de la
+    // notificación futura del backend (`PHARMACY_RECEIPT` en la tabla de la
+    // campana); sin pago registrado, la pantalla dice su vacío honesto.
+    path: 'my-account/pharmacy-orders/:orderId/receipt',
+    title: `${APP_TITLE} - Comprobante de pago`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/order-receipt/order-receipt')
+        .then((m) => m.OrderReceipt)
         .catch(() => chunkFallido()),
   },
   {

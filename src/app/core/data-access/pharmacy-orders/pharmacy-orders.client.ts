@@ -4,13 +4,16 @@ import { of, type Observable } from 'rxjs';
 
 import { SessionStore } from '../../auth/session.store';
 import {
+  ESTADOS_DE_PAGO,
   ESTADOS_DE_PEDIDO,
+  ORIGENES_DE_PAGO,
   type AjusteDeLinea,
   type BorradorDePedido,
   type EnvioDePedido,
   type EstadoDePedido,
   type HitoDeEnvio,
   type LineaDePedido,
+  type PagoDelPedido,
   type PedidoFarmacia,
   type PropuestaDeSustitucion,
   type RegistroDeRetiro,
@@ -151,6 +154,7 @@ export class PharmacyOrdersClient {
       sustituciones: [],
       envio: null,
       entregas: [],
+      pago: { estado: 'PENDIENTE', origen: null, pagadoEl: null, total: null, moneda: null },
       requestId: envio.borrador.requestId,
       siteId: envio.borrador.siteId,
     };
@@ -200,13 +204,20 @@ export class PharmacyOrdersClient {
     return of(this.transicionar(id, 'ACEPTACION_PENDIENTE', { estado: 'CONFIRMADO' }));
   }
 
-  /** TODO(FAR-E1): `POST /pharmacy/orders/:id/cancel`. */
+  /**
+   * TODO(FAR-E1): `POST /pharmacy/orders/:id/cancel`.
+   *
+   * Un pedido YA PAGADO no se cancela: la gestión de devolución no existe
+   * (es de la pasarela real, FAR-E4), y cancelarlo dejaría plata cobrada por
+   * mercadería que nadie entrega. El final sin cobro suelta el pago a `null`:
+   * no queda nada pendiente que mostrar.
+   */
   cancelar(id: string): Observable<PedidoFarmacia | null> {
     const actual = this.pedidos().find((pedido) => pedido.id === id);
-    if (actual === undefined || !puedeCancelarse(actual.estado)) {
+    if (actual === undefined || !puedeCancelarse(actual.estado) || estaPagado(actual)) {
       return of(actual ?? null);
     }
-    return of(this.actualizar(id, { estado: 'CANCELADO' }));
+    return of(this.actualizar(id, { estado: 'CANCELADO', pago: null }));
   }
 
   /**
@@ -291,14 +302,23 @@ export class PharmacyOrdersClient {
     );
   }
 
-  /** TODO(FAR-E2): `POST /pharmacy/orders/:id/reject` — motivo obligatorio. */
+  /**
+   * TODO(FAR-E2): `POST /pharmacy/orders/:id/reject` — motivo obligatorio.
+   * Un pedido pagado tampoco se rechaza (misma razón que cancelar: la
+   * devolución es de FAR-E4). El rechazo sin cobro suelta el pago a `null`.
+   */
   rechazarPedido(id: string, motivo: string): Observable<PedidoFarmacia | null> {
     const texto = motivo.trim();
     const actual = this.pedidos().find((pedido) => pedido.id === id);
-    if (actual === undefined || texto === '' || !puedeRechazarsePorFarmacia(actual.estado)) {
+    if (
+      actual === undefined ||
+      texto === '' ||
+      !puedeRechazarsePorFarmacia(actual.estado) ||
+      estaPagado(actual)
+    ) {
       return of(actual ?? null);
     }
-    return of(this.actualizar(id, { estado: 'RECHAZADO', motivoDeRechazo: texto }));
+    return of(this.actualizar(id, { estado: 'RECHAZADO', motivoDeRechazo: texto, pago: null }));
   }
 
   /**
@@ -341,9 +361,18 @@ export class PharmacyOrdersClient {
     const completo = actual.lineas.every(
       (linea, indice) => !linea.disponible || entregados.has(indice),
     );
+    // La PRIMERA entrega cobra el pedido en pie completo: la persona está en
+    // el mostrador y «pagás al retirar» sucede ahí, aunque vuelva por el
+    // resto otro día. TODO(FAR-E3): la dispensación real define pagos
+    // parciales; el mock no los inventa.
     return of({
       codigoValido: true,
-      pedido: this.actualizar(id, completo ? { entregas, estado: 'RETIRADO' } : { entregas }),
+      pedido: this.actualizar(
+        id,
+        completo
+          ? { entregas, estado: 'RETIRADO', pago: pagoAlCerrar(actual) }
+          : { entregas, pago: pagoAlCerrar(actual) },
+      ),
     });
   }
 
@@ -372,33 +401,76 @@ export class PharmacyOrdersClient {
         envio: 'ENTREGADO',
         estado: 'RETIRADO',
         entregas: [...actual.entregas, { momento: new Date(), indices: enPie(actual) }],
+        pago: pagoAlCerrar(actual),
       }),
     );
   }
 
-  /** Qué pasos de farmacia puede simular la barra de demo desde este estado. */
-  simulacionesPara(estado: EstadoDePedido): readonly SimulacionDeFarmacia[] {
-    return SIMULACIONES_POR_ESTADO[estado] ?? [];
+  /**
+   * El «pago aprobado» del QR simulado (carril FAR-I5). Sólo lo dispara el
+   * botón de la pestaña QR, que sólo existe con `environment.paymentDemo`:
+   * la pasarela real no está, y este camino lo dice con el chip DEMO.
+   * TODO(FAR-E4): el puerto real de pago reemplaza esto detrás de la misma
+   * firma; las pantallas no se enteran.
+   */
+  confirmarPagoDemo(id: string): Observable<PedidoFarmacia | null> {
+    const actual = this.pedidos().find((pedido) => pedido.id === id);
+    if (actual === undefined || !puedePagarse(actual.estado) || estaPagado(actual)) {
+      return of(actual ?? null);
+    }
+    return of(
+      this.actualizar(id, {
+        pago: {
+          estado: 'PAGADO',
+          origen: 'QR_DEMO',
+          pagadoEl: new Date(),
+          // Se congela lo que el QR mostró: si el pedido cambiara después,
+          // el comprobante sigue diciendo lo que de verdad se pagó.
+          total: actual.totalEstimado,
+          moneda: actual.moneda,
+        },
+      }),
+    );
   }
 
   /**
-   * Ejecuta un paso de la contraparte. Un paso que el estado no permite no
+   * Qué pasos de farmacia puede simular la barra de demo para este pedido.
+   * Por pedido y no por estado: sobre un pedido YA PAGADO el precio está
+   * cerrado — no se propone un genérico (cambiaría el total pagado), no se
+   * rechaza ni se vence (la devolución es de FAR-E4). Queda lo que entrega.
+   */
+  simulacionesPara(pedido: PedidoFarmacia): readonly SimulacionDeFarmacia[] {
+    const posibles = SIMULACIONES_POR_ESTADO[pedido.estado] ?? [];
+    if (!estaPagado(pedido)) {
+      return posibles;
+    }
+    return posibles.filter(
+      (paso) => paso !== 'PROPONER_SUSTITUCION' && paso !== 'RECHAZAR' && paso !== 'VENCER',
+    );
+  }
+
+  /**
+   * Ejecuta un paso de la contraparte. Un paso que el pedido no permite no
    * hace nada: la barra de demo no ofrece esos botones, y el mock no inventa
    * un error de un backend que todavía no existe.
    */
   simular(id: string, paso: SimulacionDeFarmacia): Observable<PedidoFarmacia | null> {
     const actual = this.pedidos().find((pedido) => pedido.id === id);
-    if (actual === undefined || !this.simulacionesPara(actual.estado).includes(paso)) {
+    if (actual === undefined || !this.simulacionesPara(actual).includes(paso)) {
       return of(actual ?? null);
     }
 
     const cambios: Partial<PedidoFarmacia> = {
       estado: ESTADO_POR_SIMULACION[paso],
       ...(paso === 'MARCAR_LISTO' ? cambiosDeListo() : {}),
-      ...(paso === 'RECHAZAR' ? { motivoDeRechazo: MOTIVO_DE_RECHAZO_SIMULADO } : {}),
+      ...(paso === 'RECHAZAR' ? { motivoDeRechazo: MOTIVO_DE_RECHAZO_SIMULADO, pago: null } : {}),
+      ...(paso === 'VENCER' ? { pago: null } : {}),
       ...(paso === 'PROPONER_SUSTITUCION'
         ? { sustituciones: [...actual.sustituciones, propuestaDesde(actual)] }
         : {}),
+      // Entregar en mostrador también cobra (FAR-I5): sin esto, el ciclo de
+      // la barra de demo cerraría pedidos sin pago y sin comprobante.
+      ...(paso === 'DISPENSAR' ? { pago: pagoAlCerrar(actual) } : {}),
     };
     return of(this.actualizar(id, cambios));
   }
@@ -507,6 +579,21 @@ export function puedePrepararse(estado: EstadoDePedido): boolean {
 }
 
 /**
+ * Un pedido se puede pagar cuando la farmacia ya fijó qué se lleva y por
+ * cuánto: en preparación o listo en el mostrador. Antes de confirmar (o con
+ * una propuesta en el aire) el total puede cambiar, y nadie paga un total
+ * que se está moviendo.
+ */
+export function puedePagarse(estado: EstadoDePedido): boolean {
+  return puedePrepararse(estado) || estado === 'LISTO_PARA_RETIRO';
+}
+
+/** `true` sólo con el pago registrado (mostrador o demo). */
+export function estaPagado(pedido: PedidoFarmacia): boolean {
+  return pedido.pago?.estado === 'PAGADO';
+}
+
+/**
  * Un mensaje del canal de la demo es de fiar sólo con la forma del contrato:
  * id, estado del value set y las tres colecciones. Alcanza para que ninguna
  * pantalla lea propiedades de basura.
@@ -523,8 +610,56 @@ export function esPedidoDelCanal(dato: unknown): dato is PedidoFarmacia {
     pedido.creadoEl instanceof Date &&
     Array.isArray(pedido.lineas) &&
     Array.isArray(pedido.sustituciones) &&
-    Array.isArray(pedido.entregas)
+    Array.isArray(pedido.entregas) &&
+    esPagoDelContrato(pedido.pago)
   );
+}
+
+/**
+ * `pago` viene del contrato de FAR-I5: `null` o un pago bien formado.
+ * `undefined` es una versión vieja de la app en otra pestaña — contrato
+ * distinto, afuera. Un `PAGADO` exige fecha `Date` de verdad y origen del
+ * value set: el comprobante formatea esa fecha y arma el PDF con ella — una
+ * fecha-string colada por el canal reventaría la descarga.
+ */
+function esPagoDelContrato(pago: PedidoFarmacia['pago'] | undefined): boolean {
+  if (pago === null) {
+    return true;
+  }
+  if (typeof pago !== 'object' || typeof pago.estado !== 'string') {
+    return false;
+  }
+  if (!ESTADOS_DE_PAGO.includes(pago.estado)) {
+    return false;
+  }
+  if (pago.estado === 'PENDIENTE') {
+    return pago.origen === null && pago.pagadoEl === null;
+  }
+  return (
+    pago.pagadoEl instanceof Date &&
+    typeof pago.origen === 'string' &&
+    ORIGENES_DE_PAGO.includes(pago.origen) &&
+    (pago.total === null || typeof pago.total === 'string')
+  );
+}
+
+/**
+ * El pago con que un pedido cierra por el mostrador o la entrega: si ya
+ * estaba pagado (el QR de la demo), se conserva tal cual; si no, el cierre
+ * ES el cobro — «pagás al retirar» hecho dato, con el monto CONGELADO en el
+ * momento de cobrar (el comprobante imprime esto, no el total vivo).
+ */
+function pagoAlCerrar(pedido: PedidoFarmacia): PagoDelPedido {
+  if (pedido.pago?.estado === 'PAGADO') {
+    return pedido.pago;
+  }
+  return {
+    estado: 'PAGADO',
+    origen: 'MOSTRADOR',
+    pagadoEl: new Date(),
+    total: pedido.totalEstimado,
+    moneda: pedido.moneda,
+  };
 }
 
 /** Los cambios de «quedó listo»: estado, código y las 48 h de reserva. */

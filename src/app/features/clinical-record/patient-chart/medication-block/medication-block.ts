@@ -12,6 +12,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
+import { PrescriptionFavoritesClient } from '../../../../core/data-access/prescription-favorites/prescription-favorites.client';
 import { SystemContextClient } from '../../../../core/data-access/system-context/system-context.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { listaDeTextos } from '../../../../core/data-access/terminology/terminology.types';
@@ -110,6 +111,43 @@ const PROPIEDAD_CONCENTRACIONES = 'strengths';
  */
 const SEPARADOR_DE_DOSIS = ' · ';
 
+/** Largo máximo del rótulo de un favorito. Es el del DTO (`@MaxLength(120)`). */
+const TOPE_DEL_ROTULO = 120;
+
+/**
+ * Un diagnóstico de la persona, ya traducido, para elegirlo como indicación.
+ *
+ * Baja del expediente hecho —`id` y palabras— por lo mismo que las recetas: acá
+ * no hay mapa de etiquetas ni petición de terminología que valga la pena
+ * duplicar, y la lista ya está cargada del otro lado.
+ */
+export interface DiagnosticoEnFicha {
+  /** El `clinical.conditions.id`, que es lo que viaja como indicación. */
+  readonly id: string;
+  /** El diagnóstico en palabras. Nunca el uuid del concepto. */
+  readonly etiqueta: string;
+}
+
+/**
+ * Un favorito de prescripción del profesional, en la forma que este bloque usa.
+ *
+ * Se declara acá —y no se importa del cliente— a propósito: el bloque consume
+ * exactamente estas claves, y `quantityDecimal` se acepta como número **o**
+ * texto porque la columna es `numeric` y el transporte la devuelve como cadena.
+ * {@link cantidadDe} la normaliza en el único punto donde importa.
+ */
+interface FavoritoDeReceta {
+  readonly id: string;
+  readonly name: string;
+  readonly medicationConceptId: string;
+  readonly doseText?: string;
+  readonly routeConceptId?: string;
+  readonly frequencyText?: string;
+  readonly quantityDecimal?: number | string;
+  readonly unitConceptId?: string;
+  readonly patientInstructionsText?: string;
+}
+
 /** Una receta del expediente, ya sin uuid y con su ciclo resuelto. */
 export interface RecetaEnFicha {
   readonly id: string;
@@ -175,6 +213,24 @@ export interface RecetaEnFicha {
  * lado —el botón de firmar—, no como un error rojo: el sistema no falló, falta
  * un acto que quien receta tiene que hacer.
  *
+ * ## La indicación diagnóstica es opcional y sale de la ficha
+ *
+ * `indicationConditionId` (Patch v4.1.6) dice **para qué es** la receta. Los
+ * diagnósticos bajan por input desde el expediente —ya cargados y traducidos—
+ * en vez de pedirse otra vez: son los mismos que la pestaña de diagnósticos
+ * pinta, y dos lecturas de la misma lista pueden discrepar. Es opcional de
+ * verdad: una receta sintomática o profiláctica no tiene diagnóstico detrás y
+ * se guarda igual, así que la opción vacía existe y es la de arranque.
+ *
+ * ## Los favoritos rellenan el formulario; jamás prescriben
+ *
+ * Aplicar un favorito escribe los campos y **no guarda nada**: quien receta
+ * revisa, ajusta y prescribe por el camino de siempre, con su firma y su
+ * emisión. Un atajo que creara la receta desde el favorito sería una segunda
+ * puerta a la prescripción con la mitad de los controles. Y si el formulario ya
+ * tiene datos, aplicar pide confirmación: pisar en silencio lo que alguien
+ * escribió es cómo se receta otra cosa sin enterarse.
+ *
  * ## Después de cada acción se relee
  *
  * Nada de mutar la lista en memoria. Las tres escrituras devuelven el estado
@@ -207,6 +263,7 @@ export interface RecetaEnFicha {
 })
 export class MedicationBlock {
   private readonly clinical = inject(ClinicalClient);
+  private readonly favoritos = inject(PrescriptionFavoritesClient);
   private readonly systemContext = inject(SystemContextClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
@@ -226,6 +283,17 @@ export class MedicationBlock {
 
   /** Las recetas de la persona, ya traducidas por el expediente. */
   readonly recetas = input.required<readonly RecetaEnFicha[]>();
+
+  /**
+   * Los diagnósticos de la persona, para elegir la indicación (Patch v4.1.6).
+   *
+   * Bajan traducidos del expediente —que ya los leyó para su pestaña— y no se
+   * vuelven a pedir: son la misma lista, y dos lecturas de la misma lista
+   * pueden discrepar. Por defecto vacío: sin diagnósticos registrados el
+   * selector no se ofrece, y la receta se guarda igual porque el campo es
+   * opcional en el contrato.
+   */
+  readonly diagnosticos = input<readonly DiagnosticoEnFicha[]>([]);
 
   /**
    * Los `medicationConceptId` de la medicación ya registrada, sin traducir.
@@ -324,6 +392,23 @@ export class MedicationBlock {
   protected readonly indicacionesPaciente = signal<string>('');
 
   /**
+   * El diagnóstico que motiva la receta, o `null` — «para qué es» (v4.1.6).
+   *
+   * `null` es un valor legítimo y el de arranque, no un formulario a medio
+   * llenar: hay recetas sintomáticas y profilácticas, y obligar a elegir una
+   * condición para ellas empujaría a poner cualquiera.
+   */
+  protected readonly indicacion = signal<string | null>(null);
+
+  /** Las opciones del selector de indicación, con la vacía primero. */
+  protected readonly opcionesDeIndicacion = computed<readonly SelectOption<string | null>[]>(
+    () => [
+      { value: null, label: 'Sin diagnóstico asociado' },
+      ...this.diagnosticos().map((dx) => ({ value: dx.id, label: dx.etiqueta })),
+    ],
+  );
+
+  /**
    * La última cantidad que sugirió la pauta. Distinguirla de una tecleada a
    * mano es lo que permite recalcularla al cambiar de chip sin pisar jamás lo
    * que quien receta escribió.
@@ -408,6 +493,87 @@ export class MedicationBlock {
    */
   private readonly recetaSinFirma = signal<RecetaEnFicha | null>(null);
 
+  /**
+   * Si el último fallo vino de prescribir y no del ciclo de una receta ya
+   * cargada.
+   *
+   * Existe porque `PRECONDITION_FAILED` cubre **dos cosas distintas**: emitir
+   * sin firma o sobre algo que ya no es borrador —el ciclo—, y la indicación
+   * diagnóstica que no es de esta persona —el alta, v4.1.6—. El código es el
+   * mismo y el mensaje del servidor es lo único que las separa, así que de este
+   * lado se recuerda de dónde salió en vez de leer el texto.
+   */
+  private readonly falloAlPrescribir = signal(false);
+
+  /* -- Favoritos de prescripción (v4.1.7) ----------------------------------- */
+
+  /** Los favoritos propios. Lista completa: la API no la pagina. */
+  protected readonly favoritosPropios = signal<readonly FavoritoDeReceta[]>([]);
+
+  /**
+   * Si la cuenta puede tener favoritos.
+   *
+   * `false` sólo ante el `403` de una cuenta sin perfil profesional, que **no
+   * es un error**: es «esto no aplica». Se apaga la sección entera en vez de
+   * mostrar un aviso rojo por una función que esa cuenta nunca va a usar.
+   */
+  protected readonly favoritosAplican = signal(true);
+
+  /** El favorito elegido en el selector, para poder volver a elegir el mismo. */
+  protected readonly favoritoElegido = signal<string | null>(null);
+
+  protected readonly guardandoFavorito = signal(false);
+
+  /**
+   * El fallo de guardar un favorito, en palabras.
+   *
+   * Aparte de {@link errorDeLaReceta} a propósito: guardar un atajo personal no
+   * es prescribir, y un aviso que dijera «receta» sobre un rótulo repetido
+   * mandaría a buscar el problema donde no está.
+   */
+  protected readonly errorDelFavorito = signal<string | null>(null);
+
+  /** Los favoritos como opciones del desplegable, en el orden que llegaron. */
+  protected readonly opcionesDeFavorito = computed<readonly SelectOption<string>[]>(() =>
+    this.favoritosPropios().map((favorito) => ({ value: favorito.id, label: favorito.name })),
+  );
+
+  /**
+   * Si el selector de favoritos se ofrece.
+   *
+   * Con la lista vacía no se dibuja: un desplegable sin nada que desplegar se
+   * lee como algo roto, y el primer día de cualquier profesional la lista está
+   * vacía. Lo que sí queda visible es «Guardar como favorito», que es como se
+   * llena.
+   */
+  protected readonly hayFavoritos = computed(
+    () => this.favoritosAplican() && this.favoritosPropios().length > 0,
+  );
+
+  /**
+   * Si hay algo cargado que aplicar un favorito pisaría.
+   *
+   * El medicamento cuenta como dato aunque sea lo único elegido: reemplazarlo
+   * sin avisar es exactamente cómo se termina prescribiendo otra cosa.
+   */
+  protected readonly formularioConDatos = computed(
+    () =>
+      this.medicamento() !== null ||
+      this.dosis().trim() !== '' ||
+      this.frecuencia().trim() !== '' ||
+      String(this.cantidad() ?? '').trim() !== '' ||
+      this.via() !== null ||
+      this.unidad() !== null ||
+      this.concentracion() !== null ||
+      this.presentacion() !== null ||
+      this.indicacionesPaciente().trim() !== '',
+  );
+
+  /** Sin medicamento no hay favorito que guardar: es el único obligatorio. */
+  protected readonly puedeGuardarFavorito = computed(
+    () => this.favoritosAplican() && this.medicamento() !== null && !this.guardandoFavorito(),
+  );
+
   protected readonly hayEncuentro = computed(() => {
     const id = this.encounterId();
     return id !== null && id !== '';
@@ -465,6 +631,16 @@ export class MedicationBlock {
     const state = this.registro();
     if (state.status === 'validation') {
       if (state.issues.some((issue) => issue.code === 'PRECONDITION_FAILED')) {
+        // Al prescribir, la única precondición que el alta puede romper es la
+        // indicación diagnóstica: el servidor comprueba que la condición sea de
+        // esta persona (v4.1.6). Se cuenta con el mensaje del servidor, que
+        // nombra el problema mejor que cualquier reformulación de acá.
+        if (this.falloAlPrescribir()) {
+          return (
+            state.issues.map((issue) => issue.message).join(' ') ||
+            'El diagnóstico elegido no corresponde a esta persona. Elegí otro o dejá la receta sin diagnóstico.'
+          );
+        }
         return 'Esa receta ya no está en borrador: alguien la emitió o la invalidó antes. Recargá el expediente.';
       }
       return state.issues.map((issue) => issue.message).join(' ') || null;
@@ -506,6 +682,28 @@ export class MedicationBlock {
     });
     this.cargarOpciones(TARGET_VIA, this.opcionesVia);
     this.cargarOpciones(TARGET_UNIDAD, this.opcionesUnidad);
+    this.cargarFavoritos();
+  }
+
+  /**
+   * Trae los favoritos propios, sin ruido si no hay ninguno ni si no aplican.
+   *
+   * Dos silencios distintos y deliberados: el `403` de una cuenta sin perfil
+   * profesional **apaga la sección** —no aplica, y decirlo en rojo sería
+   * regañar a alguien por no ser médico—, y cualquier otro fallo deja la lista
+   * vacía sin apagar «Guardar como favorito», porque puede ser transitorio y
+   * guardar uno nuevo sí tiene sentido.
+   */
+  private cargarFavoritos(): void {
+    this.favoritos.listOwn().subscribe({
+      next: (lista) => this.favoritosPropios.set(lista),
+      error: (error: unknown) => {
+        this.favoritosPropios.set([]);
+        if (errorToViewState<null>(error).status === 'forbidden') {
+          this.favoritosAplican.set(false);
+        }
+      },
+    });
   }
 
   /** Guarda las opciones de un catálogo. Sin catálogo, lista vacía y ya. */
@@ -792,10 +990,12 @@ export class MedicationBlock {
     const unidad = this.unidad();
     const validFrom = this.validFrom() ?? undefined;
     const validTo = this.validTo() ?? undefined;
+    const indicacion = this.indicacion();
 
     this.registrando.set(true);
     this.registro.set(loading());
     this.recetaSinFirma.set(null);
+    this.falloAlPrescribir.set(false);
 
     this.clinical
       .createMedicationRequest({
@@ -813,6 +1013,9 @@ export class MedicationBlock {
         ...(validFrom === undefined ? {} : { validFrom }),
         ...(validTo === undefined ? {} : { validTo }),
         ...(indicaciones === '' ? {} : { patientInstructionsText: indicaciones }),
+        // Para qué es la receta (v4.1.6). Se omite cuando no se eligió: una
+        // prescripción sintomática o profiláctica no tiene diagnóstico detrás.
+        ...(indicacion === null ? {} : { indicationConditionId: indicacion }),
       })
       .subscribe({
         next: () => {
@@ -824,9 +1027,154 @@ export class MedicationBlock {
         },
         error: (error: unknown) => {
           this.registrando.set(false);
+          // El 422 del alta sólo puede venir de la indicación: es la única
+          // precondición que este cuerpo puede romper. Se marca para que el
+          // aviso apunte al campo y no a «algo salió mal».
+          this.falloAlPrescribir.set(indicacion !== null);
           this.registro.set(errorToViewState<null>(error));
         },
       });
+  }
+
+  /**
+   * Vuelca un favorito en el formulario, sin guardar nada.
+   *
+   * Rellenar no es prescribir: lo que queda cargado se revisa, se ajusta y se
+   * receta por el camino de siempre —con su firma y su emisión—. Por eso no
+   * toca el diagnóstico: el favorito es la indicación repetida, y para qué es
+   * esta receta lo decide esta consulta.
+   *
+   * Si el formulario ya tiene algo escrito, se pide confirmación: perder lo
+   * tipeado por elegir una opción de una lista es exactamente el gesto que
+   * nadie espera que borre.
+   */
+  protected async aplicarFavorito(favoritoId: string | null): Promise<void> {
+    this.favoritoElegido.set(favoritoId);
+    if (favoritoId === null) {
+      return;
+    }
+    const favorito = this.favoritosPropios().find((item) => item.id === favoritoId);
+    if (favorito === undefined) {
+      return;
+    }
+
+    if (this.formularioConDatos()) {
+      const sigue = await this.dialogs.confirm({
+        title: '¿Reemplazar lo que cargaste?',
+        message: `Se va a sobrescribir el formulario con «${favorito.name}».`,
+        confirmLabel: 'Reemplazar',
+        cancelLabel: 'Dejar como está',
+      });
+      if (!sigue) {
+        this.favoritoElegido.set(null);
+        return;
+      }
+    }
+
+    this.medicamento.set(favorito.medicationConceptId);
+    this.dosis.set(favorito.doseText ?? '');
+    this.frecuencia.set(favorito.frequencyText ?? '');
+    this.cantidad.set(favorito.quantityDecimal ?? '');
+    this.via.set(favorito.routeConceptId ?? null);
+    this.unidad.set(favorito.unitConceptId ?? null);
+    this.indicacionesPaciente.set(favorito.patientInstructionsText ?? '');
+    // La posología del favorito es texto: las listas de concentración y
+    // presentación se recalculan si el medicamento las declara.
+    this.limpiarPosologia();
+  }
+
+  /**
+   * Guarda lo que hay cargado como un favorito propio, con el rótulo que se pida.
+   *
+   * El rótulo es con lo que se lo va a reconocer en la lista, así que se pide
+   * antes de guardar y no se deriva del medicamento: dos esquemas del mismo
+   * fármaco son dos favoritos distintos.
+   */
+  protected async guardarFavorito(): Promise<void> {
+    const medicationConceptId = this.medicamento();
+    if (medicationConceptId === null || this.guardandoFavorito()) {
+      return;
+    }
+
+    const rotulo = await this.dialogs.confirmWithReason(
+      {
+        title: 'Guardar como favorito',
+        message: 'Queda en tu lista personal para reutilizarlo cuando lo necesites.',
+        confirmLabel: 'Guardar',
+      },
+      {
+        label: 'Nombre del favorito',
+        hint: 'Con este nombre lo vas a encontrar en tu lista',
+        placeholder: 'ATB post extracción',
+        minLength: 1,
+        maxLength: TOPE_DEL_ROTULO,
+      },
+    );
+    if (rotulo === null) {
+      return;
+    }
+
+    const dosis = this.posologia();
+    const frecuencia = this.frecuencia().trim();
+    const cantidad = cantidadDe(this.cantidad());
+    const via = this.via();
+    const unidad = this.unidad();
+    const indicaciones = this.indicacionesPaciente().trim();
+
+    this.guardandoFavorito.set(true);
+    this.errorDelFavorito.set(null);
+    this.favoritos
+      .create({
+        name: rotulo,
+        medicationConceptId,
+        ...(dosis === '' ? {} : { doseText: dosis }),
+        ...(frecuencia === '' ? {} : { frequencyText: frecuencia }),
+        ...(cantidad === null ? {} : { quantityDecimal: cantidad }),
+        ...(via === null ? {} : { routeConceptId: via }),
+        ...(unidad === null ? {} : { unitConceptId: unidad }),
+        ...(indicaciones === '' ? {} : { patientInstructionsText: indicaciones }),
+      })
+      .subscribe({
+        next: (favorito) => {
+          this.guardandoFavorito.set(false);
+          this.favoritosPropios.set(
+            [...this.favoritosPropios(), favorito].sort((uno, otro) =>
+              uno.name.localeCompare(otro.name),
+            ),
+          );
+          this.toasts.success('Lo vas a encontrar en «Usar un favorito».', 'Favorito guardado');
+        },
+        error: (error: unknown) => {
+          this.guardandoFavorito.set(false);
+          this.errorDelFavorito.set(this.motivoDelFavorito(error));
+        },
+      });
+  }
+
+  /**
+   * Traduce el fallo al guardar en algo que diga qué hacer.
+   *
+   * Los dos casos que el servidor distingue —rótulo repetido y lista llena—
+   * tienen salida distinta, y «no se pudo guardar» las esconde a las dos.
+   */
+  private motivoDelFavorito(error: unknown): string {
+    const estado = errorToViewState<null>(error);
+    if (estado.status !== 'validation') {
+      return 'No se pudo guardar el favorito. Intentá de nuevo.';
+    }
+    // El rótulo repetido (409 CONFLICT) y la lista llena (422) llegan los dos
+    // como validación: los distingue el `code`, y cada uno tiene una salida
+    // distinta que «no se pudo guardar» escondería.
+    if (estado.issues.some((issue) => issue.code === 'CONFLICT')) {
+      return 'Ya tenés un favorito con ese nombre. Probá con otro.';
+    }
+    const delServidor = estado.issues
+      .map((issue) => issue.message)
+      .filter((mensaje) => mensaje !== '')
+      .join(' ');
+    return delServidor === ''
+      ? 'No se pudo guardar el favorito. Intentá de nuevo.'
+      : delServidor;
   }
 
   /**
@@ -985,6 +1333,11 @@ export class MedicationBlock {
     this.duracionDias.set(null);
     this.esCronico.set(false);
     this.indicacionesPaciente.set('');
+    // El diagnóstico y el favorito elegidos son de ESTA receta: la siguiente
+    // arranca sin ellos, aunque sea para el mismo paciente.
+    this.indicacion.set(null);
+    this.favoritoElegido.set(null);
+    this.errorDelFavorito.set(null);
     this.ultimaCantidadSugerida = null;
   }
 }

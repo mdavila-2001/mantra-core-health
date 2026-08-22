@@ -76,13 +76,40 @@
         Descargar PDF
       </button>
     </div>
-  } @else if (opcionesDePlantilla().length === 0) {
-    <app-alert tone="info" title="Sin plantillas todavía">
-      Tu especialidad todavía no tiene una plantilla de formulario clínico. Un admin de
-      especialidad la crea en «Formularios clínicos».
+  } @else if (buscandoPlantillas()) {
+    <p class="formulario-especialidad__estado" role="status">
+      Buscando las plantillas disponibles…
+    </p>
+  } @else if (errorDePlantillas(); as mensaje) {
+    <!-- Un fallo de lectura se dice: sin esto quedaba un formulario hueco, que
+         se lee como «no hay nada para completar». -->
+    <app-alert
+      tone="error"
+      title="No pudimos traer las plantillas"
+      data-testid="plantillas-error"
+    >
+      {{ mensaje }}
+    </app-alert>
+    <button app-button variant="outline" size="sm" (clicked)="recargarPlantillas()">
+      Reintentar
+    </button>
+  } @else if (catalogoVacio()) {
+    <!-- Problema real de datos: no hay NINGUNA plantilla cargada, ni siquiera
+         las transversales. Distinto de que la especialidad no tenga la suya. -->
+    <app-alert tone="info" title="Sin plantillas todavía" data-testid="catalogo-vacio">
+      Todavía no hay ninguna plantilla de formulario clínico cargada. Un admin de especialidad
+      las crea en «Formularios clínicos».
     </app-alert>
   } @else {
     <form class="formulario-especialidad__formulario" (submit)="$event.preventDefault()">
+      @if (sinFichaPropia()) {
+        <!-- Situación normal, no un error: se avisa discreto y se sigue. -->
+        <p class="formulario-especialidad__aviso" data-testid="sin-ficha-propia">
+          Tu especialidad todavía no tiene una ficha específica. Te ofrecemos las fichas
+          generales, que sirven para cualquier consulta.
+        </p>
+      }
+
       @if (opcionesDePlantilla().length > 1) {
         <app-form-field label="Plantilla" hint="Qué formulario vas a completar.">
           <app-select
@@ -91,6 +118,18 @@
             (valueChange)="elegirPlantilla($event)"
           />
         </app-form-field>
+      }
+
+      @if (puedeVerTodas()) {
+        <!-- El escape para la interconsulta o la segunda especialidad que no
+             está en el perfil. Filtra sobre lo ya traído: no pide nada más. -->
+        <app-checkbox
+          class="formulario-especialidad__ver-todas"
+          label="Ver todas las especialidades"
+          [checked]="verTodas()"
+          (checkedChange)="alternarVerTodas($event)"
+          data-testid="ver-todas-especialidades"
+        />
       }
 
       @if (plantillaElegida(); as plantilla) {
@@ -177,12 +216,29 @@
         }
       }
 
-      <app-form-actions
-        submitLabel="Completar formulario"
-        [pending]="enviando()"
-        [disabled]="!puedeCompletar()"
-        (submitted)="completar()"
-      />
+      @if (!hojaLibre()) {
+        <app-form-actions
+          submitLabel="Completar formulario"
+          [pending]="enviando()"
+          [disabled]="!puedeCompletar()"
+          (submitted)="completar()"
+        />
+      }
     </form>
+
+    @if (hojaLibre()) {
+      <!-- Fuera del `<form>`: la hoja libre no captura campos ni se envía con
+           el mismo botón, guarda por su cuenta contra la nota clínica. -->
+      <!-- `(guardada)` va SIN atar a propósito. Recargar el expediente pasa por
+           el estado de carga, y eso destruye este bloque y se lleva lo escrito:
+           el médico veía su nota desaparecer justo después de guardarla, y el
+           guardado siguiente abría una nota nueva en vez de versionar la suya.
+           La nota ya quedó persistida y el aviso lo dice; la pestaña «Notas» se
+           pone al día en la próxima lectura de la ficha. -->
+      <app-free-note-block
+        [patientProfileId]="patientProfileId()"
+        [encounterId]="encounterId()"
+      />
+    }
   }
 </app-card>

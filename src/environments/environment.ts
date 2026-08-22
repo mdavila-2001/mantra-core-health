@@ -33,6 +33,13 @@ export const environment: Environment = {
   demoPresets: envFromProcess.demoPresets ?? false,
 
   /**
+   * Apagada por defecto: sin pasarela real, en producción sólo existe el
+   * camino del mostrador. El staging de una demo la enciende con
+   * `PUBLIC_PAYMENT_DEMO=true`.
+   */
+  paymentDemo: envFromProcess.paymentDemo ?? false,
+
+  /**
    * Telemetría **apagada** salvo que el despliegue la encienda.
    *
    * No es timidez: apagada significa que el fragmento del SDK ni se descarga,

@@ -127,3 +127,62 @@ export interface JournalQuery {
   readonly to?: string;
   readonly limit?: number;
 }
+
+/* ============================================================================
+    Carril 18 — auto-servicio contable del doctor.
+
+    Una consulta pagada sin asiento todavía, y el resultado de registrar un
+    movimiento (ingreso de consulta, gasto u otro ingreso). El importe de una
+    consulta pagada sigue siendo texto decimal, por la misma razón que el
+    resto del módulo.
+    ========================================================================== */
+
+/** Una factura pagada del profesional, sin asiento contable todavía. */
+export interface PaidConsultation {
+  readonly invoiceId: string;
+  readonly invoiceNumber: string;
+  readonly encounterId?: string;
+  readonly appointmentId?: string;
+  readonly patientProfileId: string;
+  readonly issueDate: Date;
+  /** Decimal como texto. */
+  readonly paidTotal: string;
+  readonly currencyConceptId?: string;
+}
+
+/** Cuerpo de "registrar ingreso por consulta pagada". */
+export interface RegisterConsultationIncomeInput {
+  readonly practiceId: string;
+  readonly invoiceId: string;
+  readonly debitAccountId: string;
+  readonly creditAccountId: string;
+  /** `YYYY-MM-DD`. */
+  readonly transactionDate: string;
+  readonly description?: string;
+  readonly fileId?: string;
+}
+
+/** Cuerpo de "registrar un gasto u otro ingreso". */
+export interface RegisterSimpleEntryInput {
+  readonly practiceId: string;
+  readonly kind: 'EXPENSE' | 'OTHER_INCOME';
+  readonly debitAccountId: string;
+  readonly creditAccountId: string;
+  /** Decimal como texto. */
+  readonly amount: string;
+  /** `YYYY-MM-DD`. */
+  readonly transactionDate: string;
+  readonly description: string;
+  readonly fileId?: string;
+}
+
+/** Resultado común de registrar un movimiento del auto-servicio. */
+export interface PractitionerEntryResult {
+  readonly transactionId: string;
+  readonly transactionNumber: string;
+  readonly status: string;
+  /** Decimal como texto. */
+  readonly totalAmount: string;
+  readonly invoiceId?: string;
+  readonly notificationRequestId?: string;
+}

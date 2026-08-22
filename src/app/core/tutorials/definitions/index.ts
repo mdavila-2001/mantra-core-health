@@ -313,22 +313,96 @@ const CENTRO_DE_AYUDA: TutorialDefinition = {
   ],
 };
 
-/** Facturación, para quien la usa. */
+/**
+ * Facturación, para quien la usa. Carril 18 sumó `PRACTITIONER` (antes solo
+ * `BILLING_ADMIN`/`ACCOUNTANT`): un doctor ahora puede registrar el ingreso de
+ * sus propias consultas pagadas y sus gastos, no solo consultar.
+ */
 const CONTABILIDAD: TutorialDefinition = {
   id: 'contabilidad',
-  version: '1.0',
-  title: 'Revisar el libro diario',
-  description: 'El balance de sumas y saldos y el libro diario de tu práctica.',
+  version: '1.1',
+  title: 'Registrar tus movimientos contables',
+  description:
+    'El balance de sumas y saldos y el libro diario de tu práctica, y cómo registrar un ingreso o un gasto.',
   category: 'Facturación',
   route: '/administration/accounting',
-  roles: ['BILLING_ADMIN', 'ACCOUNTANT'],
+  roles: ['BILLING_ADMIN', 'ACCOUNTANT', 'PRACTITIONER'],
   estimatedMinutes: 3,
   level: 'intermedio',
   steps: [
     {
       id: 'que-es',
       title: 'Contabilidad',
-      body: 'Acá se consulta lo que la práctica facturó y cobró. Es consulta: los asientos los generan las operaciones.',
+      body: 'Acá revisás lo que tu práctica facturó y cobró, y registrás vos mismo tus movimientos.',
+    },
+    {
+      id: 'registrar-ingreso',
+      title: 'Ingreso de una consulta pagada',
+      body: 'Elegí la factura ya pagada, elegí las cuentas de debe y haber, y confirmá. Queda en borrador, anclado a esa factura.',
+    },
+    {
+      id: 'aprobacion',
+      title: 'Quién lo aprueba',
+      body: 'Un borrador no es un hecho contable todavía: el posteo final lo hace quien tiene autoridad contable en tu práctica.',
+    },
+  ],
+};
+
+/** Carril 18 — pedir vincularse a una organización. */
+const ORGANIZACIONES: TutorialDefinition = {
+  id: 'mis-organizaciones',
+  version: '1.0',
+  title: 'Vincularte a una organización',
+  description: 'Pedir una vinculación y entender qué implica (y qué no).',
+  category: 'Administración',
+  route: '/my-organizations',
+  roles: ['PRACTITIONER'],
+  estimatedMinutes: 2,
+  level: 'inicial',
+  steps: [
+    {
+      id: 'que-es',
+      title: 'Mis organizaciones',
+      body: 'Podés ejercer en más de una organización a la vez. Acá pedís vincularte a una y ves el estado de tus vinculaciones.',
+    },
+    {
+      id: 'pendiente',
+      title: 'Queda pendiente',
+      body: 'Pedir una vinculación no te agrega de inmediato: la organización tiene que aprobarla, igual que en la vida real.',
+    },
+    {
+      id: 'no-da-acceso',
+      title: 'No da acceso a pacientes',
+      body: 'Estar vinculado a una organización nunca te da acceso a sus pacientes. Eso depende siempre de una cita, derivación, intervención o autorización concreta con ese paciente.',
+    },
+  ],
+};
+
+/** Carril 18 — bandeja y preferencias de notificación. */
+const NOTIFICACIONES: TutorialDefinition = {
+  id: 'notificaciones',
+  version: '1.0',
+  title: 'Configurar tus notificaciones',
+  description: 'Tu bandeja y tus preferencias de canal y categoría.',
+  category: 'General',
+  route: '/my-notifications',
+  estimatedMinutes: 2,
+  level: 'inicial',
+  steps: [
+    {
+      id: 'que-es',
+      title: 'Notificaciones',
+      body: 'Acá ves los avisos que el sistema te generó y configurás por qué canal y categoría querés recibir cada tipo.',
+    },
+    {
+      id: 'criticas',
+      title: 'Las críticas siempre llegan',
+      body: 'Las alertas de seguridad y las de citas confirmadas no se pueden desactivar: no dependen de tu preferencia.',
+    },
+    {
+      id: 'canales',
+      title: 'Qué canal funciona hoy',
+      body: 'La notificación interna es real. WhatsApp, SMS y push se pueden configurar como preferencia, pero en este entorno todavía no tienen un proveedor externo conectado.',
     },
   ],
 };
@@ -345,4 +419,6 @@ export const TUTORIALS: readonly TutorialDefinition[] = [
   PERFIL_PROFESIONAL,
   CENTRO_DE_AYUDA,
   CONTABILIDAD,
+  ORGANIZACIONES,
+  NOTIFICACIONES,
 ];

@@ -35,6 +35,11 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
   // porque es donde vive la única decisión que el aviso puede estar pidiendo:
   // «te proponen un genérico» se responde ahí, no en la lista.
   PHARMACY_ORDER: (id) => `/my-account/pharmacy-orders/${id}`,
+  // El comprobante interno de pago (FAR-I5). El id es el del pedido: cuando
+  // el backend registre el pago y emita (FAR-E1/E4), su aviso ya abre el
+  // comprobante — hoy la demo lo anuncia con un toast, porque inyectar
+  // avisos locales sería tocar la campana por dentro.
+  PHARMACY_RECEIPT: (id) => `/my-account/pharmacy-orders/${id}/receipt`,
   // Mensajería directa (carril P2). Con `?responder=1` (carril P9) el hilo
   // abre con el foco puesto en el textarea: llegar desde «te escribieron» y
   // tener que buscar dónde escribir rompe el gesto que la notificación empezó.
