@@ -378,31 +378,31 @@ const ORGANIZACIONES: TutorialDefinition = {
   ],
 };
 
-/** Carril 18 — bandeja y preferencias de notificación. */
+/** Carriles P1/P9 — la bandeja (`notification-center`) y las preferencias de «Mi cuenta». */
 const NOTIFICACIONES: TutorialDefinition = {
   id: 'notificaciones',
-  version: '1.0',
-  title: 'Configurar tus notificaciones',
-  description: 'Tu bandeja y tus preferencias de canal y categoría.',
+  version: '1.1',
+  title: 'Tus notificaciones',
+  description: 'La bandeja de avisos y tus preferencias por categoría.',
   category: 'General',
-  route: '/my-notifications',
+  route: '/notification-center',
   estimatedMinutes: 2,
   level: 'inicial',
   steps: [
     {
       id: 'que-es',
       title: 'Notificaciones',
-      body: 'Acá ves los avisos que el sistema te generó y configurás por qué canal y categoría querés recibir cada tipo.',
+      body: 'Acá ves tus avisos: recetas, consultas, turnos y mensajes. Tocá uno para abrir lo que anuncia, y marcalos leídos de a uno o todos juntos.',
     },
     {
-      id: 'criticas',
-      title: 'Las críticas siempre llegan',
-      body: 'Las alertas de seguridad y las de citas confirmadas no se pueden desactivar: no dependen de tu preferencia.',
+      id: 'preferencias',
+      title: 'Elegí de qué te avisamos',
+      body: 'En «Mi cuenta → Preferencias de avisos» activás o silenciás cada familia: recetas y consultas, turnos, mensajes y actividad social.',
     },
     {
-      id: 'canales',
-      title: 'Qué canal funciona hoy',
-      body: 'La notificación interna es real. WhatsApp, SMS y push se pueden configurar como preferencia, pero en este entorno todavía no tienen un proveedor externo conectado.',
+      id: 'silencio',
+      title: 'Ventana de silencio',
+      body: 'También podés fijar un horario de silencio, que se escribe en tu hora local: en esa ventana no te avisamos, y lo pendiente te espera en la bandeja.',
     },
   ],
 };
