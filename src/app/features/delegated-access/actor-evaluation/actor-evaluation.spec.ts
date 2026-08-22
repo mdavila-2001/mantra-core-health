@@ -34,23 +34,24 @@ describe('ActorEvaluation', () => {
     return (esSenal ? valor : valor.bind(component)) as T;
   }
 
-  function conDelegacion() {
-    interno<{ patchValue: (v: Record<string, string>) => void }>('form').patchValue({
+  /** El propósito y el tipo de recurso también viven en el grupo. */
+  function completar(valores: Record<string, unknown> = {}) {
+    interno<{ patchValue: (v: Record<string, unknown>) => void }>('form').patchValue({
       practitionerDelegateAssignmentId: DELEGACION,
+      ...valores,
     });
   }
 
   it('sin delegación o sin propósito, la consulta ni sale', () => {
     interno<() => void>('submit')();
 
-    conDelegacion();
+    completar();
     interno<() => void>('submit')();
     // Sigue faltando el propósito: `http.verify()` comprueba que nada viajó.
   });
 
   it('lo mínimo viaja con la delegación y el propósito, sin claves de más', () => {
-    conDelegacion();
-    interno<(v: unknown) => void>('elegirProposito')('BILLING');
+    completar({ purpose: 'BILLING' });
 
     interno<() => void>('submit')();
 
@@ -66,8 +67,7 @@ describe('ActorEvaluation', () => {
   });
 
   it('el veredicto elige el tono por su contenido: step-up avisa, denegado alerta', () => {
-    conDelegacion();
-    interno<(v: unknown) => void>('elegirProposito')('TREATMENT');
+    completar({ purpose: 'TREATMENT' });
 
     interno<() => void>('submit')();
     http
@@ -84,7 +84,10 @@ describe('ActorEvaluation', () => {
   });
 
   it('un propósito fuera del contrato no entra', () => {
-    interno<(v: unknown) => void>('elegirProposito')('RESEARCH');
-    expect(interno<() => string | null>('purpose')()).toBeNull();
+    // El motor sólo ofrece los del contrato; la comprobación sigue al armar el
+    // cuerpo, que es lo que llega al backend venga de donde venga el valor.
+    completar({ purpose: 'RESEARCH' });
+    interno<() => void>('submit')();
+    // Nada viajó: `http.verify()` lo comprueba.
   });
 });

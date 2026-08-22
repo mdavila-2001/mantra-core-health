@@ -74,6 +74,9 @@ export class TenantBindingForm {
       campos: [
         { key: 'defaultRoleConceptId', label: 'Rol con el que se aprovisiona (concepto)', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
         { key: 'allowedEmailDomains', label: 'Dominios de correo admitidos', hint: 'Separados por coma. Vacío, no viaja.', control: 'text', mensajeDeError: 'Hasta 500 caracteres.' },
+        { key: 'isEnabled', label: 'Vínculo habilitado (la organización puede usar el proveedor)', control: 'switch' },
+        { key: 'autoProvision', label: 'Crear el usuario local automáticamente al primer login', control: 'switch' },
+        { key: 'justInTimeProvisioning', label: 'Aprovisionar en el momento del login, sin invitación previa', control: 'switch' },
       ],
     },
   ]);

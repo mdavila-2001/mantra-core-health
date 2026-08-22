@@ -98,11 +98,11 @@ export class AssistedRegistration {
       titulo: 'Datos del paciente',
       hint: 'Lo mínimo para crear la cuenta; el resto lo completa su filiación.',
       campos: [
-        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escribí el nombre del paciente.' },
-        { key: 'middleName', label: 'Segundo nombre', hint: 'Si no tiene, dejalo vacío.', control: 'text' },
-        { key: 'lastName', label: 'Apellido paterno', control: 'text', required: true, mensajeDeError: 'Escribí el apellido paterno del paciente.' },
-        { key: 'motherLastName', label: 'Apellido materno', hint: 'Si no lleva, dejalo vacío.', control: 'text' },
-        { key: 'email', label: 'Correo', hint: 'Con este correo va a activar la cuenta e iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
+        { key: 'name', testId: 'alta-paciente-nombre', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escribí el nombre del paciente.' },
+        { key: 'middleName', testId: 'alta-paciente-segundo-nombre', label: 'Segundo nombre', hint: 'Si no tiene, dejalo vacío.', control: 'text' },
+        { key: 'lastName', testId: 'alta-paciente-apellido-paterno', label: 'Apellido paterno', control: 'text', required: true, mensajeDeError: 'Escribí el apellido paterno del paciente.' },
+        { key: 'motherLastName', testId: 'alta-paciente-apellido-materno', label: 'Apellido materno', hint: 'Si no lleva, dejalo vacío.', control: 'text' },
+        { key: 'email', testId: 'alta-paciente-correo', label: 'Correo', hint: 'Con este correo va a activar la cuenta e iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
       ],
     },
     {

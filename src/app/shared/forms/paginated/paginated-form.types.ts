@@ -85,6 +85,16 @@ export interface CampoDeFormulario {
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;
 
+  /**
+   * El `data-testid` del control, cuando la pantalla ya tenía uno.
+   *
+   * Por defecto el motor pone `campo-<key>`, que alcanza para lo que nace con
+   * él. Se declara cuando hay un recorrido de navegador que ya apuntaba a otro
+   * nombre: migrar una pantalla al motor no tiene por qué romper la prueba que
+   * la recorría.
+   */
+  readonly testId?: string;
+
   readonly placeholder?: string;
 
   /**

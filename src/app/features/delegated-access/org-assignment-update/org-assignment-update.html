@@ -29,75 +29,12 @@
     <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Qué asignación"
-      description="La asignación de organización que se va a editar."
-    >
-      <app-form-field
-        label="Identificador de la asignación"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.assignmentId.touched && form.controls.assignmentId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="assignmentId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Qué cambia"
-      description="Al menos uno: nuevo supervisor, nuevo alcance o suspensión. Solo viaja lo elegido."
-    >
-      <app-form-field
-        label="Nuevo supervisor"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.supervisorUserId.touched && form.controls.supervisorUserId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="supervisorUserId" type="text" />
-      </app-form-field>
-
-      <app-form-field label="Nuevo alcance de acceso">
-        <app-radio-group [value]="accessScope()" (valueChange)="elegirAlcance($event)">
-          <app-radio value="TENANT" label="Toda la organización" />
-          <app-radio value="PRACTICE" label="Práctica" />
-          <app-radio value="SITE" label="Sede" />
-          <app-radio value="UNIT" label="Unidad" />
-        </app-radio-group>
-      </app-form-field>
-
-      <div class="m29__switches">
-        <app-switch
-          [(checked)]="suspender"
-          label="Suspender la asignación (cascada a sus delegaciones)"
-        />
-      </div>
-    </app-form-section>
-
-    <app-form-section
-      legend="Concurrencia"
-      description="Opcional: protege contra ediciones cruzadas."
-    >
-      <app-form-field
-        label="Versión esperada (row_version)"
-        hint="Si otra persona editó primero, el backend responde 409 en vez de pisar su cambio."
-      >
-        <app-input formControlName="expectedRowVersion" type="number" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Guardar cambios"
-      [pending]="isSubmitting()"
-      [disabled]="sinCambios()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Reasignar o suspender asignación"
+  submitLabel="Guardar cambios"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

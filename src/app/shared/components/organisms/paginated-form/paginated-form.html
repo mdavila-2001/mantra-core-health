@@ -102,7 +102,7 @@
                   [autocomplete]="campo.autocomplete ?? null"
                   [placeholder]="campo.placeholder ?? ''"
                   [hasError]="errorDe(campo) !== ''"
-                  [testId]="'campo-' + campo.key"
+                  [testId]="campo.testId ?? 'campo-' + campo.key"
                 />
               }
             }
