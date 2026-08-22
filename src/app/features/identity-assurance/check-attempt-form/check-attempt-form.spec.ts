@@ -76,7 +76,7 @@ describe('CheckAttemptForm', () => {
       technicalErrorCode: 'TIMEOUT',
       retryEligible: true,
     });
-    interno<(valor: unknown) => void>('elegirResultado')('FAILED');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ outcome: 'FAILED' });
 
     interno<() => void>('submit')();
 

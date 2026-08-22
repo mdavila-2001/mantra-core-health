@@ -111,7 +111,7 @@ export class DatePicker {
   readonly placeholder = input<string>('Seleccionar fecha');
   readonly hasError = input<boolean>(false);
 
-  private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
+  private readonly dialog = viewChild<ElementRef<HTMLDialogElement>>('dialog');
   private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');
 
   protected readonly isOpen = signal(false);
@@ -182,9 +182,40 @@ export class DatePicker {
   });
 
   constructor() {
-    // El foco entra al diálogo recién cuando el @if lo pintó: `viewChild` avisa
-    // en ese momento, cosa que un microtask tras `isOpen.set(true)` no hace.
-    effect(() => this.dialog()?.nativeElement.focus());
+    // El diálogo se abre y el foco entra recién cuando el @if lo pintó:
+    // `viewChild` avisa en ese momento, cosa que un microtask tras
+    // `isOpen.set(true)` no hace.
+    effect(() => {
+      const dialog = this.dialog()?.nativeElement;
+      if (!dialog) {
+        return;
+      }
+      this.showModal(dialog);
+      dialog.focus();
+    });
+  }
+
+  /**
+   * Sube el diálogo a la capa superior del navegador.
+   *
+   * Es lo único que arregla el bug de posicionamiento: un `<dialog>` abierto
+   * con `show()` —o con el atributo `open` a secas— sigue en el flujo normal y
+   * lo sigue conteniendo el ancestro con `backdrop-filter`.
+   *
+   * El `typeof` no es paranoia: jsdom, donde corren las pruebas unitarias, no
+   * implementa `showModal`. Ahí se cae al atributo `open`, que basta para que el
+   * contenido exista y se pueda ejercitar; la capa superior no significa nada
+   * sin motor de layout.
+   */
+  private showModal(dialog: HTMLDialogElement): void {
+    if (dialog.open) {
+      return;
+    }
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+      return;
+    }
+    dialog.setAttribute('open', '');
   }
 
   protected dayLabel(day: CalendarDay): string {
@@ -205,8 +236,30 @@ export class DatePicker {
     if (!this.isOpen()) {
       return;
     }
+    // Cerrar el elemento antes de que el @if lo saque del DOM: un `<dialog>`
+    // que se quita abierto deja su entrada en la capa superior, y con ella el
+    // velo y el bloqueo del resto de la página.
+    const dialog = this.dialog()?.nativeElement;
+    if (dialog?.open && typeof dialog.close === 'function') {
+      dialog.close();
+    }
     this.isOpen.set(false);
     this.trigger().nativeElement.focus();
+  }
+
+  /**
+   * Un clic en el velo cierra.
+   *
+   * Los clics sobre `::backdrop` llegan con `target` en el propio `<dialog>`,
+   * porque el velo no es un elemento con identidad propia. Por eso el diálogo no
+   * lleva relleno —lo pone `.date-picker-panel`—: si lo llevara, un clic en ese
+   * margen también daría `target === dialog` y cerraría sin que nadie apuntara
+   * al fondo.
+   */
+  protected handleBackdropClick(event: MouseEvent): void {
+    if (event.target === this.dialog()?.nativeElement) {
+      this.close();
+    }
   }
 
   protected confirm(): void {
@@ -237,7 +290,14 @@ export class DatePicker {
     this.patchDraftTime(null, Number((event.target as HTMLSelectElement).value));
   }
 
-  /** Escape cierra; Tab no debe poder salirse del diálogo. */
+  /**
+   * Escape cierra; Tab no debe poder salirse del diálogo.
+   *
+   * El `<dialog>` modal ya hace las dos cosas por su cuenta en un navegador.
+   * Se conservan porque son el único camino en jsdom —donde no hay capa
+   * superior— y porque cerrar acá es idempotente: `close()` sale solo si el
+   * diálogo ya no está abierto.
+   */
   protected handleDialogKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.preventDefault();

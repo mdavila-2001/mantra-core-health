@@ -43,70 +43,12 @@
     <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Contra qué proveedor"
-      description="El proveedor se busca por su código, no por su identificador."
-    >
-      <app-form-field
-        label="Código del proveedor"
-        [required]="true"
-        hint="El código con el que se registró el proveedor, no su UUID."
-        [errorMessage]="
-          form.controls.providerCode.touched && form.controls.providerCode.invalid
-            ? 'Ingresá el código del proveedor.'
-            : ''
-        "
-      >
-        <app-input formControlName="providerCode" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Organización a la que se quiere entrar"
-        hint="Opcional: vacía, decide el vínculo del proveedor. Pegá el identificador (UUID)."
-        [errorMessage]="
-          form.controls.tenantId.touched && form.controls.tenantId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="tenantId" type="text" />
-      </app-form-field>
-
-      <app-form-field label="Entorno" hint="Por defecto, Producción.">
-        <app-radio-group [value]="environment()" (valueChange)="elegirEntorno($event)">
-          <app-radio value="DEVELOPMENT" label="Desarrollo" />
-          <app-radio value="STAGING" label="Staging" />
-          <app-radio value="PRODUCTION" label="Producción" />
-        </app-radio-group>
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Rastro del intento"
-      description="De dónde sale el login; queda en el registro del intento."
-    >
-      <app-form-field
-        label="IP de origen"
-        hint="Opcional: vacía, no viaja."
-        [errorMessage]="
-          form.controls.ip.touched && form.controls.ip.invalid ? 'Hasta 100 caracteres.' : ''
-        "
-      >
-        <app-input formControlName="ip" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Agente de usuario"
-        hint="Opcional: el navegador o cliente que inicia el login."
-        [errorMessage]="
-          form.controls.userAgent.touched && form.controls.userAgent.invalid
-            ? 'Hasta 500 caracteres.'
-            : ''
-        "
-      >
-        <app-textarea formControlName="userAgent" [rows]="2" [autoResize]="true" [maxLength]="maxAgent" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions submitLabel="Iniciar login" [pending]="isSubmitting()" (submitted)="submit()" />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Iniciar login federado"
+  submitLabel="Iniciar login"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type { CreatedUser, InitialRole, NewUser } from '../../../core/data-access/iam/iam.types';
@@ -7,14 +7,10 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
@@ -47,17 +43,11 @@ const TELEFONO_VALIDO = /^[+]?[0-9 ()-]{6,}$/;
 @Component({
   selector: 'app-user-registration',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Radio,
-    RadioGroup,
+    PaginatedForm,
   ],
   templateUrl: './user-registration.html',
   styleUrl: './user-registration.css',
@@ -68,6 +58,33 @@ export class UserRegistration {
   private readonly navigation = inject(NavigationService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Identificación',
+      hint: 'Con qué entra y cómo se lo nombra.',
+      campos: [
+        { key: 'displayName', testId: 'alta-usuario-nombre', label: 'Nombre visible', control: 'text', required: true, mensajeDeError: 'Escribí el nombre con el que se va a mostrar la cuenta.' },
+        { key: 'email', testId: 'alta-usuario-correo', label: 'Correo', autocomplete: 'off', hint: 'Es el identificador con el que va a iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
+        { key: 'phone', testId: 'alta-usuario-telefono', label: 'Teléfono', autocomplete: 'tel', hint: 'Opcional. Queda como punto de contacto.', control: 'text', mensajeDeError: 'El teléfono sólo admite dígitos, espacios, paréntesis, + y guion.' },
+      ],
+    },
+    {
+      titulo: 'Acceso',
+      hint: 'La contraseña es provisional: entregala por un canal seguro.',
+      campos: [
+        { key: 'password', testId: 'alta-usuario-clave', label: 'Contraseña inicial', autocomplete: 'new-password', hint: 'Mínimo 8 caracteres.', control: 'password', required: true, mensajeDeError: 'La contraseña necesita al menos 8 caracteres.' },
+        { key: 'initialRole', testId: 'alta-usuario-rol', label: 'Rol inicial', hint: 'Los demás roles se conceden después.', control: 'radio', options: [{ value: 'USER', label: 'Usuario' }, { value: 'SECURITY_ADMIN', label: 'Administrador de seguridad' }] },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     displayName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -83,14 +100,13 @@ export class UserRegistration {
       nonNullable: true,
       validators: [Validators.pattern(TELEFONO_VALIDO)],
     }),
+    /**
+     * El rol inicial nunca está sin elegir: la ausencia de elección es `USER`,
+     * que es con lo que completa el backend. Por eso arranca con valor en vez
+     * de con `null`, aunque el control sea el mismo grupo de opciones.
+     */
+    initialRole: new FormControl<InitialRole>('USER', { nonNullable: true }),
   });
-
-  /**
-   * El rol inicial vive fuera del `FormGroup` porque el grupo de radios modela
-   * «sin elección» con `null` y acá siempre hay uno: la ausencia de elección es
-   * `USER`, que es con lo que completa el backend.
-   */
-  protected readonly initialRole = signal<InitialRole>('USER');
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -116,10 +132,6 @@ export class UserRegistration {
     }
     return null;
   });
-
-  protected cambiarRol(rol: string | null): void {
-    this.initialRole.set(rol === 'SECURITY_ADMIN' ? 'SECURITY_ADMIN' : 'USER');
-  }
 
   protected submit(): void {
     if (this.isSubmitting()) {
@@ -150,13 +162,13 @@ export class UserRegistration {
    */
   protected altaNueva(): void {
     this.form.reset();
-    this.initialRole.set('USER');
     this.created.set(null);
     this.state.set(ready(null));
   }
 
   private datos(): NewUser {
-    const { displayName, email, password, phone } = this.form.getRawValue();
+    const { displayName, email, password, phone, initialRole: rol } =
+      this.form.getRawValue();
     const telefono = phone.trim();
 
     return {
@@ -166,7 +178,10 @@ export class UserRegistration {
       // Ausente si no se completó: el backend valida con `forbidNonWhitelisted`
       // y una cadena vacía no es lo mismo que la ausencia del campo.
       ...(telefono === '' ? {} : { phone: telefono }),
-      ...(this.initialRole() === 'USER' ? {} : { initialRole: this.initialRole() }),
+      // Sólo viaja si es el que cambia lo que la cuenta puede hacer. Cualquier
+      // otra cosa —incluido un valor que no es ninguno de los dos— cae en
+      // `USER`, que es con lo que el backend completa.
+      ...(rol === 'SECURITY_ADMIN' ? { initialRole: rol } : {}),
     };
   }
 }

@@ -47,6 +47,7 @@
             @switch (campo.control) {
               @case ('select') {
                 <app-select
+                  [attr.data-testid]="campo.testId ?? null"
                   [formControlName]="campo.key"
                   [options]="campo.options ?? []"
                   [placeholder]="campo.placeholder ?? 'Seleccionar opción'"
@@ -57,20 +58,31 @@
                 <!-- El grupo es el `ControlValueAccessor`, no cada opción: el
                      formulario ve un control con un valor, que es lo que la
                      persona percibe. -->
-                <app-radio-group [formControlName]="campo.key">
+                <app-radio-group
+                  [attr.data-testid]="campo.testId ?? null"
+                  [formControlName]="campo.key"
+                >
                   @for (opcion of campo.options ?? []; track opcion.value) {
                     <app-radio [value]="opcion.value" [label]="opcion.label" />
                   }
                 </app-radio-group>
               }
               @case ('switch') {
-                <app-switch [formControlName]="campo.key" [label]="campo.label" />
+                <app-switch
+                  [attr.data-testid]="campo.testId ?? null"
+                  [formControlName]="campo.key"
+                  [label]="campo.label"
+                />
               }
               @case ('checkbox') {
-                <app-checkbox [formControlName]="campo.key" />
+                <app-checkbox
+                  [attr.data-testid]="campo.testId ?? null"
+                  [formControlName]="campo.key"
+                />
               }
               @case ('textarea') {
                 <app-textarea
+                  [attr.data-testid]="campo.testId ?? null"
                   [formControlName]="campo.key"
                   [placeholder]="campo.placeholder ?? ''"
                   [hasError]="errorDe(campo) !== ''"

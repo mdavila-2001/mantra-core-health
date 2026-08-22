@@ -39,89 +39,12 @@
     <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section legend="Qué proveedor" description="Cómo se identifica y se muestra.">
-      <app-form-field
-        label="Código del proveedor"
-        [required]="true"
-        hint="Único; el login federado lo usa para elegir el proveedor."
-        [errorMessage]="
-          form.controls.code.touched && form.controls.code.invalid
-            ? 'Ingresá el código (hasta 100 caracteres).'
-            : ''
-        "
-      >
-        <app-input formControlName="code" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Nombre"
-        [required]="true"
-        [errorMessage]="
-          form.controls.name.touched && form.controls.name.invalid
-            ? 'Ingresá el nombre (hasta 200 caracteres).'
-            : ''
-        "
-      >
-        <app-input formControlName="name" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Emisor declarado por el proveedor"
-        hint="Opcional: el issuer con el que firma sus tokens."
-      >
-        <app-textarea formControlName="issuer" [rows]="2" [autoResize]="true" [maxLength]="500" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Protocolo y naturaleza"
-      description="Definen qué configuración va a exigir el entorno."
-    >
-      <app-form-field label="Protocolo" [required]="true">
-        <app-radio-group [value]="protocol()" (valueChange)="elegirProtocolo($event)">
-          <app-radio value="OIDC" label="OpenID Connect" />
-          <app-radio value="SAML" label="SAML" />
-          <app-radio value="OAUTH2" label="OAuth 2.0" />
-        </app-radio-group>
-      </app-form-field>
-
-      <app-form-field label="Categoría" [required]="true">
-        <app-radio-group [value]="category()" (valueChange)="elegirCategoria($event)">
-          <app-radio value="ENTERPRISE" label="Corporativo" />
-          <app-radio value="SOCIAL" label="Social" />
-          <app-radio value="GOVERNMENT" label="Gubernamental" />
-        </app-radio-group>
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Disponibilidad"
-      description="Global lo ven todas las organizaciones; si no, necesita una dueña."
-    >
-      <div class="m40__switches">
-        <app-switch
-          formControlName="isGlobal"
-          label="Disponible para todas las organizaciones sin vínculo explícito"
-        />
-      </div>
-
-      <app-form-field
-        label="Organización dueña"
-        hint="Si el proveedor no es global, necesita una dueña: pegá su identificador (UUID)."
-        [errorMessage]="
-          form.controls.tenantId.touched && form.controls.tenantId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="tenantId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Registrar proveedor"
-      [pending]="isSubmitting()"
-      [disabled]="faltanObligatorios()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Registrar proveedor de identidad"
+  submitLabel="Registrar proveedor"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

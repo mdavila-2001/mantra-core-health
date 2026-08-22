@@ -88,10 +88,14 @@ export interface CampoDeFormulario {
   /**
    * El `data-testid` del control, cuando la pantalla ya tenía uno.
    *
-   * Por defecto el motor pone `campo-<key>`, que alcanza para lo que nace con
-   * él. Se declara cuando hay un recorrido de navegador que ya apuntaba a otro
-   * nombre: migrar una pantalla al motor no tiene por qué romper la prueba que
-   * la recorría.
+   * Por defecto el motor pone `campo-<key>` en los campos de texto, que alcanza
+   * para lo que nace con él. Se declara cuando hay un recorrido de navegador que
+   * ya apuntaba a otro nombre: migrar una pantalla al motor no tiene por qué
+   * romper la prueba que la recorría.
+   *
+   * En `select`, `radio`, `switch`, `textarea` y `checkbox` sale como
+   * `data-testid` sobre el control —esos átomos no tienen entrada `testId`— y
+   * sólo si se declara: no se inventa uno por defecto.
    */
   readonly testId?: string;
 

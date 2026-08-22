@@ -67,7 +67,7 @@ describe('LoginStartForm', () => {
       ip: '10.0.0.7',
       userAgent: 'Mozilla/5.0',
     });
-    interno<(v: unknown) => void>('elegirEntorno')('STAGING');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ environment: 'STAGING' });
 
     interno<() => void>('submit')();
 

@@ -50,7 +50,7 @@ describe('GeofenceEventForm', () => {
       geofenceId: GEOCERCA,
       trackedSubjectId: SUJETO,
     });
-    interno<{ set: (v: string) => void }>('eventType').set('ENTER');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ eventType: 'ENTER' });
 
     interno<() => void>('submit')();
 
@@ -74,7 +74,7 @@ describe('GeofenceEventForm', () => {
       geofenceId: GEOCERCA,
       trackedSubjectId: SUJETO,
     });
-    interno<{ set: (v: string) => void }>('eventType').set('ENTER');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ eventType: 'ENTER' });
 
     interno<() => void>('submit')();
 
@@ -90,12 +90,15 @@ describe('GeofenceEventForm', () => {
   });
 
   it('el selector acepta el valor del contrato y rechaza lo desconocido', () => {
-    interno<(v: unknown) => void>('elegirSentido')('EXIT');
-    expect(interno<() => string | null>('eventType')()).toBe('EXIT');
-
-    interno<(v: unknown) => void>('elegirSentido')('CUALQUIER_COSA');
-    // Un valor fuera del contrato no pisa nada.
-    expect(interno<() => string | null>('eventType')()).toBeNull();
+    // El motor sólo ofrece los dos sentidos del contrato; la comprobación sigue
+    // al armar el cuerpo, que es lo que llega al backend venga de donde venga.
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      geofenceId: GEOCERCA,
+      trackedSubjectId: SUJETO,
+      eventType: 'CUALQUIER_COSA',
+    });
+    interno<() => void>('submit')();
+    // Nada viajó: `http.verify()` lo comprueba.
   });
 
   it('la pantalla se reinicia para otra carga', () => {

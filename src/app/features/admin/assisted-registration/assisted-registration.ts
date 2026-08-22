@@ -109,7 +109,7 @@ export class AssistedRegistration {
       titulo: 'Justificación',
       hint: 'Estás creando una cuenta a nombre de otra persona: queda registrado quién y por qué.',
       campos: [
-        { key: 'reason', label: 'Motivo del registro asistido', hint: 'Queda en la trazabilidad. Máximo 500 caracteres.', control: 'textarea', required: true, mensajeDeError: 'Explicá por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).' },
+        { key: 'reason', testId: 'alta-paciente-motivo', label: 'Motivo del registro asistido', hint: 'Queda en la trazabilidad. Máximo 500 caracteres.', control: 'textarea', required: true, mensajeDeError: 'Explicá por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).' },
       ],
     },
   ]);
