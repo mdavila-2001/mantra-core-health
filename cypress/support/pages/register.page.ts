@@ -2,59 +2,101 @@ import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenar
 import type { AltaPaciente } from '../fixtures/usuarios';
 
 /**
- * Alta de cuenta (`/auth/register`).
+ * Alta de cuenta.
  *
- * La pantalla tiene dos formularios excluyentes —paciente y profesional— que un
- * grupo de opciones intercambia. Son contratos distintos: el paciente entra con
- * su documento y el correo es opcional; el profesional entra con su correo y
- * necesita matrícula y credencial.
+ * Son **dos pantallas**, no una con un selector adentro: `/auth/register` es
+ * una rejilla de tipos de cuenta y cada alta vive en su propia URL. El
+ * contrato de cada una es distinto —el paciente entra con su documento y el
+ * correo es opcional; el profesional entra con su correo y necesita matrícula
+ * y credencial—, así que cambiar de tipo es navegar, no clicar una pestaña.
+ *
+ * ## Se contesta de a una página
+ *
+ * El formulario lo sirve `app-paginated-form`: cuatro campos como mucho por
+ * página, con su barra de avance. Completar el alta es entonces escribir lo de
+ * la página y tocar «Siguiente», hasta que el botón dice «Crear cuenta». Los
+ * `data-testid` de los campos son los de siempre; los de la navegación son del
+ * motor (`paginated-form-continuar`, `paginated-form-atras`), y por eso están
+ * en un solo sitio: acá.
  */
 export const RegisterPage = {
   ruta: '/auth/register',
+  rutaPaciente: '/auth/register/patient',
+  rutaProfesional: '/auth/register/practitioner',
 
   abrir(escenario: NombreEscenario = ESCENARIO_POR_DEFECTO): void {
     cy.abrirEscenario(escenario, RegisterPage.ruta);
     RegisterPage.esperarCargada();
   },
 
+  /** La rejilla de tipos de cuenta, que es lo que hay en `/auth/register`. */
   esperarCargada(): void {
-    cy.porTestId('registro-tipo').should('be.visible');
+    cy.porTestId('tipo-paciente').should('be.visible');
   },
 
   /**
-   * Cambia de tipo de cuenta.
+   * La rejilla y, desde ahí, el alta de paciente.
    *
-   * Se clica la etiqueta y no el `<input type="radio">`: el nativo está oculto
-   * a la vista —lo dibuja el componente— y clicar lo que no se ve no es lo que
-   * hace una persona. La etiqueta es la superficie real del control.
+   * Se entra clicando la tarjeta y no visitando la URL directamente: el enlace
+   * de la rejilla es parte de lo que hay que probar — es la única forma que
+   * tiene alguien de llegar a esta pantalla.
    */
+  abrirPaciente(escenario: NombreEscenario = ESCENARIO_POR_DEFECTO): void {
+    RegisterPage.abrir(escenario);
+    RegisterPage.elegirPaciente();
+  },
+
   elegirProfesional(): void {
-    cy.get('app-radio[value="profesional"] .radio-container').click();
+    cy.porTestId('tipo-profesional').click();
     cy.porTestId('registro-form-profesional').should('be.visible');
   },
 
   elegirPaciente(): void {
-    cy.get('app-radio[value="paciente"] .radio-container').click();
+    cy.porTestId('tipo-paciente').click();
     cy.porTestId('registro-form-paciente').should('be.visible');
   },
 
+  /** El botón que avanza de página, y que en la última envía. */
+  continuar(): void {
+    cy.porTestId('paginated-form-continuar').click();
+  },
+
+  volver(): void {
+    cy.porTestId('paginated-form-atras').click();
+  },
+
+  /**
+   * Las cuatro páginas del alta de paciente, en orden.
+   *
+   * El nombre va en cuatro campos: dos obligatorios y dos que mucha gente no
+   * tiene. Se completan los cuatro para ejercitar el camino completo; el de los
+   * opcionales vacíos lo cubre la prueba de la API.
+   *
+   * La tercera página —fecha, sexo, municipio, ocupación— es toda opcional y se
+   * pasa de largo: lo que prueba este recorrido es que el alta se puede
+   * terminar sin ella.
+   */
   completarPaciente(datos: AltaPaciente, opciones: { conCorreo?: boolean } = {}): void {
     cy.porTestId('registro-documento').clear().type(datos.documento);
-    // El nombre va en cuatro campos: dos obligatorios y dos que mucha gente no
-    // tiene. Se completan los cuatro para ejercitar el camino completo; el de
-    // los opcionales vacíos lo cubre la prueba de la API.
+    RegisterPage.continuar();
+
     cy.porTestId('registro-nombre').clear().type(datos.nombre);
     cy.porTestId('registro-segundo-nombre').clear().type(datos.segundoNombre);
     cy.porTestId('registro-apellido-paterno').clear().type(datos.apellidoPaterno);
     cy.porTestId('registro-apellido-materno').clear().type(datos.apellidoMaterno);
+    RegisterPage.continuar();
+
+    RegisterPage.continuar();
+
     cy.porTestId('registro-password').clear().type(datos.password);
     if (opciones.conCorreo === true) {
       cy.porTestId('registro-correo').clear().type(datos.correo);
     }
   },
 
+  /** El botón de la última página. Ver `continuar`. */
   enviarFormulario(): void {
-    cy.porTestId('registro-submit').click();
+    RegisterPage.continuar();
   },
 
   /** El camino feliz completo. */
@@ -75,7 +117,13 @@ export const RegisterPage = {
     cy.porTestId('registro-error').should('not.exist');
   },
 
-  /** Mensajes de campo obligatorio que la pantalla muestra al intentar enviar. */
+  /**
+   * Mensajes de campo obligatorio que la pantalla muestra al intentar avanzar.
+   *
+   * Son los de **la página en la que se está**: el motor no marca lo que la
+   * persona todavía no vio, así que pedir tres de una vez ya no tiene sentido —
+   * lo que hay es el error del campo que falta acá.
+   */
   mensajesDeValidacion(minimo = 1): Cypress.Chainable<string[]> {
     return cy
       .get('.form-field-error')

@@ -97,134 +97,6 @@
   border-bottom: 1px solid var(--border-default);
 }
 
-/* ==========================================================================
-    Pestañas Paciente / Profesional.
-
-    Reemplazan al grupo de radios: dos destinos claramente distintos (dos
-    formularios, dos endpoints) se leen mejor como pestañas con ícono que como
-    una elección de radio genérica — el ícono dice de qué se trata antes de
-    leer la palabra. */
-.registro__tabs-label {
-  margin: 0 0 var(--sp-2);
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.registro__tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-2);
-  margin-bottom: var(--sp-5);
-  padding: var(--sp-1);
-  border-radius: var(--r-lg);
-  background: color-mix(in srgb, var(--bg-surface-alt) 70%, transparent);
-  border: 1px solid var(--border-default);
-}
-
-.registro__tab {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-3);
-  border-radius: var(--r-md);
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  text-align: left;
-  transition:
-    background var(--dur-base) var(--ease-out),
-    color var(--dur-base) var(--ease-out),
-    border-color var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out);
-}
-
-.registro__tab:hover {
-  background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
-}
-
-.registro__tab:focus-visible {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: 2px;
-}
-
-.registro__tab-icono {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
-  color: var(--brand-primary);
-  transition:
-    background var(--dur-base) var(--ease-out),
-    color var(--dur-base) var(--ease-out);
-}
-
-.registro__tab-icono svg {
-  width: 21px;
-  height: 21px;
-}
-
-.registro__tab-texto {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.registro__tab-titulo {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--fs-body);
-  color: var(--text-primary);
-}
-
-.registro__tab-detalle {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-  /* No empuja la tarjeta a lo ancho ni se corta a la mitad: en la pestaña más
-     angosta (mobile, dos columnas) el detalle envuelve en vez de desbordar. */
-  overflow-wrap: break-word;
-}
-
-.registro__tab--activo {
-  background: var(--brand-primary);
-  border-color: var(--brand-primary);
-  box-shadow: var(--shadow-sm), 0 8px 20px color-mix(in srgb, var(--brand-primary) 28%, transparent);
-}
-
-.registro__tab--activo .registro__tab-titulo,
-.registro__tab--activo .registro__tab-detalle {
-  color: var(--text-inverse);
-}
-
-.registro__tab--activo .registro__tab-detalle {
-  opacity: 0.85;
-}
-
-.registro__tab--activo .registro__tab-icono {
-  background: color-mix(in srgb, var(--text-inverse) 20%, transparent);
-  color: var(--text-inverse);
-}
-
-/* En una tarjeta angosta (mobile) el detalle sobra: la pestaña ya dice bastante
-   con ícono + título, y dos líneas de texto por botón compiten con el
-   formulario que sigue debajo. */
-@media (max-width: 460px) {
-  .registro__tab-detalle {
-    display: none;
-  }
-
-  .registro__tab {
-    justify-content: center;
-  }
-}
-
 .registro__title {
   margin: 0;
   font-family: var(--font-display);
@@ -274,11 +146,6 @@ form {
    viejos. Con `auto-fit` + `minmax` la fila se parte sola cuando entran dos
    campos de 15rem y vuelve a una sola columna cuando no entran, sin que haya
    que adivinar a qué ancho de ventana pasa eso. */
-.registro__row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: var(--sp-4);
-}
 
 .registro__submit {
   margin-top: var(--sp-2);
@@ -299,4 +166,44 @@ form {
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+}
+
+/* La barra de avance, el índice de páginas y los botones «Atrás»/«Crear
+   cuenta» los dibuja `app-paginated-form` con sus propios estilos: esta
+   pantalla llegó a tener una copia de todo eso, y dos hojas para el mismo
+   recorrido se separan al primer retoque que sólo se hace en una. */
+
+/* El aviso de catálogo caído, con su botón de reintento al lado. */
+.registro__catalogo-caido {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+    Pantallas bajas.
+
+    Una página de cuatro preguntas mide, con membrete, barra, titular,
+    navegación y pie, algo más de 800px de alto. En un monitor de 768
+    —1024x768, 1280x720, 1366x768, que son los que hay en las salas— eso deja
+    «Crear cuenta» cortado al ras del borde.
+
+    Acá se recorta lo que es de esta pantalla —el membrete y el pie—; lo de
+    adentro del formulario lo recorta el motor con la misma regla, que salió de
+    medir justamente estos tres monitores.
+   ========================================================================== */
+@media (max-height: 900px) {
+  .registro__header {
+    margin-bottom: var(--sp-4);
+    padding-bottom: var(--sp-3);
+  }
+
+  .registro__footer {
+    margin-top: var(--sp-4);
+    padding-top: var(--sp-3);
+  }
 }

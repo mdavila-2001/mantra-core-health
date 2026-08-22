@@ -81,12 +81,7 @@ const EXCEPCIONES = new Map([
  * ignorar, y entonces deja de proteger también a lo nuevo — que es lo que este
  * verificador existe para proteger.
  */
-const PENDIENTES = new Map([
-  [
-    'app/features/auth/register-patient/register-patient.html',
-    'la está reescribiendo otra rama (municipio de residencia, 22/08/2026); migrarla al motor en paralelo sería pisarse',
-  ],
-]);
+const PENDIENTES = new Map([]);
 
 /** Los controles que cuentan como «un campo que hay que contestar». */
 const CONTROL =
@@ -110,7 +105,12 @@ for (const archivo of plantillas) {
   if (EXCEPCIONES.has(relativa)) continue;
 
   const html = read(archivo);
-  if (!html.includes('[formGroup]')) continue;
+  // Una pantalla es un formulario si declara un `FormGroup`... **o si ya usa el
+  // motor**. Mirar sólo `[formGroup]` dejaba fuera justamente a las migradas
+  // del todo —el motor lleva el `[formGroup]` adentro suyo— y una pantalla que
+  // desaparece de la cuenta al migrarse hace que el verificador cuente cada vez
+  // menos a medida que el trabajo avanza.
+  if (!html.includes('[formGroup]') && !html.includes('<app-paginated-form')) continue;
   const pendiente = PENDIENTES.has(relativa);
 
   if (html.includes('<app-paginated-form')) {
