@@ -63,6 +63,29 @@ const EXCEPCIONES = new Map([
     'app/features/auth-providers/attribute-mappings-editor/attribute-mappings-editor.html',
     'es un repetidor: cada fila es una tarjeta con sus campos y se agrega a mano. La pantalla que lo usa sí pasa por el motor, con el editor como campo `custom`',
   ],
+  [
+    'app/features/agenda/agenda-create/agenda-create.html',
+    'es un constructor de agenda semanal, no un cuestionario: la rejilla de días, el horario de cada uno y la vista previa de los turnos que van a salir se leen juntos, y partirlos en páginas de cuatro escondería justamente lo que hay que comparar',
+  ],
+]);
+
+/**
+ * Lo que **falta migrar**, con fecha y motivo.
+ *
+ * No es lo mismo que una excepción: una excepción dice «esto no es un
+ * formulario lineal»; un pendiente dice «esto lo es y todavía no se hizo». Se
+ * imprime siempre y en voz alta, y la lista **sólo puede encoger**: si una
+ * pantalla de acá ya usa el motor, el verificador falla para que se la saque.
+ *
+ * Que no rompa el CI es deliberado: un check en rojo permanente se aprende a
+ * ignorar, y entonces deja de proteger también a lo nuevo — que es lo que este
+ * verificador existe para proteger.
+ */
+const PENDIENTES = new Map([
+  [
+    'app/features/auth/register-patient/register-patient.html',
+    'la está reescribiendo otra rama (municipio de residencia, 22/08/2026); migrarla al motor en paralelo sería pisarse',
+  ],
 ]);
 
 /** Los controles que cuentan como «un campo que hay que contestar». */
@@ -88,14 +111,21 @@ for (const archivo of plantillas) {
 
   const html = read(archivo);
   if (!html.includes('[formGroup]')) continue;
+  const pendiente = PENDIENTES.has(relativa);
+
   if (html.includes('<app-paginated-form')) {
     revisadas += 1;
+    if (pendiente) {
+      problemas.push(
+        `'${relativa}' ya usa el motor: sacalo de PENDIENTES para que la lista no mienta`,
+      );
+    }
     continue;
   }
 
   const campos = (html.match(CONTROL) ?? []).length;
   revisadas += 1;
-  if (campos > MAX_CAMPOS) {
+  if (campos > MAX_CAMPOS && !pendiente) {
     problemas.push(
       `'${relativa}' declara ${campos} campos en una sola pantalla y no usa <app-paginated-form>`,
     );
@@ -119,3 +149,8 @@ if (problemas.length > 0) {
 
 console.log('✓ check-form-pages');
 console.log(`  ${revisadas} formularios, ninguno pide más de ${MAX_CAMPOS} campos de una vez`);
+
+if (PENDIENTES.size > 0) {
+  console.log(`\n  ${PENDIENTES.size} pendiente(s) de migrar:`);
+  for (const [ruta, motivo] of PENDIENTES) console.log(`    ${ruta}\n      ${motivo}`);
+}

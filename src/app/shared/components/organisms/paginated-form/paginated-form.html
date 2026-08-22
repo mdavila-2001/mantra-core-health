@@ -125,6 +125,12 @@
   }
 
   <nav class="paginated-form__acciones" aria-label="Avance del formulario">
+    @if (cancelLabel()) {
+      <button app-button variant="ghost" type="button" (clicked)="cancelado.emit()">
+        {{ cancelLabel() }}
+      </button>
+    }
+
     @if (!esPrimera()) {
       <button
         app-button

@@ -147,8 +147,20 @@ export class PaginatedForm {
   readonly confirmTitle = input<string>('¿Confirmás la acción?');
   readonly confirmMessage = input<string>('Esta acción no se puede deshacer.');
 
+  /**
+   * El rótulo de la salida sin guardar. Vacío —lo normal— no dibuja nada.
+   *
+   * Mismo contrato que `app-form-actions`, del que salieron las pantallas que se
+   * migran. Va junto al «Atrás» y no junto al envío: son las dos formas de no
+   * seguir adelante, y ponerla al lado del botón que guarda es cómo se cancela
+   * un alta sin querer.
+   */
+  readonly cancelLabel = input<string>('');
+
   /** Se emite en la última página, y sólo si todo el formulario es válido. */
   readonly enviado = output<void>();
+
+  readonly cancelado = output<void>();
 
   /** Las plantillas de los campos `custom`, por `key`. */
   private readonly personalizados = contentChildren(CampoPersonalizado);
