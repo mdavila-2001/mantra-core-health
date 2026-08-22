@@ -3,6 +3,7 @@ import { DestroyRef, inject, Injectable, PLATFORM_ID, signal } from '@angular/co
 import { of, type Observable } from 'rxjs';
 
 import { SessionStore } from '../../auth/session.store';
+import { generarCodigoLegible } from '../../codigo-legible/codigo-legible';
 import {
   ESTADOS_DE_PAGO,
   ESTADOS_DE_PEDIDO,
@@ -23,12 +24,6 @@ import {
 
 /** Cuántas horas vive la reserva desde que el pedido queda listo (contrato). */
 const HORAS_DE_RESERVA = 48;
-
-/**
- * Alfabeto del código de retiro: sin `O/0`, `I/1` ni `B/8` — se lee en voz
- * alta en un mostrador y no puede prestarse a confusión.
- */
-const ALFABETO_DE_RETIRO = 'ACDEFHJKLMNPRTUVWXY34679';
 
 const LARGO_DEL_CODIGO = 6;
 
@@ -673,11 +668,7 @@ function cambiosDeListo(): Partial<PedidoFarmacia> {
 
 /** Seis caracteres legibles en voz alta; la unicidad la dará el backend. */
 function codigoDeRetiro(): string {
-  let codigo = '';
-  for (let i = 0; i < LARGO_DEL_CODIGO; i += 1) {
-    codigo += ALFABETO_DE_RETIRO[Math.floor(Math.random() * ALFABETO_DE_RETIRO.length)];
-  }
-  return codigo;
+  return generarCodigoLegible(LARGO_DEL_CODIGO);
 }
 
 /** Índices de las líneas que la farmacia mantiene en pie. */
