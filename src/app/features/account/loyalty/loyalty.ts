@@ -29,6 +29,7 @@ import {
   movimientoEnPalabras,
   signoDe,
   tonoDeMovimiento,
+  unidadDePuntos,
 } from './punto-motivo';
 import { RedeemCode } from './redeem-code/redeem-code';
 
@@ -198,6 +199,13 @@ export class Loyalty {
       this.errorDeCanje.set('Escribí cuántos puntos querés canjear.');
       return;
     }
+    // Los puntos son unidades enteras: el ledger no guarda medios puntos.
+    // Truncar en silencio canjearía una cantidad distinta de la pedida, así
+    // que se rechaza y se dice por qué.
+    if (!Number.isInteger(cifra)) {
+      this.errorDeCanje.set('Los puntos son enteros: escribí una cantidad sin decimales.');
+      return;
+    }
     if (cifra > Number(cuenta.saldo)) {
       this.errorDeCanje.set(`Te alcanza para canjear hasta ${cuenta.saldo} puntos.`);
       return;
@@ -206,7 +214,7 @@ export class Loyalty {
     this.errorDeCanje.set(null);
     this.canjeando.set(true);
     this.loyalty
-      .canjear({ puntos: String(Math.trunc(cifra)), idempotencyKey: crypto.randomUUID() })
+      .canjear({ puntos: String(cifra), idempotencyKey: crypto.randomUUID() })
       .subscribe({
         next: (canje) => {
           this.comprobante.set(this.loyalty.comprobanteDe(canje));
@@ -226,6 +234,11 @@ export class Loyalty {
           );
         },
       });
+  }
+
+  /** «1 punto», no «1 puntos», cuando la cifra va destacada aparte. */
+  protected unidadDe(cifra: string): string {
+    return unidadDePuntos(cifra);
   }
 
   protected etiquetaDe(movimiento: MovimientoDePuntos): string {

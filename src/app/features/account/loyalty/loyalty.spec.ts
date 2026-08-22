@@ -206,4 +206,50 @@ describe('Loyalty', () => {
     expect(porTestId('puntos-disponibles')?.textContent?.trim()).toBe('0');
     expect(porTestId('puntos-canjear')).toBeNull();
   });
+
+  it('rechaza los decimales diciendo la verdad, sin culpar al saldo', () => {
+    abrirSesion({ pid: 'pp-1' });
+    montar();
+    porTestId('puntos-canjear')?.click();
+    fixture.detectChanges();
+
+    escribirPuntos('0.5');
+    porTestId('canjear-confirmar')?.click();
+    fixture.detectChanges();
+
+    // Se queda en el formulario y explica el motivo real: los puntos son
+    // enteros. Culpar al saldo sería mentir — hay 440.
+    expect(porTestId('canjear-form')).not.toBeNull();
+    expect(texto()).toContain('Los puntos son enteros');
+    expect(texto()).not.toContain('no alcanza');
+    expect(texto()).not.toContain('Te alcanza para canjear');
+  });
+
+  it('nunca canjea una cantidad distinta de la pedida', () => {
+    abrirSesion({ pid: 'pp-1' });
+    montar();
+    porTestId('puntos-canjear')?.click();
+    fixture.detectChanges();
+
+    escribirPuntos('1.9');
+    porTestId('canjear-confirmar')?.click();
+    fixture.detectChanges();
+
+    // Truncar a 1 en silencio descontaría algo que nadie pidió.
+    expect(porTestId('canje-comprobante')).toBeNull();
+    expect(porTestId('canjear-form')).not.toBeNull();
+  });
+
+  it('con un solo punto el texto concuerda en singular', () => {
+    abrirSesion({ pid: 'pp-1' });
+    montar();
+    porTestId('puntos-canjear')?.click();
+    fixture.detectChanges();
+
+    escribirPuntos('1');
+    porTestId('canjear-confirmar')?.click();
+    fixture.detectChanges();
+
+    expect(porTestId('canje-puntos')?.textContent?.trim()).toBe('1 punto');
+  });
 });

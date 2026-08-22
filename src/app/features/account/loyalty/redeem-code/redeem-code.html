@@ -28,13 +28,13 @@
     <div class="canje__dato">
       <dt>Canjeaste</dt>
       <dd class="cifras-tabulares" data-testid="canje-puntos">
-        {{ comprobante().canje.puntos }} puntos
+        {{ enPuntos(comprobante().canje.puntos) }}
       </dd>
     </div>
     <div class="canje__dato">
       <dt>Te queda</dt>
       <dd class="cifras-tabulares" data-testid="canje-saldo">
-        {{ comprobante().canje.saldoDespues }} puntos
+        {{ enPuntos(comprobante().canje.saldoDespues) }}
       </dd>
     </div>
     <div class="canje__dato">

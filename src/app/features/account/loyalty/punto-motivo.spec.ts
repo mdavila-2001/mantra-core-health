@@ -2,8 +2,10 @@ import { MOTIVOS_DE_PUNTOS } from '../../../core/data-access/loyalty/loyalty.typ
 import {
   etiquetaDeMotivo,
   movimientoEnPalabras,
+  puntosEnPalabras,
   signoDe,
   tonoDeMovimiento,
+  unidadDePuntos,
 } from './punto-motivo';
 
 /**
@@ -42,5 +44,22 @@ describe('presentación del movimiento de puntos', () => {
   it('el vencimiento se dice como lo que es, sin alarmar', () => {
     expect(etiquetaDeMotivo('VENCIMIENTO')).toBe('Puntos vencidos');
     expect(movimientoEnPalabras('DEBITO', '30', 'VENCIMIENTO')).toContain('puntos vencidos');
+  });
+
+  it('un solo punto se dice en singular', () => {
+    expect(puntosEnPalabras('1')).toBe('1 punto');
+    expect(unidadDePuntos('1')).toBe('punto');
+  });
+
+  it('cualquier otra cantidad va en plural, el cero incluido', () => {
+    expect(puntosEnPalabras('0')).toBe('0 puntos');
+    expect(puntosEnPalabras('2')).toBe('2 puntos');
+    expect(puntosEnPalabras('150')).toBe('150 puntos');
+    // 21 no es «21 punto»: la concordancia mira la cifra entera, no su final.
+    expect(puntosEnPalabras('21')).toBe('21 puntos');
+  });
+
+  it('la concordancia llega al anuncio para lector de pantalla', () => {
+    expect(movimientoEnPalabras('DEBITO', '1', 'CANJE')).toBe('Restaste 1 punto — canje');
   });
 });

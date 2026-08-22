@@ -51,6 +51,26 @@ export function signoDe(direccion: DireccionDePuntos): string {
 }
 
 /**
+ * La cifra con su sustantivo concordado.
+ *
+ * Un solo punto es «1 punto», no «1 puntos». Vive acá y no en cada plantilla
+ * porque el mismo texto se arma en tres lugares —la fila, el comprobante y el
+ * anuncio para lector de pantalla— y tres copias es garantía de que una quede
+ * mal.
+ */
+export function puntosEnPalabras(puntos: string): string {
+  return `${puntos} ${unidadDePuntos(puntos)}`;
+}
+
+/**
+ * Sólo el sustantivo, para cuando la cifra va destacada aparte y no puede
+ * viajar dentro del mismo nodo de texto.
+ */
+export function unidadDePuntos(puntos: string): string {
+  return puntos.trim() === '1' ? 'punto' : 'puntos';
+}
+
+/**
  * Cómo se anuncia el movimiento a un lector de pantalla.
  *
  * «+45 puntos» dicho por un lector puede sonar ambiguo; esto lo dice con
@@ -62,5 +82,5 @@ export function movimientoEnPalabras(
   motivo: MotivoDePuntos,
 ): string {
   const verbo = direccion === 'CREDITO' ? 'Sumaste' : 'Restaste';
-  return `${verbo} ${puntos} puntos — ${etiquetaDeMotivo(motivo).toLowerCase()}`;
+  return `${verbo} ${puntosEnPalabras(puntos)} — ${etiquetaDeMotivo(motivo).toLowerCase()}`;
 }

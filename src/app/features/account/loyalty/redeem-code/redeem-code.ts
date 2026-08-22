@@ -16,6 +16,7 @@ import type { ComprobanteDeCanje } from '../../../../core/data-access/loyalty/lo
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
+import { puntosEnPalabras } from '../punto-motivo';
 
 /** Lado del QR de canje: el mismo tamaño legible que el de pago y el de retiro. */
 const LADO_DEL_QR = 176;
@@ -57,6 +58,11 @@ export class RedeemCode {
   protected readonly qrDisponible = signal(true);
 
   private readonly lienzoQr = viewChild<ElementRef<HTMLCanvasElement>>('lienzoQrCanje');
+
+  /** «1 punto», no «1 puntos». */
+  protected enPuntos(cifra: string): string {
+    return puntosEnPalabras(cifra);
+  }
 
   constructor() {
     effect(() => {
