@@ -45,6 +45,35 @@ condicionales), así que es un techo, no lo que se ve a la vez. Aun así ninguna
 paginación ni barra: la diferencia entre 12 y 28 en el alta de paciente es de campos ocultos, no
 de páginas.
 
+## 4 · Lo que se construyó después de verificar
+
+### La pestaña «Formularios» del doctor
+
+| Captura | Qué muestra |
+|---|---|
+| `h1-menu-doctor-con-formularios.png` | El menú de la doctora, ahora con **«Formularios»** bajo *Atención*. No aparece para el admin ni para el paciente: la sección declara `exclusiveRoles`. |
+| `h2-lista-formularios-estandar.png` | Los 43 formularios estándar del catálogo, para elegir cuál extender. |
+| `h3-formulario-abierto-presupuesto-y-previa.png` | La anamnesis general abierta: 14 campos del estándar (que no se tocan), el presupuesto «1 de 12 campos propios» con su barra, y la vista previa. |
+| `h4-vista-previa-4-campos-y-barra.png` | La vista previa es el motor de verdad: 4 campos en la página y su barra. |
+| `h5-campo-propio-agregado.png` | Tras agregar «¿Fuma?»: aparece marcado «Tuyo» y el presupuesto pasa a «2 de 12». |
+
+El recorrido corre contra la API parcheada (`:3011`), con el permiso nuevo de
+`POST /forms/assignments`. Sin ese cambio, el paso de agregar el campo devuelve 403.
+
+### La disciplina, aplicada
+
+| Captura | Qué muestra |
+|---|---|
+| `i1-caso-verificacion.png` · `i2-concesion.png` · `i3-protocolo.png` | Tres pantallas internas ya migradas. La de protocolo pedía 12 campos de una vez; ahora dice «Paso 1 de 8». |
+| `j1-alta-aseguradora-paginada.png` | El alta pública de aseguradora: 14 campos en una pantalla → 4 pasos con nombre. |
+| `j2-alta-organizacion-paginada.png` | El alta de organización, con su «Cancelar» junto al «Atrás». |
+
+`node scripts/check-form-pages.mjs` queda en verde: 34 formularios revisados,
+ninguno pide más de cuatro campos de una vez. Declara aparte lo que **no** es un
+formulario lineal (la vitrina, el motor, el repetidor de mapeos, el constructor
+de agenda semanal) y lo que **falta** (`register-patient`, en reescritura en otra
+rama).
+
 ## Cómo reproducir
 
 ```bash
