@@ -38,3 +38,47 @@ export interface PracticeSitePage {
   readonly items: readonly PracticeSite[];
   readonly count: number;
 }
+
+/* ============================================================================
+    Carril 18 — «mis organizaciones»: en qué organizaciones el profesional
+    tiene una vinculación, y en qué estado está cada una. Pertenecer a una
+    organización NO da acceso a sus pacientes; eso depende de una relación
+    asistencial concreta (cita, derivación, intervención, autorización), no de
+    esta pantalla.
+    ========================================================================== */
+
+/** Una vinculación del profesional con una organización, en cualquier estado. */
+export interface MyRoleAssignment {
+  readonly id: string;
+  readonly practiceId: string;
+  readonly practiceName: string;
+  readonly practiceType?: string;
+  readonly practiceSiteId?: string;
+  readonly roleConceptId: string;
+  readonly specialtyConceptId?: string;
+  /** Concepto de estado: pendiente / activa / suspendida / rechazada / finalizada. */
+  readonly status: string;
+  readonly isPrimary: boolean;
+  readonly validFrom?: Date;
+  readonly validTo?: Date;
+  readonly createdAt: Date;
+}
+
+/** Cuerpo de "pedir vincularme a esta organización". */
+export interface SelfRequestAffiliationInput {
+  readonly practiceSiteId?: string;
+  readonly roleConceptId?: string;
+  readonly specialtyConceptId?: string;
+  /** `YYYY-MM-DD`. */
+  readonly validFrom?: string;
+  readonly note?: string;
+}
+
+/** Resultado de solicitar/transicionar una vinculación. */
+export interface RoleAssignmentResult {
+  readonly id: string;
+  readonly practiceId: string;
+  readonly practitionerProfileId: string;
+  readonly status: string;
+  readonly createdAt: Date;
+}

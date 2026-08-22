@@ -1,0 +1,85 @@
+<app-page-header
+  title="Notificaciones"
+  subtitle="Tu bandeja y tus preferencias de canal y categoría"
+/>
+
+<app-alert tone="info" class="explicacion">
+  <p>
+    Acá ves las notificaciones que el sistema te generó (solicitudes, cambios de cita,
+    avisos contables) y configurás por qué canal y para qué categoría querés recibirlas.
+    <strong>Ejemplo:</strong> registrá un gasto en Contabilidad y volvé acá — vas a ver la
+    confirmación en tu bandeja.
+  </p>
+  <p>
+    Las alertas críticas de seguridad y las de citas confirmadas no dependen de estas
+    preferencias: llegan siempre. La notificación interna es real; WhatsApp, SMS y push se
+    pueden dejar configurados, pero en este entorno todavía no tienen un proveedor externo
+    conectado — no se envía nada por esos canales aunque los actives.
+  </p>
+</app-alert>
+
+@if (!cargando()) {
+  <h2 class="titulo-de-seccion">Categorías (canal interno)</h2>
+  <app-card>
+    <ul class="lista-de-preferencias">
+      @for (fila of categorias(); track fila.categoryConceptId) {
+        <li class="fila-de-preferencia">
+          <span>{{ fila.label }}</span>
+          <app-switch
+            [checked]="fila.optedIn"
+            [disabled]="guardandoId() === (canalInternoId() + ':' + fila.categoryConceptId)"
+            (checkedChange)="toggleCategoria(fila, $event)"
+          />
+        </li>
+      }
+    </ul>
+  </app-card>
+
+  <h2 class="titulo-de-seccion">Otros canales</h2>
+  <app-card>
+    <ul class="lista-de-preferencias">
+      @for (fila of otrosCanales(); track fila.channel.id) {
+        <li class="fila-de-preferencia">
+          <span>
+            {{ fila.label }}
+            @if (!fila.configured) {
+              <span class="etiqueta-no-configurado">sin proveedor conectado</span>
+            }
+          </span>
+          <app-switch
+            [checked]="fila.optedIn"
+            [disabled]="guardandoId() === fila.channel.id"
+            (checkedChange)="toggleCanal(fila, $event)"
+          />
+        </li>
+      }
+      @empty {
+        <li class="sin-canales">No hay más canales declarados en este entorno.</li>
+      }
+    </ul>
+  </app-card>
+}
+
+<h2 class="titulo-de-seccion">Mi bandeja</h2>
+@if (bandeja(); as items) {
+  @if (items.length === 0) {
+    <app-empty-state
+      title="Sin notificaciones todavía"
+      description="Acá van a aparecer tus avisos de citas, mensajes y contabilidad."
+    />
+  } @else {
+    <ul class="bandeja" appAnuncio>
+      @for (n of items; track n.id) {
+        <li class="notificacion" [class.no-leida]="!n.readAt">
+          @if (n.subject) {
+            <p class="asunto">{{ n.subject }}</p>
+          }
+          @if (n.bodyText) {
+            <p class="cuerpo">{{ n.bodyText }}</p>
+          }
+          <p class="meta">{{ n.availableAt | date: 'short' }}</p>
+        </li>
+      }
+    </ul>
+  }
+}

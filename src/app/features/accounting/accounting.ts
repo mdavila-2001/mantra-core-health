@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   catchError,
   map,
@@ -18,7 +19,10 @@ import {
 
 import { AccountingClient } from '../../core/data-access/accounting/accounting.client';
 import type {
+  ChartOfAccounts,
   JournalTransaction,
+  LedgerAccount,
+  PaidConsultation,
   Practice,
   TrialBalance,
   TrialBalanceRow,
@@ -28,6 +32,8 @@ import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../shared/a11y/announce-on-appear';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
+import { AppButton } from '../../shared/components/atoms/button/button';
+import { Input } from '../../shared/components/atoms/input/input';
 import { Select } from '../../shared/components/atoms/select/select';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
@@ -36,6 +42,7 @@ import { DataTable } from '../../shared/components/organisms/data-table/data-tab
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
+import { errorMessageOf } from '../../shared/forms/form-support';
 
 /**
  * Los libros contables de una práctica: balance de sumas y saldos y libro
@@ -69,10 +76,13 @@ import { StatusSeal } from '../../shared/components/organisms/status-seal/status
   imports: [
     AnnounceOnAppear,
     Alert,
+    AppButton,
     Card,
     DataTable,
     FormField,
+    Input,
     PageHeader,
+    ReactiveFormsModule,
     Select,
     StatusSeal,
   ],
@@ -209,5 +219,170 @@ export class Accounting {
 
   protected reintentar(): void {
     this.intento.update((n) => n + 1);
+  }
+
+  /* ============================================================================
+      Carril 18 — auto-servicio contable del doctor: el plan de cuentas (para
+      elegir cuentas en los formularios), las consultas pagadas sin asiento
+      todavía, y los dos formularios de registro (ingreso de consulta / gasto).
+      ========================================================================== */
+
+  protected readonly cuentas = toSignal(
+    toObservable(this.practicaYIntento).pipe(
+      switchMap(({ practiceId }): Observable<readonly LedgerAccount[]> => {
+        if (practiceId === null) return of([]);
+        return this.libros
+          .chartOfAccounts(practiceId)
+          .pipe(map((pagina: ChartOfAccounts) => pagina.items));
+      }),
+    ),
+    { initialValue: [] as readonly LedgerAccount[] },
+  );
+
+  protected readonly opcionesDeCuenta = computed<readonly SelectOption<string>[]>(() =>
+    this.cuentas().map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
+  );
+
+  protected readonly consultasPagadas = toSignal(
+    toObservable(this.practicaYIntento).pipe(
+      switchMap(({ practiceId }): Observable<readonly PaidConsultation[]> => {
+        if (practiceId === null) return of([]);
+        return this.libros.listPaidConsultations(practiceId).pipe(catchError(() => of([])));
+      }),
+    ),
+    { initialValue: [] as readonly PaidConsultation[] },
+  );
+
+  protected readonly opcionesDeConsulta = computed<readonly SelectOption<string>[]>(() =>
+    this.consultasPagadas().map((c) => ({
+      value: c.invoiceId,
+      label: `Factura ${c.invoiceNumber} — ${c.paidTotal}`,
+    })),
+  );
+
+  /* ---- Registrar ingreso de consulta pagada -------------------------------- */
+
+  protected readonly formularioDeIngreso = new FormGroup({
+    invoiceId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    debitAccountId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    creditAccountId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+  });
+
+  protected readonly estadoDeIngreso = signal<ViewState<null>>(ready(null));
+  protected readonly enviandoIngreso = computed(
+    () => this.estadoDeIngreso().status === 'loading',
+  );
+  protected readonly errorDeIngreso = computed(() =>
+    errorMessageOf(this.estadoDeIngreso(), 'No tenés permiso para registrar este ingreso.'),
+  );
+  protected readonly ingresoRegistrado = signal(false);
+
+  protected registrarIngreso(): void {
+    const practiceId = this.practicaElegida();
+    if (practiceId === null || this.enviandoIngreso()) return;
+    if (this.formularioDeIngreso.invalid) {
+      this.formularioDeIngreso.markAllAsTouched();
+      return;
+    }
+    const { invoiceId, debitAccountId, creditAccountId } =
+      this.formularioDeIngreso.getRawValue();
+
+    this.estadoDeIngreso.set(loading());
+    this.ingresoRegistrado.set(false);
+    this.libros
+      .registerConsultationIncome({
+        practiceId,
+        invoiceId,
+        debitAccountId,
+        creditAccountId,
+        // Hoy, no ayer: el doctor registra el ingreso en el momento en que lo
+        // hace, no elige una fecha contable distinta desde este formulario simple.
+        transactionDate: new Date().toISOString().slice(0, 10),
+      })
+      .subscribe({
+        next: () => {
+          this.estadoDeIngreso.set(ready(null));
+          this.ingresoRegistrado.set(true);
+          this.formularioDeIngreso.reset({
+            invoiceId: '',
+            debitAccountId: '',
+            creditAccountId: '',
+          });
+          this.reintentar();
+        },
+        error: (error: unknown) => this.estadoDeIngreso.set(errorToViewState<null>(error)),
+      });
+  }
+
+  /* ---- Registrar gasto ------------------------------------------------------ */
+
+  protected readonly formularioDeGasto = new FormGroup({
+    debitAccountId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    creditAccountId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    amount: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(/^\d+(\.\d{1,2})?$/)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(500)],
+    }),
+  });
+
+  protected readonly estadoDeGasto = signal<ViewState<null>>(ready(null));
+  protected readonly enviandoGasto = computed(() => this.estadoDeGasto().status === 'loading');
+  protected readonly errorDeGasto = computed(() =>
+    errorMessageOf(this.estadoDeGasto(), 'No tenés permiso para registrar este gasto.'),
+  );
+  protected readonly gastoRegistrado = signal(false);
+
+  protected registrarGasto(): void {
+    const practiceId = this.practicaElegida();
+    if (practiceId === null || this.enviandoGasto()) return;
+    if (this.formularioDeGasto.invalid) {
+      this.formularioDeGasto.markAllAsTouched();
+      return;
+    }
+    const { debitAccountId, creditAccountId, amount, description } =
+      this.formularioDeGasto.getRawValue();
+
+    this.estadoDeGasto.set(loading());
+    this.gastoRegistrado.set(false);
+    this.libros
+      .registerSimpleEntry({
+        practiceId,
+        kind: 'EXPENSE',
+        debitAccountId,
+        creditAccountId,
+        amount,
+        description,
+        transactionDate: new Date().toISOString().slice(0, 10),
+      })
+      .subscribe({
+        next: () => {
+          this.estadoDeGasto.set(ready(null));
+          this.gastoRegistrado.set(true);
+          this.formularioDeGasto.reset({
+            debitAccountId: '',
+            creditAccountId: '',
+            amount: '',
+            description: '',
+          });
+          this.reintentar();
+        },
+        error: (error: unknown) => this.estadoDeGasto.set(errorToViewState<null>(error)),
+      });
   }
 }
