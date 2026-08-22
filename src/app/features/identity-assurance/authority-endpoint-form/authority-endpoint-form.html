@@ -39,98 +39,12 @@
     <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section legend="De qué autoridad" description="A quién se le publica el endpoint.">
-      <app-form-field
-        label="Autoridad"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.authorityId.touched && form.controls.authorityId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="authorityId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Qué publica"
-      description="El endpoint técnico del módulo de integraciones y qué sabe responder."
-    >
-      <app-form-field
-        label="Endpoint de integración"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.integrationEndpointId.touched &&
-          form.controls.integrationEndpointId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="integrationEndpointId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Capacidad (concepto)"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.capabilityConceptId.touched && form.controls.capabilityConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="capabilityConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Nivel de aseguramiento (concepto)"
-        hint="Opcional: qué nivel alcanza lo que responde este endpoint."
-        [errorMessage]="
-          form.controls.assuranceLevelConceptId.touched &&
-          form.controls.assuranceLevelConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="assuranceLevelConceptId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Versiones del contrato"
-      description="Opcionales: con qué versión pide y con cuál responde."
-    >
-      <app-form-field
-        label="Versión del contrato de petición"
-        [errorMessage]="
-          form.controls.requestContractVersion.touched &&
-          form.controls.requestContractVersion.invalid
-            ? 'Hasta 50 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="requestContractVersion" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Versión del contrato de respuesta"
-        [errorMessage]="
-          form.controls.responseContractVersion.touched &&
-          form.controls.responseContractVersion.invalid
-            ? 'Hasta 50 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="responseContractVersion" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Publicar endpoint"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Publicar endpoint de autoridad"
+  submitLabel="Publicar endpoint"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

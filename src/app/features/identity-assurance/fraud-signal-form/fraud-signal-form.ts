@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { IdentityAdminClient } from '../../../core/data-access/identity/identity-admin.client';
 import type {
@@ -12,12 +12,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import {
   errorMessageOf,
   NUMBER_STRING_ERROR,
@@ -38,15 +36,11 @@ import {
 @Component({
   selector: 'app-fraud-signal-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
+    PaginatedForm,
   ],
   templateUrl: './fraud-signal-form.html',
   styleUrl: '../m27-admin.css',
@@ -60,6 +54,34 @@ export class FraudSignalForm {
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
   protected readonly scoreError = NUMBER_STRING_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué caso',
+      hint: 'El expediente sobre el que pesa la sospecha.',
+      campos: [
+        { key: 'caseId', label: 'Caso de verificación', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'La señal',
+      hint: 'Qué se sospecha, con qué gravedad y con cuánta certeza.',
+      campos: [
+        { key: 'signalTypeConceptId', label: 'Tipo de señal (concepto)', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'severityConceptId', label: 'Severidad (concepto)', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'confidenceScore', label: 'Puntaje de confianza', hint: 'Opcional: entre 0 y 1, como 0.75. Viaja como texto.', control: 'text', mensajeDeError: NUMBER_STRING_ERROR },
+        { key: 'sourceConceptId', label: 'Fuente (concepto)', hint: 'Opcional: de dónde salió la señal — un check, un operador, un sistema.', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'evidenceReference', label: 'Referencia a la evidencia', hint: 'Opcional: dónde está lo que respalda la sospecha (hasta 200 caracteres).', control: 'text', mensajeDeError: 'Hasta 200 caracteres.' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     caseId: new FormControl('', {

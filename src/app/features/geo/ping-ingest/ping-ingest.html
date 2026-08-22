@@ -22,29 +22,15 @@
     <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="De quién"
-      description="El sujeto tiene que estar activo y con una sesión de rastreo abierta, o la ingesta se rechaza."
-    >
-      <app-form-field
-        label="Identificador del sujeto rastreado"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.trackedSubjectId.touched && form.controls.trackedSubjectId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="trackedSubjectId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Los puntos"
-      description="Coordenadas en grados decimales. Sin momento de captura, queda el de la recepción."
-    >
+  <app-paginated-form
+    [paginas]="paginas"
+    [form]="form"
+    label="Ingerir posiciones"
+    submitLabel="Registrar posiciones"
+    [pending]="isSubmitting()"
+    (enviado)="submit()"
+  >
+    <ng-template appCampoPersonalizado="puntos">
       @for (fila of filasVisibles(); track fila; let indice = $index) {
         <app-card variant="outlined" padding="md" class="m13__alert">
           <div [formGroup]="fila">
@@ -113,12 +99,6 @@
       >
         Agregar punto
       </button>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Registrar posiciones"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+    </ng-template>
+  </app-paginated-form>
 }

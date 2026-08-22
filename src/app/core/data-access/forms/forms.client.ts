@@ -4,6 +4,9 @@ import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
+  CreateAssignmentInput,
+  CreateFieldDefinitionInput,
+  ExtensionBudget,
   FieldValueInput,
   FormInstance,
   FormInstanceDetail,
@@ -107,6 +110,53 @@ export class FormsClient {
     return this.http.get<FormInstanceDetail>(
       this.url(`/forms/me/instances/${encodeURIComponent(instanceId)}`),
     );
+  }
+
+  /* -- Generador de formularios --------------------------------------------- */
+
+  /**
+   * `POST /forms/field-definitions` (UC-09-02) — declara un campo.
+   *
+   * Declarar no es colgar: el campo existe en el catálogo global y no aparece
+   * en ningún formulario hasta que {@link createAssignment} lo asigna. Son dos
+   * llamadas y no una porque son dos permisos distintos del backend —declarar
+   * sólo pide sesión; asignar pide rol clínico y presupuesto—, y juntarlas acá
+   * escondería cuál de las dos falló.
+   */
+  createFieldDefinition(input: CreateFieldDefinitionInput): Observable<string> {
+    return this.http
+      .post<{ id: string }>(this.url('/forms/field-definitions'), input)
+      .pipe(map((res) => res.id));
+  }
+
+  /**
+   * `POST /forms/assignments` (UC-09-06) — cuelga un campo de un formulario.
+   *
+   * El tenant **no viaja en el cuerpo**: el backend lo toma del contexto de la
+   * sesión y rechaza cualquier otro. Mandarlo desde acá sería pedir permiso
+   * para algo que no se puede.
+   */
+  createAssignment(input: CreateAssignmentInput): Observable<string> {
+    return this.http
+      .post<{ id: string }>(this.url('/forms/assignments'), input)
+      .pipe(map((res) => res.id));
+  }
+
+  /**
+   * `GET /forms/assignments/budget` — cuánto puede extender el tenant un target.
+   *
+   * Se pregunta **antes** de ofrecer el alta: sin esto la pantalla ofrece un
+   * botón y descubre el techo cuando el `POST` vuelve con un 412, que es
+   * enterarse tarde y con el trabajo escrito.
+   */
+  getExtensionBudget(targetResourceConceptId: string): Observable<ExtensionBudget> {
+    const params = new HttpParams().set(
+      'targetResourceConceptId',
+      targetResourceConceptId,
+    );
+    return this.http.get<ExtensionBudget>(this.url('/forms/assignments/budget'), {
+      params,
+    });
   }
 
   private url(path: string): string {

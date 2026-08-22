@@ -1,0 +1,152 @@
+.constructor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.constructor__encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.constructor__titulo {
+  margin: 0;
+  font-size: var(--fs-h2);
+  font-weight: 600;
+}
+
+.constructor__subtitulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+}
+
+.constructor__codigo,
+.constructor__campo-meta {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.constructor__codigo {
+  margin: var(--sp-1) 0 0;
+}
+
+.constructor__nota,
+.constructor__vacio {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 68ch;
+}
+
+.constructor__presupuesto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.constructor__presupuesto-texto {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Dos columnas: qué tiene el formulario, y cómo se ve servido. En pantalla
+   angosta la vista previa cae debajo — apilarla al lado la dejaría ilegible,
+   y es justamente lo que hay que poder leer. */
+.constructor__columnas {
+  display: grid;
+  gap: var(--sp-6);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 60rem) {
+  .constructor__columnas {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.constructor__campos,
+.constructor__previa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.constructor__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.constructor__campo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.constructor__campo-nombre {
+  font-weight: 500;
+}
+
+.constructor__alta,
+.constructor__formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.constructor__previa-marco {
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  background: var(--bg-surface);
+}
+
+.constructor__plantillas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+}
+
+.constructor__plantilla {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  align-items: flex-start;
+  text-align: start;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.constructor__plantilla:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+}
+
+.constructor__plantilla:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.constructor__plantilla-nombre {
+  font-weight: 600;
+}

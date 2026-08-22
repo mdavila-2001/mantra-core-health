@@ -31,88 +31,12 @@
     <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Identidad del agente"
-      description="El código es único: un duplicado se rechaza con el detalle del conflicto."
-    >
-      <app-form-field
-        label="Código"
-        [required]="true"
-        hint="Único y estable, como boletin-msal-scraper. Máx. 100 caracteres."
-        [errorMessage]="
-          form.controls.code.touched && form.controls.code.invalid
-            ? 'Escribí el código del agente (máx. 100 caracteres).'
-            : ''
-        "
-      >
-        <app-input formControlName="code" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Nombre"
-        [required]="true"
-        [errorMessage]="
-          form.controls.name.touched && form.controls.name.invalid
-            ? 'Escribí el nombre del agente (máx. 200 caracteres).'
-            : ''
-        "
-      >
-        <app-input formControlName="name" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Tipo de agente"
-        [required]="true"
-        hint="Identificador del concepto de tipo (UUID)."
-        [errorMessage]="
-          form.controls.agentTypeConceptId.touched && form.controls.agentTypeConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="agentTypeConceptId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="De quién depende"
-      description="Opcional: el proveedor que lo opera, su referencia técnica y la organización dueña."
-    >
-      <app-form-field
-        label="Proveedor"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.providerId.touched && form.controls.providerId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="providerId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Referencia de implementación"
-        hint="Dónde vive el agente: un repositorio, una imagen, una URL. Máx. 500 caracteres."
-      >
-        <app-input formControlName="implementationRef" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Organización dueña"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.ownerTenantId.touched && form.controls.ownerTenantId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="ownerTenantId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Registrar agente"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Nuevo agente"
+  submitLabel="Registrar agente"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

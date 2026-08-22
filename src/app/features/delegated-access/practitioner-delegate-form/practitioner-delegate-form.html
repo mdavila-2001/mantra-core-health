@@ -36,102 +36,12 @@
     <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Quién delega y en quién"
-      description="Las tres referencias son obligatorias y se pegan como identificador."
-    >
-      <app-form-field
-        label="Asignación de rol del profesional"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.practitionerRoleAssignmentId.touched &&
-          form.controls.practitionerRoleAssignmentId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="practitionerRoleAssignmentId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Asignación de usuario del delegado"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.delegateUserAssignmentId.touched &&
-          form.controls.delegateUserAssignmentId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="delegateUserAssignmentId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Set de permisos delegados"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.delegatedPermissionSetId.touched &&
-          form.controls.delegatedPermissionSetId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="delegatedPermissionSetId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Alcance"
-      description="Qué rol cumple el delegado y hasta dónde llega. Lo que no elijas lo completa el backend."
-    >
-      <app-form-field label="Rol del delegado">
-        <app-radio-group [value]="delegateRole()" (valueChange)="elegirRol($event)">
-          <app-radio value="ASSISTANT" label="Asistente" />
-          <app-radio value="SECRETARY" label="Secretaría" />
-          <app-radio value="NURSE" label="Enfermería" />
-        </app-radio-group>
-      </app-form-field>
-
-      <app-form-field label="Alcance de pacientes">
-        <app-radio-group [value]="patientScope()" (valueChange)="elegirPacientes($event)">
-          <app-radio value="ASSIGNED" label="Solo los asignados" />
-          <app-radio value="ALL" label="Todos" />
-        </app-radio-group>
-      </app-form-field>
-
-      <app-form-field label="Alcance de citas">
-        <app-radio-group [value]="appointmentScope()" (valueChange)="elegirCitas($event)">
-          <app-radio value="TODAY" label="Solo las de hoy" />
-          <app-radio value="ALL" label="Todas" />
-        </app-radio-group>
-      </app-form-field>
-
-      <div class="m29__switches">
-        <app-switch [(checked)]="mayViewClinicalContent" label="Puede ver contenido clínico" />
-        <app-switch [(checked)]="mayEditDrafts" label="Puede editar borradores" />
-      </div>
-
-      <!-- La firma clínica no aparece acá: no se delega nunca por este flujo. -->
-    </app-form-section>
-
-    <app-form-section legend="Vigencia" description="Sin fechas, rige desde ahora y sin vencimiento.">
-      <app-form-field label="Inicio de vigencia">
-        <app-date-picker mode="date-time" [(value)]="validFrom" [disabled]="isSubmitting()" />
-      </app-form-field>
-
-      <app-form-field label="Fin de vigencia">
-        <app-date-picker mode="date-time" [(value)]="validTo" [disabled]="isSubmitting()" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Crear delegación"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Nueva delegación"
+  submitLabel="Crear delegación"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

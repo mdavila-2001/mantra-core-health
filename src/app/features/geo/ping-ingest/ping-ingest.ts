@@ -19,9 +19,10 @@ import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, NUMBER_STRING_PATTERN, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /** El `@ArrayMaxSize` del DTO. El editor avisa mucho antes, pero el techo es este. */
@@ -75,11 +76,11 @@ function nuevaFila(): FilaDePing {
     AnnounceOnAppear,
     AppButton,
     Card,
-    FormActions,
     FormField,
-    FormSection,
     Input,
+    CampoPersonalizado,
     PageHeader,
+    PaginatedForm,
   ],
   templateUrl: './ping-ingest.html',
   styleUrl: '../m13.css',
@@ -100,6 +101,37 @@ export class PingIngest {
       validators: [Validators.required, Validators.pattern(UUID_PATTERN)],
     }),
   });
+
+  /**
+   * Las páginas: el sujeto primero, y los puntos después.
+   *
+   * Los puntos son un **repetidor** —cada uno es una tarjeta que se agrega a
+   * mano—, así que van como campo `custom`: el motor les reserva el sitio y no
+   * aprende nada de coordenadas. Lo que gana la pantalla es que el sujeto deja
+   * de competir por la atención con la lista, y que la lista no se ve hasta
+   * haber dicho de quién son los puntos.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'De quién',
+      hint: 'El sujeto tiene que estar activo y con una sesión de rastreo abierta, o la ingesta se rechaza.',
+      campos: [
+        {
+          key: 'trackedSubjectId',
+          label: 'Identificador del sujeto rastreado',
+          hint: UUID_HINT,
+          control: 'text' as const,
+          required: true,
+          mensajeDeError: UUID_ERROR,
+        },
+      ],
+    },
+    {
+      titulo: 'Los puntos',
+      hint: 'Coordenadas en grados decimales. Sin momento de captura, queda el de la recepción.',
+      campos: [{ key: 'puntos', label: 'Posiciones', control: 'custom' as const, required: true }],
+    },
+  ]);
 
   protected readonly filas = new FormArray<FilaDePing>([nuevaFila()]);
 

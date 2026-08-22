@@ -34,27 +34,32 @@ describe('ObservationForm', () => {
     return (esSenal ? valor : valor.bind(component)) as T;
   }
 
-  function completarMinimo(): void {
+  /** Todo el formulario en el grupo, desde que lo sirve el motor. */
+  function completarMinimo(extra: Record<string, unknown> = {}): void {
     interno<{ patchValue: (v: object) => void }>('form').patchValue({
       collectionRunId: CORRIDA,
       sourceId: FUENTE,
       contentHash: 'sha256:abc',
+      status: 'ACCEPTED',
+      ...extra,
     });
-    interno<{ set: (v: string) => void }>('status').set('ACCEPTED');
   }
 
   it('un contenido extraído que no es un objeto JSON no sale a la red', () => {
-    completarMinimo();
-    interno<{ set: (v: string) => void }>('extractedPayloadJson').set('[1,2,3]');
+    // La regla la aplica ahora el validador `objetoJson` del control, así que
+    // el formulario entero queda inválido y `http.verify()` comprueba que nada
+    // viajó.
+    completarMinimo({ extractedPayloadJson: '[1,2,3]' });
 
     interno<() => void>('submit')();
 
-    expect(interno<() => boolean>('payloadInvalido')()).toBe(true);
+    const control = interno<{ controls: Record<string, { invalid: boolean }> }>('form')
+      .controls['extractedPayloadJson'];
+    expect(control?.invalid).toBe(true);
   });
 
   it('la observación viaja con el JSON parseado, no como texto', () => {
-    completarMinimo();
-    interno<{ set: (v: string) => void }>('extractedPayloadJson').set('{"casos": 12}');
+    completarMinimo({ extractedPayloadJson: '{"casos": 12}' });
 
     interno<() => void>('submit')();
 

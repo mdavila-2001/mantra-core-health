@@ -48,8 +48,10 @@ describe('AccessRequestResolution', () => {
 
   it('una denegación viaja sola: el alcance cargado no acompaña porque no hay grant', () => {
     conSolicitud();
-    interno<(v: unknown) => void>('elegirProposito')('TREATMENT');
-    interno<(v: unknown) => void>('elegirDecision')('DENIED');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      purpose: 'TREATMENT',
+      decision: 'DENIED',
+    });
 
     interno<() => void>('submit')();
 
@@ -63,11 +65,11 @@ describe('AccessRequestResolution', () => {
 
   it('una aprobación lleva el alcance elegido y devuelve el grant emitido', () => {
     conSolicitud();
-    interno<(v: unknown) => void>('elegirDecision')('APPROVED');
-    interno<(v: unknown) => void>('elegirProposito')('TREATMENT');
-    interno<{ set: (v: Date | null) => void }>('validTo').set(
-      new Date('2026-09-30T18:00:00.000Z'),
-    );
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      decision: 'APPROVED',
+      purpose: 'TREATMENT',
+      validTo: new Date('2026-09-30T18:00:00.000Z'),
+    });
 
     interno<() => void>('submit')();
 
@@ -83,7 +85,11 @@ describe('AccessRequestResolution', () => {
   });
 
   it('una decisión fuera del contrato no entra', () => {
-    interno<(v: unknown) => void>('elegirDecision')('MAYBE');
-    expect(interno<() => string | null>('decision')()).toBeNull();
+    // El motor sólo ofrece aprobar o denegar; la comprobación sigue al armar el
+    // cuerpo, que es lo que llega al backend venga de donde venga el valor.
+    conSolicitud();
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ decision: 'MAYBE' });
+    interno<() => void>('submit')();
+    // Nada viajó: `http.verify()` lo comprueba.
   });
 });

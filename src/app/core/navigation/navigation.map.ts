@@ -52,6 +52,19 @@ import type { AppSection } from './navigation.types';
  * menú). Tenerlo una sola vez es lo que evita que la tercera sección de este
  * tipo nazca con la lista a medias.
  */
+/**
+ * Los dos roles de quien atiende.
+ *
+ * Vivía en `app.routes.ts`, que lo usa para cerrar las hijas de «Mi perfil» que
+ * son sólo de quien atiende. Se mudó acá cuando la sección «Formularios» del
+ * generador necesitó la misma pareja: dos listas iguales en dos archivos es
+ * cómo una de las dos se queda corta.
+ */
+export const ROLES_DE_QUIEN_ATIENDE: readonly string[] = [
+  'CLINICIAN',
+  'PRACTITIONER',
+];
+
 const ROLES_QUE_EJERCEN_O_ADMINISTRAN = [
   'PRACTITIONER',
   'CLINICIAN',
@@ -320,6 +333,31 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Buscá un término médico y su significado en lenguaje llano.',
     module: 'M03 terminology',
+  },
+
+  {
+    // **La ruta no puede empezar por `forms`**: es prefijo del proxy hacia la
+    // API y `check-route-prefixes.mjs` lo verifica. De ahí `form-builder`.
+    //
+    // Es la pantalla del doctor, no la del administrador. `administration/
+    // clinical-forms` **arma** la plantilla estándar de una especialidad y es de
+    // `SECURITY_ADMIN`; ésta **extiende** una plantilla ya armada con los campos
+    // propios de un consultorio, dentro del presupuesto que la política de
+    // extensión declara. Son dos permisos distintos del backend y por eso son
+    // dos pantallas.
+    //
+    // `exclusiveRoles` porque el pedido fue **sólo** el doctor: sin esto el
+    // comodín `SUPERADMIN` la vería, y quien administra ya tiene la suya. Es la
+    // segunda sección del registro que lo declara, después de la Guía.
+    path: 'form-builder',
+    label: 'Formularios',
+    group: 'Atención',
+    icon: 'orders',
+    roles: ROLES_DE_QUIEN_ATIENDE,
+    exclusiveRoles: true,
+    availability: 'disponible',
+    summary: 'Agregá tus propios campos a los formularios estándar de tu especialidad.',
+    module: 'M09 forms · M15 chart',
   },
 
   {

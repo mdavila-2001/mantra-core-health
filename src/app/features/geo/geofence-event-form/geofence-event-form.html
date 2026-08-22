@@ -30,71 +30,12 @@
     <app-alert appAnuncio tone="error" class="m13__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Qué cruce"
-      description="El registro es idempotente por sentido: si el sujeto ya estaba de ese lado, se rechaza."
-    >
-      <app-form-field
-        label="Identificador de la geocerca"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.geofenceId.touched && form.controls.geofenceId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="geofenceId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Identificador del sujeto rastreado"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.trackedSubjectId.touched && form.controls.trackedSubjectId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="trackedSubjectId" type="text" />
-      </app-form-field>
-
-      <app-form-field label="Sentido" [required]="true">
-        <app-radio-group [value]="eventType()" (valueChange)="elegirSentido($event)">
-          <app-radio value="ENTER" label="Entró al área" />
-          <app-radio value="EXIT" label="Salió del área" />
-        </app-radio-group>
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Con qué respaldo"
-      description="Opcional: el ping que evidenció el cruce y el momento exacto, si se conocen."
-    >
-      <app-form-field
-        label="Ping de ubicación"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.locationPingId.touched && form.controls.locationPingId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="locationPingId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Cuándo ocurrió"
-        hint="Sin este dato, queda el momento en que se registró."
-      >
-        <app-date-picker mode="date-time" [(value)]="occurredAt" [disabled]="isSubmitting()" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Registrar cruce"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Registrar cruce de geocerca"
+  submitLabel="Registrar cruce"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

@@ -39,108 +39,12 @@
     <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section legend="Qué check" description="El check planificado al que pertenece el intento.">
-      <app-form-field
-        label="Check"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.checkId.touched && form.controls.checkId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="checkId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="El intento"
-      description="Contra qué endpoint publicado salió la consulta y cómo terminó."
-    >
-      <app-form-field
-        label="Endpoint de autoridad"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.identityAuthorityEndpointId.touched &&
-          form.controls.identityAuthorityEndpointId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="identityAuthorityEndpointId" type="text" />
-      </app-form-field>
-
-      <app-form-field label="Resultado técnico" [required]="true">
-        <app-radio-group [value]="outcome()" (valueChange)="elegirResultado($event)">
-          <app-radio value="SUCCESS" label="Exitoso" />
-          <app-radio value="PENDING" label="Pendiente" />
-          <app-radio value="FAILED" label="Fallido" />
-        </app-radio-group>
-      </app-form-field>
-
-      <app-form-field
-        label="Código de error técnico"
-        hint="Opcional: si falló, el código que devolvió la integración (hasta 100 caracteres)."
-        [errorMessage]="
-          form.controls.technicalErrorCode.touched && form.controls.technicalErrorCode.invalid
-            ? 'Hasta 100 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="technicalErrorCode" type="text" />
-      </app-form-field>
-
-      <div class="m27__switches">
-        <app-switch formControlName="retryEligible" label="Elegible para reintento" />
-      </div>
-    </app-form-section>
-
-    <app-form-section
-      legend="Correlación técnica"
-      description="Cómo enlazar el intento con la mensajería de integraciones."
-    >
-      <app-form-field
-        label="Clave de idempotencia"
-        hint="Opcional: repetir el intento con la misma clave no lo duplica (hasta 200 caracteres)."
-        [errorMessage]="
-          form.controls.idempotencyKey.touched && form.controls.idempotencyKey.invalid
-            ? 'Hasta 200 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="idempotencyKey" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Mensaje saliente"
-        hint="Opcional: el mensaje de integración con el que salió la consulta."
-        [errorMessage]="
-          form.controls.requestMessageId.touched && form.controls.requestMessageId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="requestMessageId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Mensaje entrante"
-        hint="Opcional: el mensaje de integración con el que respondió la autoridad."
-        [errorMessage]="
-          form.controls.responseMessageId.touched && form.controls.responseMessageId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="responseMessageId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Registrar intento"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Registrar intento contra la autoridad"
+  submitLabel="Registrar intento"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

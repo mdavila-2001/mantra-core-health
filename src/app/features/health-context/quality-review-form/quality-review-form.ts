@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { HealthContextClient } from '../../../core/data-access/health-context/health-context.client';
 import type {
@@ -12,16 +12,18 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import {
+  errorMessageOf,
+  objetoJson,
+  opcionDe,
+  UUID_ERROR,
+  UUID_HINT,
+  UUID_PATTERN,
+} from '../../../shared/forms/form-support';
 
 const VEREDICTOS: readonly ReviewOutcome[] = ['APPROVED', 'REJECTED'];
 
@@ -37,18 +39,11 @@ const VEREDICTOS: readonly ReviewOutcome[] = ['APPROVED', 'REJECTED'];
 @Component({
   selector: 'app-quality-review-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Radio,
-    RadioGroup,
-    Textarea,
+    PaginatedForm,
   ],
   templateUrl: './quality-review-form.html',
   styleUrl: '../m44.css',
@@ -61,6 +56,34 @@ export class QualityReviewForm {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué se revisa',
+      hint: 'La versión tiene que estar en borrador: lo publicado ya pasó por acá.',
+      campos: [
+        { key: 'versionId', label: 'Identificador de la versión', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'reviewTypeConceptId', label: 'Tipo de revisión', hint: 'Identificador del concepto de tipo (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Veredicto',
+      hint: 'Un rechazo bloquea la publicación de la versión; los detalles quedan con la revisión.',
+      campos: [
+        { key: 'outcome', label: 'Resultado', control: 'radio', options: [{ value: 'APPROVED', label: 'Aprobada' }, { value: 'REJECTED', label: 'Rechazada' }], required: true },
+        { key: 'reviewerAgentId', label: 'Revisor automatizado', hint: 'Opcional: el agente que corrió la revisión, si no fue una persona (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'issuesJson', label: 'Problemas encontrados', hint: 'Opcional: un objeto JSON con el detalle de lo que falló.', control: 'textarea', mensajeDeError: 'Tiene que ser un objeto JSON válido, como {&quot;faltantes&quot;: 2}.' },
+        { key: 'notes', label: 'Notas', hint: 'Opcional: lo que el detalle estructurado no captura.', control: 'textarea' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     versionId: new FormControl('', {
@@ -75,11 +98,15 @@ export class QualityReviewForm {
       nonNullable: true,
       validators: [Validators.pattern(UUID_PATTERN)],
     }),
+    outcome: new FormControl<ReviewOutcome | null>(null, {
+      validators: [Validators.required],
+    }),
+    // Mismo criterio que el contenido extraído de una observación: si viene,
+    // tiene que ser un objeto JSON. Ahora que vive en el grupo lo aplica el
+    // mismo validador que el resto de los campos JSON del proyecto.
+    issuesJson: new FormControl('', { nonNullable: true, validators: [objetoJson] }),
+    notes: new FormControl('', { nonNullable: true }),
   });
-
-  protected readonly outcome = signal<ReviewOutcome | null>(null);
-  protected readonly issuesJson = signal('');
-  protected readonly notes = signal('');
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -90,39 +117,27 @@ export class QualityReviewForm {
     errorMessageOf(this.state(), 'No tenés permiso para registrar revisiones de calidad.'),
   );
 
-  /** Mismo criterio que el contenido extraído de una observación. */
-  protected readonly issuesInvalidos = computed(() => {
-    const texto = this.issuesJson().trim();
-    if (texto === '') {
-      return false;
-    }
-    try {
-      const valor: unknown = JSON.parse(texto);
-      return typeof valor !== 'object' || valor === null || Array.isArray(valor);
-    } catch {
-      return true;
-    }
-  });
-
-  protected elegirVeredicto(valor: unknown): void {
-    this.outcome.set(opcionDe(VEREDICTOS, valor));
-  }
-
   protected submit(): void {
     if (this.isSubmitting()) {
       return;
     }
 
-    const veredicto = this.outcome();
-    if (this.form.invalid || veredicto === null || this.issuesInvalidos()) {
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     const valores = this.form.getRawValue();
+    // El grupo ya lo exige; se comprueba contra el contrato porque el tipo del
+    // control admite `null` y lo que sale de acá es el cuerpo real.
+    const veredicto = opcionDe(VEREDICTOS, valores.outcome);
+    if (veredicto === null) {
+      return;
+    }
+
     const revisor = valores.reviewerAgentId.trim();
-    const problemas = this.issuesJson().trim();
-    const notas = this.notes().trim();
+    const problemas = valores.issuesJson.trim();
+    const notas = valores.notes.trim();
 
     this.state.set(loading());
 
@@ -147,9 +162,6 @@ export class QualityReviewForm {
 
   protected otraRevision(): void {
     this.form.reset();
-    this.outcome.set(null);
-    this.issuesJson.set('');
-    this.notes.set('');
     this.recorded.set(null);
     this.state.set(ready(null));
   }

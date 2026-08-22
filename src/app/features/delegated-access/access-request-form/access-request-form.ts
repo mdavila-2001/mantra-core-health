@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { DelegatedAccessClient } from '../../../core/data-access/delegated-access/delegated-access.client';
 import type {
@@ -12,13 +12,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /** El `@MaxLength` del DTO. */
@@ -38,16 +35,11 @@ const UUID_OPCIONAL = Validators.pattern(UUID_PATTERN);
 @Component({
   selector: 'app-access-request-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Textarea,
+    PaginatedForm,
   ],
   templateUrl: './access-request-form.html',
   styleUrl: '../m29.css',
@@ -62,6 +54,33 @@ export class AccessRequestForm {
   protected readonly uuidError = UUID_ERROR;
   protected readonly maxJustificacion = MAX_JUSTIFICACION;
 
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué se pide',
+      hint: 'La solicitud pendiente es única por delegación, permiso y paciente o encuentro: repetirla da conflicto.',
+      campos: [
+        { key: 'delegationId', label: 'Identificador de la delegación', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'requestedPermissionId', label: 'Permiso solicitado', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Sobre quién',
+      hint: 'Opcional: acota la solicitud a un paciente o a un encuentro puntual.',
+      campos: [
+        { key: 'patientProfileId', label: 'Paciente objetivo', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'encounterId', label: 'Encuentro objetivo', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'reasonText', label: 'Justificación', hint: 'Opcional. La lee quien aprueba.', control: 'textarea' },
+      ],
+    },
+  ]);
+
   protected readonly form = new FormGroup({
     delegationId: new FormControl('', {
       nonNullable: true,
@@ -73,9 +92,8 @@ export class AccessRequestForm {
     }),
     patientProfileId: new FormControl('', { nonNullable: true, validators: [UUID_OPCIONAL] }),
     encounterId: new FormControl('', { nonNullable: true, validators: [UUID_OPCIONAL] }),
+    reasonText: new FormControl('', { nonNullable: true }),
   });
-
-  protected readonly reasonText = signal('');
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -111,16 +129,16 @@ export class AccessRequestForm {
 
   protected otraSolicitud(): void {
     this.form.reset();
-    this.reasonText.set('');
     this.created.set(null);
     this.state.set(ready(null));
   }
 
   private datos(): NewAccessRequest {
-    const { requestedPermissionId, patientProfileId, encounterId } = this.form.getRawValue();
+    const { requestedPermissionId, patientProfileId, encounterId, reasonText } =
+      this.form.getRawValue();
     const paciente = patientProfileId.trim();
     const encuentro = encounterId.trim();
-    const justificacion = this.reasonText().trim();
+    const justificacion = reasonText.trim();
 
     return {
       requestedPermissionId: requestedPermissionId.trim(),

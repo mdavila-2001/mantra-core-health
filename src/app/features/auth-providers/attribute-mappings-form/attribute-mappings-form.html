@@ -40,31 +40,16 @@
     que no lo cumpla.
   </app-alert>
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section legend="Qué se configura" description="El proveedor cuyo mapeo se fija.">
-      <app-form-field
-        label="Identificador del proveedor"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.providerId.touched && form.controls.providerId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="providerId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Mapeos"
-      description="Al menos uno; los interruptores viajan siempre, como decisión explícita."
-    >
+  <app-paginated-form
+    [paginas]="paginas"
+    [form]="form"
+    label="Fijar mapeo de atributos"
+    submitLabel="Fijar mapeo"
+    [pending]="isSubmitting()"
+    (enviado)="submit()"
+  >
+    <ng-template appCampoPersonalizado="mapeos">
       <app-attribute-mappings-editor [disabled]="isSubmitting()" />
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Fijar mapeo"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+    </ng-template>
+  </app-paginated-form>
 }

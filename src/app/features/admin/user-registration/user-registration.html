@@ -36,101 +36,13 @@
     }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="alta-usuario-form">
-    <app-form-section legend="Identificación" description="Con qué entra y cómo se lo nombra.">
-      <app-form-field
-        label="Nombre visible"
-        [required]="true"
-        [errorMessage]="
-          form.controls.displayName.touched && form.controls.displayName.invalid
-            ? 'Escribí el nombre con el que se va a mostrar la cuenta.'
-            : ''
-        "
-      >
-        <app-input formControlName="displayName" type="text" testId="alta-usuario-nombre" />
-      </app-form-field>
-
-      <app-form-field
-        label="Correo"
-        hint="Es el identificador con el que va a iniciar sesión."
-        [required]="true"
-        [errorMessage]="
-          form.controls.email.touched && form.controls.email.invalid
-            ? 'Ingresá un correo válido.'
-            : ''
-        "
-      >
-        <app-input
-          formControlName="email"
-          type="email"
-          autocomplete="off"
-          testId="alta-usuario-correo"
-        />
-      </app-form-field>
-
-      <app-form-field
-        label="Teléfono"
-        hint="Opcional. Queda como punto de contacto."
-        [errorMessage]="
-          form.controls.phone.touched && form.controls.phone.invalid
-            ? 'El teléfono sólo admite dígitos, espacios, paréntesis, + y guion.'
-            : ''
-        "
-      >
-        <!-- `text` y no `tel`: el átomo cierra el set de tipos a propósito, y el
-             backend acepta espacios, paréntesis y guion, que un teclado
-             numérico puro no ofrece. `autocomplete` sigue diciendo qué es. -->
-        <app-input
-          formControlName="phone"
-          type="text"
-          autocomplete="tel"
-          testId="alta-usuario-telefono"
-        />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Acceso"
-      description="La contraseña es provisional: entregala por un canal seguro."
-    >
-      <app-form-field
-        label="Contraseña inicial"
-        hint="Mínimo 8 caracteres."
-        [required]="true"
-        [errorMessage]="
-          form.controls.password.touched && form.controls.password.invalid
-            ? 'La contraseña necesita al menos 8 caracteres.'
-            : ''
-        "
-      >
-        <!-- `new-password` evita que el navegador ofrezca la clave del propio
-             administrador para la cuenta de otra persona. -->
-        <app-input
-          formControlName="password"
-          type="password"
-          autocomplete="new-password"
-          testId="alta-usuario-clave"
-        />
-      </app-form-field>
-
-      <!-- Dos opciones: grupo de radios, que es lo que mandan las convenciones
-           para un enum de cuatro o menos. Se ven sin abrir nada. -->
-      <app-form-field label="Rol inicial" hint="Los demás roles se conceden después.">
-        <app-radio-group
-          data-testid="alta-usuario-rol"
-          [value]="initialRole()"
-          (valueChange)="cambiarRol($event)"
-        >
-          <app-radio value="USER" label="Usuario" />
-          <app-radio value="SECURITY_ADMIN" label="Administrador de seguridad" />
-        </app-radio-group>
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Crear cuenta"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Alta de usuario"
+  submitLabel="Crear cuenta"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+  data-testid="alta-usuario-form"
+/>
 }

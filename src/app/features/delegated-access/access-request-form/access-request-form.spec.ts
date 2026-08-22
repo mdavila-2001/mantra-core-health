@@ -35,12 +35,11 @@ describe('AccessRequestForm', () => {
     return (esSenal ? valor : valor.bind(component)) as T;
   }
 
+  /** La justificación también vive en el grupo desde que la sirve el motor. */
   function completar(campos: Partial<Record<string, string>> = {}) {
-    interno<{ setValue: (v: Record<string, string>) => void }>('form').setValue({
+    interno<{ patchValue: (v: Record<string, string>) => void }>('form').patchValue({
       delegationId: DELEGACION,
       requestedPermissionId: PERMISO,
-      patientProfileId: '',
-      encounterId: '',
       ...campos,
     });
   }
@@ -64,8 +63,7 @@ describe('AccessRequestForm', () => {
   });
 
   it('la justificación viaja cuando existe', () => {
-    completar();
-    interno<{ set: (v: string) => void }>('reasonText').set('cubro la guardia del viernes');
+    completar({ reasonText: 'cubro la guardia del viernes' });
 
     interno<() => void>('submit')();
 

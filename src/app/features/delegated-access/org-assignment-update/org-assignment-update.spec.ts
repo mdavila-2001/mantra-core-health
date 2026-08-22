@@ -35,8 +35,8 @@ describe('OrgAssignmentUpdate', () => {
     return (esSenal ? valor : valor.bind(component)) as T;
   }
 
-  function conAsignacion(campos: Partial<Record<string, string | number>> = {}) {
-    interno<{ patchValue: (v: Record<string, string | number>) => void }>('form').patchValue({
+  function conAsignacion(campos: Record<string, unknown> = {}) {
+    interno<{ patchValue: (v: Record<string, unknown>) => void }>('form').patchValue({
       assignmentId: ASIGNACION,
       ...campos,
     });
@@ -64,8 +64,7 @@ describe('OrgAssignmentUpdate', () => {
   });
 
   it('la suspensión viaja como true y la versión esperada la acompaña', () => {
-    conAsignacion({ expectedRowVersion: 7 });
-    interno<{ set: (v: boolean) => void }>('suspender').set(true);
+    conAsignacion({ expectedRowVersion: 7, suspender: true });
 
     interno<() => void>('submit')();
 
@@ -77,7 +76,13 @@ describe('OrgAssignmentUpdate', () => {
   });
 
   it('un alcance fuera del contrato no entra', () => {
-    interno<(v: unknown) => void>('elegirAlcance')('REGION');
-    expect(interno<() => string | null>('accessScope')()).toBeNull();
+    // El motor sólo ofrece los del contrato; la comprobación sigue al armar el
+    // cuerpo, que es lo que llega al backend venga de donde venga el valor.
+    conAsignacion({ accessScope: 'REGION' });
+    interno<() => void>('submit')();
+
+    const req = http.expectOne(`/org/user-assignments/${ASIGNACION}`);
+    expect(req.request.body).not.toHaveProperty('accessScope');
+    req.flush({ ok: true });
   });
 });

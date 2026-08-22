@@ -36,76 +36,12 @@
     <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Qué solicitud"
-      description="La solicitud de acceso pendiente que se va a resolver."
-    >
-      <app-form-field
-        label="Identificador de la solicitud"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.requestId.touched && form.controls.requestId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="requestId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section legend="Decisión" description="Queda registrada en la auditoría del módulo.">
-      <app-form-field label="Decisión del aprobador" [required]="true">
-        <app-radio-group [value]="decision()" (valueChange)="elegirDecision($event)">
-          <app-radio value="APPROVED" label="Aprobar" />
-          <app-radio value="DENIED" label="Denegar" />
-        </app-radio-group>
-      </app-form-field>
-    </app-form-section>
-
-    @if (esAprobacion()) {
-      <app-form-section
-        legend="Alcance del grant emitido"
-        description="Opcional: acota la concesión que nace de esta aprobación."
-      >
-        <app-form-field label="Propósito de uso">
-          <app-radio-group [value]="purpose()" (valueChange)="elegirProposito($event)">
-            <app-radio value="TREATMENT" label="Tratamiento" />
-            <app-radio value="BILLING" label="Facturación" />
-            <app-radio value="OPERATIONS" label="Operaciones" />
-          </app-radio-group>
-        </app-form-field>
-
-        <app-form-field label="Tipo de recurso">
-          <app-radio-group [value]="resourceType()" (valueChange)="elegirRecurso($event)">
-            <app-radio value="CLINICAL_NOTE" label="Nota clínica" />
-            <app-radio value="APPOINTMENT" label="Cita" />
-            <app-radio value="PRESCRIPTION" label="Receta" />
-          </app-radio-group>
-        </app-form-field>
-
-        <app-form-field label="Fin de vigencia del grant" hint="Sin fecha, decide el backend.">
-          <app-date-picker mode="date-time" [(value)]="validTo" [disabled]="isSubmitting()" />
-        </app-form-field>
-
-        <app-form-field
-          label="Encuentro del grant"
-          [hint]="uuidHint"
-          [errorMessage]="
-            form.controls.encounterId.touched && form.controls.encounterId.invalid
-              ? uuidError
-              : ''
-          "
-        >
-          <app-input formControlName="encounterId" type="text" />
-        </app-form-field>
-      </app-form-section>
-    }
-
-    <app-form-actions
-      submitLabel="Resolver solicitud"
-      [pending]="isSubmitting()"
-      [disabled]="decision() === null"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+    [paginas]="paginas()"
+    [form]="form"
+    label="Resolver solicitud de acceso"
+    submitLabel="Resolver solicitud"
+    [pending]="isSubmitting()"
+    (enviado)="submit()"
+  />
 }

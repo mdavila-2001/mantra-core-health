@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { IdentityAdminClient } from '../../../core/data-access/identity/identity-admin.client';
 import type {
@@ -12,12 +12,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /**
@@ -32,15 +30,11 @@ import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../sh
 @Component({
   selector: 'app-authority-endpoint-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
+    PaginatedForm,
   ],
   templateUrl: './authority-endpoint-form.html',
   styleUrl: '../m27-admin.css',
@@ -53,6 +47,40 @@ export class AuthorityEndpointForm {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'De qué autoridad',
+      hint: 'A quién se le publica el endpoint.',
+      campos: [
+        { key: 'authorityId', label: 'Autoridad', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Qué publica',
+      hint: 'El endpoint técnico del módulo de integraciones y qué sabe responder.',
+      campos: [
+        { key: 'integrationEndpointId', label: 'Endpoint de integración', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'capabilityConceptId', label: 'Capacidad (concepto)', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'assuranceLevelConceptId', label: 'Nivel de aseguramiento (concepto)', hint: 'Opcional: qué nivel alcanza lo que responde este endpoint.', control: 'text', mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Versiones del contrato',
+      hint: 'Opcionales: con qué versión pide y con cuál responde.',
+      campos: [
+        { key: 'requestContractVersion', label: 'Versión del contrato de petición', control: 'text', mensajeDeError: 'Hasta 50 caracteres.' },
+        { key: 'responseContractVersion', label: 'Versión del contrato de respuesta', control: 'text', mensajeDeError: 'Hasta 50 caracteres.' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     authorityId: new FormControl('', {
