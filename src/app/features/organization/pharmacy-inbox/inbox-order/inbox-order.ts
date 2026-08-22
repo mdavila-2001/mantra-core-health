@@ -14,6 +14,7 @@ import type { Observable } from 'rxjs';
 
 import {
   esEstadoTerminal,
+  estaPagado,
   PharmacyOrdersClient,
   puedeConfirmarse,
   puedePrepararse,
@@ -116,6 +117,33 @@ export class InboxOrder {
 
   /** El último intento de retiro tenía un código que no coincide. */
   protected readonly codigoInvalido = signal(false);
+
+  /**
+   * El estado del pago, dicho donde el mostrador decide si cobra (FAR-I5).
+   * Sólo lectura: el pago se registra al cerrar la dispensa, no acá. Lo
+   * crítico es el «ya pagado» del QR de la demo — sin este badge, la
+   * farmacia cobraría dos veces.
+   */
+  protected readonly etiquetaDePago = computed(() => {
+    const pedido = this.pedido();
+    if (pedido === null) {
+      return null;
+    }
+    if (estaPagado(pedido)) {
+      return pedido.pago?.origen === 'QR_DEMO'
+        ? { tone: 'info' as const, label: 'Pagado por QR (demo) — no cobrar' }
+        : { tone: 'success' as const, label: 'Pagado en mostrador' };
+    }
+    // El recordatorio de cobrar aparece donde el cobro puede pasar: el
+    // mostrador con el pedido listo, o la entrega con el envío en la calle.
+    if (pedido.estado === 'LISTO_PARA_RETIRO') {
+      return { tone: 'warning' as const, label: 'Pago pendiente — cobrar en mostrador' };
+    }
+    if (pedido.envio === 'EN_CAMINO') {
+      return { tone: 'warning' as const, label: 'Pago pendiente — cobrar al entregar' };
+    }
+    return null;
+  });
 
   protected readonly presentacion = computed(() => {
     const abierto = this.pedido();

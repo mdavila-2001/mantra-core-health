@@ -1,0 +1,74 @@
+<section class="pago" aria-labelledby="pedido-pago" data-testid="pedido-pago">
+  <h3 id="pedido-pago" class="pago__subtitulo">El pago</h3>
+
+  @if (pagado()) {
+    <!-- ─── Ya está pagado: el resumen y nada más ──────────────────────── -->
+    <p class="pago__resumen" data-testid="pago-resumen">
+      <app-badge variant="success">{{ medioDePago() }}</app-badge>
+      @if (pedido().pago?.pagadoEl; as fecha) {
+        <span class="pago__secundario">
+          el {{ fecha | date: 'dd/MM/yyyy' }} a las {{ fecha | date: 'HH:mm' }}
+        </span>
+      }
+    </p>
+  } @else {
+    <p class="pago__total" data-testid="pago-total">
+      @if (pedido().totalEstimado !== null) {
+        A pagar:
+        <strong class="cifras-tabulares">
+          {{ pedido().totalEstimado }} {{ pedido().moneda }}
+        </strong>
+      } @else {
+        Total no disponible: falta algún precio publicado.
+      }
+    </p>
+
+    @if (qrDemoActiva) {
+      <app-tabs>
+        <app-tab label="En mostrador">
+          <p class="pago__mostrador" data-testid="pago-mostrador">
+            Pagás al retirar, en la farmacia. Cuando el mostrador registre tu
+            pago, tu comprobante llega directo a la app.
+          </p>
+        </app-tab>
+        <app-tab label="QR">
+          <!-- El chip DEMO va quemado a propósito: no existe input ni prop
+               que lo quite — la pasarela no está, y esta pestaña lo dice. -->
+          <div class="pago__demo-chip">
+            <app-badge variant="info" data-testid="pago-chip-demo">
+              DEMO — el pago real llega con la pasarela
+            </app-badge>
+          </div>
+          @if (qrDisponible()) {
+            <!-- El mismo dato que el monto de arriba, para la cámara del
+                 banco: duplicado para quien escucha, y por eso oculto. -->
+            <div class="pago__qr" aria-hidden="true">
+              <canvas #lienzoQrPago [width]="ladoDelQr" [height]="ladoDelQr"></canvas>
+            </div>
+          }
+          <p>Escaneá con tu banca móvil.</p>
+          <p class="pago__espera" data-testid="pago-espera">
+            <app-spinner decorative />
+            <span>Esperando la confirmación del banco…</span>
+          </p>
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            type="button"
+            data-testid="pago-simular"
+            [isLoading]="ocupado()"
+            (clicked)="pagoSimulado.emit()"
+          >
+            Simular pago aprobado
+          </button>
+        </app-tab>
+      </app-tabs>
+    } @else {
+      <p class="pago__mostrador" data-testid="pago-mostrador">
+        Pagás al retirar, en la farmacia. Cuando el mostrador registre tu
+        pago, tu comprobante llega directo a la app.
+      </p>
+    }
+  }
+</section>

@@ -30,6 +30,7 @@ describe('pedido-status', () => {
     motivoDeRechazo: null,
     envio: null,
     entregas: [],
+    pago: { estado: 'PENDIENTE', origen: null, pagadoEl: null, total: null, moneda: null },
     sustituciones: Array.from({ length: sustituciones }, (_, i) => ({
       id: `s-${i}`,
       original: { nombre: 'Marca', precio: '60.00' },
@@ -128,5 +129,23 @@ describe('pedido-status', () => {
     expect(presentacionDePedido(pedido('RETIRADO')).label).toBe('Retirado');
     const pasos = pasosDeLaLineaDeTiempo(entregado);
     expect(pasos.every((p) => p.status === 'complete')).toBe(true);
+  });
+
+  it('listo y pagado ya no dice «pagás al retirar» (FAR-I5)', () => {
+    const pagado: PedidoFarmacia = {
+      ...pedido('LISTO_PARA_RETIRO'),
+      pago: {
+        estado: 'PAGADO',
+        origen: 'QR_DEMO',
+        pagadoEl: new Date('2026-08-21T18:30:00'),
+        total: '60.00',
+        moneda: 'BOB',
+      },
+    };
+    expect(presentacionDePedido(pagado).descripcion).toContain('Ya está pagado');
+    // Pendiente, la frase del mostrador de siempre.
+    expect(presentacionDePedido(pedido('LISTO_PARA_RETIRO')).descripcion).toContain(
+      'Pagás al retirar',
+    );
   });
 });

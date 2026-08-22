@@ -95,6 +95,44 @@ export interface EntregaRegistrada {
   readonly indices: readonly number[];
 }
 
+/* ─── El pago (carril FAR-I5, contrato provisorio de FAR-E4) ────────────── */
+
+/**
+ * Estados del pago, value set provisorio del front (como `ESTADOS_DE_PEDIDO`).
+ * La pasarela real no existe: `PAGADO` llega hoy por dos caminos — el
+ * mostrador al cerrar la dispensación, o el simulador del QR detrás del gate.
+ * TODO(FAR-E4): el puerto real define el catálogo y este set se ajusta acá.
+ */
+export const ESTADOS_DE_PAGO = ['PENDIENTE', 'PAGADO'] as const;
+
+export type EstadoDePago = (typeof ESTADOS_DE_PAGO)[number];
+
+/**
+ * De dónde salió el pago. `QR_DEMO` existe sólo mientras la pasarela no está:
+ * el comprobante lo dice en palabras («Pago demo») y nadie lo confunde con
+ * dinero real.
+ */
+export const ORIGENES_DE_PAGO = ['MOSTRADOR', 'QR_DEMO'] as const;
+
+export type OrigenDePago = (typeof ORIGENES_DE_PAGO)[number];
+
+/**
+ * El pago del pedido, tal como el comprobante y las pantallas lo leen.
+ *
+ * `total` y `moneda` se **congelan al pagar**: son lo que se cobró, no un
+ * puntero al total vivo del pedido. Sin esto, una sustitución aceptada
+ * después del pago reescribiría retroactivamente lo que dice el comprobante.
+ */
+export interface PagoDelPedido {
+  readonly estado: EstadoDePago;
+  /** Sólo con `PAGADO`; pendiente no tiene origen. */
+  readonly origen: OrigenDePago | null;
+  readonly pagadoEl: Date | null;
+  /** Lo cobrado, como texto exacto — o `null` si se cobró sin precio publicado. */
+  readonly total: string | null;
+  readonly moneda: string | null;
+}
+
 /** Un pedido de farmacia, tal como las pantallas lo leen. */
 export interface PedidoFarmacia {
   readonly id: string;
@@ -132,6 +170,12 @@ export interface PedidoFarmacia {
   readonly envio: HitoDeEnvio | null;
   /** La historia de dispensas: cada entrega parcial o total del mostrador. */
   readonly entregas: readonly EntregaRegistrada[];
+  /**
+   * El pago del pedido. `null` en pedidos que terminaron sin cobrar
+   * (rechazados, vencidos, cancelados antes de pagar); los activos nacen
+   * `PENDIENTE`.
+   */
+  readonly pago: PagoDelPedido | null;
   /** La receta de origen: para re-pedir y para volver al mapa de sedes. */
   readonly requestId: string;
   readonly siteId: string;

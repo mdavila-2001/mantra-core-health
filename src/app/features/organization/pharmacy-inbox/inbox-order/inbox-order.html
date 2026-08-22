@@ -17,6 +17,11 @@
             <app-badge [variant]="estado.tone" data-testid="mostrador-estado-badge">
               {{ estado.label }}
             </app-badge>
+            @if (etiquetaDePago(); as pago) {
+              <app-badge [variant]="pago.tone" data-testid="mostrador-pago-badge">
+                {{ pago.label }}
+              </app-badge>
+            }
             <span class="mostrador__secundario">{{ estado.descripcion }}</span>
           </p>
           <p class="mostrador__secundario">

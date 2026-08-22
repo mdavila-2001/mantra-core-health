@@ -32,6 +32,14 @@ describe('rutaDeNotificacion', () => {
     );
   });
 
+  it('lleva el aviso del pago a su comprobante (FAR-I5)', () => {
+    // El id es el del pedido: cuando el backend registre el pago y emita
+    // (FAR-E1/E4), su notificación ya abre el papel.
+    expect(rutaDeNotificacion({ type: 'PHARMACY_RECEIPT', id: 'ped-1' })).toBe(
+      '/my-account/pharmacy-orders/ped-1/receipt',
+    );
+  });
+
   it('devuelve null cuando el tipo todavía no tiene pantalla', () => {
     expect(rutaDeNotificacion({ type: 'POST', id: 'p-1' })).toBeNull();
   });

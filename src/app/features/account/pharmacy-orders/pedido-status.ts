@@ -84,12 +84,20 @@ export function toPedidoStatusPresentation(estado: EstadoDePedido): PedidoStatus
 
 /**
  * La presentación del pedido completo (FAR-I3): con envío, el cierre no es
- * «Retirado» — nadie pasó por el mostrador — sino «Entregado». Para todo lo
- * demás delega en la tabla por estado.
+ * «Retirado» — nadie pasó por el mostrador — sino «Entregado». Y con el pago
+ * ya registrado (FAR-I5), «pagás al retirar» dejaría de ser verdad: la frase
+ * del mostrador cambia. Para todo lo demás delega en la tabla por estado.
  */
 export function presentacionDePedido(pedido: PedidoFarmacia): PedidoStatusPresentation {
   if (pedido.estado === 'RETIRADO' && pedido.modalidad !== 'RETIRO') {
     return { tone: 'secondary', label: 'Entregado', descripcion: 'Tu pedido llegó.' };
+  }
+  if (pedido.estado === 'LISTO_PARA_RETIRO' && pedido.pago?.estado === 'PAGADO') {
+    return {
+      tone: 'success',
+      label: 'Listo para retirar',
+      descripcion: 'Tu pedido te espera en el mostrador. Ya está pagado: solo presentá tu código.',
+    };
   }
   return toPedidoStatusPresentation(pedido.estado);
 }

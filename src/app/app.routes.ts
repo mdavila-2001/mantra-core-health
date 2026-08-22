@@ -327,6 +327,18 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // El comprobante interno del pago (carril FAR-I5). Es el destino de la
+    // notificación futura del backend (`PHARMACY_RECEIPT` en la tabla de la
+    // campana); sin pago registrado, la pantalla dice su vacío honesto.
+    path: 'my-account/pharmacy-orders/:orderId/receipt',
+    title: `${APP_TITLE} - Comprobante de pago`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/order-receipt/order-receipt')
+        .then((m) => m.OrderReceipt)
+        .catch(() => chunkFallido()),
+  },
+  {
     // El mismo pedido, visto desde el mostrador (carril FAR-I3): la
     // «recepción por un link» del registro del cliente. Hija de la bandeja;
     // hereda por prefijo su regla de acceso por membresía.
