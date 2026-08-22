@@ -33,6 +33,13 @@ export interface ChartTemplateField {
   readonly valueSetId?: string;
   readonly required: boolean;
   readonly ordinal?: number;
+  /**
+   * Si el campo lo agregó esta organización, o viene del formulario estándar.
+   *
+   * El generador lo necesita para dos cosas que no puede adivinar: qué campos
+   * puede tocar —los del estándar no— y cuáles cuentan contra su presupuesto.
+   */
+  readonly own: boolean;
 }
 
 /**
@@ -74,6 +81,14 @@ export interface ChartTemplate {
   readonly version: number;
   /** Concept id del estado de la plantilla. */
   readonly statusConceptId: string;
+  /**
+   * Sección que aloja los campos. Colgar un campo propio **dentro** de la
+   * plantilla exige nombrarla: una asignación en otra sección existe y no la
+   * dibuja nadie.
+   */
+  readonly sectionId?: string;
+  /** Target de las asignaciones de campo, para pedir presupuesto y asignar. */
+  readonly fieldTargetConceptId: string;
   readonly fields: readonly ChartTemplateField[];
   /** De dónde salió, si vino del catálogo de formularios estándar. */
   readonly provenance?: ChartTemplateProvenance;
