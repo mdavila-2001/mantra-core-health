@@ -53,7 +53,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | Objeto | Ruta | Métodos | Archivo |
 | --- | --- | --- | --- |
 | `ActivateAccountPage` | `/auth/activate` | 13 | `cypress/support/pages/activate-account.page.ts` |
-| `DashboardPage` | `/dashboard` | 10 | `cypress/support/pages/dashboard.page.ts` |
+| `DashboardPage` | `/dashboard` | 12 | `cypress/support/pages/dashboard.page.ts` |
 | `DesignSystemPage` | `/design-system` | 7 | `cypress/support/pages/design-system.page.ts` |
 | `ForgotPasswordPage` | `/auth/forgot-password` | 9 | `cypress/support/pages/forgot-password.page.ts` |
 | `LoginPage` | `/auth` | 17 | `cypress/support/pages/login.page.ts` |
@@ -83,4 +83,4 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 
 ## Coherencia de los selectores
 
-Los 83 identificadores que la suite localiza están declarados en las plantillas.
+**1 identificador(es) que la suite usa ya no existen en ninguna plantilla:** `registro-tipo`. Las pruebas que los usan van a fallar.

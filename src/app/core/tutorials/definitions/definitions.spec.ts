@@ -167,7 +167,11 @@ describe('Definiciones de tutoriales', () => {
     expect(ids).toContain('agenda-del-dia');
     expect(ids).toContain('expediente-clinico');
     expect(ids).toContain('perfil-profesional');
-    // Y no el de facturación, que es de otro rol.
-    expect(ids).not.toContain('contabilidad');
+    // Y también el de contabilidad: desde el Carril 18 los libros son de la
+    // práctica y quien la ejerce tiene que poder verlos — `contabilidad` y la
+    // sección `administration/accounting` declaran `PRACTITIONER` a propósito.
+    // Que el filtro por rol excluye de verdad lo prueba el caso de arriba: a
+    // quien no atiende no le aparecen los clínicos.
+    expect(ids).toContain('contabilidad');
   });
 });

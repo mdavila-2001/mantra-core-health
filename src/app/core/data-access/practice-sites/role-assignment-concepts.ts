@@ -2,7 +2,7 @@
  * Estados del ciclo de vida de una vinculación profesional-organización
  * (Carril 18, `practice.practitioner_role_assignments.status_concept_id`).
  *
- * Igual que `notification-concepts.ts`: son UUIDv5 deterministas derivados de
+ * Son UUIDv5 deterministas derivados de
  * una clave legible en el backend (`practice.concepts.ts`), no datos que se
  * piden en tiempo de ejecución. Confirmado contra el backend el 2026-08-15.
  * Si la clave de origen cambia allá, esto queda desincronizado — no hay
