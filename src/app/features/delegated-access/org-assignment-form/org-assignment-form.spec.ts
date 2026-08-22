@@ -61,11 +61,11 @@ describe('OrgAssignmentForm', () => {
 
   it('lo elegido viaja con sus claves exactas y las fechas en ISO', () => {
     completarMembresia({ pharmacyId: SUPERVISOR, supervisorUserId: SUPERVISOR });
-    interno<{ set: (v: string) => void }>('role').set('NURSE');
-    interno<(v: unknown) => void>('elegirAlcance')('UNIT');
-    interno<{ set: (v: Date | null) => void }>('validTo').set(
-      new Date('2026-12-31T23:59:00.000Z'),
-    );
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      role: 'NURSE',
+      accessScope: 'UNIT',
+      validTo: new Date('2026-12-31T23:59:00.000Z'),
+    });
 
     interno<() => void>('submit')();
 
@@ -82,8 +82,15 @@ describe('OrgAssignmentForm', () => {
   });
 
   it('un alcance fuera del contrato no entra', () => {
-    interno<(v: unknown) => void>('elegirAlcance')('GLOBAL');
-    expect(interno<() => string | null>('accessScope')()).toBeNull();
+    // El motor sólo ofrece los cuatro del contrato; la comprobación sigue al
+    // armar el cuerpo, que es lo que llega al backend venga de donde venga.
+    completarMembresia();
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ accessScope: 'GLOBAL' });
+    interno<() => void>('submit')();
+
+    const req = http.expectOne(`/org/${MEMBRESIA}/user-assignments`);
+    expect(req.request.body).not.toHaveProperty('accessScope');
+    req.flush({ id: 'a-1', status: 'c-uuid', createdAt: '2026-08-07T12:00:00.000Z' });
   });
 
   it('un nodo de alcance que no es UUID frena el envío', () => {
