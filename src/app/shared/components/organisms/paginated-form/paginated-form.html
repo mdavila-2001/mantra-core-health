@@ -142,6 +142,7 @@
     <button
       app-button
       type="submit"
+      [variant]="esUltima() && destructive() ? 'danger' : 'primary'"
       [isLoading]="pending()"
       [disabled]="pending()"
       data-testid="paginated-form-continuar"

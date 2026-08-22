@@ -31,6 +31,7 @@ import { Progress } from '../../atoms/progress/progress';
 import { Switch } from '../../atoms/switch/switch';
 import { Select } from '../../atoms/select/select';
 import { Textarea } from '../../atoms/textarea/textarea';
+import { DialogService } from '../../molecules/dialog/dialog-service';
 import { FormField } from '../../molecules/form-field/form-field';
 import { Radio } from '../../molecules/radio/radio';
 import { RadioGroup } from '../../molecules/radio-group/radio-group';
@@ -119,6 +120,7 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
 })
 export class PaginatedForm {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly dialogs = inject(DialogService);
 
   readonly paginas = input.required<readonly PaginaDeFormulario[]>();
 
@@ -131,6 +133,19 @@ export class PaginatedForm {
   readonly submitLabel = input<string>('Enviar');
 
   readonly pending = input(false, { transform: booleanAttribute });
+
+  /**
+   * El envío es destructivo y se confirma antes de emitirse.
+   *
+   * Mismo contrato que `app-form-actions`, del que salieron las pantallas que
+   * se migran: cerrar una corrida o revocar una aserción no se deshacen, y
+   * perder ese diálogo al pasar la pantalla al motor sería quitarle una
+   * salvaguarda a cambio de nada.
+   */
+  readonly destructive = input(false, { transform: booleanAttribute });
+
+  readonly confirmTitle = input<string>('¿Confirmás la acción?');
+  readonly confirmMessage = input<string>('Esta acción no se puede deshacer.');
 
   /** Se emite en la última página, y sólo si todo el formulario es válido. */
   readonly enviado = output<void>();
@@ -178,6 +193,18 @@ export class PaginatedForm {
   );
 
   constructor() {
+    // Las páginas pueden cambiar mientras se contesta: hay formularios donde la
+    // primera respuesta decide qué se pregunta después —un círculo pide radio,
+    // un polígono pide vértices—, y esos declaran `paginas` como un `computed`.
+    // Si el formulario encoge, el índice puede quedar apuntando a una página que
+    // ya no existe: se ve como una pantalla en blanco con «paso 4 de 3».
+    effect(() => {
+      const ultima = Math.max(0, this.paginas().length - 1);
+      if (this.indice() > ultima) {
+        this.indice.set(ultima);
+      }
+    });
+
     // La invariante, comprobada también cuando las páginas llegan armadas a mano
     // en vez de por `paginarCampos`. En desarrollo se avisa fuerte: en
     // producción el fallo no es una excepción, es una pantalla con nueve campos.
@@ -278,7 +305,7 @@ export class PaginatedForm {
   }
 
   /** El botón de la última página. Valida **todo**, no sólo lo visible. */
-  protected enviar(): void {
+  protected async enviar(): Promise<void> {
     const grupo = this.form();
     grupo.markAllAsTouched();
     if (grupo.invalid) {
@@ -290,13 +317,26 @@ export class PaginatedForm {
       if (fallo !== -1) this.indice.set(fallo);
       return;
     }
+
+    // El diálogo va **después** de validar: preguntar «¿seguro?» sobre un
+    // formulario que no se va a poder enviar es hacer decidir dos veces.
+    if (this.destructive()) {
+      const confirmado = await this.dialogs.confirm({
+        title: this.confirmTitle(),
+        message: this.confirmMessage(),
+        confirmLabel: this.submitLabel(),
+        destructive: true,
+      });
+      if (!confirmado) return;
+    }
+
     this.enviado.emit();
   }
 
   /** El submit del `<form>`: en la última página envía, en el resto avanza. */
   protected continuar(): void {
     if (this.esUltima()) {
-      this.enviar();
+      void this.enviar();
       return;
     }
     this.avanzar();
