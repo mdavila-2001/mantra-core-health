@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { HealthContextClient } from '../../../core/data-access/health-context/health-context.client';
 import type { SourceCreated } from '../../../core/data-access/health-context/health-context.types';
@@ -9,13 +9,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /**
@@ -29,16 +26,11 @@ import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../sh
 @Component({
   selector: 'app-source-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Textarea,
+    PaginatedForm,
   ],
   templateUrl: './source-form.html',
   styleUrl: '../m44.css',
@@ -51,6 +43,42 @@ export class SourceForm {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Identidad de la fuente',
+      hint: 'El código es único; el nombre es el que se lee en los reportes.',
+      campos: [
+        { key: 'code', label: 'Código', hint: 'Único y estable, como boletin-epidemiologico-msal. Máx. 100 caracteres.', control: 'text', required: true, mensajeDeError: 'Escribí el código de la fuente (máx. 100 caracteres).' },
+        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escribí el nombre de la fuente (máx. 200 caracteres).' },
+        { key: 'sourceTypeConceptId', label: 'Tipo de fuente', hint: 'Identificador del concepto de tipo (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Gobierno del dato',
+      hint: 'La confianza gobierna qué se acepta, y la licencia dice con qué derecho se usa.',
+      campos: [
+        { key: 'trustTierConceptId', label: 'Nivel de confianza', hint: 'Identificador del concepto de nivel (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'licenseText', label: 'Texto de la licencia', hint: 'Opcional, pero sin él no se puede defender el uso del dato.', control: 'textarea' },
+      ],
+    },
+    {
+      titulo: 'Procedencia',
+      hint: 'Opcional: quién publica la fuente, dónde vive y de qué país es.',
+      campos: [
+        { key: 'ownerName', label: 'Organismo dueño', hint: 'Máx. 200 caracteres.', control: 'text' },
+        { key: 'canonicalUrl', label: 'URL canónica', control: 'text' },
+        { key: 'countryConceptId', label: 'País', hint: 'Identificador del concepto de país (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     code: new FormControl('', {
@@ -78,10 +106,9 @@ export class SourceForm {
       nonNullable: true,
       validators: [Validators.pattern(UUID_PATTERN)],
     }),
+    licenseText: new FormControl('', { nonNullable: true }),
   });
 
-  /** El texto de la licencia puede ser largo: va por señal, como cada textarea. */
-  protected readonly licenseText = signal('');
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -106,7 +133,7 @@ export class SourceForm {
     const dueno = valores.ownerName.trim();
     const url = valores.canonicalUrl.trim();
     const pais = valores.countryConceptId.trim();
-    const licencia = this.licenseText().trim();
+    const licencia = valores.licenseText.trim();
 
     this.state.set(loading());
 
@@ -132,7 +159,6 @@ export class SourceForm {
 
   protected otraAlta(): void {
     this.form.reset();
-    this.licenseText.set('');
     this.created.set(null);
     this.state.set(ready(null));
   }
