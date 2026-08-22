@@ -17,8 +17,10 @@ import type { Observable } from 'rxjs';
 
 import { environment } from '../../../../../environments/environment';
 import {
+  estaPagado,
   PharmacyOrdersClient,
   puedeCancelarse,
+  puedePagarse,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type {
   PedidoFarmacia,
@@ -33,8 +35,11 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { Stepper } from '../../../../shared/components/molecules/stepper/stepper';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
+import { OrderPayment } from '../order-payment/order-payment';
 import {
   etiquetaDeModalidad,
   pasosDeLaLineaDeTiempo,
@@ -90,6 +95,7 @@ const ETIQUETA_DE_SIMULACION: Readonly<Record<SimulacionDeFarmacia, string>> = {
     AppButtonLink,
     Badge,
     DatePipe,
+    OrderPayment,
     PageHeader,
     RouterLink,
     Stepper,
@@ -105,6 +111,7 @@ export class OrderDetail {
   private readonly router = inject(Router);
   private readonly navigation = inject(NavigationService);
   private readonly dialogs = inject(DialogService);
+  private readonly toasts = inject(ToastService);
   private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly documento = inject(DOCUMENT);
 
@@ -153,17 +160,40 @@ export class OrderDetail {
     return `${diferencia.toFixed(2)} ${propuesta?.moneda ?? ''}`.trim();
   });
 
-  /** Cancelar vale mientras el pedido no terminó; en la decisión ya hay CTA. */
+  /**
+   * Cancelar vale mientras el pedido no terminó NI está pagado (la
+   * devolución no existe todavía — FAR-E4); en la decisión ya hay CTA.
+   */
   protected readonly puedeCancelar = computed(() => {
     const pedido = this.pedido();
     return (
-      pedido !== null && puedeCancelarse(pedido.estado) && pedido.estado !== 'ACEPTACION_PENDIENTE'
+      pedido !== null &&
+      puedeCancelarse(pedido.estado) &&
+      pedido.estado !== 'ACEPTACION_PENDIENTE' &&
+      !estaPagado(pedido)
     );
   });
 
   protected readonly simulaciones = computed(() => {
     const pedido = this.pedido();
-    return pedido === null ? [] : this.ordersClient.simulacionesPara(pedido.estado);
+    return pedido === null ? [] : this.ordersClient.simulacionesPara(pedido);
+  });
+
+  /**
+   * La sección de pago existe desde que la farmacia fijó qué se lleva y por
+   * cuánto, y se queda como resumen una vez pagado. Un final sin pago
+   * (rechazado, vencido, cancelado a tiempo) no la pinta: no hay nada que
+   * cobrar ni que mostrar.
+   */
+  protected readonly muestraPago = computed(() => {
+    const pedido = this.pedido();
+    return pedido !== null && (puedePagarse(pedido.estado) || estaPagado(pedido));
+  });
+
+  /** Con el pago registrado, el comprobante existe y se ofrece. */
+  protected readonly pagado = computed(() => {
+    const pedido = this.pedido();
+    return pedido !== null && estaPagado(pedido);
   });
 
   /** Evita el doble toque mientras una acción está en vuelo. */
@@ -203,6 +233,15 @@ export class OrderDetail {
       const actual = untracked(() => this.pedido());
       const fresco = actual === null ? undefined : vivos.find((p) => p.id === actual.id);
       if (fresco !== undefined && fresco !== actual) {
+        // El «TOUS» del registro (FAR-I5): el mostrador cobró en la otra
+        // ventana y el aviso llega acá. La campana real lo dirá cuando el
+        // backend emita (FAR-E1/E4); mientras, este toast es el aviso.
+        if (actual !== null && estaPagado(fresco) && !estaPagado(actual)) {
+          this.toasts.success(
+            'Abrí «Ver comprobante» para verlo o descargarlo.',
+            'Tu comprobante está listo',
+          );
+        }
         this.state.set(ready(fresco));
       }
     });
@@ -258,6 +297,20 @@ export class OrderDetail {
     this.ejecutar((id) => this.ordersClient.simular(id, paso));
   }
 
+  /**
+   * El botón de la pestaña QR (FAR-I5): dispara el puerto de la demo. Pagar
+   * destruye el botón que tenía el foco (el panel pasa al resumen): el foco
+   * aterriza en el estado, como al decidir o cancelar.
+   */
+  protected simularPago(): void {
+    this.ejecutar((id) => this.ordersClient.confirmarPagoDemo(id), this.enfocarEstado);
+  }
+
+  /** La ruta al comprobante interno del pago de este pedido. */
+  protected rutaDelComprobante(pedido: PedidoFarmacia): string {
+    return `${LISTA_ROUTE}/${pedido.id}/receipt`;
+  }
+
   protected etiquetaDeSimulacion(paso: SimulacionDeFarmacia): string {
     return ETIQUETA_DE_SIMULACION[paso];
   }
@@ -303,26 +356,4 @@ export class OrderDetail {
     }
     this.state.set(ready(pedido));
   }
-}
-
-/**
- * Dibuja el QR con la lib cargada perezoso. Negro sobre blanco siempre: es
- * para un lector de mostrador, no para el tema de la interfaz.
- */
-async function dibujarQr(
-  lienzo: HTMLCanvasElement,
-  codigo: string,
-  lado: number,
-): Promise<void> {
-  // Interop CJS (mismo caso que leaflet): según el empaquetado, la API llega
-  // como namespace o colgada de `default`.
-  const modulo = (await import('qrcode')) as typeof import('qrcode') & {
-    readonly default?: typeof import('qrcode');
-  };
-  const qr = modulo.default ?? modulo;
-  await qr.toCanvas(lienzo, codigo, {
-    width: lado,
-    margin: 2,
-    color: { dark: '#000000', light: '#ffffff' },
-  });
 }

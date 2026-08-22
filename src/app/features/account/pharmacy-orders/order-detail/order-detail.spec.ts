@@ -242,4 +242,22 @@ describe('OrderDetail', () => {
 
     expect(texto()).toContain('Confirmado');
   });
+
+  it('pagar por QR devuelve el foco al estado: el botón que lo tenía se destruye (FAR-I5)', async () => {
+    const pedido = await pedidoEn(['CONFIRMAR']);
+    await montar(pedido.id);
+
+    // La pestaña QR se abre por su botón del tablist (activación manual).
+    const pestanas = [
+      ...(harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? []),
+    ];
+    pestanas.find((boton) => (boton.textContent ?? '').includes('QR'))?.click();
+    harness.detectChanges();
+
+    click('pago-simular');
+    expect(texto()).toContain('Pagado por QR (demo)');
+    // Mismo criterio que decidir o cancelar: el foco aterriza en el estado.
+    await new Promise((resolver) => setTimeout(resolver));
+    expect(document.activeElement?.id).toBe('pedido-estado');
+  });
 });

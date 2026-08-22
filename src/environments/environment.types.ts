@@ -118,6 +118,19 @@ export interface Environment {
    * ningún médico cargue datos de demostración en una historia real.
    */
   readonly demoPresets: boolean;
+
+  /**
+   * Enciende la pestaña «QR» SIMULADA de la pantalla de pago del pedido de
+   * farmacia (carril FAR-I5).
+   *
+   * La pasarela de pago real no existe: con este interruptor la demo muestra
+   * el ciclo completo (QR con el monto → «simular pago aprobado» →
+   * comprobante) siempre con el chip «DEMO» fijo. Apagado, la pestaña no se
+   * renderiza y queda sólo el camino real de hoy: pagar en el mostrador.
+   * Mismo carácter que `demoPresets`: interruptor de despliegue, no de
+   * compilación.
+   */
+  readonly paymentDemo: boolean;
 }
 
 /**
@@ -132,4 +145,5 @@ export interface EnvironmentOverrides {
   readonly apiBaseUrl?: string;
   readonly telemetry?: Partial<TelemetryEnvironment>;
   readonly demoPresets?: boolean;
+  readonly paymentDemo?: boolean;
 }

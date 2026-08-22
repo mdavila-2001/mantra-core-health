@@ -266,6 +266,23 @@ describe('InboxOrder', () => {
     expect(elemento('[data-testid="mostrador-entregar"]')).toBeNull();
     expect(texto()).not.toContain('Entrega a domicilio');
   });
+
+  it('el pago del QR de la demo se dice donde se cobra: «no cobrar» (FAR-I5)', async () => {
+    const pedido = await enviado();
+    await montar(pedido.id);
+    click('mostrador-confirmar');
+    await asentar();
+
+    // Listo sin pagar: el mostrador sabe que tiene que cobrar.
+    click('mostrador-listo');
+    await asentar();
+    expect(texto()).toContain('Pago pendiente — cobrar en mostrador');
+
+    // El paciente paga por QR en su pantalla; la ficha se refleja en vivo.
+    await firstValueFrom(client.confirmarPagoDemo(pedido.id));
+    await asentar();
+    expect(texto()).toContain('Pagado por QR (demo) — no cobrar');
+  });
 });
 
 /**
