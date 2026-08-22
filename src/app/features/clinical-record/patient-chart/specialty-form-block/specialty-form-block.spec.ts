@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { SpecialtyFormBlock } from './specialty-form-block';
+import { SpecialtyFormBlock, PLANTILLA_HOJA_LIBRE } from './specialty-form-block';
 
 /**
  * Completar la plantilla de la especialidad dentro del encuentro — carril 2,
@@ -63,6 +63,7 @@ describe('SpecialtyFormBlock', () => {
     fixture = TestBed.createComponent(SpecialtyFormBlock);
     componente = fixture.componentInstance;
     fixture.componentRef.setInput('encounterId', 'enc-1');
+    fixture.componentRef.setInput('patientProfileId', 'pac-1');
   });
 
   afterEach(() => {
@@ -116,10 +117,24 @@ describe('SpecialtyFormBlock', () => {
   }
 
   /** Lo que el desplegable ofrece hoy, en orden. */
+  /**
+   * Las **plantillas** que ofrece el desplegable.
+   *
+   * Deja fuera la hoja en blanco a propósito: no es una plantilla sino la
+   * opción de no usar ninguna, y siempre está. Si contara, cada prueba sobre
+   * qué fichas se ofrecen tendría que sumarle uno, y el número dejaría de decir
+   * lo que la prueba quiere decir. Que la hoja esté, y esté primera, lo fija su
+   * propia prueba.
+   */
   function etiquetasOfrecidas(): string[] {
-    return interno<() => readonly { label: string }[]>('opcionesDePlantilla')().map(
-      (opcion) => opcion.label,
-    );
+    return opcionesCrudas()
+      .filter((opcion) => opcion.value !== PLANTILLA_HOJA_LIBRE)
+      .map((opcion) => opcion.label);
+  }
+
+  /** El desplegable tal cual, con la hoja en blanco incluida. */
+  function opcionesCrudas(): readonly { value: string; label: string }[] {
+    return interno<() => readonly { value: string; label: string }[]>('opcionesDePlantilla')();
   }
 
   function peticionDePlantillas() {
@@ -400,7 +415,7 @@ describe('SpecialtyFormBlock', () => {
       .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
 
     expect(interno<() => string | null>('plantillaId')()).toBeNull();
-    expect(interno<() => readonly unknown[]>('opcionesDePlantilla')()).toHaveLength(2);
+    expect(etiquetasOfrecidas()).toHaveLength(2);
   });
 
   it('una especialidad que ya no ejerce no decide la plantilla', () => {
@@ -717,6 +732,39 @@ describe('SpecialtyFormBlock', () => {
     expect(html.querySelector('[data-testid="sin-ficha-propia"]')).toBeNull();
     // Sin criterio para filtrar queda el catálogo entero, no un desplegable vacío.
     expect(etiquetasOfrecidas()).toHaveLength(2);
+  });
+
+  it('la hoja en blanco encabeza el desplegable, aun sin ninguna plantilla', () => {
+    // Es la salida para quien no quiere completar campos: enterrada al final de
+    // cuarenta y cuatro fichas equivale a no tenerla, y con el catálogo vacío es
+    // lo único que queda.
+    peticionDePlantillas().flush([]);
+    responderEspecialidad('sp-1');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    const opciones = opcionesCrudas();
+    expect(opciones[0].value).toBe(PLANTILLA_HOJA_LIBRE);
+    expect(opciones[0].label).toContain('Hoja en blanco');
+  });
+
+  it('elegir la hoja en blanco esconde los campos y saca el botón de completar', () => {
+    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+    responderEspecialidad('sp-odonto');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_HOJA_LIBRE);
+    fixture.detectChanges();
+
+    expect(interno<() => boolean>('hojaLibre')()).toBe(true);
+    // No hay plantilla elegida, así que no hay campos que dibujar ni formulario
+    // que enviar: la hoja guarda por su cuenta contra la nota clínica.
+    expect(interno<() => unknown>('plantillaElegida')()).toBeNull();
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('app-form-actions')).toBeNull();
   });
 
   it('«el catálogo está vacío» es otro caso, y no habla de tu especialidad', () => {

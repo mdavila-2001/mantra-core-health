@@ -1,0 +1,39 @@
+<section class="hoja-libre" aria-labelledby="hoja-libre-titulo">
+  <h3 class="hoja-libre__titulo" id="hoja-libre-titulo">Hoja en blanco</h3>
+  <p class="hoja-libre__ayuda">
+    Escribí la consulta con tus palabras. Cada vez que guardes queda una versión nueva en la
+    historia; lo anterior no se pierde.
+  </p>
+
+  @if (error(); as mensaje) {
+    <app-alert tone="error" title="No se guardó" data-testid="hoja-libre-error">
+      {{ mensaje }}
+    </app-alert>
+  }
+
+  <app-rich-text-editor
+    [(html)]="contenido"
+    label="Nota de la consulta"
+    placeholder="Motivo de la consulta, lo que refiere el paciente, el examen, tu impresión y el plan…"
+    data-testid="hoja-libre-editor"
+  />
+
+  <div class="hoja-libre__pie">
+    @if (versiones() > 0) {
+      <p class="hoja-libre__versiones" data-testid="hoja-libre-versiones">
+        Guardada · versión {{ versiones() }}
+      </p>
+    }
+    <button
+      app-button
+      variant="primary"
+      type="button"
+      [disabled]="vacio()"
+      [isLoading]="guardando()"
+      (click)="guardar()"
+      data-testid="hoja-libre-guardar"
+    >
+      Guardar en la historia
+    </button>
+  </div>
+</section>

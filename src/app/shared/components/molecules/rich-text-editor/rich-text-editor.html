@@ -1,0 +1,47 @@
+<div class="editor" [class.editor--solo-lectura]="readOnly()">
+  @if (interactivo() && !readOnly()) {
+    <div class="editor__barra" role="toolbar" [attr.aria-label]="'Formato de ' + label()">
+      @for (herramienta of herramientas; track herramienta.comando) {
+        <button
+          type="button"
+          class="editor__herramienta"
+          [class]="'editor__herramienta--' + herramienta.comando"
+          [attr.aria-label]="
+            herramienta.atajo ? herramienta.etiqueta + ' (' + herramienta.atajo + ')' : herramienta.etiqueta
+          "
+          [title]="herramienta.etiqueta"
+          (click)="aplicar(herramienta)"
+          [attr.data-testid]="'herramienta-' + herramienta.comando"
+        >
+          {{ herramienta.etiqueta }}
+        </button>
+      }
+    </div>
+  }
+
+  <div class="editor__hoja">
+    <!-- `contenteditable` va en un div y no en un textarea porque un textarea no
+         admite marcas. El rol textbox + multiline es lo que hace que un lector de
+         pantalla lo anuncie como área de escritura y no como región cualquiera. -->
+    <div
+      #area
+      class="editor__area"
+      [attr.contenteditable]="interactivo() && !readOnly() ? 'true' : null"
+      role="textbox"
+      aria-multiline="true"
+      [attr.aria-label]="label()"
+      [attr.aria-readonly]="readOnly() ? 'true' : null"
+      (input)="recoger()"
+      (blur)="recoger()"
+      (paste)="pegar($event)"
+      data-testid="editor-area"
+    ></div>
+
+    @if (vacio() && !readOnly()) {
+      <!-- Marcador de posición propio: `::placeholder` no existe para
+           `contenteditable`, y `:empty` falla en cuanto el navegador mete un
+           `<br>` al entrar. -->
+      <p class="editor__marcador" aria-hidden="true">{{ placeholder() }}</p>
+    }
+  </div>
+</div>

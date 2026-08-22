@@ -290,6 +290,7 @@
          vez de una tabla propia — es lo que le da su esquema de campos. -->
     <app-specialty-form-block
       class="expediente__ancho"
+      [patientProfileId]="pacienteDeLaFicha()"
       [encounterId]="encuentroParaRecetar()"
       (cambio)="recargar()"
     />

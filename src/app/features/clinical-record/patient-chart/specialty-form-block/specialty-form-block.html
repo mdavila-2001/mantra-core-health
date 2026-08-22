@@ -216,12 +216,29 @@
         }
       }
 
-      <app-form-actions
-        submitLabel="Completar formulario"
-        [pending]="enviando()"
-        [disabled]="!puedeCompletar()"
-        (submitted)="completar()"
-      />
+      @if (!hojaLibre()) {
+        <app-form-actions
+          submitLabel="Completar formulario"
+          [pending]="enviando()"
+          [disabled]="!puedeCompletar()"
+          (submitted)="completar()"
+        />
+      }
     </form>
+
+    @if (hojaLibre()) {
+      <!-- Fuera del `<form>`: la hoja libre no captura campos ni se envía con
+           el mismo botón, guarda por su cuenta contra la nota clínica. -->
+      <!-- `(guardada)` va SIN atar a propósito. Recargar el expediente pasa por
+           el estado de carga, y eso destruye este bloque y se lleva lo escrito:
+           el médico veía su nota desaparecer justo después de guardarla, y el
+           guardado siguiente abría una nota nueva en vez de versionar la suya.
+           La nota ya quedó persistida y el aviso lo dice; la pestaña «Notas» se
+           pone al día en la próxima lectura de la ficha. -->
+      <app-free-note-block
+        [patientProfileId]="patientProfileId()"
+        [encounterId]="encounterId()"
+      />
+    }
   }
 </app-card>

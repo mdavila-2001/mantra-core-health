@@ -12,6 +12,7 @@ import {
 import { of, switchMap } from 'rxjs';
 
 import { ChartTemplatesClient } from '../../../../core/data-access/chart-templates/chart-templates.client';
+import { FreeNoteBlock } from '../free-note-block/free-note-block';
 import type {
   ChartTemplate,
   ChartTemplateField,
@@ -45,6 +46,16 @@ import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 import { Odontogram } from '../odontogram/odontogram';
 import { ESTADOS_DENTALES, recuentoCpod } from '../odontogram/odontogram.types';
 import type { MapaDental } from '../odontogram/odontogram.types';
+
+/**
+ * El valor con el que el selector representa la hoja en blanco.
+ *
+ * No es el id de ninguna plantilla porque no hay plantilla: es escribir sin
+ * campos. Vive en la misma lista a propósito —quien atiende elige «con qué voy a
+ * escribir esta consulta» una sola vez, y una de las respuestas es «con
+ * nada»—. El prefijo lo hace imposible de confundir con un uuid.
+ */
+export const PLANTILLA_HOJA_LIBRE = 'hoja-libre';
 
 /** Los tipos de dato que este bloque sabe dibujar como campo de captura. */
 type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string';
@@ -146,6 +157,7 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
     Alert,
     AppButton,
     Card,
+    FreeNoteBlock,
     Checkbox,
     DatePicker,
     FormActions,
@@ -171,6 +183,15 @@ export class SpecialtyFormBlock {
    * el bloque no vuelve a preguntarlo para que no puedan discrepar.
    */
   readonly encounterId = input<string | null>(null);
+
+  /**
+   * De quién es la historia.
+   *
+   * Lo pide la hoja en blanco, que escribe contra `chart.clinical_note_*` y ahí
+   * el paciente es obligatorio. Las fichas por especialidad no lo necesitaban
+   * porque cuelgan del encuentro.
+   */
+  readonly patientProfileId = input.required<string>();
 
   /** Algo se escribió y el expediente tiene que releerse. */
   readonly cambio = output<void>();
@@ -291,11 +312,19 @@ export class SpecialtyFormBlock {
     return visibles;
   });
 
-  protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() =>
-    this.plantillasVisibles().map((plantilla) => ({
+  protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => [
+    // Primera de la lista: es la salida para quien no quiere completar nada, y
+    // enterrarla al final de cuarenta y cuatro fichas equivale a no tenerla.
+    { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
+    ...this.plantillasVisibles().map((plantilla) => ({
       value: plantilla.id,
       label: plantilla.name,
     })),
+  ]);
+
+  /** Está elegida la hoja en blanco, así que no se dibuja ninguna ficha. */
+  protected readonly hojaLibre = computed(
+    () => this.plantillaId() === PLANTILLA_HOJA_LIBRE,
   );
 
   /**
