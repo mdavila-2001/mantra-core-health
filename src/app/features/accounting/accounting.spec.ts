@@ -2,7 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Accounting } from './accounting';
+import { Accounting, agruparPorMes } from './accounting';
+import type { PaidConsultation } from '../../core/data-access/accounting/accounting.types';
 
 const PRACTICE = 'practice-1';
 
@@ -124,5 +125,60 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
     // (no `/practices` de nuevo: la práctica elegida no cambió).
     fixture.detectChanges();
     flushDependientesDeLaPractica();
+  });
+});
+
+/**
+ * «Mi facturación» (H4 del plan de UX del 22/08/2026).
+ *
+ * El resumen que ve un médico en vez del balance de sumas y saldos. Lo que se
+ * fija acá es la agrupación: un total mal sumado en una pantalla de plata se
+ * descubre tarde y cuesta la confianza en toda la sección.
+ */
+describe('agruparPorMes', () => {
+  function consulta(issueDate: Date, paidTotal: string, invoiceId = 'inv-1'): PaidConsultation {
+    return {
+      invoiceId,
+      invoiceNumber: 'F-001',
+      patientProfileId: 'per-1',
+      issueDate,
+      paidTotal,
+    };
+  }
+
+  it('sin consultas no inventa un mes en cero', () => {
+    expect(agruparPorMes([])).toEqual([]);
+  });
+
+  it('suma el mes y dice cuántas consultas fueron', () => {
+    const meses = agruparPorMes([
+      consulta(new Date(2026, 7, 3), '150.00', 'inv-1'),
+      consulta(new Date(2026, 7, 21), '250.50', 'inv-2'),
+    ]);
+
+    expect(meses).toHaveLength(1);
+    expect(meses[0].total).toBe('400.50');
+    expect(meses[0].cuantas).toBe(2);
+    expect(meses[0].promedio).toBe('200.25');
+  });
+
+  it('separa los meses y pone el más reciente arriba', () => {
+    // Es el orden en que se lee una facturación: lo último primero.
+    const meses = agruparPorMes([
+      consulta(new Date(2026, 5, 1), '100.00', 'inv-1'),
+      consulta(new Date(2026, 7, 1), '200.00', 'inv-2'),
+      consulta(new Date(2026, 6, 1), '300.00', 'inv-3'),
+    ]);
+
+    expect(meses.map((m) => m.clave)).toEqual(['2026-08', '2026-07', '2026-06']);
+  });
+
+  it('no mezcla el mismo mes de años distintos', () => {
+    const meses = agruparPorMes([
+      consulta(new Date(2025, 7, 1), '100.00', 'inv-1'),
+      consulta(new Date(2026, 7, 1), '200.00', 'inv-2'),
+    ]);
+
+    expect(meses.map((m) => m.clave)).toEqual(['2026-08', '2025-08']);
   });
 });

@@ -1,23 +1,53 @@
+<!-- H4 del plan de UX del 22/08/2026 · «el módulo contable está pésimo».
+
+     La pantalla no estaba rota: le hablaba al médico en idioma de contador.
+     Lo primero que veía era un balance de sumas y saldos y una nota sobre que
+     «los saldos llevan el signo de la naturaleza de la cuenta». Eso es
+     correcto y es de quien lleva los libros; un médico viene a preguntar
+     cuánto cobró.
+
+     Así que la misma pantalla ordena distinto según quién mira: al médico,
+     su facturación primero y los libros a un clic; a quien administra la
+     contabilidad, los libros de entrada. Nada se borra. -->
 <app-page-header
-  title="Contabilidad"
-  subtitle="Balance de sumas y saldos y libro diario de la práctica"
+  [title]="esMedico() ? 'Mi facturación' : 'Contabilidad'"
+  [subtitle]="
+    esMedico()
+      ? 'Lo que cobraste y todavía no pasaste a los libros, mes por mes.'
+      : 'Balance de sumas y saldos y libro diario de la práctica'
+  "
 />
 
-<app-alert tone="info" class="explicacion">
-  <p>
-    Acá ves el balance y el libro diario de tu práctica, y registrás vos mismo tus
-    movimientos: el ingreso de una consulta ya pagada, o un gasto.
-    <strong>Ejemplo:</strong> atendiste una consulta y el paciente ya pagó — elegí esa
-    factura abajo, elegí las cuentas (caja/banco e ingresos por consultas) y confirmá; el
-    asiento queda en borrador y anclado a esa factura.
-  </p>
-  <p>
-    Lo que registrás acá queda en <strong>borrador</strong>: el flujo canónico es
-    borrador → clasificado → en revisión → aprobado → posteado, y el posteo final lo hace
-    quien tiene autoridad contable — igual que en cualquier práctica real, donde un
-    profesional no se autoaprueba sus propios asientos.
-  </p>
-</app-alert>
+@if (esMedico()) {
+  <app-alert tone="info" class="explicacion">
+    <p>
+      Cada consulta que un paciente te pagó queda acá hasta que la registrás.
+      <strong>Registrarla</strong> es lo que la pasa a los libros de la práctica: elegís la
+      factura, elegís las cuentas y confirmás.
+    </p>
+    <p>
+      Lo que registrás queda en <strong>borrador</strong> y lo aprueba después quien lleva la
+      contabilidad — como en cualquier práctica real, donde un profesional no se autoaprueba
+      sus propios asientos.
+    </p>
+  </app-alert>
+} @else {
+  <app-alert tone="info" class="explicacion">
+    <p>
+      Acá ves el balance y el libro diario de tu práctica, y registrás vos mismo tus
+      movimientos: el ingreso de una consulta ya pagada, o un gasto.
+      <strong>Ejemplo:</strong> atendiste una consulta y el paciente ya pagó — elegí esa
+      factura abajo, elegí las cuentas (caja/banco e ingresos por consultas) y confirmá; el
+      asiento queda en borrador y anclado a esa factura.
+    </p>
+    <p>
+      Lo que registrás acá queda en <strong>borrador</strong>: el flujo canónico es
+      borrador → clasificado → en revisión → aprobado → posteado, y el posteo final lo hace
+      quien tiene autoridad contable — igual que en cualquier práctica real, donde un
+      profesional no se autoaprueba sus propios asientos.
+    </p>
+  </app-alert>
+}
 
 <!-- La práctica manda: ninguna lectura del mayor responde sin ella. -->
 <app-form-field label="Práctica" hint="Los libros que se muestran son los de esta práctica">
@@ -28,7 +58,45 @@
   />
 </app-form-field>
 
-@if (resumen(); as balance) {
+<!-- ─── Mi facturación ─────────────────────────────────────────────────────
+     El número que un médico viene a buscar, dicho con el rótulo exacto de lo
+     que el dato es: no «facturaste tanto este mes» —que la API no sabe
+     decir— sino «esto cobraste y te falta registrar». Ver el JSDoc de
+     `porMes`. -->
+@if (esMedico() && practicaElegida()) {
+  <app-card class="facturacion">
+    <div class="facturacion__total">
+      <span class="overline">Cobrado sin registrar</span>
+      <strong class="facturacion__cifra">{{ totalPendiente() }}</strong>
+      <span class="facturacion__pie">
+        {{ consultasPagadas().length }}
+        {{ consultasPagadas().length === 1 ? 'consulta' : 'consultas' }}
+      </span>
+    </div>
+
+    @if (porMes().length === 0) {
+      <p class="nota">
+        No tenés consultas cobradas pendientes de registrar en esta práctica. Cuando un paciente
+        pague una consulta tuya, va a aparecer acá.
+      </p>
+    } @else {
+      <ul class="facturacion__meses">
+        @for (mes of porMes(); track mes.clave) {
+          <li class="facturacion__mes">
+            <span class="facturacion__mes-nombre">{{ mes.etiqueta }}</span>
+            <span class="facturacion__mes-total">{{ mes.total }}</span>
+            <span class="facturacion__mes-detalle">
+              {{ mes.cuantas }} {{ mes.cuantas === 1 ? 'consulta' : 'consultas' }} ·
+              {{ mes.promedio }} por consulta
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </app-card>
+}
+
+@if (muestraLibros() && resumen(); as balance) {
   <app-card>
     <!-- El cuadre va arriba y como sello —color, forma y texto—: si no cuadra,
          nada de lo que hay debajo significa lo que parece. -->
@@ -77,24 +145,44 @@
   </app-card>
 }
 
-<h2 class="titulo-de-seccion">Balance de sumas y saldos</h2>
-<app-data-table
-  [state]="filasDelBalance()"
-  [columns]="columnasDelBalance"
-  [trackBy]="claveDeFila"
-  caption="Saldos por cuenta del plan contable"
-/>
+<!-- Los libros. Para quien lleva la contabilidad son la pantalla; para el
+     médico son el detalle que a veces le pide su contador, así que están a un
+     clic en vez de ser lo primero que ve. **No se le esconde nada**: se le
+     cambia el orden. -->
+@if (esMedico() && !librosAbiertos()) {
+  <button
+    app-button
+    variant="ghost"
+    type="button"
+    class="libros-abrir"
+    (clicked)="librosAbiertos.set(true)"
+  >
+    Ver los libros contables de la práctica
+  </button>
+}
 
-<h2 class="titulo-de-seccion">Libro diario</h2>
-<app-data-table
-  [state]="diario()"
-  [columns]="columnasDelDiario"
-  [trackBy]="claveDeAsiento"
-  caption="Asientos de la práctica, del más reciente al más antiguo"
-/>
+@if (muestraLibros()) {
+  <h2 class="titulo-de-seccion">Balance de sumas y saldos</h2>
+  <app-data-table
+    [state]="filasDelBalance()"
+    [columns]="columnasDelBalance"
+    [trackBy]="claveDeFila"
+    caption="Saldos por cuenta del plan contable"
+  />
+
+  <h2 class="titulo-de-seccion">Libro diario</h2>
+  <app-data-table
+    [state]="diario()"
+    [columns]="columnasDelDiario"
+    [trackBy]="claveDeAsiento"
+    caption="Asientos de la práctica, del más reciente al más antiguo"
+  />
+}
 
 @if (practicaElegida(); as practiceId) {
-  <h2 class="titulo-de-seccion">Registrar ingreso de consulta pagada</h2>
+  <h2 class="titulo-de-seccion">
+    {{ esMedico() ? 'Registrar una consulta cobrada' : 'Registrar ingreso de consulta pagada' }}
+  </h2>
   <app-card>
     @if (opcionesDeConsulta().length === 0) {
       <p class="nota">

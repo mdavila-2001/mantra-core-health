@@ -17,6 +17,7 @@ import {
   type Observable,
 } from 'rxjs';
 
+import { AuthService } from '../../core/auth/auth.service';
 import { AccountingClient } from '../../core/data-access/accounting/accounting.client';
 import type {
   ChartOfAccounts,
@@ -43,6 +44,57 @@ import type { ColumnDef } from '../../shared/components/organisms/data-table/dat
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
 import { errorMessageOf } from '../../shared/forms/form-support';
+
+/**
+ * Agrupa las consultas cobradas por mes de emisión, la más reciente arriba.
+ *
+ * ## Los importes se suman **para mostrar**, nunca para mandar
+ *
+ * `paidTotal` es decimal como texto por contrato, y la cabecera de
+ * `accounting.types.ts` es explícita: sumar decimales en el navegador da
+ * descuadres de un céntimo indistinguibles de un error contable real. Acá el
+ * total es un resumen que se lee, no un asiento: lo que viaja al servidor sigue
+ * siendo el texto de cada factura, sin tocar.
+ */
+export function agruparPorMes(
+  consultas: readonly PaidConsultation[],
+): readonly MesFacturado[] {
+  const porClave = new Map<string, { etiqueta: string; total: number; cuantas: number }>();
+
+  for (const consulta of consultas) {
+    const mes = String(consulta.issueDate.getMonth() + 1).padStart(2, '0');
+    const clave = `${consulta.issueDate.getFullYear()}-${mes}`;
+    const previo = porClave.get(clave) ?? {
+      etiqueta: consulta.issueDate.toLocaleDateString('es', { month: 'long', year: 'numeric' }),
+      total: 0,
+      cuantas: 0,
+    };
+    previo.total += Number(consulta.paidTotal);
+    previo.cuantas += 1;
+    porClave.set(clave, previo);
+  }
+
+  return [...porClave.entries()]
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([clave, mes]) => ({
+      clave,
+      etiqueta: mes.etiqueta,
+      total: mes.total.toFixed(2),
+      cuantas: mes.cuantas,
+      promedio: (mes.total / mes.cuantas).toFixed(2),
+    }));
+}
+
+/** Un mes de facturación, ya resuelto para pintar. */
+export interface MesFacturado {
+  readonly clave: string;
+  readonly etiqueta: string;
+  /** Decimal como texto, con dos posiciones. */
+  readonly total: string;
+  readonly cuantas: number;
+  /** Cuánto salió en promedio cada consulta, decimal como texto. */
+  readonly promedio: string;
+}
 
 /**
  * Los libros contables de una práctica: balance de sumas y saldos y libro
@@ -91,6 +143,36 @@ import { errorMessageOf } from '../../shared/forms/form-support';
 })
 export class Accounting {
   private readonly libros = inject(AccountingClient);
+  private readonly auth = inject(AuthService);
+
+  /* ---- Quién está mirando (H4 del plan de UX del 22/08/2026) --------------- */
+
+  /**
+   * Si quien mira es un médico y no quien lleva los libros.
+   *
+   * El cliente dijo del módulo contable que «está pésimo», y mirando la
+   * pantalla se entiende: al `PRACTITIONER` se le servía **la vista del
+   * contador** —balance de sumas y saldos, libro diario, y una nota sobre que
+   * «los saldos llevan el signo de la naturaleza de la cuenta»—. Nada de eso
+   * está mal; simplemente no es lo que un médico viene a preguntar. Él viene a
+   * preguntar cuánto cobró.
+   *
+   * Se decide por rol y no por una preferencia: quien además administra la
+   * contabilidad de la organización tiene ese rol y ve los libros primero.
+   */
+  protected readonly esMedico = computed(() => {
+    const roles = this.auth.roles();
+    if (roles.includes('SECURITY_ADMIN') || roles.includes('ACCOUNTING_APPROVER')) {
+      return false;
+    }
+    return roles.includes('PRACTITIONER');
+  });
+
+  /** Los libros, para quien no los ve por omisión, se piden. */
+  protected readonly librosAbiertos = signal(false);
+
+  /** Si se dibujan el balance y el libro diario. */
+  protected readonly muestraLibros = computed(() => !this.esMedico() || this.librosAbiertos());
 
   /** Las prácticas de la organización. Sin esto no hay `practiceId` que pedir. */
   private readonly practicas = toSignal(
@@ -258,6 +340,33 @@ export class Accounting {
       value: c.invoiceId,
       label: `Factura ${c.invoiceNumber} — ${c.paidTotal}`,
     })),
+  );
+
+  /* ---- «Mi facturación» (H4) ---------------------------------------------- */
+
+  /**
+   * Lo cobrado y todavía sin registrar, mes por mes.
+   *
+   * ## Por qué es **esto** y no «cuánto facturaste este mes» a secas
+   *
+   * Porque es lo único que la API sabe decir por profesional.
+   * `GET /accounting/practitioner/paid-consultations` devuelve las facturas
+   * pagadas **sin asiento contable todavía**, y el libro diario es de la
+   * práctica entera —no distingue quién atendió—. Un total de «facturado este
+   * mes» sacado de acá bajaría solo a medida que el médico registra sus
+   * asientos, que es exactamente la clase de número que hace desconfiar de una
+   * pantalla de plata.
+   *
+   * Así que el rótulo dice lo que el dato es, y encima resulta ser el número
+   * accionable: son las consultas que cobró y que le faltan pasar a los libros.
+   */
+  protected readonly porMes = computed(() => agruparPorMes(this.consultasPagadas()));
+
+  /** El total pendiente de registrar, sumando todos los meses. */
+  protected readonly totalPendiente = computed(() =>
+    this.consultasPagadas()
+      .reduce((suma, consulta) => suma + Number(consulta.paidTotal), 0)
+      .toFixed(2),
   );
 
   /* ---- Registrar ingreso de consulta pagada -------------------------------- */
