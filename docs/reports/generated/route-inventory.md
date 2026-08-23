@@ -2,7 +2,7 @@
 
 # Inventario de rutas
 
-Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 14 entradas declaradas.
+Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 17 entradas declaradas.
 
 | URL | Destino | Acceso | Render en servidor | Título |
 |---|---|---|---|---|
@@ -12,7 +12,10 @@ Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 14 entradas 
 | `/design-system` | `DesignSystemSample` (diferida) | Pública | Prerender | AloVida - Vitrina de Diseño |
 | `/auth` | `Login` | Pública | Prerender | AloVida - Iniciar sesión |
 | `/auth/organization` | `TenantSelection` | Pública | Client | AloVida - Elegí tu organización |
-| `/auth/register` | `RegisterPatient` | Pública | Prerender | AloVida - Crear cuenta |
+| `/auth/register` | `RegisterAccountType` | Pública | Prerender | AloVida - Crear cuenta |
+| `/auth/register/patient` | `RegisterPatient` | Pública | Prerender | AloVida - Crear cuenta de paciente |
+| `/auth/register/practitioner` | `RegisterPatient` | Pública | Prerender | AloVida - Crear cuenta de profesional |
+| `/auth/register/organization` | `RegisterOrganization` | Pública | Prerender | AloVida - Registrar aseguradora |
 | `/auth/verify-email` | `VerifyEmail` | Pública | Client | AloVida - Verificar correo |
 | `/auth/forgot-password` | `ForgotPassword` | Pública | Prerender | AloVida - Recuperar contraseña |
 | `/auth/activate` | `ActivateAccount` | Pública | Client | AloVida - Activar cuenta |

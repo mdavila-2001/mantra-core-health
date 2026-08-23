@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-293 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+322 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -33,6 +33,9 @@ Archivo: `src/app/core/data-access/accounting/accounting.client.ts`
 | `GET` | `/accounting/accounts` |
 | `GET` | `/accounting/journal-transactions` |
 | `GET` | `/accounting/journal-transactions/:transactionId` |
+| `POST` | `/accounting/practitioner/consultation-income` |
+| `POST` | `/accounting/practitioner/entries` |
+| `GET` | `/accounting/practitioner/paid-consultations` |
 | `GET` | `/accounting/trial-balance` |
 | `GET` | `/practices` |
 
@@ -45,10 +48,16 @@ Archivo: `src/app/core/data-access/directory/directory.client.ts`
 | `GET` | `/admin/tenants` |
 | `POST` | `/admin/tenants` |
 | `GET` | `/tenants/:tenantId` |
+| `PATCH` | `/tenants/:tenantId` |
+| `GET` | `/tenants/:tenantId/agenda` |
 | `GET` | `/tenants/:tenantId/branches` |
 | `GET` | `/tenants/:tenantId/child-tenants` |
 | `GET` | `/tenants/:tenantId/memberships` |
 | `GET` | `/tenants/:tenantId/memberships/:membershipId/branch-assignments` |
+| `GET` | `/tenants/:tenantId/practitioner-requests` |
+| `POST` | `/tenants/:tenantId/practitioner-requests/:affiliationId/approve` |
+| `POST` | `/tenants/:tenantId/practitioner-requests/:affiliationId/reject` |
+| `GET` | `/tenants/me` |
 
 ## `AuthProvidersClient`
 
@@ -99,6 +108,7 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `POST` | `/clinical/allergy-intolerances` |
 | `POST` | `/clinical/care-episodes` |
 | `POST` | `/clinical/conditions` |
+| `POST` | `/clinical/conditions/:conditionId/change-status` |
 | `POST` | `/clinical/diagnostic-reports` |
 | `POST` | `/clinical/diagnostic-reports/:diagnosticReportId/release` |
 | `POST` | `/clinical/encounters/:encounterId/close` |
@@ -108,6 +118,15 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `POST` | `/clinical/medication-requests/:medicationRequestId/sign` |
 | `POST` | `/clinical/observations` |
 | `GET` | `/clinical/patients/:patientProfileId/summary` |
+
+## `ChartNotesClient`
+
+Archivo: `src/app/core/data-access/chart-notes/chart-notes.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/charts/notes` |
+| `PUT` | `/charts/notes/:noteId/versions` |
 
 ## `ChartTemplatesClient`
 
@@ -136,6 +155,14 @@ Archivo: `src/app/core/data-access/diagnostics/diagnostics.client.ts`
 | `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` |
 | `GET` | `/diagnostics/patients/:patientProfileId/orders` |
 | `GET` | `/diagnostics/work-orders` |
+
+## `AddressesClient`
+
+Archivo: `src/app/core/data-access/common/addresses.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/common/addresses` |
 
 ## `FilesClient`
 
@@ -246,11 +273,16 @@ Archivo: `src/app/core/data-access/forms/forms.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `POST` | `/forms/assignments` |
+| `GET` | `/forms/assignments/budget` |
+| `POST` | `/forms/field-definitions` |
 | `GET` | `/forms/instances` |
 | `POST` | `/forms/instances` |
 | `GET` | `/forms/instances/:instanceId` |
 | `POST` | `/forms/instances/:instanceId/close` |
 | `POST` | `/forms/instances/:instanceId/values` |
+| `GET` | `/forms/me/instances` |
+| `GET` | `/forms/me/instances/:instanceId` |
 
 ## `GeoClient`
 
@@ -298,6 +330,7 @@ Archivo: `src/app/core/data-access/iam/iam.client.ts`
 | `POST` | `/iam/auth/forgot-password` |
 | `POST` | `/iam/auth/login` |
 | `POST` | `/iam/auth/logout` |
+| `POST` | `/iam/auth/register-organization` |
 | `POST` | `/iam/auth/register-patient` |
 | `POST` | `/iam/auth/register-practitioner` |
 | `POST` | `/iam/auth/resend-verification` |
@@ -403,6 +436,15 @@ Archivo: `src/app/core/data-access/pharma-lab/pharma-lab-concepts.client.ts`
 |---|---|
 | `GET` | `/pharma-labs/reference/concepts` |
 
+## `PharmacyClient`
+
+Archivo: `src/app/core/data-access/pharmacy/pharmacy.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/pharmacy-inventory/availability` |
+| `GET` | `/pharmacy/products` |
+
 ## `MedicalOrganizationClient`
 
 Archivo: `src/app/core/data-access/medical-organization/medical-organization.client.ts`
@@ -418,7 +460,19 @@ Archivo: `src/app/core/data-access/practice-sites/practice-sites.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `POST` | `/practices/:practiceId/role-assignments/self-request` |
 | `GET` | `/practitioners/:practitionerProfileId/sites` |
+| `GET` | `/practitioners/me/role-assignments` |
+
+## `PrescriptionFavoritesClient`
+
+Archivo: `src/app/core/data-access/prescription-favorites/prescription-favorites.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/prescription-favorites` |
+| `POST` | `/prescription-favorites` |
+| `DELETE` | `/prescription-favorites/:id` |
 
 ## `ProfilesClient`
 
@@ -443,6 +497,7 @@ Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
 | `PATCH` | `/profiles/practitioners/me` |
 | `GET` | `/profiles/practitioners/me/affiliations` |
 | `POST` | `/profiles/practitioners/me/affiliations` |
+| `GET` | `/profiles/practitioners/me/onboarding` |
 | `GET` | `/profiles/practitioners/me/summary` |
 
 ## `PublicClient`
@@ -481,7 +536,9 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 | `GET` | `/scheduling/resources` |
 | `POST` | `/scheduling/resources` |
 | `POST` | `/scheduling/resources/:resourceId/delay` |
+| `GET` | `/scheduling/resources/:resourceId/exceptions` |
 | `POST` | `/scheduling/resources/:resourceId/exceptions` |
+| `GET` | `/scheduling/resources/:resourceId/templates` |
 | `POST` | `/scheduling/resources/:resourceId/templates` |
 | `GET` | `/scheduling/slots` |
 | `POST` | `/scheduling/slots/:slotId/holds` |
