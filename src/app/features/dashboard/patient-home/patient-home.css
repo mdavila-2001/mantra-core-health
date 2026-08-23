@@ -101,3 +101,11 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* C5 del plan de UX · el flujo de síntomas encabeza el panel del paciente.
+   Con aire abajo para que no se lea pegado a las tarjetas de turnos: son dos
+   preguntas distintas y la separación es la que dice cuál se está mirando. */
+.mi-salud__sintomas {
+  display: block;
+  margin-block-end: var(--sp-6);
+}

@@ -1,0 +1,120 @@
+<section class="sintomas" aria-labelledby="sintomas-titulo">
+  <h2 class="sintomas__titulo" id="sintomas-titulo">¿Qué te pasa?</h2>
+  <p class="sintomas__texto">
+    Contanos con tus palabras qué sentís y desde cuándo. Te decimos a qué especialidad conviene
+    ir y te mostramos quién atiende.
+  </p>
+
+  <app-textarea
+    class="sintomas__campo"
+    [rows]="3"
+    [autoResize]="true"
+    [maxRows]="6"
+    [value]="texto()"
+    (valueChange)="escribir($event)"
+    placeholder="Me duele la cabeza hace tres días y veo borroso…"
+  />
+
+  <!-- Lo que se reconoce se ANUNCIA: los chips apareciendo son el acuse de
+       recibo para quien mira, y esta región lo es para quien escucha. -->
+  <p class="solo-lectores" role="status" aria-live="polite">{{ anuncio() }}</p>
+
+  @if (sintomas().length > 0) {
+    <div class="sintomas__chips">
+      <span class="sintomas__chips-rotulo">Te entendimos</span>
+      @for (sintoma of sintomas(); track sintoma.id) {
+        <!-- Cada chip se puede quitar: un falso positivo no puede quedar
+             atrapado dentro de la recomendación. -->
+        <app-chip
+          variant="info"
+          [removable]="true"
+          [label]="sintoma.nombre"
+          (removed)="quitar(sintoma)"
+        >
+          {{ sintoma.nombre }}
+        </app-chip>
+      }
+      <button app-button variant="ghost" size="sm" type="button" (clicked)="empezarDeNuevo()">
+        Empezar de nuevo
+      </button>
+    </div>
+  }
+
+  @if (sugerencias().length > 0) {
+    <div class="sintomas__sugerencias">
+      <span class="sintomas__chips-rotulo">¿Algo de esto?</span>
+      @for (sintoma of sugerencias(); track sintoma.id) {
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          (clicked)="agregar(sintoma)"
+        >
+          + {{ sintoma.nombre }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- ─── Derivación a urgencias (C6) ─────────────────────────────────────
+       Con un síntoma de alarma la pantalla DEJA de recomendar. Ofrecerle un
+       turno para el jueves a quien escribió «me duele el pecho y no puedo
+       respirar» sería el peor resultado posible de este flujo. -->
+  @if (alarmas().length > 0) {
+    <app-alert tone="error" title="Esto no puede esperar a un turno">
+      <p>
+        Lo que contás
+        @if (alarmas().length === 1) {
+          —{{ alarmas()[0].nombre }}—
+        }
+        puede ser una urgencia.
+        <strong>Andá ahora a una guardia o llamá a emergencias.</strong>
+      </p>
+      <p>
+        No te quedes esperando una respuesta acá. Si estás con otra persona, pedile que te
+        acompañe.
+      </p>
+    </app-alert>
+  } @else if (recomendaciones().length > 0) {
+    <div class="sintomas__recomendaciones">
+      <h3 class="sintomas__subtitulo">Conviene que veas a</h3>
+      <ul class="sintomas__lista">
+        @for (recomendacion of recomendaciones(); track recomendacion.nombre) {
+          <li>
+            <app-card variant="outlined" padding="md" class="sintomas__opcion">
+              <div class="sintomas__opcion-texto">
+                <p class="sintomas__especialidad">{{ recomendacion.nombre }}</p>
+                <!-- El porqué es lo que hace que esto no se sienta una caja
+                     negra. Sin él, la recomendación es una adivinanza con
+                     buena tipografía. -->
+                <p class="sintomas__porque">{{ explicacionDe(recomendacion) }}</p>
+              </div>
+              <button
+                app-button
+                variant="primary"
+                size="sm"
+                type="button"
+                (clicked)="verProfesionales(recomendacion.nombre)"
+              >
+                Ver quién atiende
+              </button>
+            </app-card>
+          </li>
+        }
+      </ul>
+    </div>
+  } @else if (texto().trim() !== '' && sintomas().length === 0) {
+    <p class="sintomas__sin-coincidencias" role="status">
+      No reconocimos ningún síntoma en lo que escribiste. Probá con palabras más simples —«me
+      duele la garganta», «tengo fiebre»— o buscá directamente en el
+      <a routerLink="/directory">directorio de médicos</a>.
+    </p>
+  }
+
+  <!-- El descargo es FIJO y no depende de que nadie se acuerde de ponerlo. -->
+  <p class="sintomas__descargo">
+    Esto <strong>no es un diagnóstico</strong>: es una orientación sobre a qué especialidad
+    conviene consultar. Quien decide qué tenés es el profesional que te atienda.
+  </p>
+</section>

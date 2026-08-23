@@ -21,6 +21,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
 import { MI_HISTORIA_ROUTE } from '../../account/medical-record/medical-record.routes';
+import { SymptomCheck } from '../../symptom-check/symptom-check';
 
 /** Un lugar al que el paciente puede ir desde su panel. */
 interface AccesoDelPaciente {
@@ -84,7 +85,16 @@ interface Resumen {
  */
 @Component({
   selector: 'app-patient-home',
-  imports: [AppButtonLink, Card, DatePipe, NavIcon, PageHeader, RouterLink, Tooltip],
+  imports: [
+    AppButtonLink,
+    Card,
+    DatePipe,
+    NavIcon,
+    PageHeader,
+    RouterLink,
+    SymptomCheck,
+    Tooltip,
+  ],
   templateUrl: './patient-home.html',
   styleUrl: './patient-home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
