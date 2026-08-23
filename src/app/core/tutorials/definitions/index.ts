@@ -378,35 +378,6 @@ const ORGANIZACIONES: TutorialDefinition = {
   ],
 };
 
-/** Carril 18 — bandeja y preferencias de notificación. */
-const NOTIFICACIONES: TutorialDefinition = {
-  id: 'notificaciones',
-  version: '1.0',
-  title: 'Configurar tus notificaciones',
-  description: 'Tu bandeja y tus preferencias de canal y categoría.',
-  category: 'General',
-  route: '/my-notifications',
-  estimatedMinutes: 2,
-  level: 'inicial',
-  steps: [
-    {
-      id: 'que-es',
-      title: 'Notificaciones',
-      body: 'Acá ves los avisos que el sistema te generó y configurás por qué canal y categoría querés recibir cada tipo.',
-    },
-    {
-      id: 'criticas',
-      title: 'Las críticas siempre llegan',
-      body: 'Las alertas de seguridad y las de citas confirmadas no se pueden desactivar: no dependen de tu preferencia.',
-    },
-    {
-      id: 'canales',
-      title: 'Qué canal funciona hoy',
-      body: 'La notificación interna es real. WhatsApp, SMS y push se pueden configurar como preferencia, pero en este entorno todavía no tienen un proveedor externo conectado.',
-    },
-  ],
-};
-
 /**
  * El catálogo. El orden es el que ve quien entra al centro sin filtrar, así que
  * va de lo que sirve el primer día a lo que sirve el primer mes.
@@ -420,5 +391,4 @@ export const TUTORIALS: readonly TutorialDefinition[] = [
   CENTRO_DE_AYUDA,
   CONTABILIDAD,
   ORGANIZACIONES,
-  NOTIFICACIONES,
 ];

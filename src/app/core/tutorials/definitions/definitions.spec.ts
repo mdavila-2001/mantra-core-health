@@ -167,7 +167,10 @@ describe('Definiciones de tutoriales', () => {
     expect(ids).toContain('agenda-del-dia');
     expect(ids).toContain('expediente-clinico');
     expect(ids).toContain('perfil-profesional');
-    // Y no el de facturación, que es de otro rol.
-    expect(ids).not.toContain('contabilidad');
+    // Y el de contabilidad, que dejó de ser sólo de facturación: desde la v1.1
+    // cubre el auto-servicio —registrar un ingreso o un gasto de la práctica
+    // propia— y por eso el tutorial suma `PRACTITIONER` a los dos roles
+    // contables. Ver `CONTABILIDAD` en `definitions/index.ts`.
+    expect(ids).toContain('contabilidad');
   });
 });
