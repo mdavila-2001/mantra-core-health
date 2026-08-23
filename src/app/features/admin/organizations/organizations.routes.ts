@@ -22,3 +22,24 @@ export const ORGANIZATION_NEW_ROUTE = `${ORGANIZATIONS_ROUTE}/new`;
  */
 export const organizationDetailRoute = (tenantId: string): string =>
   `${ORGANIZATIONS_ROUTE}/${tenantId}`;
+
+/**
+ * Verificación de la organización (V04-01·A, UC-04-02).
+ *
+ * Cuelga de la ficha y no del listado: verificar es mirar la documentación de
+ * una organización concreta, no elegir entre varias.
+ */
+export const organizationVerifyRoute = (tenantId: string): string =>
+  `${ORGANIZATIONS_ROUTE}/${tenantId}/verify`;
+
+/** Alta de una sucursal dentro de la organización (V04-06·F, UC-04-04). */
+export const branchNewRoute = (tenantId: string): string =>
+  `${ORGANIZATIONS_ROUTE}/${tenantId}/branches/new`;
+
+/** Incorporación de alguien a la organización (V04-02·F, UC-04-05). */
+export const membershipNewRoute = (tenantId: string): string =>
+  `${ORGANIZATIONS_ROUTE}/${tenantId}/memberships/new`;
+
+/** Alta de una sub-organización (V04-07·F, UC-04-03). */
+export const childOrganizationNewRoute = (tenantId: string): string =>
+  `${ORGANIZATIONS_ROUTE}/${tenantId}/child-organizations/new`;

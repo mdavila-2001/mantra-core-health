@@ -1,0 +1,64 @@
+<app-page-header
+  title="Puesta en marcha"
+  subtitle="Cuatro pasos para que la primera organización pueda atender."
+/>
+
+@switch (estado().status) {
+  @case ('loading') {
+    <output class="puesta__estado">Viendo qué falta…</output>
+  }
+
+  @case ('ready') {
+    @if (completo()) {
+      <app-alert tone="success" title="La plataforma está en marcha">
+        La organización está verificada, tiene sede y tiene equipo. Ya se puede agendar y atender.
+        @if (siguiente(); as etapa) {
+          <a app-button [routerLink]="[etapa.ruta]">{{ etapa.accion }}</a>
+        }
+      </app-alert>
+    } @else {
+      <output class="puesta__avance">
+        Llevás <strong>{{ cumplidas() }} de {{ totalDeTareas() }}</strong>. Podés dejarlo por acá y
+        seguir después: no hay nada que guardar, porque lo que cuenta es lo que ya existe y no un
+        formulario a medio llenar.
+      </output>
+    }
+
+    <app-stepper [steps]="pasosDelIndicador()" label="Puesta en marcha" />
+
+    <ol class="puesta__lista">
+      @for (etapa of etapas(); track etapa.key) {
+        <li class="puesta__etapa" [class.puesta__etapa--actual]="etapa.actual">
+          <header class="puesta__encabezado">
+            <h2 class="puesta__titulo">{{ etapa.titulo }}</h2>
+            @if (etapa.completa) {
+              <span class="puesta__marca puesta__marca--lista">Listo</span>
+            } @else if (etapa.actual) {
+              <span class="puesta__marca puesta__marca--actual">Te toca</span>
+            }
+          </header>
+
+          <p class="puesta__explica">{{ etapa.explica }}</p>
+
+          <!-- Cada etapa enlaza a la pantalla que ya sabe hacer ese trabajo.
+               Las cumplidas siguen siendo navegables —volver a mirar lo que ya
+               está hecho no es un error— y la última, que es el destino y no
+               una tarea, sólo se ofrece cuando de verdad no falta nada. -->
+          @if (etapa.key !== 'operar' || completo()) {
+            <a
+              app-button
+              [variant]="etapa.actual ? 'primary' : 'secondary'"
+              [routerLink]="[etapa.ruta]"
+            >
+              {{ etapa.accion }}
+            </a>
+          }
+        </li>
+      }
+    </ol>
+  }
+
+  @default {
+    <app-view-state-host [state]="estado()" (retry)="cargar()" />
+  }
+}

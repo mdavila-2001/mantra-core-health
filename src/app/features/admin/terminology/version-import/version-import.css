@@ -1,0 +1,85 @@
+/* ============================================================================
+    Importación de terminología por archivo.
+
+    Tres pasos en tres tarjetas, en orden y a la vista: elegir destino, subir, y
+    —cuando ya hay resultado— publicar. Sin acordeones ni asistente que esconda
+    lo que viene: el tercer paso es justamente el que se olvida, y esconderlo
+    sería ayudar a olvidarlo.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.importar__pasos {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-4);
+  /* El ancho lo fija el contenido: un formulario en una línea de 2000 px no se
+     lee. */
+  max-inline-size: 44rem;
+}
+
+.importar__paso {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.importar__titulo {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  margin: 0;
+}
+
+.importar__acciones {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* Las cifras del informe se comparan entre sí: tabulares y en fila. */
+.importar__resultado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.importar__resultado dt {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.importar__resultado dd {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin: 0;
+}
+
+.importar__errores ul {
+  display: grid;
+  gap: var(--sp-1);
+  margin-block: var(--sp-2) 0;
+  padding-inline-start: var(--sp-4);
+}
+
+.importar__errores summary {
+  cursor: pointer;
+}
+
+/* El número de línea es lo que se busca al leer la lista: se distingue del
+   mensaje sin depender del color. */
+.importar__linea {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin-inline-end: var(--sp-2);
+}
+
+.importar__nota {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  margin-block: var(--sp-2) 0;
+}

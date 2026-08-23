@@ -1,0 +1,86 @@
+<app-page-header
+  title="Sumar a alguien"
+  subtitle="Hasta que alguien más forme parte, sólo quien creó la organización puede trabajar dentro."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (errorMessage(); as mensaje) {
+  <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-membresia-error">{{
+    mensaje
+  }}</app-alert>
+}
+
+<form (ngSubmit)="submit()" novalidate data-testid="alta-membresia-form">
+  <app-form-section
+    legend="Quién"
+    description="La cuenta tiene que existir: esto la incorpora a la organización, no la crea."
+  >
+    <app-form-field
+      label="Persona"
+      hint="Buscá por nombre o correo y elegí de la lista."
+      [required]="true"
+      [errorMessage]="personaFaltante() ? 'Elegí a quién vas a sumar.' : ''"
+    >
+      <app-reference-combobox
+        [selected]="persona()"
+        [options]="candidatos()"
+        [loading]="buscando()"
+        placeholder="Nombre o correo"
+        emptyMessage="Ninguna cuenta coincide"
+        (searched)="buscarPersona($event)"
+        (selectionChange)="persona.set($event)"
+      />
+    </app-form-field>
+  </app-form-section>
+
+  <app-form-section legend="Con qué permisos" description="Qué puede hacer y hasta dónde llega.">
+    <app-form-field label="Rol" hint="El dueño es quien responde por la organización.">
+      <app-select
+        [value]="rol()"
+        (valueChange)="cambiarRol($event)"
+        [options]="opcionesDeRol"
+        placeholder="Elegí un rol"
+      />
+    </app-form-field>
+
+    <app-form-field label="Alcance" hint="Si trabaja en toda la organización o en una sede.">
+      <app-select
+        [value]="alcance()"
+        (valueChange)="cambiarAlcance($event)"
+        [options]="opcionesDeAlcance"
+        placeholder="Elegí el alcance"
+      />
+    </app-form-field>
+
+    @if (esPorSede()) {
+      @if (sinSedes()) {
+        <app-alert tone="warning" data-testid="alta-membresia-sin-sedes">
+          La organización todavía no tiene sedes, así que no hay ninguna a la que acotar. Abrí una
+          primero, o dejá el alcance en toda la organización.
+        </app-alert>
+      } @else {
+        <app-form-field
+          label="Sede"
+          hint="Dónde trabaja. Se asigna en el mismo acto de sumarla."
+          [required]="true"
+          [errorMessage]="sedeFaltante() ? 'Elegí la sede donde trabaja.' : ''"
+        >
+          <app-select
+            [value]="sede()"
+            (valueChange)="cambiarSede($event)"
+            [options]="opcionesDeSede()"
+            placeholder="Elegí una sede"
+          />
+        </app-form-field>
+      }
+    }
+  </app-form-section>
+
+  <app-form-actions
+    submitLabel="Sumar a la organización"
+    cancelLabel="Cancelar"
+    [pending]="enviando()"
+    (submitted)="submit()"
+    (cancelled)="cancelar()"
+  />
+</form>

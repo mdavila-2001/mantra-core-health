@@ -473,6 +473,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M03 terminology',
   },
   {
+    path: 'administration/content-packs',
+    label: 'Paquetes de contenido',
+    group: 'Administración',
+    icon: 'orders',
+    // `SUPERADMIN` y sólo él: aplicar un paquete cambia el catálogo que ve
+    // **toda** la instalación, no el de una organización. Es la misma superficie
+    // de plataforma que el aprovisionamiento de organizaciones.
+    roles: ['SUPERADMIN'],
+    availability: 'disponible',
+    summary: 'Cargá los catálogos que el arranque ya no trae solo.',
+    module: 'M03 terminology',
+  },
+  {
     path: 'administration/moderation',
     label: 'Moderación',
     group: 'Administración',

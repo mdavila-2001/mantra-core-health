@@ -1,0 +1,90 @@
+/* ============================================================================
+    La puesta en marcha de la plataforma, paso por paso.
+
+    Espeja el alta del profesional, que resuelve el mismo problema: una lista de
+    etapas derivadas del estado real, cada una una tarjeta que se lee entera y
+    termina en su acción. Sin acordeones — esconder lo que falta detrás de un
+    clic es lo contrario de lo que esta pantalla viene a hacer.
+
+    Mobile-first como el resto del armazón.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.puesta__estado {
+  color: var(--text-muted);
+  display: block;
+  margin-block: var(--sp-4);
+}
+
+.puesta__avance {
+  color: var(--text-secondary);
+  display: block;
+  margin-block: 0 var(--sp-4);
+}
+
+.puesta__lista {
+  display: grid;
+  gap: var(--sp-3);
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+}
+
+.puesta__etapa {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  padding: var(--sp-4);
+}
+
+/* La etapa que toca ahora se distingue por el borde y no por el fondo: un
+   fondo de color compite con los avisos, que sí son excepcionales. */
+.puesta__etapa--actual {
+  border-color: var(--border-strong);
+}
+
+.puesta__encabezado {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: space-between;
+  width: 100%;
+}
+
+.puesta__titulo {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  margin: 0;
+}
+
+.puesta__explica {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* La marca de estado es texto con fondo tenue, no sólo color: el estado se lee
+   igual sin distinguir tonos. */
+.puesta__marca {
+  border-radius: var(--r-full);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  padding: var(--sp-1) var(--sp-3);
+  white-space: nowrap;
+}
+
+.puesta__marca--lista {
+  background: var(--st-success-bg);
+  color: var(--st-success-fg);
+}
+
+.puesta__marca--actual {
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+}

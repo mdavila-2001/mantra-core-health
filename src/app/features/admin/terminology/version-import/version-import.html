@@ -1,0 +1,139 @@
+<app-page-header
+  title="Importar terminología"
+  subtitle="Carga masiva de conceptos desde un archivo, para catálogos que no entran en una petición."
+/>
+
+<app-view-state-host [state]="estado()" (retry)="cargar()">
+  <div class="importar__pasos">
+    <section class="importar__paso" aria-labelledby="paso-destino">
+      <h2 class="importar__titulo" id="paso-destino">1 · A dónde</h2>
+
+      <app-form-field label="Sistema de codificación">
+        <app-select
+          [value]="sistema()"
+          (valueChange)="cambiarSistema($event)"
+          [options]="opcionesDeSistema()"
+          placeholder="Elegí un sistema"
+        />
+      </app-form-field>
+
+      @if (sinVersionesAbiertas()) {
+        <!-- Ofrecer una versión publicada sería preparar un 422 que la persona
+             descubre recién al enviar. -->
+        <app-alert tone="warning">
+          Este sistema no tiene ninguna versión que admita conceptos: las publicadas ya no los
+          aceptan. Creá una versión nueva en borrador antes de importar.
+        </app-alert>
+      } @else {
+        <app-form-field
+          label="Versión"
+          hint="Sólo se ofrecen las que todavía admiten conceptos."
+        >
+          <app-select
+            [value]="version()"
+            (valueChange)="cambiarVersion($event)"
+            [options]="opcionesDeVersion()"
+            [disabled]="sistema() === null || cargandoVersiones()"
+            placeholder="Elegí una versión"
+          />
+        </app-form-field>
+      }
+    </section>
+
+    <section class="importar__paso" aria-labelledby="paso-archivo">
+      <h2 class="importar__titulo" id="paso-archivo">2 · El archivo</h2>
+
+      <app-alert tone="info">
+        Un objeto JSON por línea (NDJSON), con <code>code</code> y <code>display</code>
+        obligatorios y <code>definition</code> opcional. Por ejemplo:
+        <code>&#123;"code":"A00","display":"Cólera"&#125;</code>. Una línea con problemas no
+        detiene al resto: se informa con su número.
+      </app-alert>
+
+      <app-file-input
+        [(files)]="archivos"
+        accept=".ndjson,.jsonl,.json,application/json,text/plain"
+        [maxSizeBytes]="maxBytes"
+        [maxFiles]="1"
+        [disabled]="importando()"
+      />
+
+      <div class="importar__acciones">
+        <button
+          app-button
+          type="button"
+          variant="primary"
+          [disabled]="!puedeImportar()"
+          [isLoading]="importando()"
+          (clicked)="importar()"
+        >
+          Importar
+        </button>
+      </div>
+    </section>
+
+    @if (resultado(); as informe) {
+      <section class="importar__paso" aria-labelledby="paso-resultado">
+        <h2 class="importar__titulo" id="paso-resultado">3 · Qué entró</h2>
+
+        <dl class="importar__resultado" data-testid="importar-resultado">
+          <div>
+            <dt>Líneas leídas</dt>
+            <dd>{{ informe.totalRead }}</dd>
+          </div>
+          <div>
+            <dt>Conceptos nuevos</dt>
+            <dd>{{ informe.inserted }}</dd>
+          </div>
+          <div>
+            <dt>Ya estaban</dt>
+            <dd>{{ informe.skipped }}</dd>
+          </div>
+          <div>
+            <dt>Con problemas</dt>
+            <dd>{{ informe.errors }}</dd>
+          </div>
+        </dl>
+
+        @if (informe.errorSamples.length > 0) {
+          <details class="importar__errores">
+            <summary>Ver las líneas que quedaron afuera</summary>
+            <ul>
+              @for (problema of informe.errorSamples; track problema.line) {
+                <li>
+                  <span class="importar__linea">Línea {{ problema.line }}</span>
+                  {{ problema.message }}
+                </li>
+              }
+            </ul>
+            @if (informe.errors > informe.errorSamples.length) {
+              <p class="importar__nota">
+                Se muestran las primeras {{ informe.errorSamples.length }} de
+                {{ informe.errors }}.
+              </p>
+            }
+          </details>
+        }
+
+        <!-- El paso que más se olvida: sin publicar, los conceptos importados
+             son invisibles a toda expansión y no da ningún error. -->
+        <app-alert tone="warning">
+          Los conceptos quedaron en borrador. Hasta que publiques la versión, no aparecen en
+          ningún desplegable ni búsqueda de catálogo — y no da error, sale vacío.
+        </app-alert>
+
+        <div class="importar__acciones">
+          <button
+            app-button
+            type="button"
+            variant="primary"
+            [isLoading]="publicando()"
+            (clicked)="publicar()"
+          >
+            Publicar la versión
+          </button>
+        </div>
+      </section>
+    }
+  </div>
+</app-view-state-host>
