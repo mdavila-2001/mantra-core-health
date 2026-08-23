@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { CODIGO_DEL_TENANT_SEMILLA } from '../tenant-semilla';
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
@@ -12,17 +13,12 @@ import { GETTING_STARTED_ROUTE } from '../getting-started.routes';
  * Con dos alcanza: el tenant semilla más una. Es una pregunta de sí o no, no un
  * listado.
  */
+/**
+ * Con dos alcanza: la pregunta es «¿hay alguna que no sea la semilla?», y como
+ * la semilla es a lo sumo una, dos filas siempre contienen la respuesta.
+ */
 const ORGANIZACIONES_A_MIRAR = 2;
 
-/**
- * El código del tenant que siembra el arranque.
- *
- * No es una organización real: existe para que el administrador tenga dónde
- * estar y para que las escrituras sin contexto tengan a qué apuntar. Contarlo
- * daría por hecha una puesta en marcha que no ocurrió. Su valor vive en
- * `SEED.tenantCode` del backend.
- */
-const CODIGO_DEL_TENANT_SEMILLA = 'DEFAULT';
 
 /**
  * El aviso de que la plataforma todavía no tiene ninguna organización.

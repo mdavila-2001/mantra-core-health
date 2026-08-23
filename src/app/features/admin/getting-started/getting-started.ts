@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
+import { CODIGO_DEL_TENANT_SEMILLA } from './tenant-semilla';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import type { TenantListItem } from '../../../core/data-access/directory/directory.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -23,26 +24,19 @@ import {
 } from '../organizations/organizations.routes';
 
 /**
- * Cuántas organizaciones se miran para decidir si hay alguna real.
+ * Cuántas organizaciones se traen para elegir a cuál sigue el recorrido.
  *
- * Con dos alcanza: el tenant semilla más una. Pedir más sería traer un listado
- * entero para responder una pregunta de sí o no.
+ * Eran 2, que alcanzaba mientras la pregunta era «¿hay alguna que no sea la
+ * semilla?». Desde que el recorrido sigue a la **más vieja** hace falta verlas
+ * todas: con 2 no podía saber cuál lo era, ni cuántas hay, así que elegía mal y
+ * además subcontaba. Veinte es holgado para una instalación en puesta en
+ * marcha, que es cuando esta pantalla tiene sentido.
  */
-const ORGANIZACIONES_A_MIRAR = 2;
+const ORGANIZACIONES_A_MIRAR = 20;
 
 /** Cuántas membresías se miran para saber si hay alguien además del dueño. */
 const MEMBRESIAS_A_MIRAR = 2;
 
-/**
- * El código del tenant que siembra el arranque.
- *
- * No es una organización real: existe para que el administrador tenga dónde
- * estar y para que las escrituras que arrancan sin contexto —archivos,
- * consentimientos— tengan a qué apuntar. Verlo en el listado no significa que
- * la plataforma esté puesta en marcha, así que el recorrido lo saltea.
- * Su valor vive en `SEED.tenantCode` del backend.
- */
-const CODIGO_DEL_TENANT_SEMILLA = 'DEFAULT';
 
 /** El código de concepto que marca una organización ya verificada. */
 const CODIGO_VERIFICADA = 'TENANT_VERIFIED';
