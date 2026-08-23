@@ -3,8 +3,13 @@ import { inject, Injectable } from '@angular/core';
 import { expand, forkJoin, map, of, reduce, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import type { ConNulos } from '../wire';
 import type {
+  CodeSystemListItem,
+  CodeSystemVersionListItem,
+  CodeSystemVersionState,
   ConceptDetail,
+  ConceptImportResult,
   ConceptLabels,
   ConceptSearchPage,
   ConceptSearchQuery,
@@ -370,9 +375,95 @@ export class TerminologyClient {
     );
   }
 
+  /* ---- administración del catálogo ------------------------------------------
+     Las primeras escrituras de este cliente. Todo lo de arriba lee el catálogo
+     ya publicado; esto es la superficie de quien lo **carga**, y la API la
+     reserva a `SECURITY_ADMIN`. */
+
+  /**
+   * `GET /terminology/code-systems` — los sistemas de codificación registrados.
+   *
+   * Hasta que existió, el identificador de un sistema había que sacarlo de la
+   * respuesta de su alta y anotarlo a mano: no había forma de listarlos.
+   */
+  listCodeSystems(): Observable<readonly CodeSystemListItem[]> {
+    return this.http
+      .get<{ items: readonly CodeSystemListItem[] }>(this.url('/terminology/code-systems'))
+      .pipe(map((body) => body.items));
+  }
+
+  /**
+   * `GET /terminology/code-systems/{id}/versions` — sus versiones.
+   *
+   * Cada una dice si **admite conceptos**, que es la pregunta de quien va a
+   * importar: una versión ya publicada no los acepta.
+   */
+  listVersions(codeSystemId: string): Observable<readonly CodeSystemVersionListItem[]> {
+    return this.http
+      .get<{ items: readonly ConNulos<WireVersionListItem>[] }>(
+        this.url(`/terminology/code-systems/${encodeURIComponent(codeSystemId)}/versions`),
+      )
+      .pipe(map((body) => body.items.map(toVersionListItem)));
+  }
+
+  /**
+   * `POST /terminology/versions/{id}/import-file` — importa un archivo NDJSON.
+   *
+   * Va como multipart y **no** por `common/files`: aquella subida valida el
+   * tipo por bytes mágicos y sólo admite PDF e imágenes, porque existe para
+   * evidencia clínica; un archivo de texto no tiene firma binaria y se rechaza.
+   * Acá el tipo se comprueba por parseo, que para NDJSON prueba más.
+   *
+   * El contenido no se almacena: se convierte en conceptos y se descarta.
+   */
+  importConceptsFile(versionId: string, file: File): Observable<ConceptImportResult> {
+    const form = new FormData();
+    form.append('file', file);
+
+    return this.http.post<ConceptImportResult>(
+      this.url(`/terminology/versions/${encodeURIComponent(versionId)}/import-file`),
+      form,
+    );
+  }
+
+  /**
+   * `POST /terminology/versions/{id}/publish` — publica la versión.
+   *
+   * Es el paso que hace visibles a los conceptos importados: mientras la
+   * versión sea borrador, toda expansión de conjunto de valores sale vacía —sin
+   * error— porque sólo selecciona conceptos activos.
+   */
+  publishVersion(versionId: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(`/terminology/versions/${encodeURIComponent(versionId)}/publish`),
+        {},
+      )
+      .pipe(map(() => undefined));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/** La versión tal como viaja: la fecha es texto o `null`. */
+interface WireVersionListItem {
+  readonly id: string;
+  readonly version: string;
+  readonly state: CodeSystemVersionState;
+  readonly isDefault: boolean;
+  readonly publishedAt: string | null;
+  readonly acceptsConcepts: boolean;
+}
+
+/** Una versión con su fecha ya convertida. */
+function toVersionListItem(item: ConNulos<WireVersionListItem>): CodeSystemVersionListItem {
+  const { publishedAt, ...resto } = item;
+  return {
+    ...(resto as Omit<CodeSystemVersionListItem, 'publishedAt'>),
+    publishedAt: publishedAt == null ? null : new Date(publishedAt),
+  };
 }
 
 /* La forma de la respuesta vivía acá como interfaz privada, porque el único

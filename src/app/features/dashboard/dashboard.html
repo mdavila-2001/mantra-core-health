@@ -13,6 +13,23 @@
      asistente hasta terminar, y eso rompería a todos los médicos que se
      registraron antes de que existiera. Puede operar con lo que tiene; lo que
      falta es que sepa qué le falta. -->
+  <!-- Mismo criterio que el aviso de abajo: la plataforma sin ninguna
+       organización no está rota, está sin poner en marcha. Se avisa a quien
+       puede hacer algo al respecto y se le ofrece el camino; encerrarlo en un
+       asistente le impediría hacer lo demás que sí puede.
+
+       Va diferido y no en línea por peso: este panel se importa **eagerly** en
+       `app.routes.ts`, así que todo lo que toca viaja en el paquete inicial —y
+       ya estaba a 994 kB de un techo de 1 MB—. Con `@defer`, el cliente de
+       directorio queda en un paquete aparte que sólo descarga quien puede
+       aprovisionar organizaciones. Sin `@placeholder`: mientras no se sepa si
+       falta algo, lo honesto es no ocupar lugar. -->
+  @if (puedeCrearOrganizacion()) {
+    @defer (on immediate) {
+      <app-setup-notice />
+    }
+  }
+
   @if (altaPendiente(); as alta) {
     <app-alert tone="warning" title="Completá tu perfil para recibir pacientes">
       Llevás {{ alta.cumplidas }} de {{ alta.total }} pasos. Hasta terminarlos no aparecés cuando

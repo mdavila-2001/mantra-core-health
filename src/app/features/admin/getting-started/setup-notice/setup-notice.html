@@ -1,0 +1,9 @@
+@if (pendiente()) {
+  <app-alert tone="info" title="Todavía no hay ninguna organización">
+    Para que alguien pueda agendar y atender hace falta crear la primera clínica u hospital,
+    verificarla, abrirle una sede y sumarle equipo.
+    <a app-button variant="primary" size="sm" [routerLink]="[ruta]">
+      Poner la plataforma en marcha
+    </a>
+  </app-alert>
+}
