@@ -35,11 +35,6 @@ describe('SigningKeyForm', () => {
     return (esSenal ? valor : valor.bind(component)) as T;
   }
 
-  function campos(): { form: { patchValue: (v: object) => void } } {
-    return (component as unknown as { campos: () => { form: { patchValue: (v: object) => void } } })
-      .campos();
-  }
-
   it('sin proveedor o con la clave incompleta no viaja nada', () => {
     interno<() => void>('submit')();
 
@@ -50,7 +45,7 @@ describe('SigningKeyForm', () => {
 
   it('la clave viaja al proveedor de la ruta con el cuerpo exacto', () => {
     interno<{ patchValue: (v: object) => void }>('form').patchValue({ providerId: PROVEEDOR });
-    campos().form.patchValue({ keyId: 'k-1', algorithm: 'RS256', publicKey: 'pem' });
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ keyId: 'k-1', algorithm: 'RS256', publicKey: 'pem' });
 
     interno<() => void>('submit')();
 

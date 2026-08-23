@@ -36,17 +36,19 @@ describe('PractitionerDelegateForm', () => {
     return (esSenal ? valor : valor.bind(component)) as T;
   }
 
-  function completarReferencias() {
-    interno<{
-      setValue: (v: {
-        practitionerRoleAssignmentId: string;
-        delegateUserAssignmentId: string;
-        delegatedPermissionSetId: string;
-      }) => void;
-    }>('form').setValue({
+  /**
+   * El formulario entero, en un solo grupo.
+   *
+   * El rol, los alcances, los switches y las fechas vivían en señales sueltas
+   * mientras la plantilla los dibujaba a mano; con el motor todo escribe en el
+   * mismo `FormGroup`.
+   */
+  function completar(valores: Record<string, unknown> = {}) {
+    interno<{ patchValue: (v: Record<string, unknown>) => void }>('form').patchValue({
       practitionerRoleAssignmentId: UUID_A,
       delegateUserAssignmentId: UUID_B,
       delegatedPermissionSetId: UUID_C,
+      ...valores,
     });
   }
 
@@ -56,16 +58,13 @@ describe('PractitionerDelegateForm', () => {
   });
 
   it('una referencia que no tiene forma de UUID tampoco pasa', () => {
-    completarReferencias();
-    interno<{ patchValue: (v: { delegatedPermissionSetId: string }) => void }>('form').patchValue({
-      delegatedPermissionSetId: 'esto-no-es-un-uuid',
-    });
+    completar({ delegatedPermissionSetId: 'esto-no-es-un-uuid' });
 
     interno<() => void>('submit')();
   });
 
   it('lo mínimo viaja con las tres referencias y los dos switches; nada inventado', () => {
-    completarReferencias();
+    completar();
     interno<() => void>('submit')();
 
     const req = http.expectOne('/practitioner-delegates');
@@ -84,12 +83,11 @@ describe('PractitionerDelegateForm', () => {
   });
 
   it('el alcance elegido viaja, y las fechas van como ISO', () => {
-    completarReferencias();
-    interno<(v: unknown) => void>('elegirRol')('NURSE');
-    interno<(v: unknown) => void>('elegirPacientes')('ASSIGNED');
-    interno<{ set: (v: Date | null) => void }>('validTo').set(
-      new Date('2026-12-31T15:30:00.000Z'),
-    );
+    completar({
+      delegateRole: 'NURSE',
+      patientScope: 'ASSIGNED',
+      validTo: new Date('2026-12-31T15:30:00.000Z'),
+    });
 
     interno<() => void>('submit')();
 
@@ -104,9 +102,13 @@ describe('PractitionerDelegateForm', () => {
 
   it('un rol fuera del set del contrato no entra: BILLING no es rol de delegado', () => {
     // `CreatePractitionerDelegateDto` acepta ASSISTANT/SECRETARY/NURSE; BILLING
-    // existe en OTROS sets del módulo y mandarlo acá sería un 400.
-    interno<(v: unknown) => void>('elegirRol')('BILLING');
+    // existe en OTROS sets del módulo y mandarlo acá sería un 400. El motor sólo
+    // ofrece los tres del contrato; la comprobación sigue al armar el cuerpo.
+    completar({ delegateRole: 'BILLING' });
+    interno<() => void>('submit')();
 
-    expect(interno<() => string | null>('delegateRole')()).toBeNull();
+    const req = http.expectOne('/practitioner-delegates');
+    expect(req.request.body).not.toHaveProperty('delegateRole');
+    req.flush({ id: 'd-1', status: 'c', createdAt: '2026-08-07T12:00:00.000Z' });
   });
 });

@@ -25,6 +25,8 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
 /** Los tipos de respuesta, en el orden en que se ofrecen. */
@@ -78,6 +80,7 @@ const ETIQUETA_TIPO: Readonly<Record<AnswerType, string>> = {
     DatePipe,
     FormField,
     PageHeader,
+    PaginatedForm,
     ReactiveFormsModule,
     Select,
     Skeleton,
@@ -154,6 +157,58 @@ export class SurveyDetailScreen {
 
   /** Si el tipo elegido es una escala, para mostrar mínimo y máximo. */
   protected readonly pideEscala = signal(false);
+
+  /**
+   * Las páginas del alta de pregunta, **según el tipo elegido**.
+   *
+   * Las opciones sólo las pide una elección; el mínimo y el máximo, sólo una
+   * escala. Mostrarlos siempre sería pedir datos que no se van a guardar, y
+   * mostrarlos deshabilitados sería lo mismo con más ruido.
+   */
+  protected readonly paginasDePregunta = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'La pregunta',
+        campos: [
+          {
+            key: 'questionText',
+            label: 'Pregunta',
+            hint: 'Cómo la va a leer el paciente.',
+            control: 'text' as const,
+            required: true,
+            testId: 'pregunta-texto',
+            mensajeDeError: 'Escribí la pregunta (hasta 500 caracteres).',
+          },
+          {
+            key: 'answerType',
+            label: 'Tipo de respuesta',
+            control: 'select' as const,
+            required: true,
+            options: TIPOS,
+          },
+          ...(this.pideOpciones()
+            ? [
+                {
+                  key: 'options',
+                  label: 'Opciones',
+                  hint: 'Una por línea. Hacen falta al menos dos.',
+                  control: 'text' as const,
+                  required: true,
+                  testId: 'pregunta-opciones',
+                },
+              ]
+            : []),
+          ...(this.pideEscala()
+            ? [
+                { key: 'scaleMin', label: 'Mínimo', control: 'number' as const, required: true },
+                { key: 'scaleMax', label: 'Máximo', control: 'number' as const, required: true },
+              ]
+            : []),
+          { key: 'required', label: 'Obligatoria', control: 'checkbox' as const },
+        ],
+      },
+    ]),
+  );
 
   constructor() {
     this.cargar();

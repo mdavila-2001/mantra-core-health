@@ -60,6 +60,16 @@ export interface PatientRegistration {
    * distintos. Sin `nationalId` no tiene a qué atarse.
    */
   readonly issuerAdministrativeAreaConceptId?: string;
+  /**
+   * Municipio de residencia (catálogo `VS_BO_MUNICIPALITY`).
+   *
+   * Viaja **solo**, sin el departamento: el código del INE de un municipio
+   * lleva adentro el de su departamento, así que el backend lo deriva y escribe
+   * los dos en `common.addresses`. Mandar el par desde acá abriría la puerta a
+   * que llegara incoherente —el municipio de uno con el departamento de otro— y
+   * no habría criterio para decidir cuál gana.
+   */
+  readonly residenceMunicipalityConceptId?: string;
   /** Teléfono de contacto, en E.164 o formato nacional. */
   readonly phone?: string;
   /** Género administrativo (HL7 AdministrativeGender). */
@@ -142,6 +152,16 @@ export interface PractitionerRegistration {
   readonly nationalId?: string;
   /** Departamento boliviano que emitió el documento (catálogo VS_BO_DEPARTMENT). */
   readonly issuerAdministrativeAreaConceptId?: string;
+  /**
+   * Municipio de residencia (catálogo `VS_BO_MUNICIPALITY`).
+   *
+   * Viaja **solo**, sin el departamento: el código del INE de un municipio
+   * lleva adentro el de su departamento, así que el backend lo deriva y escribe
+   * los dos en `common.addresses`. Mandar el par desde acá abriría la puerta a
+   * que llegara incoherente —el municipio de uno con el departamento de otro— y
+   * no habría criterio para decidir cuál gana.
+   */
+  readonly residenceMunicipalityConceptId?: string;
   readonly licenseNumber: string;
   readonly credentialNumber: string;
   /** Autoridad que emitió la matrícula: Ministerio de Salud y Deportes, Colegio de Odontólogos, etc. */

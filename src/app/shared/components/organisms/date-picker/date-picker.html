@@ -27,23 +27,37 @@
 </div>
 
 @if (isOpen()) {
-  <!-- El fondo es el atajo de ratón para cerrar. El camino de teclado está en
-       el diálogo de adentro, que atrapa el foco y cierra con `Escape`; un
-       keydown acá no lo alcanzaría el foco nunca. -->
-  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
-  <div class="date-picker-overlay" (click)="close()">
-    <!-- tabindex=-1 para poder recibir el foco al abrir sin entrar en el orden
-         de tabulación; el keydown maneja Escape y atrapa el Tab. -->
-    <div
-      #dialog
-      class="date-picker-dialog"
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-label]="mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha'"
-      tabindex="-1"
-      (click)="$event.stopPropagation()"
-      (keydown)="handleDialogKeydown($event)"
-    >
+  <!-- `<dialog>` nativo abierto con `showModal()`, y NO un `div` con
+       `position: fixed`.
+
+       El motivo es un bug concreto: un ancestro con `backdrop-filter` —la
+       tarjeta de cristal del registro, la del login— se vuelve el bloque
+       contenedor de sus descendientes `fixed`, así que el velo de 100vw se
+       posicionaba respecto a la tarjeta y el calendario aparecía pegado al
+       borde derecho, medio fuera de la pantalla y sin manera de elegir un día.
+       Lo mismo haría un `transform` o un `filter` en cualquier pantalla futura.
+
+       La capa superior del navegador no tiene ese problema: un diálogo modal se
+       posiciona respecto a la ventana pase lo que pase arriba de él. De yapa
+       trae el velo (`::backdrop`), el atrapado del foco y el cierre con Escape.
+
+       `tabindex=-1` para poder recibir el foco al abrir sin entrar en el orden
+       de tabulación. El velo es el atajo de ratón para cerrar: un clic sobre él
+       llega con `target` en el propio `<dialog>`, que por eso no lleva relleno
+       propio —lo pone el panel de adentro—. -->
+   
+  <dialog
+    #dialog
+    class="date-picker-dialog"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha'"
+    tabindex="-1"
+    (click)="handleBackdropClick($event)"
+    (close)="close()"
+    (keydown)="handleDialogKeydown($event)"
+  >
+    <div class="date-picker-panel">
       <div class="dialog-header">
         <h3 class="dialog-title">
           {{ mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha' }}
@@ -128,5 +142,5 @@
         <button app-button variant="primary" size="sm" (clicked)="confirm()">Confirmar</button>
       </div>
     </div>
-  </div>
+  </dialog>
 }

@@ -14,7 +14,7 @@ import { RegisterPage } from '../../support/pages/register.page';
  */
 describe('Formularios · registro', () => {
   it('un paciente se da de alta con documento, nombre y contraseña', () => {
-    RegisterPage.abrir();
+    RegisterPage.abrirPaciente();
 
     RegisterPage.registrarPaciente(nuevoPaciente());
 
@@ -22,7 +22,7 @@ describe('Formularios · registro', () => {
   });
 
   it('con correo, el alta avisa que mandó la verificación', () => {
-    RegisterPage.abrir();
+    RegisterPage.abrirPaciente();
 
     RegisterPage.registrarPaciente(nuevoPaciente(), { conCorreo: true });
 
@@ -32,18 +32,22 @@ describe('Formularios · registro', () => {
   });
 
   it('los campos obligatorios se avisan sin llegar a la API', () => {
-    RegisterPage.abrir('registro-duplicado');
+    RegisterPage.abrirPaciente('registro-duplicado');
 
-    RegisterPage.enviarFormulario();
+    // Sin escribir nada: el motor no deja pasar de la primera página.
+    RegisterPage.continuar();
 
-    RegisterPage.mensajesDeValidacion(3).should('have.length.at.least', 3);
+    // Uno y no tres: el formulario se sirve de a una página y sólo se marca lo
+    // que la persona ya vio. Pintar en rojo campos de páginas que todavía no
+    // abrió sería acusarla de algo que no hizo.
+    RegisterPage.mensajesDeValidacion(1).should('have.length.at.least', 1);
     // Si el formulario hubiera llamado igual, el escenario habría devuelto 409
     // y estaríamos viendo el error del servidor en vez del del campo.
     RegisterPage.sinError();
   });
 
   it('una contraseña corta se rechaza en el cliente', () => {
-    RegisterPage.abrir();
+    RegisterPage.abrirPaciente();
 
     RegisterPage.registrarPaciente({ ...nuevoPaciente(), password: 'corta' });
 
@@ -53,7 +57,7 @@ describe('Formularios · registro', () => {
   });
 
   it('un documento ya registrado se explica como conflicto, no como error genérico', () => {
-    RegisterPage.abrir('registro-duplicado');
+    RegisterPage.abrirPaciente('registro-duplicado');
 
     RegisterPage.registrarPaciente(nuevoPaciente());
 
@@ -71,7 +75,7 @@ describe('Formularios · registro', () => {
   });
 
   it('desde la confirmación se vuelve al login', () => {
-    RegisterPage.abrir();
+    RegisterPage.abrirPaciente();
 
     RegisterPage.registrarPaciente(nuevoPaciente());
     RegisterPage.esperarConfirmacion();

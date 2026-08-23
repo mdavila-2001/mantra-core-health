@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { GeoClient } from '../../../core/data-access/geo/geo.client';
 import type { GeofenceEvent, GeofenceEventType } from '../../../core/data-access/geo/geo.types';
@@ -9,15 +9,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 const SENTIDOS: readonly GeofenceEventType[] = ['ENTER', 'EXIT'];
@@ -32,18 +27,11 @@ const SENTIDOS: readonly GeofenceEventType[] = ['ENTER', 'EXIT'];
 @Component({
   selector: 'app-geofence-event-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    DatePicker,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Radio,
-    RadioGroup,
+    PaginatedForm,
   ],
   templateUrl: './geofence-event-form.html',
   styleUrl: '../m13.css',
@@ -56,6 +44,33 @@ export class GeofenceEventForm {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué cruce',
+      hint: 'El registro es idempotente por sentido: si el sujeto ya estaba de ese lado, se rechaza.',
+      campos: [
+        { key: 'geofenceId', label: 'Identificador de la geocerca', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'trackedSubjectId', label: 'Identificador del sujeto rastreado', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'eventType', label: 'Sentido', control: 'radio', options: [{ value: 'ENTER', label: 'Entró al área' }, { value: 'EXIT', label: 'Salió del área' }], required: true },
+      ],
+    },
+    {
+      titulo: 'Con qué respaldo',
+      hint: 'Opcional: el ping que evidenció el cruce y el momento exacto, si se conocen.',
+      campos: [
+        { key: 'locationPingId', label: 'Ping de ubicación', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'occurredAt', label: 'Cuándo ocurrió', hint: 'Sin este dato, queda el momento en que se registró.', control: 'datetime' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     geofenceId: new FormControl('', {
@@ -70,13 +85,14 @@ export class GeofenceEventForm {
       nonNullable: true,
       validators: [Validators.pattern(UUID_PATTERN)],
     }),
+    eventType: new FormControl<GeofenceEventType | null>(null, {
+      validators: [Validators.required],
+    }),
+    /** Cuándo ocurrió, si se conoce; sin él el backend usa el momento del registro. */
+    occurredAt: new FormControl<Date | null>(null),
   });
 
   /** Obligatorio: un cruce sin sentido no dice nada. */
-  protected readonly eventType = signal<GeofenceEventType | null>(null);
-
-  /** Cuándo ocurrió, si se conoce; sin él el backend usa el momento del registro. */
-  protected readonly occurredAt = signal<Date | null>(null);
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -87,24 +103,24 @@ export class GeofenceEventForm {
     errorMessageOf(this.state(), 'No tenés permiso para registrar cruces de geocerca.'),
   );
 
-  protected elegirSentido(valor: unknown): void {
-    this.eventType.set(opcionDe(SENTIDOS, valor));
-  }
-
   protected submit(): void {
     if (this.isSubmitting()) {
       return;
     }
 
-    const sentido = this.eventType();
-    if (this.form.invalid || sentido === null) {
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     const valores = this.form.getRawValue();
+    const sentido = opcionDe(SENTIDOS, valores.eventType);
+    if (sentido === null) {
+      return;
+    }
+
     const ping = valores.locationPingId.trim();
-    const ocurrido = this.occurredAt();
+    const ocurrido = valores.occurredAt;
 
     this.state.set(loading());
 
@@ -127,8 +143,6 @@ export class GeofenceEventForm {
 
   protected otroCruce(): void {
     this.form.reset();
-    this.eventType.set(null);
-    this.occurredAt.set(null);
     this.created.set(null);
     this.state.set(ready(null));
   }

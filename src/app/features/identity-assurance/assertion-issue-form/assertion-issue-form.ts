@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { IdentityAdminClient } from '../../../core/data-access/identity/identity-admin.client';
 import type {
@@ -12,12 +12,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /**
@@ -31,15 +29,11 @@ import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../sh
 @Component({
   selector: 'app-assertion-issue-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
+    PaginatedForm,
   ],
   templateUrl: './assertion-issue-form.html',
   styleUrl: '../m27-admin.css',
@@ -52,6 +46,33 @@ export class AssertionIssueForm {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué caso',
+      hint: 'El expediente resuelto cuyo desenlace se acredita.',
+      campos: [
+        { key: 'caseId', label: 'Caso de verificación', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'La aserción',
+      hint: 'Quién la emite, de qué tipo es y qué nivel acredita.',
+      campos: [
+        { key: 'issuerIdentityAuthorityId', label: 'Autoridad emisora', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'assertionTypeConceptId', label: 'Tipo de aserción (concepto)', hint: 'Opcional: por defecto, aserción de identidad.', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'assuranceLevelConceptId', label: 'Nivel de aseguramiento (concepto)', hint: 'Opcional: por defecto, el nivel solicitado del caso.', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'expiresInHours', label: 'Vence en (horas)', hint: 'Opcional: por defecto, 8760 horas — un año.', control: 'number', mensajeDeError: 'La vigencia empieza en 1 hora.' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     caseId: new FormControl('', {

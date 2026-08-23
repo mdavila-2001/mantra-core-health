@@ -78,97 +78,13 @@
     }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="alta-paciente-form">
-    <app-form-section
-      legend="Datos del paciente"
-      description="Lo mínimo para crear la cuenta; el resto lo completa su filiación."
-    >
-      <app-form-field
-        label="Nombre"
-        [required]="true"
-        [errorMessage]="
-          form.controls.name.touched && form.controls.name.invalid
-            ? 'Escribí el nombre del paciente.'
-            : ''
-        "
-      >
-        <app-input formControlName="name" type="text" testId="alta-paciente-nombre" />
-      </app-form-field>
-
-      <app-form-field label="Segundo nombre" hint="Si no tiene, dejalo vacío.">
-        <app-input
-          formControlName="middleName"
-          type="text"
-          testId="alta-paciente-segundo-nombre"
-        />
-      </app-form-field>
-
-      <app-form-field
-        label="Apellido paterno"
-        [required]="true"
-        [errorMessage]="
-          form.controls.lastName.touched && form.controls.lastName.invalid
-            ? 'Escribí el apellido paterno del paciente.'
-            : ''
-        "
-      >
-        <app-input formControlName="lastName" type="text" testId="alta-paciente-apellido-paterno" />
-      </app-form-field>
-
-      <app-form-field label="Apellido materno" hint="Si no lleva, dejalo vacío.">
-        <app-input
-          formControlName="motherLastName"
-          type="text"
-          testId="alta-paciente-apellido-materno"
-        />
-      </app-form-field>
-
-      <app-form-field
-        label="Correo"
-        hint="Con este correo va a activar la cuenta e iniciar sesión."
-        [required]="true"
-        [errorMessage]="
-          form.controls.email.touched && form.controls.email.invalid
-            ? 'Ingresá un correo válido.'
-            : ''
-        "
-      >
-        <app-input
-          formControlName="email"
-          type="email"
-          autocomplete="off"
-          testId="alta-paciente-correo"
-        />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Justificación"
-      description="Estás creando una cuenta a nombre de otra persona: queda registrado quién y por qué."
-    >
-      <app-form-field
-        label="Motivo del registro asistido"
-        hint="Queda en la trazabilidad. Máximo 500 caracteres."
-        [required]="true"
-        [errorMessage]="
-          form.controls.reason.touched && form.controls.reason.invalid
-            ? 'Explicá por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).'
-            : ''
-        "
-      >
-        <app-textarea
-          formControlName="reason"
-          [rows]="3"
-          [maxLength]="500"
-          data-testid="alta-paciente-motivo"
-        />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Registrar paciente"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Alta de paciente"
+  submitLabel="Registrar paciente"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+  data-testid="alta-paciente-form"
+/>
 }

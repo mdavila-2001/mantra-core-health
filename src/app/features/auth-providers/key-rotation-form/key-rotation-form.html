@@ -42,45 +42,12 @@
     ante una clave comprometida. Sin cargar nada, el backend aplica 24 horas.
   </app-alert>
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section legend="De qué proveedor" description="La rotación alcanza a sus claves activas.">
-      <app-form-field
-        label="Identificador del proveedor"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.providerId.touched && form.controls.providerId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="providerId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section legend="La clave nueva" description="La que pasa a firmar desde ahora.">
-      <app-signing-key-fields [disabled]="isSubmitting()" />
-    </app-form-section>
-
-    <app-form-section
-      legend="Gracia de las salientes"
-      description="Cuántas horas siguen aceptándose las claves que salen."
-    >
-      <app-form-field
-        label="Horas de gracia"
-        hint="Entre 0 y 720. Vacío: el backend aplica 24."
-        [errorMessage]="
-          form.controls.graceHours.touched && form.controls.graceHours.invalid
-            ? 'Ingresá un valor entre 0 y 720.'
-            : ''
-        "
-      >
-        <app-input formControlName="graceHours" type="number" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Rotar clave"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+    [paginas]="paginas"
+    [form]="form"
+    label="Rotar clave de firma"
+    submitLabel="Rotar clave"
+    [pending]="isSubmitting()"
+    (enviado)="submit()"
+  />
 }

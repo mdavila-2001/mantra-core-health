@@ -41,7 +41,7 @@ describe('CheckResultForm', () => {
 
   it('el veredicto solo viaja con el check pegado; el cuerpo mínimo es una clave', () => {
     formulario().patchValue({ checkId: CHECK });
-    interno<(valor: unknown) => void>('elegirVeredicto')('MATCH');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ result: 'MATCH' });
 
     interno<() => void>('submit')();
 
@@ -65,7 +65,7 @@ describe('CheckResultForm', () => {
       discrepancyCodes: ' DOB_MISMATCH , NAME_PARTIAL ,',
       sourceResponseHash: 'a1b2c3',
     });
-    interno<(valor: unknown) => void>('elegirVeredicto')('NO_MATCH');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ result: 'NO_MATCH' });
 
     interno<() => void>('submit')();
 
@@ -96,7 +96,7 @@ describe('CheckResultForm', () => {
 
     // Veredicto elegido pero puntaje no numérico: el pattern lo frena.
     formulario().patchValue({ matchScore: 'alto' });
-    interno<(valor: unknown) => void>('elegirVeredicto')('MATCH');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ result: 'MATCH' });
     interno<() => void>('submit')();
     // `http.verify()` comprueba que nada salió.
   });

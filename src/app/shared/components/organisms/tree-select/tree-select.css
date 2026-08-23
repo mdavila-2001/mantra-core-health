@@ -1,0 +1,344 @@
+/* ============================================================================
+    TreeSelect — Vanilla CSS con tokens REDSAT.
+
+    El disparador es gemelo del de `app-date-picker` a propósito: los dos son
+    campos que abren un diálogo, y verse distinto haría creer que se comportan
+    distinto.
+    ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.tree-select-trigger-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.tree-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 44px;
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  padding: 0 var(--sp-4);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  text-align: left;
+}
+
+@media (min-width: 780px) {
+  .tree-select-trigger {
+    min-height: 40px;
+    padding: 0 var(--sp-3);
+  }
+}
+
+.tree-select-trigger:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+}
+
+.tree-select-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  border-color: var(--brand-primary);
+}
+
+.tree-select-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.has-error .tree-select-trigger {
+  border-color: var(--status-error, #c0392b);
+}
+
+.trigger-icon,
+.trigger-caret {
+  color: var(--brand-primary);
+  display: flex;
+  align-items: center;
+}
+
+.trigger-icon svg,
+.trigger-caret svg {
+  width: 18px;
+  height: 18px;
+}
+
+.trigger-value {
+  flex: 1;
+  /* Un municipio con su departamento detrás no siempre entra: se corta con
+     puntos suspensivos en vez de estirar el campo. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trigger-value.is-placeholder {
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+    El diálogo. Capa superior del navegador: ver la nota de `tree-select.ts`
+    sobre por qué no es un panel desplegable.
+   ========================================================================== */
+
+.tree-select-dialog {
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  max-width: min(460px, calc(100vw - 2 * var(--sp-4)));
+  max-height: calc(100vh - 2 * var(--sp-4));
+  overflow: visible;
+  --ts-veil: color-mix(in srgb, var(--c-petrol-900) 45%, transparent);
+}
+
+.tree-select-dialog::backdrop {
+  background-color: var(--ts-veil, rgba(10, 37, 49, 0.45));
+  backdrop-filter: blur(2px);
+}
+
+.tree-select-panel {
+  background-color: var(--bg-surface);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-lg);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  /* El panel entero no crece: lo que scrollea es el árbol, así que el buscador
+     y los botones quedan siempre a la vista. */
+  max-height: calc(100vh - 2 * var(--sp-4));
+  overflow: hidden;
+  animation: tree-dialog-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tree-select-panel {
+    animation: none;
+  }
+}
+
+@keyframes tree-dialog-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  border-bottom: 1px solid var(--border-default);
+  padding-bottom: var(--sp-2);
+}
+
+.dialog-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* --- El buscador --- */
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  padding: 0 var(--sp-3);
+  min-height: 44px;
+  background-color: var(--bg-surface);
+}
+
+.search-row:focus-within {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.search-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.search-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.search-input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.search-count {
+  margin: 0;
+  min-height: 1em;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* --- El árbol --- */
+
+.tree,
+.tree-leaves {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree {
+  flex: 1;
+  overflow-y: auto;
+  /* Sin esto, el foco anillado de una fila al borde se recorta contra el
+     contenedor con scroll. */
+  padding: 2px;
+}
+
+.tree-branch + .tree-branch {
+  border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+}
+
+.branch-toggle,
+.leaf-button {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  /* 44px de área táctil, que es el mínimo cómodo en un teléfono. */
+  min-height: 44px;
+}
+
+.branch-toggle {
+  font-weight: 600;
+}
+
+.branch-toggle:hover,
+.leaf-button:hover {
+  background-color: var(--bg-inset);
+}
+
+.branch-caret {
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.branch-caret svg {
+  width: 16px;
+  height: 16px;
+}
+
+.branch-caret.is-open {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .branch-caret {
+    transition: none;
+  }
+}
+
+.branch-label {
+  flex: 1;
+}
+
+.branch-count {
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background-color: var(--bg-inset);
+  border-radius: var(--r-pill, 999px);
+  padding: 2px var(--sp-2);
+}
+
+.tree-leaves {
+  /* La sangría es lo que hace ver el árbol como árbol. La guía vertical la
+     acompaña para que a diez municipios de distancia siga claro de quién
+     cuelgan. */
+  margin-left: var(--sp-3);
+  padding-left: var(--sp-3);
+  border-left: 2px solid color-mix(in srgb, var(--brand-primary) 25%, transparent);
+}
+
+.leaf-label {
+  flex: 1;
+}
+
+.leaf-hint {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* La fila señalada por el teclado y la ya elegida son cosas distintas y se ven
+   distintas: una es «dónde estoy», la otra «qué tengo». */
+.tree-branch.is-active > .branch-toggle,
+.tree-leaf.is-active > .leaf-button {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+  background-color: var(--bg-inset);
+}
+
+.tree-leaf.is-chosen > .leaf-button {
+  background-color: var(--brand-primary);
+  color: var(--text-inverse);
+  font-weight: 600;
+}
+
+.tree-leaf.is-chosen > .leaf-button .leaf-hint {
+  color: var(--text-inverse);
+}
+
+.tree-empty {
+  margin: 0;
+  padding: var(--sp-4) 0;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-default);
+}

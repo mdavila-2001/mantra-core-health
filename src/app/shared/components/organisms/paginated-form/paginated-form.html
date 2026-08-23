@@ -47,17 +47,42 @@
             @switch (campo.control) {
               @case ('select') {
                 <app-select
+                  [attr.data-testid]="campo.testId ?? null"
                   [formControlName]="campo.key"
                   [options]="campo.options ?? []"
                   [placeholder]="campo.placeholder ?? 'Seleccionar opción'"
                   [hasError]="errorDe(campo) !== ''"
                 />
               }
+              @case ('radio') {
+                <!-- El grupo es el `ControlValueAccessor`, no cada opción: el
+                     formulario ve un control con un valor, que es lo que la
+                     persona percibe. -->
+                <app-radio-group
+                  [attr.data-testid]="campo.testId ?? null"
+                  [formControlName]="campo.key"
+                >
+                  @for (opcion of campo.options ?? []; track opcion.value) {
+                    <app-radio [value]="opcion.value" [label]="opcion.label" />
+                  }
+                </app-radio-group>
+              }
+              @case ('switch') {
+                <app-switch
+                  [attr.data-testid]="campo.testId ?? null"
+                  [formControlName]="campo.key"
+                  [label]="campo.label"
+                />
+              }
               @case ('checkbox') {
-                <app-checkbox [formControlName]="campo.key" />
+                <app-checkbox
+                  [attr.data-testid]="campo.testId ?? null"
+                  [formControlName]="campo.key"
+                />
               }
               @case ('textarea') {
                 <app-textarea
+                  [attr.data-testid]="campo.testId ?? null"
                   [formControlName]="campo.key"
                   [placeholder]="campo.placeholder ?? ''"
                   [hasError]="errorDe(campo) !== ''"
@@ -73,6 +98,15 @@
                   [hasError]="errorDe(campo) !== ''"
                 />
               }
+              @case ('datetime') {
+                <app-date-picker
+                  mode="date-time"
+                  [value]="fechaDe(campo)"
+                  (valueChange)="escribirFecha(campo, $event)"
+                  [placeholder]="campo.placeholder ?? 'Seleccionar fecha y hora'"
+                  [hasError]="errorDe(campo) !== ''"
+                />
+              }
               @default {
                 <app-input
                   [formControlName]="campo.key"
@@ -80,7 +114,7 @@
                   [autocomplete]="campo.autocomplete ?? null"
                   [placeholder]="campo.placeholder ?? ''"
                   [hasError]="errorDe(campo) !== ''"
-                  [testId]="'campo-' + campo.key"
+                  [testId]="campo.testId ?? 'campo-' + campo.key"
                 />
               }
             }
@@ -91,6 +125,12 @@
   }
 
   <nav class="paginated-form__acciones" aria-label="Avance del formulario">
+    @if (cancelLabel()) {
+      <button app-button variant="ghost" type="button" (clicked)="cancelado.emit()">
+        {{ cancelLabel() }}
+      </button>
+    }
+
     @if (!esPrimera()) {
       <button
         app-button
@@ -108,6 +148,7 @@
     <button
       app-button
       type="submit"
+      [variant]="esUltima() && destructive() ? 'danger' : 'primary'"
       [isLoading]="pending()"
       [disabled]="pending()"
       data-testid="paginated-form-continuar"

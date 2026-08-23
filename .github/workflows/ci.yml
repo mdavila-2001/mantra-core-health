@@ -108,6 +108,13 @@ jobs:
       - name: Rutas contra prefijos
         run: node scripts/check-route-prefixes.mjs
 
+      # Un formulario de este sistema se sirve de a una página, con un tope de
+      # cuatro campos. La regla vive en `MAX_CAMPOS_POR_PAGINA` y la hace cumplir
+      # este script; sin esta etapa era un guardarraíl que sólo corría cuando
+      # alguien se acordaba de correrlo a mano, que es no correr.
+      - name: Formularios paginados
+        run: node scripts/check-form-pages.mjs
+
       # El catálogo tipado y `styles.css` declaran lo mismo, en ambos sentidos.
       - name: Tokens del sistema de diseño
         run: node scripts/check-tokens.mjs

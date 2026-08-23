@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { DelegatedAccessClient } from '../../../core/data-access/delegated-access/delegated-access.client';
 import type {
@@ -15,15 +16,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
-import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 const DECISIONS: readonly AccessRequestDecision[] = ['APPROVED', 'DENIED'];
@@ -45,18 +41,11 @@ const RESOURCE_TYPES: readonly GrantResourceType[] = [
 @Component({
   selector: 'app-access-request-resolution',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    DatePicker,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Radio,
-    RadioGroup,
+    PaginatedForm,
   ],
   templateUrl: './access-request-resolution.html',
   styleUrl: '../m29.css',
@@ -79,44 +68,121 @@ export class AccessRequestResolution {
       nonNullable: true,
       validators: [Validators.pattern(UUID_PATTERN)],
     }),
+    /** Obligatoria por contrato; arranca sin elegir para no decidir por nadie. */
+    decision: new FormControl<AccessRequestDecision | null>(null, {
+      validators: [Validators.required],
+    }),
+    purpose: new FormControl<PurposeOfUse | null>(null),
+    resourceType: new FormControl<GrantResourceType | null>(null),
+    validTo: new FormControl<Date | null>(null),
   });
 
-  /** Obligatoria por contrato; arranca sin elegir para no decidir por nadie. */
-  protected readonly decision = signal<AccessRequestDecision | null>(null);
+  /** La decisión, como señal, para que las páginas reaccionen a ella. */
+  private readonly decidido = toSignal(this.form.controls.decision.valueChanges, {
+    initialValue: this.form.controls.decision.value,
+  });
 
-  protected readonly purpose = signal<PurposeOfUse | null>(null);
-  protected readonly resourceType = signal<GrantResourceType | null>(null);
-  protected readonly validTo = signal<Date | null>(null);
+  /**
+   * Las páginas, que **dependen de la decisión**.
+   *
+   * Denegar no emite grant, así que su alcance no se pregunta: mostrarlo
+   * deshabilitado o vacío sería ofrecer datos que no se van a usar.
+   */
+  protected readonly paginas = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'Qué solicitud',
+        hint: 'La solicitud de acceso pendiente que se va a resolver.',
+        campos: [
+          {
+            key: 'requestId',
+            label: 'Identificador de la solicitud',
+            hint: UUID_HINT,
+            control: 'text' as const,
+            required: true,
+            mensajeDeError: UUID_ERROR,
+          },
+        ],
+      },
+      {
+        titulo: 'Decisión',
+        hint: 'Queda registrada en la auditoría del módulo.',
+        campos: [
+          {
+            key: 'decision',
+            label: 'Decisión del aprobador',
+            control: 'radio' as const,
+            required: true,
+            options: [
+              { value: 'APPROVED', label: 'Aprobar' },
+              { value: 'DENIED', label: 'Denegar' },
+            ],
+          },
+        ],
+      },
+      ...(this.esAprobacion()
+        ? [
+            {
+              titulo: 'Alcance del grant emitido',
+              hint: 'Opcional: acota la concesión que nace de esta aprobación.',
+              campos: [
+                {
+                  key: 'purpose',
+                  label: 'Propósito de uso',
+                  control: 'radio' as const,
+                  options: [
+                    { value: 'TREATMENT', label: 'Tratamiento' },
+                    { value: 'BILLING', label: 'Facturación' },
+                    { value: 'OPERATIONS', label: 'Operaciones' },
+                  ],
+                },
+                {
+                  key: 'resourceType',
+                  label: 'Tipo de recurso',
+                  control: 'radio' as const,
+                  options: [
+                    { value: 'CLINICAL_NOTE', label: 'Nota clínica' },
+                    { value: 'APPOINTMENT', label: 'Cita' },
+                    { value: 'PRESCRIPTION', label: 'Receta' },
+                  ],
+                },
+                {
+                  key: 'validTo',
+                  label: 'Fin de vigencia del grant',
+                  hint: 'Sin fecha, decide el backend.',
+                  control: 'datetime' as const,
+                },
+                {
+                  key: 'encounterId',
+                  label: 'Encuentro del grant',
+                  hint: UUID_HINT,
+                  control: 'text' as const,
+                  mensajeDeError: UUID_ERROR,
+                },
+              ],
+            },
+          ]
+        : []),
+    ]),
+  );
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
 
   protected readonly resolved = signal<AccessRequestDecisionResult | null>(null);
 
-  protected readonly esAprobacion = computed(() => this.decision() === 'APPROVED');
+  protected readonly esAprobacion = computed(() => this.decidido() === 'APPROVED');
 
   protected readonly errorMessage = computed(() =>
     errorMessageOf(this.state(), 'No tenés permiso para resolver solicitudes de acceso.'),
   );
-
-  protected elegirDecision(valor: unknown): void {
-    this.decision.set(opcionDe(DECISIONS, valor));
-  }
-
-  protected elegirProposito(valor: unknown): void {
-    this.purpose.set(opcionDe(PURPOSES, valor));
-  }
-
-  protected elegirRecurso(valor: unknown): void {
-    this.resourceType.set(opcionDe(RESOURCE_TYPES, valor));
-  }
 
   protected submit(): void {
     if (this.isSubmitting()) {
       return;
     }
 
-    if (this.form.invalid || this.decision() === null) {
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
@@ -140,29 +206,27 @@ export class AccessRequestResolution {
 
   protected otraSolicitud(): void {
     this.form.reset();
-    this.decision.set(null);
-    this.purpose.set(null);
-    this.resourceType.set(null);
-    this.validTo.set(null);
     this.resolved.set(null);
     this.state.set(ready(null));
   }
 
   private datos(): Resolution | null {
-    const decision = this.decision();
+    const valores = this.form.getRawValue();
+    const decision = opcionDe(DECISIONS, valores.decision);
     if (decision === null) {
       return null;
     }
 
+    // Denegar no emite grant: su alcance ni se lee, aunque hubiera quedado algo
+    // escrito de un intento anterior.
     if (decision === 'DENIED') {
       return { decision };
     }
 
-    const { encounterId } = this.form.getRawValue();
-    const encuentro = encounterId.trim();
-    const proposito = this.purpose();
-    const recurso = this.resourceType();
-    const vencimiento = this.validTo();
+    const encuentro = valores.encounterId.trim();
+    const proposito = opcionDe(PURPOSES, valores.purpose);
+    const recurso = opcionDe(RESOURCE_TYPES, valores.resourceType);
+    const vencimiento = valores.validTo;
 
     return {
       decision,
