@@ -83,6 +83,26 @@ describe('MembershipNew', () => {
     crudo<{ set: (v: ReferenceOption) => void }>('persona').set(PERSONA);
   }
 
+  it('sin sedes, el botón de alta queda deshabilitado y no sólo inerte', () => {
+    // Con alcance por sede y cero sedes, `submit()` cortaba antes de pedir nada
+    // y el aviso ya estaba en pantalla: apretar el botón no producía ningún
+    // cambio visible, que se lee como que la pantalla está rota.
+    const otro = TestBed.createComponent(MembershipNew);
+    otro.detectChanges();
+    http.expectOne(`/tenants/${TENANT_ID}/branches`).flush({ count: 0, items: [] });
+    otro.detectChanges();
+
+    const instancia = otro.componentInstance as unknown as Record<string, unknown>;
+    (instancia['alcance'] as { set: (v: string) => void }).set('BRANCH');
+    otro.detectChanges();
+
+    expect((instancia['sinSedes'] as () => boolean).call(instancia)).toBe(true);
+    const boton = (otro.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+    expect(boton?.getAttribute('aria-disabled')).toBe('true');
+  });
+
   it('con alcance sobre toda la organización manda una sola petición', () => {
     elegirPersona();
     interno<() => void>('submit')();

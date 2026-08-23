@@ -50,9 +50,21 @@ describe('OrganizationVerify', () => {
     fixture = TestBed.createComponent(OrganizationVerify);
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+
+    // La pantalla lee la organización para poder nombrarla: verificar la activa
+    // y no se deshace desde acá, así que decir cuál se está por activar es parte
+    // de la pantalla, no un adorno.
+    http.expectOne(`/tenants/${TENANT_ID}`).flush(RESPUESTA);
+    fixture.detectChanges();
   });
 
   afterEach(() => http.verify());
+
+  it('nombra la organización que se está por verificar', () => {
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(texto).toContain(RESPUESTA.legalName);
+  });
 
   function interno<T>(nombre: string): T {
     const valor = (fixture.componentInstance as unknown as Record<string, unknown>)[nombre];

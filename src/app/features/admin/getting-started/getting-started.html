@@ -24,6 +24,16 @@
       </output>
     }
 
+    @if (variasOrganizaciones(); as cuantas) {
+      <!-- El recorrido mide una sola organización. Callarlo hacía que su avance
+           se leyera como el de cualquiera de las otras. -->
+      <app-alert tone="info" data-testid="puesta-varias">
+        Hay {{ cuantas }} organizaciones. Este recorrido sigue a la primera que se creó,
+        <strong>{{ nombreDeLaOrganizacion() }}</strong>; las demás se administran desde
+        Organizaciones.
+      </app-alert>
+    }
+
     <app-stepper [steps]="pasosDelIndicador()" label="Puesta en marcha" />
 
     <ol class="puesta__lista" data-testid="puesta-etapas">

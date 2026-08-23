@@ -34,6 +34,21 @@ const TENANT_REAL = {
 };
 
 /** La misma organización, ya verificada: cambia el concepto, no el id. */
+/**
+ * Una segunda organización: **más nueva** que `TENANT_REAL` y alfabéticamente
+ * anterior, que es justo la combinación con la que el listado la devolvía
+ * primero y el recorrido terminaba midiéndola a ella.
+ */
+const TENANT_OTRO = {
+  id: 't-7',
+  code: 'ALFA-NORTE',
+  legalName: 'Alfa Norte S.R.L.',
+  tenantTypeConceptId: 'c-provider',
+  statusConceptId: 'c-activa',
+  verificationStatusConceptId: 'c-verificada',
+  createdAt: '2026-08-23T12:00:00.000Z',
+};
+
 const TENANT_VERIFICADO = { ...TENANT_REAL, verificationStatusConceptId: 'c-verificada' };
 
 const SIN_SEDES = { items: [], count: 0 };
@@ -174,6 +189,22 @@ describe('GettingStarted', () => {
     expect(resueltas.get('verificacion')?.actual).toBe(true);
     // Y la etapa apunta a la pantalla de esa organización, no a una genérica.
     expect(resueltas.get('verificacion')?.ruta).toContain(TENANT_REAL.id);
+  });
+
+  it('con varias organizaciones sigue a la más vieja, no a la primera del listado', () => {
+    // Tomaba `items[0]`, y el orden del listado no lo elige esta pantalla: con
+    // dos organizaciones medía una arbitraria y mostraba su avance como si fuera
+    // el de la que se está poniendo en marcha.
+    responder([TENANT_OTRO, TENANT_SEMILLA, TENANT_REAL], {
+      sedes: SIN_SEDES,
+      membresias: SOLO_EL_DUENO,
+      etiquetas: ETIQUETA_SIN_VERIFICAR,
+    });
+
+    expect(etapas().get('verificacion')?.ruta).toContain(TENANT_REAL.id);
+    expect(
+      crudo<() => number>('variasOrganizaciones').call(fixture.componentInstance),
+    ).toBe(2);
   });
 
   it('una sola membresía es el dueño, no un equipo', () => {

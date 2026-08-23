@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import type { TenantListItem } from '../../../core/data-access/directory/directory.types';
@@ -87,6 +87,8 @@ interface Avance {
   readonly verificada: boolean;
   readonly sedes: number;
   readonly membresias: number;
+  /** Cuántas organizaciones reales hay; el recorrido mide **una**. */
+  readonly organizaciones?: number;
 }
 
 /**
@@ -235,6 +237,26 @@ export class GettingStarted {
   /** Cuántas hacen falta: la última es el destino, no una tarea. */
   protected readonly totalDeTareas = computed(() => Math.max(this.etapas().length - 1, 0));
 
+  /**
+   * Cuántas organizaciones reales hay, cuando es más de una.
+   *
+   * El recorrido mide **una sola** —la más vieja—, así que con varias en juego
+   * hay que decir cuál, o el avance se lee como el de la organización que la
+   * persona tiene en la cabeza.
+   */
+  protected readonly variasOrganizaciones = computed(() => {
+    const actual = this.estado();
+    if (actual.status !== 'ready') return 0;
+    const cuantas = actual.data.organizaciones ?? 0;
+    return cuantas > 1 ? cuantas : 0;
+  });
+
+  /** El nombre de la organización que este recorrido sigue. */
+  protected readonly nombreDeLaOrganizacion = computed(() => {
+    const actual = this.estado();
+    return actual.status === 'ready' ? (actual.data.organizacion?.legalName ?? '') : '';
+  });
+
   /** Ya no falta nada. */
   protected readonly completo = computed(
     () => this.etapas().length > 0 && this.cumplidas() === this.totalDeTareas(),
@@ -251,13 +273,26 @@ export class GettingStarted {
       .searchTenants({ limit: ORGANIZACIONES_A_MIRAR })
       .pipe(
         switchMap((pagina) => {
-          const organizacion = pagina.items.find(
+          const reales = pagina.items.filter(
             (tenant) => tenant.code !== CODIGO_DEL_TENANT_SEMILLA,
           );
-          if (organizacion === undefined) {
-            return of<Avance>({ verificada: false, sedes: 0, membresias: 0 });
+          if (reales.length === 0) {
+            return of<Avance>({
+              verificada: false,
+              sedes: 0,
+              membresias: 0,
+              organizaciones: 0,
+            });
           }
-          return this.medirOrganizacion(organizacion);
+          // La **más vieja**, y no la primera que devuelva la página: esta
+          // pantalla dice «la primera organización», y el orden del listado no
+          // lo elige ella. Tomar `items[0]` medía una organización arbitraria
+          // —alfabéticamente primera, en la práctica— y mostraba su avance como
+          // si fuera el de la que se está poniendo en marcha.
+          const organizacion = [...reales].sort(
+            (uno, otro) => uno.createdAt.getTime() - otro.createdAt.getTime(),
+          )[0];
+          return this.medirOrganizacion(organizacion, reales.length);
         }),
       )
       .subscribe({
@@ -275,7 +310,7 @@ export class GettingStarted {
    *
    * @param organizacion - La organización a medir.
    */
-  private medirOrganizacion(organizacion: TenantListItem) {
+  private medirOrganizacion(organizacion: TenantListItem, organizaciones = 1) {
     return forkJoin({
       sedes: this.directory
         .listBranches(organizacion.id)
@@ -290,15 +325,24 @@ export class GettingStarted {
         .readConceptLabels([organizacion.verificationStatusConceptId])
         .pipe(catchError(() => of(new Map<string, { readonly code: string }>()))),
     }).pipe(
-      switchMap(({ sedes, membresias, etiquetas }) =>
-        of<Avance>({
-          organizacion,
-          verificada:
-            etiquetas.get(organizacion.verificationStatusConceptId)?.code === CODIGO_VERIFICADA,
-          sedes: sedes.count,
-          membresias: membresias.count,
-        }),
-      ),
+      // `map` y no `switchMap`: acá no se dispara ninguna petición más, sólo se
+      // arma el resumen con lo que ya llegó. Envolverlo en `of` y aplanarlo
+      // hacía leer como que había una cuarta lectura donde no la hay.
+      map<
+        {
+          sedes: { count: number };
+          membresias: { count: number };
+          etiquetas: ReadonlyMap<string, { readonly code: string }>;
+        },
+        Avance
+      >(({ sedes, membresias, etiquetas }) => ({
+        organizacion,
+        verificada:
+          etiquetas.get(organizacion.verificationStatusConceptId)?.code === CODIGO_VERIFICADA,
+        sedes: sedes.count,
+        membresias: membresias.count,
+        organizaciones,
+      })),
     );
   }
 }

@@ -76,10 +76,15 @@
     }
   </app-form-section>
 
+  <!-- Deshabilitado y no «clickeable pero inerte»: con alcance por sede y cero
+       sedes, `submit()` corta antes de pedir nada, y como el aviso de arriba ya
+       estaba visible, apretar el botón no producía **ningún** cambio en
+       pantalla. Un botón que no puede funcionar tiene que decirlo. -->
   <app-form-actions
     submitLabel="Sumar a la organización"
     cancelLabel="Cancelar"
     [pending]="enviando()"
+    [disabled]="sinSedes()"
     (submitted)="submit()"
     (cancelled)="cancelar()"
   />

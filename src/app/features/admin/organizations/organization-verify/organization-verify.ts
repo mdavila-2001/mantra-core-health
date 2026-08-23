@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map } from 'rxjs';
+import { catchError, map, of, switchMap } from 'rxjs';
 
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
 import type { VerifyTenantConfirmation } from '../../../../core/data-access/directory/directory.types';
@@ -79,9 +79,37 @@ export class OrganizationVerify {
     { initialValue: '' },
   );
 
+  /**
+   * El nombre de la organización que se está por verificar.
+   *
+   * Verificar la activa y no se deshace desde acá, y la pantalla no decía
+   * **cuál**: ni el encabezado, ni la miga, ni el aviso. Quien llega con dos
+   * pestañas abiertas —o desde una lista— no tenía forma de darse cuenta de que
+   * está activando la equivocada hasta después.
+   *
+   * Si la lectura falla no se bloquea nada: el resto de la pantalla funciona sin
+   * el nombre, que es información para confirmar y no un requisito para operar.
+   */
+  protected readonly organizacion = toSignal(
+    this.route.paramMap.pipe(
+      map((params) => params.get('tenantId') ?? ''),
+      switchMap((id) =>
+        id === ''
+          ? of(null)
+          : this.directory.getTenant(id).pipe(catchError(() => of(null))),
+      ),
+    ),
+    { initialValue: null },
+  );
+
+  /** El nombre, o el identificador si todavía no llegó. */
+  protected readonly nombre = computed(
+    () => this.organizacion()?.legalName ?? this.tenantId(),
+  );
+
   protected readonly breadcrumbs = computed<readonly BreadcrumbItem[]>(() => [
     { label: 'Organizaciones', routerLink: ORGANIZATIONS_ROUTE },
-    { label: 'Organización', routerLink: organizationDetailRoute(this.tenantId()) },
+    { label: this.nombre(), routerLink: organizationDetailRoute(this.tenantId()) },
     { label: 'Verificar' },
   ]);
 
