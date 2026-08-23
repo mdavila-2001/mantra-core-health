@@ -87,6 +87,45 @@ const PENDIENTES = new Map([]);
 const CONTROL =
   /<(app-input|app-select|app-textarea|app-checkbox|app-date-picker|app-radio-group|app-switch|app-file-input|app-reference-combobox|app-tree-select|input|select|textarea)[\s>]/g;
 
+/**
+ * Los grupos de una plantilla que piden más de {@link MAX_CAMPOS} de una vez.
+ *
+ * La cuenta es **por formulario, no por archivo**. Una pantalla puede tener más
+ * de un formulario independiente —cada uno con su `<form>` y su botón de
+ * enviar— y entonces nadie contesta más de cuatro cosas de corrido, que es lo
+ * que la regla protege. Sumar toda la plantilla acusaba a esas pantallas de
+ * algo que no hacen: el tablero de contabilidad tiene un alta de ingreso de
+ * tres campos, un alta de gasto de cuatro y un filtro de práctica, y sumados
+ * dan ocho.
+ *
+ * Lo que queda fuera de todo `<form>` se cuenta junto, en un solo grupo: es el
+ * caso de las pantallas que llevan el `[formGroup]` en un `div`, que siguen
+ * contándose enteras como antes. Partir la cuenta sólo puede bajar los
+ * números, así que ninguna pantalla que hoy pasa empieza a fallar por esto.
+ */
+function gruposQueExceden(html) {
+  const grupos = [];
+  const formularios = html.match(/<form\b[\s\S]*?<\/form>/g) ?? [];
+  formularios.forEach((formulario, indice) => {
+    const campos = (formulario.match(CONTROL) ?? []).length;
+    grupos.push({
+      campos,
+      donde: formularios.length > 1 ? `su formulario ${indice + 1} de ${formularios.length}` : 'su formulario',
+    });
+  });
+
+  const fuera = html.replace(/<form\b[\s\S]*?<\/form>/g, '');
+  const camposSueltos = (fuera.match(CONTROL) ?? []).length;
+  if (camposSueltos > 0) {
+    grupos.push({
+      campos: camposSueltos,
+      donde: formularios.length > 0 ? 'los campos que no están en ningún `<form>`' : 'una sola pantalla',
+    });
+  }
+
+  return grupos.filter((grupo) => grupo.campos > MAX_CAMPOS);
+}
+
 const problemas = [];
 
 const contrato = read(CONTRATO);
@@ -123,12 +162,14 @@ for (const archivo of plantillas) {
     continue;
   }
 
-  const campos = (html.match(CONTROL) ?? []).length;
   revisadas += 1;
-  if (campos > MAX_CAMPOS && !pendiente) {
-    problemas.push(
-      `'${relativa}' declara ${campos} campos en una sola pantalla y no usa <app-paginated-form>`,
-    );
+  const excedidos = gruposQueExceden(html);
+  if (excedidos.length > 0 && !pendiente) {
+    for (const grupo of excedidos) {
+      problemas.push(
+        `'${relativa}' pide ${grupo.campos} campos de una vez en ${grupo.donde} y no usa <app-paginated-form>`,
+      );
+    }
   }
 }
 
