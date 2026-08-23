@@ -124,6 +124,7 @@ nav:
       - Reglas de composición: components/composition-rules.md
       - Entradas y salidas: components/props-and-events.md
       - Formularios: components/forms.md
+      - Ayuda contextual: components/ayuda-contextual.md
       - Tablas: components/tables.md
       - Diálogos y capas: components/modals-and-overlays.md
       - Notificaciones: components/notifications.md

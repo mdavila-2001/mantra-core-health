@@ -196,8 +196,10 @@
 
           <div class="registro__row">
             <!-- Dos preguntas distintas, no una: el género es cómo te
-                 identificás y el sexo al nacer es dato clínico. -->
-            <app-form-field label="Género (opcional)">
+                 identificás y el sexo al nacer es dato clínico. El comentario
+                 se lo explicaba a quien lee el código; con K2 se lo explica a
+                 quien está llenando el formulario, que es quien duda. -->
+            <app-form-field label="Género (opcional)" hint="Cómo te identificás.">
               <app-select
                 data-testid="registro-genero"
                 [options]="opcionesGenero"
@@ -206,7 +208,10 @@
               />
             </app-form-field>
 
-            <app-form-field label="Sexo al nacer (opcional)">
+            <app-form-field
+              label="Sexo al nacer (opcional)"
+              hint="Dato clínico: cambia valores de referencia y tamizajes. No es lo mismo que el género."
+            >
               <app-select
                 data-testid="registro-sexo-al-nacer"
                 [options]="opcionesSexoAlNacer"
@@ -237,7 +242,10 @@
               />
             </app-form-field>
 
-            <app-form-field label="Ocupación (opcional)">
+            <app-form-field
+              label="Ocupación (opcional)"
+              hint="En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio."
+            >
               <app-input
                 formControlName="occupationFreeText"
                 type="text"
@@ -401,6 +409,7 @@
           <div class="registro__row">
             <app-form-field
               label="Número de matrícula"
+              hint="La que te habilita a ejercer, la del registro del Ministerio."
               [required]="true"
               [errorMessage]="
                 formProfesional.controls.licenseNumber.touched &&
@@ -453,7 +462,10 @@
               />
             </app-form-field>
 
-            <app-form-field label="Fecha de inscripción de la matrícula (opcional)">
+            <app-form-field
+              label="Fecha de inscripción de la matrícula (opcional)"
+              hint="Cuándo te registraste, no cuándo vence."
+            >
               <app-date-picker
                 [(value)]="fechaInscripcionMatricula"
                 placeholder="Seleccionar fecha"
@@ -462,7 +474,10 @@
           </div>
 
           <div class="registro__row">
-            <app-form-field label="Título profesional (opcional)">
+            <app-form-field
+              label="Título profesional (opcional)"
+              hint="Cómo querés que te nombren en tu ficha: «Médica cardióloga», «Odontólogo»."
+            >
               <app-input
                 formControlName="professionalTitle"
                 type="text"

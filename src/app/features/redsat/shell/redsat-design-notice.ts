@@ -22,7 +22,7 @@ import { filter, map, startWith } from 'rxjs';
  * las dos superficies.
  */
 const PANTALLA_REAL: Readonly<Record<string, { readonly ruta: string; readonly rotulo: string }>> = {
-  buscar: { ruta: '/directory', rotulo: 'Guía de profesionales' },
+  buscar: { ruta: '/directory', rotulo: 'Directorio de médicos' },
   directorio: { ruta: '/administration/organizations', rotulo: 'Organizaciones' },
   personas: { ruta: '/administration/patients', rotulo: 'Pacientes' },
   terminologia: { ruta: '/administration/terminology', rotulo: 'Terminología' },

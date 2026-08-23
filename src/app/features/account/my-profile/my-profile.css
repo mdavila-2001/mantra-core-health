@@ -102,3 +102,14 @@
   font-size: var(--fs-caption);
   color: var(--text-muted);
 }
+
+/* §4.H del plan de UX · los enlaces a lo que salió del menú del médico. En
+   fila y con separación clara: son tres destinos hermanos, no una lista. */
+.mi-perfil__enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-4);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+}

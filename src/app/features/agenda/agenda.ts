@@ -732,6 +732,20 @@ export class Agenda {
   /** Si el panel avisa de toda la agenda o de una cita concreta. */
   protected readonly demoraDeTodaLaAgenda = computed(() => this.demoraDe() === null);
 
+  /**
+   * Si quien mira es quien atiende.
+   *
+   * Decide el enlace a «Visitas de laboratorio»: es su bandeja, y desde §4.H
+   * del plan de UX ya no tiene renglón propio en el menú del médico. A quien
+   * reparte turnos no le corresponde —la bandeja declara `PRACTITIONER` y
+   * `CLINICIAN`— y ofrecerle una puerta que la API va a cerrar es justo lo que
+   * el filtrado del menú evita.
+   */
+  protected readonly esQuienAtiende = computed(() => {
+    const roles = this.auth.roles();
+    return roles.includes('PRACTITIONER') || roles.includes('CLINICIAN');
+  });
+
   protected readonly opcionesDeDemora = computed<readonly SelectOption<string>[]>(() =>
     DEMORAS.map((minutos) => ({ value: String(minutos), label: `${minutos} minutos` })),
   );

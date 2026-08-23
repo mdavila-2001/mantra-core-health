@@ -1,6 +1,6 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-12 (tarde) · **P14 tiene diagnóstico nuevo y procedimiento de cierre —
+**Actualizado:** 2026-08-23 — **P15 a P18 son nuevos**, del plan de UX del 22/08. Antes: 2026-08-12 (tarde) · **P14 tiene diagnóstico nuevo y procedimiento de cierre —
 ver su sección: el modelo YA tiene las columnas; lo que falta es aplicar un patch en cada
 entorno con base viva.** P6 a P13 siguen cerrados y comprobados **contra la API viva** en
 `localhost:3000`, con la imagen reconstruida — no leyendo el código.
@@ -20,6 +20,76 @@ un 404 pedido con el identificador equivocado no prueba que algo no exista.
 
 Este archivo existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber
 que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
+
+---
+
+## Abierto · P15 a P18 · Los cuatro huecos que dejó el plan de UX del 22/08/2026
+
+**Levantados el 2026-08-23**, construyendo los frentes B, D y H del plan
+`PLAN-UX-DIRECTORIOS-PERFILES-2026-08-23.md`. Los cuatro tienen la misma forma:
+la pantalla se construyó igual, hasta donde la API permite, y **dice en voz
+alta lo que no puede hacer** en vez de simularlo. Cuando el endpoint exista, en
+cada caso se borra un aviso y se enciende una función.
+
+### P15 · No hay forma de retirar una plantilla de agenda
+
+`M41 scheduling` publica horarios y no los modifica: existen
+`POST /scheduling/resources/:id/templates` y su lectura, y **no** hay
+`PUT`/`DELETE` ni forma de marcar una plantilla como retirada.
+
+Consecuencia en pantalla: «Cambiar mi horario» **agrega** el horario nuevo, y
+los cupos que el anterior ya materializó siguen ofreciéndose. Un médico que
+mueve sus martes a los jueves sigue teniendo turnos abiertos los martes.
+
+Lo que la pantalla hace mientras tanto: avisa antes de publicar y manda a
+cerrarlos con el bloqueo por rango. Es una vuelta manual sobre un problema que
+el backend puede resolver de raíz.
+
+**Lo que haría falta:** poder retirar una plantilla —o darle `validTo`
+retroactivo— y que eso cierre sus cupos libres futuros.
+
+### P16 · La ficha pública no sabe decir dónde atiende alguien
+
+El cliente lo pidió textual: «en el perfil público del profesional falta los
+lugares donde atiende». El dato **existe** —`GET /scheduling/slots` agrupa los
+cupos por sede— pero ese endpoint exige sesión, y `/p/:slug` es anónima.
+`PublicProfileDetailDto` sirve `city` y `address`: una sola dirección, no las
+sedes.
+
+**Lo que haría falta:** que la respuesta pública traiga los lugares de
+atención —nombre, dirección y, si se puede, los días que atiende en cada uno—.
+Sin horarios en vivo: alcanza con «Atiende en: Clínica X (lun/mié), Consultorio
+Y (vie)».
+
+### P17 · La foto del perfil no se puede subir desde la aplicación
+
+`OwnPublicProfile` y el perfil profesional **leen** `avatarFileId` y
+`photoFileId`, pero ninguno de los dos cuerpos de escritura los acepta:
+`UpsertOwnPublicProfile` no tiene `avatarFileId` y
+`PATCH /profiles/practitioners/me` sólo admite cuatro campos —título,
+biografía, si acepta pacientes y telemedicina—. Tampoco sirve `file_links`: sus
+`owner_type` son `USER`, `PATIENT` y `TENANT`.
+
+O sea: hoy **nadie** puede ponerle foto a un perfil desde el frontend. El
+cliente pidió «Agregar tu foto» y lo único honesto que se pudo construir es el
+aviso de que la ficha se ve sin foto.
+
+**Lo que haría falta:** aceptar el identificador del archivo en alguna de las
+dos escrituras.
+
+### P18 · No hay lectura de colección de notas clínicas
+
+`M15 chart` tiene `POST /charts/notes` y
+`PUT /charts/notes/:id/versions` —se escriben y se versionan— y ninguna
+lectura de colección: no existe un `GET` por profesional ni por fecha. Sólo se
+llega a una nota entrando al expediente de su paciente.
+
+Consecuencia: la sección «Evoluciones» del panel del médico **no puede listar
+las notas**. Lista a quién atendió —desde `GET /scheduling/bookings`— con el
+enlace a cada expediente, y lo dice en la propia pantalla.
+
+**Lo que haría falta:** `GET /charts/notes` acotado por profesional y ventana
+de fechas, devolviendo la última versión de cada nota.
 
 ---
 
