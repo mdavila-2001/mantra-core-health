@@ -6,7 +6,7 @@ import {
   type OnInit,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { DOCUMENT, DatePipe } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -14,6 +14,7 @@ import { map } from 'rxjs';
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
 
 import { jsonLdDePerfil, serializarJsonLd } from './public-profile.jsonld';
+import { PublicProfileCard } from './public-profile-card/public-profile-card';
 import type { PerfilPublicoResuelto } from './public-profile.resolver';
 
 /**
@@ -76,7 +77,7 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  */
 @Component({
   selector: 'app-public-profile',
-  imports: [DatePipe, RouterLink],
+  imports: [PublicProfileCard, RouterLink],
   templateUrl: './public-profile.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
