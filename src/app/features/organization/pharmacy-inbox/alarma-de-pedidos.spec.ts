@@ -9,8 +9,33 @@ import { AlarmaDePedidos, SONIDO_STORAGE_KEY } from './alarma-de-pedidos';
  * al volver, se restaura solo. El díng-dóng real se escucha en runtime; acá
  * se fija QUÉ dispara y QUÉ no.
  */
+/**
+ * jsdom corre con origen opaco, así que `localStorage` no está disponible como
+ * global: el spec lo usaba a pelo y moría en el `beforeEach` antes de la primera
+ * aserción. Se inyecta uno falso —el mismo doble que `theme.service.spec` y
+ * `shell.spec`—, que además vuelve determinista lo que se persiste.
+ *
+ * La alarma no lo toca directo: lo alcanza por `DOCUMENT.defaultView`, así que
+ * definirlo sobre `window` es lo que el servicio realmente lee.
+ */
+function createFakeStorage(): Storage {
+  const data = new Map<string, string>();
+  return {
+    get length() {
+      return data.size;
+    },
+    clear: () => data.clear(),
+    getItem: (key: string) => data.get(key) ?? null,
+    key: (index: number) => [...data.keys()][index] ?? null,
+    removeItem: (key: string) => void data.delete(key),
+    setItem: (key: string, value: string) => void data.set(key, value),
+  };
+}
+
 describe('AlarmaDePedidos', () => {
   let reproducir: ReturnType<typeof vi.spyOn>;
+  let almacen: Storage;
+  let almacenOriginal: PropertyDescriptor | undefined;
 
   function crear(): AlarmaDePedidos {
     TestBed.configureTestingModule({ providers: [AlarmaDePedidos] });
@@ -22,7 +47,9 @@ describe('AlarmaDePedidos', () => {
   }
 
   beforeEach(() => {
-    localStorage.removeItem(SONIDO_STORAGE_KEY);
+    almacenOriginal = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    almacen = createFakeStorage();
+    Object.defineProperty(window, 'localStorage', { value: almacen, configurable: true });
     // jsdom no implementa `play()`: se fija la llamada, no el audio real.
     reproducir = vi
       .spyOn(HTMLMediaElement.prototype, 'play')
@@ -32,6 +59,11 @@ describe('AlarmaDePedidos', () => {
   afterEach(() => {
     ocultarPestana(false);
     vi.restoreAllMocks();
+    if (almacenOriginal) {
+      Object.defineProperty(window, 'localStorage', almacenOriginal);
+    } else {
+      Reflect.deleteProperty(window, 'localStorage');
+    }
   });
 
   it('nace con el sonido encendido: la alarma es la razón de ser de la bandeja', () => {
@@ -46,14 +78,14 @@ describe('AlarmaDePedidos', () => {
     const alarma = crear();
     alarma.alternarSonido();
     expect(alarma.sonidoActivo()).toBe(false);
-    expect(localStorage.getItem(SONIDO_STORAGE_KEY)).toBe('off');
+    expect(almacen.getItem(SONIDO_STORAGE_KEY)).toBe('off');
 
     alarma.notificar(3);
     expect(reproducir).not.toHaveBeenCalled();
   });
 
   it('con la preferencia guardada en off, arranca apagada', () => {
-    localStorage.setItem(SONIDO_STORAGE_KEY, 'off');
+    almacen.setItem(SONIDO_STORAGE_KEY, 'off');
     expect(crear().sonidoActivo()).toBe(false);
   });
 
