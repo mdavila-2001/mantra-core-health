@@ -307,6 +307,15 @@
   max-width: 40rem;
 }
 
+/* Ver `AuthSplit.contentWidth`: en `full` el formulario no tiene tope propio.
+   Lo que lo mantiene legible en un monitor ancho no es un `max-width` acá sino
+   el aire de la columna, que crece con la ventana (`.auth-split--full
+   .auth-split__panel`). Así el formulario ocupa la pantalla de verdad —que es
+   lo pedido— sin que una línea de ayuda cruce 1900 px de punta a punta. */
+.auth-split__slot--full {
+  max-width: none;
+}
+
 /* Entrada: sube un poco mientras aparece. El desplazamiento es corto porque
    arriba de él hay un formulario, y un movimiento largo obliga a esperar para
    empezar a escribir. */
@@ -644,6 +653,52 @@
 
   .auth-split__chrome {
     justify-content: flex-end;
+  }
+
+  /* ==========================================================================
+      `full` — el formulario se queda con la ventana entera.
+
+      Es la única variante que toca la GRILLA y no solo el ancho del hueco: la
+      columna de marca desaparece y el panel pasa a ocupar la celda única. El
+      fondo vivo no se pierde —la aurora del panel se estira con él— y por eso
+      hay que devolver el remapeo del foco de luz: con el panel ocupando toda
+      la escena, las coordenadas del puntero vuelven a ser las de la columna,
+      igual que en teléfono.
+      ========================================================================== */
+  .auth-split--full {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-split--full .auth-split__brand {
+    display: none;
+  }
+
+  .auth-split--full .auth-split__aurora--panel,
+  .auth-split--full .auth-split__panel {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+
+  .auth-split--full .auth-split__aurora--panel::after {
+    --local-x: var(--pointer-x);
+  }
+
+  /* El aire crece con la ventana: es lo que sustituye al `max-width` del hueco.
+     A 1024 px son los mismos 24 px de siempre; a 1920 px son ~115 px de cada
+     lado, que es lo que evita que una línea de texto de ayuda se lea de punta
+     a punta del monitor. */
+  .auth-split--full .auth-split__panel {
+    padding-inline: clamp(var(--sp-6), 6vw, var(--sp-20));
+  }
+
+  /* Sin columna de marca, la píldora es lo único que dice de qué producto es
+     esta pantalla. En este modo se muestra también en escritorio —para eso
+     existe—, y el chrome vuelve a repartir marca y tema a los extremos. */
+  .auth-split--full .auth-split__marca-mini {
+    display: inline-flex;
+  }
+
+  .auth-split--full .auth-split__chrome {
+    justify-content: space-between;
   }
 
   @media (prefers-reduced-motion: reduce) {

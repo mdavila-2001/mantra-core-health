@@ -18,12 +18,12 @@
     pantallas de acceso se lean como una sola familia y no como dos pantallas
     hechas en momentos distintos.
 
-    Sin `max-height`/scroll propio en mobile a propósito: en el teléfono el
-    teclado en pantalla reduce el alto útil, y encerrar el formulario en un
-    alto fijo ahí lo deja inalcanzable — la nota de `auth-split.css` sobre
-    por qué esa columna scrollea "normal" en mobile aplica igual acá. El
-    cuerpo con scroll propio (`.registro__body`) se activa solo en pantallas
-    anchas Y altas; ver la nota del `@media` de abajo. */
+    Sin `max-height` ni scroll propio, en ninguna medida de pantalla: la
+    tarjeta crece con su contenido y la columna que la sostiene es la que
+    scrollea (`auth-split.css`). En el teléfono eso importa porque el teclado
+    en pantalla reduce el alto útil y un alto fijo dejaría el formulario
+    inalcanzable; en escritorio, porque desde que el alta ocupa la ventana
+    entera un tope sólo lograba dos barras de scroll en la misma pantalla. */
 .registro {
   position: relative;
   display: flex;
@@ -45,49 +45,24 @@
   }
 }
 
-/* Cuando el alto de la tarjeta se fija, solo el cuerpo (los formularios)
-   scrollea por dentro: cambiar de Paciente a Profesional —siete campos contra
-   diez— no estira ni encoge la tarjeta entera, que es lo que se sentía como
-   que la pantalla "se deformaba" al tocar la pestaña. */
-/* Alto fijo con cuerpo que scrollea por dentro: SOLO en pantallas anchas Y
-   altas.
+/* Acá vivía un alto fijo con el cuerpo scrolleando por dentro (`max-height:
+   min(80dvh, 44rem)` desde 1024x900). Ya no hace falta, y sostenerlo era
+   dañino: la tarjeta ocupa la ventana entera desde que el alta usa
+   `contentWidth="full"`, así que ese tope la dejaba flotando en un monitor de
+   1080px con una barra de scroll propia por dentro —dos barras en la misma
+   pantalla— en vez de aprovechar el alto que ahora sí tiene.
 
-   La regla de arriba (alto de la tarjeta atado a la ventana) solo se sostiene
-   si lo que queda para el cuerpo alcanza para ver varios campos. En un monitor
-   viejo —1024x768, 1280x720, 1366x768— la mitad derecha de la pantalla mide
-   768px de alto: el membrete, las pestañas y el pie se llevan ~370px fijos y al
-   formulario le quedaban 210–250px, o sea dos campos y medio con el tercero
-   cortado al ras del borde. Sin barra de scroll visible (el sistema las dibuja
-   encima solo al mover la rueda) eso no se lee como "hay más abajo" sino como
-   una pantalla rota, y el botón de crear la cuenta no aparecía en ningún
-   momento.
+   Las dos razones que lo justificaban se vencieron solas:
 
-   Por debajo de 900px de alto no se recorta nada: la tarjeta crece con su
-   contenido y la que scrollea es la columna del formulario
-   (`.auth-split__panel`, que ya tiene `overflow-y: auto`), igual que en el
-   teléfono. Se ve el formulario entero, con su botón, de corrido.
+   - «Cambiar de Paciente a Profesional deformaba la tarjeta»: ya no se cambia
+     acá. El tipo de cuenta se elige antes, en la rejilla de `/auth/register`.
+   - «Al formulario le quedaban dos campos y medio»: una página del motor tiene
+     CUATRO campos como tope (`MAX_CAMPOS_POR_PAGINA`), no diez. Lo que antes
+     era un formulario largo ahora son cuatro pasos cortos.
 
-   El `100vh` va antes que el `dvh` como respaldo para navegadores viejos, que
-   son los que suelen acompañar a estos monitores: sin él la declaración entera
-   se descarta y la tarjeta se queda sin tope. */
-@media (min-width: 1024px) and (min-height: 900px) {
-  .registro {
-    max-height: min(80vh, 44rem);
-    max-height: min(80dvh, 44rem);
-    overflow: hidden;
-  }
-
-  .registro__body {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    /* Separa el contenido de la barra de scroll sin mover el resto de la
-       tarjeta, que no scrollea. */
-    margin-right: calc(var(--sp-2) * -1);
-    padding-right: var(--sp-2);
-  }
-}
+   La tarjeta crece con su contenido y quien scrollea, si hace falta, es la
+   columna del formulario (`.auth-split__panel`, que ya trae `overflow-y:
+   auto`) — igual que en el teléfono. */
 
 /* Membrete: título y bajada separados del cuerpo por una regla, como la cabecera
    de un expediente. Se usa en los dos estados (alta y confirmación). */
