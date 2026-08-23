@@ -54,7 +54,18 @@
             @if (turno.startAt) {
               <p class="mi-salud__dato">
                 {{ turno.startAt | date: "EEEE d 'de' MMMM" }}
-                <span class="mi-salud__hora">a las {{ turno.startAt | date: 'HH:mm' }}</span>
+                <!-- Inicio **y fin** (D1 del plan de UX): «a las 09:30» no dice
+                     cuánto dura, que es lo que decide si hay que pedir permiso
+                     media mañana o la mañana entera. `endAt` puede faltar en una
+                     reserva sin cupo, y entonces se dice sólo la hora de inicio
+                     en vez de inventar una duración. -->
+                <span class="mi-salud__hora">
+                  @if (turno.endAt) {
+                    de {{ turno.startAt | date: 'HH:mm' }} a {{ turno.endAt | date: 'HH:mm' }}
+                  } @else {
+                    a las {{ turno.startAt | date: 'HH:mm' }}
+                  }
+                </span>
               </p>
             }
             <a app-button variant="outline" size="sm" [routerLink]="misTurnos">

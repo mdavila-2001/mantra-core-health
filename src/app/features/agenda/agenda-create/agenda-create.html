@@ -1,6 +1,14 @@
+<!-- El mismo formulario dice dos cosas distintas según si hay un horario
+     publicado o no (D2 del plan de UX del 22/08/2026). No son dos pantallas:
+     las preguntas son las mismas —«¿qué días atendés?», «¿cuánto dura una
+     consulta?»— y lo único que cambia es de qué se parte. -->
 <app-page-header
-  title="Publicá tu agenda"
-  subtitle="Elegí qué días atendés y cuánto dura una consulta. El resto lo completamos nosotros."
+  [title]="esCambio() ? 'Cambiá tu horario' : 'Publicá tu agenda'"
+  [subtitle]="
+    esCambio()
+      ? 'Está cargado el horario que tenés hoy. Cambiá lo que quieras y volvé a publicarlo.'
+      : 'Elegí qué días atendés y cuánto dura una consulta. El resto lo completamos nosotros.'
+  "
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -33,9 +41,33 @@
   </app-alert>
 } @else {
   <form class="agenda-create" (ngSubmit)="publicar()" [formGroup]="formGeneral">
+    @if (esCambio()) {
+      <!-- Lo que este formulario NO puede hacer, dicho antes y no después.
+
+           `M41 scheduling` publica plantillas y no las modifica: no hay
+           `PUT /templates/:id` ni forma de retirar una. Así que un cambio de
+           horario **agrega** el nuevo, y los turnos que el anterior ya dejó
+           abiertos siguen ahí — un paciente los seguiría viendo. Callarlo
+           sería dejar a alguien atendiendo un martes que creía haber cerrado.
+
+           Queda anotado en `PENDIENTES-BACKEND.md`; cuando la API permita
+           retirar una plantilla, este aviso se va y el cierre se hace solo. -->
+      <app-alert tone="warning" title="Los turnos ya abiertos no se cierran solos">
+        Al publicar, tu horario nuevo pasa a ser el que rige. Pero los turnos que ya se habían
+        abierto con el horario anterior <strong>siguen ofreciéndose</strong>: si alguno cae en un
+        día u horario que ya no atendés, cerralo desde
+        <a [routerLink]="rutaDeMiAgenda">Mi agenda → Cómo viene el mes → Bloquear días u
+        horarios</a>.
+      </app-alert>
+    }
+
     @if (publicaSoloLaPropia()) {
       <p class="agenda-create__titular">
-        Vas a publicar tu propia agenda@if (nombreDelTitular()) {, {{ nombreDelTitular() }}}.
+        @if (esCambio()) {
+          Estás cambiando tu propia agenda@if (nombreDelTitular()) {, {{ nombreDelTitular() }}}.
+        } @else {
+          Vas a publicar tu propia agenda@if (nombreDelTitular()) {, {{ nombreDelTitular() }}}.
+        }
       </p>
     }
 

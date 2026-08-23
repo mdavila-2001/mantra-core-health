@@ -181,8 +181,11 @@
               <ul class="organizacion__citas">
                 @for (cita of citasVisibles(); track cita.bookingId) {
                   <li class="organizacion__cita">
+                    <!-- Inicio y fin (D1 del plan de UX): el mostrador necesita
+                         saber cuándo se libera el consultorio, no sólo cuándo se
+                         ocupa. -->
                     <span class="organizacion__cita-hora">
-                      {{ cita.startAt | date: 'HH:mm' }}
+                      {{ cita.startAt | date: 'HH:mm' }}–{{ cita.endAt | date: 'HH:mm' }}
                     </span>
                     <span class="organizacion__cita-paciente">
                       {{ cita.patientName || 'Paciente sin nombre registrado' }}

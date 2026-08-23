@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
@@ -21,6 +22,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
+import { BlockForm, aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
 import { DayView, type EstadoResuelto, type PedidoDeAccion } from './day-view/day-view';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { AGENDA_CREATE_ROUTE } from '../agenda.routes';
@@ -114,6 +116,7 @@ interface Patron {
     Alert,
     AppButton,
     AppButtonLink,
+    BlockForm,
     DayView,
     MonthView,
     PageHeader,
@@ -153,6 +156,12 @@ export class MyAgenda {
   protected readonly cuposDelMes = signal<readonly AgendaSlot[]>([]);
   protected readonly bloqueosDelMes = signal<readonly BloqueoDelMes[]>([]);
   protected readonly cargandoMes = signal(false);
+
+  /** Si el panel de bloqueo está abierto (D4/D5 del plan de UX). */
+  protected readonly bloqueoAbierto = signal(false);
+
+  /** Un bloqueo en curso: evita el doble envío de un rango largo. */
+  protected readonly bloqueando = signal(false);
 
   /* -- La vista del día ------------------------------------------------------ */
 
@@ -326,6 +335,69 @@ export class MyAgenda {
    * Es el botón del aviso: extiende tres meses más desde donde terminan los
    * actuales. Sustituye al worker que todavía no existe.
    */
+  /**
+   * Bloquea un rango de días, o una franja de cada uno de esos días.
+   *
+   * D4 del plan de UX del 22/08/2026: bloquear dos semanas de vacaciones eran
+   * catorce viajes de mes → día → confirmar, y una tarde suelta no se podía
+   * bloquear en absoluto.
+   *
+   * ## Por qué una excepción por día cuando es una franja
+   *
+   * Porque `POST /exceptions` bloquea **el intervalo continuo** entre sus dos
+   * instantes. «Las tardes del 10 al 24» mandado de una sola vez sería «del 10
+   * a las 14:00 al 24 a las 18:00», que además de las tardes se lleva puestas
+   * las noches y las mañanas del medio. Los días enteros sí son un intervalo
+   * continuo y van en una sola llamada.
+   *
+   * Las llamadas van **en paralelo y se espera a todas**: si una falla, el
+   * profesional tiene que enterarse de que su bloqueo quedó a medias en vez de
+   * ver un mes que parece correcto.
+   */
+  protected bloquearRango(pedido: BloqueoPedido): void {
+    const recurso = this.recurso();
+    if (recurso === null || this.bloqueando()) {
+      return;
+    }
+
+    const intervalos = pedido.franjaHoraria
+      ? franjasPorDia(pedido)
+      : [{ startAt: pedido.desde, endAt: pedido.hasta }];
+
+    this.bloqueando.set(true);
+    forkJoin(
+      intervalos.map((intervalo) =>
+        this.scheduling.createException(recurso.id, {
+          exceptionType: 'ABSENCE',
+          startAt: intervalo.startAt.toISOString(),
+          endAt: intervalo.endAt.toISOString(),
+          reason: pedido.motivo,
+        }),
+      ),
+    ).subscribe({
+      next: (resultados) => {
+        this.bloqueando.set(false);
+        this.bloqueoAbierto.set(false);
+        const cerrados = resultados.reduce((suma, r) => suma + r.blockedSlots, 0);
+        this.toast.success(
+          cerrados === 0
+            ? 'No había turnos libres que cerrar en ese período.'
+            : `Se cerraron ${cerrados} ${cerrados === 1 ? 'turno libre' : 'turnos libres'}.`,
+          `Bloqueaste ${pedido.dias} ${pedido.dias === 1 ? 'día' : 'días'}`,
+        );
+        this.cargarMes();
+      },
+      error: (error: unknown) => {
+        this.bloqueando.set(false);
+        this.avisarFallo(error, 'bloquear ese período');
+        // Se recarga igual: si alguna de las llamadas entró antes del fallo, el
+        // mes tiene que mostrarlo. Un bloqueo a medias que no se ve es peor que
+        // uno que se ve y se corrige.
+        this.cargarMes();
+      },
+    });
+  }
+
   /**
    * Bloquea un día desde el calendario.
    *
@@ -631,6 +703,36 @@ export class MyAgenda {
         },
       });
   }
+}
+
+/**
+ * Una franja horaria por cada día del rango.
+ *
+ * `pedido.desde` y `pedido.hasta` traen ya la hora de inicio y la de fin de la
+ * franja; lo que falta es repetirla día por día. Se recorre por fecha local y
+ * no sumando 24 horas en milisegundos: en un cambio de horario de verano un día
+ * dura 23 o 25, y sumar 86 400 000 correría la franja una hora a partir de ahí.
+ */
+export function franjasPorDia(
+  pedido: BloqueoPedido,
+): readonly { startAt: Date; endAt: Date }[] {
+  const horaDesde = `${dosDigitos(pedido.desde.getHours())}:${dosDigitos(pedido.desde.getMinutes())}`;
+  const horaHasta = `${dosDigitos(pedido.hasta.getHours())}:${dosDigitos(pedido.hasta.getMinutes())}`;
+
+  const intervalos: { startAt: Date; endAt: Date }[] = [];
+  const ultimo = aMedianoche(pedido.hasta);
+  for (let dia = aMedianoche(pedido.desde); dia <= ultimo; dia = siguienteDia(dia)) {
+    intervalos.push({ startAt: conHora(dia, horaDesde), endAt: conHora(dia, horaHasta) });
+  }
+  return intervalos;
+}
+
+function siguienteDia(fecha: Date): Date {
+  return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate() + 1);
+}
+
+function dosDigitos(valor: number): string {
+  return String(valor).padStart(2, '0');
 }
 
 /** `09:00:00` → `09:00`: los segundos de una regla nunca son distintos de cero. */

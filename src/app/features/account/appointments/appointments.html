@@ -64,7 +64,13 @@
             <article class="turnos__detalle" data-testid="turnos-detalle">
               <h3 class="turnos__detalle-titulo">
                 @if (turno.cuando !== null) {
-                  {{ turno.cuando | date: "EEEE d 'de' MMM 'a las' HH:mm" }}
+                  <!-- Con la hora de fin cuando la hay (D1 del plan de UX): la
+                       lista de abajo ya la mostraba y el detalle no, así que la
+                       misma cita se leía con dos duraciones distintas según
+                       dónde se la mirara. -->
+                  {{ turno.cuando | date: "EEEE d 'de' MMM 'a las' HH:mm" }}@if (
+                    turno.hasta !== null
+                  ) {<span>–{{ turno.hasta | date: 'HH:mm' }}</span>}
                 } @else {
                   Turno sin horario asignado
                 }

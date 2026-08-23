@@ -32,8 +32,35 @@
     </div>
 
     @if (solapa() === 'mes') {
-      <!-- Tocar un día abre su detalle; bloquearlo es una acción de la vista
-           del día, no del mes: desde el mes no se ve qué se estaría tapando. -->
+      <!-- D5 del plan de UX · el bloqueo, a la vista.
+
+           Antes el único botón vivía dentro de la vista de un día, a la que se
+           llega tocando ese día en el mes. Quien mira el mes para irse de
+           vacaciones no tiene por qué adivinar que la acción está un nivel más
+           abajo — y con el botón del día, dos semanas eran catorce viajes. El
+           botón del día se conserva: para tapar un martes suelto sigue siendo
+           el camino más corto. -->
+      @if (!diaAbierto()) {
+        @if (bloqueoAbierto()) {
+          <app-block-form
+            (bloquear)="bloquearRango($event)"
+            (cancelar)="bloqueoAbierto.set(false)"
+          />
+        } @else {
+          <div class="mi-agenda__acciones-mes">
+            <button
+              app-button
+              variant="secondary"
+              type="button"
+              (clicked)="bloqueoAbierto.set(true)"
+            >
+              Bloquear días u horarios
+            </button>
+          </div>
+        }
+      }
+
+      <!-- Tocar un día abre su detalle. -->
       @if (diaAbierto(); as dia) {
         <app-day-view
           [dia]="dia"
