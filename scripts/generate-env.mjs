@@ -146,6 +146,17 @@ const MANIFEST = [
     literal: true,
     validate: validateBoolean,
   },
+
+  // Siembra las campañas de farmacia (FAR-I7) y enciende su chip DEMO. Decide
+  // si hay campañas: apagada, las secciones de promoción no se pintan en
+  // ningún lado, que es el estado honesto mientras el backend no tenga de
+  // dónde leerlas.
+  {
+    key: 'PUBLIC_CAMPAIGNS_DEMO',
+    field: 'campaignsDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
 ];
 
 /**

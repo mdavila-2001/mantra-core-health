@@ -48,6 +48,13 @@ export const environment: Environment = {
   loyaltyDemo: envFromProcess.loyaltyDemo ?? false,
 
   /**
+   * Apagada por defecto: en producción no hay lecturas de campañas, así que
+   * sembrarlas sería anunciar descuentos que ningún backend puede honrar. El
+   * staging de una demo la enciende con `PUBLIC_CAMPAIGNS_DEMO=true`.
+   */
+  campaignsDemo: envFromProcess.campaignsDemo ?? false,
+
+  /**
    * Telemetría **apagada** salvo que el despliegue la encienda.
    *
    * No es timidez: apagada significa que el fragmento del SDK ni se descarga,
