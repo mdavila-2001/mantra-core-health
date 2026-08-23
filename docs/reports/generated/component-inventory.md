@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-379 componentes y 71 servicios inyectables, leídos de `src/`.
+381 componentes y 72 servicios inyectables, leídos de `src/`.
 
 ## Átomo (18)
 
@@ -84,7 +84,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (312)
+## Feature (314)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -92,6 +92,8 @@
 | `app-appointments` | `Appointments` | — | — | — | OnPush | sí |
 | `app-diagnostic-orders` | `DiagnosticOrders` | — | — | — | OnPush | sí |
 | `app-diagnostic-results` | `DiagnosticResults` | — | — | — | OnPush | sí |
+| `app-loyalty` | `Loyalty` | — | — | — | OnPush | sí |
+| `app-redeem-code` | `RedeemCode` | `comprobante` | `cerrado` | — | OnPush | sí |
 | `app-medical-record` | `MedicalRecord` | — | — | — | OnPush | sí |
 | `app-where-to-buy` | `WhereToBuy` | — | — | — | OnPush | sí |
 | `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
@@ -413,7 +415,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (71)
+## Servicios (72)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -442,6 +444,7 @@
 | `IdentityAdminClient` | `src/app/core/data-access/identity/identity-admin.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
 | `InsuranceClient` | `src/app/core/data-access/insurance/insurance.client.ts` | root | sí |
+| `SaldoInsuficienteError` | `src/app/core/data-access/loyalty/loyalty.client.ts` | root | sí |
 | `MedicalOrganizationClient` | `src/app/core/data-access/medical-organization/medical-organization.client.ts` | root | sí |
 | `NotificationsClient` | `src/app/core/data-access/notifications/notifications.client.ts` | root | sí |
 | `PharmaLabConcepts` | `src/app/core/data-access/pharma-lab/pharma-lab-concepts.client.ts` | root | **no** |

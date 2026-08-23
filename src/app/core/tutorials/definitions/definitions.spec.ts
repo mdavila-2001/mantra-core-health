@@ -167,10 +167,11 @@ describe('Definiciones de tutoriales', () => {
     expect(ids).toContain('agenda-del-dia');
     expect(ids).toContain('expediente-clinico');
     expect(ids).toContain('perfil-profesional');
-    // Y el de contabilidad, que dejó de ser sólo de facturación: desde la v1.1
-    // cubre el auto-servicio —registrar un ingreso o un gasto de la práctica
-    // propia— y por eso el tutorial suma `PRACTITIONER` a los dos roles
-    // contables. Ver `CONTABILIDAD` en `definitions/index.ts`.
+    // Y también el de contabilidad: desde el Carril 18 los libros son de la
+    // práctica y quien la ejerce tiene que poder verlos — `contabilidad` y la
+    // sección `administration/accounting` declaran `PRACTITIONER` a propósito.
+    // Que el filtro por rol excluye de verdad lo prueba el caso de arriba: a
+    // quien no atiende no le aparecen los clínicos.
     expect(ids).toContain('contabilidad');
   });
 });

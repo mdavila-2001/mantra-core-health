@@ -378,6 +378,35 @@ const ORGANIZACIONES: TutorialDefinition = {
   ],
 };
 
+/** Carriles P1/P9 — la bandeja (`notification-center`) y las preferencias de «Mi cuenta». */
+const NOTIFICACIONES: TutorialDefinition = {
+  id: 'notificaciones',
+  version: '1.1',
+  title: 'Tus notificaciones',
+  description: 'La bandeja de avisos y tus preferencias por categoría.',
+  category: 'General',
+  route: '/notification-center',
+  estimatedMinutes: 2,
+  level: 'inicial',
+  steps: [
+    {
+      id: 'que-es',
+      title: 'Notificaciones',
+      body: 'Acá ves tus avisos: recetas, consultas, turnos y mensajes. Tocá uno para abrir lo que anuncia, y marcalos leídos de a uno o todos juntos.',
+    },
+    {
+      id: 'preferencias',
+      title: 'Elegí de qué te avisamos',
+      body: 'En «Mi cuenta → Preferencias de avisos» activás o silenciás cada familia: recetas y consultas, turnos, mensajes y actividad social.',
+    },
+    {
+      id: 'silencio',
+      title: 'Ventana de silencio',
+      body: 'También podés fijar un horario de silencio, que se escribe en tu hora local: en esa ventana no te avisamos, y lo pendiente te espera en la bandeja.',
+    },
+  ],
+};
+
 /**
  * El catálogo. El orden es el que ve quien entra al centro sin filtrar, así que
  * va de lo que sirve el primer día a lo que sirve el primer mes.
@@ -391,4 +420,5 @@ export const TUTORIALS: readonly TutorialDefinition[] = [
   CENTRO_DE_AYUDA,
   CONTABILIDAD,
   ORGANIZACIONES,
+  NOTIFICACIONES,
 ];

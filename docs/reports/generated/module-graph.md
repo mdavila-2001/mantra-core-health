@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-994 archivos TypeScript bajo `src/` y 3928 importaciones internas.
+1005 archivos TypeScript bajo `src/` y 3964 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -13,7 +13,6 @@ Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.jso
 
 Se excluyen los puntos de entrada del framework y las pruebas.
 
-- `src/app/core/data-access/notifications/notification-concepts.ts`
 - `src/app/core/observability/browser/telemetry-browser.bootstrap.ts`
 - `src/app/features/account/questionnaires/questionnaires.ts`
 - `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
@@ -159,24 +158,24 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/core/view-state/view-state.types.ts` | 164 |
-| `src/app/shared/components/atoms/button/button.ts` | 159 |
-| `src/app/core/view-state/view-state.ts` | 150 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 144 |
-| `src/app/core/http/error-to-view-state.ts` | 140 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 134 |
-| `src/app/core/navigation/navigation.service.ts` | 113 |
+| `src/app/core/view-state/view-state.types.ts` | 165 |
+| `src/app/shared/components/atoms/button/button.ts` | 161 |
+| `src/app/core/view-state/view-state.ts` | 151 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 145 |
+| `src/app/core/http/error-to-view-state.ts` | 141 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 135 |
+| `src/app/core/navigation/navigation.service.ts` | 114 |
 | `src/app/shared/a11y/announce-on-appear.ts` | 80 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 77 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 78 |
 | `src/app/shared/components/molecules/card/card.ts` | 64 |
 | `src/app/shared/forms/form-support.ts` | 64 |
-| `src/app/shared/components/atoms/input/input.ts` | 58 |
-| `src/app/core/auth/auth.service.ts` | 52 |
-| `src/app/shared/components/atoms/badge/badge.ts` | 51 |
+| `src/app/shared/components/atoms/input/input.ts` | 59 |
+| `src/app/core/auth/auth.service.ts` | 53 |
+| `src/app/shared/components/atoms/badge/badge.ts` | 53 |
 | `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 49 |
 | `src/app/shared/forms/paginated/paginar-campos.ts` | 49 |
-| `src/app/core/auth/session.store.ts` | 47 |
-| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 46 |
+| `src/app/core/auth/session.store.ts` | 48 |
+| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 47 |
 | `src/app/core/data-access/api.ts` | 40 |
 | `src/app/shared/components/organisms/form-actions/form-actions.ts` | 39 |
 
@@ -184,10 +183,10 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 908 |
-| `@angular/common` | 536 |
-| `@angular/router` | 420 |
-| `rxjs` | 137 |
+| `@angular/core` | 914 |
+| `@angular/common` | 540 |
+| `@angular/router` | 421 |
+| `rxjs` | 139 |
 | `@angular/forms` | 106 |
 | `node:fs` | 15 |
 | `@opentelemetry/api` | 12 |
