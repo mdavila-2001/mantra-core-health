@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-319 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+320 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -440,6 +440,7 @@ Archivo: `src/app/core/data-access/pharmacy/pharmacy.client.ts`
 | Método | Ruta |
 |---|---|
 | `GET` | `/pharmacy-inventory/availability` |
+| `GET` | `/pharmacy/pharmacies` |
 | `GET` | `/pharmacy/products` |
 
 ## `MedicalOrganizationClient`
