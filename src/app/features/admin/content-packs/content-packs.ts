@@ -168,8 +168,17 @@ export class ContentPacks {
       );
       return;
     }
+    // `null` es «el paquete no reporta contadores», no una cifra. Decía «sumó
+    // sus filas», que afirma un éxito cuantificado que nadie midió.
+    if (resultado.inserted === null) {
+      this.toast.success(
+        `«${paquete.name}» se aplicó en ${resultado.tookMs} ms. No informa cuántas filas dejó.`,
+        'Paquete aplicado',
+      );
+      return;
+    }
     this.toast.success(
-      `«${paquete.name}» sumó ${resultado.inserted ?? 'sus'} filas en ${resultado.tookMs} ms.`,
+      `«${paquete.name}» sumó ${resultado.inserted} filas en ${resultado.tookMs} ms.`,
       'Paquete aplicado',
     );
   }

@@ -71,6 +71,12 @@
 
 /* La marca de estado es texto con fondo tenue, no sólo color: el estado se lee
    igual sin distinguir tonos. */
+.puesta__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
 .puesta__marca {
   border-radius: var(--r-full);
   font-size: var(--fs-caption);

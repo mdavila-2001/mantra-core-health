@@ -1,6 +1,6 @@
 <app-page-header
   title="Puesta en marcha"
-  subtitle="Cuatro pasos para que la primera organización pueda atender."
+  subtitle="Cuatro pasos para que la primera organización pueda atender, y el destino."
 />
 
 @switch (estado().status) {
@@ -17,7 +17,7 @@
         }
       </app-alert>
     } @else {
-      <output class="puesta__avance">
+      <output class="puesta__avance" data-testid="puesta-avance">
         Llevás <strong>{{ cumplidas() }} de {{ totalDeTareas() }}</strong>. Podés dejarlo por acá y
         seguir después: no hay nada que guardar, porque lo que cuenta es lo que ya existe y no un
         formulario a medio llenar.
@@ -26,14 +26,17 @@
 
     <app-stepper [steps]="pasosDelIndicador()" label="Puesta en marcha" />
 
-    <ol class="puesta__lista">
+    <ol class="puesta__lista" data-testid="puesta-etapas">
       @for (etapa of etapas(); track etapa.key) {
         <li class="puesta__etapa" [class.puesta__etapa--actual]="etapa.actual">
           <header class="puesta__encabezado">
             <h2 class="puesta__titulo">{{ etapa.titulo }}</h2>
             @if (etapa.completa) {
               <span class="puesta__marca puesta__marca--lista">Listo</span>
-            } @else if (etapa.actual) {
+            } @else if (etapa.actual && !completo()) {
+              <!-- Con todo hecho, la última etapa es la única sin cumplir —es el
+                   destino, no una tarea— y se llevaba el «Te toca» debajo del
+                   aviso que dice que ya está todo en marcha. -->
               <span class="puesta__marca puesta__marca--actual">Te toca</span>
             }
           </header>
@@ -45,13 +48,30 @@
                está hecho no es un error— y la última, que es el destino y no
                una tarea, sólo se ofrece cuando de verdad no falta nada. -->
           @if (etapa.key !== 'operar' || completo()) {
-            <a
-              app-button
-              [variant]="etapa.actual ? 'primary' : 'secondary'"
-              [routerLink]="[etapa.ruta]"
-            >
-              {{ etapa.accion }}
-            </a>
+            <div class="puesta__acciones">
+              <a
+                app-button
+                [variant]="etapa.actual ? 'primary' : 'secondary'"
+                [routerLink]="[etapa.ruta]"
+                [attr.data-testid]="'puesta-accion-' + etapa.key"
+              >
+                {{ etapa.accion }}
+              </a>
+
+              <!-- El segundo camino, cuando la etapa necesita algo antes: hoy
+                   sólo la primera, que pide una cuenta dueña para poder crear la
+                   organización. -->
+              @if (etapa.accionSecundaria; as secundaria) {
+                <a
+                  app-button
+                  variant="secondary"
+                  [routerLink]="[etapa.rutaSecundaria]"
+                  [attr.data-testid]="'puesta-accion-secundaria-' + etapa.key"
+                >
+                  {{ secundaria }}
+                </a>
+              }
+            </div>
           }
         </li>
       }

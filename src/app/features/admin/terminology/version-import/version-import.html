@@ -56,7 +56,12 @@
         [maxSizeBytes]="maxBytes"
         [maxFiles]="1"
         [disabled]="importando()"
+        (rejected)="avisarRechazos($event)"
       />
+
+      <p class="importar__nota" data-testid="importar-tope">
+        Un archivo por vez, de hasta {{ maxMib }} MB — el mismo tope que aplica el servidor.
+      </p>
 
       <div class="importar__acciones">
         <button

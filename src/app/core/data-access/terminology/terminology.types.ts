@@ -394,7 +394,12 @@ export interface CodeSystemListItem {
  * importadores externos sin fijar estado, y admiten conceptos igual que un
  * borrador.
  */
-export type CodeSystemVersionState = 'DRAFT' | 'ACTIVE' | 'UNKNOWN';
+export type CodeSystemVersionState =
+  | 'DRAFT'
+  | 'ACTIVE'
+  | 'RETIRED'
+  | 'DEPRECATED'
+  | 'UNKNOWN';
 
 /** Una versión de un sistema de codificación. */
 export interface CodeSystemVersionListItem {

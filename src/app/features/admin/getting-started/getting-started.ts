@@ -59,12 +59,22 @@ const ALTA_DE_CUENTAS_ROUTE = '/administration/users';
 type EtapaKey = 'organizacion' | 'verificacion' | 'sede' | 'plantilla' | 'operar';
 
 /** Una etapa ya resuelta contra el estado real de la plataforma. */
-interface Etapa {
+export interface Etapa {
   readonly key: EtapaKey;
   readonly titulo: string;
   readonly explica: string;
   readonly accion: string;
   readonly ruta: string;
+  /**
+   * Un segundo camino, cuando la etapa necesita algo antes de poder cumplirse.
+   *
+   * Hoy sólo lo usa la primera: el alta de organización exige una cuenta dueña
+   * que se elige de una lista, así que si no hay ninguna hay que ir a crearla
+   * primero. Va aparte y no en lugar del principal para no esconder el camino
+   * que la etapa realmente pide.
+   */
+  readonly accionSecundaria?: string;
+  readonly rutaSecundaria?: string;
   readonly completa: boolean;
   /** Es la que hay que hacer ahora. */
   readonly actual: boolean;
@@ -145,9 +155,22 @@ export class GettingStarted {
         titulo: 'Creá la organización',
         explica:
           'La clínica, el hospital o el consultorio con el que vas a trabajar. ' +
-          'Hace falta una cuenta que quede como dueña, así que si todavía no existe, creala primero.',
-        accion: organizacion === undefined ? 'Crear una cuenta' : 'Ver la organización',
-        ruta: organizacion === undefined ? ALTA_DE_CUENTAS_ROUTE : ORGANIZATION_NEW_ROUTE,
+          'El alta pide una cuenta que quede como dueña y se elige de una lista, ' +
+          'así que si todavía no existe, creala antes desde Usuarios.',
+        // Pendiente, el botón lleva al alta de la organización — que es lo que la
+        // etapa pide. Cumplida, a la ficha de la que ya existe. Estuvieron
+        // cruzados: sin organización mandaba a Usuarios y el recorrido no tenía
+        // ningún enlace al alta, y con organización decía «Ver la organización»
+        // y abría el formulario de alta.
+        accion: organizacion === undefined ? 'Crear la organización' : 'Ver la organización',
+        ruta:
+          id === undefined ? ORGANIZATION_NEW_ROUTE : organizationDetailRoute(id),
+        // El alta exige una cuenta dueña que se elige de una lista: si no hay
+        // ninguna, la etapa se queda sin resolver y hay que ir a crearla. Va
+        // como acción secundaria para no competir con el camino principal.
+        ...(organizacion === undefined
+          ? { accionSecundaria: 'Crear una cuenta', rutaSecundaria: ALTA_DE_CUENTAS_ROUTE }
+          : {}),
       },
       {
         key: 'verificacion',

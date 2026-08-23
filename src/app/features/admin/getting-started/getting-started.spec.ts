@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { GettingStarted } from './getting-started';
+import { GettingStarted, type Etapa } from './getting-started';
 
 /**
  * El recorrido no guarda en qué paso va: lo deriva de lo que ya existe.
@@ -85,11 +85,15 @@ describe('GettingStarted', () => {
     return (fixture.componentInstance as unknown as Record<string, unknown>)[nombre] as T;
   }
 
-  /** Las etapas ya resueltas, indexadas por su clave. */
-  function etapas(): Map<string, { completa: boolean; actual: boolean; ruta: string }> {
-    const lista = crudo<() => readonly { key: string; completa: boolean; actual: boolean; ruta: string }[]>(
-      'etapas',
-    ).call(fixture.componentInstance);
+  /**
+   * Las etapas ya resueltas, indexadas por su clave.
+   *
+   * Se tipan con la `Etapa` del componente y no con una forma escrita acá: una
+   * copia estructural pasa a mentir en cuanto la interfaz gana un campo, y eso
+   * fue exactamente lo que dejó sin cubrir la ruta de la primera etapa.
+   */
+  function etapas(): Map<string, Etapa> {
+    const lista = crudo<() => readonly Etapa[]>('etapas').call(fixture.componentInstance);
     return new Map(lista.map((etapa) => [etapa.key, etapa]));
   }
 
@@ -125,6 +129,36 @@ describe('GettingStarted', () => {
 
     expect(etapas().get('organizacion')?.completa).toBe(false);
     expect(etapas().get('organizacion')?.actual).toBe(true);
+  });
+
+  it('sin organización, el botón lleva a crearla y ofrece crear la cuenta dueña', () => {
+    // Las dos ramas estaban cruzadas: sin organización el único botón iba al
+    // alta de cuentas —un callejón, porque desde ahí nada enlaza al alta de la
+    // organización— y con organización el botón decía «Ver» pero navegaba al
+    // formulario de creación.
+    responder([TENANT_SEMILLA]);
+
+    const etapa = etapas().get('organizacion');
+    expect(etapa?.ruta).toBe('/administration/organizations/new');
+    expect(etapa?.accion).toBe('Crear la organización');
+    // La cuenta dueña se elige de una lista, así que tiene que existir antes:
+    // ése es el único motivo del segundo camino.
+    // `/administration/users` ES el alta (`UserRegistration`), no un listado.
+    expect(etapa?.rutaSecundaria).toBe('/administration/users');
+  });
+
+  it('con la organización creada, el botón la muestra en vez de ofrecer otra', () => {
+    responder([TENANT_SEMILLA, TENANT_REAL], {
+      sedes: SIN_SEDES,
+      membresias: SOLO_EL_DUENO,
+      etiquetas: ETIQUETA_SIN_VERIFICAR,
+    });
+
+    const etapa = etapas().get('organizacion');
+    expect(etapa?.accion).toBe('Ver la organización');
+    expect(etapa?.ruta).toContain(TENANT_REAL.id);
+    // Y ya no ofrece el atajo a crear cuentas: sólo servía para poder empezar.
+    expect(etapa?.rutaSecundaria).toBeUndefined();
   });
 
   it('con una organización real avanza a verificarla', () => {

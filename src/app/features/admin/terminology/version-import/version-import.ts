@@ -13,20 +13,28 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
+import {
+  FileInput,
+  type RejectedFile,
+} from '../../../../shared/components/molecules/file-input/file-input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 
 /**
- * Tope de tamaño que la pantalla acepta antes de intentar subir.
+ * Tope de tamaño, **el mismo que aplica el servidor**.
  *
- * El techo real lo pone el servidor; éste es para no hacerle subir 200 MB a
- * alguien y enterarse del rechazo después. Cien mil conceptos NDJSON rondan los
- * 10 MB, así que 25 deja margen holgado.
+ * No es un número elegido acá: es `FILE_STORAGE_MAX_SIZE_BYTES` (10 MiB por
+ * defecto), que el importador pasa a `limits.fileSize` de multer. Ponerlo más
+ * alto —estuvo en 25 MiB— hacía que un archivo de 20 MB pasara la validación de
+ * la pantalla, viajara entero por la red y muriera del otro lado con un fallo de
+ * multer que no dice su causa. Rechazarlo acá cuesta cero y explica por qué.
  */
-const MAX_BYTES = 25 * 1024 * 1024;
+const MAX_BYTES = 10 * 1024 * 1024;
+
+/** El tope, dicho en las unidades en las que la gente mira sus archivos. */
+const MAX_MIB = MAX_BYTES / (1024 * 1024);
 
 /**
  * Importación de conceptos por archivo — `/administration/terminology/import`.
@@ -71,6 +79,7 @@ export class VersionImport {
   private readonly toast = inject(ToastService);
 
   protected readonly maxBytes = MAX_BYTES;
+  protected readonly maxMib = MAX_MIB;
 
   protected readonly estado = signal<ViewState<readonly CodeSystemListItem[]>>(loading());
 
@@ -148,6 +157,15 @@ export class VersionImport {
     this.version.set(null);
     this.versiones.set([]);
     this.resultado.set(null);
+    this.recargarVersiones(sistemaId);
+  }
+
+  /**
+   * Relee las versiones del sistema elegido, sin tocar nada más.
+   *
+   * @param sistemaId - El sistema cuyas versiones se releen; por defecto, el actual.
+   */
+  private recargarVersiones(sistemaId = this.sistema()): void {
     if (sistemaId === null) return;
 
     this.cargandoVersiones.set(true);
@@ -167,6 +185,36 @@ export class VersionImport {
   protected cambiarVersion(versionId: string | null): void {
     this.version.set(versionId);
     this.resultado.set(null);
+  }
+
+  /**
+   * Dice en voz alta qué archivo no entró y por qué.
+   *
+   * El átomo descarta en silencio lo que no cumple: sin esto, arrastrar un
+   * archivo de 30 MB no producía **ningún** cambio visible —ni el archivo en la
+   * lista, ni un aviso— y se leía como que la pantalla está rota.
+   *
+   * @param rechazados - Lo que el átomo dejó afuera.
+   */
+  protected avisarRechazos(rechazados: readonly RejectedFile[]): void {
+    if (rechazados.length === 0) return;
+
+    const detalle = rechazados
+      .map((rechazado) => `«${rechazado.file.name}» (${this.motivoDe(rechazado.reason)})`)
+      .join('; ');
+    this.toast.warning(`No se pudo tomar ${detalle}.`, 'Archivo no aceptado');
+  }
+
+  /**
+   * El motivo del rechazo, en palabras y con el dato que hace falta para actuar.
+   *
+   * @param reason - El motivo que informó el átomo.
+   */
+  private motivoDe(reason: RejectedFile['reason']): string {
+    if (reason === 'tamaño') return `pasa los ${MAX_MIB} MB que acepta el servidor`;
+    if (reason === 'tipo') return 'no es un archivo de texto NDJSON';
+    if (reason === 'cupo') return 'se importa de a un archivo por vez';
+    return 'ya estaba elegido';
   }
 
   /**
@@ -218,8 +266,10 @@ export class VersionImport {
           'Versión publicada',
         );
         // Las versiones cambiaron de estado: releerlas evita ofrecer publicar
-        // dos veces la misma.
-        this.cambiarSistema(this.sistema());
+        // dos veces la misma. Se releen a solas y NO por `cambiarSistema`, que
+        // además limpia el informe — y el informe es la única constancia de qué
+        // entró, borrarla justo al publicar es perder el recibo.
+        this.recargarVersiones();
       },
       error: (error: unknown) => {
         this.publicando.set(false);
@@ -252,6 +302,8 @@ export class VersionImport {
   protected rotuloDeEstado(state: CodeSystemVersionListItem['state']): string {
     if (state === 'DRAFT') return 'borrador';
     if (state === 'ACTIVE') return 'publicada';
+    if (state === 'RETIRED') return 'retirada';
+    if (state === 'DEPRECATED') return 'obsoleta';
     // Es el caso real de las versiones que dejaron los importadores externos:
     // no es un error y admiten conceptos igual.
     return 'sin estado';
