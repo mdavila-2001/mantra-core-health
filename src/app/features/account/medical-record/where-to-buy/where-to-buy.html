@@ -161,6 +161,25 @@
                         Le falta: {{ sede.faltantes.join(', ') }}
                       </p>
                     }
+                    <!-- FAR-I7: sin campañas vigentes no se pinta nada. La
+                         sección no existe en vez de existir vacía. -->
+                    @if (promocionesDe(sede); as promociones) {
+                      @if (promociones.length > 0) {
+                        <ul class="compra__promos" data-testid="compra-promos">
+                          @for (promo of promociones; track promo.id) {
+                            <li>
+                              <a
+                                app-link
+                                [routerLink]="['/promociones', promo.id]"
+                                class="compra__promo"
+                              >
+                                {{ promo.titulo }}
+                              </a>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    }
                   </div>
                   <div class="compra__acciones">
                     <app-badge [variant]="sede.completa ? 'success' : 'warning'">

@@ -39,6 +39,7 @@ describe('pedido-status', () => {
     })),
     requestId: 'rx-1',
     siteId: 'site-1',
+    pharmacyId: 'pharmacy-1',
   });
 
   it('cada estado del contrato tiene palabra, tono y frase — ningún código suelto', () => {

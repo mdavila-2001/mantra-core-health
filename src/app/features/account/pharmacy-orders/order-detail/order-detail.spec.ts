@@ -31,6 +31,7 @@ const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 const BORRADOR: BorradorDePedido = {
   requestId: 'rx-1',
   siteId: 'f0e1d2c3-0000-4000-8000-000000000001',
+  pharmacyId: 'a1b2c3d4-0000-4000-8000-000000000001',
   farmacia: 'Farmacia Andina',
   sede: 'Sucursal Centro',
   direccion: 'Calle Libertad 245',

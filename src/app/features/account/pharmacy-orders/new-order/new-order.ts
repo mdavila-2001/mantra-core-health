@@ -9,6 +9,11 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { environment } from '../../../../../environments/environment';
+import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import {
+  normalizado,
+  totalDeRenglones,
+} from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import {
   MODALIDADES_DE_ENTREGA,
@@ -96,6 +101,92 @@ export class NewOrder {
       : ready(this.borrador);
 
   protected readonly demoActiva = environment.demoPresets;
+
+  /* ---- las promociones del pedido (FAR-I7) --------------------------------- */
+
+  private readonly campaigns = inject(PharmacyCampaignsClient);
+
+  /**
+   * Los renglones que alguna campaña vigente de esta farmacia alcanza.
+   *
+   * Se resuelve una sola vez al construir, como el borrador: el pedido ya está
+   * congelado y nada de esta pantalla lo cambia.
+   */
+  protected readonly renglonesEnPromocion = this.resolverPromociones();
+
+  /** El total con los precios promocionales aplicados, o `null`. */
+  protected readonly totalConPromocion = this.calcularTotalConPromocion();
+
+  /**
+   * El total del borrador **no se reescribe**: se muestra al lado del
+   * promocional.
+   *
+   * El precio congelado es del backend, y el cálculo de FAR-E1 es de Ender (la
+   * regla que tiene que agregar está en `COORDINACION-AGENTES.md`). Bakear el
+   * descuento en el mock que E1 va a borrar haría que desapareciera en
+   * silencio el día que llegue el backend real.
+   */
+  private resolverPromociones(): ReadonlyMap<string, string> {
+    const borrador = this.borrador;
+    if (borrador === null) {
+      return new Map();
+    }
+    const enPromocion = new Map<string, string>();
+    for (const linea of borrador.lineas) {
+      if (linea.productId === null || !linea.disponible) {
+        continue;
+      }
+      const promocional = this.campaigns.precioPromocional(borrador.pharmacyId, linea.productId);
+      if (promocional !== null) {
+        enPromocion.set(linea.productId, promocional.precioPromocional);
+      }
+    }
+    return enPromocion;
+  }
+
+  private calcularTotalConPromocion(): string | null {
+    const borrador = this.borrador;
+    if (borrador === null || this.renglonesEnPromocion.size === 0) {
+      return null;
+    }
+    return totalDeRenglones(
+      borrador.lineas
+        .filter((linea) => linea.disponible)
+        .map((linea) => ({
+          precio:
+            (linea.productId === null
+              ? null
+              : (this.renglonesEnPromocion.get(linea.productId) ?? null)) ??
+            linea.precio ??
+            '',
+          cantidad: linea.cantidad,
+        })),
+    );
+  }
+
+  /** El precio de campaña de un renglón, o `null` si ninguna lo alcanza. */
+  protected precioPromocionalDe(productId: string | null): string | null {
+    return productId === null ? null : (this.renglonesEnPromocion.get(productId) ?? null);
+  }
+
+  /**
+   * El precio de lista con el mismo formato que el promocional.
+   *
+   * `GET /pharmacy-inventory/availability` devuelve el `numeric` tal cual —
+   * `"22.5"`—, y el promocional sale de la aritmética en centavos, siempre con
+   * dos decimales. Sueltos no molesta; puestos uno al lado del otro, «antes
+   * 22.5 · ahora 14.62» se lee como un descuido, y el descuido está sobre el
+   * número que la paciente va a pagar.
+   *
+   * Lo que no es un importe vuelve **como vino**: mejor un formato raro que un
+   * precio que desaparece de la pantalla.
+   */
+  protected precioNormalizado(importe: string | null): string | null {
+    return importe === null ? null : (normalizado(importe) ?? importe);
+  }
+
+  /** `true` si hay al menos un renglón en promoción: gobierna el banner. */
+  protected readonly hayPromocion = this.renglonesEnPromocion.size > 0;
 
   constructor() {
     // Salir sin enviar descarta el borrador: quien vuelve atrás no deja un

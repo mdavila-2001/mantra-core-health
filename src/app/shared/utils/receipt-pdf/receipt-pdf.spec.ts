@@ -69,6 +69,7 @@ const pedido = (extra: Partial<PedidoFarmacia> = {}): PedidoFarmacia => ({
   },
   requestId: 'rx-1',
   siteId: 'site-1',
+  pharmacyId: 'pharmacy-1',
   ...extra,
 });
 

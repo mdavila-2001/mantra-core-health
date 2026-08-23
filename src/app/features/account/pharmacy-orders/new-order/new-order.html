@@ -19,6 +19,20 @@
       <!-- ─── Los renglones ──────────────────────────────────────────────── -->
       <section class="confirmacion__bloque" aria-labelledby="confirmacion-renglones">
         <h2 id="confirmacion-renglones" class="confirmacion__titulo">Qué pedís</h2>
+
+        <!-- FAR-I7: discreto y sólo si algo del pedido está en campaña. Sin
+             promoción no aparece nada. -->
+        @if (hayPromocion) {
+          <p class="confirmacion__promo" role="status" data-testid="pedido-banner-promo">
+            <app-badge variant="success">En promoción</app-badge>
+            <span class="confirmacion__secundario">
+              La farmacia tiene una promoción vigente sobre
+              {{ renglonesEnPromocion.size === 1 ? 'un producto' : 'productos' }}
+              de este pedido. El precio de campaña se muestra en cada renglón.
+            </span>
+          </p>
+        }
+
         <ul class="confirmacion__lineas" data-testid="pedido-lineas">
           @for (linea of pedido.lineas; track $index) {
             <li class="confirmacion__linea">
@@ -30,7 +44,19 @@
                 <span class="confirmacion__secundario">Cantidad: {{ linea.cantidad }}</span>
               </div>
               <div class="confirmacion__linea-precio">
-                @if (linea.precio !== null) {
+                @if (precioPromocionalDe(linea.productId); as promocional) {
+                  <!-- El tachado es sólo visual: sin decir cuál es cuál, un
+                       lector de pantalla anuncia dos precios seguidos y quien
+                       escucha no sabe cuál va a pagar. -->
+                  <s class="confirmacion__secundario cifras-tabulares">
+                    <span class="sr-only">Antes:</span>
+                    {{ precioNormalizado(linea.precio) }} {{ linea.moneda }}
+                  </s>
+                  <strong class="cifras-tabulares">
+                    <span class="sr-only">Precio de campaña:</span>
+                    {{ promocional }} {{ linea.moneda }}
+                  </strong>
+                } @else if (linea.precio !== null) {
                   <span class="cifras-tabulares">{{ linea.precio }} {{ linea.moneda }}</span>
                 } @else {
                   <span class="confirmacion__secundario">Sin precio publicado</span>
@@ -43,13 +69,32 @@
           }
         </ul>
         <p class="confirmacion__total">
-          @if (pedido.totalEstimado !== null) {
+          @if (totalConPromocion; as conPromocion) {
+            Total estimado:
+            <s class="confirmacion__secundario cifras-tabulares">
+              <span class="sr-only">Antes:</span>
+              {{ precioNormalizado(pedido.totalEstimado) }} {{ pedido.moneda }}
+            </s>
+            <strong class="cifras-tabulares" data-testid="pedido-total-promo">
+              <span class="sr-only">Con la promoción:</span>
+              {{ conPromocion }} {{ pedido.moneda }}
+            </strong>
+          } @else if (pedido.totalEstimado !== null) {
             Total estimado:
             <strong class="cifras-tabulares">{{ pedido.totalEstimado }} {{ pedido.moneda }}</strong>
           } @else {
             Total no disponible: falta algún precio publicado.
           }
         </p>
+        @if (totalConPromocion !== null) {
+          <!-- Quién manda sobre el total: hoy el precio congelado es del
+               borrador y el promocional se muestra al lado. Cuando FAR-E1
+               exista, el congelado ya toma el promocional y esta aclaración
+               se retira. -->
+          <p class="confirmacion__nota">
+            El precio de campaña lo confirma la farmacia al revisar tu pedido.
+          </p>
+        }
         <!-- El pedido reserva, no cobra: decirlo evita el susto del «pagué y
              no me llegó nada». El flujo de pago no existe y no se finge. -->
         <p class="confirmacion__nota">Pagás al retirar, en la farmacia. Enviar el pedido no es un pago.</p>

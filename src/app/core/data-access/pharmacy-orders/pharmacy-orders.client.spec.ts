@@ -27,6 +27,7 @@ describe('PharmacyOrdersClient', () => {
   const borrador = (extra: Partial<BorradorDePedido> = {}): BorradorDePedido => ({
     requestId: 'rx-1',
     siteId: 'site-1',
+    pharmacyId: 'pharmacy-1',
     farmacia: 'Farmacia del Sur',
     sede: 'Sucursal Equipetrol',
     direccion: 'Av. San Martín 456',
@@ -292,6 +293,7 @@ const CODIGO_DE_RETIRO = /^[ACDEFHJKLMNPRTUVWXY34679]{6}$/;
 const BORRADOR: BorradorDePedido = {
   requestId: 'rx-1',
   siteId: 'f0e1d2c3-0000-4000-8000-000000000001',
+  pharmacyId: 'a1b2c3d4-0000-4000-8000-000000000001',
   farmacia: 'Farmacia Andina',
   sede: 'Sucursal Centro',
   direccion: 'Calle Libertad 245',
