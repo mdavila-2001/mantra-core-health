@@ -9,8 +9,13 @@
      Así que la misma pantalla ordena distinto según quién mira: al médico,
      su facturación primero y los libros a un clic; a quien administra la
      contabilidad, los libros de entrada. Nada se borra. -->
+<!-- El **título no cambia**: «Contabilidad» es uno de los ocho nombres exactos
+     de la lista del cliente, y una sección que en el menú se llama de una
+     forma y en su pantalla de otra le agrega una duda a quien acaba de tocar
+     el renglón. Lo que cambia es el subtítulo —que es donde una sección se
+     explica— y qué se muestra primero. -->
 <app-page-header
-  [title]="esMedico() ? 'Mi facturación' : 'Contabilidad'"
+  title="Contabilidad"
   [subtitle]="
     esMedico()
       ? 'Lo que cobraste y todavía no pasaste a los libros, mes por mes.'
@@ -65,6 +70,7 @@
      `porMes`. -->
 @if (esMedico() && practicaElegida()) {
   <app-card class="facturacion">
+    <h2 class="facturacion__titulo">Mi facturación</h2>
     <div class="facturacion__total">
       <span class="overline">Cobrado sin registrar</span>
       <strong class="facturacion__cifra">{{ totalPendiente() }}</strong>

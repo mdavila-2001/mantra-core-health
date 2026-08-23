@@ -228,7 +228,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // son los chips de esta pantalla. Construirlo dos veces habría dado dos
     // directorios de lo mismo, que es justo el «demasiados paneles» del que
     // salió todo esto.
-    path: 'organizations-directory',
+    //
+    // **La ruta es `clinics-directory` y no `organizations-directory`**, que
+    // era la primera opción: el proxy compara por INICIO de ruta y `/org` está
+    // en su lista, así que la pantalla se iba entera a la API y volvía un
+    // «Cannot GET /organizations-directory». Lo denunció
+    // `scripts/check-route-prefixes.mjs`, que existe justamente por esto.
+    // Además se lee mejor: el rótulo dice «clínicas».
+    path: 'clinics-directory',
     label: 'Directorio de clínicas',
     group: 'General',
     icon: 'home',

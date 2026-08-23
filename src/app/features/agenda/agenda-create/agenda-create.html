@@ -27,9 +27,12 @@
     Tu cuenta no tiene un perfil profesional, así que no hay una agenda propia que publicar.
   </app-alert>
 } @else if (publicado()) {
-  <app-alert tone="success" title="Listo, tu agenda ya está publicada">
+  <app-alert
+    tone="success"
+    [title]="esCambio() ? 'Listo, tu horario quedó cambiado' : 'Listo, tu agenda ya está publicada'"
+  >
     <p appAnuncio>
-      Publicaste: <strong>{{ resumen() }}</strong
+      {{ esCambio() ? 'Tu horario quedó' : 'Publicaste' }}: <strong>{{ resumen() }}</strong
       >. Los pacientes ya pueden reservar.
     </p>
     @if (cuposCreados(); as cupos) {
@@ -37,7 +40,10 @@
         Se abrieron <strong>{{ cupos }}</strong> turnos para los próximos meses.
       </p>
     }
-    <a app-button [routerLink]="['/my-account']">Ver mi perfil</a>
+    <!-- La salida natural después de tocar el horario es mirarlo, no ir al
+         perfil: «Mi agenda» es donde se ve cómo quedó y donde se cierran los
+         turnos viejos que el aviso de arriba menciona. -->
+    <a app-button [routerLink]="[rutaDeMiAgenda]">Ver mi agenda</a>
   </app-alert>
 } @else {
   <form class="agenda-create" (ngSubmit)="publicar()" [formGroup]="formGeneral">
@@ -298,7 +304,8 @@
 
     @if (!sinDias()) {
       <p class="agenda-create__resumen" role="status">
-        Vas a publicar: <strong>{{ resumen() }}</strong>
+        {{ esCambio() ? 'Tu horario va a quedar' : 'Vas a publicar' }}:
+        <strong>{{ resumen() }}</strong>
       </p>
     }
 
@@ -308,7 +315,7 @@
 
     <div class="agenda-create__acciones">
       <button app-button type="submit" [isLoading]="cargando()" [disabled]="sinDias()">
-        Publicar mi agenda
+        {{ esCambio() ? 'Guardar mi horario' : 'Publicar mi agenda' }}
       </button>
     </div>
   </form>

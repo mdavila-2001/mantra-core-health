@@ -36,12 +36,12 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
  * {@link PublicDirectoryListing}, compartido con el directorio de farmacias.
  */
 @Component({
-  selector: 'app-organizations-directory',
+  selector: 'app-clinics-directory',
   imports: [DirectoryPage],
-  templateUrl: './organizations-directory.html',
+  templateUrl: './clinics-directory.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationsDirectory extends PublicDirectoryListing {
+export class ClinicsDirectory extends PublicDirectoryListing {
   private readonly directorio = inject(PublicDirectoryClient);
 
   protected readonly sustantivo = SUSTANTIVO;

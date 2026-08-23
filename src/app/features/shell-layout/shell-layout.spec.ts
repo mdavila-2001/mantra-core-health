@@ -139,7 +139,7 @@ describe('ShellLayout', () => {
       // A5 y A6 del plan de UX: los directorios de clínicas y de farmacias,
       // por lo mismo que el de laboratorios — oferta publicada, sin rol que la
       // exprese.
-      '/organizations-directory',
+      '/clinics-directory',
       '/pharmacies-directory',
       // El glosario ya NO está: desde el 18/08/2026 (feedback de la analista,
       // F-03) declara los roles de quien atiende, y una sesión sin roles no es

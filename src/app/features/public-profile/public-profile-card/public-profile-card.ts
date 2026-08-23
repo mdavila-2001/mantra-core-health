@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
+import { inicialesDe } from '@shared/text/iniciales';
 
 /** Cómo se rotula cada clase de sujeto en la insignia junto al nombre. */
 const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
@@ -11,14 +12,6 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
   DIAGNOSTIC_UNIT: 'Laboratorio',
   INSURER: 'Aseguradora',
 };
-
-/**
- * Los tratamientos que no aportan una inicial.
- *
- * Se comparan sin punto y sin mayúsculas, así que cubren «Dr», «Dr.», «DRA» y
- * «dra.» con una sola entrada.
- */
-const TRATAMIENTOS = new Set(['dr', 'dra', 'lic', 'mgr', 'prof', 'sr', 'sra', 'srta']);
 
 /**
  * **El cuerpo de la ficha pública, una sola vez.**
@@ -86,25 +79,8 @@ export class PublicProfileCard {
 
   protected readonly rotuloTipo = computed(() => ROTULO_POR_TIPO[this.perfil().kind]);
 
-  /**
-   * Las iniciales del cuadrado cuando no hay foto.
-   *
-   * **El tratamiento no cuenta.** «Dra. Marisol Quispe Ticona» da `MQ`, no
-   * `DM`: en un directorio médico casi todos los nombres empiezan con «Dr.» o
-   * «Dra.», así que tomarlo como primera inicial pondría la misma letra en
-   * media pantalla y dejaría de distinguir a nadie.
-   */
-  protected readonly iniciales = computed(() =>
-    this.perfil()
-      .displayName.split(/\s+/)
-      .filter(
-        (parte) =>
-          /^[\p{L}]/u.test(parte) && !TRATAMIENTOS.has(parte.replace(/\./g, '').toLowerCase()),
-      )
-      .slice(0, 2)
-      .map((parte) => parte[0]?.toUpperCase() ?? '')
-      .join(''),
-  );
+  /** Las iniciales del cuadrado cuando no hay foto. Ver `shared/text/iniciales`. */
+  protected readonly iniciales = computed(() => inicialesDe(this.perfil().displayName));
 
   /** La puntuación con coma decimal, como se lee en castellano. */
   protected readonly puntuacion = computed(() => {

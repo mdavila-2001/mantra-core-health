@@ -98,7 +98,7 @@ describe('NavigationService', () => {
         // farmacias entran por lo mismo que el de laboratorios — es oferta
         // publicada, no PHI, y quien busca dónde atenderse no tiene un rol que
         // lo exprese. Salen de `GET /public/search/*`, que es anónimo.
-        '/organizations-directory',
+        '/clinics-directory',
         '/pharmacies-directory',
         // El glosario ya NO entra: desde el 18/08/2026 (feedback de la analista,
         // F-03) declara los roles de quien atiende, y una sesión sin roles no

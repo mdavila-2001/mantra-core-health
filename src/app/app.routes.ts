@@ -107,10 +107,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   // A5 y A6 del plan de UX · los dos hermanos que faltaban. Diferidos como el
   // resto de los directorios: no son la primera pantalla de nadie.
-  'organizations-directory': () =>
-    import('./features/public-directories/organizations-directory').then(
-      (m) => m.OrganizationsDirectory,
-    ),
+  'clinics-directory': () =>
+    import('./features/public-directories/clinics-directory').then((m) => m.ClinicsDirectory),
   'pharmacies-directory': () =>
     import('./features/public-directories/pharmacies-directory').then(
       (m) => m.PharmaciesDirectory,

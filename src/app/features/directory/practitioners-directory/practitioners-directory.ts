@@ -15,6 +15,7 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
+import { inicialesDe } from '../../../shared/text/iniciales';
 import { subtituloProfesional } from '../subtitulo-profesional';
 
 /** Cómo se cuenta lo que este directorio lista. */
@@ -409,18 +410,9 @@ function toResultado(
     id: fila.profileId,
     title: nombre,
     link: `/directory/${fila.profileId}`,
-    figureText: iniciales(nombre),
+    figureText: inicialesDe(nombre),
     meta,
     seals: sellos,
   };
 }
 
-/** Hasta dos iniciales del nombre, para el cuadrado sin foto. */
-function iniciales(nombre: string): string {
-  return nombre
-    .split(/\s+/)
-    .filter((parte) => /\p{L}/u.test(parte))
-    .slice(0, 2)
-    .map((parte) => parte[0]?.toUpperCase() ?? '')
-    .join('');
-}

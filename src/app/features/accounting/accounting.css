@@ -76,6 +76,12 @@
     margin-block-end: var(--sp-5);
 }
 
+.facturacion__titulo {
+    margin: 0 0 var(--sp-3);
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+}
+
 .facturacion__total {
     display: flex;
     flex-direction: column;
