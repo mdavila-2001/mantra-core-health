@@ -174,6 +174,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,
     ),
+  // FAR-I7: las campañas de la farmacia. Ruta hermana de la bandeja y no una
+  // sección dentro del panel de organización, por el mismo motivo que aquélla:
+  // el panel es de TP-1 y así no se le toca una línea.
+  'administration/pharmacy-campaigns': () =>
+    import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
+      (m) => m.PharmacyCampaigns,
+    ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
@@ -888,6 +895,29 @@ function rutasDeBusquedaPublica(): Routes {
           loadComponent: () =>
             import('./features/redsat/buscar/cercania-detalle/cercania-detalle').then(
               (m) => m.BuscarCercaniaDetalle,
+            ),
+        },
+      ],
+    },
+    {
+      // FAR-I7: el detalle de una promoción, con URL propia y compartible.
+      //
+      // Cuelga del marco público —y no de `administration/`— porque el enlace
+      // se manda por mensaje: quien lo recibe tiene que ver la promoción, no
+      // una pantalla de login. Va fuera de `buscar` para que la URL sea
+      // `/promociones/:id`: una promoción no es un resultado de búsqueda.
+      path: 'promociones/:campaignId',
+      loadComponent: () =>
+        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+      children: [
+        {
+          path: '',
+          pathMatch: 'full',
+          title: 'Promoción — AloVida',
+          data: { arquetipo: 'detalle', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/campaigns/campaign-detail/campaign-detail').then(
+              (m) => m.CampaignDetail,
             ),
         },
       ],

@@ -925,4 +925,18 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'La bandeja del mostrador: pedidos que llegan, confirmaciones y retiros.',
     module: 'M24 pharmacy',
   },
+  {
+    // Las promociones de la farmacia (carril FAR-I7). Mismo criterio de acceso
+    // que la bandeja de al lado: la membresía manda (claim `tenants`), no un
+    // rol del token — no existe un rol de farmacia minorista.
+    path: 'administration/pharmacy-campaigns',
+    roles: [ANY_ROLE],
+    label: 'Promociones',
+    group: 'Administración',
+    icon: 'billing',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Las campañas de tu farmacia: qué productos, con qué descuento y hasta cuándo.',
+    module: 'M51 promotions',
+  },
 ];
