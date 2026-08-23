@@ -1,0 +1,41 @@
+@if (resultado(); as r) {
+  <span class="tarjeta-resultado__figura" aria-hidden="true">
+    @if (r.figureImageUrl) {
+      <img [src]="r.figureImageUrl" alt="" loading="lazy" />
+    } @else {
+      {{ r.figureText }}
+    }
+  </span>
+
+  <p class="tarjeta-resultado__titulo">
+    <!-- El enlace cubre la tarjeta entera con el ::after de abajo, pero el
+         nombre sigue siendo el texto del enlace: es lo que anuncia un lector
+         de pantalla, y «tarjeta» no le dice a nadie a dónde va. -->
+    <a [routerLink]="r.link">{{ r.title }}</a>
+  </p>
+
+  @if (r.kind; as tipo) {
+    <p class="tarjeta-resultado__tipo">
+      <span class="app-badge" [attr.data-tono]="tipo.tone">{{ tipo.label }}</span>
+    </p>
+  }
+
+  @if (meta().length) {
+    <p class="tarjeta-resultado__meta">
+      @for (linea of meta(); track linea.text) {
+        <span>{{ linea.text }}</span>
+      }
+    </p>
+  }
+
+  @if (r.seals?.length) {
+    <p class="tarjeta-resultado__sellos">
+      @for (sello of r.seals; track sello.label) {
+        <span class="app-badge" [attr.data-tono]="sello.tone">{{ sello.label }}</span>
+      }
+    </p>
+  }
+
+  <!-- El pie: lo escribe quien usa la tarjeta. Ver el JSDoc del componente. -->
+  <span class="tarjeta-resultado__pie"><ng-content /></span>
+}

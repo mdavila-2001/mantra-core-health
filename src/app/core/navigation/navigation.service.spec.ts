@@ -94,6 +94,12 @@ describe('NavigationService', () => {
         // profesionales, y una sesión sin roles no es de nadie que ejerza.
         // El directorio de laboratorios tampoco: es oferta publicada, no PHI.
         '/laboratory-directory',
+        // A5 y A6 del plan de UX (22/08/2026): los directorios de clínicas y de
+        // farmacias entran por lo mismo que el de laboratorios — es oferta
+        // publicada, no PHI, y quien busca dónde atenderse no tiene un rol que
+        // lo exprese. Salen de `GET /public/search/*`, que es anónimo.
+        '/organizations-directory',
+        '/pharmacies-directory',
         // El glosario ya NO entra: desde el 18/08/2026 (feedback de la analista,
         // F-03) declara los roles de quien atiende, y una sesión sin roles no
         // es de nadie que atienda.
@@ -140,9 +146,49 @@ describe('NavigationService', () => {
       // no atención: el backend exige `SECURITY_ADMIN` y el menú no ofrece una
       // puerta que la API va a cerrar.
       expect(rutasDelMenu()).not.toContain('/administration/medical-laboratory');
-      // La estructura de su propia organización sí: es donde ve en qué sede y
-      // con qué rol trabaja, y `GET /practices` ya lo admite.
-      expect(rutasDelMenu()).toContain('/administration/medical-organization');
+    });
+
+    it('el menú del médico son las ocho opciones del cliente, y ninguna más', () => {
+      // §4.H del plan de UX del 22/08/2026. El cliente dio una lista **cerrada**
+      // —«las opciones únicas que se requiere en el panel del doctor son…»— y el
+      // menú tenía dieciséis entradas de primer nivel. Esta prueba es la lista,
+      // en el orden en que se dibuja, y falla si alguien agrega la novena.
+      abrirSesion(['PRACTITIONER']);
+
+      const fueraDeMiCuenta = service
+        .menu()
+        .filter((grupo) => grupo.label !== 'Mi cuenta')
+        .flatMap((grupo) => grupo.items.map((item) => item.label));
+
+      expect(fueraDeMiCuenta).toEqual([
+        'Chats',
+        'Directorio de laboratorios',
+        'Consulta médica',
+        'Turnos',
+        'Archivo clínico',
+        'Evoluciones',
+        'Glosario',
+        'Contabilidad',
+      ]);
+    });
+
+    it('lo que sale del menú del médico NO le cierra la puerta', () => {
+      // La distinción entera de `fueraDelMenuPara`: la organización médica, sus
+      // encuestas y su bandeja de visitas dejaron de ocupar un renglón y siguen
+      // siendo suyas — se llega por su ruta y por el enlace de otra pantalla.
+      // Si esto se rompiera, una limpieza de menú habría sido una pérdida
+      // silenciosa de acceso, que es justo lo que no puede pasar.
+      abrirSesion(['PRACTITIONER']);
+
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      expect(alcanzables).toContain('/administration/medical-organization');
+      expect(alcanzables).toContain('/questionnaires');
+      expect(alcanzables).toContain('/lab-visits');
+      expect(alcanzables).toContain('/dashboard');
+
+      expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
+      expect(rutasDelMenu()).not.toContain('/questionnaires');
+      expect(rutasDelMenu()).not.toContain('/lab-visits');
     });
 
     it('la Guía de profesionales solo aparece en el menú del paciente', () => {
@@ -261,7 +307,8 @@ describe('NavigationService', () => {
     it('los parámetros de consulta no confunden a la sección', async () => {
       await router.navigateByUrl('/schedule?fecha=2026-08-04');
 
-      expect(service.currentSection()?.label).toBe('Agenda');
+      // «Turnos» desde §4.H del plan de UX: la ruta sigue siendo `schedule`.
+      expect(service.currentSection()?.label).toBe('Turnos');
     });
   });
 });

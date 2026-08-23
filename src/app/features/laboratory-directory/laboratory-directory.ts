@@ -8,18 +8,27 @@ import type {
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
-import { SearchResult } from '../../shared/components/molecules/search-result/search-result';
 import type { SearchResultItem } from '../../shared/components/molecules/search-result/search-result.types';
-import { FilterBar } from '../../shared/components/organisms/filter-bar/filter-bar';
+import { DirectoryPage } from '../../shared/components/organisms/directory-page/directory-page';
+import type {
+  GrupoDeDirectorio,
+  SustantivoDelDirectorio,
+} from '../../shared/components/organisms/directory-page/directory-page.types';
 import type { FilterDef } from '../../shared/components/organisms/filter-bar/filter-bar';
-import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 
-export interface LaboratoryCategoryGroup {
-  readonly code: string;
-  readonly name: string;
-  readonly units: readonly SearchResultItem[];
-}
+/**
+ * Un tramo del directorio de laboratorios.
+ *
+ * Sigue siendo un alias del grupo genérico y no un tipo propio: las pruebas del
+ * carril lo importan por nombre y el mapeo no cambió, sólo se mudó la forma.
+ */
+export type LaboratoryCategoryGroup = GrupoDeDirectorio;
+
+/** Cómo se cuenta lo que este directorio lista. */
+const SUSTANTIVO: SustantivoDelDirectorio = {
+  singular: 'centro encontrado',
+  plural: 'centros encontrados',
+};
 
 /**
  * Los filtros que la barra ofrece.
@@ -39,6 +48,10 @@ const FILTROS: readonly FilterDef[] = [
   {
     key: 'kind',
     label: 'Tipo de centro',
+    // Chips y no desplegable (A3 del plan de UX): son dos opciones, y
+    // esconderlas detrás de un control que hay que abrir era la razón por la
+    // que casi nadie acotaba el directorio.
+    asChips: true,
     options: [
       { value: 'LABORATORY', label: 'Laboratorio clínico' },
       { value: 'IMAGING', label: 'Imagenología' },
@@ -47,18 +60,20 @@ const FILTROS: readonly FilterDef[] = [
   {
     key: 'homeCollection',
     label: 'Toma a domicilio',
-    options: [
-      { value: 'true', label: 'Sí toma a domicilio' },
-      { value: 'false', label: 'No toma a domicilio' },
-    ],
+    // Las dos comodidades comparten renglón: son dos claves de la URL y una
+    // sola pregunta de quien busca. Y van en forma **afirmativa** — «no toma a
+    // domicilio» es un filtro que nadie pone a propósito, y ocupaba la mitad
+    // del renglón.
+    asChips: true,
+    chipsGroup: 'Comodidades',
+    options: [{ value: 'true', label: 'Toma a domicilio' }],
   },
   {
     key: 'walkIn',
-    label: 'Sin cita',
-    options: [
-      { value: 'true', label: 'Atiende sin cita' },
-      { value: 'false', label: 'Sólo con cita' },
-    ],
+    label: 'Atiende sin cita',
+    asChips: true,
+    chipsGroup: 'Comodidades',
+    options: [{ value: 'true', label: 'Atiende sin cita' }],
   },
   {
     key: 'minRating',
@@ -98,21 +113,18 @@ const FILTROS: readonly FilterDef[] = [
  */
 @Component({
   selector: 'app-laboratory-directory',
-  imports: [FilterBar, PageHeader, SearchResult, ViewStateHost],
+  imports: [DirectoryPage],
   templateUrl: './laboratory-directory.html',
-  styleUrl: './laboratory-directory.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LaboratoryDirectory {
   private readonly units = inject(DiagnosticUnitsClient);
 
   protected readonly filtros = FILTROS;
+  protected readonly sustantivo = SUSTANTIVO;
 
   protected readonly state = signal<ViewState<readonly LaboratoryCategoryGroup[]>>(loading());
   protected readonly groups = computed(() => dataOf(this.state()) ?? []);
-
-  /** Cuántos centros casan con el filtro, según el servidor. */
-  protected readonly total = signal(0);
 
   /** Los filtros vigentes, tal como los emitió la barra. */
   private activos: Readonly<Record<string, string>> = {};
@@ -135,7 +147,6 @@ export class LaboratoryDirectory {
     this.state.set(loading());
     this.units.search(aConsulta(this.activos)).subscribe({
       next: (pagina) => {
-        this.total.set(pagina.total);
         this.state.set(
           pagina.items.length === 0
             ? empty(
@@ -203,11 +214,11 @@ export function groupUnits(
   }
   return [...groups.entries()]
     .map(([code, rows]) => ({
-      code,
-      name: categoryName(code, rows[0]?.type.display ?? 'Otra categoría'),
-      units: rows.map(toSearchResult).sort((a, b) => a.title.localeCompare(b.title, 'es')),
+      id: code,
+      nombre: categoryName(code, rows[0]?.type.display ?? 'Otra categoría'),
+      resultados: rows.map(toSearchResult).sort((a, b) => a.title.localeCompare(b.title, 'es')),
     }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 }
 
 export function categoryName(code: string, fallback: string): string {

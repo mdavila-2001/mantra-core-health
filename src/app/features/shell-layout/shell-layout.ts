@@ -187,7 +187,13 @@ export class ShellLayout {
    */
   protected readonly sections = computed<readonly NavSection[]>(() => {
     const menu = this.navigation.menu();
-    if (esPaciente(this.auth.roles())) {
+    const roles = this.auth.roles();
+    // El médico tampoco la ve, y por el mismo motivo que el paciente aunque
+    // sea otro: su menú es la lista cerrada de ocho del cliente (§4.H del plan
+    // de UX), y una novena entrada que además es una herramienta de quien
+    // construye la rompe. Quien la usa de verdad —diseño y desarrollo— entra
+    // por `/design-system`, que sigue en pie.
+    if (esPaciente(roles) || roles.includes('PRACTITIONER')) {
       return menu;
     }
     return [

@@ -1,0 +1,90 @@
+<app-page-header
+  title="Consulta médica"
+  subtitle="A quién tenés que atender hoy. Tocá «Abrir consulta» y entrás a su expediente con el motivo ya cargado."
+/>
+
+<app-view-state-host [state]="estado()" (retry)="cargar()">
+  @if (resumen(); as texto) {
+    <p class="consulta__resumen" role="status">{{ texto }}</p>
+  }
+
+  <ul class="consulta__turnos">
+    @for (cita of citas(); track cita.id) {
+      <li>
+        <app-card variant="outlined" padding="lg" class="consulta__turno">
+          <p class="consulta__hora">
+            @if (cita.desde) {
+              <!-- Inicio **y fin** (D1 del plan de UX): «09:30» sin el fin no
+                   dice cuánto dura la consulta, que es lo que decide si entra
+                   una más antes del mediodía. -->
+              <time [attr.datetime]="cita.desde.toISOString()">
+                {{ cita.desde | date: 'HH:mm' }}@if (cita.hasta) {
+                  <span>–{{ cita.hasta | date: 'HH:mm' }}</span>
+                }
+              </time>
+            } @else {
+              <span class="consulta__sin-hora">Sin hora</span>
+            }
+          </p>
+
+          <div class="consulta__datos">
+            <p class="consulta__paciente">{{ cita.paciente }}</p>
+            @if (cita.motivo) {
+              <p class="consulta__motivo">{{ cita.motivo }}</p>
+            }
+            <p class="consulta__estado">
+              <span class="app-badge" [attr.data-tono]="cita.llego ? 'ok' : 'neutro'">
+                {{ cita.llego ? 'Ya llegó' : cita.estado }}
+              </span>
+            </p>
+          </div>
+
+          <div class="consulta__accion">
+            @if (cita.ruta; as ruta) {
+              <a app-button variant="primary" [routerLink]="ruta" [queryParams]="cita.params">
+                Abrir consulta
+              </a>
+            } @else {
+              <!-- Sin `patientProfileId` no hay expediente que abrir. Se dice,
+                   en vez de ofrecer un botón que lleva a ninguna parte. -->
+              <p class="consulta__sin-expediente">
+                Esta reserva no trae el identificador del paciente. Abrila desde tu agenda.
+              </p>
+            }
+          </div>
+        </app-card>
+      </li>
+    }
+  </ul>
+</app-view-state-host>
+
+<!-- ─── El camino sin turno ─────────────────────────────────────────────────
+     No todo lo que se atiende tiene turno: una urgencia, alguien que llegó sin
+     cita, una interconsulta. Va **debajo** de los turnos y no arriba porque es
+     la excepción, no el camino de todos los días. -->
+<app-card variant="outlined" padding="lg" class="consulta__directo">
+  <h2 class="consulta__directo-titulo">Atender a alguien sin turno</h2>
+  <p class="consulta__directo-texto">
+    Pegá el identificador de perfil del paciente y entrás directo a su consulta. Si no lo tenés a
+    mano, buscalo en
+    <a [routerLink]="rutaDelArchivo">Archivo clínico</a>.
+  </p>
+
+  <form class="consulta__directo-form" (submit)="$event.preventDefault(); abrirPorIdentificador()">
+    <app-form-field
+      label="Identificador de perfil"
+      hint="Lo trae cada cita de tu agenda, y también el expediente del paciente."
+      class="consulta__directo-campo"
+    >
+      <app-input
+        type="text"
+        placeholder="00000000-0000-0000-0000-000000000000"
+        [value]="identificador()"
+        (valueChange)="fijarIdentificador($event)"
+      />
+    </app-form-field>
+    <button app-button type="submit" variant="secondary" [disabled]="identificador().trim() === ''">
+      Abrir consulta
+    </button>
+  </form>
+</app-card>

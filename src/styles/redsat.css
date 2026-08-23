@@ -485,6 +485,15 @@ app-shell-layout { display: block; }
   display: flex; align-items: center; gap: var(--e3);
   padding: 0 var(--e6) var(--e5); margin-bottom: var(--e1);
   border-bottom: 1px solid rgba(255, 255, 255, .12);
+  /* La marca pasó a ser el enlace al panel (§4.H del plan de UX del
+     22/08/2026): el menú del médico quedó en ocho entradas y «Panel» no es
+     una. Sigue viéndose igual —sin subrayado ni color de enlace—, pero se
+     enfoca y se toca. */
+  text-decoration: none; color: inherit; border-radius: var(--r-ctrl);
+}
+.app-side-nav__marca:hover span { color: var(--aguamarina); }
+.app-side-nav__marca:focus-visible {
+  outline: 2px solid var(--aguamarina); outline-offset: 2px;
 }
 .app-side-nav__marca img { display: block; width: 34px; height: auto; flex: none; }
 .app-side-nav__marca span {

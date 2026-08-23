@@ -165,6 +165,26 @@ export interface AppSection {
    */
   readonly requiresTenant?: boolean;
 
+  /**
+   * Roles para los que la sección **sigue existiendo y funcionando, pero no
+   * ocupa una entrada de primer nivel** en el menú.
+   *
+   * No es `roles` al revés y la diferencia importa: `roles` decide si la
+   * sesión *puede entrar* —lo pregunta `seccionRolesGuard`, que rebota—,
+   * mientras que esto decide si la sección *se ofrece en el menú*. Una
+   * sección escondida acá se sigue alcanzando por su ruta, por un enlace de
+   * otra pantalla y por «Tus accesos»: lo único que pierde es el renglón
+   * lateral.
+   *
+   * Nació con la lista cerrada de ocho opciones que pidió el cliente para el
+   * panel del médico (22/08/2026, §4.H del plan de UX). Ahí el problema no
+   * era de permisos —un médico puede ver sus encuestas y su organización— sino
+   * de cantidad: dieciséis entradas de primer nivel para un trabajo que se
+   * hace con ocho. Sacarle el rol a la sección le habría cerrado la puerta;
+   * esto sólo la saca de la vista.
+   */
+  readonly fueraDelMenuPara?: readonly string[];
+
   readonly availability: SectionAvailability;
 
   /**
@@ -287,6 +307,29 @@ export function isVisibleTo(
   }
 
   return rolesAlcanzan(required, roles);
+}
+
+/**
+ * Si la sección le ofrece una entrada de menú a esta sesión.
+ *
+ * Es {@link isVisibleTo} más la pregunta de {@link AppSection.fueraDelMenuPara}:
+ * poder entrar y aparecer en el menú dejaron de ser lo mismo el día que el
+ * panel del médico tuvo que quedar en ocho renglones sin perder pantallas.
+ *
+ * **Sólo la consume el armado del menú.** El guard sigue preguntando por
+ * `isVisibleTo`, que es lo correcto: esconder un renglón no es cerrar una
+ * puerta, y hacer que lo fuera convertiría cada limpieza de menú en una
+ * pérdida silenciosa de acceso.
+ */
+export function apareceEnElMenu(
+  section: AppSection,
+  roles: readonly string[],
+  tenants: readonly string[] = [],
+): boolean {
+  if (!isVisibleTo(section, roles, tenants)) {
+    return false;
+  }
+  return section.fueraDelMenuPara?.some((rol) => roles.includes(rol)) !== true;
 }
 
 /**

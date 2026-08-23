@@ -106,26 +106,26 @@ describe('LaboratoryDirectory', () => {
     mount();
     responder([LAB, IMAGING]);
 
-    expect(groups().map((group) => group.name)).toEqual([
+    expect(groups().map((group) => group.nombre)).toEqual([
       'Imagenología diagnóstica',
       'Laboratorio clínico',
     ]);
-    expect(groups().flatMap((group) => group.units)).toHaveLength(2);
+    expect(groups().flatMap((group) => group.resultados)).toHaveLength(2);
   });
 
   it('links each card to the distinct visual detail route', () => {
     mount();
     responder([LAB]);
 
-    expect(groups()[0].units[0].link).toBe(`/laboratory-directory/${LAB_ID}`);
-    expect(groups()[0].units[0].link).not.toContain('/diagnostics');
+    expect(groups()[0].resultados[0].link).toBe(`/laboratory-directory/${LAB_ID}`);
+    expect(groups()[0].resultados[0].link).not.toContain('/diagnostics');
   });
 
   it('says "sin calificaciones" instead of a zero the centre never earned', () => {
     mount();
     responder([IMAGING]);
 
-    const textos = (groups()[0].units[0].meta ?? []).map((entrada) => entrada.text);
+    const textos = (groups()[0].resultados[0].meta ?? []).map((entrada) => entrada.text);
     expect(textos).toContain('Sin calificaciones');
     expect(textos.join(' ')).not.toContain('0,0');
   });
@@ -134,7 +134,7 @@ describe('LaboratoryDirectory', () => {
     mount();
     responder([LAB]);
 
-    const textos = (groups()[0].units[0].meta ?? []).map((entrada) => entrada.text);
+    const textos = (groups()[0].resultados[0].meta ?? []).map((entrada) => entrada.text);
     expect(textos).toContain('4,5 · 12 reseñas');
   });
 

@@ -105,6 +105,23 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/laboratory-directory/laboratory-directory').then(
       (m) => m.LaboratoryDirectory,
     ),
+  // A5 y A6 del plan de UX · los dos hermanos que faltaban. Diferidos como el
+  // resto de los directorios: no son la primera pantalla de nadie.
+  'organizations-directory': () =>
+    import('./features/public-directories/organizations-directory').then(
+      (m) => m.OrganizationsDirectory,
+    ),
+  'pharmacies-directory': () =>
+    import('./features/public-directories/pharmacies-directory').then(
+      (m) => m.PharmaciesDirectory,
+    ),
+  // §4.H del plan de UX · las dos pantallas nuevas del panel del médico.
+  // Diferidas como el resto: sólo las alcanza quien atiende, y el presupuesto
+  // del bundle inicial está al límite —cargarlas de entrada lo pasaba por 4 kB
+  // y le costaba la descarga a todo el mundo, paciente incluido—.
+  consultation: () => import('./features/consultation/consultation').then((m) => m.Consultation),
+  'progress-notes': () =>
+    import('./features/progress-notes/progress-notes').then((m) => m.ProgressNotes),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   interventions: () =>
