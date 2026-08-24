@@ -46,8 +46,8 @@ describe('ProviderForm', () => {
 
   it('el cuerpo mínimo lleva las cuatro claves del contrato más el interruptor explícito', () => {
     formulario().patchValue({ code: '  anses  ', name: 'ANSES' });
-    interno<(v: unknown) => void>('elegirProtocolo')('OIDC');
-    interno<(v: unknown) => void>('elegirCategoria')('GOVERNMENT');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ protocol: 'OIDC' });
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ category: 'GOVERNMENT' });
 
     interno<() => void>('submit')();
 
@@ -67,9 +67,17 @@ describe('ProviderForm', () => {
   });
 
   it('un valor fuera del set no entra: el radio solo acepta los protocolos del contrato', () => {
-    interno<(v: unknown) => void>('elegirProtocolo')('LDAP');
-
-    expect(interno<() => string | null>('protocol')()).toBeNull();
+    // El motor sólo ofrece los del contrato; la comprobación sigue al armar el
+    // cuerpo, que es lo que llega al backend venga de donde venga el valor.
+    formulario().patchValue({
+      code: 'okta-clinica',
+      name: 'Okta de la clínica',
+      issuer: 'https://clinica.okta.com',
+      protocol: 'LDAP',
+      category: 'ENTERPRISE',
+    });
+    interno<() => void>('submit')();
+    // Nada viajó: `http.verify()` lo comprueba.
   });
 
   it('organización dueña y emisor viajan solo cuando se cargan', () => {
@@ -80,8 +88,8 @@ describe('ProviderForm', () => {
       tenantId: '11111111-1111-1111-1111-111111111111',
       isGlobal: true,
     });
-    interno<(v: unknown) => void>('elegirProtocolo')('SAML');
-    interno<(v: unknown) => void>('elegirCategoria')('ENTERPRISE');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ protocol: 'SAML' });
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ category: 'ENTERPRISE' });
 
     interno<() => void>('submit')();
 

@@ -40,7 +40,7 @@ describe('UserRegistration', () => {
    * otra cosa.
    */
   function completarFormulario() {
-    interno<{ setValue: (v: unknown) => void }>('form').setValue({
+    interno<{ patchValue: (v: Record<string, unknown>) => void }>('form').patchValue({
       displayName: '  Bruno Díaz  ',
       email: 'bruno@mantra.test',
       password: 'secreto12',
@@ -80,7 +80,7 @@ describe('UserRegistration', () => {
 
   it('el rol USER no viaja: es con lo que el backend completa', () => {
     completarFormulario();
-    interno<(rol: string | null) => void>('cambiarRol')('USER');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ initialRole: 'USER' });
     enviar();
 
     const req = http.expectOne('/iam/users');
@@ -91,7 +91,7 @@ describe('UserRegistration', () => {
 
   it('el rol de administrador sí viaja, porque cambia lo que la cuenta puede hacer', () => {
     completarFormulario();
-    interno<(rol: string | null) => void>('cambiarRol')('SECURITY_ADMIN');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ initialRole: 'SECURITY_ADMIN' });
     enviar();
 
     const req = http.expectOne('/iam/users');
@@ -104,7 +104,7 @@ describe('UserRegistration', () => {
     completarFormulario();
     // El grupo de radios modela «sin elección» con null; y nadie debería poder
     // colar un rol que el backend no acepta.
-    interno<(rol: string | null) => void>('cambiarRol')(null);
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ initialRole: null });
     enviar();
 
     const req = http.expectOne('/iam/users');

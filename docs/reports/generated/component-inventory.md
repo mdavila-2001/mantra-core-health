@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-382 componentes y 72 servicios inyectables, leídos de `src/`.
+383 componentes y 73 servicios inyectables, leídos de `src/`.
 
 ## Átomo (18)
 
@@ -58,7 +58,7 @@
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
 
-## Organismo (20)
+## Organismo (21)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -74,12 +74,13 @@
 | `app-map` | `AppMap` | `pines`, `etiqueta`, `centro`, `zoom` | `pinElegido` | `seleccionado` | OnPush | sí |
 | `app-notification-bell` | `NotificationBell` | — | — | — | OnPush | sí |
 | `app-page-header` | `PageHeader` | `title`, `subtitle`, `breadcrumbs`, `secondaryActions` | `actionSelected` | — | OnPush | sí |
-| `app-paginated-form` | `PaginatedForm` | `paginas`, `form`, `label`, `submitLabel`, `pending` | `enviado` | — | OnPush | sí |
+| `app-paginated-form` | `PaginatedForm` | `paginas`, `form`, `label`, `submitLabel`, `pending`, `destructive`, `confirmTitle`, `confirmMessage`, `cancelLabel` | `enviado`, `cancelado` | — | OnPush | sí |
 | `app-shell` | `Shell` | `user`, `sections`, `tenants`, `activeTenantId`, `drawerMode` | `logoutRequested`, `tenantChanged` | — | OnPush | sí |
 | `app-side-nav` | `SideNav` | `sections`, `collapsed`, `drawer`, `open` | `closeRequested` | — | OnPush | sí |
 | `app-status-seal` | `StatusSeal` | `variant`, `label` | — | — | OnPush | sí |
 | `app-tenant-switcher` | `TenantSwitcher` | `tenants`, `activeTenantId`, `variant` | `tenantChanged` | — | OnPush | sí |
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
+| `app-tree-select` | `TreeSelect` | `groups`, `disabled`, `hasError`, `placeholder`, `dialogTitle`, `searchPlaceholder`, `emptyMessage` | — | `value` | OnPush | sí |
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
@@ -147,7 +148,6 @@
 | `app-protocol-config-form` | `ProtocolConfigForm` | — | — | — | OnPush | sí |
 | `app-provider-form` | `ProviderForm` | — | — | — | OnPush | sí |
 | `app-provisioning-rule-form` | `ProvisioningRuleForm` | — | — | — | OnPush | sí |
-| `app-signing-key-fields` | `SigningKeyFields` | `disabled` | — | — | OnPush | sí |
 | `app-signing-key-form` | `SigningKeyForm` | — | — | — | OnPush | sí |
 | `app-tenant-binding-form` | `TenantBindingForm` | — | — | — | OnPush | sí |
 | `app-activate-account` | `ActivateAccount` | — | — | — | OnPush | sí |
@@ -199,6 +199,7 @@
 | `app-feed` | `Feed` | — | — | — | OnPush | sí |
 | `app-post-card` | `PostCard` | `post`, `actorProfileId`, `guardado`, `puedeReportar` | `reportar`, `cambio`, `guardarCambiado` | — | OnPush | sí |
 | `app-report-post` | `ReportPost` | `postId` | `reportado`, `cancelado` | — | OnPush | sí |
+| `app-form-builder` | `FormBuilder` | — | — | — | OnPush | sí |
 | `app-consent-revocation` | `ConsentRevocation` | — | — | — | OnPush | sí |
 | `app-geo-home` | `GeoHome` | — | — | — | OnPush | sí |
 | `app-geofence-event-form` | `GeofenceEventForm` | — | — | — | OnPush | sí |
@@ -416,7 +417,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (72)
+## Servicios (73)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -464,6 +465,7 @@
 | `SurveysClient` | `src/app/core/data-access/surveys/surveys.client.ts` | root | **no** |
 | `SystemContextClient` | `src/app/core/data-access/system-context/system-context.client.ts` | root | sí |
 | `BoDepartmentsCatalog` | `src/app/core/data-access/terminology/bo-departments.service.ts` | root | **no** |
+| `BoMunicipalitiesCatalog` | `src/app/core/data-access/terminology/bo-municipalities.service.ts` | root | **no** |
 | `MedicalSpecialtiesCatalog` | `src/app/core/data-access/terminology/medical-specialties.service.ts` | root | sí |
 | `TerminologyClient` | `src/app/core/data-access/terminology/terminology.client.ts` | root | sí |
 | `AppErrorHandler` | `src/app/core/errors/app-error-handler.ts` | local | **no** |

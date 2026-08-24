@@ -43,75 +43,15 @@
     <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Qué corrida"
-      description="Una corrida se cierra una sola vez: es un log, no un estado que va y vuelve."
-    >
-      <app-form-field
-        label="Identificador de la corrida"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.collectionRunId.touched && form.controls.collectionRunId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="collectionRunId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Cómo terminó"
-      description="Una corrida fallida tiene que declarar qué salió mal; sin eso el cierre no se puede investigar."
-    >
-      <app-form-field label="Resultado" [required]="true">
-        <app-radio-group [value]="outcome()" (valueChange)="elegirResultado($event)">
-          <app-radio value="SUCCEEDED" label="Completa" />
-          <app-radio value="PARTIAL" label="Parcial: quedó trabajo pendiente" />
-          <app-radio value="FAILED" label="Fallida" />
-        </app-radio-group>
-      </app-form-field>
-
-      @if (exigeResumenDeError()) {
-        <app-form-field
-          label="Qué salió mal"
-          [required]="true"
-          hint="El resumen queda con la corrida: es lo que permite investigar el fallo después."
-        >
-          <app-textarea [(value)]="errorSummary" autoResize [disabled]="isSubmitting()" />
-        </app-form-field>
-      } @else {
-        <app-form-field
-          label="Nota de error"
-          hint="Opcional salvo en una corrida fallida."
-        >
-          <app-textarea [(value)]="errorSummary" autoResize [disabled]="isSubmitting()" />
-        </app-form-field>
-      }
-
-      <app-form-field
-        label="Cursor de continuación"
-        hint="Opcional, para una corrida parcial: JSON con el punto desde donde retomar."
-        [errorMessage]="
-          form.controls.continuationCursorJson.touched &&
-          form.controls.continuationCursorJson.invalid
-            ? 'Tiene que ser un objeto JSON válido, como {&quot;page&quot;: 3}.'
-            : ''
-        "
-      >
-        <app-input formControlName="continuationCursorJson" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Cerrar corrida"
-      destructive
-      confirmTitle="¿Cerrar la corrida?"
-      confirmMessage="Una corrida cerrada no se reabre, y sus contadores quedan reconciliados como definitivos."
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas()"
+  [form]="form"
+  label="Cerrar corrida"
+  submitLabel="Cerrar corrida"
+  [pending]="isSubmitting()"
+  destructive
+  confirmTitle="¿Cerrar la corrida?"
+  confirmMessage="Una corrida cerrada no se reabre, y sus contadores quedan reconciliados como definitivos."
+  (enviado)="submit()"
+/>
 }

@@ -47,81 +47,12 @@
     <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section legend="Qué caso" description="El expediente resuelto cuyo desenlace se acredita.">
-      <app-form-field
-        label="Caso de verificación"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.caseId.touched && form.controls.caseId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="caseId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="La aserción"
-      description="Quién la emite, de qué tipo es y qué nivel acredita."
-    >
-      <app-form-field
-        label="Autoridad emisora"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.issuerIdentityAuthorityId.touched &&
-          form.controls.issuerIdentityAuthorityId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="issuerIdentityAuthorityId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Tipo de aserción (concepto)"
-        hint="Opcional: por defecto, aserción de identidad."
-        [errorMessage]="
-          form.controls.assertionTypeConceptId.touched &&
-          form.controls.assertionTypeConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="assertionTypeConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Nivel de aseguramiento (concepto)"
-        hint="Opcional: por defecto, el nivel solicitado del caso."
-        [errorMessage]="
-          form.controls.assuranceLevelConceptId.touched &&
-          form.controls.assuranceLevelConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="assuranceLevelConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Vence en (horas)"
-        hint="Opcional: por defecto, 8760 horas — un año."
-        [errorMessage]="
-          form.controls.expiresInHours.touched && form.controls.expiresInHours.invalid
-            ? 'La vigencia empieza en 1 hora.'
-            : ''
-        "
-      >
-        <app-input formControlName="expiresInHours" type="number" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Emitir aserción"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Emitir aserción"
+  submitLabel="Emitir aserción"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

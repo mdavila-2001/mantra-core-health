@@ -4,9 +4,8 @@ import {
   computed,
   inject,
   signal,
-  viewChild,
 } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { AuthProvidersClient } from '../../../core/data-access/auth-providers/auth-providers.client';
 import type { PublishedSigningKey } from '../../../core/data-access/auth-providers/auth-providers.types';
@@ -16,19 +15,21 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import {
+  controlesDeClaveDeFirma,
+  leerClaveDeFirma,
+  SECCION_CLAVE_DE_FIRMA,
+} from '../signing-key-fields/signing-key-fields';
 import {
   errorMessageOf,
   UUID_ERROR,
   UUID_HINT,
   UUID_PATTERN,
 } from '../../../shared/forms/form-support';
-import { SigningKeyFields } from '../signing-key-fields/signing-key-fields';
 
 /**
  * Publicar una clave de firma del proveedor (V40-08,
@@ -37,16 +38,11 @@ import { SigningKeyFields } from '../signing-key-fields/signing-key-fields';
 @Component({
   selector: 'app-signing-key-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    SigningKeyFields,
+    PaginatedForm,
   ],
   templateUrl: './signing-key-form.html',
   styleUrl: '../m40.css',
@@ -60,14 +56,31 @@ export class SigningKeyForm {
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
 
-  protected readonly campos = viewChild.required(SigningKeyFields);
-
   protected readonly form = new FormGroup({
     providerId: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(UUID_PATTERN)],
     }),
+    ...controlesDeClaveDeFirma(),
   });
+
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'De qué proveedor',
+      hint: 'La clave cuelga del proveedor.',
+      campos: [
+        {
+          key: 'providerId',
+          label: 'Identificador del proveedor',
+          hint: UUID_HINT,
+          control: 'text' as const,
+          required: true,
+          mensajeDeError: UUID_ERROR,
+        },
+      ],
+    },
+    SECCION_CLAVE_DE_FIRMA,
+  ]);
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -83,18 +96,14 @@ export class SigningKeyForm {
       return;
     }
 
-    // La clave se lee primero para que un solo intento marque los errores de
-    // los dos bloques a la vez, no de a uno.
-    const clave = this.campos().intentarLeer();
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    if (clave === null) {
-      return;
-    }
 
-    const { providerId } = this.form.getRawValue();
+    const valores = this.form.getRawValue();
+    const clave = leerClaveDeFirma(valores);
+    const { providerId } = valores;
 
     this.state.set(loading());
 
@@ -108,8 +117,6 @@ export class SigningKeyForm {
   }
 
   protected otraClave(): void {
-    // El panel de éxito desmontó los campos de la clave: renacen frescos al
-    // volver al formulario, así que acá solo se limpia lo propio.
     this.form.reset();
     this.published.set(null);
     this.state.set(ready(null));

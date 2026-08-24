@@ -49,9 +49,11 @@ describe('QualityReviewForm', () => {
       versionId: VERSION,
       reviewTypeConceptId: TIPO,
     });
-    interno<{ set: (v: string) => void }>('outcome').set('REJECTED');
-    interno<{ set: (v: string) => void }>('issuesJson').set('{"faltantes": 2}');
-    interno<{ set: (v: string) => void }>('notes').set('Faltan dos hechos con evidencia.');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      outcome: 'REJECTED',
+      issuesJson: '{"faltantes": 2}',
+      notes: 'Faltan dos hechos con evidencia.',
+    });
 
     interno<() => void>('submit')();
 
@@ -70,12 +72,15 @@ describe('QualityReviewForm', () => {
   });
 
   it('el selector acepta el valor del contrato y rechaza lo desconocido', () => {
-    interno<(v: unknown) => void>('elegirVeredicto')('APPROVED');
-    expect(interno<() => string | null>('outcome')()).toBe('APPROVED');
-
-    interno<(v: unknown) => void>('elegirVeredicto')('CUALQUIER_COSA');
-    // Un valor fuera del contrato no pisa nada.
-    expect(interno<() => string | null>('outcome')()).toBeNull();
+    // El motor sólo ofrece los del contrato; la comprobación sigue al armar el
+    // cuerpo, que es lo que llega al backend venga de donde venga el valor.
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      versionId: VERSION,
+      reviewTypeConceptId: TIPO,
+      outcome: 'CUALQUIER_COSA',
+    });
+    interno<() => void>('submit')();
+    // Nada viajó: `http.verify()` lo comprueba.
   });
 
   it('la pantalla se reinicia para otra carga', () => {

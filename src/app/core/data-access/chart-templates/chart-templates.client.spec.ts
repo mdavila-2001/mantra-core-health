@@ -12,6 +12,7 @@ const PLANTILLA: ChartTemplate = {
   name: 'Ficha de cardiología',
   version: 1,
   statusConceptId: 'st-1',
+  fieldTargetConceptId: 'target-1',
   fields: [],
 };
 

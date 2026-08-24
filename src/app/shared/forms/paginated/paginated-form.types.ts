@@ -27,6 +27,11 @@ export const MAX_CAMPOS_POR_PAGINA = 4;
 /**
  * Cómo se dibuja un campo.
  *
+ * `date` y `datetime` son el mismo control con distinto alcance —una fecha, o
+ * una fecha con su hora—: son dos tipos y no una opción del campo porque la
+ * diferencia se ve en lo que se pide contestar, y un formulario que pide la
+ * hora cuando sólo importa el día hace escribir un dato que nadie va a mirar.
+ *
  * `custom` es la vía de escape para lo que no es un control de texto —el
  * odontograma de la ficha clínica es el caso real—: el motor le reserva su
  * sitio y quien lo usa proyecta el widget. Sin ella, dibujar un mapa dental
@@ -39,7 +44,10 @@ export type TipoDeControl =
   | 'tel'
   | 'number'
   | 'date'
+  | 'datetime'
   | 'select'
+  | 'radio'
+  | 'switch'
   | 'checkbox'
   | 'textarea'
   | 'custom';
@@ -64,11 +72,32 @@ export interface CampoDeFormulario {
 
   readonly control: TipoDeControl;
 
-  /** Sólo para `select`. */
+  /**
+   * Sólo para `select` y `radio`.
+   *
+   * Son el mismo dato con dos formas de mostrarlo: la lista desplegable ahorra
+   * espacio y el grupo de opciones las deja todas a la vista. La regla que
+   * siguen las pantallas migradas es la de siempre — hasta cuatro opciones se
+   * ven, más de cuatro se despliegan— y por eso ambos leen de acá.
+   */
   readonly options?: readonly SelectOption<string>[];
 
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;
+
+  /**
+   * El `data-testid` del control, cuando la pantalla ya tenía uno.
+   *
+   * Por defecto el motor pone `campo-<key>` en los campos de texto, que alcanza
+   * para lo que nace con él. Se declara cuando hay un recorrido de navegador que
+   * ya apuntaba a otro nombre: migrar una pantalla al motor no tiene por qué
+   * romper la prueba que la recorría.
+   *
+   * En `select`, `radio`, `switch`, `textarea` y `checkbox` sale como
+   * `data-testid` sobre el control —esos átomos no tienen entrada `testId`— y
+   * sólo si se declara: no se inventa uno por defecto.
+   */
+  readonly testId?: string;
 
   readonly placeholder?: string;
 

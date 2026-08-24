@@ -58,7 +58,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `ForgotPasswordPage` | `/auth/forgot-password` | 9 | `cypress/support/pages/forgot-password.page.ts` |
 | `LoginPage` | `/auth` | 17 | `cypress/support/pages/login.page.ts` |
 | `NotFoundPage` | `/esta-ruta-no-existe` | 4 | `cypress/support/pages/not-found.page.ts` |
-| `RegisterPage` | `/auth/register` | 13 | `cypress/support/pages/register.page.ts` |
+| `RegisterPage` | `/auth/register` | 16 | `cypress/support/pages/register.page.ts` |
 | `ResendVerificationPage` | `/auth/resend-verification` | 10 | `cypress/support/pages/resend-verification.page.ts` |
 | `ResetPasswordPage` | `/auth/reset-password` | 12 | `cypress/support/pages/reset-password.page.ts` |
 | `TenantSelectionPage` | `/auth/organization` | 6 | `cypress/support/pages/tenant-selection.page.ts` |
@@ -83,4 +83,4 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 
 ## Coherencia de los selectores
 
-**1 identificador(es) que la suite usa ya no existen en ninguna plantilla:** `registro-tipo`. Las pruebas que los usan van a fallar.
+**9 identificador(es) que la suite usa ya no existen en ninguna plantilla:** `registro-apellido-materno`, `registro-apellido-paterno`, `registro-correo`, `registro-documento`, `registro-nombre`, `registro-password`, `registro-segundo-nombre`, `tipo-paciente`, `tipo-profesional`. Las pruebas que los usan van a fallar.

@@ -46,7 +46,7 @@ describe('CollectionRunForm', () => {
       agentId: AGENTE,
       // Falta el país: agente solo no alcanza.
     });
-    interno<{ set: (v: string) => void }>('trigger').set('MANUAL');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ trigger: 'MANUAL' });
 
     interno<() => void>('submit')();
 
@@ -58,7 +58,7 @@ describe('CollectionRunForm', () => {
       idempotencyKey: 'run-2026-08-11',
       scheduleId: AGENDA,
     });
-    interno<{ set: (v: string) => void }>('trigger').set('SCHEDULED');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ trigger: 'SCHEDULED' });
 
     interno<() => void>('submit')();
 
@@ -80,7 +80,7 @@ describe('CollectionRunForm', () => {
       agentId: AGENTE,
       countryConceptId: PAIS,
     });
-    interno<{ set: (v: string) => void }>('trigger').set('MANUAL');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ trigger: 'MANUAL' });
 
     interno<() => void>('submit')();
 
@@ -95,12 +95,11 @@ describe('CollectionRunForm', () => {
   });
 
   it('el selector acepta el valor del contrato y rechaza lo desconocido', () => {
-    interno<(v: unknown) => void>('elegirDisparador')('MANUAL');
-    expect(interno<() => string | null>('trigger')()).toBe('MANUAL');
-
-    interno<(v: unknown) => void>('elegirDisparador')('CUALQUIER_COSA');
-    // Un valor fuera del contrato no pisa nada.
-    expect(interno<() => string | null>('trigger')()).toBeNull();
+    // El motor sólo ofrece los dos disparadores del contrato; la comprobación
+    // sigue al armar el cuerpo, que es lo que llega al backend.
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ trigger: 'CUALQUIER_COSA' });
+    interno<() => void>('submit')();
+    // Nada viajó: `http.verify()` lo comprueba.
   });
 
   it('la pantalla se reinicia para otra carga', () => {

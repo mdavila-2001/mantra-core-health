@@ -27,6 +27,7 @@ function plantilla(over: Partial<ChartTemplate> = {}): ChartTemplate {
     name: 'Ficha cardiológica',
     version: 1,
     statusConceptId: 'st-1',
+    fieldTargetConceptId: 'target-1',
     fields: [],
     ...over,
   };
@@ -140,6 +141,7 @@ describe('FormsCatalog', () => {
       name: `Campo ${i}`,
       dataType: 'string',
       required: false,
+      own: false,
     }));
     const con9 = plantilla({ fields: campos });
 

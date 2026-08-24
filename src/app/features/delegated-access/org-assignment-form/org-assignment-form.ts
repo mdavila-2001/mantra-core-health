@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { DelegatedAccessClient } from '../../../core/data-access/delegated-access/delegated-access.client';
 import type {
@@ -14,17 +14,11 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
-import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 const SCOPES: readonly OrgAccessScope[] = ['TENANT', 'PRACTICE', 'SITE', 'UNIT'];
@@ -62,19 +56,11 @@ type NodoDeAlcance = (typeof NODOS_DE_ALCANCE)[number]['control'];
 @Component({
   selector: 'app-org-assignment-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    DatePicker,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Radio,
-    RadioGroup,
-    Select,
+    PaginatedForm,
   ],
   templateUrl: './org-assignment-form.html',
   styleUrl: '../m29.css',
@@ -87,8 +73,6 @@ export class OrgAssignmentForm {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
-  protected readonly roles = ROLES;
-  protected readonly nodosDeAlcance = NODOS_DE_ALCANCE;
 
   protected readonly form = new FormGroup({
     tenantMembershipId: new FormControl('', {
@@ -102,12 +86,96 @@ export class OrgAssignmentForm {
     diagnosticUnitId: new FormControl('', { nonNullable: true, validators: [UUID_OPCIONAL] }),
     pharmacyId: new FormControl('', { nonNullable: true, validators: [UUID_OPCIONAL] }),
     supervisorUserId: new FormControl('', { nonNullable: true, validators: [UUID_OPCIONAL] }),
+    role: new FormControl<OrgAssignmentRole | null>(null),
+    accessScope: new FormControl<OrgAccessScope | null>(null),
+    validFrom: new FormControl<Date | null>(null),
+    validTo: new FormControl<Date | null>(null),
   });
 
-  protected readonly role = signal<OrgAssignmentRole | null>(null);
-  protected readonly accessScope = signal<OrgAccessScope | null>(null);
-  protected readonly validFrom = signal<Date | null>(null);
-  protected readonly validTo = signal<Date | null>(null);
+  /**
+   * El formulario, servido de a una página.
+   *
+   * Los seis nodos de alcance se declaran desde {@link NODOS_DE_ALCANCE} en vez
+   * de escribirse uno por uno: son la misma pregunta seis veces y la lista ya
+   * existía para dibujarlos. El motor los reparte en dos páginas de cuatro y
+   * tres, que es más de lo que cabía a la vista.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Sobre qué membresía',
+      hint: 'La asignación cuelga de la membresía de la persona en la organización.',
+      campos: [
+        {
+          key: 'tenantMembershipId',
+          label: 'Identificador de la membresía',
+          hint: UUID_HINT,
+          control: 'text' as const,
+          required: true,
+          mensajeDeError: UUID_ERROR,
+        },
+      ],
+    },
+    {
+      titulo: 'Rol y alcance',
+      hint: 'Opcional: sin elegir nada, el backend aplica sus valores por defecto.',
+      campos: [
+        {
+          key: 'role',
+          label: 'Rol de la asignación',
+          control: 'select' as const,
+          options: ROLES,
+          placeholder: 'Sin rol elegido',
+        },
+        {
+          key: 'accessScope',
+          label: 'Alcance de acceso',
+          control: 'radio' as const,
+          options: [
+            { value: 'TENANT', label: 'Toda la organización' },
+            { value: 'PRACTICE', label: 'Práctica' },
+            { value: 'SITE', label: 'Sede' },
+            { value: 'UNIT', label: 'Unidad' },
+          ],
+        },
+      ],
+    },
+    {
+      titulo: 'Nodo de alcance',
+      hint: 'Opcional: a qué parte de la organización queda acotada la asignación.',
+      campos: NODOS_DE_ALCANCE.map((nodo) => ({
+        key: nodo.control,
+        label: nodo.label,
+        hint: UUID_HINT,
+        control: 'text' as const,
+        mensajeDeError: UUID_ERROR,
+      })),
+    },
+    {
+      titulo: 'Supervisión y vigencia',
+      hint: 'Opcional: quién responde por la asignación y en qué ventana rige.',
+      campos: [
+        {
+          key: 'supervisorUserId',
+          label: 'Supervisor responsable',
+          hint: UUID_HINT,
+          control: 'text' as const,
+          mensajeDeError: UUID_ERROR,
+        },
+        {
+          key: 'validFrom',
+          label: 'Inicio de vigencia',
+          hint: 'Sin fecha, rige desde ahora.',
+          control: 'datetime' as const,
+        },
+        {
+          key: 'validTo',
+          label: 'Fin de vigencia',
+          hint: 'Sin fecha, no vence sola.',
+          control: 'datetime' as const,
+        },
+      ],
+    },
+  ]);
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -117,10 +185,6 @@ export class OrgAssignmentForm {
   protected readonly errorMessage = computed(() =>
     errorMessageOf(this.state(), 'No tenés permiso para asignar usuarios de organización.'),
   );
-
-  protected elegirAlcance(valor: unknown): void {
-    this.accessScope.set(opcionDe(SCOPES, valor));
-  }
 
   protected submit(): void {
     if (this.isSubmitting()) {
@@ -147,20 +211,16 @@ export class OrgAssignmentForm {
 
   protected otraAsignacion(): void {
     this.form.reset();
-    this.role.set(null);
-    this.accessScope.set(null);
-    this.validFrom.set(null);
-    this.validTo.set(null);
     this.created.set(null);
     this.state.set(ready(null));
   }
 
   private datos(): NewOrgUserAssignment {
     const valores = this.form.getRawValue();
-    const rol = this.role();
-    const alcance = this.accessScope();
-    const inicio = this.validFrom();
-    const fin = this.validTo();
+    const rol = opcionDe(ROLES.map((r) => r.value), valores.role);
+    const alcance = opcionDe(SCOPES, valores.accessScope);
+    const inicio = valores.validFrom;
+    const fin = valores.validTo;
     const supervisor = valores.supervisorUserId.trim();
 
     return {

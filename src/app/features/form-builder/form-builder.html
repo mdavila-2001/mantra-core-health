@@ -1,0 +1,206 @@
+<app-page-header
+  title="Formularios"
+  subtitle="Agregá tus propios campos a los formularios estándar de tu especialidad."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (abierta(); as plantilla) {
+  <!-- ─── Un formulario abierto ─────────────────────────────────────────────
+       Tres cosas a la vez y en este orden: qué trae el estándar (no se toca),
+       qué agregó esta organización, y cómo se va a ver servido. -->
+  <div class="constructor">
+    <div class="constructor__encabezado">
+      <div>
+        <h2 class="constructor__titulo">{{ plantilla.name }}</h2>
+        <p class="constructor__codigo">{{ plantilla.code }} · versión {{ plantilla.version }}</p>
+      </div>
+      <button app-button type="button" variant="ghost" (clicked)="cerrar()">
+        Volver a la lista
+      </button>
+    </div>
+
+    @if (presupuestoEnPalabras(); as texto) {
+      <app-card variant="outlined" padding="md" class="constructor__presupuesto">
+        <p class="constructor__presupuesto-texto" data-testid="presupuesto">{{ texto }}</p>
+        @if (presupuestoConsumido(); as consumido) {
+          <app-progress
+            [value]="consumido"
+            label="Presupuesto de campos propios"
+          />
+        }
+        @if (!admiteCamposPropios()) {
+          <app-alert tone="info" data-testid="sin-extension">
+            Este formulario no admite campos propios: su política de extensión está cerrada.
+          </app-alert>
+        } @else if (!quedanCampos()) {
+          <app-alert tone="warning" data-testid="presupuesto-agotado">
+            Llegaste al tope de campos propios de este formulario. Para agregar otro hay que
+            quitar uno o pedir más presupuesto a tu organización.
+          </app-alert>
+        }
+      </app-card>
+    }
+
+    <div class="constructor__columnas">
+      <section class="constructor__campos">
+        <h3 class="constructor__subtitulo">Campos del formulario estándar</h3>
+        @if (camposEstandar().length === 0) {
+          <p class="constructor__vacio">Este formulario todavía no tiene campos estándar.</p>
+        } @else {
+          <ul class="constructor__lista">
+            @for (campo of camposEstandar(); track porCampo(campo)) {
+              <li class="constructor__campo" data-testid="campo-estandar">
+                <span class="constructor__campo-nombre">{{ campo.name }}</span>
+                <span class="constructor__campo-meta">{{ codigoVisible(campo, plantilla) }}</span>
+                @if (campo.required) {
+                  <app-badge variant="secondary">Obligatorio</app-badge>
+                }
+              </li>
+            }
+          </ul>
+        }
+
+        <h3 class="constructor__subtitulo">Campos de tu organización</h3>
+        @if (camposPropios().length === 0) {
+          <p class="constructor__vacio" data-testid="sin-campos-propios">
+            Todavía no agregaste ninguno. Los que agregues acá los ve tu organización y nadie más.
+          </p>
+        } @else {
+          <ul class="constructor__lista">
+            @for (campo of camposPropios(); track porCampo(campo)) {
+              <li class="constructor__campo" data-testid="campo-propio">
+                <span class="constructor__campo-nombre">{{ campo.name }}</span>
+                <span class="constructor__campo-meta">{{ codigoVisible(campo, plantilla) }}</span>
+                <app-badge variant="success">Tuyo</app-badge>
+                @if (campo.required) {
+                  <app-badge variant="secondary">Obligatorio</app-badge>
+                }
+              </li>
+            }
+          </ul>
+        }
+
+        <!-- ─── Alta de un campo propio ───────────────────────────────────── -->
+        <app-card variant="outlined" padding="lg" class="constructor__alta">
+          <h3 class="constructor__subtitulo">Agregar un campo</h3>
+
+          @if (errorDelAlta(); as mensaje) {
+            <app-alert tone="error" data-testid="alta-error">{{ mensaje }}</app-alert>
+          }
+
+          <form class="constructor__formulario" (submit)="$event.preventDefault()">
+            <app-form-field
+              label="Nombre del campo"
+              hint="Como lo va a leer quien complete el formulario."
+              [required]="true"
+            >
+              <app-input
+                [value]="nombreDelCampo()"
+                (valueChange)="nombreDelCampo.set(comoTexto($event))"
+                placeholder="¿Fuma?"
+                data-testid="campo-nombre"
+              />
+            </app-form-field>
+
+            <app-form-field label="Tipo de dato">
+              <app-select
+                [options]="tiposDeDato"
+                [value]="tipoDelCampo()"
+                (valueChange)="tipoDelCampo.set($event ?? 'string')"
+                data-testid="campo-tipo"
+              />
+            </app-form-field>
+
+            <app-checkbox
+              [checked]="obligatorio()"
+              (checkedChange)="obligatorio.set($event)"
+              label="Obligatorio"
+            />
+
+            <button
+              app-button
+              type="button"
+              variant="primary"
+              [disabled]="!puedeCrear()"
+              [isLoading]="creando()"
+              (clicked)="agregarCampo()"
+              data-testid="agregar-campo"
+            >
+              Agregar al formulario
+            </button>
+          </form>
+        </app-card>
+      </section>
+
+      <!-- ─── Vista previa ────────────────────────────────────────────────────
+           El mismo motor que sirve el formulario de verdad, con los campos
+           reales: el número de páginas que muestra es el que se va a ver. -->
+      <section class="constructor__previa">
+        <h3 class="constructor__subtitulo">Así se va a ver</h3>
+        <p class="constructor__nota">
+          De a una página, con un tope de cuatro campos y una barra que dice cuánto falta. Si
+          agregás un campo que no entra, se abre una página nueva y lo vas a ver acá antes de
+          guardarlo.
+        </p>
+        @if (paginas().length === 0) {
+          <app-empty-state
+            title="Todavía no hay nada que mostrar"
+            description="Agregá un campo y la vista previa aparece."
+          />
+        } @else {
+          <div class="constructor__previa-marco" data-testid="vista-previa">
+            <app-paginated-form
+              [paginas]="paginas()"
+              [form]="formularioDeMuestra()"
+              [label]="plantilla.name"
+              submitLabel="Guardar"
+            />
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+} @else {
+  <!-- ─── La lista de formularios estándar ─────────────────────────────────── -->
+  <div class="constructor">
+    <p class="constructor__nota">
+      Elegí un formulario estándar para verlo y agregarle tus campos. Los campos del estándar no
+      se tocan: son la parte que hace comparable una ficha entre consultorios.
+    </p>
+
+    @if (cargandoListado()) {
+      <p class="constructor__vacio">Cargando formularios…</p>
+    } @else if (listado(); as lista) {
+      @if (lista.length === 0) {
+        <app-empty-state
+          title="Todavía no hay formularios estándar"
+          description="Cuando tu organización tenga plantillas por especialidad, aparecen acá."
+        />
+      } @else {
+        <ul class="constructor__plantillas">
+          @for (plantilla of lista; track porPlantilla(plantilla)) {
+            <li>
+              <button
+                type="button"
+                class="constructor__plantilla"
+                data-testid="plantilla"
+                [disabled]="cargandoPlantilla()"
+                (click)="abrir(plantilla)"
+              >
+                <span class="constructor__plantilla-nombre">{{ plantilla.name }}</span>
+                <span class="constructor__campo-meta">{{ plantilla.code }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <app-alert tone="error">
+        No pudimos leer los formularios.
+        <button app-button type="button" variant="ghost" size="sm" (clicked)="recargar()">
+          Reintentar
+        </button>
+      </app-alert>
+    }
+  </div>
+}

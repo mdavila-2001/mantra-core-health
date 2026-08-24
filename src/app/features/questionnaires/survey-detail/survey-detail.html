@@ -83,54 +83,14 @@
       @if (editable()) {
         <app-card variant="outlined" padding="lg" class="encuesta__card">
           <h2 card-header>Agregar una pregunta</h2>
-          <form [formGroup]="formularioPregunta" (ngSubmit)="agregarPregunta()">
-            <app-form-field
-              label="Pregunta"
-              hint="Cómo la va a leer el paciente."
-              [required]="true"
-            >
-              <app-input formControlName="questionText" data-testid="pregunta-texto" />
-            </app-form-field>
-
-            <app-form-field label="Tipo de respuesta" [required]="true">
-              <app-select formControlName="answerType" [options]="tipos" />
-            </app-form-field>
-
-            @if (pideOpciones()) {
-              <app-form-field
-                label="Opciones"
-                hint="Una por línea. Hacen falta al menos dos."
-                [required]="true"
-              >
-                <app-input formControlName="options" data-testid="pregunta-opciones" />
-              </app-form-field>
-            }
-
-            @if (pideEscala()) {
-              <div class="encuesta__escala">
-                <app-form-field label="Mínimo" [required]="true">
-                  <app-input type="number" formControlName="scaleMin" />
-                </app-form-field>
-                <app-form-field label="Máximo" [required]="true">
-                  <app-input type="number" formControlName="scaleMax" />
-                </app-form-field>
-              </div>
-            }
-
-            <app-checkbox formControlName="required" label="Obligatoria" />
-
-            <div class="encuesta__acciones">
-              <button
-                app-button
-                type="submit"
-                variant="primary"
-                [disabled]="guardandoPregunta()"
-                data-testid="pregunta-guardar"
-              >
-                {{ guardandoPregunta() ? 'Agregando…' : 'Agregar pregunta' }}
-              </button>
-            </div>
-          </form>
+          <app-paginated-form
+            [paginas]="paginasDePregunta()"
+            [form]="formularioPregunta"
+            label="Agregar una pregunta"
+            submitLabel="Agregar pregunta"
+            [pending]="guardandoPregunta()"
+            (enviado)="agregarPregunta()"
+          />
         </app-card>
 
         <app-card variant="outlined" padding="lg" class="encuesta__card">

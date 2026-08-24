@@ -40,79 +40,20 @@
     <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Identidad de la corrida"
-      description="La clave hace la corrida idempotente: reintentar con la misma clave no duplica nada."
-    >
-      <app-form-field
-        label="Clave de idempotencia"
-        [required]="true"
-        hint="Única por marca de recolección, como msal-2026-08-11. Máx. 200 caracteres."
-        [errorMessage]="
-          form.controls.idempotencyKey.touched && form.controls.idempotencyKey.invalid
-            ? 'Escribí la clave de idempotencia (máx. 200 caracteres).'
-            : ''
-        "
-      >
-        <app-input formControlName="idempotencyKey" type="text" />
-      </app-form-field>
+  <!-- El aviso es de la regla del modelo —agenda, o agente y país—, que cruza
+       dos páginas del formulario: va sobre él y no dentro de una página. -->
+  @if (faltaOrigen()) {
+    <app-alert tone="warning" class="m44__alert">
+      Indicá la agenda, o el agente y el país juntos.
+    </app-alert>
+  }
 
-      <app-form-field label="Qué la dispara" [required]="true">
-        <app-radio-group [value]="trigger()" (valueChange)="elegirDisparador($event)">
-          <app-radio value="MANUAL" label="Manual: alguien la pide ahora" />
-          <app-radio value="SCHEDULED" label="Programada: la trae una agenda" />
-        </app-radio-group>
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="De dónde sale"
-      description="O viene de una agenda, o se declara el agente y el país: deducirlos sería inventarlos."
-    >
-      @if (faltaOrigen()) {
-        <app-alert tone="warning" class="m44__alert">
-          Indicá la agenda, o el agente y el país juntos.
-        </app-alert>
-      }
-
-      <app-form-field
-        label="Agenda"
-        hint="Si la corrida sale de una programación, su identificador (UUID)."
-        [errorMessage]="
-          form.controls.scheduleId.touched && form.controls.scheduleId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="scheduleId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Agente"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.agentId.touched && form.controls.agentId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="agentId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="País"
-        hint="Identificador del concepto de país (UUID)."
-        [errorMessage]="
-          form.controls.countryConceptId.touched && form.controls.countryConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="countryConceptId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Iniciar corrida"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Iniciar corrida de recolección"
+  submitLabel="Iniciar corrida"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

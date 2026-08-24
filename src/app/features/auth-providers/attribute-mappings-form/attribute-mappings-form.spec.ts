@@ -46,19 +46,57 @@ describe('AttributeMappingsForm', () => {
     return interno<{ patchValue: (v: object) => void }>('form');
   }
 
-  function editor(): { filas: { at: (i: number) => { patchValue: (v: object) => void } } } {
-    return (component as unknown as { editor: () => never }).editor();
+  /**
+   * Avanza a la página que proyecta el editor de mapeos.
+   *
+   * El editor **no existe** mientras se contesta la primera página: es un campo
+   * `custom` dentro de la segunda. Se llega como llegaría una persona —dando el
+   * proveedor y pulsando «Siguiente»—, que es también lo que comprueba que el
+   * motor no deja pasar sin él.
+   */
+  function irAlEditor(): void {
+    formulario().patchValue({ providerId: PROVEEDOR });
+    fixture.detectChanges();
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="paginated-form-continuar"]',
+      ) as HTMLButtonElement | null
+    )?.click();
+    fixture.detectChanges();
   }
 
-  it('sin proveedor no viaja nada: un solo intento marca los dos bloques', () => {
-    editor().filas.at(0).patchValue({ sourceClaim: 'sub', targetAttribute: 'external_subject' });
+  function editor(): { filas: { at: (i: number) => { patchValue: (v: object) => void } } } {
+    const encontrado = (
+      component as unknown as {
+        editor: () => { filas: { at: (i: number) => { patchValue: (v: object) => void } } } | undefined;
+      }
+    ).editor();
+    if (encontrado === undefined) {
+      throw new Error('el editor de mapeos todavía no está en pantalla: falta irAlEditor()');
+    }
+    return encontrado;
+  }
+
+  it('sin proveedor no viaja nada, y el editor ni se muestra', () => {
+    // La primera página pide el proveedor y no deja pasar sin él, así que el
+    // editor de mapeos no llega a existir.
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="paginated-form-continuar"]',
+      ) as HTMLButtonElement | null
+    )?.click();
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('app-attribute-mappings-editor'),
+    ).toBeNull();
 
     interno<() => void>('submit')();
     // `http.verify()` comprueba que nada salió.
   });
 
   it('el reemplazo viaja por PUT con los interruptores explícitos de cada fila', () => {
-    formulario().patchValue({ providerId: PROVEEDOR });
+    irAlEditor();
     editor().filas.at(0).patchValue({
       sourceClaim: 'sub',
       targetAttribute: 'external_subject',
@@ -89,7 +127,7 @@ describe('AttributeMappingsForm', () => {
   });
 
   it('una fila con la transformación rota frena; corregida, viaja parseada', () => {
-    formulario().patchValue({ providerId: PROVEEDOR });
+    irAlEditor();
     editor().filas.at(0).patchValue({
       sourceClaim: 'email',
       targetAttribute: 'contact_email',

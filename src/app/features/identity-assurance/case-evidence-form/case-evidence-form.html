@@ -35,118 +35,12 @@
     <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section legend="Qué caso" description="El expediente al que se le aporta la evidencia.">
-      <app-form-field
-        label="Caso de verificación"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.caseId.touched && form.controls.caseId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="caseId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Qué evidencia"
-      description="Qué tipo de documento es, quién lo emitió y bajo qué consentimiento se recolectó."
-    >
-      <app-form-field
-        label="Tipo de evidencia (concepto)"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.evidenceTypeConceptId.touched &&
-          form.controls.evidenceTypeConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="evidenceTypeConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Autoridad emisora"
-        hint="Opcional: la autoridad registrada que emitió el documento."
-        [errorMessage]="
-          form.controls.issuerAuthorityId.touched && form.controls.issuerAuthorityId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="issuerAuthorityId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Calidad de la evidencia (concepto)"
-        hint="Opcional: qué tan fuerte es el documento como prueba."
-        [errorMessage]="
-          form.controls.evidenceQualityConceptId.touched &&
-          form.controls.evidenceQualityConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="evidenceQualityConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Consentimiento"
-        hint="Opcional: bajo qué consentimiento registrado se recolectó."
-        [errorMessage]="
-          form.controls.collectedUnderConsentId.touched &&
-          form.controls.collectedUnderConsentId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="collectedUnderConsentId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Referencia sin datos"
-      description="Cómo encontrar el documento sin que sus datos viajen por acá."
-    >
-      <app-form-field
-        label="Hash del identificador"
-        hint="Opcional: hash del identificador del documento (hasta 200 caracteres)."
-        [errorMessage]="
-          form.controls.evidenceIdentifierHash.touched &&
-          form.controls.evidenceIdentifierHash.invalid
-            ? 'Hasta 200 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="evidenceIdentifierHash" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Archivo de evidencia"
-        hint="Opcional: el id del archivo ya subido al sistema."
-        [errorMessage]="
-          form.controls.evidenceFileId.touched && form.controls.evidenceFileId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="evidenceFileId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Referencia cifrada"
-        hint="Opcional: puntero cifrado al payload en el almacenamiento de objetos."
-      >
-        <app-input formControlName="encryptedEvidenceReference" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Aportar evidencia"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Aportar evidencia a un caso"
+  submitLabel="Aportar evidencia"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

@@ -35,83 +35,16 @@
     <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Identidad del set"
-      description="A qué organización pertenece y cómo se lo nombra."
-    >
-      @if (sinOrganizaciones()) {
-        <app-alert tone="info" class="m29__alert">
-          Tu sesión no tiene organizaciones a cargo, así que no hay dónde
-          publicar un set.
-        </app-alert>
-      } @else {
-        <app-form-field label="Organización propietaria" [required]="true">
-          <app-select
-            [(value)]="tenantId"
-            [options]="organizaciones()"
-            [disabled]="isSubmitting()"
-            placeholder="Elegí la organización"
-          />
-        </app-form-field>
-      }
-
-      <app-form-field
-        label="Código del set"
-        [required]="true"
-        hint="Único dentro de la organización; si ya existe, el backend responde 409."
-        [errorMessage]="
-          form.controls.code.touched && form.controls.code.invalid
-            ? 'Escribí un código de hasta 100 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="code" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Nombre legible"
-        [required]="true"
-        [errorMessage]="
-          form.controls.name.touched && form.controls.name.invalid
-            ? 'Escribí un nombre de hasta 200 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="name" type="text" />
-      </app-form-field>
-
-      <app-form-field label="Tipo de delegado" hint="Opcional: a qué rol está pensado el set.">
-        <app-radio-group [value]="delegateType()" (valueChange)="elegirTipo($event)">
-          <app-radio value="SECRETARY" label="Secretaría" />
-          <app-radio value="ASSISTANT" label="Asistente" />
-          <app-radio value="NURSE" label="Enfermería" />
-          <app-radio value="BILLING" label="Facturación" />
-        </app-radio-group>
-      </app-form-field>
-
-      <app-form-field label="Descripción">
-        <app-textarea
-          formControlName="description"
-          [rows]="3"
-          [autoResize]="true"
-          [maxLength]="maxDescription"
-        />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Ítems de la versión 1"
-      description="Al menos un permiso; cada ítem puede llevar su restricción y exigir step-up."
-    >
+  <app-paginated-form
+    [paginas]="paginas()"
+    [form]="form"
+    label="Publicar set de permisos"
+    submitLabel="Publicar set"
+    [pending]="isSubmitting()"
+    (enviado)="submit()"
+  >
+    <ng-template appCampoPersonalizado="items">
       <app-set-items-editor [disabled]="isSubmitting()" />
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Publicar set"
-      [pending]="isSubmitting()"
-      [disabled]="tenantId() === null"
-      (submitted)="submit()"
-    />
-  </form>
+    </ng-template>
+  </app-paginated-form>
 }

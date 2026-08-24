@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-320 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+323 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -273,6 +273,9 @@ Archivo: `src/app/core/data-access/forms/forms.client.ts`
 
 | Método | Ruta |
 |---|---|
+| `POST` | `/forms/assignments` |
+| `GET` | `/forms/assignments/budget` |
+| `POST` | `/forms/field-definitions` |
 | `GET` | `/forms/instances` |
 | `POST` | `/forms/instances` |
 | `GET` | `/forms/instances/:instanceId` |

@@ -52,7 +52,9 @@ describe('SourceForm', () => {
       sourceTypeConceptId: TIPO,
       trustTierConceptId: CONFIANZA,
     });
-    interno<{ set: (v: string) => void }>('licenseText').set('CC BY 4.0');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      licenseText: 'CC BY 4.0',
+    });
 
     interno<() => void>('submit')();
 

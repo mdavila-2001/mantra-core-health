@@ -1,63 +1,89 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormGroup } from '@angular/forms';
 
-import { SigningKeyFields } from './signing-key-fields';
+import {
+  controlesDeClaveDeFirma,
+  leerClaveDeFirma,
+  SECCION_CLAVE_DE_FIRMA,
+} from './signing-key-fields';
+import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 
-describe('SigningKeyFields', () => {
-  let fixture: ComponentFixture<SigningKeyFields>;
-  let component: SigningKeyFields;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [SigningKeyFields] }).compileComponents();
-
-    fixture = TestBed.createComponent(SigningKeyFields);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  function interno<T>(nombre: string): T {
-    return (component as unknown as Record<string, unknown>)[nombre] as T;
+/**
+ * Los campos de una clave de firma, compartidos por publicar y rotar.
+ *
+ * Eran un componente con `FormGroup` propio que el padre leía por `viewChild`;
+ * ahora son controles que el padre mezcla en el suyo, una sección que agrega a
+ * sus páginas y un lector que arma el cuerpo. Lo que se prueba acá es el lector
+ * y la forma de la sección: cómo se dibujan es del motor.
+ */
+describe('campos de clave de firma', () => {
+  function grupo(): FormGroup {
+    return new FormGroup(controlesDeClaveDeFirma());
   }
 
-  function formulario(): {
-    patchValue: (v: object) => void;
-    controls: { keyId: { touched: boolean } };
-  } {
-    return interno<{
-      patchValue: (v: object) => void;
-      controls: { keyId: { touched: boolean } };
-    }>('form');
-  }
+  it('los controles nacen vacíos y el grupo inválido: tres son obligatorios', () => {
+    const form = grupo();
 
-  it('incompleta devuelve null y deja los errores marcados', () => {
-    expect(component.intentarLeer()).toBeNull();
-    expect(formulario().controls.keyId.touched).toBe(true);
+    expect(form.invalid).toBe(true);
+    expect(form.controls['keyId']?.invalid).toBe(true);
+    expect(form.controls['algorithm']?.invalid).toBe(true);
+    expect(form.controls['publicKey']?.invalid).toBe(true);
+    // El certificado y las fechas son opcionales.
+    expect(form.controls['certificate']?.valid).toBe(true);
+    expect(form.controls['keyValidFrom']?.valid).toBe(true);
   });
 
-  it('la clave mínima lleva exactamente sus tres campos, recortados', () => {
-    formulario().patchValue({ keyId: '  k-1  ', algorithm: 'RS256', publicKey: 'pem' });
+  it('lo mínimo viaja recortado y sin las claves que no se cargaron', () => {
+    const form = grupo();
+    form.patchValue({
+      keyId: '  kid-1  ',
+      algorithm: ' RS256 ',
+      publicKey: ' -----BEGIN PUBLIC KEY----- ',
+    });
 
-    expect(component.intentarLeer()).toEqual({
-      keyId: 'k-1',
+    expect(leerClaveDeFirma(form.getRawValue())).toEqual({
+      keyId: 'kid-1',
       algorithm: 'RS256',
-      publicKey: 'pem',
+      publicKey: '-----BEGIN PUBLIC KEY-----',
     });
   });
 
-  it('certificado y vigencia viajan solo cuando se cargan, con las fechas en ISO', () => {
-    formulario().patchValue({
-      keyId: 'k-1',
+  it('el certificado y las fechas viajan cuando se cargan, y las fechas en ISO', () => {
+    const form = grupo();
+    form.patchValue({
+      keyId: 'kid-1',
+      algorithm: 'RS256',
+      publicKey: 'pem',
+      certificate: ' cert ',
+      keyValidFrom: new Date('2026-09-01T00:00:00.000Z'),
+      keyValidTo: new Date('2027-09-01T00:00:00.000Z'),
+    });
+
+    expect(leerClaveDeFirma(form.getRawValue())).toEqual({
+      keyId: 'kid-1',
       algorithm: 'RS256',
       publicKey: 'pem',
       certificate: 'cert',
+      validFrom: '2026-09-01T00:00:00.000Z',
+      validTo: '2027-09-01T00:00:00.000Z',
     });
-    interno<{ set: (v: Date) => void }>('validTo').set(new Date('2027-01-01T00:00:00.000Z'));
+  });
 
-    expect(component.intentarLeer()).toEqual({
-      keyId: 'k-1',
-      algorithm: 'RS256',
-      publicKey: 'pem',
-      certificate: 'cert',
-      validTo: '2027-01-01T00:00:00.000Z',
-    });
+  it('cada campo de la sección existe en el grupo: sin eso no se guardaría nada', () => {
+    const form = grupo();
+
+    for (const campo of SECCION_CLAVE_DE_FIRMA.campos) {
+      expect(form.get(campo.key)).not.toBeNull();
+    }
+  });
+
+  it('la sección se sirve en páginas de cuatro, conservando su nombre', () => {
+    const paginas = paginarCampos([SECCION_CLAVE_DE_FIRMA]);
+
+    expect(paginas).toHaveLength(2);
+    expect(paginas[0]?.titulo).toBe('La clave (1 de 2)');
+    for (const pagina of paginas) {
+      expect(pagina.campos.length).toBeLessThanOrEqual(MAX_CAMPOS_POR_PAGINA);
+    }
   });
 });

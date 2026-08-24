@@ -56,7 +56,7 @@ describe('GeofenceForm', () => {
       centerLat: '-34.6',
       centerLng: '-58.38',
     });
-    interno<{ set: (v: string) => void }>('shapeType').set('CIRCLE');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ shapeType: 'CIRCLE' });
 
     interno<() => void>('submit')();
     // `http.verify()` comprueba que no salió ninguna petición.
@@ -69,7 +69,7 @@ describe('GeofenceForm', () => {
       centerLat: '-34.6',
       centerLng: '-58.38',
     });
-    interno<{ set: (v: string) => void }>('shapeType').set('CIRCLE');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ shapeType: 'CIRCLE' });
 
     interno<() => void>('submit')();
 
@@ -102,10 +102,10 @@ describe('GeofenceForm', () => {
       centerLat: '-34.6',
       centerLng: '-58.38',
     });
-    interno<{ set: (v: string) => void }>('shapeType').set('POLYGON');
-    interno<{ set: (v: string) => void }>('geometryJson').set(
-      '{"type": "Polygon", "coordinates": []}',
-    );
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ shapeType: 'POLYGON' });
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      geometryJson: '{"type": "Polygon", "coordinates": []}',
+    });
 
     interno<() => void>('submit')();
 
@@ -128,7 +128,7 @@ describe('GeofenceForm', () => {
 
   it('un polígono sin geometría no sale a la red', () => {
     interno<{ patchValue: (v: object) => void }>('form').patchValue({ name: 'Zona sur' });
-    interno<{ set: (v: string) => void }>('shapeType').set('POLYGON');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ shapeType: 'POLYGON' });
 
     interno<() => void>('submit')();
 
@@ -137,12 +137,14 @@ describe('GeofenceForm', () => {
   });
 
   it('el selector acepta el valor del contrato y rechaza lo desconocido', () => {
-    interno<(v: unknown) => void>('elegirForma')('CIRCLE');
-    expect(interno<() => string | null>('shapeType')()).toBe('CIRCLE');
-
-    interno<(v: unknown) => void>('elegirForma')('CUALQUIER_COSA');
-    // Un valor fuera del contrato no pisa nada.
-    expect(interno<() => string | null>('shapeType')()).toBeNull();
+    // El motor sólo ofrece las dos formas del contrato; la comprobación sigue al
+    // armar el cuerpo, que es lo que llega al backend venga de donde venga.
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      name: 'Sede centro',
+      shapeType: 'CUALQUIER_COSA',
+    });
+    interno<() => void>('submit')();
+    // Nada viajó: `http.verify()` lo comprueba.
   });
 
   it('la pantalla se reinicia para otra carga', () => {

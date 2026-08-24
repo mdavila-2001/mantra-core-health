@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { IdentityAdminClient } from '../../../core/data-access/identity/identity-admin.client';
 import type {
@@ -12,13 +12,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import {
   errorMessageOf,
   objetoJson,
@@ -41,16 +38,11 @@ const MAX_JSON = 2000;
 @Component({
   selector: 'app-verification-policy-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Textarea,
+    PaginatedForm,
   ],
   templateUrl: './verification-policy-form.html',
   styleUrl: '../m27-admin.css',
@@ -64,6 +56,49 @@ export class VerificationPolicyForm {
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
   protected readonly maxJson = MAX_JSON;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué política',
+      hint: 'Cómo se identifica y qué versión es.',
+      campos: [
+        { key: 'policyCode', label: 'Código de la política', hint: 'Único; hasta 100 caracteres. Por ejemplo, IAL2-PACIENTE.', control: 'text', required: true, mensajeDeError: 'Ingresá el código (hasta 100 caracteres).' },
+        { key: 'versionNumber', label: 'Número de versión', hint: 'Opcional: si no se indica, arranca en 1.', control: 'number', mensajeDeError: 'La versión empieza en 1.' },
+      ],
+    },
+    {
+      titulo: 'A quién y ante qué riesgo',
+      hint: 'Qué tipo de sujeto se verifica y qué riesgo tiene la transacción que lo exige.',
+      campos: [
+        { key: 'subjectTypeConceptId', label: 'Tipo de sujeto (concepto)', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'transactionRiskConceptId', label: 'Riesgo de la transacción (concepto)', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Niveles exigidos',
+      hint: 'El de identidad es obligatorio; autenticador y federación, solo si el trámite los pide.',
+      campos: [
+        { key: 'requiredIdentityAssuranceLevelConceptId', label: 'Nivel de identidad exigido — IAL (concepto)', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'requiredAuthenticatorAssuranceLevelConceptId', label: 'Nivel de autenticador — AAL (concepto)', hint: 'Opcional.', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'requiredFederationAssuranceLevelConceptId', label: 'Nivel de federación — FAL (concepto)', hint: 'Opcional.', control: 'text', mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Evidencia y controles',
+      hint: 'Objetos declarativos del modelo; vacíos, no viajan.',
+      campos: [
+        { key: 'evidenceRequirementsJson', label: 'Requisitos de evidencia (JSON)', hint: 'Opcional: un objeto JSON. Vacío, no viaja.', control: 'textarea', mensajeDeError: 'Tiene que ser un objeto JSON válido, como {&quot;campo&quot;: &quot;valor&quot;}.' },
+        { key: 'fraudControlsJson', label: 'Controles de fraude (JSON)', hint: 'Opcional: un objeto JSON. Vacío, no viaja.', control: 'textarea', mensajeDeError: 'Tiene que ser un objeto JSON válido, como {&quot;campo&quot;: &quot;valor&quot;}.' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     policyCode: new FormControl('', {

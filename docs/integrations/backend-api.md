@@ -416,17 +416,31 @@ lee como «no hay antecedentes».
 Completa el CRUD que antes sólo tenía `assignTemplate` — crear, listar y leer
 el esquema de una plantilla por especialidad, no sólo asignarla.
 
-### `FormsClient` — 3 operaciones
+### `FormsClient` — 6 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `POST` | `/forms/instances` | `SpecialtyFormBlock` (abre una instancia) |
 | `POST` | `/forms/instances/:instanceId/values` | `SpecialtyFormBlock` (captura valores) |
 | `POST` | `/forms/instances/:instanceId/close` | `SpecialtyFormBlock` (cierra la instancia) |
+| `POST` | `/forms/field-definitions` | `FormBuilder` (declara el campo, UC-09-02) |
+| `POST` | `/forms/assignments` | `FormBuilder` (lo cuelga del formulario, UC-09-06) |
+| `GET` | `/forms/assignments/budget` | `FormBuilder` (cuánto queda por extender) |
 
-Cubre sólo el ciclo de vida que `specialty-form-block` necesita —abrir, capturar,
-cerrar—; el motor de `forms` tiene mucho más (sets versionados, migraciones)
-y queda sin cliente hasta que una pantalla lo necesite de verdad.
+Las tres primeras son el ciclo de vida que `specialty-form-block` necesita
+—abrir, capturar, cerrar—. El motor de `forms` tiene mucho más (sets versionados,
+migraciones) y sigue sin cliente hasta que una pantalla lo necesite de verdad.
+
+Las tres últimas son el generador del doctor, y **son dos permisos distintos, no
+uno**: declarar un campo sólo pide estar autenticado, colgarlo de un formulario
+exige poder asignar dentro del tenant. Por eso se hacen en dos llamadas y no en
+una, y por eso un fallo en la segunda deja un campo declarado que todavía no
+cuelga de nada.
+
+`GET /forms/assignments/budget` es el techo antes de empezar: la política de
+extensibilidad (`extension_target_policies.maximumFields`) dice cuántos campos
+propios admite ese target, y la pantalla lo consulta para no ofrecer un alta que
+el backend va a rechazar.
 
 ### `AuthzClient` — 2 operaciones · sólo lectura
 

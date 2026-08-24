@@ -18,7 +18,10 @@ import { NotFound } from './features/not-found/not-found';
 import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { authGuard } from './core/auth/auth.guard';
-import { APP_SECTIONS } from './core/navigation/navigation.map';
+import {
+  APP_SECTIONS,
+  ROLES_DE_QUIEN_ATIENDE,
+} from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
   APP_TITLE,
@@ -27,17 +30,6 @@ import {
   titleOf,
   type AppSection,
 } from './core/navigation/navigation.types';
-
-/**
- * Los roles de quien atiende, para las hijas de «Mi perfil» que son sólo suyas.
- *
- * Es la misma pareja que declaran «Archivo clínico» y «Laboratorio e imagen» en
- * el registro (`navigation.map.ts`): la Guía es del paciente; configurar el
- * perfil profesional, la vitrina pública y los artículos médicos son de quien
- * atiende. Un paciente que escribía la dirección llegaba a una pantalla que le
- * hablaba de «las personas que atendí» (feedback de la analista, 18/08/2026).
- */
-const ROLES_DE_QUIEN_ATIENDE: readonly string[] = ['CLINICIAN', 'PRACTITIONER'];
 
 /** La declaración que cierra una hija de «Mi perfil» a quien atiende. */
 function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
@@ -212,6 +204,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'my-account/questionnaires': () =>
     import('./features/account/questionnaires/questionnaires').then((m) => m.Questionnaires),
   glossary: () => import('./features/glossary/glossary').then((m) => m.Glossary),
+  // El generador de formularios del doctor. Diferido: no es el destino del
+  // login de nadie y arrastra el motor de formularios por partes para la vista
+  // previa. La ruta **no puede llamarse `forms`** — es prefijo del proxy hacia
+  // la API y lo verifica `check-route-prefixes.mjs`.
+  'form-builder': () =>
+    import('./features/form-builder/form-builder').then((m) => m.FormBuilder),
   // Carril 17. Las tres pantallas van diferidas: cada una la alcanza un rol
   // distinto —el administrador del laboratorio, el visitador y el doctor— y
   // ninguna es el destino del login de nadie.

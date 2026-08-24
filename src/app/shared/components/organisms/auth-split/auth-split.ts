@@ -5,8 +5,8 @@ import { ThemeService } from '../../../../core/tokens/theme.service';
 import { PointerScene } from '../../../motion/pointer-scene.directive';
 import { AppButton } from '../../atoms/button/button';
 
-/** Las dos medidas del hueco del formulario. Ver `AuthSplit.contentWidth`. */
-export type AuthSplitWidth = 'form' | 'wide';
+/** Las tres medidas del hueco del formulario. Ver `AuthSplit.contentWidth`. */
+export type AuthSplitWidth = 'form' | 'wide' | 'full';
 
 /**
  * Estructura partida de las pantallas de acceso: columna de marca a la
@@ -60,6 +60,16 @@ export class AuthSplit {
    * debajo del otro. `wide` (40 rem) es para altas largas que agrupan campos
    * cortos de a dos por fila —el registro— y que a 27 rem quedarían con dos
    * columnas de menos de 200 px.
+   *
+   * `full` es otra cosa, y por eso no es «otro número»: **se lleva la columna
+   * de marca** y le da la ventana entera al formulario. Es para las altas que
+   * sirve el motor por partes, donde el contenido de una página son cuatro
+   * campos y una barra de avance: encerrado en 40 rem contra media pantalla,
+   * el paso se leía como una tarjetita en una esquina en vez de como la tarea
+   * que la persona vino a hacer. Sin la columna, el fondo vivo y el selector de
+   * tema siguen ahí —pasan a ocupar toda la escena—, y la marca la sostiene la
+   * píldora de `__marca-mini`, que en este modo se muestra también en
+   * escritorio.
    *
    * Existe como entrada y no como una regla suelta porque la limitación **tiene
    * que vivir en esta plantilla**: con encapsulación emulada, un selector de
