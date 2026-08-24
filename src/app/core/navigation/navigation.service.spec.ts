@@ -94,6 +94,12 @@ describe('NavigationService', () => {
         // profesionales, y una sesión sin roles no es de nadie que ejerza.
         // El directorio de laboratorios tampoco: es oferta publicada, no PHI.
         '/laboratory-directory',
+        // A5 y A6 del plan de UX (22/08/2026): los directorios de clínicas y de
+        // farmacias entran por lo mismo que el de laboratorios — es oferta
+        // publicada, no PHI, y quien busca dónde atenderse no tiene un rol que
+        // lo exprese. Salen de `GET /public/search/*`, que es anónimo.
+        '/clinics-directory',
+        '/pharmacies-directory',
         // El glosario ya NO entra: desde el 18/08/2026 (feedback de la analista,
         // F-03) declara los roles de quien atiende, y una sesión sin roles no
         // es de nadie que atienda.
@@ -140,9 +146,65 @@ describe('NavigationService', () => {
       // no atención: el backend exige `SECURITY_ADMIN` y el menú no ofrece una
       // puerta que la API va a cerrar.
       expect(rutasDelMenu()).not.toContain('/administration/medical-laboratory');
-      // La estructura de su propia organización sí: es donde ve en qué sede y
-      // con qué rol trabaja, y `GET /practices` ya lo admite.
-      expect(rutasDelMenu()).toContain('/administration/medical-organization');
+    });
+
+    it('el menú del médico son las ocho opciones del cliente, y el generador', () => {
+      // §4.H del plan de UX del 22/08/2026. El cliente dio una lista **cerrada**
+      // —«las opciones únicas que se requiere en el panel del doctor son…»— y el
+      // menú tenía dieciséis entradas de primer nivel. Esta prueba es la lista,
+      // en el orden en que se dibuja, y falla si alguien agrega la siguiente.
+      //
+      // **«Formularios» es la novena, y entra a propósito.** El generador del
+      // doctor se pidió el 21/08 y llegó el 22 (PR #212), un día antes de esta
+      // lista; es su única puerta, y sacarlo del menú habría dejado huérfana
+      // una pantalla que el mismo cliente pidió. Las dos cosas son suyas: la
+      // lista dice que el panel no se llena de renglones, no que se tire lo
+      // encargado. Cualquier décima sí tiene que discutirse.
+      //
+      // La otra que apareció en el mismo merge, «Promociones» de la farmacia,
+      // NO entra: cumplía `requiresTenant` porque el médico pertenece a su
+      // clínica, no porque atienda un mostrador. Sale por `fueraDelMenuPara`,
+      // y se sigue llegando por la ruta —lo fija la prueba de abajo—.
+      abrirSesion(['PRACTITIONER']);
+
+      const fueraDeMiCuenta = service
+        .menu()
+        .filter((grupo) => grupo.label !== 'Mi cuenta')
+        .flatMap((grupo) => grupo.items.map((item) => item.label));
+
+      expect(fueraDeMiCuenta).toEqual([
+        'Chats',
+        'Directorio de laboratorios',
+        'Consulta médica',
+        'Turnos',
+        'Archivo clínico',
+        'Evoluciones',
+        'Glosario',
+        'Formularios',
+        'Contabilidad',
+      ]);
+    });
+
+    it('lo que sale del menú del médico NO le cierra la puerta', () => {
+      // La distinción entera de `fueraDelMenuPara`: la organización médica, sus
+      // encuestas y su bandeja de visitas dejaron de ocupar un renglón y siguen
+      // siendo suyas — se llega por su ruta y por el enlace de otra pantalla.
+      // Si esto se rompiera, una limpieza de menú habría sido una pérdida
+      // silenciosa de acceso, que es justo lo que no puede pasar.
+      abrirSesion(['PRACTITIONER']);
+
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      expect(alcanzables).toContain('/administration/medical-organization');
+      expect(alcanzables).toContain('/questionnaires');
+      expect(alcanzables).toContain('/lab-visits');
+      expect(alcanzables).toContain('/dashboard');
+
+      expect(alcanzables).toContain('/administration/pharmacy-campaigns');
+
+      expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
+      expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
+      expect(rutasDelMenu()).not.toContain('/questionnaires');
+      expect(rutasDelMenu()).not.toContain('/lab-visits');
     });
 
     it('la Guía de profesionales solo aparece en el menú del paciente', () => {
@@ -261,7 +323,8 @@ describe('NavigationService', () => {
     it('los parámetros de consulta no confunden a la sección', async () => {
       await router.navigateByUrl('/schedule?fecha=2026-08-04');
 
-      expect(service.currentSection()?.label).toBe('Agenda');
+      // «Turnos» desde §4.H del plan de UX: la ruta sigue siendo `schedule`.
+      expect(service.currentSection()?.label).toBe('Turnos');
     });
   });
 });

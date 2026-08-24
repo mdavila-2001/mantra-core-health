@@ -1,0 +1,144 @@
+/* ============================================================================
+    Tarjeta de directorio — la forma de grilla de un resultado.
+
+    Estilos **encapsulados a propósito**, a diferencia de `search-result`: ver
+    el JSDoc del componente. La regla corta es que `redsat.css` es una copia de
+    la bóveda y se vuelve a copiar entera, así que lo que nace de este lado
+    tiene que vivir de este lado o se pierde.
+
+    Lo que sí se toma prestado del archivo global es `.app-badge`, que se pinta
+    igual acá que en la fila: dos escalas de insignia en el mismo directorio se
+    verían como dos productos.
+    ========================================================================== */
+
+:host {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: var(--sp-4);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-lg);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    transition:
+        box-shadow 0.16s ease,
+        border-color 0.16s ease,
+        transform 0.16s ease;
+}
+
+:host(:hover) {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-md);
+}
+
+/* El anillo va en el HOST y no en el enlace: el enlace se estiró sobre toda la
+   tarjeta con el `::after` de abajo, así que su propio anillo dibujaría un
+   rectángulo invisible de 0 px. `:focus-within` lo pone donde se ve. */
+:host(:focus-within) {
+    border-color: var(--brand-secondary);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host {
+        transition: none;
+    }
+}
+
+/* ---- figura ------------------------------------------------------------- */
+
+.tarjeta-resultado__figura {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 56px;
+    block-size: 56px;
+    border-radius: var(--r-md);
+    background: var(--bg-inset);
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    font-weight: 600;
+    overflow: hidden;
+}
+
+.tarjeta-resultado__figura img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+}
+
+/* ---- texto -------------------------------------------------------------- */
+
+.tarjeta-resultado__titulo {
+    margin: 0;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+}
+
+.tarjeta-resultado__titulo a {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+/* El objetivo táctil es la tarjeta entera, no las tres palabras del nombre:
+   en una grilla en el teléfono, apuntarle al texto es la diferencia entre
+   entrar y volver a intentarlo. El `::after` se queda DEBAJO del pie
+   (`z-index`) para que el botón proyectado siga siendo pulsable. */
+.tarjeta-resultado__titulo a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+}
+
+.tarjeta-resultado__titulo a:focus-visible {
+    outline: none;
+}
+
+.tarjeta-resultado__tipo,
+.tarjeta-resultado__sellos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin: 0;
+}
+
+.tarjeta-resultado__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.tarjeta-resultado__meta span {
+    /* Dos líneas iguales en todas las tarjetas: una que se desborda estira su
+       fila entera de la grilla y deja huecos en las vecinas. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ---- pie ---------------------------------------------------------------- */
+
+.tarjeta-resultado__pie {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    /* Empuja el pie al fondo: las tarjetas de una fila comparten alto y los
+       botones tienen que quedar alineados entre sí, no cada uno donde termine
+       su texto. `:empty` no dibuja nada. */
+    margin-block-start: auto;
+}
+
+.tarjeta-resultado__pie:empty {
+    display: none;
+}

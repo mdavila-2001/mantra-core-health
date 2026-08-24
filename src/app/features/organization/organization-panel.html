@@ -68,15 +68,24 @@
             </app-form-field>
 
             @if (esAseguradora()) {
-              <app-form-field label="Sigla">
+              <app-form-field
+                label="Sigla"
+                hint="Las pocas letras con las que se la nombra en tablas y comprobantes."
+              >
                 <app-input [(value)]="sigla" placeholder="Sigla" />
               </app-form-field>
 
-              <app-form-field label="NIT">
+              <app-form-field
+                label="NIT"
+                hint="El número de identificación tributaria, para la facturación."
+              >
                 <app-input [(value)]="nit" placeholder="NIT" />
               </app-form-field>
 
-              <app-form-field label="Dirección">
+              <app-form-field
+                label="Dirección"
+                hint="La de la casa matriz. Las de cada sucursal se cargan en su sede."
+              >
                 <app-input [(value)]="direccion" placeholder="Dirección" />
               </app-form-field>
 
@@ -181,8 +190,11 @@
               <ul class="organizacion__citas">
                 @for (cita of citasVisibles(); track cita.bookingId) {
                   <li class="organizacion__cita">
+                    <!-- Inicio y fin (D1 del plan de UX): el mostrador necesita
+                         saber cuándo se libera el consultorio, no sólo cuándo se
+                         ocupa. -->
                     <span class="organizacion__cita-hora">
-                      {{ cita.startAt | date: 'HH:mm' }}
+                      {{ cita.startAt | date: 'HH:mm' }}–{{ cita.endAt | date: 'HH:mm' }}
                     </span>
                     <span class="organizacion__cita-paciente">
                       {{ cita.patientName || 'Paciente sin nombre registrado' }}

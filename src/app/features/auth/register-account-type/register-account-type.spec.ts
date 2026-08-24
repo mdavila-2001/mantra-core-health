@@ -36,7 +36,9 @@ describe('RegisterAccountType', () => {
 
     // Sin «Otro»: la API no tiene una cuarta alta pública, y una tarjeta que no
     // lleva a ningún lado deja sin opción a quien ya eligió la suya.
-    expect(titulos).toEqual(['Paciente', 'Doctor', 'Aseguradora']);
+    // «Médico» y no «Doctor» (F2 del plan de UX del 22/08/2026): en toda la
+    // superficie que ve un paciente o un profesional se dice «médico».
+    expect(titulos).toEqual(['Paciente', 'Médico', 'Aseguradora']);
   });
 
   it('cada tarjeta lleva a su alta', () => {

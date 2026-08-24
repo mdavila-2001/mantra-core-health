@@ -14,10 +14,13 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { MedicalOrganizationClient } from '../../../core/data-access/medical-organization/medical-organization.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
+  PublishedTemplate,
   ResourceType,
   ScheduleRule,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { AGENDA_MINE_ROUTE } from '../agenda.routes';
+import { miRecursoDeAgenda } from '../mi-recurso';
 import { calcularTurnos, type Calculo } from './agenda-turnos';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
@@ -63,6 +66,14 @@ const HORIZONTE_MESES = 3;
 
 /** Duraciones ofrecidas como fichas. La séptima opción es escribirla. */
 const DURACIONES = [15, 20, 30, 45, 60, 90] as const;
+
+/**
+ * A cuánto se cae la duración cuando el horario vigente no la declara.
+ *
+ * Media hora: es la duración más frecuente y la que el propio formulario trae
+ * marcada al abrirse en blanco.
+ */
+const DURACION_POR_OMISION = 30;
 
 /** Entero positivo o vacío: los numéricos opcionales viajan como texto. */
 const ENTERO_POSITIVO = /^\d+$/;
@@ -161,6 +172,7 @@ export class AgendaCreate {
   private readonly navigation = inject(NavigationService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+  protected readonly rutaDeMiAgenda = AGENDA_MINE_ROUTE;
   protected readonly uuidError = UUID_ERROR;
   protected readonly dias = DIAS;
   protected readonly duraciones = DURACIONES;
@@ -208,6 +220,20 @@ export class AgendaCreate {
     errorMessageOf(this.estado(), 'No tenés permiso para configurar agenda.'),
   );
   protected readonly publicado = signal(false);
+
+  /* -- Cambiar un horario que ya existe (D2 del plan de UX) ---------------- */
+
+  /**
+   * El horario vigente, cuando esta pantalla se abre para **cambiarlo**.
+   *
+   * `null` mientras se lo busca o cuando de verdad no hay ninguno. Que sea no
+   * nulo es lo que convierte a esta pantalla de «publicá tu agenda» en «cambiá
+   * tu horario»: mismo formulario, otro encabezado y otro aviso.
+   */
+  protected readonly vigente = signal<PublishedTemplate | null>(null);
+
+  /** Si se está editando un horario ya publicado. */
+  protected readonly esCambio = computed(() => this.vigente() !== null);
 
   /** Identificadores ya obtenidos: reintentar no vuelve a crearlos. */
   private readonly resourceId = signal<string | null>(null);
@@ -340,6 +366,76 @@ export class AgendaCreate {
   constructor() {
     this.semana.valueChanges.subscribe(() => this.versionDeLaSemana.update((v) => v + 1));
     this.cargarSedes();
+    this.cargarHorarioVigente();
+  }
+
+  /**
+   * Busca el horario ya publicado y, si lo hay, lo carga en el formulario.
+   *
+   * ## Por qué esto no es una comodidad, es una corrección
+   *
+   * «Mi agenda» ofrecía «Cambiar mi horario» y traía acá, a un formulario en
+   * blanco que **siempre creaba un recurso nuevo**. Es decir: el médico que
+   * quería mover su horario de los martes terminaba con **dos agendas** en la
+   * misma organización, y los pacientes viendo los turnos de las dos. Era el
+   * pedido de Pablo —«vista de edición de horarios»— y a la vez un defecto.
+   *
+   * Ahora, si el recurso ya existe, se reusa (`resourceId` queda fijado antes
+   * de publicar) y la semanita se rellena con lo que hoy está vigente. La
+   * pantalla que se reabre es **reconocible**, que es lo que hace que editar se
+   * sienta editar.
+   *
+   * Un fallo acá **no rompe nada**: se sigue con el formulario en blanco, que
+   * es el comportamiento de siempre. No se le arruina el alta a alguien porque
+   * la lectura de plantillas haya fallado.
+   */
+  private cargarHorarioVigente(): void {
+    const perfil = this.auth.practitionerProfileId();
+    const tenantId = this.organizacion();
+    // Sin rol de agenda tampoco se pregunta: la lectura devolvería 403 y esta
+    // pantalla ya le está diciendo a esa sesión que la sección no es suya.
+    if (perfil === null || tenantId === null || !this.puedeCrear()) return;
+
+    miRecursoDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+      next: (recurso) => {
+        if (recurso === null) return;
+        this.resourceId.set(recurso.id);
+        this.scheduling.listTemplates(recurso.id).subscribe({
+          next: (pagina) => {
+            // La primera es la que gobierna: el servidor las devuelve de la más
+            // reciente a la más vieja, y es el mismo criterio que usa «Mi
+            // agenda» para decir qué horario tenés.
+            const vigente = pagina.items[0];
+            if (vigente === undefined) return;
+            this.vigente.set(vigente);
+            this.cargarSemanaDesde(vigente);
+          },
+          error: () => undefined,
+        });
+      },
+      error: () => undefined,
+    });
+  }
+
+  /** Vuelca las reglas del horario vigente en la semanita del formulario. */
+  private cargarSemanaDesde(plantilla: PublishedTemplate): void {
+    for (const indice of DIAS.keys()) {
+      this.semana.at(indice).patchValue({ activo: false });
+    }
+    for (const regla of plantilla.rules) {
+      const indice = DIAS.findIndex((dia) => dia.numero === regla.dayOfWeek);
+      if (indice === -1) continue;
+      this.semana.at(indice).patchValue({
+        activo: true,
+        desde: sinSegundos(regla.startTime),
+        hasta: sinSegundos(regla.endTime),
+        duracion: regla.slotMinutes ?? plantilla.slotMinutes ?? DURACION_POR_OMISION,
+      });
+    }
+    if (plantilla.validTo !== undefined) {
+      this.formGeneral.controls.tieneFin.setValue('si');
+      this.fechaDeFin.set(new Date(plantilla.validTo));
+    }
   }
 
   /**
@@ -632,6 +728,11 @@ function nuevoDia(_dayOfWeek: number): DiaGroup {
     }),
     duracion: new FormControl(30, { nonNullable: true, validators: [Validators.required] }),
   });
+}
+
+/** `09:00:00` → `09:00`: los segundos de una regla nunca son distintos de cero. */
+function sinSegundos(hora: string): string {
+  return hora.slice(0, 5);
 }
 
 /** `09:00` → `9`, `13:30` → `13:30`: la hora redonda se lee sin los minutos. */

@@ -167,12 +167,14 @@ export class RegisterOrganization {
         {
           key: 'tradeName',
           label: 'Nombre comercial (opcional)',
+          hint: 'Con el que la conocen los afiliados. Es el que se ve en el directorio.',
           control: 'text' as const,
           testId: 'registro-organizacion-comercial',
         },
         {
           key: 'sigla',
           label: 'Sigla',
+          hint: 'Las pocas letras con las que se la nombra en tablas y comprobantes.',
           control: 'text' as const,
           required: true,
           testId: 'registro-organizacion-sigla',
@@ -187,6 +189,7 @@ export class RegisterOrganization {
         {
           key: 'regulatorIdentifier',
           label: 'NIT',
+          hint: 'El número de identificación tributaria, para la facturación.',
           control: 'text' as const,
           required: true,
           testId: 'registro-organizacion-nit',
@@ -195,6 +198,7 @@ export class RegisterOrganization {
         {
           key: 'address',
           label: 'Dirección',
+          hint: 'La de la casa matriz. Las de cada sucursal se cargan después.',
           control: 'text' as const,
           required: true,
           testId: 'registro-organizacion-direccion',

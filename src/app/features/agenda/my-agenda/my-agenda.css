@@ -104,3 +104,12 @@
 .mi-agenda__acciones-dia {
   margin-top: var(--sp-4);
 }
+
+/* D5 del plan de UX · el botón de bloqueo, en la solapa del mes y a la vista.
+   Alineado a la derecha para que no compita con el calendario, que es lo que
+   se viene a mirar. */
+.mi-agenda__acciones-mes {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: var(--sp-4);
+}

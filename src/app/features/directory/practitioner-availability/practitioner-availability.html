@@ -59,9 +59,15 @@
                   @for (cupo of sede.cupos; track cupo.id) {
                     <li>
                       <!-- El `aria-label` lleva la fecha completa: «Lun 24 ·
-                           09:30» se lee de un vistazo pero no se escucha bien,
-                           y quien navega con lector necesita saber de qué día
-                           habla cada chip. -->
+                           09:30–10:00» se lee de un vistazo pero no se escucha
+                           bien, y quien navega con lector necesita saber de qué
+                           día habla cada chip.
+
+                           **Y la hora de fin** (D1 del plan de UX del
+                           22/08/2026): el chip decía «Lun 24 · 09:30» y quien
+                           pide turno no sabía si le tomaban veinte minutos o
+                           una hora. El dato ya venía en el cupo —`endAt` no es
+                           opcional en `AgendaSlot`—; sólo no se pintaba. -->
                       <button
                         app-button
                         type="button"
@@ -70,15 +76,17 @@
                         [attr.aria-label]="
                           'Pedir turno el ' +
                           (cupo.startAt | date: 'EEEE d \'de\' MMMM') +
-                          ' a las ' +
+                          ' de ' +
                           (cupo.startAt | date: 'HH:mm') +
+                          ' a ' +
+                          (cupo.endAt | date: 'HH:mm') +
                           ' en ' +
                           sede.recurso.name
                         "
                         (clicked)="reservar(sede, cupo)"
                       >
                         {{ cupo.startAt | date: 'EEE d' }} ·
-                        {{ cupo.startAt | date: 'HH:mm' }}
+                        {{ cupo.startAt | date: 'HH:mm' }}–{{ cupo.endAt | date: 'HH:mm' }}
                       </button>
                     </li>
                   }
@@ -94,7 +102,7 @@
                     (clicked)="reservar(sede, proximo)"
                   >
                     {{ proximo.startAt | date: 'EEE d MMM' }} ·
-                    {{ proximo.startAt | date: 'HH:mm' }}
+                    {{ proximo.startAt | date: 'HH:mm' }}–{{ proximo.endAt | date: 'HH:mm' }}
                   </button>
                 </p>
               } @else {

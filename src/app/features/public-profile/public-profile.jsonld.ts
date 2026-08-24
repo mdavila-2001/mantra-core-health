@@ -45,9 +45,10 @@ const PREFIJO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  * dato como inválido y, peor, publica en el buscador que a este profesional lo
  * calificaron mal cuando nadie lo calificó.
  *
- * **No hay `address` sin dirección ni `geo` sin coordenadas.** Un
+ * **No hay `address` sin calle NI ciudad, ni `geo` sin coordenadas.** Un
  * `PostalAddress` vacío es un resultado de mapa que manda a alguien a ninguna
- * parte.
+ * parte. Con una sola de las dos sí se declara: la localidad sola es válida y
+ * es media búsqueda de un médico.
  *
  * Todo campo se agrega sólo si tiene valor; no hay claves con `null`.
  *
@@ -84,14 +85,18 @@ export function jsonLdDePerfil(
     datos[clave] = [...perfil.specialties];
   }
 
-  if (perfil.address !== null && perfil.address !== '') {
-    const direccion: Record<string, unknown> = {
-      '@type': 'PostalAddress',
-      streetAddress: perfil.address,
-    };
-    if (perfil.city !== null && perfil.city !== '') {
-      direccion['addressLocality'] = perfil.city;
-    }
+  // **La ciudad sola también cuenta** (B3 del plan de UX del 22/08/2026). Antes
+  // hacía falta la calle para declarar nada, así que una ficha que dice
+  // «Cochabamba» aparecía en el buscador sin ninguna localidad — y «dónde
+  // atiende» es media búsqueda de un médico. Un `addressLocality` sin
+  // `streetAddress` es un `PostalAddress` válido; lo que no vale es uno vacío,
+  // que manda a alguien a ninguna parte.
+  const tieneCalle = perfil.address !== null && perfil.address !== '';
+  const tieneCiudad = perfil.city !== null && perfil.city !== '';
+  if (tieneCalle || tieneCiudad) {
+    const direccion: Record<string, unknown> = { '@type': 'PostalAddress' };
+    if (tieneCalle) direccion['streetAddress'] = perfil.address;
+    if (tieneCiudad) direccion['addressLocality'] = perfil.city;
     datos['address'] = direccion;
   }
 

@@ -165,6 +165,22 @@
       Tu acceso decide qué secciones ves. Para cambiarlo, pedíselo a quien administra la
       organización.
     </p>
+
+    <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta.
+
+         El menú del médico quedó en las ocho opciones que pidió el cliente, y
+         estas tres salieron de ahí. **No se les cerró la puerta**: son
+         trámites, no trabajo diario, y su casa natural es «Mi perfil», que es
+         donde alguien va a buscar «¿dónde trabajo?». Esconderlas sin dejar
+         camino habría convertido una limpieza de menú en una pérdida de
+         acceso, que es lo único que no puede pasar. -->
+    @if (esProfesional()) {
+      <nav class="mi-perfil__enlaces" aria-label="Tus organizaciones">
+        <a app-link routerLink="/my-organizations">Mis organizaciones</a>
+        <a app-link routerLink="/administration/my-organization">Tu organización</a>
+        <a app-link routerLink="/administration/medical-organization">Organización médica</a>
+      </nav>
+    }
   </app-card>
   }
 

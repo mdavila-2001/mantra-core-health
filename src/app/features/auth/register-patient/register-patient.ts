@@ -360,6 +360,7 @@ export class RegisterPatient {
           {
             key: 'sexAtBirth',
             label: 'Sexo al nacer (opcional)',
+            hint: 'Dato clínico: cambia las dosis, los valores de referencia y los tamizajes.',
             control: 'select',
             options: OPCIONES_SEXO_AL_NACER,
             placeholder: 'Sin especificar',
@@ -374,6 +375,7 @@ export class RegisterPatient {
           {
             key: 'occupationFreeText',
             label: 'Ocupación (opcional)',
+            hint: 'En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio.',
             control: 'text',
             autocomplete: 'organization-title',
             placeholder: 'Docente',
@@ -511,6 +513,7 @@ export class RegisterPatient {
           {
             key: 'licenseNumber',
             label: 'Número de matrícula',
+            hint: 'La que te habilita a ejercer, la del registro del Ministerio.',
             control: 'text',
             required: true,
             autocomplete: 'off',
@@ -541,6 +544,7 @@ export class RegisterPatient {
           {
             key: 'licenseIssueDate',
             label: 'Fecha de inscripción de la matrícula (opcional)',
+            hint: 'Cuándo te registraste, no cuándo vence.',
             control: 'date',
           },
         ],
@@ -552,6 +556,7 @@ export class RegisterPatient {
           {
             key: 'professionalTitle',
             label: 'Título profesional (opcional)',
+            hint: 'Cómo querés que te nombren en tu ficha: «Médica cardióloga», «Odontólogo».',
             control: 'text',
             autocomplete: 'off',
             placeholder: 'Cardiología',

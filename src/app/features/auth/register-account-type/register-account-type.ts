@@ -37,7 +37,7 @@ const TIPOS: readonly TipoDeCuenta[] = [
   },
   {
     icono: 'practitioner',
-    titulo: 'Doctor',
+    titulo: 'Médico',
     detalle: 'Atendé, recetá y llevá tu agenda. Necesitás matrícula y colegio.',
     ruta: '/auth/register/practitioner',
     testId: 'tipo-profesional',

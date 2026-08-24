@@ -44,10 +44,15 @@
       <span class="app-side-nav__brillo"></span>
     </div>
 
-    <p class="app-side-nav__marca">
+    <!-- La marca es un enlace al panel desde §4.H del plan de UX. El menú del
+         médico quedó en ocho entradas y «Panel» no es una de ellas: sin esto,
+         el único camino de vuelta al inicio sería el rastro de migas de la
+         pantalla en la que uno esté. Un logotipo que lleva al inicio es además
+         lo que cualquiera prueba primero. -->
+    <a class="app-side-nav__marca" routerLink="/dashboard" aria-label="AloVida — ir al panel">
       <img src="/redsat/imagenes/alovida-logo-blanco.svg" alt="" width="34" height="25" />
       <span>AloVida</span>
-    </p>
+    </a>
 
     <!-- Los grupos y sus ítems siguen saliendo del registro de secciones: lo
          que cambia es cómo se pintan, no de dónde vienen. -->

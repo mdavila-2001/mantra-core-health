@@ -62,28 +62,32 @@
       </app-card>
 
       <!-- ─── La vista previa ──────────────────────────────────────────────
-           Así te ven, calculada de lo que hay escrito en el formulario en este
-           mismo instante — no de lo último guardado. -->
+           **Es el mismo componente que dibuja `/p/:slug`** (B1 del plan de UX
+           del 22/08/2026), alimentado con lo que hay escrito en el formulario
+           en este mismo instante — no con lo último guardado.
+
+           Acá había una tarjetita dibujada a mano que no se parecía a la ficha
+           que prometía previsualizar. Era el reclamo textual del cliente: «el
+           perfil público debe ser el mismo que se ve el preview, si no no tiene
+           ningún sentido tener preview». -->
       <div class="vitrina__previa">
         <p class="vitrina__previa-rotulo">Así te ven</p>
 
-        <app-card variant="outlined" padding="lg" class="vitrina__tarjeta">
-          <div class="vitrina__tarjeta-encabezado">
-            <app-avatar size="lg" [name]="vistaPrevia().displayName" alt="" />
-            <div>
-              <h3 class="vitrina__tarjeta-nombre">{{ vistaPrevia().displayName }}</h3>
-              @if (vistaPrevia().headline) {
-                <p class="vitrina__tarjeta-titular">{{ vistaPrevia().headline }}</p>
-              }
-            </div>
-          </div>
+        @if (sinFoto()) {
+          <!-- B4 · «Agregar tu foto». Se avisa lo que falta **y se dice la
+               verdad de por qué no hay botón**: ni `PUT /community/profiles/me`
+               ni `PATCH /profiles/practitioners/me` aceptan hoy el archivo de
+               la foto, así que un botón acá sería un botón que no puede
+               funcionar. Queda anotado en `PENDIENTES-BACKEND.md`. -->
+          <app-alert tone="info" title="Tu ficha se ve sin foto">
+            Quien te busque va a ver tus iniciales. Una foto es lo que hace que alguien reconozca a
+            su médico en una lista. Todavía no se puede subir desde acá: lo estamos habilitando.
+          </app-alert>
+        }
 
-          @if (vistaPrevia().biography) {
-            <p class="vitrina__tarjeta-bio">{{ vistaPrevia().biography }}</p>
-          }
+        <app-public-profile-card [perfil]="vistaPrevia()" [preview]="true" />
 
-          <p class="vitrina__tarjeta-enlace">alovida.app/p/{{ vistaPrevia().slug }}</p>
-        </app-card>
+        <p class="vitrina__enlace">{{ enlace() }}</p>
 
         @if (tieneVitrina()) {
           <p class="vitrina__articulos">

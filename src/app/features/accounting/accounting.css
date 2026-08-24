@@ -65,3 +65,77 @@
   margin-bottom: var(--e3);
   display: block;
 }
+
+/* ============================================================================
+    «Mi facturación» (H4 del plan de UX del 22/08/2026) — lo que ve el médico
+    antes que los libros.
+    ========================================================================== */
+
+.facturacion {
+    display: block;
+    margin-block-end: var(--sp-5);
+}
+
+.facturacion__titulo {
+    margin: 0 0 var(--sp-3);
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+}
+
+.facturacion__total {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    margin-block-end: var(--sp-4);
+}
+
+.facturacion__cifra {
+    font-family: var(--font-mono);
+    font-size: var(--fs-h1);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.facturacion__pie {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.facturacion__meses {
+    display: grid;
+    gap: var(--sp-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.facturacion__mes {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--sp-1) var(--sp-3);
+    padding-block: var(--sp-2);
+    border-block-start: 1px solid var(--border-default);
+}
+
+.facturacion__mes-nombre {
+    font-weight: 600;
+    /* El nombre del mes viene de `toLocaleDateString`, en minúscula. */
+    text-transform: capitalize;
+}
+
+.facturacion__mes-total {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    text-align: end;
+}
+
+.facturacion__mes-detalle {
+    grid-column: 1 / -1;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.libros-abrir {
+    margin-block: var(--sp-4);
+}

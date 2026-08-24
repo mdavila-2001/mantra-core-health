@@ -73,7 +73,10 @@ describe('NotificationPreferences', () => {
     // sus avisos razona en «recetas y consultas».
     expect(texto()).toContain('Recetas y consultas');
     expect(texto()).toContain('Turnos');
-    expect(texto()).toContain('Mensajes');
+    // «Chats» y no «Mensajes» desde F1/§4.H del plan de UX del 22/08/2026: la
+    // sección se llama así en el menú, y las preferencias de aviso tienen que
+    // usar el mismo nombre o son dos cosas distintas para quien las lee.
+    expect(texto()).toContain('Chats');
     expect(texto()).toContain('Actividad social');
     expect(texto()).not.toContain('CLINICAL');
   });

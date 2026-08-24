@@ -32,6 +32,39 @@ export interface FilterDef {
   readonly options: readonly SelectOption<string>[];
   /** Motivo visible cuando el value set no está disponible. */
   readonly unavailableReason?: string;
+  /**
+   * Se dibuja como **una fila de chips que se tocan**, no como un desplegable.
+   *
+   * Lo pidió el cliente para los cuatro directorios (A3 del plan de UX del
+   * 22/08/2026: «Chips de filtro»), y la diferencia no es estética: un
+   * desplegable **esconde** las opciones hasta que alguien lo abre, así que
+   * quien entra al directorio de laboratorios no se entera de que puede acotar
+   * por categoría. Los chips las muestran, y acotar pasa a ser un toque.
+   *
+   * Por eso mismo es para value sets **cortos**: doce especialidades entran en
+   * dos renglones, ciento veinte ciudades no. Cuando la lista es larga sigue
+   * ganando el desplegable, que es el valor por omisión.
+   */
+  readonly asChips?: boolean;
+
+  /**
+   * Rótulo del renglón de chips en el que este filtro se dibuja.
+   *
+   * Los filtros que declaran el **mismo** `chipsGroup` comparten renglón y
+   * encabezado. Existe porque «toma a domicilio» y «atiende sin cita» son dos
+   * claves distintas de la URL y una sola pregunta de la persona —«¿qué
+   * comodidades?»—, y darles un encabezado a cada una ponía dos renglones que
+   * decían lo mismo dos veces.
+   *
+   * Sin él, cada filtro es su propio renglón, rotulado con su `label`.
+   */
+  readonly chipsGroup?: string;
+}
+
+/** Un renglón de chips ya resuelto: su rótulo y los filtros que lo componen. */
+export interface ChipGroup {
+  readonly label: string;
+  readonly filters: readonly FilterDef[];
 }
 
 /** Un filtro activo, listo para dibujarse como chip. */
@@ -119,6 +152,57 @@ export class FilterBar {
   protected readonly hasActiveFilters = computed(
     () => this.activeFilters().length > 0 || this.searchTerm() !== '',
   );
+
+  /** Los filtros que se dibujan como desplegable, que sigue siendo lo normal. */
+  protected readonly selectFilters = computed(() =>
+    this.filters().filter((filtro) => filtro.asChips !== true),
+  );
+
+  /**
+   * Los renglones de chips, ya agrupados por {@link FilterDef.chipsGroup}.
+   *
+   * Se conserva el orden de declaración: el primer filtro de cada grupo fija
+   * dónde aparece el renglón, así que reordenar la pantalla es reordenar el
+   * array de filtros y nada más.
+   */
+  protected readonly chipGroups = computed<readonly ChipGroup[]>(() => {
+    const grupos: { label: string; filters: FilterDef[] }[] = [];
+    for (const filtro of this.filters()) {
+      if (filtro.asChips !== true) {
+        continue;
+      }
+      const rotulo = filtro.chipsGroup ?? filtro.label;
+      const existente = grupos.find((grupo) => grupo.label === rotulo);
+      if (existente === undefined) {
+        grupos.push({ label: rotulo, filters: [filtro] });
+      } else {
+        existente.filters.push(filtro);
+      }
+    }
+    return grupos;
+  });
+
+  /** Si esa opción es la que está puesta hoy para ese filtro. */
+  protected isChipSelected(filter: FilterDef, code: string): boolean {
+    return this.valueOf(filter) === code;
+  }
+
+  /**
+   * Alterna un chip de filtro.
+   *
+   * Tocar el que ya está puesto lo **quita**, que es lo que espera cualquiera
+   * que haya usado un filtro de chips: si el único modo de sacarlo fuera el
+   * chip de «activos» de abajo, un toque de más dejaría a la persona sin
+   * salida visible.
+   *
+   * Un filtro, un valor: el segundo chip reemplaza al primero. La selección
+   * múltiple exigiría que la URL llevara listas y que el backend aceptara
+   * `?tipo=a,b`, y hoy ninguno de los dos lo hace — ofrecerla en la pantalla
+   * sería prometer un filtrado que la respuesta no aplica.
+   */
+  protected toggleChip(filter: FilterDef, code: string): void {
+    this.applyParams({ [filter.key]: this.isChipSelected(filter, code) ? null : code }, false);
+  }
 
   /** Mientras se tipea se reemplaza la entrada del historial: no se ensucia. */
   protected onSearch(term: string): void {

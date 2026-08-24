@@ -26,6 +26,27 @@
     color: var(--st-warning-fg);
 }
 
+/* ---- filtros de chips (A3 del plan de UX) -------------------------------
+   Se envuelven en vez de desplazarse en horizontal: un carrusel esconde la
+   mitad de las opciones, que es justo lo que los chips vinieron a arreglar.
+   Con muchas opciones se ve alto, y eso es preferible a que no se vean. */
+
+.filter-bar__chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-block-start: var(--sp-3);
+}
+
+.filter-bar__chips-rotulo {
+    color: var(--text-secondary);
+    font-size: var(--fs-overline);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
 .filter-bar__active {
     display: flex;
     align-items: center;

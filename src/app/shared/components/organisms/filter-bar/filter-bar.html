@@ -6,7 +6,7 @@
     (searched)="onSearch($event)"
   />
 
-  @for (filter of filters(); track filter.key) {
+  @for (filter of selectFilters(); track filter.key) {
     <div class="filter-bar__filter">
       @if (isAvailable(filter)) {
         <app-select
@@ -33,6 +33,37 @@
     </div>
   }
 </div>
+
+<!-- Los filtros de chips van en su propia fila, DEBAJO de los controles y
+     ENCIMA de los activos: son la lista de opciones a la vista, y mezclarlos
+     con los desplegables los haría competir por el mismo renglón. Cada grupo
+     es un `role="group"` con su rótulo, para que un lector de pantalla diga
+     «Categoría, grupo» antes de leer los ocho chips. -->
+@for (grupo of chipGroups(); track grupo.label) {
+  <div class="filter-bar__chips" role="group" [attr.aria-label]="grupo.label">
+    <span class="filter-bar__chips-rotulo">{{ grupo.label }}</span>
+    @for (filter of grupo.filters; track filter.key) {
+      @if (isAvailable(filter)) {
+        @for (opcion of filter.options; track opcion.value) {
+          <app-chip
+            size="md"
+            variant="info"
+            [selectable]="true"
+            [label]="opcion.label"
+            [selected]="isChipSelected(filter, opcion.value)"
+            (selectedChange)="toggleChip(filter, opcion.value)"
+          >
+            {{ opcion.label }}
+          </app-chip>
+        }
+      } @else {
+        <p class="filter-bar__unavailable">
+          {{ filter.unavailableReason || 'No se pudo cargar el listado de opciones.' }}
+        </p>
+      }
+    }
+  </div>
+}
 
 @if (hasActiveFilters()) {
   <div class="filter-bar__active">

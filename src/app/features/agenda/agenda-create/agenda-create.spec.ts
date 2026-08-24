@@ -25,6 +25,9 @@ interface Testable {
   readonly fechaDeFin: WritableSignal<Date | null>;
   readonly resumen: () => string;
   readonly sinDias: () => boolean;
+  /** D2: la semana visible y el grupo de cada día, para comprobar la precarga. */
+  readonly diasVisibles: () => readonly { indice: number; largo: string; activo: boolean }[];
+  grupoDe(indice: number): FormGroup;
   alternarDia(indice: number): void;
   elegirDuracion(indice: number, minutos: number): void;
   repetirElPrimero(): void;
@@ -74,6 +77,66 @@ describe('AgendaCreate', () => {
     // Las sedes se leen al construir; sin responderla, `http.verify()` la
     // denuncia como pendiente en cada prueba.
     http.expectOne('/practices').flush([]);
+
+    // Y desde D2 (plan de UX del 22/08/2026) también se busca el horario que ya
+    // esté publicado, para poder **cambiarlo** en vez de crear una segunda
+    // agenda. Por omisión se responde «no hay recurso», que es el caso del alta
+    // y el que cubren casi todas las pruebas de este archivo; el del cambio lo
+    // arma {@link crearConHorarioVigente}.
+    if (leeHorarioVigente(roles, tenant, perfilProfesional)) {
+      http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
+    }
+    fixture.detectChanges();
+  }
+
+  /**
+   * Si la pantalla va a preguntar por el horario vigente con esos parámetros.
+   *
+   * Sin organización, sin perfil profesional o sin rol de agenda no pregunta:
+   * las tres serían lecturas que la sesión no puede hacer.
+   */
+  function leeHorarioVigente(
+    roles: readonly string[],
+    tenant: string | null,
+    perfil: string | null,
+  ): boolean {
+    const puedeCrear = ['SCHEDULING_ADMIN', 'SUPERADMIN', 'PRACTITIONER'].some((rol) =>
+      roles.includes(rol),
+    );
+    return puedeCrear && tenant !== null && perfil !== null;
+  }
+
+  /** Abre la pantalla con un horario ya publicado, que es el caso de «cambiar». */
+  function crearConHorarioVigente(plantilla: object): void {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: AuthService,
+          useValue: {
+            roles: signal<readonly string[]>(['PRACTITIONER']),
+            activeTenantId: signal<string | null>(TENANT),
+            practitionerProfileId: signal<string | null>(PERFIL),
+            displayName: signal<string | null>('Dra. Elena Salas'),
+          },
+        },
+        { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
+      ],
+    });
+    fixture = TestBed.createComponent(AgendaCreate);
+    http = TestBed.inject(HttpTestingController);
+    acc = fixture.componentInstance as unknown as Testable;
+    fixture.detectChanges();
+    http.expectOne('/practices').flush([]);
+    http.expectOne((r) => r.url === '/scheduling/resources').flush({
+      items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL, stateConceptId: 'c' }],
+      count: 1,
+    });
+    http
+      .expectOne('/scheduling/resources/res-1/templates')
+      .flush({ items: [plantilla], count: 1 });
     fixture.detectChanges();
   }
 
@@ -98,6 +161,77 @@ describe('AgendaCreate', () => {
       .flush({ templateId: 'tpl-1', created: 40, skipped: 0 });
     fixture.detectChanges();
   }
+
+  /* -- Cambiar un horario que ya existe (D2 del plan de UX) ----------------- */
+
+  describe('cuando ya hay un horario publicado', () => {
+    const VIGENTE = {
+      id: 'tpl-1',
+      name: 'Horario de Dra. Elena Salas',
+      slotMinutes: 30,
+      statusConceptId: 'c',
+      rules: [
+        { dayOfWeek: 2, startTime: '15:00:00', endTime: '19:00:00', slotMinutes: 20 },
+        { dayOfWeek: 4, startTime: '15:00:00', endTime: '19:00:00', slotMinutes: 20 },
+      ],
+    };
+
+    it('la pantalla se presenta como un cambio, no como un alta', () => {
+      crearConHorarioVigente(VIGENTE);
+
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).toContain('Cambiá tu horario');
+      expect(texto).not.toContain('Publicá tu agenda');
+    });
+
+    it('carga la semanita con el horario vigente, para poder editarlo', () => {
+      crearConHorarioVigente(VIGENTE);
+
+      // Martes y jueves encendidos, el resto apagados: es lo que hace que la
+      // pantalla se reconozca como «la mía» en vez de un formulario en blanco.
+      const activos = acc
+        .diasVisibles()
+        .filter((dia) => dia.activo)
+        .map((dia) => dia.largo);
+      expect(activos).toEqual(['Martes', 'Jueves']);
+
+      const martes = acc.grupoDe(1).getRawValue();
+      // Sin los segundos: el `<input type="time"> del formulario los rechaza.
+      expect(martes.desde).toBe('15:00');
+      expect(martes.hasta).toBe('19:00');
+      expect(martes.duracion).toBe(20);
+    });
+
+    it('avisa que los turnos ya abiertos NO se cierran solos', () => {
+      // Es la limitación real de `M41 scheduling`: no hay forma de retirar una
+      // plantilla, así que publicar un cambio agrega el horario nuevo y deja
+      // los cupos del anterior en pie. Callarlo dejaría a alguien atendiendo un
+      // día que creía haber cerrado.
+      crearConHorarioVigente(VIGENTE);
+
+      expect(fixture.nativeElement.textContent).toContain(
+        'Los turnos ya abiertos no se cierran solos',
+      );
+    });
+
+    it('reusa el recurso: cambiar el horario NO crea una segunda agenda', () => {
+      crearConHorarioVigente(VIGENTE);
+
+      acc.publicar();
+
+      // Ni un `POST /scheduling/resources`: el recurso ya estaba y se reusa. Es
+      // el defecto que este carril arregla — «Cambiar mi horario» dejaba al
+      // médico con dos agendas y a los pacientes viendo los turnos de las dos.
+      http.expectNone((r) => r.url === '/scheduling/resources' && r.method === 'POST');
+      http
+        .expectOne('/scheduling/resources/res-1/templates')
+        .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-2/generate-slots')
+        .flush({ templateId: 'tpl-2', created: 40, skipped: 0 });
+      fixture.detectChanges();
+    });
+  });
 
   /* -- Quién puede entrar --------------------------------------------------- */
 

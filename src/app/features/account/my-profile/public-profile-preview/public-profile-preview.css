@@ -90,3 +90,14 @@
   margin: 0;
   text-align: center;
 }
+
+/* El enlace de la vitrina, bajo la ficha. Antes vivía dentro de la tarjetita
+   dibujada a mano; la ficha real no lo muestra —un paciente ya está en esa
+   URL— así que queda acá, que es donde le sirve a quien la está armando. */
+.vitrina__enlace {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  word-break: break-all;
+}

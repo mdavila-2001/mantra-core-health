@@ -39,7 +39,7 @@ const ROTULOS: Readonly<
       'Recordatorios, cambios de cita, demoras y cupos que se liberan.',
   },
   MESSAGES: {
-    titulo: 'Mensajes',
+    titulo: 'Chats',
     detalle: 'Cuando alguien te escribe por la mensajería.',
   },
   SOCIAL: {
