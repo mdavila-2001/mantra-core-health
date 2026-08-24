@@ -10,6 +10,36 @@ import type { DirectMessage } from '../data-access/community/community.types';
 /** Empujado al enviar un mensaje (`conversation:message`). */
 export type ChatMessageEvent = DirectMessage;
 
+/**
+ * El mensaje **como viaja por el cable**: las fechas son texto ISO.
+ *
+ * Es la distinción que faltaba. `DirectMessage.sentAt` es un `Date` porque
+ * `CommunityClient` lo convierte al mapear la respuesta HTTP; el socket
+ * entregaba el JSON crudo con un `as ChatMessageEvent` y nadie convertía nada,
+ * así que la fecha llegaba como `string` con tipo de `Date`.
+ *
+ * No era teoría: `Thread.leido()` hace `mensaje.sentAt.getTime()`, y cada
+ * mensaje que entraba en vivo tiraba `sentAt.getTime is not a function` en cada
+ * ciclo de detección de cambios — el hilo quedaba inutilizable hasta recargar.
+ */
+interface MensajeDelCable extends Omit<DirectMessage, 'sentAt'> {
+  readonly sentAt?: string | Date | null;
+}
+
+/** Una fecha del cable, o `undefined`. Tolera que ya venga convertida. */
+function aFecha(valor: string | Date | null | undefined): Date | undefined {
+  if (valor === null || valor === undefined) {
+    return undefined;
+  }
+  const fecha = valor instanceof Date ? valor : new Date(valor);
+  return Number.isNaN(fecha.getTime()) ? undefined : fecha;
+}
+
+/** El mensaje del cable, con sus fechas ya convertidas. */
+function aMensaje(payload: MensajeDelCable): ChatMessageEvent {
+  return { ...payload, sentAt: aFecha(payload.sentAt) };
+}
+
 /** Empujado al marcar leído (`conversation:read`). */
 export interface ChatReadEvent {
   readonly conversationId: string;
@@ -83,8 +113,8 @@ export class ChatSocketService {
 
     socket.on('connect', () => this.connected.set(true));
     socket.on('disconnect', () => this.connected.set(false));
-    socket.on('conversation:message', (payload: ChatMessageEvent) =>
-      this.messages$.next(payload),
+    socket.on('conversation:message', (payload: MensajeDelCable) =>
+      this.messages$.next(aMensaje(payload)),
     );
     socket.on('conversation:read', (payload: ChatReadEvent) =>
       this.reads$.next(payload),

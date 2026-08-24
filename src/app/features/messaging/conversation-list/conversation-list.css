@@ -1,0 +1,98 @@
+/* La lista de conversaciones, con la anatomía que tiene en cualquier chat:
+   avatar, nombre y hora arriba, última línea y no-leídos abajo. Las filas se
+   tocan entre sí y se separan con una línea, no con aire: una bandeja con
+   tarjetas sueltas ocupa el doble y muestra la mitad. */
+
+.conversaciones {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conversaciones__fila + .conversaciones__fila {
+  border-block-start: 1px solid var(--border-subtle, rgb(0 0 0 / 8%));
+}
+
+.conversaciones__item {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3);
+  color: inherit;
+  text-decoration: none;
+}
+
+.conversaciones__item:hover,
+.conversaciones__item:focus-visible {
+  background: var(--surface-hover, rgb(0 0 0 / 4%));
+}
+
+/* La abierta se marca con fondo **y** con la barra lateral: el fondo solo es
+   demasiado sutil sobre una lista larga, y `aria-current` ya lo dice para
+   quien no lo ve. */
+.conversaciones__fila.is-activa .conversaciones__item {
+  background: var(--surface-hover, rgb(0 0 0 / 6%));
+  box-shadow: inset 3px 0 0 0 var(--accent, #0e6690);
+}
+
+.conversaciones__avatar {
+  flex: none;
+}
+
+.conversaciones__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-inline-size: 0;
+  flex: 1 1 auto;
+}
+
+.conversaciones__cabecera,
+.conversaciones__pie {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e2);
+  min-inline-size: 0;
+}
+
+.conversaciones__pie {
+  align-items: center;
+  min-block-size: 1.25rem;
+}
+
+.conversaciones__con-quien,
+.conversaciones__vista-previa {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+
+.conversaciones__cuando {
+  flex: none;
+  color: var(--text-tertiary, var(--text-secondary));
+  font-size: 0.75rem;
+}
+
+.conversaciones__vista-previa {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.conversaciones__sin-leer {
+  flex: none;
+}
+
+/* Sin leer se marca con peso **y** con el globo del contador, nunca sólo con
+   color: el color solo no distingue nada para quien no lo percibe. */
+.conversaciones__fila.is-sin-leer .conversaciones__con-quien,
+.conversaciones__fila.is-sin-leer .conversaciones__vista-previa {
+  font-weight: 600;
+  color: var(--text-primary, inherit);
+}
+
+.conversaciones__fila.is-sin-leer .conversaciones__cuando {
+  color: var(--accent, #0e6690);
+  font-weight: 600;
+}
