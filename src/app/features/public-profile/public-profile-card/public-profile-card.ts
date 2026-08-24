@@ -1,5 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+} from '@angular/core';
+
+import { AppButton } from '@shared/components/atoms/button/button';
 
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
 import { inicialesDe } from '@shared/text/iniciales';
@@ -60,8 +68,9 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  */
 @Component({
   selector: 'app-public-profile-card',
-  imports: [DatePipe],
+  imports: [AppButton, DatePipe],
   templateUrl: './public-profile-card.html',
+  styleUrl: './public-profile-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublicProfileCard {
@@ -76,6 +85,17 @@ export class PublicProfileCard {
    * componente existe para impedir.
    */
   readonly preview = input(false);
+
+  /**
+   * Quien mira quiere escribirle.
+   *
+   * Es una salida y no una navegación de acá porque la ficha se dibuja en dos
+   * pantallas y sólo una tiene sentido: abrir un chat desde la **vista previa**
+   * sería escribirse a uno mismo. La pantalla que sí corresponde es la que lo
+   * escucha; la otra simplemente no lo ata, y por eso el botón tampoco se pinta
+   * en modo preview.
+   */
+  readonly escribir = output<void>();
 
   protected readonly rotuloTipo = computed(() => ROTULO_POR_TIPO[this.perfil().kind]);
 

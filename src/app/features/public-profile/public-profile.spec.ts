@@ -94,12 +94,11 @@ describe('PublicProfile', () => {
   /** Sin foto van las iniciales reales, no un icono genérico ni un roto. */
   it('degrada a las iniciales cuando no hay foto', () => {
     const fixture = montar(perfil);
-    const figura: HTMLElement | null = fixture.nativeElement.querySelector(
-      '.app-perfil-cabecera__figura',
-    );
+    const figura: HTMLElement | null =
+      fixture.nativeElement.querySelector('.perfil__retrato');
 
     expect(figura?.textContent?.trim()).toBe('MQ');
-    expect(fixture.nativeElement.querySelector('img.app-perfil-cabecera__figura')).toBeNull();
+    expect(fixture.nativeElement.querySelector('img.perfil__retrato')).toBeNull();
   });
 
   /**

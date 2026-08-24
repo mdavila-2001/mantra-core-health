@@ -8,7 +8,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DOCUMENT } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
@@ -106,6 +106,7 @@ export class PublicProfile implements OnInit {
    * leído una vez dejaría la ficha anterior en pantalla.
    */
   private readonly ruta = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly perfil = toSignal(
     this.ruta.data.pipe(map((data) => (data['perfil'] ?? null) as PerfilPublicoResuelto)),
@@ -214,5 +215,21 @@ export class PublicProfile implements OnInit {
     script.type = 'application/ld+json';
     script.textContent = serializarJsonLd(jsonLdDePerfil(perfil, origen));
     doc.head.appendChild(script);
+  }
+
+  /**
+   * «Enviar mensaje»: lleva a los chats con a quién escribirle.
+   *
+   * No abre la conversación acá. La ficha es **anónima** —se sirve sin sesión,
+   * y el SSR la pinta para buscadores—, así que crear un hilo desde esta
+   * pantalla exigiría resolver quién es uno antes de saber si hay sesión. La
+   * bandeja ya sabe hacerlo: recibe el slug, resuelve la ficha, abre el hilo si
+   * no existía, y si a quien llega le falta el perfil público le ofrece
+   * crearlo. El guard de sesión de `/messaging` se encarga del resto.
+   */
+  protected escribirle(slug: string): void {
+    void this.router.navigate(['/messaging'], {
+      queryParams: { escribirA: slug },
+    });
   }
 }
