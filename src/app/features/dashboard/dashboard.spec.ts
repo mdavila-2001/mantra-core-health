@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockBehavior, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
@@ -47,6 +47,16 @@ describe('Dashboard', () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      // El aviso de puesta en marcha cuelga de un `@defer (on immediate)`, y con
+      // el comportamiento por defecto —`Playthrough`— su carga es un `import()`
+      // real: según cuánto tarde, la petición que hace al construirse cae
+      // adentro o afuera de la prueba. Local resolvía tarde y no se notaba; en
+      // CI, con la máquina cargada, resolvía a tiempo y volteaba la primera
+      // prueba del bloque con un `timeout` de 5 s.
+      //
+      // `Manual` no es esquivar el problema: estas pruebas hablan del panel, no
+      // del aviso, cuya conducta fijan sus propias pruebas en `setup-notice`.
+      deferBlockBehavior: DeferBlockBehavior.Manual,
     }).compileComponents();
 
     http = TestBed.inject(HttpTestingController);

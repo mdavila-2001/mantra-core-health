@@ -5,6 +5,8 @@ import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
+import { rolesAlcanzan } from '../../../core/navigation/navigation.types';
+import { GETTING_STARTED_ROUTE } from '../../admin/getting-started/getting-started.routes';
 import type { LoginCredentials } from '../../../core/data-access/iam/iam.types';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -22,6 +24,14 @@ import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 
 /** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
 const HOME_ROUTE = '/';
+
+/**
+ * Dónde aterriza quien entra sin pertenecer a ninguna organización.
+ *
+ * Su estado vacío ya explica qué hacer —pedir el alta, esperar la invitación—,
+ * que es más de lo que le dice un panel donde casi nada tiene datos.
+ */
+const MY_ORGANIZATIONS_ROUTE = '/my-organizations';
 
 /**
  * Pantalla de inicio de sesión.
@@ -137,12 +147,31 @@ export class Login {
       : { kind: 'nationalId', nationalId: trimmed, password, ...mfa };
   }
 
-  /** Con más de una organización hay que elegir antes de entrar. */
+  /**
+   * A dónde va cada quien después de entrar.
+   *
+   * Tres casos, y el del medio faltaba. Con **más de una** organización hay que
+   * elegir. Con **ninguna** no hay nada que elegir pero tampoco nada que hacer
+   * en el panel: a quien puede aprovisionar organizaciones le corresponde el
+   * recorrido de puesta en marcha, y al resto la pantalla que le explica que
+   * todavía no pertenece a ninguna. Con **una** se entra derecho.
+   */
   private goAfterLogin(): void {
     this.state.set(ready(null));
-    void this.router.navigateByUrl(
-      this.auth.needsTenantSelection() ? TENANT_SELECTION_ROUTE : HOME_ROUTE,
-    );
+    void this.router.navigateByUrl(this.destinoDespuesDeEntrar());
+  }
+
+  /** El destino que corresponde a esta sesión. */
+  private destinoDespuesDeEntrar(): string {
+    if (this.auth.needsTenantSelection()) {
+      return TENANT_SELECTION_ROUTE;
+    }
+    if (this.auth.tenants().length === 0) {
+      return rolesAlcanzan(['SUPERADMIN'], this.auth.roles())
+        ? GETTING_STARTED_ROUTE
+        : MY_ORGANIZATIONS_ROUTE;
+    }
+    return HOME_ROUTE;
   }
 
   /**

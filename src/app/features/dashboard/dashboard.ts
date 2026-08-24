@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { rolesConEtiqueta } from '../../core/auth/role-labels';
+import { GETTING_STARTED_ROUTE } from '../admin/getting-started/getting-started.routes';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { IdentityClient } from '../../core/data-access/identity/identity.client';
@@ -12,7 +13,7 @@ import type { PatientListItem } from '../../core/data-access/profiles/profiles.t
 import { PublicClient, type PublicProjection } from '../../core/data-access/public/public.client';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
-import type { AppSection } from '../../core/navigation/navigation.types';
+import { rolesAlcanzan, type AppSection } from '../../core/navigation/navigation.types';
 import { dataOf, empty, loading, ready, stale } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Badge } from '../../shared/components/atoms/badge/badge';
@@ -26,6 +27,7 @@ import { StatusSeal } from '../../shared/components/organisms/status-seal/status
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { CaseStatusCatalog, toCaseStatusPresentation } from '../identity-verification/case-status';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
+import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
 import { PatientHome } from './patient-home/patient-home';
 
 /**
@@ -96,6 +98,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     TutorialTarget,
     ViewStateHost,
     PatientHome,
+    SetupNotice,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -154,8 +157,23 @@ export class Dashboard {
     this.secciones().filter((s) => s.availability === 'planificada'),
   );
 
-  /** Sólo quien administra puede listar pacientes; al resto la API le responde 403. */
-  protected readonly puedeVerPacientes = computed(() => this.roles().includes('SECURITY_ADMIN'));
+  /**
+   * Sólo quien administra puede listar pacientes; al resto la API le responde 403.
+   *
+   * Por `rolesAlcanzan` y no por un `includes` propio: `SUPERADMIN` es comodín
+   * en el guard del backend y en el menú, así que con la lista literal el panel
+   * le escondía el bloque de pacientes a alguien a quien el menú **sí** le
+   * ofrecía la sección. Dos lecturas de la misma regla terminan diciendo cosas
+   * distintas; ésta es la única.
+   */
+  protected readonly puedeVerPacientes = computed(() =>
+    rolesAlcanzan(['SECURITY_ADMIN'], this.roles()),
+  );
+
+  /** Quien puede aprovisionar organizaciones: es de quien es la puesta en marcha. */
+  protected readonly puedeCrearOrganizacion = computed(() =>
+    rolesAlcanzan(['SUPERADMIN'], this.roles()),
+  );
 
   /**
    * Si quien entra viene a atenderse, y no a trabajar acá.
@@ -301,7 +319,8 @@ export class Dashboard {
     this.directory.set(loading());
 
     this.publicClient.searchDirectory().subscribe({
-      next: (projection) => this.directory.set(toState(projection)),
+      next: (projection) =>
+        this.directory.set(toState(projection, this.puedeCrearOrganizacion())),
       error: (error: unknown) => this.directory.set(errorToViewState<PublicProjection>(error)),
     });
   }
@@ -320,10 +339,19 @@ interface PatientPageResumen {
  * no tiene nada que mostrar, así que anunciar su antigüedad sería decirle a la
  * persona cuán viejo es un dato que no está viendo.
  */
-function toState(projection: PublicProjection): ViewState<PublicProjection> {
+function toState(
+  projection: PublicProjection,
+  puedeCrearOrganizacion: boolean,
+): ViewState<PublicProjection> {
   if (projection.records.length === 0) {
+    // A quien puede poner la plataforma en marcha, el directorio vacío le está
+    // diciendo exactamente eso: que todavía no hay ninguna organización. Ese es
+    // el momento de ofrecerle el recorrido, y no un enlace al sistema de
+    // diseño, que no es una respuesta a nada de lo que vino a hacer.
     return empty(
-      { label: 'Ver el sistema de diseño', route: '/design-system' },
+      puedeCrearOrganizacion
+        ? { label: 'Poner la plataforma en marcha', route: GETTING_STARTED_ROUTE }
+        : { label: 'Ver el sistema de diseño', route: '/design-system' },
       'El directorio público todavía no tiene registros publicados.',
     );
   }

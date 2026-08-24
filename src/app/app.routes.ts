@@ -142,6 +142,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
+  'administration/content-packs': () =>
+    import('./features/admin/content-packs/content-packs').then((m) => m.ContentPacks),
   'administration/moderation': () =>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
@@ -509,12 +511,80 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // La importación por archivo. No es una sección del menú: cuelga de
+    // Terminología, que es donde alguien va a buscarla, y se alcanza desde ahí
+    // o por enlace directo.
+    path: 'administration/terminology/import',
+    title: `${APP_TITLE} - Importar terminología`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/terminology/version-import/version-import')
+        .then((m) => m.VersionImport)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El recorrido de puesta en marcha. No es una sección del menú: se llega
+    // desde el aviso del panel o desde el ingreso, y es un destino, no un
+    // lugar donde quedarse.
+    path: 'administration/getting-started',
+    title: `${APP_TITLE} - Puesta en marcha`,
+    canActivate: [seccionRolesGuard],
+    data: { roles: ['SUPERADMIN', 'SECURITY_ADMIN'] },
+    loadComponent: () =>
+      import('./features/admin/getting-started/getting-started')
+        .then((m) => m.GettingStarted)
+        .catch(() => chunkFallido()),
+  },
+  {
     path: 'administration/organizations/new',
     title: `${APP_TITLE} - Nueva organización`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/admin/organizations/organization-new/organization-new')
         .then((m) => m.OrganizationNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Las tres pantallas de escritura de una organización. Van ANTES de la
+    // ficha (`:tenantId`) no por el parámetro —el suyo también lo es— sino
+    // porque sus segmentos finales son literales: `.../verify` tiene que
+    // resolver acá y no caer en la ficha con `verify` de id.
+    //
+    // Con guard de sección: las tres son administrativas, a diferencia de la
+    // ficha, cuyas lecturas la API abre a cualquier miembro del tenant.
+    path: 'administration/organizations/:tenantId/verify',
+    title: `${APP_TITLE} - Verificar organización`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/organizations/organization-verify/organization-verify')
+        .then((m) => m.OrganizationVerify)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'administration/organizations/:tenantId/branches/new',
+    title: `${APP_TITLE} - Nueva sucursal`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/organizations/branch-new/branch-new')
+        .then((m) => m.BranchNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'administration/organizations/:tenantId/memberships/new',
+    title: `${APP_TITLE} - Sumar a la organización`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/organizations/membership-new/membership-new')
+        .then((m) => m.MembershipNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'administration/organizations/:tenantId/child-organizations/new',
+    title: `${APP_TITLE} - Nueva sub-organización`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/organizations/child-organization-new/child-organization-new')
+        .then((m) => m.ChildOrganizationNew)
         .catch(() => chunkFallido()),
   },
   {
