@@ -93,12 +93,15 @@ describe('Messaging', () => {
     http.verify();
   });
 
-  it('sin perfil público ofrece la puerta, no una pantalla rota', () => {
+  it('sin perfil público ofrece crearlo acá, no una pantalla rota', () => {
     montar();
     http.expectOne('/community/profiles/me').flush(null);
     fixture.detectChanges();
 
-    expect(texto()).toContain('Todavía no tenés perfil público');
+    // Antes esto mandaba a «Mi perfil» a buscar un formulario. Ahora la puerta
+    // está en la propia pantalla: quien entra a los chats quiere chatear.
+    expect(texto()).toContain('Te falta tu perfil público');
+    expect(consultar('mensajeria-crear-perfil')).not.toBeNull();
     // Y no pide la bandeja: no hay a nombre de quién pedirla.
     http.expectNone((r) => r.url === '/community/conversations');
   });

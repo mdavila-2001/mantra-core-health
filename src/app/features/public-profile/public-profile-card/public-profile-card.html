@@ -1,101 +1,128 @@
-<!-- El cuerpo de la ficha pública, dibujado UNA sola vez. Las clases son las de
-     `redsat.css` §25 y las de la maqueta V65-07: el marcado se reusa, los datos
-     son los de la API. Lo que la maqueta dibuja y la API todavía no sirve no se
-     pinta con valores de relleno — ver el JSDoc del componente. -->
+<!-- La ficha pública, con la anatomía de un perfil profesional: portada,
+     retrato montado sobre ella, identidad y acciones arriba, y debajo las
+     secciones en tarjetas. Los datos son los de la API; lo que la API no sirve
+     no se pinta con relleno — ver el JSDoc del componente. -->
 
 @if (perfil(); as p) {
-  <div class="pila">
-    <section class="app-card">
-      <div class="app-perfil-cabecera">
+  <article class="perfil">
+    <header class="perfil__encabezado">
+      <!-- La portada. Con imagen si la hay; si no, un degradado del tema, que
+           es un fondo y no un hueco: una franja gris se lee como una imagen
+           que no cargó. -->
+      @if (p.coverUrl; as portada) {
+        <div
+          class="perfil__portada"
+          [style.background-image]="'url(' + portada + ')'"
+          role="img"
+          [attr.aria-label]="'Portada de ' + p.displayName"
+        ></div>
+      } @else {
+        <div class="perfil__portada perfil__portada--lisa" aria-hidden="true"></div>
+      }
+
+      <div class="perfil__identidad">
         @if (p.avatarUrl; as foto) {
-          <img class="app-perfil-cabecera__figura" [src]="foto" alt="" width="56" height="56" />
+          <img class="perfil__retrato" [src]="foto" alt="" width="152" height="152" />
         } @else {
           <!-- Sin foto van las iniciales, no un roto ni un icono genérico. -->
-          <span class="app-perfil-cabecera__figura" aria-hidden="true">{{ iniciales() }}</span>
+          <span class="perfil__retrato perfil__retrato--iniciales" aria-hidden="true">
+            {{ iniciales() }}
+          </span>
         }
 
-        <div class="app-perfil-cabecera__texto">
-          <div class="app-page-header__titulo"><h1>{{ p.displayName }}</h1></div>
-
-          @if (p.headline) {
-            <p class="caption">{{ p.headline }}</p>
-          }
-
-          <p class="app-resultado__sellos">
-            <span class="app-badge" data-tono="neutro">{{ rotuloTipo() }}</span>
-
-            <!-- El sello sólo aparece si la verificación está activa. Pendiente
-                 cuenta como no verificado: la jerarquía la pone el sello, y uno
-                 que aparece por omisión no significa nada. -->
+        <div class="perfil__datos">
+          <h1 class="perfil__nombre">
+            {{ p.displayName }}
+            <!-- El sello sólo si la verificación está activa. Pendiente cuenta
+                 como no verificado: la jerarquía la pone el sello, y uno que
+                 aparece por omisión no significa nada. -->
             @if (p.verified) {
-              <span class="app-badge" data-tono="ok">
-                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="m9 12 2 2 4-4"></path></svg>
-                Verificado
+              <span class="perfil__sello" title="Identidad verificada">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z" /><path d="m9 12 2 2 4-4" /></svg>
+                <span class="solo-lectores">Identidad verificada</span>
               </span>
             }
+          </h1>
 
+          @if (p.headline) {
+            <p class="perfil__titular">{{ p.headline }}</p>
+          }
+
+          <p class="perfil__linea">
+            <span class="perfil__tipo">{{ rotuloTipo() }}</span>
             @if (p.city) {
-              <span class="app-badge" data-tono="neutro">{{ p.city }}</span>
+              <span class="perfil__punto" aria-hidden="true">·</span>
+              <span>{{ p.city }}</span>
+            }
+            @if (puntuacion(); as media) {
+              <span class="perfil__punto" aria-hidden="true">·</span>
+              <span class="perfil__estrella">
+                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" focusable="false"><path d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z" /></svg>
+                {{ media }}
+              </span>
+              <span class="perfil__opiniones">({{ p.ratingCount }})</span>
+            } @else {
+              <span class="perfil__punto" aria-hidden="true">·</span>
+              <span class="perfil__opiniones">Sin calificar</span>
             }
           </p>
-        </div>
-      </div>
-    </section>
 
-    @if (p.specialties.length > 0) {
-      <section class="app-card">
-        <div class="app-card__cabecera"><h2>Especialidades</h2></div>
-        <p class="app-resultado__sellos">
-          @for (especialidad of p.specialties; track especialidad) {
-            <span class="app-badge" data-tono="info">{{ especialidad }}</span>
+          <!-- Las acciones van junto a la identidad, que es donde se decide qué
+               hacer con esta persona. En vista previa no van: uno no se escribe
+               a sí mismo. -->
+          @if (!preview()) {
+            <p class="perfil__acciones">
+              <button
+                app-button
+                variant="primary"
+                data-testid="perfil-escribir"
+                (clicked)="escribir.emit()"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z" /></svg>
+                Enviar mensaje
+              </button>
+            </p>
           }
-        </p>
-      </section>
-    }
-
-    <section class="app-card">
-      <div class="app-perfil-cifras">
-        <div>
-          <span class="overline">Calificación</span>
-          <!-- Sin reseñas se escribe «Sin calificar» y no «0». Un profesional
-               que nadie calificó todavía no está calificado con cero, y la
-               diferencia decide a quién elige alguien que compara dos fichas. -->
-          <strong>{{ puntuacion() ?? 'Sin calificar' }}</strong>
         </div>
-        <div>
-          <span class="overline">Opiniones</span>
-          <strong>{{ p.ratingCount }}</strong>
-        </div>
-        @if (p.acceptsReviews) {
-          <div>
-            <span class="overline">Reseñas</span>
-            <strong>Abiertas</strong>
-          </div>
-        }
       </div>
-    </section>
+    </header>
 
-    <section class="app-card">
-      <div class="app-card__cabecera"><h2>Presentación</h2></div>
+    <!-- Acerca de -->
+    <section class="app-card perfil__seccion">
+      <div class="app-card__cabecera"><h2>Acerca de</h2></div>
       @if (p.biography) {
-        <p style="max-width: 80ch">{{ p.biography }}</p>
-      } @else {
+        <p class="perfil__parrafo">{{ p.biography }}</p>
+      } @else if (preview()) {
         <!-- El bloque no desaparece en el preview: si se escondiera, quien
              configura su vitrina no vería el hueco que está dejando. En la
              ficha pública sí se calla — al paciente no le sirve saber lo que
              falta. -->
-        @if (preview()) {
-          <p class="caption">
-            Todavía no escribiste tu presentación. Es lo primero que lee alguien que no te conoce.
-          </p>
-        }
+        <p class="caption">
+          Todavía no escribiste tu presentación. Es lo primero que lee alguien que no te conoce.
+        </p>
+      } @else {
+        <p class="caption">No publicó una presentación.</p>
       }
     </section>
 
-    <section class="app-card">
+    @if (p.specialties.length > 0) {
+      <section class="app-card perfil__seccion">
+        <div class="app-card__cabecera"><h2>Especialidades</h2></div>
+        <ul class="perfil__aptitudes">
+          @for (especialidad of p.specialties; track especialidad) {
+            <li class="perfil__aptitud">{{ especialidad }}</li>
+          }
+        </ul>
+      </section>
+    }
+
+    <section class="app-card perfil__seccion">
       <div class="app-card__cabecera"><h2>Dónde atiende</h2></div>
       @if (donde()) {
-        <p>{{ donde() }}</p>
+        <p class="perfil__donde">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21.2s7-6 7-11.2a7 7 0 1 0-14 0c0 5.2 7 11.2 7 11.2z" /><circle cx="12" cy="9.8" r="2.6" /></svg>
+          {{ donde() }}
+        </p>
       } @else if (preview()) {
         <p class="caption">Todavía no cargaste dónde atendés.</p>
       } @else {
@@ -103,22 +130,24 @@
       }
     </section>
 
-    <section class="app-card">
-      <div class="app-card__cabecera"><h2>Publicaciones</h2></div>
+    <section class="app-card perfil__seccion">
+      <div class="app-card__cabecera">
+        <h2>Publicaciones</h2>
+      </div>
       @if (p.posts.length === 0) {
         <p class="caption">
           {{ preview() ? 'Todavía no publicaste nada.' : 'Todavía no publicó nada.' }}
         </p>
       } @else {
-        <div class="pila-contenidos">
+        <ul class="perfil__publicaciones">
           @for (post of p.posts; track post.id) {
-            <article class="app-card app-card--inset">
+            <li class="perfil__publicacion">
               <p class="overline">{{ post.publishedAt | date: 'dd/MM/yyyy' }}</p>
-              <p style="margin-top: var(--e3); max-width: 80ch">{{ post.bodyText }}</p>
-            </article>
+              <p class="perfil__parrafo">{{ post.bodyText }}</p>
+            </li>
           }
-        </div>
+        </ul>
       }
     </section>
-  </div>
+  </article>
 }

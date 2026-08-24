@@ -1,3 +1,9 @@
+/* La bandeja, con la forma que tiene un chat de escritorio: la lista a la
+   izquierda y la conversación a la derecha, las dos dentro de un marco que no
+   crece con el contenido —la que scrollea es la lista, no la página—.
+   Debajo de 60rem se apila y queda la lista sola, que es lo que pasa en un
+   teléfono: la conversación es otra pantalla. */
+
 .mensajeria__alerta {
   display: block;
   margin-bottom: var(--e4);
@@ -7,31 +13,80 @@
   color: var(--text-secondary);
 }
 
-.mensajeria__barra {
-  display: flex;
-  gap: var(--e2);
-  margin-bottom: var(--e4);
+.mensajeria {
+  display: grid;
+  grid-template-columns: minmax(18rem, 22rem) 1fr;
+  /* Alto fijo: el hilo scrollea por dentro. Sin esto el composer se va al pie
+     de una página larguísima y hay que bajar para escribir. */
+  block-size: min(calc(100dvh - 9rem), 46rem);
+  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
+  border-radius: var(--radio-md, 0.75rem);
+  overflow: hidden;
+  background: var(--surface-raised, #fff);
 }
+
+.mensajeria__panel {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  border-inline-end: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
+}
+
+.mensajeria__panel-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  padding: var(--e3);
+  border-block-end: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
+}
+
+.mensajeria__titulo {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.mensajeria__lista {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+/* --- El buscador de «escribirle a alguien» ------------------------------- */
 
 .mensajeria__buscador {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--e2);
-  margin-bottom: var(--e4);
   padding: var(--e3);
-  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
-  border-radius: var(--radio-md, 0.75rem);
-  max-inline-size: 68ch;
+  border-block-end: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
 }
 
 .mensajeria__campo {
-  flex: 1 1 16rem;
+  position: relative;
+  flex: 1 1 10rem;
+  display: flex;
+  align-items: center;
+}
+
+.mensajeria__campo-icono {
+  position: absolute;
+  inset-inline-start: var(--e2);
+  display: inline-flex;
+  color: var(--text-tertiary, var(--text-secondary));
+  pointer-events: none;
+}
+
+.mensajeria__campo-icono svg {
+  inline-size: 1rem;
+  block-size: 1rem;
 }
 
 .mensajeria__campo input {
   inline-size: 100%;
   padding: var(--e2);
+  padding-inline-start: calc(var(--e2) * 2 + 1rem);
   border: 1px solid var(--border-subtle, rgb(0 0 0 / 20%));
   border-radius: var(--radio-sm, 0.5rem);
   font: inherit;
@@ -69,83 +124,54 @@
   font-size: 0.85rem;
 }
 
-.mensajeria__lista {
+/* --- El panel derecho sin hilo abierto ----------------------------------- */
+
+.mensajeria__vacio {
   display: flex;
   flex-direction: column;
-  gap: var(--e2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  /* Ancho de lectura: una bandeja que cruza una pantalla ancha entera separa
-     el nombre de la fecha por medio metro de vacío. */
-  max-inline-size: 68ch;
-}
-
-.mensajeria__fila {
-  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
-  border-radius: var(--radio-md, 0.75rem);
-  background: var(--surface-raised, #fff);
-}
-
-/* Sin leer se marca con barra **y** con peso, no sólo con color: el color solo
-   no distingue nada para quien no lo percibe. */
-.mensajeria__fila.is-sin-leer {
-  border-inline-start: 4px solid var(--accent, #0e6690);
-}
-
-.mensajeria__fila.is-sin-leer .mensajeria__con-quien {
-  font-weight: 600;
-}
-
-.mensajeria__item {
-  display: flex;
-  flex-direction: row;
   align-items: center;
+  justify-content: center;
   gap: var(--e3);
-  padding: var(--e3);
-  color: inherit;
-  text-decoration: none;
-}
-
-.mensajeria__item:hover,
-.mensajeria__item:focus-visible {
-  background: var(--surface-hover, rgb(0 0 0 / 4%));
-  border-radius: inherit;
-}
-
-.mensajeria__avatar {
-  flex: none;
-}
-
-.mensajeria__texto {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-inline-size: 0;
-  flex: 1 1 auto;
-}
-
-.mensajeria__con-quien {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mensajeria__vista-previa {
+  padding: var(--e5, 2rem);
+  text-align: center;
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  /* Una línea: la vista previa orienta, no reemplaza al hilo. */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  background: var(--surface-sunken, rgb(0 0 0 / 2%));
 }
 
-.mensajeria__meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  flex: none;
-  gap: var(--e2);
+.mensajeria__vacio-icono {
+  margin: 0;
   color: var(--text-tertiary, var(--text-secondary));
-  font-size: 0.8rem;
+  opacity: 0.5;
+}
+
+.mensajeria__vacio-icono svg {
+  inline-size: 4rem;
+  block-size: 4rem;
+}
+
+.mensajeria__vacio-texto {
+  margin: 0;
+}
+
+@media (max-width: 60rem) {
+  .mensajeria {
+    grid-template-columns: 1fr;
+    block-size: auto;
+    max-block-size: none;
+  }
+
+  .mensajeria__panel {
+    border-inline-end: 0;
+  }
+
+  .mensajeria__lista {
+    overflow-y: visible;
+  }
+
+  /* En angosto la conversación es otra pantalla, así que el hueco de la
+     derecha no tiene sentido: ocuparía una pantalla entera para decir que no
+     hay nada abierto. */
+  .mensajeria__vacio {
+    display: none;
+  }
 }

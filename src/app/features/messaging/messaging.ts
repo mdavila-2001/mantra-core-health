@@ -8,26 +8,45 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { CommunityClient } from '../../core/data-access/community/community.client';
 import { ChatSocketService } from '../../core/messaging/chat-socket.service';
+import { conQuien } from '../../core/messaging/con-quien';
+import { SessionStore } from '../../core/auth/session.store';
 import type {
   ConversationListItem,
   PublicDirectoryResult,
 } from '../../core/data-access/community/community.types';
-import { tiempoRelativo } from '../../shared/date/tiempo-relativo';
-import { Avatar } from '../../shared/components/atoms/avatar/avatar';
-import { Badge } from '../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
-import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
+import { ConversationList } from './conversation-list/conversation-list';
 
 /** Cada cuánto se relee la bandeja, en milisegundos. */
 const SONDEO_MS = 60_000;
+
+/**
+ * Un slug legible a partir del nombre, con una cola al azar.
+ *
+ * La cola no es decoración: el slug es único en toda la plataforma y hay más de
+ * una «María López». Sin ella, la segunda que entra a los chats se choca con un
+ * 409 en el peor momento —al pulsar «crear mi perfil»— y no tiene forma de
+ * arreglarlo desde esa pantalla.
+ */
+function slugDe(nombre: string): string {
+  const base = nombre
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+  const cola = Math.random().toString(36).slice(2, 8);
+  return `${base === '' ? 'perfil' : base}-${cola}`;
+}
 
 /**
  * La bandeja de mensajería directa — carril P2.
@@ -57,17 +76,7 @@ const SONDEO_MS = 60_000;
  */
 @Component({
   selector: 'app-messaging',
-  imports: [
-    Alert,
-    AppButton,
-    Avatar,
-    Badge,
-    DatePipe,
-    EmptyState,
-    FormsModule,
-    PageHeader,
-    RouterLink,
-  ],
+  imports: [Alert, AppButton, ConversationList, EmptyState, FormsModule],
   templateUrl: './messaging.html',
   styleUrl: './messaging.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,7 +84,9 @@ const SONDEO_MS = 60_000;
 export class Messaging {
   private readonly community = inject(CommunityClient);
   private readonly chatSocket = inject(ChatSocketService);
+  private readonly sesion = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private temporizador: ReturnType<typeof setTimeout> | null = null;
@@ -90,6 +101,9 @@ export class Messaging {
   /** Perfil público propio, o `null` si todavía no lo creó. */
   protected readonly perfil = signal<string | null>(null);
   protected readonly perfilResuelto = signal(false);
+
+  /** Mientras se crea la vitrina desde el estado vacío. */
+  protected readonly creandoPerfil = signal(false);
 
   /** Si está abierto el buscador de «escribirle a alguien». */
   protected readonly buscando = signal(false);
@@ -113,6 +127,7 @@ export class Messaging {
           this.cargar();
           this.agendar();
           this.chatSocket.joinInbox(propio.id);
+          this.atenderEscribirA();
         }
       },
       error: () => {
@@ -133,19 +148,64 @@ export class Messaging {
       .subscribe(() => this.cargar());
   }
 
-  /** «hace 2 min», o `null` si ya pasó más de una semana (cae al `date:'short'` del template). */
-  protected relativo(fecha: Date): string | null {
-    return tiempoRelativo(fecha);
+  /** Con quién es cada conversación. Lo dibuja `app-conversation-list`. */
+  protected readonly conQuien = conQuien;
+
+  /**
+   * Crea la vitrina pública que la mensajería necesita, sin salir de acá.
+   *
+   * Antes esto era un cartel que mandaba a «Mi perfil» a buscar un formulario:
+   * quien entra a los chats quiere chatear, y hacerle recorrer otra sección
+   * para volver es exactamente la fricción que dejaba la pantalla muerta para
+   * cualquiera recién registrado.
+   *
+   * Se crea con lo mínimo —nombre y slug— y **sin publicarla en el directorio**:
+   * `visibility` va omitido a propósito, porque aparecer en la guía pública es
+   * una decisión aparte que se toma en «Mi perfil», no un efecto secundario de
+   * querer escribirle a alguien.
+   */
+  protected crearPerfil(): void {
+    const tenantId = this.sesion.activeTenantId();
+    if (tenantId === null || this.creandoPerfil()) {
+      this.error.set(
+        tenantId === null ? 'No pudimos saber en qué organización estás.' : '',
+      );
+      return;
+    }
+
+    const nombre = this.sesion.displayName() ?? 'Mi perfil';
+    this.creandoPerfil.set(true);
+    this.community
+      .upsertOwnProfile({ tenantId, slug: slugDe(nombre), displayName: nombre })
+      .subscribe({
+        next: (propio) => {
+          this.creandoPerfil.set(false);
+          this.perfil.set(propio.id);
+          this.cargar();
+          this.agendar();
+          this.chatSocket.joinInbox(propio.id);
+        },
+        error: () => {
+          this.creandoPerfil.set(false);
+          this.error.set('No pudimos crear tu perfil. Probá de nuevo.');
+        },
+      });
   }
 
-  /** Con quién es la conversación, en una línea. */
-  protected conQuien(conversacion: ConversationListItem): string {
-    const nombres = conversacion.peers
-      .map((peer) => peer.displayName)
-      .filter((nombre): nombre is string => nombre !== undefined);
-    // Sin nombre resuelto se dice «Conversación» y no el uuid: un
-    // identificador en la bandeja no le dice nada a nadie.
-    return nombres.length === 0 ? 'Conversación' : nombres.join(', ');
+  /**
+   * Atiende el `?escribirA=<slug>` con el que llega el botón «Enviar mensaje»
+   * de una ficha pública.
+   *
+   * Se ejecuta recién cuando se sabe cuál es el perfil propio: sin eso no hay
+   * con qué abrir el hilo. Si a quien llega le falta el perfil, no pasa nada
+   * malo —ve el estado vacío que se lo ofrece crear— y basta con volver a
+   * entrar desde la ficha.
+   */
+  private atenderEscribirA(): void {
+    const slug = this.ruta.snapshot.queryParamMap.get('escribirA');
+    if (slug !== null && slug !== '') {
+      this.abrirConSlug(slug);
+    }
   }
 
   protected alternarBusqueda(): void {
@@ -182,14 +242,38 @@ export class Messaging {
    * existe, el backend devuelve ése.
    */
   protected escribirA(resultado: PublicDirectoryResult): void {
+    this.abrirConSlug(resultado.slug);
+  }
+
+  /**
+   * Abre —o crea— el hilo con quien tenga ese slug.
+   *
+   * Son dos llamadas y no una porque la superficie pública devuelve `slug` y no
+   * `profileId`: no publica identificadores internos. La segunda es idempotente
+   * desde este carril: si el hilo ya existe, el backend devuelve ése.
+   *
+   * Lo usan dos caminos: el buscador de acá y el botón «Enviar mensaje» de la
+   * ficha pública, que llega por `?escribirA=<slug>`.
+   */
+  private abrirConSlug(slug: string): void {
     const propio = this.perfil();
     if (propio === null || this.abriendo()) {
       return;
     }
     this.abriendo.set(true);
 
-    this.community.readProfileBySlug(resultado.slug).subscribe({
+    this.community.readProfileBySlug(slug).subscribe({
       next: (ficha) => {
+        // Uno no se escribe a sí mismo. Sin esto, «Enviar mensaje» en la propia
+        // ficha pública pedía una conversación con un solo participante
+        // repetido y el backend devolvía **otra** conversación cualquiera de
+        // las suyas: se abría un hilo ajeno al que se pidió.
+        if (ficha.id === propio) {
+          this.abriendo.set(false);
+          this.error.set('Ese es tu propio perfil: no podés escribirte.');
+          return;
+        }
+
         this.community
           .createConversation({
             participantProfileIds: [propio, ficha.id],

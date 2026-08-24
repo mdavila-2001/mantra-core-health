@@ -23,7 +23,7 @@
        MISMO componente que usa la vista previa de «Tu perfil público» (B1 del
        plan de UX del 22/08/2026). Que las dos pantallas se vean igual dejó de
        ser una promesa y pasó a ser algo que no se puede romper. -->
-  <app-public-profile-card [perfil]="p" />
+  <app-public-profile-card [perfil]="p" (escribir)="escribirle(p.slug)" />
 } @else {
   <!-- Un slug inexistente y uno despublicado caen los dos acá, con el mismo
        texto. Distinguirlos —«este perfil es privado»— confirmaría que existe, y

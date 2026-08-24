@@ -1,0 +1,206 @@
+/* La ficha pública. Portada ancha, retrato montado sobre ella y la identidad
+   debajo: es la anatomía que cualquiera reconoce de un perfil profesional, y
+   reconocerla es la mitad de entender la pantalla sin leerla. */
+
+.perfil {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+/* --- Encabezado ---------------------------------------------------------- */
+
+.perfil__encabezado {
+  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
+  border-radius: var(--radio-md, 0.75rem);
+  overflow: hidden;
+  background: var(--surface-raised, #fff);
+}
+
+.perfil__portada {
+  block-size: 11rem;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Sin imagen, un degradado del tema: un fondo, no un hueco. Una franja gris se
+   lee como una imagen que no cargó. */
+.perfil__portada--lisa {
+  background-image: linear-gradient(
+    120deg,
+    var(--accent, #0e6690) 0%,
+    var(--accent-soft, #7fc4dd) 100%
+  );
+}
+
+.perfil__identidad {
+  position: relative;
+  padding: 0 var(--e4) var(--e4);
+}
+
+.perfil__retrato {
+  display: grid;
+  place-items: center;
+  inline-size: 9.5rem;
+  block-size: 9.5rem;
+  margin-block-start: -4.75rem;
+  border-radius: 50%;
+  border: 4px solid var(--surface-raised, #fff);
+  background: var(--surface-sunken, #e8eef2);
+  object-fit: cover;
+}
+
+.perfil__retrato--iniciales {
+  color: var(--accent, #0e6690);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.perfil__datos {
+  margin-block-start: var(--e3);
+}
+
+.perfil__nombre {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.perfil__sello {
+  display: inline-flex;
+  color: var(--ok, #1f7a4d);
+}
+
+.perfil__sello svg {
+  inline-size: 1.35rem;
+  block-size: 1.35rem;
+}
+
+.perfil__titular {
+  margin: var(--e2) 0 0;
+  font-size: 1.05rem;
+}
+
+.perfil__linea {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: var(--e2) 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.perfil__punto {
+  opacity: 0.6;
+}
+
+.perfil__estrella {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--text-primary, inherit);
+  font-weight: 600;
+}
+
+.perfil__estrella svg {
+  inline-size: 0.95rem;
+  block-size: 0.95rem;
+  color: var(--warning, #d99a00);
+}
+
+.perfil__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin: var(--e3) 0 0;
+}
+
+.perfil__acciones svg {
+  inline-size: 1.05rem;
+  block-size: 1.05rem;
+}
+
+/* --- Secciones ----------------------------------------------------------- */
+
+.perfil__seccion {
+  margin: 0;
+}
+
+.perfil__parrafo {
+  margin: 0;
+  max-inline-size: 80ch;
+  white-space: pre-wrap;
+}
+
+/* Las especialidades como pastillas: son etiquetas, y una lista con viñetas
+   las convierte en un inventario. */
+.perfil__aptitudes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.perfil__aptitud {
+  padding: 0.25rem var(--e3);
+  border: 1px solid var(--border-subtle, rgb(0 0 0 / 12%));
+  border-radius: 999px;
+  background: var(--surface-sunken, rgb(0 0 0 / 3%));
+  font-size: 0.875rem;
+}
+
+.perfil__donde {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+}
+
+.perfil__donde svg {
+  flex: none;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  color: var(--text-secondary);
+}
+
+.perfil__publicaciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.perfil__publicacion + .perfil__publicacion {
+  padding-block-start: var(--e3);
+  border-block-start: 1px solid var(--border-subtle, rgb(0 0 0 / 8%));
+}
+
+.perfil__publicacion .overline {
+  margin: 0 0 var(--e2);
+}
+
+@media (max-width: 40rem) {
+  .perfil__portada {
+    block-size: 7rem;
+  }
+
+  .perfil__retrato {
+    inline-size: 7rem;
+    block-size: 7rem;
+    margin-block-start: -3.5rem;
+  }
+
+  .perfil__nombre {
+    font-size: 1.4rem;
+  }
+}

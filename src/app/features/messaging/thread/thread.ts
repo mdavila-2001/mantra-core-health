@@ -11,23 +11,77 @@ import {
 } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CommunityClient } from '../../../core/data-access/community/community.client';
 import { MessageTemplates } from '../../../core/messaging/message-templates';
 import { ChatSocketService } from '../../../core/messaging/chat-socket.service';
-import type { DirectMessage } from '../../../core/data-access/community/community.types';
+import { conQuien as conQuienDe } from '../../../core/messaging/con-quien';
+import type {
+  ConversationListItem,
+  DirectMessage,
+} from '../../../core/data-access/community/community.types';
+import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
-import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { ConversationList } from '../conversation-list/conversation-list';
+
+/**
+ * Una línea del hilo: o un separador de día, o un mensaje con lo que la vista
+ * necesita saber de sus vecinos.
+ *
+ * Los separadores se calculan acá y no en el template porque el template no
+ * puede mirar el mensaje anterior sin volverse ilegible, y **agrupar** —quitarle
+ * la hora y el nombre al mensaje que sigue al mismo autor dentro del mismo
+ * minuto— es lo que hace que una ráfaga de tres mensajes se lea como una y no
+ * como tres fichas.
+ */
+type LineaDelHilo =
+  | { readonly tipo: 'fecha'; readonly clave: string; readonly etiqueta: string }
+  | {
+      readonly tipo: 'mensaje';
+      readonly clave: string;
+      readonly mensaje: DirectMessage;
+      readonly propio: boolean;
+      /** Si arranca un bloque de quien escribe: lleva la cola de la burbuja. */
+      readonly abreBloque: boolean;
+    };
 
 /** Cada cuánto se relee el hilo abierto, en milisegundos. */
 const SONDEO_MS = 30_000;
 
 /** Cuántos mensajes trae cada página. */
 const PAGE_SIZE = 30;
+
+/**
+ * El rótulo del separador de día: «Hoy», «Ayer» o la fecha.
+ *
+ * «Hoy» y «Ayer» no son adorno: son las dos fechas que alguien mira en un chat,
+ * y leer «24/08/2026» para decir «hoy» obliga a comparar con el calendario.
+ */
+function etiquetaDeDia(fecha: Date | undefined): string {
+  if (!fecha) {
+    return '';
+  }
+  const dia = new Date(fecha);
+  const hoy = new Date();
+  const ayer = new Date(hoy);
+  ayer.setDate(hoy.getDate() - 1);
+
+  if (dia.toDateString() === hoy.toDateString()) {
+    return 'Hoy';
+  }
+  if (dia.toDateString() === ayer.toDateString()) {
+    return 'Ayer';
+  }
+  return dia.toLocaleDateString('es', {
+    day: 'numeric',
+    month: 'long',
+    year: dia.getFullYear() === hoy.getFullYear() ? undefined : 'numeric',
+  });
+}
 
 /**
  * El hilo de una conversación — carril P2.
@@ -54,7 +108,16 @@ const PAGE_SIZE = 30;
  */
 @Component({
   selector: 'app-thread',
-  imports: [Alert, AppButton, DatePipe, EmptyState, FormsModule, PageHeader],
+  imports: [
+    Alert,
+    AppButton,
+    Avatar,
+    ConversationList,
+    DatePipe,
+    EmptyState,
+    FormsModule,
+    RouterLink,
+  ],
   templateUrl: './thread.html',
   styleUrl: './thread.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,9 +133,18 @@ export class Thread {
   private readonly composer =
     viewChild<ElementRef<HTMLTextAreaElement>>('composer');
 
+  /** El host, para encontrar el marco que scrollea. */
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
   private temporizador: ReturnType<typeof setTimeout> | null = null;
   private conversationId: string | null = null;
   private yaMarcado = false;
+
+  /**
+   * Si la vista está al pie del hilo. Arranca en `true` —un hilo se abre por
+   * el final— y lo apaga quien sube a leer.
+   */
+  private pegadoAbajo = true;
 
   protected readonly mensajes = signal<readonly DirectMessage[]>([]);
   protected readonly cursor = signal<string | null>(null);
@@ -90,6 +162,19 @@ export class Thread {
   protected readonly conQuien = signal('Conversación');
 
   /**
+   * Las otras conversaciones, para el carril de la izquierda.
+   *
+   * No cuesta una petición extra: `nombrarHilo` ya pedía la bandeja entera
+   * para sacar de ahí el nombre del otro y tiraba el resto. Ahora se queda.
+   */
+  protected readonly conversaciones = signal<readonly ConversationListItem[]>(
+    [],
+  );
+
+  /** Cuál está abierta, para que el carril la marque. */
+  protected readonly activaId = signal<string | null>(null);
+
+  /**
    * Hasta qué `sentAt` leyó el otro lado — el doble check ✓✓. `null` si
    * todavía no leyó nada, o si el hilo es de grupo (no hay «el otro lado»).
    */
@@ -102,6 +187,55 @@ export class Thread {
 
   /** Los mensajes en orden de lectura: del más viejo al más nuevo. */
   protected readonly enOrden = computed(() => [...this.mensajes()].reverse());
+
+  /**
+   * El hilo listo para pintar: separadores de día intercalados y cada mensaje
+   * sabiendo si abre bloque.
+   *
+   * «Abre bloque» es cambiar de autor o pasar más de cinco minutos. Es lo que
+   * decide si la burbuja lleva cola y hora: tres mensajes seguidos de la misma
+   * persona en el mismo minuto son un mensaje partido en tres, y repetirles la
+   * hora los convierte en tres fichas de archivo.
+   */
+  protected readonly lineas = computed<readonly LineaDelHilo[]>(() => {
+    const salida: LineaDelHilo[] = [];
+    let diaAnterior = '';
+    let autorAnterior: string | null = null;
+    let cuandoAnterior = 0;
+
+    for (const mensaje of this.enOrden()) {
+      const cuando = mensaje.sentAt ? new Date(mensaje.sentAt).getTime() : 0;
+      const dia = mensaje.sentAt ? new Date(mensaje.sentAt).toDateString() : '';
+
+      if (dia !== diaAnterior) {
+        salida.push({
+          tipo: 'fecha',
+          clave: `f-${dia || mensaje.id}`,
+          etiqueta: etiquetaDeDia(mensaje.sentAt),
+        });
+        diaAnterior = dia;
+        // Un día nuevo siempre abre bloque, aunque escriba el mismo.
+        autorAnterior = null;
+      }
+
+      const propio = this.esPropio(mensaje);
+      const abreBloque =
+        mensaje.senderProfileId !== autorAnterior ||
+        cuando - cuandoAnterior > 5 * 60 * 1000;
+
+      salida.push({
+        tipo: 'mensaje',
+        clave: mensaje.id,
+        mensaje,
+        propio,
+        abreBloque,
+      });
+      autorAnterior = mensaje.senderProfileId;
+      cuandoAnterior = cuando;
+    }
+
+    return salida;
+  });
 
   protected readonly puedeEnviar = computed(
     () => this.borrador().trim() !== '' && !this.enviando(),
@@ -174,6 +308,7 @@ export class Thread {
         this.chatSocket.leaveConversation(anterior);
       }
       this.conversationId = params.get('conversationId');
+      this.activaId.set(this.conversationId);
       this.yaMarcado = false;
       this.mensajes.set([]);
       this.cursor.set(null);
@@ -213,6 +348,7 @@ export class Thread {
     const nuevos = items.filter((m) => !conocidos.has(m.id));
     if (nuevos.length > 0) {
       this.mensajes.update((lista) => [...nuevos, ...lista]);
+      this.bajar();
     }
   }
 
@@ -231,7 +367,43 @@ export class Thread {
   }
 
   protected verMas(): void {
+    // Al pedir lo anterior no se baja: la persona está mirando hacia arriba.
+    this.pegadoAbajo = false;
     this.cargar();
+  }
+
+  /**
+   * Baja al último mensaje, si la persona no subió a leer.
+   *
+   * Se llama donde **llegan los datos** y no desde un `effect`: el efecto
+   * corría antes de que existiera el marco —el `@else` que lo contiene todavía
+   * no se había pintado— y entonces no bajaba nunca. El `setTimeout(0)` espera
+   * a que Angular haya pintado las burbujas nuevas; sin él se mide un
+   * `scrollHeight` que todavía no las incluye.
+   */
+  private bajar(): void {
+    if (!this.isBrowser || !this.pegadoAbajo) {
+      return;
+    }
+    setTimeout(() => {
+      const marco = this.host.nativeElement.querySelector<HTMLElement>(
+        '.hilo__mensajes-marco',
+      );
+      if (marco) {
+        marco.scrollTop = marco.scrollHeight;
+      }
+    });
+  }
+
+  /**
+   * Recuerda si la vista quedó al pie, para decidir si el próximo mensaje
+   * arrastra el scroll. El margen de 80 px es para que «casi abajo» cuente
+   * como abajo: nadie deja el scroll clavado al píxel.
+   */
+  protected alScrollear(evento: Event): void {
+    const marco = evento.target as HTMLElement;
+    this.pegadoAbajo =
+      marco.scrollHeight - marco.scrollTop - marco.clientHeight < 80;
   }
 
   /** Enter envía; Shift+Enter hace salto de línea. */
@@ -317,14 +489,15 @@ export class Thread {
   private nombrarHilo(profileId: string): void {
     this.community.listConversations({ profileId, limit: 50 }).subscribe({
       next: (pagina) => {
+        this.conversaciones.set(pagina.items);
         const hilo = pagina.items.find(
           (item) => item.id === this.conversationId,
         );
-        const nombres = (hilo?.peers ?? [])
-          .map((peer) => peer.displayName)
-          .filter((nombre): nombre is string => nombre !== undefined);
-        if (nombres.length > 0) {
-          this.conQuien.set(nombres.join(', '));
+        if (hilo) {
+          const nombre = conQuienDe(hilo);
+          if (nombre !== 'Conversación') {
+            this.conQuien.set(nombre);
+          }
         }
       },
       // Sin nombre el hilo sigue siendo usable: se queda con «Conversación».
@@ -355,6 +528,7 @@ export class Thread {
           this.cargando.set(false);
           this.error.set('');
           this.peerReadUpTo.set(pagina.peerReadUpTo ?? null);
+          this.bajar();
           this.marcarLeido(conversationId, propio);
         },
         error: () => {
@@ -372,7 +546,12 @@ export class Thread {
     }
     this.yaMarcado = true;
     this.community.markConversationRead(conversationId, profileId).subscribe({
-      // El acuse no cambia nada de la pantalla; que falle no vale un cartel.
+      // Sí cambia algo desde que el hilo muestra el carril al costado: la
+      // conversación que estás leyendo seguía anunciando sus no leídos a dos
+      // dedos del mensaje que acabás de leer. Se relee la bandeja para que el
+      // contador se apague ahora y no en el próximo tic.
+      next: () => this.nombrarHilo(profileId),
+      // Que el acuse falle no vale un cartel: no cambia lo que se lee.
       error: () => undefined,
     });
   }
