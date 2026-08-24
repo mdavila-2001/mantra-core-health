@@ -200,12 +200,15 @@
                         Enviar pedido
                       </button>
                     } @else {
+                      <!-- `[disabled]` y no el atributo nativo: AppButton
+                           deshabilita con `aria-disabled` y el botón sigue
+                           siendo enfocable y anunciado. -->
                       <button
                         app-button
                         variant="primary"
                         size="sm"
                         type="button"
-                        disabled
+                        [disabled]="true"
                         data-testid="compra-cta-pedido"
                       >
                         Enviar pedido
