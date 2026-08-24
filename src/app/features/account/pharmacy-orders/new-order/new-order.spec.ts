@@ -4,6 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { NewOrder } from './new-order';
@@ -22,6 +23,7 @@ import { NewOrder } from './new-order';
 const BORRADOR: BorradorDePedido = {
   requestId: 'rx-1',
   siteId: 'f0e1d2c3-0000-4000-8000-000000000001',
+  pharmacyId: 'a1b2c3d4-0000-4000-8000-000000000001',
   farmacia: 'Farmacia Andina',
   sede: 'Sucursal Centro',
   direccion: 'Calle Libertad 245',
@@ -147,5 +149,45 @@ describe('NewOrder', () => {
     expect(pedidos[0].direccionDeEntrega).toBeNull();
     expect(client.borradorPreparado()).toBeNull();
     expect(navegar).toHaveBeenCalledWith(['/my-account/pharmacy-orders', pedidos[0].id]);
+  });
+
+  /* ── Las promociones del pedido (FAR-I7) ───────────────────────────────── */
+
+  it('pone los dos precios con el mismo formato y dice en voz alta cuál es cuál', () => {
+    // `GET /pharmacy-inventory/availability` devuelve el numeric crudo: el
+    // precio de este renglón llega como "22.5". Junto al promocional, que sale
+    // de la aritmética en centavos, «antes 22.5 · ahora 14.62» se lee como un
+    // descuido sobre el número que la paciente va a pagar.
+    const conPrecioCrudo: BorradorDePedido = {
+      ...BORRADOR,
+      lineas: [{ ...BORRADOR.lineas[0], precio: '22.5' }],
+      totalEstimado: '22.5',
+    };
+    TestBed.inject(PharmacyCampaignsClient).sembrarPara(BORRADOR.pharmacyId, BORRADOR.farmacia, [
+      {
+        productId: 'f0e1d2c3-0000-4000-8000-000000000002',
+        nombre: 'Ibuprofeno 400 mg',
+        presentacion: null,
+        precio: '22.5',
+        moneda: 'BOB',
+      },
+    ]);
+    client.prepararBorrador(conPrecioCrudo);
+    montar();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    expect(raiz.querySelector('[data-testid="pedido-banner-promo"]')).not.toBeNull();
+    const renglon = raiz.querySelector('[data-testid="pedido-lineas"] .confirmacion__linea-precio');
+    // Los dos con dos decimales, y no uno crudo y el otro formateado.
+    expect(renglon?.textContent).toContain('22.50 BOB');
+    expect(renglon?.textContent).toContain('14.62 BOB');
+    // El tachado no se escucha: sin estas etiquetas, un lector de pantalla
+    // anuncia dos precios seguidos y quien escucha no sabe cuál va a pagar.
+    expect(renglon?.querySelector('s .sr-only')?.textContent).toContain('Antes');
+    expect(renglon?.querySelector('strong .sr-only')?.textContent).toContain('campaña');
+
+    const total = raiz.querySelector('[data-testid="pedido-total-promo"]');
+    expect(total?.textContent).toContain('14.62');
+    expect(raiz.querySelector('.confirmacion__total s .sr-only')?.textContent).toContain('Antes');
   });
 });

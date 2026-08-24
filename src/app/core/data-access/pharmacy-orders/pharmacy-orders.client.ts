@@ -131,6 +131,7 @@ export class PharmacyOrdersClient {
       estado: 'ENVIADO',
       creadoEl: new Date(),
       venceEl: null,
+      pharmacyId: envio.borrador.pharmacyId,
       farmacia: envio.borrador.farmacia,
       sede: envio.borrador.sede,
       direccion: envio.borrador.direccion,
@@ -229,6 +230,7 @@ export class PharmacyOrdersClient {
       borrador: {
         requestId: vencido.requestId,
         siteId: vencido.siteId,
+        pharmacyId: vencido.pharmacyId,
         farmacia: vencido.farmacia,
         sede: vencido.sede,
         direccion: vencido.direccion,

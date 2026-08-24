@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-381 componentes y 72 servicios inyectables, leídos de `src/`.
+383 componentes y 73 servicios inyectables, leídos de `src/`.
 
 ## Átomo (18)
 
@@ -84,7 +84,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (314)
+## Feature (316)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -160,6 +160,7 @@
 | `app-reset-password` | `ResetPassword` | — | — | — | OnPush | sí |
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
+| `app-campaign-detail` | `CampaignDetail` | — | — | — | OnPush | sí |
 | `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
 | `app-admission-block` | `AdmissionBlock` | `patientProfileId`, `encounterId`, `internaciones` | `cambio` | — | OnPush | sí |
 | `app-attachments-block` | `AttachmentsBlock` | `patientProfileId` | — | — | OnPush | sí |
@@ -261,6 +262,7 @@
 | `app-notification-center` | `NotificationCenter` | — | — | — | OnPush | sí |
 | `app-onboarding-practitioner` | `OnboardingPractitioner` | — | — | — | OnPush | sí |
 | `app-organization-panel` | `OrganizationPanel` | — | — | — | OnPush | sí |
+| `app-pharmacy-campaigns` | `PharmacyCampaigns` | — | — | — | OnPush | sí |
 | `app-inbox-order` | `InboxOrder` | — | — | — | OnPush | sí |
 | `app-pharmacy-inbox` | `PharmacyInbox` | — | — | — | OnPush | sí |
 | `app-my-organizations` | `MyOrganizations` | — | — | — | OnPush | sí |
@@ -415,7 +417,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (72)
+## Servicios (73)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -449,6 +451,7 @@
 | `NotificationsClient` | `src/app/core/data-access/notifications/notifications.client.ts` | root | sí |
 | `PharmaLabConcepts` | `src/app/core/data-access/pharma-lab/pharma-lab-concepts.client.ts` | root | **no** |
 | `PharmaLabClient` | `src/app/core/data-access/pharma-lab/pharma-lab.client.ts` | root | **no** |
+| `PharmacyCampaignsClient` | `src/app/core/data-access/pharmacy-campaigns/pharmacy-campaigns.client.ts` | root | sí |
 | `PharmacyOrdersClient` | `src/app/core/data-access/pharmacy-orders/pharmacy-orders.client.ts` | root | sí |
 | `PharmacyClient` | `src/app/core/data-access/pharmacy/pharmacy.client.ts` | root | sí |
 | `PracticeSitesClient` | `src/app/core/data-access/practice-sites/practice-sites.client.ts` | root | sí |

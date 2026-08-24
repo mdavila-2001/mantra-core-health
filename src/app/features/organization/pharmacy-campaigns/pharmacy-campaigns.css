@@ -1,0 +1,118 @@
+/* Promociones de mi farmacia (FAR-I7). Mobile-first: la única media query
+   sube a dos columnas donde entra, nunca al revés. */
+
+.campanas__demo {
+  margin-block: var(--sp-3) var(--sp-4);
+}
+
+.campanas__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-6);
+}
+
+.campanas__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.campanas__subtitulo {
+  margin-block: var(--sp-4) 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.campanas__lista,
+.campanas__candidatos,
+.campanas__renglones,
+.campanas__fallos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.campanas__fallos {
+  gap: var(--sp-1);
+  padding-inline-start: var(--sp-4);
+  list-style: disc;
+}
+
+.campanas__fila,
+.campanas__candidato,
+.campanas__renglon {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.campanas__fila-datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.campanas__principal {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.campanas__secundario {
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+}
+
+.campanas__vigencia,
+.campanas__precios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.campanas__acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-start: var(--sp-4);
+}
+
+@media (min-width: 40rem) {
+  .campanas__fila,
+  .campanas__candidato {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .campanas__renglon {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .campanas__fila-datos {
+    flex: 1 1 auto;
+  }
+
+  .campanas__vigencia,
+  .campanas__precios {
+    flex-direction: row;
+  }
+
+  .campanas__vigencia > *,
+  .campanas__precios > * {
+    flex: 1 1 0;
+  }
+}

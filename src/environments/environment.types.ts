@@ -146,6 +146,23 @@ export interface Environment {
    * interruptor se retira.
    */
   readonly loyaltyDemo: boolean;
+
+  /**
+   * Siembra las campañas de farmacia (carril FAR-I7) y enciende su chip
+   * «DEMO».
+   *
+   * A diferencia de `loyaltyDemo`, acá el interruptor **sí decide si hay
+   * secciones**: sin campañas no se pinta una sección vacía decorativa, ni en
+   * la ficha de la farmacia ni en el pedido. Es la regla del carril, no una
+   * consecuencia del apagado.
+   *
+   * Va con chip y no en silencio porque una promoción promete un precio, y hoy
+   * ningún backend lo honra: `promotions` y `marketing` no publican una sola
+   * lectura, y el modelo todavía no relaciona campaña con productos (el pedido
+   * a Marcelo está en `COORDINACION-AGENTES.md`). Un descuento sin marca sería
+   * exactamente la pantalla que finge que algo real ocurrió.
+   */
+  readonly campaignsDemo: boolean;
 }
 
 /**
@@ -162,4 +179,5 @@ export interface EnvironmentOverrides {
   readonly demoPresets?: boolean;
   readonly paymentDemo?: boolean;
   readonly loyaltyDemo?: boolean;
+  readonly campaignsDemo?: boolean;
 }

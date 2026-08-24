@@ -1,0 +1,211 @@
+<app-page-header
+  title="Promociones de mi farmacia"
+  subtitle="Armá una campaña con productos de tu catálogo y decidí hasta cuándo vale. Los pacientes la ven en tu ficha y en su pedido."
+/>
+
+@if (!activo) {
+  <app-alert tone="info" title="Las promociones están apagadas en este entorno">
+    Cuando se enciendan vas a poder crear campañas y verlas acá. Nada de lo que armes ahora se
+    guardaría.
+  </app-alert>
+} @else {
+  <!-- El chip va quemado, como en el pago (FAR-I5): no existe un input que lo
+       cambie, y una promoción sin backend que la honre no puede pintarse sin
+       decir qué es. -->
+  <p class="campanas__demo">
+    <app-badge variant="info" data-testid="campanas-chip-demo">
+      DEMO — las campañas viven en esta sesión: todavía no hay dónde guardarlas
+    </app-badge>
+  </p>
+
+  <app-view-state-host [state]="farmacias()">
+    @if (hayVariasFarmacias()) {
+      <section class="campanas__bloque" aria-labelledby="campanas-farmacia">
+        <h2 id="campanas-farmacia" class="campanas__titulo">De qué farmacia</h2>
+        <app-form-field label="Farmacia" hint="La campaña va a colgar de esta farmacia.">
+          <app-select
+            [options]="opcionesDeFarmacia()"
+            [value]="farmaciaElegida()"
+            (valueChange)="elegirFarmacia($event)"
+            placeholder="Elegí tu farmacia"
+          />
+        </app-form-field>
+      </section>
+    }
+
+    @if (farmaciaElegida() !== null) {
+      <section class="campanas__bloque" aria-labelledby="campanas-publicadas">
+        <h2 id="campanas-publicadas" class="campanas__titulo">Tus campañas</h2>
+
+        <app-view-state-host [state]="lista()">
+          <ul class="campanas__lista" data-testid="campanas-lista">
+            @for (fila of filas(); track fila.campana.id) {
+              <li class="campanas__fila">
+                <div class="campanas__fila-datos">
+                  <!-- El título es el enlace a la ficha pública: quien publica
+                       la campaña necesita el enlace que va a compartir, y de
+                       paso ve exactamente lo que ve quien lo recibe. -->
+                  <a
+                    app-link
+                    [routerLink]="['/promociones', fila.campana.id]"
+                    class="campanas__principal"
+                  >
+                    {{ fila.campana.titulo }}
+                  </a>
+                  <span class="campanas__secundario">
+                    {{ fila.cuantosProductos }}
+                    {{ fila.cuantosProductos === 1 ? 'producto' : 'productos' }}
+                    · del {{ fila.campana.desde | date: 'd MMM' }}
+                    al {{ fila.campana.hasta | date: 'd MMM y' }}
+                    @if (ahorroMayor(fila.campana); as ahorro) {
+                      · hasta {{ ahorro }} % menos
+                    }
+                  </span>
+                </div>
+                <app-badge [variant]="tonoDelEstado(fila.estado)">
+                  {{ textoDelEstado(fila.estado) }}
+                </app-badge>
+              </li>
+            }
+          </ul>
+
+          <p vsh-empty class="campanas__secundario" data-testid="campanas-sin-campanas">
+            Todavía no publicaste ninguna campaña. Armá la primera con el formulario de abajo:
+            elegí productos de tu catálogo y hasta cuándo vale.
+          </p>
+        </app-view-state-host>
+      </section>
+
+      <section class="campanas__bloque" aria-labelledby="campanas-nueva">
+        <h2 id="campanas-nueva" class="campanas__titulo">Nueva campaña</h2>
+
+        @if (mensajesDeFallo().length > 0) {
+          <app-alert tone="error" title="Falta resolver esto">
+            <ul class="campanas__fallos" data-testid="campanas-fallos">
+              @for (mensaje of mensajesDeFallo(); track mensaje) {
+                <li>{{ mensaje }}</li>
+              }
+            </ul>
+          </app-alert>
+        }
+
+        <app-form-field label="Título" hint="Lo primero que se lee. Corto y concreto." [required]="true">
+          <app-input [value]="titulo()" (valueChange)="fijarTitulo($event)" placeholder="Cuidado diario con 20 % menos" />
+        </app-form-field>
+
+        <app-form-field label="Descripción" hint="Qué incluye y para quién es.">
+          <app-textarea [value]="descripcion()" (valueChange)="descripcion.set($event)" [rows]="3" />
+        </app-form-field>
+
+        <div class="campanas__vigencia">
+          <app-form-field label="Desde" [required]="true">
+            <app-date-picker [value]="desde()" (valueChange)="desde.set($event)" />
+          </app-form-field>
+          <app-form-field label="Hasta" hint="El último día cuenta: la campaña vale todo ese día." [required]="true">
+            <app-date-picker [value]="hasta()" (valueChange)="hasta.set($event)" />
+          </app-form-field>
+        </div>
+
+        <app-form-field label="Cómo se calcula el descuento">
+          <app-select
+            [options]="opcionesDeDescuento"
+            [value]="tipoDeDescuento()"
+            (valueChange)="fijarTipoDeDescuento($event)"
+          />
+        </app-form-field>
+
+        @if (porPorcentaje()) {
+          <app-form-field label="Descuento" hint="Entre 1 % y 99 %. Se aplica a todos los productos de la campaña.">
+            <app-input type="number" [value]="porcentaje()" (valueChange)="fijarPorcentaje($event)" />
+          </app-form-field>
+        }
+
+        <h3 class="campanas__subtitulo">Productos incluidos</h3>
+
+        <app-search-field
+          label="Buscar en tu catálogo"
+          placeholder="Nombre del medicamento o código"
+          [value]="termino()"
+          (valueChange)="termino.set($event)"
+          [loading]="buscando()"
+          (searched)="buscarEnElCatalogo($event)"
+        />
+
+        @if (seBusco()) {
+          @if (candidatos().length > 0) {
+            <ul class="campanas__candidatos" data-testid="campanas-candidatos">
+              @for (producto of candidatos(); track producto.id) {
+                <li class="campanas__candidato">
+                  <div class="campanas__fila-datos">
+                    <span class="campanas__principal">{{ producto.brandName ?? producto.genericName ?? producto.productCode }}</span>
+                    @if (producto.strengthText !== null || producto.packageSizeText !== null) {
+                      <span class="campanas__secundario">
+                        {{ producto.strengthText }} {{ producto.packageSizeText }}
+                      </span>
+                    }
+                  </div>
+                  <button app-button variant="secondary" size="sm" type="button" (clicked)="agregar(producto)">
+                    Agregar
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="campanas__secundario" role="status">
+              No hay productos de tu catálogo con ese nombre que no estén ya en la campaña.
+            </p>
+          }
+        }
+
+        @if (renglones().length > 0) {
+          <ul class="campanas__renglones" data-testid="campanas-renglones">
+            @for (renglon of renglones(); track renglon.productId) {
+              <li class="campanas__renglon">
+                <div class="campanas__fila-datos">
+                  <span class="campanas__principal">{{ renglon.nombre }}</span>
+                  @if (renglon.presentacion !== null) {
+                    <span class="campanas__secundario">{{ renglon.presentacion }}</span>
+                  }
+                </div>
+                <div class="campanas__precios">
+                  <app-form-field label="Precio normal">
+                    <app-input
+                      [value]="renglon.precioNormal"
+                      (valueChange)="fijarPrecioNormal(renglon.productId, $event)"
+                      placeholder="0.00"
+                    />
+                  </app-form-field>
+                  @if (!porPorcentaje()) {
+                    <app-form-field label="Precio de campaña">
+                      <app-input
+                        [value]="renglon.precioPromocional ?? ''"
+                        (valueChange)="fijarPrecioPromocional(renglon.productId, $event)"
+                        placeholder="0.00"
+                      />
+                    </app-form-field>
+                  }
+                </div>
+                <button app-button variant="ghost" size="sm" type="button" (clicked)="quitar(renglon.productId)">
+                  Quitar
+                </button>
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="campanas__acciones">
+          <button
+            app-button
+            variant="primary"
+            type="button"
+            data-testid="campanas-publicar"
+            [isLoading]="publicando()"
+            (clicked)="publicar()"
+          >
+            Publicar campaña
+          </button>
+        </div>
+      </section>
+    }
+  </app-view-state-host>
+}

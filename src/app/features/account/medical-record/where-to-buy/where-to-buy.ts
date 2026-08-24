@@ -15,6 +15,8 @@ import type {
   AvailabilitySite,
   GeoPoint,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
+import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import type { CampanaDeFarmacia } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.types';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type {
   BorradorDePedido,
@@ -29,6 +31,7 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
+import { Link } from '../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
 import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
@@ -99,6 +102,8 @@ interface ListaDeCompra {
 interface SedeVisible {
   /** Identifica la sede al armar el borrador del pedido. Jamás se pinta. */
   readonly siteId: string;
+  /** La farmacia dueña de la sede: la llave para cruzar sus promociones. */
+  readonly pharmacyId: string;
   readonly codigo: string;
   readonly farmacia: string;
   readonly sede: string;
@@ -159,7 +164,18 @@ interface ResultadoDeSedes {
  */
 @Component({
   selector: 'app-where-to-buy',
-  imports: [AppButton, AppButtonLink, AppMap, Badge, Checkbox, Alert, PageHeader, RouterLink, ViewStateHost],
+  imports: [
+    AppButton,
+    AppButtonLink,
+    AppMap,
+    Badge,
+    Checkbox,
+    Alert,
+    Link,
+    PageHeader,
+    RouterLink,
+    ViewStateHost,
+  ],
   templateUrl: './where-to-buy.html',
   styleUrl: './where-to-buy.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -169,6 +185,7 @@ export class WhereToBuy {
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly pharmacy = inject(PharmacyClient);
+  private readonly campaigns = inject(PharmacyCampaignsClient);
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -404,11 +421,53 @@ export class WhereToBuy {
             return;
           }
           this.ultimaConsulta = { respuesta, consultables, sinProducto };
+          this.sembrarPromociones(respuesta);
           this.resultados.set(ready(evaluar(respuesta, consultables, sinProducto)));
         },
         error: (error: unknown) =>
           this.resultados.set(errorToViewState<ResultadoDeSedes>(error)),
       });
+  }
+
+  /* ---- las promociones (FAR-I7) -------------------------------------------- */
+
+  /**
+   * Le pasa al carril de promociones el catálogo que esta consulta ya trajo.
+   *
+   * El cliente de campañas no tiene de dónde leer productos con precio: no hay
+   * endpoint de campañas y `GET /pharmacy/products` publica el catálogo sin
+   * precios. Acá sí están, reales, y sembrar con ellos es lo que evita que una
+   * promoción de demostración anuncie un producto inventado. Es idempotente:
+   * cada farmacia se siembra una sola vez por sesión.
+   */
+  private sembrarPromociones(respuesta: AvailabilityResult): void {
+    for (const sede of respuesta.items) {
+      // `flatMap` y no `filter` + `map`: el filtro no estrecha el tipo de
+      // `price` y obligaría a una aserción por cada uso.
+      const catalogo = sede.products.flatMap((producto) => {
+        const precio = producto.price;
+        if (precio === null) {
+          return [];
+        }
+        return [
+          {
+            productId: producto.productId,
+            nombre: producto.brandName ?? producto.genericName ?? producto.productCode,
+            presentacion: presentacionDe(producto),
+            // Lo que paga el paciente cuando la lista lo distingue: es el
+            // precio sobre el que la promoción tiene que descontar.
+            precio: precio.patientAmount ?? precio.unitAmount,
+            moneda: precio.currency?.code ?? '',
+          },
+        ];
+      });
+      this.campaigns.sembrarPara(sede.pharmacyId, sede.pharmacyName, catalogo);
+    }
+  }
+
+  /** Cuántas promociones vigentes tiene la farmacia de esta sede. */
+  protected promocionesDe(sede: SedeVisible): readonly CampanaDeFarmacia[] {
+    return this.campaigns.campanasVigentes(sede.pharmacyId);
   }
 
   /* ---- el pedido (FAR-I2) -------------------------------------------------- */
@@ -581,6 +640,7 @@ export function borradorDePedido(
   return {
     requestId,
     siteId: sitio.siteId,
+    pharmacyId: sitio.pharmacyId,
     farmacia: sitio.pharmacyName,
     sede: sitio.siteName,
     direccion: sitio.addressText,
@@ -627,6 +687,7 @@ function evaluar(
     ];
     return {
       siteId: sede.siteId,
+      pharmacyId: sede.pharmacyId,
       codigo: CODIGOS[indice] ?? String(indice + 1),
       farmacia: sede.pharmacyName,
       sede: sede.siteName,

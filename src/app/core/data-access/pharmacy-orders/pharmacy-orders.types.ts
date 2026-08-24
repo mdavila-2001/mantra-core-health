@@ -179,6 +179,12 @@ export interface PedidoFarmacia {
   /** La receta de origen: para re-pedir y para volver al mapa de sedes. */
   readonly requestId: string;
   readonly siteId: string;
+  /**
+   * La farmacia dueña de la sede. La agregó FAR-I7, y no es sólo para las
+   * promociones: un pedido pertenece a una farmacia, no sólo a una sucursal, y
+   * re-pedir uno vencido necesita reconstruir el borrador entero.
+   */
+  readonly pharmacyId: string;
 }
 
 /**
@@ -189,6 +195,11 @@ export interface PedidoFarmacia {
 export interface BorradorDePedido {
   readonly requestId: string;
   readonly siteId: string;
+  /**
+   * La farmacia dueña de la sede. La agregó FAR-I7: la confirmación necesita
+   * saber de qué farmacia es el pedido para cruzar sus promociones vigentes.
+   */
+  readonly pharmacyId: string;
   readonly farmacia: string;
   readonly sede: string;
   readonly direccion: string | null;
