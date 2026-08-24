@@ -148,11 +148,23 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).not.toContain('/administration/medical-laboratory');
     });
 
-    it('el menú del médico son las ocho opciones del cliente, y ninguna más', () => {
+    it('el menú del médico son las ocho opciones del cliente, y el generador', () => {
       // §4.H del plan de UX del 22/08/2026. El cliente dio una lista **cerrada**
       // —«las opciones únicas que se requiere en el panel del doctor son…»— y el
       // menú tenía dieciséis entradas de primer nivel. Esta prueba es la lista,
-      // en el orden en que se dibuja, y falla si alguien agrega la novena.
+      // en el orden en que se dibuja, y falla si alguien agrega la siguiente.
+      //
+      // **«Formularios» es la novena, y entra a propósito.** El generador del
+      // doctor se pidió el 21/08 y llegó el 22 (PR #212), un día antes de esta
+      // lista; es su única puerta, y sacarlo del menú habría dejado huérfana
+      // una pantalla que el mismo cliente pidió. Las dos cosas son suyas: la
+      // lista dice que el panel no se llena de renglones, no que se tire lo
+      // encargado. Cualquier décima sí tiene que discutirse.
+      //
+      // La otra que apareció en el mismo merge, «Promociones» de la farmacia,
+      // NO entra: cumplía `requiresTenant` porque el médico pertenece a su
+      // clínica, no porque atienda un mostrador. Sale por `fueraDelMenuPara`,
+      // y se sigue llegando por la ruta —lo fija la prueba de abajo—.
       abrirSesion(['PRACTITIONER']);
 
       const fueraDeMiCuenta = service
@@ -168,6 +180,7 @@ describe('NavigationService', () => {
         'Archivo clínico',
         'Evoluciones',
         'Glosario',
+        'Formularios',
         'Contabilidad',
       ]);
     });
@@ -186,7 +199,10 @@ describe('NavigationService', () => {
       expect(alcanzables).toContain('/lab-visits');
       expect(alcanzables).toContain('/dashboard');
 
+      expect(alcanzables).toContain('/administration/pharmacy-campaigns');
+
       expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
+      expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
       expect(rutasDelMenu()).not.toContain('/questionnaires');
       expect(rutasDelMenu()).not.toContain('/lab-visits');
     });

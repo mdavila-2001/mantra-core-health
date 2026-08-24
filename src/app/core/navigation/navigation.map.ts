@@ -1132,6 +1132,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // rol del token — no existe un rol de farmacia minorista.
     path: 'administration/pharmacy-campaigns',
     roles: [ANY_ROLE],
+    // §4.H · fuera del menú del médico, como la bandeja de al lado. El corte
+    // por membresía es `requiresTenant`, y un tenant es un tenant: el médico
+    // que pertenece a su clínica cumple la condición y terminaba con las
+    // promociones de una farmacia en su menú de ocho. No se le tocan los
+    // `roles` —quien sí atiende el mostrador la sigue viendo, y quien llega
+    // por la ruta entra igual—: esto habla de renglones, no de permisos.
+    fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Promociones',
     group: 'Administración',
     icon: 'billing',
