@@ -23,9 +23,12 @@
  * (`features/shell-layout`), que es la única capa que puede ver a las dos.
  *
  * Es un set cerrado por la misma razón que del otro lado: un nombre libre
- * terminaría en un ícono mudo.
+ * terminaría en un ícono mudo. Y son cuarenta y cuatro, no siete, porque con
+ * cincuenta y cinco secciones siete dejan de distinguir: el porqué del reparto
+ * está escrito en `atoms/nav-icon/nav-icon.types.ts`, que es donde se dibujan.
  */
 export const NAV_ICON_NAMES = [
+  // Los siete originales.
   'home',
   'patients',
   'calendar',
@@ -33,6 +36,57 @@ export const NAV_ICON_NAMES = [
   'results',
   'billing',
   'settings',
+
+  // Gente y conversación.
+  'people',
+  'chat',
+  'directory',
+
+  // Atención clínica.
+  'stethoscope',
+  'hospital',
+  'flask',
+  'scan',
+  'scalpel',
+  'pill',
+  'heart',
+  'folder',
+  'note',
+
+  // Papeles: los tres que `orders` hacía a la vez.
+  'clipboard',
+  'survey',
+  'book',
+  'labels',
+
+  // Cosas y lugares.
+  'building',
+  'factory',
+  'package',
+  'bag',
+  'tag',
+  'megaphone',
+  'pin',
+  'route',
+  'globe',
+
+  // Dinero.
+  'chart',
+  'star',
+
+  // Confianza y llaves.
+  'shield',
+  'key',
+  'link',
+  'flag',
+  'umbrella',
+  'briefcase',
+
+  // Avisos y ajustes.
+  'bell',
+  'sliders',
+  'history',
+  'teach',
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 

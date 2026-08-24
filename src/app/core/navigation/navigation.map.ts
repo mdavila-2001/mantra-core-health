@@ -116,7 +116,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Tutoriales',
     group: 'General',
-    icon: 'results',
+    icon: 'teach',
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
@@ -137,7 +137,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'messaging',
     label: 'Chats',
     group: 'General',
-    icon: 'results',
+    icon: 'chat',
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Escribile a tu médico y seguí la conversación, en vivo.',
@@ -181,7 +181,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'directory',
     label: 'Directorio de médicos',
     group: 'General',
-    icon: 'home',
+    icon: 'directory',
     roles: ['PATIENT'],
     exclusiveRoles: true,
     availability: 'disponible',
@@ -207,7 +207,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Grupos y foros',
     group: 'General',
-    icon: 'home',
+    icon: 'people',
     roles: ROLES_QUE_EJERCEN_O_ADMINISTRAN,
     availability: 'disponible',
     summary: 'Comunidades por tema y especialidad, con su muro y sus integrantes.',
@@ -220,7 +220,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'laboratory-directory',
     label: 'Directorio de laboratorios',
     group: 'General',
-    icon: 'results',
+    icon: 'flask',
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Laboratorios e imagenología, agrupados por categoría y con su oferta vigente.',
@@ -251,7 +251,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'clinics-directory',
     label: 'Directorio de clínicas',
     group: 'General',
-    icon: 'home',
+    icon: 'hospital',
     roles: [ANY_ROLE],
     // Fuera del menú del médico por la lista cerrada de ocho (§4.H). Sigue
     // alcanzable por su ruta y desde el flujo de síntomas.
@@ -267,7 +267,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'pharmacies-directory',
     label: 'Directorio de farmacias',
     group: 'General',
-    icon: 'orders',
+    icon: 'pill',
     roles: [ANY_ROLE],
     fueraDelMenuPara: ['PRACTITIONER'],
     availability: 'disponible',
@@ -293,7 +293,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'consultation',
     label: 'Consulta médica',
     group: 'Atención',
-    icon: 'patients',
+    icon: 'stethoscope',
     roles: ['CLINICIAN', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Empezá la atención de hoy: elegí al paciente y entrá a su consulta.',
@@ -325,7 +325,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'medical-records',
     label: 'Archivo clínico',
     group: 'Atención',
-    icon: 'results',
+    icon: 'folder',
     roles: ['CLINICIAN', 'PRACTITIONER'],
     // Encendida con `GET /clinical/patients/:id/summary` (UC-39-20) y
     // `GET /charts/patients/:id/chart` (UC-40-14). No hay —ni debe haber— un
@@ -348,7 +348,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'progress-notes',
     label: 'Evoluciones',
     group: 'Atención',
-    icon: 'orders',
+    icon: 'note',
     roles: ['CLINICIAN', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Lo último que escribiste, de todos tus pacientes y en un solo lugar.',
@@ -364,7 +364,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Laboratorio e imagen',
     group: 'Atención',
-    icon: 'results',
+    icon: 'scan',
     // Los mismos dos roles que declaran los cuatro controladores de M20 y el de
     // órdenes clínicas de M08: es PHI y la escribe y la lee quien atiende.
     roles: ['CLINICIAN', 'PRACTITIONER'],
@@ -391,7 +391,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'interventions',
     label: 'Intervenciones',
     group: 'Atención',
-    icon: 'orders',
+    icon: 'scalpel',
     roles: [
       'SURGEON',
       'ANESTHESIOLOGIST',
@@ -422,7 +422,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Visitas de laboratorio',
     group: 'Atención',
-    icon: 'calendar',
+    icon: 'route',
     roles: ['PRACTITIONER', 'CLINICIAN'],
     availability: 'disponible',
     summary: 'Aceptá o rechazá visitas de visitadores médicos y mirá tu agenda de visitas.',
@@ -438,7 +438,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-visits',
     label: 'Mis visitas médicas',
     group: 'Atención',
-    icon: 'calendar',
+    icon: 'route',
     roles: ['MEDICAL_VISITOR'],
     availability: 'disponible',
     summary: 'Consultá el estado de las visitas que solicitaste a los médicos.',
@@ -461,7 +461,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'glossary',
     label: 'Glosario',
     group: 'Atención',
-    icon: 'orders',
+    icon: 'book',
     roles: ROLES_QUE_EJERCEN_O_ADMINISTRAN,
     availability: 'disponible',
     summary: 'Buscá un término médico y su significado en lenguaje llano.',
@@ -485,7 +485,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'form-builder',
     label: 'Formularios',
     group: 'Atención',
-    icon: 'orders',
+    icon: 'clipboard',
     roles: ROLES_DE_QUIEN_ATIENDE,
     exclusiveRoles: true,
     availability: 'disponible',
@@ -505,7 +505,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Encuestas',
     group: 'Atención',
-    icon: 'orders',
+    icon: 'survey',
     // Los dos roles que exigen `SurveysTemplatesController` y
     // `SurveysAssignmentsController`.
     roles: ['PRACTITIONER', 'CLINICIAN'],
@@ -532,7 +532,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/users',
     label: 'Usuarios',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'people',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Dá de alta cuentas y revisá quién tiene acceso a la organización.',
@@ -542,7 +542,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/organizations',
     label: 'Organizaciones',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'building',
     // El listado admite además SUPERADMIN, pero ese rol es el comodín del
     // menú (`isVisibleTo`) y no hace falta declararlo.
     roles: ['SECURITY_ADMIN'],
@@ -567,7 +567,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/insurance',
     label: 'Aseguradora',
     group: 'Administración',
-    icon: 'billing',
+    icon: 'umbrella',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Revisá tus productos, planes, coberturas y la red de prestadores.',
@@ -580,7 +580,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/brokers',
     label: 'Brokers',
     group: 'Administración',
-    icon: 'patients',
+    icon: 'briefcase',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Consultá tus corredores, sus vinculaciones vigentes y su cartera.',
@@ -593,7 +593,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/delegated-access',
     label: 'Acceso delegado',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'key',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Delegá acceso con alcance y vigencia, y administrá sus permisos.',
@@ -607,7 +607,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/identity-providers',
     label: 'Proveedores de identidad',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'link',
     roles: ['IDENTITY_ADMIN'],
     availability: 'disponible',
     summary: 'Configurá el login federado: proveedores, claves y vinculación.',
@@ -622,7 +622,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/identity-assurance',
     label: 'Verificación de identidad',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'shield',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Administrá autoridades, políticas y casos de verificación de identidad.',
@@ -632,7 +632,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/terminology',
     label: 'Terminología',
     group: 'Administración',
-    icon: 'orders',
+    icon: 'labels',
     // La **lectura** del catálogo no pide rol —es metadato compartido, sin datos
     // de paciente, y el backend lo dice explícitamente en UC-03-13—, pero la
     // sección se deja acotada a quien administra porque es a quien le sirve:
@@ -650,7 +650,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/content-packs',
     label: 'Paquetes de contenido',
     group: 'Administración',
-    icon: 'orders',
+    icon: 'package',
     // `SUPERADMIN` y sólo él: aplicar un paquete cambia el catálogo que ve
     // **toda** la instalación, no el de una organización. Es la misma superficie
     // de plataforma que el aprovisionamiento de organizaciones.
@@ -663,7 +663,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/moderation',
     label: 'Moderación',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'flag',
     // `SECURITY_ADMIN` y sólo él: las tres lecturas exponen contenido
     // reportado, el texto que escribió quien reportó y quién decidió qué. El
     // servidor lo comprueba en cada una; esta guarda evita llegar a una
@@ -687,7 +687,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Administración',
     // Mismo ícono que Terminología, y por la misma razón: los dos son catálogos
     // de plataforma que alimentan decisiones, no registros de atención.
-    icon: 'orders',
+    icon: 'globe',
     // Los cinco roles humanos de `HealthContextController`. `SYSTEM` queda
     // afuera a propósito: es un rol de servicio para el scheduler, no de alguien
     // que navega — el mismo criterio que dejó a `AUTH_SERVICE` fuera de M40.
@@ -713,7 +713,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/geolocation',
     label: 'Geolocalización',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'pin',
     // Los cuatro controllers del módulo exigen el mismo rol, sin excepción.
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
@@ -729,7 +729,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/services-catalog',
     label: 'Catálogo de servicios',
     group: 'Administración',
-    icon: 'billing',
+    icon: 'tag',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Mantené la lista fija de servicios sobre la que se arman los presupuestos.',
@@ -753,7 +753,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Organización médica',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'hospital',
     // Los mismos roles que ya admite `GET /practices`: quien puede enumerar las
     // prácticas del tenant puede ver la estructura de la suya. El aislamiento
     // real lo hace la API, que responde 404 ante la de otra organización.
@@ -772,7 +772,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/medical-laboratory',
     label: 'Laboratorio médico',
     group: 'Administración',
-    icon: 'results',
+    icon: 'flask',
     // El mismo rol que exigen las dos lecturas administrativas del módulo.
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
@@ -788,7 +788,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/clinical-forms',
     label: 'Formularios clínicos',
     group: 'Administración',
-    icon: 'orders',
+    icon: 'clipboard',
     // Mismo rol que exige el backend en `ChartTemplatesController`.
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
@@ -822,7 +822,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/pharma-lab',
     label: 'Laboratorio farmacéutico',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'factory',
     roles: ['PHARMA_LAB_ADMIN', 'BUSINESS_ADMIN', 'PLATFORM_ADMIN'],
     availability: 'disponible',
     summary:
@@ -834,7 +834,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/accounting',
     label: 'Contabilidad',
     group: 'Facturación',
-    icon: 'billing',
+    icon: 'chart',
     // `PRACTITIONER` a propósito: los libros son de la práctica y quien la
     // ejerce tiene que poder verlos. El control de que la práctica consultada
     // es la suya lo hace la API, que responde 403 ante la de otra organización.
@@ -857,7 +857,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Mis organizaciones',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'building',
     roles: ['PRACTITIONER'],
     availability: 'disponible',
     summary:
@@ -914,7 +914,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `results` y no `patients`: lo que esta sección muestra son resultados de
     // atenciones, y el ícono de pacientes es el de «gente», que acá sería la
     // persona mirándose a sí misma.
-    icon: 'results',
+    icon: 'heart',
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Tus atenciones y tus recetas, con la descarga en PDF de cada una.',
@@ -960,7 +960,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/questionnaires',
     label: 'Mis cuestionarios',
     group: 'Mi cuenta',
-    icon: 'orders',
+    icon: 'survey',
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Respondé los cuestionarios de las consultas que ya tuviste.',
@@ -976,7 +976,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/notification-preferences',
     label: 'Preferencias de avisos',
     group: 'Mi cuenta',
-    icon: 'settings',
+    icon: 'sliders',
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Elegí de qué te avisamos y en qué horario no.',
@@ -1000,7 +1000,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'notification-center',
     label: 'Notificaciones',
     group: 'Mi cuenta',
-    icon: 'results',
+    icon: 'bell',
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Revisá todos tus avisos: recetas, consultas, turnos y mensajes.',
@@ -1013,7 +1013,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/identity/verify',
     label: 'Verificar identidad',
     group: 'Mi cuenta',
-    icon: 'patients',
+    icon: 'shield',
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Validá tu identidad, tu matrícula o una organización a tu cargo.',
@@ -1026,7 +1026,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/identity/cases',
     label: 'Mis verificaciones',
     group: 'Mi cuenta',
-    icon: 'patients',
+    icon: 'history',
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Seguí el estado de tus trámites de verificación de identidad.',
@@ -1044,7 +1044,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/pharmacy-orders',
     label: 'Mis pedidos',
     group: 'Mi cuenta',
-    icon: 'orders',
+    icon: 'bag',
     roles: ['PATIENT'],
     availability: 'disponible',
     summary: 'Seguí tus pedidos de farmacia: del envío al retiro.',
@@ -1065,7 +1065,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/loyalty',
     label: 'Mis puntos',
     group: 'Mi cuenta',
-    icon: 'billing',
+    icon: 'star',
     roles: ['PATIENT'],
     availability: 'disponible',
     summary: 'Tus puntos: lo que sumaste con tus compras y cómo canjearlo.',
@@ -1100,7 +1100,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: [ANY_ROLE],
     label: 'Tu organización',
     group: 'Administración',
-    icon: 'settings',
+    icon: 'building',
     requiresTenant: true,
     availability: 'disponible',
     summary: 'Los datos de tu organización, su gente y las solicitudes de médicos.',
@@ -1120,7 +1120,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: [ANY_ROLE],
     label: 'Pedidos de farmacia',
     group: 'Administración',
-    icon: 'orders',
+    icon: 'bag',
     requiresTenant: true,
     availability: 'disponible',
     summary: 'La bandeja del mostrador: pedidos que llegan, confirmaciones y retiros.',
@@ -1141,7 +1141,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Promociones',
     group: 'Administración',
-    icon: 'billing',
+    icon: 'megaphone',
     requiresTenant: true,
     availability: 'disponible',
     summary: 'Las campañas de tu farmacia: qué productos, con qué descuento y hasta cuándo.',
