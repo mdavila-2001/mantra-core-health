@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs';
+
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -32,8 +35,12 @@ import { borradorDePedido, WhereToBuy, type ItemDeReceta } from './where-to-buy'
  *    `environment.development` → `demoPresets` encendido, así que el CTA está
  *    habilitado, anunciado como demostración, y el clic arma el borrador y
  *    navega a confirmarlo. El armado del borrador se ejercita además como
- *    función pura; la rama sin demo (botón cerrado con «Próximamente») vive en
- *    la plantilla y se verifica en runtime.
+ *    función pura. La rama sin demo (botón cerrado con «Próximamente») se
+ *    prueba apagando el gate: cierra con el patrón de AppButton
+ *    (`aria-disabled`, enfocable), no con el atributo nativo.
+ * 5. **El CSS del componente usa solo tokens declarados**: cada `var(--…)`
+ *    existe en `src/styles.css` y no hay colores a mano — la misma frontera
+ *    de deriva que fija `design-tokens.types.spec.ts`.
  */
 
 /** base64url **sobre UTF-8**, como el token real. */
@@ -287,6 +294,46 @@ describe('WhereToBuy', () => {
     expect(navegar).toHaveBeenCalledWith(['/my-account/pharmacy-orders/new']);
   });
 
+  it('sin la demo, «Enviar pedido» cierra con el patrón de AppButton y sigue enfocable', async () => {
+    await montar();
+    responderHastaProductos();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    // Se apaga el gate de la demo para pintar la rama «Próximamente». El
+    // componente es OnPush y el gate es un campo plano: hay que marcarlo
+    // sucio a mano para que el @if se re-evalúe.
+    const componente = harness.routeDebugElement?.componentInstance as unknown as {
+      pedidoDisponible: boolean;
+    };
+    componente.pedidoDisponible = false;
+    harness.routeDebugElement?.injector.get(ChangeDetectorRef).markForCheck();
+    harness.detectChanges();
+
+    const botones =
+      harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>(
+        '[data-testid="compra-cta-pedido"]',
+      ) ?? [];
+    expect(botones.length).toBeGreaterThan(0);
+    for (const boton of botones) {
+      // `aria-disabled`, no el atributo nativo: el botón queda anunciado como
+      // deshabilitado pero sigue en el orden de tabulación.
+      expect(boton.getAttribute('aria-disabled')).toBe('true');
+      expect(boton.hasAttribute('disabled')).toBe(false);
+      expect(boton.disabled).toBe(false);
+    }
+    expect(texto()).toContain('Próximamente');
+
+    // Cerrado quiere decir cerrado: el clic no arma borrador ni navega.
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    botones[0]?.click();
+    harness.detectChanges();
+    expect(navegar).not.toHaveBeenCalled();
+    expect(TestBed.inject(PharmacyOrdersClient).borradorPreparado()).toBeNull();
+  });
+
   it('no toca la geolocalización al entrar; el botón la pide y reconsulta con lat/lng', async () => {
     await montar();
     responderHastaProductos();
@@ -453,5 +500,33 @@ describe('borradorDePedido (FAR-I2)', () => {
       moneda: null,
       disponible: false,
     });
+  });
+});
+
+/**
+ * La misma frontera de deriva que `design-tokens.types.spec.ts`: un
+ * `var(--token-que-no-existe)` falla en silencio — el navegador descarta la
+ * declaración y el componente se pinta con lo que herede. Acá se fija que el
+ * CSS del carril solo hable el idioma declarado en `src/styles.css`.
+ */
+describe('where-to-buy.css usa solo tokens declarados', () => {
+  const css = readFileSync(
+    'src/app/features/account/medical-record/where-to-buy/where-to-buy.css',
+    'utf8',
+  );
+
+  it('cada var(--…) del componente está declarado en src/styles.css', () => {
+    const declarados = new Set(
+      [...readFileSync('src/styles.css', 'utf8').matchAll(/(--[a-z0-9-]+)\s*:/g)].map(
+        (match) => match[1],
+      ),
+    );
+    const usados = [...css.matchAll(/var\((--[a-z0-9-]+)/g)].map((match) => match[1]);
+    expect(usados.length).toBeGreaterThan(0);
+    expect(usados.filter((token) => !declarados.has(token))).toEqual([]);
+  });
+
+  it('sin colores a mano: ni hex de relleno ni blanco sobre aguamarina', () => {
+    expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 });
