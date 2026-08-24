@@ -118,6 +118,14 @@ export class IamClient {
             issuerAdministrativeAreaConceptId:
               registration.issuerAdministrativeAreaConceptId,
           }),
+      // Sólo el municipio: el departamento de residencia lo deriva el backend
+      // del código del INE, así que el par no puede llegar incoherente.
+      ...(registration.residenceMunicipalityConceptId === undefined
+        ? {}
+        : {
+            residenceMunicipalityConceptId:
+              registration.residenceMunicipalityConceptId,
+          }),
       ...(registration.phone === undefined ? {} : { phone: registration.phone }),
       ...(registration.gender === undefined ? {} : { gender: registration.gender }),
       ...(registration.sexAtBirth === undefined ? {} : { sexAtBirth: registration.sexAtBirth }),
@@ -152,6 +160,11 @@ export class IamClient {
         ? {}
         : {
             issuerAdministrativeAreaConceptId: registration.issuerAdministrativeAreaConceptId,
+          }),
+      ...(registration.residenceMunicipalityConceptId === undefined
+        ? {}
+        : {
+            residenceMunicipalityConceptId: registration.residenceMunicipalityConceptId,
           }),
       licenseNumber: registration.licenseNumber,
       credentialNumber: registration.credentialNumber,

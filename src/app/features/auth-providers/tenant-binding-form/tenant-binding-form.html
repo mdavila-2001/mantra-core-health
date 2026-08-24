@@ -43,83 +43,12 @@
     prenda el aprovisionamiento sin decir con qué rol entra la gente.
   </app-alert>
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Qué se vincula"
-      description="El proveedor y la organización que va a poder usarlo."
-    >
-      <app-form-field
-        label="Identificador del proveedor"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.providerId.touched && form.controls.providerId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="providerId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Identificador de la organización"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.tenantId.touched && form.controls.tenantId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="tenantId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Aprovisionamiento"
-      description="Qué pasa cuando llega alguien de esa organización sin usuario local."
-    >
-      <div class="m40__switches">
-        <app-switch
-          formControlName="isEnabled"
-          label="Vínculo habilitado (la organización puede usar el proveedor)"
-        />
-        <app-switch
-          formControlName="autoProvision"
-          label="Crear el usuario local automáticamente al primer login"
-        />
-        <app-switch
-          formControlName="justInTimeProvisioning"
-          label="Aprovisionar en el momento del login, sin invitación previa"
-        />
-      </div>
-
-      <app-form-field
-        label="Rol con el que se aprovisiona (concepto)"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.defaultRoleConceptId.touched &&
-          form.controls.defaultRoleConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="defaultRoleConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Dominios de correo admitidos"
-        hint="Separados por coma. Vacío, no viaja."
-        [errorMessage]="
-          form.controls.allowedEmailDomains.touched && form.controls.allowedEmailDomains.invalid
-            ? 'Hasta 500 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="allowedEmailDomains" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Vincular proveedor"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Vincular proveedor a una organización"
+  submitLabel="Vincular proveedor"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

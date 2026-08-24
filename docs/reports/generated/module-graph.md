@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-987 archivos TypeScript bajo `src/` y 4032 importaciones internas.
+1014 archivos TypeScript bajo `src/` y 4012 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -158,36 +158,36 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/core/view-state/view-state.types.ts` | 163 |
-| `src/app/shared/components/atoms/button/button.ts` | 158 |
-| `src/app/core/view-state/view-state.ts` | 149 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 143 |
-| `src/app/core/http/error-to-view-state.ts` | 139 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 133 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 119 |
-| `src/app/core/navigation/navigation.service.ts` | 112 |
-| `src/app/shared/components/atoms/input/input.ts` | 100 |
-| `src/app/shared/components/organisms/form-actions/form-actions.ts` | 81 |
+| `src/app/core/view-state/view-state.types.ts` | 167 |
+| `src/app/shared/components/atoms/button/button.ts` | 162 |
+| `src/app/core/view-state/view-state.ts` | 153 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 146 |
+| `src/app/core/http/error-to-view-state.ts` | 143 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 136 |
+| `src/app/core/navigation/navigation.service.ts` | 114 |
 | `src/app/shared/a11y/announce-on-appear.ts` | 80 |
-| `src/app/shared/components/organisms/form-section/form-section.ts` | 67 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 79 |
+| `src/app/shared/components/molecules/card/card.ts` | 64 |
 | `src/app/shared/forms/form-support.ts` | 64 |
-| `src/app/shared/components/molecules/card/card.ts` | 63 |
-| `src/app/core/auth/auth.service.ts` | 52 |
-| `src/app/shared/components/atoms/badge/badge.ts` | 50 |
-| `src/app/shared/components/atoms/textarea/textarea.ts` | 48 |
-| `src/app/core/auth/session.store.ts` | 47 |
-| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 46 |
+| `src/app/shared/components/atoms/input/input.ts` | 60 |
+| `src/app/shared/components/atoms/badge/badge.ts` | 55 |
+| `src/app/core/auth/auth.service.ts` | 53 |
+| `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 49 |
+| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 49 |
+| `src/app/shared/forms/paginated/paginar-campos.ts` | 49 |
+| `src/app/core/auth/session.store.ts` | 48 |
 | `src/app/core/data-access/api.ts` | 40 |
+| `src/app/shared/components/organisms/form-actions/form-actions.ts` | 39 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 900 |
-| `@angular/common` | 533 |
-| `@angular/router` | 418 |
-| `rxjs` | 135 |
-| `@angular/forms` | 104 |
+| `@angular/core` | 921 |
+| `@angular/common` | 547 |
+| `@angular/router` | 426 |
+| `rxjs` | 143 |
+| `@angular/forms` | 106 |
 | `node:fs` | 15 |
 | `@opentelemetry/api` | 12 |
 | `@angular/platform-browser` | 11 |

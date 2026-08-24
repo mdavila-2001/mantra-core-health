@@ -196,13 +196,30 @@ describe('APP_SECTIONS', () => {
     expect(isVisibleTo(glosario, ['SUPERADMIN'])).toBe(true);
   });
 
-  it('sólo la Guía rompe el comodín: el resto del registro lo respeta', () => {
+  it('el generador de formularios es del doctor, y de nadie más', () => {
+    const generador = APP_SECTIONS.find((s) => s.path === 'form-builder')!;
+
+    // Pedido del 22/08/2026: la pestaña «Formularios» **sólo** en el doctor.
+    // Quien administra ya tiene la suya (`administration/clinical-forms`, que
+    // arma la plantilla estándar); ésta extiende una plantilla ya armada con
+    // los campos de un consultorio, y eso no es una tarea de plataforma.
+    expect(isVisibleTo(generador, ['USER', 'PRACTITIONER'])).toBe(true);
+    expect(isVisibleTo(generador, ['CLINICIAN'])).toBe(true);
+    expect(isVisibleTo(generador, ['USER', 'PATIENT'])).toBe(false);
+    expect(isVisibleTo(generador, ['SECURITY_ADMIN'])).toBe(false);
+    expect(isVisibleTo(generador, ['SUPERADMIN'])).toBe(false);
+  });
+
+  it('el comodín sólo lo rompen las dos secciones que lo declaran', () => {
     // Si `exclusiveRoles` se empezara a repartir, el comodín dejaría de servir
     // para lo que existe —que quien administra pueda recorrer el sistema— y
-    // nadie se enteraría hasta que una sección deje de aparecer.
+    // nadie se enteraría hasta que una sección deje de aparecer. Son dos, y
+    // cada una por un pedido explícito del cliente: la Guía es sólo del
+    // paciente (15/08/2026) y el generador de formularios sólo del doctor
+    // (22/08/2026).
     const exclusivas = APP_SECTIONS.filter((s) => s.exclusiveRoles === true).map((s) => s.path);
 
-    expect(exclusivas).toEqual(['directory']);
+    expect(exclusivas).toEqual(['directory', 'form-builder']);
   });
 });
 

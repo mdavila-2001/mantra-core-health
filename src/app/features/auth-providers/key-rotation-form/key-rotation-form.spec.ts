@@ -39,14 +39,9 @@ describe('KeyRotationForm', () => {
     return interno<{ patchValue: (v: object) => void }>('form');
   }
 
-  function campos(): { form: { patchValue: (v: object) => void } } {
-    return (component as unknown as { campos: () => { form: { patchValue: (v: object) => void } } })
-      .campos();
-  }
-
   function cargarClave(): void {
     formulario().patchValue({ providerId: PROVEEDOR });
-    campos().form.patchValue({ keyId: 'k-2', algorithm: 'RS256', publicKey: 'pem' });
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ keyId: 'k-2', algorithm: 'RS256', publicKey: 'pem' });
   }
 
   it('gracia 0 viaja: es la rotación de emergencia, no una omisión', () => {

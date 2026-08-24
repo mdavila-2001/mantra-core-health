@@ -34,29 +34,34 @@ describe('GrantForm', () => {
     return (esSenal ? valor : valor.bind(component)) as T;
   }
 
-  function completarDelegacion() {
+  /**
+   * El formulario entero, ahora en un solo grupo.
+   *
+   * El propósito, la vigencia y el tipo de recurso vivían en señales sueltas
+   * mientras la plantilla los dibujaba a mano; con el motor de formularios todo
+   * escribe en el mismo `FormGroup`, así que la prueba lo llena igual que lo
+   * llenaría una persona.
+   */
+  function completar(valores: Record<string, unknown> = {}) {
     interno<{
-      setValue: (v: Record<string, string>) => void;
-    }>('form').setValue({ delegationId: DELEGACION, patientProfileId: '', encounterId: '' });
+      patchValue: (v: Record<string, unknown>) => void;
+    }>('form').patchValue({ delegationId: DELEGACION, ...valores });
   }
 
   it('sin propósito o sin vencimiento, el envío ni se intenta', () => {
-    completarDelegacion();
-    expect(interno<() => boolean>('faltanObligatorios')()).toBe(true);
-
+    completar();
     interno<() => void>('submit')();
 
-    interno<(v: unknown) => void>('elegirProposito')('TREATMENT');
+    completar({ purpose: 'TREATMENT' });
     interno<() => void>('submit')();
     // Sigue faltando `validTo`: `http.verify()` comprueba que nada viajó.
   });
 
   it('el grant viaja con propósito y vencimiento ISO, sin claves de más', () => {
-    completarDelegacion();
-    interno<(v: unknown) => void>('elegirProposito')('TREATMENT');
-    interno<{ set: (v: Date | null) => void }>('validTo').set(
-      new Date('2026-09-01T08:00:00.000Z'),
-    );
+    completar({
+      purpose: 'TREATMENT',
+      validTo: new Date('2026-09-01T08:00:00.000Z'),
+    });
 
     interno<() => void>('submit')();
 
@@ -71,10 +76,23 @@ describe('GrantForm', () => {
   });
 
   it('el tipo de recurso solo entra si es uno del contrato', () => {
-    interno<(v: unknown) => void>('elegirRecurso')('LAB_ORDER');
-    expect(interno<() => string | null>('resourceType')()).toBeNull();
+    // El grupo admite cualquier texto —lo escribe el motor desde las opciones
+    // que se le declararon—, así que la comprobación contra el contrato sigue
+    // haciéndose al armar el cuerpo, que es donde importa.
+    completar({
+      purpose: 'TREATMENT',
+      validTo: new Date('2026-09-01T08:00:00.000Z'),
+      resourceType: 'LAB_ORDER',
+    });
+    interno<() => void>('submit')();
+    const ajeno = http.expectOne(`/practitioner-delegates/${DELEGACION}/grants`);
+    expect(ajeno.request.body).not.toHaveProperty('resourceType');
+    ajeno.flush({ id: 'g-1', status: 'c', createdAt: '2026-08-07T12:00:00.000Z' });
 
-    interno<(v: unknown) => void>('elegirRecurso')('PRESCRIPTION');
-    expect(interno<() => string | null>('resourceType')()).toBe('PRESCRIPTION');
+    completar({ resourceType: 'PRESCRIPTION' });
+    interno<() => void>('submit')();
+    const valido = http.expectOne(`/practitioner-delegates/${DELEGACION}/grants`);
+    expect(valido.request.body).toMatchObject({ resourceType: 'PRESCRIPTION' });
+    valido.flush({ id: 'g-2', status: 'c', createdAt: '2026-08-07T12:00:00.000Z' });
   });
 });

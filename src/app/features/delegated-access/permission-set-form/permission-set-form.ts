@@ -3,11 +3,11 @@ import {
   Component,
   computed,
   inject,
-  linkedSignal,
+  effect,
   signal,
   viewChild,
 } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { DelegatedAccessClient } from '../../../core/data-access/delegated-access/delegated-access.client';
@@ -21,17 +21,12 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
-import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, opcionDe } from '../../../shared/forms/form-support';
 import { SetItemsEditor } from '../set-items-editor/set-items-editor';
 
@@ -58,20 +53,13 @@ const MAX_DESCRIPTION = 1000;
 @Component({
   selector: 'app-permission-set-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
+    CampoPersonalizado,
     PageHeader,
-    Radio,
-    RadioGroup,
-    Select,
+    PaginatedForm,
     SetItemsEditor,
-    Textarea,
   ],
   templateUrl: './permission-set-form.html',
   styleUrl: '../m29.css',
@@ -82,7 +70,12 @@ export class PermissionSetForm {
   private readonly navigation = inject(NavigationService);
   private readonly session = inject(SessionStore);
 
-  private readonly editor = viewChild.required(SetItemsEditor);
+/**
+   * El editor vive dentro de la página que lo proyecta, así que **no existe**
+   * mientras se contesta la primera. Sólo lo lee el envío, que ocurre en la
+   * última.
+   */
+  private readonly editor = viewChild(SetItemsEditor);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly maxDescription = MAX_DESCRIPTION;
@@ -100,22 +93,94 @@ export class PermissionSetForm {
       nonNullable: true,
       validators: [Validators.maxLength(MAX_DESCRIPTION)],
     }),
+    tenantId: new FormControl<string | null>(null, { validators: [Validators.required] }),
+    delegateType: new FormControl<PermissionSetDelegateType | null>(null),
   });
+
+  /**
+   * Las páginas, con el editor de ítems como campo `custom`.
+   *
+   * Los ítems son una **lista que crece**, no una pregunta: el motor le reserva
+   * su sitio y el editor sigue siendo quien la maneja. Las opciones de
+   * organización salen del token, así que las páginas son un `computed`.
+   */
+  protected readonly paginas = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'Identidad del set',
+        hint: 'A qué organización pertenece y cómo se lo nombra.',
+        campos: [
+          {
+            key: 'tenantId',
+            label: 'Organización propietaria',
+            control: 'select' as const,
+            required: true,
+            options: this.organizaciones(),
+            placeholder: 'Elegí la organización',
+            mensajeDeError: this.sinOrganizaciones()
+              ? 'Tu sesión no tiene organizaciones a cargo, así que no hay dónde publicar un set.'
+              : 'Elegí la organización propietaria.',
+          },
+          {
+            key: 'code',
+            label: 'Código del set',
+            hint: 'Único dentro de la organización; si ya existe, el backend responde 409.',
+            control: 'text' as const,
+            required: true,
+            mensajeDeError: 'Escribí un código de hasta 100 caracteres.',
+          },
+          {
+            key: 'name',
+            label: 'Nombre legible',
+            control: 'text' as const,
+            required: true,
+            mensajeDeError: 'Escribí un nombre de hasta 200 caracteres.',
+          },
+          {
+            key: 'delegateType',
+            label: 'Tipo de delegado',
+            hint: 'Opcional: a qué rol está pensado el set.',
+            control: 'radio' as const,
+            options: [
+              { value: 'SECRETARY', label: 'Secretaría' },
+              { value: 'ASSISTANT', label: 'Asistente' },
+              { value: 'NURSE', label: 'Enfermería' },
+              { value: 'BILLING', label: 'Facturación' },
+            ],
+          },
+          { key: 'description', label: 'Descripción', control: 'textarea' as const },
+        ],
+      },
+      {
+        titulo: 'Ítems de la versión 1',
+        hint: 'Al menos un permiso; cada ítem puede llevar su restricción y exigir step-up.',
+        campos: [
+          { key: 'items', label: 'Permisos del set', control: 'custom' as const, required: true },
+        ],
+      },
+    ]),
+  );
 
   /** Las organizaciones del token: un set pertenece a una que administrás. */
   protected readonly organizaciones = computed<readonly SelectOption<string>[]>(() =>
     this.session.tenants().map((id) => ({ value: id, label: this.session.tenantName(id) })),
   );
 
-  /** Con una sola organización no hay nada que elegir: queda elegida. */
-  protected readonly tenantId = linkedSignal<string | null>(() => {
+  /**
+   * Con una sola organización no hay nada que elegir: queda elegida.
+   *
+   * Escribe en el control del grupo porque el motor lee de ahí; el efecto es el
+   * mismo que tenía la señal enlazada, sin un segundo sitio donde vive el dato.
+   */
+  private readonly unaSolaOrganizacion = effect(() => {
     const organizaciones = this.organizaciones();
-    return organizaciones.length === 1 ? (organizaciones[0]?.value ?? null) : null;
+    if (organizaciones.length === 1) {
+      this.form.controls.tenantId.setValue(organizaciones[0]?.value ?? null);
+    }
   });
 
   protected readonly sinOrganizaciones = computed(() => this.organizaciones().length === 0);
 
-  protected readonly delegateType = signal<PermissionSetDelegateType | null>(null);
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -126,25 +191,23 @@ export class PermissionSetForm {
     errorMessageOf(this.state(), 'No tenés permiso para publicar sets de permisos.'),
   );
 
-  protected elegirTipo(valor: unknown): void {
-    this.delegateType.set(opcionDe(DELEGATE_TYPES, valor));
-  }
-
   protected submit(): void {
     if (this.isSubmitting()) {
       return;
     }
 
-    const tenantId = this.tenantId();
-    const items = this.editor().intentarEnvio();
+    const items = this.editor()?.intentarEnvio() ?? null;
 
-    if (this.form.invalid || tenantId === null || items === null) {
+    if (this.form.invalid || items === null) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const { code, name, description } = this.form.getRawValue();
-    const tipo = this.delegateType();
+    const { code, name, description, tenantId, delegateType } = this.form.getRawValue();
+    if (tenantId === null) {
+      return;
+    }
+    const tipo = opcionDe(DELEGATE_TYPES, delegateType);
     const descripcion = description.trim();
 
     this.state.set(loading());
@@ -171,7 +234,6 @@ export class PermissionSetForm {
     // El editor de ítems no se toca: el panel de éxito lo desmontó, y al
     // volver al formulario renace fresco, con su única fila vacía.
     this.form.reset();
-    this.delegateType.set(null);
     this.published.set(null);
     this.state.set(ready(null));
   }

@@ -18,7 +18,10 @@ import { NotFound } from './features/not-found/not-found';
 import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { authGuard } from './core/auth/auth.guard';
-import { APP_SECTIONS } from './core/navigation/navigation.map';
+import {
+  APP_SECTIONS,
+  ROLES_DE_QUIEN_ATIENDE,
+} from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
   APP_TITLE,
@@ -27,17 +30,6 @@ import {
   titleOf,
   type AppSection,
 } from './core/navigation/navigation.types';
-
-/**
- * Los roles de quien atiende, para las hijas de «Mi perfil» que son sólo suyas.
- *
- * Es la misma pareja que declaran «Archivo clínico» y «Laboratorio e imagen» en
- * el registro (`navigation.map.ts`): la Guía es del paciente; configurar el
- * perfil profesional, la vitrina pública y los artículos médicos son de quien
- * atiende. Un paciente que escribía la dirección llegaba a una pantalla que le
- * hablaba de «las personas que atendí» (feedback de la analista, 18/08/2026).
- */
-const ROLES_DE_QUIEN_ATIENDE: readonly string[] = ['CLINICIAN', 'PRACTITIONER'];
 
 /** La declaración que cierra una hija de «Mi perfil» a quien atiende. */
 function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
@@ -165,6 +157,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
+  'administration/content-packs': () =>
+    import('./features/admin/content-packs/content-packs').then((m) => m.ContentPacks),
   'administration/moderation': () =>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
@@ -188,6 +182,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,
+    ),
+  // FAR-I7: las campañas de la farmacia. Ruta hermana de la bandeja y no una
+  // sección dentro del panel de organización, por el mismo motivo que aquélla:
+  // el panel es de TP-1 y así no se le toca una línea.
+  'administration/pharmacy-campaigns': () =>
+    import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
+      (m) => m.PharmacyCampaigns,
     ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
@@ -220,6 +221,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'my-account/questionnaires': () =>
     import('./features/account/questionnaires/questionnaires').then((m) => m.Questionnaires),
   glossary: () => import('./features/glossary/glossary').then((m) => m.Glossary),
+  // El generador de formularios del doctor. Diferido: no es el destino del
+  // login de nadie y arrastra el motor de formularios por partes para la vista
+  // previa. La ruta **no puede llamarse `forms`** — es prefijo del proxy hacia
+  // la API y lo verifica `check-route-prefixes.mjs`.
+  'form-builder': () =>
+    import('./features/form-builder/form-builder').then((m) => m.FormBuilder),
   // Carril 17. Las tres pantallas van diferidas: cada una la alcanza un rol
   // distinto —el administrador del laboratorio, el visitador y el doctor— y
   // ninguna es el destino del login de nadie.
@@ -519,12 +526,80 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // La importación por archivo. No es una sección del menú: cuelga de
+    // Terminología, que es donde alguien va a buscarla, y se alcanza desde ahí
+    // o por enlace directo.
+    path: 'administration/terminology/import',
+    title: `${APP_TITLE} - Importar terminología`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/terminology/version-import/version-import')
+        .then((m) => m.VersionImport)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El recorrido de puesta en marcha. No es una sección del menú: se llega
+    // desde el aviso del panel o desde el ingreso, y es un destino, no un
+    // lugar donde quedarse.
+    path: 'administration/getting-started',
+    title: `${APP_TITLE} - Puesta en marcha`,
+    canActivate: [seccionRolesGuard],
+    data: { roles: ['SUPERADMIN', 'SECURITY_ADMIN'] },
+    loadComponent: () =>
+      import('./features/admin/getting-started/getting-started')
+        .then((m) => m.GettingStarted)
+        .catch(() => chunkFallido()),
+  },
+  {
     path: 'administration/organizations/new',
     title: `${APP_TITLE} - Nueva organización`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/admin/organizations/organization-new/organization-new')
         .then((m) => m.OrganizationNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Las tres pantallas de escritura de una organización. Van ANTES de la
+    // ficha (`:tenantId`) no por el parámetro —el suyo también lo es— sino
+    // porque sus segmentos finales son literales: `.../verify` tiene que
+    // resolver acá y no caer en la ficha con `verify` de id.
+    //
+    // Con guard de sección: las tres son administrativas, a diferencia de la
+    // ficha, cuyas lecturas la API abre a cualquier miembro del tenant.
+    path: 'administration/organizations/:tenantId/verify',
+    title: `${APP_TITLE} - Verificar organización`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/organizations/organization-verify/organization-verify')
+        .then((m) => m.OrganizationVerify)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'administration/organizations/:tenantId/branches/new',
+    title: `${APP_TITLE} - Nueva sucursal`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/organizations/branch-new/branch-new')
+        .then((m) => m.BranchNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'administration/organizations/:tenantId/memberships/new',
+    title: `${APP_TITLE} - Sumar a la organización`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/organizations/membership-new/membership-new')
+        .then((m) => m.MembershipNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'administration/organizations/:tenantId/child-organizations/new',
+    title: `${APP_TITLE} - Nueva sub-organización`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/organizations/child-organization-new/child-organization-new')
+        .then((m) => m.ChildOrganizationNew)
         .catch(() => chunkFallido()),
   },
   {
@@ -903,6 +978,29 @@ function rutasDeBusquedaPublica(): Routes {
           loadComponent: () =>
             import('./features/redsat/buscar/cercania-detalle/cercania-detalle').then(
               (m) => m.BuscarCercaniaDetalle,
+            ),
+        },
+      ],
+    },
+    {
+      // FAR-I7: el detalle de una promoción, con URL propia y compartible.
+      //
+      // Cuelga del marco público —y no de `administration/`— porque el enlace
+      // se manda por mensaje: quien lo recibe tiene que ver la promoción, no
+      // una pantalla de login. Va fuera de `buscar` para que la URL sea
+      // `/promociones/:id`: una promoción no es un resultado de búsqueda.
+      path: 'promociones/:campaignId',
+      loadComponent: () =>
+        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+      children: [
+        {
+          path: '',
+          pathMatch: 'full',
+          title: 'Promoción — AloVida',
+          data: { arquetipo: 'detalle', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/campaigns/campaign-detail/campaign-detail').then(
+              (m) => m.CampaignDetail,
             ),
         },
       ],

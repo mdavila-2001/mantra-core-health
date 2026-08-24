@@ -20,6 +20,28 @@ export interface GeoPoint {
   readonly lng: number;
 }
 
+/**
+ * Una farmacia del directorio publicado, tal como la lista `GET
+ * /pharmacy/pharmacies`.
+ *
+ * Sólo los campos que alguna pantalla consume: el resto del DTO (`legalName`,
+ * `type`, `homeDeliveryAvailable`, `pickupAvailable`) se agrega cuando alguien
+ * lo pida, que es la regla que este cliente ya venía siguiendo.
+ */
+export interface PharmacyDirectoryItem {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly siteCount: number;
+  readonly productCount: number;
+}
+
+/** El directorio de farmacias publicadas del tenant activo. */
+export interface PharmacyDirectoryPage {
+  readonly items: readonly PharmacyDirectoryItem[];
+  readonly count: number;
+}
+
 /** Un producto publicado del directorio, tal como lo lista la búsqueda. */
 export interface PharmacyProduct {
   readonly id: string;

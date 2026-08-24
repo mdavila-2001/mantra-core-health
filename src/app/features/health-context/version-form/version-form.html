@@ -39,65 +39,15 @@
     <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="De dónde sale"
-      description="La versión se redacta desde una corrida del mismo país del contexto."
-    >
-      <app-form-field
-        label="Identificador del contexto"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.contextId.touched && form.controls.contextId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="contextId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Identificador de la corrida"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.collectionRunId.touched && form.controls.collectionRunId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="collectionRunId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="El contenido"
-      description="El cuerpo de la versión es un objeto JSON; su forma la define cada país."
-    >
-      <app-form-field
-        label="Contenido (JSON)"
-        [required]="true"
-        [errorMessage]="
-          form.controls.contextPayloadJson.touched && form.controls.contextPayloadJson.invalid
-            ? 'Tiene que ser un objeto JSON válido.'
-            : ''
-        "
-      >
-        <app-textarea formControlName="contextPayloadJson" [rows]="4" [autoResize]="true" />
-      </app-form-field>
-
-      <app-form-field label="Resumen" hint="Opcional: qué cambió respecto de la anterior. Máx. 2000 caracteres.">
-        <app-textarea formControlName="summary" [rows]="2" [autoResize]="true" />
-      </app-form-field>
-
-      <app-form-field label="Versión del esquema" hint="Opcional. Máx. 50 caracteres.">
-        <app-input formControlName="schemaVersion" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Los hechos"
-      description="Cada hecho apunta a observaciones aceptadas de la misma corrida: sin evidencia no se acepta."
-    >
+  <app-paginated-form
+    [paginas]="paginas"
+    [form]="form"
+    label="Redactar versión"
+    submitLabel="Guardar borrador"
+    [pending]="isSubmitting()"
+    (enviado)="submit()"
+  >
+    <ng-template appCampoPersonalizado="hechos">
       @for (hecho of hechosVisibles(); track hecho; let indiceHecho = $index) {
         <app-card variant="outlined" padding="md" class="m44__alert">
           <div [formGroup]="hecho">
@@ -228,12 +178,6 @@
       <button app-button variant="secondary" type="button" (clicked)="agregarHecho()">
         Agregar hecho
       </button>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Guardar borrador"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+    </ng-template>
+  </app-paginated-form>
 }

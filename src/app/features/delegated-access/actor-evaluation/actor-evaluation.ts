@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { DelegatedAccessClient } from '../../../core/data-access/delegated-access/delegated-access.client';
 import type {
@@ -13,14 +13,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 const PURPOSES: readonly PurposeOfUse[] = ['TREATMENT', 'BILLING', 'OPERATIONS'];
@@ -43,17 +39,11 @@ const UUID_OPCIONAL = Validators.pattern(UUID_PATTERN);
 @Component({
   selector: 'app-actor-evaluation',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Radio,
-    RadioGroup,
+    PaginatedForm,
   ],
   templateUrl: './actor-evaluation.html',
   styleUrl: '../m29.css',
@@ -67,6 +57,40 @@ export class ActorEvaluation {
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
 
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué delegación',
+      hint: 'La delegación cuyo alcance efectivo se quiere conocer.',
+      campos: [
+        { key: 'practitionerDelegateAssignmentId', label: 'Identificador de la delegación', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Con qué propósito',
+      hint: 'La misma delegación puede permitir tratamiento y denegar facturación.',
+      campos: [
+        { key: 'purpose', label: 'Propósito de uso', control: 'radio', options: [{ value: 'TREATMENT', label: 'Tratamiento' }, { value: 'BILLING', label: 'Facturación' }, { value: 'OPERATIONS', label: 'Operaciones' }], required: true },
+      ],
+    },
+    {
+      titulo: 'En qué contexto',
+      hint: 'Opcional: cuanto más concreto el contexto, más fiel el veredicto.',
+      campos: [
+        { key: 'permissionId', label: 'Permiso concreto que se ejerce', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'patientProfileId', label: 'Paciente sobre el que se accede', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'encounterId', label: 'Encuentro sobre el que se accede', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'resourceType', label: 'Tipo de recurso', control: 'radio', options: [{ value: 'CLINICAL_NOTE', label: 'Nota clínica' }, { value: 'APPOINTMENT', label: 'Cita' }, { value: 'PRESCRIPTION', label: 'Receta' }] },
+      ],
+    },
+  ]);
+
   protected readonly form = new FormGroup({
     practitionerDelegateAssignmentId: new FormControl('', {
       nonNullable: true,
@@ -75,12 +99,12 @@ export class ActorEvaluation {
     permissionId: new FormControl('', { nonNullable: true, validators: [UUID_OPCIONAL] }),
     patientProfileId: new FormControl('', { nonNullable: true, validators: [UUID_OPCIONAL] }),
     encounterId: new FormControl('', { nonNullable: true, validators: [UUID_OPCIONAL] }),
+    /** Obligatorio por contrato: toda evaluación es por propósito. */
+    purpose: new FormControl<PurposeOfUse | null>(null, {
+      validators: [Validators.required],
+    }),
+    resourceType: new FormControl<GrantResourceType | null>(null),
   });
-
-  /** Obligatorio por contrato: toda evaluación es por propósito. */
-  protected readonly purpose = signal<PurposeOfUse | null>(null);
-
-  protected readonly resourceType = signal<GrantResourceType | null>(null);
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -100,30 +124,27 @@ export class ActorEvaluation {
     return resultado.requiresStepUp ? 'warning' : 'success';
   });
 
-  protected elegirProposito(valor: unknown): void {
-    this.purpose.set(opcionDe(PURPOSES, valor));
-  }
-
-  protected elegirRecurso(valor: unknown): void {
-    this.resourceType.set(opcionDe(RESOURCE_TYPES, valor));
-  }
-
   protected submit(): void {
     if (this.isSubmitting()) {
       return;
     }
 
-    const proposito = this.purpose();
-    if (this.form.invalid || proposito === null) {
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     const valores = this.form.getRawValue();
+    // El grupo ya lo exige; se vuelve a comprobar contra el contrato porque el
+    // tipo del control admite `null` y lo que sale de acá es el cuerpo real.
+    const proposito = opcionDe(PURPOSES, valores.purpose);
+    if (proposito === null) {
+      return;
+    }
     const permiso = valores.permissionId.trim();
     const paciente = valores.patientProfileId.trim();
     const encuentro = valores.encounterId.trim();
-    const recurso = this.resourceType();
+    const recurso = opcionDe(RESOURCE_TYPES, valores.resourceType);
 
     this.state.set(loading());
 

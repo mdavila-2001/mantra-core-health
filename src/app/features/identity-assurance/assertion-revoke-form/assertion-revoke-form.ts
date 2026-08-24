@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { IdentityAdminClient } from '../../../core/data-access/identity/identity-admin.client';
 import type {
@@ -12,13 +12,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /**
@@ -32,16 +29,11 @@ import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../sh
 @Component({
   selector: 'app-assertion-revoke-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Switch,
+    PaginatedForm,
   ],
   templateUrl: './assertion-revoke-form.html',
   styleUrl: '../m27-admin.css',
@@ -54,6 +46,32 @@ export class AssertionRevokeForm {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué aserción',
+      hint: 'La credencial emitida que deja de valer.',
+      campos: [
+        { key: 'assertionId', label: 'Aserción', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'revocationReasonConceptId', label: 'Motivo de revocación (concepto)', hint: 'Opcional: por defecto, fraude.', control: 'text', mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Señal derivada',
+      hint: 'Si la revocación es por fraude, la misma operación puede registrar la señal.',
+      campos: [
+        { key: 'fraudSignalTypeConceptId', label: 'Tipo de señal (concepto)', hint: 'Opcional: qué se sospecha, si se deriva la señal.', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'fraudSeverityConceptId', label: 'Severidad de la señal (concepto)', hint: 'Opcional: con qué gravedad, si se deriva la señal.', control: 'text', mensajeDeError: UUID_ERROR },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     assertionId: new FormControl('', {

@@ -5,6 +5,11 @@
   subtitle="Sus sucursales, su plantilla y las sub-organizaciones que dependen de ella."
   [breadcrumbs]="breadcrumbs()"
 >
+  @if (rutaDeVerificacion(); as rutaVerificar) {
+    <a app-button page-actions variant="primary" [routerLink]="rutaVerificar">
+      Verificar
+    </a>
+  }
   <a app-button page-actions variant="secondary" [routerLink]="rutaDelListado">
     Volver al listado
   </a>

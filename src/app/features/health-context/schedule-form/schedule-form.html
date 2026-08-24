@@ -34,100 +34,12 @@
     <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Qué se recolecta"
-      description="Un agente, un país, una cadencia. El scheduler la ejecuta con corridas idempotentes."
-    >
-      <app-form-field
-        label="País"
-        [required]="true"
-        hint="Identificador del concepto de país (UUID)."
-        [errorMessage]="
-          form.controls.countryConceptId.touched && form.controls.countryConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="countryConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Agente"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.agentId.touched && form.controls.agentId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="agentId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Expresión de programación"
-        [required]="true"
-        hint="La cadencia, como una expresión cron: 0 3 * * * corre todos los días a las 3."
-        [errorMessage]="
-          form.controls.scheduleExpression.touched && form.controls.scheduleExpression.invalid
-            ? 'Escribí la expresión de programación (máx. 200 caracteres).'
-            : ''
-        "
-      >
-        <app-input formControlName="scheduleExpression" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Ajustes"
-      description="Opcionales: zona horaria, cuántos días hacia atrás mirar y cuánto vive el dato."
-    >
-      <app-form-field
-        label="Zona horaria"
-        hint="Identificador del concepto de zona (UUID)."
-        [errorMessage]="
-          form.controls.timezoneConceptId.touched && form.controls.timezoneConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="timezoneConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Ventana hacia atrás (días)"
-        [errorMessage]="
-          form.controls.lookbackDays.touched && form.controls.lookbackDays.invalid
-            ? 'Ingresá un número entero de días, sin signo.'
-            : ''
-        "
-      >
-        <app-input formControlName="lookbackDays" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Vigencia del dato (segundos)"
-        hint="Cuánto se considera fresco lo recolectado. Mínimo 60."
-        [errorMessage]="
-          form.controls.freshnessTtlSeconds.touched && form.controls.freshnessTtlSeconds.invalid
-            ? 'Ingresá un número entero de segundos, de 60 en adelante.'
-            : ''
-        "
-      >
-        <app-input formControlName="freshnessTtlSeconds" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Primera corrida"
-        hint="Sin este dato, la calcula el scheduler a partir de la expresión."
-      >
-        <app-date-picker mode="date-time" [(value)]="nextRunAt" [disabled]="isSubmitting()" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Programar agenda"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Nueva agenda de recolección"
+  submitLabel="Programar agenda"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

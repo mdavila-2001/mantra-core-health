@@ -1,0 +1,19 @@
+/* Alta de membresía. El ritmo lo pone `app-form-section`: acá sólo el ancho de
+   lectura y la separación del error general. Mismo criterio que el alta de
+   organización, para que las dos pantallas de la misma sección se lean igual. */
+
+:host {
+  display: block;
+}
+
+form {
+  margin-block-start: var(--sp-6);
+  /* Una línea larga rompe la lectura de un formulario: el ancho lo fija el
+     contenido, no la ventana. */
+  max-inline-size: 40rem;
+}
+
+.alta__alert {
+  display: block;
+  margin-block-start: var(--sp-6);
+}

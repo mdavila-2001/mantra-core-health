@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
@@ -7,12 +7,11 @@ import type { OrganizationRegistration } from '../../../core/data-access/iam/iam
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Mínimos que exigen los DTO del backend. */
@@ -61,15 +60,12 @@ const CODIGO_VALIDO = /^[A-Za-z0-9._-]+$/;
 @Component({
   selector: 'app-register-organization',
   imports: [
-    ReactiveFormsModule,
     RouterLink,
-    AppButton,
-    Input,
     Link,
-    FormField,
     Alert,
     AuthSplit,
     AnnounceOnAppear,
+    PaginatedForm,
   ],
   templateUrl: './register-organization.html',
   styleUrl: './register-organization.css',
@@ -135,6 +131,157 @@ export class RegisterOrganization {
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
     }),
   });
+
+  /**
+   * El alta, servida de a una página.
+   *
+   * Catorce campos en una pantalla es lo que hace abandonar un registro a la
+   * mitad, y este es el alta pública de una aseguradora: quien la abre no tiene
+   * ninguna obligación de terminarla. Las tres secciones son las que ya
+   * separaban visualmente el formulario —la empresa, su identificación ante la
+   * plataforma, y la cuenta de quien la administra—; el motor las parte en
+   * páginas de cuatro conservando el nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'La empresa',
+      hint: 'Cómo se llama y cómo se la identifica.',
+      campos: [
+        {
+          key: 'code',
+          label: 'Código',
+          hint: 'Identificador único en toda la plataforma.',
+          control: 'text' as const,
+          required: true,
+          testId: 'registro-organizacion-codigo',
+          mensajeDeError: 'Escribí un código: letras, números, punto, guion o guion bajo.',
+        },
+        {
+          key: 'legalName',
+          label: 'Nombre de la empresa',
+          control: 'text' as const,
+          required: true,
+          testId: 'registro-organizacion-nombre',
+          mensajeDeError: 'Escribí el nombre de la empresa.',
+        },
+        {
+          key: 'tradeName',
+          label: 'Nombre comercial (opcional)',
+          hint: 'Con el que la conocen los afiliados. Es el que se ve en el directorio.',
+          control: 'text' as const,
+          testId: 'registro-organizacion-comercial',
+        },
+        {
+          key: 'sigla',
+          label: 'Sigla',
+          hint: 'Las pocas letras con las que se la nombra en tablas y comprobantes.',
+          control: 'text' as const,
+          required: true,
+          testId: 'registro-organizacion-sigla',
+          mensajeDeError: 'Escribí la sigla (hasta 20 caracteres).',
+        },
+      ],
+    },
+    {
+      titulo: 'Datos de la aseguradora',
+      hint: 'Lo que la plataforma necesita para facturarle y ubicarla.',
+      campos: [
+        {
+          key: 'regulatorIdentifier',
+          label: 'NIT',
+          hint: 'El número de identificación tributaria, para la facturación.',
+          control: 'text' as const,
+          required: true,
+          testId: 'registro-organizacion-nit',
+          mensajeDeError: 'Escribí el NIT de la empresa.',
+        },
+        {
+          key: 'address',
+          label: 'Dirección',
+          hint: 'La de la casa matriz. Las de cada sucursal se cargan después.',
+          control: 'text' as const,
+          required: true,
+          testId: 'registro-organizacion-direccion',
+          mensajeDeError: 'Escribí la dirección (hasta 300 caracteres).',
+        },
+        {
+          key: 'carrierCode',
+          label: 'Código de aseguradora',
+          hint: 'El código interno con el que la plataforma la identifica.',
+          control: 'text' as const,
+          required: true,
+          testId: 'registro-organizacion-carrier',
+          mensajeDeError: 'Escribí el código de aseguradora (hasta 60 caracteres).',
+        },
+        {
+          key: 'timeZone',
+          label: 'Zona horaria (opcional)',
+          hint: 'Formato IANA, por ejemplo America/La_Paz.',
+          control: 'text' as const,
+          testId: 'registro-organizacion-zona',
+          mensajeDeError: 'La zona horaria no puede superar los 100 caracteres.',
+        },
+      ],
+    },
+    {
+      titulo: 'Tu cuenta',
+      hint: 'Quien administra la aseguradora en la plataforma.',
+      campos: [
+        {
+          key: 'name',
+          label: 'Nombre',
+          control: 'text' as const,
+          required: true,
+          autocomplete: 'given-name',
+          testId: 'registro-organizacion-owner-nombre',
+          mensajeDeError: 'Ingresá tu nombre.',
+        },
+        {
+          key: 'middleName',
+          label: 'Segundo nombre (opcional)',
+          control: 'text' as const,
+          autocomplete: 'additional-name',
+          testId: 'registro-organizacion-owner-segundo-nombre',
+        },
+        {
+          key: 'lastName',
+          label: 'Apellido paterno',
+          control: 'text' as const,
+          required: true,
+          autocomplete: 'family-name',
+          testId: 'registro-organizacion-owner-apellido-paterno',
+          mensajeDeError: 'Ingresá tu apellido paterno.',
+        },
+        {
+          key: 'motherLastName',
+          label: 'Apellido materno (opcional)',
+          control: 'text' as const,
+          autocomplete: 'family-name',
+          testId: 'registro-organizacion-owner-apellido-materno',
+        },
+        {
+          key: 'email',
+          label: 'Correo',
+          hint: 'Con este correo vas a iniciar sesión.',
+          control: 'email' as const,
+          required: true,
+          autocomplete: 'username',
+          testId: 'registro-organizacion-owner-correo',
+          mensajeDeError: 'Ingresá un correo válido.',
+        },
+        {
+          key: 'password',
+          label: 'Contraseña',
+          hint: 'Al menos 8 caracteres.',
+          control: 'password' as const,
+          required: true,
+          autocomplete: 'new-password',
+          testId: 'registro-organizacion-owner-password',
+          mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+        },
+      ],
+    },
+  ]);
 
   readonly state = signal<ViewState<null>>(ready(null));
   readonly isSubmitting = computed(() => this.state().status === 'loading');

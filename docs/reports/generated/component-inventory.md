@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-378 componentes y 70 servicios inyectables, leídos de `src/`.
+383 componentes y 73 servicios inyectables, leídos de `src/`.
 
 ## Átomo (18)
 
@@ -58,7 +58,7 @@
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
 
-## Organismo (20)
+## Organismo (21)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -74,16 +74,17 @@
 | `app-map` | `AppMap` | `pines`, `etiqueta`, `centro`, `zoom` | `pinElegido` | `seleccionado` | OnPush | sí |
 | `app-notification-bell` | `NotificationBell` | — | — | — | OnPush | sí |
 | `app-page-header` | `PageHeader` | `title`, `subtitle`, `breadcrumbs`, `secondaryActions` | `actionSelected` | — | OnPush | sí |
-| `app-paginated-form` | `PaginatedForm` | `paginas`, `form`, `label`, `submitLabel`, `pending` | `enviado` | — | OnPush | sí |
+| `app-paginated-form` | `PaginatedForm` | `paginas`, `form`, `label`, `submitLabel`, `pending`, `destructive`, `confirmTitle`, `confirmMessage`, `cancelLabel` | `enviado`, `cancelado` | — | OnPush | sí |
 | `app-shell` | `Shell` | `user`, `sections`, `tenants`, `activeTenantId`, `drawerMode` | `logoutRequested`, `tenantChanged` | — | OnPush | sí |
 | `app-side-nav` | `SideNav` | `sections`, `collapsed`, `drawer`, `open` | `closeRequested` | — | OnPush | sí |
 | `app-status-seal` | `StatusSeal` | `variant`, `label` | — | — | OnPush | sí |
 | `app-tenant-switcher` | `TenantSwitcher` | `tenants`, `activeTenantId`, `variant` | `tenantChanged` | — | OnPush | sí |
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
+| `app-tree-select` | `TreeSelect` | `groups`, `disabled`, `hasError`, `placeholder`, `dialogTitle`, `searchPlaceholder`, `emptyMessage` | — | `value` | OnPush | sí |
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (312)
+## Feature (316)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -91,6 +92,8 @@
 | `app-appointments` | `Appointments` | — | — | — | OnPush | sí |
 | `app-diagnostic-orders` | `DiagnosticOrders` | — | — | — | OnPush | sí |
 | `app-diagnostic-results` | `DiagnosticResults` | — | — | — | OnPush | sí |
+| `app-loyalty` | `Loyalty` | — | — | — | OnPush | sí |
+| `app-redeem-code` | `RedeemCode` | `comprobante` | `cerrado` | — | OnPush | sí |
 | `app-medical-record` | `MedicalRecord` | — | — | — | OnPush | sí |
 | `app-where-to-buy` | `WhereToBuy` | — | — | — | OnPush | sí |
 | `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
@@ -145,7 +148,6 @@
 | `app-protocol-config-form` | `ProtocolConfigForm` | — | — | — | OnPush | sí |
 | `app-provider-form` | `ProviderForm` | — | — | — | OnPush | sí |
 | `app-provisioning-rule-form` | `ProvisioningRuleForm` | — | — | — | OnPush | sí |
-| `app-signing-key-fields` | `SigningKeyFields` | `disabled` | — | — | OnPush | sí |
 | `app-signing-key-form` | `SigningKeyForm` | — | — | — | OnPush | sí |
 | `app-tenant-binding-form` | `TenantBindingForm` | — | — | — | OnPush | sí |
 | `app-activate-account` | `ActivateAccount` | — | — | — | OnPush | sí |
@@ -158,6 +160,7 @@
 | `app-reset-password` | `ResetPassword` | — | — | — | OnPush | sí |
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
+| `app-campaign-detail` | `CampaignDetail` | — | — | — | OnPush | sí |
 | `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
 | `app-admission-block` | `AdmissionBlock` | `patientProfileId`, `encounterId`, `internaciones` | `cambio` | — | OnPush | sí |
 | `app-attachments-block` | `AttachmentsBlock` | `patientProfileId` | — | — | OnPush | sí |
@@ -196,6 +199,7 @@
 | `app-feed` | `Feed` | — | — | — | OnPush | sí |
 | `app-post-card` | `PostCard` | `post`, `actorProfileId`, `guardado`, `puedeReportar` | `reportar`, `cambio`, `guardarCambiado` | — | OnPush | sí |
 | `app-report-post` | `ReportPost` | `postId` | `reportado`, `cancelado` | — | OnPush | sí |
+| `app-form-builder` | `FormBuilder` | — | — | — | OnPush | sí |
 | `app-consent-revocation` | `ConsentRevocation` | — | — | — | OnPush | sí |
 | `app-geo-home` | `GeoHome` | — | — | — | OnPush | sí |
 | `app-geofence-event-form` | `GeofenceEventForm` | — | — | — | OnPush | sí |
@@ -258,6 +262,7 @@
 | `app-notification-center` | `NotificationCenter` | — | — | — | OnPush | sí |
 | `app-onboarding-practitioner` | `OnboardingPractitioner` | — | — | — | OnPush | sí |
 | `app-organization-panel` | `OrganizationPanel` | — | — | — | OnPush | sí |
+| `app-pharmacy-campaigns` | `PharmacyCampaigns` | — | — | — | OnPush | sí |
 | `app-inbox-order` | `InboxOrder` | — | — | — | OnPush | sí |
 | `app-pharmacy-inbox` | `PharmacyInbox` | — | — | — | OnPush | sí |
 | `app-my-organizations` | `MyOrganizations` | — | — | — | OnPush | sí |
@@ -412,7 +417,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (70)
+## Servicios (73)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -441,10 +446,12 @@
 | `IdentityAdminClient` | `src/app/core/data-access/identity/identity-admin.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
 | `InsuranceClient` | `src/app/core/data-access/insurance/insurance.client.ts` | root | sí |
+| `SaldoInsuficienteError` | `src/app/core/data-access/loyalty/loyalty.client.ts` | root | sí |
 | `MedicalOrganizationClient` | `src/app/core/data-access/medical-organization/medical-organization.client.ts` | root | sí |
 | `NotificationsClient` | `src/app/core/data-access/notifications/notifications.client.ts` | root | sí |
 | `PharmaLabConcepts` | `src/app/core/data-access/pharma-lab/pharma-lab-concepts.client.ts` | root | **no** |
 | `PharmaLabClient` | `src/app/core/data-access/pharma-lab/pharma-lab.client.ts` | root | **no** |
+| `PharmacyCampaignsClient` | `src/app/core/data-access/pharmacy-campaigns/pharmacy-campaigns.client.ts` | root | sí |
 | `PharmacyOrdersClient` | `src/app/core/data-access/pharmacy-orders/pharmacy-orders.client.ts` | root | sí |
 | `PharmacyClient` | `src/app/core/data-access/pharmacy/pharmacy.client.ts` | root | sí |
 | `PracticeSitesClient` | `src/app/core/data-access/practice-sites/practice-sites.client.ts` | root | sí |
@@ -458,6 +465,7 @@
 | `SurveysClient` | `src/app/core/data-access/surveys/surveys.client.ts` | root | **no** |
 | `SystemContextClient` | `src/app/core/data-access/system-context/system-context.client.ts` | root | sí |
 | `BoDepartmentsCatalog` | `src/app/core/data-access/terminology/bo-departments.service.ts` | root | **no** |
+| `BoMunicipalitiesCatalog` | `src/app/core/data-access/terminology/bo-municipalities.service.ts` | root | **no** |
 | `MedicalSpecialtiesCatalog` | `src/app/core/data-access/terminology/medical-specialties.service.ts` | root | sí |
 | `TerminologyClient` | `src/app/core/data-access/terminology/terminology.client.ts` | root | sí |
 | `AppErrorHandler` | `src/app/core/errors/app-error-handler.ts` | local | **no** |

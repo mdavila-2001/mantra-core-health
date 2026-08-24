@@ -80,6 +80,12 @@ describe('rutas del armazón', () => {
       // menú — una entrada permanente a algo que se hace una vez sería ruido
       // para todos los médicos que ya lo completaron.
       'onboarding',
+      // La puesta en marcha de la plataforma, por lo mismo y en el otro
+      // extremo: el alta del profesional se hace una vez por médico, ésta una
+      // vez por instalación. Se llega por el aviso del panel o por el ingreso
+      // cuando todavía no hay ninguna organización; dejarla en el menú sería
+      // ofrecerle para siempre «poner en marcha» a quien ya la puso.
+      'administration/getting-started',
     ];
 
     const huerfanas = hijas.filter((r) => {

@@ -19,11 +19,16 @@ import type {
   MembershipListItem,
   MembershipPage,
   MembershipQuery,
+  NewBranch,
+  NewBranchAssignment,
+  NewChildTenant,
+  NewMembership,
   NewTenant,
   TenantCreated,
   TenantListItem,
   TenantPage,
   TenantSearchQuery,
+  VerifyTenantConfirmation,
 } from './directory.types';
 
 /**
@@ -88,6 +93,92 @@ export class DirectoryClient {
     return this.http
       .post<WireTenantCreated>(this.url('/admin/tenants'), stripUndefined(tenant))
       .pipe(map(toTenantCreated));
+  }
+
+  /**
+   * `POST /admin/tenants/{id}/verification` — activa la organización (UC-04-02).
+   * Pide `SECURITY_ADMIN`, no `SUPERADMIN`.
+   *
+   * Va sin la cabecera de organización, como el alta: es superficie de
+   * plataforma y el actor no tiene por qué pertenecer a lo que verifica.
+   */
+  verifyTenant(
+    tenantId: string,
+    confirmation: VerifyTenantConfirmation = {},
+  ): Observable<TenantCreated> {
+    return this.http
+      .post<WireTenantCreated>(
+        this.url(`/admin/tenants/${tenantId}/verification`),
+        stripUndefined(confirmation),
+      )
+      .pipe(map(toTenantCreated));
+  }
+
+  /**
+   * `POST /tenants/{id}/child-tenants` — filial de una organización (UC-04-03).
+   * Pide `SECURITY_ADMIN` y que la madre esté activa.
+   */
+  createChildTenant(tenantId: string, child: NewChildTenant): Observable<TenantCreated> {
+    return this.http
+      .post<WireTenantCreated>(
+        this.url(`/tenants/${tenantId}/child-tenants`),
+        stripUndefined(child),
+        { headers: deLaOrganizacion(tenantId) },
+      )
+      .pipe(map(toTenantCreated));
+  }
+
+  /**
+   * `POST /tenants/{id}/branches` — abre una sede (UC-04-04).
+   *
+   * Sin al menos una sucursal la organización no tiene dónde agendar ni a qué
+   * sede asignar a su gente, así que es el primer paso después del alta.
+   */
+  createBranch(tenantId: string, branch: NewBranch): Observable<BranchListItem> {
+    return this.http
+      .post<ConNulos<WireBranchListItem>>(
+        this.url(`/tenants/${tenantId}/branches`),
+        stripUndefined(branch),
+        { headers: deLaOrganizacion(tenantId) },
+      )
+      .pipe(map(toBranchListItem));
+  }
+
+  /**
+   * `POST /tenants/{id}/memberships` — incorpora a alguien (UC-04-05).
+   *
+   * Es lo que hace que el token de esa persona lleve la organización: sin
+   * membresía nadie más que quien la creó puede trabajar dentro.
+   */
+  createMembership(tenantId: string, membership: NewMembership): Observable<MembershipListItem> {
+    return this.http
+      .post<ConNulos<WireMembershipListItem>>(
+        this.url(`/tenants/${tenantId}/memberships`),
+        stripUndefined(membership),
+        { headers: deLaOrganizacion(tenantId) },
+      )
+      .pipe(map(toMembershipListItem));
+  }
+
+  /**
+   * `POST /tenants/{id}/memberships/{mid}/branch-assignments` — ata una
+   * membresía a una sucursal (UC-04-06).
+   *
+   * Es la operación que le da sentido al alcance `BRANCH`: declararlo sin
+   * asignar ninguna sucursal deja a esa persona sin nada a la vista.
+   */
+  assignBranch(
+    tenantId: string,
+    membershipId: string,
+    assignment: NewBranchAssignment,
+  ): Observable<BranchAssignmentListItem> {
+    return this.http
+      .post<ConNulos<WireBranchAssignmentListItem>>(
+        this.url(`/tenants/${tenantId}/memberships/${membershipId}/branch-assignments`),
+        stripUndefined(assignment),
+        { headers: deLaOrganizacion(tenantId) },
+      )
+      .pipe(map(toBranchAssignmentListItem));
   }
 
   /**

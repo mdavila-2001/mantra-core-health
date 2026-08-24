@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { IdentityAdminClient } from '../../../core/data-access/identity/identity-admin.client';
 import type {
@@ -13,14 +13,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import {
   errorMessageOf,
   NUMBER_STRING_ERROR,
@@ -46,17 +42,11 @@ const OUTCOMES: readonly CheckResultOutcome[] = ['MATCH', 'NO_MATCH'];
 @Component({
   selector: 'app-check-result-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Radio,
-    RadioGroup,
+    PaginatedForm,
   ],
   templateUrl: './check-result-form.html',
   styleUrl: '../m27-admin.css',
@@ -70,6 +60,33 @@ export class CheckResultForm {
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
   protected readonly scoreError = NUMBER_STRING_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué check',
+      hint: 'El check cuyo veredicto se registra.',
+      campos: [
+        { key: 'checkId', label: 'Check', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'El veredicto',
+      hint: 'Qué respondió la autoridad y con cuánta certeza.',
+      campos: [
+        { key: 'result', label: 'Veredicto', control: 'radio', options: [{ value: 'MATCH', label: 'Coincide' }, { value: 'NO_MATCH', label: 'No coincide' }], required: true },
+        { key: 'matchScore', label: 'Puntaje de coincidencia', hint: 'Opcional: entre 0 y 1, como 0.98. Viaja como texto.', control: 'text', mensajeDeError: NUMBER_STRING_ERROR },
+        { key: 'discrepancyCodes', label: 'Códigos de discrepancia', hint: 'Opcional: separá los códigos con comas, como DOB_MISMATCH, NAME_PARTIAL.', control: 'text' },
+        { key: 'sourceResponseHash', label: 'Hash de la respuesta fuente', hint: 'Opcional: hash de lo que respondió la autoridad (hasta 200 caracteres).', control: 'text', mensajeDeError: 'Hasta 200 caracteres.' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     checkId: new FormControl('', {
@@ -85,10 +102,12 @@ export class CheckResultForm {
       nonNullable: true,
       validators: [Validators.maxLength(200)],
     }),
+    /** Obligatorio por contrato; arranca sin elegir para no decidir por nadie. */
+    result: new FormControl<CheckResultOutcome | null>(null, {
+      validators: [Validators.required],
+    }),
   });
 
-  /** Obligatorio por contrato; arranca sin elegir para no decidir por nadie. */
-  protected readonly result = signal<CheckResultOutcome | null>(null);
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -98,10 +117,6 @@ export class CheckResultForm {
   protected readonly errorMessage = computed(() =>
     errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
   );
-
-  protected elegirVeredicto(valor: unknown): void {
-    this.result.set(opcionDe(OUTCOMES, valor));
-  }
 
   protected submit(): void {
     if (this.isSubmitting()) {
@@ -129,18 +144,16 @@ export class CheckResultForm {
 
   protected otroResultado(): void {
     this.form.reset();
-    this.result.set(null);
     this.recorded.set(null);
     this.state.set(ready(null));
   }
 
   private datos(): NewCheckResult | null {
-    const veredicto = this.result();
+    const valores = this.form.getRawValue();
+    const veredicto = opcionDe(OUTCOMES, valores.result);
     if (veredicto === null) {
       return null;
     }
-
-    const valores = this.form.getRawValue();
     const puntaje = valores.matchScore.trim();
     const hash = valores.sourceResponseHash.trim();
     const codigos = valores.discrepancyCodes

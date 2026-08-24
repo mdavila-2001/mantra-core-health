@@ -1,5 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
@@ -17,17 +24,15 @@ import { NavigationService } from '../../../../core/navigation/navigation.servic
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
-import { Input } from '../../../../shared/components/atoms/input/input';
-import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
-import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
+import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
 
@@ -91,19 +96,26 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
  * Entidad legal y región de datos son opcionales y sin value set publicado —
  * la misma deuda, y la misma decisión, que en el alta de paciente.
  */
+/** Los cuatro campos que sólo pide una aseguradora. */
+const CAMPOS_DE_ASEGURADORA = [
+  'carrierCode',
+  'regulatorIdentifier',
+  'sigla',
+  'address',
+] as const;
+
+/** Los dos que sólo pide un corredor. */
+const CAMPOS_DE_CORREDOR = ['brokerCode', 'licenseNumber'] as const;
+
 @Component({
   selector: 'app-organization-new',
   imports: [
     Alert,
     AnnounceOnAppear,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
+    CampoPersonalizado,
     PageHeader,
-    ReactiveFormsModule,
+    PaginatedForm,
     ReferenceCombobox,
-    Select,
   ],
   templateUrl: './organization-new.html',
   styleUrl: './organization-new.css',
@@ -148,10 +160,16 @@ export class OrganizationNew {
       nonNullable: true,
       validators: [Validators.maxLength(MAX_ZONA_HORARIA)],
     }),
-  });
+    /**
+     * El tipo vivía en una señal aparte porque el selector trabajaba con el
+     * valor tipado; con el motor todo escribe en el grupo, y de él dependen las
+     * páginas que existen.
+     */
+    tipo: new FormControl<TenantTypeCode | null>(null, {
+      validators: [Validators.required],
+    }),
 
-  /** Bloque de aseguradora. Se valida sólo cuando el tipo es `PAYER`. */
-  protected readonly formPayer = new FormGroup({
+    /* -- Bloque de aseguradora. Sólo cuenta cuando el tipo es `PAYER`. ------ */
     carrierCode: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_CODIGO_ASEGURADORA)],
@@ -168,10 +186,8 @@ export class OrganizationNew {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
-  });
 
-  /** Bloque de corredor. Se valida sólo cuando el tipo es `BROKER`. */
-  protected readonly formBroker = new FormGroup({
+    /* -- Bloque de corredor. Sólo cuenta cuando el tipo es `BROKER`. -------- */
     brokerCode: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_CODIGO_CORREDOR)],
@@ -182,12 +198,219 @@ export class OrganizationNew {
     }),
   });
 
+  constructor() {
+    // Se engancha al `valueChanges` y no a un `effect`: el efecto corre en la
+    // cola de Angular, así que entre elegir el tipo y enviar habría un instante
+    // con el bloque equivocado habilitado. Acá el cambio es inmediato.
+    this.form.controls.tipo.valueChanges.subscribe((tipo) => this.aplicarTipo(tipo));
+    this.aplicarTipo(this.form.controls.tipo.value);
+  }
+
   /**
-   * El tipo vive fuera del `FormGroup`, como la fecha en el alta de paciente:
-   * el selector trabaja con el valor tipado y de él depende qué bloques
-   * existen — un signal deja esa dependencia a la vista.
+   * Apaga los bloques que el tipo no pide.
+   *
+   * Vivían en dos `FormGroup` aparte y sólo se validaban si el tipo coincidía;
+   * ahora están en el mismo grupo —el motor escribe siempre en uno— y la misma
+   * regla se consigue deshabilitándolos: un control deshabilitado no cuenta
+   * para la validez del grupo, y `getRawValue()` lo sigue leyendo. Sin esto, un
+   * alta de farmacia nunca sería válida por faltarle el NIT de una aseguradora.
    */
-  protected readonly tipo = signal<TenantTypeCode | null>(null);
+  private aplicarTipo(tipo: TenantTypeCode | null): void {
+    for (const nombre of CAMPOS_DE_ASEGURADORA) {
+      const control = this.form.controls[nombre];
+      if (tipo === 'PAYER') control.enable({ emitEvent: false });
+      else control.disable({ emitEvent: false });
+    }
+    for (const nombre of CAMPOS_DE_CORREDOR) {
+      const control = this.form.controls[nombre];
+      if (tipo === 'BROKER') control.enable({ emitEvent: false });
+      else control.disable({ emitEvent: false });
+    }
+  }
+
+
+
+  /** El tipo elegido, como señal, para que las páginas reaccionen a él. */
+  protected readonly tipo = toSignal(this.form.controls.tipo.valueChanges, {
+    initialValue: this.form.controls.tipo.value,
+  });
+
+  /**
+   * Las páginas, que **dependen del tipo elegido**.
+   *
+   * El tipo decide qué exige el alta: una aseguradora declara su NIT y su
+   * sigla, un corredor su licencia, y los territoriales dónde operan. Preguntar
+   * todo siempre sería pedir catorce datos de los que sobran seis, y el backend
+   * **rechaza** los bloques que no corresponden.
+   *
+   * Los tres buscadores —país, jurisdicción y owner— van como campos `custom`:
+   * son comboboxes con búsqueda contra la API, no controles de texto.
+   */
+  protected readonly paginas = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'Identificación',
+        hint: 'Con qué se la encuentra y cómo se presenta.',
+        campos: [
+          {
+            key: 'code',
+            label: 'Código',
+            hint: 'Único en toda la plataforma. Es sobre lo que ordena el listado.',
+            control: 'text' as const,
+            required: true,
+            testId: 'alta-organizacion-codigo',
+            mensajeDeError: this.codigoEnConflicto()
+              ? 'Ya existe una organización con este código. Probá con otro.'
+              : 'Escribí el código de la organización.',
+          },
+          {
+            key: 'legalName',
+            label: 'Razón social',
+            control: 'text' as const,
+            required: true,
+            testId: 'alta-organizacion-razon',
+            mensajeDeError: 'Escribí la razón social (hasta 300 caracteres).',
+          },
+          {
+            key: 'tradeName',
+            label: 'Nombre comercial',
+            hint: 'Opcional. Cómo la conoce la gente, si difiere de la razón social.',
+            control: 'text' as const,
+            testId: 'alta-organizacion-comercial',
+            mensajeDeError: 'El nombre comercial no puede superar los 300 caracteres.',
+          },
+        ],
+      },
+      {
+        titulo: 'Clasificación',
+        hint: 'El tipo decide qué datos exige el alta y cómo opera la organización.',
+        campos: [
+          {
+            key: 'tipo',
+            label: 'Tipo de organización',
+            control: 'select' as const,
+            required: true,
+            options: this.opcionesDeTipo,
+            placeholder: 'Elegí un tipo',
+            mensajeDeError: 'Elegí el tipo de organización.',
+          },
+        ],
+      },
+      ...(this.esTerritorial()
+        ? [
+            {
+              titulo: 'Dónde opera',
+              hint: 'El backend lo exige para este tipo: determina bajo qué regulador presta atención.',
+              campos: [
+                {
+                  key: 'pais',
+                  label: 'País',
+                  hint: 'Buscá por nombre; el código acompaña para distinguir homónimos.',
+                  control: 'custom' as const,
+                  required: true,
+                },
+                {
+                  key: 'jurisdiccion',
+                  label: 'Jurisdicción',
+                  hint: 'La jurisdicción regulatoria, por ejemplo «Bolivia · JUR_BO».',
+                  control: 'custom' as const,
+                  required: true,
+                },
+              ],
+            },
+          ]
+        : []),
+      ...(this.esAseguradora()
+        ? [
+            {
+              titulo: 'Datos de la aseguradora',
+              hint: 'El backend los exige para este tipo: identifican a la aseguradora ante su regulador.',
+              campos: [
+                {
+                  key: 'carrierCode',
+                  label: 'Código de aseguradora',
+                  control: 'text' as const,
+                  required: true,
+                  mensajeDeError: 'Escribí el código de aseguradora.',
+                },
+                {
+                  key: 'regulatorIdentifier',
+                  label: 'NIT',
+                  control: 'text' as const,
+                  required: true,
+                  mensajeDeError: 'Escribí el NIT ante el regulador.',
+                },
+                {
+                  key: 'sigla',
+                  label: 'Sigla',
+                  control: 'text' as const,
+                  required: true,
+                  mensajeDeError: 'Escribí la sigla (hasta 20 caracteres).',
+                },
+                {
+                  key: 'address',
+                  label: 'Dirección',
+                  control: 'text' as const,
+                  required: true,
+                  mensajeDeError: 'Escribí la dirección (hasta 300 caracteres).',
+                },
+              ],
+            },
+          ]
+        : []),
+      ...(this.esCorredor()
+        ? [
+            {
+              titulo: 'Datos del corredor',
+              hint: 'El backend los exige para este tipo: identifican al corredor ante su regulador.',
+              campos: [
+                {
+                  key: 'brokerCode',
+                  label: 'Código de corredor',
+                  control: 'text' as const,
+                  required: true,
+                  mensajeDeError: 'Escribí el código de corredor.',
+                },
+                {
+                  key: 'licenseNumber',
+                  label: 'Número de licencia',
+                  control: 'text' as const,
+                  required: true,
+                  mensajeDeError: 'Escribí el número de licencia.',
+                },
+              ],
+            },
+          ]
+        : []),
+      {
+        titulo: 'Titularidad',
+        hint: 'Quién queda como owner inicial. La membresía se crea en la misma operación.',
+        campos: [
+          {
+            key: 'owner',
+            label: 'Usuario owner',
+            hint: 'Buscá por nombre o correo. Debe existir antes del alta.',
+            control: 'custom' as const,
+            required: true,
+          },
+        ],
+      },
+      {
+        titulo: 'Datos operativos',
+        hint: 'Se pueden completar después.',
+        campos: [
+          {
+            key: 'timeZone',
+            label: 'Zona horaria',
+            hint: 'Opcional, en formato IANA (por ejemplo, America/La_Paz).',
+            control: 'text' as const,
+            testId: 'alta-organizacion-zona',
+            mensajeDeError: 'La zona horaria no puede superar los 100 caracteres.',
+          },
+        ],
+      },
+    ]),
+  );
 
   /** Marca que el envío ya se intentó, para mostrar los faltantes no tocados. */
   private readonly enviado = signal(false);
@@ -340,7 +563,7 @@ export class OrganizationNew {
   }
 
   protected cambiarTipo(tipo: TenantTypeCode | null): void {
-    this.tipo.set(tipo);
+    this.form.controls.tipo.setValue(tipo);
   }
 
   protected submit(): void {
@@ -352,8 +575,6 @@ export class OrganizationNew {
 
     if (!this.puedeEnviar()) {
       this.form.markAllAsTouched();
-      this.formPayer.markAllAsTouched();
-      this.formBroker.markAllAsTouched();
       return;
     }
 
@@ -384,10 +605,9 @@ export class OrganizationNew {
     if (this.esTerritorial() && (this.pais() === null || this.jurisdiccion() === null)) {
       return false;
     }
-    if (this.esAseguradora() && this.formPayer.invalid) {
-      return false;
-    }
-    return !(this.esCorredor() && this.formBroker.invalid);
+    // Los bloques por tipo ya entran en `this.form.invalid`: el efecto de
+    // arriba apaga el que no corresponde, y un control apagado no cuenta.
+    return true;
   }
 
   /**
@@ -396,7 +616,8 @@ export class OrganizationNew {
    * un bloque `payer` en una farmacia.
    */
   private datos(): NewTenant {
-    const { code, legalName, tradeName, timeZone } = this.form.getRawValue();
+    const valores = this.form.getRawValue();
+    const { code, legalName, tradeName, timeZone } = valores;
     // `puedeEnviar` ya garantizó ambos; el `?? ''` de abajo nunca corre y sólo
     // le consta al compilador.
     const tipo = this.tipo() ?? 'PROVIDER';
@@ -419,8 +640,24 @@ export class OrganizationNew {
       ...(territorial && jurisdiccion !== null
         ? { jurisdictionConceptId: jurisdiccion.value }
         : {}),
-      ...(tipo === 'PAYER' ? { payer: this.formPayer.getRawValue() } : {}),
-      ...(tipo === 'BROKER' ? { broker: this.formBroker.getRawValue() } : {}),
+      ...(tipo === 'PAYER'
+        ? {
+            payer: {
+              carrierCode: valores.carrierCode.trim(),
+              regulatorIdentifier: valores.regulatorIdentifier.trim(),
+              sigla: valores.sigla.trim(),
+              address: valores.address.trim(),
+            },
+          }
+        : {}),
+      ...(tipo === 'BROKER'
+        ? {
+            broker: {
+              brokerCode: valores.brokerCode.trim(),
+              licenseNumber: valores.licenseNumber.trim(),
+            },
+          }
+        : {}),
     };
   }
 }

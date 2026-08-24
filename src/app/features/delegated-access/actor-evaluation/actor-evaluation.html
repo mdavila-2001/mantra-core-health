@@ -39,93 +39,12 @@
     <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Qué delegación"
-      description="La delegación cuyo alcance efectivo se quiere conocer."
-    >
-      <app-form-field
-        label="Identificador de la delegación"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.practitionerDelegateAssignmentId.touched &&
-          form.controls.practitionerDelegateAssignmentId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="practitionerDelegateAssignmentId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Con qué propósito"
-      description="La misma delegación puede permitir tratamiento y denegar facturación."
-    >
-      <app-form-field label="Propósito de uso" [required]="true">
-        <app-radio-group [value]="purpose()" (valueChange)="elegirProposito($event)">
-          <app-radio value="TREATMENT" label="Tratamiento" />
-          <app-radio value="BILLING" label="Facturación" />
-          <app-radio value="OPERATIONS" label="Operaciones" />
-        </app-radio-group>
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="En qué contexto"
-      description="Opcional: cuanto más concreto el contexto, más fiel el veredicto."
-    >
-      <app-form-field
-        label="Permiso concreto que se ejerce"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.permissionId.touched && form.controls.permissionId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="permissionId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Paciente sobre el que se accede"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.patientProfileId.touched && form.controls.patientProfileId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="patientProfileId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Encuentro sobre el que se accede"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.encounterId.touched && form.controls.encounterId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="encounterId" type="text" />
-      </app-form-field>
-
-      <app-form-field label="Tipo de recurso">
-        <app-radio-group [value]="resourceType()" (valueChange)="elegirRecurso($event)">
-          <app-radio value="CLINICAL_NOTE" label="Nota clínica" />
-          <app-radio value="APPOINTMENT" label="Cita" />
-          <app-radio value="PRESCRIPTION" label="Receta" />
-        </app-radio-group>
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Evaluar"
-      [pending]="isSubmitting()"
-      [disabled]="purpose() === null"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Evaluar actor efectivo"
+  submitLabel="Evaluar"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

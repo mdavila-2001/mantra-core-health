@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { IdentityAdminClient } from '../../../core/data-access/identity/identity-admin.client';
 import type {
@@ -12,12 +12,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /** Techo del hash del identificador; el DTO declara `MaxLength(200)`. */
@@ -34,15 +32,11 @@ const MAX_HASH = 200;
 @Component({
   selector: 'app-case-evidence-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
+    PaginatedForm,
   ],
   templateUrl: './case-evidence-form.html',
   styleUrl: '../m27-admin.css',
@@ -56,6 +50,42 @@ export class CaseEvidenceForm {
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
   protected readonly maxHash = MAX_HASH;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué caso',
+      hint: 'El expediente al que se le aporta la evidencia.',
+      campos: [
+        { key: 'caseId', label: 'Caso de verificación', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Qué evidencia',
+      hint: 'Qué tipo de documento es, quién lo emitió y bajo qué consentimiento se recolectó.',
+      campos: [
+        { key: 'evidenceTypeConceptId', label: 'Tipo de evidencia (concepto)', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'issuerAuthorityId', label: 'Autoridad emisora', hint: 'Opcional: la autoridad registrada que emitió el documento.', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'evidenceQualityConceptId', label: 'Calidad de la evidencia (concepto)', hint: 'Opcional: qué tan fuerte es el documento como prueba.', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'collectedUnderConsentId', label: 'Consentimiento', hint: 'Opcional: bajo qué consentimiento registrado se recolectó.', control: 'text', mensajeDeError: UUID_ERROR },
+      ],
+    },
+    {
+      titulo: 'Referencia sin datos',
+      hint: 'Cómo encontrar el documento sin que sus datos viajen por acá.',
+      campos: [
+        { key: 'evidenceIdentifierHash', label: 'Hash del identificador', hint: 'Opcional: hash del identificador del documento (hasta 200 caracteres).', control: 'text', mensajeDeError: 'Hasta 200 caracteres.' },
+        { key: 'evidenceFileId', label: 'Archivo de evidencia', hint: 'Opcional: el id del archivo ya subido al sistema.', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'encryptedEvidenceReference', label: 'Referencia cifrada', hint: 'Opcional: puntero cifrado al payload en el almacenamiento de objetos.', control: 'text' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     caseId: new FormControl('', {

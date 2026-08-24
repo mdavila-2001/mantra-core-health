@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { HealthContextClient } from '../../../core/data-access/health-context/health-context.client';
 import type { ScheduleCreated } from '../../../core/data-access/health-context/health-context.types';
@@ -9,13 +9,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /** Entero no negativo o vacío. */
@@ -35,16 +32,11 @@ const MIN_TTL_SEGUNDOS = 60;
 @Component({
   selector: 'app-schedule-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    DatePicker,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
+    PaginatedForm,
   ],
   templateUrl: './schedule-form.html',
   styleUrl: '../m44.css',
@@ -57,6 +49,35 @@ export class ScheduleForm {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Qué se recolecta',
+      hint: 'Un agente, un país, una cadencia. El scheduler la ejecuta con corridas idempotentes.',
+      campos: [
+        { key: 'countryConceptId', label: 'País', hint: 'Identificador del concepto de país (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'agentId', label: 'Agente', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
+        { key: 'scheduleExpression', label: 'Expresión de programación', hint: 'La cadencia, como una expresión cron: 0 3 * * * corre todos los días a las 3.', control: 'text', required: true, mensajeDeError: 'Escribí la expresión de programación (máx. 200 caracteres).' },
+      ],
+    },
+    {
+      titulo: 'Ajustes',
+      hint: 'Opcionales: zona horaria, cuántos días hacia atrás mirar y cuánto vive el dato.',
+      campos: [
+        { key: 'timezoneConceptId', label: 'Zona horaria', hint: 'Identificador del concepto de zona (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'lookbackDays', label: 'Ventana hacia atrás (días)', control: 'text', mensajeDeError: 'Ingresá un número entero de días, sin signo.' },
+        { key: 'freshnessTtlSeconds', label: 'Vigencia del dato (segundos)', hint: 'Cuánto se considera fresco lo recolectado. Mínimo 60.', control: 'text', mensajeDeError: 'Ingresá un número entero de segundos, de 60 en adelante.' },
+        { key: 'nextRunAt', label: 'Primera corrida', hint: 'Sin este dato, la calcula el scheduler a partir de la expresión.', control: 'datetime' },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     countryConceptId: new FormControl('', {
@@ -83,10 +104,10 @@ export class ScheduleForm {
       nonNullable: true,
       validators: [Validators.pattern(ENTERO_NO_NEGATIVO), validarTtl],
     }),
+    /** Primera corrida, si no se deja que la calcule el scheduler. */
+    nextRunAt: new FormControl<Date | null>(null),
   });
 
-  /** Primera corrida, si no se deja que la calcule el scheduler. */
-  protected readonly nextRunAt = signal<Date | null>(null);
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -111,7 +132,7 @@ export class ScheduleForm {
     const zona = valores.timezoneConceptId.trim();
     const ventana = valores.lookbackDays.trim();
     const vigencia = valores.freshnessTtlSeconds.trim();
-    const primera = this.nextRunAt();
+    const primera = valores.nextRunAt;
 
     this.state.set(loading());
 
@@ -136,7 +157,6 @@ export class ScheduleForm {
 
   protected otraAgenda(): void {
     this.form.reset();
-    this.nextRunAt.set(null);
     this.created.set(null);
     this.state.set(ready(null));
   }

@@ -61,120 +61,12 @@
     <app-alert appAnuncio tone="error" class="m40__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Qué devolvió el proveedor"
-      description="El «state» liga esta respuesta con el intento iniciado antes."
-    >
-      <app-form-field
-        label="Código del proveedor"
-        [required]="true"
-        hint="El código con el que se registró el proveedor, no su UUID."
-        [errorMessage]="
-          form.controls.providerCode.touched && form.controls.providerCode.invalid
-            ? 'Ingresá el código del proveedor.'
-            : ''
-        "
-      >
-        <app-input formControlName="providerCode" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="State devuelto por el proveedor"
-        [required]="true"
-        hint="Tal cual lo entregó «Iniciar login federado»."
-        [errorMessage]="
-          form.controls.state.touched && form.controls.state.invalid
-            ? 'Ingresá el state, hasta 200 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="state" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Sujeto externo"
-        [required]="true"
-        hint="El identificador del sujeto en el proveedor."
-        [errorMessage]="
-          form.controls.externalSubject.touched && form.controls.externalSubject.invalid
-            ? 'Ingresá el sujeto externo, hasta 300 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="externalSubject" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Claims recibidos (JSON)"
-        [required]="true"
-        hint="Un objeto JSON con los claims ya verificados por quien llama."
-        [errorMessage]="
-          form.controls.claims.touched && form.controls.claims.invalid
-            ? 'Tiene que ser un objeto JSON válido, como {&quot;sub&quot;: &quot;valor&quot;}.'
-            : ''
-        "
-      >
-        <app-textarea formControlName="claims" [rows]="3" [autoResize]="true" [maxLength]="maxClaims" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="A dónde entra"
-      description="El módulo no crea usuarios: sin usuario local, el login sin identidad previa devuelve un token de vinculación."
-    >
-      <app-form-field
-        label="Organización en la que se entra"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.tenantId.touched && form.controls.tenantId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="tenantId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Usuario local ya resuelto por IAM"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.userId.touched && form.controls.userId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="userId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Rastro del intento"
-      description="De dónde vino la respuesta; queda en el registro."
-    >
-      <app-form-field
-        label="IP de origen"
-        hint="Opcional: vacía, no viaja."
-        [errorMessage]="
-          form.controls.ip.touched && form.controls.ip.invalid ? 'Hasta 100 caracteres.' : ''
-        "
-      >
-        <app-input formControlName="ip" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Agente de usuario"
-        hint="Opcional: el navegador o cliente que devolvió el callback."
-        [errorMessage]="
-          form.controls.userAgent.touched && form.controls.userAgent.invalid
-            ? 'Hasta 500 caracteres.'
-            : ''
-        "
-      >
-        <app-textarea formControlName="userAgent" [rows]="2" [autoResize]="true" [maxLength]="maxAgent" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Procesar callback"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Procesar callback del proveedor"
+  submitLabel="Procesar callback"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

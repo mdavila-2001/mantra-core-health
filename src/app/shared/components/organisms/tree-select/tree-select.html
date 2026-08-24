@@ -1,0 +1,167 @@
+<div class="tree-select-trigger-wrapper" [class.has-error]="invalid()" [class.is-disabled]="disabled()">
+  <button
+    #trigger
+    type="button"
+    class="tree-select-trigger"
+    [id]="controlId()"
+    [disabled]="disabled()"
+    [attr.aria-invalid]="invalid()"
+    [attr.aria-describedby]="describedBy()"
+    aria-haspopup="dialog"
+    [attr.aria-expanded]="isOpen()"
+    (click)="open()"
+  >
+    <span class="trigger-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    </span>
+
+    <span class="trigger-value" [class.is-placeholder]="!displayValue()">
+      {{ displayValue() || placeholder() }}
+    </span>
+
+    <span class="trigger-caret" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </span>
+  </button>
+</div>
+
+@if (isOpen()) {
+  <!-- Mismo `<dialog>` nativo que el calendario, y por el mismo motivo: la capa
+       superior del navegador es lo único que no desplaza un ancestro con
+       `backdrop-filter` ni recorta uno con `overflow: hidden`. Ver la nota
+       larga de `date-picker.html`. -->
+   
+  <dialog
+    #dialog
+    class="tree-select-dialog"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="dialogTitle()"
+    (click)="handleBackdropClick($event)"
+    (close)="close()"
+    (keydown)="handleDialogKeydown($event)"
+  >
+    <div class="tree-select-panel">
+      <div class="dialog-header">
+        <h3 class="dialog-title">{{ dialogTitle() }}</h3>
+        <button app-button iconOnly variant="ghost" size="sm" (clicked)="close()" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- El foco vive acá y no se mueve nunca: la fila señalada viaja por
+           `aria-activedescendant`. Es lo que permite escribir y navegar con las
+           flechas a la vez sin que el lector de pantalla pierda el hilo. -->
+      <div class="search-row">
+        <span class="search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </span>
+        <input
+          #search
+          type="text"
+          class="search-input"
+          role="combobox"
+          autocomplete="off"
+          [attr.aria-label]="searchPlaceholder()"
+          [attr.aria-controls]="treeId()"
+          aria-expanded="true"
+          [attr.aria-activedescendant]="idActivo()"
+          [placeholder]="searchPlaceholder()"
+          [value]="query()"
+          (input)="handleSearch($event)"
+        />
+      </div>
+
+      <!-- El recuento se anuncia solo al cambiar la búsqueda: sin él, escribir
+           y no ver nada no distingue «no hay» de «todavía no filtró». -->
+      <p class="search-count" aria-live="polite">
+        @if (query().trim()) {
+          {{ totalVisible() }}
+          @if (totalVisible() === 1) { resultado } @else { resultados }
+        }
+      </p>
+
+      @if (ramas().length === 0) {
+        <p class="tree-empty">{{ emptyMessage() }}</p>
+      } @else {
+        <ul class="tree" role="tree" [id]="treeId()" [attr.aria-label]="dialogTitle()">
+          @for (rama of ramas(); track rama.indice) {
+            <li
+              class="tree-branch"
+              role="treeitem"
+              [id]="idRama(rama.indice)"
+              [attr.aria-expanded]="rama.abierta"
+              [attr.aria-selected]="false"
+              [class.is-active]="ramaActiva(rama.indice)"
+            >
+              <!-- El `<button>` es lo que se toca; el `role="treeitem"` vive en
+                   el `<li>` porque un botón dentro de un árbol se anunciaría
+                   como botón y rompería el recorrido. -->
+              <button
+                type="button"
+                class="branch-toggle"
+                tabindex="-1"
+                (click)="toggleRama(rama.indice)"
+              >
+                <span class="branch-caret" [class.is-open]="rama.abierta" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 6 15 12 9 18" />
+                  </svg>
+                </span>
+                <span class="branch-label">{{ rama.label }}</span>
+                <span class="branch-count">{{ rama.items.length }}</span>
+              </button>
+
+              @if (rama.abierta) {
+                <ul class="tree-leaves" role="group" [attr.aria-label]="rama.label">
+                  @for (hoja of rama.items; track hoja.indice) {
+                    <li
+                      class="tree-leaf"
+                      role="treeitem"
+                      [id]="idHoja(rama.indice, hoja.indice)"
+                      [attr.aria-selected]="hojaElegida(hoja.value)"
+                      [class.is-active]="hojaActiva(rama.indice, hoja.indice)"
+                      [class.is-chosen]="hojaElegida(hoja.value)"
+                    >
+                      <button
+                        type="button"
+                        class="leaf-button"
+                        tabindex="-1"
+                        (click)="elegir(hoja.value)"
+                      >
+                        <span class="leaf-label">{{ hoja.label }}</span>
+                        @if (hoja.hint) {
+                          <span class="leaf-hint">{{ hoja.hint }}</span>
+                        }
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="dialog-actions">
+        @if (value() !== null) {
+          <button app-button variant="ghost" size="sm" (clicked)="limpiar()">
+            Quitar elección
+          </button>
+        }
+        <button app-button variant="ghost" size="sm" (clicked)="close()">Cancelar</button>
+      </div>
+    </div>
+  </dialog>
+}

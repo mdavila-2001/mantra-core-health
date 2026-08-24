@@ -6,6 +6,7 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AvailabilityQuery,
   AvailabilityResult,
+  PharmacyDirectoryPage,
   PharmacyProductSearchPage,
   PharmacyProductSearchQuery,
 } from './pharmacy.types';
@@ -23,6 +24,18 @@ import type {
 export class PharmacyClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+
+  /**
+   * `GET /pharmacy/pharmacies` — el directorio de farmacias publicadas.
+   *
+   * Lo pidió el carril de promociones (FAR-I7): una campaña es **de una
+   * farmacia**, y su panel necesita saber cuál antes de que se elija un solo
+   * producto. La lectura no lleva `@Roles` en el backend porque el filtro real
+   * es la publicación, no el rol.
+   */
+  listPharmacies(): Observable<PharmacyDirectoryPage> {
+    return this.http.get<PharmacyDirectoryPage>(this.url('/pharmacy/pharmacies'));
+  }
 
   /**
    * `GET /pharmacy/products` — búsqueda de productos publicados.

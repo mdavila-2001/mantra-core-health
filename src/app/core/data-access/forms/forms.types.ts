@@ -105,3 +105,69 @@ export interface MyFormInstanceList {
   /** true si quedaron instancias fuera del tope. */
   readonly truncated: boolean;
 }
+
+/* ============================================================================
+   Generador de formularios — lo que un doctor agrega a un formulario estándar
+   ========================================================================== */
+
+/**
+ * Los tipos de dato que declara `terminology.technical_data_type`.
+ *
+ * Es el catálogo entero del backend; qué subconjunto ofrece cada pantalla es
+ * decisión suya. El generador ofrece menos, por el mismo motivo que el editor
+ * de plantillas: los que piden un dato extra —un target de referencia, un
+ * archivo, un concepto del catálogo— dejarían un campo que el backend rechaza
+ * al completarse.
+ */
+export type TechnicalDataType =
+  | 'string'
+  | 'text'
+  | 'integer'
+  | 'decimal'
+  | 'boolean'
+  | 'date'
+  | 'datetime'
+  | 'time'
+  | 'uuid'
+  | 'json'
+  | 'binary'
+  | 'reference'
+  | 'code';
+
+/** Cuerpo de `POST /forms/field-definitions` (UC-09-02). */
+export interface CreateFieldDefinitionInput {
+  /** Código único del campo en toda la instalación, no sólo en el formulario. */
+  readonly code: string;
+  readonly name: string;
+  readonly dataType: TechnicalDataType;
+  readonly cardinalityMin?: number;
+  readonly cardinalityMax?: number;
+  readonly regex?: string;
+}
+
+/** Cuerpo de `POST /forms/assignments` (UC-09-06). */
+export interface CreateAssignmentInput {
+  readonly fieldId: string;
+  readonly targetResourceConceptId: string;
+  /** Sección destino; sin ella el backend aprovisiona una suelta. */
+  readonly sectionId?: string;
+  readonly required?: boolean;
+  readonly visible?: boolean;
+  readonly editable?: boolean;
+  readonly ordinal?: number;
+}
+
+/**
+ * Respuesta de `GET /forms/assignments/budget`.
+ *
+ * `maximumFields` y `remaining` faltan cuando la política no declara tope. No
+ * es lo mismo que cero, y la pantalla tiene que decir cosas distintas.
+ */
+export interface ExtensionBudget {
+  readonly targetResourceConceptId: string;
+  /** Si la política deja a la organización colgar campos propios. */
+  readonly allowTenantFields: boolean;
+  readonly maximumFields?: number;
+  readonly used: number;
+  readonly remaining?: number;
+}

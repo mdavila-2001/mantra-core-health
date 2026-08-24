@@ -40,7 +40,15 @@ import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
+import { SessionStore } from '../../../../core/auth/session.store';
+import { rolesAlcanzan } from '../../../../core/navigation/navigation.types';
+import {
+  ORGANIZATIONS_ROUTE,
+  branchNewRoute,
+  childOrganizationNewRoute,
+  membershipNewRoute,
+  organizationVerifyRoute,
+} from '../organizations.routes';
 
 /** Membresías por página. El backend aplica 50 por omisión y admite hasta 200. */
 const TAMANO_DE_PAGINA = 25;
@@ -109,6 +117,7 @@ export class OrganizationDetail {
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
+  private readonly session = inject(SessionStore);
 
   /**
    * La organización que se está mirando, leída del segmento `:tenantId`.
@@ -232,6 +241,34 @@ export class OrganizationDetail {
     return branchId === undefined ? undefined : this.nombreDeSucursal().get(branchId);
   }
 
+  /**
+   * A dónde lleva el botón de verificar.
+   *
+   * Se ofrece sólo mientras la organización está sin verificar y a quien puede
+   * hacerlo. `rolesAlcanzan` y no un `includes` propio: el comodín `SUPERADMIN`
+   * tiene que pasar igual que en el menú, y duplicar la regla es cómo las dos
+   * lecturas terminan diciendo cosas distintas.
+   *
+   * Devuelve `null` en vez de un booleano aparte porque la plantilla necesita
+   * la ruta, y dos señales que hay que leer juntas son una sola.
+   */
+  protected readonly rutaDeVerificacion = computed<string | null>(() => {
+    const ficha = this.organizacion();
+    if (ficha.status !== 'ready') {
+      return null;
+    }
+    if (!rolesAlcanzan(['SECURITY_ADMIN'], this.session.roles())) {
+      return null;
+    }
+    const verificacion = this.etiquetaDe(ficha.data.verificationStatusConceptId);
+    // Sin etiqueta el catálogo no respondió: no se ofrece una acción cuyo
+    // sentido no se puede afirmar.
+    if (verificacion === undefined || verificacion.code === 'TENANT_VERIFIED') {
+      return null;
+    }
+    return organizationVerifyRoute(ficha.data.id);
+  });
+
   private cargar(): void {
     const id = this.tenantId();
     if (id === '') {
@@ -266,7 +303,7 @@ export class OrganizationDetail {
           ? errorToViewState<readonly BranchListItem[]>(sucursales.error)
           : estadoDeLista(
               sucursales.items,
-              { label: 'Nueva sucursal' },
+              { label: 'Nueva sucursal', route: branchNewRoute(id) },
               'Una sucursal es cada lugar físico donde esta organización atiende. Sin al menos una no hay dónde agendar ni a qué sede asignar a la plantilla.',
             ),
       );
@@ -276,7 +313,7 @@ export class OrganizationDetail {
           ? errorToViewState<readonly MembershipListItem[]>(membresias.error)
           : estadoDeLista(
               membresias.items,
-              { label: 'Sumar a alguien' },
+              { label: 'Sumar a alguien', route: membershipNewRoute(id) },
               'La plantilla es quién trabaja acá y con qué rol. Mientras esté vacía, sólo quien creó la organización puede entrar.',
             ),
       );
@@ -286,7 +323,7 @@ export class OrganizationDetail {
           ? errorToViewState<readonly TenantListItem[]>(hijas.error)
           : estadoDeLista(
               hijas.items,
-              { label: 'Nueva sub-organización' },
+              { label: 'Nueva sub-organización', route: childOrganizationNewRoute(id) },
               'Una sub-organización es una unidad con identidad propia dentro de esta —una red de farmacias, un instituto—. La mayoría de las organizaciones no tiene ninguna, y está bien así.',
             ),
       );

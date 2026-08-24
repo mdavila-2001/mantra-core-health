@@ -79,3 +79,12 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
+
+/* El banner de promoción (FAR-I7): discreto, en línea con el resto. */
+.confirmacion__promo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+}

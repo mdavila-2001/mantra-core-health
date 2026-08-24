@@ -50,6 +50,7 @@ const pedido = (extra: Partial<PedidoFarmacia> = {}): PedidoFarmacia => ({
   pago: { estado: 'PENDIENTE', origen: null, pagadoEl: null, total: null, moneda: null },
   requestId: 'rx-1',
   siteId: 'site-1',
+  pharmacyId: 'pharmacy-1',
   ...extra,
 });
 

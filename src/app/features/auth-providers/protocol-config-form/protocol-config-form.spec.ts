@@ -47,11 +47,44 @@ describe('ProtocolConfigForm', () => {
     return interno<{ patchValue: (v: object) => void }>('form');
   }
 
+  /**
+   * Avanza hasta la página que proyecta el editor de claves.
+   *
+   * Es la última de siete: el editor **no existe** antes, porque es un campo
+   * `custom` de esa página. Se llega como llegaría una persona, pulsando
+   * «Siguiente».
+   */
+  function irAlEditor(): void {
+    for (let intento = 0; intento < 10; intento += 1) {
+      fixture.detectChanges();
+      if (fixture.nativeElement.querySelector('app-discovered-keys-editor') !== null) break;
+      (
+        fixture.nativeElement.querySelector(
+          '[data-testid="paginated-form-continuar"]',
+        ) as HTMLButtonElement | null
+      )?.click();
+    }
+    fixture.detectChanges();
+  }
+
   function editor(): {
     filas: { at: (i: number) => { patchValue: (v: object) => void } };
     agregarFila: () => void;
   } {
-    return (component as unknown as { editor: () => never }).editor();
+    const encontrado = (
+      component as unknown as {
+        editor: () =>
+          | {
+              filas: { at: (i: number) => { patchValue: (v: object) => void } };
+              agregarFila: () => void;
+            }
+          | undefined;
+      }
+    ).editor();
+    if (encontrado === undefined) {
+      throw new Error('el editor de claves todavía no está en pantalla: falta irAlEditor()');
+    }
+    return encontrado;
   }
 
   it('sin entorno elegido no viaja nada: es lo único obligatorio del cuerpo', () => {
@@ -63,7 +96,7 @@ describe('ProtocolConfigForm', () => {
 
   it('el cuerpo mínimo lleva el entorno y el PKCE explícito, nada más', () => {
     formulario().patchValue({ providerId: PROVEEDOR });
-    interno<(v: unknown) => void>('elegirEntorno')('PRODUCTION');
+    formulario().patchValue({ environment: 'PRODUCTION' });
 
     interno<() => void>('submit')();
 
@@ -77,7 +110,7 @@ describe('ProtocolConfigForm', () => {
 
   it('la configuración adicional exige un objeto JSON: rota frena, objeto viaja parseado', () => {
     formulario().patchValue({ providerId: PROVEEDOR, extraConfigJson: '{rota' });
-    interno<(v: unknown) => void>('elegirEntorno')('STAGING');
+    formulario().patchValue({ environment: 'STAGING' });
 
     interno<() => void>('submit')();
     http.expectNone(`/auth-providers/identity-providers/${PROVEEDOR}/protocol-configs`);
@@ -101,7 +134,8 @@ describe('ProtocolConfigForm', () => {
       jwksUri: 'https://idp.example/jwks',
       pkceRequired: false,
     });
-    interno<(v: unknown) => void>('elegirEntorno')('PRODUCTION');
+    formulario().patchValue({ environment: 'PRODUCTION' });
+    irAlEditor();
     editor().agregarFila();
     editor().filas.at(0).patchValue({ keyId: 'k-1' });
 

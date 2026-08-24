@@ -1,0 +1,73 @@
+<app-page-header
+  title="Paquetes de contenido"
+  subtitle="Catálogos que la plataforma puede cargar cuando los necesite. El arranque ya no los trae solo."
+/>
+
+<app-view-state-host [state]="estado()" (retry)="cargar()">
+  <app-alert tone="info" class="paquetes__nota">
+    Aplicar un paquete es seguro de repetir: si el contenido ya está, no se duplica y el resultado
+    lo dice con cero filas nuevas.
+  </app-alert>
+
+  <ul class="paquetes__lista">
+    @for (paquete of paquetes(); track paquete.code) {
+      <li class="paquetes__item">
+        <header class="paquetes__encabezado">
+          <h2 class="paquetes__titulo">{{ paquete.name }}</h2>
+          <span class="paquetes__tamano">~{{ paquete.approxRows }} filas</span>
+        </header>
+
+        <p class="paquetes__descripcion">{{ paquete.description }}</p>
+
+        @if (paquete.requiresDemoPassword) {
+          <app-form-field
+            label="Contraseña de las cuentas"
+            hint="La comparten a propósito: son para enseñar el producto, no para proteger nada."
+            [required]="true"
+          >
+            <app-input
+              type="password"
+              [value]="demoPassword()"
+              (valueChange)="cambiarPassword($event)"
+              testId="paquetes-password"
+            />
+          </app-form-field>
+        }
+
+        <div class="paquetes__acciones">
+          <button
+            app-button
+            type="button"
+            variant="secondary"
+            [disabled]="!puedeAplicar(paquete)"
+            [isLoading]="aplicando() === paquete.code"
+            (clicked)="aplicar(paquete)"
+          >
+            {{ resultadoDe(paquete.code) ? 'Aplicar de nuevo' : 'Aplicar' }}
+          </button>
+        </div>
+
+        @if (resultadoDe(paquete.code); as resultado) {
+          <!-- El detalle por tipo de fila y no sólo el total: es lo que dice
+               QUÉ entró, y cada paquete lo reporta con su propio vocabulario. -->
+          <dl class="paquetes__resultado" [attr.data-testid]="'paquetes-resultado-' + paquete.code">
+            <div>
+              <dt>Filas nuevas</dt>
+              <dd>{{ resultado.inserted ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>Tardó</dt>
+              <dd>{{ resultado.tookMs }} ms</dd>
+            </div>
+            @for (contador of contadoresDe(paquete.code); track contador.nombre) {
+              <div>
+                <dt>{{ contador.nombre }}</dt>
+                <dd>{{ contador.valor }}</dd>
+              </div>
+            }
+          </dl>
+        }
+      </li>
+    }
+  </ul>
+</app-view-state-host>
