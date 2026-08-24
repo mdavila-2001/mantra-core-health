@@ -1,0 +1,142 @@
+#!/bin/sh
+#
+# Construye antes de empujar, y no deja empujar algo que no compila.
+#
+# ## Por qué existe
+#
+# El 23/08 se descubrió que `dev` llevaba **seis días sin compilar**: el paquete
+# inicial había cruzado el techo de 1 MB de `angular.json` y nadie tenía cómo
+# verlo. El CI no disparaba por `push`, así que la rama principal no tenía quién
+# la construyera, y las sesenta corridas previas estaban todas en rojo, así que
+# un rojo más no distinguía nada.
+#
+# El disparo por `push` sobre `dev` (ver `.github/workflows/ci.yml`) baja el
+# tiempo de descubrimiento de seis días a un par de minutos. Este gancho es el
+# paso anterior: corre en la máquina de quien empuja, **antes** de que lo roto
+# llegue al servidor, y no depende de que el runner propio del equipo esté sano.
+# Esa independencia es el punto: un guardarraíl que vive solo en el CI se cae
+# junto con el CI.
+#
+# ## Qué hace
+#
+# Construye en modo producción y, si el artefacto queda en pie, imprime el
+# desglose del paquete con `scripts/check-bundle-budget.mjs` —el mismo script
+# que corre el CI—: cuánto pesa el inicial, qué archivos lo componen y cuánto
+# margen queda contra el techo. Ver el margen es lo que faltaba: el paquete pasó
+# de 982 kB a 1,04 MB en tres semanas de a poco, y a nadie le constaba.
+#
+# ## Cuándo NO corre
+#
+# Si lo que se empuja no toca nada que pueda mover el paquete —solo pruebas,
+# documentación o flujos de trabajo— se saltea. Construir para empujar un `.md`
+# es cobrar un minuto por nada, y un guardarraíl que molesta sin motivo es un
+# guardarraíl que alguien termina desactivando.
+#
+# ## Cómo saltearlo
+#
+#   git push --no-verify          # una vez
+#   SALTAR_BUILD=1 git push       # una vez, dejando dicho que fue a propósito
+#
+# Saltearlo es legítimo —empujar un avance a medias a una rama propia, por
+# ejemplo—. Lo que no es legítimo es saltearlo hacia `dev`.
+#
+# ## Instalación
+#
+# No hace falta hacer nada: el script `prepare` de `package.json` apunta
+# `core.hooksPath` a `.githooks/` en cada `yarn install`. Para comprobarlo:
+#
+#   git config core.hooksPath      # debe decir .githooks
+
+set -eu
+
+if [ "${SALTAR_BUILD:-}" = "1" ]; then
+  echo "pre-push: salteado por SALTAR_BUILD=1."
+  exit 0
+fi
+
+# Los archivos que pueden mover el paquete. El resto no justifica una
+# construcción.
+afecta_al_paquete() {
+  echo "$1" | grep -qE '^(src/|angular\.json|package\.json|yarn\.lock|tsconfig[^/]*\.json)'
+}
+
+# Git entrega por la entrada estándar una línea por referencia empujada:
+#   <ref local> <sha local> <ref remota> <sha remota>
+# El sha en ceros significa «rama nueva» (remoto) o «borrado de rama» (local).
+es_cero() {
+  case "$1" in
+    *[!0]*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+hay_que_construir=0
+
+while read -r ref_local sha_local ref_remota sha_remoto; do
+  # Borrar una rama no construye nada.
+  if es_cero "$sha_local"; then
+    continue
+  fi
+
+  # Rama nueva en el remoto: no hay contra qué comparar, así que se toma como
+  # base la bifurcación desde `dev`. Si tampoco existe, se construye y punto:
+  # ante la duda, verificar.
+  if es_cero "$sha_remoto"; then
+    base=$(git merge-base origin/dev "$sha_local" 2>/dev/null || echo '')
+    if [ -z "$base" ]; then
+      hay_que_construir=1
+      break
+    fi
+  else
+    base="$sha_remoto"
+  fi
+
+  archivos=$(git diff --name-only "$base" "$sha_local" 2>/dev/null || echo '')
+  for archivo in $archivos; do
+    if afecta_al_paquete "$archivo"; then
+      hay_que_construir=1
+      break
+    fi
+  done
+
+  [ "$hay_que_construir" = "1" ] && break
+done
+
+if [ "$hay_que_construir" = "0" ]; then
+  echo "pre-push: nada de lo empujado mueve el paquete. No se construye."
+  exit 0
+fi
+
+echo ""
+echo "pre-push: construyendo en modo producción antes de empujar…"
+echo "          (para saltearlo: git push --no-verify)"
+echo ""
+
+if ! yarn build; then
+  echo ""
+  echo "  ✗ La construcción falló. El empuje se cancela."
+  echo ""
+  echo "    Si el fallo es de presupuesto, el propio build dice cuál se pasó y"
+  echo "    por cuánto. Los dos techos están en angular.json, en los"
+  echo "    presupuestos de la configuración de producción."
+  echo ""
+  echo "    Subir el techo para que pase NO es la salida por defecto: el de"
+  echo "    1 MB se sostuvo intacto desde el commit inicial. Diferir lo que"
+  echo "    entró al paquete inicial suele ser el arreglo correcto, y el repo"
+  echo "    ya lo hizo antes (la vitrina pasó a loadComponent y bajó de 503 a"
+  echo "    314 kB)."
+  echo ""
+  echo "    Si el empuje es deliberado y a una rama propia: git push --no-verify"
+  echo ""
+  exit 1
+fi
+
+# El desglose: cuánto pesa el inicial, de qué está hecho y cuánto margen queda.
+# Es tolerante —si no hay artefacto, lo dice y sale sin fallar—, así que no
+# puede tumbar un empuje por su cuenta.
+echo ""
+node scripts/check-bundle-budget.mjs || true
+
+echo ""
+echo "pre-push: la construcción pasó. Empujando."
+echo ""

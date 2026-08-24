@@ -1,0 +1,9 @@
+# Los ganchos de Git son scripts de shell y los ejecuta `sh`, también en el
+# runner propio, que es Linux. Con finales de línea CRLF —lo que produce
+# `core.autocrlf=true`, que es el valor por defecto en las máquinas Windows del
+# equipo— el intérprete lee `#!/bin/sh\r` y responde `bad interpreter`.
+#
+# Esta regla es deliberadamente estrecha: fija los finales de línea de
+# `.githooks/` y de nada más. Normalizar el repositorio entero reescribiría
+# todos los archivos y produciría un diff que nadie puede revisar.
+.githooks/** text eol=lf
