@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "ng": "ng",
+    "prepare": "git config core.hooksPath .githooks || true",
     "env:generate": "node scripts/generate-env.mjs",
     "config:env": "yarn env:generate",
     "start": "yarn env:generate && ng serve",

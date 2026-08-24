@@ -9,11 +9,22 @@
 name: CI
 
 # Desde el 18/08 corre en un runner propio (ver los jobs), que es una máquina
-# del equipo y no una flota elástica: el disparo se acota a `pull_request` para
-# que la batería llegue cuando sirve —antes de mergear— sin duplicar cada
-# corrida con el `push` que sigue al merge.
+# del equipo y no una flota elástica. Hasta el 24/08 el disparo se acotaba a
+# `pull_request` para no duplicar cada corrida con el `push` que sigue al merge.
+#
+# Ese ahorro salió caro: sin disparo por `push`, **nadie construía `dev`**. El
+# paquete inicial creció de 982 kB (21/08) a 1,04 MB (23/08), cruzó el techo de
+# 1 MB con el #212 y la rama principal quedó seis días sin compilar sin que nada
+# avisara. La última corrida sobre `dev` era del 18/08.
+#
+# El `push` sobre `dev` es el único que reconstruye la rama principal después de
+# cada merge: no impide que entre algo roto —eso lo hace el gancho `pre-push` de
+# `.githooks/`, que corre antes y en la máquina de quien empuja— pero baja el
+# tiempo de descubrimiento de seis días a un par de minutos.
 on:
   pull_request:
+  push:
+    branches: [dev]
   # Para lanzar a mano la regresión completa de extremo a extremo antes de un despliegue,
   # sin esperar a que algo llegue a `master`.
   workflow_dispatch:
