@@ -38,7 +38,19 @@
                  aparece por omisión no significa nada. -->
             @if (p.verified) {
               <span class="perfil__sello" title="Identidad verificada">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z" /><path d="m9 12 2 2 4-4" /></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
                 <span class="solo-lectores">Identidad verificada</span>
               </span>
             }
@@ -57,7 +69,17 @@
             @if (puntuacion(); as media) {
               <span class="perfil__punto" aria-hidden="true">·</span>
               <span class="perfil__estrella">
-                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" focusable="false"><path d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z" /></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  stroke="none"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z"
+                  />
+                </svg>
                 {{ media }}
               </span>
               <span class="perfil__opiniones">({{ p.ratingCount }})</span>
@@ -78,7 +100,20 @@
                 data-testid="perfil-escribir"
                 (clicked)="escribir.emit()"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z" /></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z"
+                  />
+                </svg>
                 Enviar mensaje
               </button>
             </p>
@@ -88,22 +123,20 @@
     </header>
 
     <!-- Acerca de -->
-    <section class="app-card perfil__seccion">
-      <div class="app-card__cabecera"><h2>Acerca de</h2></div>
-      @if (p.biography) {
-        <p class="perfil__parrafo">{{ p.biography }}</p>
-      } @else if (preview()) {
-        <!-- El bloque no desaparece en el preview: si se escondiera, quien
-             configura su vitrina no vería el hueco que está dejando. En la
-             ficha pública sí se calla — al paciente no le sirve saber lo que
-             falta. -->
-        <p class="caption">
-          Todavía no escribiste tu presentación. Es lo primero que lee alguien que no te conoce.
-        </p>
-      } @else {
-        <p class="caption">No publicó una presentación.</p>
-      }
-    </section>
+    @if (p.biography || preview()) {
+      <section class="app-card perfil__seccion">
+        <div class="app-card__cabecera"><h2>Acerca de</h2></div>
+        @if (p.biography) {
+          <p class="perfil__parrafo">{{ p.biography }}</p>
+        } @else {
+          <!-- El bloque no desaparece en el preview: si se escondiera, quien
+             configura su vitrina no vería el hueco que está dejando. -->
+          <p class="caption">
+            Todavía no escribiste tu presentación. Es lo primero que lee alguien que no te conoce.
+          </p>
+        }
+      </section>
+    }
 
     @if (p.specialties.length > 0) {
       <section class="app-card perfil__seccion">
@@ -116,38 +149,55 @@
       </section>
     }
 
-    <section class="app-card perfil__seccion">
-      <div class="app-card__cabecera"><h2>Dónde atiende</h2></div>
-      @if (donde()) {
-        <p class="perfil__donde">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21.2s7-6 7-11.2a7 7 0 1 0-14 0c0 5.2 7 11.2 7 11.2z" /><circle cx="12" cy="9.8" r="2.6" /></svg>
-          {{ donde() }}
-        </p>
-      } @else if (preview()) {
-        <p class="caption">Todavía no cargaste dónde atendés.</p>
-      } @else {
-        <p class="caption">No publicó dónde atiende.</p>
-      }
-    </section>
+    @if (donde() || preview()) {
+      <section class="app-card perfil__seccion">
+        <div class="app-card__cabecera"><h2>Dónde atiende</h2></div>
+        @if (donde()) {
+          <p class="perfil__donde">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M12 21.2s7-6 7-11.2a7 7 0 1 0-14 0c0 5.2 7 11.2 7 11.2z" />
+              <circle cx="12" cy="9.8" r="2.6" />
+            </svg>
+            {{ donde() }}
+          </p>
+        } @else {
+          <p class="caption">Todavía no cargaste dónde atendés.</p>
+        }
+      </section>
+    }
 
-    <section class="app-card perfil__seccion">
-      <div class="app-card__cabecera">
-        <h2>Publicaciones</h2>
-      </div>
-      @if (p.posts.length === 0) {
-        <p class="caption">
-          {{ preview() ? 'Todavía no publicaste nada.' : 'Todavía no publicó nada.' }}
-        </p>
-      } @else {
-        <ul class="perfil__publicaciones">
-          @for (post of p.posts; track post.id) {
-            <li class="perfil__publicacion">
-              <p class="overline">{{ post.publishedAt | date: 'dd/MM/yyyy' }}</p>
-              <p class="perfil__parrafo">{{ post.bodyText }}</p>
-            </li>
-          }
-        </ul>
-      }
-    </section>
+    <!-- Las secciones vacías se callan en la ficha pública y se quedan en la
+         vista previa. Es la misma regla que ya tenía la presentación: al
+         paciente no le sirve saber lo que falta —una página de «no publicó»
+         se lee como una cuenta abandonada—, y a quien configura su vitrina sí,
+         porque es el hueco que está dejando. -->
+    @if (p.posts.length > 0 || preview()) {
+      <section class="app-card perfil__seccion">
+        <div class="app-card__cabecera">
+          <h2>Publicaciones</h2>
+        </div>
+        @if (p.posts.length === 0) {
+          <p class="caption">Todavía no publicaste nada.</p>
+        } @else {
+          <ul class="perfil__publicaciones">
+            @for (post of p.posts; track post.id) {
+              <li class="perfil__publicacion">
+                <p class="overline">{{ post.publishedAt | date: 'dd/MM/yyyy' }}</p>
+                <p class="perfil__parrafo">{{ post.bodyText }}</p>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
   </article>
 }
