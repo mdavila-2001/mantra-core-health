@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, map, of, switchMap, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
+import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
 import { AppButton } from '@shared/components/atoms/button/button';
@@ -76,8 +77,28 @@ const POR_PAGINA = 50;
 })
 export class SymptomCheck {
   private readonly profiles = inject(ProfilesClient);
+  private readonly publico = inject(PublicDirectoryClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
+
+  /**
+   * Si esta instancia trabaja **sin sesión**.
+   *
+   * Cambia de dónde salen las especialidades: con sesión, del directorio
+   * interno (`GET /profiles/practitioners`); sin ella, del buscador público,
+   * que es el único que responde a quien no entró. Sin esta distinción la
+   * pantalla pública pedía un endpoint autenticado, se comía un 401 y quedaba
+   * sin filtro — funcionaba, pero recomendando especialidades que no tienen a
+   * nadie detrás.
+   */
+  readonly sinSesion = input(false);
+
+  /**
+   * A dónde lleva «ver profesionales». Con sesión, a la guía interna; sin
+   * ella, al buscador público, que es la única que alguien sin cuenta puede
+   * abrir.
+   */
+  readonly rutaDeResultados = input('/directory');
 
   /** Lo que la persona escribió, tal cual. */
   protected readonly texto = signal('');
@@ -193,7 +214,9 @@ export class SymptomCheck {
    * directorio, que es quien tiene los grupos cargados.
    */
   protected verProfesionales(nombre: string): void {
-    void this.router.navigate(['/directory'], { queryParams: { q: nombre } });
+    void this.router.navigate([this.rutaDeResultados()], {
+      queryParams: { q: nombre },
+    });
   }
 
   /**
@@ -204,6 +227,9 @@ export class SymptomCheck {
    * sería traerse el directorio para leer una lista de nombres.
    */
   private leerEspecialidades(): Observable<ReadonlySet<string>> {
+    if (this.sinSesion()) {
+      return this.leerEspecialidadesPublicas();
+    }
     return this.profiles.listPractitioners({ limit: POR_PAGINA }).pipe(
       switchMap((pagina) => {
         const ids = [
@@ -224,6 +250,31 @@ export class SymptomCheck {
           catchError(() => of(new Set<string>())),
         );
       }),
+    );
+  }
+
+  /**
+   * Las especialidades que se ven **sin sesión**, sacadas del buscador público.
+   *
+   * El buscador no publica los conceptos de especialidad —no expone
+   * identificadores internos—, así que se leen del `headline`, que es donde el
+   * profesional escribe qué hace («Cardióloga · Arritmias y prevención»). Se
+   * parte por el separador y se normaliza cada parte: es una aproximación, y
+   * alcanza para lo único que hace falta acá, que es no recomendar una
+   * especialidad sin nadie detrás.
+   */
+  private leerEspecialidadesPublicas(): Observable<ReadonlySet<string>> {
+    return this.publico.searchPractitioners({ limit: POR_PAGINA }).pipe(
+      map(
+        (pagina) =>
+          new Set(
+            pagina.items
+              .flatMap((fila) => (fila.headline ?? '').split(/[·,|]/))
+              .map((parte) => normalizar(parte))
+              .filter((parte) => parte !== ''),
+          ) as ReadonlySet<string>,
+      ),
+      catchError(() => of(new Set<string>())),
     );
   }
 }

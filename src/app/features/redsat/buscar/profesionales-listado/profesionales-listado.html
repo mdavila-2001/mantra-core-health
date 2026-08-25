@@ -46,19 +46,18 @@
       @switch (busqueda.estado()) {
         @case ('datos') {
       <div data-estado="datos">
-      <ul class="app-resultado-lista">
+      <!-- Grilla de tarjetas y no lista de filas. Es el MISMO
+           `app-result-card` que usan los cuatro directorios internos: quien
+           llega sin sesión y quien entra ven la misma pieza, y una corrección
+           de diseño se aplica una vez. Una fila por profesional obligaba a
+           leer en zigzag —foto a la izquierda, botón a la derecha, medio metro
+           de vacío en el medio— y en una pantalla ancha mostraba cinco
+           resultados donde caben doce. -->
+      <ul class="profesionales__grilla">
         @for (tarjeta of tarjetas(); track tarjeta.id) {
-          <li app-search-result [resultado]="tarjeta">
-            <div class="app-resultado__lado">
-              <a
-                app-button
-                data-variante="secundario"
-                data-tam="sm"
-                [routerLink]="tarjeta.link"
-                >Ver perfil</a
-              >
-            </div>
-          </li>
+          <!-- El selector es `li[app-result-card]`: la tarjeta ES el elemento
+               de la lista, no algo que se mete dentro de uno. -->
+          <li app-result-card [resultado]="tarjeta"></li>
         }
       </ul>
       <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
