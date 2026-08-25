@@ -1,0 +1,17 @@
+/* La grilla del listado público. `auto-fill` con un mínimo de 19rem: en una
+   pantalla ancha entran cuatro tarjetas y en una angosta una, sin puntos de
+   corte escritos a mano que después nadie mantiene. */
+.profesionales__grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: var(--e4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* La tarjeta ocupa su celda entera: con alturas distintas, una fila de tarjetas
+   de distinto alto se lee como un listado roto. */
+.profesionales__grilla > li {
+  inline-size: 100%;
+}

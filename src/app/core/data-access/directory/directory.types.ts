@@ -68,6 +68,13 @@ export interface PractitionerRequest {
   /** Con este id se aprueba o se rechaza. */
   readonly id: string;
   readonly practitionerProfileId: string;
+  /**
+   * Cómo se llama quien pide. `null` si no tiene nombre cargado, que la
+   * pantalla debe contar como dato faltante y no como persona anónima.
+   */
+  readonly practitionerName: string | null;
+  /** Matrícula del Ministerio: lo que permite verificar a quien pide entrar. */
+  readonly practitionerLicense: string | null;
   /** Institución tal como la declaró el profesional. */
   readonly organizationName: string;
   readonly roleTitle: string;

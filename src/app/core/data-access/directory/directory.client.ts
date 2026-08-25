@@ -592,6 +592,11 @@ function toPractitionerRequest(body: ConNulos<WirePractitionerRequest>): Practit
   return {
     ...resto,
     practiceSiteId: body.practiceSiteId ?? null,
+    // Los tres opcionales se dejan como `null` explícito: «sin nombre cargado»
+    // no es lo mismo que «no vino el dato», y quien administra la organización
+    // tiene que poder ver la diferencia antes de aprobar a alguien.
+    practitionerName: body.practitionerName ?? null,
+    practitionerLicense: body.practitionerLicense ?? null,
     startDate: new Date(startDate),
     createdAt: new Date(createdAt),
   };

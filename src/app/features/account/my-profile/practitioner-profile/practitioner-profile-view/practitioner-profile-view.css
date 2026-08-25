@@ -357,3 +357,57 @@
   overflow-wrap: anywhere;
   text-transform: none;
 }
+
+/* ── La foto de perfil, que ahora se cambia tocándola (P17) ──────────────── */
+
+/* Es un `label` con un `input[type=file]` escondido y no un `button`: así el
+   diálogo de archivos lo abre el navegador, sin JavaScript que lo simule, y el
+   teclado y el lector de pantalla lo encuentran solos. */
+.profesional__foto {
+  position: relative;
+  display: inline-flex;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* La capa con la cámara aparece al pasar por encima o al enfocar con teclado.
+   Fuera de esos dos momentos no tapa la foto: una foto de perfil se mira, y un
+   icono permanente encima es ruido. */
+.profesional__foto-capa {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--velo);
+  color: var(--tinta-nav);
+  opacity: 0;
+  transition: opacity var(--mov-rapido) var(--curva);
+}
+
+.profesional__foto-capa svg {
+  inline-size: 26px;
+  block-size: 26px;
+}
+
+.profesional__foto:hover .profesional__foto-capa,
+.profesional__foto:focus-within .profesional__foto-capa,
+.profesional__foto.is-subiendo .profesional__foto-capa {
+  opacity: 1;
+}
+
+.profesional__foto.is-subiendo {
+  cursor: progress;
+}
+
+.profesional__foto-error {
+  margin: var(--sp-3) var(--sp-5) 0;
+  color: var(--error-tinta, #8a2f22);
+  font-size: var(--fs-caption);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profesional__foto-capa {
+    transition: none;
+  }
+}

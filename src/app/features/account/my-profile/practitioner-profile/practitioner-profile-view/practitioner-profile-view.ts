@@ -1,5 +1,17 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { switchMap } from 'rxjs';
+
+import { FilesClient } from '@core/data-access/files/files.client';
+import { CommunityClient } from '@core/data-access/community/community.client';
 import { RouterLink } from '@angular/router';
 
 import { WorkHistory } from '../../work-history/work-history';
@@ -98,6 +110,104 @@ export class PractitionerProfileView {
    * por error del llamador.
    */
   readonly previewMode = input(false);
+
+  /* --- La foto de perfil (P17) ------------------------------------------ */
+
+  private readonly archivos = inject(FilesClient);
+  private readonly community = inject(CommunityClient);
+
+  /** Mientras la foto viaja. Bloquea el control para no subir dos veces. */
+  protected readonly subiendoFoto = signal(false);
+
+  /** Qué salió mal, si salió mal. Vacío es que no pasó nada. */
+  protected readonly errorDeFoto = signal('');
+
+  /**
+   * La foto recién subida, servida por la API.
+   *
+   * El perfil llega por `input()` desde quien lo leyó, así que este componente
+   * no puede refrescarlo por su cuenta y necesita recordar la foto nueva.
+   *
+   * **Se guarda la ruta del servidor, no un `blob:`.** Se probó con
+   * `URL.createObjectURL(archivo)` —instantáneo, sin ida y vuelta— y la propia
+   * CSP de la aplicación lo bloquea: `img-src` declara `'self' data:` y una
+   * `blob:` no entra. La imagen quedaba invisible y en consola aparecía una
+   * violación de CSP, que es el peor de los dos mundos: parece que la subida
+   * falló cuando en realidad había funcionado. La ruta de la API es
+   * `same-origin`, se ve, y además prueba que la foto quedó guardada.
+   */
+  protected readonly fotoRecien = signal<string | null>(null);
+
+  protected readonly fotoVisible = computed(
+    () => this.fotoRecien() ?? this.perfil().fotoUrl,
+  );
+
+  /**
+   * Sube la foto elegida y la cuelga de la vitrina pública.
+   *
+   * **Son dos llamadas y no una, a propósito.** `POST /common/files/upload`
+   * recibe los bytes por `multipart`; `PUT /community/profiles/me` es un JSON
+   * idempotente que recibe el **id** del archivo. Mezclarlos obligaría a la
+   * vitrina a hablar dos idiomas y a reenviar la foto entera cada vez que
+   * alguien corrige su biografía.
+   *
+   * La vitrina se relee antes de escribirla porque el `PUT` es completo: sin
+   * `slug`, `displayName` y `tenantId` el backend rechaza, y adivinarlos acá
+   * sería pisar lo que la persona haya escrito en otra pantalla.
+   */
+  protected alElegirFoto(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
+    // seguidas no dispara `change` y parece que el botón dejó de andar.
+    entrada.value = '';
+    if (!archivo || this.subiendoFoto()) {
+      return;
+    }
+
+    this.subiendoFoto.set(true);
+    this.errorDeFoto.set('');
+
+    this.archivos
+      .upload(archivo, 'IMAGE', 'NORMAL')
+      .pipe(
+        switchMap((subido) =>
+          this.community.getOwnProfile().pipe(
+            switchMap((propio) => {
+              if (propio === null) {
+                throw new Error('sin-vitrina');
+              }
+              return this.community.upsertOwnProfile({
+                tenantId: propio.tenantId,
+                slug: propio.slug,
+                displayName: propio.displayName,
+                ...(propio.headline === null ? {} : { headline: propio.headline }),
+                ...(propio.biography === null ? {} : { biography: propio.biography }),
+                avatarFileId: subido.id,
+              });
+            }),
+          ),
+        ),
+      )
+      .subscribe({
+        next: (guardado) => {
+          this.subiendoFoto.set(false);
+          this.fotoRecien.set(
+            guardado.avatarFileId === undefined
+              ? null
+              : `/public/media/${guardado.avatarFileId}`,
+          );
+        },
+        error: (error: unknown) => {
+          this.subiendoFoto.set(false);
+          this.errorDeFoto.set(
+            error instanceof Error && error.message === 'sin-vitrina'
+              ? 'Primero creá tu perfil público desde Chats o desde «Configurar mi perfil».'
+              : 'No pudimos subir la foto. Probá con otra imagen.',
+          );
+        },
+      });
+  }
 
   /** Alguien agregó un vínculo laboral desde el formulario embebido: el contenedor debe releer el perfil. */
   readonly trayectoriaCambio = output<void>();

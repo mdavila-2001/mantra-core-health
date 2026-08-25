@@ -1,11 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, map, of, switchMap, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
+import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
+import { ZONAS_DEL_CUERPO, type ZonaDelCuerpo } from './zonas.datos';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
@@ -21,6 +23,7 @@ import {
   sugerir,
   type Recomendacion,
   type Sintoma,
+  SINTOMAS,
 } from './sintomas';
 
 /** Tope por página del listado de profesionales. */
@@ -76,8 +79,28 @@ const POR_PAGINA = 50;
 })
 export class SymptomCheck {
   private readonly profiles = inject(ProfilesClient);
+  private readonly publico = inject(PublicDirectoryClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
+
+  /**
+   * Si esta instancia trabaja **sin sesión**.
+   *
+   * Cambia de dónde salen las especialidades: con sesión, del directorio
+   * interno (`GET /profiles/practitioners`); sin ella, del buscador público,
+   * que es el único que responde a quien no entró. Sin esta distinción la
+   * pantalla pública pedía un endpoint autenticado, se comía un 401 y quedaba
+   * sin filtro — funcionaba, pero recomendando especialidades que no tienen a
+   * nadie detrás.
+   */
+  readonly sinSesion = input(false);
+
+  /**
+   * A dónde lleva «ver profesionales». Con sesión, a la guía interna; sin
+   * ella, al buscador público, que es la única que alguien sin cuenta puede
+   * abrir.
+   */
+  readonly rutaDeResultados = input('/directory');
 
   /** Lo que la persona escribió, tal cual. */
   protected readonly texto = signal('');
@@ -153,6 +176,54 @@ export class SymptomCheck {
 
   protected readonly explicacionDe = explicar;
 
+  /* --- Elegir sin escribir ---------------------------------------------- */
+
+  /** Las zonas del cuerpo, tal cual la tabla. */
+  protected readonly zonas = signal(ZONAS_DEL_CUERPO);
+
+  /** Qué zona está abierta, o `null` si ninguna. Una sola a la vez. */
+  protected readonly zonaAbierta = signal<string | null>(null);
+
+  /**
+   * Los síntomas de la zona abierta, resueltos contra `SINTOMAS`.
+   *
+   * Un `id` de la tabla de zonas que no exista allá **se ignora**: la zona
+   * ofrece uno menos y la pantalla sigue en pie. Es la única forma de que dos
+   * listas convivan sin que una rompa a la otra.
+   */
+  protected readonly sintomasDeLaZona = computed<readonly Sintoma[]>(() => {
+    const abierta = this.zonaAbierta();
+    if (abierta === null) {
+      return [];
+    }
+    const zona = ZONAS_DEL_CUERPO.find((z) => z.id === abierta);
+    if (zona === undefined) {
+      return [];
+    }
+    return zona.sintomas
+      .map((id) => SINTOMAS.find((s) => s.id === id))
+      .filter((s): s is Sintoma => s !== undefined);
+  });
+
+  /** Abre una zona, o la cierra si ya lo estaba. */
+  protected alternarZona(zona: ZonaDelCuerpo): void {
+    this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
+  }
+
+  /** Si un síntoma ya está elegido, para pintarlo distinto. */
+  protected estaElegido(sintoma: Sintoma): boolean {
+    return this.sintomas().some((s) => s.id === sintoma.id);
+  }
+
+  /** Tocar una pastilla lo agrega o lo quita: es un interruptor. */
+  protected alternarSintoma(sintoma: Sintoma): void {
+    if (this.estaElegido(sintoma)) {
+      this.quitar(sintoma);
+    } else {
+      this.agregar(sintoma);
+    }
+  }
+
   protected escribir(valor: string): void {
     this.texto.set(valor);
     if (valor.trim() !== '') {
@@ -193,7 +264,9 @@ export class SymptomCheck {
    * directorio, que es quien tiene los grupos cargados.
    */
   protected verProfesionales(nombre: string): void {
-    void this.router.navigate(['/directory'], { queryParams: { q: nombre } });
+    void this.router.navigate([this.rutaDeResultados()], {
+      queryParams: { q: nombre },
+    });
   }
 
   /**
@@ -204,6 +277,9 @@ export class SymptomCheck {
    * sería traerse el directorio para leer una lista de nombres.
    */
   private leerEspecialidades(): Observable<ReadonlySet<string>> {
+    if (this.sinSesion()) {
+      return this.leerEspecialidadesPublicas();
+    }
     return this.profiles.listPractitioners({ limit: POR_PAGINA }).pipe(
       switchMap((pagina) => {
         const ids = [
@@ -224,6 +300,31 @@ export class SymptomCheck {
           catchError(() => of(new Set<string>())),
         );
       }),
+    );
+  }
+
+  /**
+   * Las especialidades que se ven **sin sesión**, sacadas del buscador público.
+   *
+   * El buscador no publica los conceptos de especialidad —no expone
+   * identificadores internos—, así que se leen del `headline`, que es donde el
+   * profesional escribe qué hace («Cardióloga · Arritmias y prevención»). Se
+   * parte por el separador y se normaliza cada parte: es una aproximación, y
+   * alcanza para lo único que hace falta acá, que es no recomendar una
+   * especialidad sin nadie detrás.
+   */
+  private leerEspecialidadesPublicas(): Observable<ReadonlySet<string>> {
+    return this.publico.searchPractitioners({ limit: POR_PAGINA }).pipe(
+      map(
+        (pagina) =>
+          new Set(
+            pagina.items
+              .flatMap((fila) => (fila.headline ?? '').split(/[·,|]/))
+              .map((parte) => normalizar(parte))
+              .filter((parte) => parte !== ''),
+          ) as ReadonlySet<string>,
+      ),
+      catchError(() => of(new Set<string>())),
     );
   }
 }

@@ -34,6 +34,7 @@ import type {
   RelatedPerson,
   RelatedPersonCreated,
   PractitionerOnboarding,
+  LinkableOrganizationPage,
 } from './profiles.types';
 
 /** Las mismas respuestas, con las fechas como viajan: texto. */
@@ -478,6 +479,42 @@ export class ProfilesClient {
         ...(linkTypeConceptId === undefined ? {} : { linkTypeConceptId }),
       })
       .pipe(map((body) => ({ ...body, validFrom: new Date(body.validFrom) })));
+  }
+
+  /**
+   * `GET /profiles/practitioners/me/linkable-organizations` — el padrón de
+   * establecimientos, para elegir dónde se trabaja en vez de escribirlo.
+   *
+   * ## Por qué el buscador y no un desplegable
+   *
+   * Son 523 establecimientos. Un `<select>` con 523 opciones no es un selector,
+   * es una lista para desplazar. Se escribe, se filtra, se elige.
+   *
+   * ## El padrón cubre sólo Santa Cruz
+   *
+   * Quien trabaja en otro departamento no va a encontrarse acá, y por eso el
+   * alta sigue admitiendo el nombre escrito a mano. Es la salida para lo que el
+   * padrón no cubre, no la forma normal de cargarlo.
+   *
+   * @param query - Texto del nombre; sin él devuelve el padrón acotado al tope.
+   * @param municipality - Municipio exacto, para separar homónimos.
+   * @returns Los establecimientos que coinciden.
+   */
+  searchLinkableOrganizations(
+    query?: string,
+    municipality?: string,
+  ): Observable<LinkableOrganizationPage> {
+    let params = new HttpParams();
+    if (query !== undefined && query.trim() !== '') {
+      params = params.set('q', query.trim());
+    }
+    if (municipality !== undefined && municipality.trim() !== '') {
+      params = params.set('municipality', municipality.trim());
+    }
+    return this.http.get<LinkableOrganizationPage>(
+      this.url('/profiles/practitioners/me/linkable-organizations'),
+      { params },
+    );
   }
 
   private url(path: string): string {

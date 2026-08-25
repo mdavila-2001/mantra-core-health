@@ -147,6 +147,17 @@ export interface UpsertOwnPublicProfile {
    * publicarla.
    */
   readonly visibility?: ProfileVisibility;
+
+  /**
+   * El archivo de la foto de perfil, ya subido por `POST /common/files/upload`.
+   *
+   * Se manda el **id** y no los bytes: esta escritura es un `PUT` de JSON
+   * idempotente, y meterle un `multipart` la obligaría a reenviar la foto
+   * entera cada vez que alguien corrige su biografía.
+   *
+   * **Omitirlo conserva la que haya**, igual que `visibility`; `null` la quita.
+   */
+  readonly avatarFileId?: string | null;
 }
 
 // ─── Publicaciones ───────────────────────────────────────────────────────────

@@ -925,6 +925,19 @@ function rutasDeBusquedaPublica(): Routes {
             ),
         },
         {
+          // El triaje de síntomas, sin sesión. Era lo primero que veía un
+          // paciente **al entrar**, y entrar es justamente lo que no hizo quien
+          // todavía no sabe a qué médico ir: la pregunta que trae a alguien
+          // —«me pasa esto, ¿a quién consulto?»— quedaba detrás del registro.
+          path: 'sintomas',
+          title: '¿A qué especialista consultar? — AloVida',
+          data: { arquetipo: 'formulario', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/sintomas-publico/sintomas-publico').then(
+              (m) => m.SintomasPublico,
+            ),
+        },
+        {
           path: 'profesionales',
           title: 'Profesionales de salud — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
