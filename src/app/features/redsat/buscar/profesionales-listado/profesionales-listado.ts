@@ -9,7 +9,7 @@ import { PublicDirectoryClient } from '@core/data-access/public-directory/public
 import { aTarjeta } from '../public-result.mapper';
 import { BusquedaPublica } from '@core/data-access/public-directory/public-search.store';
 
-import { SearchResult } from '../../../../shared/components/molecules';
+import { ResultCard } from '../../../../shared/components/molecules/result-card/result-card';
 
 /**
  * El listado de profesionales de la superficie pública.
@@ -37,8 +37,9 @@ import { SearchResult } from '../../../../shared/components/molecules';
  */
 @Component({
   selector: 'app-redsat-buscar-profesionales-listado',
-  imports: [RouterLink, SearchResult],
+  imports: [RouterLink, ResultCard],
   templateUrl: './profesionales-listado.html',
+  styleUrl: './profesionales-listado.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuscarProfesionalesListado {
