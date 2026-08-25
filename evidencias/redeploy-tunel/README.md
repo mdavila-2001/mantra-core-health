@@ -52,3 +52,29 @@ relanza el *front*, pero sólo regenera nginx cuando hay commit nuevo. Se arregl
 ```bash
 cd mantra-core-health && tools/redeploy/redeploy.sh proxy
 ```
+
+## 24/08/2026 — el relanzamiento que destrabó 65 commits
+
+| Archivo | Qué prueba |
+| --- | --- |
+| `07-relanzado-a87afbb` | El frontend desplegado sirviendo, ya con la imagen `alovida-front:a87afbb` |
+| `08-perfil-nuevo-en-el-despliegue` | Que el despliegue **lleva lo de hoy**: la ficha pública con portada y retrato montado, no la de anteayer |
+
+Tres cosas se juntaron ese día, y ninguna gritaba:
+
+1. **El enlace servía el PR #210 desde hacía 65 commits.** Siete despliegues
+   seguidos fallaron por el presupuesto de bundle —el inicial pesa 1,05 MB
+   contra un techo de 1 MB— y el redespliegue hizo lo correcto: conservar lo que
+   servía y anotar el commit como fallido. El síntoma fue el silencio.
+2. **La sesión de GitHub del túnel había caducado otra vez**, con las cuatro
+   unidades en bucle. Se recupera con la orden de siempre —login por navegador
+   en `DISPLAY=:0`— y las cuatro reenganchan solas.
+3. **`SSR_ALLOWED_HOSTS` había quedado en `localhost,127.0.0.1`**, porque el
+   redespliegue calcula los hosts desde `estado/URL` y ese archivo estaba vacío:
+   el túnel estaba caído cuando corrió. El borde devolvía
+   `Header "x-forwarded-host" ... is not allowed` — un 400, no el 421 de nginx de
+   otras veces. Se arregla con `redeploy.sh web`, que relanza el frontend con la
+   misma imagen y recalcula el entorno una vez el túnel ya tiene URL.
+
+El orden importa: **primero el túnel, después el `web`**. Al revés, los hosts
+vuelven a salir vacíos.
