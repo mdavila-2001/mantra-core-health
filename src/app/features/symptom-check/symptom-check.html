@@ -1,19 +1,95 @@
 <section class="sintomas" aria-labelledby="sintomas-titulo">
-  <h2 class="sintomas__titulo" id="sintomas-titulo">¿Qué te pasa?</h2>
-  <p class="sintomas__texto">
-    Contanos con tus palabras qué sentís y desde cuándo. Te decimos a qué especialidad conviene
-    ir y te mostramos quién atiende.
-  </p>
+  <h2 class="sintomas__titulo" id="sintomas-titulo">¿Cómo te sentís?</h2>
+  <p class="sintomas__texto">Tocá dónde te pasa. Te decimos a qué especialidad ir.</p>
 
-  <app-textarea
-    class="sintomas__campo"
-    [rows]="3"
-    [autoResize]="true"
-    [maxRows]="6"
-    [value]="texto()"
-    (valueChange)="escribir($event)"
-    placeholder="Me duele la cabeza hace tres días y veo borroso…"
-  />
+  <!-- ─── Elegir sin escribir ───────────────────────────────────────────────
+       Un campo de texto vacío es la peor pregunta posible: quien no sabe a qué
+       médico ir tampoco sabe con qué palabras nombrarlo. Señalar dónde duele es
+       lo que hace cualquiera, y es una decisión de un toque. -->
+  <ul class="sintomas__zonas">
+    @for (zona of zonas(); track zona.id) {
+      <li>
+        <button
+          class="sintomas__zona"
+          type="button"
+          [class.is-abierta]="zonaAbierta() === zona.id"
+          [attr.aria-expanded]="zonaAbierta() === zona.id"
+          [attr.data-testid]="'zona-' + zona.id"
+          (click)="alternarZona(zona)"
+        >
+          <span class="sintomas__zona-icono" aria-hidden="true">
+            @switch (zona.icono) {
+              @case ('cabeza') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 20.5v-2.2c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 4.6a6.5 6.5 0 0 0-4.3 11.4c.5.5.8 1.2.8 1.9v2.6" /><path d="M9.5 8.6a2.6 2.6 0 0 1 3.6 1.2" /></svg>
+              }
+              @case ('ojo') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.8" /></svg>
+              }
+              @case ('garganta') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5a4 4 0 0 0-4 4v3.2c0 1-.3 1.9-.9 2.7l-1 1.3c-.6.8 0 2 1 2H9" /><path d="M9 16.7v1.1a2.7 2.7 0 0 0 5.4 0V16h1.7a1.3 1.3 0 0 0 1.2-1.7l-.8-2.6a4 4 0 0 1-.2-1.2V7.5a4 4 0 0 0-4-4" /></svg>
+              }
+              @case ('pecho') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.4 4.7 13a4.7 4.7 0 0 1 6.6-6.7l.7.7.7-.7A4.7 4.7 0 0 1 19.3 13z" /><path d="M5.4 12.4h2.4l1.4-2.5 2 4.9 1.6-3.3h3.8" /></svg>
+              }
+              @case ('panza') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5v4.2a4.6 4.6 0 0 0 4.6 4.6h.7a3.4 3.4 0 0 1 0 6.8h-1.6a3 3 0 0 1-3-3" /><path d="M7 3.5h4" /></svg>
+              }
+              @case ('huesos') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 15.5 15.5 8.5" /><path d="M6.2 17.8a2.2 2.2 0 1 1-1.6-3.7 2.2 2.2 0 1 1 3.7 1.6z" /><path d="M17.8 6.2a2.2 2.2 0 1 0 1.6 3.7 2.2 2.2 0 1 0-3.7-1.6z" /></svg>
+              }
+              @case ('piel') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4" /><circle cx="9.5" cy="10" r="1.2" /><circle cx="14.5" cy="13.5" r="1.6" /><circle cx="15" cy="8.5" r=".9" /></svg>
+              }
+              @case ('animo') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M9 10.2h.01M15 10.2h.01" /><path d="M8.8 15.4a4.2 4.2 0 0 1 6.4 0" /></svg>
+              }
+              @case ('intima') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9.5" r="5" /><path d="M12 14.5v6M9.2 18h5.6" /></svg>
+              }
+              @default {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z" /><path d="M12 9v6M9 12h6" /></svg>
+              }
+            }
+          </span>
+          <span class="sintomas__zona-nombre">{{ zona.nombre }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+
+  @if (sintomasDeLaZona().length > 0) {
+    <ul class="sintomas__opciones" data-testid="zona-abierta">
+      @for (sintoma of sintomasDeLaZona(); track sintoma.id) {
+        <li>
+          <button
+            class="sintomas__opcion-chip"
+            type="button"
+            [class.is-elegido]="estaElegido(sintoma)"
+            [attr.aria-pressed]="estaElegido(sintoma)"
+            (click)="alternarSintoma(sintoma)"
+          >
+            {{ sintoma.nombre }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- El texto libre sigue estando, pero deja de ser la única puerta: hay
+       síntomas que no entran en ninguna zona, y escribir es más rápido para
+       quien ya sabe qué decir. -->
+  <details class="sintomas__escribir" [open]="sintomas().length === 0">
+    <summary>O escribilo con tus palabras</summary>
+    <app-textarea
+      class="sintomas__campo"
+      [rows]="2"
+      [autoResize]="true"
+      [maxRows]="5"
+      [value]="texto()"
+      (valueChange)="escribir($event)"
+      placeholder="Me duele la cabeza hace tres días y veo borroso…"
+    />
+  </details>
 
   <!-- Lo que se reconoce se ANUNCIA: los chips apareciendo son el acuse de
        recibo para quien mira, y esta región lo es para quien escucha. -->
@@ -44,13 +120,7 @@
     <div class="sintomas__sugerencias">
       <span class="sintomas__chips-rotulo">¿Algo de esto?</span>
       @for (sintoma of sugerencias(); track sintoma.id) {
-        <button
-          app-button
-          variant="outline"
-          size="sm"
-          type="button"
-          (clicked)="agregar(sintoma)"
-        >
+        <button app-button variant="outline" size="sm" type="button" (clicked)="agregar(sintoma)">
           + {{ sintoma.nombre }}
         </button>
       }
@@ -71,50 +141,41 @@
         puede ser una urgencia.
         <strong>Andá ahora a una guardia o llamá a emergencias.</strong>
       </p>
-      <p>
-        No te quedes esperando una respuesta acá. Si estás con otra persona, pedile que te
-        acompañe.
-      </p>
     </app-alert>
   } @else if (recomendaciones().length > 0) {
     <div class="sintomas__recomendaciones">
       <h3 class="sintomas__subtitulo">Conviene que veas a</h3>
       <ul class="sintomas__lista">
         @for (recomendacion of recomendaciones(); track recomendacion.nombre) {
-          <li>
-            <app-card variant="outlined" padding="md" class="sintomas__opcion">
-              <div class="sintomas__opcion-texto">
-                <p class="sintomas__especialidad">{{ recomendacion.nombre }}</p>
-                <!-- El porqué es lo que hace que esto no se sienta una caja
-                     negra. Sin él, la recomendación es una adivinanza con
-                     buena tipografía. -->
-                <p class="sintomas__porque">{{ explicacionDe(recomendacion) }}</p>
-              </div>
-              <button
-                app-button
-                variant="primary"
-                size="sm"
-                type="button"
-                (clicked)="verProfesionales(recomendacion.nombre)"
-              >
-                Ver quién atiende
-              </button>
-            </app-card>
+          <li class="sintomas__opcion">
+            <div class="sintomas__opcion-texto">
+              <p class="sintomas__especialidad">{{ recomendacion.nombre }}</p>
+              <!-- El porqué es lo que hace que esto no se sienta una caja
+                   negra. Sin él, la recomendación es una adivinanza con buena
+                   tipografía. -->
+              <p class="sintomas__porque">{{ explicacionDe(recomendacion) }}</p>
+            </div>
+            <button
+              app-button
+              variant="primary"
+              size="sm"
+              type="button"
+              (clicked)="verProfesionales(recomendacion.nombre)"
+            >
+              Ver quién atiende
+            </button>
           </li>
         }
       </ul>
     </div>
   } @else if (texto().trim() !== '' && sintomas().length === 0) {
     <p class="sintomas__sin-coincidencias" role="status">
-      No reconocimos ningún síntoma en lo que escribiste. Probá con palabras más simples —«me
-      duele la garganta», «tengo fiebre»— o buscá directamente en el
-      <a routerLink="/directory">directorio de médicos</a>.
+      No reconocimos ningún síntoma. Probá con palabras más simples, o tocá una zona de arriba.
     </p>
   }
 
   <!-- El descargo es FIJO y no depende de que nadie se acuerde de ponerlo. -->
   <p class="sintomas__descargo">
-    Esto <strong>no es un diagnóstico</strong>: es una orientación sobre a qué especialidad
-    conviene consultar. Quien decide qué tenés es el profesional que te atienda.
+    Esto <strong>no es un diagnóstico</strong>: orienta sobre a qué especialidad consultar.
   </p>
 </section>
