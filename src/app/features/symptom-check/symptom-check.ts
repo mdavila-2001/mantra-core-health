@@ -7,6 +7,7 @@ import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
+import { ZONAS_DEL_CUERPO, type ZonaDelCuerpo } from './zonas.datos';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
@@ -22,6 +23,7 @@ import {
   sugerir,
   type Recomendacion,
   type Sintoma,
+  SINTOMAS,
 } from './sintomas';
 
 /** Tope por página del listado de profesionales. */
@@ -173,6 +175,54 @@ export class SymptomCheck {
   });
 
   protected readonly explicacionDe = explicar;
+
+  /* --- Elegir sin escribir ---------------------------------------------- */
+
+  /** Las zonas del cuerpo, tal cual la tabla. */
+  protected readonly zonas = signal(ZONAS_DEL_CUERPO);
+
+  /** Qué zona está abierta, o `null` si ninguna. Una sola a la vez. */
+  protected readonly zonaAbierta = signal<string | null>(null);
+
+  /**
+   * Los síntomas de la zona abierta, resueltos contra `SINTOMAS`.
+   *
+   * Un `id` de la tabla de zonas que no exista allá **se ignora**: la zona
+   * ofrece uno menos y la pantalla sigue en pie. Es la única forma de que dos
+   * listas convivan sin que una rompa a la otra.
+   */
+  protected readonly sintomasDeLaZona = computed<readonly Sintoma[]>(() => {
+    const abierta = this.zonaAbierta();
+    if (abierta === null) {
+      return [];
+    }
+    const zona = ZONAS_DEL_CUERPO.find((z) => z.id === abierta);
+    if (zona === undefined) {
+      return [];
+    }
+    return zona.sintomas
+      .map((id) => SINTOMAS.find((s) => s.id === id))
+      .filter((s): s is Sintoma => s !== undefined);
+  });
+
+  /** Abre una zona, o la cierra si ya lo estaba. */
+  protected alternarZona(zona: ZonaDelCuerpo): void {
+    this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
+  }
+
+  /** Si un síntoma ya está elegido, para pintarlo distinto. */
+  protected estaElegido(sintoma: Sintoma): boolean {
+    return this.sintomas().some((s) => s.id === sintoma.id);
+  }
+
+  /** Tocar una pastilla lo agrega o lo quita: es un interruptor. */
+  protected alternarSintoma(sintoma: Sintoma): void {
+    if (this.estaElegido(sintoma)) {
+      this.quitar(sintoma);
+    } else {
+      this.agregar(sintoma);
+    }
+  }
 
   protected escribir(valor: string): void {
     this.texto.set(valor);

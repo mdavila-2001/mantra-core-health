@@ -108,3 +108,148 @@
     font-size: var(--fs-caption);
     line-height: var(--lh-caption);
 }
+
+/* ─── Elegir sin escribir ─────────────────────────────────────────────────
+   La grilla de zonas es la primera decisión de la pantalla: señalar dónde,
+   que es lo que hace cualquiera cuando le duele algo. */
+
+.sintomas__zonas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: var(--e2);
+  margin: var(--e4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sintomas__zona {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e2);
+  inline-size: 100%;
+  padding: var(--e3) var(--e2);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--mov-rapido) var(--curva),
+    background var(--mov-rapido) var(--curva),
+    transform var(--mov-rapido) var(--curva);
+}
+
+.sintomas__zona:hover,
+.sintomas__zona:focus-visible {
+  border-color: var(--aguamarina);
+  background: var(--sup-inset);
+  transform: translateY(-1px);
+}
+
+.sintomas__zona.is-abierta {
+  border-color: var(--petroleo);
+  background: var(--info-bg);
+  color: var(--tinta-marca);
+}
+
+.sintomas__zona-icono {
+  display: inline-flex;
+  color: var(--petroleo);
+}
+
+.sintomas__zona-icono svg {
+  inline-size: 30px;
+  block-size: 30px;
+}
+
+.sintomas__zona-nombre {
+  line-height: 1.25;
+}
+
+/* Las opciones de la zona abierta. Entran con una transición corta: el
+   movimiento explica de dónde salieron, que es de la pastilla de arriba. */
+.sintomas__opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin: var(--e3) 0 0;
+  padding: 0;
+  list-style: none;
+  animation: sintomas-entrar var(--mov-medio) var(--curva);
+}
+
+@keyframes sintomas-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sintomas__zona,
+  .sintomas__opciones {
+    transition: none;
+    animation: none;
+  }
+}
+
+.sintomas__opcion-chip {
+  padding: 6px var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    border-color var(--mov-rapido) var(--curva),
+    background var(--mov-rapido) var(--curva);
+}
+
+.sintomas__opcion-chip:hover,
+.sintomas__opcion-chip:focus-visible {
+  border-color: var(--aguamarina);
+}
+
+/* Elegido se marca con fondo, borde y peso — nunca sólo con color, y
+   `aria-pressed` lo dice para quien no lo ve. */
+.sintomas__opcion-chip.is-elegido {
+  border-color: var(--petroleo);
+  background: var(--petroleo);
+  color: var(--tinta-nav);
+  font-weight: 600;
+}
+
+.sintomas__escribir {
+  margin: var(--e4) 0 0;
+}
+
+.sintomas__escribir summary {
+  color: var(--tinta-2);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.sintomas__escribir .sintomas__campo {
+  margin-block-start: var(--e2);
+}
+
+/* La recomendación, ya sin la tarjeta de dentro: una fila con lo que hay que
+   leer y el botón que sigue. */
+.sintomas__opcion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+}
