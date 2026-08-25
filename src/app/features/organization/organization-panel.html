@@ -237,7 +237,19 @@
                 @for (pedido of pedidos(); track pedido.id) {
                   <li class="organizacion__solicitud">
                     <div class="organizacion__solicitud-datos">
-                      <p class="organizacion__solicitud-cargo">{{ pedido.roleTitle }}</p>
+                      <!-- El nombre va primero y el cargo debajo: se decide sobre una
+                           persona, no sobre un puesto. Si no hay nombre cargado se
+                           dice, en vez de dejar la fila muda y que alguien apruebe a
+                           ciegas. -->
+                      <p class="organizacion__solicitud-quien">
+                        {{ pedido.practitionerName ?? 'Profesional sin nombre cargado' }}
+                      </p>
+                      <p class="organizacion__solicitud-cargo">
+                        {{ pedido.roleTitle }}
+                        @if (pedido.practitionerLicense) {
+                          · Matrícula {{ pedido.practitionerLicense }}
+                        }
+                      </p>
                       <p class="organizacion__solicitud-nota">
                         {{ pedido.organizationName }} · desde
                         {{ pedido.startDate | date: 'longDate' }}

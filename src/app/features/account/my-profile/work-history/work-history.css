@@ -118,3 +118,19 @@
   font-size: var(--fs-sm);
   color: var(--c-neutral-600);
 }
+
+/* El aviso del trámite. Sólo aparece cuando hay algo que decir, así que puede
+   ocupar su propia línea sin competir con el resto de la ficha. */
+.historial__vinculo {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.historial__vinculo--pendiente {
+  color: var(--st-warning-ink, var(--c-amber-700));
+}
+
+.historial__vinculo--rechazado {
+  color: var(--st-error-ink, var(--c-error-700));
+}

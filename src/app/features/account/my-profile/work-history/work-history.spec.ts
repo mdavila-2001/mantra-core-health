@@ -23,6 +23,7 @@ const enCable = (over: Record<string, unknown> = {}) => ({
   endDate: null,
   current: true,
   status: 'c-activo',
+  statusKind: 'aprobado',
   createdAt: '2026-08-14T12:00:00.000Z',
   ...over,
 });
@@ -406,6 +407,59 @@ describe('WorkHistory', () => {
       fixture.detectChanges();
 
       expect(leer(componente, 'puedeRegistrar')).toBe(false);
+      http.verify();
+    });
+  });
+
+
+  describe('el medico ve en que quedo su tramite', () => {
+    /** Monta el bloque con un historial de una sola afiliación. */
+    async function conHistorial(over: Record<string, unknown>) {
+      const montado = await montar('prac-1');
+      montado.http.expectOne(AFILIACIONES).flush({ items: [enCable(over)], count: 1 });
+      montado.http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+      montado.fixture.detectChanges();
+      return montado;
+    }
+
+    it('avisa que esta esperando aprobacion, y que eso frena publicar', async () => {
+      // Es el único lugar donde el médico puede mirar el trámite que él inició.
+      // Sin esto pide el vínculo y no se entera de nada.
+      const { fixture, http } = await conHistorial({
+        statusKind: 'pendiente',
+        practiceSiteId: 'sede-1',
+      });
+
+      expect(fixture.nativeElement.textContent).toContain('Esperando que la organización te acepte');
+      expect(fixture.nativeElement.textContent).toContain('no vas a poder publicar agenda');
+      http.verify();
+    });
+
+    it('avisa el rechazo sin dejarlo sin salida', async () => {
+      const { fixture, http } = await conHistorial({ statusKind: 'rechazado' });
+
+      expect(fixture.nativeElement.textContent).toContain('no aceptó este vínculo');
+      expect(fixture.nativeElement.textContent).toContain('hablá con ellos');
+      http.verify();
+    });
+
+    it('un vinculo aprobado no anuncia nada', async () => {
+      // Lo esperable no se avisa: un cartel en cada línea vuelve ruido la lista
+      // y esconde justamente el que importa.
+      const { fixture, http } = await conHistorial({ statusKind: 'aprobado' });
+
+      expect(fixture.nativeElement.textContent).not.toContain('Esperando');
+      expect(fixture.nativeElement.textContent).not.toContain('no aceptó');
+      http.verify();
+    });
+
+    it('un estado que este cliente no conoce no inventa un aviso', async () => {
+      // Cuando llegue `declarado` del backend, esta pantalla va a callarse en
+      // vez de mentir sobre él.
+      const { fixture, http } = await conHistorial({ statusKind: 'desconocido' });
+
+      expect(fixture.nativeElement.textContent).not.toContain('Esperando');
+      expect(fixture.nativeElement.textContent).not.toContain('no aceptó');
       http.verify();
     });
   });

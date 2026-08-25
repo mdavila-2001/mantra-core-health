@@ -327,6 +327,15 @@ export interface PractitionerAffiliation {
   readonly current: boolean;
   /** Concepto del estado del registro, no del vínculo laboral. */
   readonly status: string;
+  /**
+   * El mismo estado, legible. El concept id sigue en `status` y es la verdad;
+   * esto evita que la pantalla compare uuids escritos a mano.
+   *
+   * `desconocido` cuando el backend informa un estado que este cliente todavía
+   * no distingue —como el `declarado` que viene—: mejor decir que no se
+   * reconoce que mentir sobre él.
+   */
+  readonly statusKind: 'pendiente' | 'aprobado' | 'rechazado' | 'desconocido';
   readonly createdAt: Date;
 }
 

@@ -55,6 +55,16 @@
                 </span>
                 <span class="historial__estado">{{ periodo(afiliacion) }}</span>
               </div>
+
+              <!-- Si la organización todavía no decidió, o dijo que no, el médico
+                   tiene que enterarse acá: es el único lugar donde puede mirar el
+                   trámite que él mismo inició. Un vínculo aprobado no se anuncia
+                   —es lo esperable— y uno sin sede nunca pasó por una aprobación. -->
+              @if (avisoDelVinculo(afiliacion); as aviso) {
+                <p class="historial__vinculo historial__vinculo--{{ afiliacion.statusKind }}">
+                  {{ aviso }}
+                </p>
+              }
             </li>
           }
         </ul>

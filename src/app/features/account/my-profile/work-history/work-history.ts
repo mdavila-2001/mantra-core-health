@@ -365,6 +365,28 @@ export class WorkHistory {
     this.modoDeInstitucion.set('padron');
   }
 
+  /**
+   * Qué contarle al médico sobre el trámite de este vínculo.
+   *
+   * Devuelve `null` cuando no hay nada que decir —aprobado, o un vínculo que
+   * nunca necesitó aprobación— porque un aviso en cada línea del historial
+   * convierte la lista en ruido y esconde justamente el que importa.
+   *
+   * @param afiliacion - El vínculo a describir.
+   * @returns El aviso, o `null` si no corresponde ninguno.
+   */
+  protected avisoDelVinculo(afiliacion: PractitionerAffiliation): string | null {
+    if (afiliacion.statusKind === 'pendiente') {
+      return afiliacion.practiceSiteId === null
+        ? 'Esperando que la institución confirme el vínculo.'
+        : 'Esperando que la organización te acepte. Hasta entonces no vas a poder publicar agenda ahí.';
+    }
+    if (afiliacion.statusKind === 'rechazado') {
+      return 'La organización no aceptó este vínculo. Si creés que es un error, hablá con ellos.';
+    }
+    return null;
+  }
+
   /** El período de una afiliación, en palabras. */
   protected periodo(afiliacion: PractitionerAffiliation): string {
     return afiliacion.current ? 'En curso' : 'Finalizado';
