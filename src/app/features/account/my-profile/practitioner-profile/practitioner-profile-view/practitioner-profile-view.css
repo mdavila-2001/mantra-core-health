@@ -25,22 +25,48 @@
 
 /* ── Portada ───────────────────────────────────────────────────────────────*/
 
-/* El filo de marca hace de jerarquía donde la sombra no alcanza (modo oscuro,
-   pantallas mate). Es un borde, no un fondo: la portada no compite con el
-   contenido, lo preside. */
+/* La portada es una portada de verdad: una franja de marca arriba y el retrato
+   montado sobre ella, que es la anatomía que cualquiera reconoce de un perfil
+   profesional. Antes era un filo de 3 px a la izquierda y una fila de foto +
+   texto: la identidad no presidía nada, se leía como una ficha más de la
+   rejilla.
+   El relleno lo ponía el Card; acá se le quita para que la franja llegue a los
+   bordes, y se lo devuelve al bloque de identidad. */
 .profesional__portada {
-  /* El radio lo pone el propio Card en su host; el borde lo sigue solo. */
-  border-inline-start: 3px solid var(--brand-primary);
+  padding: 0;
+  overflow: hidden;
 }
 
-/* Foto, texto y sello en fila cuando entran; apilados cuando no. El sello se va
-   al final de la fila porque es el veredicto, y leerlo antes del nombre invierte
-   el orden de la presentación. */
+.profesional__portada::before {
+  content: '';
+  display: block;
+  block-size: 7.5rem;
+  background-image:
+    radial-gradient(70% 120% at 15% 0%, var(--nav-halo-a) 0%, var(--nav-halo-0) 70%),
+    linear-gradient(115deg, var(--petroleo-x) 0%, var(--petroleo) 55%, var(--aguamarina) 130%);
+}
+
+/* Foto, texto y sello. La foto sube sobre la franja; el sello se va al final de
+   la fila porque es el veredicto, y leerlo antes del nombre invierte el orden
+   de la presentación. */
 .profesional__identidad {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--sp-4);
+  align-items: flex-end;
+  gap: var(--sp-3) var(--sp-4);
+  padding: 0 var(--sp-5) var(--sp-4);
+}
+
+/* El retrato, montado sobre la franja y con un anillo del papel de la tarjeta:
+   es lo que hace que se lea como una foto de perfil y no como un icono suelto. */
+/* El anillo va por `box-shadow` y NO por `border` + `background`: pintarle el
+   fondo al host tapaba el color del propio avatar y las iniciales quedaban
+   sueltas sobre la tarjeta, sin círculo. El avatar se dibuja solo; acá sólo se
+   lo sube sobre la franja y se le pone el anillo del papel. */
+.profesional__identidad app-avatar {
+  margin-block-start: -3.25rem;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px var(--sup-tarjeta);
 }
 
 /* Sin esto, un nombre largo estira la fila en vez de partirse. */
@@ -75,7 +101,19 @@
   margin: var(--sp-2) 0 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
-  color: var(--text-secondary);
+  color: var(--text-muted);
+}
+
+/* El uuid entero no cabe en una línea y partido en dos se lee como un error.
+   Se muestra en una sola, recortado, y completo al pasar el cursor: quien lo
+   necesita lo copia, y quien no, no lo tropieza. */
+.profesional__cifra {
+  display: inline-block;
+  max-inline-size: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 
 .profesional__sello {
@@ -89,6 +127,11 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+}
+
+.profesional__bio,
+.profesional__disponibilidad {
+  padding-inline: var(--sp-5);
 }
 
 .profesional__disponibilidad {

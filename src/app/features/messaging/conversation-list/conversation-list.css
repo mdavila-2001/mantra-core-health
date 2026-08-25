@@ -1,7 +1,12 @@
 /* La lista de conversaciones, con la anatomía que tiene en cualquier chat:
    avatar, nombre y hora arriba, última línea y no-leídos abajo. Las filas se
-   tocan entre sí y se separan con una línea, no con aire: una bandeja con
-   tarjetas sueltas ocupa el doble y muestra la mitad. */
+   tocan y se separan con un filete, no con aire: una bandeja con tarjetas
+   sueltas ocupa el doble y muestra la mitad.
+
+   Los colores son los del sistema (`redsat.css`) y no valores propios: antes
+   esta hoja inventaba `--surface-raised` y `--text-secondary` con respaldos
+   grises, así que la pantalla se veía fría al lado del resto de la aplicación
+   —que es papel cálido y petróleo— y en tema oscuro no cambiaba de tono. */
 
 .conversaciones {
   margin: 0;
@@ -10,7 +15,7 @@
 }
 
 .conversaciones__fila + .conversaciones__fila {
-  border-block-start: 1px solid var(--border-subtle, rgb(0 0 0 / 8%));
+  border-block-start: 1px solid var(--filete-2);
 }
 
 .conversaciones__item {
@@ -20,19 +25,20 @@
   padding: var(--e3);
   color: inherit;
   text-decoration: none;
+  transition: background var(--mov-rapido) var(--curva);
 }
 
 .conversaciones__item:hover,
 .conversaciones__item:focus-visible {
-  background: var(--surface-hover, rgb(0 0 0 / 4%));
+  background: var(--neutro-bg);
 }
 
-/* La abierta se marca con fondo **y** con la barra lateral: el fondo solo es
-   demasiado sutil sobre una lista larga, y `aria-current` ya lo dice para
-   quien no lo ve. */
+/* La abierta se marca con fondo **y** con la barra de marca: el fondo solo es
+   demasiado sutil en una lista larga, y `aria-current` ya lo dice para quien
+   no lo ve. */
 .conversaciones__fila.is-activa .conversaciones__item {
-  background: var(--surface-hover, rgb(0 0 0 / 6%));
-  box-shadow: inset 3px 0 0 0 var(--accent, #0e6690);
+  background: var(--info-bg);
+  box-shadow: inset 3px 0 0 0 var(--petroleo);
 }
 
 .conversaciones__avatar {
@@ -42,7 +48,7 @@
 .conversaciones__texto {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 2px;
   min-inline-size: 0;
   flex: 1 1 auto;
 }
@@ -58,7 +64,7 @@
 
 .conversaciones__pie {
   align-items: center;
-  min-block-size: 1.25rem;
+  min-block-size: 20px;
 }
 
 .conversaciones__con-quien,
@@ -69,15 +75,21 @@
   min-inline-size: 0;
 }
 
+.conversaciones__con-quien {
+  font-family: var(--f-titulo);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
 .conversaciones__cuando {
   flex: none;
-  color: var(--text-tertiary, var(--text-secondary));
-  font-size: 0.75rem;
+  color: var(--tinta-3);
+  font-size: 12px;
 }
 
 .conversaciones__vista-previa {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+  color: var(--tinta-2);
+  font-size: 13px;
 }
 
 .conversaciones__sin-leer {
@@ -86,13 +98,12 @@
 
 /* Sin leer se marca con peso **y** con el globo del contador, nunca sólo con
    color: el color solo no distingue nada para quien no lo percibe. */
-.conversaciones__fila.is-sin-leer .conversaciones__con-quien,
 .conversaciones__fila.is-sin-leer .conversaciones__vista-previa {
   font-weight: 600;
-  color: var(--text-primary, inherit);
+  color: var(--tinta);
 }
 
 .conversaciones__fila.is-sin-leer .conversaciones__cuando {
-  color: var(--accent, #0e6690);
-  font-weight: 600;
+  color: var(--petroleo);
+  font-weight: 700;
 }
