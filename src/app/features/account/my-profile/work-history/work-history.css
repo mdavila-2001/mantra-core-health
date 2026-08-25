@@ -106,3 +106,15 @@
      de la pantalla y serían ilegibles. Mismo tope que los bloques de la ficha. */
   max-inline-size: 68ch;
 }
+
+/* La salida hacia el texto libre. Discreta a propósito: es la excepción, no el
+   camino, y competir visualmente con el buscador invitaría a saltearlo. */
+.historial__escape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: calc(var(--sp-2) * -1) 0 var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--c-neutral-600);
+}

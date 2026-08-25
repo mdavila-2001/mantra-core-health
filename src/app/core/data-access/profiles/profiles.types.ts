@@ -524,3 +524,32 @@ export interface PractitionerOnboarding {
   readonly steps: readonly OnboardingStep[];
   readonly firstIncomplete: OnboardingStepKey | 'done';
 }
+
+/**
+ * Un establecimiento del padrón oficial, para elegir dónde se trabaja.
+ *
+ * El municipio **no es decoración**: el padrón repite nombres —cuatro «SAN
+ * LUIS», tres «EL CARMEN»— y sólo el municipio los separa. Una lista que lo
+ * omitiera mostraría opciones idénticas.
+ */
+export interface LinkableOrganization {
+  /** El concepto del establecimiento en el catálogo. */
+  readonly facilityConceptId: string;
+  /** Código del padrón, el que un humano puede cotejar. */
+  readonly code: string;
+  /** Nombre canónico. Es el que conviene guardar como institución. */
+  readonly name: string;
+  /** Municipio donde está. */
+  readonly municipality: string | null;
+  /** `CLINICA_PRIVADA`, `HOSPITAL`, `CAJA_SALUD`, `CENTRO_SALUD`… */
+  readonly type: string | null;
+  /** Dirección declarada en el padrón. */
+  readonly address: string | null;
+}
+
+/** Resultado de buscar en el padrón. Sin cursor: es un autocompletar. */
+export interface LinkableOrganizationPage {
+  readonly items: readonly LinkableOrganization[];
+  readonly count: number;
+  readonly limit: number;
+}

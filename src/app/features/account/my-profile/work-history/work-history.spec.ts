@@ -5,8 +5,10 @@ import { signal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { WorkHistory } from './work-history';
+import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 
 const AFILIACIONES = '/profiles/practitioners/me/affiliations';
+const PADRON = '/profiles/practitioners/me/linkable-organizations';
 
 /** Una afiliación tal como llega por el cable. */
 const enCable = (over: Record<string, unknown> = {}) => ({
@@ -66,8 +68,19 @@ function api(fixture: ComponentFixture<WorkHistory>): Record<string, UnMiembro> 
  * siembra.
  */
 interface UnMiembro {
-  (...args: never[]): unknown;
-  set(valor: string | Date | null): void;
+  (...args: readonly (string | Date | null)[]): unknown;
+  set(valor: unknown): void;
+}
+
+/**
+ * Lee una señal o computada del componente con el tipo que se espera.
+ *
+ * Invocar un `UnMiembro` devuelve `unknown` —que es lo correcto: el helper no
+ * sabe qué guarda cada señal—, así que el tipo se declara acá, en la prueba que
+ * sí lo sabe, en vez de aflojar el helper para todas.
+ */
+function leer<T>(componente: Record<string, UnMiembro>, nombre: string): T {
+  return componente[nombre]() as T;
 }
 
 describe('WorkHistory', () => {
@@ -137,6 +150,7 @@ describe('WorkHistory', () => {
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
 
     const componente = api(fixture);
+    componente['escribirAMano']();
     componente['institucion'].set('  Clínica del Sur  ');
     componente['cargo'].set('Jefe de guardia');
     // 1 de marzo local. Con `toISOString()` viajaría como 28 de febrero en
@@ -165,6 +179,7 @@ describe('WorkHistory', () => {
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
 
     const componente = api(fixture);
+    componente['escribirAMano']();
     componente['institucion'].set('Clínica del Sur');
     componente['cargo'].set('Jefe de guardia');
     componente['desde'].set(new Date(2024, 0, 1));
@@ -191,6 +206,7 @@ describe('WorkHistory', () => {
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
 
     const componente = api(fixture);
+    componente['escribirAMano']();
     componente['institucion'].set('Hospital Obrero N.º 1');
     componente['cargo'].set('Médico de planta');
     componente['desde'].set(new Date(2020, 2, 1));
@@ -250,6 +266,7 @@ describe('WorkHistory', () => {
     fixture.componentInstance.added.subscribe(() => (emitido = true));
 
     const componente = api(fixture);
+    componente['escribirAMano']();
     componente['institucion'].set('Clínica del Sur');
     componente['cargo'].set('Jefe de guardia');
     componente['desde'].set(new Date(2021, 2, 1));
@@ -264,4 +281,133 @@ describe('WorkHistory', () => {
     expect(emitido).toBe(true);
     http.verify();
   });
+
+  describe('elegir la institucion del padron', () => {
+    /** Un establecimiento tal como lo devuelve el buscador. */
+    const delPadron = (over: Record<string, unknown> = {}) => ({
+      facilityConceptId: 'fac-1',
+      code: 'BO_EST_CLINICA_FOIANINI',
+      name: 'CLINICA FOIANINI',
+      municipality: 'SANTA CRUZ DE LA SIERRA',
+      type: 'CLINICA_PRIVADA',
+      address: 'Av. Irala # 468',
+      ...over,
+    });
+
+    /** Monta el bloque con las dos lecturas de arranque ya resueltas. */
+    async function listo() {
+      const montado = await montar('prac-1');
+      montado.http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+      montado.http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+      return montado;
+    }
+
+    it('guarda el nombre CANONICO del padron, no lo que se tecleo', async () => {
+      // Es todo el punto de haber elegido en vez de escrito: si se guardara el
+      // texto tecleado, «CLINICA FOIANINI» y «Clinica Foianini» volverían a ser
+      // dos instituciones distintas.
+      const { fixture, http } = await listo();
+      const componente = api(fixture);
+
+      componente['buscarEnPadron']('foia');
+      http.expectOne((r) => r.url === PADRON).flush({
+        items: [delPadron()],
+        count: 1,
+        limit: 20,
+      });
+      componente['establecimiento'].set(
+        leer<readonly ReferenceOption[]>(componente, 'resultados')[0],
+      );
+      componente['cargo'].set('Cardióloga');
+      componente['desde'].set(new Date(2021, 2, 1));
+      fixture.detectChanges();
+
+      componente['registrar']();
+
+      const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
+      expect(req.request.body.organizationName).toBe('CLINICA FOIANINI');
+
+      req.flush(enCable({ id: 'af-2' }));
+      http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+      http.verify();
+    });
+
+    it('el municipio va en la pista, nunca dentro del nombre', async () => {
+      // El rótulo es lo que se guarda: pegarle « · WARNES» dejaría el municipio
+      // escrito dentro del nombre de la institución. Pero sin mostrarlo, los
+      // cuatro «SAN LUIS» del padrón son indistinguibles.
+      const { fixture, http } = await listo();
+      const componente = api(fixture);
+
+      componente['buscarEnPadron']('san luis');
+      http.expectOne((r) => r.url === PADRON).flush({
+        items: [delPadron({ name: 'SAN LUIS', municipality: 'EL TORNO', address: null })],
+        count: 1,
+        limit: 20,
+      });
+
+      const opcion = leer<readonly ReferenceOption[]>(componente, 'resultados')[0];
+      expect(opcion.label).toBe('SAN LUIS');
+      expect(opcion.hint).toBe('EL TORNO');
+      http.verify();
+    });
+
+    it('no consulta el padron con el campo vacio', async () => {
+      // Escribir y borrar no debería disparar una consulta que devolvería el
+      // padrón entero para no mostrarlo.
+      const { fixture, http } = await listo();
+
+      api(fixture)['buscarEnPadron']('   ');
+
+      http.verify();
+    });
+
+    it('un fallo del buscador no rompe el alta: queda el texto libre', async () => {
+      const { fixture, http } = await listo();
+      const componente = api(fixture);
+
+      componente['buscarEnPadron']('foia');
+      http.expectOne((r) => r.url === PADRON).error(new ProgressEvent('error'));
+
+      expect(leer(componente, 'resultados')).toEqual([]);
+      expect(leer(componente, 'buscandoEnPadron')).toBe(false);
+      http.verify();
+    });
+
+    it('pasar a texto libre descarta lo elegido del padron', async () => {
+      // Quedarse con un establecimiento elegido y además un nombre tecleado
+      // serían dos respuestas a la misma pregunta.
+      const { fixture, http } = await listo();
+      const componente = api(fixture);
+
+      componente['buscarEnPadron']('foia');
+      http.expectOne((r) => r.url === PADRON).flush({
+        items: [delPadron()],
+        count: 1,
+        limit: 20,
+      });
+      componente['establecimiento'].set(
+        leer<readonly ReferenceOption[]>(componente, 'resultados')[0],
+      );
+
+      componente['escribirAMano']();
+
+      expect(leer(componente, 'establecimiento')).toBeNull();
+      expect(leer(componente, 'nombreDeLaInstitucion')).toBe('');
+      http.verify();
+    });
+
+    it('sin elegir nada del padron no deja registrar', async () => {
+      const { fixture, http } = await listo();
+      const componente = api(fixture);
+
+      componente['cargo'].set('Cardióloga');
+      componente['desde'].set(new Date(2021, 2, 1));
+      fixture.detectChanges();
+
+      expect(leer(componente, 'puedeRegistrar')).toBe(false);
+      http.verify();
+    });
+  });
+
 });

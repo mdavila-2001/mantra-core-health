@@ -12,7 +12,10 @@ import {
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import type { PractitionerAffiliation } from '../../../../core/data-access/profiles/profiles.types';
+import type {
+  LinkableOrganization,
+  PractitionerAffiliation,
+} from '../../../../core/data-access/profiles/profiles.types';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -23,6 +26,9 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Input } from '../../../../shared/components/atoms/input/input';
+import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -37,13 +43,23 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
  * trabajó**, que es lo que el cliente pidió con esas palabras: «hospitales o
  * entidades médicas». No era un campo escondido: no existía ni la tabla.
  *
- * ## La institución se escribe, no se elige
+ * ## La institución se elige del padrón, y si no está, se escribe
  *
- * Es un campo de texto y no un selector, y es deliberado: la mayoría de los
- * hospitales donde alguien trabajó **no están en la plataforma**. Un selector
- * obligaría a darlos de alta como organizaciones para poder mencionarlos, que
- * es convertir un dato de currículum en un trámite. Cuando la institución sí
- * está dentro, el desplegable de consultorios la ata por identificador.
+ * Durante un tiempo esto fue sólo un campo de texto, con un motivo correcto: el
+ * único selector posible eran las organizaciones de la plataforma, y obligar a
+ * darlas de alta para poder mencionarlas convertía un dato de currículum en un
+ * trámite.
+ *
+ * El padrón oficial cambia esa premisa. Son 523 establecimientos reales de
+ * Santa Cruz —las siete cajas de la seguridad social incluidas— que existen
+ * como catálogo **sin ser organizaciones registradas**: elegir uno no da de
+ * alta nada. Y elegir en vez de escribir es lo que evita que «CLINICA
+ * FOIANINI», «Clínica Ángel Foianini» y «Centro Médico Foianini» sean tres
+ * instituciones distintas para el sistema.
+ *
+ * El texto libre **sigue existiendo**, porque el padrón cubre sólo Santa Cruz y
+ * quien trabajó en La Paz no va a encontrarse ahí. Pero es la salida declarada,
+ * no el camino por defecto: hay que pedirla.
  *
  * ## «Sigue ahí» se dice dejando la fecha vacía
  *
@@ -60,7 +76,18 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
  */
 @Component({
   selector: 'app-work-history',
-  imports: [Alert, Card, DatePicker, DatePipe, FormActions, FormField, Input, Select],
+  imports: [
+    Alert,
+    AppButton,
+    Card,
+    DatePicker,
+    DatePipe,
+    FormActions,
+    FormField,
+    Input,
+    ReferenceCombobox,
+    Select,
+  ],
   templateUrl: './work-history.html',
   styleUrl: './work-history.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -122,6 +149,25 @@ export class WorkHistory {
 
   /* -- El formulario ------------------------------------------------------- */
 
+  /**
+   * Cómo se está nombrando la institución.
+   *
+   * `'padron'` es el camino normal: se elige de los 523 establecimientos
+   * reales. `'libre'` es la salida para lo que el padrón no cubre —cualquier
+   * cosa fuera de Santa Cruz—, y hay que pedirla explícitamente: si estuviera
+   * disponible de entrada nadie usaría el catálogo, y volveríamos a tener el
+   * mismo hospital escrito de cinco formas.
+   */
+  protected readonly modoDeInstitucion = signal<'padron' | 'libre'>('padron');
+
+  /** El establecimiento elegido del padrón, con su nombre canónico. */
+  protected readonly establecimiento = signal<ReferenceOption | null>(null);
+
+  /** Resultados de la última búsqueda en el padrón. */
+  protected readonly resultados = signal<readonly ReferenceOption[]>([]);
+
+  protected readonly buscandoEnPadron = signal(false);
+
   protected readonly institucion = signal('');
   protected readonly cargo = signal('');
   protected readonly area = signal('');
@@ -148,9 +194,21 @@ export class WorkHistory {
     return desde !== null && hasta !== null && hasta < desde;
   });
 
+  /**
+   * El nombre que se va a guardar, venga de donde venga.
+   *
+   * Del padrón sale el nombre canónico —el del listado oficial—, que es todo el
+   * punto de haber elegido en vez de escrito.
+   */
+  protected readonly nombreDeLaInstitucion = computed(() =>
+    this.modoDeInstitucion() === 'padron'
+      ? (this.establecimiento()?.label ?? '')
+      : this.institucion().trim(),
+  );
+
   protected readonly puedeRegistrar = computed(
     () =>
-      this.institucion().trim() !== '' &&
+      this.nombreDeLaInstitucion() !== '' &&
       this.cargo().trim() !== '' &&
       this.desde() !== null &&
       !this.periodoInvertido() &&
@@ -235,7 +293,7 @@ export class WorkHistory {
 
     this.profiles
       .addAffiliation({
-        organizationName: this.institucion().trim(),
+        organizationName: this.nombreDeLaInstitucion(),
         roleTitle: this.cargo().trim(),
         startDate: soloFecha(desde),
         // Los opcionales sin valor se **omiten**: el backend valida con
@@ -258,6 +316,53 @@ export class WorkHistory {
           this.registro.set(errorToViewState<null>(error));
         },
       });
+  }
+
+  /**
+   * Busca en el padrón lo que el profesional está escribiendo.
+   *
+   * La molécula ya espera antes de emitir, así que acá no se vuelve a esperar.
+   * Un fallo deja la lista vacía y no se muestra: el camino de texto libre
+   * sigue disponible, y pintar un error rojo sobre un buscador opcional sería
+   * anunciar una avería donde hay una alternativa.
+   *
+   * @param texto - Lo que se escribió en el campo.
+   */
+  protected buscarEnPadron(texto: string): void {
+    if (texto.trim() === '') {
+      this.resultados.set([]);
+      return;
+    }
+
+    this.buscandoEnPadron.set(true);
+    this.profiles.searchLinkableOrganizations(texto).subscribe({
+      next: (pagina) => {
+        this.buscandoEnPadron.set(false);
+        this.resultados.set(pagina.items.map(comoOpcion));
+      },
+      error: () => {
+        this.buscandoEnPadron.set(false);
+        this.resultados.set([]);
+      },
+    });
+  }
+
+  /**
+   * Pasa a escribir el nombre a mano.
+   *
+   * Se lleva lo elegido: quedarse con un establecimiento del padrón y además un
+   * texto libre serían dos respuestas a la misma pregunta.
+   */
+  protected escribirAMano(): void {
+    this.establecimiento.set(null);
+    this.resultados.set([]);
+    this.modoDeInstitucion.set('libre');
+  }
+
+  /** Vuelve a buscar en el padrón, descartando lo escrito a mano. */
+  protected buscarEnElPadron(): void {
+    this.institucion.set('');
+    this.modoDeInstitucion.set('padron');
   }
 
   /** El período de una afiliación, en palabras. */
@@ -305,6 +410,9 @@ export class WorkHistory {
   /** Vacía el formulario tras un alta. El siguiente vínculo arranca limpio. */
   private limpiar(): void {
     this.institucion.set('');
+    this.establecimiento.set(null);
+    this.resultados.set([]);
+    this.modoDeInstitucion.set('padron');
     this.cargo.set('');
     this.area.set('');
     this.desde.set(null);
@@ -326,4 +434,23 @@ function soloFecha(fecha: Date): string {
   const mes = String(fecha.getMonth() + 1).padStart(2, '0');
   const dia = String(fecha.getDate()).padStart(2, '0');
   return `${fecha.getFullYear()}-${mes}-${dia}`;
+}
+
+/**
+ * Un establecimiento del padrón, como opción del buscador.
+ *
+ * El municipio va en el `hint` y no en el rótulo porque el rótulo es lo que se
+ * guarda como nombre de la institución: pegarle « · WARNES» dejaría el
+ * municipio escrito dentro del nombre. Y va, porque sin él los cuatro «SAN
+ * LUIS» del padrón son indistinguibles.
+ */
+function comoOpcion(establecimiento: LinkableOrganization): ReferenceOption {
+  const pistas = [establecimiento.municipality, establecimiento.address].filter(
+    (dato): dato is string => dato !== null && dato.trim() !== '',
+  );
+  return {
+    value: establecimiento.facilityConceptId,
+    label: establecimiento.name,
+    ...(pistas.length === 0 ? {} : { hint: pistas.join(' · ') }),
+  };
 }
