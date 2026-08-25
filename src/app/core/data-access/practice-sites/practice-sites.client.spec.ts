@@ -71,4 +71,73 @@ describe('PracticeSitesClient', () => {
 
     expect(pagina!.count).toBe(0);
   });
+
+  describe('Carril 18 — mis organizaciones', () => {
+    it('listMyRoleAssignments pide /practitioners/me/role-assignments y normaliza opcionales', () => {
+      let vinculaciones: readonly unknown[] = [];
+      client
+        .listMyRoleAssignments()
+        .subscribe((items) => (vinculaciones = items));
+
+      http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([
+        {
+          id: 'role-1',
+          practiceId: 'practice-1',
+          practiceName: 'Clínica Central',
+          practiceType: null,
+          practiceSiteId: null,
+          roleConceptId: 'role-attending',
+          specialtyConceptId: null,
+          status: 'status-pending',
+          isPrimary: false,
+          validFrom: '2026-01-01',
+          validTo: null,
+          createdAt: '2026-01-01T12:00:00.000Z',
+        },
+      ]);
+
+      expect(vinculaciones).toEqual([
+        {
+          id: 'role-1',
+          practiceId: 'practice-1',
+          practiceName: 'Clínica Central',
+          roleConceptId: 'role-attending',
+          status: 'status-pending',
+          isPrimary: false,
+          validFrom: new Date(2026, 0, 1),
+          createdAt: new Date('2026-01-01T12:00:00.000Z'),
+        },
+      ]);
+      expect('practiceType' in (vinculaciones[0] as object)).toBe(false);
+      expect('validTo' in (vinculaciones[0] as object)).toBe(false);
+    });
+
+    it('selfRequestAffiliation postea al practiceId dado y devuelve el estado PENDING', () => {
+      let resultado: unknown;
+      client
+        .selfRequestAffiliation('practice-1', { roleConceptId: 'role-attending' })
+        .subscribe((r) => (resultado = r));
+
+      const req = http.expectOne(
+        (r) => r.url === '/practices/practice-1/role-assignments/self-request',
+      );
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ roleConceptId: 'role-attending' });
+      req.flush({
+        id: 'role-1',
+        practiceId: 'practice-1',
+        practitionerProfileId: 'prof-1',
+        status: 'status-pending',
+        createdAt: '2026-01-01T12:00:00.000Z',
+      });
+
+      expect(resultado).toEqual({
+        id: 'role-1',
+        practiceId: 'practice-1',
+        practitionerProfileId: 'prof-1',
+        status: 'status-pending',
+        createdAt: new Date('2026-01-01T12:00:00.000Z'),
+      });
+    });
+  });
 });

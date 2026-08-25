@@ -1,4 +1,13 @@
-<app-page-header [title]="section().label" [breadcrumbs]="breadcrumbs()">
+<!-- El `summary` de la sección también va como subtítulo (K3 del plan de UX
+     del 22/08/2026): era la única pantalla del armazón sin una línea que dijera
+     de qué es. El dato ya estaba —lo usa el estado vacío de abajo— y no
+     mostrarlo arriba dejaba el encabezado diciendo sólo el rótulo del menú, que
+     es lo que la persona acaba de tocar. -->
+<app-page-header
+  [title]="section().label"
+  [subtitle]="section().summary"
+  [breadcrumbs]="breadcrumbs()"
+>
   <!-- Trazabilidad al modelo: qué módulo respalda la sección. No es un detalle
        técnico de más — es lo que le dice a quien venga a construir la pantalla
        qué ficha de `SALUD/Vistas/` abrir. -->

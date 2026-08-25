@@ -687,6 +687,14 @@ export interface DirectMessagePage {
   readonly count: number;
   readonly limit: number;
   readonly nextCursor: string | null;
+  /**
+   * Hasta qué `sentAt` leyó el otro lado, en una conversación DIRECT.
+   *
+   * `undefined` si es de grupo, o si el peer no marcó nada como leído
+   * todavía. Con esto se pinta ✓✓ en los mensajes propios cuyo `sentAt` sea
+   * anterior o igual a esta marca.
+   */
+  readonly peerReadUpTo?: Date;
 }
 
 /**

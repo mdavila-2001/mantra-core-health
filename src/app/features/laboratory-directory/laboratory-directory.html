@@ -1,32 +1,15 @@
-<app-page-header
-  title="Buscar un laboratorio"
-  subtitle="Centros verificados de laboratorio clínico e imagenología, de toda la red."
+<!-- Toda la anatomía —encabezado, chips, contador y grilla— la pone
+     `app-directory-page`, que es el patrón común de los cuatro directorios
+     (A7 del plan de UX). Acá sólo queda lo que de verdad es propio de los
+     laboratorios: sus filtros y su mapeo. -->
+<app-directory-page
+  titulo="Directorio de laboratorios"
+  subtitulo="Centros verificados de laboratorio clínico e imagenología, de toda la red. Tocá un chip para acotar."
+  etiquetaBusqueda="Buscar por nombre o código del centro"
+  [filtros]="filtros"
+  [estado]="state()"
+  [grupos]="groups()"
+  [sustantivo]="sustantivo"
+  (filtrosCambiaron)="filtrar($event)"
+  (reintentar)="retry()"
 />
-
-<app-filter-bar
-  [filters]="filtros"
-  searchLabel="Buscar por nombre o código del centro"
-  (filtersChanged)="filtrar($event)"
-/>
-
-<app-view-state-host [state]="state()" (retry)="retry()">
-  @if (state().status === 'ready') {
-    <p class="directory__count">
-      {{ total() }} {{ total() === 1 ? 'centro encontrado' : 'centros encontrados' }}
-    </p>
-
-    @for (group of groups(); track group.code) {
-      <section class="directory__group" [attr.aria-labelledby]="'category-' + group.code">
-        <h2 class="directory__category" [id]="'category-' + group.code">
-          {{ group.name }}
-          <span class="directory__quantity">{{ group.units.length }}</span>
-        </h2>
-        <ul class="directory__list">
-          @for (unit of group.units; track unit.id) {
-            <li app-search-result [resultado]="unit"></li>
-          }
-        </ul>
-      </section>
-    }
-  }
-</app-view-state-host>

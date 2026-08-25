@@ -94,6 +94,17 @@ describe('PractitionersDirectory', () => {
     return interno<() => readonly GrupoDeEspecialidad[]>('grupos')();
   }
 
+  /**
+   * Cuántos profesionales quedan tras filtrar.
+   *
+   * Se cuenta acá y ya no en el componente: el contador se mudó al patrón común
+   * de directorio (A7 del plan de UX), y dejar en la pantalla un `computed` que
+   * sólo usan las pruebas es peor que sumarlo en dos líneas.
+   */
+  function total(): number {
+    return grupos().reduce((suma, grupo) => suma + grupo.profesionales.length, 0);
+  }
+
   /** Responde una página de la guía y después el catálogo. */
   function responder(items: object[], nextCursor: string | null = null): void {
     http
@@ -113,7 +124,7 @@ describe('PractitionersDirectory', () => {
     responderConceptos();
 
     expect(grupos()).toHaveLength(2);
-    expect(interno<() => number>('total')()).toBe(2);
+    expect(total()).toBe(2);
   });
 
   /**
@@ -126,7 +137,7 @@ describe('PractitionersDirectory', () => {
     responder([OTRA], null);
     responderConceptos();
 
-    expect(interno<() => number>('total')()).toBe(2);
+    expect(total()).toBe(2);
   });
 
   /* -- 2 · La especialidad es el encabezado -------------------------------- */
@@ -139,6 +150,30 @@ describe('PractitionersDirectory', () => {
     const nombres = grupos().map((g) => g.nombre);
     // Alfabético: una guía se hojea, no se ordena por cuántos tiene cada una.
     expect(nombres).toEqual(['Cardiología', 'Pediatría']);
+  });
+
+  /**
+   * F-25 (18/08/2026): tres tarjetas de la Guía mostraban como subtítulo el
+   * nombre de OTRO profesional. El dato cruzado lo arregla FX-4 en el seeder;
+   * este es el guardia de la vista, que no depende de eso.
+   */
+  it('una tarjeta nunca muestra el nombre de otro como subtítulo (F-25)', () => {
+    montar();
+    responder([
+      { ...FILA, displayName: 'Ana Lucía Flores', professionalTitle: 'Dr. Andrés Peña — Pediatría' },
+      OTRA,
+    ]);
+    responderConceptos();
+
+    const tarjetas = grupos().flatMap((g: GrupoDeEspecialidad) => g.profesionales);
+    const cruzada = tarjetas.find((t) => t.title === 'Ana Lucía Flores');
+
+    expect(cruzada, 'la tarjeta cruzada debería estar en la guía').toBeDefined();
+    // Sin subtítulo: más pobre, pero no miente sobre quién es quién.
+    expect(cruzada?.meta ?? []).toEqual([]);
+    // Y el resto conserva el suyo, que es legítimo.
+    const sana = tarjetas.find((t) => t.title === 'Dr. Andrés Peña');
+    expect(sana?.meta?.[0]?.text).toBe('Pediatra');
   });
 
   /** Quien ejerce dos especialidades figura bajo las dos. */
@@ -180,7 +215,7 @@ describe('PractitionersDirectory', () => {
       .expectOne((r) => r.url === '/terminology/concepts')
       .error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
 
-    expect(interno<() => number>('total')()).toBe(1);
+    expect(total()).toBe(1);
     expect(grupos()[0].nombre).toBe('Sin especialidad registrada');
   });
 
@@ -197,6 +232,23 @@ describe('PractitionersDirectory', () => {
     expect(grupos()[0].profesionales[0].title).toBe('Dra. Lucía Salas');
   });
 
+  /**
+   * F-19/F-27: la especialidad es el encabezado de la grilla, y buscarla tiene
+   * que traer a quienes la ejercen aunque su nombre no la mencione.
+   */
+  it('el buscador también encuentra por especialidad, con el grupo entero', () => {
+    montar();
+    responder([FILA, OTRA]);
+    responderConceptos();
+
+    senal<string>('filtro').set('cardio');
+
+    const encontrados = grupos();
+    expect(encontrados).toHaveLength(1);
+    expect(encontrados[0].nombre).toBe('Cardiología');
+    expect(encontrados[0].profesionales).toHaveLength(1);
+  });
+
   it('el buscador también encuentra por el título profesional', () => {
     montar();
     responder([FILA, OTRA]);
@@ -204,7 +256,7 @@ describe('PractitionersDirectory', () => {
 
     senal<string>('filtro').set('pediatra');
 
-    expect(interno<() => number>('total')()).toBe(1);
+    expect(total()).toBe(1);
   });
 
   it('el buscador encuentra por ESPECIALIDAD, que es el encabezado y no un dato de la tarjeta', () => {
@@ -241,7 +293,7 @@ describe('PractitionersDirectory', () => {
 
     senal<string>('filtro').set('cardio');
 
-    expect(interno<() => number>('total')()).toBe(2);
+    expect(total()).toBe(2);
   });
 
   it('el código interno del profesional no se muestra ni filtra: el paciente no lo conoce', () => {
@@ -256,7 +308,7 @@ describe('PractitionersDirectory', () => {
     expect(lineas.some((linea) => /MED-|Código/.test(linea.text))).toBe(false);
 
     senal<string>('filtro').set('med-1');
-    expect(interno<() => number>('total')()).toBe(0);
+    expect(total()).toBe(0);
   });
 
   /**
@@ -268,11 +320,16 @@ describe('PractitionersDirectory', () => {
     responder([FILA]);
     responderConceptos();
 
-    expect(interno<() => boolean>('sinCoincidencias')()).toBe(false);
+    // Ahora devuelve **el texto** en vez de un booleano: el patrón común de
+    // directorio muestra lo que se le pase, y quién sabe qué decir es la
+    // pantalla que sabe qué se estaba buscando. `null` = no es ese caso.
+    expect(interno<() => string | null>('sinCoincidencias')()).toBeNull();
 
     senal<string>('filtro').set('nadie con este nombre');
 
-    expect(interno<() => boolean>('sinCoincidencias')()).toBe(true);
+    expect(interno<() => string | null>('sinCoincidencias')()).toContain(
+      'nadie con este nombre',
+    );
   });
 
   /* -- La traducción a la tarjeta ------------------------------------------ */

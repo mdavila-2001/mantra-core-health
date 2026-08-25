@@ -6,6 +6,7 @@ import { filter, map } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { APP_SECTIONS } from './navigation.map';
 import {
+  apareceEnElMenu,
   isVisibleTo,
   NAV_GROUPS,
   routeOf,
@@ -56,7 +57,8 @@ export class NavigationService {
   /** Las secciones que esta sesión puede ver, sin agrupar. */
   readonly visibleSections = computed<readonly AppSection[]>(() => {
     const roles = this.auth.roles();
-    return APP_SECTIONS.filter((section) => isVisibleTo(section, roles));
+    const tenants = this.auth.tenants();
+    return APP_SECTIONS.filter((section) => isVisibleTo(section, roles, tenants));
   });
 
   /**
@@ -66,11 +68,18 @@ export class NavigationService {
    * filtrado quería evitar.
    */
   readonly menu = computed<readonly NavMenuSection[]>(() => {
-    const visible = this.visibleSections();
+    // **No sale de `visibleSections`**: aparecer en el menú y poder entrar
+    // dejaron de ser la misma pregunta cuando el panel del médico tuvo que
+    // quedar en ocho renglones (§4.H del plan de UX). Una sección con
+    // `fueraDelMenuPara` sigue en `visibleSections` —el guard la deja pasar,
+    // «Tus accesos» la lista— y no ocupa un renglón acá.
+    const roles = this.auth.roles();
+    const tenants = this.auth.tenants();
+    const enElMenu = APP_SECTIONS.filter((section) => apareceEnElMenu(section, roles, tenants));
 
     return NAV_GROUPS.map((group) => ({
       label: group,
-      items: visible
+      items: enElMenu
         .filter((section) => section.group === group)
         .map((section) => ({
           label: section.label,

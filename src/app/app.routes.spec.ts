@@ -3,7 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
-import { ROLES_ROUTE_DATA, SECTION_ROUTE_DATA, titleOf } from './core/navigation/navigation.types';
+import {
+  ROLES_ROUTE_DATA,
+  SECTION_ROUTE_DATA,
+  restringePorRol,
+  titleOf,
+} from './core/navigation/navigation.types';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes } from './app.routes';
 
@@ -75,6 +80,12 @@ describe('rutas del armazón', () => {
       // menú — una entrada permanente a algo que se hace una vez sería ruido
       // para todos los médicos que ya lo completaron.
       'onboarding',
+      // La puesta en marcha de la plataforma, por lo mismo y en el otro
+      // extremo: el alta del profesional se hace una vez por médico, ésta una
+      // vez por instalación. Se llega por el aviso del panel o por el ingreso
+      // cuando todavía no hay ninguna organización; dejarla en el menú sería
+      // ofrecerle para siempre «poner en marcha» a quien ya la puso.
+      'administration/getting-started',
     ];
 
     const huerfanas = hijas.filter((r) => {
@@ -122,7 +133,8 @@ describe('rutas del armazón', () => {
       if (path === '' || r.redirectTo !== undefined) {
         return false;
       }
-      return seccionDe(path)?.roles !== undefined;
+      const section = seccionDe(path);
+      return section !== undefined && restringePorRol(section);
     });
 
     it('lo lleva toda pantalla hija cuya sección declara roles', () => {
@@ -138,7 +150,9 @@ describe('rutas del armazón', () => {
         const ruta = hijas.find((r) => r.path === path);
 
         expect(ruta, path).toBeDefined();
-        expect(seccionDe(path)?.roles, path).toBeDefined();
+        const section = seccionDe(path);
+        expect(section, path).toBeDefined();
+        expect(restringePorRol(section!), path).toBe(true);
         expect((ruta?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(false);
       }
     });
@@ -402,5 +416,42 @@ describe('rutas públicas del buscador', () => {
     await router.navigateByUrl('/buscar?q=cardiolog%C3%ADa');
 
     expect(location.path()).toContain('q=cardiolog');
+  });
+});
+
+/**
+ * El comprobante (FAR-I5) vive en `…/:orderId/receipt`, declarado DESPUÉS del
+ * paramétrico `…/:orderId`: que resuelva depende del retroceso del router —
+ * el mismo supuesto que el bloque del buscador fija arriba. Los guards se
+ * neutralizan a propósito: acá se prueba el matching, no la sesión (el guard
+ * ya lo cubre el bloque de cobertura de roles).
+ */
+describe('la ruta del comprobante de farmacia (FAR-I5)', () => {
+  let router: Router;
+  let location: Location;
+
+  /**
+   * Vacía los guards en TODO el árbol (la ruta vive como hija del shell y
+   * lleva el suyo propio), sólo donde había: una ruta `redirectTo` no admite
+   * `canActivate` ni vacío (NG04014).
+   */
+  function sinGuards(arbol: typeof routes): typeof routes {
+    return arbol.map((ruta) => ({
+      ...ruta,
+      ...(ruta.canActivate === undefined ? {} : { canActivate: [] }),
+      ...(ruta.children === undefined ? {} : { children: sinGuards(ruta.children) }),
+    }));
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(sinGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  it('`/:orderId/receipt` no se la traga el paramétrico del detalle', async () => {
+    const ok = await router.navigateByUrl('/my-account/pharmacy-orders/abc/receipt');
+    expect(ok).not.toBe(false);
+    expect(location.path()).toBe('/my-account/pharmacy-orders/abc/receipt');
   });
 });

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { GeoClient } from '../../../core/data-access/geo/geo.client';
@@ -10,16 +11,11 @@ import { forbidden, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { errorMessageOf, NUMBER_STRING_PATTERN, opcionDe } from '../../../shared/forms/form-support';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { errorMessageOf, objetoJson, NUMBER_STRING_PATTERN, opcionDe } from '../../../shared/forms/form-support';
 
 const FORMAS: readonly GeofenceShapeType[] = ['CIRCLE', 'POLYGON'];
 
@@ -47,18 +43,11 @@ const NUMERO_POSITIVO = NUMBER_STRING_PATTERN;
 @Component({
   selector: 'app-geofence-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Radio,
-    RadioGroup,
-    Textarea,
+    PaginatedForm,
   ],
   templateUrl: './geofence-form.html',
   styleUrl: '../m13.css',
@@ -88,10 +77,17 @@ export class GeofenceForm {
       nonNullable: true,
       validators: [Validators.pattern(NUMBER_STRING_PATTERN)],
     }),
+    shapeType: new FormControl<GeofenceShapeType | null>(null, {
+      validators: [Validators.required],
+    }),
+    /** GeoJSON: un objeto, no un array ni un texto. */
+    geometryJson: new FormControl('', { nonNullable: true, validators: [objetoJson] }),
   });
 
-  protected readonly shapeType = signal<GeofenceShapeType | null>(null);
-  protected readonly geometryJson = signal('');
+  /** El valor de la forma, como señal, para que las páginas reaccionen a él. */
+  private readonly forma = toSignal(this.form.controls.shapeType.valueChanges, {
+    initialValue: this.form.controls.shapeType.value,
+  });
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -102,26 +98,90 @@ export class GeofenceForm {
     errorMessageOf(this.state(), 'No tenés permiso para crear geocercas.'),
   );
 
-  protected readonly esCirculo = computed(() => this.shapeType() === 'CIRCLE');
-  protected readonly esPoligono = computed(() => this.shapeType() === 'POLYGON');
-
-  /** GeoJSON: un objeto, no un array ni un texto. */
-  protected readonly geometriaInvalida = computed(() => {
-    const texto = this.geometryJson().trim();
-    if (texto === '') {
-      return false;
-    }
-    try {
-      const valor: unknown = JSON.parse(texto);
-      return typeof valor !== 'object' || valor === null || Array.isArray(valor);
-    } catch {
-      return true;
-    }
-  });
-
-  protected elegirForma(valor: unknown): void {
-    this.shapeType.set(opcionDe(FORMAS, valor));
-  }
+  /**
+   * Las páginas, que **dependen de la primera respuesta**.
+   *
+   * Un círculo pide radio y centro; un polígono pide una geometría. Preguntar
+   * las dos cosas a la vez es pedir cinco datos de los que sobran tres, así que
+   * la segunda página se arma con lo que la forma elegida necesita — y mientras
+   * no haya forma elegida, no hay segunda página que mostrar.
+   */
+  protected readonly paginas = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'Identidad',
+        hint: 'El nombre es único dentro de la organización: el duplicado se rechaza.',
+        campos: [
+          {
+            key: 'name',
+            label: 'Nombre',
+            control: 'text' as const,
+            required: true,
+            mensajeDeError: 'Escribí el nombre de la geocerca (máx. 200 caracteres).',
+          },
+          {
+            key: 'shapeType',
+            label: 'Forma',
+            control: 'radio' as const,
+            required: true,
+            options: [
+              { value: 'CIRCLE', label: 'Círculo: un centro y un radio' },
+              { value: 'POLYGON', label: 'Polígono: una geometría GeoJSON' },
+            ],
+          },
+        ],
+      },
+      ...(this.forma() === 'CIRCLE'
+        ? [
+            {
+              titulo: 'El círculo',
+              hint: 'Radio en metros y centro en grados decimales. Los tres son obligatorios.',
+              campos: [
+                {
+                  key: 'radiusM',
+                  label: 'Radio (metros)',
+                  control: 'text' as const,
+                  required: true,
+                  mensajeDeError: 'Ingresá el radio en metros, como 500.',
+                },
+                {
+                  key: 'centerLat',
+                  label: 'Latitud del centro',
+                  control: 'text' as const,
+                  required: true,
+                  mensajeDeError: 'Ingresá la latitud en grados decimales, como -34.603765.',
+                },
+                {
+                  key: 'centerLng',
+                  label: 'Longitud del centro',
+                  control: 'text' as const,
+                  required: true,
+                  mensajeDeError: 'Ingresá la longitud en grados decimales, como -58.381592.',
+                },
+              ],
+            },
+          ]
+        : []),
+      ...(this.forma() === 'POLYGON'
+        ? [
+            {
+              titulo: 'El polígono',
+              hint: 'La geometría GeoJSON del área, como la produce cualquier editor de mapas.',
+              campos: [
+                {
+                  key: 'geometryJson',
+                  label: 'Geometría (GeoJSON)',
+                  hint: 'Un objeto como {"type": "Polygon", "coordinates": [...]}.',
+                  control: 'textarea' as const,
+                  required: true,
+                  mensajeDeError: 'Tiene que ser un objeto JSON válido.',
+                },
+              ],
+            },
+          ]
+        : []),
+    ]),
+  );
 
   protected submit(): void {
     if (this.isSubmitting()) {
@@ -147,14 +207,12 @@ export class GeofenceForm {
 
   protected otraGeocerca(): void {
     this.form.reset();
-    this.shapeType.set(null);
-    this.geometryJson.set('');
     this.created.set(null);
     this.state.set(ready(null));
   }
 
   private cuerpoValido(): NewGeofence | null {
-    const forma = this.shapeType();
+    const forma = opcionDe(FORMAS, this.form.getRawValue().shapeType);
     const tenantId = this.session.activeTenantId();
 
     if (this.form.invalid || forma === null) {
@@ -190,8 +248,8 @@ export class GeofenceForm {
       };
     }
 
-    const geometria = this.geometryJson().trim();
-    if (geometria === '' || this.geometriaInvalida()) {
+    const geometria = valores.geometryJson.trim();
+    if (geometria === '') {
       return null;
     }
     return {

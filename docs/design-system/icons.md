@@ -24,15 +24,23 @@ adicional**.
 
 ## El set del menú es cerrado y tipado
 
-`side-nav.types.ts` declara siete nombres y nada más:
+`atoms/nav-icon/nav-icon.types.ts` declara **cuarenta y cuatro** nombres y nada
+más —`side-nav.types.ts` los re-exporta, por quien ya los importaba de ahí—:
 
 ```ts
 /**
- * Set de íconos de trazo propio del nav. Cerrado a propósito: un string libre
- * terminaría en nombres que no existen y en íconos mudos.
+ * Set de íconos de trazo propio de la navegación. Cerrado a propósito: un
+ * string libre terminaría en nombres que no existen y en íconos mudos.
  */
 export const NAV_ICON_NAMES = [
   'home', 'patients', 'calendar', 'orders', 'results', 'billing', 'settings',
+  'people', 'chat', 'directory',
+  'stethoscope', 'hospital', 'flask', 'scan', 'scalpel', 'pill', 'heart', 'folder', 'note',
+  'clipboard', 'survey', 'book', 'labels',
+  'building', 'factory', 'package', 'bag', 'tag', 'megaphone', 'pin', 'route', 'globe',
+  'chart', 'star',
+  'shield', 'key', 'link', 'flag', 'umbrella', 'briefcase',
+  'bell', 'sliders', 'history', 'teach',
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 ```
@@ -53,9 +61,24 @@ sustituye.
 **`icon` es opcional.** Sin él, el ítem colapsado muestra la inicial de su
 etiqueta en vez de un hueco.
 
-Los siete nombres anticipan los portales del modelo (pacientes, agenda, órdenes,
-resultados, facturación) aunque solo dos estén en uso: el set se declaró
-completo, no se irá ampliando de a uno.
+### Por qué son cuarenta y cuatro y fueron siete
+
+Los siete originales se eligieron cuando el menú tenía dos entradas y el set
+«anticipaba los portales del modelo». Con **cincuenta y cinco secciones** eso
+dejó de ser un set y pasó a ser un reparto: `orders` —una hoja de papel—
+cargaba catorce secciones y `settings` doce, así que «Chats» era una onda de
+electrocardiograma, «Directorio de médicos» una casa y «Directorio de
+farmacias» un documento.
+
+Un ícono aporta **una** cosa: reconocer una sección sin leerla. Repetido
+catorce veces no aporta nada —peor, miente—, y en la rejilla de «Tus accesos»
+del panel, donde treinta secciones se ven juntas, la repetición es lo primero
+que se nota.
+
+La regla al agregar uno: que **diga algo que su etiqueta no dice ya**. Dos
+secciones comparten ícono sólo cuando son la misma idea vista dos veces
+—«Turnos» y «Mis turnos», la agenda de quien atiende y la de quien consulta—,
+nunca por falta de dibujo. Hoy ninguno carga más de tres.
 
 ## Nombre accesible
 
@@ -105,8 +128,12 @@ Coherente con [no tener biblioteca de interfaz](../adr/ADR-0004-sistema-de-disen
 | Sin dependencia que actualizar | Sin consistencia garantizada entre íconos de distintas fuentes |
 | Sin petición de red ni de fuente de íconos | |
 
-A esta escala —dos íconos en el menú y unos pocos en los componentes— es la
-decisión correcta. Con cincuenta pantallas, la columna derecha empieza a pesar.
+Con cuarenta y cuatro íconos de navegación, once de categoría del glosario y
+unos pocos sueltos en los componentes, la columna derecha ya pesa: no hay
+catálogo que explorar y cada forma se dibuja a mano. Sigue ganando la izquierda
+—los cuarenta y cuatro son trazos de dos o tres `path`, no una dependencia que
+actualizar ni una petición de red—, pero la próxima vez que el set se duplique
+conviene volver a mirar esta tabla en vez de darla por saldada.
 
 ## Reglas al agregar un ícono
 

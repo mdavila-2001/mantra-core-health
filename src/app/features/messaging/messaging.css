@@ -1,40 +1,111 @@
+/* La bandeja, con la forma de un chat de escritorio: la lista a la izquierda y
+   la conversación a la derecha, dentro de un marco que no crece con el
+   contenido —la que scrollea es la lista, no la página—. Debajo de 60rem se
+   apila y queda la lista sola: en un teléfono la conversación es otra pantalla.
+
+   Todo el color sale de `redsat.css`. Ver la nota de `conversation-list.css`. */
+
 .mensajeria__alerta {
   display: block;
   margin-bottom: var(--e4);
 }
 
 .mensajeria__cargando {
-  color: var(--text-secondary);
+  color: var(--tinta-2);
 }
 
-.mensajeria__barra {
-  display: flex;
-  gap: var(--e2);
-  margin-bottom: var(--e4);
+.mensajeria {
+  display: grid;
+  grid-template-columns: minmax(18rem, 23rem) 1fr;
+  /* Alto fijo: el hilo scrollea por dentro. Sin esto el composer se va al pie
+     de una página larguísima y hay que bajar para escribir. */
+  block-size: min(calc(100dvh - 9rem), 46rem);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
 }
+
+.mensajeria__panel {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  border-inline-end: 1px solid var(--filete);
+}
+
+.mensajeria__panel-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  min-block-size: var(--h-header);
+  padding: 0 var(--e3);
+  border-block-end: 1px solid var(--filete);
+  background: var(--sup-inset);
+}
+
+.mensajeria__titulo {
+  margin: 0;
+  font-family: var(--f-titulo);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--tinta-marca);
+}
+
+.mensajeria__lista {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+/* --- El buscador de «escribirle a alguien» ------------------------------- */
 
 .mensajeria__buscador {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--e2);
-  margin-bottom: var(--e4);
   padding: var(--e3);
-  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
-  border-radius: var(--radio-md, 0.75rem);
-  max-inline-size: 68ch;
+  border-block-end: 1px solid var(--filete);
+  background: var(--sup-inset);
 }
 
 .mensajeria__campo {
-  flex: 1 1 16rem;
+  position: relative;
+  flex: 1 1 10rem;
+  display: flex;
+  align-items: center;
+}
+
+.mensajeria__campo-icono {
+  position: absolute;
+  inset-inline-start: var(--e3);
+  display: inline-flex;
+  color: var(--tinta-3);
+  pointer-events: none;
+}
+
+.mensajeria__campo-icono svg {
+  inline-size: 16px;
+  block-size: 16px;
 }
 
 .mensajeria__campo input {
   inline-size: 100%;
-  padding: var(--e2);
-  border: 1px solid var(--border-subtle, rgb(0 0 0 / 20%));
-  border-radius: var(--radio-sm, 0.5rem);
+  block-size: var(--h-ctrl);
+  padding-inline: calc(var(--e3) * 2 + 16px) var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
   font: inherit;
+  color: var(--tinta);
+}
+
+.mensajeria__campo input:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+  border-color: var(--petroleo);
 }
 
 .mensajeria__resultados {
@@ -47,11 +118,11 @@
 .mensajeria__resultado {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 2px;
   inline-size: 100%;
-  padding: var(--e2);
+  padding: var(--e2) var(--e3);
   border: 0;
-  border-radius: var(--radio-sm, 0.5rem);
+  border-radius: var(--r-ctrl);
   background: none;
   color: inherit;
   font: inherit;
@@ -61,70 +132,70 @@
 
 .mensajeria__resultado:hover,
 .mensajeria__resultado:focus-visible {
-  background: var(--surface-hover, rgb(0 0 0 / 5%));
+  background: var(--neutro-bg);
 }
 
-.mensajeria__resultado-detalle {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-}
-
-.mensajeria__lista {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  /* Ancho de lectura: una bandeja que cruza una pantalla ancha entera separa
-     el nombre de la fecha por medio metro de vacío. */
-  max-inline-size: 68ch;
-}
-
-.mensajeria__fila {
-  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
-  border-radius: var(--radio-md, 0.75rem);
-  background: var(--surface-raised, #fff);
-}
-
-/* Sin leer se marca con barra **y** con peso, no sólo con color: el color solo
-   no distingue nada para quien no lo percibe. */
-.mensajeria__fila.is-sin-leer {
-  border-inline-start: 4px solid var(--accent, #0e6690);
-}
-
-.mensajeria__fila.is-sin-leer .mensajeria__con-quien {
+.mensajeria__resultado-nombre {
+  font-family: var(--f-titulo);
   font-weight: 600;
 }
 
-.mensajeria__item {
+.mensajeria__resultado-detalle {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+/* --- El panel derecho sin hilo abierto ----------------------------------- */
+
+.mensajeria__vacio {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: var(--e3);
-  color: inherit;
-  text-decoration: none;
-}
-
-.mensajeria__item:hover,
-.mensajeria__item:focus-visible {
-  background: var(--surface-hover, rgb(0 0 0 / 4%));
-  border-radius: inherit;
-}
-
-.mensajeria__vista-previa {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  /* Una línea: la vista previa orienta, no reemplaza al hilo. */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mensajeria__meta {
-  display: flex;
   align-items: center;
-  gap: var(--e2);
-  color: var(--text-tertiary, var(--text-secondary));
-  font-size: 0.8rem;
+  justify-content: center;
+  gap: var(--e3);
+  padding: var(--e6);
+  text-align: center;
+  color: var(--tinta-2);
+  /* El mismo papel del hilo, para que el panel derecho no cambie de material
+     al abrir una conversación. */
+  background:
+    radial-gradient(60% 50% at 50% 40%, var(--info-bg) 0%, transparent 70%), var(--sup-inset);
+}
+
+.mensajeria__vacio-icono {
+  margin: 0;
+  color: var(--aguamarina);
+}
+
+.mensajeria__vacio-icono svg {
+  inline-size: 72px;
+  block-size: 72px;
+}
+
+.mensajeria__vacio-texto {
+  margin: 0;
+  max-inline-size: 28ch;
+}
+
+@media (max-width: 60rem) {
+  .mensajeria {
+    grid-template-columns: 1fr;
+    block-size: auto;
+    max-block-size: none;
+  }
+
+  .mensajeria__panel {
+    border-inline-end: 0;
+  }
+
+  .mensajeria__lista {
+    overflow-y: visible;
+  }
+
+  /* En angosto la conversación es otra pantalla, así que el hueco de la
+     derecha no tiene sentido: ocuparía una pantalla entera para decir que no
+     hay nada abierto. */
+  .mensajeria__vacio {
+    display: none;
+  }
 }

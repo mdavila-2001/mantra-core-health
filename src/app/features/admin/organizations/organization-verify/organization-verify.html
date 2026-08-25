@@ -1,0 +1,62 @@
+<app-page-header
+  [title]="'Verificar «' + nombre() + '»'"
+  subtitle="Mientras esté pendiente, la organización existe en el directorio pero no puede operar."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (errorMessage(); as mensaje) {
+  <app-alert appAnuncio tone="error" class="alta__alert" data-testid="verificar-error">{{
+    mensaje
+  }}</app-alert>
+}
+
+<form (ngSubmit)="submit()" novalidate data-testid="verificar-form">
+  <app-alert tone="info" class="alta__alert">
+    Verificar es hacerse cargo de que la documentación regulatoria de
+    <strong data-testid="verificar-nombre">{{ nombre() }}</strong> se revisó. Al confirmar, queda
+    activa y su gente puede empezar a trabajar.
+  </app-alert>
+
+  <app-form-section
+    legend="Corregir dónde opera"
+    description="Opcional. Si al revisar la documentación no coincide con lo declarado en el alta, corregilo acá; si coincide, dejalo vacío."
+  >
+    <app-form-field
+      label="País"
+      hint="Buscá por nombre; el código acompaña para distinguir homónimos."
+    >
+      <app-reference-combobox
+        [selected]="pais()"
+        [options]="candidatosPais()"
+        [loading]="buscandoPais()"
+        placeholder="Nombre del país"
+        emptyMessage="Ningún concepto coincide"
+        (searched)="buscarPais($event)"
+        (selectionChange)="pais.set($event)"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Jurisdicción"
+      hint="La jurisdicción regulatoria, por ejemplo «Bolivia · JUR_BO»."
+    >
+      <app-reference-combobox
+        [selected]="jurisdiccion()"
+        [options]="candidatosJurisdiccion()"
+        [loading]="buscandoJurisdiccion()"
+        placeholder="Nombre de la jurisdicción"
+        emptyMessage="Ningún concepto coincide"
+        (searched)="buscarJurisdiccion($event)"
+        (selectionChange)="jurisdiccion.set($event)"
+      />
+    </app-form-field>
+  </app-form-section>
+
+  <app-form-actions
+    submitLabel="Verificar y activar"
+    cancelLabel="Cancelar"
+    [pending]="enviando()"
+    (submitted)="submit()"
+    (cancelled)="cancelar()"
+  />
+</form>

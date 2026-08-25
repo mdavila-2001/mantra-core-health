@@ -12,12 +12,14 @@ import type {
   CreatedUser,
   LoginCredentials,
   NewUser,
+  OrganizationRegistration,
   PasswordReset,
   PasswordResetRequested,
   VerificationResent,
   PasswordResetResult,
   PatientRegistration,
   PractitionerRegistration,
+  RegisteredOrganization,
   RegisteredPatient,
   RegisteredPractitioner,
   Session,
@@ -104,6 +106,32 @@ export class IamClient {
         : { motherLastName: registration.motherLastName }),
       ...(registration.email === undefined ? {} : { email: registration.email }),
       ...(registration.birthDate === undefined ? {} : { birthDate: registration.birthDate }),
+      // El cuerpo se re-proyecta campo por campo y no con un `...registration`
+      // a propósito: `forbidNonWhitelisted` del backend rechaza toda propiedad
+      // que el DTO no declare, así que lo que viaja es exactamente lo acordado
+      // y no lo que alguien haya dejado colgando del objeto de dominio. El
+      // precio es éste: un campo nuevo en `PatientRegistration` no llega solo,
+      // hay que listarlo acá.
+      ...(registration.issuerAdministrativeAreaConceptId === undefined
+        ? {}
+        : {
+            issuerAdministrativeAreaConceptId:
+              registration.issuerAdministrativeAreaConceptId,
+          }),
+      // Sólo el municipio: el departamento de residencia lo deriva el backend
+      // del código del INE, así que el par no puede llegar incoherente.
+      ...(registration.residenceMunicipalityConceptId === undefined
+        ? {}
+        : {
+            residenceMunicipalityConceptId:
+              registration.residenceMunicipalityConceptId,
+          }),
+      ...(registration.phone === undefined ? {} : { phone: registration.phone }),
+      ...(registration.gender === undefined ? {} : { gender: registration.gender }),
+      ...(registration.sexAtBirth === undefined ? {} : { sexAtBirth: registration.sexAtBirth }),
+      ...(registration.occupationFreeText === undefined
+        ? {}
+        : { occupationFreeText: registration.occupationFreeText }),
       ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
     });
   }
@@ -126,12 +154,73 @@ export class IamClient {
       ...(registration.motherLastName === undefined
         ? {}
         : { motherLastName: registration.motherLastName }),
+      ...(registration.birthDate === undefined ? {} : { birthDate: registration.birthDate }),
+      ...(registration.nationalId === undefined ? {} : { nationalId: registration.nationalId }),
+      ...(registration.issuerAdministrativeAreaConceptId === undefined
+        ? {}
+        : {
+            issuerAdministrativeAreaConceptId: registration.issuerAdministrativeAreaConceptId,
+          }),
+      ...(registration.residenceMunicipalityConceptId === undefined
+        ? {}
+        : {
+            residenceMunicipalityConceptId: registration.residenceMunicipalityConceptId,
+          }),
       licenseNumber: registration.licenseNumber,
       credentialNumber: registration.credentialNumber,
+      ...(registration.regulatoryAuthority === undefined
+        ? {}
+        : { regulatoryAuthority: registration.regulatoryAuthority }),
+      ...(registration.licenseIssueDate === undefined
+        ? {}
+        : { licenseIssueDate: registration.licenseIssueDate }),
       ...(registration.professionalTitle === undefined
         ? {}
         : { professionalTitle: registration.professionalTitle }),
       ...(registration.phone === undefined ? {} : { phone: registration.phone }),
+    });
+  }
+
+  /**
+   * `POST /iam/auth/register-organization`. Auto-registro de una organización
+   * aseguradora: crea el tenant `PAYER` y su usuario owner en la misma
+   * operación.
+   *
+   * El tipo del tenant viaja **fijo** en `'PAYER'`: esta pantalla sólo da de
+   * alta aseguradoras, así que no hay nada que elegir — a diferencia del alta
+   * administrativa (`DirectoryClient.createTenant`), que sirve a los diez
+   * tipos y por eso sí lo pide.
+   */
+  registerOrganization(registration: OrganizationRegistration): Observable<RegisteredOrganization> {
+    return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
+      organization: {
+        code: registration.code,
+        legalName: registration.legalName,
+        ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
+        tenantType: 'PAYER',
+        ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
+        payer: {
+          carrierCode: registration.payer.carrierCode,
+          regulatorIdentifier: registration.payer.regulatorIdentifier,
+          sigla: registration.payer.sigla,
+          address: registration.payer.address,
+        },
+      },
+      owner: {
+        email: registration.owner.email,
+        password: registration.owner.password,
+        // El nombre viaja en partes y el backend compone el que se muestra: si
+        // el front lo compusiera, la base guardaría una versión y el contrato
+        // otra.
+        name: registration.owner.name,
+        lastName: registration.owner.lastName,
+        ...(registration.owner.middleName === undefined
+          ? {}
+          : { middleName: registration.owner.middleName }),
+        ...(registration.owner.motherLastName === undefined
+          ? {}
+          : { motherLastName: registration.owner.motherLastName }),
+      },
     });
   }
 

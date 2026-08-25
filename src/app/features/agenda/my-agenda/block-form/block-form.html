@@ -1,0 +1,91 @@
+<app-card variant="outlined" padding="lg" class="bloqueo">
+  <h3 class="bloqueo__titulo">Bloquear días u horarios</h3>
+  <p class="bloqueo__texto">
+    Los turnos libres del período dejan de ofrecerse. Las citas ya reservadas
+    <strong>no se tocan</strong>: si querés cancelarlas, hacelo una por una desde el día.
+  </p>
+
+  <form class="bloqueo__form" (submit)="$event.preventDefault(); enviar()">
+    <div class="bloqueo__fechas">
+      <app-date-picker
+        label="Primer día"
+        [value]="desde()"
+        (valueChange)="desde.set($event)"
+      />
+      <app-date-picker
+        label="Último día"
+        [value]="hasta()"
+        (valueChange)="hasta.set($event)"
+      />
+    </div>
+
+    @if (dias() > 0) {
+      <!-- El número se muestra ANTES de confirmar: «del 10 al 24» son quince
+           días y no catorce, y equivocarse ahí se descubre volviendo de
+           vacaciones. -->
+      <p class="bloqueo__cuenta" role="status">
+        {{ dias() }} {{ dias() === 1 ? 'día' : 'días' }}, los dos extremos incluidos.
+      </p>
+    }
+
+    <fieldset class="bloqueo__alcance">
+      <legend class="bloqueo__leyenda">¿Todo el día o sólo un rato?</legend>
+      <label class="bloqueo__opcion">
+        <input
+          type="radio"
+          name="alcance"
+          [checked]="!porFranja()"
+          (change)="porFranja.set(false)"
+        />
+        <span>Los días enteros</span>
+      </label>
+      <label class="bloqueo__opcion">
+        <input
+          type="radio"
+          name="alcance"
+          [checked]="porFranja()"
+          (change)="porFranja.set(true)"
+        />
+        <span>Sólo una franja de cada día</span>
+      </label>
+    </fieldset>
+
+    @if (porFranja()) {
+      <div class="bloqueo__horas">
+        <app-form-field label="Desde" hint="HH:MM — a partir de qué hora dejás de atender.">
+          <app-input type="text" [value]="horaDesde()" (valueChange)="fijarHoraDesde($event)" />
+        </app-form-field>
+        <app-form-field label="Hasta" hint="HH:MM — a partir de qué hora volvés.">
+          <app-input type="text" [value]="horaHasta()" (valueChange)="fijarHoraHasta($event)" />
+        </app-form-field>
+      </div>
+      <p class="bloqueo__nota">
+        Se bloquea esa franja <strong>en cada uno de los días</strong> del rango, no de corrido
+        desde el primero hasta el último.
+      </p>
+    }
+
+    <app-form-field
+      label="¿Por qué?"
+      hint="Lo ves sólo vos, para acordarte cuando mires el mes."
+    >
+      <app-input
+        type="text"
+        placeholder="Congreso, vacaciones, trámite…"
+        [value]="motivo()"
+        (valueChange)="fijarMotivo($event)"
+      />
+    </app-form-field>
+
+    @if (errorVisible(); as texto) {
+      <p class="bloqueo__error" role="alert">{{ texto }}</p>
+    }
+
+    <div class="bloqueo__acciones">
+      <button app-button type="submit" variant="primary">Bloquear</button>
+      <button app-button type="button" variant="ghost" (clicked)="cancelar.emit()">
+        Cancelar
+      </button>
+    </div>
+  </form>
+</app-card>

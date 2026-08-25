@@ -26,6 +26,35 @@ export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
 
   /**
+   * Apagada por defecto: en producción la barra de demostración no existe
+   * salvo que el despliegue la pida (`PUBLIC_DEMO_PRESETS=true`, pensado para
+   * el staging de una demo).
+   */
+  demoPresets: envFromProcess.demoPresets ?? false,
+
+  /**
+   * Apagada por defecto: sin pasarela real, en producción sólo existe el
+   * camino del mostrador. El staging de una demo la enciende con
+   * `PUBLIC_PAYMENT_DEMO=true`.
+   */
+  paymentDemo: envFromProcess.paymentDemo ?? false,
+
+  /**
+   * Apagada por defecto: en producción no hay de dónde leer una membresía
+   * todavía, así que la billetera dice que no hay programa activo en vez de
+   * mostrar un saldo sembrado. El staging de una demo la enciende con
+   * `PUBLIC_LOYALTY_DEMO=true`.
+   */
+  loyaltyDemo: envFromProcess.loyaltyDemo ?? false,
+
+  /**
+   * Apagada por defecto: en producción no hay lecturas de campañas, así que
+   * sembrarlas sería anunciar descuentos que ningún backend puede honrar. El
+   * staging de una demo la enciende con `PUBLIC_CAMPAIGNS_DEMO=true`.
+   */
+  campaignsDemo: envFromProcess.campaignsDemo ?? false,
+
+  /**
    * Telemetría **apagada** salvo que el despliegue la encienda.
    *
    * No es timidez: apagada significa que el fragmento del SDK ni se descarga,

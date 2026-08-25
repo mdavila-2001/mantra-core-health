@@ -31,7 +31,21 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Prerender,
   },
   {
+    // La rejilla de tipos de cuenta y las tres altas: públicas e iguales para
+    // todo el mundo, así que salen del servidor ya pintadas.
     path: 'auth/register',
+    renderMode: RenderMode.Prerender,
+  },
+  {
+    path: 'auth/register/patient',
+    renderMode: RenderMode.Prerender,
+  },
+  {
+    path: 'auth/register/practitioner',
+    renderMode: RenderMode.Prerender,
+  },
+  {
+    path: 'auth/register/organization',
     renderMode: RenderMode.Prerender,
   },
   {
@@ -107,6 +121,22 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'f/:slug', renderMode: RenderMode.Server },
   { path: 'l/:slug', renderMode: RenderMode.Server },
   { path: 's/:slug', renderMode: RenderMode.Server },
+  /**
+   * El detalle de una promoción: `Client` **declarado**, no heredado del comodín.
+   *
+   * Es la excepción a la regla de las fichas públicas, y por un motivo que no
+   * es de diseño sino de datos: `promotions` todavía no publica ninguna
+   * lectura, así que hoy la campaña vive en la memoria del navegador (carril
+   * FAR-I7, gate `campaignsDemo`). En `Server` el servidor no tendría de dónde
+   * leerla y mandaría «no encontramos lo que buscás» ya pintado, que es peor
+   * que el cascarón: una promoción vigente llegaría al destinatario como un
+   * enlace roto.
+   *
+   * **Cuando el backend publique la campaña esto pasa a `Server`**, y por las
+   * mismas razones que las fichas por slug: un enlace compartido en un mensaje
+   * tiene que llegar con su título y su precio adentro.
+   */
+  { path: 'promociones/:campaignId', renderMode: RenderMode.Client },
   {
     path: '**',
     renderMode: RenderMode.Client,

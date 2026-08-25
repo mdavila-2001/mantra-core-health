@@ -1,0 +1,73 @@
+/* ============================================================================
+    La anatomía común de los cuatro directorios (A7 del plan de UX).
+
+    Sólo distribución: la tarjeta trae la suya. Lo único que este archivo
+    decide es cuántas entran por fila y cómo se separan los tramos.
+    ========================================================================== */
+
+:host {
+    display: block;
+}
+
+.directorio__cuenta {
+    margin: 0 0 var(--sp-4);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.directorio__aviso,
+.directorio__vacio {
+    margin: 0 0 var(--sp-4);
+    max-inline-size: 68ch;
+    color: var(--text-secondary);
+}
+
+.directorio__grupo + .directorio__grupo {
+    margin-block-start: var(--sp-6);
+}
+
+/* El encabezado se pega al desplazar: en un directorio largo, saber bajo qué
+   tramo se está mirando es la mitad de la información. Venía de la guía de
+   profesionales y se conserva para los cuatro. */
+.directorio__rotulo {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    margin: 0 0 var(--sp-3);
+    padding-block: var(--sp-2);
+    /* Opaco: si no, las tarjetas se leen a través del encabezado al desplazar. */
+    background: var(--bg-base);
+    border-block-end: 1px solid var(--border-default);
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    font-weight: 600;
+}
+
+.directorio__cantidad {
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--fs-caption);
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+}
+
+/* La grilla, que es el pedido concreto del cliente («Grilla de directorio de
+   lab… y todos los anteriores»).
+
+   `auto-fill` con `minmax` y no un número fijo de columnas: el directorio se
+   abre en un teléfono, en una tablet y en un monitor de escritorio, y fijar
+   tres columnas obliga a tres reglas de medios que se olvidan de la cuarta
+   pantalla. El mínimo de 15rem es el ancho al que una tarjeta con nombre,
+   tipo y dos líneas de contexto todavía se lee. */
+.directorio__grilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: var(--sp-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}

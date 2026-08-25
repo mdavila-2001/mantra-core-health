@@ -34,6 +34,8 @@ export interface Condition {
   /** Fecha esperada de resolución o próxima revisión (Patch v4.0.8). */
   readonly expectedResolutionAt?: Date;
   readonly resolvedAt?: Date;
+  /** Hallazgos y justificación clínica (Patch v4.1.3). */
+  readonly noteText?: string;
   readonly createdAt: Date;
 }
 
@@ -58,6 +60,8 @@ export interface MedicationRequest {
   readonly frequencyText?: string;
   readonly validFrom?: Date;
   readonly validTo?: Date;
+  /** Indicaciones al paciente impresas en la receta (Patch v4.1.3). */
+  readonly patientInstructionsText?: string;
   readonly signedAt?: Date;
   readonly issuedAt?: Date;
   readonly createdAt: Date;
@@ -363,6 +367,22 @@ export interface NewMedicationRequest {
   readonly substanceAtcConceptId?: string;
   readonly validFrom?: Date;
   readonly validTo?: Date;
+  /**
+   * Indicaciones al paciente (Patch v4.1.3). Narrativa separada de `doseText`
+   * a propósito: la posología la lee farmacia y no debe llevarla concatenada.
+   */
+  readonly patientInstructionsText?: string;
+  /**
+   * La condición clínica que motiva la receta — «para qué es» (Patch v4.1.6).
+   *
+   * Opcional de verdad: una receta sintomática o profiláctica no tiene
+   * diagnóstico detrás y se registra igual. Cuando viaja, el servidor **exige
+   * que la condición sea del mismo paciente** y responde `422
+   * PRECONDITION_FAILED` si no lo es o no existe: una indicación que apunta al
+   * diagnóstico de otra persona no es un dato incompleto sino uno falso, y
+   * termina impreso en el papel.
+   */
+  readonly indicationConditionId?: string;
 }
 
 /**
@@ -407,6 +427,8 @@ export interface NewCondition {
   readonly onsetAt?: Date;
   /** Fecha esperada de resolución. Sólo tiene sentido en curso agudo/subagudo. */
   readonly expectedResolutionAt?: Date;
+  /** Hallazgos y justificación clínica (Patch v4.1.3). Narrativa libre. */
+  readonly noteText?: string;
 }
 
 /**

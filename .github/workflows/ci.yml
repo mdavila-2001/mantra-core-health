@@ -9,11 +9,22 @@
 name: CI
 
 # Desde el 18/08 corre en un runner propio (ver los jobs), que es una máquina
-# del equipo y no una flota elástica: el disparo se acota a `pull_request` para
-# que la batería llegue cuando sirve —antes de mergear— sin duplicar cada
-# corrida con el `push` que sigue al merge.
+# del equipo y no una flota elástica. Hasta el 24/08 el disparo se acotaba a
+# `pull_request` para no duplicar cada corrida con el `push` que sigue al merge.
+#
+# Ese ahorro salió caro: sin disparo por `push`, **nadie construía `dev`**. El
+# paquete inicial creció de 982 kB (21/08) a 1,04 MB (23/08), cruzó el techo de
+# 1 MB con el #212 y la rama principal quedó seis días sin compilar sin que nada
+# avisara. La última corrida sobre `dev` era del 18/08.
+#
+# El `push` sobre `dev` es el único que reconstruye la rama principal después de
+# cada merge: no impide que entre algo roto —eso lo hace el gancho `pre-push` de
+# `.githooks/`, que corre antes y en la máquina de quien empuja— pero baja el
+# tiempo de descubrimiento de seis días a un par de minutos.
 on:
   pull_request:
+  push:
+    branches: [dev]
   # Para lanzar a mano la regresión completa de extremo a extremo antes de un despliegue,
   # sin esperar a que algo llegue a `master`.
   workflow_dispatch:
@@ -107,6 +118,13 @@ jobs:
       # y dejaría la pantalla en blanco (ya pasó con `/admin`).
       - name: Rutas contra prefijos
         run: node scripts/check-route-prefixes.mjs
+
+      # Un formulario de este sistema se sirve de a una página, con un tope de
+      # cuatro campos. La regla vive en `MAX_CAMPOS_POR_PAGINA` y la hace cumplir
+      # este script; sin esta etapa era un guardarraíl que sólo corría cuando
+      # alguien se acordaba de correrlo a mano, que es no correr.
+      - name: Formularios paginados
+        run: node scripts/check-form-pages.mjs
 
       # El catálogo tipado y `styles.css` declaran lo mismo, en ambos sentidos.
       - name: Tokens del sistema de diseño

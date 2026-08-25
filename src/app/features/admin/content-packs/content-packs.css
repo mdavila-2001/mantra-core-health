@@ -1,0 +1,87 @@
+/* ============================================================================
+    Los paquetes de contenido.
+
+    Cada paquete es una tarjeta que se lee entera y termina en su acción: qué
+    trae, cuánto pesa, aplicar, y —cuando ya se aplicó— qué dejó. Mobile-first
+    como el resto del armazón.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.paquetes__nota {
+  display: block;
+  margin-block: var(--sp-4);
+}
+
+.paquetes__lista {
+  display: grid;
+  gap: var(--sp-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.paquetes__item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+}
+
+.paquetes__encabezado {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: space-between;
+}
+
+.paquetes__titulo {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* El tamaño en cifras tabulares: son números que se comparan entre tarjetas. */
+.paquetes__tamano {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.paquetes__descripcion {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.paquetes__acciones {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* El resultado se lee como una ficha de datos, no como prosa: son cifras que
+   se comparan entre sí y con la corrida anterior. */
+.paquetes__resultado {
+  border-top: 1px solid var(--border-default);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0;
+  padding-block-start: var(--sp-3);
+}
+
+.paquetes__resultado dt {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.paquetes__resultado dd {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin: 0;
+}

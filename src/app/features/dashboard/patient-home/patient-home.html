@@ -4,8 +4,34 @@
 <app-page-header
   data-testid="mi-salud"
   [title]="nombre() === '' ? 'Mi salud' : 'Hola, ' + nombre()"
-  subtitle="Tus turnos, tus recetas y tu historia, en un solo lugar."
+  subtitle="Contanos qué te pasa y te decimos a quién ver. Abajo, tus turnos y tu historia."
 />
+
+<!-- ─── C5 del plan de UX del 22/08/2026 ────────────────────────────────────
+     «La primera pantalla al paciente es de síntomas».
+
+     Va **encabezando** el panel y no reemplazándolo: la pregunta que trae a
+     alguien que no sabe a quién consultar es «¿qué me pasa?», y ésa ahora es
+     lo primero que ve. Pero al que ya tiene turno para mañana la pregunta que
+     lo trae es «¿cuándo era?», y borrar esa tarjeta para poner la otra sería
+     cambiar un problema por el simétrico.
+
+     Lo demás baja un renglón, que es exactamente lo que el plan pedía: el
+     buscador clásico deja de ser la puerta y pasa a ser el camino de quien ya
+     sabe a quién busca. -->
+<app-card variant="outlined" padding="lg" class="mi-salud__sintomas" data-testid="mi-salud-sintomas">
+  <!-- `@defer` y no un import normal: la tabla de síntomas con sus sinónimos
+       pesa, y el panel del paciente viaja en el bundle **inicial** —es el
+       destino del login—. Metida de frente pasaba el presupuesto de 1 MB por
+       21 kB, que los paga todo el mundo en la primera carga. `on immediate`
+       la trae apenas la aplicación queda quieta: quien entra a contar qué le
+       pasa no espera nada. -->
+  @defer (on immediate) {
+    <app-symptom-check />
+  } @placeholder {
+    <p class="mi-salud__texto">¿Qué te pasa? Contanos y te decimos a quién ver.</p>
+  }
+</app-card>
 
 @switch (estado().status) {
   @case ('loading') {
@@ -54,7 +80,18 @@
             @if (turno.startAt) {
               <p class="mi-salud__dato">
                 {{ turno.startAt | date: "EEEE d 'de' MMMM" }}
-                <span class="mi-salud__hora">a las {{ turno.startAt | date: 'HH:mm' }}</span>
+                <!-- Inicio **y fin** (D1 del plan de UX): «a las 09:30» no dice
+                     cuánto dura, que es lo que decide si hay que pedir permiso
+                     media mañana o la mañana entera. `endAt` puede faltar en una
+                     reserva sin cupo, y entonces se dice sólo la hora de inicio
+                     en vez de inventar una duración. -->
+                <span class="mi-salud__hora">
+                  @if (turno.endAt) {
+                    de {{ turno.startAt | date: 'HH:mm' }} a {{ turno.endAt | date: 'HH:mm' }}
+                  } @else {
+                    a las {{ turno.startAt | date: 'HH:mm' }}
+                  }
+                </span>
               </p>
             }
             <a app-button variant="outline" size="sm" [routerLink]="misTurnos">

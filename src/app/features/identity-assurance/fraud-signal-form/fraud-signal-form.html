@@ -35,92 +35,12 @@
     <app-alert appAnuncio tone="error" class="m27__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section legend="Qué caso" description="El expediente sobre el que pesa la sospecha.">
-      <app-form-field
-        label="Caso de verificación"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.caseId.touched && form.controls.caseId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="caseId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="La señal"
-      description="Qué se sospecha, con qué gravedad y con cuánta certeza."
-    >
-      <app-form-field
-        label="Tipo de señal (concepto)"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.signalTypeConceptId.touched &&
-          form.controls.signalTypeConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="signalTypeConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Severidad (concepto)"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.severityConceptId.touched && form.controls.severityConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="severityConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Puntaje de confianza"
-        hint="Opcional: entre 0 y 1, como 0.75. Viaja como texto."
-        [errorMessage]="
-          form.controls.confidenceScore.touched && form.controls.confidenceScore.invalid
-            ? scoreError
-            : ''
-        "
-      >
-        <app-input formControlName="confidenceScore" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Fuente (concepto)"
-        hint="Opcional: de dónde salió la señal — un check, un operador, un sistema."
-        [errorMessage]="
-          form.controls.sourceConceptId.touched && form.controls.sourceConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="sourceConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Referencia a la evidencia"
-        hint="Opcional: dónde está lo que respalda la sospecha (hasta 200 caracteres)."
-        [errorMessage]="
-          form.controls.evidenceReference.touched && form.controls.evidenceReference.invalid
-            ? 'Hasta 200 caracteres.'
-            : ''
-        "
-      >
-        <app-input formControlName="evidenceReference" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Registrar señal"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Registrar señal de fraude"
+  submitLabel="Registrar señal"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

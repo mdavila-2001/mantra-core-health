@@ -31,81 +31,12 @@
     <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Qué se revisa"
-      description="La versión tiene que estar en borrador: lo publicado ya pasó por acá."
-    >
-      <app-form-field
-        label="Identificador de la versión"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          form.controls.versionId.touched && form.controls.versionId.invalid ? uuidError : ''
-        "
-      >
-        <app-input formControlName="versionId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Tipo de revisión"
-        [required]="true"
-        hint="Identificador del concepto de tipo (UUID)."
-        [errorMessage]="
-          form.controls.reviewTypeConceptId.touched &&
-          form.controls.reviewTypeConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="reviewTypeConceptId" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section
-      legend="Veredicto"
-      description="Un rechazo bloquea la publicación de la versión; los detalles quedan con la revisión."
-    >
-      <app-form-field label="Resultado" [required]="true">
-        <app-radio-group [value]="outcome()" (valueChange)="elegirVeredicto($event)">
-          <app-radio value="APPROVED" label="Aprobada" />
-          <app-radio value="REJECTED" label="Rechazada" />
-        </app-radio-group>
-      </app-form-field>
-
-      <app-form-field
-        label="Revisor automatizado"
-        hint="Opcional: el agente que corrió la revisión, si no fue una persona (UUID)."
-        [errorMessage]="
-          form.controls.reviewerAgentId.touched && form.controls.reviewerAgentId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="reviewerAgentId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Problemas encontrados"
-        hint="Opcional: un objeto JSON con el detalle de lo que falló."
-        [errorMessage]="
-          issuesInvalidos()
-            ? 'Tiene que ser un objeto JSON válido, como {&quot;faltantes&quot;: 2}.'
-            : ''
-        "
-      >
-        <app-textarea [(value)]="issuesJson" autoResize [disabled]="isSubmitting()" />
-      </app-form-field>
-
-      <app-form-field label="Notas" hint="Opcional: lo que el detalle estructurado no captura.">
-        <app-textarea [(value)]="notes" autoResize [disabled]="isSubmitting()" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Registrar revisión"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Registrar revisión de calidad"
+  submitLabel="Registrar revisión"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

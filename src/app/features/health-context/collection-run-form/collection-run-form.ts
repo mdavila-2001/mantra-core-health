@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { HealthContextClient } from '../../../core/data-access/health-context/health-context.client';
 import type {
@@ -12,14 +12,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../shared/components/molecules/radio-group/radio-group';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 const DISPARADORES: readonly CollectionTrigger[] = ['SCHEDULED', 'MANUAL'];
@@ -40,17 +36,11 @@ const DISPARADORES: readonly CollectionTrigger[] = ['SCHEDULED', 'MANUAL'];
 @Component({
   selector: 'app-collection-run-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    Radio,
-    RadioGroup,
+    PaginatedForm,
   ],
   templateUrl: './collection-run-form.html',
   styleUrl: '../m44.css',
@@ -63,6 +53,33 @@ export class CollectionRunForm {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly uuidHint = UUID_HINT;
   protected readonly uuidError = UUID_ERROR;
+
+/**
+   * El formulario, servido de a una página.
+   *
+   * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
+   * declara qué campo va en qué sección. Las secciones que no entran en una
+   * página se parten conservando su nombre.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'Identidad de la corrida',
+      hint: 'La clave hace la corrida idempotente: reintentar con la misma clave no duplica nada.',
+      campos: [
+        { key: 'idempotencyKey', label: 'Clave de idempotencia', hint: 'Única por marca de recolección, como msal-2026-08-11. Máx. 200 caracteres.', control: 'text', required: true, mensajeDeError: 'Escribí la clave de idempotencia (máx. 200 caracteres).' },
+        { key: 'trigger', label: 'Qué la dispara', control: 'radio', options: [{ value: 'MANUAL', label: 'Manual: alguien la pide ahora' }, { value: 'SCHEDULED', label: 'Programada: la trae una agenda' }], required: true },
+      ],
+    },
+    {
+      titulo: 'De dónde sale',
+      hint: 'O viene de una agenda, o se declara el agente y el país: deducirlos sería inventarlos.',
+      campos: [
+        { key: 'scheduleId', label: 'Agenda', hint: 'Si la corrida sale de una programación, su identificador (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'agentId', label: 'Agente', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'countryConceptId', label: 'País', hint: 'Identificador del concepto de país (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
+      ],
+    },
+  ]);
 
   protected readonly form = new FormGroup({
     idempotencyKey: new FormControl('', {
@@ -81,9 +98,11 @@ export class CollectionRunForm {
       nonNullable: true,
       validators: [Validators.pattern(UUID_PATTERN)],
     }),
+    trigger: new FormControl<CollectionTrigger | null>(null, {
+      validators: [Validators.required],
+    }),
   });
 
-  protected readonly trigger = signal<CollectionTrigger | null>(null);
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -109,22 +128,21 @@ export class CollectionRunForm {
     return !tieneAgenda && !tieneManual;
   }
 
-  protected elegirDisparador(valor: unknown): void {
-    this.trigger.set(opcionDe(DISPARADORES, valor));
-  }
-
   protected submit(): void {
     if (this.isSubmitting()) {
       return;
     }
 
-    const disparador = this.trigger();
-    if (this.form.invalid || disparador === null || this.faltaOrigen()) {
+    if (this.form.invalid || this.faltaOrigen()) {
       this.form.markAllAsTouched();
       return;
     }
 
     const valores = this.form.getRawValue();
+    const disparador = opcionDe(DISPARADORES, valores.trigger);
+    if (disparador === null) {
+      return;
+    }
     const agenda = valores.scheduleId.trim();
     const agente = valores.agentId.trim();
     const pais = valores.countryConceptId.trim();
@@ -150,7 +168,6 @@ export class CollectionRunForm {
 
   protected otraCorrida(): void {
     this.form.reset();
-    this.trigger.set(null);
     this.started.set(null);
     this.state.set(ready(null));
   }

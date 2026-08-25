@@ -2,7 +2,7 @@
      arriba y no en cada capa para que TODA la escena mida contra el mismo
      rectángulo: si cada velo midiera contra el suyo, el paralaje tiraría de
      cada uno para un lado distinto y se perdería la sensación de profundidad. -->
-<div class="auth-split" appPointerScene>
+<div class="auth-split" [class.auth-split--full]="contentWidth() === 'full'" appPointerScene>
   <!-- Columna de marca. `aria-hidden` porque es decorativa: lo que importa está
        en el formulario, y anunciarla duplicaría el mensaje.
        El diseño original lleva una fotografía; usamos un degradado de marca
@@ -179,7 +179,11 @@
          atributo de este componente y no alcanza a un hijo que viene del
          componente de la pantalla: la limitación de ancho no se aplicaba. -->
     <div class="auth-split__content">
-      <div class="auth-split__slot" [class.auth-split__slot--wide]="contentWidth() === 'wide'">
+      <div
+        class="auth-split__slot"
+        [class.auth-split__slot--wide]="contentWidth() === 'wide'"
+        [class.auth-split__slot--full]="contentWidth() === 'full'"
+      >
         <ng-content />
       </div>
     </div>

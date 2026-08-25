@@ -181,6 +181,31 @@
       }
     </app-card>
 
+    <!-- ─── Escenarios de demostración ───────────────────────────────────
+         Un clic llena el diagnóstico Y su receta coherente. Existe sólo donde
+         `PUBLIC_DEMO_PRESETS` lo pidió; los bloques de abajo tienen además su
+         barra individual, con el mismo gate. -->
+    @if (demoActiva) {
+      <div
+        class="expediente__demo expediente__ancho"
+        data-testid="expediente-escenarios-demo"
+      >
+        <span class="expediente__demo-titulo">Escenarios de demostración</span>
+        <app-badge variant="info">Demo</app-badge>
+        @for (escenario of escenariosDemo; track escenario.label) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            (clicked)="aplicarEscenarioDemo(escenario)"
+          >
+            {{ escenario.label }}
+          </button>
+        }
+      </div>
+    }
+
     <!-- ─── La receta ────────────────────────────────────────────────────
          Pegada al encuentro y no dentro de las pestañas: el recorrido es
          check-in → ficha → recetar ahí mismo, y la pestaña de medicación es
@@ -198,6 +223,7 @@
       [encounterId]="encuentroParaRecetar()"
       [recetas]="recetas()"
       [medicacionActivaConceptIds]="medicacionActivaConceptIds()"
+      [diagnosticos]="diagnosticosParaReceta()"
       (cambio)="recargar()"
       (descargar)="descargarReceta($event)"
     />
@@ -231,14 +257,20 @@
     />
 
     <!-- ─── El histórico de procedimientos ───────────────────────────────
-         Cirugías y odontología (punto 7). Sin `[encounterId]` y sin
-         `(cambio)`, a diferencia de los tres de arriba, y por el mismo motivo
-         en los dos casos: no cuelga del encuentro abierto. Un histórico es de
-         la persona, no de la consulta de hoy —se lee igual sin encuentro—, y
-         lo único que se escribe desde acá, el tratamiento odontológico, no
-         aparece en `GET /clinical/patients/:id/summary`: el bloque relee lo
-         suyo y avisar acá recargaría cinco bloques que no cambiaron. -->
-    <app-procedures-block [patientProfileId]="pacienteDeLaFicha()" />
+         Cirugías y odontología (punto 7). Sigue SIN `(cambio)`, a diferencia
+         de los tres de arriba: lo que se escribe acá no aparece en
+         `GET /clinical/patients/:id/summary`, el bloque relee lo suyo, y
+         avisar recargaría cinco bloques que no cambiaron.
+
+         `[encounterId]` sí baja, y no contradice lo anterior: el histórico se
+         LEE sin encuentro —es de la persona, no de la consulta de hoy—, pero
+         un tratamiento que se registra durante una consulta pertenece a esa
+         consulta. Si no hay ninguna abierta viaja en `null` y la clave se
+         omite, que es como funcionaba hasta ahora. -->
+    <app-procedures-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="encuentroParaRecetar()"
+    />
 
     <!-- ─── La internación ───────────────────────────────────────────────
          Punto 8 del reclamo. Va al final de los bloques de escritura y con la
@@ -258,6 +290,7 @@
          vez de una tabla propia — es lo que le da su esquema de campos. -->
     <app-specialty-form-block
       class="expediente__ancho"
+      [patientProfileId]="pacienteDeLaFicha()"
       [encounterId]="encuentroParaRecetar()"
       (cambio)="recargar()"
     />

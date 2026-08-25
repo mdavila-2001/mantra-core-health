@@ -1,0 +1,126 @@
+<app-page-header
+  title="Nueva sub-organización"
+  subtitle="Una unidad con identidad propia dentro de esta organización. Puede ser de otro tipo que su madre."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (errorMessage(); as mensaje) {
+  <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-filial-error">{{
+    mensaje
+  }}</app-alert>
+}
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="alta-filial-form">
+  <app-form-section legend="Identificación" description="Con qué se la encuentra en la plataforma.">
+    <app-form-field
+      label="Código"
+      hint="Único en toda la plataforma, no sólo dentro de la organización madre."
+      [required]="true"
+      [errorMessage]="
+        codigoEnConflicto()
+          ? 'Ya existe una organización con este código. Probá con otro.'
+          : form.controls.code.touched && form.controls.code.invalid
+            ? 'Escribí el código de la sub-organización.'
+            : ''
+      "
+    >
+      <app-input formControlName="code" type="text" testId="alta-filial-codigo" />
+    </app-form-field>
+
+    <app-form-field
+      label="Razón social"
+      [required]="true"
+      [errorMessage]="
+        form.controls.legalName.touched && form.controls.legalName.invalid
+          ? 'Escribí la razón social (hasta 300 caracteres).'
+          : ''
+      "
+    >
+      <app-input formControlName="legalName" type="text" testId="alta-filial-razon" />
+    </app-form-field>
+  </app-form-section>
+
+  <app-form-section
+    legend="Clasificación"
+    description="No se hereda de la organización madre: una red puede tener un hospital y una farmacia."
+  >
+    <app-form-field
+      label="Tipo"
+      [required]="true"
+      [errorMessage]="tipoFaltante() ? 'Elegí el tipo de la sub-organización.' : ''"
+    >
+      <app-select
+        [value]="tipo()"
+        (valueChange)="cambiarTipo($event)"
+        [options]="opcionesDeTipo"
+        placeholder="Elegí un tipo"
+      />
+    </app-form-field>
+
+    @if (esTerritorial()) {
+      <app-form-field
+        label="País"
+        hint="Buscá por nombre; el código acompaña para distinguir homónimos."
+        [required]="true"
+        [errorMessage]="paisFaltante() ? 'Elegí el país donde opera.' : ''"
+      >
+        <app-reference-combobox
+          [selected]="pais()"
+          [options]="candidatosPais()"
+          [loading]="buscandoPais()"
+          placeholder="Nombre del país"
+          emptyMessage="Ningún concepto coincide"
+          (searched)="buscarPais($event)"
+          (selectionChange)="pais.set($event)"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Jurisdicción"
+        hint="La jurisdicción regulatoria, por ejemplo «Bolivia · JUR_BO»."
+        [required]="true"
+        [errorMessage]="jurisdiccionFaltante() ? 'Elegí la jurisdicción.' : ''"
+      >
+        <app-reference-combobox
+          [selected]="jurisdiccion()"
+          [options]="candidatosJurisdiccion()"
+          [loading]="buscandoJurisdiccion()"
+          placeholder="Nombre de la jurisdicción"
+          emptyMessage="Ningún concepto coincide"
+          (searched)="buscarJurisdiccion($event)"
+          (selectionChange)="jurisdiccion.set($event)"
+        />
+      </app-form-field>
+    }
+  </app-form-section>
+
+  <app-form-section
+    legend="Quién la administra"
+    description="La cuenta tiene que existir. Queda como administradora de la sub-organización."
+  >
+    <app-form-field
+      label="Administrador"
+      hint="Buscá por nombre o correo y elegí de la lista."
+      [required]="true"
+      [errorMessage]="adminFaltante() ? 'Elegí quién va a administrarla.' : ''"
+    >
+      <app-reference-combobox
+        [selected]="administrador()"
+        [options]="candidatosAdmin()"
+        [loading]="buscandoAdmin()"
+        placeholder="Nombre o correo"
+        emptyMessage="Ninguna cuenta coincide"
+        (searched)="buscarAdministrador($event)"
+        (selectionChange)="administrador.set($event)"
+      />
+    </app-form-field>
+  </app-form-section>
+
+  <app-form-actions
+    submitLabel="Crear sub-organización"
+    cancelLabel="Cancelar"
+    [pending]="enviando()"
+    (submitted)="submit()"
+    (cancelled)="cancelar()"
+  />
+</form>

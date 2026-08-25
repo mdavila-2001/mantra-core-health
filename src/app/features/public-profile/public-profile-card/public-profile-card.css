@@ -1,0 +1,261 @@
+/* La ficha pública. Portada ancha, retrato montado sobre ella y la identidad
+   debajo: la anatomía que cualquiera reconoce de un perfil profesional, y
+   reconocerla es la mitad de entender la pantalla sin leerla.
+
+   Colores del sistema (`redsat.css`): la portada es el degradado de marca
+   —petróleo a aguamarina, con el mismo halo que usa el nav— y no un azul
+   cualquiera. */
+
+.perfil {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+/* --- Encabezado ---------------------------------------------------------- */
+
+.perfil__encabezado {
+  border: 1px solid var(--filete);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+}
+
+.perfil__portada {
+  block-size: 12rem;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Sin imagen, el degradado de marca: un fondo, no un hueco. Una franja gris se
+   lee como una imagen que no cargó. */
+.perfil__portada--lisa {
+  background-image:
+    radial-gradient(70% 120% at 15% 0%, var(--nav-halo-a) 0%, var(--nav-halo-0) 70%),
+    radial-gradient(60% 100% at 85% 10%, var(--nav-halo-c) 0%, var(--nav-halo-0) 70%),
+    linear-gradient(115deg, var(--petroleo-x) 0%, var(--petroleo) 55%, var(--aguamarina) 130%);
+}
+
+.perfil__identidad {
+  position: relative;
+  padding: 0 var(--e5) var(--e5);
+}
+
+.perfil__retrato {
+  display: grid;
+  place-items: center;
+  inline-size: 9.5rem;
+  block-size: 9.5rem;
+  margin-block-start: -4.75rem;
+  border-radius: var(--r-pill);
+  border: 5px solid var(--sup-tarjeta);
+  background: var(--menta);
+  box-shadow: var(--sombra-1);
+  object-fit: cover;
+}
+
+.perfil__retrato--iniciales {
+  color: var(--tinta-marca);
+  font-family: var(--f-titulo);
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* La identidad y las acciones conviven en una fila en pantalla ancha: dejar el
+   botón debajo del nombre desperdiciaba media tarjeta en blanco. */
+.perfil__datos {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: var(--e3) var(--e4);
+  margin-block-start: var(--e4);
+}
+
+.perfil__nombre {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+  font-family: var(--f-titulo);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--tinta-marca);
+}
+
+.perfil__sello {
+  display: inline-flex;
+  color: var(--aguamarina);
+}
+
+.perfil__sello svg {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
+.perfil__titular {
+  grid-column: 1;
+  margin: var(--e2) 0 0;
+  font-size: 17px;
+  color: var(--tinta);
+}
+
+.perfil__linea {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: var(--e2) 0 0;
+  color: var(--tinta-2);
+  font-size: 14px;
+}
+
+.perfil__tipo {
+  padding: 2px var(--e2);
+  border-radius: var(--r-pill);
+  background: var(--neutro-bg);
+  color: var(--tinta-2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.perfil__punto {
+  color: var(--tinta-3);
+}
+
+.perfil__estrella {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--tinta);
+  font-weight: 700;
+}
+
+.perfil__estrella svg {
+  inline-size: 15px;
+  block-size: 15px;
+  color: var(--ambar);
+}
+
+/* Las acciones van a la derecha del nombre, alineadas con su base. */
+.perfil__acciones {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin: 0;
+}
+
+.perfil__acciones svg {
+  inline-size: 17px;
+  block-size: 17px;
+}
+
+/* --- Secciones ----------------------------------------------------------- */
+
+/* Las secciones siguen siendo `app-card` del sistema —papel, filete, sombra y
+   relleno son suyos—: replicarlos acá habría dado dos definiciones de tarjeta
+   que se separan en la primera revisión del sistema de diseño. Lo único propio
+   es que no traigan margen. */
+.perfil__seccion {
+  margin: 0;
+}
+
+.perfil__parrafo {
+  margin: 0;
+  max-inline-size: 78ch;
+  color: var(--tinta);
+  white-space: pre-wrap;
+}
+
+/* Las especialidades como pastillas: son etiquetas, y una lista con viñetas
+   las convierte en un inventario. */
+.perfil__aptitudes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.perfil__aptitud {
+  padding: 5px var(--e3);
+  border-radius: var(--r-pill);
+  background: var(--info-bg);
+  color: var(--tinta-marca);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.perfil__donde {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+  color: var(--tinta);
+}
+
+.perfil__donde svg {
+  flex: none;
+  inline-size: 18px;
+  block-size: 18px;
+  color: var(--aguamarina);
+}
+
+.perfil__publicaciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.perfil__publicacion + .perfil__publicacion {
+  padding-block-start: var(--e4);
+  border-block-start: 1px solid var(--filete-2);
+}
+
+.perfil__publicacion .overline {
+  margin: 0 0 var(--e2);
+}
+
+@media (max-width: 48rem) {
+  .perfil__datos {
+    grid-template-columns: 1fr;
+  }
+
+  .perfil__acciones {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 40rem) {
+  .perfil__portada {
+    block-size: 7.5rem;
+  }
+
+  .perfil__identidad {
+    padding-inline: var(--e4);
+    padding-block-end: var(--e4);
+  }
+
+  .perfil__retrato {
+    inline-size: 7rem;
+    block-size: 7rem;
+    margin-block-start: -3.5rem;
+  }
+
+  .perfil__nombre {
+    font-size: 24px;
+  }
+}

@@ -57,10 +57,14 @@ test.describe('Carril E3 · dónde comprar mi receta', () => {
     const paciente = await crearPaciente(api);
     await entrar(page, paciente);
 
-    // 1 · La historia recién nacida: cero recetas, cero botones de compra.
+    // 1 · La historia recién nacida es un estado vacío DELIBERADO (`estaVacia`
+    // → `empty()`, desde C09): sin secciones no existe el encabezado «Recetas»
+    // — y por lo tanto tampoco ningún botón de compra.
     await irA(page, '/my-account/medical-record');
     await estable(page);
-    await expect(page.getByRole('heading', { name: /Recetas/i })).toBeVisible();
+    await expect(
+      page.getByText('Todavía no hay atenciones registradas en tu historia.'),
+    ).toBeVisible();
     await expect(page.getByTestId('historia-donde-comprar')).toHaveCount(0);
 
     // 2 · La pantalla de compra con una receta que no existe en la historia:

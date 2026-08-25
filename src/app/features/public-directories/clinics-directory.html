@@ -1,0 +1,15 @@
+<!-- La anatomía es la de los otros tres directorios y la pone
+     `app-directory-page` (A7 del plan de UX). -->
+<app-directory-page
+  titulo="Directorio de clínicas"
+  subtitulo="Clínicas, hospitales y centros de salud con ficha pública, agrupados por ciudad."
+  etiquetaBusqueda="Buscar por nombre de la clínica o el hospital"
+  [filtros]="filtros()"
+  [estado]="estado()"
+  [grupos]="tramos()"
+  [sustantivo]="sustantivo"
+  [aviso]="aviso()"
+  [textoSinCoincidencias]="sinCoincidencias()"
+  (filtrosCambiaron)="filtrar($event)"
+  (reintentar)="cargar()"
+/>

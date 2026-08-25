@@ -1,0 +1,84 @@
+<app-view-state-host [state]="state()" (retry)="cargar()">
+  @if (resuelta(); as publica) {
+    @switch (publica.tipo) {
+      @case ('vigente') {
+        @if (vigente(); as campana) {
+          <article class="promo" data-testid="promo-detalle">
+            <header class="promo__cabecera">
+              <p class="promo__farmacia">{{ campana.farmacia }}</p>
+              <h1 class="promo__titulo">{{ campana.titulo }}</h1>
+              <p class="promo__vigencia">
+                Válida hasta el {{ campana.hasta | date: 'd \'de\' MMMM \'de\' y' }}
+              </p>
+              @if (campana.descripcion !== '') {
+                <p class="promo__descripcion">{{ campana.descripcion }}</p>
+              }
+              @if (!campana.sembrada) {
+                <p class="promo__aviso" role="note">
+                  <app-badge variant="info" data-testid="promo-chip-demo">
+                    DEMO — esta campaña vive en la sesión de quien la creó
+                  </app-badge>
+                </p>
+              }
+            </header>
+
+            <h2 class="promo__subtitulo">Qué incluye</h2>
+            <ul class="promo__productos" data-testid="promo-productos">
+              @for (fila of productos(); track fila.producto.productId) {
+                <li class="promo__producto">
+                  <div class="promo__producto-datos">
+                    <span class="promo__principal">{{ fila.producto.nombre }}</span>
+                    @if (fila.producto.presentacion !== null) {
+                      <span class="promo__secundario">{{ fila.producto.presentacion }}</span>
+                    }
+                  </div>
+                  <div class="promo__precios">
+                    <s class="promo__antes cifras-tabulares">
+                      <span class="sr-only">Antes:</span>
+                      {{ fila.producto.precioNormal }} {{ fila.producto.moneda }}
+                    </s>
+                    <strong class="promo__ahora cifras-tabulares">
+                      <span class="sr-only">Precio de campaña:</span>
+                      {{ fila.producto.precioPromocional }} {{ fila.producto.moneda }}
+                    </strong>
+                    @if (fila.ahorro !== null) {
+                      <app-badge variant="success">{{ fila.ahorro }} % menos</app-badge>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+
+            <p class="promo__secundario">
+              Los precios son los que publicó la farmacia. Para comprar, pedí desde tu receta en
+              «dónde comprar».
+            </p>
+          </article>
+        }
+      }
+
+      @case ('programada') {
+        <div class="promo promo--sin-contenido" data-testid="promo-programada">
+          <h1 class="promo__titulo">{{ publica.titulo }}</h1>
+          <p class="promo__vigencia">
+            Esta promoción todavía no empezó: arranca el
+            {{ publica.desde | date: 'd \'de\' MMMM' }}.
+          </p>
+        </div>
+      }
+
+      @case ('terminada') {
+        <div class="promo promo--sin-contenido" data-testid="promo-terminada">
+          <h1 class="promo__titulo">{{ publica.titulo }}</h1>
+          <p class="promo__vigencia">
+            Esta promoción terminó el {{ publica.hasta | date: 'd \'de\' MMMM \'de\' y' }}.
+          </p>
+          <p class="promo__secundario">
+            Los precios que tenía ya no valen, así que no los mostramos. Buscá la farmacia para ver
+            si tiene alguna vigente.
+          </p>
+        </div>
+      }
+    }
+  }
+</app-view-state-host>

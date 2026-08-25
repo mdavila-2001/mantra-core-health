@@ -33,74 +33,12 @@
     <app-alert appAnuncio tone="error" class="m44__alert">{{ mensaje }}</app-alert>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-section
-      legend="Dónde vive"
-      description="País, dominio y clave forman la identidad del contexto: la combinación repetida es un duplicado."
-    >
-      <app-form-field
-        label="País"
-        [required]="true"
-        hint="Identificador del concepto de país (UUID)."
-        [errorMessage]="
-          form.controls.countryConceptId.touched && form.controls.countryConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="countryConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Dominio del contexto"
-        [required]="true"
-        hint="Identificador del concepto de dominio (UUID)."
-        [errorMessage]="
-          form.controls.contextDomainConceptId.touched &&
-          form.controls.contextDomainConceptId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="contextDomainConceptId" type="text" />
-      </app-form-field>
-
-      <app-form-field
-        label="Clave del contexto"
-        [required]="true"
-        hint="La clave dentro del dominio, como cobertura.publica. Máx. 200 caracteres."
-        [errorMessage]="
-          form.controls.contextKey.touched && form.controls.contextKey.invalid
-            ? 'Escribí la clave del contexto (máx. 200 caracteres).'
-            : ''
-        "
-      >
-        <app-input formControlName="contextKey" type="text" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-section legend="Cómo se presenta" description="El título es el que se lee en los reportes.">
-      <app-form-field
-        label="Título"
-        [required]="true"
-        [errorMessage]="
-          form.controls.title.touched && form.controls.title.invalid
-            ? 'Escribí el título del contexto (máx. 300 caracteres).'
-            : ''
-        "
-      >
-        <app-input formControlName="title" type="text" />
-      </app-form-field>
-
-      <app-form-field label="Descripción" hint="Opcional.">
-        <app-textarea [(value)]="description" autoResize [disabled]="isSubmitting()" />
-      </app-form-field>
-    </app-form-section>
-
-    <app-form-actions
-      submitLabel="Crear contexto"
-      [pending]="isSubmitting()"
-      (submitted)="submit()"
-    />
-  </form>
+  <app-paginated-form
+  [paginas]="paginas"
+  [form]="form"
+  label="Nuevo contexto de país"
+  submitLabel="Crear contexto"
+  [pending]="isSubmitting()"
+  (enviado)="submit()"
+/>
 }

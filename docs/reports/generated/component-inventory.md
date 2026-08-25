@@ -2,12 +2,13 @@
 
 # Inventario de componentes y servicios
 
-355 componentes y 61 servicios inyectables, leídos de `src/`.
+383 componentes y 73 servicios inyectables, leídos de `src/`.
 
-## Átomo (17)
+## Átomo (18)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
+| `app-account-icon` | `AccountIcon` | `name` | — | — | OnPush | **no** |
 | `app-avatar` | `Avatar` | `src`, `name`, `initials`, `size`, `status`, `alt` | — | — | OnPush | sí |
 | `app-badge` | `Badge` | `variant`, `size`, `value`, `max`, `dotOnly`, `label` | — | — | OnPush | sí |
 | `a[app-button]` | `AppButtonLink` | `variant`, `size`, `disabled`, `iconOnly` | — | — | OnPush | sí |
@@ -26,7 +27,7 @@
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (25)
+## Molécula (26)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -48,6 +49,7 @@
 | `app-radio-group` | `RadioGroup` | `disabled`, `hasError`, `name` | — | `value` | OnPush | sí |
 | `app-radio` | `Radio` | `value`, `label`, `disabled` | — | — | OnPush | **no** |
 | `app-reference-combobox` | `ReferenceCombobox` | `selected`, `options`, `loading`, `disabled`, `placeholder`, `debounceMs`, `minQueryLength`, `label`, `emptyMessage` | `searched`, `selectionChange` | `value` | OnPush | sí |
+| `app-rich-text-editor` | `RichTextEditor` | `label`, `placeholder`, `readOnly` | `edited` | `html` | OnPush | sí |
 | `app-search-field` | `SearchField` | `placeholder`, `debounceMs`, `loading`, `disabled`, `label` | `searched` | `value` | OnPush | sí |
 | `li[app-search-result]` | `SearchResult` | `resultado` | — | — | OnPush | sí |
 | `app-stepper` | `Stepper` | `steps`, `label` | — | — | OnPush | sí |
@@ -56,7 +58,7 @@
 | `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
 
-## Organismo (18)
+## Organismo (21)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -69,17 +71,20 @@
 | `app-form-actions` | `FormActions` | `submitLabel`, `cancelLabel`, `pending`, `disabled`, `destructive`, `correctionOnly`, `confirmTitle`, `confirmMessage` | `submitted`, `cancelled` | — | OnPush | sí |
 | `app-form-section` | `FormSection` | `legend`, `description`, `collapsible`, `invalid` | — | `expanded` | OnPush | sí |
 | `header[app-header]` | `Header` | `user`, `tenants`, `activeTenantId`, `showMenuButton`, `menuOpen`, `navPanelId` | `menuToggled`, `logoutRequested`, `tenantChanged` | — | OnPush | sí |
+| `app-map` | `AppMap` | `pines`, `etiqueta`, `centro`, `zoom` | `pinElegido` | `seleccionado` | OnPush | sí |
 | `app-notification-bell` | `NotificationBell` | — | — | — | OnPush | sí |
 | `app-page-header` | `PageHeader` | `title`, `subtitle`, `breadcrumbs`, `secondaryActions` | `actionSelected` | — | OnPush | sí |
+| `app-paginated-form` | `PaginatedForm` | `paginas`, `form`, `label`, `submitLabel`, `pending`, `destructive`, `confirmTitle`, `confirmMessage`, `cancelLabel` | `enviado`, `cancelado` | — | OnPush | sí |
 | `app-shell` | `Shell` | `user`, `sections`, `tenants`, `activeTenantId`, `drawerMode` | `logoutRequested`, `tenantChanged` | — | OnPush | sí |
 | `app-side-nav` | `SideNav` | `sections`, `collapsed`, `drawer`, `open` | `closeRequested` | — | OnPush | sí |
 | `app-status-seal` | `StatusSeal` | `variant`, `label` | — | — | OnPush | sí |
 | `app-tenant-switcher` | `TenantSwitcher` | `tenants`, `activeTenantId`, `variant` | `tenantChanged` | — | OnPush | sí |
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
+| `app-tree-select` | `TreeSelect` | `groups`, `disabled`, `hasError`, `placeholder`, `dialogTitle`, `searchPlaceholder`, `emptyMessage` | — | `value` | OnPush | sí |
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (293)
+## Feature (316)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -87,7 +92,10 @@
 | `app-appointments` | `Appointments` | — | — | — | OnPush | sí |
 | `app-diagnostic-orders` | `DiagnosticOrders` | — | — | — | OnPush | sí |
 | `app-diagnostic-results` | `DiagnosticResults` | — | — | — | OnPush | sí |
+| `app-loyalty` | `Loyalty` | — | — | — | OnPush | sí |
+| `app-redeem-code` | `RedeemCode` | `comprobante` | `cerrado` | — | OnPush | sí |
 | `app-medical-record` | `MedicalRecord` | — | — | — | OnPush | sí |
+| `app-where-to-buy` | `WhereToBuy` | — | — | — | OnPush | sí |
 | `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-practitioner-profile-edit` | `PractitionerProfileEdit` | — | — | — | OnPush | sí |
@@ -96,9 +104,14 @@
 | `app-public-profile-preview` | `PublicProfilePreview` | — | — | — | OnPush | sí |
 | `app-work-history` | `WorkHistory` | `layout` | `added` | — | OnPush | sí |
 | `app-notification-preferences` | `NotificationPreferences` | — | — | — | OnPush | sí |
+| `app-new-order` | `NewOrder` | — | — | — | OnPush | sí |
+| `app-order-detail` | `OrderDetail` | — | — | — | OnPush | sí |
+| `app-order-payment` | `OrderPayment` | `pedido`, `ocupado` | `pagoSimulado` | — | OnPush | sí |
+| `app-order-receipt` | `OrderReceipt` | — | — | — | OnPush | sí |
+| `app-pharmacy-orders` | `PharmacyOrders` | — | — | — | OnPush | sí |
 | `app-questionnaire-answer` | `QuestionnaireAnswer` | — | — | — | OnPush | sí |
 | `app-questionnaires` | `Questionnaires` | — | — | — | OnPush | **no** |
-| `app-accounting` | `Accounting` | — | — | — | OnPush | **no** |
+| `app-accounting` | `Accounting` | — | — | — | OnPush | sí |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
 | `app-clinical-forms` | `ClinicalForms` | — | — | — | OnPush | sí |
 | `app-forms-catalog` | `FormsCatalog` | — | `duplicar` | — | OnPush | sí |
@@ -119,6 +132,9 @@
 | `app-agenda-create` | `AgendaCreate` | — | — | — | OnPush | sí |
 | `app-agenda` | `Agenda` | — | — | — | OnPush | sí |
 | `app-booking-new` | `BookingNew` | — | — | — | OnPush | sí |
+| `app-day-view` | `DayView` | `dia`, `cupos`, `citas`, `bloqueos`, `puedeRegistrarLlegada`, `etiquetas` | `accionPedida`, `volver` | — | OnPush | sí |
+| `app-month-view` | `MonthView` | `mes`, `cupos`, `bloqueos` | `mesElegido`, `diaElegido` | — | OnPush | sí |
+| `app-my-agenda` | `MyAgenda` | — | — | — | OnPush | sí |
 | `app-account-link-complete-form` | `AccountLinkCompleteForm` | — | — | — | OnPush | sí |
 | `app-account-link-request-form` | `AccountLinkRequestForm` | — | — | — | OnPush | sí |
 | `app-attribute-mappings-editor` | `AttributeMappingsEditor` | `disabled` | — | — | OnPush | sí |
@@ -132,26 +148,30 @@
 | `app-protocol-config-form` | `ProtocolConfigForm` | — | — | — | OnPush | sí |
 | `app-provider-form` | `ProviderForm` | — | — | — | OnPush | sí |
 | `app-provisioning-rule-form` | `ProvisioningRuleForm` | — | — | — | OnPush | sí |
-| `app-signing-key-fields` | `SigningKeyFields` | `disabled` | — | — | OnPush | sí |
 | `app-signing-key-form` | `SigningKeyForm` | — | — | — | OnPush | sí |
 | `app-tenant-binding-form` | `TenantBindingForm` | — | — | — | OnPush | sí |
 | `app-activate-account` | `ActivateAccount` | — | — | — | OnPush | sí |
 | `app-forgot-password` | `ForgotPassword` | — | — | — | OnPush | sí |
 | `app-login` | `Login` | — | — | — | OnPush | sí |
+| `app-register-account-type` | `RegisterAccountType` | — | — | — | OnPush | sí |
+| `app-register-organization` | `RegisterOrganization` | — | — | — | OnPush | sí |
 | `app-register-patient` | `RegisterPatient` | — | — | — | OnPush | sí |
 | `app-resend-verification` | `ResendVerification` | — | — | — | OnPush | sí |
 | `app-reset-password` | `ResetPassword` | — | — | — | OnPush | sí |
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
+| `app-campaign-detail` | `CampaignDetail` | — | — | — | OnPush | sí |
 | `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
 | `app-admission-block` | `AdmissionBlock` | `patientProfileId`, `encounterId`, `internaciones` | `cambio` | — | OnPush | sí |
 | `app-attachments-block` | `AttachmentsBlock` | `patientProfileId` | — | — | OnPush | sí |
 | `app-diagnosis-block` | `DiagnosisBlock` | `patientProfileId`, `encounterId` | `cambio` | — | OnPush | sí |
 | `app-diagnostics-block` | `DiagnosticsBlock` | `patientProfileId`, `encounterId` | — | — | OnPush | sí |
-| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas`, `medicacionActivaConceptIds` | `cambio`, `descargar` | — | OnPush | sí |
+| `app-free-note-block` | `FreeNoteBlock` | `patientProfileId`, `encounterId` | `guardada` | — | OnPush | sí |
+| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas`, `diagnosticos`, `medicacionActivaConceptIds` | `cambio`, `descargar` | — | OnPush | sí |
+| `app-odontogram` | `Odontogram` | `estados`, `marcas`, `seleccionada`, `readonly` | `pieza` | — | OnPush | sí |
 | `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |
-| `app-procedures-block` | `ProceduresBlock` | `patientProfileId` | — | — | OnPush | sí |
-| `app-specialty-form-block` | `SpecialtyFormBlock` | `encounterId` | `cambio` | — | OnPush | sí |
+| `app-procedures-block` | `ProceduresBlock` | `patientProfileId`, `encounterId` | — | — | OnPush | sí |
+| `app-specialty-form-block` | `SpecialtyFormBlock` | `encounterId`, `patientProfileId` | `cambio` | — | OnPush | sí |
 | `app-dashboard` | `Dashboard` | — | — | — | OnPush | sí |
 | `app-patient-home` | `PatientHome` | — | — | — | OnPush | sí |
 | `app-access-request-form` | `AccessRequestForm` | — | — | — | OnPush | sí |
@@ -171,6 +191,7 @@
 | `app-organisms-gallery` | `OrganismsGallery` | — | — | — | OnPush | **no** |
 | `app-view-state-gallery` | `ViewStateGallery` | — | — | — | OnPush | sí |
 | `app-diagnostics` | `Diagnostics` | — | — | — | OnPush | sí |
+| `app-practitioner-availability` | `PractitionerAvailability` | `practitionerProfileId`, `tenantId` | — | — | OnPush | sí |
 | `app-practitioner-detail` | `PractitionerDetail` | — | — | — | OnPush | sí |
 | `app-practitioners-directory` | `PractitionersDirectory` | — | — | — | OnPush | sí |
 | `app-error-recovery` | `ErrorRecovery` | — | — | — | OnPush | **no** |
@@ -178,6 +199,7 @@
 | `app-feed` | `Feed` | — | — | — | OnPush | sí |
 | `app-post-card` | `PostCard` | `post`, `actorProfileId`, `guardado`, `puedeReportar` | `reportar`, `cambio`, `guardarCambiado` | — | OnPush | sí |
 | `app-report-post` | `ReportPost` | `postId` | `reportado`, `cancelado` | — | OnPush | sí |
+| `app-form-builder` | `FormBuilder` | — | — | — | OnPush | sí |
 | `app-consent-revocation` | `ConsentRevocation` | — | — | — | OnPush | sí |
 | `app-geo-home` | `GeoHome` | — | — | — | OnPush | sí |
 | `app-geofence-event-form` | `GeofenceEventForm` | — | — | — | OnPush | sí |
@@ -238,6 +260,12 @@
 | `app-thread` | `Thread` | — | — | — | OnPush | sí |
 | `app-not-found` | `NotFound` | — | — | — | OnPush | sí |
 | `app-notification-center` | `NotificationCenter` | — | — | — | OnPush | sí |
+| `app-onboarding-practitioner` | `OnboardingPractitioner` | — | — | — | OnPush | sí |
+| `app-organization-panel` | `OrganizationPanel` | — | — | — | OnPush | sí |
+| `app-pharmacy-campaigns` | `PharmacyCampaigns` | — | — | — | OnPush | sí |
+| `app-inbox-order` | `InboxOrder` | — | — | — | OnPush | sí |
+| `app-pharmacy-inbox` | `PharmacyInbox` | — | — | — | OnPush | sí |
+| `app-my-organizations` | `MyOrganizations` | — | — | — | OnPush | sí |
 | `app-doctor-visits` | `DoctorVisits` | — | — | — | OnPush | sí |
 | `app-pharma-lab-home` | `PharmaLabHome` | — | — | — | OnPush | sí |
 | `app-visitor-visits` | `VisitorVisits` | — | — | — | OnPush | sí |
@@ -389,7 +417,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (61)
+## Servicios (73)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -397,11 +425,13 @@
 | `IdleLogout` | `src/app/core/auth/idle-logout.ts` | root | sí |
 | `RefreshTokenStorage` | `src/app/core/auth/refresh-token.storage.ts` | root | **no** |
 | `SessionStore` | `src/app/core/auth/session.store.ts` | root | sí |
-| `AccountingClient` | `src/app/core/data-access/accounting/accounting.client.ts` | root | **no** |
+| `AccountingClient` | `src/app/core/data-access/accounting/accounting.client.ts` | root | sí |
 | `AuthProvidersClient` | `src/app/core/data-access/auth-providers/auth-providers.client.ts` | root | sí |
 | `AuthzClient` | `src/app/core/data-access/authz/authz.client.ts` | root | sí |
+| `ChartNotesClient` | `src/app/core/data-access/chart-notes/chart-notes.client.ts` | root | **no** |
 | `ChartTemplatesClient` | `src/app/core/data-access/chart-templates/chart-templates.client.ts` | root | sí |
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |
+| `AddressesClient` | `src/app/core/data-access/common/addresses.client.ts` | root | **no** |
 | `CommunityClient` | `src/app/core/data-access/community/community.client.ts` | root | sí |
 | `DelegatedAccessClient` | `src/app/core/data-access/delegated-access/delegated-access.client.ts` | root | sí |
 | `DiagnosticUnitsAdminClient` | `src/app/core/data-access/diagnostic-units/diagnostic-units-admin.client.ts` | root | sí |
@@ -416,11 +446,16 @@
 | `IdentityAdminClient` | `src/app/core/data-access/identity/identity-admin.client.ts` | root | sí |
 | `IdentityClient` | `src/app/core/data-access/identity/identity.client.ts` | root | sí |
 | `InsuranceClient` | `src/app/core/data-access/insurance/insurance.client.ts` | root | sí |
+| `SaldoInsuficienteError` | `src/app/core/data-access/loyalty/loyalty.client.ts` | root | sí |
 | `MedicalOrganizationClient` | `src/app/core/data-access/medical-organization/medical-organization.client.ts` | root | sí |
 | `NotificationsClient` | `src/app/core/data-access/notifications/notifications.client.ts` | root | sí |
 | `PharmaLabConcepts` | `src/app/core/data-access/pharma-lab/pharma-lab-concepts.client.ts` | root | **no** |
 | `PharmaLabClient` | `src/app/core/data-access/pharma-lab/pharma-lab.client.ts` | root | **no** |
+| `PharmacyCampaignsClient` | `src/app/core/data-access/pharmacy-campaigns/pharmacy-campaigns.client.ts` | root | sí |
+| `PharmacyOrdersClient` | `src/app/core/data-access/pharmacy-orders/pharmacy-orders.client.ts` | root | sí |
+| `PharmacyClient` | `src/app/core/data-access/pharmacy/pharmacy.client.ts` | root | sí |
 | `PracticeSitesClient` | `src/app/core/data-access/practice-sites/practice-sites.client.ts` | root | sí |
+| `PrescriptionFavoritesClient` | `src/app/core/data-access/prescription-favorites/prescription-favorites.client.ts` | root | sí |
 | `ProceduresClient` | `src/app/core/data-access/procedures/procedures.client.ts` | root | sí |
 | `ProfilesClient` | `src/app/core/data-access/profiles/profiles.client.ts` | root | sí |
 | `PublicDirectoryClient` | `src/app/core/data-access/public-directory/public-directory.client.ts` | root | sí |
@@ -429,11 +464,15 @@
 | `ServicesCatalogClient` | `src/app/core/data-access/services-catalog/services-catalog.client.ts` | root | sí |
 | `SurveysClient` | `src/app/core/data-access/surveys/surveys.client.ts` | root | **no** |
 | `SystemContextClient` | `src/app/core/data-access/system-context/system-context.client.ts` | root | sí |
+| `BoDepartmentsCatalog` | `src/app/core/data-access/terminology/bo-departments.service.ts` | root | **no** |
+| `BoMunicipalitiesCatalog` | `src/app/core/data-access/terminology/bo-municipalities.service.ts` | root | **no** |
+| `MedicalSpecialtiesCatalog` | `src/app/core/data-access/terminology/medical-specialties.service.ts` | root | sí |
 | `TerminologyClient` | `src/app/core/data-access/terminology/terminology.client.ts` | root | sí |
 | `AppErrorHandler` | `src/app/core/errors/app-error-handler.ts` | local | **no** |
 | `ErrorReporter` | `src/app/core/errors/error-reporter.ts` | root | sí |
 | `TokenRefreshService` | `src/app/core/http/token-refresh.service.ts` | root | sí |
 | `Breakpoints` | `src/app/core/layout/breakpoints.ts` | root | sí |
+| `ChatSocketService` | `src/app/core/messaging/chat-socket.service.ts` | root | **no** |
 | `MessageTemplates` | `src/app/core/messaging/message-templates.ts` | root | **no** |
 | `NavigationService` | `src/app/core/navigation/navigation.service.ts` | root | sí |
 | `NotificationsStore` | `src/app/core/notifications/notifications.store.ts` | root | sí |
@@ -450,6 +489,7 @@
 | `TutorialEngine` | `src/app/core/tutorials/tutorial.engine.ts` | root | sí |
 | `TutorialRegistry` | `src/app/core/tutorials/tutorial.registry.ts` | root | sí |
 | `CaseStatusCatalog` | `src/app/features/identity-verification/case-status.ts` | root | sí |
+| `AlarmaDePedidos` | `src/app/features/organization/pharmacy-inbox/alarma-de-pedidos.ts` | local | sí |
 | `DialogService` | `src/app/shared/components/molecules/dialog/dialog-service.ts` | root | **no** |
 | `PdfExportService` | `src/app/shared/components/molecules/pdf-export-button/pdf-export.service.ts` | root | **no** |
 | `ToastService` | `src/app/shared/components/molecules/toast/toast.service.ts` | root | sí |
@@ -459,7 +499,6 @@
 
 - `ToastDevPanel` — `src/app/core/dev/toast-dev-panel/toast-dev-panel.ts`
 - `Questionnaires` — `src/app/features/account/questionnaires/questionnaires.ts`
-- `Accounting` — `src/app/features/accounting/accounting.ts`
 - `OrganizationDetail` — `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
@@ -596,6 +635,7 @@
 - `TerminologiaVersionesImportar` — `src/app/features/redsat/terminologia/versiones-importar/versiones-importar.ts`
 - `TerminologiaVersionesListado` — `src/app/features/redsat/terminologia/versiones-listado/versiones-listado.ts`
 - `TerminologiaVersionesPublicar` — `src/app/features/redsat/terminologia/versiones-publicar/versiones-publicar.ts`
+- `AccountIcon` — `src/app/shared/components/atoms/account-icon/account-icon.ts`
 - `NavIcon` — `src/app/shared/components/atoms/nav-icon/nav-icon.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`
 - `AccordionPanel` — `src/app/shared/components/molecules/accordion/accordion-panel/accordion-panel.ts`

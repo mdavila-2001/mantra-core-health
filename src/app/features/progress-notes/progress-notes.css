@@ -1,0 +1,57 @@
+/* ============================================================================
+    Evoluciones — una fila por persona atendida, la más reciente arriba.
+    ========================================================================== */
+
+:host {
+    display: block;
+}
+
+.evoluciones__resumen {
+    margin: var(--sp-4) 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.evoluciones__lista {
+    display: grid;
+    gap: var(--sp-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.evoluciones__fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+}
+
+.evoluciones__datos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    min-inline-size: 0;
+    flex: 1 1 20rem;
+}
+
+.evoluciones__nombre {
+    margin: 0;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+}
+
+.evoluciones__motivo,
+.evoluciones__cuando {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.evoluciones__veces {
+    font-variant-numeric: tabular-nums;
+}

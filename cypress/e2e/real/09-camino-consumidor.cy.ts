@@ -1,5 +1,12 @@
 import { capturar, reiniciarContadores } from '../../support/recorrido/evidencia';
-import { admin, apiViva, CLAVE, crearPaciente, tokenDe, type Actor } from '../../support/real/actores';
+import {
+  admin,
+  apiViva,
+  CLAVE,
+  crearPaciente,
+  tokenDe,
+  type Actor,
+} from '../../support/real/actores';
 import { conceptoPorCodigo, escalarYDecidir, resumenDelTitular } from '../../support/real/casos';
 import { entrar, estable, irA } from '../../support/real/sesion';
 import { subirDocumento } from '../../support/real/tramites';
@@ -98,16 +105,26 @@ describe('Recorrido real · el camino del consumidor', () => {
    */
   function registrarsePorPantalla(): void {
     const documento = `CI-E2E-R9-${sufijo()}`;
-    cy.visit(RUTAS.registro);
+    cy.visit(RUTAS.registroPaciente);
     cy.esperarAplicacionLista();
 
+    // El alta se sirve de a una página, con cuatro campos como mucho: se
+    // contesta lo de cada una y se avanza. La tercera —fecha, sexo, municipio,
+    // ocupación— es toda opcional y se pasa de largo a propósito: parte de lo
+    // que este recorrido responde es que el alta se puede terminar sin ella.
     escribirPorTestId('registro-documento', documento);
+    cy.porTestId('paginated-form-continuar').click();
+
     escribirPorTestId('registro-nombre', 'Lucía');
     escribirPorTestId('registro-apellido-paterno', 'Recorrido');
+    cy.porTestId('paginated-form-continuar').click();
+
+    cy.porTestId('paginated-form-continuar').click();
+
     escribirPorTestId('registro-password', CLAVE);
     capturar({ carpeta: 'consumidor-00-registro', titulo: 'Crear cuenta' }, 'formulario-completo');
 
-    cy.porTestId('registro-submit').click();
+    cy.porTestId('paginated-form-continuar').click();
     cy.get('[data-testid="registro-exito"]', { timeout: 20_000 }).should('exist');
     capturar({ carpeta: 'consumidor-00-registro', titulo: 'Crear cuenta' }, 'cuenta-creada');
 
@@ -220,10 +237,7 @@ describe('Recorrido real · el camino del consumidor', () => {
             },
             { log: false },
           );
-          capturar(
-            { carpeta: 'consumidor-03-turno', titulo: 'Reservar' },
-            'defecto-submit-nativo',
-          );
+          capturar({ carpeta: 'consumidor-03-turno', titulo: 'Reservar' }, 'defecto-submit-nativo');
           return;
         }
 

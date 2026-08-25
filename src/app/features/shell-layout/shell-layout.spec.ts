@@ -135,18 +135,18 @@ describe('ShellLayout', () => {
       // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
       // perfil público de `community`, que es un dato de la cuenta.
       '/messaging',
-      // La **Guía de profesionales** ya no está: desde la corrección #2 del
-      // 15/08/2026 declara `roles: ['PATIENT']` y excluyentes, y una sesión sin
-      // roles no es una sesión de paciente. El directorio de laboratorios sí
-      // sigue: es oferta publicada, no PHI, y lo consulta cualquiera que
-      // necesite un estudio.
-      // Grupos y foros (P7): un grupo público lo lee cualquier sesión, y
-      // quién puede publicar en cada uno lo decide la API por membresía.
-      '/groups',
       '/laboratory-directory',
+      // A5 y A6 del plan de UX: los directorios de clínicas y de farmacias,
+      // por lo mismo que el de laboratorios — oferta publicada, sin rol que la
+      // exprese.
+      '/clinics-directory',
+      '/pharmacies-directory',
       // El glosario ya NO está: desde el 18/08/2026 (feedback de la analista,
       // F-03) declara los roles de quien atiende, y una sesión sin roles no es
       // de nadie que atienda.
+      //
+      // «Tu organización» tampoco: no pide rol, pero sí membresía
+      // (`requiresTenant`, F-31), y esta sesión no pertenece a ninguna.
       '/my-account',
       '/my-account/appointments',
       // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que

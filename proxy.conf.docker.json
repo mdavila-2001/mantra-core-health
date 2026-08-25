@@ -61,5 +61,14 @@
     "pathRewrite": {
       "^/otel": ""
     }
+  },
+  {
+    "context": [
+      "/socket.io"
+    ],
+    "target": "__BACKEND_ORIGIN__",
+    "secure": false,
+    "changeOrigin": true,
+    "ws": true
   }
 ]

@@ -108,6 +108,61 @@ export interface Environment {
 
   /** Ver {@link TelemetryEnvironment}. */
   readonly telemetry: TelemetryEnvironment;
+
+  /**
+   * Enciende la barra de casos de demostración de la ficha clínica.
+   *
+   * Es un interruptor de despliegue, no de compilación: un entorno de staging
+   * armado para una demo lo enciende con `PUBLIC_DEMO_PRESETS=true` sin
+   * recompilar distinto. En producción queda apagado por defecto para que
+   * ningún médico cargue datos de demostración en una historia real.
+   */
+  readonly demoPresets: boolean;
+
+  /**
+   * Enciende la pestaña «QR» SIMULADA de la pantalla de pago del pedido de
+   * farmacia (carril FAR-I5).
+   *
+   * La pasarela de pago real no existe: con este interruptor la demo muestra
+   * el ciclo completo (QR con el monto → «simular pago aprobado» →
+   * comprobante) siempre con el chip «DEMO» fijo. Apagado, la pestaña no se
+   * renderiza y queda sólo el camino real de hoy: pagar en el mostrador.
+   * Mismo carácter que `demoPresets`: interruptor de despliegue, no de
+   * compilación.
+   */
+  readonly paymentDemo: boolean;
+
+  /**
+   * Siembra los datos de demostración de la billetera de puntos (carril
+   * FAR-I6): una membresía con saldo, nivel y movimientos.
+   *
+   * **No decide si la pantalla existe** — el cliente pidió que el módulo esté
+   * disponible, y lo está. Decide si hay algo sembrado que mostrar. Apagado, la
+   * billetera se pinta igual y dice la verdad: que todavía no hay un programa
+   * de puntos activo. Lo que no hace nunca es inventar un saldo sin marca.
+   *
+   * Se apaga solo cuando existan las lecturas reales del backend (el pedido
+   * está en `COORDINACION-AGENTES.md`): ahí los datos vienen de la API y este
+   * interruptor se retira.
+   */
+  readonly loyaltyDemo: boolean;
+
+  /**
+   * Siembra las campañas de farmacia (carril FAR-I7) y enciende su chip
+   * «DEMO».
+   *
+   * A diferencia de `loyaltyDemo`, acá el interruptor **sí decide si hay
+   * secciones**: sin campañas no se pinta una sección vacía decorativa, ni en
+   * la ficha de la farmacia ni en el pedido. Es la regla del carril, no una
+   * consecuencia del apagado.
+   *
+   * Va con chip y no en silencio porque una promoción promete un precio, y hoy
+   * ningún backend lo honra: `promotions` y `marketing` no publican una sola
+   * lectura, y el modelo todavía no relaciona campaña con productos (el pedido
+   * a Marcelo está en `COORDINACION-AGENTES.md`). Un descuento sin marca sería
+   * exactamente la pantalla que finge que algo real ocurrió.
+   */
+  readonly campaignsDemo: boolean;
 }
 
 /**
@@ -121,4 +176,8 @@ export interface Environment {
 export interface EnvironmentOverrides {
   readonly apiBaseUrl?: string;
   readonly telemetry?: Partial<TelemetryEnvironment>;
+  readonly demoPresets?: boolean;
+  readonly paymentDemo?: boolean;
+  readonly loyaltyDemo?: boolean;
+  readonly campaignsDemo?: boolean;
 }

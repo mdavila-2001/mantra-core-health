@@ -1,0 +1,54 @@
+<ul class="conversaciones" [class.is-compacta]="compacta()">
+  @for (conversacion of conversaciones(); track conversacion.id) {
+    <li
+      class="conversaciones__fila"
+      [class.is-sin-leer]="conversacion.unreadCount > 0"
+      [class.is-activa]="conversacion.id === activaId()"
+    >
+      <a
+        class="conversaciones__item"
+        data-testid="conversacion"
+        [routerLink]="['/messaging', conversacion.id]"
+        [attr.aria-current]="conversacion.id === activaId() ? 'page' : null"
+      >
+        <app-avatar
+          class="conversaciones__avatar"
+          [name]="conQuien(conversacion)"
+          size="md"
+        />
+
+        <span class="conversaciones__texto">
+          <span class="conversaciones__cabecera">
+            <span class="conversaciones__con-quien">{{ conQuien(conversacion) }}</span>
+            @if (conversacion.lastMessageAt; as cuando) {
+              <span class="conversaciones__cuando">
+                {{ relativo(cuando) ?? (cuando | date: 'short') }}
+              </span>
+            }
+          </span>
+
+          <span class="conversaciones__pie">
+            @if (!compacta() && conversacion.lastMessage?.bodyText) {
+              <span class="conversaciones__vista-previa">
+                {{ conversacion.lastMessage?.bodyText }}
+              </span>
+            } @else {
+              <span class="conversaciones__vista-previa"></span>
+            }
+
+            @if (conversacion.unreadCount > 0) {
+              <app-badge
+                class="conversaciones__sin-leer"
+                variant="info"
+                [value]="conversacion.unreadCount"
+                [max]="99"
+                label="mensajes sin leer"
+                data-testid="conversacion-sin-leer"
+              />
+            }
+          </span>
+        </span>
+      </a>
+    </li>
+  }
+</ul>

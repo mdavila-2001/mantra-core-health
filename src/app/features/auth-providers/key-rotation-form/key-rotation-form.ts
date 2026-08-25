@@ -4,9 +4,8 @@ import {
   computed,
   inject,
   signal,
-  viewChild,
 } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { AuthProvidersClient } from '../../../core/data-access/auth-providers/auth-providers.client';
 import type { KeyRotationResult } from '../../../core/data-access/auth-providers/auth-providers.types';
@@ -16,19 +15,21 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import {
+  controlesDeClaveDeFirma,
+  leerClaveDeFirma,
+  SECCION_CLAVE_DE_FIRMA,
+} from '../signing-key-fields/signing-key-fields';
 import {
   errorMessageOf,
   UUID_ERROR,
   UUID_HINT,
   UUID_PATTERN,
 } from '../../../shared/forms/form-support';
-import { SigningKeyFields } from '../signing-key-fields/signing-key-fields';
 
 /** Techo del contrato: 720 horas de gracia, un mes. */
 const MAX_GRACE_HOURS = 720;
@@ -45,16 +46,11 @@ const MAX_GRACE_HOURS = 720;
 @Component({
   selector: 'app-key-rotation-form',
   imports: [
-    ReactiveFormsModule,
     Alert,
     AnnounceOnAppear,
     AppButton,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
     PageHeader,
-    SigningKeyFields,
+    PaginatedForm,
   ],
   templateUrl: './key-rotation-form.html',
   styleUrl: '../m40.css',
@@ -69,8 +65,6 @@ export class KeyRotationForm {
   protected readonly uuidError = UUID_ERROR;
   protected readonly maxGraceHours = MAX_GRACE_HOURS;
 
-  protected readonly campos = viewChild.required(SigningKeyFields);
-
   protected readonly form = new FormGroup({
     providerId: new FormControl('', {
       nonNullable: true,
@@ -79,7 +73,39 @@ export class KeyRotationForm {
     graceHours: new FormControl<number | null>(null, {
       validators: [Validators.min(0), Validators.max(MAX_GRACE_HOURS)],
     }),
+    ...controlesDeClaveDeFirma(),
   });
+
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'De qué proveedor',
+      hint: 'La rotación alcanza a sus claves activas.',
+      campos: [
+        {
+          key: 'providerId',
+          label: 'Identificador del proveedor',
+          hint: UUID_HINT,
+          control: 'text' as const,
+          required: true,
+          mensajeDeError: UUID_ERROR,
+        },
+      ],
+    },
+    { ...SECCION_CLAVE_DE_FIRMA, titulo: 'La clave nueva', hint: 'La que pasa a firmar desde ahora.' },
+    {
+      titulo: 'Gracia de las salientes',
+      hint: 'Cuántas horas siguen aceptándose las claves que salen.',
+      campos: [
+        {
+          key: 'graceHours',
+          label: 'Horas de gracia',
+          hint: 'Entre 0 y 720. Vacío: el backend aplica 24.',
+          control: 'number' as const,
+          mensajeDeError: 'Ingresá un valor entre 0 y 720.',
+        },
+      ],
+    },
+  ]);
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly isSubmitting = computed(() => this.state().status === 'loading');
@@ -95,18 +121,14 @@ export class KeyRotationForm {
       return;
     }
 
-    // La clave se lee primero para que un solo intento marque los errores de
-    // los dos bloques a la vez, no de a uno.
-    const clave = this.campos().intentarLeer();
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    if (clave === null) {
-      return;
-    }
 
-    const { providerId, graceHours } = this.form.getRawValue();
+    const valores = this.form.getRawValue();
+    const clave = leerClaveDeFirma(valores);
+    const { providerId, graceHours } = valores;
 
     this.state.set(loading());
 

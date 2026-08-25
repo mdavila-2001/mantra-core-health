@@ -60,15 +60,45 @@ describe('PermissionSetForm', () => {
     });
   }
 
+  /**
+   * Avanza a la página que proyecta el editor de ítems y carga el primero.
+   *
+   * El editor **no existe** mientras se contesta la identidad del set: es un
+   * campo `custom` de la segunda página. Se llega como llegaría una persona,
+   * pulsando «Siguiente», que además comprueba que la primera página valida.
+   */
   function completarItem() {
+    // La identidad son cinco campos, así que el motor la sirve en dos páginas:
+    // se avanza hasta que el editor aparece, como haría una persona.
+    for (let intento = 0; intento < 5; intento += 1) {
+      fixture.detectChanges();
+      if (fixture.nativeElement.querySelector('app-set-items-editor') !== null) break;
+      (
+        fixture.nativeElement.querySelector(
+          '[data-testid="paginated-form-continuar"]',
+        ) as HTMLButtonElement | null
+      )?.click();
+    }
+    fixture.detectChanges();
+
     const editor = (
-      component as unknown as { editor: () => { filas: { at: (i: number) => { patchValue: (v: object) => void } } } }
+      component as unknown as {
+        editor: () =>
+          | { filas: { at: (i: number) => { patchValue: (v: object) => void } } }
+          | undefined;
+      }
     ).editor();
+    if (editor === undefined) {
+      throw new Error('el editor de ítems todavía no está en pantalla');
+    }
     editor.filas.at(0).patchValue({ permissionId: PERMISO });
   }
 
   it('con una sola organización en el token, queda elegida sola', () => {
-    expect(interno<() => string | null>('tenantId')()).toBe('t-1');
+    fixture.detectChanges();
+    expect(
+      interno<{ getRawValue: () => { tenantId: string | null } }>('form').getRawValue().tenantId,
+    ).toBe('t-1');
   });
 
   it('sin código, nombre o ítems válidos, no se publica nada', () => {
@@ -100,12 +130,11 @@ describe('PermissionSetForm', () => {
   });
 
   it('el tipo de delegado elegido viaja; uno fuera del contrato no entra', () => {
-    interno<(v: unknown) => void>('elegirTipo')('STAFF');
-    expect(interno<() => string | null>('delegateType')()).toBeNull();
-
+    // El motor sólo ofrece los cuatro del contrato; la comprobación sigue al
+    // armar el cuerpo, que es lo que llega al backend venga de donde venga.
     completarIdentidad();
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ delegateType: 'NURSE' });
     completarItem();
-    interno<(v: unknown) => void>('elegirTipo')('NURSE');
 
     interno<() => void>('submit')();
 

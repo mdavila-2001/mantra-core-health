@@ -6,17 +6,45 @@
   display: block;
 }
 
-/* `auto-fit` en vez de un número de columnas: si mañana se agrega un bloque, la
-   rejilla no hay que retocarla. El mínimo es el ancho al que un uuid deja de
-   partirse feo. */
+/* Perfil a la izquierda, satélites a la derecha.
+ *
+ * Antes eran tres columnas iguales (`auto-fit minmax(19rem, 1fr)`). En una
+ * pantalla ancha eso daba tres tercios: el perfil —que trae portada, identidad,
+ * disponibilidad y tres pestañas— quedaba espachurrado en 19rem partiendo el
+ * código profesional en dos renglones, y al lado quedaban dos fichas de cuatro
+ * líneas con el resto de la columna en blanco hasta el pie. Se veía roto porque
+ * lo estaba: tres bloques de peso muy distinto tratados como hermanos.
+ *
+ * Verificación y acceso son **satélites** de la identidad, no hermanos suyos:
+ * van en un lateral angosto, que es la forma que tiene cualquier perfil
+ * profesional. Debajo de 60rem se apilan y el lateral queda al final, que es
+ * donde importa menos.
+ */
 .mi-perfil {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
   margin-block-start: var(--sp-6);
-  /* Los bloques tienen alturas distintas; sin esto, el más alto estira la fila
-     y los otros quedan flotando arriba con la tarjeta a medio pintar. */
   align-items: start;
+}
+
+@media (min-width: 62rem) {
+  .mi-perfil {
+    grid-template-columns: minmax(0, 2.4fr) minmax(17rem, 1fr);
+  }
+}
+
+.mi-perfil__principal {
+  display: grid;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.mi-perfil__lateral {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+  min-inline-size: 0;
 }
 
 .mi-perfil__bloque {
@@ -101,4 +129,15 @@
   margin-block: var(--sp-4) 0;
   font-size: var(--fs-caption);
   color: var(--text-muted);
+}
+
+/* §4.H del plan de UX · los enlaces a lo que salió del menú del médico. En
+   fila y con separación clara: son tres destinos hermanos, no una lista. */
+.mi-perfil__enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-4);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
 }

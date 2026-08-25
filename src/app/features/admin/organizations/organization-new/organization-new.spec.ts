@@ -63,13 +63,13 @@ describe('OrganizationNew', () => {
   }
 
   function completar(valores?: { code?: string; legalName?: string }) {
-    interno<{ setValue: (v: unknown) => void }>('form').setValue({
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
       code: valores?.code ?? 'FARMACIA-SUR',
       legalName: valores?.legalName ?? 'Farmacia del Sur S.R.L.',
       tradeName: '',
       timeZone: '',
     });
-    crudo<{ set: (v: unknown) => void }>('tipo').set('PHARMACY');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'PHARMACY' });
     crudo<{ set: (v: unknown) => void }>('owner').set(OWNER);
     // Una farmacia es territorial: sin país y jurisdicción el backend la
     // rechaza con 422, así que el formulario los exige.
@@ -83,10 +83,10 @@ describe('OrganizationNew', () => {
 
   it('sin tipo o sin owner no se envía nada: los dos son obligatorios', () => {
     completar();
-    crudo<{ set: (v: unknown) => void }>('tipo').set(null);
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: null });
     enviar();
 
-    crudo<{ set: (v: unknown) => void }>('tipo').set('PHARMACY');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'PHARMACY' });
     crudo<{ set: (v: unknown) => void }>('owner').set(null);
     enviar();
 
@@ -125,7 +125,7 @@ describe('OrganizationNew', () => {
 
   it('una aseguradora exige su bloque: sin él no se envía', () => {
     completar();
-    crudo<{ set: (v: unknown) => void }>('tipo').set('PAYER');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'PAYER' });
     enviar();
 
     expect(interno<() => { status: string }>('state')().status).toBe('ready');
@@ -133,10 +133,12 @@ describe('OrganizationNew', () => {
 
   it('una aseguradora viaja con su bloque, y sólo con el suyo', () => {
     completar();
-    crudo<{ set: (v: unknown) => void }>('tipo').set('PAYER');
-    interno<{ setValue: (v: unknown) => void }>('formPayer').setValue({
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'PAYER' });
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
       carrierCode: 'ANDINA',
       regulatorIdentifier: 'APS-123',
+      sigla: 'AND',
+      address: 'Av. Siempre Viva 123',
     });
     enviar();
 
@@ -144,6 +146,8 @@ describe('OrganizationNew', () => {
     expect((req.request.body as { payer?: unknown }).payer).toEqual({
       carrierCode: 'ANDINA',
       regulatorIdentifier: 'APS-123',
+      sigla: 'AND',
+      address: 'Av. Siempre Viva 123',
     });
     expect('broker' in (req.request.body as object)).toBe(false);
     // No es territorial: aunque haya país elegido de un tipo anterior, no
@@ -151,6 +155,25 @@ describe('OrganizationNew', () => {
     expect('countryConceptId' in (req.request.body as object)).toBe(false);
 
     req.flush(RESPUESTA);
+  });
+
+  /**
+   * `sigla` y `address` son tan obligatorios como `carrierCode` y
+   * `regulatorIdentifier`: el backend los exige a los cuatro cuando el tipo
+   * es `PAYER`.
+   */
+  it('una aseguradora sin sigla o sin dirección tampoco se envía', () => {
+    completar();
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'PAYER' });
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      carrierCode: 'ANDINA',
+      regulatorIdentifier: 'APS-123',
+      sigla: '',
+      address: '',
+    });
+    enviar();
+
+    expect(interno<() => { status: string }>('state')().status).toBe('ready');
   });
 
   it('al crearla vuelve al listado', () => {

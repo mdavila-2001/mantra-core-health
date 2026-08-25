@@ -1,0 +1,158 @@
+<app-page-header
+  title="Mis puntos"
+  subtitle="Lo que sumaste con tus compras, y cómo canjearlo."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (sinPerfilDePaciente) {
+  <!-- Sesión válida de una cuenta que no es de un paciente: la pantalla no le
+       corresponde, y no es un error. -->
+  <app-alert tone="info" title="Esta sección es para pacientes">
+    Tu cuenta no tiene un perfil de paciente, así que no hay puntos propios que mirar.
+  </app-alert>
+} @else {
+  <app-view-state-host [state]="membresia()" (retry)="cargar()">
+    @if (cuenta(); as cuenta) {
+      @switch (paso()) {
+        @case ('comprobante') {
+          @if (comprobante(); as comprobante) {
+            <app-redeem-code [comprobante]="comprobante" (cerrado)="volverAlSaldo()" />
+          }
+        }
+
+        @case ('canjear') {
+          <section class="canjear" aria-labelledby="canjear-titulo" data-testid="canjear-form">
+            <h2 id="canjear-titulo" class="canjear__titulo">¿Cuántos puntos querés canjear?</h2>
+            <p class="canjear__disponible">
+              Tenés
+              <strong class="cifras-tabulares">{{ cuenta.saldo }}</strong>
+              {{ unidadDe(cuenta.saldo) }} disponibles.
+            </p>
+
+            <app-form-field
+              label="Puntos a canjear"
+              hint="Después te mostramos el código para presentar en el mostrador."
+              [errorMessage]="errorDeCanje() ?? ''"
+            >
+              <app-input
+                type="number"
+                testId="canjear-puntos"
+                [(value)]="puntosACanjear"
+                [hasError]="errorDeCanje() !== null"
+              />
+            </app-form-field>
+
+            <div class="canjear__acciones">
+              <button
+                app-button
+                variant="ghost"
+                type="button"
+                data-testid="canjear-cancelar"
+                (clicked)="volverAlSaldo()"
+              >
+                Cancelar
+              </button>
+              <button
+                app-button
+                variant="primary"
+                type="button"
+                data-testid="canjear-confirmar"
+                [isLoading]="canjeando()"
+                (clicked)="confirmarCanje()"
+              >
+                Canjear
+              </button>
+            </div>
+          </section>
+        }
+
+        @default {
+          <section class="saldo" aria-labelledby="saldo-titulo" data-testid="puntos-saldo">
+            <h2 id="saldo-titulo" class="saldo__programa">{{ cuenta.programa }}</h2>
+
+            <p class="saldo__cifra">
+              <strong class="cifras-tabulares" data-testid="puntos-disponibles">
+                {{ cuenta.saldo }}
+              </strong>
+              <span class="saldo__unidad">{{ cuenta.unidad }} disponibles</span>
+            </p>
+
+            <dl class="saldo__datos">
+              @if (cuenta.nivel; as nivel) {
+                <div class="saldo__dato">
+                  <dt>Tu nivel</dt>
+                  <dd data-testid="puntos-nivel">{{ nivel.nombre }}</dd>
+                </div>
+              }
+              <div class="saldo__dato">
+                <dt>Acumulados desde siempre</dt>
+                <dd class="cifras-tabulares" data-testid="puntos-de-por-vida">
+                  {{ cuenta.puntosDePorVida }}
+                </dd>
+              </div>
+            </dl>
+
+            @if (puedeCanjear()) {
+              <button
+                app-button
+                variant="primary"
+                type="button"
+                data-testid="puntos-canjear"
+                (clicked)="abrirCanje()"
+              >
+                Canjear puntos
+              </button>
+            }
+          </section>
+
+          <section class="movimientos" aria-labelledby="movimientos-titulo">
+            <h2 id="movimientos-titulo" class="movimientos__titulo">Tus movimientos</h2>
+
+            @if (movimientos().length === 0) {
+              <p class="movimientos__vacio" data-testid="movimientos-vacio">
+                Todavía no hay movimientos para mostrar.
+              </p>
+            } @else {
+              <ul class="movimientos__lista" data-testid="movimientos-lista">
+                @for (movimiento of movimientos(); track movimiento.id) {
+                  <li class="movimientos__fila">
+                    <div class="movimientos__datos">
+                      <span class="movimientos__principal">
+                        {{ movimiento.detalle ?? etiquetaDe(movimiento) }}
+                      </span>
+                      <span class="movimientos__secundario">
+                        {{ movimiento.ocurrioEl | date: 'dd/MM/yyyy' }}
+                      </span>
+                    </div>
+                    <app-badge [variant]="tonoDe(movimiento)">
+                      {{ etiquetaDe(movimiento) }}
+                    </app-badge>
+                    <!-- El signo va en el texto: el color no puede ser lo único
+                         que diga si sumaste o restaste. -->
+                    <span class="movimientos__puntos cifras-tabulares" aria-hidden="true">
+                      {{ signoDe(movimiento) }}{{ movimiento.puntos }}
+                    </span>
+                    <span class="sr-only">{{ enPalabras(movimiento) }}</span>
+                  </li>
+                }
+              </ul>
+
+              @if (hayMas()) {
+                <button
+                  app-button
+                  variant="outline"
+                  type="button"
+                  data-testid="movimientos-ver-mas"
+                  [isLoading]="cargandoMas()"
+                  (clicked)="verMas()"
+                >
+                  Ver más
+                </button>
+              }
+            }
+          </section>
+        }
+      }
+    }
+  </app-view-state-host>
+}

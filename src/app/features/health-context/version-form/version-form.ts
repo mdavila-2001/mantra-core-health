@@ -24,9 +24,10 @@ import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import {
   errorMessageOf,
   NUMBER_STRING_PATTERN,
@@ -115,11 +116,11 @@ function nuevoHecho(): FilaDeHecho {
     AnnounceOnAppear,
     AppButton,
     Card,
-    FormActions,
     FormField,
-    FormSection,
     Input,
+    CampoPersonalizado,
     PageHeader,
+    PaginatedForm,
     Textarea,
   ],
   templateUrl: './version-form.html',
@@ -156,6 +157,71 @@ export class VersionForm {
       validators: [Validators.maxLength(50)],
     }),
   });
+
+  /**
+   * Las páginas: de dónde sale, qué contiene, y los hechos.
+   *
+   * Los hechos son un **árbol que crece** —cada uno con sus evidencias—, así que
+   * van como campo `custom`: el motor les reserva el sitio y no aprende nada de
+   * procedencia. Lo que gana la pantalla es que las cinco preguntas del
+   * encabezado dejan de llegar junto con el árbol.
+   */
+  protected readonly paginas = paginarCampos([
+    {
+      titulo: 'De dónde sale',
+      hint: 'La versión se redacta desde una corrida del mismo país del contexto.',
+      campos: [
+        {
+          key: 'contextId',
+          label: 'Identificador del contexto',
+          hint: UUID_HINT,
+          control: 'text' as const,
+          required: true,
+          mensajeDeError: UUID_ERROR,
+        },
+        {
+          key: 'collectionRunId',
+          label: 'Identificador de la corrida',
+          hint: UUID_HINT,
+          control: 'text' as const,
+          required: true,
+          mensajeDeError: UUID_ERROR,
+        },
+      ],
+    },
+    {
+      titulo: 'El contenido',
+      hint: 'El cuerpo de la versión es un objeto JSON; su forma la define cada país.',
+      campos: [
+        {
+          key: 'contextPayloadJson',
+          label: 'Contenido (JSON)',
+          control: 'textarea' as const,
+          required: true,
+          mensajeDeError: 'Tiene que ser un objeto JSON válido.',
+        },
+        {
+          key: 'summary',
+          label: 'Resumen',
+          hint: 'Opcional: qué cambió respecto de la anterior. Máx. 2000 caracteres.',
+          control: 'textarea' as const,
+        },
+        {
+          key: 'schemaVersion',
+          label: 'Versión del esquema',
+          hint: 'Opcional. Máx. 50 caracteres.',
+          control: 'text' as const,
+        },
+      ],
+    },
+    {
+      titulo: 'Los hechos',
+      hint: 'Cada hecho apunta a observaciones aceptadas de la misma corrida: sin evidencia no se acepta.',
+      campos: [
+        { key: 'hechos', label: 'Hechos de la versión', control: 'custom' as const, required: true },
+      ],
+    },
+  ]);
 
   protected readonly hechos = new FormArray<FilaDeHecho>([nuevoHecho()]);
 

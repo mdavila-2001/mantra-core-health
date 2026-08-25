@@ -51,6 +51,19 @@
     position: sticky;
     top: var(--sp-4);
   }
+
+  /* Los bloques que cruzan las dos columnas ganan la capa.
+
+     `position: sticky` es posicionado, así que el encuentro pintaba por encima
+     de todo lo que viniera después aunque estuviera antes en el documento. Con
+     bloques bajos no se notaba; la hoja en blanco mide veintiocho rem y quedaba
+     media tapada por la tarjeta del encuentro mientras se escribía. Cuando llega
+     una fila que ocupa el ancho completo, esa fila es la que manda: la tarjeta
+     ya cumplió su papel de acompañar la columna angosta. */
+  .expediente__ancho {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 /* ── Banda de contexto ─────────────────────────────────────────────────────
@@ -233,4 +246,25 @@
   align-items: center;
   gap: var(--sp-2);
   flex-wrap: wrap;
+}
+
+/* ── Escenarios de demostración (gate: PUBLIC_DEMO_PRESETS) ───────────────*/
+
+/* Borde discontinuo a propósito: la barra es utilería de demostración, no un
+   control clínico, y tiene que leerse distinta de los bloques de al lado. */
+.expediente__demo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background-color: var(--bg-surface-alt);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.expediente__demo-titulo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-muted);
 }

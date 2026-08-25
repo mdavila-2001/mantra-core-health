@@ -372,3 +372,62 @@ export interface GlossaryTermDetail extends GlossaryTermBase {
   /** Ausente en todos los términos sembrados hoy — ver {@link GlossaryImage}. */
   readonly image?: GlossaryImage;
 }
+
+/* ---- administración del catálogo -------------------------------------------
+   Lecturas y escrituras que sólo alcanza `SECURITY_ADMIN`. Son la superficie de
+   quien **carga** terminología, no de quien la consume: el resto de este archivo
+   describe el catálogo ya publicado. */
+
+/** Un sistema de codificación registrado. */
+export interface CodeSystemListItem {
+  readonly id: string;
+  /** Código interno con el que se lo nombra (`icd10cm`, `loinc`…). */
+  readonly internalCode: string;
+  readonly name: string;
+  readonly canonicalUrl: string;
+}
+
+/**
+ * Estado de una versión.
+ *
+ * `UNKNOWN` no es un error: es el caso real de las versiones que dejaron los
+ * importadores externos sin fijar estado, y admiten conceptos igual que un
+ * borrador.
+ */
+export type CodeSystemVersionState =
+  | 'DRAFT'
+  | 'ACTIVE'
+  | 'RETIRED'
+  | 'DEPRECATED'
+  | 'UNKNOWN';
+
+/** Una versión de un sistema de codificación. */
+export interface CodeSystemVersionListItem {
+  readonly id: string;
+  readonly version: string;
+  readonly state: CodeSystemVersionState;
+  readonly isDefault: boolean;
+  readonly publishedAt: Date | null;
+  /** Si todavía se le pueden importar conceptos. */
+  readonly acceptsConcepts: boolean;
+}
+
+/** Una línea del archivo que el importador no pudo usar. */
+export interface ImportFileIssue {
+  /** Línea del archivo, empezando en 1. */
+  readonly line: number;
+  readonly message: string;
+}
+
+/** Lo que dejó importar un archivo de conceptos. */
+export interface ConceptImportResult {
+  /** El lote registrado, para poder auditarlo después. */
+  readonly batchId: string;
+  readonly totalRead: number;
+  readonly inserted: number;
+  /** Códigos que ya estaban en la versión y se dejaron como estaban. */
+  readonly skipped: number;
+  readonly errors: number;
+  /** Una muestra de los errores, no todos. */
+  readonly errorSamples: readonly ImportFileIssue[];
+}

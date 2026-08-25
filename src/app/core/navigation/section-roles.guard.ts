@@ -71,21 +71,26 @@ export const seccionRolesGuard: CanActivateFn = tracedGuard('seccionRolesGuard',
   const session = inject(SessionStore);
   const router = inject(Router);
 
-  if (alcanza(route, state.url, session.roles())) {
+  if (alcanza(route, state.url, session.roles(), session.tenants())) {
     return true;
   }
 
   return router.createUrlTree([SECCION_DENEGADA_ROUTE]);
 });
 
-function alcanza(route: ActivatedRouteSnapshot, url: string, roles: readonly string[]): boolean {
+function alcanza(
+  route: ActivatedRouteSnapshot,
+  url: string,
+  roles: readonly string[],
+  tenants: readonly string[],
+): boolean {
   const propios = rolesDeLaRuta(route);
   if (propios !== undefined) {
     return rolesAlcanzan(propios, roles);
   }
 
   const seccion = seccionDe(url);
-  return seccion === null || isVisibleTo(seccion, roles);
+  return seccion === null || isVisibleTo(seccion, roles, tenants);
 }
 
 /**

@@ -1,0 +1,119 @@
+.editor {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.editor:focus-within {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.editor__barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: var(--sp-2);
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-inset);
+}
+
+.editor__herramienta {
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  cursor: pointer;
+}
+
+.editor__herramienta:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.editor__herramienta:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+}
+
+/* La barra dice qué hace cada botón con la propia marca que aplica: el que pone
+   negrita se ve en negrita. Es la ayuda más barata que existe y no ocupa
+   espacio. */
+.editor__herramienta--bold {
+  font-weight: 700;
+}
+
+.editor__herramienta--italic {
+  font-style: italic;
+}
+
+.editor__herramienta--underline {
+  text-decoration: underline;
+}
+
+.editor__hoja {
+  position: relative;
+}
+
+.editor__area {
+  min-height: 22rem;
+  padding: var(--sp-4);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  overflow-wrap: break-word;
+}
+
+.editor__area:focus {
+  outline: none;
+}
+
+/* Las marcas, dentro de la hoja. Se declaran acá porque el contenido entra por
+   `innerHTML` y no lo alcanza ningún estilo de componente. */
+.editor__area :is(h2, h3) {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-family: var(--font-display);
+  line-height: 1.3;
+}
+
+.editor__area h2 {
+  font-size: var(--fs-h3);
+}
+
+.editor__area h3 {
+  font-size: var(--fs-body);
+}
+
+.editor__area p {
+  margin: 0 0 var(--sp-3);
+}
+
+.editor__area :is(ul, ol) {
+  margin: 0 0 var(--sp-3);
+  padding-inline-start: var(--sp-6);
+}
+
+.editor__marcador {
+  position: absolute;
+  inset-block-start: var(--sp-4);
+  inset-inline-start: var(--sp-4);
+  margin: 0;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.editor--solo-lectura .editor__area {
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+}
+
+@media (min-width: 48rem) {
+  .editor__area {
+    min-height: 28rem;
+    padding: var(--sp-6);
+  }
+}

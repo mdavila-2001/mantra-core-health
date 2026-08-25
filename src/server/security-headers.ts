@@ -174,8 +174,10 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     "style-src 'self' 'unsafe-inline'",
     // Las tipografías están autoalojadas: no hace falta abrir ningún CDN.
     "font-src 'self'",
-    // `data:` cubre los SVG en línea del sistema de diseño.
-    "img-src 'self' data:",
+    // `data:` cubre los SVG en línea del sistema de diseño. Los tiles de
+    // OpenStreetMap son el único origen de imagen ajeno: el mapa (Leaflet, sin
+    // clave de API) los pide directo del navegador y sin ellos queda gris.
+    "img-src 'self' data: https://tile.openstreetmap.org",
     `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
@@ -203,8 +205,11 @@ export function securityHeaders(
     'X-Frame-Options': 'DENY',
     // Una URL con identificadores no debe viajar a otro sitio en el `Referer`.
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    // La aplicación no usa ninguna de las tres. Declararlo lo hace cumplir.
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    // Cámara y micrófono no se usan. La ubicación sí: «dónde comprar mi
+    // receta» la pide con permiso explícito del navegador para ordenar
+    // sucursales por cercanía — `geolocation=()` la apagaba para toda la
+    // aplicación. `(self)` la permite solo al propio origen, jamás a un iframe.
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
     'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
   };
 }

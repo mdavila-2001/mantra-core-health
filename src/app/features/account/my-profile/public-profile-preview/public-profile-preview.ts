@@ -5,11 +5,11 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
 import type { OwnPublicProfile } from '../../../../core/data-access/community/community.types';
+import type { PublicProfileDetail } from '../../../../core/data-access/public-directory/public-directory.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
-import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
@@ -20,6 +20,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { PublicProfileCard } from '../../../public-profile/public-profile-card/public-profile-card';
 
 /** Sólo minúsculas, números y guiones — la misma regla que el backend valida. */
 const SLUG_VALIDO = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -52,12 +53,12 @@ const SLUG_VALIDO = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   selector: 'app-public-profile-preview',
   imports: [
     Alert,
-    Avatar,
     Card,
     FormActions,
     FormField,
     Input,
     PageHeader,
+    PublicProfileCard,
     RouterLink,
     Switch,
     Textarea,
@@ -101,13 +102,66 @@ export class PublicProfilePreview {
     () => this.slugValido() && this.displayName().trim() !== '',
   );
 
-  /** Cómo se ve la tarjeta pública mientras se edita, sin guardar todavía. */
-  protected readonly vistaPrevia = computed(() => ({
-    displayName: this.displayName().trim() || 'Tu nombre',
-    headline: this.headline().trim(),
-    biography: this.biography().trim(),
-    slug: this.slug().trim() || 'tu-slug',
-  }));
+  /** El enlace que se copia y se pega, tal como va a quedar. */
+  protected readonly enlace = computed(() => `alovida.app/p/${this.slug().trim() || 'tu-slug'}`);
+
+  /**
+   * Cómo se ve la ficha pública mientras se edita, sin guardar todavía.
+   *
+   * ## Por qué arma un `PublicProfileDetail` completo
+   *
+   * B1 del plan de UX del 22/08/2026. Acá se dibujaba a mano una tarjetita con
+   * avatar, nombre, titular y biografía, mientras `/p/:slug` mostraba una
+   * página con insignia de tipo, sello de verificación, ciudad,
+   * especialidades, calificación, opiniones y publicaciones. El cliente lo
+   * dijo textual: «el perfil público debe ser el mismo que se ve el preview,
+   * si no no tiene ningún sentido tener preview».
+   *
+   * Ahora las dos pantallas instancian **el mismo componente**, así que el
+   * preview tiene que hablar su idioma: el de la respuesta pública real.
+   *
+   * ## Lo que se rellena con lo que la vitrina todavía no sabe
+   *
+   * `verified`, `city`, `specialties`, `ratingAverage` y `posts` **no los
+   * decide este formulario**: los pone la plataforma o salen de otras
+   * pantallas. Van en su estado vacío honesto —sin verificar, sin calificar,
+   * sin publicaciones—, que es como se ve una vitrina recién creada. Inventar
+   * un sello de verificado en el preview sería peor que no tener preview.
+   */
+  protected readonly vistaPrevia = computed<PublicProfileDetail>(() => {
+    const guardado = this.perfil();
+    const publicado = guardado.status === 'ready' ? guardado.data : null;
+    const vacio = (texto: string): string | null => (texto.trim() === '' ? null : texto.trim());
+
+    return {
+      kind: 'PRACTITIONER',
+      slug: this.slug().trim() || 'tu-slug',
+      displayName: this.displayName().trim() || 'Tu nombre',
+      headline: vacio(this.headline()),
+      biography: vacio(this.biography()),
+      // La foto de la vitrina todavía no se puede subir desde la aplicación
+      // (ver el aviso de la plantilla): el preview muestra lo mismo que va a
+      // ver un paciente, que hoy son las iniciales.
+      avatarUrl: null,
+      coverUrl: null,
+      verified: publicado?.verificationStatusConceptId !== undefined,
+      city: null,
+      address: null,
+      location: null,
+      specialties: [],
+      ratingAverage: null,
+      ratingCount: 0,
+      acceptsReviews: this.acceptsReviews(),
+      posts: [],
+      updatedAt: new Date(0),
+    };
+  });
+
+  /** Si la vitrina todavía no tiene foto. Ver el aviso de la plantilla (B4). */
+  protected readonly sinFoto = computed(() => {
+    const estado = this.perfil();
+    return estado.status === 'ready' && (estado.data?.avatarFileId ?? undefined) === undefined;
+  });
 
   constructor() {
     this.cargar();

@@ -20,8 +20,10 @@
 export const RUTAS = {
   /** La pantalla de ingreso. */
   ingreso: '/auth',
-  /** El alta pública de pacientes. */
+  /** La rejilla de tipos de cuenta. */
   registro: '/auth/register',
+  /** El alta pública de pacientes, que es una pantalla propia desde la rejilla. */
+  registroPaciente: '/auth/register/patient',
   /** El destino del login. */
   panel: '/dashboard',
   /** El portal de turnos del paciente: los suyos y los horarios pedibles. */

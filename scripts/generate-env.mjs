@@ -113,6 +113,50 @@ const MANIFEST = [
     literal: true,
     validate: validateRatio,
   },
+
+  // --- Demostración ---------------------------------------------------------
+  //
+  // Enciende la barra de casos de demostración de la ficha clínica. No es un
+  // secreto: solo decide si esa UI se pinta. Apagada en producción salvo
+  // decisión explícita del despliegue (el default de desarrollo lo pone
+  // `environment.development.ts`).
+  {
+    key: 'PUBLIC_DEMO_PRESETS',
+    field: 'demoPresets',
+    literal: true,
+    validate: validateBoolean,
+  },
+
+  // Enciende la pestaña «QR» simulada de la pantalla de pago de farmacia
+  // (FAR-I5). Tampoco es un secreto: decide si esa pestaña —siempre con su
+  // chip DEMO— se pinta. Apagada en producción salvo decisión del despliegue.
+  {
+    key: 'PUBLIC_PAYMENT_DEMO',
+    field: 'paymentDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
+
+  // Siembra los datos de demostración de la billetera de puntos (FAR-I6). No
+  // decide si la pantalla existe —existe siempre— sino si hay una membresía
+  // sembrada que mostrar. Apagada, la billetera dice que no hay programa activo.
+  {
+    key: 'PUBLIC_LOYALTY_DEMO',
+    field: 'loyaltyDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
+
+  // Siembra las campañas de farmacia (FAR-I7) y enciende su chip DEMO. Decide
+  // si hay campañas: apagada, las secciones de promoción no se pintan en
+  // ningún lado, que es el estado honesto mientras el backend no tenga de
+  // dónde leerlas.
+  {
+    key: 'PUBLIC_CAMPAIGNS_DEMO',
+    field: 'campaignsDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
 ];
 
 /**

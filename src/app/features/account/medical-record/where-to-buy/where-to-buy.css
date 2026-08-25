@@ -35,7 +35,7 @@
 
 .compra__proximamente {
   margin: 0;
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
   font-style: italic;
 }
@@ -56,7 +56,7 @@
   flex-direction: column;
   gap: var(--sp-2);
   padding: var(--sp-4);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   background: var(--bg-surface);
 }
@@ -71,7 +71,7 @@
 }
 
 .compra__secundario {
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
@@ -102,11 +102,14 @@
   gap: var(--sp-2);
 }
 
-.compra__mapa svg {
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+.compra__mapa app-map {
+  min-block-size: 20rem;
+}
+
+/* La tarjeta y el pin hablan de la misma sede: el resalte es simétrico. */
+.compra__sede--elegida {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 1px var(--focus-ring);
 }
 
 .compra__codigo {
@@ -117,8 +120,12 @@
   inline-size: 1.75rem;
   block-size: 1.75rem;
   border-radius: var(--r-full);
-  background: var(--accent, #4fb3a9);
-  color: #ffffff;
+  /* La receta tonal del pin del mapa: fondo claro + tinta oscura del mismo
+     trío aqua (`--st-info-*`) — sobre aguamarina la tinta va oscura, nunca
+     blanca, y el trío ya cambia con el tema. */
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  border: 1.5px solid var(--st-info-bd);
   font-weight: 700;
 }
 
@@ -131,7 +138,7 @@
 
 .compra__faltantes {
   margin: 0;
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
@@ -152,4 +159,18 @@
   .compra__sede-datos {
     flex: 1;
   }
+}
+
+/* Las promociones vigentes de la farmacia de la sede (FAR-I7). */
+.compra__promos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.compra__promo {
+  font-size: var(--fs-caption);
 }

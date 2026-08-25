@@ -12,7 +12,11 @@ import type {
   JournalTransactionDetail,
   LedgerAccount,
   LedgerEntry,
+  PaidConsultation,
   Practice,
+  PractitionerEntryResult,
+  RegisterConsultationIncomeInput,
+  RegisterSimpleEntryInput,
   TrialBalance,
   TrialBalanceRow,
 } from './accounting.types';
@@ -105,6 +109,45 @@ export class AccountingClient {
         this.url(`/accounting/journal-transactions/${transactionId}`),
       )
       .pipe(map(aAsientoDetallado));
+  }
+
+  /**
+   * `GET /accounting/practitioner/paid-consultations` — Carril 18: facturas
+   * pagadas del profesional autenticado, en esa práctica, sin asiento
+   * contable todavía.
+   */
+  listPaidConsultations(practiceId: string): Observable<readonly PaidConsultation[]> {
+    return this.http
+      .get<RespuestaConsultasPagadas>(
+        this.url('/accounting/practitioner/paid-consultations'),
+        { params: new HttpParams().set('practiceId', practiceId) },
+      )
+      .pipe(map((body) => body.items.map(aConsultaPagada)));
+  }
+
+  /**
+   * `POST /accounting/practitioner/consultation-income` — registra el
+   * ingreso de una consulta ya pagada. El importe lo calcula el servidor a
+   * partir de la factura; acá solo se eligen las cuentas.
+   */
+  registerConsultationIncome(
+    input: RegisterConsultationIncomeInput,
+  ): Observable<PractitionerEntryResult> {
+    return this.http
+      .post<WireResultado>(
+        this.url('/accounting/practitioner/consultation-income'),
+        input,
+      )
+      .pipe(map(aResultado));
+  }
+
+  /** `POST /accounting/practitioner/entries` — gasto u otro ingreso. */
+  registerSimpleEntry(
+    input: RegisterSimpleEntryInput,
+  ): Observable<PractitionerEntryResult> {
+    return this.http
+      .post<WireResultado>(this.url('/accounting/practitioner/entries'), input)
+      .pipe(map(aResultado));
   }
 
   private url(path: string): string {
@@ -225,4 +268,43 @@ function aAsientoDetallado(
     practiceId: practiceId as string,
     lines: ((lines ?? []) as readonly WireLinea[]).map(aLinea),
   };
+}
+
+/* ---- Carril 18: auto-servicio contable del doctor ------------------------- */
+
+interface WireConsultaPagada {
+  readonly invoiceId: string;
+  readonly invoiceNumber: string;
+  readonly encounterId: string | null;
+  readonly appointmentId: string | null;
+  readonly patientProfileId: string;
+  readonly issueDate: string;
+  readonly paidTotal: string;
+  readonly currencyConceptId: string | null;
+}
+
+interface WireResultado {
+  readonly transactionId: string;
+  readonly transactionNumber: string;
+  readonly status: string;
+  readonly totalAmount: string;
+  readonly invoiceId: string | null;
+  readonly notificationRequestId: string | null;
+}
+
+interface RespuestaConsultasPagadas {
+  readonly items: readonly WireConsultaPagada[];
+  readonly count: number;
+}
+
+function aConsultaPagada(body: WireConsultaPagada): PaidConsultation {
+  const { issueDate, ...resto } = body;
+  return {
+    ...sinNulos(resto as ConNulos<Omit<PaidConsultation, 'issueDate'>>),
+    issueDate: maybeDateOnly(issueDate) ?? new Date(issueDate),
+  };
+}
+
+function aResultado(body: WireResultado): PractitionerEntryResult {
+  return sinNulos(body as ConNulos<PractitionerEntryResult>);
 }

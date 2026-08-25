@@ -1,0 +1,81 @@
+<app-page-header
+  title="Comprobante de pago"
+  subtitle="Tu constancia interna: qué pagaste, dónde y cuándo."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="state()" (retry)="cargar()">
+  @if (comprobante(); as papel) {
+    <article class="comprobante" data-testid="comprobante">
+      <!-- ─── El encabezado que dice qué es este papel ───────────────────── -->
+      <header class="comprobante__cabecera">
+        <p class="comprobante__marca">AloVida</p>
+        <p class="comprobante__aclaracion">
+          Comprobante interno. No es una factura.
+        </p>
+      </header>
+
+      <dl class="comprobante__datos">
+        <dt>Farmacia</dt>
+        <dd>{{ papel.farmacia }} — {{ papel.sede }}</dd>
+        @if (papel.paciente !== null) {
+          <dt>Paciente</dt>
+          <dd>{{ papel.paciente }}</dd>
+        }
+        <dt>Pagado el</dt>
+        <dd>
+          {{ papel.pagadoEl | date: 'dd/MM/yyyy' }} a las
+          {{ papel.pagadoEl | date: 'HH:mm' }}
+        </dd>
+        <dt>Medio</dt>
+        <dd>
+          <app-badge variant="success" data-testid="comprobante-medio">
+            {{ papel.medioDePago }}
+          </app-badge>
+        </dd>
+      </dl>
+
+      <!-- ─── Las líneas cobradas ────────────────────────────────────────── -->
+      <ul class="comprobante__lineas" data-testid="comprobante-lineas">
+        @for (linea of papel.lineas; track $index) {
+          <li class="comprobante__linea">
+            <span class="comprobante__descripcion">
+              {{ linea.descripcion }}
+              <span class="comprobante__secundario">x{{ linea.cantidad }}</span>
+            </span>
+            @if (linea.importe !== null) {
+              <span class="cifras-tabulares">{{ linea.importe }} {{ papel.moneda }}</span>
+            } @else {
+              <span class="comprobante__secundario">Precio no publicado</span>
+            }
+          </li>
+        }
+      </ul>
+
+      <p class="comprobante__total" data-testid="comprobante-total">
+        @if (papel.total !== null) {
+          Total:
+          <strong class="cifras-tabulares">{{ papel.total }} {{ papel.moneda }}</strong>
+        } @else {
+          Total no disponible: falta algún precio publicado.
+        }
+      </p>
+
+      <div class="comprobante__acciones">
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          type="button"
+          data-testid="comprobante-descargar"
+          (clicked)="descargar()"
+        >
+          Descargar en PDF
+        </button>
+        <a app-button variant="ghost" size="sm" [routerLink]="rutaDelPedido(papel.id)">
+          Volver al pedido
+        </a>
+      </div>
+    </article>
+  }
+</app-view-state-host>

@@ -47,7 +47,7 @@ describe('CollectionRunFinish', () => {
 
   it('una corrida fallida sin resumen de error no se cierra', () => {
     fijarCorrida();
-    interno<{ set: (v: string) => void }>('outcome').set('FAILED');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ outcome: 'FAILED' });
 
     interno<() => void>('submit')();
 
@@ -57,7 +57,7 @@ describe('CollectionRunFinish', () => {
 
   it('una corrida completa se cierra sin campos opcionales, y los omite del cuerpo', () => {
     fijarCorrida();
-    interno<{ set: (v: string) => void }>('outcome').set('SUCCEEDED');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ outcome: 'SUCCEEDED' });
 
     interno<() => void>('submit')();
 
@@ -83,7 +83,7 @@ describe('CollectionRunFinish', () => {
     interno<{ patchValue: (v: object) => void }>('form').patchValue({
       continuationCursorJson: '{"page": 3}',
     });
-    interno<{ set: (v: string) => void }>('outcome').set('PARTIAL');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ outcome: 'PARTIAL' });
 
     interno<() => void>('submit')();
 
@@ -107,18 +107,17 @@ describe('CollectionRunFinish', () => {
     interno<{ patchValue: (v: object) => void }>('form').patchValue({
       continuationCursorJson: '{roto',
     });
-    interno<{ set: (v: string) => void }>('outcome').set('PARTIAL');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ outcome: 'PARTIAL' });
 
     interno<() => void>('submit')();
   });
 
   it('el selector acepta el valor del contrato y rechaza lo desconocido', () => {
-    interno<(v: unknown) => void>('elegirResultado')('PARTIAL');
-    expect(interno<() => string | null>('outcome')()).toBe('PARTIAL');
-
-    interno<(v: unknown) => void>('elegirResultado')('CUALQUIER_COSA');
-    // Un valor fuera del contrato no pisa nada.
-    expect(interno<() => string | null>('outcome')()).toBeNull();
+    // El motor sólo ofrece los tres resultados del contrato; la comprobación
+    // sigue al armar el cuerpo, que es lo que llega al backend.
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ outcome: 'CUALQUIER_COSA' });
+    interno<() => void>('submit')();
+    // Nada viajó: `http.verify()` lo comprueba.
   });
 
   it('la pantalla se reinicia para otra carga', () => {

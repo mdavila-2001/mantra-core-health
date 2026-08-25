@@ -17,12 +17,18 @@
     ========================================================================== */
 
 import type { SearchResultItem } from '@shared/components/molecules';
+import { inicialesDe } from '@shared/text/iniciales';
 
 import {
   PUBLIC_PROFILE_PREFIX,
   type PublicResultKind,
   type PublicSearchResult,
 } from '@core/data-access/public-directory/public-directory.types';
+
+// Se reexporta porque las pantallas del buscador la importan de acá desde el
+// carril P4. La implementación se mudó a `shared/text` al descubrirse que el
+// directorio de médicos tenía una copia que no descartaba el tratamiento.
+export { inicialesDe } from '@shared/text/iniciales';
 
 /** Cómo se rotula cada vertical en la insignia junto al nombre. */
 const ROTULO_POR_TIPO: Readonly<Record<PublicResultKind, string>> = {
@@ -33,30 +39,6 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicResultKind, string>> = {
   INSURER: 'Aseguradora',
   MEDICATION: 'Medicamento',
 };
-
-/** Los tratamientos que no aportan una inicial. */
-const TRATAMIENTOS = new Set(['dr', 'dra', 'lic', 'mgr', 'prof', 'sr', 'sra', 'srta']);
-
-/**
- * Las iniciales del cuadrado cuando no hay foto.
- *
- * **El tratamiento no cuenta.** «Dra. Marisol Quispe Ticona» da `MQ` y no `DM`:
- * en un directorio médico casi todos los nombres empiezan con «Dr.» o «Dra.»,
- * así que tomarlo como primera inicial pondría la misma letra en media
- * pantalla y dejaría de distinguir a nadie, que es lo único que las iniciales
- * tienen que hacer.
- */
-export function inicialesDe(nombre: string): string {
-  return nombre
-    .split(/\s+/)
-    .filter(
-      (parte) =>
-        /^[\p{L}]/u.test(parte) && !TRATAMIENTOS.has(parte.replace(/\./g, '').toLowerCase()),
-    )
-    .slice(0, 2)
-    .map((parte) => parte[0]?.toUpperCase() ?? '')
-    .join('');
-}
 
 /**
  * La ruta de la ficha de un resultado.

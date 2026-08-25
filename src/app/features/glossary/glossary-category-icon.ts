@@ -52,10 +52,19 @@ export function glossaryCategoryOrder(internalCode: string): number {
 /**
  * El ícono de una categoría del glosario, o el género neutro por defecto.
  *
- * No existe un `<app-icon>` genérico ni un sprite compartido en este proyecto
- * (`NAV_ICON_NAMES` del nav lateral es un set cerrado de 7 nombres, sin
- * relación con la medicina) — once formas nuevas no justifican construir esa
- * pieza genérica, así que este componente vive acá, junto a quien lo usa.
+ * No existe un `<app-icon>` genérico ni un sprite compartido en este proyecto:
+ * `NAV_ICON_NAMES` es el set cerrado de la **navegación** —responde «qué
+ * sección es ésta», no «de qué habla este término»—, así que once formas
+ * nuevas no justificaban construir esa pieza genérica y este componente vive
+ * acá, junto a quien lo usa.
+ *
+ * **Con una salvedad, desde que el set del nav pasó de siete a cuarenta y
+ * cuatro:** cinco de estas once formas ya existen allá con otro nombre
+ * —estetoscopio, bisturí, cápsula, placa, tubo—. Son dos dibujos de la misma
+ * cosa, que es justo lo que este repositorio evita. No se unificaron acá
+ * porque las otras seis no tienen equivalente y mezclar los dos vocabularios
+ * dejaría un set que no responde ninguna de las dos preguntas; queda anotado
+ * para quien vuelva a tocar cualquiera de los dos.
  *
  * Trazo simple de un color (`currentColor`), mismo peso visual que los íconos
  * del nav lateral (`stroke-width="1.6"`, `viewBox="0 0 24 24"`, sin relleno):

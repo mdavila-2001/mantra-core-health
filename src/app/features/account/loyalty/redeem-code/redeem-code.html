@@ -1,0 +1,51 @@
+<section class="canje" aria-labelledby="canje-titulo" data-testid="canje-comprobante">
+  <h3 id="canje-titulo" class="canje__titulo">Mostrá esto en el mostrador</h3>
+
+  <!-- El chip DEMO va quemado a propósito: no existe input ni prop que lo
+       quite — quien escanea este código todavía no existe, y se dice. -->
+  <div class="canje__demo-chip">
+    <app-badge variant="info" data-testid="canje-chip-demo">
+      DEMO — el canje en el comercio llega después
+    </app-badge>
+  </div>
+
+  @if (qrDisponible()) {
+    <!-- El mismo dato que el código de abajo, para la cámara: duplicado para
+         quien escucha, y por eso oculto al lector de pantalla. -->
+    <div class="canje__qr" aria-hidden="true">
+      <canvas #lienzoQrCanje [width]="ladoDelQr" [height]="ladoDelQr"></canvas>
+    </div>
+  }
+
+  <p class="canje__codigo cifras-tabulares" data-testid="canje-codigo">
+    {{ comprobante().codigo }}
+  </p>
+  <p class="canje__ayuda">
+    Si el escáner no lo toma, dictá este código.
+  </p>
+
+  <dl class="canje__datos">
+    <div class="canje__dato">
+      <dt>Canjeaste</dt>
+      <dd class="cifras-tabulares" data-testid="canje-puntos">
+        {{ enPuntos(comprobante().canje.puntos) }}
+      </dd>
+    </div>
+    <div class="canje__dato">
+      <dt>Te queda</dt>
+      <dd class="cifras-tabulares" data-testid="canje-saldo">
+        {{ enPuntos(comprobante().canje.saldoDespues) }}
+      </dd>
+    </div>
+    <div class="canje__dato">
+      <dt>Vence</dt>
+      <dd data-testid="canje-vence">
+        a las {{ comprobante().venceEl | date: 'HH:mm' }}
+      </dd>
+    </div>
+  </dl>
+
+  <button app-button variant="outline" type="button" data-testid="canje-cerrar" (clicked)="cerrado.emit()">
+    Listo
+  </button>
+</section>

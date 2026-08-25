@@ -1,0 +1,61 @@
+<app-auth-split [claim]="claim" [tagline]="tagline" contentWidth="full">
+  <div class="registro">
+    @if (registered()) {
+      <div class="registro__header">
+        <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-organizacion-exito">
+          Tu cuenta está lista
+        </h1>
+        <p class="registro__subtitle">
+          Ya podés entrar con tu correo y la contraseña que elegiste.
+          @if (verificationSent()) {
+            Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no hace
+            falta para usar tu cuenta.
+          }
+          Tu organización queda pendiente de aprobación: mientras la plataforma no la apruebe, no
+          aparece en las búsquedas de pacientes.
+        </p>
+      </div>
+      <button
+        app-button
+        variant="primary"
+        size="lg"
+        class="registro__submit"
+        data-testid="registro-organizacion-ir-login"
+        (clicked)="goToLogin()"
+      >
+        Ir a iniciar sesión
+      </button>
+    } @else {
+      <div class="registro__header">
+        <h1 class="registro__title">Registrá tu aseguradora</h1>
+        <p class="registro__subtitle">
+          Creá la cuenta de tu organización y su usuario administrador en un solo paso.
+        </p>
+      </div>
+
+      @if (errorMessage(); as mensaje) {
+        <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-organizacion-error">{{
+          mensaje
+        }}</app-alert>
+      }
+
+      <div class="registro__body">
+        <app-paginated-form
+          [paginas]="paginas"
+          [form]="form"
+          label="Crear cuenta de la aseguradora"
+          submitLabel="Crear cuenta de la aseguradora"
+          [pending]="isSubmitting()"
+          (enviado)="submit()"
+          data-testid="registro-organizacion-form"
+        />
+      </div>
+
+      <div class="registro__footer">
+        <p class="registro__pie">
+          ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+        </p>
+      </div>
+    }
+  </div>
+</app-auth-split>

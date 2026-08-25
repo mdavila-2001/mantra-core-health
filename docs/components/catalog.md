@@ -16,7 +16,7 @@ Esta página explica el catálogo; aquélla lo enumera.
 |---|---|---:|---|
 | **Átomos** | Un control, sin dominio | 16 | `app-button`, `app-input`, `app-badge`, `app-skeleton` |
 | **Moléculas** | Composición con comportamiento propio | 20 | `app-form-field`, `app-dialog`, `app-tabs`, `app-toast` |
-| **Organismos** | Estructura de pantalla o control complejo | 15 | `app-shell`, `app-data-table`, `app-view-state-host`, `app-status-seal` |
+| **Organismos** | Estructura de pantalla o control complejo | 16 | `app-shell`, `app-data-table`, `app-view-state-host`, `app-directory-page` |
 
 El nivel **se deduce de la carpeta**, no se declara en el código. Mover una
 carpeta es reclasificar.
@@ -133,6 +133,38 @@ Salidas: `sortChanged`, `cursorChanged`, `selectionChanged`.
 
 Que reciba `cursor` y no `page` es coherente con la API, que pagina por cursor
 opaco. Ver [tablas](tables.md).
+
+### `app-directory-page` — la anatomía común de los cuatro directorios
+
+| Entrada | Para qué |
+|---|---|
+| `titulo`, `subtitulo` | El `page-header`. El subtítulo es **obligatorio**: es donde la sección se explica (K3) |
+| `filtros` | Los `FilterDef` de la barra, con chips o desplegables |
+| `etiquetaBusqueda` | El rótulo del campo de texto |
+| `estado` | Un `ViewState` — la página pinta sus propios estados |
+| `grupos` | Los tramos, cada uno con su rótulo y sus resultados |
+| `sustantivo` | Singular y plural de lo que lista, para contarlo en castellano |
+| `aviso` | Un aviso sobre el listado, si hace falta |
+| `textoSinCoincidencias` | Qué decir cuando el filtro no dejó a nadie. `null` = no es ese caso |
+
+Salidas: `filtrosCambiaron`, `reintentar`.
+
+Existe porque el cliente pidió cuatro directorios —médicos, laboratorios,
+clínicas, farmacias— con la misma pinta, y había dos escritos a mano que ya
+diferían: uno con `filter-bar` y otro con un `search-field` suelto, uno con
+contador y el otro con un aviso, los dos con listas planas donde el diseño pedía
+grillas. Con cuatro pantallas a mano, la quinta corrección de diseño se aplica a
+dos y media.
+
+**No pide datos ni filtra.** Recibe el estado resuelto y los grupos armados;
+cada directorio sabe si su filtrado es del servidor o en memoria, y eso no se
+puede unificar sin empeorar a alguno.
+
+Las tarjetas son `app-result-card`, que es el hermano vertical de
+`app-search-result`: **mismo tipo de dato, distinta forma**. Es un componente
+aparte y no una variante porque `search-result` no tiene CSS propio a propósito
+—su diseño vive en `redsat.css`, que se recopia entero desde la bóveda— y una
+variante escrita ahí desaparecería en la primera recopia.
 
 ## Componentes sin prueba propia
 

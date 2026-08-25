@@ -23,6 +23,10 @@ import type {
   PatientChart as ExpedienteDePaciente,
 } from '../../../core/data-access/clinical/clinical.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
+import type {
+  OwnPractitionerProfile,
+  PractitionerLicense,
+} from '../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -64,9 +68,16 @@ import {
 import { AdmissionBlock, type InternacionEnFicha } from './admission-block/admission-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 import { AttachmentsBlock } from './attachments-block/attachments-block';
+import { environment } from '../../../../environments/environment';
+import { ESCENARIOS_CLINICOS_DEMO } from './demo-presets';
+import type { EscenarioClinicoDemo } from './demo-presets';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import { DiagnosticsBlock } from './diagnostics-block/diagnostics-block';
-import { MedicationBlock, type RecetaEnFicha } from './medication-block/medication-block';
+import {
+  MedicationBlock,
+  type DiagnosticoEnFicha,
+  type RecetaEnFicha,
+} from './medication-block/medication-block';
 import { ProceduresBlock } from './procedures-block/procedures-block';
 import { SpecialtyFormBlock } from './specialty-form-block/specialty-form-block';
 
@@ -253,6 +264,35 @@ export class PatientChart {
   private readonly celdaAcciones =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAcciones');
 
+  /* -- Escenarios de demostración ------------------------------------------- */
+
+  /**
+   * Los dos bloques de escritura, por referencia, para que un escenario de
+   * demostración los precargue juntos. No `required`: sólo existen cuando el
+   * expediente está listo y hay encuentro abierto.
+   */
+  private readonly bloqueDiagnostico = viewChild(DiagnosisBlock);
+  private readonly bloqueMedicacion = viewChild(MedicationBlock);
+
+  /** La barra existe sólo donde el despliegue la pidió (`PUBLIC_DEMO_PRESETS`). */
+  protected readonly demoActiva = environment.demoPresets;
+  protected readonly escenariosDemo = ESCENARIOS_CLINICOS_DEMO;
+
+  /**
+   * Un clic, los dos formularios: el diagnóstico y su receta coherente. Cada
+   * bloque resuelve sus códigos contra el catálogo y avisa lo suyo; acá sólo
+   * se coordina.
+   */
+  protected aplicarEscenarioDemo(escenario: EscenarioClinicoDemo): void {
+    const diagnostico = this.bloqueDiagnostico();
+    const medicacion = this.bloqueMedicacion();
+    if (diagnostico === undefined || medicacion === undefined) {
+      return;
+    }
+    diagnostico.aplicarCasoDemo(escenario.diagnostico);
+    medicacion.aplicarCasoDemo(escenario.receta);
+  }
+
   /**
    * El perfil que se está mirando, leído del segmento `:profileId`.
    *
@@ -300,6 +340,15 @@ export class PatientChart {
   /** Nombre del paciente si se pudo leer; vacío si el padrón está prohibido. */
   private readonly nombre = signal('');
 
+  /**
+   * El perfil profesional de **quien está mirando**, para firmar el papel.
+   *
+   * Es de la sesión y no del expediente: no se relee al pasar de un paciente a
+   * otro. `null` mientras no se sabe —y también cuando la cuenta no ejerce, que
+   * es un caso normal y no un error.
+   */
+  private readonly perfilPropio = signal<OwnPractitionerProfile | null>(null);
+
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
   private readonly datos = computed(() => dataOf(this.expediente()));
@@ -343,6 +392,21 @@ export class PatientChart {
       estado: this.label(fila.clinicalStatusConceptId),
       cuando: fila.onsetAt ?? fila.createdAt,
       detalle: fila.resolvedAt === undefined ? '' : 'Resuelto',
+    })),
+  );
+
+  /**
+   * Los diagnósticos como opciones para «¿para qué es esta receta?» (v4.1.6).
+   *
+   * Se ofrecen **todos**, no sólo los activos: renovar el tratamiento de una
+   * condición ya resuelta es un acto clínico legítimo, y esconderla obligaría a
+   * dejar la receta sin indicación. Lo que sí lleva la etiqueta es el estado,
+   * para que elegir una resuelta sea una decisión y no un descuido.
+   */
+  protected readonly diagnosticosParaReceta = computed<readonly DiagnosticoEnFicha[]>(() =>
+    this.diagnosticos().map((dx) => ({
+      id: dx.id,
+      etiqueta: dx.detalle === '' ? dx.principal : `${dx.principal} · ${dx.detalle}`,
     })),
   );
 
@@ -789,6 +853,37 @@ export class PatientChart {
       const dePar = this.motivoDeLaCita();
       untracked(() => this.motivo.set(dePar));
     });
+
+    // Quién firma se resuelve una sola vez, cuando la sesión dice que hay
+    // perfil profesional. Depende de la sesión y **no** del expediente: la
+    // matrícula de quien atiende no cambia porque se abra la ficha de otra
+    // persona, y releerla por paciente sería una petición por navegación.
+    effect(() => {
+      const perfilId = this.auth.practitionerProfileId();
+      untracked(() => this.resolverPerfilPropio(perfilId));
+    });
+  }
+
+  /**
+   * Lee el perfil profesional propio, del que sale la matrícula del papel.
+   *
+   * Falla en silencio, igual que en el bloque de formularios: una cuenta sin
+   * perfil profesional —administración, recepción— responde `404`, y eso es un
+   * caso normal que no cabe contarle a nadie. Sin perfil no hay matrícula y el
+   * documento simplemente no imprime esa línea.
+   */
+  private resolverPerfilPropio(perfilId: string | null): void {
+    if (perfilId === null) {
+      this.perfilPropio.set(null);
+      return;
+    }
+    if (this.perfilPropio()?.profileId === perfilId) {
+      return;
+    }
+    this.profiles.getOwnPractitionerProfile().subscribe({
+      next: (perfil) => this.perfilPropio.set(perfil),
+      error: () => this.perfilPropio.set(null),
+    });
   }
 
   protected recargar(): void {
@@ -1019,11 +1114,23 @@ export class PatientChart {
     this.toasts.success('La atención se descargó como PDF.', 'Historia clínica');
   }
 
-  /** Quién es quién en el papel: paciente, profesional y organización. */
+  /**
+   * Quién es quién en el papel: paciente, profesional, matrícula y organización.
+   *
+   * Los cuatro datos van juntos porque el papel se lee como una sola cosa: una
+   * receta sin matrícula ni origen no es rastreable, y la farmacia no tiene
+   * contra qué contrastarla. Los dos opcionales se omiten cuando no se saben —el
+   * motor no imprime la línea— en vez de viajar vacíos: un renglón «Matrícula:»
+   * sin número afirma que no tiene, que es distinto de no haberla podido leer.
+   */
   private contextoDelDocumento(): ContextoDelDocumento {
+    const matricula = this.matriculaDeLaSesion();
+    const organizacion = this.organizacionDeLaSesion();
     return {
       paciente: this.nombre(),
       profesional: this.profesionalDeLaSesion(),
+      ...(matricula === undefined ? {} : { matricula }),
+      ...(organizacion === undefined ? {} : { organizacion }),
     };
   }
 
@@ -1034,12 +1141,63 @@ export class PatientChart {
    * expediente y quien registró la atención. Devuelve vacío cuando la cuenta no
    * tiene perfil profesional —administración, por ejemplo—: el documento lo
    * imprime como «No registrado» en vez de atribuirle la atención a alguien.
+   *
+   * El nombre sale del token y, si éste no lo trae, del perfil profesional ya
+   * leído: son la misma persona, y el papel no puede quedarse sin firma porque
+   * el emisor del token haya omitido un claim cosmético.
    */
   private profesionalDeLaSesion(): string {
     if (this.auth.practitionerProfileId() === null) {
       return '';
     }
-    return this.auth.displayName() ?? '';
+    return this.auth.displayName() ?? this.perfilPropio()?.displayName ?? '';
+  }
+
+  /**
+   * La matrícula con la que quien atiende está habilitado a ejercer.
+   *
+   * **Vigente es una ventana, no una bandera** —el mismo criterio con el que la
+   * ficha de filiación lee sus vínculos—: sin `validTo` no caduca, y con
+   * `validTo` en el futuro sigue habilitando. Descartar toda matrícula que
+   * declare vencimiento dejaría sin firma a quien tiene la suya en regla, que
+   * es el caso normal: una matrícula real se renueva y por eso trae fecha.
+   * Vencida sí se descarta: firmar con ella es peor que no imprimir el renglón.
+   *
+   * Y la ventana tiene **dos** extremos: una matrícula cuyo `validFrom` todavía
+   * no llegó —la que ya se cargó porque el trámite salió, pero habilita recién
+   * el mes que viene— no habilita hoy, y firmar con ella afirma una habilitación
+   * que aún no existe.
+   *
+   * Si hay varias vigentes —quien ejerce en más de una jurisdicción— se toma la
+   * primera que declara el perfil, que es el orden en que el backend las
+   * devuelve; elegir por jurisdicción exigiría saber dónde se está atendiendo, y
+   * eso el expediente no lo sabe.
+   */
+  private matriculaDeLaSesion(): string | undefined {
+    const licencias = this.perfilPropio()?.licenses ?? [];
+    const ahora = Date.now();
+    const vigente = licencias.find((licencia: PractitionerLicense) =>
+      vigenciaCubre(licencia.validFrom, licencia.validTo, ahora),
+    );
+    const numero = (vigente?.licenseNumber ?? '').trim();
+    return numero === '' ? undefined : numero;
+  }
+
+  /**
+   * La organización que emite el papel: la del tenant activo de la sesión, que
+   * es el mismo custodio bajo el que se registra el encuentro.
+   *
+   * Se imprime **el nombre o nada**. `tenantName` cae al identificador cuando el
+   * token no trae el nombre: en pantalla es feo, pero en un documento clínico es
+   * un uuid impreso donde debería decir de dónde salió la receta.
+   */
+  private organizacionDeLaSesion(): string | undefined {
+    const tenantId = this.auth.activeTenantId();
+    if (tenantId === null) {
+      return undefined;
+    }
+    const nombre = this.auth.tenantName(tenantId);
+    return nombre === tenantId || nombre.trim() === '' ? undefined : nombre;
   }
 
   /* -- Lectura ------------------------------------------------------------- */
@@ -1138,6 +1296,25 @@ export class PatientChart {
     }
     return SIN_DATO;
   }
+}
+
+/**
+ * Si una vigencia declarada cubre el instante dado.
+ *
+ * Los dos extremos son opcionales y la ausencia de cada uno significa «no
+ * empieza» y «no termina», que es cómo el contrato de `profiles` declara sus
+ * ventanas. Mirar sólo el final trataría como habilitada a una credencial que
+ * todavía no entró en vigencia.
+ */
+function vigenciaCubre(
+  desde: Date | undefined,
+  hasta: Date | undefined,
+  instante: number,
+): boolean {
+  if (desde !== undefined && desde.getTime() > instante) {
+    return false;
+  }
+  return hasta === undefined || hasta.getTime() > instante;
 }
 
 /**

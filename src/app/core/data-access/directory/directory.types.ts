@@ -49,6 +49,12 @@ export interface MyOrganization extends TenantListItem {
   readonly isVerified: boolean;
   /** Zona horaria IANA declarada, si la hay. */
   readonly timeZone?: string;
+  /**
+   * Datos de aseguradora. Presente **sólo** si el tenant es de tipo `PAYER`:
+   * su presencia es la señal de que se trata de una aseguradora, en vez de
+   * decodificar `tenantTypeConceptId` — mismo principio que `isVerified`.
+   */
+  readonly payer?: PayerProfile;
 }
 
 /**
@@ -121,6 +127,16 @@ export interface OrganizationEdit {
   readonly legalName?: string;
   readonly tradeName?: string;
   readonly timeZone?: string;
+  /**
+   * Sólo para aseguradoras: se manda cuando el tenant es `PAYER`. El backend
+   * rechaza este bloque en cualquier otro tipo, así que la pantalla lo arma
+   * sólo si `payer` vino en la lectura.
+   */
+  readonly payer?: {
+    readonly sigla?: string;
+    readonly address?: string;
+    readonly regulatorIdentifier?: string;
+  };
 }
 
 /** Página del listado. Sin total: la paginación es por cursor, a propósito. */
@@ -211,6 +227,10 @@ export interface PayerProfile {
   readonly carrierCode: string;
   readonly regulatorIdentifier: string;
   readonly jurisdictionConceptId?: string;
+  /** Sigla de la aseguradora. Hasta 20 caracteres. */
+  readonly sigla: string;
+  /** Dirección física. Hasta 300 caracteres. */
+  readonly address: string;
 }
 
 /** Datos de corredor. Mismo trato que {@link PayerProfile}, para `BROKER`. */
@@ -245,6 +265,38 @@ export interface NewTenant {
   readonly jurisdictionConceptId?: string;
   readonly payer?: PayerProfile;
   readonly broker?: BrokerProfile;
+}
+
+/**
+ * Alta de una sub-organización (`POST /tenants/{id}/child-tenants`, UC-04-03).
+ *
+ * Pide `SECURITY_ADMIN` y que la organización madre esté activa. El tipo es
+ * obligatorio a propósito y **no se hereda**: una filial puede ser de otra
+ * clase que su madre —una red con un hospital y una farmacia—, así que
+ * suponerlo sería adivinar.
+ */
+export interface NewChildTenant {
+  readonly code: string;
+  readonly legalName: string;
+  /** Usuario que queda como administrador de la filial. Se elige, no se tipea. */
+  readonly adminUserId: string;
+  readonly tenantType: TenantTypeCode;
+  readonly countryConceptId?: string;
+  readonly jurisdictionConceptId?: string;
+  readonly payer?: PayerProfile;
+  readonly broker?: BrokerProfile;
+}
+
+/**
+ * Confirmación de la verificación (`POST /admin/tenants/{id}/verification`).
+ *
+ * Los dos campos son opcionales: sirven para corregir país y jurisdicción en el
+ * mismo acto de verificar, que es cuando alguien mira la documentación de
+ * verdad. Omitirlos deja lo declarado en el alta.
+ */
+export interface VerifyTenantConfirmation {
+  readonly countryConceptId?: string;
+  readonly jurisdictionConceptId?: string;
 }
 
 /** Lo que devuelve el alta. La organización nace `pending`, sin verificar. */
@@ -287,6 +339,29 @@ export interface BranchList {
   readonly count: number;
 }
 
+/** Tipos de sede que acepta el alta. */
+export type BranchTypeCode = 'CLINIC' | 'OFFICE';
+
+/**
+ * Alta de una sucursal (`POST /tenants/{id}/branches`, UC-04-04).
+ *
+ * El tipo viaja como **código**, no como concept id: el contrato lo acota a dos
+ * literales y los traduce el backend, así que la pantalla resuelve con un
+ * desplegable fijo y no necesita consultar terminología.
+ *
+ * Las coordenadas son opcionales y van juntas o no van: media coordenada no
+ * ubica nada. La pantalla lo hace cumplir; el backend acepta cada una por
+ * separado.
+ */
+export interface NewBranch {
+  readonly code: string;
+  readonly name: string;
+  readonly branchType?: BranchTypeCode;
+  readonly timeZone?: string;
+  readonly latitude?: number;
+  readonly longitude?: number;
+}
+
 /**
  * Una membresía (`GET /tenants/{id}/memberships`).
  *
@@ -312,6 +387,41 @@ export interface MembershipPage {
   readonly count: number;
   readonly limit: number;
   readonly nextCursor: string | null;
+}
+
+/** Roles que una membresía puede tener dentro de la organización. */
+export type TenantRoleCode = 'OWNER' | 'ADMIN' | 'STAFF';
+
+/** Hasta dónde llega una membresía: toda la organización o una sucursal. */
+export type AccessScopeCode = 'ALL_TENANT' | 'BRANCH';
+
+/**
+ * Incorporación de alguien a la organización
+ * (`POST /tenants/{id}/memberships`, UC-04-05).
+ *
+ * El usuario tiene que existir antes: la membresía ata una cuenta a una
+ * organización, no crea la cuenta. Rol y alcance viajan como códigos, igual
+ * que el tipo de sucursal.
+ *
+ * `primaryBranchId` es la sucursal de referencia; asignarla de verdad —para que
+ * el alcance `BRANCH` signifique algo— es la operación aparte de
+ * `assignBranch`.
+ */
+export interface NewMembership {
+  readonly userId: string;
+  readonly role?: TenantRoleCode;
+  readonly accessScope?: AccessScopeCode;
+  readonly primaryBranchId?: string;
+}
+
+/**
+ * Asignación de una membresía a una sucursal
+ * (`POST /tenants/{id}/memberships/{mid}/branch-assignments`, UC-04-06).
+ */
+export interface NewBranchAssignment {
+  readonly branchId: string;
+  /** Rol local dentro de esa sucursal; opcional y sin binding publicado. */
+  readonly localRoleConceptId?: string;
 }
 
 /** Filtros de `GET /tenants/{id}/memberships`. */

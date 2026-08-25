@@ -1,8 +1,3 @@
-<app-page-header
-  title="Mensajes"
-  subtitle="Escribile a tu médico y seguí la conversación desde acá."
-/>
-
 @if (error(); as mensaje) {
   <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
 }
@@ -11,104 +6,122 @@
   <p class="mensajeria__cargando" role="status">Cargando tus conversaciones…</p>
 } @else if (perfil() === null) {
   <!-- Una puerta, no un error: la mensajería necesita el perfil público de
-       `community`, que es una entidad aparte del perfil de paciente del token. -->
+       `community`, que es una entidad aparte del perfil de paciente del token.
+       Antes esto mandaba a «Mi perfil» a buscarlo; ahora se crea acá mismo, que
+       es donde la persona está parada. -->
   <app-empty-state
-    title="Todavía no tenés perfil público"
-    description="La mensajería usa tu perfil de la red social, y para eso hace falta tener el tuyo. Se crea desde «Mi perfil»."
+    title="Te falta tu perfil público"
+    description="Los chats usan tu perfil de la red social: es lo que ve la otra persona cuando le escribís. Se crea en un paso y después podés completarlo."
     variant="empty"
-  />
-} @else {
-  <div class="mensajeria__barra">
+  >
+    <!-- `empty-actions` es el hueco que `app-empty-state` proyecta; sin ese
+         atributo el botón se cae y el estado vacío vuelve a ser un cartel. -->
     <button
+      empty-actions
       app-button
       variant="primary"
-      size="sm"
-      data-testid="mensajeria-nueva"
-      (clicked)="alternarBusqueda()"
+      data-testid="mensajeria-crear-perfil"
+      [isLoading]="creandoPerfil()"
+      (clicked)="crearPerfil()"
     >
-      {{ buscando() ? 'Cancelar' : 'Escribirle a un profesional' }}
+      Crear mi perfil y empezar a chatear
     </button>
-  </div>
-
-  @if (buscando()) {
-    <div class="mensajeria__buscador">
-      <label class="mensajeria__campo">
-        <span class="solo-lectores">Buscar profesional</span>
-        <input
-          type="search"
-          data-testid="mensajeria-consulta"
-          placeholder="Nombre o especialidad"
-          [ngModel]="consulta()"
-          (ngModelChange)="consulta.set($event)"
-          (keydown.enter)="buscar()"
-        />
-      </label>
-      <button
-        app-button
-        variant="outline"
-        size="sm"
-        data-testid="mensajeria-buscar"
-        [isLoading]="buscandoAhora()"
-        (clicked)="buscar()"
-      >
-        Buscar
-      </button>
-
-      @if (resultados().length > 0) {
-        <ul class="mensajeria__resultados">
-          @for (resultado of resultados(); track resultado.slug) {
-            <li>
-              <button
-                class="mensajeria__resultado"
-                type="button"
-                data-testid="mensajeria-resultado"
-                [disabled]="abriendo()"
-                (click)="escribirA(resultado)"
-              >
-                <span class="mensajeria__resultado-nombre">{{ resultado.displayName }}</span>
-                @if (resultado.headline) {
-                  <span class="mensajeria__resultado-detalle">{{ resultado.headline }}</span>
-                }
-              </button>
-            </li>
+  </app-empty-state>
+} @else {
+  <div class="mensajeria">
+    <!-- Panel izquierdo: la bandeja. -->
+    <section class="mensajeria__panel" aria-label="Tus conversaciones">
+      <header class="mensajeria__panel-cabecera">
+        <h1 class="mensajeria__titulo">Chats</h1>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          iconOnly
+          aria-label="Escribirle a un profesional"
+          data-testid="mensajeria-nueva"
+          (clicked)="alternarBusqueda()"
+        >
+          @if (buscando()) {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          } @else {
+            <!-- Lápiz sobre un globo: escribirle a alguien nuevo. -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 11.2c0 4.3-3.8 7.8-8.5 7.8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9A7.7 7.7 0 0 1 3.5 11c0-4.3 3.8-7.8 8.5-7.8 1 0 2 .2 2.9.5" /><path d="m21.2 3.1 1.2 1.2-4.3 4.3h-1.2V7.4z" /></svg>
           }
-        </ul>
-      }
-    </div>
-  }
+        </button>
+      </header>
 
-  @if (vacio()) {
-    <app-empty-state
-      title="No tenés conversaciones"
-      description="Cuando le escribas a un profesional —o alguien te escriba— la conversación va a aparecer acá."
-      variant="empty"
-    />
-  } @else {
-    <ul class="mensajeria__lista">
-      @for (conversacion of conversaciones(); track conversacion.id) {
-        <li class="mensajeria__fila" [class.is-sin-leer]="conversacion.unreadCount > 0">
-          <a
-            class="mensajeria__item"
-            data-testid="conversacion"
-            [routerLink]="['/messaging', conversacion.id]"
-          >
-            <span class="mensajeria__con-quien">{{ conQuien(conversacion) }}</span>
-            @if (conversacion.lastMessage?.bodyText; as vistaPrevia) {
-              <span class="mensajeria__vista-previa">{{ vistaPrevia }}</span>
-            }
-            <span class="mensajeria__meta">
-              @if (conversacion.lastMessageAt) {
-                <span>{{ conversacion.lastMessageAt | date: 'short' }}</span>
-              }
-              @if (conversacion.unreadCount > 0) {
-                <span class="app-badge" data-tono="info" data-testid="conversacion-sin-leer">
-                  {{ conversacion.unreadCount }}
-                </span>
-              }
+      @if (buscando()) {
+        <div class="mensajeria__buscador">
+          <label class="mensajeria__campo">
+            <span class="solo-lectores">Buscar profesional</span>
+            <span class="mensajeria__campo-icono" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
             </span>
-          </a>
-        </li>
+            <input
+              type="search"
+              data-testid="mensajeria-consulta"
+              placeholder="Nombre o especialidad"
+              [ngModel]="consulta()"
+              (ngModelChange)="consulta.set($event)"
+              (keydown.enter)="buscar()"
+            />
+          </label>
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            data-testid="mensajeria-buscar"
+            [isLoading]="buscandoAhora()"
+            (clicked)="buscar()"
+          >
+            Buscar
+          </button>
+
+          @if (resultados().length > 0) {
+            <ul class="mensajeria__resultados">
+              @for (resultado of resultados(); track resultado.slug) {
+                <li>
+                  <button
+                    class="mensajeria__resultado"
+                    type="button"
+                    data-testid="mensajeria-resultado"
+                    [disabled]="abriendo()"
+                    (click)="escribirA(resultado)"
+                  >
+                    <span class="mensajeria__resultado-nombre">{{ resultado.displayName }}</span>
+                    @if (resultado.headline) {
+                      <span class="mensajeria__resultado-detalle">{{ resultado.headline }}</span>
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
       }
-    </ul>
-  }
+
+      <div class="mensajeria__lista">
+        @if (vacio()) {
+          <app-empty-state
+            title="No tenés conversaciones"
+            description="Cuando le escribas a un profesional —o alguien te escriba— la conversación va a aparecer acá."
+            variant="empty"
+          />
+        } @else {
+          <app-conversation-list [conversaciones]="conversaciones()" />
+        }
+      </div>
+    </section>
+
+    <!-- Panel derecho: sin hilo abierto, el lugar donde va a estar. Es el
+         mismo hueco que deja cualquier chat de escritorio, y decirlo es mejor
+         que dejar la mitad de la pantalla en blanco sin explicación. -->
+    <section class="mensajeria__vacio" aria-label="Conversación">
+      <p class="mensajeria__vacio-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z" /></svg>
+      </p>
+      <p class="mensajeria__vacio-texto">Elegí una conversación para leerla acá.</p>
+    </section>
+  </div>
 }

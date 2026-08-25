@@ -57,7 +57,7 @@ describe('ProvisioningRuleForm', () => {
 
   it('el cuerpo mínimo lleva prioridad y efecto, nada más', () => {
     formulario().patchValue({ providerId: PROVEEDOR, priority: 10 });
-    interno<(v: unknown) => void>('elegirEfecto')('DENY');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ effect: 'DENY' });
 
     interno<() => void>('submit')();
 
@@ -73,7 +73,7 @@ describe('ProvisioningRuleForm', () => {
 
   it('la prioridad arranca en 1: cero frena sin gastar la petición', () => {
     formulario().patchValue({ providerId: PROVEEDOR, priority: 0 });
-    interno<(v: unknown) => void>('elegirEfecto')('ALLOW');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ effect: 'ALLOW' });
 
     interno<() => void>('submit')();
     // `http.verify()` comprueba que nada salió.
@@ -87,7 +87,7 @@ describe('ProvisioningRuleForm', () => {
       assignRoleConceptId: ROL,
       assignTenantId: ORGANIZACION,
     });
-    interno<(v: unknown) => void>('elegirEfecto')('ALLOW');
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ effect: 'ALLOW' });
 
     interno<() => void>('submit')();
     http.expectNone(`/auth-providers/identity-providers/${PROVEEDOR}/provisioning-rules`);

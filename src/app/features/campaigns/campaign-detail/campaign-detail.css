@@ -1,0 +1,113 @@
+/* El detalle público de una promoción (FAR-I7). Mobile-first. */
+
+.promo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.promo__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.promo__farmacia {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+}
+
+.promo__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.promo__vigencia,
+.promo__descripcion {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.promo__aviso {
+  margin: 0;
+}
+
+.promo__subtitulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.promo__productos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.promo__producto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.promo__producto-datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.promo__principal {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.promo__secundario {
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+}
+
+.promo__precios {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.promo__antes {
+  color: var(--text-secondary);
+}
+
+.promo__ahora {
+  color: var(--text-primary);
+}
+
+.promo--sin-contenido {
+  gap: var(--sp-2);
+}
+
+@media (min-width: 40rem) {
+  .promo__producto {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .promo__producto-datos {
+    flex: 1 1 auto;
+  }
+}

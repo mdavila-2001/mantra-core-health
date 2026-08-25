@@ -1,17 +1,27 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
+import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
 import type {
+  AvailabilityProduct,
   AvailabilityResult,
+  AvailabilitySite,
   GeoPoint,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
+import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import type { CampanaDeFarmacia } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.types';
+import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
+import type {
+  BorradorDePedido,
+  LineaDePedido,
+} from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -21,7 +31,10 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
+import { Link } from '../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { AppMap } from '../../../../shared/components/organisms/map/map';
+import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
@@ -37,6 +50,13 @@ const CODIGOS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
 const SIN_DATO = 'Sin registrar';
+
+/**
+ * Un envase por renglón recetado: la receta no declara cantidades, y la
+ * confirmación del pedido las muestra tal cual — inventar más sería decidir
+ * por la persona.
+ */
+const CANTIDAD_POR_RENGLON = 1;
 
 /**
  * Puntos de referencia para medir distancias sin entregar la ubicación: las
@@ -80,6 +100,10 @@ interface ListaDeCompra {
 
 /** Una sede candidata, ya evaluada contra los renglones incluidos. */
 interface SedeVisible {
+  /** Identifica la sede al armar el borrador del pedido. Jamás se pinta. */
+  readonly siteId: string;
+  /** La farmacia dueña de la sede: la llave para cruzar sus promociones. */
+  readonly pharmacyId: string;
   readonly codigo: string;
   readonly farmacia: string;
   readonly sede: string;
@@ -93,9 +117,9 @@ interface SedeVisible {
   readonly total: string | null;
   readonly retiro: boolean | null;
   readonly delivery: boolean | null;
-  /** Posición en el `viewBox` del mapa; `null` si la sede no tiene coordenadas. */
-  readonly x: number | null;
-  readonly y: number | null;
+  /** Coordenadas reales de la sede; `null` si el directorio no las publica. */
+  readonly lat: number | null;
+  readonly lng: number | null;
 }
 
 /** El resultado de la consulta, listo para pintarse. */
@@ -140,7 +164,18 @@ interface ResultadoDeSedes {
  */
 @Component({
   selector: 'app-where-to-buy',
-  imports: [AppButton, AppButtonLink, Badge, Checkbox, Alert, PageHeader, RouterLink, ViewStateHost],
+  imports: [
+    AppButton,
+    AppButtonLink,
+    AppMap,
+    Badge,
+    Checkbox,
+    Alert,
+    Link,
+    PageHeader,
+    RouterLink,
+    ViewStateHost,
+  ],
   templateUrl: './where-to-buy.html',
   styleUrl: './where-to-buy.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -150,7 +185,10 @@ export class WhereToBuy {
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly pharmacy = inject(PharmacyClient);
+  private readonly campaigns = inject(PharmacyCampaignsClient);
+  private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly documento = inject(DOCUMENT);
 
   private readonly requestId = this.route.snapshot.paramMap.get('requestId') ?? '';
@@ -159,6 +197,22 @@ export class WhereToBuy {
   protected readonly sinPerfilDePaciente = this.perfil === null;
   protected readonly rutaDeHistoria = MI_HISTORIA_ROUTE;
   protected readonly ciudades = CIUDADES;
+
+  /**
+   * El pedido (FAR-I2) corre hoy contra un mock del cliente de datos, así que
+   * sólo se ofrece donde la demostración está pedida — con su aviso. Sin el
+   * gate, el botón queda a la vista y cerrado, como estaba.
+   * TODO(FAR-E1): al conectar el backend real, el botón queda siempre activo
+   * y este gate desaparece.
+   */
+  protected readonly pedidoDisponible = environment.demoPresets;
+
+  /** La última respuesta cruda: el borrador necesita los precios por línea. */
+  private ultimaConsulta: {
+    readonly respuesta: AvailabilityResult;
+    readonly consultables: readonly (ItemDeReceta & { productId: string })[];
+    readonly sinProducto: readonly string[];
+  } | null = null;
 
   protected readonly lista = signal<ViewState<ListaDeCompra>>(loading());
   protected readonly resultados = signal<ViewState<ResultadoDeSedes>>(loading());
@@ -177,10 +231,37 @@ export class WhereToBuy {
   /** Las sedes que el mapa puede ubicar: las que tienen coordenadas. */
   protected readonly sedesEnElMapa = computed(() =>
     (this.resultado()?.sedes ?? []).filter(
-      (sede): sede is SedeVisible & { x: number; y: number } =>
-        sede.x !== null && sede.y !== null,
+      (sede): sede is SedeVisible & { lat: number; lng: number } =>
+        sede.lat !== null && sede.lng !== null,
     ),
   );
+
+  /** La sede resaltada, compartida en two-way entre el mapa y las tarjetas. */
+  protected readonly sedeElegida = signal<string | null>(null);
+
+  /** Las sedes ubicables, traducidas al contrato del organismo de mapa. */
+  protected readonly pinesDeSedes = computed<readonly PinMapa[]>(() =>
+    this.sedesEnElMapa().map((sede) => ({
+      // La letra de la tarjeta es la referencia compartida: ningún uuid
+      // llega al mapa, la misma regla de cero identificadores visibles.
+      id: sede.codigo,
+      codigo: sede.codigo,
+      lat: sede.lat,
+      lng: sede.lng,
+      titulo: `${sede.farmacia} · ${sede.sede}`,
+      subtitulo: subtituloDePin(sede),
+      estado: sede.completa
+        ? { etiqueta: 'Tiene todo', tono: 'success' as const }
+        : { etiqueta: 'Le falta algo', tono: 'warning' as const },
+      ctaEtiqueta: 'Ver en la lista',
+    })),
+  );
+
+  protected readonly etiquetaDelMapa = computed(() => {
+    const cantidad = this.sedesEnElMapa().length;
+    const marcadas = cantidad === 1 ? '1 sucursal marcada' : `${cantidad} sucursales marcadas`;
+    return `${marcadas} en el mapa. La lista completa, con dirección y distancia en línea recta, está en las tarjetas debajo.`;
+  });
 
   constructor() {
     if (this.perfil === null) {
@@ -291,6 +372,7 @@ export class WhereToBuy {
   /* ---- la consulta -------------------------------------------------------- */
 
   protected consultar(): void {
+    this.ultimaConsulta = null;
     const incluidos = this.items().filter((item) => this.incluidos().has(item.conceptId));
     if (incluidos.length === 0) {
       this.resultados.set(
@@ -338,11 +420,75 @@ export class WhereToBuy {
             );
             return;
           }
+          this.ultimaConsulta = { respuesta, consultables, sinProducto };
+          this.sembrarPromociones(respuesta);
           this.resultados.set(ready(evaluar(respuesta, consultables, sinProducto)));
         },
         error: (error: unknown) =>
           this.resultados.set(errorToViewState<ResultadoDeSedes>(error)),
       });
+  }
+
+  /* ---- las promociones (FAR-I7) -------------------------------------------- */
+
+  /**
+   * Le pasa al carril de promociones el catálogo que esta consulta ya trajo.
+   *
+   * El cliente de campañas no tiene de dónde leer productos con precio: no hay
+   * endpoint de campañas y `GET /pharmacy/products` publica el catálogo sin
+   * precios. Acá sí están, reales, y sembrar con ellos es lo que evita que una
+   * promoción de demostración anuncie un producto inventado. Es idempotente:
+   * cada farmacia se siembra una sola vez por sesión.
+   */
+  private sembrarPromociones(respuesta: AvailabilityResult): void {
+    for (const sede of respuesta.items) {
+      // `flatMap` y no `filter` + `map`: el filtro no estrecha el tipo de
+      // `price` y obligaría a una aserción por cada uso.
+      const catalogo = sede.products.flatMap((producto) => {
+        const precio = producto.price;
+        if (precio === null) {
+          return [];
+        }
+        return [
+          {
+            productId: producto.productId,
+            nombre: producto.brandName ?? producto.genericName ?? producto.productCode,
+            presentacion: presentacionDe(producto),
+            // Lo que paga el paciente cuando la lista lo distingue: es el
+            // precio sobre el que la promoción tiene que descontar.
+            precio: precio.patientAmount ?? precio.unitAmount,
+            moneda: precio.currency?.code ?? '',
+          },
+        ];
+      });
+      this.campaigns.sembrarPara(sede.pharmacyId, sede.pharmacyName, catalogo);
+    }
+  }
+
+  /** Cuántas promociones vigentes tiene la farmacia de esta sede. */
+  protected promocionesDe(sede: SedeVisible): readonly CampanaDeFarmacia[] {
+    return this.campaigns.campanasVigentes(sede.pharmacyId);
+  }
+
+  /* ---- el pedido (FAR-I2) -------------------------------------------------- */
+
+  /**
+   * Arma el borrador con la sede elegida y navega a la confirmación.
+   *
+   * El borrador viaja por el cliente de pedidos y no por la URL: renglones,
+   * precios y sede ya están acá, y repetir la consulta en la pantalla
+   * siguiente sería pedirle dos veces lo mismo al backend.
+   */
+  protected enviarPedido(sede: SedeVisible): void {
+    const consulta = this.ultimaConsulta;
+    const sitio = consulta?.respuesta.items.find((item) => item.siteId === sede.siteId);
+    if (consulta === null || sitio === undefined) {
+      return;
+    }
+    this.ordersClient.prepararBorrador(
+      borradorDePedido(this.requestId, sitio, consulta.consultables, consulta.sinProducto),
+    );
+    void this.router.navigate(['/my-account/pharmacy-orders/new']);
   }
 
   /* ---- la ubicación: se pide, no se toma ---------------------------------- */
@@ -387,6 +533,20 @@ export class WhereToBuy {
     this.origen.set(null);
     this.consultar();
   }
+
+  /* ---- el mapa y las tarjetas hablan de la misma sede ---------------------- */
+
+  /** Lleva la vista a la tarjeta de la sede cuyo CTA se tocó en el popup. */
+  protected enfocarSede(codigo: string): void {
+    const tarjeta = this.documento.getElementById(`compra-sede-${codigo}`);
+    if (tarjeta === null) {
+      return;
+    }
+    const reducirMovimiento =
+      this.documento.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ??
+      false;
+    tarjeta.scrollIntoView({ behavior: reducirMovimiento ? 'auto' : 'smooth', block: 'center' });
+  }
 }
 
 /** Un renglón por medicamento: dos recetas del mismo remedio son una compra. */
@@ -421,18 +581,93 @@ function geoPuntoDe(punto: PuntoDeReferencia): GeoPoint {
   return { lat: punto.lat, lng: punto.lng };
 }
 
+/** El renglón secundario del pin: distancia rotulada y dirección, lo que haya. */
+function subtituloDePin(sede: SedeVisible): string | undefined {
+  const partes = [
+    sede.distancia === null ? null : `${sede.distancia} en línea recta`,
+    sede.direccion,
+  ].filter((parte): parte is string => parte !== null);
+  return partes.length === 0 ? undefined : partes.join(' · ');
+}
+
 /**
- * Las sedes del backend, evaluadas contra la receta y proyectadas al mapa.
+ * El borrador del pedido (FAR-I2): los renglones incluidos, evaluados contra
+ * la sede elegida, con el precio que la sede publica.
+ *
+ * Exportada a propósito: es pura y el spec la ejercita directo — el clic que
+ * la dispara sólo existe con la demostración encendida.
+ */
+export function borradorDePedido(
+  requestId: string,
+  sitio: AvailabilitySite,
+  consultables: readonly (ItemDeReceta & { productId: string })[],
+  sinProducto: readonly string[],
+): BorradorDePedido {
+  const porProducto = new Map(sitio.products.map((producto) => [producto.productId, producto]));
+  const lineas: readonly LineaDePedido[] = [
+    ...consultables.map((item): LineaDePedido => {
+      const producto = porProducto.get(item.productId);
+      const disponible =
+        producto !== undefined && !sitio.missingProductIds.includes(item.productId);
+      const precio = producto?.price?.patientAmount ?? producto?.price?.unitAmount ?? null;
+      return {
+        productId: item.productId,
+        medicamento: item.medicamento,
+        presentacion: presentacionDe(producto),
+        cantidad: CANTIDAD_POR_RENGLON,
+        precio: disponible ? precio : null,
+        moneda:
+          disponible && precio !== null
+            ? (producto?.price?.currency?.code ?? sitio.currency?.code ?? null)
+            : null,
+        disponible,
+      };
+    }),
+    // Sin producto publicado nadie puede confirmarlo: viaja igual en el
+    // pedido, dicho claro, para que la farmacia sepa qué más pide la receta.
+    ...sinProducto.map(
+      (medicamento): LineaDePedido => ({
+        productId: null,
+        medicamento,
+        presentacion: null,
+        cantidad: CANTIDAD_POR_RENGLON,
+        precio: null,
+        moneda: null,
+        disponible: false,
+      }),
+    ),
+  ];
+  return {
+    requestId,
+    siteId: sitio.siteId,
+    pharmacyId: sitio.pharmacyId,
+    farmacia: sitio.pharmacyName,
+    sede: sitio.siteName,
+    direccion: sitio.addressText,
+    lineas,
+    totalEstimado: sitio.totalAmount,
+    moneda: sitio.currency?.code ?? null,
+  };
+}
+
+/** «500 mg · caja x 20», con lo que el directorio publique. */
+function presentacionDe(producto: AvailabilityProduct | undefined): string | null {
+  const partes = [producto?.strengthText, producto?.packageSizeText].filter(
+    (parte): parte is string => typeof parte === 'string' && parte !== '',
+  );
+  return partes.length === 0 ? null : partes.join(' · ');
+}
+
+/**
+ * Las sedes del backend, evaluadas contra la receta.
  *
  * La «completa» del backend habla de los productos consultados; acá se exige
  * además que ningún medicamento incluido haya quedado afuera por no tener
  * producto publicado — una sede no puede declararse completa sobre una
  * consulta que no pudo incluirlo todo. El orden del backend se conserva.
  *
- * La posición es una **proyección lineal del recuadro que ocupan las sedes**,
- * no una proyección cartográfica — mismo esquema que «Cerca mío» (P4): a
- * escala de ciudad la diferencia es de píxeles y el mapa es un esquema de
- * posiciones relativas, no una carta de navegación.
+ * Las coordenadas viajan crudas: la cartografía es del organismo de mapa
+ * (FAR-I1), no de esta pantalla.
  */
 function evaluar(
   respuesta: AvailabilityResult,
@@ -443,17 +678,6 @@ function evaluar(
     consultables.map((item) => [item.productId, item.medicamento]),
   );
 
-  const ubicadas = respuesta.items.filter(
-    (sede) => sede.latitude !== null && sede.longitude !== null,
-  );
-  const lats = ubicadas.map((sede) => sede.latitude ?? 0);
-  const lngs = ubicadas.map((sede) => sede.longitude ?? 0);
-  const [minLat, maxLat] = [Math.min(...lats), Math.max(...lats)];
-  const [minLng, maxLng] = [Math.min(...lngs), Math.max(...lngs)];
-
-  const proyecta = (valor: number, min: number, max: number, largo: number): number =>
-    max === min ? largo / 2 : 60 + ((valor - min) / (max - min)) * (largo - 120);
-
   const sedes = respuesta.items.map((sede, indice): SedeVisible => {
     const faltantes = [
       ...sede.missingProductIds.map(
@@ -461,8 +685,9 @@ function evaluar(
       ),
       ...sinProducto,
     ];
-    const conCoordenadas = sede.latitude !== null && sede.longitude !== null;
     return {
+      siteId: sede.siteId,
+      pharmacyId: sede.pharmacyId,
       codigo: CODIGOS[indice] ?? String(indice + 1),
       farmacia: sede.pharmacyName,
       sede: sede.siteName,
@@ -477,10 +702,8 @@ function evaluar(
           : `${sede.totalAmount} ${sede.currency?.code ?? ''}`.trim(),
       retiro: sede.pickupAvailable,
       delivery: sede.homeDeliveryAvailable,
-      x: conCoordenadas ? proyecta(sede.longitude ?? 0, minLng, maxLng, 800) : null,
-      // La latitud crece hacia el norte y la `y` del SVG hacia abajo: sin
-      // invertirla el mapa sale reflejado.
-      y: conCoordenadas ? 400 - proyecta(sede.latitude ?? 0, minLat, maxLat, 400) : null,
+      lat: sede.latitude,
+      lng: sede.longitude,
     };
   });
 

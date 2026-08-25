@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-889 archivos TypeScript bajo `src/` y 3576 importaciones internas.
+1014 archivos TypeScript bajo `src/` y 4012 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -15,9 +15,7 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 
 - `src/app/core/observability/browser/telemetry-browser.bootstrap.ts`
 - `src/app/features/account/questionnaires/questionnaires.ts`
-- `src/app/features/accounting/accounting.ts`
 - `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
-- `src/app/features/diagnostics/diagnostics.routes.ts`
 - `src/app/features/interventions/interventions.routes.ts`
 - `src/app/features/interventions/interventions.ts`
 - `src/app/features/questionnaires/questionnaires.ts`
@@ -160,50 +158,52 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/core/view-state/view-state.types.ts` | 151 |
-| `src/app/shared/components/atoms/button/button.ts` | 139 |
-| `src/app/core/view-state/view-state.ts` | 136 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 132 |
-| `src/app/core/http/error-to-view-state.ts` | 130 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 121 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 114 |
-| `src/app/core/navigation/navigation.service.ts` | 105 |
-| `src/app/shared/components/atoms/input/input.ts` | 95 |
-| `src/app/shared/components/organisms/form-actions/form-actions.ts` | 80 |
-| `src/app/shared/a11y/announce-on-appear.ts` | 78 |
-| `src/app/shared/components/organisms/form-section/form-section.ts` | 68 |
-| `src/app/shared/forms/form-support.ts` | 62 |
-| `src/app/shared/components/molecules/card/card.ts` | 60 |
-| `src/app/shared/components/atoms/textarea/textarea.ts` | 46 |
-| `src/app/core/auth/auth.service.ts` | 45 |
-| `src/app/core/auth/session.store.ts` | 40 |
-| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 36 |
-| `src/app/core/data-access/api.ts` | 35 |
-| `src/app/shared/components/atoms/badge/badge.ts` | 35 |
+| `src/app/core/view-state/view-state.types.ts` | 167 |
+| `src/app/shared/components/atoms/button/button.ts` | 162 |
+| `src/app/core/view-state/view-state.ts` | 153 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 146 |
+| `src/app/core/http/error-to-view-state.ts` | 143 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 136 |
+| `src/app/core/navigation/navigation.service.ts` | 114 |
+| `src/app/shared/a11y/announce-on-appear.ts` | 80 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 79 |
+| `src/app/shared/components/molecules/card/card.ts` | 64 |
+| `src/app/shared/forms/form-support.ts` | 64 |
+| `src/app/shared/components/atoms/input/input.ts` | 60 |
+| `src/app/shared/components/atoms/badge/badge.ts` | 55 |
+| `src/app/core/auth/auth.service.ts` | 53 |
+| `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 49 |
+| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 49 |
+| `src/app/shared/forms/paginated/paginar-campos.ts` | 49 |
+| `src/app/core/auth/session.store.ts` | 48 |
+| `src/app/core/data-access/api.ts` | 40 |
+| `src/app/shared/components/organisms/form-actions/form-actions.ts` | 39 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 822 |
-| `@angular/common` | 477 |
-| `@angular/router` | 389 |
-| `rxjs` | 112 |
-| `@angular/forms` | 95 |
+| `@angular/core` | 921 |
+| `@angular/common` | 547 |
+| `@angular/router` | 426 |
+| `rxjs` | 143 |
+| `@angular/forms` | 106 |
 | `node:fs` | 15 |
 | `@opentelemetry/api` | 12 |
+| `@angular/platform-browser` | 11 |
 | `@opentelemetry/sdk-trace-web` | 9 |
-| `@angular/platform-browser` | 8 |
 | `@opentelemetry/semantic-conventions` | 7 |
 | `@angular/ssr` | 3 |
 | `@opentelemetry/core` | 3 |
 | `express` | 3 |
+| `jspdf` | 3 |
 | `node:path` | 3 |
 | `@opentelemetry/exporter-trace-otlp-http` | 2 |
 | `@opentelemetry/resources` | 2 |
-| `jspdf` | 2 |
 | `@opentelemetry/sdk-trace-node` | 1 |
 | `axe-core` | 1 |
+| `leaflet` | 1 |
 | `node:crypto` | 1 |
 | `node:http` | 1 |
 | `node:https` | 1 |
+| `socket.io-client` | 1 |

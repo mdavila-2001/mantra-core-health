@@ -52,6 +52,9 @@ describe('PatientHome', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
+      // Declarado en `imports` para que `compileComponents` lo alcance: la
+      // plantilla trae un `@defer` desde C5 y sin compilar queda sin metadatos.
+      imports: [PatientHome],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     http = TestBed.inject(HttpTestingController);
@@ -60,8 +63,14 @@ describe('PatientHome', () => {
 
   afterEach(() => http.verify());
 
-  /** Abre sesión de paciente y monta. `pid` ausente = cuenta sin ficha. */
-  function montar({ pid }: { pid?: string } = { pid: PERFIL }): void {
+  /**
+   * Abre sesión de paciente y monta. `pid` ausente = cuenta sin ficha.
+   *
+   * `async` desde que el panel encabeza con el flujo de síntomas (C5 del plan
+   * de UX): va dentro de un `@defer` —la tabla de síntomas no puede viajar en
+   * el bundle inicial— y una plantilla con `@defer` exige `compileComponents`.
+   */
+  async function montar({ pid }: { pid?: string } = { pid: PERFIL }): Promise<void> {
     session.start({
       accessToken: jwt({
         sub: 'u-1',
@@ -72,6 +81,7 @@ describe('PatientHome', () => {
       }),
       refreshToken: 'r-1',
     });
+    await TestBed.compileComponents();
     fixture = TestBed.createComponent(PatientHome);
     fixture.detectChanges();
   }
@@ -91,12 +101,13 @@ describe('PatientHome', () => {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
 
-  it('saluda por el nombre y habla de lo suyo, no de la organización', () => {
-    montar();
+  it('saluda por el nombre y habla de lo suyo, no de la organización', async () => {
+    await montar();
     responder([], null);
 
     expect(texto()).toContain('Ana Quispe');
-    expect(texto()).toContain('Tus turnos, tus recetas y tu historia');
+    // El subtítulo cambió con C5: el panel ahora encabeza con los síntomas.
+    expect(texto()).toContain('Contanos qué te pasa');
   });
 
   /**
@@ -104,8 +115,8 @@ describe('PatientHome', () => {
    * refiere organización desde la vista del paciente?», «Secciones disponibles:
    * 12», «estado del sistema». Nada de eso es del paciente.
    */
-  it('no usa vocabulario de sistema ni muestra identificadores', () => {
-    montar();
+  it('no usa vocabulario de sistema ni muestra identificadores', async () => {
+    await montar();
     responder([{ id: 'b-1', statusConceptId: 'c-1', startAt: '2099-01-01T13:00:00.000Z' }], null);
 
     const t = texto().toLowerCase();
@@ -124,8 +135,8 @@ describe('PatientHome', () => {
     );
   });
 
-  it('muestra el próximo turno, no el más viejo ni uno que ya pasó', () => {
-    montar();
+  it('muestra el próximo turno, no el más viejo ni uno que ya pasó', async () => {
+    await montar();
     responder(
       [
         { id: 'pasado', statusConceptId: 'c-1', startAt: '2020-01-01T13:00:00.000Z' },
@@ -142,8 +153,8 @@ describe('PatientHome', () => {
     expect(tarjeta?.getAttribute('data-turno')).toBe('proximo');
   });
 
-  it('quien recién llega recibe una invitación, no tres tarjetas vacías', () => {
-    montar();
+  it('quien recién llega recibe una invitación, no tres tarjetas vacías', async () => {
+    await montar();
     responder([], null);
 
     const primera = (fixture.nativeElement as HTMLElement).querySelector(
@@ -153,8 +164,8 @@ describe('PatientHome', () => {
     expect(primera?.textContent).toContain('Pedir mi primer turno');
   });
 
-  it('con historia, ofrece ver y descargar la última receta', () => {
-    montar();
+  it('con historia, ofrece ver y descargar la última receta', async () => {
+    await montar();
     responder([], {
       ...historiaVacia(),
       medicationRequests: [
@@ -170,8 +181,8 @@ describe('PatientHome', () => {
   });
 
   /** La Guía es de los pacientes: es donde buscan con quién atenderse. */
-  it('ofrece los accesos del paciente, la Guía incluida', () => {
-    montar();
+  it('ofrece los accesos del paciente, la Guía incluida', async () => {
+    await montar();
     responder([], null);
 
     const rutas = [
@@ -186,8 +197,8 @@ describe('PatientHome', () => {
   });
 
   /** Media pantalla útil es mejor que un error que tapa lo que sí se pudo leer. */
-  it('si falla una lectura, muestra la otra', () => {
-    montar();
+  it('si falla una lectura, muestra la otra', async () => {
+    await montar();
     http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .flush('nope', { status: 500, statusText: 'Server Error' });
@@ -202,8 +213,8 @@ describe('PatientHome', () => {
     expect(texto()).toContain('Ver y descargar');
   });
 
-  it('sin ficha de paciente no sale a la red', () => {
-    montar({ pid: undefined });
+  it('sin ficha de paciente no sale a la red', async () => {
+    await montar({ pid: undefined });
 
     // El `http.verify()` del afterEach falla si algo salió a la red.
     expect(texto()).toContain('ficha de paciente');

@@ -60,6 +60,17 @@ describe('security-headers', () => {
       expect(contentSecurityPolicy()).not.toContain('fonts.googleapis.com');
     });
 
+    it('abre imágenes SOLO a los tiles de OpenStreetMap, y nada más sale a terceros', () => {
+      const csp = contentSecurityPolicy();
+
+      // El mapa (Leaflet sin clave de API) pide sus tiles directo del
+      // navegador; sin este origen queda un rectángulo gris.
+      expect(csp).toContain("img-src 'self' data: https://tile.openstreetmap.org");
+      // El permiso es de imágenes: scripts y conexiones no se abren con él.
+      expect(csp).not.toContain('script-src \'self\' https://tile.openstreetmap.org');
+      expect(csp).not.toContain('connect-src \'self\' https://tile.openstreetmap.org');
+    });
+
     it('con la API en el mismo origen, `connect-src` se queda en `self`', () => {
       expect(contentSecurityPolicy({ apiBaseUrl: '' })).toContain("connect-src 'self';");
     });
@@ -102,9 +113,12 @@ describe('security-headers', () => {
       expect(securityHeaders()['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
     });
 
-    it('niega cámara, micrófono y ubicación: la aplicación no usa ninguna', () => {
+    it('niega cámara y micrófono; la ubicación queda solo para el propio origen', () => {
+      // «Dónde comprar mi receta» pide la posición con permiso del navegador
+      // para ordenar sucursales por cercanía; `geolocation=()` la apagaba para
+      // toda la aplicación. `(self)` nunca la concede a un iframe de terceros.
       expect(securityHeaders()['Permissions-Policy']).toBe(
-        'camera=(), microphone=(), geolocation=()',
+        'camera=(), microphone=(), geolocation=(self)',
       );
     });
   });

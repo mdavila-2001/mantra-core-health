@@ -1,0 +1,129 @@
+/* Misma jerarquía tipo "documento" que `register-patient`: membrete y pie con
+   reglas, cuerpo con scroll propio desde 1024px. Un solo formulario, sin
+   pestañas — acá no hay variante de tipo de cuenta. Sólo tokens REDSAT. */
+
+/* Pantalla enrutada: el host es un custom element y sin `display` sería EN
+   LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
+   contenido y hace scrollear la página de más. */
+:host {
+  display: block;
+}
+
+/* ==========================================================================
+    La tarjeta.
+
+    Mismo cristal que login y register-patient (`.login` en auth-split), para
+    que las pantallas de acceso se lean como una sola familia.
+
+    Sin `max-height` ni scroll propio, en ninguna medida de pantalla: la
+    tarjeta crece con su contenido y la columna que la sostiene es la que
+    scrollea (`auth-split.css`). En el teléfono eso importa por el teclado en
+    pantalla, que reduce el alto útil; en escritorio, porque el alta ocupa la
+    ventana entera y un tope sólo lograba dos barras de scroll a la vez. */
+.registro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+  border-radius: var(--r-2xl);
+  padding: var(--sp-6);
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
+}
+
+@media (min-width: 650px) {
+  .registro {
+    padding: var(--sp-8);
+  }
+}
+
+/* Acá vivía un alto fijo con el cuerpo scrolleando por dentro (`max-height:
+   min(85dvh, 48rem)` desde 1024x900). Se fue por lo mismo que en el alta de
+   paciente: con `contentWidth="full"` la tarjeta ocupa la ventana, y el tope la
+   dejaba flotando con una barra de scroll propia adentro de otra. Una página
+   del motor tiene cuatro campos como tope, así que no hay nada que recortar; si
+   algo scrollea es la columna del formulario, que ya sabe hacerlo. */
+
+/* Membrete: título y bajada separados del cuerpo por una regla, como la cabecera
+   de un expediente. Se usa en los dos estados (alta y confirmación). */
+.registro__header {
+  margin-bottom: var(--sp-6);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.registro__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  /* Documento: el título va en tinta, no en color de marca (coherente con login). */
+  color: var(--text-primary);
+}
+
+.registro__subtitle {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.registro__alert {
+  display: block;
+  margin-bottom: var(--sp-4);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  animation: registro-entra var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes registro-entra {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-2));
+  }
+}
+
+/* Fila de dos campos cortos compatibles.
+
+   El corte lo decide el ancho REAL de la fila y no el de la ventana. Desde
+   1024px la tarjeta vive en media pantalla, así que en una pantalla de
+   1024–1366px un `@media (min-width: 780px)` partía en dos una fila de ~400px
+   y dejaba cada campo en 165–230px: dos cajas de texto demasiado angostas para
+   lo que se escribe adentro, que es justo lo que se veía roto en los monitores
+   viejos. Con `auto-fit` + `minmax` la fila se parte sola cuando entran dos
+   campos de 15rem y vuelve a una sola columna cuando no entran, sin que haya
+   que adivinar a qué ancho de ventana pasa eso. */
+.registro__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--sp-4);
+}
+
+.registro__submit {
+  margin-top: var(--sp-2);
+  width: 100%;
+}
+
+/* Pie: acción secundaria separada del cuerpo por una regla, como el pie de un
+   formulario oficial. */
+.registro__footer {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--border-default);
+}
+
+.registro__pie {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

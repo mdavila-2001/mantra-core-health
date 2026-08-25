@@ -1,4 +1,4 @@
-﻿<app-auth-split [claim]="claim()" [tagline]="tagline()" contentWidth="wide">
+<app-auth-split [claim]="claim()" [tagline]="tagline()" contentWidth="full">
   <div class="registro">
     @if (registered()) {
       <div class="registro__header">
@@ -25,385 +25,105 @@
       </button>
     } @else {
       <div class="registro__header">
-        <h1 class="registro__title">Crear cuenta</h1>
-        <p class="registro__subtitle">Elegí qué tipo de cuenta necesitás.</p>
-      </div>
-
-      <p class="registro__tabs-label" id="registro-tabs-label">Me registro como</p>
-      <div class="registro__tabs" role="tablist" aria-labelledby="registro-tabs-label" data-testid="registro-tipo">
-        <button
-          type="button"
-          role="tab"
-          id="registro-tab-paciente"
-          aria-controls="registro-panel-paciente"
-          [attr.aria-selected]="tipo() === 'paciente'"
-          [tabindex]="tipo() === 'paciente' ? 0 : -1"
-          class="registro__tab"
-          [class.registro__tab--activo]="tipo() === 'paciente'"
-          (click)="cambiarTipo('paciente')"
-          data-testid="registro-tab-paciente"
-        >
-          <span class="registro__tab-icono" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="3.6" />
-              <path d="M4.5 20.2c1-3.9 4.2-6.1 7.5-6.1s6.5 2.2 7.5 6.1" />
-            </svg>
-          </span>
-          <span class="registro__tab-texto">
-            <span class="registro__tab-titulo">Paciente</span>
-            <span class="registro__tab-detalle">Historia clínica y turnos</span>
-          </span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          id="registro-tab-profesional"
-          aria-controls="registro-panel-profesional"
-          [attr.aria-selected]="tipo() === 'profesional'"
-          [tabindex]="tipo() === 'profesional' ? 0 : -1"
-          class="registro__tab"
-          [class.registro__tab--activo]="tipo() === 'profesional'"
-          (click)="cambiarTipo('profesional')"
-          data-testid="registro-tab-profesional"
-        >
-          <span class="registro__tab-icono" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5.5 3v6.2a4.5 4.5 0 0 0 9 0V3" />
-              <path d="M10 9.5v2a5 5 0 0 0 10 0V9" />
-              <circle cx="19.5" cy="7" r="1.6" />
-              <path d="M13 18a3.6 3.6 0 1 1-3.6-3.6" />
-            </svg>
-          </span>
-          <span class="registro__tab-texto">
-            <span class="registro__tab-titulo">Profesional</span>
-            <span class="registro__tab-detalle">Consultorio y pacientes</span>
-          </span>
-        </button>
+        <h1 class="registro__title">{{ titulo() }}</h1>
       </div>
 
       @if (errorMessage(); as mensaje) {
-        <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{ mensaje }}</app-alert>
+        <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{
+          mensaje
+        }}</app-alert>
       }
 
+      <!-- La barra de avance, el índice de páginas, el «Atrás», la validación
+           de a una página y el foco que la sigue son del motor: esta pantalla
+           declara qué se pregunta y en qué orden, y nada más.
+
+           Los dos catálogos bolivianos van proyectados: el árbol de municipios
+           siempre —el motor no dibuja árboles con búsqueda—, y el aviso del
+           departamento sólo cuando su lectura falló, que es cuando el campo
+           deja de ser un `select`. -->
       <div class="registro__body">
-      @if (tipo() === 'paciente') {
-        <form
-          id="registro-panel-paciente"
-          role="tabpanel"
-          aria-labelledby="registro-tab-paciente"
-          [formGroup]="formPaciente"
-          (ngSubmit)="submit()"
-          novalidate
-          data-testid="registro-form-paciente"
-        >
-          <app-form-field
-            label="Documento de identidad"
-            hint="Con este número vas a iniciar sesión."
-            [required]="true"
-            [errorMessage]="
-              formPaciente.controls.nationalId.touched && formPaciente.controls.nationalId.invalid
-                ? 'Ingresá tu documento: letras, números, punto y guion.'
-                : ''
-            "
+        @if (tipo() === 'paciente') {
+          <app-paginated-form
+            data-testid="registro-form-paciente"
+            [paginas]="paginasPaciente()"
+            [form]="formPaciente"
+            label="Crear cuenta"
+            submitLabel="Crear cuenta"
+            [pending]="isSubmitting()"
+            (enviado)="submit()"
           >
-            <!-- Es el identificador con el que va a entrar: `username`. -->
-            <app-input
-              formControlName="nationalId"
-              type="text"
-              autocomplete="username"
-              placeholder="1234567"
-              testId="registro-documento"
-            />
-          </app-form-field>
+            <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
+              <p class="registro__catalogo-caido">
+                No pudimos traer el catálogo de departamentos.
+                <button app-button variant="ghost" size="sm" (clicked)="reintentarDepartamentos()">
+                  Reintentar
+                </button>
+              </p>
+            </ng-template>
 
-          <app-form-field
-            label="Nombre"
-            [required]="true"
-            [errorMessage]="
-              formPaciente.controls.name.touched && formPaciente.controls.name.invalid
-                ? 'Ingresá tu nombre.'
-                : ''
-            "
+            <ng-template appCampoPersonalizado="municipio">
+              @if (catalogoMunicipiosCaido()) {
+                <p class="registro__catalogo-caido">
+                  No pudimos traer el catálogo de municipios.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <app-tree-select
+                  data-testid="registro-municipio"
+                  [groups]="arbolMunicipios()"
+                  [(value)]="municipioPaciente"
+                  placeholder="Sin especificar"
+                  dialogTitle="¿Dónde vivís?"
+                  searchPlaceholder="Buscar municipio o departamento…"
+                  emptyMessage="Ningún municipio coincide con esa búsqueda."
+                />
+              }
+            </ng-template>
+          </app-paginated-form>
+        } @else {
+          <app-paginated-form
+            data-testid="registro-form-profesional"
+            [paginas]="paginasProfesional()"
+            [form]="formProfesional"
+            label="Crear cuenta"
+            submitLabel="Crear cuenta"
+            [pending]="isSubmitting()"
+            (enviado)="submit()"
           >
-            <app-input
-              formControlName="name"
-              type="text"
-              autocomplete="given-name"
-              placeholder="Lucía"
-              testId="registro-nombre"
-            />
-          </app-form-field>
+            <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
+              <p class="registro__catalogo-caido">
+                No pudimos traer el catálogo de departamentos.
+                <button app-button variant="ghost" size="sm" (clicked)="reintentarDepartamentos()">
+                  Reintentar
+                </button>
+              </p>
+            </ng-template>
 
-          <app-form-field label="Segundo nombre" hint="Si no tenés, dejalo vacío.">
-            <app-input
-              formControlName="middleName"
-              type="text"
-              autocomplete="additional-name"
-              placeholder="Andrea"
-              testId="registro-segundo-nombre"
-            />
-          </app-form-field>
-
-          <app-form-field
-            label="Apellido paterno"
-            [required]="true"
-            [errorMessage]="
-              formPaciente.controls.lastName.touched && formPaciente.controls.lastName.invalid
-                ? 'Ingresá tu apellido paterno.'
-                : ''
-            "
-          >
-            <app-input
-              formControlName="lastName"
-              type="text"
-              autocomplete="family-name"
-              placeholder="Mamani"
-              testId="registro-apellido-paterno"
-            />
-          </app-form-field>
-
-          <app-form-field label="Apellido materno" hint="Si no llevás, dejalo vacío.">
-            <app-input
-              formControlName="motherLastName"
-              type="text"
-              autocomplete="family-name"
-              placeholder="Quispe"
-              testId="registro-apellido-materno"
-            />
-          </app-form-field>
-
-          <app-form-field
-            label="Contraseña"
-            hint="Al menos 8 caracteres."
-            [required]="true"
-            [errorMessage]="
-              formPaciente.controls.password.touched && formPaciente.controls.password.invalid
-                ? 'La contraseña necesita al menos 8 caracteres.'
-                : ''
-            "
-          >
-            <app-input
-              formControlName="password"
-              type="password"
-              autocomplete="new-password"
-              placeholder="Tu contraseña"
-              testId="registro-password"
-            />
-          </app-form-field>
-
-          <app-form-field
-            label="Correo (opcional)"
-            hint="Sirve para contactarte. No hace falta para entrar."
-            [errorMessage]="
-              formPaciente.controls.email.touched && formPaciente.controls.email.invalid
-                ? 'Ese correo no tiene un formato válido.'
-                : ''
-            "
-          >
-            <!-- `email` y no `username`: acá el correo NO es con lo que entra. -->
-            <app-input
-              formControlName="email"
-              type="email"
-              autocomplete="email"
-              placeholder="correo@ejemplo.com"
-              testId="registro-correo"
-            />
-          </app-form-field>
-
-          <button
-            app-button
-            type="submit"
-            variant="primary"
-            size="lg"
-            class="registro__submit"
-            data-testid="registro-submit"
-            [isLoading]="isSubmitting()"
-          >
-            Crear cuenta
-          </button>
-        </form>
-      } @else {
-        <form
-          id="registro-panel-profesional"
-          role="tabpanel"
-          aria-labelledby="registro-tab-profesional"
-          [formGroup]="formProfesional"
-          (ngSubmit)="submit()"
-          novalidate
-          data-testid="registro-form-profesional"
-        >
-          <app-form-field
-            label="Nombre"
-            [required]="true"
-            [errorMessage]="
-              formProfesional.controls.name.touched && formProfesional.controls.name.invalid
-                ? 'Ingresá tu nombre.'
-                : ''
-            "
-          >
-            <app-input
-              formControlName="name"
-              type="text"
-              autocomplete="given-name"
-              placeholder="Ana"
-              testId="registro-pro-nombre"
-            />
-          </app-form-field>
-
-          <app-form-field label="Segundo nombre" hint="Si no tenés, dejalo vacío.">
-            <app-input
-              formControlName="middleName"
-              type="text"
-              autocomplete="additional-name"
-              placeholder="Lucía"
-              testId="registro-pro-segundo-nombre"
-            />
-          </app-form-field>
-
-          <app-form-field
-            label="Apellido paterno"
-            [required]="true"
-            [errorMessage]="
-              formProfesional.controls.lastName.touched && formProfesional.controls.lastName.invalid
-                ? 'Ingresá tu apellido paterno.'
-                : ''
-            "
-          >
-            <app-input
-              formControlName="lastName"
-              type="text"
-              autocomplete="family-name"
-              placeholder="Rojas"
-              testId="registro-pro-apellido-paterno"
-            />
-          </app-form-field>
-
-          <app-form-field label="Apellido materno" hint="Si no llevás, dejalo vacío.">
-            <app-input
-              formControlName="motherLastName"
-              type="text"
-              autocomplete="family-name"
-              placeholder="Paz"
-              testId="registro-pro-apellido-materno"
-            />
-          </app-form-field>
-
-          <app-form-field
-            label="Correo profesional"
-            hint="Con este correo vas a iniciar sesión."
-            [required]="true"
-            [errorMessage]="
-              formProfesional.controls.email.touched && formProfesional.controls.email.invalid
-                ? 'Ingresá un correo válido.'
-                : ''
-            "
-          >
-            <!-- `username`: acá el correo SÍ es el identificador de acceso. Sin
-                 esto el navegador guardaba el número de credencial como usuario. -->
-            <app-input
-              formControlName="email"
-              type="email"
-              autocomplete="username"
-              placeholder="matricula@hospital.bo"
-              testId="registro-pro-correo"
-            />
-          </app-form-field>
-
-          <div class="registro__row">
-            <app-form-field
-              label="Número de matrícula"
-              [required]="true"
-              [errorMessage]="
-                formProfesional.controls.licenseNumber.touched &&
-                formProfesional.controls.licenseNumber.invalid
-                  ? 'Ingresá tu matrícula profesional.'
-                  : ''
-              "
-            >
-              <app-input
-                formControlName="licenseNumber"
-                type="text"
-                autocomplete="off"
-                placeholder="MP-12345"
-                testId="registro-pro-matricula"
-              />
-            </app-form-field>
-
-            <app-form-field
-              label="Número de credencial"
-              hint="El de tu colegio profesional."
-              [required]="true"
-              [errorMessage]="
-                formProfesional.controls.credentialNumber.touched &&
-                formProfesional.controls.credentialNumber.invalid
-                  ? 'Ingresá el número de tu colegio.'
-                  : ''
-              "
-            >
-              <app-input
-                formControlName="credentialNumber"
-                type="text"
-                autocomplete="off"
-                placeholder="TIT-6789"
-                testId="registro-pro-credencial"
-              />
-            </app-form-field>
-          </div>
-
-          <div class="registro__row">
-            <app-form-field label="Título profesional (opcional)">
-              <app-input
-                formControlName="professionalTitle"
-                type="text"
-                autocomplete="off"
-                placeholder="Cardiología"
-              />
-            </app-form-field>
-
-            <app-form-field label="Teléfono (opcional)">
-              <app-input
-                formControlName="phone"
-                type="text"
-                autocomplete="tel"
-                placeholder="+591 70012345"
-              />
-            </app-form-field>
-          </div>
-
-          <app-form-field
-            label="Contraseña"
-            hint="Al menos 8 caracteres."
-            [required]="true"
-            [errorMessage]="
-              formProfesional.controls.password.touched &&
-              formProfesional.controls.password.invalid
-                ? 'La contraseña necesita al menos 8 caracteres.'
-                : ''
-            "
-          >
-            <app-input
-              formControlName="password"
-              type="password"
-              autocomplete="new-password"
-              placeholder="Tu contraseña"
-              testId="registro-pro-password"
-            />
-          </app-form-field>
-
-          <button
-            app-button
-            type="submit"
-            variant="primary"
-            size="lg"
-            class="registro__submit"
-            data-testid="registro-pro-submit"
-            [isLoading]="isSubmitting()"
-          >
-            Crear cuenta profesional
-          </button>
-        </form>
-      }
+            <ng-template appCampoPersonalizado="municipio">
+              @if (catalogoMunicipiosCaido()) {
+                <p class="registro__catalogo-caido">
+                  No pudimos traer el catálogo de municipios.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <app-tree-select
+                  data-testid="registro-pro-municipio"
+                  [groups]="arbolMunicipios()"
+                  [(value)]="municipioProfesional"
+                  placeholder="Sin especificar"
+                  dialogTitle="¿Dónde vivís?"
+                  searchPlaceholder="Buscar municipio o departamento…"
+                  emptyMessage="Ningún municipio coincide con esa búsqueda."
+                />
+              }
+            </ng-template>
+          </app-paginated-form>
+        }
       </div>
 
       <div class="registro__footer">

@@ -1,9 +1,3 @@
-<app-page-header
-  [title]="conQuien()"
-  subtitle="Conversación directa"
-  [breadcrumbs]="[{ label: 'Mensajes', routerLink: '/messaging' }]"
-/>
-
 @if (error(); as mensaje) {
   <app-alert tone="error" class="hilo__alerta">{{ mensaje }}</app-alert>
 }
@@ -13,138 +7,203 @@
 } @else if (perfil() === null) {
   <app-empty-state
     title="Todavía no tenés perfil público"
-    description="La mensajería usa tu perfil de la red social. Se crea desde «Mi perfil»."
+    description="Los chats usan tu perfil de la red social. Se crea desde la bandeja, en un paso."
     variant="empty"
   />
 } @else {
-  @if (hayMas()) {
-    <div class="hilo__mas">
-      <!-- Hacia arriba: en un hilo, «ver más» es ver lo anterior. -->
-      <button app-button variant="ghost" size="sm" [isLoading]="cargando()" (clicked)="verMas()">
-        Ver mensajes anteriores
-      </button>
-    </div>
-  }
+  <div class="hilo">
+    <!-- Carril izquierdo: las otras conversaciones. En un chat de escritorio
+         cambiar de hilo es un clic, no una vuelta a la bandeja. -->
+    <aside class="hilo__carril" aria-label="Tus conversaciones">
+      <header class="hilo__carril-cabecera">
+        <a class="hilo__volver" routerLink="/messaging">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
+          Chats
+        </a>
+      </header>
+      <div class="hilo__carril-lista">
+        <app-conversation-list
+          [conversaciones]="conversaciones()"
+          [activaId]="activaId()"
+          [compacta]="true"
+        />
+      </div>
+    </aside>
 
-  @if (vacio()) {
-    <app-empty-state
-      title="Todavía no se escribieron nada"
-      description="Escribí el primer mensaje abajo."
-      variant="empty"
-    />
-  } @else {
-    <!-- `log` y no `list`: un hilo de mensajes es una región viva, y lo que
-         llega por sondeo tiene que anunciarse a quien no lo ve. -->
-    <ol class="hilo__mensajes" role="log" aria-label="Mensajes de la conversación">
-      @for (mensaje of enOrden(); track mensaje.id) {
-        <li
-          class="hilo__burbuja"
-          data-testid="mensaje"
-          [class.is-propio]="esPropio(mensaje)"
-          [attr.data-propio]="esPropio(mensaje)"
-        >
-          <p class="hilo__texto">{{ mensaje.bodyText }}</p>
-          <p class="hilo__meta">
-            <span class="solo-lectores">{{ esPropio(mensaje) ? 'Vos' : conQuien() }}, </span>
-            @if (mensaje.sentAt) {
-              {{ mensaje.sentAt | date: 'short' }}
-            }
-          </p>
-        </li>
-      }
-    </ol>
-  }
+    <!-- Panel derecho: la conversación. -->
+    <section class="hilo__panel" aria-label="Conversación">
+      <header class="hilo__cabecera">
+        <a class="hilo__volver hilo__volver--movil" routerLink="/messaging" aria-label="Volver a los chats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
+        </a>
+        <app-avatar [name]="conQuien()" size="md" />
+        <div class="hilo__cabecera-texto">
+          <h1 class="hilo__nombre">{{ conQuien() }}</h1>
+          <p class="hilo__estado">Conversación directa</p>
+        </div>
+      </header>
 
-  <!-- Carril P9 · las plantillas del profesional. Van sobre el composer y no
-       dentro: es una ayuda para escribir, no un campo del formulario. -->
-  <div class="hilo__plantillas">
-    <button
-      app-button
-      variant="ghost"
-      size="sm"
-      type="button"
-      data-testid="hilo-plantillas"
-      [attr.aria-expanded]="plantillasAbiertas()"
-      (clicked)="alternarPlantillas()"
-    >
-      {{ plantillasAbiertas() ? 'Cerrar plantillas' : 'Usar una plantilla' }}
-    </button>
-
-    @if (plantillasAbiertas()) {
-      <ul class="hilo__plantillas-lista">
-        @for (plantilla of plantillasDisponibles(); track plantilla) {
-          <li class="hilo__plantilla">
-            <button
-              class="hilo__plantilla-texto"
-              type="button"
-              data-testid="hilo-plantilla"
-              (click)="usarPlantilla(plantilla)"
-            >
-              {{ plantilla }}
+      <div class="hilo__mensajes-marco" #marco (scroll)="alScrollear($event)">
+        @if (hayMas()) {
+          <div class="hilo__mas">
+            <!-- Hacia arriba: en un hilo, «ver más» es ver lo anterior. -->
+            <button app-button variant="ghost" size="sm" [isLoading]="cargando()" (clicked)="verMas()">
+              Ver mensajes anteriores
             </button>
-            @if (esPropia(plantilla)) {
-              <button
-                class="hilo__plantilla-quitar"
-                type="button"
-                [attr.aria-label]="'Quitar la plantilla: ' + plantilla"
-                (click)="olvidarPlantilla(plantilla)"
-              >
-                Quitar
-              </button>
-            }
-          </li>
+          </div>
         }
-      </ul>
 
-      <div class="hilo__plantilla-nueva">
-        <label class="hilo__campo">
-          <span class="solo-lectores">Nueva plantilla</span>
-          <input
-            type="text"
-            data-testid="hilo-plantilla-nueva"
-            placeholder="Guardar una frase que uses seguido"
-            [ngModel]="plantillaNueva()"
-            (ngModelChange)="plantillaNueva.set($event)"
-            name="plantillaNueva"
+        @if (vacio()) {
+          <app-empty-state
+            title="Todavía no se escribieron nada"
+            description="Escribí el primer mensaje abajo."
+            variant="empty"
           />
-        </label>
+        } @else {
+          <!-- `log` y no `list`: un hilo de mensajes es una región viva, y lo
+               que llega por sondeo tiene que anunciarse a quien no lo ve. -->
+          <ol class="hilo__mensajes" role="log" aria-label="Mensajes de la conversación">
+            @for (linea of lineas(); track linea.clave) {
+              @if (linea.tipo === 'fecha') {
+                <li class="hilo__dia"><span>{{ linea.etiqueta }}</span></li>
+              } @else {
+                <li
+                  class="hilo__burbuja"
+                  data-testid="mensaje"
+                  [class.is-propio]="linea.propio"
+                  [class.is-abre]="linea.abreBloque"
+                  [attr.data-propio]="linea.propio"
+                >
+                  <p class="hilo__texto">{{ linea.mensaje.bodyText }}</p>
+                  <p class="hilo__meta">
+                    <span class="solo-lectores">{{ linea.propio ? 'Vos' : conQuien() }}, </span>
+                    @if (linea.mensaje.sentAt) {
+                      {{ linea.mensaje.sentAt | date: 'HH:mm' }}
+                    }
+                    @if (linea.propio) {
+                      <span
+                        class="hilo__ticks"
+                        [class.is-leido]="leido(linea.mensaje)"
+                        data-testid="hilo-ticks"
+                        aria-hidden="true"
+                      >
+                        <!-- Un tilde si salió, dos si lo leyeron. -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                          <path d="m2 12.5 4.2 4.2L14 8.5" />
+                          @if (leido(linea.mensaje)) {
+                            <path d="m10.5 16.7 7.8-8.2" />
+                          }
+                        </svg>
+                      </span>
+                      <span class="solo-lectores">{{ leido(linea.mensaje) ? 'Leído' : 'Enviado' }}</span>
+                    }
+                  </p>
+                </li>
+              }
+            }
+          </ol>
+        }
+      </div>
+
+      <!-- Carril P9 · las plantillas del profesional. El desplegable se abre
+           SOBRE el composer, que es donde se usa: antes vivía encima como una
+           fila suelta y su botón se leía como el rótulo del campo de texto. -->
+      @if (plantillasAbiertas()) {
+        <div class="hilo__plantillas-panel">
+          <ul class="hilo__plantillas-lista">
+            @for (plantilla of plantillasDisponibles(); track plantilla) {
+              <li class="hilo__plantilla">
+                <button
+                  class="hilo__plantilla-texto"
+                  type="button"
+                  data-testid="hilo-plantilla"
+                  (click)="usarPlantilla(plantilla)"
+                >
+                  {{ plantilla }}
+                </button>
+                @if (esPropia(plantilla)) {
+                  <button
+                    class="hilo__plantilla-quitar"
+                    type="button"
+                    [attr.aria-label]="'Quitar la plantilla: ' + plantilla"
+                    (click)="olvidarPlantilla(plantilla)"
+                  >
+                    Quitar
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+
+          <div class="hilo__plantilla-nueva">
+            <label class="hilo__campo">
+              <span class="solo-lectores">Nueva plantilla</span>
+              <input
+                type="text"
+                data-testid="hilo-plantilla-nueva"
+                placeholder="Guardar una frase que uses seguido"
+                [ngModel]="plantillaNueva()"
+                (ngModelChange)="plantillaNueva.set($event)"
+                name="plantillaNueva"
+              />
+            </label>
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              data-testid="hilo-plantilla-guardar"
+              (clicked)="guardarPlantilla()"
+            >
+              Guardar
+            </button>
+          </div>
+        </div>
+      }
+
+      <form class="hilo__composer" (submit)="$event.preventDefault(); enviar()">
         <button
           app-button
-          variant="outline"
+          variant="ghost"
           size="sm"
+          iconOnly
           type="button"
-          data-testid="hilo-plantilla-guardar"
-          (clicked)="guardarPlantilla()"
+          data-testid="hilo-plantillas"
+          aria-label="Usar una plantilla"
+          [attr.aria-expanded]="plantillasAbiertas()"
+          (clicked)="alternarPlantillas()"
         >
-          Guardar
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 4.5H7A1.5 1.5 0 0 0 5.5 6v13.5A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V6A1.5 1.5 0 0 0 17 4.5h-2" /><rect x="9" y="2.5" width="6" height="3.6" rx="1.2" /><path d="M8.8 11h6.4M8.8 15h4.2" /></svg>
         </button>
-      </div>
-    }
-  </div>
 
-  <form class="hilo__composer" (submit)="$event.preventDefault(); enviar()">
-    <label class="hilo__campo">
-      <span class="solo-lectores">Escribí tu mensaje</span>
-      <textarea
-        #composer
-        data-testid="hilo-texto"
-        rows="2"
-        placeholder="Escribí tu mensaje. Enter envía, Shift+Enter hace salto de línea."
-        [ngModel]="borrador()"
-        (ngModelChange)="borrador.set($event)"
-        name="borrador"
-        (keydown)="alTeclear($event)"
-      ></textarea>
-    </label>
-    <button
-      app-button
-      type="submit"
-      variant="primary"
-      data-testid="hilo-enviar"
-      [disabled]="!puedeEnviar()"
-      [isLoading]="enviando()"
-    >
-      Enviar
-    </button>
-  </form>
+        <label class="hilo__campo hilo__campo--texto">
+          <span class="solo-lectores">Escribí tu mensaje</span>
+          <textarea
+            #composer
+            data-testid="hilo-texto"
+            rows="1"
+            placeholder="Escribí un mensaje"
+            [ngModel]="borrador()"
+            (ngModelChange)="borrador.set($event)"
+            name="borrador"
+            (keydown)="alTeclear($event)"
+          ></textarea>
+        </label>
+
+        <button
+          app-button
+          type="submit"
+          variant="primary"
+          iconOnly
+          data-testid="hilo-enviar"
+          aria-label="Enviar mensaje"
+          [disabled]="!puedeEnviar()"
+          [isLoading]="enviando()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.4 20.4 17.3-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
+        </button>
+      </form>
+      <p class="hilo__ayuda">Enter envía · Shift+Enter hace salto de línea</p>
+    </section>
+  </div>
 }
