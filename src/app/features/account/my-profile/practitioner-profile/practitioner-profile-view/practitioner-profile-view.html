@@ -38,7 +38,7 @@
         @if (esPropio()) {
           <p class="profesional__codigo">
             Código profesional
-            <span class="profesional__cifra">{{ perfil().codigo }}</span>
+            <span class="profesional__cifra" [title]="perfil().codigo">{{ perfil().codigo }}</span>
           </p>
         }
       </div>
