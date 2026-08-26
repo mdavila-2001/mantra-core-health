@@ -24,6 +24,7 @@ const enCable = (over: Record<string, unknown> = {}) => ({
   current: true,
   status: 'c-activo',
   statusKind: 'aprobado',
+  decisionReasonText: null,
   createdAt: '2026-08-14T12:00:00.000Z',
   ...over,
 });
@@ -474,6 +475,32 @@ describe('WorkHistory', () => {
       expect(fixture.nativeElement.textContent).not.toContain('no aceptó');
       http.verify();
     });
+    it('el rechazo MUESTRA el motivo que dio la organizacion', async () => {
+      // Leer «no aceptaron tu vínculo» y tener que buscar por qué en otro
+      // renglón parte en dos una sola noticia.
+      const { fixture, http } = await conHistorial({
+        statusKind: 'rechazado',
+        decisionReasonText: 'No figurás en nuestro plantel de cardiología',
+      });
+
+      expect(fixture.nativeElement.textContent).toContain('no aceptó este vínculo');
+      expect(fixture.nativeElement.textContent).toContain(
+        'No figurás en nuestro plantel',
+      );
+      http.verify();
+    });
+
+    it('sin motivo, el rechazo igual dice qué hacer', async () => {
+      const { fixture, http } = await conHistorial({
+        statusKind: 'rechazado',
+        decisionReasonText: null,
+      });
+
+      expect(fixture.nativeElement.textContent).toContain('hablá con ellos');
+      expect(fixture.nativeElement.textContent).not.toContain('Motivo:');
+      http.verify();
+    });
+
     it('un vinculo REVOCADO avisa y aclara que las citas siguen', async () => {
       const { fixture, http } = await conHistorial({ statusKind: 'revocado' });
 
