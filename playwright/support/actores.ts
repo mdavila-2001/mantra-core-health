@@ -72,9 +72,8 @@ export function administrador(): Actor {
   return {
     rol: 'administrador',
     identificador:
-      process.env['E2E_ADMIN_EMAIL'] ??
-      'cpacentropreparacionacademica@gmail.com',
-    clave: process.env['E2E_ADMIN_PASSWORD'] ?? CLAVE,
+      process.env['E2E_ADMIN_EMAIL'] ?? 'admin@alovida.com',
+    clave: process.env['E2E_ADMIN_PASSWORD'] ?? '12345678',
     nombre: 'Administrador',
   };
 }
