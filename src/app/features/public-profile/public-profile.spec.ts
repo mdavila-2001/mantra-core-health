@@ -35,6 +35,7 @@ describe('PublicProfile', () => {
     address: null,
     location: null,
     specialties: [],
+    trajectory: [],
     ratingAverage: null,
     ratingCount: 0,
     acceptsReviews: true,

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree, type ActivatedRouteSnapshot, type RouterStateSnapshot } from '@angular/router';
 import { provideRouter } from '@angular/router';
 
-import { authGuard, TENANT_SELECTION_ROUTE } from './auth.guard';
+import { authGuard, homeGuard, TENANT_SELECTION_ROUTE } from './auth.guard';
 import { LOGIN_ROUTE } from '../http/auth.interceptor';
 import { SessionStore } from './session.store';
 
@@ -82,5 +82,41 @@ describe('authGuard · el estado S1 del M34', () => {
     session.start({ accessToken: UN_TENANT, refreshToken: 'r-1' });
 
     expect(ejecutar()).toBe(true);
+  });
+});
+
+/**
+ * `homeGuard`: a dónde manda `/`. Antes de existir, `/` colgaba del árbol de
+ * `authGuard` con `redirectTo: 'dashboard'`, así que una visita sin sesión
+ * terminaba en el login en vez de en la superficie pública.
+ */
+describe('homeGuard · a dónde manda la raíz', () => {
+  let session: SessionStore;
+  let router: Router;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+
+    session = TestBed.inject(SessionStore);
+    router = TestBed.inject(Router);
+  });
+
+  const ejecutar = (): boolean | UrlTree =>
+    TestBed.runInInjectionContext(() => homeGuard(RUTA, ESTADO)) as boolean | UrlTree;
+
+  it('sin sesión manda a la superficie pública', () => {
+    const resultado = ejecutar();
+
+    expect(resultado).toBeInstanceOf(UrlTree);
+    expect(router.serializeUrl(resultado as UrlTree)).toBe('/buscar');
+  });
+
+  it('con sesión manda al panel', () => {
+    session.start({ accessToken: UN_TENANT, refreshToken: 'r-1' });
+
+    const resultado = ejecutar();
+
+    expect(resultado).toBeInstanceOf(UrlTree);
+    expect(router.serializeUrl(resultado as UrlTree)).toBe('/dashboard');
   });
 });

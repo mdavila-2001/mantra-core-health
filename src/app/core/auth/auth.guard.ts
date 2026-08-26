@@ -43,3 +43,27 @@ export const authGuard: CanActivateFn = tracedGuard('authGuard', () => {
 
   return true;
 });
+
+/**
+ * A dónde manda la raíz (`/`), según haya o no sesión.
+ *
+ * Antes de este guard, `/` vivía dentro del árbol guardado por `authGuard`
+ * como `redirectTo: 'dashboard'` — así que quien llegaba sin sesión, ni
+ * siquiera de visita, caía directo al login. Un enlace compartido a secas
+ * («mirá esta app») no debería pedir cuenta antes de dejar ver nada: la
+ * superficie pública (`/buscar`) es la puerta de entrada, el login es lo que
+ * pide una acción concreta.
+ *
+ * Con sesión sigue yendo al panel: no le cambia nada a quien ya inició sesión.
+ *
+ * Siempre devuelve un `UrlTree` y nunca `true`: Angular no deja combinar
+ * `redirectTo` con `canActivate` en la misma ruta («redirects happen before
+ * guards are executed»), así que la ruta de `/` no declara `redirectTo` — es
+ * este guard, con los dos destinos posibles, el que hace todo el trabajo.
+ */
+export const homeGuard: CanActivateFn = tracedGuard('homeGuard', () => {
+  const session = inject(SessionStore);
+  const router = inject(Router);
+
+  return router.createUrlTree([session.isAuthenticated() ? '/dashboard' : '/buscar']);
+});

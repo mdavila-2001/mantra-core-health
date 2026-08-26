@@ -18,3 +18,16 @@ export function conQuien(conversacion: ConversationListItem): string {
 
   return nombres.length === 0 ? 'Conversación' : nombres.join(', ');
 }
+
+/**
+ * El avatar de con quién es una conversación, o `null`.
+ *
+ * Sólo en una directa (un solo `peer`): un grupo no tiene una cara que lo
+ * represente, y mostrar la del primero que llegó sería inventarle una
+ * identidad al grupo entero. `app-avatar` ya sabe caer a iniciales sin foto,
+ * así que `null` es una respuesta completa, no un caso a medias.
+ */
+export function avatarDeConQuien(conversacion: ConversationListItem): string | null {
+  if (conversacion.peers.length !== 1) return null;
+  return conversacion.peers[0].avatarUrl ?? null;
+}

@@ -17,7 +17,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommunityClient } from '../../../core/data-access/community/community.client';
 import { MessageTemplates } from '../../../core/messaging/message-templates';
 import { ChatSocketService } from '../../../core/messaging/chat-socket.service';
-import { conQuien as conQuienDe } from '../../../core/messaging/con-quien';
+import {
+  avatarDeConQuien as avatarDeConQuienDe,
+  conQuien as conQuienDe,
+} from '../../../core/messaging/con-quien';
 import type {
   ConversationListItem,
   DirectMessage,
@@ -160,6 +163,7 @@ export class Thread {
 
   /** Con quién es la conversación, cuando se pudo resolver. */
   protected readonly conQuien = signal('Conversación');
+  protected readonly avatarDeConQuien = signal<string | null>(null);
 
   /**
    * Las otras conversaciones, para el carril de la izquierda.
@@ -498,6 +502,7 @@ export class Thread {
           if (nombre !== 'Conversación') {
             this.conQuien.set(nombre);
           }
+          this.avatarDeConQuien.set(avatarDeConQuienDe(hilo));
         }
       },
       // Sin nombre el hilo sigue siendo usable: se queda con «Conversación».
