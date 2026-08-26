@@ -335,7 +335,13 @@ export interface PractitionerAffiliation {
    * no distingue —como el `declarado` que viene—: mejor decir que no se
    * reconoce que mentir sobre él.
    */
-  readonly statusKind: 'pendiente' | 'aprobado' | 'rechazado' | 'desconocido';
+  readonly statusKind:
+    | 'pendiente'
+    | 'declarado'
+    | 'aprobado'
+    | 'rechazado'
+    | 'revocado'
+    | 'desconocido';
   readonly createdAt: Date;
 }
 
