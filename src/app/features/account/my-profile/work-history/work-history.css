@@ -106,3 +106,31 @@
      de la pantalla y serían ilegibles. Mismo tope que los bloques de la ficha. */
   max-inline-size: 68ch;
 }
+
+/* La salida hacia el texto libre. Discreta a propósito: es la excepción, no el
+   camino, y competir visualmente con el buscador invitaría a saltearlo. */
+.historial__escape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: calc(var(--sp-2) * -1) 0 var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--c-neutral-600);
+}
+
+/* El aviso del trámite. Sólo aparece cuando hay algo que decir, así que puede
+   ocupar su propia línea sin competir con el resto de la ficha. */
+.historial__vinculo {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.historial__vinculo--pendiente {
+  color: var(--st-warning-ink, var(--c-amber-700));
+}
+
+.historial__vinculo--rechazado {
+  color: var(--st-error-ink, var(--c-error-700));
+}

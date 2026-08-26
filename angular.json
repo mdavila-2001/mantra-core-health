@@ -49,7 +49,11 @@
                 "localhost",
                 "127.0.0.1",
                 "mantra-core-health.local",
-                "frontend"
+                "frontend",
+                ".devtunnels.ms",
+                ".trycloudflare.com",
+                ".ngrok-free.app",
+                ".loca.lt"
               ]
             }
           },
