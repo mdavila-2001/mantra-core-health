@@ -101,6 +101,17 @@ export interface PublicLocation {
   readonly lng: number;
 }
 
+/** Un vínculo laboral de la trayectoria pública de un profesional. */
+export interface PublicAffiliation {
+  readonly organizationName: string;
+  readonly roleTitle: string;
+  readonly departmentText: string | null;
+  /** Fecha ISO (`YYYY-MM-DD`). */
+  readonly startDate: string;
+  /** Fecha ISO, o `null` si sigue vigente. */
+  readonly endDate: string | null;
+}
+
 /**
  * La ficha pública que sirve `/p/:slug` y sus cuatro hermanas.
  *
@@ -122,6 +133,8 @@ export interface PublicProfileDetail {
   readonly address: string | null;
   readonly location: PublicLocation | null;
   readonly specialties: readonly string[];
+  /** Trayectoria laboral, de la más reciente a la más antigua. Vacía fuera de un profesional. */
+  readonly trajectory: readonly PublicAffiliation[];
   readonly ratingAverage: number | null;
   readonly ratingCount: number;
   readonly acceptsReviews: boolean;

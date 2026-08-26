@@ -90,6 +90,21 @@ describe('Avatar', () => {
 
       expect(host().querySelector('.avatar__silhouette')).not.toBeNull();
     });
+
+    it('tras una foto rota, una nueva src tiene su propia oportunidad', async () => {
+      // Esta es la instancia que una lista reutiliza al reordenarse (misma
+      // `app-avatar`, `src` distinto): sin esto, la persona de la fila queda
+      // en iniciales para siempre aunque su foto sea válida.
+      await setInputs({ src: '/rota.jpg', name: 'Andrea Peña' });
+      host().querySelector('img')!.dispatchEvent(new Event('error'));
+      await fixture.whenStable();
+      expect(host().querySelector('img')).toBeNull();
+
+      await setInputs({ src: '/nueva.jpg' });
+
+      expect(host().querySelector('img')).not.toBeNull();
+      expect(host().querySelector('.avatar__initials')).toBeNull();
+    });
   });
 
   describe('color determinista', () => {

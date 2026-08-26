@@ -669,6 +669,8 @@ export interface PublicDirectoryResult {
 export interface ConversationPeer {
   readonly profileId: string;
   readonly displayName?: string;
+  /** Su avatar público, o `null`/ausente si no subió ninguno. */
+  readonly avatarUrl?: string | null;
 }
 
 /** Una página de conversaciones. */

@@ -1,13 +1,9 @@
 import { DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import { AppButton } from '@shared/components/atoms/button/button';
+import { AppMap } from '@shared/components/organisms/map/map';
+import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
 
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
 import { inicialesDe } from '@shared/text/iniciales';
@@ -68,7 +64,7 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  */
 @Component({
   selector: 'app-public-profile-card',
-  imports: [AppButton, DatePipe],
+  imports: [AppButton, DatePipe, AppMap],
   templateUrl: './public-profile-card.html',
   styleUrl: './public-profile-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -119,4 +115,26 @@ export class PublicProfileCard {
     const { city, address } = this.perfil();
     return [address, city].filter((parte) => parte !== null && parte !== '').join(' · ');
   });
+
+  /**
+   * El mapa, aparte del texto.
+   *
+   * «Dónde atiende» ya lo dice en palabras (`donde`); esto es el mismo dato
+   * mostrado como mapa, no una fuente distinta. Va por `app-map`
+   * (Leaflet + OpenStreetMap, el mismo organismo de «Dónde comprar mi
+   * receta») y no por un *embed* de Google: la política de seguridad de
+   * contenido de la aplicación sólo abre `frame-src` para nada —bloquea
+   * cualquier `iframe` ajeno— y sólo permite imágenes de
+   * `tile.openstreetmap.org`. Sin coordenadas no hay pin que dibujar: a
+   * diferencia de un *embed* de Google, Leaflet no busca por texto.
+   */
+  protected readonly pines = computed<readonly PinMapa[]>(() => {
+    const { location, displayName } = this.perfil();
+    if (location === null) return [];
+    return [{ id: 'ubicacion', lat: location.lat, lng: location.lng, titulo: displayName }];
+  });
+
+  protected readonly etiquetaDelMapa = computed(
+    () => `Dónde atiende ${this.perfil().displayName}, en el mapa.`,
+  );
 }

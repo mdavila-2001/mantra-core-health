@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
-import { conQuien } from '../../../core/messaging/con-quien';
+import { avatarDeConQuien, conQuien } from '../../../core/messaging/con-quien';
 import { tiempoRelativo } from '../../../shared/date/tiempo-relativo';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
@@ -48,6 +48,7 @@ export class ConversationList {
   readonly compacta = input(false);
 
   protected readonly conQuien = conQuien;
+  protected readonly avatarDeConQuien = avatarDeConQuien;
 
   /** «hace 2 min», o `null` si ya pasó una semana (cae al `date` del template). */
   protected relativo(fecha: Date): string | null {
