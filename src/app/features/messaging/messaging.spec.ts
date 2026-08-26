@@ -163,7 +163,7 @@ describe('Messaging', () => {
     consultar('mensajeria-buscar')?.click();
 
     http
-      .expectOne((r) => r.url === '/community/public/search/practitioners')
+      .expectOne((r) => r.url === '/public/search/practitioners')
       .flush({
         items: [
           {
