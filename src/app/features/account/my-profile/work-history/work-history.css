@@ -134,3 +134,13 @@
 .historial__vinculo--rechazado {
   color: var(--st-error-ink, var(--c-error-700));
 }
+
+/* «Declarado» no es una falla: el vínculo funciona, sólo que sin sello de la
+   institución. Va en tinta neutra, no en ámbar de advertencia. */
+.historial__vinculo--declarado {
+  color: var(--c-neutral-600);
+}
+
+.historial__vinculo--revocado {
+  color: var(--st-error-ink, var(--c-error-700));
+}

@@ -384,6 +384,16 @@ export class WorkHistory {
     if (afiliacion.statusKind === 'rechazado') {
       return 'La organización no aceptó este vínculo. Si creés que es un error, hablá con ellos.';
     }
+    if (afiliacion.statusKind === 'revocado') {
+      return 'La organización dio de baja este vínculo. Las citas que ya confirmaste siguen en pie.';
+    }
+    if (afiliacion.statusKind === 'declarado') {
+      // No es un problema y no se pinta como tal: el médico PUEDE publicar acá.
+      // Lo que se cuenta es que la institución no lo confirmó —porque no tiene
+      // a nadie que pueda hacerlo—, para que sepa por qué su ficha no muestra
+      // el sello y no lo lea como un trámite trabado.
+      return 'Declarado por vos. Esta institución no tiene quién confirme vínculos, así que no lleva su sello.';
+    }
     return null;
   }
 

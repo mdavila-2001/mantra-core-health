@@ -453,6 +453,18 @@ describe('WorkHistory', () => {
       http.verify();
     });
 
+    it('un vinculo DECLARADO se cuenta, sin pintarlo como problema', async () => {
+      // El médico PUEDE publicar con un vínculo declarado. Lo que se le dice es
+      // por qué su ficha no lleva el sello de la institución, para que no lo lea
+      // como un trámite trabado.
+      const { fixture, http } = await conHistorial({ statusKind: 'declarado' });
+
+      expect(fixture.nativeElement.textContent).toContain('Declarado por vos');
+      expect(fixture.nativeElement.textContent).toContain('no lleva su sello');
+      expect(fixture.nativeElement.textContent).not.toContain('Esperando');
+      http.verify();
+    });
+
     it('un estado que este cliente no conoce no inventa un aviso', async () => {
       // Cuando llegue `declarado` del backend, esta pantalla va a callarse en
       // vez de mentir sobre él.
@@ -462,6 +474,12 @@ describe('WorkHistory', () => {
       expect(fixture.nativeElement.textContent).not.toContain('no aceptó');
       http.verify();
     });
-  });
+    it('un vinculo REVOCADO avisa y aclara que las citas siguen', async () => {
+      const { fixture, http } = await conHistorial({ statusKind: 'revocado' });
 
+      expect(fixture.nativeElement.textContent).toContain('dio de baja');
+      expect(fixture.nativeElement.textContent).toContain('siguen en pie');
+      http.verify();
+    });
+  });
 });
