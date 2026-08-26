@@ -342,6 +342,13 @@ export interface PractitionerAffiliation {
     | 'rechazado'
     | 'revocado'
     | 'desconocido';
+  /**
+   * Por qué la organización rechazó o dio de baja el vínculo.
+   *
+   * Lo escribe quien decide sabiendo que el profesional lo lee. `null` en
+   * cualquier otro estado.
+   */
+  readonly decisionReasonText: string | null;
   readonly createdAt: Date;
 }
 
