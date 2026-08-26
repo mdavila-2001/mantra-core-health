@@ -381,11 +381,27 @@ export class WorkHistory {
         ? 'Esperando que la institución confirme el vínculo.'
         : 'Esperando que la organización te acepte. Hasta entonces no vas a poder publicar agenda ahí.';
     }
+    // El motivo, cuando la organización lo dio, va DENTRO del aviso y no como
+    // una línea aparte: leer «no aceptaron tu vínculo» y tener que buscar por
+    // qué en otro renglón parte en dos una sola noticia.
+    const motivo =
+      afiliacion.decisionReasonText === null
+        ? ''
+        : ` Motivo: ${afiliacion.decisionReasonText}`;
+
     if (afiliacion.statusKind === 'rechazado') {
-      return 'La organización no aceptó este vínculo. Si creés que es un error, hablá con ellos.';
+      return (
+        'La organización no aceptó este vínculo.' +
+        (motivo === ''
+          ? ' Si creés que es un error, hablá con ellos.'
+          : motivo)
+      );
     }
     if (afiliacion.statusKind === 'revocado') {
-      return 'La organización dio de baja este vínculo. Las citas que ya confirmaste siguen en pie.';
+      return (
+        'La organización dio de baja este vínculo. Las citas que ya ' +
+        'confirmaste siguen en pie.' + motivo
+      );
     }
     if (afiliacion.statusKind === 'declarado') {
       // No es un problema y no se pinta como tal: el médico PUEDE publicar acá.
