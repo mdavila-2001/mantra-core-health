@@ -210,6 +210,10 @@
   color: var(--aguamarina);
 }
 
+.perfil__mapa {
+  margin-top: var(--e3);
+}
+
 .perfil__publicaciones {
   display: flex;
   flex-direction: column;
