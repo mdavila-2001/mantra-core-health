@@ -1,10 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { switchMap } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
 import type { OwnPublicProfile } from '../../../../core/data-access/community/community.types';
+import { FilesClient } from '../../../../core/data-access/files/files.client';
 import type { PublicProfileDetail } from '../../../../core/data-access/public-directory/public-directory.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
@@ -70,6 +72,7 @@ const SLUG_VALIDO = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 })
 export class PublicProfilePreview {
   private readonly community = inject(CommunityClient);
+  private readonly files = inject(FilesClient);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
@@ -95,6 +98,22 @@ export class PublicProfilePreview {
   protected readonly biography = signal('');
   protected readonly acceptsReviews = signal(true);
   protected readonly guardando = signal(false);
+
+  /* -- El avatar de la vitrina ------------------------------------------- */
+
+  /** Mientras la foto viaja. Bloquea el control para no subir dos veces. */
+  protected readonly subiendoFoto = signal(false);
+  /** Qué salió mal, si salió mal. Vacío es que no pasó nada. */
+  protected readonly errorDeFoto = signal('');
+  /**
+   * La foto recién subida, servida por la API.
+   *
+   * Se guarda la ruta del servidor y no un `blob:` local, misma razón que en
+   * la foto profesional: la CSP de la aplicación bloquea `blob:` en
+   * `img-src`, así que un preview instantáneo con `URL.createObjectURL`
+   * parece un error de consola aunque la subida haya funcionado.
+   */
+  protected readonly fotoRecien = signal<string | null>(null);
 
   protected readonly slugValido = computed(() => SLUG_VALIDO.test(this.slug()));
 
@@ -139,16 +158,14 @@ export class PublicProfilePreview {
       displayName: this.displayName().trim() || 'Tu nombre',
       headline: vacio(this.headline()),
       biography: vacio(this.biography()),
-      // La foto de la vitrina todavía no se puede subir desde la aplicación
-      // (ver el aviso de la plantilla): el preview muestra lo mismo que va a
-      // ver un paciente, que hoy son las iniciales.
-      avatarUrl: null,
+      avatarUrl: this.fotoRecien() ?? this.avatarUrlDe(publicado),
       coverUrl: null,
       verified: publicado?.verificationStatusConceptId !== undefined,
       city: null,
       address: null,
       location: null,
       specialties: [],
+      trajectory: [],
       ratingAverage: null,
       ratingCount: 0,
       acceptsReviews: this.acceptsReviews(),
@@ -162,6 +179,11 @@ export class PublicProfilePreview {
     const estado = this.perfil();
     return estado.status === 'ready' && (estado.data?.avatarFileId ?? undefined) === undefined;
   });
+
+  /** La URL servida por la API para el avatar ya guardado, o `null`. */
+  private avatarUrlDe(perfil: OwnPublicProfile | null): string | null {
+    return perfil?.avatarFileId == null ? null : `/public/media/${perfil.avatarFileId}`;
+  }
 
   constructor() {
     this.cargar();
@@ -222,6 +244,58 @@ export class PublicProfilePreview {
               : 'No se pudo guardar. Probá de nuevo.',
             'Perfil público',
           );
+        },
+      });
+  }
+
+  /**
+   * Sube la foto elegida y la cuelga de la vitrina ya guardada.
+   *
+   * Exige `tieneVitrina()`: `PUT /community/profiles/me` es completo y pide
+   * `slug`/`displayName`/`tenantId` — sin una vitrina previa esos campos
+   * todavía no tienen un valor guardado del que partir, y adivinarlos acá
+   * sería pisar lo que la persona no terminó de escribir en el formulario.
+   */
+  protected alElegirFoto(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
+    // seguidas no dispara `change` y parece que el botón dejó de andar.
+    entrada.value = '';
+    const tenantId = this.auth.activeTenantId();
+    if (!archivo || this.subiendoFoto() || !this.tieneVitrina() || tenantId === null) {
+      return;
+    }
+
+    this.subiendoFoto.set(true);
+    this.errorDeFoto.set('');
+
+    this.files
+      .upload(archivo, 'IMAGE', 'NORMAL')
+      .pipe(
+        switchMap((subido) =>
+          this.community.upsertOwnProfile({
+            tenantId,
+            slug: this.slug().trim(),
+            displayName: this.displayName().trim(),
+            headline: this.headline().trim() || undefined,
+            biography: this.biography().trim() || undefined,
+            acceptsReviews: this.acceptsReviews(),
+            avatarFileId: subido.id,
+          }),
+        ),
+      )
+      .subscribe({
+        next: (perfil) => {
+          this.subiendoFoto.set(false);
+          this.sembrarFormulario(perfil);
+          this.perfil.set(ready(perfil));
+          this.fotoRecien.set(this.avatarUrlDe(perfil));
+          this.toasts.success('Tu foto quedó guardada.', 'Perfil público');
+        },
+        error: () => {
+          this.subiendoFoto.set(false);
+          this.errorDeFoto.set('No pudimos subir la foto. Probá con otra imagen.');
         },
       });
   }

@@ -36,7 +36,7 @@
         <a class="hilo__volver hilo__volver--movil" routerLink="/messaging" aria-label="Volver a los chats">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
         </a>
-        <app-avatar [name]="conQuien()" size="md" />
+        <app-avatar [src]="avatarDeConQuien()" [name]="conQuien()" size="md" />
         <div class="hilo__cabecera-texto">
           <h1 class="hilo__nombre">{{ conQuien() }}</h1>
           <p class="hilo__estado">Conversación directa</p>

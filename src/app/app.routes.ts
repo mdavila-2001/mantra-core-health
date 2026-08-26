@@ -17,7 +17,7 @@ import { IdentityVerification } from './features/identity-verification/identity-
 import { NotFound } from './features/not-found/not-found';
 import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
-import { authGuard } from './core/auth/auth.guard';
+import { authGuard, homeGuard } from './core/auth/auth.guard';
 import {
   APP_SECTIONS,
   ROLES_DE_QUIEN_ATIENDE,
@@ -1038,6 +1038,18 @@ export const routes: Routes = [
   // y el cliente lo traduce al prefijo de la API, que devuelve 404 si el slug
   // es de otra clase en vez de redirigir.
   ...rutasDeFichasPublicas(),
+  // La raíz, antes del armazón guardado: sin sesión manda a la superficie
+  // pública (`/buscar`) y no al login; con sesión, al panel. Los dos destinos
+  // salen del propio `homeGuard` (un `UrlTree`, nunca `true`) porque Angular no
+  // deja combinar `canActivate` con `redirectTo` en la misma ruta. Sin
+  // `component`/`redirectTo` propios, `children: []` es lo mínimo que exige
+  // una ruta válida — el guard nunca deja que lleguen a importar.
+  {
+    path: '',
+    pathMatch: 'full',
+    canActivate: [homeGuard],
+    children: [],
+  },
   {
     // El armazón: header con el usuario, navegación y selector de organización.
     // El guard corre en el padre — S1 del M34: autorizar ANTES de pedir datos —
@@ -1046,7 +1058,6 @@ export const routes: Routes = [
     component: ShellLayout,
     canActivate: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
       {

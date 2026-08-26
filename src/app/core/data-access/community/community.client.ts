@@ -984,7 +984,15 @@ export class CommunityClient {
   }
 
   /**
-   * `GET /community/public/search/practitioners` — profesionales del directorio.
+   * `GET /public/search/practitioners` — profesionales del directorio.
+   *
+   * Vive bajo `/public`, no bajo `/community`: es `CommunityPublicController`
+   * quien lo sirve, pero sin prefijo de módulo (ver su propio comentario sobre
+   * por qué se registra sin `@Controller('community')`). Pedirlo con el
+   * prefijo equivocado no da un 404 silencioso: el proxy de desarrollo tiene
+   * `/community` mapeado al mismo backend, así que la respuesta también es un
+   * 404 — HTML de Nest, no el sobre de error — y `searchPractitioners` fallaba
+   * siempre, aun con el catálogo bien sembrado.
    *
    * Devuelve `slug`, no `profileId`: la superficie pública no expone
    * identificadores internos. Para escribirle a alguien, este resultado se
@@ -1004,7 +1012,7 @@ export class CommunityClient {
     }
     return this.http
       .get<{ readonly items: readonly PublicDirectoryResult[] }>(
-        this.url('/community/public/search/practitioners'),
+        this.url('/public/search/practitioners'),
         { params },
       )
       .pipe(map((body) => body.items));

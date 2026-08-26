@@ -19,7 +19,14 @@ import { routes } from './app.routes';
  * vuelve a escribirlas a mano.
  */
 describe('rutas del armazón', () => {
-  const armazon = routes.find((route) => route.path === '' && route.children !== undefined);
+  // Hay DOS rutas con `path: ''`: la raíz —que sólo lleva el `homeGuard` y unos
+  // `children: []` vacíos, porque Angular no deja combinar `canActivate` con
+  // `redirectTo`— y el armazón, que es el que tiene secciones colgando. Buscar
+  // sólo por `children !== undefined` devolvía la primera y dejaba estas nueve
+  // pruebas mirando la ruta equivocada.
+  const armazon = routes.find(
+    (route) => route.path === '' && (route.children?.length ?? 0) > 0,
+  );
   const hijas = armazon?.children ?? [];
 
   it('el armazón existe y está detrás del guard', () => {
@@ -29,11 +36,19 @@ describe('rutas del armazón', () => {
     expect(armazon?.canActivate?.length).toBeGreaterThan(0);
   });
 
-  it('entrar a la raíz lleva al panel', () => {
-    const raiz = hijas.find((route) => route.path === '');
+  it('entrar a la raíz la decide un guard, no un redirect fijo', () => {
+    // Antes redirigía siempre al panel, que para quien no tiene sesión era
+    // mandarlo al login. Ahora el destino lo elige `homeGuard` —público si no
+    // hay sesión, panel si la hay— y por eso devuelve un `UrlTree` en vez de
+    // `true`: Angular no deja combinar `canActivate` con `redirectTo`.
+    const raiz = routes.find(
+      (route) =>
+        route.path === '' && (route.children?.length ?? 0) === 0 && route.canActivate,
+    );
 
-    expect(raiz?.redirectTo).toBe('dashboard');
+    expect(raiz).toBeDefined();
     expect(raiz?.pathMatch).toBe('full');
+    expect(raiz?.canActivate?.length).toBeGreaterThan(0);
   });
 
   it('cada sección del registro tiene su ruta, con su título y su sección en `data`', () => {

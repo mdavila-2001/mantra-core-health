@@ -25,6 +25,7 @@ describe('jsonLdDePerfil · dónde atiende', () => {
     address: null,
     location: null,
     specialties: [],
+    trajectory: [],
     ratingAverage: null,
     ratingCount: 0,
     acceptsReviews: false,
@@ -89,6 +90,7 @@ describe('PublicProfileCard · pines', () => {
     address: null,
     location: null,
     specialties: [],
+    trajectory: [],
     ratingAverage: null,
     ratingCount: 0,
     acceptsReviews: false,
@@ -119,5 +121,108 @@ describe('PublicProfileCard · pines', () => {
     expect(pines).toEqual([
       { id: 'ubicacion', lat: -17.78, lng: -63.18, titulo: 'Dra. Lucía Salas' },
     ]);
+  });
+});
+
+/** La sección «Trayectoria»: sólo aparece con algo que mostrar. */
+describe('PublicProfileCard · trayectoria', () => {
+  const BASE: PublicProfileDetail = {
+    kind: 'PRACTITIONER',
+    slug: 'dra-lucia-salas',
+    displayName: 'Dra. Lucía Salas',
+    headline: null,
+    biography: null,
+    avatarUrl: null,
+    coverUrl: null,
+    verified: true,
+    city: null,
+    address: null,
+    location: null,
+    specialties: [],
+    trajectory: [],
+    ratingAverage: null,
+    ratingCount: 0,
+    acceptsReviews: false,
+    posts: [],
+    updatedAt: new Date('2026-08-01T00:00:00Z'),
+  };
+
+  function crear(perfil: PublicProfileDetail): HTMLElement {
+    const fixture = TestBed.createComponent(PublicProfileCard);
+    fixture.componentRef.setInput('perfil', perfil);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('sin trayectoria no dibuja la sección', () => {
+    expect(crear(BASE).querySelector('.perfil__trayectoria')).toBeNull();
+  });
+
+  it('con un vínculo vigente dice "actualidad" y no una fecha', () => {
+    const host = crear({
+      ...BASE,
+      trajectory: [
+        {
+          organizationName: 'Hospital Obrero N.º 1',
+          roleTitle: 'Cardióloga de planta',
+          departmentText: 'Cardiología',
+          startDate: '2018-03-01',
+          endDate: null,
+        },
+      ],
+    });
+
+    const vinculo = host.querySelector('.perfil__vinculo')!;
+    expect(vinculo.querySelector('.perfil__vinculo-institucion')?.textContent).toContain(
+      'Hospital Obrero N.º 1',
+    );
+    expect(vinculo.querySelector('.perfil__vinculo-cargo')?.textContent).toContain(
+      'Cardióloga de planta',
+    );
+    expect(vinculo.querySelector('.perfil__vinculo-periodo')?.textContent).toContain('actualidad');
+  });
+
+  it('con vínculo cerrado muestra las dos puntas del período', () => {
+    const host = crear({
+      ...BASE,
+      trajectory: [
+        {
+          organizationName: 'Clínica del Sur',
+          roleTitle: 'Residente',
+          departmentText: null,
+          startDate: '2014-01-15',
+          endDate: '2017-12-20',
+        },
+      ],
+    });
+
+    const periodo = host.querySelector('.perfil__vinculo-periodo')?.textContent ?? '';
+    expect(periodo).not.toContain('actualidad');
+    expect(periodo.toLowerCase()).toContain('2014');
+    expect(periodo.toLowerCase()).toContain('2017');
+  });
+
+  it('varios vínculos se listan todos', () => {
+    const host = crear({
+      ...BASE,
+      trajectory: [
+        {
+          organizationName: 'Hospital Obrero N.º 1',
+          roleTitle: 'Cardióloga de planta',
+          departmentText: null,
+          startDate: '2018-03-01',
+          endDate: null,
+        },
+        {
+          organizationName: 'Clínica del Sur',
+          roleTitle: 'Residente',
+          departmentText: null,
+          startDate: '2014-01-15',
+          endDate: '2017-12-20',
+        },
+      ],
+    });
+
+    expect(host.querySelectorAll('.perfil__vinculo').length).toBe(2);
   });
 });
