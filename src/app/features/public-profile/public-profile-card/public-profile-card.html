@@ -169,6 +169,12 @@
             </svg>
             {{ donde() }}
           </p>
+          <!-- El mapa: el mismo dato de arriba, mostrado aparte del texto. -->
+          @if (pines().length > 0) {
+            <div class="perfil__mapa">
+              <app-map [pines]="pines()" [etiqueta]="etiquetaDelMapa()" />
+            </div>
+          }
         } @else {
           <p class="caption">Todavía no cargaste dónde atendés.</p>
         }
