@@ -55,6 +55,16 @@
                 </span>
                 <span class="historial__estado">{{ periodo(afiliacion) }}</span>
               </div>
+
+              <!-- Si la organización todavía no decidió, o dijo que no, el médico
+                   tiene que enterarse acá: es el único lugar donde puede mirar el
+                   trámite que él mismo inició. Un vínculo aprobado no se anuncia
+                   —es lo esperable— y uno sin sede nunca pasó por una aprobación. -->
+              @if (avisoDelVinculo(afiliacion); as aviso) {
+                <p class="historial__vinculo historial__vinculo--{{ afiliacion.statusKind }}">
+                  {{ aviso }}
+                </p>
+              }
             </li>
           }
         </ul>
@@ -79,13 +89,49 @@
     <form class="historial__formulario" (submit)="$event.preventDefault()">
       <h3 class="historial__subtitulo">Agregar un vínculo</h3>
 
-      <app-form-field
-        label="Institución"
-        hint="El hospital o la entidad, como se llama. No hace falta que esté en la plataforma."
-        [required]="true"
-      >
-        <app-input [(value)]="institucion" placeholder="Hospital Obrero N.º 1" />
-      </app-form-field>
+      <!-- Dos formas de nombrar la institución, nunca las dos a la vez: elegirla
+           del padrón y además escribirla serían dos respuestas a una pregunta. -->
+      @if (modoDeInstitucion() === 'padron') {
+        <app-form-field
+          label="Institución"
+          hint="Escribí el nombre y elegila del padrón oficial de salud."
+          [required]="true"
+        >
+          <app-reference-combobox
+            [selected]="establecimiento()"
+            [options]="resultados()"
+            [loading]="buscandoEnPadron()"
+            placeholder="Clínica Foianini"
+            emptyMessage="Ningún establecimiento coincide"
+            (searched)="buscarEnPadron($event)"
+            (selectionChange)="establecimiento.set($event)"
+          />
+        </app-form-field>
+
+        <p class="historial__escape">
+          <!-- El padrón cubre sólo Santa Cruz: quien trabajó en otro
+               departamento necesita esta salida, y decirlo evita que la busque
+               como si fuera una falla. -->
+          ¿Trabajaste fuera de Santa Cruz o no la encontrás?
+          <button app-button variant="ghost" size="sm" type="button" (click)="escribirAMano()">
+            Escribir el nombre a mano
+          </button>
+        </p>
+      } @else {
+        <app-form-field
+          label="Institución"
+          hint="El hospital o la entidad, como se llama. No hace falta que esté en la plataforma."
+          [required]="true"
+        >
+          <app-input [(value)]="institucion" placeholder="Hospital Obrero N.º 1" />
+        </app-form-field>
+
+        <p class="historial__escape">
+          <button app-button variant="ghost" size="sm" type="button" (click)="buscarEnElPadron()">
+            Buscarla en el padrón
+          </button>
+        </p>
+      }
 
       <app-form-field label="Cargo" hint="El puesto que ejerciste ahí." [required]="true">
         <app-input [(value)]="cargo" placeholder="Médico de planta" />
