@@ -74,15 +74,32 @@
         <p class="vitrina__previa-rotulo">Así te ven</p>
 
         @if (sinFoto()) {
-          <!-- B4 · «Agregar tu foto». Se avisa lo que falta **y se dice la
-               verdad de por qué no hay botón**: ni `PUT /community/profiles/me`
-               ni `PATCH /profiles/practitioners/me` aceptan hoy el archivo de
-               la foto, así que un botón acá sería un botón que no puede
-               funcionar. Queda anotado en `PENDIENTES-BACKEND.md`. -->
+          <!-- B4 · «Agregar tu foto». Con vitrina guardada ya se puede subir
+               (PUT /community/profiles/me acepta avatarFileId); sin vitrina
+               todavía no hay `slug`/`displayName` guardados de los que
+               partir, así que el aviso queda sólo informativo. -->
           <app-alert tone="info" title="Tu ficha se ve sin foto">
             Quien te busque va a ver tus iniciales. Una foto es lo que hace que alguien reconozca a
-            su médico en una lista. Todavía no se puede subir desde acá: lo estamos habilitando.
+            su médico en una lista.
+            @if (tieneVitrina()) {
+              <label class="vitrina__foto-boton">
+                {{ subiendoFoto() ? 'Subiendo…' : 'Subir una foto' }}
+                <input
+                  type="file"
+                  class="solo-lectores"
+                  accept="image/*"
+                  data-testid="vitrina-foto"
+                  [disabled]="subiendoFoto()"
+                  (change)="alElegirFoto($event)"
+                />
+              </label>
+            } @else {
+              Guardá la vitrina primero; después vas a poder subirla acá mismo.
+            }
           </app-alert>
+          @if (errorDeFoto(); as fallo) {
+            <p class="vitrina__foto-error" role="alert">{{ fallo }}</p>
+          }
         }
 
         <app-public-profile-card [perfil]="vistaPrevia()" [preview]="true" />

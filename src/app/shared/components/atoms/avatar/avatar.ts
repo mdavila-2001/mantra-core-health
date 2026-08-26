@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  linkedSignal,
+} from '@angular/core';
 
 import { AVATAR_TONES, type AvatarSize, type AvatarStatus, type AvatarTone } from './avatar.types';
 
@@ -40,8 +46,20 @@ export class Avatar {
   readonly status = input<AvatarStatus>('none');
   readonly alt = input<string>('Avatar de usuario');
 
-  /** Una foto rota no puede dejar un hueco: activa el fallback a iniciales. */
-  protected readonly imageFailed = signal(false);
+  /**
+   * Una foto rota no puede dejar un hueco: activa el fallback a iniciales.
+   *
+   * `linkedSignal` y no `signal`: si sólo se apagara con `set(true)` en el
+   * error, un avatar que falló una vez quedaba en iniciales para siempre,
+   * aunque después llegara un `src` nuevo y válido — exactamente lo que pasa
+   * en una lista de conversaciones que reutiliza la misma instancia del
+   * componente al reordenarse. Al recalcular en `false` cada vez que cambia
+   * `src`, cada foto nueva tiene su propia oportunidad.
+   */
+  protected readonly imageFailed = linkedSignal({
+    source: this.src,
+    computation: () => false,
+  });
 
   protected readonly computedInitials = computed(() => {
     const explicit = this.initials()?.trim();

@@ -143,6 +143,68 @@ describe('PublicProfilePreview', () => {
     expect(interno<() => boolean>('tieneVitrina')()).toBe(true);
   });
 
+  /** Fabrica un evento `change` de `<input type="file">` con un solo archivo. */
+  function eventoDeArchivo(archivo: File): Event {
+    return { target: { files: [archivo], value: '' } } as unknown as Event;
+  }
+
+  it('subir una foto sin vitrina guardada no manda nada', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush(null as never);
+
+    interno<(e: Event) => void>('alElegirFoto')(
+      eventoDeArchivo(new File(['x'], 'foto.png', { type: 'image/png' })),
+    );
+
+    http.verify();
+  });
+
+  it('subir una foto con vitrina guardada la sube y la cuelga de la vitrina', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush({
+      id: 'pp-1',
+      tenantId: 't-1',
+      targetId: 'hp-1',
+      slug: 'dra-salas',
+      displayName: 'Dra. Salas',
+      headline: null,
+      biography: null,
+      acceptsReviews: true,
+      verificationStatusConceptId: null,
+      avatarFileId: null,
+      statusConceptId: 'st-activo',
+    });
+    expect(interno<() => boolean>('tieneVitrina')()).toBe(true);
+
+    interno<(e: Event) => void>('alElegirFoto')(
+      eventoDeArchivo(new File(['x'], 'foto.png', { type: 'image/png' })),
+    );
+
+    const subida = http.expectOne('/common/files/upload');
+    expect(subida.request.method).toBe('POST');
+    subida.flush({ id: 'f-1' } as never);
+
+    const put = http.expectOne('/community/profiles/me');
+    expect(put.request.body).toMatchObject({ avatarFileId: 'f-1' });
+    put.flush({
+      id: 'pp-1',
+      tenantId: 't-1',
+      targetId: 'hp-1',
+      slug: 'dra-salas',
+      displayName: 'Dra. Salas',
+      headline: null,
+      biography: null,
+      acceptsReviews: true,
+      verificationStatusConceptId: null,
+      avatarFileId: 'f-1',
+      statusConceptId: 'st-activo',
+    });
+
+    expect(interno<() => { avatarUrl: string | null }>('vistaPrevia')().avatarUrl).toBe(
+      '/public/media/f-1',
+    );
+  });
+
   it('la vista previa refleja lo que se está escribiendo, antes de guardar', () => {
     montar();
     http.expectOne('/community/profiles/me').flush(null as never);

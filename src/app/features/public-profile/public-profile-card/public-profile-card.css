@@ -214,6 +214,43 @@
   margin-top: var(--e3);
 }
 
+.perfil__trayectoria {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.perfil__vinculo + .perfil__vinculo {
+  padding-block-start: var(--e4);
+  border-block-start: 1px solid var(--filete-2);
+}
+
+.perfil__vinculo-cargo {
+  margin: 0;
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.perfil__vinculo-departamento {
+  font-weight: 400;
+  color: var(--tinta-2);
+}
+
+.perfil__vinculo-institucion {
+  margin: var(--e1) 0 0;
+  color: var(--tinta);
+}
+
+.perfil__vinculo-periodo {
+  margin: var(--e1) 0 0;
+  color: var(--tinta-2);
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
 .perfil__publicaciones {
   display: flex;
   flex-direction: column;

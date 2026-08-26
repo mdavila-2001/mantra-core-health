@@ -101,3 +101,23 @@
   font-size: var(--fs-caption);
   word-break: break-all;
 }
+
+.vitrina__foto-boton {
+  display: inline-block;
+  margin-block-start: var(--sp-2);
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--tinta-marca);
+  text-decoration: underline;
+}
+
+.vitrina__foto-boton:has(input:disabled) {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.vitrina__foto-error {
+  margin: var(--sp-2) 0 0;
+  color: var(--error-tinta, #8a2f22);
+  font-size: var(--fs-caption);
+}
