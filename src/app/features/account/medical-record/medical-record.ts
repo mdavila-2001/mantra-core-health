@@ -30,7 +30,6 @@ import {
   downloadHistoryPdf,
   downloadPrescriptionPdf,
   downloadVisitPdf,
-  VALOR_ENMASCARADO,
 } from '../../../shared/utils/clinical-pdf/clinical-pdf';
 import type { DocumentoDeFormulario } from '../../../shared/utils/clinical-pdf/clinical-pdf.types';
 import {
@@ -68,7 +67,7 @@ interface RecetaVisible {
   readonly cuando: Date;
 }
 
-/** Una fila de las listas de sólo lectura (diagnósticos, alergias, resultados). */
+/** Una fila de las listas de sólo lectura (alergias, resultados). */
 interface FilaVisible {
   readonly id: string;
   readonly principal: string;
@@ -203,34 +202,6 @@ export class MedicalRecord {
     })),
   );
 
-  /**
-   * Patch v4.0.8: el estado clínico y, cuando aplica, que es de seguimiento
-   * continuo. Antes de este patch todo diagnóstico llegaba "activo" para
-   * siempre —no había cómo cerrarlo—; ahora `secundario` refleja el estado
-   * real, incluida una condición ya resuelta o en remisión.
-   *
-   * El curso clínico se cuenta como texto y no como campo aparte: `FilaVisible`
-   * es la fila genérica de las tres listas de sólo lectura, y agregarle un
-   * campo que sólo llena diagnósticos dejaría a alergias y resultados con una
-   * columna vacía en toda la tabla.
-   */
-  protected readonly diagnosticos = computed<readonly FilaVisible[]>(() =>
-    (this.datos()?.conditions ?? []).map((fila) => {
-      const estado = this.label(fila.clinicalStatusConceptId);
-      // Se branchea por `code` —nunca por `display`—: el rótulo es presentación
-      // y puede cambiar sin aviso, el código estable no.
-      const esCronica =
-        this.etiquetas().get(fila.clinicalCourseConceptId ?? '')?.code ===
-        'COND_COURSE_CHRONIC';
-      return {
-        id: fila.id,
-        principal: this.label(fila.codeConceptId),
-        secundario: esCronica ? `${estado} · Seguimiento continuo` : estado,
-        cuando: fila.onsetAt ?? fila.createdAt,
-      };
-    }),
-  );
-
   protected readonly alergias = computed<readonly FilaVisible[]>(() =>
     (this.datos()?.allergies ?? []).map((fila) => ({
       id: fila.id,
@@ -257,58 +228,35 @@ export class MedicalRecord {
    */
   protected readonly recorte = computed(() => (this.datos()?.truncated ?? []).join(', '));
 
-  /* ---- los formularios clínicos respondidos ------------------------------- */
-
-  /** Lo que el archivo imprime donde el backend no expuso el valor. */
-  protected readonly marcadorEnmascarado = VALOR_ENMASCARADO;
+  /* ---- los formularios clínicos, para los documentos ---------------------- */
 
   /**
    * Los formularios propios, con sus respuestas ya leídas.
    *
+   * La pantalla no los lista: se leen porque los llevan los dos documentos —el
+   * de cada atención y el de la historia completa—, y quitar la lectura los
+   * degradaría en silencio.
+   *
    * Estado aparte de `historia` a propósito: salen de otro módulo del backend
    * (`/forms/me`), y un fallo ahí no justifica perder las atenciones ni al
-   * revés. Cada bloque declara su propia carga y su propio error.
+   * revés. Si esta lectura falla, los documentos salen sin ese bloque y el
+   * resto de la historia se muestra igual.
    */
-  protected readonly formularios = signal<ViewState<readonly FormularioVisible[]>>(loading());
+  private readonly formularios = signal<ViewState<readonly FormularioVisible[]>>(loading());
 
-  protected readonly buscandoFormularios = computed(
-    () => this.formularios().status === 'loading',
-  );
-
-  protected readonly formulariosVisibles = computed<readonly FormularioVisible[]>(() => {
+  private readonly formulariosVisibles = computed<readonly FormularioVisible[]>(() => {
     const estado = this.formularios();
     return estado.status === 'ready' || estado.status === 'stale' ? estado.data : [];
-  });
-
-  /** Si la lectura de formularios falló, acá está el porqué, en palabras. */
-  protected readonly errorDeFormularios = computed<string | null>(() => {
-    const estado = this.formularios();
-    if (estado.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (estado.status === 'forbidden') {
-      return estado.message ?? 'Tu cuenta no puede leer estos formularios.';
-    }
-    if (estado.status === 'not-found') {
-      return 'No encontramos tus formularios.';
-    }
-    if (estado.status === 'validation') {
-      return estado.issues.map((issue) => issue.message).join(' ') || 'No pudimos leerlos.';
-    }
-    if (estado.status === 'error') {
-      return `${estado.message || 'Ocurrió un error inesperado.'} (${estado.requestId})`;
-    }
-    return null;
   });
 
   /**
    * Lee el listado propio y el detalle de cada instancia.
    *
-   * El detalle se trae entero de una vez —no al desplegar— porque es lo que la
-   * sección muestra y lo que el PDF de la atención incorpora: descargar un
-   * documento no puede depender de una lectura que todavía no salió.
+   * El detalle se trae entero al abrir la pantalla —y no al pedir el PDF—
+   * porque es lo que el documento de la atención incorpora: descargarlo no
+   * puede depender de una lectura que todavía no salió.
    */
-  protected cargarFormularios(): void {
+  private cargarFormularios(): void {
     if (this.perfil === null) {
       return;
     }
@@ -445,7 +393,7 @@ export class MedicalRecord {
               resumen: datos,
               // Todos los formularios del paciente, sin filtrar por encuentro:
               // la historia completa es longitudinal. Si su lectura falló, va
-              // vacío y la sección lo dice — el documento no se niega por eso.
+              // vacío — el documento no se niega por eso.
               formularios: this.formulariosVisibles().map(comoDocumentoDeFormulario),
               ordenes: ordenes.items,
               resultados: resultados.items,
@@ -535,11 +483,7 @@ export class MedicalRecord {
 /** Los conceptos que hay que traducir para pintar la historia. */
 function conceptosDe(resumen: ClinicalSummary): readonly string[] {
   const ids = [
-    ...resumen.conditions.flatMap((fila) => [
-      fila.codeConceptId,
-      fila.clinicalStatusConceptId,
-      fila.clinicalCourseConceptId,
-    ]),
+    ...resumen.conditions.flatMap((fila) => [fila.codeConceptId, fila.clinicalStatusConceptId]),
     ...resumen.allergies.flatMap((fila) => [fila.substanceConceptId, fila.criticalityConceptId]),
     ...resumen.medicationRequests.flatMap((fila: MedicationRequest) => [
       fila.medicationConceptId,
@@ -580,9 +524,9 @@ function comoDocumentoDeFormulario(formulario: FormularioVisible): DocumentoDeFo
  *
  * El título es genérico porque la instancia no declara su plantilla y el
  * paciente no puede leer el catálogo de plantillas; la etiqueta de cada campo
- * sí viaja en el detalle (`fieldName`) y es lo que vuelve legible la lista.
- * Cuando `masked` está puesto, el texto queda vacío: el marcador lo pone la
- * vista — acá jamás viaja el contenido.
+ * sí viaja en el detalle (`fieldName`) y es lo que vuelve legible la respuesta.
+ * Cuando `masked` está puesto, el texto queda vacío: el marcador lo pone el
+ * documento — acá jamás viaja el contenido.
  */
 function formularioLeible(detalle: FormInstanceDetail): FormularioVisible {
   const cierre = detalle.closedAt === undefined ? undefined : new Date(detalle.closedAt);
@@ -611,11 +555,14 @@ function formularioLeible(detalle: FormInstanceDetail): FormularioVisible {
  * Se mira bloque por bloque y no `encounters` solo: una persona puede tener
  * alergias registradas antes de su primera consulta, y decirle que su historia
  * está vacía sería falso.
+ *
+ * Las condiciones no cuentan: la pantalla no las lista por su cuenta —se leen
+ * dentro de la atención que las registró—, así que un archivo que sólo las
+ * tuviera no dibujaría ni una fila, y entonces está vacío para quien lo mira.
  */
 function estaVacia(resumen: ClinicalSummary): boolean {
   return (
     resumen.encounters.length === 0 &&
-    resumen.conditions.length === 0 &&
     resumen.allergies.length === 0 &&
     resumen.medicationRequests.length === 0 &&
     resumen.observations.length === 0

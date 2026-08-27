@@ -82,57 +82,11 @@
   gap: var(--sp-2);
 }
 
-/* ---- los formularios respondidos ------------------------------------------
-   El item lleva sus respuestas adentro, así que no se acuesta en fila ancha:
-   una definición por renglón se lee mejor que una tabla apretada. */
-
-.historia__item--formulario {
-  align-items: stretch;
-}
-
-.historia__respuestas {
-  margin: var(--sp-2) 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-}
-
-.historia__respuesta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  font-size: var(--fs-body);
-}
-
-.historia__respuesta dt {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
-.historia__respuesta dt::after {
-  content: ':';
-}
-
-.historia__respuesta dd {
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.historia__respuesta em {
-  font-style: italic;
-  color: var(--text-secondary);
-}
-
 @media (min-width: 48rem) {
   .historia__item {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-  }
-
-  .historia__item--formulario {
-    flex-direction: column;
-    align-items: stretch;
   }
 
   .historia__acciones {
