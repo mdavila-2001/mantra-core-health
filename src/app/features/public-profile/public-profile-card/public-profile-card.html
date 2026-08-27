@@ -210,8 +210,8 @@
          se lee como una cuenta abandonada—, y a quien configura su vitrina sí,
          porque es el hueco que está dejando. -->
     @if (p.posts.length > 0 || preview()) {
-      <section class="app-card perfil__seccion">
-        <div class="app-card__cabecera">
+      <section class="perfil__seccion perfil__feed">
+        <div class="perfil__feed-cabecera">
           <h2>Publicaciones</h2>
           <p class="caption">
             Lo que este profesional escribe para divulgar. No es una consulta ni un consejo para tu
@@ -226,57 +226,15 @@
         } @else {
           <ul class="perfil__publicaciones">
             @for (post of p.posts; track post.id) {
-              <li class="publicacion">
-                <header class="publicacion__cabecera">
-                  @if (p.avatarUrl; as foto) {
-                    <img class="publicacion__avatar" [src]="foto" alt="" width="44" height="44" />
-                  } @else {
-                    <span class="publicacion__avatar publicacion__avatar--iniciales" aria-hidden="true">
-                      {{ iniciales() }}
-                    </span>
-                  }
-                  <div class="publicacion__firma">
-                    <p class="publicacion__autor">{{ p.displayName }}</p>
-                    @if (p.headline) {
-                      <p class="publicacion__titular">{{ p.headline }}</p>
-                    }
-                    <p class="publicacion__fecha">
-                      <time [attr.datetime]="post.publishedAt.toISOString()">
-                        {{ post.publishedAt | date: 'd MMM y' }}
-                      </time>
-                    </p>
-                  </div>
-                </header>
-
-                <p class="publicacion__cuerpo">{{ post.bodyText }}</p>
-
-                @if (post.mediaUrls.length > 0) {
-                  <div
-                    class="publicacion__medios"
-                    [attr.data-cantidad]="post.mediaUrls.length > 1 ? 'varias' : 'una'"
-                  >
-                    @for (url of post.mediaUrls; track url) {
-                      <img class="publicacion__imagen" [src]="url" alt="" loading="lazy" />
-                    }
-                  </div>
-                }
-
-                @if (post.reactionCount > 0 || post.commentCount > 0) {
-                  <footer class="publicacion__pie">
-                    @if (post.reactionCount > 0) {
-                      <span class="publicacion__conteo">
-                        {{ post.reactionCount }}
-                        {{ post.reactionCount === 1 ? 'reacción' : 'reacciones' }}
-                      </span>
-                    }
-                    @if (post.commentCount > 0) {
-                      <span class="publicacion__conteo">
-                        {{ post.commentCount }}
-                        {{ post.commentCount === 1 ? 'comentario' : 'comentarios' }}
-                      </span>
-                    }
-                  </footer>
-                }
+              <li>
+                <app-publicacion-post
+                  [post]="post"
+                  [slug]="p.slug"
+                  [autorNombre]="p.displayName"
+                  [autorHeadline]="p.headline"
+                  [autorAvatar]="p.avatarUrl"
+                  [autorIniciales]="iniciales()"
+                />
               </li>
             }
           </ul>

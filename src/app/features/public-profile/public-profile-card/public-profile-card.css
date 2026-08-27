@@ -10,6 +10,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--e4);
+  /* Una ficha social no se lee a lo ancho de un monitor: la columna se acota a
+     una medida de lectura cómoda y se centra, como la de cualquier perfil de
+     red social. */
+  max-inline-size: 45rem;
+  margin-inline: auto;
 }
 
 /* --- Encabezado ---------------------------------------------------------- */
@@ -251,10 +256,24 @@
   text-transform: capitalize;
 }
 
-/* --- Publicaciones: un repositorio de divulgación, con la anatomía de una
-   entrada de feed —firma, cuerpo, imagen y la interacción abajo—. Cada post es
-   una tarjeta con filete propio y no una fila separada por una línea: lo que se
-   lee de arriba a abajo es contenido de peso, no una lista de anuncios. --- */
+/* --- Publicaciones: un feed al estilo de una red social. La sección no es una
+   `app-card` —sería una tarjeta blanca gigante con los posts adentro—: es un
+   título y una pila de tarjetas, cada post la suya, con la imagen a sangre y la
+   interacción al pie. */
+.perfil__feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.perfil__feed-cabecera h2 {
+  margin: 0;
+}
+
+.perfil__feed-cabecera .caption {
+  margin: var(--e1) 0 0;
+}
+
 .perfil__publicaciones {
   display: flex;
   flex-direction: column;
@@ -264,104 +283,9 @@
   list-style: none;
 }
 
-.publicacion {
-  border: 1px solid var(--filete-2);
-  border-radius: var(--r-card);
-  padding: var(--e4);
-  background: var(--sup-tarjeta);
-}
-
-.publicacion__cabecera {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--e3);
-}
-
-.publicacion__avatar {
-  flex: none;
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
-  border-radius: var(--r-pill);
-  object-fit: cover;
-  background: var(--menta);
-}
-
-.publicacion__avatar--iniciales {
-  display: grid;
-  place-items: center;
-  color: var(--tinta-marca);
-  font-family: var(--f-titulo);
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.publicacion__firma {
-  min-inline-size: 0;
-}
-
-.publicacion__autor {
-  margin: 0;
-  font-weight: 600;
-  color: var(--tinta);
-}
-
-.publicacion__titular {
-  margin: 0;
-  font-size: 14px;
-  color: var(--tinta-2);
-}
-
-.publicacion__fecha {
-  margin: 2px 0 0;
-  font-size: 13px;
-  color: var(--tinta-2);
-  text-transform: capitalize;
-}
-
-.publicacion__cuerpo {
-  margin: var(--e3) 0 0;
-  max-inline-size: 70ch;
-  color: var(--tinta);
-  white-space: pre-line;
-  line-height: 1.6;
-}
-
-.publicacion__medios {
-  margin-block-start: var(--e3);
-  display: grid;
-  gap: var(--e2);
-}
-
-.publicacion__medios[data-cantidad='varias'] {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.publicacion__imagen {
-  inline-size: 100%;
-  max-block-size: 26rem;
-  object-fit: cover;
-  border-radius: var(--r-card);
-  border: 1px solid var(--filete-2);
-}
-
-.publicacion__pie {
-  margin-block-start: var(--e3);
-  padding-block-start: var(--e3);
-  border-block-start: 1px solid var(--filete-2);
-  display: flex;
-  gap: var(--e3);
-}
-
-.publicacion__conteo {
-  font-size: 13px;
-  color: var(--tinta-2);
-}
-
-@media (max-width: 40rem) {
-  .publicacion__medios[data-cantidad='varias'] {
-    grid-template-columns: 1fr;
-  }
-}
+/* Cada `<li>` es sólo el ancla de la lista; la tarjeta la dibuja
+   `app-publicacion-post`, que se comparte con la vista de una publicación
+   suelta. */
 
 @media (max-width: 48rem) {
   .perfil__datos {

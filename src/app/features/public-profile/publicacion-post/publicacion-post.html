@@ -1,0 +1,84 @@
+@let p = post();
+
+<article class="publicacion">
+  <div class="publicacion__texto">
+    <header class="publicacion__cabecera">
+      @if (autorAvatar(); as foto) {
+        <img class="publicacion__avatar" [src]="foto" alt="" width="40" height="40" />
+      } @else {
+        <span class="publicacion__avatar publicacion__avatar--iniciales" aria-hidden="true">{{
+          autorIniciales()
+        }}</span>
+      }
+      <div class="publicacion__firma">
+        <p class="publicacion__autor">{{ autorNombre() }}</p>
+        @if (autorHeadline()) {
+          <p class="publicacion__titular">{{ autorHeadline() }}</p>
+        }
+        <p class="publicacion__meta">
+          <a class="publicacion__fecha" [routerLink]="enlacePost()">
+            <time [attr.datetime]="p.publishedAt.toISOString()">
+              {{ p.publishedAt | date: 'd MMM y' }}
+            </time>
+          </a>
+          <span class="publicacion__punto" aria-hidden="true">·</span>
+          <svg
+            class="publicacion__globo"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+          </svg>
+          <span class="solo-lectores">Publicación pública</span>
+        </p>
+      </div>
+    </header>
+
+    <p class="publicacion__cuerpo" [class.publicacion__cuerpo--recortado]="recortado()">@for (
+        trozo of segmentos();
+        track $index
+      ) {@if (trozo.href) {<a
+          [href]="trozo.href"
+          class="publicacion__enlace"
+          target="_blank"
+          rel="nofollow noopener"
+          >{{ trozo.texto }}</a
+        >} @else {{{ trozo.texto }}}}</p>
+    @if (recortable()) {
+      <button type="button" class="publicacion__vermas" (click)="alternar()">
+        {{ recortado() ? 'Ver más' : 'Ver menos' }}
+      </button>
+    }
+  </div>
+
+  @if (p.mediaUrls.length > 0) {
+    <div
+      class="publicacion__medios"
+      [attr.data-cantidad]="p.mediaUrls.length > 1 ? 'varias' : 'una'"
+      [attr.aria-label]="p.mediaUrls.length > 1 ? 'Deslizá para ver las ' + p.mediaUrls.length + ' imágenes' : null"
+    >
+      @for (url of p.mediaUrls; track url) {
+        <img class="publicacion__imagen" [src]="url" alt="" />
+      }
+    </div>
+  }
+
+  @if (p.reactionCount > 0 || p.commentCount > 0) {
+    <div class="publicacion__resumen">
+      @if (p.reactionCount > 0) {
+        <span class="publicacion__reacciones">
+          <span class="publicacion__pulgar" aria-hidden="true">👍</span>
+          {{ p.reactionCount }}
+        </span>
+      }
+      @if (p.commentCount > 0) {
+        <span>{{ p.commentCount }} {{ p.commentCount === 1 ? 'comentario' : 'comentarios' }}</span>
+      }
+    </div>
+  }
+</article>
