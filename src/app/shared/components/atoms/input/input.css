@@ -98,6 +98,26 @@
   height: 18px;
 }
 
+/* Al enfocar, el ícono toma el color de marca junto con el borde.
+
+   Es lo que hace que se lea como parte del control y no como un adorno pegado
+   delante: si el marco se ilumina y el glifo se queda gris, el ícono parece de
+   otra capa. Lo tenía `login.css` en una clase propia —`.login__campo-icono`—,
+   que es la señal de que le tocaba al átomo: cada pantalla que quisiera un
+   ícono en su campo tendría que volver a escribirla, y la que se olvidara
+   tendría íconos muertos sin que nadie lo note. */
+.input-wrapper:focus-within ::ng-deep [slot='icon-start'],
+.input-wrapper:focus-within ::ng-deep [slot='icon-end'] {
+  color: var(--brand-primary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :host ::ng-deep [slot='icon-start'],
+  :host ::ng-deep [slot='icon-end'] {
+    transition: color 0.15s ease;
+  }
+}
+
 .input-action-btn {
   display: inline-flex;
   align-items: center;

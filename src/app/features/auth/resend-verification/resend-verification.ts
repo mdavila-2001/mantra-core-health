@@ -8,6 +8,7 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -45,6 +46,7 @@ const MAX_IDENTIFICADOR = 320;
     AnnounceOnAppear,
     AppButton,
     FormField,
+    NavIcon,
     Input,
     Link,
     ReactiveFormsModule,

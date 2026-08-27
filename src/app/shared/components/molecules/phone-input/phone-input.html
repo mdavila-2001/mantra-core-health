@@ -1,20 +1,74 @@
-<!-- El prefijo va proyectado en la ranura de ícono del átomo: así queda dentro
-     del marco del campo, comparte su foco y su estado de error, y no hay que
-     maquetar una fila de dos cajas que se despegan en el móvil. -->
+<!-- El selector de país va proyectado en la ranura de ícono del átomo: así
+     queda dentro del marco del campo, comparte su foco y su estado de error, y
+     no hay que maquetar una fila de dos cajas que se despegan en el móvil. -->
 <app-input
   type="text"
   inputMode="numeric"
-  autocomplete="tel"
+  autocomplete="tel-national"
   [value]="texto()"
   (valueChange)="alEscribir($event)"
   (blurred)="alSalir()"
-  [placeholder]="placeholder()"
+  [placeholder]="placeholderEfectivo()"
   [hasError]="hasError()"
   [disabled]="isDisabled()"
   [testId]="testId()"
 >
-  <!-- `aria-hidden`: el prefijo es parte del rótulo del campo para quien ve, y
-       repetido por el lector de pantalla en cada foco sería ruido. La pista del
-       campo ya dice que el número es boliviano. -->
-  <span slot="icon-start" class="telefono__prefijo" aria-hidden="true">{{ prefijo }}</span>
+  <div slot="icon-start" class="pais">
+    <!-- `type="button"`: dentro de un formulario, un botón sin tipo envía. Abrir
+         el desplegable de país mandaría el alta a medio llenar. -->
+    <button
+      type="button"
+      class="pais__disparador"
+      [disabled]="isDisabled()"
+      [attr.aria-expanded]="abierto()"
+      [attr.aria-controls]="idLista"
+      [attr.data-testid]="testId() ? testId() + '-pais' : null"
+      aria-haspopup="listbox"
+      [attr.aria-label]="'País del teléfono: ' + pais().nombre + ' ' + pais().prefijo"
+      (click)="alternar()"
+      (keydown)="alTeclearEnDisparador($event)"
+    >
+      <app-pais-bandera [iso]="pais().iso" />
+      <span class="pais__prefijo">{{ pais().prefijo }}</span>
+      <svg class="pais__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+
+    @if (abierto()) {
+      <ul
+        class="pais__lista"
+        role="listbox"
+        [id]="idLista"
+        [attr.aria-activedescendant]="idOpcion(resaltado())"
+        aria-label="Elegí el país"
+        tabindex="-1"
+        #lista
+        (keydown)="alTeclearEnLista($event)"
+      >
+        @for (opcion of paises; track opcion.iso; let i = $index) {
+          <!-- El teclado no falta: en el patrón de listbox el foco NO se mueve a
+               la opción —se queda en la lista y la activa se señala con
+               `aria-activedescendant`—, así que `↓`, `↑`, `Inicio`, `Fin`,
+               `Enter` y `Escape` los maneja la lista. Hacer la opción enfocable
+               rompería justamente el patrón que este componente implementa.
+               Mismo criterio que `reference-combobox`. -->
+          <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+          <li
+            class="pais__opcion"
+            role="option"
+            [id]="idOpcion(i)"
+            [class.pais__opcion--resaltada]="i === resaltado()"
+            [attr.aria-selected]="opcion.iso === pais().iso"
+            (click)="elegir(opcion)"
+            (mouseenter)="resaltado.set(i)"
+          >
+            <app-pais-bandera [iso]="opcion.iso" />
+            <span class="pais__nombre">{{ opcion.nombre }}</span>
+            <span class="pais__codigo">{{ opcion.prefijo }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </div>
 </app-input>
