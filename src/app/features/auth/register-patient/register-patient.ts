@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import { BoOccupationsCatalog } from '../../../core/data-access/terminology/bo-occupations.service';
+import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
@@ -50,17 +51,16 @@ const MIN_DOCUMENTO = 4;
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
 
-/**
- * La forma única en que este formulario compone un teléfono: `+591` y ocho
- * dígitos.
+/*
+ * El teléfono lo valida `telefonoCompleto`, importado de `app-phone-input`.
  *
- * Es **más estrecho** que el `@Matches` del backend —que acepta espacios,
- * paréntesis y guiones— y a propósito: quien escribe ya no elige el formato,
- * lo compone `app-phone-input`, así que lo único que puede fallar es que el
- * número esté incompleto. Validar acá lo que el campo produce evita el caso en
- * que el control deja pasar cuatro dígitos y el error llega de la API.
+ * Acá vivía `/^\+591 [0-9]{8}$/`, escrito a mano. Era correcto mientras el
+ * campo sólo componía Bolivia; desde que se le puede elegir el país, el largo
+ * del número es del país y esta pantalla no tiene por qué saberlo — con el
+ * regex fijo, todo número extranjero quedaba rechazado sin que el mensaje
+ * dijera por qué («Ingresá los ocho dígitos», sobre un número brasileño de
+ * once).
  */
-const TELEFONO_BOLIVIANO = /^\+591 [0-9]{8}$/;
 
 /**
  * Género, con sus dos categorías.
@@ -280,12 +280,12 @@ export class RegisterPatient {
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
     }),
     email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
-    // El control guarda lo que `app-phone-input` compone —`+591` y ocho
-    // dígitos—, así que el validador comprueba justamente eso: ver
-    // `TELEFONO_BOLIVIANO`.
+    // El control guarda lo que `app-phone-input` compone —el prefijo del país
+    // elegido y su número—, así que el validador comprueba justamente eso, y
+    // viene del propio campo: es él quien sabe qué largo tiene cada país.
     phone: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.pattern(TELEFONO_BOLIVIANO)],
+      validators: [telefonoCompleto],
     }),
     // La ocupación es un concepto de `VS_BO_OCCUPATION`, no un texto: ver
     // `campoOcupacion`.
@@ -349,7 +349,7 @@ export class RegisterPatient {
     // cambia de forma según quién se registre.
     phone: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.pattern(TELEFONO_BOLIVIANO)],
+      validators: [telefonoCompleto],
     }),
     birthDate: new FormControl<Date | null>(null),
     licenseIssueDate: new FormControl<Date | null>(null),
@@ -517,14 +517,13 @@ export class RegisterPatient {
           {
             key: 'phone',
             label: 'Teléfono (opcional)',
-            hint: 'Ocho dígitos. El +591 lo pone el campo.',
+            hint: 'Elegí el país si tu número no es de Bolivia.',
             // `tel` lo dibuja `app-phone-input`: ver el motor.
             control: 'tel',
             autocomplete: 'tel',
-            placeholder: '7001 2345',
             testId: 'registro-telefono',
             icono: 'phone',
-            mensajeDeError: 'Ingresá los ocho dígitos de tu teléfono.',
+            mensajeDeError: 'El número está incompleto para el país elegido.',
           },
         ],
       },
@@ -676,13 +675,12 @@ export class RegisterPatient {
           {
             key: 'phone',
             label: 'Teléfono (opcional)',
-            hint: 'Ocho dígitos. El +591 lo pone el campo.',
+            hint: 'Elegí el país si tu número no es de Bolivia.',
             control: 'tel',
             autocomplete: 'tel',
-            placeholder: '7001 2345',
             testId: 'registro-pro-telefono',
             icono: 'phone',
-            mensajeDeError: 'Ingresá los ocho dígitos de tu teléfono.',
+            mensajeDeError: 'El número está incompleto para el país elegido.',
           },
         ],
       },

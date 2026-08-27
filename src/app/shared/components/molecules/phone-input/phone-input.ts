@@ -1,35 +1,76 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
+  effect,
   forwardRef,
+  inject,
   input,
   signal,
+  viewChild,
 } from '@angular/core';
-import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
+import {
+  NG_VALUE_ACCESSOR,
+  type AbstractControl,
+  type ControlValueAccessor,
+  type ValidationErrors,
+} from '@angular/forms';
 
 import { Input } from '../../atoms/input/input';
+import { PaisBandera } from './pais-bandera';
+import {
+  PAISES_TELEFONO,
+  PAIS_POR_DEFECTO,
+  agrupar,
+  ejemploDe,
+  esTelefonoCompleto,
+  nacionalDelNumero,
+  paisDelNumero,
+  type PaisTelefono,
+} from './phone-input.paises';
+
+export { PAISES_TELEFONO, PAIS_POR_DEFECTO } from './phone-input.paises';
+export type { IsoPais, PaisTelefono } from './phone-input.paises';
+
+/** Prefijo internacional de Bolivia, el país por defecto del campo. */
+export const PREFIJO_BOLIVIA = PAIS_POR_DEFECTO.prefijo;
+
+/** Cuántos dígitos tiene un número boliviano. */
+export const DIGITOS_TELEFONO_BOLIVIA = PAIS_POR_DEFECTO.digitos;
+
+/** Ver `idLista`: un id por instancia, para que `aria-controls` apunte bien. */
+let siguienteId = 0;
 
 /**
- * Prefijo internacional de Bolivia, el único que este campo compone.
+ * Valida que el teléfono esté completo para el país que lo compuso.
  *
- * Va como constante y no como opción porque hoy no hay dónde elegir otro: el
- * producto opera en Bolivia y el número que se guarda se usa para llamar o
- * mandar un mensaje desde acá. El día que haya que aceptar un número
- * extranjero, lo que cambia es este componente —un desplegable de país delante
- * del número—, no las pantallas que lo usan.
+ * ```ts
+ * phone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] })
+ * ```
+ *
+ * Se exporta desde acá —y no lo escribe cada pantalla— porque el largo del
+ * número es del país, y el catálogo de países vive en este componente. El alta
+ * de paciente tenía `/^\+591 [0-9]{8}$/` a mano: correcto mientras el campo
+ * sólo componía Bolivia, y un rechazo silencioso de todo número extranjero en
+ * cuanto dejó de hacerlo.
+ *
+ * Es **más estrecho** que el `@Matches` del backend —que acepta espacios,
+ * paréntesis y guiones— y a propósito: quien escribe ya no elige el formato, lo
+ * compone este campo, así que lo único que puede fallar es que el número esté
+ * incompleto. Validar acá lo que el campo produce evita el caso en que el
+ * control deja pasar cuatro dígitos y el error llega de la API.
  */
-export const PREFIJO_BOLIVIA = '+591';
-
-/** Cuántos dígitos tiene un número boliviano, fijo y sin excepciones. */
-export const DIGITOS_TELEFONO_BOLIVIA = 8;
-
-/** Cómo se agrupan esos ocho dígitos al mostrarlos: `7001 2345`. */
-const CORTE_DE_GRUPO = 4;
+export function telefonoCompleto(control: AbstractControl): ValidationErrors | null {
+  const valor = control.value;
+  if (typeof valor !== 'string' || esTelefonoCompleto(valor)) {
+    return null;
+  }
+  return { telefonoIncompleto: true };
+}
 
 /**
- * Campo de teléfono boliviano: el prefijo lo pone el campo, la persona escribe
- * los ocho dígitos.
+ * Campo de teléfono: el país se elige, la persona escribe el número nacional.
  *
  * ```html
  * <app-phone-input formControlName="phone" testId="registro-telefono" />
@@ -50,10 +91,16 @@ const CORTE_DE_GRUPO = 4;
  * - **Teclear en el teclado equivocado.** Sin `inputmode`, el móvil abre el
  *   alfabético para escribir ocho dígitos.
  *
- * Acá el prefijo es parte del campo —se ve, no se escribe y no se puede
- * borrar—, lo que se teclea son dígitos y nada más, y se muestran agrupados
- * `7001 2345` mientras el formulario guarda `+591 70012345`, que es la forma
- * única que valida el `@Matches` del backend.
+ * ## Por qué ahora se elige el país
+ *
+ * La versión anterior fijaba `+591` como constante, con esta nota: «el día que
+ * haya que aceptar un número extranjero, lo que cambia es este componente —un
+ * desplegable de país delante del número—, no las pantallas que lo usan». Ese
+ * día llegó, y la promesa se cumple: **ninguna pantalla cambió**. El campo
+ * sigue exponiendo un `ControlValueAccessor` de string y sigue abriendo en
+ * Bolivia; lo único nuevo es que se puede cambiar.
+ *
+ * El catálogo es corto y cerrado a propósito — ver `phone-input.paises.ts`.
  *
  * ## Lo que se guarda no es lo que se ve
  *
@@ -68,15 +115,18 @@ const CORTE_DE_GRUPO = 4;
  * Porque el foco, el error, el estado deshabilitado y el `aria-describedby` del
  * campo ya están resueltos en `app-input`, y una copia de esa fontanería se
  * desincroniza en el primer arreglo que sólo se hace en una de las dos. Acá
- * sólo vive lo que es del teléfono: el prefijo, el filtro de dígitos y el
+ * sólo vive lo que es del teléfono: el país, el filtro de dígitos y el
  * agrupado.
  */
 @Component({
   selector: 'app-phone-input',
-  imports: [Input],
+  imports: [Input, PaisBandera],
   templateUrl: './phone-input.html',
   styleUrl: './phone-input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:pointerdown)': 'alApuntarFuera($event)',
+  },
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -86,12 +136,26 @@ const CORTE_DE_GRUPO = 4;
   ],
 })
 export class PhoneInput implements ControlValueAccessor {
-  readonly placeholder = input<string>('7001 2345');
+  /**
+   * El marcador. Por defecto es el número de ejemplo del país elegido, así que
+   * al cambiar de país cambia solo: un marcador boliviano en un campo argentino
+   * enseña un largo que ese país no usa.
+   */
+  readonly placeholder = input<string | null>(null);
   readonly hasError = input<boolean>(false);
   readonly disabled = input<boolean>(false);
 
   /** Ver `Input.testId`: el `<input>` real vive dos componentes más adentro. */
   readonly testId = input<string | null>(null);
+
+  protected readonly paises = PAISES_TELEFONO;
+  protected readonly idLista = `paises-${(siguienteId += 1)}`;
+
+  private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly lista = viewChild<ElementRef<HTMLElement>>('lista');
+
+  /** El país elegido. Abre en Bolivia; `writeValue` lo corrige si el valor trae otro. */
+  protected readonly pais = signal<PaisTelefono>(PAIS_POR_DEFECTO);
 
   /** Los dígitos tecleados, sin prefijo y sin separadores. */
   private readonly digitos = signal('');
@@ -99,20 +163,41 @@ export class PhoneInput implements ControlValueAccessor {
   /** Si el formulario deshabilitó el control. Ver `ValueAccessorBridge`. */
   private readonly disabledByForm = signal(false);
 
+  protected readonly abierto = signal(false);
+
+  /** Qué fila está resaltada en el desplegable, para el teclado. */
+  protected readonly resaltado = signal(0);
+
   protected readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
 
-  /** Lo que ve la persona: los dígitos agrupados de a cuatro. */
-  protected readonly texto = computed(() => agrupar(this.digitos()));
+  /** Lo que ve la persona: los dígitos agrupados como agrupa su país. */
+  protected readonly texto = computed(() => agrupar(this.digitos(), this.pais().grupos));
 
-  protected readonly prefijo = PREFIJO_BOLIVIA;
+  protected readonly placeholderEfectivo = computed(
+    () => this.placeholder() ?? ejemploDe(this.pais()),
+  );
 
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
 
+  constructor() {
+    // Al abrir, el foco se va a la lista: sin esto las flechas seguirían
+    // moviendo el cursor dentro del número y el desplegable quedaría abierto
+    // sin forma de recorrerlo con el teclado.
+    effect(() => {
+      if (this.abierto()) {
+        this.lista()?.nativeElement.focus();
+      }
+    });
+  }
+
   // --- ControlValueAccessor ------------------------------------------------
 
   writeValue(value: string | null): void {
-    this.digitos.set(soloDigitos(value ?? ''));
+    const crudo = value ?? '';
+    const pais = paisDelNumero(crudo);
+    this.pais.set(pais);
+    this.digitos.set(nacionalDelNumero(crudo, pais));
   }
 
   registerOnChange(fn: (value: string) => void): void {
@@ -127,42 +212,127 @@ export class PhoneInput implements ControlValueAccessor {
     this.disabledByForm.set(isDisabled);
   }
 
+  // --- Número --------------------------------------------------------------
+
   /**
    * Único punto por donde entra lo que la persona teclea.
    *
-   * Se filtra a dígitos y se corta a ocho **antes** de avisar al formulario:
-   * así el control nunca ve un valor que después habría que limpiar, y el
-   * mensaje de error habla del número y no de los caracteres.
+   * Se filtra a dígitos y se corta al largo del país **antes** de avisar al
+   * formulario: así el control nunca ve un valor que después habría que
+   * limpiar, y el mensaje de error habla del número y no de los caracteres.
+   *
+   * Pasa por `nacionalDelNumero` —el mismo camino que `writeValue`— para que
+   * pegar `+591 70012345` desde una agenda dé exactamente lo mismo que
+   * teclear `70012345`: son el mismo teléfono y tienen que terminar en el
+   * mismo valor guardado.
    */
   protected alEscribir(valor: string | number | null): void {
-    const digitos = soloDigitos(String(valor ?? '')).slice(0, DIGITOS_TELEFONO_BOLIVIA);
-    this.digitos.set(digitos);
-    this.onChange(digitos === '' ? '' : `${PREFIJO_BOLIVIA} ${digitos}`);
+    this.digitos.set(nacionalDelNumero(String(valor ?? ''), this.pais()));
+    this.emitir();
   }
 
   protected alSalir(): void {
     this.onTouched();
   }
-}
 
-/**
- * Quita todo lo que no sea dígito y, si venía, el prefijo del país.
- *
- * El prefijo se saca acá y no en `writeValue` porque llega por dos caminos —el
- * valor que el formulario escribe y lo que alguien pega en el campo— y los dos
- * tienen que dar el mismo resultado. Se contempla `591` con y sin `+` porque es
- * como se copia un número desde una agenda.
- */
-function soloDigitos(valor: string): string {
-  const digitos = valor.replace(/\D/g, '');
-  const sinPais = digitos.startsWith('591') ? digitos.slice(3) : digitos;
-  return sinPais.slice(0, DIGITOS_TELEFONO_BOLIVIA);
-}
-
-/** `70012345` -> `7001 2345`. Ayuda de lectura, no dato. */
-function agrupar(digitos: string): string {
-  if (digitos.length <= CORTE_DE_GRUPO) {
-    return digitos;
+  private emitir(): void {
+    const digitos = this.digitos();
+    this.onChange(digitos === '' ? '' : `${this.pais().prefijo} ${digitos}`);
   }
-  return `${digitos.slice(0, CORTE_DE_GRUPO)} ${digitos.slice(CORTE_DE_GRUPO)}`;
+
+  // --- País ----------------------------------------------------------------
+
+  protected alternar(): void {
+    if (this.isDisabled()) {
+      return;
+    }
+    if (this.abierto()) {
+      this.abierto.set(false);
+      return;
+    }
+    this.resaltado.set(this.paises.findIndex((p) => p.iso === this.pais().iso));
+    this.abierto.set(true);
+  }
+
+  /**
+   * Cambiar de país recorta el número al largo del nuevo.
+   *
+   * Es la decisión menos mala de las dos: guardar once dígitos bajo un prefijo
+   * que admite ocho produce un teléfono que no existe, y el recorte al menos se
+   * ve en el campo en el momento de hacerlo.
+   */
+  protected elegir(pais: PaisTelefono): void {
+    this.pais.set(pais);
+    this.digitos.update((d) => d.slice(0, pais.digitos));
+    this.abierto.set(false);
+    this.emitir();
+    this.onTouched();
+    this.enfocarDisparador();
+  }
+
+  protected idOpcion(indice: number): string {
+    return `${this.idLista}-${indice}`;
+  }
+
+  protected alTeclearEnDisparador(evento: KeyboardEvent): void {
+    if (evento.key === 'ArrowDown' || evento.key === 'ArrowUp') {
+      evento.preventDefault();
+      this.alternar();
+    }
+  }
+
+  protected alTeclearEnLista(evento: KeyboardEvent): void {
+    switch (evento.key) {
+      case 'ArrowDown':
+        evento.preventDefault();
+        this.resaltado.update((i) => (i + 1) % this.paises.length);
+        break;
+      case 'ArrowUp':
+        evento.preventDefault();
+        this.resaltado.update((i) => (i - 1 + this.paises.length) % this.paises.length);
+        break;
+      case 'Home':
+        evento.preventDefault();
+        this.resaltado.set(0);
+        break;
+      case 'End':
+        evento.preventDefault();
+        this.resaltado.set(this.paises.length - 1);
+        break;
+      case 'Enter':
+      case ' ':
+        evento.preventDefault();
+        this.elegir(this.paises[this.resaltado()]);
+        break;
+      case 'Escape':
+      case 'Tab':
+        // Escape no se `preventDefault`ea a ciegas: dentro de un diálogo, el
+        // que cierra es el desplegable y no el diálogo, y eso sí hay que
+        // frenarlo. Tab, en cambio, tiene que seguir moviendo el foco.
+        if (evento.key === 'Escape') {
+          evento.preventDefault();
+        }
+        this.abierto.set(false);
+        this.enfocarDisparador();
+        break;
+      default:
+        break;
+    }
+  }
+
+  /** Un clic fuera cierra: es lo que espera cualquiera que abrió por error. */
+  protected alApuntarFuera(evento: PointerEvent): void {
+    if (!this.abierto()) {
+      return;
+    }
+    const propio = this.host.nativeElement as HTMLElement;
+    if (!propio.contains(evento.target as Node)) {
+      this.abierto.set(false);
+    }
+  }
+
+  private enfocarDisparador(): void {
+    const propio = this.host.nativeElement as HTMLElement;
+    propio.querySelector<HTMLButtonElement>('.pais__disparador')?.focus();
+  }
 }
