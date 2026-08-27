@@ -748,6 +748,19 @@ export function simularApiTotal(opciones: OpcionesApi = {}): void {
     },
   });
 
+  /**
+   * Los formularios propios (M09).
+   *
+   * «Mi historia clínica» los lee al abrirse aunque no los liste: son lo que
+   * incorporan los documentos que ofrece descargar. La lista va vacía porque el
+   * recorrido no captura formularios; lo que hace falta es que la lectura tenga
+   * su respuesta declarada, como el resto de la API simulada.
+   */
+  cy.intercept('**/forms/me/instances*', {
+    statusCode: 200,
+    body: { items: [], limit: 50, truncated: false },
+  });
+
   /* -- Bases legítimas de acceso (M06) -------------------------------------- */
 
   cy.intercept('**/authz/care-relationships**', { statusCode: 200, body: RELACIONES });

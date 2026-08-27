@@ -349,6 +349,13 @@ export class SchedulingClient {
         startAt: cita.startAt,
         durationMinutes: cita.durationMinutes,
         ...(cita.reasonText === undefined ? {} : { reasonText: cita.reasonText }),
+        // Ausente = presencial: no se manda un valor que nadie eligió.
+        //
+        // Ojo al agregar campos acá: este cuerpo se arma nombre por nombre, así
+        // que lo que el contrato declare y esta lista no repita **se descarta
+        // en silencio** — la petición sale sin él y nada falla. Es el mismo
+        // patrón que dejó la modalidad sin escribir del lado de la API.
+        ...(cita.channel === undefined ? {} : { channel: cita.channel }),
       },
     );
   }

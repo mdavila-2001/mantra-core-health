@@ -38,6 +38,29 @@
       />
     </app-form-field>
 
+    <!-- La modalidad sólo existe si hay paciente: un rato ocupado del doctor no
+         se atiende «por videollamada», y ofrecerlo sería un control que no
+         significa nada. Aparece con el paciente, como la pregunta que sigue. -->
+    @if (paciente() !== null) {
+      <fieldset class="tarjeta__modalidad">
+        <legend class="tarjeta__modalidad-titulo">¿Cómo lo atendés?</legend>
+        <div class="tarjeta__modalidad-opciones">
+          @for (opcion of modalidades; track opcion.valor) {
+            <label class="tarjeta__modalidad-opcion">
+              <input
+                type="radio"
+                name="modalidad"
+                [value]="opcion.valor"
+                [checked]="modalidad() === opcion.valor"
+                (change)="modalidad.set(opcion.valor)"
+              />
+              <span>{{ opcion.nombre }}</span>
+            </label>
+          }
+        </div>
+      </fieldset>
+    }
+
     <app-form-field
       label="¿Qué pasa?"
       hint="El motivo de la cita, o el rótulo del rato ocupado (reunión, guardia…)."

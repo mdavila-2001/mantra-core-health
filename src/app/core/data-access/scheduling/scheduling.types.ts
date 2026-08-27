@@ -618,7 +618,34 @@ export interface NewDirectAppointment {
   /** Libre a propósito: la cirugía de 3 h y la consulta de 45 conviven. */
   readonly durationMinutes: number;
   readonly reasonText?: string;
+  /**
+   * Por qué medio ocurre la atención.
+   *
+   * **Omitirlo significa presencial** — es lo que fueron todas las citas hasta
+   * que existió este conjunto, así que no se manda un valor que nadie eligió.
+   * No confundir con el canal de la RESERVA, que dice cómo se pidió el turno.
+   */
+  readonly channel?: ModalidadDeAtencion;
 }
+
+/**
+ * Por qué medio ocurre la atención.
+ *
+ * Los códigos son los del catálogo de la API (`APPT_CH_*`) y por eso van en
+ * castellano: son el contrato, no texto de pantalla. Lo que la persona lee sale
+ * de {@link MODALIDADES}.
+ */
+export type ModalidadDeAtencion = 'PRESENCIAL' | 'TELECONSULTA' | 'DOMICILIO';
+
+/** Las modalidades con su nombre para la pantalla, en orden de uso. */
+export const MODALIDADES: readonly {
+  readonly valor: ModalidadDeAtencion;
+  readonly nombre: string;
+}[] = [
+  { valor: 'PRESENCIAL', nombre: 'En el consultorio' },
+  { valor: 'TELECONSULTA', nombre: 'Por videollamada' },
+  { valor: 'DOMICILIO', nombre: 'A domicilio' },
+];
 
 /** Lo que la cita puntual devuelve. */
 export interface DirectAppointmentCreated {

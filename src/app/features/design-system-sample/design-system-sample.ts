@@ -257,6 +257,10 @@ export class DesignSystemSample {
 
   protected readonly dateOnlyVal = signal<Date | null>(new Date());
   protected readonly dateTimeVal = signal<Date | null>(new Date());
+  protected readonly fechaNacimientoVal = signal<Date | null>(null);
+
+  /** Piso del rango de nacimiento, como en el registro de pacientes. */
+  protected readonly fechaMinimaNacimiento = new Date(1900, 0, 1);
   protected readonly fileList = signal<readonly File[]>([]);
 
   protected readonly selectOptions: SelectOption<string>[] = [
