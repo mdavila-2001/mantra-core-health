@@ -152,23 +152,28 @@
     @if (p.trajectory.length > 0) {
       <section class="app-card perfil__seccion">
         <div class="app-card__cabecera"><h2>Trayectoria</h2></div>
-        <ul class="perfil__trayectoria">
+        <ol class="perfil__linea-tiempo">
           @for (vinculo of p.trajectory; track vinculo.organizationName + vinculo.startDate) {
-            <li class="perfil__vinculo">
-              <p class="perfil__vinculo-cargo">
-                {{ vinculo.roleTitle }}
-                @if (vinculo.departmentText) {
-                  <span class="perfil__vinculo-departamento">· {{ vinculo.departmentText }}</span>
-                }
-              </p>
-              <p class="perfil__vinculo-institucion">{{ vinculo.organizationName }}</p>
-              <p class="perfil__vinculo-periodo">
-                {{ vinculo.startDate | date: 'MMM yyyy' }} –
-                {{ vinculo.endDate ? (vinculo.endDate | date: 'MMM yyyy') : 'actualidad' }}
-              </p>
+            <li class="hito" [class.hito--vigente]="!vinculo.endDate">
+              <span class="hito__riel" aria-hidden="true">
+                <span class="hito__punto"></span>
+              </span>
+              <div class="hito__cuerpo">
+                <p class="hito__periodo">
+                  {{ vinculo.startDate | date: 'MMM yyyy' }} –
+                  {{ vinculo.endDate ? (vinculo.endDate | date: 'MMM yyyy') : 'actualidad' }}
+                </p>
+                <p class="hito__cargo">
+                  {{ vinculo.roleTitle }}
+                  @if (vinculo.departmentText) {
+                    <span class="hito__departamento">· {{ vinculo.departmentText }}</span>
+                  }
+                </p>
+                <p class="hito__institucion">{{ vinculo.organizationName }}</p>
+              </div>
             </li>
           }
-        </ul>
+        </ol>
       </section>
     }
 

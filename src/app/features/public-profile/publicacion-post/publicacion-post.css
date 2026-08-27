@@ -56,6 +56,21 @@
   line-height: 1.25;
 }
 
+.publicacion__retrato-enlace {
+  display: block;
+  flex: none;
+  line-height: 0;
+}
+
+.publicacion__autor-enlace {
+  color: inherit;
+  text-decoration: none;
+}
+
+.publicacion__autor-enlace:hover {
+  text-decoration: underline;
+}
+
 .publicacion__titular {
   margin: 0;
   font-size: 12px;

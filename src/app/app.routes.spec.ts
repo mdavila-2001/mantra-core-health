@@ -397,6 +397,9 @@ describe('rutas públicas del buscador', () => {
   // ─── Las URL que la ficha V65 declara ──────────────────────────────────────
 
   it.each([
+    // La portada: el compilado de lo último de todos los profesionales, que es
+    // adonde `homeGuard` manda a quien entra sin sesión.
+    ['/publicaciones'],
     ['/buscar'],
     ['/buscar/profesionales'],
     ['/buscar/medicamentos'],
