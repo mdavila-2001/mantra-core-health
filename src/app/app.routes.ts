@@ -874,6 +874,21 @@ function rutasDeFichasPublicas(): Routes {
     loadComponent: () =>
       import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
     children: [
+      // La vista de una publicación suelta cuelga sólo de `p/` —quien publica
+      // es un profesional—, y va antes que `:slug` porque tiene más segmentos.
+      ...(prefijo === 'p'
+        ? [
+            {
+              path: ':slug/publicacion/:postId',
+              data: { kind, pantallaReal: true },
+              resolve: { perfil: perfilPublicoResolver },
+              loadComponent: () =>
+                import('./features/public-profile/publicacion-detalle/publicacion-detalle').then(
+                  (m) => m.PublicacionDetalle,
+                ),
+            },
+          ]
+        : []),
       {
         path: ':slug',
         data: { kind, pantallaReal: true },
