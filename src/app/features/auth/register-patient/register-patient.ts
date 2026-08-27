@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import { BoOccupationsCatalog } from '../../../core/data-access/terminology/bo-occupations.service';
+import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import {
   BoMunicipalitiesCatalog,
@@ -112,6 +113,42 @@ const OPCIONES_GENERO: readonly SelectOption<BirthSexCode>[] = [
  * persiste. El día que la columna pase a `*_concept_id`, esto se cambia por una
  * lectura como la de la ocupación.
  */
+/**
+ * Las especialidades que pertenecen a la odontología, por código de catálogo.
+ *
+ * El listado del stakeholder (`LISTA_DE_ESPECIALIDADES_ODONTOLOGICAS.md`) viene
+ * como PROFESIÓN → ESPECIALIDAD: al elegir «Odontólogo» se ofrecen éstas y sólo
+ * éstas, y al elegir una profesión médica, las demás. El vínculo es de
+ * interfaz a propósito — el modelo no tiene tabla profesión→especialidad y no
+ * se inventó una: un conjunto, un dueño, y esta lista decide qué se MUESTRA.
+ *
+ * `CIRUGIA_BUCOMAXILOFACIAL` está acá aunque venga del listado del SNRM: es la
+ * única especialidad de residencia médica cuyo requisito es Odontología (así lo
+ * exige el SNRM y así quedó en la nota del value set).
+ */
+const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
+  'ODONTOLOGIA',
+  'ENDODONCIA',
+  'ORTODONCIA',
+  'PERIODONCIA',
+  'ESTETICA_DENTAL',
+  'REHABILITACION_ORAL',
+  'CIRUGIA_ORAL_MAXILOFACIAL',
+  'CIRUGIA_BUCOMAXILOFACIAL',
+  'ODONTOPEDIATRIA',
+  'IMPLANTOLOGIA_ORAL',
+  'ARMONIZACION_OROFACIAL',
+]);
+
+const TITULO_ODONTOLOGO = 'Odontólogo / Odontóloga';
+const COLEGIO_MEDICO = 'Colegio Médico de Bolivia';
+const COLEGIO_ODONTOLOGOS = 'Colegio de Odontólogos de Bolivia';
+/** Títulos cuya autoridad natural es el Colegio Médico. */
+const TITULOS_MEDICOS: ReadonlySet<string> = new Set([
+  'Médico / Médica',
+  'Médico especialista / Médica especialista',
+]);
+
 const OPCIONES_AUTORIDAD_REGULADORA: readonly SelectOption<string>[] = [
   { value: 'Ministerio de Salud y Deportes', label: 'Ministerio de Salud y Deportes' },
   { value: 'Colegio Médico de Bolivia', label: 'Colegio Médico de Bolivia' },
@@ -354,6 +391,12 @@ export class RegisterPatient {
     birthDate: new FormControl<Date | null>(null),
     licenseIssueDate: new FormControl<Date | null>(null),
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
+    // Las «3 espacios adicionales a la profesión» del registro del cliente
+    // (módulo Médico §1.4.2), literales: tres desplegables, no un multiselect.
+    // La primera es la principal; las otras dos, opcionales.
+    specialtyPrimary: new FormControl('', { nonNullable: true }),
+    specialtySecond: new FormControl('', { nonNullable: true }),
+    specialtyThird: new FormControl('', { nonNullable: true }),
   });
 
   /** El municipio de residencia del profesional. Ver el del paciente. */
@@ -366,6 +409,19 @@ export class RegisterPatient {
 
   /** Ocupación del paciente (VS_BO_OCCUPATION), y su catálogo. */
   private readonly ocupaciones = inject(BoOccupationsCatalog);
+
+  /**
+   * Las especialidades (VS_MEDICAL_SPECIALTY, 63 desde el 27/08), y su catálogo.
+   *
+   * Se guardan CON su código además del par value/label: el código es lo que
+   * decide si una especialidad es odontológica, y por lo tanto en cuál de las
+   * dos listas —la del odontólogo o la del resto— aparece.
+   */
+  private readonly especialidades = inject(MedicalSpecialtiesCatalog);
+  readonly opcionesEspecialidad = signal<
+    readonly { value: string; label: string; code: string }[]
+  >([]);
+  readonly catalogoEspecialidadesCaido = signal(false);
   readonly opcionesOcupacion = signal<readonly SelectOption<string>[]>([]);
   readonly catalogoOcupacionesCaido = signal(false);
 
@@ -666,7 +722,7 @@ export class RegisterPatient {
           {
             key: 'professionalTitle',
             label: 'Título profesional (opcional)',
-            hint: 'Cómo aparecés en tu ficha. Tu especialidad se elige después, desde el perfil.',
+            hint: 'Cómo aparecés en tu ficha. Al elegirlo, la lista de especialidades y el colegio se acomodan solos.',
             control: 'select',
             options: OPCIONES_TITULO_PROFESIONAL,
             placeholder: 'Sin especificar',
@@ -681,6 +737,40 @@ export class RegisterPatient {
             testId: 'registro-pro-telefono',
             icono: 'phone',
             mensajeDeError: 'El número está incompleto para el país elegido.',
+          },
+        ],
+      },
+      // Página propia y no cuatro campos apretados en «Tu práctica»: el motor
+      // existe para no volver a apretar. Y va DESPUÉS de la profesión porque
+      // es la que decide qué especialidades se ofrecen.
+      {
+        titulo: 'Tus especialidades',
+        hint: 'Hasta tres. Son lo que un paciente busca cuando necesita a alguien como vos.',
+        campos: [
+          {
+            key: 'specialtyPrimary',
+            label: 'Especialidad principal (opcional)',
+            hint: 'La que responde «¿de qué sos?».',
+            control: 'select',
+            options: this.opcionesEspecialidadFiltradas(),
+            placeholder: 'Sin especialidad',
+            testId: 'registro-pro-especialidad-1',
+          },
+          {
+            key: 'specialtySecond',
+            label: 'Segunda especialidad (opcional)',
+            control: 'select',
+            options: this.opcionesEspecialidadFiltradas(),
+            placeholder: 'Sin especificar',
+            testId: 'registro-pro-especialidad-2',
+          },
+          {
+            key: 'specialtyThird',
+            label: 'Tercera especialidad (opcional)',
+            control: 'select',
+            options: this.opcionesEspecialidadFiltradas(),
+            placeholder: 'Sin especificar',
+            testId: 'registro-pro-especialidad-3',
           },
         ],
       },
@@ -823,6 +913,8 @@ export class RegisterPatient {
     this.cargarDepartamentos();
     this.cargarMunicipios();
     this.cargarOcupaciones();
+    this.cargarEspecialidades();
+    this.acomodarColegioYEspecialidades();
 
     // El aviso de un envío fallido se va en cuanto se corrige algo.
     //
@@ -833,6 +925,62 @@ export class RegisterPatient {
     // corregir en la misma página donde falló el envío.
     this.limpiarElErrorAlCorregir(this.formPaciente);
     this.limpiarElErrorAlCorregir(this.formProfesional);
+  }
+
+  /**
+   * El registro del cliente, §1.4.4: al elegir la profesión, el colegio cambia
+   * SOLO. Elegir «Odontólogo» pone Colegio de Odontólogos; una profesión médica
+   * pone Colegio Médico — pero únicamente si la autoridad estaba vacía o era el
+   * otro colegio del par: una elección explícita distinta (SEDES, Enfermería…)
+   * no se pisa, porque el automatismo es una ayuda, no una regla.
+   *
+   * Y al cambiar de profesión, las especialidades elegidas que ya no pertenecen
+   * a la lista nueva se limpian: un desplegable con un valor que no está entre
+   * sus opciones muestra un vacío que miente.
+   */
+  private acomodarColegioYEspecialidades(): void {
+    const titulo = this.formProfesional.controls.professionalTitle;
+    const autoridad = this.formProfesional.controls.regulatoryAuthority;
+    titulo.valueChanges.pipe(takeUntilDestroyed()).subscribe((valor) => {
+      const esOdontologo = valor === TITULO_ODONTOLOGO;
+      if (esOdontologo && (autoridad.value === '' || autoridad.value === COLEGIO_MEDICO)) {
+        autoridad.setValue(COLEGIO_ODONTOLOGOS);
+      } else if (
+        TITULOS_MEDICOS.has(valor) &&
+        (autoridad.value === '' || autoridad.value === COLEGIO_ODONTOLOGOS)
+      ) {
+        autoridad.setValue(COLEGIO_MEDICO);
+      }
+
+      const validas = new Set(this.opcionesEspecialidadFiltradas().map((o) => o.value));
+      for (const control of this.controlesDeEspecialidad()) {
+        if (control.value !== '' && !validas.has(control.value)) {
+          control.setValue('');
+        }
+      }
+    });
+  }
+
+  private controlesDeEspecialidad() {
+    const c = this.formProfesional.controls;
+    return [c.specialtyPrimary, c.specialtySecond, c.specialtyThird] as const;
+  }
+
+  /**
+   * Las especialidades que corresponde OFRECER según la profesión elegida:
+   * odontólogo → las odontológicas; cualquier otra → el resto del catálogo.
+   * Sin profesión elegida se ofrece todo, porque no hay con qué filtrar.
+   */
+  protected opcionesEspecialidadFiltradas(): readonly SelectOption<string>[] {
+    const titulo = this.formProfesional.controls.professionalTitle.value;
+    const todas = this.opcionesEspecialidad();
+    const filtradas =
+      titulo === ''
+        ? todas
+        : titulo === TITULO_ODONTOLOGO
+          ? todas.filter((o) => ESPECIALIDADES_ODONTOLOGICAS.has(o.code))
+          : todas.filter((o) => !ESPECIALIDADES_ODONTOLOGICAS.has(o.code));
+    return filtradas.map(({ value, label }) => ({ value, label }));
   }
 
   /** Ver el constructor. Se llama desde ahí: `takeUntilDestroyed` pide contexto de inyección. */
@@ -914,6 +1062,26 @@ export class RegisterPatient {
       error: () => {
         this.opcionesOcupacion.set([]);
         this.catalogoOcupacionesCaido.set(true);
+      },
+    });
+  }
+
+  /** Las especialidades, para elegirlas EN el alta. Un fallo no bloquea: son opcionales. */
+  protected cargarEspecialidades(): void {
+    this.especialidades.listar().subscribe({
+      next: (opciones) => {
+        this.catalogoEspecialidadesCaido.set(false);
+        this.opcionesEspecialidad.set(
+          opciones.map((opcion) => ({
+            value: opcion.conceptId,
+            label: opcion.display,
+            code: opcion.code,
+          })),
+        );
+      },
+      error: () => {
+        this.opcionesEspecialidad.set([]);
+        this.catalogoEspecialidadesCaido.set(true);
       },
     });
   }
@@ -1081,6 +1249,20 @@ export class RegisterPatient {
       ...(fechaInscripcion === null ? {} : { licenseIssueDate: fechaIso(fechaInscripcion) }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
       ...(telefono === '' ? {} : { phone: telefono }),
+      ...(this.especialidadesElegidas().length === 0
+        ? {}
+        : { specialtyConceptIds: this.especialidadesElegidas() }),
     };
+  }
+
+  /**
+   * Las especialidades elegidas, en orden y sin repetidos: la primera del
+   * formulario es la principal, y elegir la misma dos veces declara una.
+   */
+  private especialidadesElegidas(): readonly string[] {
+    const elegidas = this.controlesDeEspecialidad()
+      .map((control) => control.value)
+      .filter((valor) => valor !== '');
+    return [...new Set(elegidas)];
   }
 }

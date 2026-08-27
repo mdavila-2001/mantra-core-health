@@ -1,6 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { map, shareReplay, switchMap, throwError } from 'rxjs';
+import { map, of, shareReplay, switchMap, throwError } from 'rxjs';
 
 import { TerminologyClient } from './terminology.client';
 import type { ValueSetOption } from './terminology.types';
@@ -41,6 +42,7 @@ export const CODIGO_CATALOGO_ESPECIALIDADES = 'VS_MEDICAL_SPECIALTY';
 @Injectable({ providedIn: 'root' })
 export class MedicalSpecialtiesCatalog {
   private readonly terminology = inject(TerminologyClient);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /** La lectura en curso o ya resuelta. `null` mientras nadie la pidió. */
   private cache: Observable<readonly ValueSetOption[]> | null = null;
@@ -51,6 +53,14 @@ export class MedicalSpecialtiesCatalog {
    * @returns Las opciones del catálogo; falla si el catálogo no está sembrado.
    */
   listar(): Observable<readonly ValueSetOption[]> {
+    // Bajo SSR no se pide nada, por lo mismo que los otros catálogos: el
+    // registro es una ruta pública y PRERENDERIZADA, y durante el prerender no
+    // hay API a la que preguntar — sin esto el build falla al prerenderizar
+    // `/auth/register/practitioner`. En el navegador, tras hidratar, se pide de
+    // verdad, y no se cachea el vacío del servidor para que así sea.
+    if (!this.isBrowser) {
+      return of([]);
+    }
     this.cache ??= this.leerCatalogo().pipe(shareReplay({ bufferSize: 1, refCount: false }));
     return this.cache;
   }

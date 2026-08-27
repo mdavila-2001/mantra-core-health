@@ -149,6 +149,13 @@ export class IamClient {
     return this.http.post<RegisteredPractitioner>(this.url('/iam/auth/register-practitioner'), {
       email: registration.email,
       password: registration.password,
+      // Ojo al agregar campos: este cuerpo se arma nombre por nombre, así que
+      // lo que el contrato declare y esta lista no repita se descarta EN
+      // SILENCIO — mismo patrón que dejó la modalidad sin escribir (PR #241).
+      ...(registration.specialtyConceptIds === undefined ||
+      registration.specialtyConceptIds.length === 0
+        ? {}
+        : { specialtyConceptIds: [...registration.specialtyConceptIds] }),
       // El nombre viaja en partes y el backend compone el que se muestra: si el
       // front lo compusiera, la base guardaría una versión y el contrato otra.
       name: registration.name,

@@ -145,6 +145,13 @@ export interface ActivationResult {
 export interface PractitionerRegistration {
   readonly email: string;
   readonly password: string;
+  /**
+   * Las especialidades elegidas EN el alta (hasta 3; la primera queda como
+   * principal). El registro del cliente las pide junto a la profesión — módulo
+   * Médico §1.4.2 — y hasta ahora sólo se podían declarar después, desde el
+   * perfil, adonde la mayoría no volvía.
+   */
+  readonly specialtyConceptIds?: readonly string[];
   /** Nombre de pila. */
   readonly name: string;
   /** Segundo nombre. Opcional: mucha gente no tiene. */
