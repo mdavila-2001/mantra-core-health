@@ -106,6 +106,7 @@ export class PatientNew {
    * enviar, evita tener las dos formas dando vueltas por la pantalla.
    */
   protected readonly fechaDeNacimiento = signal<Date | null>(null);
+  protected readonly fechaMinimaNacimiento = new Date(1900, 0, 1);
 
   /**
    * Los dos campos de catálogo, fuera del `FormGroup` por lo mismo que la fecha:

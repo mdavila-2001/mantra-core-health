@@ -1,51 +1,73 @@
 <div class="date-picker-trigger-wrapper" [class.has-error]="invalid()" [class.is-disabled]="disabled()">
-  <button
-    #trigger
-    type="button"
-    class="date-picker-trigger"
-    [id]="controlId()"
-    [disabled]="disabled()"
-    [attr.aria-invalid]="invalid()"
-    [attr.aria-describedby]="describedBy()"
-    aria-haspopup="dialog"
-    [attr.aria-expanded]="isOpen()"
-    (click)="open()"
-  >
-    <span class="trigger-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
-    </span>
+  @if (allowKeyboard()) {
+    <div class="date-picker-input-group">
+      <input
+        #inputEl
+        type="text"
+        inputmode="numeric"
+        class="date-picker-input"
+        [id]="controlId()"
+        [disabled]="disabled()"
+        [attr.aria-invalid]="invalid()"
+        [attr.aria-describedby]="describedBy()"
+        [placeholder]="placeholder()"
+        [value]="inputText()"
+        (focus)="handleFocus()"
+        (input)="handleTextInput($event)"
+        (blur)="handleTextBlur()"
+        (keydown)="handleInputKeydown($event)"
+        (paste)="handlePaste($event)"
+      />
+      <button
+        #trigger
+        type="button"
+        class="date-picker-trigger date-picker-btn"
+        [disabled]="disabled()"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="isOpen()"
+        aria-label="Abrir calendario"
+        (click)="open()"
+      >
+        <span class="trigger-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </span>
+      </button>
+    </div>
+  } @else {
+    <button
+      #trigger
+      type="button"
+      class="date-picker-trigger"
+      [id]="controlId()"
+      [disabled]="disabled()"
+      [attr.aria-invalid]="invalid()"
+      [attr.aria-describedby]="describedBy()"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="isOpen()"
+      (click)="open()"
+    >
+      <span class="trigger-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </span>
 
-    <span class="trigger-value" [class.is-placeholder]="!displayValue()">
-      {{ displayValue() || placeholder() }}
-    </span>
-  </button>
+      <span class="trigger-value" [class.is-placeholder]="!displayValue()">
+        {{ displayValue() || placeholder() }}
+      </span>
+    </button>
+  }
 </div>
 
 @if (isOpen()) {
-  <!-- `<dialog>` nativo abierto con `showModal()`, y NO un `div` con
-       `position: fixed`.
-
-       El motivo es un bug concreto: un ancestro con `backdrop-filter` —la
-       tarjeta de cristal del registro, la del login— se vuelve el bloque
-       contenedor de sus descendientes `fixed`, así que el velo de 100vw se
-       posicionaba respecto a la tarjeta y el calendario aparecía pegado al
-       borde derecho, medio fuera de la pantalla y sin manera de elegir un día.
-       Lo mismo haría un `transform` o un `filter` en cualquier pantalla futura.
-
-       La capa superior del navegador no tiene ese problema: un diálogo modal se
-       posiciona respecto a la ventana pase lo que pase arriba de él. De yapa
-       trae el velo (`::backdrop`), el atrapado del foco y el cierre con Escape.
-
-       `tabindex=-1` para poder recibir el foco al abrir sin entrar en el orden
-       de tabulación. El velo es el atajo de ratón para cerrar: un clic sobre él
-       llega con `target` en el propio `<dialog>`, que por eso no lleva relleno
-       propio —lo pone el panel de adentro—. -->
-   
   <dialog
     #dialog
     class="date-picker-dialog"
@@ -71,17 +93,57 @@
       </div>
 
       <div class="calendar-nav">
-        <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftMonth(-1)" aria-label="Mes anterior">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-        <span class="current-month-year" aria-live="polite">{{ viewLabel() }}</span>
-        <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftMonth(1)" aria-label="Mes siguiente">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
+        <div class="nav-controls">
+          <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftYear(-1)" aria-label="Año anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="11 17 6 12 11 7" />
+              <polyline points="18 17 13 12 18 7" />
+            </svg>
+          </button>
+          <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftMonth(-1)" aria-label="Mes anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="nav-selectors">
+          <select
+            class="nav-select month-select"
+            aria-label="Seleccionar mes"
+            [value]="viewMonth().getMonth()"
+            (change)="setMonth($event)"
+          >
+            @for (month of monthNames; track $index) {
+              <option [value]="$index">{{ month }}</option>
+            }
+          </select>
+
+          <select
+            class="nav-select year-select"
+            aria-label="Seleccionar año"
+            [value]="viewMonth().getFullYear()"
+            (change)="setYear($event)"
+          >
+            @for (year of years(); track year) {
+              <option [value]="year">{{ year }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="nav-controls">
+          <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftMonth(1)" aria-label="Mes siguiente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+          <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftYear(1)" aria-label="Año siguiente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="13 17 18 12 13 7" />
+              <polyline points="6 17 11 12 6 7" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="weekdays-grid" aria-hidden="true">
@@ -98,8 +160,11 @@
             [class.other-month]="!day.isCurrentMonth"
             [class.is-today]="day.isToday"
             [class.is-selected]="day.isSelected"
+            [class.is-disabled]="day.isDisabled"
+            [disabled]="day.isDisabled"
             [attr.aria-pressed]="day.isSelected"
             [attr.aria-current]="day.isToday ? 'date' : null"
+            [attr.aria-disabled]="day.isDisabled ? 'true' : null"
             [attr.aria-label]="dayLabel(day)"
             (click)="selectDay(day)"
           >
@@ -144,3 +209,4 @@
     </div>
   </dialog>
 }
+

@@ -23,15 +23,15 @@
 }
 
 .avisos__fila {
-  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
+  border: 1px solid var(--border-default);
   border-radius: var(--radio-md, 0.75rem);
-  background: var(--surface-raised, #fff);
+  background: var(--bg-surface);
 }
 
 /* Sin leer se marca con una barra y con peso, no sólo con color: el color solo
    no distingue nada para quien no lo percibe. */
 .avisos__fila.is-sin-leer {
-  border-inline-start: 4px solid var(--accent, #0e6690);
+  border-inline-start: 4px solid var(--brand-primary);
 }
 
 .avisos__item {
@@ -54,7 +54,7 @@ button.avisos__item {
 
 button.avisos__item:hover,
 button.avisos__item:focus-visible {
-  background: var(--surface-hover, rgb(0 0 0 / 4%));
+  background: var(--bg-hover);
 }
 
 .avisos__fila.is-sin-leer .avisos__titulo {
@@ -67,7 +67,7 @@ button.avisos__item:focus-visible {
 }
 
 .avisos__fecha {
-  color: var(--text-tertiary, var(--text-secondary));
+  color: var(--text-muted);
   font-size: 0.8rem;
 }
 
