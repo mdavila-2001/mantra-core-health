@@ -14,6 +14,15 @@
     Acá va todo con los tokens de verdad —`--bg-surface`, `--border-default`,
     `--sp-*`, `--r-*`, `--shadow-lg`—, que es lo que hace que se lea como parte
     del producto y que el tema oscuro funcione solo.
+
+    ## Los alias de `styles.css` no hacen falta en este archivo
+
+    El mismo día, el PR #232 llegó al mismo diagnóstico y lo resolvió por los
+    dos lados: cambió los tokens de acá **y** declaró
+    `--surface-raised`, `--surface-hover`, `--border-subtle`, `--text-tertiary`,
+    `--text-danger`, `--text-link` y `--accent` como alias en `styles.css`. Los
+    alias se quedan —hay más archivos que todavía los piden—, pero este ya no
+    los usa: apunta a los tokens de primera mano, que es donde hay que terminar.
     ========================================================================== */
 
 .campana {

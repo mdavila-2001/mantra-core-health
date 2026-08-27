@@ -464,6 +464,8 @@ export class RegisterPatient {
             label: 'Fecha de nacimiento (opcional)',
             hint: 'Sirve para calcular dosis y valores de referencia.',
             control: 'date',
+            maxDate: 'today',
+            minDate: new Date(1900, 0, 1),
           },
           {
             key: 'sexAtBirth',
@@ -597,6 +599,8 @@ export class RegisterPatient {
             key: 'birthDate',
             label: 'Fecha de nacimiento (opcional)',
             control: 'date',
+            maxDate: 'today',
+            minDate: new Date(1900, 0, 1),
           },
           {
             key: 'municipio',

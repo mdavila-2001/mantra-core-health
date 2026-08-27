@@ -7,3 +7,6 @@
 
 export const DATE_PICKER_MODES = ['date-only', 'date-time'] as const;
 export type DatePickerMode = (typeof DATE_PICKER_MODES)[number];
+
+export const MIN_DEFAULT_YEAR = 1900;
+export const MAX_DEFAULT_YEAR = 2000;

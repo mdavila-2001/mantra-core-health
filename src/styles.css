@@ -232,6 +232,15 @@
     --st-primary-bg: var(--c-petrol-50);  --st-primary-fg: var(--c-petrol-700);  --st-primary-bd: var(--c-petrol-200);
     --st-secondary-bg: var(--c-mint-50);  --st-secondary-fg: var(--c-mint-800);  --st-secondary-bd: var(--c-mint-300);
 
+    /* alias semánticos de compatibilidad para superficies y enlaces */
+    --surface-raised: var(--bg-surface);
+    --surface-hover: var(--bg-hover);
+    --border-subtle: var(--border-default);
+    --text-tertiary: var(--text-muted);
+    --text-danger: var(--st-error-fg);
+    --text-link: var(--brand-primary);
+    --accent: var(--brand-primary);
+
     color-scheme: light dark;
 }
 

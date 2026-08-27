@@ -27,9 +27,9 @@
 }
 
 .prefs__fila {
-  border: 1px solid var(--border-subtle, rgb(0 0 0 / 10%));
+  border: 1px solid var(--border-default);
   border-radius: var(--radio-md, 0.75rem);
-  background: var(--surface-raised, #fff);
+  background: var(--bg-surface);
 }
 
 .prefs__control {
@@ -71,14 +71,16 @@
 
 .prefs__hora input {
   padding: var(--e2);
-  border: 1px solid var(--border-subtle, rgb(0 0 0 / 20%));
+  border: 1px solid var(--border-default);
   border-radius: var(--radio-sm, 0.5rem);
   font: inherit;
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 .prefs__nota {
   margin: var(--e2) 0 0 var(--e3);
-  color: var(--text-tertiary, var(--text-secondary));
+  color: var(--text-muted);
   font-size: 0.8rem;
 }
 

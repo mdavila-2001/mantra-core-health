@@ -105,7 +105,9 @@
                 <app-date-picker
                   [value]="fechaDe(campo)"
                   (valueChange)="escribirFecha(campo, $event)"
-                  [placeholder]="campo.placeholder ?? 'Seleccionar fecha'"
+                  [placeholder]="campo.placeholder ?? 'DD/MM/AAAA'"
+                  [minDate]="campo.minDate ?? null"
+                  [maxDate]="campo.maxDate ?? null"
                   [hasError]="errorDe(campo) !== ''"
                 />
               }
@@ -114,7 +116,9 @@
                   mode="date-time"
                   [value]="fechaDe(campo)"
                   (valueChange)="escribirFecha(campo, $event)"
-                  [placeholder]="campo.placeholder ?? 'Seleccionar fecha y hora'"
+                  [placeholder]="campo.placeholder ?? 'DD/MM/AAAA HH:mm'"
+                  [minDate]="campo.minDate ?? null"
+                  [maxDate]="campo.maxDate ?? null"
                   [hasError]="errorDe(campo) !== ''"
                 />
               }
