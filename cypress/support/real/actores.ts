@@ -46,8 +46,8 @@ export function admin(): { identificador: string; clave: string } {
     identificador:
       typeof correo === 'string' && correo !== ''
         ? correo
-        : 'cpacentropreparacionacademica@gmail.com',
-    clave: typeof clave === 'string' && clave !== '' ? clave : CLAVE,
+        : 'admin@alovida.com',
+    clave: typeof clave === 'string' && clave !== '' ? clave : '12345678',
   };
 }
 

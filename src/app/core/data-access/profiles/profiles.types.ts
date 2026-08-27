@@ -335,7 +335,20 @@ export interface PractitionerAffiliation {
    * no distingue —como el `declarado` que viene—: mejor decir que no se
    * reconoce que mentir sobre él.
    */
-  readonly statusKind: 'pendiente' | 'aprobado' | 'rechazado' | 'desconocido';
+  readonly statusKind:
+    | 'pendiente'
+    | 'declarado'
+    | 'aprobado'
+    | 'rechazado'
+    | 'revocado'
+    | 'desconocido';
+  /**
+   * Por qué la organización rechazó o dio de baja el vínculo.
+   *
+   * Lo escribe quien decide sabiendo que el profesional lo lee. `null` en
+   * cualquier otro estado.
+   */
+  readonly decisionReasonText: string | null;
   readonly createdAt: Date;
 }
 

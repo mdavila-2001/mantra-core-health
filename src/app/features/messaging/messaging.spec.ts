@@ -163,7 +163,10 @@ describe('Messaging', () => {
     consultar('mensajeria-buscar')?.click();
 
     http
-      .expectOne((r) => r.url === '/community/public/search/practitioners')
+      // Sin el prefijo `/community`: lo sirve `CommunityPublicController`,
+      // pero registrado sin prefijo de módulo. Con el prefijo la API responde
+      // 404, que es el defecto que arregló este carril.
+      .expectOne((r) => r.url === '/public/search/practitioners')
       .flush({
         items: [
           {
