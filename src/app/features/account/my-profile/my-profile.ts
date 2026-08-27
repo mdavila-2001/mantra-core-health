@@ -42,12 +42,20 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
  * pasar y no hay forma de pedir el resumen de otra persona. Por eso esta
  * pantalla no tiene parámetro de ruta ni buscador — no le faltan, no van.
  *
- * ## El 403 acá es una puerta, no un muro
+ * ## El perfil no depende de verificarse (F-34)
  *
- * El endpoint exige identidad verificada vigente. Sin ella responde `403` con
- * `IDENTITY_VERIFICATION_REQUIRED`, y `errorToViewState` ya lo traduce a un S5
- * **con acción**: el host de estados pinta el enlace a la pantalla de
- * verificación. Esta pantalla no escribe ni una línea sobre ese caso.
+ * El endpoint responde `200` a todo paciente, verificado o no. Lo único que la
+ * verificación gobierna es el **código de paciente**, que el backend omite
+ * mientras no haya aserción vigente: la fila lo dice en palabras y ofrece el
+ * trámite como invitación. La vista no oculta nada por su cuenta — muestra lo
+ * que el backend le devolvió a esa sesión.
+ *
+ * ## El 403 sigue contemplado, para la API anterior
+ *
+ * Una API previa a F-34 responde `403` con `IDENTITY_VERIFICATION_REQUIRED`, y
+ * `errorToViewState` lo traduce a un S5 **con acción**: el host de estados
+ * pinta el enlace a la pantalla de verificación. Se conserva tal cual para que
+ * el frente y el backend se puedan desplegar en cualquier orden.
  *
  * ## Por qué son tres bloques y no una tarjeta
  *
@@ -153,11 +161,12 @@ export class MyProfile {
   /**
    * Si «Tus datos» está cerrado **sólo** porque falta verificar la identidad.
    *
-   * Es el estado normal de todo paciente recién registrado, no un error: el
-   * backend responde 403 con la puerta a verificarse. La tarjeta lo dice en
-   * neutro y con la salida a mano —una alerta roja «No tenés acceso» sobre la
-   * propia cuenta lee como que algo se rompió (feedback de la analista, barrido
-   * del 18/08/2026)—. Cualquier otro 403 sigue pintándose como lo que es.
+   * Desde F-34 el backend ya no cierra esa puerta, así que esto sólo se
+   * enciende contra una API anterior al cambio. Cuando pasa, la tarjeta lo dice
+   * en neutro y con la salida a mano —una alerta roja «No tenés acceso» sobre
+   * la propia cuenta lee como que algo se rompió (feedback de la analista,
+   * barrido del 18/08/2026)—. Cualquier otro 403 sigue pintándose como lo que
+   * es.
    */
   protected readonly verificacionPendiente = computed(() => {
     const estado = this.resumen();

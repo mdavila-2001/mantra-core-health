@@ -1,5 +1,7 @@
 /** Tipos de la vista para `profiles`. Se mapean desde los DTOs, no son ellos. */
 
+import type { BirthSexCode } from '../iam/iam.types';
+
 /** Alta de un perfil de paciente hecha por personal (no auto-registro). */
 export interface NewPatientProfile {
   readonly patientCode: string;
@@ -336,12 +338,7 @@ export interface PractitionerAffiliation {
    * reconoce que mentir sobre él.
    */
   readonly statusKind:
-    | 'pendiente'
-    | 'declarado'
-    | 'aprobado'
-    | 'rechazado'
-    | 'revocado'
-    | 'desconocido';
+    'pendiente' | 'declarado' | 'aprobado' | 'rechazado' | 'revocado' | 'desconocido';
   /**
    * Por qué la organización rechazó o dio de baja el vínculo.
    *
@@ -460,18 +457,117 @@ export interface PatientMergeEvent {
 /**
  * Resumen que la persona consulta sobre sí misma (V05-03).
  *
- * El backend exige identidad verificada vigente: sin ella responde `403` con
- * `IDENTITY_VERIFICATION_REQUIRED`, que `errorToViewState` ya convierte en un
- * S5 **con salida** hacia la pantalla de verificación.
+ * **El perfil ya no depende de verificarse** (F-34): el backend responde `200`
+ * a todo paciente, verificado o no, y es él quien decide qué campos viajan. Lo
+ * único que la verificación gobierna es `patientCode`.
+ *
+ * Una API anterior a F-34 todavía puede responder `403` con
+ * `IDENTITY_VERIFICATION_REQUIRED`, que `errorToViewState` convierte en un S5
+ * **con salida** hacia la pantalla de verificación. La pantalla tolera los dos
+ * contratos mientras dure el despliegue.
  */
 export interface OwnPatientSummary {
   readonly personId: string;
   readonly patientProfileId: string;
-  readonly patientCode: string;
+  /**
+   * El código con el que la persona se identifica en el centro. **Sólo viaja
+   * con identidad verificada**: su ausencia es la respuesta del servidor, no
+   * un filtro de la vista.
+   */
+  readonly patientCode?: string;
   readonly displayName?: string;
   readonly birthDate?: Date;
   /** Concepto del estado de la persona; se resuelve contra `terminology`. */
   readonly personStatus: string;
+  /** Si hay una aserción de identidad vigente. Lo decide el backend. */
+  readonly identityVerified: boolean;
+}
+
+/**
+ * Los datos que la persona dio al registrarse, tal como ella los ve
+ * (`GET /profiles/patients/me`).
+ *
+ * No es el resumen: {@link OwnPatientSummary} responde «quién soy y en qué
+ * estado estoy» con el nombre ya compuesto por el backend, y con eso no se
+ * puede corregir nada — para editar hacen falta las **cuatro partes** del
+ * nombre por separado, que es como las guarda el modelo y como las pidió el
+ * alta. `displayName` sigue viniendo, pero es derivado: se muestra, no se
+ * escribe.
+ *
+ * Lo que no está acá tampoco se edita desde acá: documento, correo,
+ * contraseña, género administrativo y código de paciente son trámites propios
+ * —o datos que decide el servidor—, no campos de un formulario.
+ */
+export interface OwnPatientProfile {
+  readonly personId: string;
+  readonly patientProfileId: string;
+  readonly name?: string;
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
+  /** Compuesto por el backend a partir de las cuatro partes. Sólo lectura. */
+  readonly displayName?: string;
+  readonly birthDate?: Date;
+  /** Sexo asignado al nacer, por código legible. Ver `BirthSexCode`. */
+  readonly sexAtBirth?: BirthSexCode;
+  /**
+   * Ocupación como **texto libre**, tal como la escribió el alta anterior al
+   * catálogo. Convive con {@link OwnPatientProfile.occupationConceptId} y a lo
+   * sumo uno de los dos trae valor: el backend deja el texto en `null` en
+   * cuanto se asigna un concepto.
+   */
+  readonly occupationFreeText?: string;
+  /**
+   * Ocupación como concepto de `VS_BO_OCCUPATION`, que es lo que declara el
+   * alta desde que el campo pasó a ser un desplegable. Un uuid, nunca una
+   * etiqueta: el texto que se muestra sale del catálogo.
+   */
+  readonly occupationConceptId?: string;
+  readonly phone?: string;
+  /**
+   * Municipio de residencia. Viaja **solo**, sin el departamento: el backend lo
+   * deriva del código del INE, igual que en el alta.
+   */
+  readonly residenceMunicipalityConceptId?: string;
+  readonly identityVerified: boolean;
+  /** Sólo con identidad verificada, igual que en el resumen. */
+  readonly patientCode?: string;
+}
+
+/**
+ * Lo que se puede corregir de {@link OwnPatientProfile}
+ * (`PATCH /profiles/patients/me`).
+ *
+ * Es un subconjunto **cerrado**: el backend valida con `forbidNonWhitelisted`,
+ * así que una clave de más —`displayName`, `patientCode`, `identityVerified`—
+ * no es un campo ignorado, es un `400`. Por eso el tipo se declara aparte y no
+ * como `Partial<OwnPatientProfile>`.
+ *
+ * Un campo presente con `''` **borra** el dato: el segundo nombre y el apellido
+ * materno se vacían cuando la persona descubre que no lleva ninguno. Ausente y
+ * vacío no son lo mismo, y quien arme los cambios tiene que respetar esa
+ * diferencia.
+ */
+export interface OwnPatientProfileChanges {
+  readonly name?: string;
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
+  /** Se serializa a `YYYY-MM-DD` en la frontera; acá es una fecha de verdad. */
+  readonly birthDate?: Date;
+  readonly sexAtBirth?: BirthSexCode;
+  readonly occupationFreeText?: string;
+  /**
+   * Ocupación por concepto de `VS_BO_OCCUPATION`.
+   *
+   * Un uuid la asigna y **el catálogo gana**: el backend deja
+   * `occupationFreeText` en `null`, así que no hay forma de quedarse con las
+   * dos. `''` la vacía, como en cualquier otro campo de este contrato. Un uuid
+   * que no exista en el catálogo vuelve `422`.
+   */
+  readonly occupationConceptId?: string;
+  readonly phone?: string;
+  readonly residenceMunicipalityConceptId?: string;
 }
 
 /* ============================================================================

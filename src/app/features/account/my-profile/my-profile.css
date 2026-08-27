@@ -131,6 +131,13 @@
   color: var(--text-muted);
 }
 
+/* La salida a corregir los datos propios. Clase propia y no `mi-perfil__nota`
+   porque no es una nota al pie: es la acción de la tarjeta, y se lee al tamaño
+   del cuerpo. */
+.mi-perfil__accion {
+  margin-block: var(--sp-4) 0;
+}
+
 /* §4.H del plan de UX · los enlaces a lo que salió del menú del médico. En
    fila y con separación clara: son tres destinos hermanos, no una lista. */
 .mi-perfil__enlaces {

@@ -285,9 +285,202 @@ describe('ProfilesClient', () => {
       displayName: null,
       birthDate: null,
       personStatus: 'c-activo',
+      identityVerified: true,
     });
 
     expect(resumen?.birthDate).toBeUndefined();
+  });
+
+  /* ---- F-34: el resumen llega verificado o no, y el código es lo único que
+     depende de eso ---------------------------------------------------------- */
+
+  it('sin identidad verificada el resumen llega igual, y sin código de paciente', () => {
+    let resumen: { identityVerified: boolean; patientCode?: string } | undefined;
+    client.getOwnSummary().subscribe((r) => (resumen = r));
+
+    // Lo que responde el backend desde F-34: la clave `patientCode` no viene.
+    http.expectOne('/profiles/patients/me/summary').flush({
+      personId: 'p-1',
+      patientProfileId: 'pp-1',
+      displayName: 'Ana Salas',
+      birthDate: null,
+      personStatus: 'c-activo',
+      identityVerified: false,
+    });
+
+    expect(resumen?.identityVerified).toBe(false);
+    expect(resumen?.patientCode).toBeUndefined();
+  });
+
+  /**
+   * La API anterior a F-34 sólo respondía `200` a quien ya estaba verificado, y
+   * no emite la marca. Tomarla como `false` mostraría «Pendiente de
+   * verificación» al lado del código que esa misma respuesta trae.
+   */
+  it('una respuesta sin la marca se resuelve por la presencia del código', () => {
+    let resumen: { identityVerified: boolean } | undefined;
+    client.getOwnSummary().subscribe((r) => (resumen = r));
+
+    http.expectOne('/profiles/patients/me/summary').flush({
+      personId: 'p-1',
+      patientProfileId: 'pp-1',
+      patientCode: 'PAC-1',
+      displayName: 'Ana Salas',
+      birthDate: null,
+      personStatus: 'c-activo',
+    });
+
+    expect(resumen?.identityVerified).toBe(true);
+  });
+
+  /* ---- los datos propios del paciente: leerlos y corregirlos --------------
+     Es un contrato distinto del resumen: trae las CUATRO partes del nombre,
+     que es lo único con lo que se puede corregir un apellido sin adivinar
+     dónde cortar el compuesto. -------------------------------------------- */
+
+  const DATOS_WIRE = {
+    personId: 'p-1',
+    patientProfileId: 'pp-1',
+    name: 'Ana',
+    middleName: 'Lucía',
+    lastName: 'Quispe',
+    motherLastName: 'Mamani',
+    displayName: 'Ana Lucía Quispe Mamani',
+    birthDate: '1985-03-14',
+    sexAtBirth: 'FEMALE',
+    occupationFreeText: 'Docente',
+    phone: '+591 70055555',
+    residenceMunicipalityConceptId: 'mun-1',
+    identityVerified: false,
+  };
+
+  it('getOwnPatientProfile no manda ningún identificador: el sujeto sale de la sesión', () => {
+    client.getOwnPatientProfile().subscribe();
+
+    const req = http.expectOne('/profiles/patients/me');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys()).toEqual([]);
+
+    req.flush(DATOS_WIRE);
+  });
+
+  /**
+   * La fecha es `format: 'date'`: se ancla a medianoche **local**. Con
+   * `new Date()` a secas retrocedería un día en cualquier huso al oeste de
+   * Greenwich, y la persona vería mal justo el dato que vino a corregir.
+   */
+  it('getOwnPatientProfile ancla la fecha de nacimiento al día local', () => {
+    let perfil: { birthDate?: Date } | undefined;
+    client.getOwnPatientProfile().subscribe((p) => (perfil = p));
+
+    http.expectOne('/profiles/patients/me').flush(DATOS_WIRE);
+
+    expect(perfil?.birthDate?.getFullYear()).toBe(1985);
+    expect(perfil?.birthDate?.getMonth()).toBe(2);
+    expect(perfil?.birthDate?.getDate()).toBe(14);
+  });
+
+  /**
+   * El contrato dice que los opcionales llegan **ausentes**. Se traduce igual
+   * con `sinNulos` —como el resumen— porque una API que mande `null` no puede
+   * hacer que `'phone' in perfil` diga lo contrario que el tipo.
+   */
+  it('getOwnPatientProfile deja fuera los opcionales ausentes y los nulos', () => {
+    let perfil: Record<string, unknown> | undefined;
+    client
+      .getOwnPatientProfile()
+      .subscribe((p) => (perfil = p as unknown as Record<string, unknown>));
+
+    http.expectOne('/profiles/patients/me').flush({
+      personId: 'p-1',
+      patientProfileId: 'pp-1',
+      name: 'Ana',
+      lastName: 'Quispe',
+      middleName: null,
+      birthDate: null,
+      identityVerified: false,
+    });
+
+    expect(perfil?.['birthDate']).toBeUndefined();
+    expect('middleName' in (perfil ?? {})).toBe(false);
+    expect('phone' in (perfil ?? {})).toBe(false);
+  });
+
+  /**
+   * La ocupación pasó a ser un concepto de `VS_BO_OCCUPATION`, y llega **junto**
+   * al texto libre de las altas anteriores: a lo sumo uno de los dos trae valor,
+   * así que los dos tienen que sobrevivir al mapeo sin pisarse.
+   */
+  it('getOwnPatientProfile trae la ocupación como concepto del catálogo', () => {
+    let perfil: { occupationConceptId?: string; occupationFreeText?: string } | undefined;
+    client.getOwnPatientProfile().subscribe((p) => (perfil = p));
+
+    http.expectOne('/profiles/patients/me').flush({
+      ...DATOS_WIRE,
+      occupationFreeText: null,
+      occupationConceptId: 'oc-docente',
+    });
+
+    expect(perfil?.occupationConceptId).toBe('oc-docente');
+    expect('occupationFreeText' in (perfil ?? {})).toBe(false);
+  });
+
+  it('updateOwnPatientProfile manda sólo lo que se le pasa, y la fecha como YYYY-MM-DD', () => {
+    client
+      .updateOwnPatientProfile({ name: 'Ana María', birthDate: new Date(1990, 10, 2) })
+      .subscribe();
+
+    const req = http.expectOne('/profiles/patients/me');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ name: 'Ana María', birthDate: '1990-11-02' });
+
+    req.flush(DATOS_WIRE);
+  });
+
+  /**
+   * `''` borra el dato y `undefined` lo deja como estaba: son cosas distintas
+   * en el contrato del backend, así que la clave sin valor **no se manda** —
+   * `forbidNonWhitelisted` la tomaría como una clave declarada.
+   */
+  it('updateOwnPatientProfile manda el vacío que borra, y no las claves sin valor', () => {
+    client
+      .updateOwnPatientProfile({ middleName: '', motherLastName: '', phone: undefined })
+      .subscribe();
+
+    const req = http.expectOne('/profiles/patients/me');
+    expect(req.request.body).toEqual({ middleName: '', motherLastName: '' });
+
+    req.flush(DATOS_WIRE);
+  });
+
+  /**
+   * El concepto viaja **tal cual**, sin traducción y sin etiqueta: el uuid es el
+   * dato. Y `''` lo vacía, igual que en cualquier otro campo de este contrato —
+   * si se degradara a `undefined`, quien quita su ocupación no la quitaría.
+   */
+  it('updateOwnPatientProfile serializa la ocupación tal cual, y el vacío que la borra', () => {
+    client.updateOwnPatientProfile({ occupationConceptId: 'oc-docente' }).subscribe();
+    const asigna = http.expectOne('/profiles/patients/me');
+    expect(asigna.request.body).toEqual({ occupationConceptId: 'oc-docente' });
+    asigna.flush(DATOS_WIRE);
+
+    client.updateOwnPatientProfile({ occupationConceptId: '' }).subscribe();
+    const vacia = http.expectOne('/profiles/patients/me');
+    expect(vacia.request.body).toEqual({ occupationConceptId: '' });
+    vacia.flush(DATOS_WIRE);
+  });
+
+  it('updateOwnPatientProfile devuelve el perfil releído, ya traducido', () => {
+    let perfil: { name?: string; birthDate?: Date } | undefined;
+    client.updateOwnPatientProfile({ name: 'Ana María' }).subscribe((p) => (perfil = p));
+
+    http
+      .expectOne('/profiles/patients/me')
+      .flush({ ...DATOS_WIRE, name: 'Ana María', birthDate: '1990-11-02' });
+
+    expect(perfil?.name).toBe('Ana María');
+    expect(perfil?.birthDate).toBeInstanceOf(Date);
+    expect(perfil?.birthDate?.getDate()).toBe(2);
   });
 
   /* ---- el perfil profesional propio --------------------------------------- */
@@ -492,6 +685,7 @@ describe('ProfilesClient', () => {
       patientProfileId: 'pp-1',
       patientCode: 'PAC-1',
       personStatus: 'concepto-activo',
+      identityVerified: true,
     });
   });
 

@@ -161,17 +161,29 @@ describe('Recorrido · armazón', () => {
     capturar(pantalla, 'sin sesión, /panel redirige al login');
   });
 
-  it('identidad sin verificar bloquea el perfil', () => {
+  it('identidad sin verificar no tapa el perfil', () => {
     simularApiTotal({
       claims: { ...CLAIMS_ADMIN, tenants: ['t-1'] },
       identidadSinVerificar: true,
     });
     iniciarSesionEnRecorrido();
 
+    // La carpeta conserva su nombre: el informe del recorrido la referencia por
+    // ahí, y lo que cambió es lo que la pantalla muestra, no de qué habla.
     const pantalla = { carpeta: '20-identidad-requerida', titulo: 'Identidad sin verificar' };
 
     cy.visit('/my-account');
     esperarEstable();
+
+    // F-34: sus datos están y no hay muro. Mientras el producto no ofrezca la
+    // verificación tampoco se nombra el trámite —ni la fila del código ni la
+    // invitación—: anunciar que falta algo que no se puede hacer deja a la
+    // persona buscando una puerta que no está.
+    cy.contains('dd', 'Ana Salas').should('be.visible');
+    cy.contains('Pendiente de verificación').should('not.exist');
+    cy.contains('a', 'Verificá tu identidad para ver tu código de paciente').should('not.exist');
+    cy.contains('cuando tu identidad esté verificada').should('not.exist');
+
     capturar(pantalla, 'mi perfil con identidad sin verificar');
   });
 
