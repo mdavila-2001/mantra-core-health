@@ -111,7 +111,7 @@
           }
           @case ('years') {
             <div class="nav-controls">
-              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftDecade(-1)" (clicked)="shiftDecade(-1)" aria-label="Década anterior">
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYearPage(-1)" (clicked)="shiftYearPage(-1)" aria-label="30 años anteriores">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="11 17 6 12 11 7" />
                   <polyline points="18 17 13 12 18 7" />
@@ -155,7 +155,7 @@
           }
           @case ('years') {
             <div class="nav-controls">
-              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftDecade(1)" (clicked)="shiftDecade(1)" aria-label="Década siguiente">
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYearPage(1)" (clicked)="shiftYearPage(1)" aria-label="30 años siguientes">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="13 17 18 12 13 7" />
                   <polyline points="6 17 11 12 6 7" />
@@ -170,12 +170,11 @@
 
       @switch (panel()) {
         @case ('years') {
-          <div class="calendar-grid calendar-grid-wide">
+          <div class="calendar-grid calendar-grid-years">
             @for (cell of yearCells(); track $index) {
               <button
                 type="button"
                 class="calendar-day-btn calendar-unit-btn"
-                [class.other-decade]="cell.isOutsideDecade"
                 [class.is-selected]="cell.isSelected"
                 [class.is-disabled]="cell.isDisabled"
                 [disabled]="cell.isDisabled"
@@ -191,7 +190,7 @@
           </div>
         }
         @case ('months') {
-          <div class="calendar-grid calendar-grid-wide">
+          <div class="calendar-grid calendar-grid-months">
             @for (cell of monthCells(); track $index) {
               <button
                 type="button"

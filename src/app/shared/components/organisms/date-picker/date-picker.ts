@@ -29,10 +29,9 @@ export interface CalendarDay {
   readonly isDisabled: boolean;
 }
 
-/** Celda de la grilla de años: los diez de la década más los dos vecinos. */
+/** Celda de la grilla de años: uno de los treinta que muestra la página. */
 export interface YearCell {
   readonly year: number;
-  readonly isOutsideDecade: boolean;
   readonly isSelected: boolean;
   readonly isDisabled: boolean;
 }
@@ -45,7 +44,7 @@ export interface MonthCell {
   readonly isDisabled: boolean;
 }
 
-/** Nivel visible del diálogo: días del mes, meses del año o años de la década. */
+/** Nivel visible del diálogo: días del mes, meses del año o años de la página. */
 type PickerPanel = 'days' | 'months' | 'years';
 
 /** Locale del producto: Bolivia. Un solo lugar, no repetido por llamada. */
@@ -59,11 +58,17 @@ const HOURS_PER_DAY = 24;
 
 const YEARS_PER_DECADE = 10;
 
-/** La década llena la grilla con sus diez años más el anterior y el siguiente. */
-const DECADE_CELLS = YEARS_PER_DECADE + 2;
+/** La página de años abarca tres décadas: la del año en vista y las dos previas. */
+const DECADES_PER_YEAR_PAGE = 3;
 
-/** Las grillas de años y meses comparten forma: cuatro columnas por tres filas. */
-const PICKER_GRID_COLUMNS = 4;
+/** Treinta años por página, en cinco columnas por seis filas. */
+const YEARS_PER_PAGE = YEARS_PER_DECADE * DECADES_PER_YEAR_PAGE;
+
+/** Cinco columnas de años: las seis filas igualan el alto de la grilla de días. */
+const YEAR_GRID_COLUMNS = 5;
+
+/** Los doce meses entran en cuatro columnas por tres filas. */
+const MONTH_GRID_COLUMNS = 4;
 
 /** Mediodía: evita que un cambio de huso corra la fecha al día anterior. */
 const SAFE_HOUR = 12;
@@ -150,6 +155,15 @@ function startOfDecade(year: number): number {
   return Math.floor(year / YEARS_PER_DECADE) * YEARS_PER_DECADE;
 }
 
+/**
+ * Primer año de la página que contiene a `year` en su última década: 1985 →
+ * 1960, 2000 → 1980. Mirar hacia atrás es lo que acerca los años de nacimiento,
+ * que es lo que se busca en un calendario clínico.
+ */
+function startOfYearPage(year: number): number {
+  return startOfDecade(year) - (DECADES_PER_YEAR_PAGE - 1) * YEARS_PER_DECADE;
+}
+
 /** Medianoche local: compara fechas por día, sin que la hora corra el límite. */
 function dayTime(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
@@ -214,8 +228,8 @@ export class DatePicker {
   /** Nivel visible del diálogo. El encabezado sube y baja entre los tres. */
   protected readonly panel = signal<PickerPanel>('days');
 
-  /** Primer año de la década que muestra la grilla de años. */
-  protected readonly decadeStart = signal<number>(startOfDecade(MAX_DEFAULT_YEAR));
+  /** Primer año de los treinta que muestra la grilla de años. */
+  protected readonly yearPageStart = signal<number>(startOfYearPage(MAX_DEFAULT_YEAR));
 
   /** Roving tabindex: la única celda tabulable de la grilla vigente. */
   protected readonly activeCell = signal<number>(0);
@@ -270,18 +284,17 @@ export class DatePicker {
   });
 
   /**
-   * Los diez años de la década en vista más el anterior y el siguiente, que se
-   * muestran atenuados: doce celdas para una grilla de cuatro por tres.
+   * Los treinta años consecutivos de la página en vista: cinco columnas por
+   * seis filas, todos elegibles de un toque y sin vecinos atenuados.
    */
   protected readonly yearCells = computed<YearCell[]>(() => {
-    const start = this.decadeStart();
+    const start = this.yearPageStart();
     const viewYear = this.viewMonth().getFullYear();
 
-    return Array.from({ length: DECADE_CELLS }, (_, index) => {
-      const year = start - 1 + index;
+    return Array.from({ length: YEARS_PER_PAGE }, (_, index) => {
+      const year = start + index;
       return {
         year,
-        isOutsideDecade: year < start || year >= start + YEARS_PER_DECADE,
         isSelected: year === viewYear,
         isDisabled: this.isYearOutOfRange(year),
       };
@@ -327,8 +340,8 @@ export class DatePicker {
 
     switch (this.panel()) {
       case 'years': {
-        const start = this.decadeStart();
-        return `Años ${start} a ${start + YEARS_PER_DECADE - 1}`;
+        const start = this.yearPageStart();
+        return `Años ${start} a ${start + YEARS_PER_PAGE - 1}`;
       }
       case 'months':
         return `Meses de ${view.getFullYear()}`;
@@ -801,20 +814,21 @@ export class DatePicker {
     return !this.isMonthOutOfRange(view.getFullYear() + offset, view.getMonth());
   }
 
-  /** Ídem con la década vecina de la grilla de años. */
-  protected canShiftDecade(offset: number): boolean {
-    const start = this.decadeStart() + offset * YEARS_PER_DECADE;
+  /** Ídem con la página vecina de treinta años de la grilla. */
+  protected canShiftYearPage(offset: number): boolean {
+    const start = this.yearPageStart() + offset * YEARS_PER_PAGE;
     return !this.hasNoDayInRange(
       new Date(start, 0, 1),
-      new Date(start + YEARS_PER_DECADE - 1, MONTHS_PER_YEAR, 0),
+      new Date(start + YEARS_PER_PAGE - 1, MONTHS_PER_YEAR, 0),
     );
   }
 
-  protected shiftDecade(offset: number): void {
-    if (!this.canShiftDecade(offset)) {
+  /** El foco se queda en la misma posición de la grilla: el año equivalente. */
+  protected shiftYearPage(offset: number): void {
+    if (!this.canShiftYearPage(offset)) {
       return;
     }
-    this.decadeStart.update((start) => start + offset * YEARS_PER_DECADE);
+    this.yearPageStart.update((start) => start + offset * YEARS_PER_PAGE);
     this.activeCell.set(usableCell(this.yearCells(), this.activeCell()));
   }
 
@@ -853,10 +867,10 @@ export class DatePicker {
 
   private showYears(): void {
     const viewYear = this.viewMonth().getFullYear();
-    const start = startOfDecade(viewYear);
-    this.decadeStart.set(start);
+    const start = startOfYearPage(viewYear);
+    this.yearPageStart.set(start);
     this.panel.set('years');
-    this.activeCell.set(usableCell(this.yearCells(), viewYear - start + 1));
+    this.activeCell.set(usableCell(this.yearCells(), viewYear - start));
     this.focusAfterRender(() => this.focusActiveCell());
   }
 
@@ -878,7 +892,7 @@ export class DatePicker {
   /**
    * Teclado de las grillas de años y meses: las flechas mueven el foco entre
    * celdas utilizables, Inicio y Fin van a los bordes, Re Pág y Av Pág cambian
-   * de década, y Enter o Espacio eligen la celda enfocada.
+   * de página de años, y Enter o Espacio eligen la celda enfocada.
    */
   protected handleGridKeydown(event: KeyboardEvent, index: number): void {
     if (event.key === 'PageUp' || event.key === 'PageDown') {
@@ -886,7 +900,7 @@ export class DatePicker {
         return;
       }
       event.preventDefault();
-      this.shiftDecade(event.key === 'PageUp' ? -1 : 1);
+      this.shiftYearPage(event.key === 'PageUp' ? -1 : 1);
       this.focusAfterRender(() => this.focusActiveCell());
       return;
     }
@@ -919,20 +933,27 @@ export class DatePicker {
     return this.panel() === 'years' ? this.yearCells() : this.monthCells();
   }
 
+  /** Una fila de la grilla vigente: los años y los meses no tienen el mismo ancho. */
+  private gridColumns(): number {
+    return this.panel() === 'years' ? YEAR_GRID_COLUMNS : MONTH_GRID_COLUMNS;
+  }
+
   private nextCellIndex(
     cells: readonly { readonly isDisabled: boolean }[],
     from: number,
     key: string,
   ): number | null {
+    const columns = this.gridColumns();
+
     switch (key) {
       case 'ArrowRight':
         return this.stepCell(cells, from, 1);
       case 'ArrowLeft':
         return this.stepCell(cells, from, -1);
       case 'ArrowDown':
-        return this.stepCell(cells, from, PICKER_GRID_COLUMNS);
+        return this.stepCell(cells, from, columns);
       case 'ArrowUp':
-        return this.stepCell(cells, from, -PICKER_GRID_COLUMNS);
+        return this.stepCell(cells, from, -columns);
       case 'Home':
         return usableCell(cells, 0);
       case 'End':

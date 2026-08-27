@@ -26,6 +26,18 @@ describe('DatePicker', () => {
   function celda(texto: string): HTMLButtonElement {
     return celdas().find((cell) => cell.textContent?.trim() === texto)!;
   }
+  function grillaDeAnios(): HTMLElement | null {
+    return fixture.nativeElement.querySelector('.calendar-grid-years');
+  }
+  function grillaDeMeses(): HTMLElement | null {
+    return fixture.nativeElement.querySelector('.calendar-grid-months');
+  }
+  function enfocada(): string {
+    return document.activeElement?.textContent?.trim() ?? '';
+  }
+  function tabulables(): HTMLButtonElement[] {
+    return celdas().filter((cell) => cell.getAttribute('tabindex') === '0');
+  }
   function flecha(etiqueta: string): HTMLButtonElement {
     return fixture.nativeElement.querySelector(`[aria-label="${etiqueta}"]`);
   }
@@ -203,18 +215,19 @@ describe('DatePicker', () => {
   });
 
   describe('navegación de años y meses', () => {
-    it('la grilla de años arranca en la década de 2000 cuando no hay fecha elegida', async () => {
+    it('la grilla de años abre en 1980-2009 cuando no hay fecha elegida', async () => {
       fixture.componentRef.setInput('value', null);
       await fixture.whenStable();
       await abrirAnios();
 
-      const esperados = Array.from({ length: 12 }, (_, index) => String(1999 + index));
-      expect(celdas().map((cell) => cell.textContent?.trim())).toEqual(esperados);
-      expect(anuncio()).toBe('Años 2000 a 2009');
-      // 1999 y 2010 son los vecinos de la década, atenuados.
-      expect(celdas()[0].classList.contains('other-decade')).toBe(true);
-      expect(celdas()[11].classList.contains('other-decade')).toBe(true);
-      expect(celda('2005').classList.contains('other-decade')).toBe(false);
+      const textos = celdas().map((cell) => cell.textContent?.trim());
+      expect(textos.length).toBe(30);
+      expect(textos[0]).toBe('1980');
+      expect(textos[29]).toBe('2009');
+      expect(textos).toEqual(Array.from({ length: 30 }, (_, index) => String(1980 + index)));
+      expect(anuncio()).toBe('Años 1980 a 2009');
+      // Los treinta son de la página: ninguno se muestra atenuado.
+      expect(celdas().filter((cell) => cell.classList.contains('other-decade')).length).toBe(0);
     });
 
     it('elegir un año abre la grilla de meses y elegir el mes vuelve a los días', async () => {
@@ -229,14 +242,15 @@ describe('DatePicker', () => {
       celdas()[2].click(); // marzo
       await fixture.whenStable();
 
-      expect(fixture.nativeElement.querySelector('.calendar-grid-wide')).toBeNull();
+      expect(grillaDeMeses()).toBeNull();
+      expect(grillaDeAnios()).toBeNull();
       const diasDeMarzo = dias().filter((day) => !day.classList.contains('other-month'));
       expect(diasDeMarzo.length).toBe(31);
       expect(diasDeMarzo[0].getAttribute('aria-label')).toContain('2024');
       expect(encabezado().textContent).toContain('2024');
     });
 
-    it('elegir 1985 en 3 gestos: año, mes y día', async () => {
+    it('carga 1985 en 4 toques: encabezado, año, mes y día', async () => {
       fixture.componentRef.setInput('value', null);
       await fixture.whenStable();
       await abrir();
@@ -246,28 +260,26 @@ describe('DatePicker', () => {
       toques++;
       await fixture.whenStable();
 
-      // De la década de 2000 a la de 1980.
-      for (let salto = 0; salto < 2; salto++) {
-        flecha('Década anterior').click();
-        toques++;
-        await fixture.whenStable();
-      }
-      expect(anuncio()).toBe('Años 1980 a 1989');
+      // 1985 entra en la página que abre sola: no hay que paginar.
+      expect(anuncio()).toBe('Años 1980 a 2009');
+      expect(celda('1985')).toBeDefined();
 
-      celda('1985').click(); // gesto 1: el año
+      celda('1985').click(); // toque 2: el año
       toques++;
       await fixture.whenStable();
 
-      celdas()[2].click(); // gesto 2: marzo
+      celdas()[2].click(); // toque 3: marzo
       toques++;
       await fixture.whenStable();
 
       const quince = dias().find(
         (day) => day.textContent?.trim() === '15' && !day.classList.contains('other-month'),
       )!;
-      quince.click(); // gesto 3: el día
+      quince.click(); // toque 4: el día
       toques++;
       await fixture.whenStable();
+
+      expect(toques).toBe(4);
 
       const confirmar = [...fixture.nativeElement.querySelectorAll('.dialog-actions button')][1];
       confirmar.click();
@@ -277,77 +289,113 @@ describe('DatePicker', () => {
       expect(elegido?.getFullYear()).toBe(1985);
       expect(elegido?.getMonth()).toBe(2);
       expect(elegido?.getDate()).toBe(15);
-      // Tres selecciones más el encabezado y las dos décadas de distancia.
-      expect(toques).toBe(6);
     });
 
     it('la grilla de años no ofrece años posteriores a maxDate', async () => {
-      fixture.componentRef.setInput('maxDate', 'today');
+      fixture.componentRef.setInput('maxDate', new Date(2026, 11, 31));
       await fixture.whenStable();
       await abrirAnios();
 
-      const anioActual = new Date().getFullYear();
-      const habilitados = celdas()
-        .filter((cell) => !cell.disabled)
-        .map((cell) => Number(cell.textContent));
-      const futuros = celdas().filter((cell) => Number(cell.textContent) > anioActual);
+      expect(anuncio()).toBe('Años 2000 a 2029');
+      expect(celda('2026').disabled).toBe(false);
 
-      expect(habilitados.length).toBeGreaterThan(0);
-      expect(habilitados.every((anio) => anio <= anioActual)).toBe(true);
-      expect(futuros.length).toBeGreaterThan(0);
+      const futuros = ['2027', '2028', '2029'].map(celda);
       expect(futuros.every((cell) => cell.disabled)).toBe(true);
       expect(futuros.every((cell) => cell.getAttribute('aria-disabled') === 'true')).toBe(true);
       expect(futuros.every((cell) => cell.classList.contains('is-disabled'))).toBe(true);
-      // La década siguiente entera queda fuera: la flecha se apaga.
-      expect(flecha('Década siguiente').getAttribute('aria-disabled')).toBe('true');
+      // La página siguiente entera queda fuera: la flecha se apaga.
+      expect(flecha('30 años siguientes').getAttribute('aria-disabled')).toBe('true');
     });
 
-    it('la grilla de años no ofrece la década anterior a minDate', async () => {
+    it('la grilla de años apaga los años anteriores a minDate', async () => {
       fixture.componentRef.setInput('minDate', new Date(1900, 0, 1));
       fixture.componentRef.setInput('value', new Date(1905, 5, 10));
       await fixture.whenStable();
       await abrirAnios();
 
-      expect(anuncio()).toBe('Años 1900 a 1909');
+      expect(anuncio()).toBe('Años 1880 a 1909');
       expect(celda('1899').disabled).toBe(true);
       expect(celda('1900').disabled).toBe(false);
-      expect(flecha('Década anterior').getAttribute('aria-disabled')).toBe('true');
-
-      flecha('Década anterior').click();
-      await fixture.whenStable();
-      expect(anuncio()).toBe('Años 1900 a 1909');
     });
 
-    it('las flechas mueven el foco entre celdas y Enter elige', async () => {
+    it('en el borde de minDate la flecha de 30 años anteriores se apaga', async () => {
+      fixture.componentRef.setInput('minDate', new Date(1900, 0, 1));
+      fixture.componentRef.setInput('value', new Date(1925, 5, 10));
+      await fixture.whenStable();
+      await abrirAnios();
+
+      expect(anuncio()).toBe('Años 1900 a 1929');
+      expect(celda('1900').disabled).toBe(false);
+      expect(flecha('30 años anteriores').getAttribute('aria-disabled')).toBe('true');
+
+      flecha('30 años anteriores').click();
+      await fixture.whenStable();
+      expect(anuncio()).toBe('Años 1900 a 1929');
+    });
+
+    it('las flechas mueven el foco de a cinco por fila y Enter elige', async () => {
       await abrirAnios();
 
       // La celda del año en vista es la única tabulable y recibe el foco.
       const activa = celdas().findIndex((cell) => cell.getAttribute('tabindex') === '0');
       expect(celdas()[activa].textContent?.trim()).toBe('2026');
-      expect(celdas().filter((cell) => cell.getAttribute('tabindex') === '0').length).toBe(1);
+      expect(tabulables().length).toBe(1);
       expect(document.activeElement).toBe(celdas()[activa]);
 
-      await teclear(celdas()[activa], 'ArrowUp'); // una fila: cuatro columnas
-      expect(document.activeElement).toBe(celdas()[activa - 4]);
-      expect(celdas()[activa - 4].getAttribute('tabindex')).toBe('0');
+      await teclear(celdas()[activa], 'ArrowUp'); // una fila: cinco columnas
+      expect(document.activeElement).toBe(celdas()[activa - 5]);
+      expect(enfocada()).toBe('2021');
+      expect(celdas()[activa - 5].getAttribute('tabindex')).toBe('0');
+
+      await teclear(document.activeElement!, 'ArrowDown');
+      expect(enfocada()).toBe('2026');
 
       await teclear(document.activeElement!, 'ArrowRight');
-      expect(document.activeElement).toBe(celdas()[activa - 3]);
+      expect(document.activeElement).toBe(celdas()[activa + 1]);
 
-      const anio = document.activeElement!.textContent?.trim();
+      const anio = enfocada();
       await teclear(document.activeElement!, 'Enter');
 
       expect(anuncio()).toBe(`Meses de ${anio}`);
     });
 
+    it('Inicio y Fin van al primer y al último año de la página', async () => {
+      await abrirAnios();
+
+      const activa = celdas().findIndex((cell) => cell.getAttribute('tabindex') === '0');
+
+      await teclear(celdas()[activa], 'Home');
+      expect(enfocada()).toBe('2000');
+
+      await teclear(document.activeElement!, 'End');
+      expect(enfocada()).toBe('2029');
+    });
+
+    it('Av Pág y Re Pág cambian de página de 30 años sin duplicar el tabindex', async () => {
+      await abrirAnios();
+
+      const activa = celdas().findIndex((cell) => cell.getAttribute('tabindex') === '0');
+
+      await teclear(celdas()[activa], 'PageDown');
+      expect(anuncio()).toBe('Años 2030 a 2059');
+      // El foco cae en el año equivalente de la página nueva.
+      expect(enfocada()).toBe('2056');
+      expect(tabulables().length).toBe(1);
+
+      await teclear(document.activeElement!, 'PageUp');
+      expect(anuncio()).toBe('Años 2000 a 2029');
+      expect(enfocada()).toBe('2026');
+      expect(tabulables().length).toBe(1);
+    });
+
     it('Escape vuelve a los días y recién después cierra el diálogo', async () => {
       await abrirAnios();
-      expect(fixture.nativeElement.querySelector('.calendar-grid-wide')).not.toBeNull();
+      expect(grillaDeAnios()).not.toBeNull();
 
       await teclear(dialog()!, 'Escape');
 
       expect(dialog()).not.toBeNull();
-      expect(fixture.nativeElement.querySelector('.calendar-grid-wide')).toBeNull();
+      expect(grillaDeAnios()).toBeNull();
       expect(document.activeElement).toBe(encabezado());
 
       await teclear(dialog()!, 'Escape');
@@ -365,7 +413,7 @@ describe('DatePicker', () => {
 
       encabezado().click();
       await fixture.whenStable();
-      expect(anuncio()).toBe('Años 2020 a 2029');
+      expect(anuncio()).toBe('Años 2000 a 2029');
 
       celda('2026').click();
       await fixture.whenStable();

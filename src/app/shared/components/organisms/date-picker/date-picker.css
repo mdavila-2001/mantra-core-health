@@ -327,10 +327,19 @@
   font-weight: 600;
 }
 
-/* Grillas de Años y Meses: misma celda, cuatro columnas y sin cuadrar. */
-.calendar-grid-wide {
-  grid-template-columns: repeat(4, 1fr);
+/* Grillas de Años y Meses: misma celda sin cuadrar, distinto ancho de fila.
+   Los treinta años van de a cinco: seis filas, el alto de la grilla de días. */
+.calendar-grid-years,
+.calendar-grid-months {
   gap: var(--sp-1);
+}
+
+.calendar-grid-years {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.calendar-grid-months {
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .calendar-unit-btn {
@@ -344,12 +353,6 @@
   .calendar-unit-btn {
     min-height: 40px;
   }
-}
-
-/* Los dos años vecinos de la década se muestran, pero no compiten con ella.
-   Si uno de ellos es el año en vista, manda el estado elegido. */
-.calendar-unit-btn.other-decade:not(.is-selected) {
-  color: var(--text-muted);
 }
 
 .calendar-day-btn.is-disabled,
