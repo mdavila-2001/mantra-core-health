@@ -132,6 +132,33 @@ export function nacionalDelNumero(valor: string, pais: PaisTelefono): string {
   return sinPais.slice(0, pais.digitos);
 }
 
+/**
+ * Si un valor ya compuesto es un teléfono completo de alguno de los países.
+ *
+ * Vive con el catálogo y no en la pantalla que lo valida, por lo mismo que el
+ * prefijo dejó de vivir ahí: el largo del número es del país, y una pantalla
+ * que lo repita queda desincronizada en cuanto se agregue uno. El alta de
+ * paciente traía `/^\+591 [0-9]{8}$/` escrito a mano —correcto mientras el
+ * campo sólo componía Bolivia, y un rechazo silencioso de todo número
+ * extranjero apenas dejó de hacerlo.
+ *
+ * Vacío cuenta como válido: el campo es opcional en las pantallas que lo usan,
+ * y quien lo quiera obligatorio suma `Validators.required`, que es lo que
+ * corresponde. Ver `PhoneInput`: con el campo vacío se guarda cadena vacía y no
+ * un prefijo suelto, justamente para que esto pueda distinguirlos.
+ */
+export function esTelefonoCompleto(valor: string): boolean {
+  if (valor === '') {
+    return true;
+  }
+  return PAISES_TELEFONO.some((pais) => {
+    const digitos = valor.startsWith(`${pais.prefijo} `)
+      ? valor.slice(pais.prefijo.length + 1)
+      : null;
+    return digitos !== null && new RegExp(`^[0-9]{${pais.digitos}}$`).test(digitos);
+  });
+}
+
 /** `70012345` + `[4,4]` -> `7001 2345`. Ayuda de lectura, no dato. */
 export function agrupar(digitos: string, grupos: readonly number[]): string {
   const partes: string[] = [];

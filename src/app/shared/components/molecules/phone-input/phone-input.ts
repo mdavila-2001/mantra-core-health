@@ -10,7 +10,12 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
+import {
+  NG_VALUE_ACCESSOR,
+  type AbstractControl,
+  type ControlValueAccessor,
+  type ValidationErrors,
+} from '@angular/forms';
 
 import { Input } from '../../atoms/input/input';
 import { PaisBandera } from './pais-bandera';
@@ -19,6 +24,7 @@ import {
   PAIS_POR_DEFECTO,
   agrupar,
   ejemploDe,
+  esTelefonoCompleto,
   nacionalDelNumero,
   paisDelNumero,
   type PaisTelefono,
@@ -35,6 +41,33 @@ export const DIGITOS_TELEFONO_BOLIVIA = PAIS_POR_DEFECTO.digitos;
 
 /** Ver `idLista`: un id por instancia, para que `aria-controls` apunte bien. */
 let siguienteId = 0;
+
+/**
+ * Valida que el teléfono esté completo para el país que lo compuso.
+ *
+ * ```ts
+ * phone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] })
+ * ```
+ *
+ * Se exporta desde acá —y no lo escribe cada pantalla— porque el largo del
+ * número es del país, y el catálogo de países vive en este componente. El alta
+ * de paciente tenía `/^\+591 [0-9]{8}$/` a mano: correcto mientras el campo
+ * sólo componía Bolivia, y un rechazo silencioso de todo número extranjero en
+ * cuanto dejó de hacerlo.
+ *
+ * Es **más estrecho** que el `@Matches` del backend —que acepta espacios,
+ * paréntesis y guiones— y a propósito: quien escribe ya no elige el formato, lo
+ * compone este campo, así que lo único que puede fallar es que el número esté
+ * incompleto. Validar acá lo que el campo produce evita el caso en que el
+ * control deja pasar cuatro dígitos y el error llega de la API.
+ */
+export function telefonoCompleto(control: AbstractControl): ValidationErrors | null {
+  const valor = control.value;
+  if (typeof valor !== 'string' || esTelefonoCompleto(valor)) {
+    return null;
+  }
+  return { telefonoIncompleto: true };
+}
 
 /**
  * Campo de teléfono: el país se elige, la persona escribe el número nacional.

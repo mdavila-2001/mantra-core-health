@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { PhoneInput } from './phone-input';
+import { PhoneInput, telefonoCompleto } from './phone-input';
 
 @Component({
   imports: [PhoneInput, ReactiveFormsModule],
@@ -218,6 +218,37 @@ describe('PhoneInput', () => {
 
       expect(fixture.nativeElement.querySelector('[role="listbox"]')).toBeNull();
       expect(disparador().getAttribute('aria-label')).toContain('Bolivia');
+    });
+
+    it('un número extranjero completo es válido', () => {
+      // La regresión que el selector destapó: con el validador fijo a Bolivia
+      // —`/^\+591 [0-9]{8}$/`, escrito a mano en el alta de paciente— un número
+      // brasileño de once dígitos quedaba rechazado con el mensaje «Ingresá los
+      // ocho dígitos», que no explica nada sobre un número que no es de acá.
+      host.control.addValidators(telefonoCompleto);
+
+      elegirPais('Brasil');
+      escribir('11912345678');
+
+      expect(host.control.valid).toBe(true);
+    });
+
+    it('un número incompleto para su país no es válido', () => {
+      host.control.addValidators(telefonoCompleto);
+
+      elegirPais('Brasil');
+      escribir('119');
+
+      expect(host.control.hasError('telefonoIncompleto')).toBe(true);
+    });
+
+    it('vacío es válido: el campo es opcional', () => {
+      // Quien lo quiera obligatorio suma `Validators.required`, que es lo que
+      // corresponde; el validador del teléfono sólo habla del largo.
+      host.control.addValidators(telefonoCompleto);
+      host.control.updateValueAndValidity();
+
+      expect(host.control.valid).toBe(true);
     });
 
     it('deshabilitado no abre', () => {
