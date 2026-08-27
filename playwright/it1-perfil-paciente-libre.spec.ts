@@ -87,7 +87,6 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
     const paciente = await crearPaciente(api);
     await entrar(page, paciente);
     await irAMiPerfil(page);
-    await capturar(page, '01-sin-verificar');
 
     // 1 · Sus datos están. El nombre lo **compone el backend** a partir de las
     // cuatro partes del alta, así que se afirman las dos que ninguna
@@ -112,6 +111,10 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
     // 5 · Ni un identificador interno a la vista, acá tampoco.
     const cuerpo = (await page.locator('main').first().textContent()) ?? '';
     expect(cuerpo).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+
+    // La captura va al final, con la tarjeta ya pintada: antes de las
+    // aserciones la pantalla todavía puede estar en su esqueleto de carga.
+    await capturar(page, '01-sin-verificar');
   });
 
   test('una vez verificada, la misma persona ve su código y ya no la invitan', async ({ page }) => {
@@ -144,7 +147,6 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
     await page.reload();
     await esperarAplicacionLista(page);
     await estable(page);
-    await capturar(page, '02-verificado');
 
     // El código es lo único que cambia: presente, y sin nada pendiente.
     const codigo = filaDelCodigo(page);
@@ -154,5 +156,8 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
 
     await expect(page.getByRole('link', { name: INVITACION })).toHaveCount(0);
     await expect(page.getByText(TARJETA_VACIA)).toHaveCount(0);
+
+    // Igual que arriba: se retrata el perfil ya resuelto, no su esqueleto.
+    await capturar(page, '02-verificado');
   });
 });

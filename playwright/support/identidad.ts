@@ -22,10 +22,7 @@ import type { Actor } from './actores';
  */
 
 /** El texto de la respuesta, acotado: un cuerpo entero de error tapa el motivo. */
-async function detalle(respuesta: {
-  status(): number;
-  text(): Promise<string>;
-}): Promise<string> {
+async function detalle(respuesta: { status(): number; text(): Promise<string> }): Promise<string> {
   return `${respuesta.status()}: ${(await respuesta.text()).slice(0, 400)}`;
 }
 
@@ -83,6 +80,12 @@ export async function conceptoPorCodigo(
   return encontrado.conceptId;
 }
 
+/** Un PNG de 1×1 real: la API valida los bytes del archivo, no el rótulo del multipart. */
+const DOCUMENTO_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
+
 /**
  * Sube un documento y abre el caso de verificación; devuelve su identificador.
  *
@@ -95,9 +98,9 @@ export async function abrirCaso(api: APIRequestContext, token: string): Promise<
     headers: { Authorization: `Bearer ${token}` },
     multipart: {
       file: {
-        name: 'documento.pdf',
-        mimeType: 'application/pdf',
-        buffer: Buffer.from('documento de prueba'),
+        name: 'documento.png',
+        mimeType: 'image/png',
+        buffer: DOCUMENTO_PNG,
       },
       category: 'DOCUMENT',
       sensitivity: 'PHI',
