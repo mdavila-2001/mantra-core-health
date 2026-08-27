@@ -88,6 +88,17 @@
                   [hasError]="errorDe(campo) !== ''"
                 />
               }
+              @case ('tel') {
+                <!-- El teléfono tiene su propio control: el prefijo `+591` es
+                     del campo, no de lo que la persona escribe. Ver
+                     `app-phone-input`. -->
+                <app-phone-input
+                  [formControlName]="campo.key"
+                  [placeholder]="campo.placeholder ?? '7001 2345'"
+                  [hasError]="errorDe(campo) !== ''"
+                  [testId]="campo.testId ?? 'campo-' + campo.key"
+                />
+              }
               @case ('date') {
                 <!-- Sin `formControlName`: `app-date-picker` trabaja con
                      `model()`. El puente escribe en el mismo control. -->

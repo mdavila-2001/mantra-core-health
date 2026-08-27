@@ -1,0 +1,33 @@
+/* ============================================================================
+    Phone input — el prefijo del país, dentro del marco del campo.
+    ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+/* El prefijo se lee como parte del campo pero no como algo escrito: color
+   secundario y una línea que lo separa del número, igual que la separación que
+   la persona ve entre «+591» y sus dígitos al leer un número escrito. */
+.telefono__prefijo {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding-inline-end: var(--sp-3);
+  margin-inline-end: var(--sp-3);
+  border-inline-end: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Los dígitos van tabulares: sin esto el número cambia de ancho a medida que se
+   escribe y el campo «tiembla» tecla a tecla. */
+:host ::ng-deep .native-input {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}

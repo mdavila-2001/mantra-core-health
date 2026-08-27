@@ -58,7 +58,24 @@
       }
 
       @if (avisos().length === 0) {
-        <p class="campana__vacio">No tenés notificaciones.</p>
+        <p class="campana__vacio">
+          <svg
+            class="campana__vacio-icono"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
+          </svg>
+          <!-- Dice además para qué sirve: un «no hay nada» a secas en una cuenta
+               recién creada se lee como que la campana no anda. -->
+          Estás al día. Acá te vamos a avisar de tus turnos, recetas y mensajes.
+        </p>
       } @else {
         <ul class="campana__lista">
           @for (aviso of avisos(); track aviso.fuente + aviso.id) {

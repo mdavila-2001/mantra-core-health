@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
+import { SegipOccupationsCatalog } from '../../../core/data-access/terminology/segip-occupations.service';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
@@ -49,34 +50,133 @@ const MIN_DOCUMENTO = 4;
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
 
-/** Dígitos, espacios, paréntesis, `+` y guion — el mismo `@Matches` del backend. */
-const TELEFONO_VALIDO = /^[+]?[0-9 ()-]{6,}$/;
-
-/** Tope de la ocupación en texto libre, el mismo `@MaxLength` del backend. */
-const MAX_OCUPACION = 200;
+/**
+ * La forma única en que este formulario compone un teléfono: `+591` y ocho
+ * dígitos.
+ *
+ * Es **más estrecho** que el `@Matches` del backend —que acepta espacios,
+ * paréntesis y guiones— y a propósito: quien escribe ya no elige el formato,
+ * lo compone `app-phone-input`, así que lo único que puede fallar es que el
+ * número esté incompleto. Validar acá lo que el campo produce evita el caso en
+ * que el control deja pasar cuatro dígitos y el error llega de la API.
+ */
+const TELEFONO_BOLIVIANO = /^\+591 [0-9]{8}$/;
 
 /**
- * Sexo al nacer, con sus etiquetas en castellano.
+ * Género, con sus dos categorías.
  *
  * Va como lista fija y no como lectura de terminología —a diferencia de los
- * departamentos— porque la API lo recibe **por código legible**
- * (`sexAtBirth: 'FEMALE'`), no por uuid de concepto: pedir el catálogo sólo
- * para pintar cuatro etiquetas agregaría una petición y un estado de fallo a
- * una pantalla pública, sin ganar nada. Los códigos son los que valida el
- * `@IsIn` del backend; el mapeo a concepto lo hace él.
+ * departamentos o de la ocupación— porque la API lo recibe **por código
+ * legible** (`sexAtBirth: 'FEMALE'`), no por uuid de concepto: pedir el
+ * catálogo sólo para pintar dos etiquetas agregaría una petición y un estado de
+ * fallo a una pantalla pública, sin ganar nada. Los códigos son los que valida
+ * el `@IsIn` del backend; el mapeo a concepto lo hace él.
  *
- * **El género administrativo ya no se pregunta.** Se preguntaba al lado de
- * éste, y la pantalla terminaba pidiendo dos veces algo que la persona lee como
- * lo mismo. De los dos, el que tiene consecuencia clínica —dosis, valores de
- * referencia, tamizajes— es el sexo al nacer, así que es el que se queda. El
- * campo `gender` del DTO sigue existiendo y otros clientes lo pueden mandar;
- * este formulario no lo manda, y ausente no es lo mismo que vacío.
+ * ## Por qué dos y no cuatro
+ *
+ * El campo ofrecía además «Intersexual» y «Prefiero no decirlo», y el equipo
+ * pidió dejar sólo masculino y femenino: es lo que el documento de identidad
+ * boliviano registra y lo que la ficha del paciente contrasta contra él. Sigue
+ * siendo opcional —«Sin especificar» es el marcador del desplegable y deja el
+ * control vacío—, así que quien no quiera contestar no tiene que elegir una
+ * casilla que no lo describe: simplemente no elige.
+ *
+ * ## Por qué el rótulo dice «Género» y el dato viaja como `sexAtBirth`
+ *
+ * Porque son las dos mitades de la misma decisión. El rótulo es el que el
+ * equipo pidió y el que la gente reconoce; el campo que se manda es el que
+ * tiene consecuencia clínica —dosis, valores de referencia, tamizajes— y el
+ * único que el backend traduce a concepto en el alta. El `gender`
+ * administrativo del DTO sigue existiendo para otros clientes; este formulario
+ * no lo manda, y ausente no es lo mismo que vacío.
  */
-const OPCIONES_SEXO_AL_NACER: readonly SelectOption<BirthSexCode>[] = [
-  { value: 'FEMALE', label: 'Femenino' },
+const OPCIONES_GENERO: readonly SelectOption<BirthSexCode>[] = [
   { value: 'MALE', label: 'Masculino' },
-  { value: 'INTERSEX', label: 'Intersexual' },
-  { value: 'UNKNOWN', label: 'Prefiero no decirlo' },
+  { value: 'FEMALE', label: 'Femenino' },
+];
+
+/**
+ * Quién emite la matrícula que habilita a ejercer, como lista cerrada.
+ *
+ * Era texto libre, con la lista escrita en la pista del campo: «Ministerio de
+ * Salud y Deportes, o Colegio de Odontólogos si tu especialidad es
+ * odontología». Eso es un catálogo pidiendo permiso para existir — y mientras
+ * no existió, la misma autoridad entró como «Ministerio de Salud», «MSD» y
+ * «ministerio de salud y deportes», que son tres organismos distintos para
+ * cualquier consulta.
+ *
+ * Va como lista fija y no por terminología porque el backend guarda un
+ * **texto** (`regulatoryAuthority`, `@MaxLength(100)`), no un concepto: leer un
+ * conjunto de valores para acabar mandando su etiqueta agregaría una petición y
+ * un estado de fallo a una pantalla pública sin cambiar el dato que se
+ * persiste. El día que la columna pase a `*_concept_id`, esto se cambia por una
+ * lectura como la de la ocupación.
+ */
+const OPCIONES_AUTORIDAD_REGULADORA: readonly SelectOption<string>[] = [
+  { value: 'Ministerio de Salud y Deportes', label: 'Ministerio de Salud y Deportes' },
+  { value: 'Colegio Médico de Bolivia', label: 'Colegio Médico de Bolivia' },
+  { value: 'Colegio de Odontólogos de Bolivia', label: 'Colegio de Odontólogos de Bolivia' },
+  { value: 'Colegio de Enfermeras de Bolivia', label: 'Colegio de Enfermeras de Bolivia' },
+  {
+    value: 'Colegio de Bioquímica y Farmacia de Bolivia',
+    label: 'Colegio de Bioquímica y Farmacia de Bolivia',
+  },
+  {
+    value: 'Colegio de Nutricionistas y Dietistas de Bolivia',
+    label: 'Colegio de Nutricionistas y Dietistas de Bolivia',
+  },
+  { value: 'Colegio de Psicólogos de Bolivia', label: 'Colegio de Psicólogos de Bolivia' },
+  {
+    value: 'Colegio de Fisioterapia y Kinesiología de Bolivia',
+    label: 'Colegio de Fisioterapia y Kinesiología de Bolivia',
+  },
+  {
+    value: 'Colegio de Trabajadores Sociales de Bolivia',
+    label: 'Colegio de Trabajadores Sociales de Bolivia',
+  },
+  { value: 'Servicio Departamental de Salud (SEDES)', label: 'Servicio Departamental de Salud (SEDES)' },
+];
+
+/**
+ * El título profesional, como lista cerrada.
+ *
+ * Mismo caso que la autoridad reguladora, y con la misma razón para no ser
+ * terminología: `professionalTitle` es un texto de hasta cien caracteres en el
+ * backend. Lo que cambia es para qué sirve el dato: **es lo que ve el paciente
+ * en la ficha**, así que en texto libre la misma profesión aparecía como
+ * «Medico», «Dr.», «medico general» y «MÉDICO GENERAL» en cuatro fichas
+ * seguidas — un directorio que se lee como cuatro productos distintos.
+ *
+ * Las dos formas —masculina y femenina— van en la misma entrada («Médico /
+ * Médica») porque lo que se guarda es el título, no el género de quien lo
+ * ostenta, y separarlas duplicaría la lista para que cada quien elija la mitad
+ * que le toca.
+ */
+const OPCIONES_TITULO_PROFESIONAL: readonly SelectOption<string>[] = [
+  { value: 'Médico / Médica', label: 'Médico / Médica' },
+  { value: 'Médico especialista / Médica especialista', label: 'Médico especialista / Médica especialista' },
+  { value: 'Odontólogo / Odontóloga', label: 'Odontólogo / Odontóloga' },
+  { value: 'Licenciado / Licenciada en Enfermería', label: 'Licenciado / Licenciada en Enfermería' },
+  {
+    value: 'Licenciado / Licenciada en Bioquímica y Farmacia',
+    label: 'Licenciado / Licenciada en Bioquímica y Farmacia',
+  },
+  { value: 'Licenciado / Licenciada en Nutrición', label: 'Licenciado / Licenciada en Nutrición' },
+  { value: 'Licenciado / Licenciada en Psicología', label: 'Licenciado / Licenciada en Psicología' },
+  {
+    value: 'Licenciado / Licenciada en Fisioterapia y Kinesiología',
+    label: 'Licenciado / Licenciada en Fisioterapia y Kinesiología',
+  },
+  {
+    value: 'Licenciado / Licenciada en Fonoaudiología',
+    label: 'Licenciado / Licenciada en Fonoaudiología',
+  },
+  {
+    value: 'Licenciado / Licenciada en Trabajo Social',
+    label: 'Licenciado / Licenciada en Trabajo Social',
+  },
+  { value: 'Técnico / Técnica en Radiología', label: 'Técnico / Técnica en Radiología' },
+  { value: 'Auxiliar de Enfermería', label: 'Auxiliar de Enfermería' },
 ];
 
 /** Quién se está registrando. Define qué endpoint y qué campos. */
@@ -180,19 +280,16 @@ export class RegisterPatient {
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
     }),
     email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
-    // Mismo patrón que el backend (`@Matches` de `phone`): dígitos, espacios,
-    // paréntesis, `+` y guion. Validarlo acá evita un viaje a la API para
-    // enterarse de algo que se ve en el campo.
+    // El control guarda lo que `app-phone-input` compone —`+591` y ocho
+    // dígitos—, así que el validador comprueba justamente eso: ver
+    // `TELEFONO_BOLIVIANO`.
     phone: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.pattern(TELEFONO_VALIDO)],
+      validators: [Validators.pattern(TELEFONO_BOLIVIANO)],
     }),
-    // Ocupación en texto libre: ver `PatientRegistration.occupationFreeText`
-    // sobre por qué todavía no es un catálogo.
-    occupationFreeText: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(MAX_OCUPACION)],
-    }),
+    // La ocupación es un concepto de `VS_SEGIP_OCCUPATION`, no un texto: ver
+    // `campoOcupacion`.
+    occupationConceptId: new FormControl<string | null>(null),
     // La fecha y el sexo al nacer viven **en el formulario**, no en signals
     // aparte: el motor puentea `app-date-picker` —que trabaja con `model()`—
     // contra este mismo control, y así el dato tiene una sola fuente. Tenerlo
@@ -215,8 +312,8 @@ export class RegisterPatient {
    */
   readonly municipioPaciente = signal<string | null>(null);
 
-  /** La lista fija, expuesta a la plantilla. */
-  protected readonly opcionesSexoAlNacer = OPCIONES_SEXO_AL_NACER;
+  /** Las listas fijas, expuestas a la plantilla. */
+  protected readonly opcionesGenero = OPCIONES_GENERO;
 
   readonly formProfesional = new FormGroup({
     // Mismas cuatro partes que el paciente: la persona se registra igual sea
@@ -241,13 +338,19 @@ export class RegisterPatient {
     }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     credentialNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    // Quién emitió la matrícula: Ministerio de Salud y Deportes para la
-    // mayoría de las especialidades médicas, o el Colegio de Odontólogos para
-    // quien ejerce odontología. Texto libre porque no todas las jurisdicciones
-    // ni todos los colegios departamentales caben en un catálogo cerrado.
+    // Quién emitió la matrícula y con qué título ejerce: los dos salen de una
+    // lista cerrada — ver `OPCIONES_AUTORIDAD_REGULADORA` y
+    // `OPCIONES_TITULO_PROFESIONAL`. Siguen siendo controles de texto porque lo
+    // que el desplegable escribe es la etiqueta, que es lo que el backend
+    // guarda.
     regulatoryAuthority: new FormControl('', { nonNullable: true }),
     professionalTitle: new FormControl('', { nonNullable: true }),
-    phone: new FormControl('', { nonNullable: true }),
+    // Mismo control y mismo validador que el del paciente: el teléfono no
+    // cambia de forma según quién se registre.
+    phone: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.pattern(TELEFONO_BOLIVIANO)],
+    }),
     birthDate: new FormControl<Date | null>(null),
     licenseIssueDate: new FormControl<Date | null>(null),
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
@@ -260,6 +363,11 @@ export class RegisterPatient {
   private readonly departamentos = inject(BoDepartmentsCatalog);
   readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
   readonly catalogoDepartamentosCaido = signal(false);
+
+  /** Ocupación del paciente (VS_SEGIP_OCCUPATION), y su catálogo. */
+  private readonly ocupaciones = inject(SegipOccupationsCatalog);
+  readonly opcionesOcupacion = signal<readonly SelectOption<string>[]>([]);
+  readonly catalogoOcupacionesCaido = signal(false);
 
   /** Municipio de residencia (VS_BO_MUNICIPALITY), colgado de su departamento. */
   private readonly municipios = inject(BoMunicipalitiesCatalog);
@@ -359,12 +467,12 @@ export class RegisterPatient {
           },
           {
             key: 'sexAtBirth',
-            label: 'Sexo al nacer (opcional)',
+            label: 'Género (opcional)',
             hint: 'Dato clínico: cambia las dosis, los valores de referencia y los tamizajes.',
             control: 'select',
-            options: OPCIONES_SEXO_AL_NACER,
+            options: OPCIONES_GENERO,
             placeholder: 'Sin especificar',
-            testId: 'registro-sexo-al-nacer',
+            testId: 'registro-genero',
           },
           {
             key: 'municipio',
@@ -372,15 +480,7 @@ export class RegisterPatient {
             hint: 'Buscá tu municipio, o abrí tu departamento.',
             control: 'custom',
           },
-          {
-            key: 'occupationFreeText',
-            label: 'Ocupación (opcional)',
-            hint: 'En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio.',
-            control: 'text',
-            autocomplete: 'organization-title',
-            placeholder: 'Docente',
-            testId: 'registro-ocupacion',
-          },
+          this.campoOcupacion(),
         ],
       },
       {
@@ -412,13 +512,13 @@ export class RegisterPatient {
           {
             key: 'phone',
             label: 'Teléfono (opcional)',
-            // `tel` sale como `type="text"` en el motor, con el `autocomplete`
-            // haciendo el trabajo: ver `tipoDeInput` de `app-paginated-form`.
+            hint: 'Ocho dígitos. El +591 lo pone el campo.',
+            // `tel` lo dibuja `app-phone-input`: ver el motor.
             control: 'tel',
             autocomplete: 'tel',
-            placeholder: '+591 70012345',
+            placeholder: '7001 2345',
             testId: 'registro-telefono',
-            mensajeDeError: 'Dígitos, espacios, paréntesis, + y guion.',
+            mensajeDeError: 'Ingresá los ocho dígitos de tu teléfono.',
           },
         ],
       },
@@ -535,10 +635,10 @@ export class RegisterPatient {
           {
             key: 'regulatoryAuthority',
             label: 'Autoridad reguladora (opcional)',
-            hint: 'Ministerio de Salud y Deportes, o Colegio de Odontólogos si tu especialidad es odontología.',
-            control: 'text',
-            autocomplete: 'off',
-            placeholder: 'Ministerio de Salud y Deportes',
+            hint: 'Quién emitió tu matrícula.',
+            control: 'select',
+            options: OPCIONES_AUTORIDAD_REGULADORA,
+            placeholder: 'Sin especificar',
             testId: 'registro-pro-autoridad',
           },
           {
@@ -556,19 +656,21 @@ export class RegisterPatient {
           {
             key: 'professionalTitle',
             label: 'Título profesional (opcional)',
-            hint: 'Cómo querés que te nombren en tu ficha: «Médica cardióloga», «Odontólogo».',
-            control: 'text',
-            autocomplete: 'off',
-            placeholder: 'Cardiología',
+            hint: 'Cómo aparecés en tu ficha. Tu especialidad se elige después, desde el perfil.',
+            control: 'select',
+            options: OPCIONES_TITULO_PROFESIONAL,
+            placeholder: 'Sin especificar',
             testId: 'registro-pro-titulo',
           },
           {
             key: 'phone',
             label: 'Teléfono (opcional)',
+            hint: 'Ocho dígitos. El +591 lo pone el campo.',
             control: 'tel',
             autocomplete: 'tel',
-            placeholder: '+591 70012345',
+            placeholder: '7001 2345',
             testId: 'registro-pro-telefono',
+            mensajeDeError: 'Ingresá los ocho dígitos de tu teléfono.',
           },
         ],
       },
@@ -635,6 +737,36 @@ export class RegisterPatient {
         };
   }
 
+  /**
+   * El campo de la ocupación.
+   *
+   * Misma mecánica que el departamento emisor: es un `select` del motor
+   * mientras el catálogo esté, y pasa a `custom` si la lectura falló, para que
+   * la pantalla pueda proyectar ahí el aviso con su «Reintentar». Un desplegable
+   * vacío no tiene dónde decir que no cargó.
+   *
+   * Y por lo mismo que aquél, un fallo no bloquea el alta: el campo es
+   * opcional, así que sin catálogo la persona se registra igual y completa la
+   * ocupación después desde su perfil.
+   */
+  private campoOcupacion(): CampoDeFormulario {
+    const base = {
+      key: 'occupationConceptId',
+      label: 'Ocupación (opcional)',
+      hint: 'En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio.',
+    } as const;
+
+    return this.catalogoOcupacionesCaido()
+      ? { ...base, control: 'custom' }
+      : {
+          ...base,
+          control: 'select',
+          options: this.opcionesOcupacion(),
+          placeholder: 'Sin especificar',
+          testId: 'registro-ocupacion',
+        };
+  }
+
   readonly state = signal<ViewState<null>>(ready(null));
   readonly isSubmitting = computed(() => this.state().status === 'loading');
 
@@ -678,6 +810,7 @@ export class RegisterPatient {
   constructor() {
     this.cargarDepartamentos();
     this.cargarMunicipios();
+    this.cargarOcupaciones();
 
     // El aviso de un envío fallido se va en cuanto se corrige algo.
     //
@@ -753,6 +886,27 @@ export class RegisterPatient {
   }
 
   /**
+   * Trae el catálogo de ocupaciones del SEGIP, para «¿en qué trabajás?».
+   *
+   * Mismo criterio que los departamentos ante un fallo: el campo es opcional y
+   * el alta sigue.
+   */
+  protected cargarOcupaciones(): void {
+    this.ocupaciones.listar().subscribe({
+      next: (opciones) => {
+        this.catalogoOcupacionesCaido.set(false);
+        this.opcionesOcupacion.set(
+          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+        );
+      },
+      error: () => {
+        this.opcionesOcupacion.set([]);
+        this.catalogoOcupacionesCaido.set(true);
+      },
+    });
+  }
+
+  /**
    * Reintenta la lectura del catálogo.
    *
    * Olvida lo cacheado antes de pedir: `BoDepartmentsCatalog` comparte la
@@ -763,6 +917,12 @@ export class RegisterPatient {
   protected reintentarDepartamentos(): void {
     this.departamentos.olvidar();
     this.cargarDepartamentos();
+  }
+
+  /** Reintenta la lectura del catálogo de ocupaciones. Ver `reintentarDepartamentos`. */
+  protected reintentarOcupaciones(): void {
+    this.ocupaciones.olvidar();
+    this.cargarOcupaciones();
   }
 
   /** Reintenta la lectura del árbol de municipios. Ver `reintentarDepartamentos`. */
@@ -844,7 +1004,7 @@ export class RegisterPatient {
     const apellidoMaterno = raw.motherLastName.trim();
     const documento = raw.nationalId.trim();
     const telefono = raw.phone.trim();
-    const ocupacion = raw.occupationFreeText.trim();
+    const ocupacion = raw.occupationConceptId;
     const fechaNacimiento = raw.birthDate;
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const sexoAlNacer = raw.sexAtBirth;
@@ -871,7 +1031,7 @@ export class RegisterPatient {
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(telefono === '' ? {} : { phone: telefono }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
-      ...(ocupacion === '' ? {} : { occupationFreeText: ocupacion }),
+      ...(ocupacion === null ? {} : { occupationConceptId: ocupacion }),
     };
   }
 

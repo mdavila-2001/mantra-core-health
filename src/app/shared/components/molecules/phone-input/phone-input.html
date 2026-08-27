@@ -1,0 +1,20 @@
+<!-- El prefijo va proyectado en la ranura de ícono del átomo: así queda dentro
+     del marco del campo, comparte su foco y su estado de error, y no hay que
+     maquetar una fila de dos cajas que se despegan en el móvil. -->
+<app-input
+  type="text"
+  inputMode="numeric"
+  autocomplete="tel"
+  [value]="texto()"
+  (valueChange)="alEscribir($event)"
+  (blurred)="alSalir()"
+  [placeholder]="placeholder()"
+  [hasError]="hasError()"
+  [disabled]="isDisabled()"
+  [testId]="testId()"
+>
+  <!-- `aria-hidden`: el prefijo es parte del rótulo del campo para quien ve, y
+       repetido por el lector de pantalla en cada foco sería ruido. La pista del
+       campo ya dice que el número es boliviano. -->
+  <span slot="icon-start" class="telefono__prefijo" aria-hidden="true">{{ prefijo }}</span>
+</app-input>
