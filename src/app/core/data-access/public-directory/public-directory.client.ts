@@ -5,6 +5,7 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { PUBLIC_PROFILE_PREFIX } from './public-directory.types';
 import type {
+  PublicFeedPost,
   PublicNearbyQuery,
   PublicNearbyResult,
   PublicPage,
@@ -31,6 +32,10 @@ type WireSearchResult = PublicSearchResult;
 type WireNearbyResult = PublicNearbyResult;
 
 type WirePost = Omit<PublicPostSummary, 'publishedAt'> & {
+  readonly publishedAt: string;
+};
+
+type WireFeedPost = Omit<PublicFeedPost, 'publishedAt'> & {
   readonly publishedAt: string;
 };
 
@@ -79,6 +84,32 @@ type WireProfile = Omit<PublicProfileDetail, 'posts' | 'updatedAt'> & {
 export class PublicDirectoryClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+
+  /**
+   * `GET /public/posts` — lo último de **todas** las vitrinas, mezclado.
+   *
+   * Es el feed de la portada. A diferencia de las publicaciones de una ficha,
+   * cada una trae a su autor: en un feed mezclado es lo único que distingue
+   * una tarjeta de la siguiente.
+   */
+  feedPublico(opciones: { cursor?: string; limit?: number } = {}): Observable<
+    PublicPage<PublicFeedPost>
+  > {
+    let params = new HttpParams();
+    if (opciones.cursor) params = params.set('cursor', opciones.cursor);
+    if (opciones.limit !== undefined) params = params.set('limit', String(opciones.limit));
+    return this.http
+      .get<WirePage<WireFeedPost>>(this.url('/public/posts'), { params })
+      .pipe(
+        map((body) => ({
+          ...toPage(body),
+          items: body.items.map((post) => ({
+            ...post,
+            publishedAt: new Date(post.publishedAt),
+          })),
+        })),
+      );
+  }
 
   /** `GET /public/search` — la búsqueda unificada sobre los seis verticales. */
   search(filtros: PublicSearchQuery = {}): Observable<PublicPage<PublicSearchResult>> {

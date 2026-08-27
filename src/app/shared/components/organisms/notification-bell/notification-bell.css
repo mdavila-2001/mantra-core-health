@@ -1,3 +1,30 @@
+/* ============================================================================
+    Campana de notificaciones.
+
+    ## Por qué el panel se veía ajeno al producto
+
+    Porque no usaba ninguno de los tokens del sistema: pedía `--surface-raised`,
+    `--border-subtle`, `--text-link`, `--e2`, `--e3` y `--radio-md`, que **no
+    existen** en `styles.css`. Cada `var()` caía en su valor de reserva, así que
+    el panel se pintaba con un `#fff` fijo, una sombra propia y unos espaciados
+    que no eran los de ninguna otra ficha. Y como el blanco estaba escrito a
+    mano, en tema oscuro el panel seguía siendo blanco con texto claro encima:
+    ilegible.
+
+    Acá va todo con los tokens de verdad —`--bg-surface`, `--border-default`,
+    `--sp-*`, `--r-*`, `--shadow-lg`—, que es lo que hace que se lea como parte
+    del producto y que el tema oscuro funcione solo.
+
+    ## Los alias de `styles.css` no hacen falta en este archivo
+
+    El mismo día, el PR #232 llegó al mismo diagnóstico y lo resolvió por los
+    dos lados: cambió los tokens de acá **y** declaró
+    `--surface-raised`, `--surface-hover`, `--border-subtle`, `--text-tertiary`,
+    `--text-danger`, `--text-link` y `--accent` como alias en `styles.css`. Los
+    alias se quedan —hay más archivos que todavía los piden—, pero este ya no
+    los usa: apunta a los tokens de primera mano, que es donde hay que terminar.
+    ========================================================================== */
+
 .campana {
   position: relative;
   display: inline-flex;
@@ -11,15 +38,16 @@
   inline-size: 2.5rem;
   block-size: 2.5rem;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--r-full);
   background: transparent;
   color: inherit;
   cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 
 .campana__boton:hover,
 .campana__boton:focus-visible {
-  background: var(--surface-hover, rgb(255 255 255 / 12%));
+  background: var(--bg-hover);
 }
 
 .campana__badge {
@@ -32,67 +60,107 @@
 
 .campana__panel {
   position: absolute;
-  inset-block-start: calc(100% + var(--e2, 0.5rem));
+  inset-block-start: calc(100% + var(--sp-2));
   inset-inline-end: 0;
   z-index: 40;
-  inline-size: min(22rem, calc(100vw - 2rem));
-  padding: var(--e3, 0.75rem);
+  inline-size: min(24rem, calc(100vw - var(--sp-8)));
+  /* Sin relleno propio: cada zona pone el suyo, para que la lista pueda
+     desplazarse contra los bordes y el pie quede pegado abajo. */
+  padding: 0;
+  /* Sin `overflow: hidden`: recortaría la punta del ::before. Las esquinas las
+     redondea cada franja por su cuenta. */
   border: 1px solid var(--border-default);
-  border-radius: var(--radio-md, 0.75rem);
+  border-radius: var(--r-md);
   background: var(--bg-surface);
   color: var(--text-primary);
-  box-shadow: var(--shadow-lg, 0 12px 32px rgb(0 0 0 / 18%));
+  box-shadow: var(--shadow-lg);
+}
+
+/* La punta hacia la campana: sin ella el panel flota sin decir de qué botón
+   salió, que es lo que lo hacía leerse como un cartel suelto sobre la página. */
+.campana__panel::before {
+  content: '';
+  position: absolute;
+  inset-block-start: -5px;
+  inset-inline-end: 14px;
+  inline-size: 10px;
+  block-size: 10px;
+  rotate: 45deg;
+  border-block-start: 1px solid var(--border-default);
+  border-inline-start: 1px solid var(--border-default);
+  background: var(--bg-surface);
 }
 
 .campana__encabezado {
+  border-start-start-radius: var(--r-md);
+  border-start-end-radius: var(--r-md);
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--e2, 0.5rem);
-  margin-block-end: var(--e2, 0.5rem);
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-block-end: 1px solid var(--border-default);
 }
 
 .campana__titulo {
   margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 
-.campana__accion,
-.campana__ver-todas {
+.campana__accion {
   border: 0;
   background: none;
   padding: 0;
   color: var(--brand-primary);
-  font-size: 0.85rem;
+  font: inherit;
+  font-size: var(--fs-caption);
   cursor: pointer;
+}
+
+.campana__accion:hover,
+.campana__accion:focus-visible {
   text-decoration: underline;
 }
 
-.campana__ver-todas {
-  display: block;
-  margin-block-start: var(--e3, 0.75rem);
+.campana__error {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+  font-size: var(--fs-caption);
+}
+
+/* El vacío no es una línea de texto suelta: es el mismo bloque centrado que el
+   resto del producto usa cuando no hay nada, con su ícono apagado. Una frase
+   sola pegada al borde se lee como un error de carga. */
+.campana__vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-6) var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
   text-align: center;
 }
 
-.campana__error {
-  margin: 0 0 var(--e2, 0.5rem);
-  color: var(--st-error-fg);
-  font-size: 0.85rem;
-}
-
-.campana__vacio {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+.campana__vacio-icono {
+  inline-size: 2rem;
+  block-size: 2rem;
+  color: var(--text-muted);
+  stroke-width: 1.4;
 }
 
 .campana__lista {
   margin: 0;
-  padding: 0;
+  padding: var(--sp-2);
   list-style: none;
   /* El panel muestra pocas y ofrece «ver todas»: sin tope, un panel de ocho
-     líneas largas empuja el botón fuera de la pantalla en un teléfono. */
-  max-block-size: 24rem;
+     líneas largas empuja el pie fuera de la pantalla en un teléfono. */
+  max-block-size: 22rem;
   overflow-y: auto;
 }
 
@@ -102,9 +170,13 @@
   gap: 0.15rem;
   inline-size: 100%;
   margin: 0;
-  padding: var(--e2, 0.5rem);
+  padding: var(--sp-2) var(--sp-3);
   border: 0;
-  border-radius: var(--radio-sm, 0.5rem);
+  /* La barra de «sin leer» se reserva siempre, transparente: si sólo la lleva
+     el que está sin leer, los títulos de la lista no quedan alineados entre sí
+     y la columna «baila» a medida que se van leyendo. */
+  border-inline-start: 3px solid transparent;
+  border-radius: var(--r-sm);
   background: none;
   color: inherit;
   font: inherit;
@@ -123,18 +195,55 @@ button.campana__item:focus-visible {
 /* Sin leer se marca con peso y una barra lateral, no sólo con color: el color
    solo no distingue nada para quien no lo percibe. */
 .campana__item.is-sin-leer {
-  border-inline-start: 3px solid var(--brand-primary);
+  border-inline-start-color: var(--brand-primary);
   font-weight: 600;
 }
 
+.campana__item-titulo {
+  /* Dos líneas como mucho: un título largo empujaba la fecha fuera del panel y
+     dejaba tres avisos ocupando el alto de ocho. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
 .campana__item-detalle {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--fs-caption);
   font-weight: 400;
 }
 
 .campana__item-fecha {
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: var(--fs-overline);
   font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* El pie es una franja propia, separada de la lista: así «Ver todas» sigue a la
+   vista cuando la lista se desplaza, en vez de quedar colgando después del
+   último aviso. */
+.campana__ver-todas {
+  display: block;
+  border-end-start-radius: var(--r-md);
+  border-end-end-radius: var(--r-md);
+  padding: var(--sp-3) var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+  background: var(--bg-surface-alt);
+  color: var(--brand-primary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+.campana__ver-todas:hover,
+.campana__ver-todas:focus-visible {
+  background: var(--bg-hover);
+  text-decoration: underline;
 }

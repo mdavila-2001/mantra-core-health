@@ -54,7 +54,7 @@ describe('ShellLayout', () => {
            comprobar. */
         provideRouter([
           { path: 'my-account', children: [] },
-          { path: 'my-account/identity/verify', children: [] },
+          { path: 'my-account/notification-preferences', children: [] },
           { path: 'my-account/appointments/book/:id', children: [] },
         ]),
       ],
@@ -168,8 +168,8 @@ describe('ShellLayout', () => {
       // Carril P9: las preferencias de aviso, pegadas a la bandeja.
       '/my-account/notification-preferences',
       '/notification-center',
-      '/my-account/identity/verify',
-      '/my-account/identity/cases',
+      // La verificación de identidad y su historial salieron del menú mientras
+      // el producto no la ofrezca: ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
       '/design-system',
     ]);
   });
@@ -304,9 +304,9 @@ describe('ShellLayout', () => {
       });
 
       it('en una hija que también está en el menú, gana la hija sobre su padre', async () => {
-        await ir('/my-account/identity/verify');
+        await ir('/my-account/notification-preferences');
 
-        expect(marcadas()).toEqual(['/my-account/identity/verify']);
+        expect(marcadas()).toEqual(['/my-account/notification-preferences']);
       });
 
       it('en una pantalla que no está en el menú, gana el ancestro más cercano', async () => {

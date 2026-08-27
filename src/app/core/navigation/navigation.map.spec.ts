@@ -2,6 +2,7 @@ import { IDENTITY_VERIFICATION_ROUTE } from '../http/error-to-view-state';
 import { APP_SECTIONS } from './navigation.map';
 import {
   ANY_ROLE,
+  apareceEnElMenu,
   isVisibleTo,
   routeOf,
   titleOf,
@@ -247,5 +248,50 @@ describe('isVisibleTo', () => {
 
   it('sin ninguno de los roles, no se ofrece la puerta', () => {
     expect(isVisibleTo(conRoles, ['PATIENT'])).toBe(false);
+  });
+});
+
+/**
+ * `fueraDelMenuPara` con el comodín es lo que apaga una sección de momento sin
+ * cerrarle la puerta: la verificación de identidad lo usa mientras el producto
+ * no la ofrezca (`VERIFICACION_DE_IDENTIDAD_OFRECIDA`).
+ */
+describe('apareceEnElMenu', () => {
+  const seccion = {
+    path: 'x',
+    label: 'X',
+    group: 'Mi cuenta',
+    icon: 'shield',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 's',
+    module: 'M00',
+  } as const;
+
+  it('sin `fueraDelMenuPara`, la sección ocupa su renglón', () => {
+    expect(apareceEnElMenu(seccion, ['PATIENT'])).toBe(true);
+  });
+
+  it('con un rol concreto, sale del menú sólo para ese rol', () => {
+    const fuera = { ...seccion, fueraDelMenuPara: ['PRACTITIONER'] } as const;
+
+    expect(apareceEnElMenu(fuera, ['PRACTITIONER'])).toBe(false);
+    expect(apareceEnElMenu(fuera, ['PATIENT'])).toBe(true);
+  });
+
+  it('con el comodín, sale del menú para todos —y para el que se agregue mañana', () => {
+    const apagada = { ...seccion, fueraDelMenuPara: [ANY_ROLE] } as const;
+
+    expect(apareceEnElMenu(apagada, ['PATIENT'])).toBe(false);
+    expect(apareceEnElMenu(apagada, [])).toBe(false);
+    expect(apareceEnElMenu(apagada, ['UN_ROL_NUEVO'])).toBe(false);
+  });
+
+  it('pero sigue pudiendo entrar: esconder un renglón no es cerrar la puerta', () => {
+    const apagada = { ...seccion, fueraDelMenuPara: [ANY_ROLE] } as const;
+
+    // Es la diferencia entera de `fueraDelMenuPara` frente a `roles`, y lo que
+    // hace que la salida del 403 `IDENTITY_VERIFICATION_REQUIRED` siga viva.
+    expect(isVisibleTo(apagada, ['PATIENT'])).toBe(true);
   });
 });

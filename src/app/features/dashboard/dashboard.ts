@@ -12,6 +12,7 @@ import { ProfilesClient } from '../../core/data-access/profiles/profiles.client'
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
 import { PublicClient, type PublicProjection } from '../../core/data-access/public/public.client';
 import { errorToViewState } from '../../core/http/error-to-view-state';
+import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../core/identity-assurance/verificacion-ofrecida';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { rolesAlcanzan, type AppSection } from '../../core/navigation/navigation.types';
 import { dataOf, empty, loading, ready, stale } from '../../core/view-state/view-state';
@@ -231,6 +232,15 @@ export class Dashboard {
   protected readonly pacientes = signal<ViewState<PatientPageResumen>>(loading());
   protected readonly directory = signal<ViewState<PublicProjection>>(loading());
 
+  /**
+   * Si el panel muestra la tarjeta «Tu identidad».
+   *
+   * Va como campo y no como import suelto en la plantilla porque una plantilla
+   * de Angular sólo lee miembros de la clase. Ver
+   * `VERIFICACION_DE_IDENTIDAD_OFRECIDA` sobre por qué está apagada.
+   */
+  protected readonly verificacionOfrecida = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
+
   /** Los casos de verificación propios. Sin estado de vista: es un adorno, no una pantalla. */
   protected readonly casos = signal<readonly VerificationCase[]>([]);
 
@@ -263,7 +273,12 @@ export class Dashboard {
 
   constructor() {
     this.loadDirectory();
-    this.loadCasos();
+    // Sin verificación ofrecida no hay tarjeta que llenar, así que tampoco hay
+    // petición que hacer: pedir un trámite que nadie va a ver es gastar una
+    // llamada por cada panel que se abre. Ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
+    if (this.verificacionOfrecida) {
+      this.loadCasos();
+    }
     this.cargarAltaPendiente();
     if (this.puedeVerPacientes()) {
       this.loadPacientes();

@@ -216,6 +216,48 @@ export const LINE_HEIGHT_ROLES = [
 export type LineHeightRole = (typeof LINE_HEIGHT_ROLES)[number];
 export type LineHeightToken = `--lh-${LineHeightRole}`;
 
+/* ---- alias de compatibilidad ---------------------------------------------
+   Deuda declarada, no vocabulario nuevo. */
+
+/**
+ * Los siete nombres que 19 hojas de estilo escribieron sin que existieran.
+ *
+ * Nacieron de la misma confusión repetida: `--surface-raised` en vez de
+ * `--bg-surface`, `--text-link` en vez de `--brand-primary`… Como `var()` cae
+ * en su valor de reserva sin avisar, cada uno de esos archivos quedó con un
+ * color **fijo** escrito a mano, y en tema oscuro el panel de la campana se
+ * pintaba blanco con texto claro encima. El PR #232 los declaró en
+ * `styles.css` apuntando al token de verdad, que apaga el incendio en las 19 a
+ * la vez.
+ *
+ * Se registran acá porque la prueba de fidelidad exige que todo token
+ * declarado en el CSS esté en el catálogo, y esa exigencia es correcta: un
+ * token que el CSS declara y el catálogo no conoce es exactamente la deriva
+ * que la prueba vino a detectar. Registrarlos **como alias y en su propio
+ * grupo** es lo que deja ver que son deuda: `DESIGN_TOKENS` los incluye, pero
+ * `SURFACE`, `TEXT` y `BRAND` —que es de donde se escribe código nuevo— no.
+ *
+ * **No usar en código nuevo.** El grupo se vacía a medida que cada hoja pase a
+ * su token de primera mano; `notification-bell.css` ya no pide ninguno.
+ */
+export const COMPAT_ALIASES = {
+  /** → `--bg-surface`. */
+  surfaceRaised: '--surface-raised',
+  /** → `--bg-hover`. */
+  surfaceHover: '--surface-hover',
+  /** → `--border-default`. */
+  borderSubtle: '--border-subtle',
+  /** → `--text-muted`. */
+  textTertiary: '--text-tertiary',
+  /** → `--st-error-fg`. */
+  textDanger: '--text-danger',
+  /** → `--brand-primary`. */
+  textLink: '--text-link',
+  /** → `--brand-primary`. */
+  accent: '--accent',
+} as const;
+export type CompatAliasToken = (typeof COMPAT_ALIASES)[keyof typeof COMPAT_ALIASES];
+
 /* ---- unión total + catálogo en runtime ----------------------------------- */
 
 export type DesignToken =
@@ -235,7 +277,8 @@ export type DesignToken =
   | EasingToken
   | FontFamilyToken
   | FontSizeToken
-  | LineHeightToken;
+  | LineHeightToken
+  | CompatAliasToken;
 
 /** Nombre de la rampa: `rampToken('petrol', 500)` → `--c-petrol-500`. */
 export function rampToken<F extends RampFamily, S extends RampStep>(
@@ -290,6 +333,8 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...Object.values(FONT_FAMILY),
   ...TYPE_ROLES.map((role): FontSizeToken => `--fs-${role}`),
   ...LINE_HEIGHT_ROLES.map((role): LineHeightToken => `--lh-${role}`),
+  // Al final y aparte: ver `COMPAT_ALIASES`. No son vocabulario, son deuda.
+  ...Object.values(COMPAT_ALIASES),
 ]);
 
 /** Guarda de tipo para lo que viene de `localStorage`, que es texto sin contrato. */

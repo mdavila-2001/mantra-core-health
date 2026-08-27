@@ -51,8 +51,14 @@ export const authGuard: CanActivateFn = tracedGuard('authGuard', () => {
  * como `redirectTo: 'dashboard'` — así que quien llegaba sin sesión, ni
  * siquiera de visita, caía directo al login. Un enlace compartido a secas
  * («mirá esta app») no debería pedir cuenta antes de dejar ver nada: la
- * superficie pública (`/buscar`) es la puerta de entrada, el login es lo que
- * pide una acción concreta.
+ * superficie pública es la puerta de entrada, el login es lo que pide una
+ * acción concreta.
+ *
+ * El destino sin sesión es `/publicaciones` —el compilado de lo último que
+ * escribieron los profesionales— y no `/buscar`. Quien entra por primera vez no
+ * trae el nombre de un médico en la cabeza, así que un buscador le pide de
+ * entrada justamente el dato que no tiene; un feed se lee sin saber nada de
+ * antemano, y de cada publicación se llega a la ficha de quien la escribió.
  *
  * Con sesión sigue yendo al panel: no le cambia nada a quien ya inició sesión.
  *
@@ -65,5 +71,5 @@ export const homeGuard: CanActivateFn = tracedGuard('homeGuard', () => {
   const session = inject(SessionStore);
   const router = inject(Router);
 
-  return router.createUrlTree([session.isAuthenticated() ? '/dashboard' : '/buscar']);
+  return router.createUrlTree([session.isAuthenticated() ? '/dashboard' : '/publicaciones']);
 });
