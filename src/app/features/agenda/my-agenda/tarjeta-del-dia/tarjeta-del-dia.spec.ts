@@ -83,6 +83,92 @@ describe('TarjetaDelDia', () => {
     http.verify();
   });
 
+  /**
+   * La modalidad de la atención — la teleconsulta desde la pantalla.
+   *
+   * La API la acepta desde la PR #251, pero hasta acá ninguna pantalla podía
+   * mandarla: un doctor no tenía cómo declarar que atiende por video. Estas
+   * pruebas fijan las tres mitades — que el control aparece cuando tiene
+   * sentido, que el valor VIAJA (el cliente arma el cuerpo campo por campo y
+   * descarta en silencio lo que no nombra), y que se dice antes de guardar.
+   */
+  describe('la modalidad de la atención', () => {
+    it('no se ofrece sin paciente: un rato tuyo no se atiende por videollamada', async () => {
+      await montar();
+      api()['motivo'].set('Reunión de equipo');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.tarjeta__modalidad')).toBeNull();
+    });
+
+    it('aparece al elegir paciente, con presencial marcado', async () => {
+      await montar();
+      api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.tarjeta__modalidad')).not.toBeNull();
+      expect(api()['modalidad']()).toBe('PRESENCIAL');
+    });
+
+    it('la teleconsulta VIAJA en el cuerpo de la petición', async () => {
+      // Lo que el cliente descartaría si alguien olvidara nombrarla: el POST
+      // saldría sin `channel` y nada fallaría — la cita quedaría presencial.
+      await montar();
+      api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
+      api()['modalidad'].set('TELECONSULTA');
+      fixture.detectChanges();
+
+      api()['guardar']();
+      const req = http.expectOne(
+        (r) => r.url === '/scheduling/appointments/direct' && r.method === 'POST',
+      );
+      expect(req.request.body.channel).toBe('TELECONSULTA');
+      req.flush({ bookingId: 'bk-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+      http.verify();
+    });
+
+    it('presencial también viaja: elegirlo no es lo mismo que no decir nada', async () => {
+      await montar();
+      api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
+      fixture.detectChanges();
+
+      api()['guardar']();
+      const req = http.expectOne(
+        (r) => r.url === '/scheduling/appointments/direct' && r.method === 'POST',
+      );
+      expect(req.request.body.channel).toBe('PRESENCIAL');
+      req.flush({ bookingId: 'bk-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+      http.verify();
+    });
+
+    it('avisa la videollamada antes de guardar, y no repite lo de siempre', async () => {
+      // Lo que se sale de la norma se dice; «en el consultorio» en cada cita
+      // presencial sería ruido.
+      //
+      // Se mira SÓLO la frase de inferencia y no la pantalla entera: los
+      // rótulos de las tres opciones también dicen «videollamada», así que
+      // aseverar sobre todo el texto probaría que el control existe, no que la
+      // frase cambió.
+      const inferencia = () =>
+        (fixture.nativeElement.querySelector('.tarjeta__inferencia')?.textContent ??
+          '') as string;
+
+      await montar();
+      api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
+      fixture.detectChanges();
+      expect(inferencia()).toContain('le avisamos al paciente');
+      expect(inferencia()).not.toContain('videollamada');
+
+      api()['modalidad'].set('TELECONSULTA');
+      fixture.detectChanges();
+      expect(inferencia()).toContain('Va por videollamada');
+
+      api()['modalidad'].set('DOMICILIO');
+      fixture.detectChanges();
+      expect(inferencia()).toContain('Vas a su domicilio');
+    });
+  });
+
   it('con solo MOTIVO infiere tiempo ocupado, y lo dice', async () => {
     await montar();
     api()['motivo'].set('Reunión de equipo');
