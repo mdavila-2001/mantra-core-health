@@ -48,6 +48,7 @@ const CATALOGO_MUNICIPIOS = '/terminology/value-sets?code=VS_BO_MUNICIPALITY';
 
 /** La del catálogo de ocupaciones de Bolivia, que dispara el mismo constructor. */
 const CATALOGO_OCUPACIONES = '/terminology/value-sets?code=VS_BO_OCCUPATION';
+const CATALOGO_ESPECIALIDADES = '/terminology/value-sets?code=VS_MEDICAL_SPECIALTY';
 
 /** Un concepto de `VS_BO_OCCUPATION`, el que la ocupación manda como uuid. */
 const OCUPACION_DOCENTE = 'a2f0b6d1-0f7d-5a2e-9d3b-6f1f0a9c1e42';
@@ -290,7 +291,10 @@ describe('RegisterPatient', () => {
         | 'middleName'
         | 'motherLastName'
         | 'nationalId'
-        | 'regulatoryAuthority',
+        | 'regulatoryAuthority'
+        | 'specialtyPrimary'
+        | 'specialtySecond'
+        | 'specialtyThird',
         string
       >
     > = {},
@@ -311,6 +315,9 @@ describe('RegisterPatient', () => {
       birthDate: null,
       licenseIssueDate: null,
       issuerAdministrativeAreaConceptId: null,
+      specialtyPrimary: extra.specialtyPrimary ?? '',
+      specialtySecond: extra.specialtySecond ?? '',
+      specialtyThird: extra.specialtyThird ?? '',
     });
   }
 
@@ -551,13 +558,14 @@ describe('RegisterPatient', () => {
       await montar('profesional');
     });
 
-    it('tiene cinco páginas, ninguna de más de cuatro preguntas', () => {
-      // Cinco y no cuatro porque el límite es de campos por página, no de
+    it('tiene seis páginas, ninguna de más de cuatro preguntas', () => {
+      // Seis y no cinco porque el límite es de campos por página, no de
       // páginas: apretar seis en una para tener una página menos es lo que
-      // este motor vino a deshacer.
+      // este motor vino a deshacer. La sexta son las especialidades, que
+      // entraron con página propia por esa misma regla.
       const paginas = component.paginasProfesional();
 
-      expect(paginas.length).toBe(5);
+      expect(paginas.length).toBe(6);
       for (const pagina of paginas) {
         expect(pagina.campos.length).toBeLessThanOrEqual(4);
       }
@@ -573,6 +581,142 @@ describe('RegisterPatient', () => {
           ).not.toBeNull();
         }
       }
+    });
+
+    /**
+     * Las especialidades EN el alta — registro del cliente, módulo Médico §1.4.2
+     * y §1.4.4.
+     *
+     * Lo que fijan: que se ofrecen las de la profesión elegida y no las otras
+     * (un odontólogo no es cardiólogo), que el colegio cambia solo sin pisar una
+     * elección explícita, y que los conceptos VIAJAN en el cuerpo — el cliente
+     * lo arma nombre por nombre y descarta en silencio lo que no nombra.
+     */
+    describe('las especialidades del alta', () => {
+      /** Responde el catálogo con dos médicas y dos odontológicas. */
+      function catalogoDeEspecialidades(): void {
+        http.expectOne(CATALOGO_ESPECIALIDADES).flush({
+          items: [{ id: 'vs-esp', internalCode: 'VS_MEDICAL_SPECIALTY', name: 'Especialidades' }],
+        });
+        http.expectOne('/terminology/value-sets/vs-esp/$expand?limit=200').flush({
+          items: [
+            { conceptId: 'e-cardio', code: 'CARDIOLOGIA', display: 'Cardiología' },
+            { conceptId: 'e-pedia', code: 'PEDIATRIA', display: 'Pediatría' },
+            { conceptId: 'e-endo', code: 'ENDODONCIA', display: 'Endodoncia' },
+            { conceptId: 'e-orto', code: 'ORTODONCIA', display: 'Ortodoncia' },
+          ],
+          count: 4,
+          limit: 200,
+          nextCursor: null,
+        });
+      }
+
+      function opcionesDeLaPagina(): readonly { value: string; label: string }[] {
+        const pagina = component
+          .paginasProfesional()
+          .find((p) => p.titulo === 'Tus especialidades');
+        return (pagina?.campos[0].options ?? []) as readonly {
+          value: string;
+          label: string;
+        }[];
+      }
+
+      it('un odontólogo ve las odontológicas y NO las médicas', () => {
+        catalogoDeEspecialidades();
+        component.formProfesional.controls.professionalTitle.setValue(
+          'Odontólogo / Odontóloga',
+        );
+        fixture.detectChanges();
+
+        const valores = opcionesDeLaPagina().map((o) => o.value);
+        expect(valores).toEqual(['e-endo', 'e-orto']);
+      });
+
+      it('un médico ve las médicas y NO las odontológicas', () => {
+        catalogoDeEspecialidades();
+        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+        fixture.detectChanges();
+
+        const valores = opcionesDeLaPagina().map((o) => o.value);
+        expect(valores).toEqual(['e-cardio', 'e-pedia']);
+      });
+
+      it('el colegio cambia solo al elegir la profesión', () => {
+        catalogoDeEspecialidades();
+        const autoridad = component.formProfesional.controls.regulatoryAuthority;
+
+        component.formProfesional.controls.professionalTitle.setValue(
+          'Odontólogo / Odontóloga',
+        );
+        expect(autoridad.value).toBe('Colegio de Odontólogos de Bolivia');
+
+        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+        expect(autoridad.value).toBe('Colegio Médico de Bolivia');
+      });
+
+      it('pero NO pisa una autoridad elegida a mano', () => {
+        // El automatismo es una ayuda, no una regla: quien eligió SEDES sabe
+        // por qué, y verlo cambiar solo sería peor que no tener automatismo.
+        catalogoDeEspecialidades();
+        const autoridad = component.formProfesional.controls.regulatoryAuthority;
+        autoridad.setValue('Servicio Departamental de Salud (SEDES)');
+
+        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+
+        expect(autoridad.value).toBe('Servicio Departamental de Salud (SEDES)');
+      });
+
+      it('cambiar de profesión limpia una especialidad que ya no corresponde', () => {
+        // Un desplegable con un valor que no está entre sus opciones muestra un
+        // vacío que miente: parece que no elegiste y el cuerpo lo manda igual.
+        catalogoDeEspecialidades();
+        component.formProfesional.controls.professionalTitle.setValue(
+          'Odontólogo / Odontóloga',
+        );
+        component.formProfesional.controls.specialtyPrimary.setValue('e-endo');
+
+        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+
+        expect(component.formProfesional.controls.specialtyPrimary.value).toBe('');
+      });
+
+      it('las especialidades elegidas VIAJAN en el cuerpo, en orden', () => {
+        catalogoDeEspecialidades();
+        completarProfesional({
+          professionalTitle: 'Médico / Médica',
+          specialtyPrimary: 'e-cardio',
+          specialtySecond: 'e-pedia',
+        });
+        component.submit();
+
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.specialtyConceptIds).toEqual(['e-cardio', 'e-pedia']);
+        req.flush(RESPUESTA_PRO);
+      });
+
+      it('sin especialidades el cuerpo no las menciona', () => {
+        catalogoDeEspecialidades();
+        completarProfesional();
+        component.submit();
+
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.specialtyConceptIds).toBeUndefined();
+        req.flush(RESPUESTA_PRO);
+      });
+
+      it('elegir la misma dos veces declara una', () => {
+        catalogoDeEspecialidades();
+        completarProfesional({
+          professionalTitle: 'Médico / Médica',
+          specialtyPrimary: 'e-cardio',
+          specialtySecond: 'e-cardio',
+        });
+        component.submit();
+
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.specialtyConceptIds).toEqual(['e-cardio']);
+        req.flush(RESPUESTA_PRO);
+      });
     });
 
     it('va a otro endpoint y manda los cinco campos obligatorios', () => {
