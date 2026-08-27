@@ -887,6 +887,21 @@ function rutasDeFichasPublicas(): Routes {
     loadComponent: () =>
       import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
     children: [
+      // La vista de una publicación suelta cuelga sólo de `p/` —quien publica
+      // es un profesional—, y va antes que `:slug` porque tiene más segmentos.
+      ...(prefijo === 'p'
+        ? [
+            {
+              path: ':slug/publicacion/:postId',
+              data: { kind, pantallaReal: true },
+              resolve: { perfil: perfilPublicoResolver },
+              loadComponent: () =>
+                import('./features/public-profile/publicacion-detalle/publicacion-detalle').then(
+                  (m) => m.PublicacionDetalle,
+                ),
+            },
+          ]
+        : []),
       {
         path: ':slug',
         data: { kind, pantallaReal: true },
@@ -922,6 +937,28 @@ function rutasDeFichasPublicas(): Routes {
  */
 function rutasDeBusquedaPublica(): Routes {
   return [
+    {
+      // La portada pública: lo último que publicaron todos los profesionales.
+      // Es el destino por defecto de quien entra sin sesión (ver `homeGuard`),
+      // y va en su propia ruta y no en `/buscar` porque son dos cosas
+      // distintas: acá se lee sin saber a quién buscar, allá se busca a
+      // alguien concreto.
+      path: 'publicaciones',
+      loadComponent: () =>
+        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+      children: [
+        {
+          path: '',
+          pathMatch: 'full',
+          title: 'Lo último de los profesionales — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/feed-publicaciones/feed-publicaciones').then(
+              (m) => m.FeedPublicaciones,
+            ),
+        },
+      ],
+    },
     {
       path: 'buscar',
       loadComponent: () =>

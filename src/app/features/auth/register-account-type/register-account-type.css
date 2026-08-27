@@ -68,16 +68,29 @@
     /* La tarjeta entera es el destino táctil: en un teléfono, apuntar sólo al
        título deja la mitad del área muerta y se siente rota. */
     cursor: pointer;
+    /* El resorte del sistema al levantar, la curva corta al hundir: una
+       tarjeta que sube con rebote y baja en seco es exactamente cómo se siente
+       un control con masa. Que la salida y la entrada usen curvas distintas es
+       la mitad de lo que hace «nativo» a un hover. */
     transition:
         border-color var(--dur-base) var(--ease-out),
         box-shadow var(--dur-base) var(--ease-out),
-        transform var(--dur-base) var(--ease-out);
+        transform var(--dur-base) var(--ease-spring);
 }
 
 .tipos__card:hover {
     border-color: var(--brand-primary);
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
+}
+
+/* El hundido al pulsar. Sin esto la tarjeta se queda levantada mientras la
+   ruta carga y no acusa recibo del toque, que es cuando la gente vuelve a
+   tocar pensando que no funcionó. */
+.tipos__card:active {
+    transform: scale(0.985);
+    transition-duration: var(--dur-fast);
+    transition-timing-function: var(--ease-standard);
 }
 
 .tipos__card:focus-visible {
@@ -91,7 +104,8 @@
         transition: none;
     }
 
-    .tipos__card:hover {
+    .tipos__card:hover,
+    .tipos__card:active {
         transform: none;
     }
 }
@@ -116,6 +130,36 @@
 
 .tipos__card:hover .tipos__icon {
     background: color-mix(in srgb, var(--brand-primary) 18%, transparent);
+}
+
+/* La entrada de las tres, escalonada y con el mismo asentarse que la tarjeta
+   del acceso: la pantalla se lee de izquierda a derecha en vez de aparecer
+   entera. Nacen un punto por debajo de su tamaño, no desde un borde. */
+.tipos__item {
+    animation: tipos-asienta var(--dur-slow) var(--ease-spring) both;
+}
+
+.tipos__item:nth-child(1) {
+    animation-delay: 60ms;
+}
+.tipos__item:nth-child(2) {
+    animation-delay: 120ms;
+}
+.tipos__item:nth-child(3) {
+    animation-delay: 180ms;
+}
+
+@keyframes tipos-asienta {
+    from {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tipos__item {
+        animation-delay: 0ms !important;
+    }
 }
 
 .tipos__card-title {

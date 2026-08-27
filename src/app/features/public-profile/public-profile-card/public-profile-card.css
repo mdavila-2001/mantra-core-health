@@ -10,6 +10,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--e4);
+  /* Una ficha social no se lee a lo ancho de un monitor: la columna se acota a
+     una medida de lectura cómoda y se centra, como la de cualquier perfil de
+     red social. */
+  max-inline-size: 45rem;
+  margin-inline: auto;
 }
 
 /* --- Encabezado ---------------------------------------------------------- */
@@ -214,41 +219,117 @@
   margin-top: var(--e3);
 }
 
-.perfil__trayectoria {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e4);
+/* --- Trayectoria: línea de tiempo vertical ---------------------------------
+   Un riel continuo con un punto por hito, más marcado en el que sigue vigente
+   —sin `endDate`—, que es el que de verdad importa mirar primero. El riel es
+   un único gradiente de fondo detrás de la columna de puntos, no un borde por
+   ítem: así no se corta entre hito y hito y queda una línea de una pieza. */
+.perfil__linea-tiempo {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.perfil__vinculo + .perfil__vinculo {
-  padding-block-start: var(--e4);
-  border-block-start: 1px solid var(--filete-2);
+.hito {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  column-gap: var(--e3);
 }
 
-.perfil__vinculo-cargo {
+.hito__riel {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+/* El riel: una línea vertical que atraviesa el punto, de arriba a abajo del
+   `<li>`. En el primer y el último hito se recorta a la mitad para no
+   sobresalir de la lista. */
+.hito__riel::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inline-size: 2px;
+  background: var(--filete-2);
+}
+
+.hito:first-child .hito__riel::before {
+  inset-block-start: 50%;
+}
+
+.hito:last-child .hito__riel::before {
+  inset-block-end: 50%;
+}
+
+.hito__punto {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  inline-size: 0.7rem;
+  block-size: 0.7rem;
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  border: 2px solid var(--tinta-2);
+}
+
+.hito--vigente .hito__punto {
+  border-color: var(--tinta-marca);
+  background: var(--tinta-marca);
+}
+
+.hito__cuerpo {
+  padding-block-end: var(--e4);
+}
+
+.hito:last-child .hito__cuerpo {
+  padding-block-end: 0;
+}
+
+.hito__periodo {
   margin: 0;
+  color: var(--tinta-2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.hito--vigente .hito__periodo {
+  color: var(--tinta-marca);
+}
+
+.hito__cargo {
+  margin: var(--e1) 0 0;
   font-weight: 600;
   color: var(--tinta);
 }
 
-.perfil__vinculo-departamento {
+.hito__departamento {
   font-weight: 400;
   color: var(--tinta-2);
 }
 
-.perfil__vinculo-institucion {
-  margin: var(--e1) 0 0;
-  color: var(--tinta);
+.hito__institucion {
+  margin: 2px 0 0;
+  color: var(--tinta-2);
 }
 
-.perfil__vinculo-periodo {
+/* --- Publicaciones: un feed al estilo de una red social. La sección no es una
+   `app-card` —sería una tarjeta blanca gigante con los posts adentro—: es un
+   título y una pila de tarjetas, cada post la suya, con la imagen a sangre y la
+   interacción al pie. */
+.perfil__feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.perfil__feed-cabecera h2 {
+  margin: 0;
+}
+
+.perfil__feed-cabecera .caption {
   margin: var(--e1) 0 0;
-  color: var(--tinta-2);
-  font-size: 14px;
-  text-transform: capitalize;
 }
 
 .perfil__publicaciones {
@@ -260,14 +341,9 @@
   list-style: none;
 }
 
-.perfil__publicacion + .perfil__publicacion {
-  padding-block-start: var(--e4);
-  border-block-start: 1px solid var(--filete-2);
-}
-
-.perfil__publicacion .overline {
-  margin: 0 0 var(--e2);
-}
+/* Cada `<li>` es sólo el ancla de la lista; la tarjeta la dibuja
+   `app-publicacion-post`, que se comparte con la vista de una publicación
+   suelta. */
 
 @media (max-width: 48rem) {
   .perfil__datos {

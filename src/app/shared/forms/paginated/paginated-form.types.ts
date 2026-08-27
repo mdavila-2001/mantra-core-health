@@ -7,6 +7,7 @@
     no en una hoja de estilos ni en la cabeza de quien arma la pantalla.
     ========================================================================== */
 
+import type { NavIconName } from '../../components/atoms/nav-icon/nav-icon.types';
 import type { SelectOption } from '../../components/atoms/select/select.types';
 
 /**
@@ -84,6 +85,21 @@ export interface CampoDeFormulario {
 
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;
+
+  /**
+   * El glifo que va **dentro** del campo, del set cerrado del nav.
+   *
+   * Opcional y sin defecto: un ícono por campo, puesto por costumbre, es ruido
+   * — la regla del set (`nav-icon.types.ts`) vale igual acá: se declara cuando
+   * **dice algo que el rótulo no dice ya**, y sobre todo cuando ayuda a
+   * encontrar un campo entre varios de un vistazo. En una página de un solo
+   * campo no aporta nada; en una de cuatro, es lo que la vuelve escaneable.
+   *
+   * Va dentro del control y no al lado del rótulo a propósito: así comparte el
+   * marco, el foco y el estado de error del campo, y se enciende cuando el
+   * campo está activo en vez de quedar como una calcomanía junto al texto.
+   */
+  readonly icono?: NavIconName;
 
   /**
    * El `data-testid` del control, cuando la pantalla ya tenía uno.

@@ -13,7 +13,7 @@
  * `side-nav.types.ts` lo re-exporta para no romper a quien ya lo importaba de
  * ahí.
  *
- * ## Por qué son cuarenta y cuatro y no siete
+ * ## Por qué son cuarenta y siete y no siete
  *
  * Eran siete, elegidos cuando el menú tenía dos entradas y el set «anticipaba
  * los portales del modelo». Con cincuenta y cinco secciones eso dejó de ser un
@@ -82,10 +82,23 @@ export const NAV_ICON_NAMES = [
   // Confianza y llaves.
   'shield',
   'key',
+  /**
+   * Candado. **No es `key`**: la llave es el acceso que se presta —la
+   * delegación—, el candado es lo que uno guarda y nadie más abre. En un
+   * formulario de acceso conviven, y confundirlos deja el campo de contraseña
+   * diciendo «esto se comparte».
+   */
+  'lock',
   'link',
   'flag',
   'umbrella',
   'briefcase',
+
+  // Contacto: cómo se llega a una persona. Ninguno de los de arriba lo dice
+  // —`chat` es la mensajería del producto, no una dirección de correo—, y son
+  // los dos datos que todo formulario de alta pide.
+  'mail',
+  'phone',
 
   // Avisos y ajustes.
   'bell',

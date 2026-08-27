@@ -152,23 +152,28 @@
     @if (p.trajectory.length > 0) {
       <section class="app-card perfil__seccion">
         <div class="app-card__cabecera"><h2>Trayectoria</h2></div>
-        <ul class="perfil__trayectoria">
+        <ol class="perfil__linea-tiempo">
           @for (vinculo of p.trajectory; track vinculo.organizationName + vinculo.startDate) {
-            <li class="perfil__vinculo">
-              <p class="perfil__vinculo-cargo">
-                {{ vinculo.roleTitle }}
-                @if (vinculo.departmentText) {
-                  <span class="perfil__vinculo-departamento">· {{ vinculo.departmentText }}</span>
-                }
-              </p>
-              <p class="perfil__vinculo-institucion">{{ vinculo.organizationName }}</p>
-              <p class="perfil__vinculo-periodo">
-                {{ vinculo.startDate | date: 'MMM yyyy' }} –
-                {{ vinculo.endDate ? (vinculo.endDate | date: 'MMM yyyy') : 'actualidad' }}
-              </p>
+            <li class="hito" [class.hito--vigente]="!vinculo.endDate">
+              <span class="hito__riel" aria-hidden="true">
+                <span class="hito__punto"></span>
+              </span>
+              <div class="hito__cuerpo">
+                <p class="hito__periodo">
+                  {{ vinculo.startDate | date: 'MMM yyyy' }} –
+                  {{ vinculo.endDate ? (vinculo.endDate | date: 'MMM yyyy') : 'actualidad' }}
+                </p>
+                <p class="hito__cargo">
+                  {{ vinculo.roleTitle }}
+                  @if (vinculo.departmentText) {
+                    <span class="hito__departamento">· {{ vinculo.departmentText }}</span>
+                  }
+                </p>
+                <p class="hito__institucion">{{ vinculo.organizationName }}</p>
+              </div>
             </li>
           }
-        </ul>
+        </ol>
       </section>
     }
 
@@ -210,18 +215,31 @@
          se lee como una cuenta abandonada—, y a quien configura su vitrina sí,
          porque es el hueco que está dejando. -->
     @if (p.posts.length > 0 || preview()) {
-      <section class="app-card perfil__seccion">
-        <div class="app-card__cabecera">
+      <section class="perfil__seccion perfil__feed">
+        <div class="perfil__feed-cabecera">
           <h2>Publicaciones</h2>
+          <p class="caption">
+            Lo que este profesional escribe para divulgar. No es una consulta ni un consejo para tu
+            caso.
+          </p>
         </div>
         @if (p.posts.length === 0) {
-          <p class="caption">Todavía no publicaste nada.</p>
+          <p class="caption">
+            Todavía no publicaste nada. Un artículo corto —una duda frecuente, algo que repetís en
+            cada consulta— es lo que hace que una ficha se lea como la de alguien en actividad.
+          </p>
         } @else {
           <ul class="perfil__publicaciones">
             @for (post of p.posts; track post.id) {
-              <li class="perfil__publicacion">
-                <p class="overline">{{ post.publishedAt | date: 'dd/MM/yyyy' }}</p>
-                <p class="perfil__parrafo">{{ post.bodyText }}</p>
+              <li>
+                <app-publicacion-post
+                  [post]="post"
+                  [slug]="p.slug"
+                  [autorNombre]="p.displayName"
+                  [autorHeadline]="p.headline"
+                  [autorAvatar]="p.avatarUrl"
+                  [autorIniciales]="iniciales()"
+                />
               </li>
             }
           </ul>

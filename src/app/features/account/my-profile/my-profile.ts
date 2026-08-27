@@ -15,6 +15,7 @@ import {
   errorToViewState,
   IDENTITY_VERIFICATION_ROUTE,
 } from '../../../core/http/error-to-view-state';
+import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../../core/identity-assurance/verificacion-ofrecida';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -176,6 +177,14 @@ export class MyProfile {
 
   protected readonly rutaDeVerificacion = IDENTITY_VERIFICATION_ROUTE;
 
+  /**
+   * Si la ficha «Verificación de identidad» se dibuja.
+   *
+   * Campo y no import suelto porque la plantilla sólo lee miembros de la clase.
+   * Ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
+   */
+  protected readonly verificacionOfrecida = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
+
   /** El mensaje de un 403 que no es el de identidad: se muestra como lo haría el host. */
   protected readonly motivoDelMuro = computed(() => {
     const estado = this.resumen();
@@ -290,6 +299,13 @@ export class MyProfile {
    * sin lo único que en ese caso tiene para decir.
    */
   private cargarCasos(): void {
+    // Con la verificación apagada la ficha no se dibuja, así que su lectura
+    // sería una petición para nadie. Ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
+    if (!this.verificacionOfrecida) {
+      this.casos.set([]);
+      return;
+    }
+
     this.identity.listVerificationCases().subscribe({
       next: (casos) => this.casos.set(casos),
       error: () => this.casos.set([]),

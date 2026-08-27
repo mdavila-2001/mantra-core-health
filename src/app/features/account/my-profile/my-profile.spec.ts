@@ -65,11 +65,12 @@ describe('MyProfile', () => {
     resolverEstadosDeCaso(http);
     fixture.detectChanges();
 
-    // El historial de verificación se pide **en paralelo** al resumen, no
-    // encadenado: el resumen falla con 403 cuando falta verificar la identidad,
-    // que es justo cuando el historial tiene algo que decir. Se responde acá
-    // para que cada prueba hable de lo suyo.
-    http.expectOne('/identity/me/verification-cases').flush([]);
+    // El historial de verificación **ya no se pide**: la ficha está apagada
+    // mientras `VERIFICACION_DE_IDENTIDAD_OFRECIDA` sea `false`, y una lectura
+    // para una ficha que no se dibuja es una petición para nadie. Se afirma acá
+    // —y no en una prueba suelta— porque es lo que sostiene el `verify()` de
+    // todas las demás.
+    http.expectNone('/identity/me/verification-cases');
   });
 
   afterEach(() => http.verify());
@@ -399,16 +400,29 @@ describe('MyProfile · orden del historial', () => {
 
   afterEach(() => http.verify());
 
+  /**
+   * Se escriben los casos **a mano** en vez de responderlos por la red: con la
+   * verificación apagada la pantalla ya no los pide, y la regla de cuál es el
+   * vigente sigue siendo suya. Probarla acá es lo que hace que volver a
+   * encender la ficha no estrene un orden distinto del que tenía.
+   */
   it('el caso vigente es el más reciente, y el cierre manda sobre la apertura', () => {
-    http.expectOne('/identity/me/verification-cases').flush([
+    const casos = (
+      fixture.componentInstance as unknown as {
+        casos: { set: (valor: readonly unknown[]) => void };
+      }
+    ).casos;
+    // Fechas ya como `Date`, que es lo que el cliente entrega: el componente las
+    // ordena por `getTime()`, no por la cadena de la API.
+    casos.set([
       // Abierto después, pero sin resolver.
-      { id: 'c-viejo', status: 'PENDING', openedAt: '2026-01-10T10:00:00.000Z' },
+      { id: 'c-viejo', status: 'PENDING', openedAt: new Date('2026-01-10T10:00:00.000Z') },
       // Abierto antes y resuelto **después**: es el más reciente de los dos.
       {
         id: 'c-nuevo',
         status: 'APPROVED',
-        openedAt: '2026-01-05T10:00:00.000Z',
-        completedAt: '2026-02-01T10:00:00.000Z',
+        openedAt: new Date('2026-01-05T10:00:00.000Z'),
+        completedAt: new Date('2026-02-01T10:00:00.000Z'),
       },
     ]);
     http

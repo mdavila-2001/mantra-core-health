@@ -1,0 +1,82 @@
+<div class="tarjeta" role="dialog" aria-label="Agregar algo al día">
+  <header class="tarjeta__barra">
+    <h3 class="tarjeta__titulo">{{ titulo() }}</h3>
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      aria-label="Cerrar sin guardar"
+      (clicked)="cerrada.emit()"
+    >
+      ✕
+    </button>
+  </header>
+
+  <form class="tarjeta__cuerpo" (submit)="$event.preventDefault(); guardar()">
+    <div class="tarjeta__rango">
+      <app-form-field label="Desde" [required]="true">
+        <app-input [(value)]="desde" placeholder="10:00" />
+      </app-form-field>
+      <app-form-field label="Hasta" [required]="true">
+        <app-input [(value)]="hasta" placeholder="10:45" />
+      </app-form-field>
+    </div>
+
+    <app-form-field
+      label="¿Con quién?"
+      hint="Buscá al paciente, o dejalo vacío si es un rato tuyo."
+    >
+      <app-reference-combobox
+        [selected]="paciente()"
+        [options]="candidatos()"
+        [loading]="buscando()"
+        placeholder="Nombre o código del paciente"
+        emptyMessage="Ningún paciente coincide"
+        (searched)="buscarPaciente($event)"
+        (selectionChange)="paciente.set($event)"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="¿Qué pasa?"
+      hint="El motivo de la cita, o el rótulo del rato ocupado (reunión, guardia…)."
+    >
+      <app-input [(value)]="motivo" placeholder="Control · Cirugía · Reunión de equipo…" />
+    </app-form-field>
+
+    <!-- La inferencia hecha visible: qué va a crear, dicho ANTES de apretar. -->
+    @if (queVaAPasar(); as aviso) {
+      <p class="tarjeta__inferencia" role="status">{{ aviso }}</p>
+    }
+
+    <!-- El choque con lo ya cargado del día, en vivo. El servidor cruza además
+         las otras sedes al guardar: esto es el aviso temprano, no la regla. -->
+    @if (choqueEnVivo(); as choque) {
+      <app-alert tone="warning" title="Ese rato ya está tomado">
+        {{ choque }}
+      </app-alert>
+    }
+
+    @if (error(); as mensaje) {
+      <app-alert tone="error" title="No se pudo guardar">
+        {{ mensaje }}
+      </app-alert>
+    }
+
+    <footer class="tarjeta__pie">
+      <!-- El horario fijo semanal no vive acá: la tarjeta cubre lo puntual de
+           UN día. El enlace es para quien cayó buscando eso. -->
+      <a class="tarjeta__publicar" routerLink="/agenda">¿Horario fijo semanal? → Publicar agenda</a>
+      <button
+        app-button
+        variant="primary"
+        type="submit"
+        [disabled]="!puedeGuardar()"
+        [isLoading]="guardando()"
+      >
+        Guardar
+      </button>
+    </footer>
+  </form>
+</div>

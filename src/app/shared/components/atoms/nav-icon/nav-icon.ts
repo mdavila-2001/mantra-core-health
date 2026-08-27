@@ -262,6 +262,21 @@ import type { NavIconName } from './nav-icon.types';
           <path d="M10.6 12.4 20.2 2.8" />
           <path d="m17.6 5.4 2.2 2.2M15.2 7.8l2.2 2.2" />
         }
+        @case ('lock') {
+          <!-- Candado cerrado: la contraseña. No es la llave, que es lo que
+               se presta: ver la nota del set. -->
+          <rect x="4.5" y="10.5" width="15" height="10" rx="2.2" />
+          <path d="M8.2 10.5V7.8a3.8 3.8 0 0 1 7.6 0v2.7" />
+        }
+        @case ('mail') {
+          <!-- Sobre: una dirección de correo, no una conversación. -->
+          <rect x="2.8" y="5" width="18.4" height="14" rx="2.2" />
+          <path d="m3.4 7.2 7.5 5.4a2 2 0 0 0 2.2 0l7.5-5.4" />
+        }
+        @case ('phone') {
+          <!-- Auricular: el teléfono al que se llama. -->
+          <path d="M7.6 3.5H5.2a1.8 1.8 0 0 0-1.8 2c.3 3 1.4 5.8 3.2 8.2a19 19 0 0 0 5.7 5.7c2.4 1.8 5.2 2.9 8.2 3.2a1.8 1.8 0 0 0 2-1.8v-2.4a1.8 1.8 0 0 0-1.5-1.8l-2.4-.4a1.8 1.8 0 0 0-1.8.8l-.8 1.2a14 14 0 0 1-5.4-5.4l1.2-.8a1.8 1.8 0 0 0 .8-1.8l-.4-2.4a1.8 1.8 0 0 0-1.8-1.5z" />
+        }
         @case ('link') {
           <!-- Dos eslabones: un proveedor de identidad es de afuera. -->
           <path d="M10.4 13.6a4.2 4.2 0 0 0 6 0l2.6-2.7a4.2 4.2 0 0 0-6-6l-1.5 1.6" />

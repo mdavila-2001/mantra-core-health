@@ -77,13 +77,20 @@ export interface PatientRegistration {
   /** Sexo asignado al nacer. Es dato clínico, distinto del género. */
   readonly sexAtBirth?: BirthSexCode;
   /**
-   * Ocupación en texto libre.
+   * Ocupación, como concepto de `VS_BO_OCCUPATION`.
    *
-   * Texto y no concepto porque el catálogo boliviano de ocupaciones
-   * (`VS_BO_OCCUPATION`) todavía no está sembrado: la API acepta
-   * `occupationConceptId`, pero hoy no hay de dónde sacar un uuid válido. El
-   * día que el catálogo exista, este campo pasa a ser el respaldo de «no está
-   * en la lista», que es como ya lo trata el backend.
+   * **Ya es un catálogo.** Lo siembra `BoOccupationsSeedService` en la API y lo
+   * lee `BoOccupationsCatalog`; el alta manda el uuid del concepto elegido.
+   * Antes iba en `occupationFreeText` porque el conjunto no existía en ninguna
+   * base, y cada persona escribía su oficio a mano.
+   */
+  readonly occupationConceptId?: string;
+  /**
+   * Ocupación en texto libre, el respaldo de «no está en la lista».
+   *
+   * El backend lo ignora si viene `occupationConceptId`. Este formulario ya no
+   * lo manda —el desplegable cubre la lista completa, con «Otra ocupación» al
+   * final—, y sigue en el contrato porque otros clientes lo usan.
    */
   readonly occupationFreeText?: string;
   readonly timeZone?: string;

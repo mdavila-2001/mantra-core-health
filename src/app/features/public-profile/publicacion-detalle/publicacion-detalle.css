@@ -1,0 +1,6 @@
+/* Una publicación suelta se lee en la misma columna angosta que la ficha, no a
+   lo ancho del monitor. */
+.publicacion-suelta {
+  max-inline-size: 40rem;
+  margin-inline: auto;
+}
