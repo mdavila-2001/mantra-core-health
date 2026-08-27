@@ -1,0 +1,55 @@
+/* Editar los datos propios del paciente: tres bloques en una columna, con
+   medida de formulario. Sólo distribución — los colores salen de los tokens.
+   Mobile-first: la única consulta de medios es `min-width`. */
+
+:host {
+  display: block;
+}
+
+.datos {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-6);
+  /* Un formulario de campos angostos a lo ancho de una pantalla grande se lee
+     peor que uno acotado a la medida de un formulario. */
+  max-inline-size: 44rem;
+}
+
+.datos__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.datos__nota {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* En el teléfono cada campo ocupa el ancho: dos columnas de 160 px obligan a
+   escribir un apellido en una rendija. Desde tablet caben de a dos. */
+.datos__campos {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-4);
+}
+
+@media (min-width: 780px) {
+  .datos__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* El aviso de catálogo caído: dice qué pasó y ofrece la salida en la misma
+   línea, para no empujar el resto del formulario hacia abajo. */
+.datos__aviso {
+  align-items: center;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+}

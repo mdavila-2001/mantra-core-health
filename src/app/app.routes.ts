@@ -505,6 +505,19 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Corregir los datos propios del paciente. **Sin `soloDeQuienAtiende()`**:
+    // es de quien se atiende, no de quien atiende — «Mi perfil» no declara
+    // roles y esta hija tampoco los restringe, igual que el caso de
+    // verificación de identidad. El sujeto lo resuelve el backend desde la
+    // sesión, así que no hay perfil ajeno que abrir escribiendo la URL.
+    path: 'my-account/profile/edit',
+    title: `${APP_TITLE} - Editar tus datos`,
+    loadComponent: () =>
+      import('./features/account/my-profile/patient-profile-edit/patient-profile-edit')
+        .then((m) => m.PatientProfileEdit)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La vitrina pública: se configura y se ve en la misma pantalla.
     path: 'my-account/preview',
     title: `${APP_TITLE} - Tu perfil público`,

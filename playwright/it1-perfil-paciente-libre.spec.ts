@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { expect, test, type APIRequestContext, type Locator, type Page } from '@playwright/test';
 
 import { administrador, apiViva, contextoDeApi, crearPaciente, urlDeApi } from './support/actores';
-import { accesoDeRevisor, aprobarIdentidad } from './support/identidad';
+import { accesoDeRevisor, aprobarIdentidad, tokenDe } from './support/identidad';
 import { entrar, esperarAplicacionLista, estable, irA } from './support/sesion';
 
 /**
@@ -18,12 +18,16 @@ import { entrar, esperarAplicacionLista, estable, irA } from './support/sesion';
  * `200` siempre y lo único que la verificación gobierna es el **código de
  * paciente**, que viaja sólo con aserción vigente.
  *
- * Así que hay dos recorridos, y los dos son de la misma persona:
+ * Así que hay tres recorridos, y los tres son de la misma persona:
  *
  * 1. **Recién registrada**: ve su nombre, su nacimiento y su estado, y donde
  *    iría el código lee «Pendiente de verificación» con la invitación al
  *    trámite. Sin muro y sin código inventado.
  * 2. **Verificada**: el mismo perfil, con el código y sin invitación.
+ * 3. **Corrigiendo lo suyo**: entra a «Editar tus datos», cambia nombre,
+ *    teléfono y nacimiento, y vuelve a «Mi perfil» a verlos. Se comprueba en la
+ *    pantalla **y** contra la API, porque una pantalla que muestra lo que
+ *    escribió la persona sin haberlo guardado se ve exactamente igual.
  *
  * ## Contra qué API corre
  *
@@ -48,6 +52,14 @@ const INVITACION = 'Verificá tu identidad para ver tu código de paciente';
 
 /** El copy de la tarjeta vacía de antes: si aparece, el muro sigue en pie. */
 const TARJETA_VACIA = 'cuando tu identidad esté verificada';
+
+/* Los valores con los que se corrige el alta en el tramo (c). El nombre no
+   comparte prefijo con el que siembra `crearPaciente` («Ana»), para que
+   afirmar el nuevo no pueda pasar por casualidad con el viejo puesto. */
+const NOMBRE_NUEVO = 'Valentina';
+const TELEFONO_NUEVO = '+591 71234567';
+const NACIMIENTO_NUEVO_VISIBLE = '02/11/1990';
+const NACIMIENTO_NUEVO_ISO = '1990-11-02';
 
 let api: APIRequestContext;
 
@@ -159,5 +171,82 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
 
     // Igual que arriba: se retrata el perfil ya resuelto, no su esqueleto.
     await capturar(page, '02-verificado');
+  });
+
+  /**
+   * El tramo (c): corregir lo que se declaró al registrarse.
+   *
+   * El alta escribía estos datos una vez y no había forma de volver a tocarlos.
+   * Acá se comprueban las dos mitades del arreglo: que la pantalla los guarde
+   * —y lo diga— y que el backend los tenga de verdad. La segunda no es
+   * redundante: un formulario que conserva en memoria lo que la persona
+   * escribió se ve idéntico a uno que guardó.
+   */
+  test('edita sus datos y los ve corregidos al volver a «Mi perfil»', async ({ page }) => {
+    const paciente = await crearPaciente(api);
+    await entrar(page, paciente);
+    await irAMiPerfil(page);
+
+    // 1 · La salida está donde la persona ya estaba mirando sus datos.
+    await page.getByTestId('mi-perfil-editar').click();
+    await expect(page.getByRole('heading', { name: 'Editar tus datos' })).toBeVisible();
+    await estable(page);
+
+    // 2 · Se corrigen tres campos de naturaleza distinta a propósito: un texto,
+    // un texto con formato validado y una fecha, que es la que más viajes de
+    // ida y vuelta tiene entre la pantalla y el contrato.
+    await page.getByTestId('perfil-nombre').fill(NOMBRE_NUEVO);
+    await page.getByTestId('perfil-telefono').fill(TELEFONO_NUEVO);
+    // La fecha se teclea dígito a dígito, como lo hace quien ya sabe la suya, y
+    // la máscara pone las barras. No sirve `fill`: el alta de `crearPaciente`
+    // no manda fecha, el campo llega vacío, y al enfocarlo la máscara escribe
+    // la plantilla `DD/MM/AAAA` como valor; un `fill` inserta el texto delante
+    // de ella y el campo queda inválido. Por eso primero se borra la plantilla.
+    const campoDeFecha = page.getByLabel('Fecha de nacimiento');
+    await campoDeFecha.click();
+    await page.keyboard.press('Control+A');
+    await page.keyboard.press('Backspace');
+    await campoDeFecha.pressSequentially(NACIMIENTO_NUEVO_VISIBLE.replace(/\//g, ''), {
+      delay: 40,
+    });
+    await campoDeFecha.blur();
+
+    await expect(page.getByTestId('perfil-nombre')).toHaveValue(NOMBRE_NUEVO);
+    await expect(campoDeFecha).toHaveValue(NACIMIENTO_NUEVO_VISIBLE);
+
+    // La captura del formulario va acá, con los tres campos ya escritos.
+    await capturar(page, '11-editar-form');
+
+    // 3 · Guardar lo dice con palabras, no con un cambio silencioso.
+    await page.getByRole('button', { name: 'Guardar cambios' }).click();
+    await expect(page.getByTestId('toast-mensaje')).toHaveText(
+      'Tus datos quedaron actualizados.',
+    );
+
+    // 4 · Y quedaron: al volver, «Mi perfil» los muestra.
+    await irAMiPerfil(page);
+    const tarjeta = page.locator('.mi-perfil__principal');
+    await expect(tarjeta).toContainText(NOMBRE_NUEVO);
+    await expect(tarjeta).toContainText(NACIMIENTO_NUEVO_VISIBLE);
+
+    // 5 · La prueba de que se guardaron de verdad: la API los devuelve. Sin
+    // esto, un formulario que sólo recuerda lo tecleado pasaría igual.
+    const token = await tokenDe(api, paciente);
+    const respuesta = await api.get('/profiles/patients/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(respuesta.status(), await respuesta.text()).toBe(200);
+    const guardado = (await respuesta.json()) as {
+      name?: string;
+      phone?: string;
+      birthDate?: string;
+    };
+    expect(guardado.name).toBe(NOMBRE_NUEVO);
+    expect(guardado.phone).toBe(TELEFONO_NUEVO);
+    // La fecha vuelve serializada como instante aunque el contrato la declare
+    // `format: 'date'`: lo que se afirma es el día, que es el dato.
+    expect(guardado.birthDate?.slice(0, 10)).toBe(NACIMIENTO_NUEVO_ISO);
+
+    await capturar(page, '12-editado-mi-perfil');
   });
 });

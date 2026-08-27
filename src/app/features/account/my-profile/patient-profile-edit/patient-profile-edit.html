@@ -1,0 +1,168 @@
+<app-page-header
+  title="Editar tus datos"
+  subtitle="Lo que nos contaste al registrarte. Corregilo cuando quieras."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="perfil()" (retry)="recargar()">
+  <form class="datos" (submit)="$event.preventDefault()">
+    <!-- ─── Tu nombre ──────────────────────────────────────────────────────
+         Las cuatro partes por separado, como las guarda el modelo: el nombre
+         que se muestra lo compone el backend con ellas. -->
+    <app-card variant="outlined" padding="lg" class="datos__bloque">
+      <h2 class="datos__titulo">Tu nombre</h2>
+      <p class="datos__nota">Como figura en tu documento de identidad.</p>
+
+      <div class="datos__campos">
+        <app-form-field
+          label="Nombre"
+          [required]="true"
+          [errorMessage]="nombreVacio() ? 'Ingresá tu nombre.' : ''"
+        >
+          <app-input
+            testId="perfil-nombre"
+            autocomplete="given-name"
+            placeholder="Ana"
+            [(value)]="nombre"
+          />
+        </app-form-field>
+
+        <app-form-field label="Segundo nombre" hint="Si no llevás, dejalo vacío.">
+          <app-input
+            testId="perfil-segundo-nombre"
+            autocomplete="additional-name"
+            placeholder="Lucía"
+            [(value)]="segundoNombre"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Apellido paterno"
+          [required]="true"
+          [errorMessage]="apellidoVacio() ? 'Ingresá tu apellido paterno.' : ''"
+        >
+          <app-input
+            testId="perfil-apellido-paterno"
+            autocomplete="family-name"
+            placeholder="Mamani"
+            [(value)]="apellidoPaterno"
+          />
+        </app-form-field>
+
+        <app-form-field label="Apellido materno" hint="Si no llevás, dejalo vacío.">
+          <app-input
+            testId="perfil-apellido-materno"
+            autocomplete="family-name"
+            placeholder="Quispe"
+            [(value)]="apellidoMaterno"
+          />
+        </app-form-field>
+      </div>
+    </app-card>
+
+    <!-- ─── Sobre vos ──────────────────────────────────────────────────────
+         Datos con consecuencia clínica: cambian dosis, valores de referencia
+         y tamizajes. -->
+    <app-card variant="outlined" padding="lg" class="datos__bloque">
+      <h2 class="datos__titulo">Sobre vos</h2>
+      <p class="datos__nota">Sirve para atenderte mejor. Todo esto es opcional.</p>
+
+      <div class="datos__campos">
+        <app-form-field
+          label="Fecha de nacimiento"
+          hint="Sirve para calcular dosis y valores de referencia."
+        >
+          <app-date-picker
+            [(value)]="fechaNacimiento"
+            [minDate]="nacimientoMasAntiguo"
+            maxDate="today"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Sexo al nacer"
+          hint="Dato clínico: cambia las dosis, los valores de referencia y los tamizajes."
+        >
+          <app-select
+            data-testid="perfil-sexo-al-nacer"
+            [options]="opcionesSexoAlNacer"
+            [(value)]="sexoAlNacer"
+            placeholder="Sin especificar"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Ocupación"
+          hint="En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio."
+        >
+          <app-input
+            testId="perfil-ocupacion"
+            autocomplete="organization-title"
+            placeholder="Docente"
+            [(value)]="ocupacion"
+          />
+        </app-form-field>
+      </div>
+    </app-card>
+
+    <!-- ─── Contacto ───────────────────────────────────────────────────────
+         El municipio viaja SOLO: el departamento lo deriva el backend del
+         código del INE, así que el par no puede llegar incoherente. -->
+    <app-card variant="outlined" padding="lg" class="datos__bloque">
+      <h2 class="datos__titulo">Contacto</h2>
+      <p class="datos__nota">Cómo ubicarte y dónde vivís.</p>
+
+      <div class="datos__campos">
+        <app-form-field
+          label="Teléfono"
+          hint="Con el que podamos llamarte. Vaciarlo te deja sin teléfono."
+          [errorMessage]="
+            telefonoMalEscrito() ? 'Ese teléfono no tiene un formato que podamos marcar.' : ''
+          "
+        >
+          <!-- Sin `type="tel"`: el átomo no lo admite (`INPUT_TYPES`), y el
+             `autocomplete` es el que hace el trabajo. Mismo criterio que el
+             alta, que documenta esto mismo. -->
+          <app-input
+            testId="perfil-telefono"
+            autocomplete="tel"
+            placeholder="+591 70000000"
+            [(value)]="telefono"
+          />
+        </app-form-field>
+
+        @if (catalogoMunicipiosCaido()) {
+          <app-form-field label="¿Dónde vivís?">
+            <p class="datos__aviso" data-testid="perfil-municipios-caidos">
+              No pudimos traer el catálogo de municipios.
+              <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                Reintentar
+              </button>
+            </p>
+          </app-form-field>
+        } @else {
+          <app-form-field label="¿Dónde vivís?" hint="Buscá tu municipio, o abrí tu departamento.">
+            <app-tree-select
+              data-testid="perfil-municipio"
+              [groups]="arbolMunicipios()"
+              [(value)]="municipio"
+              placeholder="Sin especificar"
+              dialogTitle="¿Dónde vivís?"
+              searchPlaceholder="Buscar municipio o departamento…"
+              emptyMessage="Ningún municipio coincide con esa búsqueda."
+            />
+          </app-form-field>
+        }
+      </div>
+    </app-card>
+
+    <app-form-actions
+      submitLabel="Guardar cambios"
+      cancelLabel="Cancelar"
+      [pending]="guardando()"
+      [disabled]="!puedeGuardar()"
+      (submitted)="guardar()"
+      (cancelled)="cancelar()"
+    />
+  </form>
+</app-view-state-host>

@@ -422,3 +422,87 @@ describe('MyProfile · orden del historial', () => {
     expect(vigente?.id).toBe('c-nuevo');
   });
 });
+
+/**
+ * La salida a corregir los datos propios.
+ *
+ * Va en su propio `describe` porque hace falta abrir la sesión **antes** de
+ * crear la pantalla: `esProfesional()` decide en el constructor qué resumen se
+ * pide, y una sesión abierta después ya no cambia esa decisión.
+ */
+describe('MyProfile · el enlace a editar los datos propios', () => {
+  let fixture: ComponentFixture<MyProfile>;
+  let http: HttpTestingController;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  /** Abre la sesión con los claims que se le pasen y monta la pantalla. */
+  function montar(claims: Record<string, unknown>): void {
+    TestBed.inject(SessionStore).start({ accessToken: jwt(claims), refreshToken: 'r-1' });
+    fixture = TestBed.createComponent(MyProfile);
+    resolverEstadosDeCaso(http);
+    fixture.detectChanges();
+    http.expectOne('/identity/me/verification-cases').flush([]);
+  }
+
+  function enlaceDeEdicion(): HTMLAnchorElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '[data-testid="mi-perfil-editar"]',
+    );
+  }
+
+  it('la paciente ve la salida a corregir sus datos, con su destino real', () => {
+    montar({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({
+      items: [],
+      count: 0,
+      limit: 50,
+    });
+    fixture.detectChanges();
+
+    const enlace = enlaceDeEdicion();
+    expect(enlace?.textContent?.trim()).toBe('Editar tus datos');
+    expect(enlace?.getAttribute('href')).toBe('/my-account/profile/edit');
+  });
+
+  /**
+   * A quien atiende no se le ofrece: el editor lee `GET /profiles/patients/me`,
+   * y a un profesional le responde `404` porque no tiene perfil de paciente.
+   */
+  it('a quien atiende no se le ofrece: no tiene perfil de paciente que editar', () => {
+    montar({ sub: 'u-1', hpid: 'hp-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] });
+    http
+      .expectOne('/profiles/practitioners/me/summary')
+      .error(new ProgressEvent('error'), { status: 500 });
+    fixture.detectChanges();
+
+    expect(enlaceDeEdicion()).toBeNull();
+  });
+
+  /** Mientras el resumen no llegó no hay nada que editar todavía. */
+  it('mientras carga el resumen todavía no se ofrece editar', () => {
+    montar({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+
+    expect(enlaceDeEdicion()).toBeNull();
+
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({
+      items: [],
+      count: 0,
+      limit: 50,
+    });
+    fixture.detectChanges();
+
+    expect(enlaceDeEdicion()).not.toBeNull();
+  });
+});

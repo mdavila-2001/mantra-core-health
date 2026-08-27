@@ -1,5 +1,7 @@
 /** Tipos de la vista para `profiles`. Se mapean desde los DTOs, no son ellos. */
 
+import type { BirthSexCode } from '../iam/iam.types';
+
 /** Alta de un perfil de paciente hecha por personal (no auto-registro). */
 export interface NewPatientProfile {
   readonly patientCode: string;
@@ -484,6 +486,72 @@ export interface OwnPatientSummary {
   readonly personStatus: string;
   /** Si hay una aserción de identidad vigente. Lo decide el backend. */
   readonly identityVerified: boolean;
+}
+
+/**
+ * Los datos que la persona dio al registrarse, tal como ella los ve
+ * (`GET /profiles/patients/me`).
+ *
+ * No es el resumen: {@link OwnPatientSummary} responde «quién soy y en qué
+ * estado estoy» con el nombre ya compuesto por el backend, y con eso no se
+ * puede corregir nada — para editar hacen falta las **cuatro partes** del
+ * nombre por separado, que es como las guarda el modelo y como las pidió el
+ * alta. `displayName` sigue viniendo, pero es derivado: se muestra, no se
+ * escribe.
+ *
+ * Lo que no está acá tampoco se edita desde acá: documento, correo,
+ * contraseña, género administrativo y código de paciente son trámites propios
+ * —o datos que decide el servidor—, no campos de un formulario.
+ */
+export interface OwnPatientProfile {
+  readonly personId: string;
+  readonly patientProfileId: string;
+  readonly name?: string;
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
+  /** Compuesto por el backend a partir de las cuatro partes. Sólo lectura. */
+  readonly displayName?: string;
+  readonly birthDate?: Date;
+  /** Sexo asignado al nacer, por código legible. Ver `BirthSexCode`. */
+  readonly sexAtBirth?: BirthSexCode;
+  readonly occupationFreeText?: string;
+  readonly phone?: string;
+  /**
+   * Municipio de residencia. Viaja **solo**, sin el departamento: el backend lo
+   * deriva del código del INE, igual que en el alta.
+   */
+  readonly residenceMunicipalityConceptId?: string;
+  readonly identityVerified: boolean;
+  /** Sólo con identidad verificada, igual que en el resumen. */
+  readonly patientCode?: string;
+}
+
+/**
+ * Lo que se puede corregir de {@link OwnPatientProfile}
+ * (`PATCH /profiles/patients/me`).
+ *
+ * Es un subconjunto **cerrado**: el backend valida con `forbidNonWhitelisted`,
+ * así que una clave de más —`displayName`, `patientCode`, `identityVerified`—
+ * no es un campo ignorado, es un `400`. Por eso el tipo se declara aparte y no
+ * como `Partial<OwnPatientProfile>`.
+ *
+ * Un campo presente con `''` **borra** el dato: el segundo nombre y el apellido
+ * materno se vacían cuando la persona descubre que no lleva ninguno. Ausente y
+ * vacío no son lo mismo, y quien arme los cambios tiene que respetar esa
+ * diferencia.
+ */
+export interface OwnPatientProfileChanges {
+  readonly name?: string;
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
+  /** Se serializa a `YYYY-MM-DD` en la frontera; acá es una fecha de verdad. */
+  readonly birthDate?: Date;
+  readonly sexAtBirth?: BirthSexCode;
+  readonly occupationFreeText?: string;
+  readonly phone?: string;
+  readonly residenceMunicipalityConceptId?: string;
 }
 
 /* ============================================================================

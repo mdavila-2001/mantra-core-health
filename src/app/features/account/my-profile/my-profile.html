@@ -96,6 +96,17 @@
               </div>
             </dl>
 
+            <!-- Corregir lo propio. Sólo acá: el editor pide `GET
+               /profiles/patients/me`, que a un profesional le responde 404
+               porque no tiene perfil de paciente. Y sólo con el resumen ya
+               leído, para no ofrecer editar lo que todavía no se sabe si
+               existe. -->
+            <p class="mi-perfil__accion">
+              <a app-link data-testid="mi-perfil-editar" routerLink="/my-account/profile/edit">
+                Editar tus datos
+              </a>
+            </p>
+
             <!-- Invitación, no muro: un enlace al pie de la lista que promete
                **sólo lo que es cierto** — hoy verificarse habilita el código de
                paciente y nada más. -->

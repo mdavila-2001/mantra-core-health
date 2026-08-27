@@ -333,6 +333,120 @@ describe('ProfilesClient', () => {
     expect(resumen?.identityVerified).toBe(true);
   });
 
+  /* ---- los datos propios del paciente: leerlos y corregirlos --------------
+     Es un contrato distinto del resumen: trae las CUATRO partes del nombre,
+     que es lo único con lo que se puede corregir un apellido sin adivinar
+     dónde cortar el compuesto. -------------------------------------------- */
+
+  const DATOS_WIRE = {
+    personId: 'p-1',
+    patientProfileId: 'pp-1',
+    name: 'Ana',
+    middleName: 'Lucía',
+    lastName: 'Quispe',
+    motherLastName: 'Mamani',
+    displayName: 'Ana Lucía Quispe Mamani',
+    birthDate: '1985-03-14',
+    sexAtBirth: 'FEMALE',
+    occupationFreeText: 'Docente',
+    phone: '+591 70055555',
+    residenceMunicipalityConceptId: 'mun-1',
+    identityVerified: false,
+  };
+
+  it('getOwnPatientProfile no manda ningún identificador: el sujeto sale de la sesión', () => {
+    client.getOwnPatientProfile().subscribe();
+
+    const req = http.expectOne('/profiles/patients/me');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys()).toEqual([]);
+
+    req.flush(DATOS_WIRE);
+  });
+
+  /**
+   * La fecha es `format: 'date'`: se ancla a medianoche **local**. Con
+   * `new Date()` a secas retrocedería un día en cualquier huso al oeste de
+   * Greenwich, y la persona vería mal justo el dato que vino a corregir.
+   */
+  it('getOwnPatientProfile ancla la fecha de nacimiento al día local', () => {
+    let perfil: { birthDate?: Date } | undefined;
+    client.getOwnPatientProfile().subscribe((p) => (perfil = p));
+
+    http.expectOne('/profiles/patients/me').flush(DATOS_WIRE);
+
+    expect(perfil?.birthDate?.getFullYear()).toBe(1985);
+    expect(perfil?.birthDate?.getMonth()).toBe(2);
+    expect(perfil?.birthDate?.getDate()).toBe(14);
+  });
+
+  /**
+   * El contrato dice que los opcionales llegan **ausentes**. Se traduce igual
+   * con `sinNulos` —como el resumen— porque una API que mande `null` no puede
+   * hacer que `'phone' in perfil` diga lo contrario que el tipo.
+   */
+  it('getOwnPatientProfile deja fuera los opcionales ausentes y los nulos', () => {
+    let perfil: Record<string, unknown> | undefined;
+    client
+      .getOwnPatientProfile()
+      .subscribe((p) => (perfil = p as unknown as Record<string, unknown>));
+
+    http.expectOne('/profiles/patients/me').flush({
+      personId: 'p-1',
+      patientProfileId: 'pp-1',
+      name: 'Ana',
+      lastName: 'Quispe',
+      middleName: null,
+      birthDate: null,
+      identityVerified: false,
+    });
+
+    expect(perfil?.['birthDate']).toBeUndefined();
+    expect('middleName' in (perfil ?? {})).toBe(false);
+    expect('phone' in (perfil ?? {})).toBe(false);
+  });
+
+  it('updateOwnPatientProfile manda sólo lo que se le pasa, y la fecha como YYYY-MM-DD', () => {
+    client
+      .updateOwnPatientProfile({ name: 'Ana María', birthDate: new Date(1990, 10, 2) })
+      .subscribe();
+
+    const req = http.expectOne('/profiles/patients/me');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ name: 'Ana María', birthDate: '1990-11-02' });
+
+    req.flush(DATOS_WIRE);
+  });
+
+  /**
+   * `''` borra el dato y `undefined` lo deja como estaba: son cosas distintas
+   * en el contrato del backend, así que la clave sin valor **no se manda** —
+   * `forbidNonWhitelisted` la tomaría como una clave declarada.
+   */
+  it('updateOwnPatientProfile manda el vacío que borra, y no las claves sin valor', () => {
+    client
+      .updateOwnPatientProfile({ middleName: '', motherLastName: '', phone: undefined })
+      .subscribe();
+
+    const req = http.expectOne('/profiles/patients/me');
+    expect(req.request.body).toEqual({ middleName: '', motherLastName: '' });
+
+    req.flush(DATOS_WIRE);
+  });
+
+  it('updateOwnPatientProfile devuelve el perfil releído, ya traducido', () => {
+    let perfil: { name?: string; birthDate?: Date } | undefined;
+    client.updateOwnPatientProfile({ name: 'Ana María' }).subscribe((p) => (perfil = p));
+
+    http
+      .expectOne('/profiles/patients/me')
+      .flush({ ...DATOS_WIRE, name: 'Ana María', birthDate: '1990-11-02' });
+
+    expect(perfil?.name).toBe('Ana María');
+    expect(perfil?.birthDate).toBeInstanceOf(Date);
+    expect(perfil?.birthDate?.getDate()).toBe(2);
+  });
+
   /* ---- el perfil profesional propio --------------------------------------- */
 
   const PERFIL_WIRE = {
