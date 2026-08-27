@@ -62,6 +62,15 @@
               </p>
             </ng-template>
 
+            <ng-template appCampoPersonalizado="occupationConceptId">
+              <p class="registro__catalogo-caido">
+                No pudimos traer el catálogo de ocupaciones.
+                <button app-button variant="ghost" size="sm" (clicked)="reintentarOcupaciones()">
+                  Reintentar
+                </button>
+              </p>
+            </ng-template>
+
             <ng-template appCampoPersonalizado="municipio">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">

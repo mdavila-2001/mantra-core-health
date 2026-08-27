@@ -46,6 +46,12 @@ const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
 /** La del catálogo de municipios, que dispara el mismo constructor. */
 const CATALOGO_MUNICIPIOS = '/terminology/value-sets?code=VS_BO_MUNICIPALITY';
 
+/** La del catálogo de ocupaciones del SEGIP, que dispara el mismo constructor. */
+const CATALOGO_OCUPACIONES = '/terminology/value-sets?code=VS_SEGIP_OCCUPATION';
+
+/** Un concepto de `VS_SEGIP_OCCUPATION`, el que la ocupación manda como uuid. */
+const OCUPACION_DOCENTE = 'a2f0b6d1-0f7d-5a2e-9d3b-6f1f0a9c1e42';
+
 describe('RegisterPatient', () => {
   let fixture: ComponentFixture<RegisterPatient>;
   let component: RegisterPatient;
@@ -189,6 +195,43 @@ describe('RegisterPatient', () => {
           items: [{ value: 'm-2', label: 'Santa Cruz de la Sierra' }],
         },
       ]);
+    });
+
+    /**
+     * La ocupación dejó de ser texto libre: es un concepto de
+     * `VS_SEGIP_OCCUPATION`, así que lo que el desplegable ofrece sale de la
+     * expansión y lo que se manda es el uuid.
+     */
+    it('ofrece las ocupaciones del catálogo del SEGIP', () => {
+      http.expectOne(CATALOGO_OCUPACIONES).flush({
+        items: [{ id: 'vs-occ', internalCode: 'VS_SEGIP_OCCUPATION', name: 'Ocupaciones' }],
+      });
+      http.expectOne('/terminology/value-sets/vs-occ/$expand?limit=200').flush({
+        items: [
+          { conceptId: 'o-1', code: 'occupation:segip:DOCENTE', display: 'Docente' },
+          { conceptId: 'o-2', code: 'occupation:segip:MINERO', display: 'Minero / Minera' },
+        ],
+        count: 2,
+        limit: 200,
+        nextCursor: null,
+      });
+
+      expect(component.catalogoOcupacionesCaido()).toBe(false);
+      expect(component.opcionesOcupacion()).toEqual([
+        { value: 'o-1', label: 'Docente' },
+        { value: 'o-2', label: 'Minero / Minera' },
+      ]);
+    });
+
+    it('sin catálogo de ocupaciones el alta sigue: el campo es opcional', () => {
+      http
+        .expectOne(CATALOGO_OCUPACIONES)
+        .flush(null, { status: 503, statusText: 'Service Unavailable' });
+      fixture.detectChanges();
+
+      expect(component.catalogoOcupacionesCaido()).toBe(true);
+      expect(component.opcionesOcupacion()).toEqual([]);
+      expect(navegaciones).toEqual([]);
     });
 
     it('un departamento sin municipios no arma una rama vacía', () => {
@@ -415,7 +458,10 @@ describe('RegisterPatient', () => {
 
   it('manda los datos clínicos y de contacto que la API acepta, solo si se completaron', () => {
     completar();
-    component.formPaciente.patchValue({ phone: '+591 70012345', occupationFreeText: 'Docente' });
+    component.formPaciente.patchValue({
+      phone: '+591 70012345',
+      occupationConceptId: OCUPACION_DOCENTE,
+    });
     component.formPaciente.patchValue({
       birthDate: new Date(1990, 4, 17),
       sexAtBirth: 'FEMALE',
@@ -437,7 +483,7 @@ describe('RegisterPatient', () => {
       birthDate: '1990-05-17',
       phone: '+591 70012345',
       sexAtBirth: 'FEMALE',
-      occupationFreeText: 'Docente',
+      occupationConceptId: OCUPACION_DOCENTE,
     });
 
     req.flush(RESPUESTA);
@@ -473,6 +519,7 @@ describe('RegisterPatient', () => {
     expect(enviado).not.toContain('phone');
     expect(enviado).not.toContain('gender');
     expect(enviado).not.toContain('sexAtBirth');
+    expect(enviado).not.toContain('occupationConceptId');
     expect(enviado).not.toContain('occupationFreeText');
 
     req.flush(RESPUESTA);

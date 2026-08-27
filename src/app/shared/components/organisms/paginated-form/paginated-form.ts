@@ -33,6 +33,7 @@ import { Select } from '../../atoms/select/select';
 import { Textarea } from '../../atoms/textarea/textarea';
 import { DialogService } from '../../molecules/dialog/dialog-service';
 import { FormField } from '../../molecules/form-field/form-field';
+import { PhoneInput } from '../../molecules/phone-input/phone-input';
 import { Radio } from '../../molecules/radio/radio';
 import { RadioGroup } from '../../molecules/radio-group/radio-group';
 import { Stepper } from '../../molecules/stepper/stepper';
@@ -103,6 +104,7 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
     DatePicker,
     FormField,
     Input,
+    PhoneInput,
     Progress,
     Radio,
     RadioGroup,
@@ -265,14 +267,12 @@ export class PaginatedForm {
   /**
    * El `type` del `<input>` nativo.
    *
-   * `tel` no está entre los tipos del átomo, y no es un olvido: un `type="tel"`
-   * no valida nada que `text` no valide y en cambio cambia el teclado del
-   * teléfono a uno sin letras, que estorba en los números con extensión. Lo que
-   * hace el trabajo es el `autocomplete="tel"`, igual que ya hacía el signup a
-   * mano antes de paginarse.
+   * Ya no recibe `tel`: ese control lo dibuja `app-phone-input`, que compone el
+   * prefijo del país y filtra los dígitos. Queda como la traducción directa del
+   * resto de los tipos de texto.
    */
   protected tipoDeInput(campo: CampoDeFormulario): InputType {
-    return campo.control === 'tel' ? 'text' : (campo.control as InputType);
+    return campo.control as InputType;
   }
 
   protected errorDe(campo: CampoDeFormulario): string {

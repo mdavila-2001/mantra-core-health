@@ -383,7 +383,17 @@ export function apareceEnElMenu(
   if (!isVisibleTo(section, roles, tenants)) {
     return false;
   }
-  return section.fueraDelMenuPara?.some((rol) => roles.includes(rol)) !== true;
+  const fuera = section.fueraDelMenuPara;
+  if (fuera === undefined) {
+    return true;
+  }
+  // `ANY_ROLE` acá significa «para nadie ocupa un renglón», que es lo que pide
+  // una sección apagada de momento —la verificación de identidad— y no un rol
+  // concreto al que le sobra. Es el mismo comodín que ya lee `rolesAlcanzan` en
+  // `roles`, con el mismo sentido de «cualquiera»: sin esto, apagarla obligaría
+  // a enumerar todos los roles del producto y a acordarse del que se agregue
+  // mañana.
+  return !fuera.includes(ANY_ROLE) && !fuera.some((rol) => roles.includes(rol));
 }
 
 /**

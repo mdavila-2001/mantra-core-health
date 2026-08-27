@@ -56,6 +56,17 @@ export class Input implements ControlValueAccessor {
    * `email`, `tel`, `name`… y `off` donde no corresponda ninguno.
    */
   readonly autocomplete = input<string | null>(null);
+
+  /**
+   * Qué teclado abre el móvil, cuando el `type` no lo dice ya.
+   *
+   * Existe para los campos que son numéricos **como dato** pero no pueden ser
+   * `type="number"` —un teléfono con su prefijo, un documento con letras— y que
+   * sin esto abren el teclado alfabético completo en el móvil. Es un atributo
+   * más en el `<input>`: no cambia lo que se valida ni lo que se ve en
+   * escritorio, y sin valor no se emite ninguno.
+   */
+  readonly inputMode = input<string | null>(null);
   readonly placeholder = input<string>('');
   readonly value = model<string | number | null>('');
   readonly disabled = input<boolean>(false);
