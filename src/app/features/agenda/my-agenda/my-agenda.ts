@@ -23,7 +23,13 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import { BlockForm, aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
-import { DayView, type EstadoResuelto, type PedidoDeAccion } from './day-view/day-view';
+import {
+  DayView,
+  type EstadoResuelto,
+  type PedidoDeAccion,
+  type RatoTocado,
+} from './day-view/day-view';
+import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { AGENDA_CREATE_ROUTE } from '../agenda.routes';
 
@@ -118,6 +124,7 @@ interface Patron {
     AppButtonLink,
     BlockForm,
     DayView,
+    TarjetaDelDia,
     MonthView,
     PageHeader,
     RouterLink,
@@ -528,6 +535,63 @@ export class MyAgenda {
   protected abrirDia(fecha: Date): void {
     this.diaAbierto.set(fecha);
     this.cargarDia(fecha);
+  }
+
+  /** El rato tocado para crear algo, o `null` con la tarjeta cerrada. */
+  protected readonly ratoParaCrear = signal<RatoTocado | null>(null);
+
+  /**
+   * Lo que el día ya tiene tomado, para que la tarjeta avise el choque ANTES
+   * de guardar — con lo que la pantalla ya sabe, sin viaje extra. El servidor
+   * cruza además las otras sedes al guardar: esto es aviso temprano, no regla.
+   */
+  protected readonly ratosTomadosDelDia = computed<readonly RatoDelDia[]>(() => {
+    const porSlot = new Map(this.citasDelDia().map((c) => [c.bookableSlotId, c]));
+    const deCitas = this.cuposDelDia()
+      .filter((cupo) => porSlot.has(cupo.id))
+      .map((cupo) => ({
+        desde: cupo.startAt,
+        hasta: cupo.endAt ?? cupo.startAt,
+        rotulo: `la cita de ${porSlot.get(cupo.id)?.patientName ?? 'un paciente'}`,
+      }));
+    const deOcupados = this.bloqueosDelMes().map((b) => ({
+      desde: b.desde,
+      hasta: b.hasta,
+      rotulo: b.motivo === null ? 'un rato ocupado' : `«${b.motivo}»`,
+    }));
+    return [...deCitas, ...deOcupados];
+  });
+
+  /** Abre la tarjeta con el rato tocado ya puesto. */
+  protected abrirTarjeta(rato: RatoTocado): void {
+    this.ratoParaCrear.set(rato);
+  }
+
+  /** La tarjeta creó algo: se cierra y el día se relee del servidor. */
+  protected tarjetaCreo(dia: Date): void {
+    this.ratoParaCrear.set(null);
+    this.cargarDia(dia);
+    // El mes también: una cita nueva cambia la ocupación que el mes pinta.
+    this.cargarMes();
+  }
+
+  /**
+   * Quita un tiempo ocupado desde el día.
+   *
+   * Sin confirmación previa: quitar una reunión propia no cierra ni sella
+   * nada, y el que borra por error la vuelve a crear en dos toques. Los cupos
+   * que la excepción retiró NO resucitan — la semántica declarada del DELETE.
+   */
+  protected quitarOcupado(exceptionId: string): void {
+    const dia = this.diaAbierto();
+    this.scheduling.deleteException(exceptionId).subscribe({
+      next: () => {
+        this.toast.success('Los horarios que retiró no vuelven solos: se regeneran con tu plantilla.', 'Rato ocupado quitado');
+        if (dia !== null) this.cargarDia(dia);
+        this.cargarMes();
+      },
+      error: (error: unknown) => this.avisarFallo(error, 'quitar ese rato ocupado'),
+    });
   }
 
   protected volverAlMes(): void {

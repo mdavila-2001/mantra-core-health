@@ -95,6 +95,22 @@ export interface PublicPostSummary {
   readonly commentCount: number;
 }
 
+/**
+ * Una publicación del feed de la portada, con su autor adentro.
+ *
+ * Extiende la de la ficha porque **es la misma publicación**; lo que agrega es
+ * de quién es. En la ficha el autor es la página entera y repetirlo sería
+ * ruido; en un feed mezclado es lo único que distingue una tarjeta de otra.
+ */
+export interface PublicFeedPost extends PublicPostSummary {
+  readonly authorSlug: string;
+  readonly authorDisplayName: string;
+  readonly authorHeadline: string | null;
+  readonly authorAvatarUrl: string | null;
+  /** El vertical del autor, para armar el prefijo de su ficha. */
+  readonly authorKind: PublicResultKind;
+}
+
 /** Un punto geográfico del directorio. */
 export interface PublicLocation {
   readonly lat: number;

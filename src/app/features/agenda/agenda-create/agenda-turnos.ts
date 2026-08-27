@@ -16,6 +16,15 @@ export interface Franja {
   readonly hasta: string;
   /** Duración de cada turno, en minutos. */
   readonly duracion: number;
+  /**
+   * El respiro entre consultas, en minutos (AG-4).
+   *
+   * Es un atributo DE LA FRANJA, no una configuración global: el mismo doctor
+   * puede querer el lunes «consultas de 45 sin respiro» y el miércoles «de 20
+   * con 10 de margen». Opcional y con 0 como ausencia: receso 0 ≡ hoy, y
+   * ninguna pantalla que no lo pida nota nada.
+   */
+  readonly receso?: number;
 }
 
 /** Un turno concreto, en hora de pared. */
@@ -53,6 +62,14 @@ export interface Calculo {
  * la vista previa prometería un turno que después no existe, y una vista previa
  * que miente es peor que no tener ninguna.
  *
+ * ## El receso entra en la misma aritmética (AG-4)
+ *
+ * Con respiro, el paso entre turnos es `duración + receso`: franja 9:00–12:00,
+ * consulta 20, receso 10 → turnos 9:00, 9:30, 10:00… Seis de 20 minutos con
+ * huecos de 10. Cada turno sigue midiendo su duración real —el paciente
+ * reserva 20 minutos—; el receso es aire del doctor, no un cupo ni un bloqueo.
+ * El último turno no necesita respiro después: entra si su CONSULTA entra.
+ *
  * @param franjas - Las franjas activas.
  * @returns Los turnos por día y el total.
  */
@@ -75,20 +92,32 @@ function calcularDia(franja: Franja): DiaCalculado {
     return { dia: franja.dia, turnos: [], resto: 0, restoDesde: null };
   }
 
-  const disponibles = fin - inicio;
-  const cuantos = Math.floor(disponibles / franja.duracion);
+  // Un receso negativo es un estado alcanzable mientras se tipea; se trata
+  // como 0 en vez de reventar, igual que el resto de los estados a medias.
+  const receso = Math.max(0, franja.receso ?? 0);
+  const paso = franja.duracion + receso;
+
   const turnos: Turno[] = [];
-  for (let i = 0; i < cuantos; i++) {
-    const desde = inicio + i * franja.duracion;
+  // El último turno no necesita respiro después: entra si su CONSULTA entra.
+  // Por eso el corte es sobre `desde + duración`, no sobre el paso completo.
+  for (let desde = inicio; desde + franja.duracion <= fin; desde += paso) {
     turnos.push({ desde: enTexto(desde), hasta: enTexto(desde + franja.duracion) });
   }
 
-  const resto = disponibles % franja.duracion;
+  if (turnos.length === 0) {
+    return { dia: franja.dia, turnos: [], resto: fin - inicio, restoDesde: enTexto(inicio) };
+  }
+
+  // El resto se mide desde el FIN del último turno: el aire de los recesos ya
+  // está contado adentro del paso, y lo que sobra al final es lo único que el
+  // médico podría querer reacomodar.
+  const finUltimo = enMinutos(turnos[turnos.length - 1].hasta) ?? fin;
+  const resto = fin - finUltimo;
   return {
     dia: franja.dia,
     turnos,
     resto,
-    restoDesde: resto === 0 ? null : enTexto(inicio + cuantos * franja.duracion),
+    restoDesde: resto === 0 ? null : enTexto(finUltimo),
   };
 }
 

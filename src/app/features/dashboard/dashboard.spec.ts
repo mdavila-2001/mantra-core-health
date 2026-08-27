@@ -91,10 +91,12 @@ describe('Dashboard', () => {
     fixture = TestBed.createComponent(Dashboard);
     component = fixture.componentInstance;
 
-    // El historial de verificación se pide siempre, con o sin rol. Se responde
-    // acá para que cada prueba hable de lo suyo y no de esta petición.
-    http.expectOne((request) => request.url.endsWith('/identity/me/verification-cases')).flush([]);
-    // Y el sello de ese trámite sale de terminología, por el mismo motivo.
+    // El historial de verificación **ya no se pide**: la tarjeta «Tu identidad»
+    // está apagada mientras `VERIFICACION_DE_IDENTIDAD_OFRECIDA` sea `false`, y
+    // una lectura para una tarjeta que no se dibuja es una petición para nadie.
+    http.expectNone((request) => request.url.endsWith('/identity/me/verification-cases'));
+    // El sello de ese trámite sale de terminología, y su búsqueda sigue saliendo
+    // sola: la escribe `case-status`, que no sabe de esta pantalla.
     resolverEstadosDeCaso(http);
   }
 
@@ -352,9 +354,11 @@ describe('Dashboard', () => {
     });
   });
 
-  it('si el historial de verificación falla, el panel sigue en pie', () => {
-    // Es información de contexto: romper el panel entero porque el módulo de
-    // identidad no contestó sería peor que un panel sin ese dato.
+  it('sin verificación ofrecida, el panel no pide el historial ni pinta el sello', () => {
+    // El pedido del 26/08/2026 fue «no pida verificación de momento», y una
+    // tarjeta que saluda con un sello «Sin verificar» es pedirla desde el primer
+    // renglón del panel. Apagada, la pantalla no la dibuja **y** no gasta la
+    // lectura: ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
     session.start({
       accessToken: jwt({ sub: 'u-1', roles: [], tenants: [] }),
       refreshToken: 'r-1',
@@ -362,15 +366,17 @@ describe('Dashboard', () => {
     fixture = TestBed.createComponent(Dashboard);
     component = fixture.componentInstance;
 
-    http
-      .expectOne((request) => request.url.endsWith('/identity/me/verification-cases'))
-      .error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
+    http.expectNone((request) => request.url.endsWith('/identity/me/verification-cases'));
     resolverEstadosDeCaso(http);
     responder([{ a: 1 }], null);
+    fixture.detectChanges();
 
     expect(estado().status).toBe('ready');
     const sello = (component as unknown as { selloDeIdentidad: () => unknown }).selloDeIdentidad();
     expect(sello).toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="panel-cifra-identidad"]'),
+    ).toBeNull();
   });
 
   describe('el aviso del alta incompleta (TJ-1)', () => {

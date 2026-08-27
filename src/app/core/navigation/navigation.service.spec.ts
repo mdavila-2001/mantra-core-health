@@ -123,8 +123,10 @@ describe('NavigationService', () => {
         // Carril P9: las preferencias de aviso, pegadas a la bandeja.
         '/my-account/notification-preferences',
         '/notification-center',
-        '/my-account/identity/verify',
-        '/my-account/identity/cases',
+        // La verificación de identidad y su historial **no** entran: el
+        // producto no la ofrece de momento y las dos secciones salieron del
+        // menú con `fueraDelMenuPara: [ANY_ROLE]`. Se siguen alcanzando por su
+        // ruta — ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
       ]);
     });
 

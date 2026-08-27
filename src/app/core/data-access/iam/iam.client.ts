@@ -129,6 +129,9 @@ export class IamClient {
       ...(registration.phone === undefined ? {} : { phone: registration.phone }),
       ...(registration.gender === undefined ? {} : { gender: registration.gender }),
       ...(registration.sexAtBirth === undefined ? {} : { sexAtBirth: registration.sexAtBirth }),
+      ...(registration.occupationConceptId === undefined
+        ? {}
+        : { occupationConceptId: registration.occupationConceptId }),
       ...(registration.occupationFreeText === undefined
         ? {}
         : { occupationFreeText: registration.occupationFreeText }),

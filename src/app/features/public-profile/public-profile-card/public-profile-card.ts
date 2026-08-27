@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppMap } from '@shared/components/organisms/map/map';
 import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
+import { PublicacionPost } from '../publicacion-post/publicacion-post';
 
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
 import { inicialesDe } from '@shared/text/iniciales';
@@ -64,7 +65,7 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  */
 @Component({
   selector: 'app-public-profile-card',
-  imports: [AppButton, DatePipe, AppMap],
+  imports: [AppButton, DatePipe, AppMap, PublicacionPost],
   templateUrl: './public-profile-card.html',
   styleUrl: './public-profile-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

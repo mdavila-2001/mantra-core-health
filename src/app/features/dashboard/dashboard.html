@@ -85,21 +85,26 @@
       </p>
     </app-card>
 
-    <app-card variant="outlined" padding="md" data-testid="panel-cifra-identidad">
-      <p class="panel__cifra-rotulo">Tu identidad</p>
-      <!-- El sello y no una cifra: el estado de un trámite no es un número, y
-         forzarlo a serlo obligaría a inventar una escala que no existe. -->
-      <div class="panel__cifra-sello">
-        @if (selloDeIdentidad(); as sello) {
-          <app-status-seal [variant]="sello.variant" [label]="sello.label" />
-        } @else {
-          <app-status-seal variant="pending" label="Sin verificar" />
-        }
-      </div>
-      <p class="panel__cifra-pie">
-        <a routerLink="/my-account/identity/verify">Ver el trámite</a>
-      </p>
-    </app-card>
+    <!-- La tarjeta saludaba con un sello «Sin verificar», que es pedir la
+         verificación desde el primer renglón del panel. Apagada de momento:
+         ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. -->
+    @if (verificacionOfrecida) {
+      <app-card variant="outlined" padding="md" data-testid="panel-cifra-identidad">
+        <p class="panel__cifra-rotulo">Tu identidad</p>
+        <!-- El sello y no una cifra: el estado de un trámite no es un número, y
+             forzarlo a serlo obligaría a inventar una escala que no existe. -->
+        <div class="panel__cifra-sello">
+          @if (selloDeIdentidad(); as sello) {
+            <app-status-seal [variant]="sello.variant" [label]="sello.label" />
+          } @else {
+            <app-status-seal variant="pending" label="Sin verificar" />
+          }
+        </div>
+        <p class="panel__cifra-pie">
+          <a routerLink="/my-account/identity/verify">Ver el trámite</a>
+        </p>
+      </app-card>
+    }
   </section>
 
   <div class="panel__grid" appStaggerList>
