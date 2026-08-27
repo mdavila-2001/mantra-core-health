@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
-import { SegipOccupationsCatalog } from '../../../core/data-access/terminology/segip-occupations.service';
+import { BoOccupationsCatalog } from '../../../core/data-access/terminology/bo-occupations.service';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
@@ -287,7 +287,7 @@ export class RegisterPatient {
       nonNullable: true,
       validators: [Validators.pattern(TELEFONO_BOLIVIANO)],
     }),
-    // La ocupación es un concepto de `VS_SEGIP_OCCUPATION`, no un texto: ver
+    // La ocupación es un concepto de `VS_BO_OCCUPATION`, no un texto: ver
     // `campoOcupacion`.
     occupationConceptId: new FormControl<string | null>(null),
     // La fecha y el sexo al nacer viven **en el formulario**, no en signals
@@ -364,8 +364,8 @@ export class RegisterPatient {
   readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
   readonly catalogoDepartamentosCaido = signal(false);
 
-  /** Ocupación del paciente (VS_SEGIP_OCCUPATION), y su catálogo. */
-  private readonly ocupaciones = inject(SegipOccupationsCatalog);
+  /** Ocupación del paciente (VS_BO_OCCUPATION), y su catálogo. */
+  private readonly ocupaciones = inject(BoOccupationsCatalog);
   readonly opcionesOcupacion = signal<readonly SelectOption<string>[]>([]);
   readonly catalogoOcupacionesCaido = signal(false);
 
@@ -890,7 +890,7 @@ export class RegisterPatient {
   }
 
   /**
-   * Trae el catálogo de ocupaciones del SEGIP, para «¿en qué trabajás?».
+   * Trae el catálogo de ocupaciones de Bolivia, para «¿en qué trabajás?».
    *
    * Mismo criterio que los departamentos ante un fallo: el campo es opcional y
    * el alta sigue.

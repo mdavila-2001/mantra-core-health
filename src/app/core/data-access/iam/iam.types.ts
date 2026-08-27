@@ -77,12 +77,12 @@ export interface PatientRegistration {
   /** Sexo asignado al nacer. Es dato clínico, distinto del género. */
   readonly sexAtBirth?: BirthSexCode;
   /**
-   * Ocupación, como concepto de `VS_SEGIP_OCCUPATION`.
+   * Ocupación, como concepto de `VS_BO_OCCUPATION`.
    *
-   * **Ya es un catálogo.** Lo siembra `SegipOccupationsSeedService` en la API y
-   * lo lee `SegipOccupationsCatalog`; el alta manda el uuid del concepto
-   * elegido. Antes iba en `occupationFreeText` porque el conjunto no existía en
-   * ninguna base, y cada persona escribía su oficio a mano.
+   * **Ya es un catálogo.** Lo siembra `BoOccupationsSeedService` en la API y lo
+   * lee `BoOccupationsCatalog`; el alta manda el uuid del concepto elegido.
+   * Antes iba en `occupationFreeText` porque el conjunto no existía en ninguna
+   * base, y cada persona escribía su oficio a mano.
    */
   readonly occupationConceptId?: string;
   /**

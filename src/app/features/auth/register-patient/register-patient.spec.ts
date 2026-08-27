@@ -46,10 +46,10 @@ const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
 /** La del catálogo de municipios, que dispara el mismo constructor. */
 const CATALOGO_MUNICIPIOS = '/terminology/value-sets?code=VS_BO_MUNICIPALITY';
 
-/** La del catálogo de ocupaciones del SEGIP, que dispara el mismo constructor. */
-const CATALOGO_OCUPACIONES = '/terminology/value-sets?code=VS_SEGIP_OCCUPATION';
+/** La del catálogo de ocupaciones de Bolivia, que dispara el mismo constructor. */
+const CATALOGO_OCUPACIONES = '/terminology/value-sets?code=VS_BO_OCCUPATION';
 
-/** Un concepto de `VS_SEGIP_OCCUPATION`, el que la ocupación manda como uuid. */
+/** Un concepto de `VS_BO_OCCUPATION`, el que la ocupación manda como uuid. */
 const OCUPACION_DOCENTE = 'a2f0b6d1-0f7d-5a2e-9d3b-6f1f0a9c1e42';
 
 describe('RegisterPatient', () => {
@@ -199,17 +199,17 @@ describe('RegisterPatient', () => {
 
     /**
      * La ocupación dejó de ser texto libre: es un concepto de
-     * `VS_SEGIP_OCCUPATION`, así que lo que el desplegable ofrece sale de la
+     * `VS_BO_OCCUPATION`, así que lo que el desplegable ofrece sale de la
      * expansión y lo que se manda es el uuid.
      */
-    it('ofrece las ocupaciones del catálogo del SEGIP', () => {
+    it('ofrece las ocupaciones del catálogo de Bolivia', () => {
       http.expectOne(CATALOGO_OCUPACIONES).flush({
-        items: [{ id: 'vs-occ', internalCode: 'VS_SEGIP_OCCUPATION', name: 'Ocupaciones' }],
+        items: [{ id: 'vs-occ', internalCode: 'VS_BO_OCCUPATION', name: 'Ocupaciones' }],
       });
       http.expectOne('/terminology/value-sets/vs-occ/$expand?limit=200').flush({
         items: [
-          { conceptId: 'o-1', code: 'occupation:segip:DOCENTE', display: 'Docente' },
-          { conceptId: 'o-2', code: 'occupation:segip:MINERO', display: 'Minero / Minera' },
+          { conceptId: 'o-1', code: 'occupation:bo:DOCENTE', display: 'Docente' },
+          { conceptId: 'o-2', code: 'occupation:bo:MINERO', display: 'Minero / Minera' },
         ],
         count: 2,
         limit: 200,

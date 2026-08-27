@@ -7,18 +7,19 @@ import { TerminologyClient } from './terminology.client';
 import type { ValueSetOption } from './terminology.types';
 
 /**
- * El código interno del catálogo de ocupaciones del SEGIP.
+ * El código interno del catálogo de ocupaciones de Bolivia.
  *
- * Es el que declara `RegisterPatientDto.occupationConceptId` en la API —«miembro
- * de `VS_SEGIP_OCCUPATION`»— y el que siembra `SegipOccupationsSeedService`.
- * **No** es `VS_BO_OCCUPATION`, que es el nombre que este frontend supuso
- * mientras el conjunto no existía: pedirlo por ese código devuelve `count: 0`,
- * igual que pasó con `VS_ADMINISTRATIVE_AREA` y los departamentos.
+ * Es el que fija la nota de entidad de `profiles.persons` en el modelo (v4.1.8)
+ * y el que siembra `BoOccupationsSeedService` en la API. **No es
+ * `VS_SEGIP_OCCUPATION`**, que es lo que `RegisterPatientDto` decía un día antes
+ * y que no llegó a sembrarse nunca: un catálogo tiene un solo dueño, y pedirlo
+ * por el otro código devuelve `count: 0` — el mismo cuento de
+ * `VS_ADMINISTRATIVE_AREA` con los departamentos.
  */
-export const CODIGO_CATALOGO_OCUPACIONES = 'VS_SEGIP_OCCUPATION';
+export const CODIGO_CATALOGO_OCUPACIONES = 'VS_BO_OCCUPATION';
 
 /**
- * Las ocupaciones del SEGIP, para el desplegable de «¿en qué trabajás?» del
+ * Las ocupaciones de Bolivia, para el desplegable de «¿en qué trabajás?» del
  * alta de paciente.
  *
  * Mismo criterio que `BoDepartmentsCatalog`: `profiles.persons.
@@ -27,7 +28,7 @@ export const CODIGO_CATALOGO_OCUPACIONES = 'VS_SEGIP_OCCUPATION';
  * —pedirlo con `?target=` responde `404`—.
  */
 @Injectable({ providedIn: 'root' })
-export class SegipOccupationsCatalog {
+export class BoOccupationsCatalog {
   private readonly terminology = inject(TerminologyClient);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
