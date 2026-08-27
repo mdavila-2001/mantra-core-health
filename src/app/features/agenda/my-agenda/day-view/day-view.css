@@ -1,9 +1,13 @@
 /* ============================================================================
-    El día del profesional — la línea de tiempo con huecos.
+    El día del profesional — la línea de horas con bloques proporcionales (AG-5).
+
+    LA decisión visual: la altura de cada bloque es proporcional a su duración.
+    La cirugía de 3 horas se VE grande; la consulta de 30 minutos, chica; el
+    aire entre bloques ocupa exactamente su rato. El día se lee de un vistazo,
+    que era el caso del odontólogo.
 
     Mobile-first: es LA pantalla del teléfono, la que se mira entre paciente y
-    paciente. Una columna, filas táctiles; en escritorio la hora se corre a un
-    costado y las acciones se alinean a la derecha.
+    paciente. Una columna; en escritorio la hora gana su carril fijo.
     ========================================================================== */
 
 .dia {
@@ -14,9 +18,14 @@
 
 .dia__barra {
   display: flex;
-  flex-direction: column;
   gap: var(--sp-2);
   align-items: flex-start;
+  justify-content: space-between;
+}
+
+.dia__cabecera {
+  flex: 1;
+  min-width: 0;
 }
 
 .dia__titulo {
@@ -31,40 +40,64 @@
   text-transform: uppercase;
 }
 
-.dia__resumen,
-.dia__vacio {
+.dia__resumen {
   margin: 0;
   color: var(--fg-muted);
+}
+
+.dia__vacio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  color: var(--fg-muted);
+}
+
+.dia__vacio p {
+  margin: 0;
 }
 
 .dia__linea {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.dia__fila {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: var(--stroke-1) solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
+}
+
+/* Cada bloque: la hora en su carril, el cuerpo al lado. La altura viene por
+   estilo en línea (proporcional a la duración) — acá sólo la disposición. */
+.dia__bloque {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: stretch;
+  box-sizing: border-box;
 }
 
 .dia__hora {
-  color: var(--fg-muted);
+  flex: 0 0 6.5rem;
+  padding-top: var(--sp-2);
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
 }
 
 .dia__cuerpo {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+/* -- La cita: el bloque protagonista ------------------------------------- */
+
+.dia__bloque[data-tipo='cita'] {
+  border-left: 3px solid var(--c-petrol-600, #16697a);
+  background: var(--c-petrol-50, #eef6f8);
+  border-radius: var(--r-md);
+  padding: var(--sp-2) var(--sp-3);
+  margin-bottom: 2px;
 }
 
 .dia__paciente {
@@ -73,52 +106,85 @@
 }
 
 .dia__motivo {
-  margin: var(--sp-1) 0 0;
-  color: var(--fg-muted);
-}
-
-/* El hueco se ve distinto sin gritar: es información, no una alarma. */
-[data-tipo='libre'] {
-  border-style: dashed;
-  background: var(--bg-surface-alt);
-}
-
-.dia__libre {
   margin: 0;
-  color: var(--fg-muted);
-}
-
-[data-tipo='bloqueado'] {
-  border-style: dashed;
-  border-color: var(--border-strong);
-  background: var(--bg-surface-alt);
-}
-
-.dia__bloqueado {
-  margin: 0;
+  font-size: var(--fs-sm);
   color: var(--fg-muted);
 }
 
 .dia__acciones {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
+  margin-top: auto;
 }
 
-@media (min-width: 40rem) {
-  .dia__barra {
-    flex-direction: row;
-    align-items: center;
-    gap: var(--sp-4);
+/* -- El tiempo ocupado: presente pero apagado ------------------------------ */
+
+.dia__bloque[data-tipo='ocupado'] {
+  border-left: 3px solid var(--c-neutral-400, #a3a3a3);
+  background: var(--c-neutral-100, #f5f5f5);
+  border-radius: var(--r-md);
+  padding: var(--sp-2) var(--sp-3);
+  margin-bottom: 2px;
+  color: var(--fg-muted);
+}
+
+.dia__ocupado-rotulo {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* -- El hueco disponible: invita ------------------------------------------ */
+
+.dia__bloque[data-tipo='libre'] {
+  margin-bottom: 2px;
+}
+
+.dia__libre {
+  flex: 1;
+  border: 1px dashed var(--c-neutral-300, #d4d4d4);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  text-align: center;
+}
+
+.dia__libre:hover,
+.dia__libre:focus-visible {
+  border-color: var(--c-petrol-400, #4d9aab);
+  color: var(--c-petrol-700, #105263);
+}
+
+/* -- El aire: el respiro no invita ---------------------------------------- */
+
+/* Ni borde ni texto: sólo la altura del hueco. Sigue siendo tocable —crear
+   algo en un hueco es legítimo— pero no lo anuncia: la diferencia visual entre
+   «hueco que se puede tomar» y «respiro del doctor». */
+.dia__aire {
+  flex: 1;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* En pantallas chicas la hora pierde su carril y va arriba del cuerpo. */
+@media (max-width: 480px) {
+  .dia__bloque {
+    flex-direction: column;
+    gap: 0;
   }
 
-  .dia__fila {
+  .dia__bloque[data-tipo='aire'],
+  .dia__bloque[data-tipo='libre'] {
     flex-direction: row;
-    align-items: center;
-    gap: var(--sp-4);
   }
 
   .dia__hora {
-    flex: 0 0 8.5rem;
+    flex: none;
+    padding-top: 0;
   }
 }
