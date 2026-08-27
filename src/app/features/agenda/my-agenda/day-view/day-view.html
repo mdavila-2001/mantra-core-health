@@ -3,86 +3,129 @@
     <button app-button variant="ghost" size="sm" type="button" (clicked)="volver.emit()">
       ← Volver al mes
     </button>
-    <div>
+    <div class="dia__cabecera">
       <h3 class="dia__titulo">{{ titulo() }}</h3>
       <p class="dia__resumen" role="status">{{ resumen() }}</p>
     </div>
+    <button
+      app-button
+      variant="secondary"
+      size="sm"
+      type="button"
+      aria-label="Agregar algo a este día"
+      (clicked)="crear()"
+    >
+      +
+    </button>
   </header>
 
-  @if (filas().length === 0) {
-    <p class="dia__vacio">No atendés este día.</p>
+  @if (bloques().length === 0) {
+    <div class="dia__vacio">
+      <p>No atendés este día.</p>
+      <button app-button variant="ghost" size="sm" type="button" (clicked)="crear()">
+        Agregar una cita o un rato ocupado
+      </button>
+    </div>
   } @else {
     <ol class="dia__linea">
-      @for (fila of filas(); track fila.clave) {
-        <li class="dia__fila" [attr.data-tipo]="fila.tipo">
-          <span class="dia__hora">
-            {{ fila.desde | date: 'HH:mm' }}@if (fila.hasta) {–{{ fila.hasta | date: 'HH:mm' }}}
-          </span>
-
-          @switch (fila.tipo) {
+      @for (bloque of bloques(); track bloque.clave) {
+        <li
+          class="dia__bloque"
+          [attr.data-tipo]="bloque.tipo"
+          [style.min-height.px]="bloque.alturaPx"
+        >
+          @switch (bloque.tipo) {
             @case ('cita') {
+              <span class="dia__hora">
+                {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
+              </span>
               <div class="dia__cuerpo">
-                <p class="dia__paciente">{{ fila.paciente }}</p>
+                <p class="dia__paciente">{{ bloque.paciente }}</p>
                 <!-- El motivo se muestra acá y NO en la agenda de la
                      organización: para quien va a recibir a esa persona en diez
-                     minutos, saber por qué viene es el trabajo. La regla la
-                     aplica el servidor; esta pantalla muestra lo que le llega. -->
-                @if (fila.cita?.reasonText; as motivo) {
+                     minutos, saber por qué viene es el trabajo. -->
+                @if (bloque.cita?.reasonText; as motivo) {
                   <p class="dia__motivo">{{ motivo }}</p>
                 }
+                <div class="dia__acciones">
+                  @if (puedeLlegar(bloque)) {
+                    <button
+                      app-button
+                      variant="secondary"
+                      size="sm"
+                      type="button"
+                      (clicked)="pedir(bloque, 'llegó')"
+                    >
+                      Llegó
+                    </button>
+                  }
+                  @if (puedeOperar(bloque)) {
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      (clicked)="pedir(bloque, 'demora')"
+                    >
+                      Avisar demora
+                    </button>
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      (clicked)="pedir(bloque, 'cancelar')"
+                    >
+                      Cancelar
+                    </button>
+                  }
+                </div>
               </div>
+              <app-badge variant="primary">{{ bloque.estado }}</app-badge>
+            }
 
-              <app-badge variant="primary">{{ fila.estado }}</app-badge>
-
-              <div class="dia__acciones">
-                @if (puedeLlegar(fila)) {
-                  <button
-                    app-button
-                    variant="secondary"
-                    size="sm"
-                    type="button"
-                    (clicked)="pedir(fila, 'llegó')"
-                  >
-                    Llegó
-                  </button>
-                }
-                @if (puedeOperar(fila)) {
+            @case ('ocupado') {
+              <span class="dia__hora">
+                {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
+              </span>
+              <div class="dia__cuerpo">
+                <!-- El tiempo del doctor sin paciente (AG-3): su rótulo, en tono
+                     apagado. El paciente nunca ve esto — no hay cupo ahí, punto. -->
+                <p class="dia__ocupado-rotulo">{{ bloque.motivo ?? 'Ocupado' }}</p>
+                @if (bloque.excepcionId; as excepcionId) {
                   <button
                     app-button
                     variant="ghost"
                     size="sm"
                     type="button"
-                    (clicked)="pedir(fila, 'demora')"
+                    (clicked)="quitarOcupado.emit(excepcionId)"
                   >
-                    Avisar demora
-                  </button>
-                  <button
-                    app-button
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    (clicked)="pedir(fila, 'cancelar')"
-                  >
-                    Cancelar
+                    Quitar
                   </button>
                 }
               </div>
             }
 
-            @case ('bloqueado') {
-              <div class="dia__cuerpo">
-                <p class="dia__bloqueado">
-                  ⛔ Bloqueado@if (fila.motivo) { — {{ fila.motivo }}}
-                </p>
-              </div>
+            @case ('libre') {
+              <span class="dia__hora">
+                {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
+              </span>
+              <!-- El hueco invita: tocarlo abre la tarjeta con el rango puesto. -->
+              <button class="dia__libre" type="button" (click)="tocar(bloque)">
+                — disponible —
+              </button>
             }
 
             @default {
-              <!-- El hueco es una fila y no el espacio entre dos citas: es lo
-                   que hace visible cuándo hay lugar. -->
-              <div class="dia__cuerpo">
-                <p class="dia__libre">— libre —</p>
-              </div>
+              <!-- El aire: el respiro del doctor o tiempo sin agenda. Ni borde ni
+                   texto — no invita, pero ocupa su altura porque un día con
+                   huecos TIENE huecos. Tocarlo también crea, sin anunciarlo. -->
+              <button
+                class="dia__aire"
+                type="button"
+                aria-label="Agregar algo en este hueco"
+                (click)="tocar(bloque)"
+              ></button>
             }
           }
         </li>
