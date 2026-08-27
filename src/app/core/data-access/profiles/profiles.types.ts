@@ -460,18 +460,30 @@ export interface PatientMergeEvent {
 /**
  * Resumen que la persona consulta sobre sí misma (V05-03).
  *
- * El backend exige identidad verificada vigente: sin ella responde `403` con
- * `IDENTITY_VERIFICATION_REQUIRED`, que `errorToViewState` ya convierte en un
- * S5 **con salida** hacia la pantalla de verificación.
+ * **El perfil ya no depende de verificarse** (F-34): el backend responde `200`
+ * a todo paciente, verificado o no, y es él quien decide qué campos viajan. Lo
+ * único que la verificación gobierna es `patientCode`.
+ *
+ * Una API anterior a F-34 todavía puede responder `403` con
+ * `IDENTITY_VERIFICATION_REQUIRED`, que `errorToViewState` convierte en un S5
+ * **con salida** hacia la pantalla de verificación. La pantalla tolera los dos
+ * contratos mientras dure el despliegue.
  */
 export interface OwnPatientSummary {
   readonly personId: string;
   readonly patientProfileId: string;
-  readonly patientCode: string;
+  /**
+   * El código con el que la persona se identifica en el centro. **Sólo viaja
+   * con identidad verificada**: su ausencia es la respuesta del servidor, no
+   * un filtro de la vista.
+   */
+  readonly patientCode?: string;
   readonly displayName?: string;
   readonly birthDate?: Date;
   /** Concepto del estado de la persona; se resuelve contra `terminology`. */
   readonly personStatus: string;
+  /** Si hay una aserción de identidad vigente. Lo decide el backend. */
+  readonly identityVerified: boolean;
 }
 
 /* ============================================================================

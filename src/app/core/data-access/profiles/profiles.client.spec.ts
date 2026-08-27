@@ -285,9 +285,52 @@ describe('ProfilesClient', () => {
       displayName: null,
       birthDate: null,
       personStatus: 'c-activo',
+      identityVerified: true,
     });
 
     expect(resumen?.birthDate).toBeUndefined();
+  });
+
+  /* ---- F-34: el resumen llega verificado o no, y el código es lo único que
+     depende de eso ---------------------------------------------------------- */
+
+  it('sin identidad verificada el resumen llega igual, y sin código de paciente', () => {
+    let resumen: { identityVerified: boolean; patientCode?: string } | undefined;
+    client.getOwnSummary().subscribe((r) => (resumen = r));
+
+    // Lo que responde el backend desde F-34: la clave `patientCode` no viene.
+    http.expectOne('/profiles/patients/me/summary').flush({
+      personId: 'p-1',
+      patientProfileId: 'pp-1',
+      displayName: 'Ana Salas',
+      birthDate: null,
+      personStatus: 'c-activo',
+      identityVerified: false,
+    });
+
+    expect(resumen?.identityVerified).toBe(false);
+    expect(resumen?.patientCode).toBeUndefined();
+  });
+
+  /**
+   * La API anterior a F-34 sólo respondía `200` a quien ya estaba verificado, y
+   * no emite la marca. Tomarla como `false` mostraría «Pendiente de
+   * verificación» al lado del código que esa misma respuesta trae.
+   */
+  it('una respuesta sin la marca se resuelve por la presencia del código', () => {
+    let resumen: { identityVerified: boolean } | undefined;
+    client.getOwnSummary().subscribe((r) => (resumen = r));
+
+    http.expectOne('/profiles/patients/me/summary').flush({
+      personId: 'p-1',
+      patientProfileId: 'pp-1',
+      patientCode: 'PAC-1',
+      displayName: 'Ana Salas',
+      birthDate: null,
+      personStatus: 'c-activo',
+    });
+
+    expect(resumen?.identityVerified).toBe(true);
   });
 
   /* ---- el perfil profesional propio --------------------------------------- */
@@ -492,6 +535,7 @@ describe('ProfilesClient', () => {
       patientProfileId: 'pp-1',
       patientCode: 'PAC-1',
       personStatus: 'concepto-activo',
+      identityVerified: true,
     });
   });
 

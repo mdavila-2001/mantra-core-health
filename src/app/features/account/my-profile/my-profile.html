@@ -27,9 +27,11 @@
         <h2 class="mi-perfil__titulo">Tus datos</h2>
 
         <app-view-state-host [state]="resumen()" (retry)="recargar()">
-          <!-- El 403 por identidad es el estado normal de un paciente nuevo, no un
-             error: se dice en neutro y con la salida a mano. Cualquier otro 403
-             sigue siendo un muro y se pinta como tal. -->
+          <!-- El 403 por identidad ya no debería llegar: desde F-34 el resumen
+             propio responde 200 a todo paciente. Se conserva **tal cual** para
+             la API anterior, que sigue cerrando la puerta mientras no se
+             despliegue el cambio. Cualquier otro 403 sigue siendo un muro y se
+             pinta como tal. -->
           <ng-container vsh-forbidden>
             @if (verificacionPendiente()) {
               <app-alert
@@ -59,9 +61,22 @@
                 <dd>{{ resumen.displayName ?? 'Sin registrar' }}</dd>
               </div>
 
+              <!-- F-34 · el código es lo único que depende de verificarse, y
+                 se muestra como una fila con estado, no tapando el resto. Sin
+                 verificar, el `<dd>` dice el estado **en palabras** —insignia
+                 informativa, no una alerta: no hay nada roto—. -->
               <div class="mi-perfil__dato">
                 <dt>Código de paciente</dt>
-                <dd class="mi-perfil__cifra">{{ resumen.patientCode }}</dd>
+                <dd
+                  data-testid="mi-perfil-codigo"
+                  [class.mi-perfil__cifra]="resumen.identityVerified"
+                >
+                  @if (resumen.identityVerified) {
+                    {{ resumen.patientCode ?? 'Sin registrar' }}
+                  } @else {
+                    <app-badge variant="info" value="Pendiente de verificación" />
+                  }
+                </dd>
               </div>
 
               <div class="mi-perfil__dato">
@@ -80,6 +95,17 @@
                 <dd>{{ estado() }}</dd>
               </div>
             </dl>
+
+            <!-- Invitación, no muro: un enlace al pie de la lista que promete
+               **sólo lo que es cierto** — hoy verificarse habilita el código de
+               paciente y nada más. -->
+            @if (!resumen.identityVerified) {
+              <p class="mi-perfil__nota">
+                <a app-link [routerLink]="rutaDeVerificacion">
+                  Verificá tu identidad para ver tu código de paciente
+                </a>
+              </p>
+            }
           }
         </app-view-state-host>
       </app-card>

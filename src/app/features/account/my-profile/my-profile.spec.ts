@@ -20,9 +20,11 @@ function jwt(payload: Record<string, unknown>): string {
 }
 
 /**
- * El resumen propio es la única pantalla de este lote que **no** pide rol: pide
- * identidad verificada. Por eso lo que más importa acá es el 403 — que tiene
- * que llegar como una puerta con salida, no como un muro.
+ * El resumen propio no pide rol y, desde F-34, tampoco identidad verificada: el
+ * backend responde 200 a todo paciente y omite el código de quien no verificó.
+ * Lo que más importa acá son dos cosas — que sin verificar la persona vea sus
+ * datos con el código como fila pendiente, y que el 403 de la API anterior siga
+ * llegando como una puerta con salida y no como un muro.
  */
 const ESTADO = '22222222-2222-4222-8222-222222222222';
 
@@ -33,6 +35,17 @@ const RESUMEN = {
   displayName: 'Ana Salas',
   birthDate: '1985-03-14',
   personStatus: ESTADO,
+  identityVerified: true,
+};
+
+/** El mismo resumen de quien todavía no verificó: sin código, como lo manda la API. */
+const RESUMEN_SIN_VERIFICAR = {
+  personId: 'p-1',
+  patientProfileId: 'pp-1',
+  displayName: 'Ana Salas',
+  birthDate: '1985-03-14',
+  personStatus: ESTADO,
+  identityVerified: false,
 };
 
 describe('MyProfile', () => {
@@ -285,6 +298,79 @@ describe('MyProfile', () => {
     // El motivo que dio el backend se conserva, como lo haría el host de estados.
     expect(alerta?.textContent).toContain('No tenés acceso a este recurso.');
     expect(alerta?.querySelector('a')).toBeNull();
+  });
+
+  /* -- F-34: el perfil no depende de verificarse ---------------------------- */
+
+  /**
+   * La invitación del pie de la lista. Se busca acotada a la columna principal
+   * porque `mi-perfil__nota` también rotula los enlaces del lateral, y el 403
+   * pinta su propio enlace dentro de la alerta: sin acotar, las tres cosas se
+   * confundirían entre sí.
+   */
+  function invitacionAVerificar(): HTMLAnchorElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '.mi-perfil__principal p.mi-perfil__nota a',
+    );
+  }
+
+  /** La lista de datos de «Tus datos» — no la de «Tu acceso», que comparte clase. */
+  function listaDeDatos(): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector(
+      '.mi-perfil__principal .mi-perfil__datos',
+    );
+  }
+
+  it('sin verificar, la persona ve sus datos y el código queda como fila pendiente', () => {
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN_SIN_VERIFICAR);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({
+      items: [{ conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' }],
+      count: 1,
+      limit: 50,
+    });
+    fixture.detectChanges();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    // Lo que la tarjeta vacía tapaba: nombre, nacimiento y estado.
+    expect(texto).toContain('Ana Salas');
+    expect(texto).toContain('14/03/1985');
+    expect(texto).toContain('Activa');
+    // El código no llegó, así que no se inventa: se dice en qué está.
+    expect(texto).toContain('Pendiente de verificación');
+    expect(texto).not.toContain('PAC-');
+    expect(texto).not.toContain('cuando tu identidad esté verificada');
+
+    const invitacion = invitacionAVerificar();
+    expect(invitacion?.textContent?.trim()).toBe(
+      'Verificá tu identidad para ver tu código de paciente',
+    );
+    expect(invitacion?.getAttribute('href')).toBe('/my-account/identity/verify');
+  });
+
+  it('verificada, ve su código y ya no se le invita a verificarse', () => {
+    responderResumen();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain(RESUMEN.patientCode);
+    expect(texto).not.toContain('Pendiente de verificación');
+    expect(invitacionAVerificar()).toBeNull();
+  });
+
+  /**
+   * Compatibilidad: mientras la API anterior siga desplegada, el 403 tiene que
+   * pintar exactamente la tarjeta neutra de antes — ni la lista de datos ni la
+   * invitación se cuelan por ese camino.
+   */
+  it('con el 403 de la API anterior no se cuelan ni la lista ni la invitación', () => {
+    http.expectOne('/profiles/patients/me/summary').flush(
+      { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    fixture.detectChanges();
+
+    expect(alertaDeDatos()?.textContent).toContain('cuando tu identidad esté verificada');
+    expect(listaDeDatos()).toBeNull();
+    expect(invitacionAVerificar()).toBeNull();
   });
 });
 

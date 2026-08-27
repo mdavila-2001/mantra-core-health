@@ -121,15 +121,31 @@ export class ProfilesClient {
    * `GET /profiles/patients/me/summary` — el resumen propio (V05-03).
    *
    * Autoservicio: el backend resuelve el sujeto desde la sesión y no admite
-   * consultar por otro. Exige identidad verificada vigente; sin ella responde
-   * `403 IDENTITY_VERIFICATION_REQUIRED`, que la capa de errores convierte en
-   * un estado con salida hacia la verificación en vez de un muro.
+   * consultar por otro.
+   *
+   * **Ya no exige identidad verificada** (F-34): responde `200` a todo
+   * paciente. Lo que la verificación gobierna es un solo campo —el código de
+   * paciente, que viaja únicamente cuando `identityVerified` es verdadero—, y
+   * esa decisión es del servidor: la vista muestra lo que llegó, no filtra.
+   *
+   * Una API anterior al cambio sigue respondiendo `403
+   * IDENTITY_VERIFICATION_REQUIRED`, que la capa de errores convierte en un
+   * estado con salida hacia la verificación en vez de un muro. Los dos
+   * contratos conviven mientras dure el despliegue.
    */
   getOwnSummary(): Observable<OwnPatientSummary> {
     return this.http.get<RespuestaResumen>(this.url('/profiles/patients/me/summary')).pipe(
       map((body) => {
         const limpio = sinNulos<WireOwnSummary>(body);
-        return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
+        return {
+          ...limpio,
+          birthDate: maybeDateOnly(limpio.birthDate),
+          // La API anterior a F-34 no emite la marca, y su `200` sólo existía
+          // para quien ya estaba verificado: dejarla en `false` mostraría
+          // «Pendiente de verificación» junto al código que esa misma
+          // respuesta trae. La presencia del código es el dato que queda.
+          identityVerified: limpio.identityVerified ?? limpio.patientCode !== undefined,
+        };
       }),
     );
   }
@@ -541,7 +557,14 @@ type WirePatientDetail = Omit<
   readonly updatedAt: string;
 };
 
-type WireOwnSummary = WireDates<OwnPatientSummary, 'birthDate'>;
+/**
+ * El resumen como viaja. `identityVerified` es **opcional en el cable a
+ * propósito**: la API anterior a F-34 no lo emite, y el tipo de vista lo
+ * declara obligatorio porque el cliente lo completa en la frontera.
+ */
+type WireOwnSummary = WireDates<Omit<OwnPatientSummary, 'identityVerified'>, 'birthDate'> & {
+  readonly identityVerified?: boolean;
+};
 
 /* El perfil profesional: `createdAt` siempre viene, y cada colección trae sus
    propias fechas opcionales. Las colecciones se declaran una por una y no con
