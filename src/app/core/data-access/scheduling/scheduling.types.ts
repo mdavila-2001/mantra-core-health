@@ -603,3 +603,31 @@ export interface AvailabilityExceptionPage {
   readonly items: readonly PublishedException[];
   readonly count: number;
 }
+
+/**
+ * Alta de una cita puntual — el doctor asigna (AG-2).
+ *
+ * «Volvé el jueves a las 10»: nace confirmada, el paciente se entera por la
+ * campana con la salida de «pedir cambio». No hay paso de aceptación.
+ */
+export interface NewDirectAppointment {
+  readonly patientProfileId: string;
+  /** La agenda del doctor donde ocurre; elegirla ES elegir la sede. */
+  readonly resourceId: string;
+  readonly startAt: string;
+  /** Libre a propósito: la cirugía de 3 h y la consulta de 45 conviven. */
+  readonly durationMinutes: number;
+  readonly reasonText?: string;
+}
+
+/** Lo que la cita puntual devuelve. */
+export interface DirectAppointmentCreated {
+  readonly bookingId: string;
+  readonly bookableSlotId: string;
+  readonly statusConceptId: string;
+  /**
+   * Horarios libres que la cita retiró al pisar cupos ofrecidos. Se muestra
+   * como AVISO («esto quitó N horarios disponibles»), no como pregunta.
+   */
+  readonly retractedSlots: number;
+}
