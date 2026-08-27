@@ -175,13 +175,13 @@ describe('Recorrido · armazón', () => {
     cy.visit('/my-account');
     esperarEstable();
 
-    // F-34: sus datos están, y lo único pendiente es el código de paciente —
-    // dicho en palabras, con la invitación al trámite y sin muro.
+    // F-34: sus datos están y no hay muro. Mientras el producto no ofrezca la
+    // verificación tampoco se nombra el trámite —ni la fila del código ni la
+    // invitación—: anunciar que falta algo que no se puede hacer deja a la
+    // persona buscando una puerta que no está.
     cy.contains('dd', 'Ana Salas').should('be.visible');
-    cy.contains('Pendiente de verificación').should('be.visible');
-    cy.contains('a', 'Verificá tu identidad para ver tu código de paciente')
-      .should('be.visible')
-      .and('have.attr', 'href', '/my-account/identity/verify');
+    cy.contains('Pendiente de verificación').should('not.exist');
+    cy.contains('a', 'Verificá tu identidad para ver tu código de paciente').should('not.exist');
     cy.contains('cuando tu identidad esté verificada').should('not.exist');
 
     capturar(pantalla, 'mi perfil con identidad sin verificar');

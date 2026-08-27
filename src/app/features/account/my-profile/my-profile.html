@@ -64,20 +64,29 @@
               <!-- F-34 · el código es lo único que depende de verificarse, y
                  se muestra como una fila con estado, no tapando el resto. Sin
                  verificar, el `<dd>` dice el estado **en palabras** —insignia
-                 informativa, no una alerta: no hay nada roto—. -->
-              <div class="mi-perfil__dato">
-                <dt>Código de paciente</dt>
-                <dd
-                  data-testid="mi-perfil-codigo"
-                  [class.mi-perfil__cifra]="resumen.identityVerified"
-                >
-                  @if (resumen.identityVerified) {
-                    {{ resumen.patientCode ?? 'Sin registrar' }}
-                  } @else {
-                    <app-badge variant="info" value="Pendiente de verificación" />
-                  }
-                </dd>
-              </div>
+                 informativa, no una alerta: no hay nada roto—.
+
+                 Mientras la verificación no se ofrezca, la fila **no se dibuja**
+                 para quien no la tiene: «Pendiente de verificación» nombra un
+                 trámite que hoy no existe, y anunciar que falta algo que no se
+                 puede hacer es peor que no mostrar el renglón. Quien ya está
+                 verificado sigue viendo su código, que es un dato suyo. Ver
+                 `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. -->
+              @if (resumen.identityVerified || verificacionOfrecida) {
+                <div class="mi-perfil__dato">
+                  <dt>Código de paciente</dt>
+                  <dd
+                    data-testid="mi-perfil-codigo"
+                    [class.mi-perfil__cifra]="resumen.identityVerified"
+                  >
+                    @if (resumen.identityVerified) {
+                      {{ resumen.patientCode ?? 'Sin registrar' }}
+                    } @else {
+                      <app-badge variant="info" value="Pendiente de verificación" />
+                    }
+                  </dd>
+                </div>
+              }
 
               <div class="mi-perfil__dato">
                 <dt>Fecha de nacimiento</dt>
@@ -109,8 +118,10 @@
 
             <!-- Invitación, no muro: un enlace al pie de la lista que promete
                **sólo lo que es cierto** — hoy verificarse habilita el código de
-               paciente y nada más. -->
-            @if (!resumen.identityVerified) {
+               paciente y nada más. Y sólo mientras el trámite se ofrezca: es la
+               invitación más directa que hay, así que se apaga con el mismo
+               interruptor que las otras tres. -->
+            @if (verificacionOfrecida && !resumen.identityVerified) {
               <p class="mi-perfil__nota">
                 <a app-link [routerLink]="rutaDeVerificacion">
                   Verificá tu identidad para ver tu código de paciente

@@ -79,29 +79,42 @@
           />
         </app-form-field>
 
+        <!-- Rótulo, ayuda y marcador son los del alta, palabra por palabra: es
+             el mismo dato, y dos redacciones distintas hacen dudar de si se
+             trata del mismo campo. Un valor heredado que ya no está en la lista
+             —«Intersexual», «Prefiero no decirlo»— se ve como «Sin especificar»
+             y no se manda mientras la persona no elija otra cosa. -->
         <app-form-field
-          label="Sexo al nacer"
+          label="Género (opcional)"
           hint="Dato clínico: cambia las dosis, los valores de referencia y los tamizajes."
         >
           <app-select
-            data-testid="perfil-sexo-al-nacer"
+            data-testid="perfil-genero"
             [options]="opcionesSexoAlNacer"
             [(value)]="sexoAlNacer"
             placeholder="Sin especificar"
           />
         </app-form-field>
 
-        <app-form-field
-          label="Ocupación"
-          hint="En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio."
-        >
-          <app-input
-            testId="perfil-ocupacion"
-            autocomplete="organization-title"
-            placeholder="Docente"
-            [(value)]="ocupacion"
-          />
-        </app-form-field>
+        @if (catalogoOcupacionesCaido()) {
+          <app-form-field label="Ocupación (opcional)">
+            <p class="datos__aviso" data-testid="perfil-ocupaciones-caido">
+              No pudimos traer el catálogo de ocupaciones.
+              <button app-button variant="ghost" size="sm" (clicked)="reintentarOcupaciones()">
+                Reintentar
+              </button>
+            </p>
+          </app-form-field>
+        } @else {
+          <app-form-field label="Ocupación (opcional)" [hint]="hintOcupacion()">
+            <app-select
+              data-testid="perfil-ocupacion"
+              [options]="opcionesOcupacion()"
+              [(value)]="ocupacionConceptId"
+              placeholder="Sin especificar"
+            />
+          </app-form-field>
+        }
       </div>
     </app-card>
 
@@ -117,17 +130,17 @@
           label="Teléfono"
           hint="Con el que podamos llamarte. Vaciarlo te deja sin teléfono."
           [errorMessage]="
-            telefonoMalEscrito() ? 'Ese teléfono no tiene un formato que podamos marcar.' : ''
+            telefonoMalEscrito() ? 'El número está incompleto para el país elegido.' : ''
           "
         >
-          <!-- Sin `type="tel"`: el átomo no lo admite (`INPUT_TYPES`), y el
-             `autocomplete` es el que hace el trabajo. Mismo criterio que el
-             alta, que documenta esto mismo. -->
-          <app-input
-            testId="perfil-telefono"
-            autocomplete="tel"
-            placeholder="+591 70000000"
-            [(value)]="telefono"
+          <!-- El mismo campo del alta: el prefijo se elige y la persona teclea
+             sólo su número nacional. Escribirlo a mano producía `+591 70012345`,
+             `70012345` y `591 7001-2345` como tres formas del mismo teléfono. -->
+          <app-phone-input
+            [formControl]="telefonoControl"
+            [placeholder]="'7001 2345'"
+            [hasError]="telefonoMalEscrito()"
+            [testId]="'perfil-telefono'"
           />
         </app-form-field>
 

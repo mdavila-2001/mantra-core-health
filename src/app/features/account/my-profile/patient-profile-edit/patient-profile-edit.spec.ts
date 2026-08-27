@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type { WritableSignal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import type { FormControl } from '@angular/forms';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
@@ -18,8 +19,12 @@ import { PatientProfileEdit } from './patient-profile-edit';
  *    es como se borra un segundo nombre que nunca se tuvo.
  * 3. **Sin cambios no se llama a la API.** Un `PATCH` vacío es válido en el
  *    contrato, pero pedirlo por nada ensucia la auditoría del backend.
- * 4. **Perder el catálogo de municipios no es perder el formulario**: se avisa
- *    en su bloque y el resto se sigue pudiendo corregir.
+ * 4. **Perder un catálogo no es perder el formulario**: se avisa en su bloque,
+ *    se ofrece reintentar y el resto se sigue pudiendo corregir.
+ * 5. **El editor ofrece exactamente lo que ofrece el alta**: la ocupación como
+ *    concepto del catálogo, el teléfono compuesto con su país y el género en
+ *    dos opciones. Un editor que admite más de lo que el alta admite convierte
+ *    «corregir mis datos» en una segunda puerta con otras reglas.
  */
 
 /** Lo que responde `GET /profiles/patients/me`: los opcionales llegan ausentes. */
@@ -33,11 +38,14 @@ const PERFIL_BASE = {
   displayName: 'Ana Lucía Quispe Mamani',
   birthDate: '1985-03-14',
   sexAtBirth: 'FEMALE',
-  occupationFreeText: 'Docente',
+  occupationConceptId: 'oc-docente',
   phone: '+591 70055555',
   residenceMunicipalityConceptId: 'mun-sacaba',
   identityVerified: false,
 };
+
+/** El mensaje que el alta muestra cuando el número no está completo. */
+const TELEFONO_INCOMPLETO = 'El número está incompleto para el país elegido.';
 
 /** Un departamento y dos municipios: lo justo para que el árbol tenga forma. */
 const DEPARTAMENTOS = [
@@ -64,7 +72,24 @@ const MUNICIPIOS = [
   },
 ];
 
+/** Dos ocupaciones del catálogo `VS_BO_OCCUPATION`, con sus conceptos reales. */
+const OCUPACIONES = [
+  {
+    conceptId: 'oc-docente',
+    code: 'occupation:TEACHER',
+    display: 'Docente',
+    codeSystemVersionId: 'csv-1',
+  },
+  {
+    conceptId: 'oc-albanil',
+    code: 'occupation:BUILDER',
+    display: 'Albañil',
+    codeSystemVersionId: 'csv-1',
+  },
+];
+
 describe('PatientProfileEdit', () => {
+  let fixture: ComponentFixture<PatientProfileEdit>;
   let componente: PatientProfileEdit;
   let http: HttpTestingController;
   let toasts: ToastService;
@@ -102,19 +127,32 @@ describe('PatientProfileEdit', () => {
       limit: 50,
       nextCursor: null,
     });
-    http.expectOne((r) => r.url.includes(`/terminology/value-sets/${id}/$expand`)).flush({
-      valueSetId: id,
-      items: opciones,
-      count: opciones.length,
-      limit: 200,
-      nextCursor: null,
-    });
+    http
+      .expectOne((r) => r.url.includes(`/terminology/value-sets/${id}/$expand`))
+      .flush({
+        valueSetId: id,
+        items: opciones,
+        count: opciones.length,
+        limit: 200,
+        nextCursor: null,
+      });
   }
 
   /** El árbol completo, que son dos catálogos: departamentos y municipios. */
   function responderMunicipios(): void {
     responderConjunto('VS_BO_DEPARTMENT', 'vs-dep', DEPARTAMENTOS);
     responderConjunto('VS_BO_MUNICIPALITY', 'vs-mun', MUNICIPIOS);
+  }
+
+  /** El catálogo de ocupaciones, que la pantalla pide junto con el árbol. */
+  function responderOcupaciones(): void {
+    responderConjunto('VS_BO_OCCUPATION', 'vs-oc', OCUPACIONES);
+  }
+
+  /** Los dos catálogos de la pantalla, que es lo que pide al montarse. */
+  function responderCatalogos(): void {
+    responderMunicipios();
+    responderOcupaciones();
   }
 
   /**
@@ -125,21 +163,76 @@ describe('PatientProfileEdit', () => {
    * cancela al hermano en cuanto uno falla, y a una petición cancelada no se le
    * puede contestar («Cannot return an error for a cancelled request»). Se
    * drena con `match`, que la saca de las abiertas sin inventarle una
-   * respuesta que el navegador tampoco le daría.
+   * respuesta que el navegador tampoco le daría. Se acota al conjunto de
+   * municipios: el de ocupaciones sale de la misma ruta y no tiene nada que ver
+   * con este fallo.
    */
   function caerseElCatalogo(): void {
     pedidoDeConjunto('VS_BO_DEPARTMENT').error(new ProgressEvent('error'), { status: 500 });
-    http.match((r) => r.url === '/terminology/value-sets');
+    http.match(
+      (r) => r.url === '/terminology/value-sets' && r.params.get('code') === 'VS_BO_MUNICIPALITY',
+    );
+  }
+
+  /** Tumba el catálogo de ocupaciones, que es una sola lectura. */
+  function caerseElCatalogoDeOcupaciones(): void {
+    pedidoDeConjunto('VS_BO_OCCUPATION').error(new ProgressEvent('error'), { status: 500 });
   }
 
   function montar(): void {
-    componente = TestBed.createComponent(PatientProfileEdit).componentInstance;
+    fixture = TestBed.createComponent(PatientProfileEdit);
+    componente = fixture.componentInstance;
   }
 
   function montarYCargar(perfil: object = {}): void {
     montar();
     http.expectOne('/profiles/patients/me').flush({ ...PERFIL_BASE, ...perfil });
-    responderMunicipios();
+    responderCatalogos();
+  }
+
+  /** Lo mismo, pero además pintando la pantalla: para lo que hay que ver dibujado. */
+  function montarPintadoYCargado(perfil: object = {}): void {
+    montarYCargar(perfil);
+    fixture.detectChanges();
+  }
+
+  /** El `<select>` real de un campo, que vive dentro del átomo. */
+  function desplegable(testId: string): HTMLSelectElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(
+      `[data-testid="${testId}"] select`,
+    );
+  }
+
+  /** Las etiquetas que ofrece un desplegable, marcador incluido. */
+  function opcionesDe(testId: string): readonly string[] {
+    return [...(desplegable(testId)?.options ?? [])].map((opcion) => opcion.text.trim());
+  }
+
+  /** El `<input>` real del teléfono, que vive dentro de `app-phone-input`. */
+  function campoDeTelefono(): HTMLInputElement {
+    const campo = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      '[data-testid="perfil-telefono"]',
+    );
+    if (campo === null) {
+      throw new Error('El campo de teléfono no está en la pantalla.');
+    }
+    return campo;
+  }
+
+  /** Teclea en el campo de teléfono, que es como se cambia de verdad. */
+  function teclearTelefono(digitos: string): void {
+    const campo = campoDeTelefono();
+    campo.value = digitos;
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  }
+
+  /** El texto del campo que envuelve a un control, sea ayuda o error. */
+  function notaDelCampo(testId: string, clase: string): string {
+    const campo = (fixture.nativeElement as HTMLElement)
+      .querySelector(`[data-testid="${testId}"]`)
+      ?.closest('app-form-field');
+    return campo?.querySelector(clase)?.textContent?.trim() ?? '';
   }
 
   function interno<T>(nombre: string): T {
@@ -155,6 +248,17 @@ describe('PatientProfileEdit', () => {
     return (componente as unknown as Record<string, WritableSignal<T>>)[nombre];
   }
 
+  /**
+   * El control del teléfono.
+   *
+   * Es lo único que no va en una señal: `app-phone-input` es un
+   * `ControlValueAccessor`, así que escribir el teléfono es escribir su control
+   * —igual que hace el campo cuando alguien teclea—.
+   */
+  function telefono(): FormControl<string> {
+    return (componente as unknown as Record<string, FormControl<string>>)['telefonoControl'];
+  }
+
   /** El `PATCH` de los datos propios, que es el único de esta pantalla. */
   function pedidoDeGuardado() {
     return http.expectOne('/profiles/patients/me');
@@ -167,7 +271,8 @@ describe('PatientProfileEdit', () => {
     expect(señal<string>('segundoNombre')()).toBe('Lucía');
     expect(señal<string>('apellidoPaterno')()).toBe('Quispe');
     expect(señal<string>('apellidoMaterno')()).toBe('Mamani');
-    expect(señal<string>('ocupacion')()).toBe('Docente');
+    expect(señal<string | null>('ocupacionConceptId')()).toBe('oc-docente');
+    expect(telefono().value).toBe('+591 70055555');
     expect(señal<string>('telefono')()).toBe('+591 70055555');
     expect(señal<string | null>('sexoAlNacer')()).toBe('FEMALE');
   });
@@ -190,9 +295,8 @@ describe('PatientProfileEdit', () => {
     montarYCargar();
 
     expect(señal<string | null>('municipio')()).toBe('mun-sacaba');
-    const arbol = interno<() => readonly { label: string; items: readonly object[] }[]>(
-      'arbolMunicipios',
-    )();
+    const arbol =
+      interno<() => readonly { label: string; items: readonly object[] }[]>('arbolMunicipios')();
     expect(arbol.map((rama) => rama.label)).toEqual(['Cochabamba']);
     expect(arbol[0]?.items).toHaveLength(2);
   });
@@ -207,7 +311,7 @@ describe('PatientProfileEdit', () => {
 
     expect(señal<string>('segundoNombre')()).toBe('');
     expect(señal<string>('apellidoMaterno')()).toBe('');
-    expect(señal<string>('telefono')()).toBe('');
+    expect(telefono().value).toBe('');
     expect(señal<string | null>('municipio')()).toBeNull();
   });
 
@@ -296,9 +400,7 @@ describe('PatientProfileEdit', () => {
     interno<() => void>('guardar')();
     pedidoDeGuardado().error(new ProgressEvent('error'), { status: 500 });
 
-    expect(toasts.toasts().at(-1)?.message).toBe(
-      'No pudimos guardar los cambios. Probá de nuevo.',
-    );
+    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Probá de nuevo.');
     expect(interno<() => boolean>('guardando')()).toBe(false);
     expect(señal<string>('nombre')()).toBe('Ana María');
   });
@@ -315,19 +417,112 @@ describe('PatientProfileEdit', () => {
     http.expectNone('/profiles/patients/me');
   });
 
-  it('un teléfono con letras no llega a la API; vaciarlo sí es válido', () => {
-    montarYCargar();
+  /**
+   * El campo compone el número, así que lo único que puede fallar es que esté
+   * incompleto para el país elegido — y se dice **con las palabras del alta**:
+   * dos redacciones del mismo rechazo se leen como dos reglas distintas.
+   */
+  it('un teléfono incompleto no llega a la API, y lo dice como lo dice el alta', () => {
+    montarPintadoYCargado();
 
-    señal<string>('telefono').set('no tengo');
+    telefono().setValue('+591 7005');
+    expect(interno<() => boolean>('telefonoMalEscrito')()).toBe(true);
     expect(interno<() => boolean>('puedeGuardar')()).toBe(false);
 
-    señal<string>('telefono').set('');
+    fixture.detectChanges();
+    expect(notaDelCampo('perfil-telefono', '.form-field-error')).toBe(TELEFONO_INCOMPLETO);
+
+    interno<() => void>('guardar')();
+    http.expectNone('/profiles/patients/me');
+  });
+
+  it('vaciar el teléfono sí es válido, y viaja en blanco para borrarlo', () => {
+    montarYCargar();
+
+    telefono().setValue('');
     expect(interno<() => boolean>('puedeGuardar')()).toBe(true);
     interno<() => void>('guardar')();
 
     const req = pedidoDeGuardado();
     expect(req.request.body).toEqual({ phone: '' });
     req.flush({ ...PERFIL_BASE, phone: undefined });
+  });
+
+  /** Un número completo viaja con el prefijo del país delante, no a secas. */
+  it('un teléfono completo viaja compuesto con su prefijo', () => {
+    montarYCargar();
+
+    telefono().setValue('+591 70012345');
+    expect(interno<() => boolean>('telefonoMalEscrito')()).toBe(false);
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ phone: '+591 70012345' });
+    req.flush({ ...PERFIL_BASE, phone: '+591 70012345' });
+  });
+
+  /* ---- el teléfono guardado en formatos viejos ---------------------------- */
+
+  /**
+   * En la base conviven tres formas del mismo número —el `@Matches` del backend
+   * las acepta todas y el alta anterior dejaba escribirlo a mano—. El campo las
+   * pinta todas igual, pero `telefonoCompleto` sólo acepta la compuesta: sembrar
+   * el dato crudo dejaba el editor **abierto en inválido**, con «Guardar
+   * cambios» deshabilitado, y entonces no se podía corregir ni el nombre.
+   */
+  it.each([
+    ['+591 700 22222', '7002 2222'],
+    ['70012345', '7001 2345'],
+  ])('un teléfono guardado como «%s» abre el editor válido y editable', (guardado, visible) => {
+    montarPintadoYCargado({ phone: guardado });
+
+    expect(campoDeTelefono().value).toBe(visible);
+    expect(interno<() => boolean>('telefonoMalEscrito')()).toBe(false);
+    expect(interno<() => boolean>('puedeGuardar')()).toBe(true);
+    expect(notaDelCampo('perfil-telefono', '.form-field-error')).toBe('');
+  });
+
+  /**
+   * Y no viaja solo. Normalizar en silencio lo que nadie tocó cerraría el
+   * contacto vigente y abriría otro sin que la persona hiciera nada: es una
+   * decisión suya, no de una pantalla que se abrió.
+   */
+  it.each(['+591 700 22222', '70012345'])(
+    'el teléfono heredado «%s» no viaja si nadie lo tocó',
+    (guardado) => {
+      montarYCargar({ phone: guardado });
+
+      señal<string>('nombre').set('Ana María');
+      interno<() => void>('guardar')();
+
+      const req = pedidoDeGuardado();
+      expect(req.request.body).toEqual({ name: 'Ana María' });
+      req.flush({ ...PERFIL_BASE, name: 'Ana María', phone: guardado });
+    },
+  );
+
+  it('vaciar un teléfono heredado sí viaja, y lo borra', () => {
+    montarPintadoYCargado({ phone: '+591 700 22222' });
+
+    teclearTelefono('');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ phone: '' });
+    req.flush({ ...PERFIL_BASE, phone: undefined });
+  });
+
+  it('teclear encima de un teléfono heredado manda la forma compuesta', () => {
+    montarPintadoYCargado({ phone: '70012345' });
+
+    teclearTelefono('71234567');
+    expect(campoDeTelefono().value).toBe('7123 4567');
+
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ phone: '+591 71234567' });
+    req.flush({ ...PERFIL_BASE, phone: '+591 71234567' });
   });
 
   /* ---- salidas y catálogo -------------------------------------------------- */
@@ -348,6 +543,7 @@ describe('PatientProfileEdit', () => {
     montar();
     http.expectOne('/profiles/patients/me').flush(PERFIL_BASE);
     caerseElCatalogo();
+    responderOcupaciones();
 
     expect(interno<() => boolean>('catalogoMunicipiosCaido')()).toBe(true);
     expect(interno<() => readonly unknown[]>('arbolMunicipios')()).toHaveLength(0);
@@ -358,6 +554,7 @@ describe('PatientProfileEdit', () => {
     montar();
     http.expectOne('/profiles/patients/me').flush(PERFIL_BASE);
     caerseElCatalogo();
+    responderOcupaciones();
 
     interno<() => void>('reintentarMunicipios')();
     responderMunicipios();
@@ -369,7 +566,7 @@ describe('PatientProfileEdit', () => {
   it('un fallo de lectura del perfil deja la pantalla en estado de error con reintento', () => {
     montar();
     http.expectOne('/profiles/patients/me').error(new ProgressEvent('error'), { status: 500 });
-    responderMunicipios();
+    responderCatalogos();
 
     expect(interno<() => { status: string }>('perfil')().status).toBe('error');
 
@@ -377,5 +574,113 @@ describe('PatientProfileEdit', () => {
     http.expectOne('/profiles/patients/me').flush(PERFIL_BASE);
 
     expect(interno<() => { status: string }>('perfil')().status).toBe('ready');
+  });
+
+  /* ---- la ocupación, que ahora es un concepto del catálogo ---------------- */
+
+  it('ofrece las ocupaciones del catálogo, con su marcador de «sin especificar»', () => {
+    montarPintadoYCargado();
+
+    expect(opcionesDe('perfil-ocupacion')).toEqual(['Sin especificar', 'Docente', 'Albañil']);
+  });
+
+  /**
+   * El uuid es el dato y la etiqueta es presentación. Mandar «Docente» dejaría
+   * la ocupación fuera de todo lo que se puede agrupar o buscar por concepto.
+   */
+  it('elegir una ocupación manda su concepto, nunca su etiqueta', () => {
+    montarYCargar();
+
+    señal<string | null>('ocupacionConceptId').set('oc-albanil');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ occupationConceptId: 'oc-albanil' });
+    req.flush({ ...PERFIL_BASE, occupationConceptId: 'oc-albanil' });
+  });
+
+  /** Volver a «Sin especificar» es quitarse la ocupación, y el backend la borra con `''`. */
+  it('volver a «Sin especificar» vacía la ocupación con la cadena vacía', () => {
+    montarYCargar();
+
+    señal<string | null>('ocupacionConceptId').set(null);
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ occupationConceptId: '' });
+    req.flush({ ...PERFIL_BASE, occupationConceptId: undefined });
+  });
+
+  /**
+   * Las altas anteriores al catálogo guardaron texto libre. El desplegable no
+   * puede preseleccionarlo —no es un concepto— y dejarlo mudo haría creer que
+   * la persona nunca declaró su ocupación, así que la ayuda del campo lo dice.
+   */
+  it('la ocupación escrita antes del catálogo se dice en la ayuda del campo', () => {
+    montarPintadoYCargado({ occupationConceptId: undefined, occupationFreeText: 'Panadera' });
+
+    expect(señal<string | null>('ocupacionConceptId')()).toBeNull();
+    expect(notaDelCampo('perfil-ocupacion', '.form-field-hint')).toBe(
+      'Registrada como «Panadera». Elegí una opción del catálogo para reemplazarla.',
+    );
+  });
+
+  /** Y no se manda sola: quien no toca el desplegable conserva su texto libre. */
+  it('el texto libre heredado no viaja como cambio si nadie eligió un concepto', () => {
+    montarYCargar({ occupationConceptId: undefined, occupationFreeText: 'Panadera' });
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ name: 'Ana María' });
+    req.flush({ ...PERFIL_BASE, name: 'Ana María' });
+  });
+
+  it('si el catálogo de ocupaciones se cae lo dice, y reintentar vuelve a tocar la red', () => {
+    montar();
+    http.expectOne('/profiles/patients/me').flush(PERFIL_BASE);
+    responderMunicipios();
+    caerseElCatalogoDeOcupaciones();
+    fixture.detectChanges();
+
+    expect(interno<() => boolean>('catalogoOcupacionesCaido')()).toBe(true);
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="perfil-ocupaciones-caido"]',
+    );
+    expect(aviso?.textContent).toContain('No pudimos traer el catálogo de ocupaciones.');
+    // El resto del formulario no se cayó con él: el campo es opcional.
+    expect(señal<string>('nombre')()).toBe('Ana');
+
+    interno<() => void>('reintentarOcupaciones')();
+    responderOcupaciones();
+    fixture.detectChanges();
+
+    expect(interno<() => boolean>('catalogoOcupacionesCaido')()).toBe(false);
+    expect(opcionesDe('perfil-ocupacion')).toEqual(['Sin especificar', 'Docente', 'Albañil']);
+  });
+
+  /* ---- el género, con las mismas opciones que el alta -------------------- */
+
+  /**
+   * Dos opciones, las del alta. Ofrecer más acá dejaría corregir los datos con
+   * un valor que el alta no admite, y esa diferencia no la explica nada.
+   */
+  it('el género se ofrece con las dos opciones del alta', () => {
+    montarPintadoYCargado();
+
+    expect(opcionesDe('perfil-genero')).toEqual(['Sin especificar', 'Masculino', 'Femenino']);
+  });
+
+  /** Un valor heredado que ya no está en la lista se conserva: no se manda nada. */
+  it('un género heredado fuera de la lista no se pisa al guardar otra cosa', () => {
+    montarYCargar({ sexAtBirth: 'INTERSEX' });
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ name: 'Ana María' });
+    req.flush({ ...PERFIL_BASE, name: 'Ana María', sexAtBirth: 'INTERSEX' });
   });
 });

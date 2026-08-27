@@ -93,11 +93,13 @@ describe('MyProfile', () => {
     expect(req.request.params.keys()).toEqual([]);
 
     req.flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [],
-      count: 0,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [],
+        count: 0,
+        limit: 50,
+      });
   });
 
   /**
@@ -138,11 +140,15 @@ describe('MyProfile', () => {
 
   it('traduce el estado de la persona a palabras', () => {
     http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [{ conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' }],
-      count: 1,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [
+          { conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' },
+        ],
+        count: 1,
+        limit: 50,
+      });
     fixture.detectChanges();
 
     expect(interno<() => string>('estado')()).toBe('Activa');
@@ -167,10 +173,12 @@ describe('MyProfile', () => {
    * trámite ya está en curso, y con las peticiones encadenadas no vería nada.
    */
   it('el historial sobrevive al 403 del resumen', () => {
-    http.expectOne('/profiles/patients/me/summary').flush(
-      { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
-      { status: 403, statusText: 'Forbidden' },
-    );
+    http
+      .expectOne('/profiles/patients/me/summary')
+      .flush(
+        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
+        { status: 403, statusText: 'Forbidden' },
+      );
     fixture.detectChanges();
 
     expect(estado().status).toBe('forbidden');
@@ -182,11 +190,13 @@ describe('MyProfile', () => {
 
   function responderResumen(): void {
     http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [],
-      count: 0,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [],
+        count: 0,
+        limit: 50,
+      });
     fixture.detectChanges();
   }
 
@@ -270,10 +280,12 @@ describe('MyProfile', () => {
     // Todo paciente recién registrado pasa por acá: pintarlo como «No tenés
     // acceso» en rojo lee como que algo se rompió, y el mensaje crudo del
     // backend habla de usted (feedback de la analista, barrido del 18/08/2026).
-    http.expectOne('/profiles/patients/me/summary').flush(
-      { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verifique su identidad.' },
-      { status: 403, statusText: 'Forbidden' },
-    );
+    http
+      .expectOne('/profiles/patients/me/summary')
+      .flush(
+        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verifique su identidad.' },
+        { status: 403, statusText: 'Forbidden' },
+      );
     fixture.detectChanges();
 
     const alerta = alertaDeDatos();
@@ -322,30 +334,41 @@ describe('MyProfile', () => {
     );
   }
 
-  it('sin verificar, la persona ve sus datos y el código queda como fila pendiente', () => {
+  /**
+   * Con la verificación apagada, quien no la tiene ve **sus datos y nada más**.
+   *
+   * Ni la insignia «Pendiente de verificación» ni la invitación: las dos nombran
+   * un trámite que el producto hoy no ofrece, y anunciar que falta algo que no
+   * se puede hacer deja a la persona buscando una puerta que no está. Lo que la
+   * tarjeta vacía tapaba —nombre, nacimiento y estado— sigue en pie, que es lo
+   * que F-34 vino a resolver.
+   */
+  it('sin verificar, la persona ve sus datos y no se le nombra un trámite que no se ofrece', () => {
     http.expectOne('/profiles/patients/me/summary').flush(RESUMEN_SIN_VERIFICAR);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [{ conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' }],
-      count: 1,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [
+          { conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' },
+        ],
+        count: 1,
+        limit: 50,
+      });
     fixture.detectChanges();
 
-    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    // Lo que la tarjeta vacía tapaba: nombre, nacimiento y estado.
+    const raiz = fixture.nativeElement as HTMLElement;
+    const texto = raiz.textContent ?? '';
     expect(texto).toContain('Ana Salas');
     expect(texto).toContain('14/03/1985');
     expect(texto).toContain('Activa');
-    // El código no llegó, así que no se inventa: se dice en qué está.
-    expect(texto).toContain('Pendiente de verificación');
+    // Sin código no se inventa uno, y tampoco se deja el renglón anunciando
+    // que falta un trámite: la fila entera no se dibuja.
+    expect(raiz.querySelector('[data-testid="mi-perfil-codigo"]')).toBeNull();
+    expect(texto).not.toContain('Código de paciente');
+    expect(texto).not.toContain('Pendiente de verificación');
     expect(texto).not.toContain('PAC-');
     expect(texto).not.toContain('cuando tu identidad esté verificada');
-
-    const invitacion = invitacionAVerificar();
-    expect(invitacion?.textContent?.trim()).toBe(
-      'Verificá tu identidad para ver tu código de paciente',
-    );
-    expect(invitacion?.getAttribute('href')).toBe('/my-account/identity/verify');
+    expect(invitacionAVerificar()).toBeNull();
   });
 
   it('verificada, ve su código y ya no se le invita a verificarse', () => {
@@ -363,10 +386,12 @@ describe('MyProfile', () => {
    * invitación se cuelan por ese camino.
    */
   it('con el 403 de la API anterior no se cuelan ni la lista ni la invitación', () => {
-    http.expectOne('/profiles/patients/me/summary').flush(
-      { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
-      { status: 403, statusText: 'Forbidden' },
-    );
+    http
+      .expectOne('/profiles/patients/me/summary')
+      .flush(
+        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
+        { status: 403, statusText: 'Forbidden' },
+      );
     fixture.detectChanges();
 
     expect(alertaDeDatos()?.textContent).toContain('cuando tu identidad esté verificada');
@@ -465,7 +490,9 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     fixture = TestBed.createComponent(MyProfile);
     resolverEstadosDeCaso(http);
     fixture.detectChanges();
-    http.expectOne('/identity/me/verification-cases').flush([]);
+    // El historial ya no se pide: la ficha está apagada. Ver el `beforeEach` del
+    // primer describe, que lo afirma con `expectNone`.
+    http.expectNone('/identity/me/verification-cases');
   }
 
   function enlaceDeEdicion(): HTMLAnchorElement | null {
@@ -477,11 +504,13 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
   it('la paciente ve la salida a corregir sus datos, con su destino real', () => {
     montar({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
     http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [],
-      count: 0,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [],
+        count: 0,
+        limit: 50,
+      });
     fixture.detectChanges();
 
     const enlace = enlaceDeEdicion();
@@ -510,11 +539,13 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     expect(enlaceDeEdicion()).toBeNull();
 
     http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [],
-      count: 0,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [],
+        count: 0,
+        limit: 50,
+      });
     fixture.detectChanges();
 
     expect(enlaceDeEdicion()).not.toBeNull();

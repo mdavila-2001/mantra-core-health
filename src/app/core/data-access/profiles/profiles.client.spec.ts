@@ -406,6 +406,25 @@ describe('ProfilesClient', () => {
     expect('phone' in (perfil ?? {})).toBe(false);
   });
 
+  /**
+   * La ocupación pasó a ser un concepto de `VS_BO_OCCUPATION`, y llega **junto**
+   * al texto libre de las altas anteriores: a lo sumo uno de los dos trae valor,
+   * así que los dos tienen que sobrevivir al mapeo sin pisarse.
+   */
+  it('getOwnPatientProfile trae la ocupación como concepto del catálogo', () => {
+    let perfil: { occupationConceptId?: string; occupationFreeText?: string } | undefined;
+    client.getOwnPatientProfile().subscribe((p) => (perfil = p));
+
+    http.expectOne('/profiles/patients/me').flush({
+      ...DATOS_WIRE,
+      occupationFreeText: null,
+      occupationConceptId: 'oc-docente',
+    });
+
+    expect(perfil?.occupationConceptId).toBe('oc-docente');
+    expect('occupationFreeText' in (perfil ?? {})).toBe(false);
+  });
+
   it('updateOwnPatientProfile manda sólo lo que se le pasa, y la fecha como YYYY-MM-DD', () => {
     client
       .updateOwnPatientProfile({ name: 'Ana María', birthDate: new Date(1990, 10, 2) })
@@ -432,6 +451,23 @@ describe('ProfilesClient', () => {
     expect(req.request.body).toEqual({ middleName: '', motherLastName: '' });
 
     req.flush(DATOS_WIRE);
+  });
+
+  /**
+   * El concepto viaja **tal cual**, sin traducción y sin etiqueta: el uuid es el
+   * dato. Y `''` lo vacía, igual que en cualquier otro campo de este contrato —
+   * si se degradara a `undefined`, quien quita su ocupación no la quitaría.
+   */
+  it('updateOwnPatientProfile serializa la ocupación tal cual, y el vacío que la borra', () => {
+    client.updateOwnPatientProfile({ occupationConceptId: 'oc-docente' }).subscribe();
+    const asigna = http.expectOne('/profiles/patients/me');
+    expect(asigna.request.body).toEqual({ occupationConceptId: 'oc-docente' });
+    asigna.flush(DATOS_WIRE);
+
+    client.updateOwnPatientProfile({ occupationConceptId: '' }).subscribe();
+    const vacia = http.expectOne('/profiles/patients/me');
+    expect(vacia.request.body).toEqual({ occupationConceptId: '' });
+    vacia.flush(DATOS_WIRE);
   });
 
   it('updateOwnPatientProfile devuelve el perfil releído, ya traducido', () => {

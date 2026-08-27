@@ -20,14 +20,16 @@ import { entrar, esperarAplicacionLista, estable, irA } from './support/sesion';
  *
  * Así que hay tres recorridos, y los tres son de la misma persona:
  *
- * 1. **Recién registrada**: ve su nombre, su nacimiento y su estado, y donde
- *    iría el código lee «Pendiente de verificación» con la invitación al
- *    trámite. Sin muro y sin código inventado.
- * 2. **Verificada**: el mismo perfil, con el código y sin invitación.
+ * 1. **Recién registrada**: ve su nombre, su nacimiento y su estado. Sin muro y
+ *    sin código inventado. Mientras el producto no ofrezca la verificación
+ *    —`VERIFICACION_DE_IDENTIDAD_OFRECIDA`— tampoco ve la fila del código ni la
+ *    invitación al trámite: nombrar una puerta que no está es peor que callarla.
+ * 2. **Verificada**: el mismo perfil, con el código.
  * 3. **Corrigiendo lo suyo**: entra a «Editar tus datos», cambia nombre,
- *    teléfono y nacimiento, y vuelve a «Mi perfil» a verlos. Se comprueba en la
- *    pantalla **y** contra la API, porque una pantalla que muestra lo que
- *    escribió la persona sin haberlo guardado se ve exactamente igual.
+ *    teléfono, nacimiento, género y ocupación, y vuelve a «Mi perfil» a verlos.
+ *    Se comprueba en la pantalla **y** contra la API, porque una pantalla que
+ *    muestra lo que escribió la persona sin haberlo guardado se ve exactamente
+ *    igual.
  *
  * ## Contra qué API corre
  *
@@ -57,6 +59,10 @@ const TARJETA_VACIA = 'cuando tu identidad esté verificada';
    comparte prefijo con el que siembra `crearPaciente` («Ana»), para que
    afirmar el nuevo no pueda pasar por casualidad con el viejo puesto. */
 const NOMBRE_NUEVO = 'Valentina';
+/* Se teclean sólo los ocho dígitos: el prefijo lo pone el campo, y lo que se
+   guarda es la composición de los dos. Lo que se ve es el número agrupado. */
+const TELEFONO_DIGITOS = '71234567';
+const TELEFONO_VISIBLE = '7123 4567';
 const TELEFONO_NUEVO = '+591 71234567';
 const NACIMIENTO_NUEVO_VISIBLE = '02/11/1990';
 const NACIMIENTO_NUEVO_ISO = '1990-11-02';
@@ -93,7 +99,7 @@ function filaDelCodigo(page: Page): Locator {
 }
 
 test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificada', () => {
-  test('recién registrada ve sus datos; el código queda pendiente, con invitación', async ({
+  test('recién registrada ve sus datos, sin que se le nombre un trámite que no se ofrece', async ({
     page,
   }) => {
     const paciente = await crearPaciente(api);
@@ -108,14 +114,13 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
     await expect(tarjeta).toContainText(nombreDePila);
     await expect(tarjeta).toContainText(apellidoPaterno);
 
-    // 2 · El código no llegó, y la pantalla lo dice en palabras en vez de
-    // inventarlo o de tapar el resto de la tarjeta.
-    await expect(filaDelCodigo(page)).toHaveText('Pendiente de verificación');
+    // 2 · El código no llegó, y no se inventa. Con la verificación apagada
+    // tampoco se deja el renglón anunciando que falta: la fila entera no está.
+    await expect(filaDelCodigo(page)).toHaveCount(0);
+    await expect(page.getByText('Pendiente de verificación')).toHaveCount(0);
 
-    // 3 · La invitación es un enlace real al trámite, no una alerta.
-    const invitacion = page.getByRole('link', { name: INVITACION });
-    await expect(invitacion).toBeVisible();
-    await expect(invitacion).toHaveAttribute('href', '/my-account/identity/verify');
+    // 3 · Y no se la invita a un trámite que el producto hoy no ofrece.
+    await expect(page.getByRole('link', { name: INVITACION })).toHaveCount(0);
 
     // 4 · El muro de antes ya no está.
     await expect(page.getByText(TARJETA_VACIA)).toHaveCount(0);
@@ -129,7 +134,7 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
     await capturar(page, '01-sin-verificar');
   });
 
-  test('una vez verificada, la misma persona ve su código y ya no la invitan', async ({ page }) => {
+  test('una vez verificada, la misma persona ve su código', async ({ page }) => {
     // Aprobar una identidad exige una cuenta con permisos de revisión, y esas
     // credenciales las declara el entorno. Sin ellas el tramo **no se puede
     // ejecutar**: se saltea con el motivo literal que devolvió la API, que es
@@ -192,11 +197,15 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
     await expect(page.getByRole('heading', { name: 'Editar tus datos' })).toBeVisible();
     await estable(page);
 
-    // 2 · Se corrigen tres campos de naturaleza distinta a propósito: un texto,
-    // un texto con formato validado y una fecha, que es la que más viajes de
-    // ida y vuelta tiene entre la pantalla y el contrato.
+    // 2 · Se corrigen campos de naturaleza distinta a propósito: un texto, un
+    // teléfono que el campo compone con su país, una fecha —la que más viajes
+    // de ida y vuelta tiene entre la pantalla y el contrato— y dos conceptos
+    // que se eligen de una lista.
     await page.getByTestId('perfil-nombre').fill(NOMBRE_NUEVO);
-    await page.getByTestId('perfil-telefono').fill(TELEFONO_NUEVO);
+    // Sólo los ocho dígitos: el prefijo lo pone el campo, y lo que muestra es
+    // el número agrupado como lo agrupa Bolivia.
+    await page.getByTestId('perfil-telefono').fill(TELEFONO_DIGITOS);
+    await expect(page.getByTestId('perfil-telefono')).toHaveValue(TELEFONO_VISIBLE);
     // La fecha se teclea dígito a dígito, como lo hace quien ya sabe la suya, y
     // la máscara pone las barras. No sirve `fill`: el alta de `crearPaciente`
     // no manda fecha, el campo llega vacío, y al enfocarlo la máscara escribe
@@ -211,17 +220,30 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
     });
     await campoDeFecha.blur();
 
+    // El género y la ocupación son desplegables: el primero con las dos
+    // opciones del alta, el segundo con lo que traiga `VS_BO_OCCUPATION`. Se
+    // elige por posición porque el `<option>` lleva el índice —el concepto no
+    // viaja al DOM— y porque el catálogo lo siembra el entorno, no la prueba.
+    const genero = page.getByTestId('perfil-genero').locator('select');
+    await genero.selectOption({ index: 1 });
+
+    const ocupacion = page.getByTestId('perfil-ocupacion').locator('select');
+    const ocupacionesOfrecidas = await ocupacion.locator('option').count();
+    // La primera es el marcador «Sin especificar»: con una sola no hay catálogo
+    // que elegir, y eso es un entorno sin sembrar, no un fallo de la pantalla.
+    if (ocupacionesOfrecidas > 1) {
+      await ocupacion.selectOption({ index: 1 });
+    }
+
     await expect(page.getByTestId('perfil-nombre')).toHaveValue(NOMBRE_NUEVO);
     await expect(campoDeFecha).toHaveValue(NACIMIENTO_NUEVO_VISIBLE);
 
-    // La captura del formulario va acá, con los tres campos ya escritos.
+    // La captura del formulario va acá, con los campos ya escritos.
     await capturar(page, '11-editar-form');
 
     // 3 · Guardar lo dice con palabras, no con un cambio silencioso.
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
-    await expect(page.getByTestId('toast-mensaje')).toHaveText(
-      'Tus datos quedaron actualizados.',
-    );
+    await expect(page.getByTestId('toast-mensaje')).toHaveText('Tus datos quedaron actualizados.');
 
     // 4 · Y quedaron: al volver, «Mi perfil» los muestra.
     await irAMiPerfil(page);

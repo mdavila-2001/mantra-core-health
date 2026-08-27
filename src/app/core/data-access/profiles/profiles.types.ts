@@ -338,12 +338,7 @@ export interface PractitionerAffiliation {
    * reconoce que mentir sobre él.
    */
   readonly statusKind:
-    | 'pendiente'
-    | 'declarado'
-    | 'aprobado'
-    | 'rechazado'
-    | 'revocado'
-    | 'desconocido';
+    'pendiente' | 'declarado' | 'aprobado' | 'rechazado' | 'revocado' | 'desconocido';
   /**
    * Por qué la organización rechazó o dio de baja el vínculo.
    *
@@ -515,7 +510,19 @@ export interface OwnPatientProfile {
   readonly birthDate?: Date;
   /** Sexo asignado al nacer, por código legible. Ver `BirthSexCode`. */
   readonly sexAtBirth?: BirthSexCode;
+  /**
+   * Ocupación como **texto libre**, tal como la escribió el alta anterior al
+   * catálogo. Convive con {@link OwnPatientProfile.occupationConceptId} y a lo
+   * sumo uno de los dos trae valor: el backend deja el texto en `null` en
+   * cuanto se asigna un concepto.
+   */
   readonly occupationFreeText?: string;
+  /**
+   * Ocupación como concepto de `VS_BO_OCCUPATION`, que es lo que declara el
+   * alta desde que el campo pasó a ser un desplegable. Un uuid, nunca una
+   * etiqueta: el texto que se muestra sale del catálogo.
+   */
+  readonly occupationConceptId?: string;
   readonly phone?: string;
   /**
    * Municipio de residencia. Viaja **solo**, sin el departamento: el backend lo
@@ -550,6 +557,15 @@ export interface OwnPatientProfileChanges {
   readonly birthDate?: Date;
   readonly sexAtBirth?: BirthSexCode;
   readonly occupationFreeText?: string;
+  /**
+   * Ocupación por concepto de `VS_BO_OCCUPATION`.
+   *
+   * Un uuid la asigna y **el catálogo gana**: el backend deja
+   * `occupationFreeText` en `null`, así que no hay forma de quedarse con las
+   * dos. `''` la vacía, como en cualquier otro campo de este contrato. Un uuid
+   * que no exista en el catálogo vuelve `422`.
+   */
+  readonly occupationConceptId?: string;
   readonly phone?: string;
   readonly residenceMunicipalityConceptId?: string;
 }
