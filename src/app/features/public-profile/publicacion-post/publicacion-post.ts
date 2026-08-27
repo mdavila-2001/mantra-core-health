@@ -31,6 +31,15 @@ export class PublicacionPost {
   readonly slug = input.required<string>();
   /** En la vista de una publicación suelta el cuerpo no se recorta. */
   readonly enfocada = input(false);
+  /**
+   * Si el nombre del autor lleva al perfil.
+   *
+   * En la ficha de alguien, no: el nombre de arriba de cada post es el dueño de
+   * la página que ya se está mirando, y un enlace que no lleva a ningún lado
+   * nuevo es ruido. En el feed mezclado, sí: es cómo se pasa de leer algo a
+   * ver quién lo escribió.
+   */
+  readonly autorEnlazado = input(false);
 
   private readonly expandido = signal(false);
 
@@ -48,6 +57,8 @@ export class PublicacionPost {
     'publicacion',
     this.post().id,
   ]);
+
+  protected readonly enlaceAutor = computed(() => ['/p', this.slug()]);
 
   protected alternar(): void {
     this.expandido.update((v) => !v);

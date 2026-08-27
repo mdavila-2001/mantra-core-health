@@ -925,6 +925,28 @@ function rutasDeFichasPublicas(): Routes {
 function rutasDeBusquedaPublica(): Routes {
   return [
     {
+      // La portada pública: lo último que publicaron todos los profesionales.
+      // Es el destino por defecto de quien entra sin sesión (ver `homeGuard`),
+      // y va en su propia ruta y no en `/buscar` porque son dos cosas
+      // distintas: acá se lee sin saber a quién buscar, allá se busca a
+      // alguien concreto.
+      path: 'publicaciones',
+      loadComponent: () =>
+        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+      children: [
+        {
+          path: '',
+          pathMatch: 'full',
+          title: 'Lo último de los profesionales — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/feed-publicaciones/feed-publicaciones').then(
+              (m) => m.FeedPublicaciones,
+            ),
+        },
+      ],
+    },
+    {
       path: 'buscar',
       loadComponent: () =>
         import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),

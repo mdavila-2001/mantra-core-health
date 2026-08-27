@@ -3,7 +3,17 @@
 <article class="publicacion">
   <div class="publicacion__texto">
     <header class="publicacion__cabecera">
-      @if (autorAvatar(); as foto) {
+      @if (autorEnlazado()) {
+        <a [routerLink]="enlaceAutor()" class="publicacion__retrato-enlace">
+          @if (autorAvatar(); as foto) {
+            <img class="publicacion__avatar" [src]="foto" alt="" width="40" height="40" />
+          } @else {
+            <span class="publicacion__avatar publicacion__avatar--iniciales" aria-hidden="true">{{
+              autorIniciales()
+            }}</span>
+          }
+        </a>
+      } @else if (autorAvatar(); as foto) {
         <img class="publicacion__avatar" [src]="foto" alt="" width="40" height="40" />
       } @else {
         <span class="publicacion__avatar publicacion__avatar--iniciales" aria-hidden="true">{{
@@ -11,7 +21,15 @@
         }}</span>
       }
       <div class="publicacion__firma">
-        <p class="publicacion__autor">{{ autorNombre() }}</p>
+        @if (autorEnlazado()) {
+          <p class="publicacion__autor">
+            <a [routerLink]="enlaceAutor()" class="publicacion__autor-enlace">{{
+              autorNombre()
+            }}</a>
+          </p>
+        } @else {
+          <p class="publicacion__autor">{{ autorNombre() }}</p>
+        }
         @if (autorHeadline()) {
           <p class="publicacion__titular">{{ autorHeadline() }}</p>
         }
