@@ -293,10 +293,21 @@
             </div>
 
             <!-- 12. Date Picker Modal -->
-            <h3>12. DatePicker Modal (`molecules/date-picker`)</h3>
+            <h3>12. DatePicker Modal (`organisms/date-picker`)</h3>
             <div class="inputs-demo-grid">
-                <app-form-field label="Fecha de nacimiento" hint="Variante date-only">
+                <app-form-field label="Fecha" hint="Variante date-only">
                     <app-date-picker mode="date-only" [(value)]="dateOnlyVal"></app-date-picker>
+                </app-form-field>
+                <app-form-field
+                    label="Fecha de nacimiento"
+                    hint="Con rango: desde 1900 y sin fechas futuras. El encabezado abre la grilla de años."
+                >
+                    <app-date-picker
+                        mode="date-only"
+                        [(value)]="fechaNacimientoVal"
+                        [minDate]="fechaMinimaNacimiento"
+                        maxDate="today"
+                    ></app-date-picker>
                 </app-form-field>
                 <app-form-field label="Fecha y Hora de Cita" hint="Variante date-time">
                     <app-date-picker mode="date-time" [(value)]="dateTimeVal"></app-date-picker>

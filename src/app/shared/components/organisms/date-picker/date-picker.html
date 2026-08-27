@@ -93,87 +93,155 @@
       </div>
 
       <div class="calendar-nav">
-        <div class="nav-controls">
-          <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftYear(-1)" aria-label="Año anterior">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="11 17 6 12 11 7" />
-              <polyline points="18 17 13 12 18 7" />
-            </svg>
-          </button>
-          <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftMonth(-1)" aria-label="Mes anterior">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-        </div>
+        @switch (panel()) {
+          @case ('days') {
+            <div class="nav-controls">
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYear(-1)" (clicked)="shiftYear(-1)" aria-label="Año anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="11 17 6 12 11 7" />
+                  <polyline points="18 17 13 12 18 7" />
+                </svg>
+              </button>
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftMonth(-1)" (clicked)="shiftMonth(-1)" aria-label="Mes anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+            </div>
+          }
+          @case ('years') {
+            <div class="nav-controls">
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftDecade(-1)" (clicked)="shiftDecade(-1)" aria-label="Década anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="11 17 6 12 11 7" />
+                  <polyline points="18 17 13 12 18 7" />
+                </svg>
+              </button>
+            </div>
+          }
+        }
 
         <div class="nav-selectors">
-          <select
-            class="nav-select month-select"
-            aria-label="Seleccionar mes"
-            [value]="viewMonth().getMonth()"
-            (change)="setMonth($event)"
-          >
-            @for (month of monthNames; track $index) {
-              <option [value]="$index">{{ month }}</option>
-            }
-          </select>
-
-          <select
-            class="nav-select year-select"
-            aria-label="Seleccionar año"
-            [value]="viewMonth().getFullYear()"
-            (change)="setYear($event)"
-          >
-            @for (year of years(); track year) {
-              <option [value]="year">{{ year }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="nav-controls">
-          <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftMonth(1)" aria-label="Mes siguiente">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-          <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftYear(1)" aria-label="Año siguiente">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="13 17 18 12 13 7" />
-              <polyline points="6 17 11 12 6 7" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="weekdays-grid" aria-hidden="true">
-        @for (dayName of weekDayNames; track dayName) {
-          <span class="weekday-name">{{ dayName }}</span>
-        }
-      </div>
-
-      <div class="calendar-grid">
-        @for (day of calendarDays(); track day.date.getTime()) {
           <button
+            #viewSwitch
             type="button"
-            class="calendar-day-btn"
-            [class.other-month]="!day.isCurrentMonth"
-            [class.is-today]="day.isToday"
-            [class.is-selected]="day.isSelected"
-            [class.is-disabled]="day.isDisabled"
-            [disabled]="day.isDisabled"
-            [attr.aria-pressed]="day.isSelected"
-            [attr.aria-current]="day.isToday ? 'date' : null"
-            [attr.aria-disabled]="day.isDisabled ? 'true' : null"
-            [attr.aria-label]="dayLabel(day)"
-            (click)="selectDay(day)"
+            class="view-switch"
+            aria-label="Cambiar mes y año"
+            [attr.aria-expanded]="panel() !== 'days'"
+            (click)="toggleYearPanel()"
           >
-            {{ day.dayNumber }}
+            <span class="view-switch-label">{{ viewLabel() }}</span>
+            <svg class="view-switch-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </button>
+        </div>
+
+        @switch (panel()) {
+          @case ('days') {
+            <div class="nav-controls">
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftMonth(1)" (clicked)="shiftMonth(1)" aria-label="Mes siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYear(1)" (clicked)="shiftYear(1)" aria-label="Año siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="13 17 18 12 13 7" />
+                  <polyline points="6 17 11 12 6 7" />
+                </svg>
+              </button>
+            </div>
+          }
+          @case ('years') {
+            <div class="nav-controls">
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftDecade(1)" (clicked)="shiftDecade(1)" aria-label="Década siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="13 17 18 12 13 7" />
+                  <polyline points="6 17 11 12 6 7" />
+                </svg>
+              </button>
+            </div>
+          }
         }
       </div>
 
-      @if (mode() === 'date-time') {
+      <span class="sr-only" role="status" aria-live="polite">{{ panelAnnouncement() }}</span>
+
+      @switch (panel()) {
+        @case ('years') {
+          <div class="calendar-grid calendar-grid-wide">
+            @for (cell of yearCells(); track $index) {
+              <button
+                type="button"
+                class="calendar-day-btn calendar-unit-btn"
+                [class.other-decade]="cell.isOutsideDecade"
+                [class.is-selected]="cell.isSelected"
+                [class.is-disabled]="cell.isDisabled"
+                [disabled]="cell.isDisabled"
+                [attr.tabindex]="$index === activeCell() ? 0 : -1"
+                [attr.aria-pressed]="cell.isSelected"
+                [attr.aria-disabled]="cell.isDisabled ? 'true' : null"
+                (click)="selectYear(cell)"
+                (keydown)="handleGridKeydown($event, $index)"
+              >
+                {{ cell.year }}
+              </button>
+            }
+          </div>
+        }
+        @case ('months') {
+          <div class="calendar-grid calendar-grid-wide">
+            @for (cell of monthCells(); track $index) {
+              <button
+                type="button"
+                class="calendar-day-btn calendar-unit-btn"
+                [class.is-selected]="cell.isSelected"
+                [class.is-disabled]="cell.isDisabled"
+                [disabled]="cell.isDisabled"
+                [attr.tabindex]="$index === activeCell() ? 0 : -1"
+                [attr.aria-pressed]="cell.isSelected"
+                [attr.aria-disabled]="cell.isDisabled ? 'true' : null"
+                [attr.aria-label]="monthLabel(cell)"
+                (click)="selectMonth(cell)"
+                (keydown)="handleGridKeydown($event, $index)"
+              >
+                {{ cell.name }}
+              </button>
+            }
+          </div>
+        }
+        @default {
+          <div class="weekdays-grid" aria-hidden="true">
+            @for (dayName of weekDayNames; track dayName) {
+              <span class="weekday-name">{{ dayName }}</span>
+            }
+          </div>
+
+          <div class="calendar-grid">
+            @for (day of calendarDays(); track day.date.getTime()) {
+              <button
+                type="button"
+                class="calendar-day-btn"
+                [class.other-month]="!day.isCurrentMonth"
+                [class.is-today]="day.isToday"
+                [class.is-selected]="day.isSelected"
+                [class.is-disabled]="day.isDisabled"
+                [disabled]="day.isDisabled"
+                [attr.aria-pressed]="day.isSelected"
+                [attr.aria-current]="day.isToday ? 'date' : null"
+                [attr.aria-disabled]="day.isDisabled ? 'true' : null"
+                [attr.aria-label]="dayLabel(day)"
+                (click)="selectDay(day)"
+              >
+                {{ day.dayNumber }}
+              </button>
+            }
+          </div>
+        }
+      }
+
+      @if (mode() === 'date-time' && panel() === 'days') {
         <div class="time-picker-section">
           <span class="time-label" id="time-label">Hora</span>
           <div class="time-controls">
