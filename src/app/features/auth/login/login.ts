@@ -15,6 +15,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { FormTracing } from '../../../core/observability/business/form-tracing';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -54,6 +55,7 @@ const MY_ORGANIZATIONS_ROUTE = '/my-organizations';
     Input,
     Link,
     FormField,
+    NavIcon,
     Alert,
     AuthSplit,
     AnnounceOnAppear,
@@ -83,15 +85,20 @@ export class Login {
   readonly isSubmitting = computed(() => this.state().status === 'loading');
 
   /**
-   * El campo de MFA está siempre visible y rotulado como opcional.
+   * El campo de MFA **ya no se dibuja**, y el control se queda.
    *
-   * `LoginDto` acepta `mfaCode`, pero **el backend no emite ninguna señal** de
+   * Estaba siempre a la vista, rotulado «Código de verificación (opcional)»,
+   * porque `LoginDto` acepta `mfaCode` y el backend no emite ninguna señal de
    * cuándo hace falta: no hay código de error propio en el catálogo ni mención
-   * de MFA en el servicio de login. Antes esto se resolvía olfateando el texto
-   * de la respuesta, que era adivinar. Mostrarlo siempre como opcional no
-   * inventa nada y quien tenga segundo factor puede completarlo.
+   * de MFA en el servicio de login. Mostrarlo siempre no inventaba nada, pero
+   * le pedía a todo el mundo un dato que casi nadie tiene — y en una pantalla
+   * de dos campos, un tercero que no te toca es el que te hace dudar de los
+   * otros dos.
    *
-   * TODO: cuando el backend declare el caso, ocultarlo hasta que lo pida.
+   * El control sigue declarado a propósito: `credentials()` lo omite mientras
+   * esté vacío, así que hoy no cambia nada de lo que viaja, y el día que el
+   * backend declare el caso vuelve el campo a la plantilla —pedido, no
+   * ofrecido— sin tocar el formulario ni el envío.
    */
 
   readonly errorMessage = computed<string | null>(() => {

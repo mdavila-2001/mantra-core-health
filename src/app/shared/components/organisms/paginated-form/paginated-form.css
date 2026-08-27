@@ -115,3 +115,31 @@
     margin-block-start: var(--sp-5);
   }
 }
+
+/* ==========================================================================
+    El glifo dentro del campo.
+
+    Apagado en reposo, encendido cuando el campo toma el foco: es el control
+    diciendo cuál está activo. En una página de cuatro campos eso es lo que la
+    vuelve escaneable de un vistazo, que es todo lo que un ícono de formulario
+    tiene que conseguir. Ver `CampoDeFormulario.icono`.
+    ========================================================================== */
+.paginated-form__campo-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  margin-inline-end: var(--sp-2);
+  color: var(--text-muted);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.paginated-form__campo-icono svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+app-form-field:focus-within .paginated-form__campo-icono {
+  color: var(--brand-primary);
+}

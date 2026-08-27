@@ -7,12 +7,11 @@
        o el reflejo aparece corrido media ventana. Las variables se heredan, así
        que basta con volver a publicarlas en este nodo. -->
   <div class="login" appPointerScene>
+    <!-- Sin sello de marca. La columna de al lado ya lleva el logo a tamaño de
+         marca y la barra superior lleva la píldora: un tercer AloVida encima
+         del título era la marca pidiendo turno en su propia pantalla, y lo que
+         la persona vino a hacer acá es entrar. El título es el ancla. -->
     <div class="login__header">
-      <!-- Marca de seguridad: refuerza "acceso" en el mismo lenguaje de marca
-           que la columna del split, también en mobile donde esa columna no existe. -->
-      <div class="login__mark" aria-hidden="true">
-        <span class="login__mark-glifo"></span>
-      </div>
       <h1 class="login__title">Iniciar sesión</h1>
       <p class="login__subtitle">Ingresá con tu correo o tu documento de identidad.</p>
     </div>
@@ -39,7 +38,12 @@
           autocomplete="username"
           placeholder="correo@ejemplo.com o 1234567"
           testId="login-identifier"
-        />
+        >
+          <!-- El glifo va dentro del campo, no al lado del rótulo: así se lee
+               como parte del control —se ilumina cuando el campo toma el foco—
+               y no como un adorno pegado al texto. -->
+          <app-nav-icon slot="icon-start" name="mail" class="login__campo-icono" />
+        </app-input>
       </app-form-field>
 
       <app-form-field
@@ -57,21 +61,18 @@
           autocomplete="current-password"
           placeholder="Tu contraseña"
           testId="login-password"
-        />
+        >
+          <!-- Candado y no llave: la llave es el acceso que se presta. -->
+          <app-nav-icon slot="icon-start" name="lock" class="login__campo-icono" />
+        </app-input>
       </app-form-field>
 
-      <app-form-field
-        label="Código de verificación (opcional)"
-        hint="Solo si tenés segundo factor activado."
-      >
-        <app-input
-          formControlName="mfaCode"
-          type="text"
-          autocomplete="one-time-code"
-          placeholder="123456"
-          testId="login-mfa"
-        />
-      </app-form-field>
+      <!-- El código de segundo factor **no se pregunta acá**. Estaba siempre a
+           la vista y rotulado «opcional», que es pedirle a todo el mundo un
+           dato que casi nadie tiene: tres de cada tres personas leían un campo
+           que no les tocaba. Vuelve cuando el backend diga que hace falta —el
+           control sigue en el formulario, ver `Login.form`—, y entonces se
+           muestra pedido, no ofrecido. -->
 
       <button
         app-button
@@ -91,13 +92,53 @@
         <a app-link routerLink="/auth/forgot-password" data-testid="login-recuperar">¿Olvidaste tu contraseña?</a>
       </p>
 
-      <p class="login__pie login__registro">
-        ¿No tenés cuenta? <a app-link routerLink="/auth/register" data-testid="login-registro">Creá la tuya</a>
-      </p>
+      <!-- Los dos accesos de alta van con su glifo: son dos caminos distintos y
+           el ícono es lo que los distingue de un vistazo, antes de leerlos. -->
+      <a class="login__anexo" routerLink="/auth/register" data-testid="login-registro">
+        <app-nav-icon name="patients" class="login__anexo-icono" />
+        <span class="login__anexo-texto">
+          <span class="login__anexo-titulo">Creá tu cuenta</span>
+          <span class="login__anexo-detalle">Paciente o profesional</span>
+        </span>
+        <svg
+          class="login__anexo-flecha"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="m9 5 7 7-7 7" />
+        </svg>
+      </a>
 
-      <p class="login__pie login__registro">
-        ¿Sos una aseguradora? <a app-link routerLink="/auth/register/organization" data-testid="login-registro-organizacion">Registrá tu organización</a>
-      </p>
+      <a
+        class="login__anexo"
+        routerLink="/auth/register/organization"
+        data-testid="login-registro-organizacion"
+      >
+        <app-nav-icon name="umbrella" class="login__anexo-icono" />
+        <span class="login__anexo-texto">
+          <span class="login__anexo-titulo">Registrá tu organización</span>
+          <span class="login__anexo-detalle">Aseguradoras</span>
+        </span>
+        <svg
+          class="login__anexo-flecha"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="m9 5 7 7-7 7" />
+        </svg>
+      </a>
     </div>
   </div>
 </app-auth-split>

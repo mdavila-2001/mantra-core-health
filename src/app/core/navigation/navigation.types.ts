@@ -23,7 +23,7 @@
  * (`features/shell-layout`), que es la única capa que puede ver a las dos.
  *
  * Es un set cerrado por la misma razón que del otro lado: un nombre libre
- * terminaría en un ícono mudo. Y son cuarenta y cuatro, no siete, porque con
+ * terminaría en un ícono mudo. Y son cuarenta y siete, no siete, porque con
  * cincuenta y cinco secciones siete dejan de distinguir: el porqué del reparto
  * está escrito en `atoms/nav-icon/nav-icon.types.ts`, que es donde se dibujan.
  */
@@ -77,10 +77,16 @@ export const NAV_ICON_NAMES = [
   // Confianza y llaves.
   'shield',
   'key',
+  // Candado: lo que uno guarda, no lo que presta. Ver la nota del set.
+  'lock',
   'link',
   'flag',
   'umbrella',
   'briefcase',
+
+  // Contacto: correo y teléfono, los dos datos que pide todo formulario de alta.
+  'mail',
+  'phone',
 
   // Avisos y ajustes.
   'bell',

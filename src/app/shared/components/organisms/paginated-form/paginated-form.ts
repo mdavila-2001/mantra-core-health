@@ -26,6 +26,7 @@ import {
 import { AppButton } from '../../atoms/button/button';
 import { Checkbox } from '../../atoms/checkbox/checkbox';
 import { Input } from '../../atoms/input/input';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import type { InputType } from '../../atoms/input/input.types';
 import { Progress } from '../../atoms/progress/progress';
 import { Switch } from '../../atoms/switch/switch';
@@ -104,6 +105,7 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
     DatePicker,
     FormField,
     Input,
+    NavIcon,
     PhoneInput,
     Progress,
     Radio,

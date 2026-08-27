@@ -404,6 +404,7 @@ export class RegisterPatient {
             autocomplete: 'username',
             placeholder: '1234567',
             testId: 'registro-documento',
+            icono: 'patients',
             mensajeDeError: 'Ingresá tu documento: letras, números, punto y guion.',
           },
           // Pegado al documento porque es un dato DE ese documento: la
@@ -498,6 +499,7 @@ export class RegisterPatient {
             autocomplete: 'new-password',
             placeholder: 'Tu contraseña',
             testId: 'registro-password',
+            icono: 'lock',
             mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
           },
           {
@@ -509,6 +511,7 @@ export class RegisterPatient {
             autocomplete: 'email',
             placeholder: 'correo@ejemplo.com',
             testId: 'registro-correo',
+            icono: 'mail',
             mensajeDeError: 'Ese correo no tiene un formato válido.',
           },
           {
@@ -520,6 +523,7 @@ export class RegisterPatient {
             autocomplete: 'tel',
             placeholder: '7001 2345',
             testId: 'registro-telefono',
+            icono: 'phone',
             mensajeDeError: 'Ingresá los ocho dígitos de tu teléfono.',
           },
         ],
@@ -592,6 +596,7 @@ export class RegisterPatient {
             autocomplete: 'off',
             placeholder: '1234567',
             testId: 'registro-pro-documento',
+            icono: 'patients',
             mensajeDeError: 'Letras, números, punto y guion.',
           },
           this.campoDepartamentoEmisor('registro-pro-departamento-ci'),
@@ -623,6 +628,7 @@ export class RegisterPatient {
             autocomplete: 'off',
             placeholder: 'MP-12345',
             testId: 'registro-pro-matricula',
+            icono: 'shield',
             mensajeDeError: 'Ingresá tu matrícula profesional.',
           },
           {
@@ -634,6 +640,7 @@ export class RegisterPatient {
             autocomplete: 'off',
             placeholder: 'TIT-6789',
             testId: 'registro-pro-credencial',
+            icono: 'briefcase',
             mensajeDeError: 'Ingresá el número de tu colegio.',
           },
           {
@@ -674,6 +681,7 @@ export class RegisterPatient {
             autocomplete: 'tel',
             placeholder: '7001 2345',
             testId: 'registro-pro-telefono',
+            icono: 'phone',
             mensajeDeError: 'Ingresá los ocho dígitos de tu teléfono.',
           },
         ],
@@ -693,6 +701,7 @@ export class RegisterPatient {
             autocomplete: 'username',
             placeholder: 'matricula@hospital.bo',
             testId: 'registro-pro-correo',
+            icono: 'mail',
             mensajeDeError: 'Ingresá un correo válido.',
           },
           {
@@ -704,6 +713,7 @@ export class RegisterPatient {
             autocomplete: 'new-password',
             placeholder: 'Tu contraseña',
             testId: 'registro-pro-password',
+            icono: 'lock',
             mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
           },
         ],

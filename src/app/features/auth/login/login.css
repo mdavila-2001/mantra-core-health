@@ -93,56 +93,6 @@
   }
 }
 
-/* Sello de acceso: mismo par bg/fg que `btn--primary` (7,25 AAA peor caso),
-   así que el contraste ya está validado — no es una combinación nueva. */
-.login__mark {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  margin-bottom: var(--sp-4);
-  border-radius: var(--r-lg);
-  background: var(--brand-primary);
-  color: var(--text-inverse);
-  box-shadow: var(--shadow-sm), 0 10px 24px color-mix(in srgb, var(--brand-primary) 30%, transparent);
-}
-
-/* Halo: un anillo que nace del sello y se disuelve, en el mismo compás lento
-   que el latido de la columna de marca. Es lo único que se mueve del lado del
-   formulario cuando nadie toca nada, y ata las dos mitades de la pantalla. */
-.login__mark::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid var(--brand-primary);
-  animation: login-halo 3.6s cubic-bezier(0.2, 0, 0.2, 1) infinite;
-}
-
-@keyframes login-halo {
-  0% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.55);
-  }
-}
-
-/* El glifo real de AloVida, no un ícono genérico de "acceso": misma técnica que
-   `.auth-split__marca-mini-glifo` (máscara sobre `currentColor`) para que sirva
-   en los dos temas con el único archivo de marca aprobado. */
-.login__mark-glifo {
-  width: 28px;
-  height: 21px;
-  background: currentColor;
-  -webkit-mask: url('/redsat/imagenes/alovida-logo.svg') no-repeat center / contain;
-  mask: url('/redsat/imagenes/alovida-logo.svg') no-repeat center / contain;
-}
-
 /* Membrete: título y bajada, cerrados por una regla que se apaga hacia la
    derecha en vez de cortar seco — el mismo gesto que un membrete impreso. */
 .login__header {
@@ -166,6 +116,10 @@
   font-size: var(--fs-h1);
   font-weight: 700;
   line-height: var(--lh-h1);
+  /* Una display grande se aprieta; una de cuerpo se abre. Es la regla óptica
+     que sigue todo sistema con familia display propia, y a 32 px la diferencia
+     entre 0 y -0,02em es la que separa «título» de «párrafo grande». */
+  letter-spacing: -0.02em;
   /* Documento: el título va en tinta (texto), no en color de marca; el acento
      de marca queda para la acción primaria. */
   color: var(--text-primary);
@@ -232,6 +186,11 @@ form {
   color: var(--brand-primary-hover);
 }
 
+/* Los anexos NO entran acá: son filas, no enlaces de texto, y su color lo
+   pone su propia regla. Sin esta exclusión el `a[app-link]` global tampoco los
+   alcanza —no llevan el atributo—, pero conviene decirlo antes de que alguien
+   se lo agregue «por consistencia» y les pinte el título de aguamarina. */
+
 .login__pie {
   margin: 0;
   text-align: center;
@@ -240,29 +199,147 @@ form {
   color: var(--text-secondary);
 }
 
-/* El alta se presenta como un "anexo" enmarcado —como en los Stitch expediente—,
-   no como un enlace suelto. Sigue siendo un `<a app-link>`: no cambia el
-   comportamiento ni el contrato. */
-.login__registro {
+/* ==========================================================================
+    Los dos accesos de alta.
+
+    Eran dos frases con un enlace adentro, encerradas en un marco. Como texto
+    corrido obligan a leerlas enteras para saber cuál es cuál, y el enlace real
+    —las dos o tres palabras subrayadas— era un blanco chico dentro de una caja
+    grande que no hacía nada.
+
+    Acá la caja **es** el enlace, con la anatomía de una fila de Ajustes de
+    macOS: glifo, dos líneas de texto y el galón a la derecha. El glifo es lo
+    que distingue los dos caminos antes de leerlos, y la fila entera es el
+    blanco — 60 px de alto, muy por encima del mínimo táctil.
+    ========================================================================== */
+.login__anexo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   background: color-mix(in srgb, var(--bg-surface-alt) 70%, transparent);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
+}
+
+.login__anexo:hover {
+  border-color: color-mix(in srgb, var(--brand-primary) 45%, var(--border-default));
+  background: color-mix(in srgb, var(--bg-surface-alt) 92%, transparent);
+}
+
+/* El hundido al pulsar. Es el gesto que más «nativo» se siente y el más barato:
+   el control acusa recibo antes de que la navegación ocurra, así que nadie
+   vuelve a tocarlo pensando que no pasó nada. */
+.login__anexo:active {
+  transform: scale(0.985);
+}
+
+.login__anexo-icono {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  color: var(--brand-primary);
+}
+
+.login__anexo-icono svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
+.login__anexo-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-inline-size: 0;
+  flex: 1;
+}
+
+.login__anexo-titulo {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.login__anexo-detalle {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* El galón se corre un pelo al pasar por encima: dice «esto lleva a otro lado»
+   sin escribirlo. */
+.login__anexo-flecha {
+  flex: none;
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  color: var(--text-muted);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.login__anexo:hover .login__anexo-flecha {
+  transform: translateX(2px);
 }
 
 /* ==========================================================================
-    Entrada en cascada.
+    El glifo dentro del campo.
 
-    `app-auth-split` ya hace aparecer la tarjeta entera; esto ordena lo de
-    adentro para que la pantalla se lea de arriba hacia abajo en vez de
-    aparecer de una. Los retardos son cortos y el último cae en 260 ms: el
-    formulario está utilizable antes de que la cascada termine, que es la única
-    condición que un acceso tiene que cumplir.
+    Va en la ranura de ícono del átomo, así que comparte el marco, el foco y el
+    estado de error del control. Apagado en reposo y encendido en foco: es el
+    control diciendo cuál está activo, que en un formulario de dos campos es
+    toda la orientación que hace falta.
+    ========================================================================== */
+.login__campo-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  margin-inline-end: var(--sp-2);
+  color: var(--text-muted);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.login__campo-icono svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+app-form-field:focus-within .login__campo-icono {
+  color: var(--brand-primary);
+}
+
+/* ==========================================================================
+    Entrada, al modo de macOS.
+
+    Un panel de sistema no aparece deslizándose: **se asienta**. Nace un punto
+    por debajo de su tamaño, sube y se pasa un pelo antes de quedarse quieto.
+    Ese rebote mínimo es lo que hace leer la superficie como algo con masa en
+    vez de como una capa que se desvanece, y es la única diferencia real entre
+    «tiene animación» y «se siente nativo».
+
+    Lo hace `--ease-spring` —el resorte del sistema, ya en los tokens— sobre
+    `scale` y no sobre `translateY`: escalar desde 0,97 mueve todo el bloque
+    hacia su centro, que es de donde parece salir un panel; desplazarlo lo hace
+    entrar desde un borde, que es de donde sale un cartel.
+
+    El orden importa más que la duración: el membrete primero, los campos
+    detrás de a uno y el pie al final. Los retardos son cortos y el último cae
+    en 260 ms — el formulario está utilizable antes de que la cascada termine,
+    que es la única condición que un acceso tiene que cumplir.
     ========================================================================== */
 .login__header,
 form > *,
 .login__footer {
-  animation: login-cae var(--dur-slow) var(--ease-out) both;
+  animation: login-asienta var(--dur-slow) var(--ease-spring) both;
 }
 
 form > *:nth-child(1) {
@@ -282,10 +359,10 @@ form > *:nth-child(n + 4) {
   animation-delay: 260ms;
 }
 
-@keyframes login-cae {
+@keyframes login-asienta {
   from {
     opacity: 0;
-    transform: translateY(var(--sp-2));
+    transform: scale(0.97);
   }
 }
 
@@ -297,11 +374,6 @@ form > *:nth-child(n + 4) {
   form > *,
   .login__footer {
     animation-delay: 0ms !important;
-  }
-
-  .login__mark::after {
-    animation: none !important;
-    opacity: 0;
   }
 
   .login {

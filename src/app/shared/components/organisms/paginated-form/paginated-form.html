@@ -130,7 +130,18 @@
                   [placeholder]="campo.placeholder ?? ''"
                   [hasError]="errorDe(campo) !== ''"
                   [testId]="campo.testId ?? 'campo-' + campo.key"
-                />
+                >
+                  <!-- El glifo del campo, cuando lo declara: dentro del control,
+                       para que comparta su marco y su foco. Ver `icono` en el
+                       contrato. -->
+                  @if (campo.icono; as icono) {
+                    <app-nav-icon
+                      slot="icon-start"
+                      [name]="icono"
+                      class="paginated-form__campo-icono"
+                    />
+                  }
+                </app-input>
               }
             }
           </app-form-field>
