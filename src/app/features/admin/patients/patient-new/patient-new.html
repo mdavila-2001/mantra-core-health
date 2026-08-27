@@ -55,6 +55,8 @@
         [value]="fechaDeNacimiento()"
         (valueChange)="fechaDeNacimiento.set($event)"
         placeholder="dd/mm/aaaa"
+        maxDate="today"
+        [minDate]="fechaMinimaNacimiento"
       />
     </app-form-field>
 

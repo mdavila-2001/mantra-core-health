@@ -120,6 +120,10 @@ export interface CampoDeFormulario {
    * control que no existe.
    */
   readonly required?: boolean;
+
+  /** Límites de fecha para campos 'date' y 'datetime'. */
+  readonly minDate?: Date | 'today' | string | null;
+  readonly maxDate?: Date | 'today' | string | null;
 }
 
 /** Una página: el rótulo de su sección y hasta cuatro campos. */

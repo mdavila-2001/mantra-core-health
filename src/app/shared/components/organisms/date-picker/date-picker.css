@@ -13,7 +13,85 @@
   width: 100%;
 }
 
-.date-picker-trigger {
+/* Grupo de Input con Botón de Calendario */
+.date-picker-input-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  overflow: hidden;
+}
+
+@media (min-width: 780px) {
+  .date-picker-input-group {
+    min-height: 40px;
+  }
+}
+
+.date-picker-input-group:hover:not(.is-disabled) {
+  border-color: var(--brand-primary);
+}
+
+.date-picker-input-group:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  border-color: var(--brand-primary);
+}
+
+.date-picker-trigger-wrapper.has-error .date-picker-input-group {
+  border-color: var(--c-danger-600, #dc2626);
+}
+
+.date-picker-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0 var(--sp-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.date-picker-input::placeholder {
+  color: var(--text-muted);
+}
+
+.date-picker-input:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.date-picker-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--sp-3);
+  background: transparent;
+  border: none;
+  color: var(--brand-primary);
+  cursor: pointer;
+  height: 100%;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.date-picker-btn:hover:not(:disabled) {
+  background-color: var(--bg-inset);
+}
+
+.date-picker-btn:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+/* Disparador como botón completo (fallback o allowKeyboard=false) */
+.date-picker-trigger:not(.date-picker-btn) {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
@@ -31,20 +109,18 @@
   text-align: left;
 }
 
-/* Base = móvil: área táctil de 44px. Desde 780px (tablet/escritorio) el disparador
-   se compacta a 40px y padding menor. */
 @media (min-width: 780px) {
-  .date-picker-trigger {
+  .date-picker-trigger:not(.date-picker-btn) {
     min-height: 40px;
     padding: 0 var(--sp-3);
   }
 }
 
-.date-picker-trigger:hover:not(:disabled) {
+.date-picker-trigger:not(.date-picker-btn):hover:not(:disabled) {
   border-color: var(--brand-primary);
 }
 
-.date-picker-trigger:focus-visible {
+.date-picker-trigger:not(.date-picker-btn):focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px var(--focus-ring);
   border-color: var(--brand-primary);
@@ -71,31 +147,17 @@
 
 /* ==========================================================================
     El diálogo.
-
-    Es un `<dialog>` nativo abierto con `showModal()`, así que vive en la capa
-    superior del navegador: se centra respecto a la VENTANA aunque un ancestro
-    tenga `backdrop-filter` o `transform`. Ese es justamente el bug que arregla
-    —ver la nota larga de `date-picker.html`—, y por eso acá no hay ningún
-    `position: fixed` ni `z-index`: la capa superior no los necesita y tenerlos
-    solo invitaría a volver al `div` de antes.
    ========================================================================== */
 
 .date-picker-dialog {
-  /* El centrado del diálogo modal: `auto` en los cuatro lados. */
   margin: auto;
-  /* Sin relleno, borde ni fondo propios: los pone `.date-picker-panel`. Que el
-     elemento coincida con el panel es lo que permite distinguir un clic en el
-     velo (`target` es el `<dialog>`) de uno adentro. */
   padding: 0;
   border: 0;
   background: transparent;
   width: 100%;
-  /* Nunca más ancho que la ventana menos su respiro, en un teléfono angosto. */
-  max-width: min(360px, calc(100vw - 2 * var(--sp-4)));
+  max-width: min(380px, calc(100vw - 2 * var(--sp-4)));
   max-height: calc(100vh - 2 * var(--sp-4));
   overflow: visible;
-  /* El token, para que `::backdrop` lo herede: el pseudo-elemento hereda del
-     elemento que lo origina, no de `:root`. */
   --dp-veil: color-mix(in srgb, var(--c-petrol-900) 45%, transparent);
 }
 
@@ -118,7 +180,6 @@
   animation: dialog-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Quien pidió menos movimiento no recibe el salto de entrada. */
 @media (prefers-reduced-motion: reduce) {
   .date-picker-panel {
     animation: none;
@@ -152,19 +213,49 @@
   margin: 0;
 }
 
-/* Navegación del Calendario */
+/* Navegación del Calendario: Controles y Selectores de Mes / Año */
 .calendar-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--sp-1);
   padding: var(--sp-1) 0;
 }
 
-.current-month-year {
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav-selectors {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-select {
+  background-color: var(--bg-surface-alt, #f8fafc);
+  border: 1px solid var(--border-strong, #cbd5e1);
+  border-radius: var(--r-xs, 4px);
+  padding: 4px var(--sp-2, 8px);
   font-family: var(--font-body);
-  font-size: var(--fs-body-lg);
+  font-size: var(--fs-body, 0.875rem);
   font-weight: 600;
   color: var(--text-primary);
+  cursor: pointer;
+  max-width: 130px;
+}
+
+.nav-select:focus-visible {
+  outline: none;
+  border-color: var(--brand-primary);
+}
+
+.month-select {
+  text-transform: capitalize;
 }
 
 /* Grilla de Días de la Semana */
@@ -200,7 +291,7 @@
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.calendar-day-btn:hover:not(.is-selected) {
+.calendar-day-btn:hover:not(.is-selected):not(.is-disabled):not(:disabled) {
   background-color: var(--bg-inset);
 }
 
@@ -217,6 +308,15 @@
   background-color: var(--brand-primary);
   color: var(--text-inverse);
   font-weight: 600;
+}
+
+.calendar-day-btn.is-disabled,
+.calendar-day-btn:disabled {
+  opacity: 0.3;
+  color: var(--text-muted);
+  cursor: not-allowed;
+  pointer-events: none;
+  background: transparent;
 }
 
 /* Sección Selector de Hora */
@@ -265,3 +365,4 @@
   padding-top: var(--sp-2);
   border-top: 1px solid var(--border-default);
 }
+
