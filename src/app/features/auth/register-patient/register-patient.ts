@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  PLATFORM_ID,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -46,7 +53,12 @@ import { InsuranceClient } from '../../../core/data-access/insurance/insurance.c
 import type { CarrierCatalogEntry } from '../../../core/data-access/insurance/insurance.types';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import { DecimalPipe, DOCUMENT, NgTemplateOutlet } from '@angular/common';
+import {
+  DecimalPipe,
+  DOCUMENT,
+  isPlatformBrowser,
+  NgTemplateOutlet,
+} from '@angular/common';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
@@ -1151,6 +1163,7 @@ export class RegisterPatient {
   /* ---- Seguros declarados ------------------------------------------------ */
 
   private readonly insurance = inject(InsuranceClient);
+  private readonly plataforma = inject(PLATFORM_ID);
 
   /** El catálogo de aseguradoras, tal como llegó. */
   readonly catalogoAseguradoras = signal<readonly CarrierCatalogEntry[]>([]);
@@ -1466,6 +1479,14 @@ export class RegisterPatient {
    * después.
    */
   protected cargarAseguradoras(): void {
+    // Bajo SSR no se pide nada, por lo mismo que los catálogos de terminología:
+    // el registro es una ruta pública y prerenderizada, y durante el prerender
+    // no hay API a la que preguntar. En el navegador, tras hidratar, se pide de
+    // verdad. Sin esta guarda el build de producción falla al prerenderizar.
+    if (!isPlatformBrowser(this.plataforma)) {
+      return;
+    }
+
     this.insurance.listCarrierCatalog().subscribe({
       next: (carriers) => {
         this.catalogoAseguradorasCaido.set(false);
