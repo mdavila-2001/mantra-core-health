@@ -156,6 +156,12 @@ export class IamClient {
       ...(registration.workLongitude === undefined
         ? {}
         : { workLongitude: registration.workLongitude }),
+      ...(registration.workEmployerConceptId === undefined
+        ? {}
+        : { workEmployerConceptId: registration.workEmployerConceptId }),
+      ...(registration.workEmployerFreeText === undefined
+        ? {}
+        : { workEmployerFreeText: registration.workEmployerFreeText }),
       ...(registration.guardianName === undefined
         ? {}
         : { guardianName: registration.guardianName }),

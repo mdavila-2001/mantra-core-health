@@ -50,6 +50,13 @@ const CATALOGO_MUNICIPIOS = '/terminology/value-sets?code=VS_BO_MUNICIPALITY';
 const CATALOGO_OCUPACIONES = '/terminology/value-sets?code=VS_BO_OCCUPATION';
 const CATALOGO_ESPECIALIDADES = '/terminology/value-sets?code=VS_MEDICAL_SPECIALTY';
 
+/** La del catálogo de empresas de Bolivia, que dispara el mismo constructor. */
+const CATALOGO_EMPRESAS = '/terminology/value-sets?code=VS_BO_EMPLOYER';
+
+/** Dos conceptos de `VS_BO_EMPLOYER`: una empresa de la lista, y la salida. */
+const EMPRESA_ENTEL = 'b31c7e4a-2d55-5e91-8a4c-1c7f2b9d3e07';
+const EMPRESA_OTRA = 'c47d8f5b-3e66-5fa2-9b5d-2d8f3cae4f18';
+
 /** Un concepto de `VS_BO_OCCUPATION`, el que la ocupación manda como uuid. */
 const OCUPACION_DOCENTE = 'a2f0b6d1-0f7d-5a2e-9d3b-6f1f0a9c1e42';
 
@@ -284,7 +291,7 @@ describe('RegisterPatient', () => {
         | 'middleName'
         | 'motherLastName'
         | 'homeAddressLines'
-        | 'workAddressLines'
+        | 'workEmployerFreeText'
         | 'guardianName'
         | 'guardianPhone'
         | 'billingTaxId',
@@ -301,7 +308,7 @@ describe('RegisterPatient', () => {
       password: 'secreto12',
       email: extra.email ?? '',
       homeAddressLines: extra.homeAddressLines ?? '',
-      workAddressLines: extra.workAddressLines ?? '',
+      workEmployerFreeText: extra.workEmployerFreeText ?? '',
       guardianName: extra.guardianName ?? '',
       guardianPhone: extra.guardianPhone ?? '',
       billingTaxId: extra.billingTaxId ?? '',
@@ -559,7 +566,8 @@ describe('RegisterPatient', () => {
     // Y los del alta completa: calle, coordenadas, trabajo, tutor, seguros, NIT.
     expect(enviado).not.toContain('homeAddressLines');
     expect(enviado).not.toContain('homeLatitude');
-    expect(enviado).not.toContain('workAddressLines');
+    expect(enviado).not.toContain('workEmployerConceptId');
+    expect(enviado).not.toContain('workEmployerFreeText');
     expect(enviado).not.toContain('guardianName');
     expect(enviado).not.toContain('guardianPhone');
     expect(enviado).not.toContain('privateInsurancePlanId');
@@ -581,9 +589,29 @@ describe('RegisterPatient', () => {
     req.flush(RESPUESTA);
   });
 
-  it('manda la ubicación capturada como par de coordenadas', () => {
+  /**
+   * El punto capturado **no** es todavía una dirección: el navegador acierta la
+   * manzana, no la puerta, y lo que se muestra es el mapa para que alguien lo
+   * mire. Hasta que lo confirma, no viaja — que es justamente lo que el par de
+   * coordenadas en pantalla no permitía comprobar.
+   */
+  it('no manda la ubicación capturada mientras no se confirme en el mapa', () => {
     completar();
     component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    const enviado = Object.keys(req.request.body as Record<string, unknown>);
+    expect(enviado).not.toContain('homeLatitude');
+    expect(enviado).not.toContain('homeLongitude');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('manda la ubicación como par de coordenadas una vez confirmada', () => {
+    completar();
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.confirmarDireccionActual();
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-patient');
@@ -591,6 +619,146 @@ describe('RegisterPatient', () => {
     expect(req.request.body.homeLongitude).toBe(-63.1821);
 
     req.flush(RESPUESTA);
+  });
+
+  it('sin punto capturado no hay nada que confirmar', () => {
+    completar();
+    component.confirmarDireccionActual();
+    expect(component.direccionConfirmada()).toBe(false);
+
+    component.submit();
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain('homeLatitude');
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * Volver a ubicarse invalida lo confirmado: lo que se dio por bueno era el
+   * punto anterior, y el que está por llegar todavía no lo miró nadie.
+   */
+  it('quitar la ubicación se lleva también su confirmación', () => {
+    completar();
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.confirmarDireccionActual();
+    expect(component.direccionConfirmada()).toBe(true);
+
+    component.quitarUbicacion();
+    expect(component.gpsDomicilio()).toBeNull();
+    expect(component.direccionConfirmada()).toBe(false);
+
+    component.submit();
+    http.expectOne('/iam/auth/register-patient').flush(RESPUESTA);
+  });
+
+  /**
+   * El pin es lo único que el mapa necesita, y lo que reemplazó al par de
+   * números: sin punto no hay pin, con punto hay uno solo.
+   */
+  it('el mapa recibe un pin, y ninguno mientras no haya punto', () => {
+    expect(component.pinesDomicilio()).toEqual([]);
+
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    const pines = component.pinesDomicilio();
+    expect(pines).toHaveLength(1);
+    expect(pines[0].lat).toBe(-17.7833);
+    expect(pines[0].lng).toBe(-63.1821);
+  });
+
+  /* ---- La empresa, que reemplazó a la ubicación del trabajo ---- */
+
+  /**
+   * Deja el catálogo de empresas atendido y sus opciones cargadas.
+   *
+   * Es el mismo baile que el de ocupaciones: la lectura la dispara el
+   * constructor, así que la prueba responde la que ya está esperando.
+   */
+  function responderEmpresas(): void {
+    http.expectOne(CATALOGO_EMPRESAS).flush({
+      items: [{ id: 'vs-emp', internalCode: 'VS_BO_EMPLOYER', name: 'Empresas' }],
+    });
+    http.expectOne('/terminology/value-sets/vs-emp/$expand?limit=200').flush({
+      items: [
+        {
+          conceptId: EMPRESA_ENTEL,
+          code: 'employer:bo:ENTEL',
+          display: 'Entel',
+          codeSystemVersionId: 'csv-1',
+        },
+        {
+          conceptId: EMPRESA_OTRA,
+          code: 'employer:bo:OTRA',
+          display: 'Otra empresa (la escribo)',
+          codeSystemVersionId: 'csv-1',
+        },
+      ],
+      count: 2,
+      limit: 200,
+      nextCursor: null,
+    });
+  }
+
+  it('manda la empresa elegida como concepto del catálogo', () => {
+    responderEmpresas();
+    completar();
+    component.elegirEmpresa({ value: EMPRESA_ENTEL, label: 'Entel' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.workEmployerConceptId).toBe(EMPRESA_ENTEL);
+    // La empresa reemplazó a la dirección del trabajo: nada de eso viaja ya.
+    const enviado = Object.keys(req.request.body as Record<string, unknown>);
+    expect(enviado).not.toContain('workAddressLines');
+    expect(enviado).not.toContain('workMunicipalityConceptId');
+    expect(enviado).not.toContain('workLatitude');
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * El texto libre es la salida de «no está en la lista», y sólo acompaña al
+   * concepto que la representa: con cualquier otra empresa elegida sería un
+   * nombre que contradice al catálogo.
+   */
+  it('«Otra empresa» habilita el nombre escrito a mano y lo manda', () => {
+    responderEmpresas();
+    completar({ workEmployerFreeText: '  Ferretería San Martín  ' });
+    component.elegirEmpresa({ value: EMPRESA_OTRA, label: 'Otra empresa (la escribo)' });
+    expect(component.empresaEsOtra()).toBe(true);
+
+    component.submit();
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.workEmployerConceptId).toBe(EMPRESA_OTRA);
+    // Recortado, como la calle y el NIT.
+    expect(req.request.body.workEmployerFreeText).toBe('Ferretería San Martín');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('cambiar de «Otra empresa» a una del catálogo borra el nombre escrito', () => {
+    responderEmpresas();
+    completar({ workEmployerFreeText: 'Ferretería San Martín' });
+    component.elegirEmpresa({ value: EMPRESA_OTRA, label: 'Otra empresa (la escribo)' });
+    component.elegirEmpresa({ value: EMPRESA_ENTEL, label: 'Entel' });
+
+    expect(component.formPaciente.controls.workEmployerFreeText.value).toBe('');
+    expect(component.empresaEsOtra()).toBe(false);
+
+    component.submit();
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
+      'workEmployerFreeText',
+    );
+    req.flush(RESPUESTA);
+  });
+
+  /** Un catálogo caído no frena el alta: el campo es opcional. */
+  it('si el catálogo de empresas no carga, el alta sigue', () => {
+    http.expectOne(CATALOGO_EMPRESAS).flush('vacío', { status: 500, statusText: 'Server Error' });
+    expect(component.catalogoEmpresasCaido()).toBe(true);
+
+    completar();
+    component.submit();
+    http.expectOne('/iam/auth/register-patient').flush(RESPUESTA);
   });
 
   it('no deja enviar un teléfono de tutor sin su nombre', () => {

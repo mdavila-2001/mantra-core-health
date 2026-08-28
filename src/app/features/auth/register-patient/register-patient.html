@@ -1,256 +1,323 @@
 <app-auth-split [claim]="claim()" [tagline]="tagline()" contentWidth="full">
-  <div class="registro">
-    @if (registered()) {
-      <div class="registro__header">
-        <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
-          Tu cuenta está lista
-        </h1>
-        <p class="registro__subtitle">
-          Ya podés entrar con {{ accessHint() }} y la contraseña que elegiste.
-          @if (verificationSent()) {
-            Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no hace
-            falta para usar tu cuenta.
-          }
-        </p>
-      </div>
-      <button
-        app-button
-        variant="primary"
-        size="lg"
-        class="registro__submit"
-        data-testid="registro-ir-login"
-        (clicked)="goToLogin()"
-      >
-        Ir a iniciar sesión
-      </button>
-    } @else {
-      <div class="registro__header">
-        <h1 class="registro__title">{{ titulo() }}</h1>
-      </div>
+  <!-- El alta y la columna que la explica son una sola cosa en pantalla ancha:
+       la pregunta a la izquierda y por qué se hace a la derecha. En teléfono la
+       columna cae debajo del formulario (ver el CSS), que es donde alguien duda
+       si sigue o abandona. Cuando la cuenta ya está creada no hay nada que
+       explicar, así que la columna no se dibuja. -->
+  <div class="registro-conjunto" [class.registro-conjunto--solo]="registered()">
+    <div class="registro">
+      @if (registered()) {
+        <div class="registro__header">
+          <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
+            Tu cuenta está lista
+          </h1>
+          <p class="registro__subtitle">
+            Ya podés entrar con {{ accessHint() }} y la contraseña que elegiste.
+            @if (verificationSent()) {
+              Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no
+              hace falta para usar tu cuenta.
+            }
+          </p>
+        </div>
+        <button
+          app-button
+          variant="primary"
+          size="lg"
+          class="registro__submit"
+          data-testid="registro-ir-login"
+          (clicked)="goToLogin()"
+        >
+          Ir a iniciar sesión
+        </button>
+      } @else {
+        <div class="registro__header">
+          <h1 class="registro__title">{{ titulo() }}</h1>
+        </div>
 
-      @if (errorMessage(); as mensaje) {
-        <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{
-          mensaje
-        }}</app-alert>
-      }
+        @if (errorMessage(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{
+            mensaje
+          }}</app-alert>
+        }
 
-      <!-- La barra de avance, el índice de páginas, el «Atrás», la validación
+        <!-- La barra de avance, el índice de páginas, el «Atrás», la validación
            de a una página y el foco que la sigue son del motor: esta pantalla
            declara qué se pregunta y en qué orden, y nada más.
 
-           Los dos catálogos bolivianos van proyectados: el árbol de municipios
-           siempre —el motor no dibuja árboles con búsqueda—, y el aviso del
-           departamento sólo cuando su lectura falló, que es cuando el campo
-           deja de ser un `select`. -->
-      <div class="registro__body">
-        @if (tipo() === 'paciente') {
-          <app-paginated-form
-            data-testid="registro-form-paciente"
-            [paginas]="paginasPaciente()"
-            [form]="formPaciente"
-            label="Crear cuenta"
-            submitLabel="Crear cuenta"
-            [pending]="isSubmitting()"
-            (enviado)="submit()"
-          >
-            <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
-              <p class="registro__catalogo-caido">
-                No pudimos traer el catálogo de departamentos.
-                <button app-button variant="ghost" size="sm" (clicked)="reintentarDepartamentos()">
-                  Reintentar
-                </button>
-              </p>
-            </ng-template>
+           Los catálogos bolivianos van proyectados: el árbol de municipios
+           siempre —el motor no dibuja árboles con búsqueda—, las lupas de
+           ocupación y de empresa por lo mismo, y el aviso del departamento
+           sólo cuando su lectura falló, que es cuando el campo deja de ser
+           un `select`.
 
-            <ng-template appCampoPersonalizado="occupationConceptId">
-              @if (catalogoOcupacionesCaido()) {
+           La ubicación del domicilio también se proyecta, y es un mapa: el
+           motor no tiene por qué saber de Leaflet ni de permisos del
+           navegador. -->
+        <div class="registro__body">
+          @if (tipo() === 'paciente') {
+            <app-paginated-form
+              data-testid="registro-form-paciente"
+              [paginas]="paginasPaciente()"
+              [form]="formPaciente"
+              label="Crear cuenta"
+              submitLabel="Crear cuenta"
+              [pending]="isSubmitting()"
+              (pasoVisible)="recordarPaso($event)"
+              (enviado)="submit()"
+            >
+              <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
                 <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de ocupaciones.
-                  <button app-button variant="ghost" size="sm" (clicked)="reintentarOcupaciones()">
+                  No pudimos traer el catálogo de departamentos.
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    (clicked)="reintentarDepartamentos()"
+                  >
                     Reintentar
                   </button>
                 </p>
-              } @else {
-                <!-- La lupa que pide el registro del cliente: son cientos de
+              </ng-template>
+
+              <ng-template appCampoPersonalizado="occupationConceptId">
+                @if (catalogoOcupacionesCaido()) {
+                  <p class="registro__catalogo-caido">
+                    No pudimos traer el catálogo de ocupaciones.
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      (clicked)="reintentarOcupaciones()"
+                    >
+                      Reintentar
+                    </button>
+                  </p>
+                } @else {
+                  <!-- La lupa que pide el registro del cliente: son cientos de
                      oficios y un desplegable sin filtro no se recorre. -->
-                <app-reference-combobox
-                  data-testid="registro-ocupacion"
-                  label="Ocupación"
-                  placeholder="Buscá tu profesión u oficio…"
-                  emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
-                  [options]="ocupacionesFiltradas()"
-                  [selected]="ocupacionElegida()"
-                  [minQueryLength]="0"
-                  (searched)="busquedaOcupacion.set($event)"
-                  (selectionChange)="elegirOcupacion($event)"
-                />
-              }
-            </ng-template>
+                  <app-reference-combobox
+                    data-testid="registro-ocupacion"
+                    label="Ocupación"
+                    placeholder="Buscá tu profesión u oficio…"
+                    emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+                    [options]="ocupacionesFiltradas()"
+                    [selected]="ocupacionElegida()"
+                    [minQueryLength]="0"
+                    (searched)="busquedaOcupacion.set($event)"
+                    (selectionChange)="elegirOcupacion($event)"
+                  />
+                }
+              </ng-template>
 
-            <ng-template appCampoPersonalizado="municipioTrabajo">
-              @if (catalogoMunicipiosCaido()) {
+              <!-- La empresa reemplazó a la dirección del trabajo: eran un árbol de
+                   municipios, una calle y un permiso de GPS para un dato que casi
+                   nadie completaba. La lupa es la misma de la ocupación. -->
+              <ng-template appCampoPersonalizado="workEmployerConceptId">
+                @if (catalogoEmpresasCaido()) {
+                  <p class="registro__catalogo-caido">
+                    No pudimos traer el catálogo de empresas.
+                    <button app-button variant="ghost" size="sm" (clicked)="reintentarEmpresas()">
+                      Reintentar
+                    </button>
+                  </p>
+                } @else {
+                  <app-reference-combobox
+                    data-testid="registro-empresa"
+                    label="Empresa donde trabajás"
+                    placeholder="Buscá tu empresa…"
+                    emptyMessage="Ninguna empresa coincide. Elegí «Otra empresa» para escribirla."
+                    [options]="empresasFiltradas()"
+                    [selected]="empresaElegida()"
+                    [minQueryLength]="0"
+                    (searched)="busquedaEmpresa.set($event)"
+                    (selectionChange)="elegirEmpresa($event)"
+                  />
+                }
+              </ng-template>
+
+              <ng-template appCampoPersonalizado="gpsDomicilio">
+                @if (gpsDomicilio(); as punto) {
+                  <div class="registro__ubicacion">
+                    <!-- El mapa reemplazó al par de coordenadas. Un «-17,7833, -63,1821»
+                         no le dice a nadie si el punto cayó en su casa; el pin sobre el
+                         plano se lee de un vistazo, que es justo lo que hay que
+                         confirmar. -->
+                    <app-map
+                      class="registro__mapa"
+                      data-testid="registro-mapa-domicilio"
+                      [pines]="pinesDomicilio()"
+                      [centro]="punto"
+                      [zoom]="17"
+                      etiqueta="Tu ubicación actual en el mapa"
+                    />
+
+                    @if (direccionConfirmada()) {
+                      <p
+                        appAnuncio
+                        class="registro__ubicacion-estado"
+                        data-testid="registro-direccion-confirmada"
+                      >
+                        Listo, guardamos esta dirección.
+                      </p>
+                      <div class="registro__ubicacion-acciones">
+                        <button
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          [isLoading]="pidiendoGps()"
+                          (clicked)="usarMiUbicacion()"
+                        >
+                          Volver a ubicarme
+                        </button>
+                        <button app-button variant="ghost" size="sm" (clicked)="quitarUbicacion()">
+                          Quitar
+                        </button>
+                      </div>
+                    } @else {
+                      <p class="registro__ubicacion-estado">
+                        ¿Es acá donde vivís? Movete por el mapa para comprobarlo.
+                      </p>
+                      <div class="registro__ubicacion-acciones">
+                        <button
+                          app-button
+                          variant="primary"
+                          size="sm"
+                          data-testid="registro-confirmar-direccion"
+                          (clicked)="confirmarDireccionActual()"
+                        >
+                          Confirmar dirección actual
+                        </button>
+                        <button
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          [isLoading]="pidiendoGps()"
+                          (clicked)="usarMiUbicacion()"
+                        >
+                          Volver a ubicarme
+                        </button>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="registro__ubicacion">
+                    <button
+                      app-button
+                      variant="secondary"
+                      size="sm"
+                      data-testid="registro-usar-ubicacion"
+                      [isLoading]="pidiendoGps()"
+                      (clicked)="usarMiUbicacion()"
+                    >
+                      Usar mi ubicación
+                    </button>
+                    @if (gpsRechazado()) {
+                      <span class="registro__ubicacion-aviso">
+                        No pudimos obtener tu ubicación. Podés seguir sin esto.
+                      </span>
+                    }
+                  </p>
+                }
+              </ng-template>
+
+              <ng-template appCampoPersonalizado="privateInsurancePlanId">
                 <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de municipios.
-                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                  No pudimos traer el catálogo de aseguradoras.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarAseguradoras()">
                     Reintentar
                   </button>
                 </p>
-              } @else {
-                <app-tree-select
-                  data-testid="registro-municipio-trabajo"
-                  [groups]="arbolMunicipios()"
-                  [(value)]="municipioTrabajo"
-                  placeholder="Sin especificar"
-                  dialogTitle="¿Dónde trabajás?"
-                  searchPlaceholder="Buscar municipio o departamento…"
-                  emptyMessage="Ningún municipio coincide con esa búsqueda."
-                />
-              }
-            </ng-template>
+              </ng-template>
 
-            <ng-template appCampoPersonalizado="gpsDomicilio">
-              <ng-container
-                *ngTemplateOutlet="
-                  ubicacion;
-                  context: {
-                    cual: 'domicilio',
-                    punto: gpsDomicilio(),
-                    rechazado: gpsRechazado().domicilio
-                  }
-                "
-              />
-            </ng-template>
-
-            <ng-template appCampoPersonalizado="gpsTrabajo">
-              <ng-container
-                *ngTemplateOutlet="
-                  ubicacion;
-                  context: {
-                    cual: 'trabajo',
-                    punto: gpsTrabajo(),
-                    rechazado: gpsRechazado().trabajo
-                  }
-                "
-              />
-            </ng-template>
-
-            <ng-template appCampoPersonalizado="privateInsurancePlanId">
-              <p class="registro__catalogo-caido">
-                No pudimos traer el catálogo de aseguradoras.
-                <button app-button variant="ghost" size="sm" (clicked)="reintentarAseguradoras()">
-                  Reintentar
-                </button>
-              </p>
-            </ng-template>
-
-            <ng-template appCampoPersonalizado="publicInsurancePlanId">
-              <p class="registro__catalogo-caido">
-                No pudimos traer el catálogo de seguros públicos.
-                <button app-button variant="ghost" size="sm" (clicked)="reintentarAseguradoras()">
-                  Reintentar
-                </button>
-              </p>
-            </ng-template>
-
-            <ng-template appCampoPersonalizado="municipio">
-              @if (catalogoMunicipiosCaido()) {
+              <ng-template appCampoPersonalizado="publicInsurancePlanId">
                 <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de municipios.
-                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                  No pudimos traer el catálogo de seguros públicos.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarAseguradoras()">
                     Reintentar
                   </button>
                 </p>
-              } @else {
-                <app-tree-select
-                  data-testid="registro-municipio"
-                  [groups]="arbolMunicipios()"
-                  [(value)]="municipioPaciente"
-                  placeholder="Sin especificar"
-                  dialogTitle="¿Dónde vivís?"
-                  searchPlaceholder="Buscar municipio o departamento…"
-                  emptyMessage="Ningún municipio coincide con esa búsqueda."
-                />
-              }
-            </ng-template>
-          </app-paginated-form>
-        } @else {
-          <app-paginated-form
-            data-testid="registro-form-profesional"
-            [paginas]="paginasProfesional()"
-            [form]="formProfesional"
-            label="Crear cuenta"
-            submitLabel="Crear cuenta"
-            [pending]="isSubmitting()"
-            (enviado)="submit()"
-          >
-            <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
-              <p class="registro__catalogo-caido">
-                No pudimos traer el catálogo de departamentos.
-                <button app-button variant="ghost" size="sm" (clicked)="reintentarDepartamentos()">
-                  Reintentar
-                </button>
-              </p>
-            </ng-template>
+              </ng-template>
 
-            <ng-template appCampoPersonalizado="municipio">
-              @if (catalogoMunicipiosCaido()) {
+              <ng-template appCampoPersonalizado="municipio">
+                @if (catalogoMunicipiosCaido()) {
+                  <p class="registro__catalogo-caido">
+                    No pudimos traer el catálogo de municipios.
+                    <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                      Reintentar
+                    </button>
+                  </p>
+                } @else {
+                  <app-tree-select
+                    data-testid="registro-municipio"
+                    [groups]="arbolMunicipios()"
+                    [(value)]="municipioPaciente"
+                    placeholder="Sin especificar"
+                    dialogTitle="¿Dónde vivís?"
+                    searchPlaceholder="Buscar municipio o departamento…"
+                    emptyMessage="Ningún municipio coincide con esa búsqueda."
+                  />
+                }
+              </ng-template>
+            </app-paginated-form>
+          } @else {
+            <app-paginated-form
+              data-testid="registro-form-profesional"
+              [paginas]="paginasProfesional()"
+              [form]="formProfesional"
+              label="Crear cuenta"
+              submitLabel="Crear cuenta"
+              [pending]="isSubmitting()"
+              (pasoVisible)="recordarPaso($event)"
+              (enviado)="submit()"
+            >
+              <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
                 <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de municipios.
-                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                  No pudimos traer el catálogo de departamentos.
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    (clicked)="reintentarDepartamentos()"
+                  >
                     Reintentar
                   </button>
                 </p>
-              } @else {
-                <app-tree-select
-                  data-testid="registro-pro-municipio"
-                  [groups]="arbolMunicipios()"
-                  [(value)]="municipioProfesional"
-                  placeholder="Sin especificar"
-                  dialogTitle="¿Dónde vivís?"
-                  searchPlaceholder="Buscar municipio o departamento…"
-                  emptyMessage="Ningún municipio coincide con esa búsqueda."
-                />
-              }
-            </ng-template>
-          </app-paginated-form>
-        }
-      </div>
+              </ng-template>
 
-      <div class="registro__footer">
-        <p class="registro__pie">
-          ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
-        </p>
-      </div>
+              <ng-template appCampoPersonalizado="municipio">
+                @if (catalogoMunicipiosCaido()) {
+                  <p class="registro__catalogo-caido">
+                    No pudimos traer el catálogo de municipios.
+                    <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                      Reintentar
+                    </button>
+                  </p>
+                } @else {
+                  <app-tree-select
+                    data-testid="registro-pro-municipio"
+                    [groups]="arbolMunicipios()"
+                    [(value)]="municipioProfesional"
+                    placeholder="Sin especificar"
+                    dialogTitle="¿Dónde vivís?"
+                    searchPlaceholder="Buscar municipio o departamento…"
+                    emptyMessage="Ningún municipio coincide con esa búsqueda."
+                  />
+                }
+              </ng-template>
+            </app-paginated-form>
+          }
+        </div>
+
+        <div class="registro__footer">
+          <p class="registro__pie">
+            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+          </p>
+        </div>
+      }
+    </div>
+
+    @if (!registered()) {
+      <app-registro-ayuda class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
     }
   </div>
 </app-auth-split>
-
-<!-- El bloque de ubicación, uno por dirección. Es el mismo control dos veces,
-     así que vive una sola vez y se instancia con el nombre de su dirección. -->
-<ng-template #ubicacion let-cual="cual" let-punto="punto" let-rechazado="rechazado">
-  @if (punto) {
-    <p class="registro__ubicacion">
-      <span class="registro__ubicacion-valor">
-        Ubicación guardada ({{ punto.lat | number: '1.4-4' }}, {{ punto.lng | number: '1.4-4' }})
-      </span>
-      <button app-button variant="ghost" size="sm" (clicked)="quitarUbicacion(cual)">Quitar</button>
-    </p>
-  } @else {
-    <p class="registro__ubicacion">
-      <button
-        app-button
-        variant="secondary"
-        size="sm"
-        [isLoading]="pidiendoGps() === cual"
-        (clicked)="usarMiUbicacion(cual)"
-      >
-        Usar mi ubicación
-      </button>
-      @if (rechazado) {
-        <span class="registro__ubicacion-aviso">
-          No pudimos obtener tu ubicación. Podés seguir sin esto.
-        </span>
-      }
-    </p>
-  }
-</ng-template>

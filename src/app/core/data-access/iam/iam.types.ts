@@ -104,11 +104,37 @@ export interface PatientRegistration {
   readonly homeLatitude?: number;
   /** Longitud del domicilio. Ver {@link PatientRegistration.homeLatitude}. */
   readonly homeLongitude?: number;
-  /** Municipio del lugar de trabajo (catálogo `VS_BO_MUNICIPALITY`). */
+  /**
+   * Empresa donde trabaja, como concepto de `VS_BO_EMPLOYER`.
+   *
+   * **Reemplaza a la ubicación del trabajo** en el alta: preguntar municipio,
+   * calle y coordenadas del trabajo eran tres campos para un dato que casi
+   * nadie completaba y que no agrupaba a nadie. El empleador es una sola
+   * pregunta, se sabe de memoria, y sí agrupa —salud ocupacional, convenios—.
+   *
+   * Lo siembra `BoEmployersSeedService` en la API y lo lee
+   * {@link BoEmployersCatalog}; el alta manda el uuid del concepto elegido.
+   */
+  readonly workEmployerConceptId?: string;
+  /**
+   * La empresa escrita a mano, para «no está en la lista».
+   *
+   * Viaja **sólo** cuando se eligió el concepto `employer:bo:OTRA`: el catálogo
+   * cubre a los empleadores grandes del país, y el resto —que en Bolivia es la
+   * mayoría de las unidades económicas— se escribe. Ver `bo-employers.catalog.ts`
+   * en la API sobre por qué el catálogo no puede ser exhaustivo.
+   */
+  readonly workEmployerFreeText?: string;
+  /**
+   * Municipio del lugar de trabajo (catálogo `VS_BO_MUNICIPALITY`).
+   *
+   * Sigue en el contrato porque otros clientes lo usan; **este formulario ya no
+   * lo manda**, desde que la página del trabajo pregunta la empresa.
+   */
   readonly workMunicipalityConceptId?: string;
-  /** Calle y número del lugar de trabajo. */
+  /** Calle y número del lugar de trabajo. Ver {@link PatientRegistration.workMunicipalityConceptId}. */
   readonly workAddressLines?: string;
-  /** Latitud del trabajo. Mismo par completo que el domicilio. */
+  /** Latitud del trabajo. Mismo par completo que el domicilio, y tampoco lo manda ya el alta. */
   readonly workLatitude?: number;
   /** Longitud del trabajo. */
   readonly workLongitude?: number;
