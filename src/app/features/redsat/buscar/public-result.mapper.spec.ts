@@ -11,7 +11,7 @@ import type { PublicSearchResult } from '@core/data-access/public-directory/publ
  * nombres empiezan con «Dr.».
  */
 describe('mapeador de resultados públicos', () => {
-  /** Una fila con los nueve campos que la API sirve de verdad. */
+  /** Una fila con los campos que la API sirve de verdad. */
   function fila(parcial: Partial<PublicSearchResult> = {}): PublicSearchResult {
     return {
       kind: 'PRACTITIONER',
@@ -23,6 +23,11 @@ describe('mapeador de resultados públicos', () => {
       verified: false,
       ratingAverage: null,
       ratingCount: 0,
+      coverUrl: null,
+      address: null,
+      location: null,
+      hasPublishedAgenda: false,
+      nextAvailableDate: null,
       ...parcial,
     };
   }

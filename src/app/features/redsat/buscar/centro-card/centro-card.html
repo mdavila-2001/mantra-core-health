@@ -1,0 +1,149 @@
+@if (centro(); as c) {
+  <!-- La portada. Con foto si la hay; si no, un degradado del tema, que es un
+       fondo y no un hueco: una franja gris se lee como una imagen que no
+       cargó, y en una grilla de veinte tarjetas eso se lee como la lista rota. -->
+  <span class="centro__portada" [class.centro__portada--lisa]="!c.portada">
+    @if (c.portada) {
+      <img
+        class="centro__foto"
+        [src]="c.portada"
+        alt=""
+        loading="lazy"
+        decoding="async"
+        width="600"
+        height="338"
+      />
+    }
+
+    @if (c.sellos.length) {
+      <span class="centro__sellos">
+        @for (sello of c.sellos; track sello.texto) {
+          <span class="app-badge" [attr.data-tono]="sello.tono">{{ sello.texto }}</span>
+        }
+      </span>
+    }
+
+    <!-- El logo montado sobre el borde de la portada: es lo que distingue una
+         ficha de prestador de una foto de catálogo. -->
+    <span class="centro__logo" aria-hidden="true">
+      @if (c.logo) {
+        <img [src]="c.logo" alt="" loading="lazy" decoding="async" width="52" height="52" />
+      } @else {
+        {{ c.iniciales }}
+      }
+    </span>
+  </span>
+
+  <div class="centro__cuerpo">
+    <h3 class="centro__nombre">
+      <!-- El enlace cubre la tarjeta entera con el ::after del CSS, pero su
+           texto sigue siendo el nombre: es lo que anuncia un lector de
+           pantalla, y «tarjeta» no le dice a nadie a dónde va. -->
+      <a [routerLink]="c.link">{{ c.nombre }}</a>
+    </h3>
+
+    @if (c.titular) {
+      <p class="centro__titular">{{ c.titular }}</p>
+    }
+
+    @if (c.donde) {
+      <p class="centro__donde">
+        <svg
+          class="centro__icono"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M12 21.2s7-6 7-11.2a7 7 0 1 0-14 0c0 5.2 7 11.2 7 11.2z" />
+          <circle cx="12" cy="9.8" r="2.6" />
+        </svg>
+        {{ c.donde }}
+      </p>
+    }
+
+    @if (c.atributos.length) {
+      <ul class="centro__atributos">
+        @for (atributo of c.atributos; track atributo.clave) {
+          <li class="centro__atributo" [attr.data-clave]="atributo.clave">
+            @switch (atributo.clave) {
+              @case ('puntuacion') {
+                <svg
+                  class="centro__icono centro__icono--estrella"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  stroke="none"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z"
+                  />
+                </svg>
+              }
+              @case ('turno') {
+                <svg
+                  class="centro__icono"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <rect x="3.5" y="5.5" width="17" height="15" rx="2.5" />
+                  <path d="M3.5 10.5h17M8 3.5v4M16 3.5v4" />
+                </svg>
+              }
+              @case ('distancia') {
+                <svg
+                  class="centro__icono"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M12 21.2s7-6 7-11.2a7 7 0 1 0-14 0c0 5.2 7 11.2 7 11.2z" />
+                  <circle cx="12" cy="9.8" r="2.6" />
+                </svg>
+              }
+              @default {
+                <svg
+                  class="centro__icono"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                </svg>
+              }
+            }
+            <span>{{ atributo.texto }}</span>
+            @if (atributo.etiqueta) {
+              <span class="solo-lectores">{{ atributo.etiqueta }}</span>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- El pie: lo escribe quien usa la tarjeta —«Ver ficha», «Cómo llegar»—.
+         Sin contenido proyectado no se dibuja. -->
+    <div class="centro__pie"><ng-content /></div>
+  </div>
+}
