@@ -70,6 +70,18 @@ describe('MyProfile · con la verificación ofrecida', () => {
 
   /** Responde el resumen de quien no verificó, y el catálogo de su estado. */
   function responderSinVerificar(): void {
+    // La tarjeta pide además el perfil completo, para mostrar los datos que la
+    // persona declaró. Ninguna prueba de este archivo lo afirma —miran el
+    // interruptor de verificación—, pero sin responderlo `verify()` protesta.
+    for (const req of http.match('/profiles/patients/me')) {
+      req.flush({
+        personId: 'per-1',
+        patientProfileId: 'pp-1',
+        identityVerified: false,
+        coverages: [],
+        guardians: [],
+      });
+    }
     http.expectOne('/profiles/patients/me/summary').flush(RESUMEN_SIN_VERIFICAR);
     http
       .expectOne((r) => r.url === '/terminology/concepts')

@@ -48,6 +48,34 @@ const RESUMEN_SIN_VERIFICAR = {
   identityVerified: false,
 };
 
+
+/**
+ * Atiende la lectura del perfil completo, que la tarjeta pide junto al resumen.
+ *
+ * Va como ayuda y no dentro de cada prueba porque **ninguna de las 19 la
+ * afirma**: sostienen el resumen, los roles y la verificación. Sin responderla,
+ * `verify()` protesta por una petición abierta en todas.
+ *
+ * Por defecto responde un perfil vacío: quien quiera probar los bloques nuevos
+ * le pasa lo suyo.
+ */
+function resolverPerfilCompleto(
+  http: HttpTestingController,
+  perfil: Record<string, unknown> = {},
+): void {
+  const pendientes = http.match('/profiles/patients/me');
+  for (const req of pendientes) {
+    req.flush({
+      personId: 'per-1',
+      patientProfileId: 'pp-1',
+      identityVerified: false,
+      coverages: [],
+      guardians: [],
+      ...perfil,
+    });
+  }
+}
+
 describe('MyProfile', () => {
   let fixture: ComponentFixture<MyProfile>;
   let http: HttpTestingController;
@@ -64,6 +92,7 @@ describe('MyProfile', () => {
     // búsqueda quedan en neutro y `verify()` protesta.
     resolverEstadosDeCaso(http);
     fixture.detectChanges();
+    resolverPerfilCompleto(http);
 
     // El historial de verificación **ya no se pide**: la ficha está apagada
     // mientras `VERIFICACION_DE_IDENTIDAD_OFRECIDA` sea `false`, y una lectura
@@ -74,6 +103,122 @@ describe('MyProfile', () => {
   });
 
   afterEach(() => http.verify());
+
+  /**
+   * La ficha muestra TODO lo que la persona declaró.
+   *
+   * Mostraba tres campos de quince: el documento, el correo, las direcciones,
+   * los seguros y el tutor ya viajaban en `GET /profiles/patients/me` y no se
+   * pintaban. Lo que estas pruebas fijan es que se vean, y que lo que no
+   * declaró **no ocupe lugar**: una lista de «Sin registrar» no informa.
+   */
+  describe('los datos completos', () => {
+    /**
+     * Pone el perfil y devuelve el texto de la pantalla.
+     *
+     * Se escribe la señal en vez de responder la petición porque el arnés ya la
+     * atendió en su `beforeEach` —y volver a responderla rompe las 19 pruebas
+     * que sostienen el resto—. Lo que estas pruebas miran es la PLANTILLA: qué
+     * se dibuja con qué datos.
+     */
+    function conPerfil(perfil: Record<string, unknown>): string {
+      http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+      // El resumen dispara la lectura del catálogo para traducir el estado.
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({
+        items: [],
+        count: 0,
+      });
+      // La señal se toma del componente SIN pasar por `interno`: ése liga las
+      // funciones al componente, y una señal ES una función — ligada, pierde
+      // `.set`.
+      const señal = (fixture.componentInstance as unknown as Record<string, { set: (v: unknown) => void }>)[
+        'perfil'
+      ];
+      señal.set({
+        personId: 'per-1',
+        patientProfileId: 'pp-1',
+        identityVerified: false,
+        coverages: [],
+        guardians: [],
+        ...perfil,
+      });
+      fixture.detectChanges();
+      return fixture.nativeElement.textContent as string;
+    }
+
+    it('muestra documento, correo, NIT y las dos direcciones', () => {
+      const texto = conPerfil({
+        nationalId: '7678614',
+        email: 'ana@example.test',
+        taxId: '1234567890',
+        homeAddress: { lines: 'Av. Banzer #1234', city: 'Santa Cruz' },
+        workAddress: { lines: 'Calle Warnes #45', city: 'Santa Cruz' },
+      });
+
+      expect(texto).toContain('7678614');
+      expect(texto).toContain('ana@example.test');
+      expect(texto).toContain('1234567890');
+      expect(texto).toContain('Av. Banzer #1234');
+      expect(texto).toContain('Calle Warnes #45');
+    });
+
+    it('los seguros se ven con su aseguradora, su plan y si son públicos', () => {
+      const texto = conPerfil({
+        coverages: [
+          {
+            carrierName: 'Alianza Vida Seguros',
+            planName: 'AFI Gold',
+            isPublic: false,
+            verified: false,
+          },
+          { carrierName: 'Caja Nacional de Salud', isPublic: true, verified: false },
+        ],
+      });
+
+      expect(texto).toContain('Alianza Vida Seguros');
+      expect(texto).toContain('AFI Gold');
+      expect(texto).toContain('Caja Nacional de Salud');
+      expect(texto).toContain('Público');
+      // Lo declarado al registrarse no está confirmado con la aseguradora, y
+      // decirlo evita que alguien lo dé por hecho.
+      expect(texto).toContain('Sin verificar');
+    });
+
+    it('el tutor se ve con su teléfono: es el dato por el que existe', () => {
+      const texto = conPerfil({
+        guardians: [
+          {
+            displayName: 'Carlos Mamani',
+            phone: '+591 70055443',
+            isEmergencyContact: true,
+            isLegalGuardian: true,
+          },
+        ],
+      });
+
+      expect(texto).toContain('Carlos Mamani');
+      expect(texto).toContain('+591 70055443');
+      expect(texto).toContain('Tutor legal');
+    });
+
+    it('lo que no declaró NO se dibuja: nada de listas de «Sin registrar»', () => {
+      const texto = conPerfil({});
+
+      expect(texto).not.toContain('Documento de identidad');
+      expect(texto).not.toContain('NIT');
+      expect(texto).not.toContain('Tus seguros');
+      expect(texto).not.toContain('Contactos y tutores');
+    });
+
+    it('la edad se calcula de la fecha, no se pide al servidor', () => {
+      // El registro del cliente la pide «de manera automática».
+      const nacimiento = new Date();
+      nacimiento.setFullYear(nacimiento.getFullYear() - 34);
+      const texto = conPerfil({ birthDate: nacimiento });
+
+      expect(texto).toContain('34 años');
+    });
+  });
 
   function interno<T>(nombre: string): T {
     const valor = (fixture.componentInstance as unknown as Record<string, unknown>)[nombre];
@@ -421,6 +566,7 @@ describe('MyProfile · orden del historial', () => {
     // búsqueda quedan en neutro y `verify()` protesta.
     resolverEstadosDeCaso(http);
     fixture.detectChanges();
+    resolverPerfilCompleto(http);
   });
 
   afterEach(() => http.verify());
@@ -490,6 +636,7 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     fixture = TestBed.createComponent(MyProfile);
     resolverEstadosDeCaso(http);
     fixture.detectChanges();
+    resolverPerfilCompleto(http);
     // El historial ya no se pide: la ficha está apagada. Ver el `beforeEach` del
     // primer describe, que lo afirma con `expectNone`.
     http.expectNone('/identity/me/verification-cases');
