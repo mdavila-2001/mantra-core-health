@@ -1,0 +1,37 @@
+<meta charset="utf-8">
+<title>Verificación merge dev → pablo/mapa-perfil-publico</title>
+<style>
+  body { background:#0d1117; color:#c9d1d9; font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; padding:28px; margin:0; }
+  h1 { color:#e6edf3; font-size:17px; margin:0 0 4px; }
+  .sub { color:#8b949e; font-size:12px; margin-bottom:22px; }
+  .bloque { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:14px 18px; margin-bottom:16px; }
+  .cmd { color:#7ee787; margin-bottom:8px; }
+  .cmd::before { content:"$ "; color:#8b949e; }
+  pre { margin:0; white-space:pre-wrap; color:#c9d1d9; }
+  .ok { color:#3fb950; font-weight:700; }
+  .vacio { color:#8b949e; font-style:italic; }
+</style>
+<h1>pablo/mapa-perfil-publico — conflictos resueltos, merge de <code>dev</code> verificado</h1>
+<div class="sub">commit 69e01fa · 2026-08-26 · 2 archivos en conflicto (app.routes.spec.ts, messaging.spec.ts)</div>
+
+<div class="bloque">
+  <div class="cmd">git diff --name-only --diff-filter=U</div>
+  <pre class="vacio">(sin salida — 0 conflictos pendientes)</pre>
+</div>
+
+<div class="bloque">
+  <div class="cmd">grep -rn '^&lt;&lt;&lt;&lt;&lt;&lt;&lt; \|^=======$\|^&gt;&gt;&gt;&gt;&gt;&gt;&gt; ' --include='*.ts' src/</div>
+  <pre class="vacio">(sin salida — ninguna marca de conflicto quedó en el árbol)</pre>
+</div>
+
+<div class="bloque">
+  <div class="cmd">yarn typecheck</div>
+  <pre><span class="ok">sin errores</span></pre>
+</div>
+
+<div class="bloque">
+  <div class="cmd">yarn test --watch=false</div>
+<pre>Test Files  <span class="ok">357 passed</span> (357)
+Tests       <span class="ok">3714 passed</span> (3714)
+Duration    32.67s</pre>
+</div>

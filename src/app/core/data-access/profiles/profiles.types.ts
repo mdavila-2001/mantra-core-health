@@ -175,6 +175,22 @@ export interface OwnPractitionerProfile {
   /** Presentación en prosa: lo que hace que un perfil se lea como una persona. */
   readonly professionalBio?: string;
   readonly photoFileId?: string;
+  readonly email?: string;
+  readonly phone?: string;
+
+  /* --- los datos personales, sólo en la lectura propia -------------------- */
+
+  /** Las cuatro partes: es lo único con lo que se corrige un apellido. */
+  readonly name?: string;
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
+  readonly birthDate?: Date;
+  /** Su documento. No editable desde el perfil: tiene su circuito propio. */
+  readonly nationalId?: string;
+  readonly issuerAdministrativeAreaConceptId?: string;
+  readonly residenceMunicipalityConceptId?: string;
+
   readonly practitionerCategoryConceptId: string;
   readonly verificationStatusConceptId: string;
   readonly practiceStatusConceptId: string;
@@ -498,6 +514,41 @@ export interface OwnPatientSummary {
  * contraseña, género administrativo y código de paciente son trámites propios
  * —o datos que decide el servidor—, no campos de un formulario.
  */
+/** Una dirección del paciente, con su punto en el mapa si lo declaró. */
+export interface OwnAddress {
+  readonly lines?: string;
+  readonly city?: string;
+  readonly municipalityConceptId?: string;
+  /** Latitud y longitud viajan juntas o no viajan: media coordenada no ubica nada. */
+  readonly latitude?: number;
+  readonly longitude?: number;
+}
+
+/**
+ * Un seguro declarado.
+ *
+ * La aseguradora y el plan llegan **en palabras** y no como uuid: el backend
+ * los resuelve para que la pantalla no tenga que pedir dos catálogos más sólo
+ * para pintar una línea de texto.
+ */
+export interface OwnCoverage {
+  readonly carrierName: string;
+  readonly planName?: string;
+  readonly isPublic: boolean;
+  readonly memberIdentifier?: string;
+  /** Lo declarado al registrarse nace SIN verificar. */
+  readonly verified: boolean;
+}
+
+/** Un tutor o persona autorizada, con su teléfono. */
+export interface OwnGuardian {
+  readonly displayName?: string;
+  readonly relationshipConceptId?: string;
+  readonly isEmergencyContact: boolean;
+  readonly isLegalGuardian: boolean;
+  readonly phone?: string;
+}
+
 export interface OwnPatientProfile {
   readonly personId: string;
   readonly patientProfileId: string;
@@ -532,6 +583,21 @@ export interface OwnPatientProfile {
   readonly identityVerified: boolean;
   /** Sólo con identidad verificada, igual que en el resumen. */
   readonly patientCode?: string;
+
+  /* --- lo que el alta captura y el perfil ahora muestra ------------------- */
+
+  /** Su documento. No se edita desde el perfil: es su usuario de acceso. */
+  readonly nationalId?: string;
+  /** Departamento que lo emitió (VS_BO_DEPARTMENT). */
+  readonly issuerAdministrativeAreaConceptId?: string;
+  /** NIT para facturación. */
+  readonly taxId?: string;
+  readonly email?: string;
+  readonly homeAddress?: OwnAddress;
+  readonly workAddress?: OwnAddress;
+  /** Siempre presentes, vacías si no declaró nada. */
+  readonly coverages: readonly OwnCoverage[];
+  readonly guardians: readonly OwnGuardian[];
 }
 
 /**

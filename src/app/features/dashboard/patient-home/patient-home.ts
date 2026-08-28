@@ -131,7 +131,7 @@ export class PatientHome {
     const propios: AccesoDelPaciente[] = [
       {
         ruta: MIS_TURNOS_ROUTE,
-        etiqueta: 'Mis turnos',
+        etiqueta: 'Mis citas',
         icono: 'calendar',
         resumen: 'Los turnos que pediste y los horarios que podés pedir.',
       },

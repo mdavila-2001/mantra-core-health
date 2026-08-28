@@ -15,6 +15,28 @@
         <p class="edicion__nota">Cómo te ven las personas que consultan tu perfil.</p>
 
         <form class="edicion__formulario" (submit)="$event.preventDefault()">
+          <!-- Los datos personales van primero: son de quien edita, y lo
+               profesional viene después. Vacío BORRA el dato opcional, que es
+               cómo se quita un segundo nombre que no se lleva. -->
+          <app-form-field label="Nombre">
+            <app-input [(value)]="nombre" placeholder="Tu nombre" />
+          </app-form-field>
+          <app-form-field label="Segundo nombre (opcional)">
+            <app-input [(value)]="segundoNombre" placeholder="Si tenés" />
+          </app-form-field>
+          <app-form-field label="Apellido paterno">
+            <app-input [(value)]="apellidoPaterno" />
+          </app-form-field>
+          <app-form-field label="Apellido materno (opcional)">
+            <app-input [(value)]="apellidoMaterno" />
+          </app-form-field>
+          <app-form-field
+            label="Teléfono"
+            hint="El número por el que te pueden contactar de tu consulta."
+          >
+            <app-input [(value)]="telefono" placeholder="+591 70000000" />
+          </app-form-field>
+
           <app-form-field label="Título profesional" hint="«Médica cardióloga», «Kinesiólogo».">
             <app-input [(value)]="titulo" placeholder="Tu título" />
           </app-form-field>

@@ -326,6 +326,16 @@ export class ProfilesClient {
       readonly professionalBio: string;
       readonly acceptsNewPatients: boolean;
       readonly telehealthAvailable: boolean;
+      /* Los personales. Una cadena vacía BORRA el dato opcional, así que se
+         mandan tal cual llegan: filtrar los vacíos impediría quitar un segundo
+         nombre. `displayName` no está — lo recompone el backend. */
+      readonly name: string;
+      readonly middleName: string;
+      readonly lastName: string;
+      readonly motherLastName: string;
+      readonly birthDate: string;
+      readonly phone: string;
+      readonly residenceMunicipalityConceptId: string;
     }>,
   ): Observable<OwnPractitionerProfile> {
     return this.http
@@ -349,6 +359,10 @@ export class ProfilesClient {
     return {
       ...limpio,
       createdAt: new Date(limpio.createdAt),
+      // Anclada a medianoche LOCAL: con `new Date()` retrocedería un día en
+      // cualquier huso al oeste de Greenwich, y quien nació el 1 de marzo se
+      // leería como del 28 de febrero.
+      birthDate: maybeDateOnly(limpio.birthDate),
       // Cada colección trae sus propias fechas opcionales. Se convierten acá y
       // no en la plantilla para que ninguna llegue como texto a un `| date`,
       // que lo pinta crudo sin avisar.
@@ -646,9 +660,11 @@ type WirePractitionerDirectoryPage = PractitionerDirectoryPage;
 
 type WireOwnPractitioner = Omit<
   OwnPractitionerProfile,
-  'createdAt' | 'specialties' | 'credentials' | 'licenses' | 'affiliations'
+  'createdAt' | 'birthDate' | 'specialties' | 'credentials' | 'licenses' | 'affiliations'
 > & {
   readonly createdAt: string;
+  /** `format: 'date'`, sin hora: pasa por `maybeDateOnly` como la del paciente. */
+  readonly birthDate?: string;
   readonly specialties: readonly WireDates<PractitionerSpecialty, 'validFrom' | 'validTo'>[];
   readonly credentials: readonly WireDates<
     PractitionerCredential,
@@ -681,7 +697,15 @@ type WireOwnPatientProfile = WireDates<OwnPatientProfile, 'birthDate'>;
 /** Los datos propios con la fecha ya convertida y los `null` fuera. */
 function toOwnPatientProfile(body: ConNulos<WireOwnPatientProfile>): OwnPatientProfile {
   const limpio = sinNulos<WireOwnPatientProfile>(body);
-  return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
+  return {
+    ...limpio,
+    birthDate: maybeDateOnly(limpio.birthDate),
+    // Las listas son obligatorias en el contrato, pero se defienden igual: una
+    // API anterior a este cambio las omite, y la pantalla las recorre sin
+    // preguntar. Vacías dicen «no declaró ninguna», que es lo correcto ahí.
+    coverages: limpio.coverages ?? [],
+    guardians: limpio.guardians ?? [],
+  };
 }
 
 /**

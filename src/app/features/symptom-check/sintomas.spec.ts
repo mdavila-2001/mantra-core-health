@@ -3,11 +3,15 @@ import {
   normalizar,
   reconocer,
   reconocerAlarmas,
+  reconocerNegados,
   recomendar,
   sugerir,
   SINTOMAS,
+  SINTOMAS_DE_ALARMA,
+  TODOS_LOS_SINTOMAS,
 } from './sintomas';
-import { ultimaFrase } from './symptom-check';
+import { ZONAS_DEL_CUERPO } from './zonas.datos';
+import { ultimaFrase } from './texto';
 
 /**
  * El flujo de síntomas (Frente C del plan de UX del 22/08/2026).
@@ -50,6 +54,13 @@ describe('reconocer', () => {
 
   it('un texto sin ningún síntoma conocido devuelve vacío, no una adivinanza', () => {
     expect(reconocer('quiero saber el horario de atención')).toEqual([]);
+  });
+
+  it('no reconoce lo que la persona escribió para negarlo', () => {
+    // Era el peor error posible de esta pantalla: contestarle a alguien lo
+    // contrario de lo que acababa de escribir.
+    expect(reconocer('no tengo fiebre')).toEqual([]);
+    expect(reconocerNegados('no tengo fiebre').map((s) => s.id)).toEqual(['fiebre']);
   });
 });
 
@@ -137,6 +148,21 @@ describe('recomendar', () => {
   it('sin síntomas no recomienda nada', () => {
     expect(recomendar([])).toEqual([]);
   });
+
+  it('reconoce la especialidad aunque el directorio la escriba distinto', () => {
+    // Los nombres del directorio los escribe cada profesional o cada catálogo:
+    // «Cardióloga», «Otorrinolaringología y Cirugía de Cabeza y Cuello». Con
+    // igualdad exacta ninguno coincidía, y el filtro que existe para no mandar
+    // a un directorio vacío terminaba vaciando la recomendación entera.
+    const conFemenino = recomendar(reconocer('veo borroso'), new Set(['oftalmologa']));
+    const conNombreLargo = recomendar(
+      reconocer('me duele la garganta'),
+      new Set(['otorrinolaringologia y cirugia de cabeza y cuello']),
+    );
+
+    expect(conFemenino.map((r) => r.nombre)).toContain('Oftalmología');
+    expect(conNombreLargo.map((r) => r.nombre)).toContain('Otorrinolaringología');
+  });
 });
 
 describe('explicar', () => {
@@ -206,9 +232,39 @@ describe('la tabla', () => {
   it('los sinónimos están normalizados en el propio dato', () => {
     // Se comparan normalizados; uno con tilde o mayúscula no coincidiría nunca
     // y el fallo sería invisible.
+    for (const sintoma of TODOS_LOS_SINTOMAS) {
+      for (const frase of [...sintoma.sinonimos, ...(sintoma.partes ?? [])]) {
+        expect(frase, `${sintoma.id}: «${frase}»`).toBe(normalizar(frase));
+      }
+    }
+  });
+
+  it('las dos tablas no comparten identificadores', () => {
+    const todos = TODOS_LOS_SINTOMAS.map((s) => s.id);
+
+    expect(new Set(todos).size).toBe(todos.length);
+    expect(todos.length).toBe(SINTOMAS.length + SINTOMAS_DE_ALARMA.length);
+  });
+
+  it('las de alarma están marcadas como tales y no ofrecen especialidad', () => {
+    for (const alarma of SINTOMAS_DE_ALARMA) {
+      expect(alarma.alarma, alarma.id).toBe(true);
+      expect(alarma.especialidades, alarma.id).toEqual([]);
+    }
     for (const sintoma of SINTOMAS) {
-      for (const sinonimo of sintoma.sinonimos) {
-        expect(sinonimo, `${sintoma.id}: «${sinonimo}»`).toBe(normalizar(sinonimo));
+      expect(sintoma.alarma, sintoma.id).not.toBe(true);
+    }
+  });
+
+  it('cada zona del cuerpo ofrece síntomas que existen', () => {
+    // Las zonas listan `id`, y tres de ellos son de alarma. Buscándolos sólo en
+    // `SINTOMAS` no aparecían nunca: la zona ofrecía menos de lo que dice y
+    // nadie se enteraba.
+    const conocidos = new Set(TODOS_LOS_SINTOMAS.map((s) => s.id));
+
+    for (const zona of ZONAS_DEL_CUERPO) {
+      for (const id of zona.sintomas) {
+        expect(conocidos.has(id), `${zona.id} ofrece «${id}»`).toBe(true);
       }
     }
   });

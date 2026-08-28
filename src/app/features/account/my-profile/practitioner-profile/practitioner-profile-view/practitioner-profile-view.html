@@ -176,6 +176,63 @@
           </app-tab-help-block>
         }
 
+        <!-- Tus datos: sólo en la ficha propia. Van antes de la trayectoria
+             porque son de quien mira, no de su carrera; y cada uno se dibuja
+             sólo si lo declaró, para que la lista no sea una fila de «Sin
+             registrar». -->
+        @if (perfil().datosPersonales; as datos) {
+          @if (datos.documento || datos.telefono || datos.correo || datos.domicilio || datos.edad !== null) {
+            <section class="profesional__fase">
+              <h3 class="profesional__fase-titulo">Tus datos</h3>
+              <dl class="profesional__datos">
+                @if (datos.documento) {
+                  <div class="profesional__dato">
+                    <dt>Documento de identidad</dt>
+                    <dd class="profesional__cifra">
+                      {{ datos.documento }}
+                      @if (datos.departamento) {
+                        <span class="profesional__sufijo">{{ datos.departamento }}</span>
+                      }
+                    </dd>
+                  </div>
+                }
+                @if (datos.fechaNacimiento) {
+                  <div class="profesional__dato">
+                    <dt>Fecha de nacimiento</dt>
+                    <dd class="profesional__cifra">
+                      {{ datos.fechaNacimiento | date: 'dd/MM/yyyy' }}
+                    </dd>
+                  </div>
+                }
+                @if (datos.edad !== null) {
+                  <div class="profesional__dato">
+                    <dt>Edad</dt>
+                    <dd class="profesional__cifra">{{ datos.edad }} años</dd>
+                  </div>
+                }
+                @if (datos.telefono) {
+                  <div class="profesional__dato">
+                    <dt>Teléfono</dt>
+                    <dd class="profesional__cifra">{{ datos.telefono }}</dd>
+                  </div>
+                }
+                @if (datos.correo) {
+                  <div class="profesional__dato">
+                    <dt>Correo</dt>
+                    <dd>{{ datos.correo }}</dd>
+                  </div>
+                }
+                @if (datos.domicilio) {
+                  <div class="profesional__dato">
+                    <dt>Dónde vivís</dt>
+                    <dd>{{ datos.domicilio }}</dd>
+                  </div>
+                }
+              </dl>
+            </section>
+          }
+        }
+
         <!-- Actividad actual: primero y destacada, porque es lo más relevante hoy. -->
         <section class="profesional__fase">
           <h3 class="profesional__fase-titulo">Actividad actual</h3>

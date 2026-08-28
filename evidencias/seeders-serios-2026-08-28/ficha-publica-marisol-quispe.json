@@ -1,0 +1,124 @@
+{
+    "kind": "PRACTITIONER",
+    "slug": "marisol-quispe-hshwl0",
+    "displayName": "Marisol Quispe",
+    "headline": "Cardi\u00f3loga \u00b7 Cardiolog\u00eda",
+    "biography": "Cardi\u00f3loga con quince a\u00f1os de pr\u00e1ctica en La Paz. Atiendo hipertensi\u00f3n, arritmias y control de riesgo cardiovascular, con ergometr\u00eda y Holter en el mismo consultorio. Trabajo con registro domiciliario de presi\u00f3n: el n\u00famero que decide un tratamiento tiene que ser el de tu casa, no el del susto de la consulta. Derivo a electrofisiolog\u00eda cuando el caso lo pide y lo digo de frente cuando no hace falta.",
+    "avatarUrl": "/public/media/5589dde3-8734-449f-b805-c5ddcefd94da",
+    "coverUrl": "/public/media/9e7934e1-a020-4420-a4ad-ac0853062758",
+    "verified": false,
+    "city": null,
+    "address": null,
+    "location": null,
+    "specialties": [
+        "Cardiolog\u00eda"
+    ],
+    "trajectory": [
+        {
+            "organizationName": "Universidad Mayor de San Andr\u00e9s \u2014 Facultad de Medicina, Enfermer\u00eda, Nutrici\u00f3n y Tecnolog\u00eda M\u00e9dica",
+            "roleTitle": "Docente de la c\u00e1tedra de Semiolog\u00eda Cardiovascular",
+            "departmentText": "Carrera de Medicina",
+            "startDate": "2018-03-05",
+            "endDate": null
+        },
+        {
+            "organizationName": "Cl\u00ednica del Sur",
+            "roleTitle": "M\u00e9dica cardi\u00f3loga de planta",
+            "departmentText": "Servicio de Cardiolog\u00eda",
+            "startDate": "2015-05-04",
+            "endDate": null
+        },
+        {
+            "organizationName": "Instituto Nacional de T\u00f3rax",
+            "roleTitle": "Formaci\u00f3n complementaria en Ecocardiograf\u00eda y Prueba de Esfuerzo",
+            "departmentText": "Unidad de M\u00e9todos No Invasivos",
+            "startDate": "2014-04-01",
+            "endDate": "2015-03-31"
+        },
+        {
+            "organizationName": "Hospital Obrero N.\u00ba 1 \u2014 Caja Nacional de Salud",
+            "roleTitle": "Residente de Cardiolog\u00eda (R1 a R3)",
+            "departmentText": "Servicio de Cardiolog\u00eda",
+            "startDate": "2011-03-01",
+            "endDate": "2014-02-28"
+        },
+        {
+            "organizationName": "Centro de Salud Achacachi \u2014 Red de Salud Omasuyos",
+            "roleTitle": "M\u00e9dica SAFCI \u2014 Servicio Social de Salud Rural Obligatorio",
+            "departmentText": "Primer nivel de atenci\u00f3n",
+            "startDate": "2010-01-15",
+            "endDate": "2010-12-31"
+        },
+        {
+            "organizationName": "Hospital de Cl\u00ednicas Universitario",
+            "roleTitle": "Interna rotatoria de pregrado",
+            "departmentText": "Medicina interna, Cirug\u00eda, Pediatr\u00eda y Ginecolog\u00eda",
+            "startDate": "2009-01-12",
+            "endDate": "2009-12-18"
+        },
+        {
+            "organizationName": "Universidad Mayor de San Andr\u00e9s \u2014 Facultad de Medicina, Enfermer\u00eda, Nutrici\u00f3n y Tecnolog\u00eda M\u00e9dica",
+            "roleTitle": "Doctora en Medicina \u2014 t\u00edtulo en provisi\u00f3n nacional",
+            "departmentText": "Carrera de Medicina",
+            "startDate": "2003-02-10",
+            "endDate": "2008-12-19"
+        }
+    ],
+    "ratingAverage": null,
+    "ratingCount": 0,
+    "acceptsReviews": true,
+    "verifiedBadge": {
+        "status": "NONE",
+        "badgeTypeConceptId": null,
+        "verificationMethodConceptId": null,
+        "verifiedAt": null,
+        "validUntil": null
+    },
+    "hasPublishedAgenda": false,
+    "nextAvailableDate": null,
+    "posts": [
+        {
+            "id": "e2036116-61b4-4f65-91ad-4d0c132fbb2a",
+            "bodyText": "El Holter no es \u00abun electro m\u00e1s largo\u00bb, y por eso a veces lo pido cuando el electro sali\u00f3 normal.\n\nUn electrocardiograma es una foto de treinta segundos. Si tu palpitaci\u00f3n aparece dos veces por semana, la probabilidad de que caiga justo en esos treinta segundos es casi nula. El Holter graba 24 o 48 horas seguidas, y ah\u00ed s\u00ed aparece \u2014o se demuestra que no est\u00e1.\n\nDos cosas que te van a pedir y conviene saber de antes: llevar un diario de s\u00edntomas con la hora exacta (eso es lo que hace \u00fatil el estudio) y no ba\u00f1arse con el equipo puesto. Y s\u00ed, se duerme con \u00e9l.",
+            "publishedAt": "2026-08-28T05:09:41.235Z",
+            "mediaUrls": [
+                "/public/media/87fa278c-144d-4b63-9809-e307d5b5941c",
+                "/public/media/95fef0b8-80d7-4dfb-8635-e44a32d6024e",
+                "/public/media/e9534fcf-e785-48e9-aea1-99869b71477b"
+            ],
+            "reactionCount": 12,
+            "commentCount": 3
+        },
+        {
+            "id": "fcf798e8-d59e-44eb-a3ce-f0aef92610d8",
+            "bodyText": "Sobre la sal: el problema casi nunca es el salero.\n\nAlrededor de tres cuartas partes de la sal que come una persona ya ven\u00eda adentro de lo que compr\u00f3: pan, embutidos, caldos en cubo, snacks, conservas y salsas. Sacar el salero de la mesa ayuda, pero mueve poco si el resto no cambia.\n\nDos gestos que s\u00ed mueven la aguja: leer el sodio en la etiqueta \u2014por cada 100 gramos, no por porci\u00f3n, que las porciones est\u00e1n dibujadas para que el n\u00famero parezca chico\u2014 y cocinar el mismo plato con la mitad de sal durante dos semanas. El gusto se reeduca; la presi\u00f3n responde antes que el paladar.",
+            "publishedAt": "2026-08-28T05:09:37.863Z",
+            "mediaUrls": [
+                "/public/media/86ae4eda-747c-49d6-bae9-c9b346171738"
+            ],
+            "reactionCount": 21,
+            "commentCount": 2
+        },
+        {
+            "id": "10d867b7-e428-47dd-85d9-203c81e5dcc3",
+            "bodyText": "Tres se\u00f1ales que s\u00ed ameritan ir a una emergencia, no esperar un turno:\n\n1. Dolor o presi\u00f3n en el pecho que aparece con el esfuerzo y cede con el reposo.\n2. Falta de aire que aparece al acostarse y obliga a dormir con m\u00e1s almohadas.\n3. Desmayo sin aviso, sobre todo si fue haciendo un esfuerzo.\n\nEl resto de las molestias del pecho \u2014pinchazos que duran un segundo, dolor que cambia al respirar o al apretar con el dedo\u2014 casi nunca son del coraz\u00f3n. Pero si hay dudas se consulta: perder una hora en una guardia es barato comparado con lo otro.",
+            "publishedAt": "2026-08-28T05:09:37.488Z",
+            "mediaUrls": [
+                "/public/media/421c4f78-83a3-470e-96ad-8310da0ed39d"
+            ],
+            "reactionCount": 18,
+            "commentCount": 2
+        },
+        {
+            "id": "f97a6b2a-bc02-48fa-81e1-b411b9fd0337",
+            "bodyText": "La presi\u00f3n se mide sentado, con la espalda apoyada, los pies en el piso y el brazo a la altura del coraz\u00f3n, despu\u00e9s de cinco minutos quieto y sin haber tomado caf\u00e9 ni fumado en la media hora previa.\n\nMedida de cualquier otra forma \u2014parado, apurado, con la vejiga llena\u2014 el n\u00famero sale alto y no sirve para decidir nada. Un tratamiento ajustado con mediciones mal tomadas es un tratamiento mal ajustado.\n\nLo mejor para el control es un registro en casa: dos tomas a la ma\u00f1ana y dos a la noche, durante una semana, anotadas con fecha y hora. Ese cuaderno vale m\u00e1s que una sola medici\u00f3n en el consultorio.",
+            "publishedAt": "2026-08-28T05:09:37.114Z",
+            "mediaUrls": [
+                "/public/media/5dd864ad-e993-4bb5-a443-0bcf579e3110"
+            ],
+            "reactionCount": 14,
+            "commentCount": 3
+        }
+    ],
+    "updatedAt": "2026-08-28T05:09:36.568Z"
+}

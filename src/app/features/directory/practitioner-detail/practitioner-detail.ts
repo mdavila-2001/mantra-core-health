@@ -197,6 +197,9 @@ function convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
     formacion: formacionDe(perfil, etiquetas),
     matriculas: matriculasDe(perfil, etiquetas),
     idiomas: idiomasDe(perfil, etiquetas),
+    // La ficha de otro profesional no muestra sus datos personales: el
+    // documento y la fecha de nacimiento de un colega no son de quien mira.
+    datosPersonales: null,
     actividadActual: afiliaciones.actual,
     experienciaHistorica: afiliaciones.historica,
     desde: perfil.createdAt ?? null,

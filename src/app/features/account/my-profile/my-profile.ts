@@ -8,7 +8,11 @@ import { rolesConEtiqueta } from '../../../core/auth/role-labels';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
-import type { OwnPatientSummary } from '../../../core/data-access/profiles/profiles.types';
+import type {
+  OwnAddress,
+  OwnPatientProfile,
+  OwnPatientSummary,
+} from '../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import {
@@ -156,6 +160,17 @@ export class MyProfile {
 
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
+  /**
+   * Los datos completos de filiación, para MOSTRARLOS.
+   *
+   * Va aparte del resumen y no reemplaza a ninguno: el resumen compone el nombre
+   * y trae el estado; éste trae lo que la persona declaró —documento, correo,
+   * direcciones, seguros, tutores—, que hasta ahora sólo se podía ver entrando a
+   * editar. Un fallo acá no rompe la tarjeta: los bloques nuevos sencillamente
+   * no se dibujan.
+   */
+  protected readonly perfil = signal<OwnPatientProfile | null>(null);
+
   protected readonly datos = computed(() => dataOf(this.resumen()));
 
   /**
@@ -272,11 +287,75 @@ export class MyProfile {
   constructor() {
     this.cargar();
     this.cargarCasos();
+    this.cargarPerfil();
+  }
+
+
+  /**
+   * La etiqueta de un concepto, o nada.
+   *
+   * Devuelve cadena vacía y no el uuid cuando el catálogo todavía no llegó: un
+   * identificador crudo en la ficha no le dice nada a nadie y delata la
+   * plomería. La fila queda con el dato principal y sin el sufijo.
+   */
+  protected etiquetaDe(conceptId: string): string {
+    return this.etiquetas().get(conceptId)?.display ?? '';
+  }
+
+  /**
+   * La edad, calculada.
+   *
+   * El registro del stakeholder la pide «de manera automática con la fecha de
+   * nacimiento ingresada»: es derivada, no un dato que alguien escriba, así que
+   * no se guarda ni se pide al backend.
+   */
+  protected readonly edad = computed<number | null>(() => {
+    const nacimiento = this.perfil()?.birthDate;
+    if (!nacimiento) return null;
+    const hoy = new Date();
+    let anios = hoy.getFullYear() - nacimiento.getFullYear();
+    // Si todavía no llegó su cumpleaños este año, tiene uno menos.
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) anios -= 1;
+    return anios >= 0 && anios < 130 ? anios : null;
+  });
+
+  /**
+   * Una dirección en una línea.
+   *
+   * Se arma con lo que haya: quien declaró sólo el municipio ve el municipio, y
+   * quien escribió la calle la ve primero. Las coordenadas NO se muestran —un
+   * par de números no le dice nada a quien lee su ficha—; están para el mapa.
+   */
+  protected direccionLegible(dir: OwnAddress): string {
+    const partes = [
+      dir.lines,
+      dir.city ?? (dir.municipalityConceptId ? this.etiquetaDe(dir.municipalityConceptId) : ''),
+    ].filter((parte) => parte !== undefined && parte !== '');
+    return partes.length > 0 ? partes.join(' · ') : 'Sin detalle';
   }
 
   protected recargar(): void {
     this.cargar();
     this.cargarCasos();
+    this.cargarPerfil();
+  }
+
+  /**
+   * Los datos completos, si la sesión es de paciente.
+   *
+   * Silencioso a propósito: a un profesional esta ruta le responde 404 —no tiene
+   * perfil de paciente— y ese fallo no le falta a nadie. La tarjeta sigue
+   * mostrando lo que el resumen ya trajo.
+   */
+  private cargarPerfil(): void {
+    this.perfil.set(null);
+    if (!this.debeLeerResumenDePaciente()) return;
+
+    this.profiles.getOwnPatientProfile().subscribe({
+      next: (p) => this.perfil.set(p),
+      error: () => this.perfil.set(null),
+    });
   }
 
   /**

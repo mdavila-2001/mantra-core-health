@@ -311,7 +311,10 @@ construir() {
   log "BUILD: construyendo $IMAGEN:$etiqueta (esto tarda unos minutos)"
   # `PUBLIC_API_BASE_URL` vacía a propósito: rutas relativas, un solo origen,
   # sin CORS. Es la decisión que documenta el propio Dockerfile.
-  docker build -f "$contexto/Dockerfile" -t "$IMAGEN:$etiqueta" \
+  # `--network=host`: el DNS que Docker copia a los contenedores (192.168.0.1) no
+  # responde desde los puentes, así que `yarn install` muere por timeout. Con la red
+  # del anfitrión la construcción resuelve por systemd-resolved y sí sale a internet.
+  docker build --network=host -f "$contexto/Dockerfile" -t "$IMAGEN:$etiqueta" \
     --build-arg PUBLIC_API_BASE_URL= "$contexto" >>"$LOG" 2>&1
 }
 
