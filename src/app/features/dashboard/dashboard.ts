@@ -18,9 +18,7 @@ import { rolesAlcanzan, type AppSection } from '../../core/navigation/navigation
 import { dataOf, empty, loading, ready, stale } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Badge } from '../../shared/components/atoms/badge/badge';
-import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
-import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { StaggerList } from '../../shared/motion/stagger-list.directive';
 import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
@@ -29,6 +27,7 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
 import { CaseStatusCatalog, toCaseStatusPresentation } from '../identity-verification/case-status';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
+import { AccessTree } from './access-tree/access-tree';
 import { PatientHome } from './patient-home/patient-home';
 
 /**
@@ -79,9 +78,9 @@ const ROLES_DE_TRABAJO: readonly string[] = [
 @Component({
   selector: 'app-dashboard',
   imports: [
+    AccessTree,
     Badge,
     Card,
-    NavIcon,
     Alert,
     AppButtonLink,
     PageHeader,
@@ -89,7 +88,6 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     Skeleton,
     StaggerList,
     StatusSeal,
-    Tooltip,
     // Faltaba de la lista aunque la plantilla lo usa en dos elementos: el
     // atributo `appTutorialTarget` se renderizaba como un atributo cualquiera,
     // la directiva no aplicaba, y el tutorial del panel no encontraba ni el
@@ -148,14 +146,22 @@ export class Dashboard {
    * sección nueva aparece acá sin tocar este archivo, y una que se apaga
    * desaparece de los dos lados a la vez.
    */
-  private readonly secciones = computed(() => this.navigation.visibleSections());
+  /**
+   * Todo lo que la sesión alcanza, sin filtrar por disponibilidad.
+   *
+   * Es lo que consume el árbol de accesos, que reparte y **muestra las dos
+   * cosas**: lo que se puede abrir y lo que está en construcción, cada una con
+   * su forma. Dárselo ya separado lo obligaría a volver a juntarlo para
+   * ordenarlo por zona.
+   */
+  protected readonly seccionesVisibles = computed(() => this.navigation.visibleSections());
 
   protected readonly seccionesDisponibles = computed<readonly AppSection[]>(() =>
-    this.secciones().filter((s) => s.availability === 'disponible'),
+    this.seccionesVisibles().filter((s) => s.availability === 'disponible'),
   );
 
   protected readonly seccionesPlanificadas = computed<readonly AppSection[]>(() =>
-    this.secciones().filter((s) => s.availability === 'planificada'),
+    this.seccionesVisibles().filter((s) => s.availability === 'planificada'),
   );
 
   /**

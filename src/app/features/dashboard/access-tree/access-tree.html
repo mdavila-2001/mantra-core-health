@@ -1,0 +1,171 @@
+<!-- ═══ El árbol de accesos ═══════════════════════════════════════════════════
+     Dos escalones. Arriba, cinco zonas como mucho; adentro, las secciones de
+     esa zona. El reparto lo declara `core/navigation/access-tree.ts`: acá no
+     hay ni una ruta escrita a mano.
+
+     `@for` con `@empty` y no `@if`/`@else`: la lista de la zona abierta tiene
+     cero o un elemento, y con `track` por identificador cambiar de zona
+     destruye y rehace el bloque. Eso es lo que hace que la animación de
+     entrada se vuelva a ver al saltar de una zona a otra — con `@if` es el
+     mismo nodo con otro contenido, y el gesto no se repite. -->
+@for (abierta of zonaAbierta(); track abierta.area.id) {
+  <section
+    class="arbol__abierta"
+    data-testid="panel-zona-abierta"
+    [attr.data-zona-abierta]="abierta.area.id"
+    [attr.data-tono]="abierta.area.tone"
+    [attr.aria-label]="abierta.area.label"
+  >
+    <header class="arbol__cabecera">
+      <!-- Primero el camino de vuelta y después el rótulo: es el orden en que
+           se necesitan, y deja el botón de salida como primer control del
+           bloque nuevo — que es adonde va el foco al entrar. -->
+      <button
+        type="button"
+        class="arbol__volver"
+        data-arbol-volver
+        data-testid="panel-zona-volver"
+        (click)="cerrar()"
+      >
+        <svg
+          class="arbol__flecha"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M15 5.5 8.5 12l6.5 6.5" />
+        </svg>
+        Todas las zonas
+      </button>
+
+      <span class="arbol__cabecera-icono">
+        <app-nav-icon [name]="abierta.area.icon" />
+      </span>
+
+      <div class="arbol__cabecera-texto">
+        <h3 class="arbol__cabecera-titulo">{{ abierta.area.label }}</h3>
+        <p class="arbol__cabecera-resumen">{{ abierta.area.tagline }}</p>
+      </div>
+    </header>
+
+    <!-- El mismo `data-testid` y el mismo `data-ruta` que tenía la rejilla
+         plana: lo que cambió es dónde están, no qué son, y las pruebas de
+         navegador siguen preguntando por el acceso y no por su envoltorio. -->
+    <ul class="arbol__accesos">
+      @for (seccion of abierta.sections; track seccion.path) {
+        <li [style.animation-delay.ms]="$index * 35">
+          @if (seccion.availability === 'disponible') {
+            <a
+              class="arbol__acceso"
+              data-testid="panel-acceso"
+              [attr.data-ruta]="rutaDe(seccion)"
+              [routerLink]="rutaDe(seccion)"
+              [attr.aria-label]="seccion.label + '. ' + seccion.summary"
+              [appTooltip]="seccion.summary"
+              appTooltipPosition="bottom"
+            >
+              <span class="arbol__acceso-icono">
+                <app-nav-icon [name]="seccion.icon" />
+              </span>
+              <span class="arbol__acceso-nombre">{{ seccion.label }}</span>
+            </a>
+          } @else {
+            <!-- Sin enlace: lleva al placeholder, y prometer una pantalla que
+                 no existe es peor que decir que falta. Tampoco lleva globo —un
+                 globo pide foco, y esto no es enfocable justamente porque no se
+                 puede entrar—. Lo que hay que saber se dice con el sello. -->
+            <div
+              class="arbol__acceso arbol__acceso--planificada"
+              data-testid="panel-acceso-planificado"
+              [attr.data-ruta]="rutaDe(seccion)"
+              [attr.aria-label]="seccion.label + '. En construcción. ' + seccion.summary"
+            >
+              <span class="arbol__acceso-icono">
+                <app-nav-icon [name]="seccion.icon" />
+              </span>
+              <span class="arbol__acceso-nombre">{{ seccion.label }}</span>
+              <app-badge variant="secondary" value="En construcción" />
+            </div>
+          }
+        </li>
+      }
+    </ul>
+
+    <!-- Saltar de zona sin volver al principio. Es lo que convierte el árbol
+         en algo que se recorre y no en un menú de dos clics por destino. -->
+    @if (otrasZonas().length > 0) {
+      <nav class="arbol__saltos" aria-label="Ir a otra zona">
+        @for (otra of otrasZonas(); track otra.area.id) {
+          <button
+            type="button"
+            class="arbol__salto"
+            data-testid="panel-zona-salto"
+            [attr.data-zona-salto]="otra.area.id"
+            [attr.data-tono]="otra.area.tone"
+            (click)="abrir(otra.area.id)"
+          >
+            <span class="arbol__salto-icono">
+              <app-nav-icon [name]="otra.area.icon" />
+            </span>
+            {{ otra.area.label }}
+          </button>
+        }
+      </nav>
+    }
+  </section>
+} @empty {
+  <ul class="arbol__zonas">
+    @for (zona of zonas(); track zona.area.id) {
+      <li [style.animation-delay.ms]="$index * 55">
+        <button
+          type="button"
+          class="arbol__zona"
+          data-testid="panel-zona"
+          [attr.data-zona]="zona.area.id"
+          [attr.data-tono]="zona.area.tone"
+          [attr.aria-label]="
+            zona.area.label + '. ' + zona.disponibles + ' secciones. ' + zona.area.tagline
+          "
+          (click)="abrir(zona.area.id)"
+        >
+          <span class="arbol__zona-icono">
+            <app-nav-icon [name]="zona.area.icon" />
+          </span>
+
+          <span class="arbol__zona-texto">
+            <span class="arbol__zona-nombre">{{ zona.area.label }}</span>
+            <span class="arbol__zona-resumen">{{ zona.area.tagline }}</span>
+          </span>
+
+          <!-- La cifra cuenta sólo lo que se puede abrir: prometer treinta y
+               dos y que ocho sean placeholders es prometer de más. -->
+          <span class="arbol__zona-cuenta" aria-hidden="true">{{ zona.disponibles }}</span>
+
+          <svg
+            class="arbol__chevron"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M9 5.5 15.5 12 9 18.5" />
+          </svg>
+        </button>
+      </li>
+    }
+  </ul>
+
+  <p class="arbol__pie">
+    {{ totalDisponibles() }} secciones habilitadas en {{ zonas().length }} zonas. Abrí una para ver
+    qué hay adentro.
+  </p>
+}

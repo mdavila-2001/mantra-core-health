@@ -30,11 +30,47 @@ import { entrar, estable, irA } from './support/sesion';
 
 const RUTA_GUIA = '/directory';
 
-/** Los accesos de la rejilla del panel, por la ruta a la que llevan. */
-async function rutasDeAccesos(page: Page): Promise<string[]> {
+/** Los identificadores de las zonas de la primera pantalla del árbol. */
+async function idsDeZonas(page: Page): Promise<string[]> {
   return page
-    .getByTestId('panel-acceso')
-    .evaluateAll((nodos) => nodos.map((n) => (n as HTMLElement).dataset['ruta'] ?? ''));
+    .getByTestId('panel-zona')
+    .evaluateAll((nodos) => nodos.map((n) => (n as HTMLElement).dataset['zona'] ?? ''));
+}
+
+/** Abre una zona y espera a que aparezca el camino de vuelta. */
+async function abrirZona(page: Page, id: string): Promise<void> {
+  await page.locator(`[data-zona="${id}"]`).click();
+  await page.getByTestId('panel-zona-volver').waitFor();
+}
+
+/** Vuelve a la primera pantalla del árbol. */
+async function volverAlArbol(page: Page): Promise<void> {
+  await page.getByTestId('panel-zona-volver').click();
+  await page.getByTestId('panel-zona').first().waitFor();
+}
+
+/**
+ * Los accesos del panel, por la ruta a la que llevan.
+ *
+ * Desde el 28/08/2026 «Tus accesos» es un árbol de dos escalones: la primera
+ * pantalla son cinco zonas y las secciones viven adentro. Así que esto ya no
+ * lee una rejilla: **recorre el árbol entero**, que además es la única forma
+ * de que la comprobación de «nada de lo ofrecido rebota» siga cubriendo todo.
+ */
+async function rutasDeAccesos(page: Page): Promise<string[]> {
+  const rutas: string[] = [];
+
+  for (const zona of await idsDeZonas(page)) {
+    await abrirZona(page, zona);
+    rutas.push(
+      ...(await page
+        .getByTestId('panel-acceso')
+        .evaluateAll((nodos) => nodos.map((n) => (n as HTMLElement).dataset['ruta'] ?? ''))),
+    );
+    await volverAlArbol(page);
+  }
+
+  return rutas;
 }
 
 /** Los destinos del menú lateral. */
@@ -68,7 +104,9 @@ test.describe('Carril 02 · accesos, Guía de profesionales y RBAC', () => {
     expect(await rutasDeAccesos(page)).toContain(RUTA_GUIA);
 
     // Se entra por el acceso, no escribiendo la dirección: lo que hay que
-    // comprobar es que el enlace del panel funciona.
+    // comprobar es que el enlace del panel funciona. La Guía vive en la zona
+    // «La red», que es donde el registro de zonas la declara.
+    await abrirZona(page, 'red');
     await page.getByTestId('panel-acceso').filter({ hasText: 'Guía de profesionales' }).click();
     await page.waitForURL(/\/directory$/);
     await estable(page);
@@ -103,6 +141,10 @@ test.describe('Carril 02 · accesos, Guía de profesionales y RBAC', () => {
     await irA(page, '/dashboard');
     await estable(page);
 
+    // Un escalón adentro: la primera pantalla son zonas, y el globo es de los
+    // accesos que hay dentro de una.
+    await abrirZona(page, 'consulta');
+
     const primero = page.getByTestId('panel-acceso').first();
     await expect(primero.locator('app-nav-icon svg')).toBeVisible();
 
@@ -117,6 +159,10 @@ test.describe('Carril 02 · accesos, Guía de profesionales y RBAC', () => {
     await expect(page.locator(`#${globoId}`)).toBeVisible();
 
     /* -- 4 · nada de lo ofrecido rebota ------------------------------------ */
+
+    // Se sale de la zona antes de recorrer el árbol: `rutasDeAccesos` arranca
+    // desde la primera pantalla, y adentro de una zona no hay zonas que abrir.
+    await volverAlArbol(page);
 
     // El panel y el guard salen del mismo registro. Si se desincronizaran, el
     // síntoma sería justamente éste: un acceso que se ofrece y devuelve al

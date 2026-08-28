@@ -80,6 +80,27 @@ secciones comparten ícono sólo cuando son la misma idea vista dos veces
 —«Turnos» y «Mis turnos», la agenda de quien atiende y la de quien consulta—,
 nunca por falta de dibujo. Hoy ninguno carga más de tres.
 
+### Cómo se dibuja uno (28/08/2026)
+
+Tener cuarenta y cuatro nombres distintos no alcanzaba si los dibujos no se
+leían. Tres reglas, que salieron de mirarlos al tamaño en que se ven de verdad
+—20 px en el menú, 22 px dentro de una zona del árbol de accesos—:
+
+1. **Trazo 1,5.** Era 1,6, y a ese tamaño ese décimo de más empasta: dos trazos
+   paralelos a menos de 2 px se leen como uno solo grueso.
+2. **Centro en 12, con aire.** El `viewBox` es `0 0 24 24` y el dibujo se centra
+   ahí, con unos 2 px libres a cada lado. `patients` tenía la cabeza en x=9 y
+   los hombros llegando a x=1: en una fila de íconos se veía torcido sin que se
+   supiera por qué.
+3. **Un detalle interior que lo distinga.** Una silueta sola no basta cuando hay
+   cuarenta y cuatro: el calendario lleva los días marcados, la orden dos
+   renglones escritos, el globo de diálogo tres puntos, la carpeta su tapa. Sin
+   eso, a 20 px `orders`, `note` y `clipboard` son el mismo rectángulo.
+
+Y dos íconos no pueden compartir el mismo interior: `results` y `scan` llevaban
+los dos el mismo electrocardiograma y en el menú eran el mismo dibujo. Ahora el
+trazo es del informe (`results`) y el barrido es de la placa (`scan`).
+
 ## Nombre accesible
 
 **Un botón de solo ícono sin nombre accesible es un control mudo.** `AppButton`

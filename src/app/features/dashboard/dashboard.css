@@ -28,10 +28,17 @@
   margin-block-start: var(--sp-5);
 }
 
+/* Rótulo en «overline» —el estilo que el sistema reserva para etiquetar un
+   dato— y no en caption: cuatro tarjetas en fila necesitan que la etiqueta se
+   distinga de la cifra por FORMA y no sólo por tamaño, o las dos líneas se
+   leen como un párrafo de dos renglones. */
 .panel__cifra-rotulo {
   margin: 0;
-  font-size: var(--fs-caption);
+  font-size: var(--fs-overline);
   line-height: var(--lh-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-secondary);
 }
 
@@ -96,84 +103,18 @@
 }
 
 /* ── Accesos ──────────────────────────────────────────────────────────────
-   Corrección #1: rejilla de acciones con ícono, no tarjetas con la descripción
-   pegada debajo.
+   La rejilla se fue entera a `access-tree/`: dejó de ser una lista plana y
+   pasó a ser un árbol de dos escalones, con su propio estado —qué zona está
+   abierta— y su propio movimiento. Lo que queda acá es el hueco donde entra, y
+   el hueco es la fila completa (`.panel__bloque--ancho`, más arriba): sigue
+   siendo la tarjeta más alta y la que más se lee.
 
-   El mínimo baja de 16rem a 9rem porque lo que hay que acomodar ahora es un
-   ícono con su rótulo, no un párrafo: con 16rem quedaban tres columnas
-   larguísimas medio vacías. Con 9rem entran cinco o seis por fila y las once
-   secciones de la doctora caben en dos, que es lo que convierte «Tus accesos»
-   en algo que se abarca de un vistazo. */
-.panel__accesos {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.panel__acceso {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--sp-2);
-  height: 100%;
-  padding: var(--sp-4) var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-sm);
-  text-align: center;
-  text-decoration: none;
-  color: inherit;
-  transition:
-    background-color var(--dur-fast) var(--ease-standard),
-    border-color var(--dur-fast) var(--ease-standard);
-}
-
-/* El ícono a tamaño de acción, no de adorno: es lo primero que se busca cuando
-   la rejilla se recorre con la vista. `currentColor` en el trazo hace que
-   acompañe al realce del enlace sin declarar un color propio. */
-.panel__acceso-icono {
-  display: inline-flex;
-  width: 2rem;
-  height: 2rem;
-  color: var(--text-secondary);
-}
-
-a.panel__acceso:hover .panel__acceso-icono,
-a.panel__acceso:focus-visible .panel__acceso-icono {
-  color: var(--text-primary);
-}
-
-/* El realce es un VELO (`--bg-hover`), no un color opaco: se compone con la
-   tarjeta que hay debajo y por eso funciona igual en claro y en oscuro, sin
-   tocar el contraste del texto. El borde acompaña para que el realce no
-   dependa sólo del relleno. */
-a.panel__acceso:hover,
-a.panel__acceso:focus-visible {
-  border-color: var(--border-strong);
-  background: var(--bg-hover);
-}
-
-a.panel__acceso:active {
-  background: var(--bg-active);
-}
-
-/* La planificada no es un enlace, y tiene que verse que no lo es sin depender
-   sólo del cursor: nadie pasa el mouse por encima para averiguarlo. */
-.panel__acceso--planificada {
-  opacity: 0.72;
-}
-
-/* El rótulo se queda —la corrección pide reemplazar la **descripción** por el
-   tooltip, no dejar la rejilla muda—. Un panel de íconos sin nombre obliga a
-   recorrerlos con el cursor uno por uno para saber cuál es cuál. */
-.panel__acceso-nombre {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-weight: 600;
-  text-wrap: balance;
+   La separación con la nota de arriba se declara acá y no en el árbol: es
+   distancia entre DOS piezas de esta tarjeta, y un margen propio del componente
+   lo arrastraría a cualquier otra pantalla que algún día lo use. */
+app-access-tree {
+  display: block;
+  margin-block-start: var(--sp-4);
 }
 
 /* ── Listas y datos ───────────────────────────────────────────────────────*/
