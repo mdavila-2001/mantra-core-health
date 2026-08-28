@@ -6,6 +6,7 @@ import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDateOnly } from '../wire';
 import type {
   BrokerAgreement,
+  CarrierCatalogEntry,
   BrokerClient,
   BrokerDirectory,
   BrokerPortfolio,
@@ -93,6 +94,24 @@ export class InsuranceClient {
   private readonly baseUrl = inject(API_BASE_URL);
 
   /** `GET /insurance-carriers` — aseguradoras del tenant activo. */
+  /**
+   * `GET /insurance-carrier-catalog`. El catálogo boliviano de aseguradoras.
+   *
+   * Es público: la pantalla de registro lo consulta antes de que exista la
+   * cuenta. No confundir con {@link InsuranceClient.listCarriers}, que lista
+   * las aseguradoras del tenant activo y desde el tenant de un paciente
+   * devuelve vacío.
+   *
+   * @returns Aseguradoras privadas y públicas con sus planes de salud.
+   */
+  listCarrierCatalog(): Observable<readonly CarrierCatalogEntry[]> {
+    return this.http
+      .get<{ readonly carriers: readonly CarrierCatalogEntry[] }>(
+        this.url('/insurance-carrier-catalog'),
+      )
+      .pipe(map((body) => body.carriers));
+  }
+
   listCarriers(): Observable<CarrierDirectory> {
     return this.http
       .get<{

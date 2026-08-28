@@ -135,6 +135,42 @@ export class IamClient {
       ...(registration.occupationFreeText === undefined
         ? {}
         : { occupationFreeText: registration.occupationFreeText }),
+      ...(registration.homeAddressLines === undefined
+        ? {}
+        : { homeAddressLines: registration.homeAddressLines }),
+      ...(registration.homeLatitude === undefined
+        ? {}
+        : { homeLatitude: registration.homeLatitude }),
+      ...(registration.homeLongitude === undefined
+        ? {}
+        : { homeLongitude: registration.homeLongitude }),
+      ...(registration.workMunicipalityConceptId === undefined
+        ? {}
+        : { workMunicipalityConceptId: registration.workMunicipalityConceptId }),
+      ...(registration.workAddressLines === undefined
+        ? {}
+        : { workAddressLines: registration.workAddressLines }),
+      ...(registration.workLatitude === undefined
+        ? {}
+        : { workLatitude: registration.workLatitude }),
+      ...(registration.workLongitude === undefined
+        ? {}
+        : { workLongitude: registration.workLongitude }),
+      ...(registration.guardianName === undefined
+        ? {}
+        : { guardianName: registration.guardianName }),
+      ...(registration.guardianPhone === undefined
+        ? {}
+        : { guardianPhone: registration.guardianPhone }),
+      ...(registration.privateInsurancePlanId === undefined
+        ? {}
+        : { privateInsurancePlanId: registration.privateInsurancePlanId }),
+      ...(registration.publicInsurancePlanId === undefined
+        ? {}
+        : { publicInsurancePlanId: registration.publicInsurancePlanId }),
+      ...(registration.billingTaxId === undefined
+        ? {}
+        : { billingTaxId: registration.billingTaxId }),
       ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
     });
   }
