@@ -78,6 +78,23 @@ interface PerfilResuelto {
  * pudo resolver deja el avatar de iniciales. Ninguno de los dos puede tumbar la
  * pantalla que muestra la trayectoria de alguien.
  */
+
+/**
+ * La edad, calculada de la fecha de nacimiento.
+ *
+ * Es derivada: el registro del cliente la pide «de manera automática», así que
+ * no se guarda ni se pide al servidor. `null` si no declaró la fecha o si el
+ * resultado no es una edad creíble.
+ */
+function edadDe(nacimiento?: Date): number | null {
+  if (!nacimiento) return null;
+  const hoy = new Date();
+  let anios = hoy.getFullYear() - nacimiento.getFullYear();
+  const mes = hoy.getMonth() - nacimiento.getMonth();
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) anios -= 1;
+  return anios >= 0 && anios < 130 ? anios : null;
+}
+
 @Component({
   selector: 'app-practitioner-profile',
   imports: [PractitionerProfileView, ViewStateHost],
@@ -172,6 +189,22 @@ export class PractitionerProfile {
       formacion: this.formacion(perfil, etiquetas),
       matriculas: this.matriculas(perfil, etiquetas),
       idiomas: this.idiomas(perfil, etiquetas),
+      // Sólo en la ficha propia: el documento y la fecha de nacimiento de un
+      // colega no son de quien mira su ficha. Este componente ES la ficha
+      // propia, así que siempre se arman; la del directorio pasa `null`.
+      datosPersonales: {
+        documento: perfil.nationalId ?? '',
+        departamento: perfil.issuerAdministrativeAreaConceptId
+          ? label(etiquetas, perfil.issuerAdministrativeAreaConceptId)
+          : '',
+        fechaNacimiento: perfil.birthDate ?? null,
+        edad: edadDe(perfil.birthDate),
+        telefono: perfil.phone ?? '',
+        correo: perfil.email ?? '',
+        domicilio: perfil.residenceMunicipalityConceptId
+          ? label(etiquetas, perfil.residenceMunicipalityConceptId)
+          : '',
+      },
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
       desde: perfil.createdAt ?? null,

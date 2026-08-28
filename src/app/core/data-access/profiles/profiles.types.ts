@@ -175,6 +175,22 @@ export interface OwnPractitionerProfile {
   /** Presentación en prosa: lo que hace que un perfil se lea como una persona. */
   readonly professionalBio?: string;
   readonly photoFileId?: string;
+  readonly email?: string;
+  readonly phone?: string;
+
+  /* --- los datos personales, sólo en la lectura propia -------------------- */
+
+  /** Las cuatro partes: es lo único con lo que se corrige un apellido. */
+  readonly name?: string;
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
+  readonly birthDate?: Date;
+  /** Su documento. No editable desde el perfil: tiene su circuito propio. */
+  readonly nationalId?: string;
+  readonly issuerAdministrativeAreaConceptId?: string;
+  readonly residenceMunicipalityConceptId?: string;
+
   readonly practitionerCategoryConceptId: string;
   readonly verificationStatusConceptId: string;
   readonly practiceStatusConceptId: string;

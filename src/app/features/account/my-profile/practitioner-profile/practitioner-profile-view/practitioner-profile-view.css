@@ -411,3 +411,49 @@
     transition: none;
   }
 }
+
+/* --- Tus datos -------------------------------------------------------------
+   Lista de dos columnas, como la ficha del paciente: la etiqueta arriba en
+   pantalla chica y al costado cuando hay lugar. */
+.profesional__datos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.profesional__dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.profesional__dato dt {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.profesional__dato dd {
+  margin: 0;
+}
+
+.profesional__cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+/* El departamento emisor, junto al documento y en segundo plano. */
+.profesional__sufijo {
+  margin-left: var(--sp-2);
+  color: var(--fg-muted);
+}
+
+@media (min-width: 40rem) {
+  .profesional__dato {
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--sp-4);
+  }
+
+  .profesional__dato dt {
+    flex: 0 0 12rem;
+  }
+}

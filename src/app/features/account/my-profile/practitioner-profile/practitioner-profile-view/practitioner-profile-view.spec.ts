@@ -109,6 +109,9 @@ const PERFIL: PerfilProfesionalVisible = {
     },
   ],
   idiomas: [{ id: 'idi-es', nombre: 'Español', nivel: '', interpreta: true }],
+  // Sin datos personales por defecto: es la ficha de un colega, que es lo que
+  // miran casi todas estas pruebas. Las que hablan del bloque lo declaran.
+  datosPersonales: null,
   actividadActual: [afiliacion({ id: 'af-2', organizacion: 'Sede Central Sopocachi', hasta: null, actual: true })],
   experienciaHistorica: [afiliacion()],
   desde: new Date('2014-02-01'),
@@ -460,4 +463,61 @@ describe('PractitionerProfileView', () => {
 
     expect(host.querySelector('.profesional__bio')).toBeNull();
   });
+
+  /**
+   * «Tus datos» — sólo en la ficha propia.
+   *
+   * La ficha del profesional mostraba su matrícula y su trayectoria, pero no el
+   * documento con el que se registró ni su fecha de nacimiento. Lo reportó
+   * Itzan en la revisión del túnel: la API los devolvía y la pantalla no los
+   * dibujaba.
+   */
+  describe('los datos personales', () => {
+    const DATOS = {
+      documento: '8812345',
+      departamento: 'Santa Cruz',
+      fechaNacimiento: new Date('1985-03-20'),
+      edad: 41,
+      telefono: '+591 70012345',
+      correo: 'elena@example.test',
+      domicilio: 'Santa Cruz de la Sierra',
+    };
+
+    it('en la ficha propia se ven documento, edad, teléfono y domicilio', () => {
+      const host = montar({ ...PERFIL, datosPersonales: DATOS });
+      const texto = host.textContent ?? '';
+
+      expect(texto).toContain('8812345');
+      expect(texto).toContain('Santa Cruz');
+      expect(texto).toContain('41 años');
+      expect(texto).toContain('+591 70012345');
+      expect(texto).toContain('elena@example.test');
+    });
+
+    it('en la ficha de OTRO no se ven: su documento no es de quien mira', () => {
+      const host = montar({ ...PERFIL, datosPersonales: null });
+      const texto = host.textContent ?? '';
+
+      expect(texto).not.toContain('Tus datos');
+      expect(texto).not.toContain('8812345');
+    });
+
+    it('lo que no declaró no se dibuja: nada de «Sin registrar»', () => {
+      const host = montar({
+        ...PERFIL,
+        datosPersonales: {
+          documento: '',
+          departamento: '',
+          fechaNacimiento: null,
+          edad: null,
+          telefono: '',
+          correo: '',
+          domicilio: '',
+        },
+      });
+
+      expect(host.textContent ?? '').not.toContain('Tus datos');
+    });
+  });
+
 });
