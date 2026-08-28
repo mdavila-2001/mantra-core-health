@@ -1,123 +1,406 @@
-<div class="app-page-header" app-page-header="">
-      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M12 8.5v7M8.5 12h7"></path></svg></span>
-      <div class="app-page-header__texto">
-        <div class="app-page-header__titulo"><h1>Dónde conseguir tu medicamento</h1></div>
-        <p class="caption">La farmacia más cercana que lo tenga, con su precio y su horario. La disponibilidad la reporta cada farmacia y puede cambiar entre que la ves y que llegás: si el viaje es largo, llamá antes.</p>
-      </div>
+<!-- ─── El banner de la vitrina ─────────────────────────────────────────────── -->
+<section class="vitrina-hero" aria-labelledby="vitrina-titulo">
+  <div class="vitrina-hero__fondo" aria-hidden="true">
+    <span class="vitrina-hero__brillo vitrina-hero__brillo--uno"></span>
+    <span class="vitrina-hero__brillo vitrina-hero__brillo--dos"></span>
+  </div>
 
+  <div class="vitrina-hero__cuerpo">
+    <p class="vitrina-hero__overline">Vitrina de medicamentos</p>
+    <h1 id="vitrina-titulo" class="vitrina-hero__titulo">
+      Mirá dónde conseguirlo, antes de salir de tu casa
+    </h1>
+    <p class="vitrina-hero__bajada">
+      Precio y disponibilidad de las farmacias de tu zona, uno al lado del otro. Lo consultás acá y
+      lo comprás allá:
+      <strong>AloVida no vende medicamentos ni cobra comisión sobre estos precios.</strong>
+    </p>
+
+    <div class="vitrina-hero__buscador">
+      <app-search-field
+        label="Buscá por principio activo, marca o código ATC"
+        placeholder="Paracetamol, Losartán, C09CA01…"
+        [value]="texto()"
+        (searched)="buscar($event)"
+      />
     </div>
-    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Qué estás buscando">
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar">Todo</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/profesionales">Profesionales</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Medicamentos</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/hospitales">Hospitales y clínicas</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/diagnostico">Laboratorios e imagen</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/aseguradoras">Aseguradoras</a>
+
+    @if (total() > 0) {
+      <p class="vitrina-hero__cifra" data-testid="vitrina-cifra">
+        <strong>{{ total() }}</strong>
+        {{ total() === 1 ? 'medicamento' : 'medicamentos' }}
+        @if (origen(); as punto) {
+          con farmacia a menos de {{ radioKm }} km de {{ punto.etiqueta }}
+        } @else {
+          publicados por las farmacias de la red
+        }
+      </p>
+    }
+  </div>
+</section>
+
+<!-- ─── Las pestañas del buscador ───────────────────────────────────────────── -->
+<div role="tablist" class="app-tabs" app-tabs="" aria-label="Qué estás buscando">
+  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar">Todo</a>
+  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/profesionales"
+    >Profesionales</a
+  >
+  <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-current="page"
+    >Medicamentos</a
+  >
+  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/hospitales"
+    >Hospitales y clínicas</a
+  >
+  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/diagnostico"
+    >Laboratorios e imagen</a
+  >
+  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/aseguradoras"
+    >Aseguradoras</a
+  >
+</div>
+
+<!-- ─── Desde dónde medir: se pide, no se toma ──────────────────────────────── -->
+<section class="vitrina-zona" aria-labelledby="vitrina-zona-titulo">
+  <h2 id="vitrina-zona-titulo" class="vitrina-zona__titulo">Farmacias cerca tuyo</h2>
+
+  @if (origen(); as punto) {
+    <p class="vitrina-zona__activa" data-testid="vitrina-origen">
+      <svg
+        class="icono"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"></path>
+        <circle cx="12" cy="10" r="2.5"></circle>
+      </svg>
+      Midiendo desde <strong>{{ punto.etiqueta }}</strong
+      >, hasta {{ radioKm }} km.
+      <button app-button variant="ghost" size="sm" type="button" (clicked)="quitarOrigen()">
+        Ver todas
+      </button>
+    </p>
+  } @else {
+    <p class="vitrina-zona__nota">
+      Compartí tu ubicación para ver primero lo que se consigue cerca — se usa una sola vez para
+      calcular distancias y no se guarda. O medí desde una ciudad, sin dar tu ubicación.
+    </p>
+    <div class="vitrina-zona__acciones">
+      <button
+        app-button
+        variant="primary"
+        size="sm"
+        type="button"
+        data-testid="vitrina-compartir-ubicacion"
+        [isLoading]="pidiendoUbicacion()"
+        (clicked)="compartirUbicacion()"
+      >
+        Compartir mi ubicación
+      </button>
+      @for (ciudad of ciudades; track ciudad.etiqueta) {
+        <button app-button variant="outline" size="sm" type="button" (clicked)="medirDesde(ciudad)">
+          {{ ciudad.etiqueta }}
+        </button>
+      }
     </div>
-    <div class="app-card app-card--inset">
-      <p class="overline">Estás buscando</p>
-      <h2 style="margin-top:var(--e2)">Losartán 50 mg · comprimido recubierto</h2>
-      <dl class="lista-definiciones" style="margin-top:var(--e4)">
-        <div><dt>Principio activo</dt><dd>Losartán potásico</dd></div>
-        <div><dt>Concentración</dt><dd class="num">50 mg</dd></div>
-        <div><dt>Forma farmacéutica</dt><dd>Comprimido recubierto</dd></div>
-        <div><dt>Clasificación ATC</dt><dd class="col-codigo">C09CA01</dd></div>
-        <div><dt>Condición de venta</dt><dd>Con receta médica</dd></div>
-        <div><dt>Equivalentes</dt><dd><a app-link="" aria-disabled="true" data-sin-destino="">7 presentaciones con el mismo principio activo</a></dd></div>
-      </dl>
-    </div>
-    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
-      <label class="app-search-field" app-search-field="">
-        <span class="solo-lectores">Buscá por principio activo, marca o código</span>
-        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-        <input
-          class="app-input"
-          app-input=""
-          type="search"
-          name="q"
-          placeholder="Buscá por principio activo, marca o código"
-          [value]="busqueda.texto()"
-          (input)="alEscribir($any($event.target).value)"
-        />
-      </label>
-    </section>
-    <p class="app-revelacion"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Precio y disponibilidad los reporta cada farmacia y pueden cambiar sin aviso. AloVida no vende medicamentos ni cobra comisión sobre estos precios.</p>
-    <section class="app-view-state-host" app-view-state-host="">
-      @switch (busqueda.estado()) {
-        @case ('datos') {
-      <div data-estado="datos">
-        <ul class="app-resultado-lista">
-          @for (tarjeta of tarjetas(); track tarjeta.id) {
-            <li app-search-result [resultado]="tarjeta">
-              <div class="app-resultado__lado">
-                <a app-button data-variante="secundario" data-tam="sm" [routerLink]="tarjeta.link"
-                  >Ver ficha</a
-                >
+    @if (ubicacionDenegada()) {
+      <p class="vitrina-zona__nota" role="status">
+        No pudimos leer tu ubicación. Podés medir desde una ciudad, o seguir sin distancias: la
+        vitrina funciona igual.
+      </p>
+    }
+  }
+</section>
+
+<!-- ─── Los grupos terapéuticos ─────────────────────────────────────────────── -->
+@if (grupos().length > 0) {
+  <section class="vitrina-grupos" aria-label="Filtrar por grupo terapéutico">
+    @for (nombre of grupos(); track nombre) {
+      <app-chip
+        variant="neutral"
+        [selectable]="true"
+        [selected]="grupo() === nombre"
+        [label]="nombre"
+        (selectedChange)="alternarGrupo(nombre)"
+      >
+        {{ nombre }}
+      </app-chip>
+    }
+    @if (hayFiltros) {
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        data-testid="vitrina-limpiar"
+        (clicked)="limpiarFiltros()"
+      >
+        Limpiar filtros
+      </button>
+    }
+  </section>
+}
+
+<!-- ─── El descargo ─────────────────────────────────────────────────────────── -->
+<p class="app-revelacion">
+  <svg
+    class="icono"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M12 4.5 21 19.5H3z"></path>
+    <path d="M12 10v4"></path>
+    <circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle>
+  </svg>
+  Cada farmacia reporta su precio y su stock, y pueden cambiar entre que lo ves y que llegás. Si el
+  viaje es largo, llamá antes. Los medicamentos con receta se dispensan sólo contra receta médica.
+</p>
+
+<!-- ─── La vitrina ──────────────────────────────────────────────────────────── -->
+<section class="app-view-state-host" app-view-state-host="" aria-label="Medicamentos publicados">
+  @switch (estado()) {
+    @case ('datos') {
+      <ul class="vitrina-grilla" data-estado="datos" data-testid="vitrina-grilla">
+        @for (tarjeta of tarjetas(); track tarjeta.conceptId; let i = $index) {
+          <li
+            class="vitrina-tarjeta"
+            [class.vitrina-tarjeta--abierta]="estaAbierto(tarjeta)"
+            [style.--indice]="i"
+          >
+            <article class="vitrina-tarjeta__cara">
+              <header class="vitrina-tarjeta__encabezado">
+                <span class="vitrina-tarjeta__grupo">{{ tarjeta.therapeuticGroup }}</span>
+                <span class="vitrina-tarjeta__atc col-codigo">{{ tarjeta.atcCode }}</span>
+              </header>
+
+              <h3 class="vitrina-tarjeta__nombre">{{ tarjeta.genericName }}</h3>
+
+              @if (tarjeta.brands.length > 0) {
+                <p class="vitrina-tarjeta__marcas">{{ tarjeta.brands.join(' · ') }}</p>
+              }
+              @if (tarjeta.presentations.length > 0) {
+                <p class="vitrina-tarjeta__presentacion">{{ tarjeta.presentations[0] }}</p>
+              }
+
+              <p class="vitrina-tarjeta__precio">
+                @if (hayRango(tarjeta)) {
+                  <span class="vitrina-tarjeta__precio-rotulo">desde</span>
+                }
+                <span class="vitrina-tarjeta__precio-valor num">{{ precioDe(tarjeta) }}</span>
+                @if (hayRango(tarjeta)) {
+                  <span class="vitrina-tarjeta__precio-tope"
+                    >la más cara, {{ precioMaximoDe(tarjeta) }}</span
+                  >
+                }
+              </p>
+
+              <div class="vitrina-tarjeta__señales">
+                <app-badge variant="info">
+                  {{ tarjeta.pharmacyCount }}
+                  {{ tarjeta.pharmacyCount === 1 ? 'farmacia' : 'farmacias' }}
+                </app-badge>
+                @if (distancia(tarjeta.nearestKm); as km) {
+                  <app-badge variant="success">a {{ km }}</app-badge>
+                }
+                @if (tarjeta.requiresPrescription) {
+                  <app-badge variant="warning">Con receta</app-badge>
+                }
               </div>
-            </li>
+
+              <button
+                app-button
+                variant="secondary"
+                size="sm"
+                type="button"
+                class="vitrina-tarjeta__cta"
+                data-testid="vitrina-ver-farmacias"
+                [attr.aria-expanded]="estaAbierto(tarjeta)"
+                (clicked)="alternarDetalle(tarjeta)"
+              >
+                {{ estaAbierto(tarjeta) ? 'Cerrar' : 'Ver en qué farmacias' }}
+              </button>
+            </article>
+
+            <!-- ─── La disponibilidad, con su mapa ───────────────────────── -->
+            @if (estaAbierto(tarjeta)) {
+              <div class="vitrina-detalle" data-testid="vitrina-detalle">
+                @if (cargandoDetalle()) {
+                  <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+                    <span class="solo-lectores">Buscando farmacias…</span>
+                    <span class="app-skeleton"></span>
+                    <span class="app-skeleton"></span>
+                    <span class="app-skeleton"></span>
+                  </div>
+                } @else if (errorDetalle()) {
+                  <div class="app-alert" app-alert="" data-tono="error" role="alert">
+                    <div class="app-alert__cuerpo">
+                      <strong>No pudimos consultar las farmacias.</strong>
+                      <p>Volvé a intentarlo en un momento.</p>
+                    </div>
+                  </div>
+                } @else {
+                  @if (pines().length > 0) {
+                    <figure class="vitrina-detalle__mapa">
+                      <app-map
+                        [pines]="pines()"
+                        [etiqueta]="etiquetaDelMapa()"
+                        [centro]="centroDelMapa()"
+                        [zoom]="zoomDelMapa()"
+                        [(seleccionado)]="farmaciaElegida"
+                        (pinElegido)="enfocarFarmacia($event)"
+                      />
+                      <figcaption class="vitrina-detalle__pie">
+                        Las distancias son en línea recta, no de recorrido: el tiempo real de viaje
+                        depende del tráfico.
+                      </figcaption>
+                    </figure>
+                  }
+
+                  <ul class="vitrina-ofertas" data-testid="vitrina-ofertas">
+                    @for (oferta of ofertas(); track oferta.codigo) {
+                      <li
+                        class="vitrina-oferta"
+                        [id]="'oferta-' + oferta.codigo"
+                        [class.vitrina-oferta--elegida]="farmaciaElegida() === oferta.codigo"
+                        (mouseenter)="farmaciaElegida.set(oferta.codigo)"
+                      >
+                        <span class="vitrina-oferta__codigo" aria-hidden="true">{{
+                          oferta.codigo
+                        }}</span>
+
+                        <div class="vitrina-oferta__datos">
+                          <span class="vitrina-oferta__farmacia">{{ oferta.pharmacyName }}</span>
+                          @if (oferta.addressText !== null) {
+                            <span class="vitrina-oferta__direccion">
+                              {{ oferta.addressText }}@if (oferta.city !== null) {
+                                , {{ oferta.city }}
+                              }
+                            </span>
+                          }
+                          <span class="vitrina-oferta__detalle">
+                            @if (oferta.brandName !== null) {
+                              {{ oferta.brandName }}
+                            }
+                            @if (oferta.presentation !== null) {
+                              · {{ oferta.presentation }}
+                            }
+                          </span>
+                          <span class="vitrina-oferta__entrega">
+                            @if (oferta.pickup) {
+                              Retiro en farmacia
+                            }
+                            @if (oferta.homeDelivery) {
+                              · Envío a domicilio
+                            }
+                          </span>
+                        </div>
+
+                        <div class="vitrina-oferta__cierre">
+                          <span class="vitrina-oferta__precio num">{{ importeDe(oferta) }}</span>
+                          @if (distancia(oferta.distanceKm); as km) {
+                            <span class="vitrina-oferta__km">{{ km }} en línea recta</span>
+                          }
+                          <app-badge [variant]="oferta.inStock ? 'success' : 'warning'">
+                            {{ oferta.inStock ? 'Disponible hoy' : 'Sin stock hoy' }}
+                          </app-badge>
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @case ('vacio') {
+      <div data-estado="vacio">
+        <div class="app-empty-state" app-empty-state="">
+          <span class="app-empty-state__icono">
+            <svg
+              class="icono"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect>
+              <path d="M12 8.5v7M8.5 12h7"></path>
+            </svg>
+          </span>
+          <h2>Ninguna farmacia publicó algo así</h2>
+          <p>
+            Puede que ninguna lo tenga hoy, o que las de esta zona no publiquen su inventario. Dos
+            salidas: ampliá la zona, o buscá por principio activo en vez de por marca — una
+            presentación equivalente suele estar cuando la marca exacta no lo está.
+          </p>
+          @if (hayFiltros) {
+            <button app-button variant="secondary" type="button" (clicked)="limpiarFiltros()">
+              Limpiar filtros
+            </button>
           }
-        </ul>
-        <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
-          <p class="app-pagination__nota">{{ busqueda.rotuloDePagina() }}</p>
-          <button
-            app-button=""
-            data-variante="secundario"
-            data-tam="sm"
-            type="button"
-            [disabled]="!busqueda.hayAnteriores()"
-            (click)="busqueda.anterior()"
-          >
-            Anteriores
-          </button>
-          <button
-            app-button=""
-            data-variante="secundario"
-            data-tam="sm"
-            type="button"
-            [disabled]="!busqueda.haySiguientes()"
-            (click)="busqueda.siguiente()"
-          >
-            Siguientes
-          </button>
-        </nav>
+        </div>
       </div>
-        }
-        @case ('vacio') {
-<div data-estado="vacio">
-      <div class="app-empty-state" app-empty-state="">
-        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="M12 8.5v7M8.5 12h7"></path></svg></span>
-        <h2>Ninguna farmacia cercana reportó este medicamento</h2>
-        <p>Puede ser que ninguna lo tenga hoy, o que las de tu zona no publiquen su inventario. Dos salidas: ampliá la distancia, o buscá por principio activo en vez de por marca —una presentación equivalente suele estar disponible cuando la marca exacta no lo está.</p>
-        <a app-button="" data-variante="secundario" routerLink="/buscar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+    }
+
+    @case ('carga') {
+      <div data-estado="carga">
+        <div class="vitrina-grilla" aria-live="polite" aria-busy="true">
+          <span class="solo-lectores">Buscando medicamentos…</span>
+          @for (hueco of [1, 2, 3, 4, 5, 6]; track hueco) {
+            <div class="vitrina-tarjeta vitrina-tarjeta--esqueleto">
+              <span class="app-skeleton"></span>
+              <span class="app-skeleton"></span>
+              <span class="app-skeleton"></span>
+              <span class="app-skeleton"></span>
+            </div>
+          }
+        </div>
       </div>
-      </div>
-        }
-        @case ('carga') {
-<div data-estado="carga">
-      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
-        <span class="solo-lectores">Buscando…</span>
-        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
-        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
-        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
-        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
-      </div>
-      </div>
-        }
-        @case ('error') {
-<div data-estado="error">
-      <div style="padding:var(--e6)">
+    }
+
+    @case ('error') {
+      <div data-estado="error">
         <div class="app-alert" app-alert="" data-tono="error" role="alert">
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <svg
+            class="icono"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M12 4.5 21 19.5H3z"></path>
+            <path d="M12 10v4"></path>
+            <circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle>
+          </svg>
           <div class="app-alert__cuerpo">
-            <strong>No pudimos completar la búsqueda de farmacias.</strong>
-            <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento; tu búsqueda se mantiene escrita.</p>
+            <strong>No pudimos cargar la vitrina.</strong>
+            <p>El catálogo no respondió a tiempo. Tu búsqueda se mantiene escrita.</p>
           </div>
         </div>
-        <div style="margin-top:var(--e5)">
-          <button app-button="" data-variante="secundario" type="button" (click)="busqueda.reintentar()"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        <div style="margin-top: var(--sp-5)">
+          <button app-button variant="secondary" type="button" (clicked)="consultar()">
+            Reintentar
+          </button>
         </div>
       </div>
-      </div>
-        }
-      }
-    </section>
+    }
+  }
+</section>

@@ -1,59 +1,425 @@
-/* V65-03·L · Medicamentos y farmacias
-   Portada de V65-buscador/publico/ en la bóveda. El marcado lo genera
-   scripts/port-vistas-redsat.mjs; la lógica va acá, no en el generador. */
+/* V65-03·L · Medicamentos y farmacias — la vitrina pública.
+   La maqueta original salía de scripts/port-vistas-redsat.mjs; esta pantalla
+   ya no la sigue: se reescribió contra `GET /public/medications`. */
 
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
-import { aTarjeta } from '../public-result.mapper';
-import { BusquedaPublica } from '@core/data-access/public-directory/public-search.store';
+import { PublicMarketplaceClient } from '@core/data-access/public-marketplace/public-marketplace.client';
+import type {
+  DisponibilidadDeMedicamento,
+  OfertaDeFarmacia,
+  PaginaDeVitrina,
+  PuntoDeOrigen,
+  TarjetaDeMedicamento,
+} from '@core/data-access/public-marketplace/public-marketplace.types';
 
-import { SearchResult } from '../../../../shared/components/molecules';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Badge } from '../../../../shared/components/atoms/badge/badge';
+import { Chip } from '../../../../shared/components/atoms/chip/chip';
+import { SearchField } from '../../../../shared/components/molecules/search-field/search-field';
+import { AppMap } from '../../../../shared/components/organisms/map/map';
+import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
+
+/** Tope de tarjetas de la vitrina. El backend no deja pasar de 60. */
+const TOPE = 36;
 
 /**
- * Medicamentos y las farmacias que los ofertan.
+ * Radio por defecto cuando hay origen.
  *
- * ## Esta pantalla sale vacía hoy, y es correcto que salga vacía
+ * 25 km cubre cualquiera de las tres ciudades entera y deja afuera las otras
+ * dos: sin él, «cerca tuyo» listaría una farmacia a 544 km, que es exactamente
+ * lo que la pantalla promete no hacer.
+ */
+const RADIO_KM = 25;
+
+/** Las letras con que el mapa y las tarjetas se refieren a la misma farmacia. */
+const CODIGOS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+/**
+ * Puntos públicos desde donde medir sin entregar la ubicación: las plazas
+ * centrales de las ciudades donde la red opera. Son datos del mapa, no de la
+ * persona — el mismo criterio que «Dónde comprar mi receta».
+ */
+const CIUDADES: readonly PuntoDeReferencia[] = [
+  { etiqueta: 'Santa Cruz', lat: -17.7833, lng: -63.1821 },
+  { etiqueta: 'La Paz', lat: -16.4957, lng: -68.1335 },
+  { etiqueta: 'Cochabamba', lat: -17.3895, lng: -66.1568 },
+];
+
+/** Un lugar con nombre desde donde medir distancias. */
+export interface PuntoDeReferencia {
+  readonly etiqueta: string;
+  readonly lat: number;
+  readonly lng: number;
+}
+
+/** Una oferta con la letra que comparte con su pin en el mapa. */
+export interface OfertaVisible extends OfertaDeFarmacia {
+  readonly codigo: string;
+}
+
+/** En qué estado está la vitrina. */
+type Estado = 'carga' | 'datos' | 'vacio' | 'error';
+
+/**
+ * **Medicamentos** — la vitrina pública de exhibición y consulta.
  *
- * `GET /public/search/medications` acota por `kind: 'MEDICATION'`, y un
- * medicamento **no es un perfil**: vive en el catálogo de farmacia, no en
- * `community.public_profiles`, que es la única tabla que el buscador público
- * consulta. Hasta este carril el filtro se perdía en silencio y el endpoint
- * devolvía **el directorio entero de profesionales** a quien buscaba un
- * remedio; ahora devuelve vacío, que es lo que hay.
+ * ## Qué es y qué no es
  *
- * El estado vacío de la maqueta explica exactamente eso y ofrece las dos
- * salidas útiles —ampliar la distancia, buscar por principio activo—, así que
- * la pantalla sigue diciendo algo cierto mientras el catálogo no tenga
- * superficie pública.
+ * Es un escaparate: qué medicamentos se consiguen, a qué precio y en qué
+ * farmacia cerca. **No es una tienda.** No hay carrito, ni reserva, ni pedido,
+ * y la API que la alimenta no devuelve ningún identificador con el que se
+ * pudiera armar uno. AloVida no vende medicamentos ni cobra comisión sobre
+ * estos precios, y la pantalla lo dice donde se ve, no en letra chica.
  *
- * ## Por qué la barra de filtros conserva sólo la caja de texto
+ * ## Por qué ya no usa el buscador público
  *
- * La maqueta dibuja varios selectores más. La API pública implementa **`q`**
- * —y `verified` sólo en profesionales—: `city` y los filtros propios de cada
- * vertical figuran en `CONTRATO-PUBLICO.md` §2 pero el controlador no los lee.
- * Un selector que no filtra devuelve la lista sin acotar y le dice a quien lo
- * usó, sin decírselo, que todos los resultados cumplen su criterio. Los que
- * faltan están registrados en el reporte del carril.
+ * Antes pegaba a `GET /public/search/medications`, que devuelve vacío **por
+ * construcción**: su índice son `community.public_profiles` y un medicamento
+ * no es un perfil. El catálogo vive en el módulo de farmacia, así que esta
+ * pantalla habla con su cara pública, `GET /public/medications`.
+ *
+ * ## La ubicación se pide, no se toma
+ *
+ * La vitrina carga **sin coordenadas** y funciona igual: las tarjetas salen
+ * ordenadas por en cuántas farmacias se consigue. La API de geolocalización
+ * del navegador no se toca hasta que alguien aprieta el botón; la alternativa
+ * sin entregar nada es medir desde una ciudad. Con origen, el orden pasa a ser
+ * por cercanía y aparece el radio de {@link RADIO_KM}.
+ *
+ * ## Las distancias son en línea recta y se rotulan así
+ *
+ * La ruta real depende de un servicio de mapas que no existe en este sistema.
+ * Prometer «a 10 minutos» sería inventar; cada número dice «en línea recta».
  */
 @Component({
   selector: 'app-redsat-buscar-medicamentos-listado',
-  imports: [RouterLink, SearchResult],
+  imports: [AppButton, AppMap, Badge, Chip, RouterLink, SearchField],
   templateUrl: './medicamentos-listado.html',
+  styleUrl: './medicamentos-listado.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuscarMedicamentosListado {
-  private readonly directorio = inject(PublicDirectoryClient);
+  private readonly vitrina = inject(PublicMarketplaceClient);
+  private readonly documento = inject(DOCUMENT);
 
-  protected readonly busqueda = new BusquedaPublica((filtros) =>
-    this.directorio.searchMedications(filtros),
+  protected readonly ciudades = CIUDADES;
+  protected readonly radioKm = RADIO_KM;
+
+  /* ---- la vitrina --------------------------------------------------------- */
+
+  protected readonly estado = signal<Estado>('carga');
+  protected readonly pagina = signal<PaginaDeVitrina | null>(null);
+
+  protected readonly texto = signal('');
+  protected readonly grupo = signal<string | null>(null);
+
+  protected readonly tarjetas = computed(() => this.pagina()?.items ?? []);
+  protected readonly grupos = computed(() => this.pagina()?.groups ?? []);
+  protected readonly total = computed(() => this.pagina()?.total ?? 0);
+
+  /* ---- el origen: se pide, no se toma ------------------------------------- */
+
+  protected readonly origen = signal<PuntoDeReferencia | null>(null);
+  protected readonly pidiendoUbicacion = signal(false);
+  protected readonly ubicacionDenegada = signal(false);
+
+  /* ---- el detalle de disponibilidad --------------------------------------- */
+
+  /** El medicamento cuya disponibilidad está abierta; `null` si ninguno. */
+  protected readonly abierto = signal<TarjetaDeMedicamento | null>(null);
+  protected readonly cargandoDetalle = signal(false);
+  protected readonly detalle = signal<DisponibilidadDeMedicamento | null>(null);
+  protected readonly errorDetalle = signal(false);
+
+  /** La farmacia resaltada, compartida entre el mapa y las tarjetas. */
+  protected readonly farmaciaElegida = signal<string | null>(null);
+
+  /** Las ofertas con su letra: la referencia que comparten mapa y lista. */
+  protected readonly ofertas = computed<readonly OfertaVisible[]>(() =>
+    (this.detalle()?.offers ?? []).map((oferta, indice) => ({
+      ...oferta,
+      codigo: CODIGOS[indice] ?? String(indice + 1),
+    })),
   );
 
-  protected readonly tarjetas = computed(() => this.busqueda.resultados().map(aTarjeta));
+  /** Las ofertas traducidas al contrato del organismo de mapa. */
+  protected readonly pines = computed<readonly PinMapa[]>(() =>
+    this.ofertas().map((oferta) => ({
+      // La letra y no el slug: nada del mapa debe poder filtrar identificadores.
+      id: oferta.codigo,
+      codigo: oferta.codigo,
+      lat: oferta.latitude,
+      lng: oferta.longitude,
+      titulo: oferta.pharmacyName,
+      subtitulo: subtituloDePin(oferta),
+      estado: oferta.inStock
+        ? { etiqueta: 'Disponible hoy', tono: 'success' as const }
+        : { etiqueta: 'Sin stock hoy', tono: 'warning' as const },
+      ctaEtiqueta: 'Ver en la lista',
+    })),
+  );
 
-  /** Escribir lleva el texto a `?q=`; el cambio de la URL dispara la lectura. */
-  protected alEscribir(valor: string): void {
-    this.busqueda.escribir(valor);
+  /**
+   * Dónde se centra el mapa: en el punto elegido, cuando lo hay.
+   *
+   * Sin esto el mapa encuadra **todos** los pines, y el detalle lista a
+   * propósito las farmacias de todo el país —quien abre la ficha quiere saber
+   * dónde se consigue, aunque sea lejos—. El resultado era un mapa de Bolivia
+   * entera para contestar «¿dónde lo compro cerca?». Con centro impuesto, la
+   * vista abre en la zona elegida y las lejanas siguen ahí, a un zoom de
+   * distancia, además de estar todas en la lista.
+   */
+  protected readonly centroDelMapa = computed<PuntoDeOrigen | null>(() => {
+    const punto = this.origen();
+    return punto === null ? null : { lat: punto.lat, lng: punto.lng };
+  });
+
+  /** Escala de ciudad: se ven los barrios y la farmacia de al lado. */
+  protected readonly zoomDelMapa = computed(() => (this.origen() === null ? null : 12));
+
+  protected readonly etiquetaDelMapa = computed(() => {
+    const cantidad = this.pines().length;
+    const marcadas = cantidad === 1 ? '1 farmacia marcada' : `${cantidad} farmacias marcadas`;
+    const punto = this.origen();
+    const encuadre =
+      punto === null ? '' : ` El mapa abre centrado en ${punto.etiqueta}; alejá para ver el resto.`;
+    return `${marcadas} en el mapa.${encuadre} La lista completa, con dirección, precio y distancia en línea recta, está debajo.`;
+  });
+
+  constructor() {
+    this.consultar();
   }
+
+  /* ---- la consulta -------------------------------------------------------- */
+
+  protected consultar(): void {
+    this.estado.set('carga');
+    const punto = this.origen();
+    this.vitrina
+      .listMedications({
+        q: this.texto(),
+        group: this.grupo() ?? undefined,
+        origin: punto === null ? undefined : puntoGeoDe(punto),
+        radiusKm: punto === null ? undefined : RADIO_KM,
+        limit: TOPE,
+      })
+      .subscribe({
+        next: (pagina) => {
+          this.pagina.set(pagina);
+          this.estado.set(pagina.items.length === 0 ? 'vacio' : 'datos');
+          // Un filtro que deja la vitrina vacía también deja sin sentido el
+          // detalle abierto: se cierra en vez de quedar colgando de una
+          // tarjeta que ya no está en pantalla.
+          if (pagina.items.length === 0) this.cerrarDetalle();
+        },
+        error: () => {
+          this.pagina.set(null);
+          this.estado.set('error');
+        },
+      });
+  }
+
+  protected buscar(valor: string): void {
+    this.texto.set(valor);
+    this.consultar();
+  }
+
+  /** Alterna el grupo terapéutico: volver a tocarlo lo quita. */
+  protected alternarGrupo(nombre: string): void {
+    this.grupo.set(this.grupo() === nombre ? null : nombre);
+    this.consultar();
+  }
+
+  protected limpiarFiltros(): void {
+    this.texto.set('');
+    this.grupo.set(null);
+    this.consultar();
+  }
+
+  protected get hayFiltros(): boolean {
+    return this.texto() !== '' || this.grupo() !== null;
+  }
+
+  /* ---- el detalle --------------------------------------------------------- */
+
+  /** Abre la disponibilidad de una tarjeta; volver a tocarla la cierra. */
+  protected alternarDetalle(tarjeta: TarjetaDeMedicamento): void {
+    if (this.abierto()?.conceptId === tarjeta.conceptId) {
+      this.cerrarDetalle();
+      return;
+    }
+
+    this.abierto.set(tarjeta);
+    this.detalle.set(null);
+    this.errorDetalle.set(false);
+    this.cargandoDetalle.set(true);
+    this.farmaciaElegida.set(null);
+
+    const punto = this.origen();
+    this.vitrina
+      .getAvailability(tarjeta.conceptId, {
+        origin: punto === null ? undefined : puntoGeoDe(punto),
+        // El radio NO viaja acá a propósito: quien abrió la ficha quiere saber
+        // dónde se consigue, aunque sea lejos. La vitrina acota; el detalle
+        // informa, y ordena por cercanía.
+      })
+      .subscribe({
+        next: (disponibilidad) => {
+          this.detalle.set(disponibilidad);
+          this.cargandoDetalle.set(false);
+        },
+        error: () => {
+          this.errorDetalle.set(true);
+          this.cargandoDetalle.set(false);
+        },
+      });
+  }
+
+  protected cerrarDetalle(): void {
+    this.abierto.set(null);
+    this.detalle.set(null);
+    this.errorDetalle.set(false);
+    this.cargandoDetalle.set(false);
+  }
+
+  protected estaAbierto(tarjeta: TarjetaDeMedicamento): boolean {
+    return this.abierto()?.conceptId === tarjeta.conceptId;
+  }
+
+  /** Lleva la vista a la tarjeta de la farmacia cuyo pin se tocó. */
+  protected enfocarFarmacia(codigo: string): void {
+    this.farmaciaElegida.set(codigo);
+    const fila = this.documento.getElementById(`oferta-${codigo}`);
+    if (fila === null) return;
+    const reducirMovimiento =
+      this.documento.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ??
+      false;
+    fila.scrollIntoView({ behavior: reducirMovimiento ? 'auto' : 'smooth', block: 'center' });
+  }
+
+  /* ---- la ubicación ------------------------------------------------------- */
+
+  /** Pide la ubicación al navegador. Sólo se llama desde el botón. */
+  protected compartirUbicacion(): void {
+    const geo = this.documento.defaultView?.navigator?.geolocation;
+    if (!geo) {
+      // Sin API de geolocalización —navegador viejo, o el render del
+      // servidor— no hay nada que pedir: quedan las ciudades.
+      this.ubicacionDenegada.set(true);
+      return;
+    }
+
+    this.pidiendoUbicacion.set(true);
+    geo.getCurrentPosition(
+      (posicion) => {
+        this.pidiendoUbicacion.set(false);
+        this.ubicacionDenegada.set(false);
+        this.medirDesde({
+          etiqueta: 'tu ubicación',
+          lat: posicion.coords.latitude,
+          lng: posicion.coords.longitude,
+        });
+      },
+      // Denegado, no disponible o vencido llevan al mismo lugar: las
+      // alternativas escritas. Distinguirlos no le cambia nada a quien mira.
+      () => {
+        this.pidiendoUbicacion.set(false);
+        this.ubicacionDenegada.set(true);
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+    );
+  }
+
+  protected medirDesde(punto: PuntoDeReferencia): void {
+    this.origen.set(punto);
+    this.consultar();
+    // El detalle abierto se rearma con el nuevo origen: si no, seguiría
+    // mostrando las distancias medidas desde el punto anterior.
+    const abierto = this.abierto();
+    if (abierto !== null) {
+      this.abierto.set(null);
+      this.alternarDetalle(abierto);
+    }
+  }
+
+  protected quitarOrigen(): void {
+    this.origen.set(null);
+    this.consultar();
+    const abierto = this.abierto();
+    if (abierto !== null) {
+      this.abierto.set(null);
+      this.alternarDetalle(abierto);
+    }
+  }
+
+  /* ---- formato ------------------------------------------------------------ */
+
+  /**
+   * El precio que encabeza la tarjeta: siempre el más bajo publicado.
+   *
+   * Es el número que «desde» promete, y por eso el rótulo sólo aparece cuando
+   * hay rango: con una sola farmacia —o con todas cobrando lo mismo— «desde»
+   * insinuaría que en algún lado sale más caro, y no es cierto.
+   */
+  protected precioDe(tarjeta: TarjetaDeMedicamento): string {
+    return importe(tarjeta.priceFrom, tarjeta.currency);
+  }
+
+  /** `true` si las farmacias no coinciden en el precio. */
+  protected hayRango(tarjeta: TarjetaDeMedicamento): boolean {
+    return tarjeta.priceFrom !== tarjeta.priceTo;
+  }
+
+  /** «hasta Bs 29,74», para el renglón secundario del rango. */
+  protected precioMaximoDe(tarjeta: TarjetaDeMedicamento): string {
+    return importe(tarjeta.priceTo, tarjeta.currency);
+  }
+
+  /** «1,2 km», con coma decimal. */
+  protected distancia(km: number | null): string | null {
+    return km === null ? null : `${km.toFixed(1).replace('.', ',')} km`;
+  }
+
+  protected importeDe(oferta: OfertaDeFarmacia): string {
+    return importe(oferta.price, oferta.currency);
+  }
+}
+
+/* ---- funciones puras ------------------------------------------------------ */
+
+/** El punto, en el contrato que viaja a la API. */
+function puntoGeoDe(punto: PuntoDeReferencia): PuntoDeOrigen {
+  return { lat: punto.lat, lng: punto.lng };
+}
+
+/**
+ * «Bs 18,50» a partir del texto exacto del backend.
+ *
+ * El importe **no se convierte a número**: se reformatea el texto. Pasar por
+ * `Number` y volver perdería el centavo que la farmacia publicó, que es
+ * justamente el dato que la pantalla promete mostrar sin tocar.
+ */
+function importe(valor: string, moneda: string): string {
+  const simbolo = moneda === 'BOB' ? 'Bs' : moneda;
+  return `${simbolo} ${valor.replace('.', ',')}`;
+}
+
+/** El renglón secundario del pin: distancia rotulada y dirección, lo que haya. */
+function subtituloDePin(oferta: OfertaDeFarmacia): string | undefined {
+  const partes = [
+    oferta.distanceKm === null
+      ? null
+      : `${oferta.distanceKm.toFixed(1).replace('.', ',')} km en línea recta`,
+    oferta.addressText,
+  ].filter((parte): parte is string => parte !== null);
+  return partes.length === 0 ? undefined : partes.join(' · ');
 }
