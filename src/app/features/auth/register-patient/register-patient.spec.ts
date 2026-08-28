@@ -111,9 +111,17 @@ describe('RegisterPatient', () => {
     // lecturas, así que responder la primera con un catálogo vacío la hace
     // fallar y eso cancela la otra en el acto. Volcar una petición ya cancelada
     // es un error de `HttpTestingController`, no un fallo de la pantalla.
-    for (const pendiente of http.match((r) => r.url.startsWith('/terminology/'))) {
+    for (const pendiente of http.match(
+      (r) =>
+        r.url.startsWith('/terminology/') ||
+        // El catálogo de aseguradoras lo pide el mismo constructor, para los
+        // dos campos de seguro declarado.
+        r.url.startsWith('/insurance-carrier-catalog'),
+    )) {
       if (pendiente.cancelled) continue;
-      pendiente.flush({ items: [] });
+      // Cada catálogo tiene su forma; el cuerpo lleva las dos claves para que
+      // ninguno de los dos lectores encuentre `undefined`.
+      pendiente.flush({ items: [], carriers: [] });
     }
     http.verify();
   });
@@ -270,7 +278,19 @@ describe('RegisterPatient', () => {
    * comprueba que se omiten cuando están vacías es su propia prueba.
    */
   function completar(
-    extra: Partial<Record<'email' | 'middleName' | 'motherLastName', string>> = {},
+    extra: Partial<
+      Record<
+        | 'email'
+        | 'middleName'
+        | 'motherLastName'
+        | 'homeAddressLines'
+        | 'workAddressLines'
+        | 'guardianName'
+        | 'guardianPhone'
+        | 'billingTaxId',
+        string
+      >
+    > = {},
   ): void {
     component.formPaciente.patchValue({
       nationalId: '1234567',
@@ -280,6 +300,11 @@ describe('RegisterPatient', () => {
       motherLastName: extra.motherLastName ?? '',
       password: 'secreto12',
       email: extra.email ?? '',
+      homeAddressLines: extra.homeAddressLines ?? '',
+      workAddressLines: extra.workAddressLines ?? '',
+      guardianName: extra.guardianName ?? '',
+      guardianPhone: extra.guardianPhone ?? '',
+      billingTaxId: extra.billingTaxId ?? '',
     });
   }
 
@@ -332,10 +357,13 @@ describe('RegisterPatient', () => {
    * dos copias cambie.
    */
   describe('las páginas del alta de paciente', () => {
-    it('son cuatro, y ninguna pide más de cuatro cosas', () => {
+    it('son ocho, y ninguna pide más de cuatro cosas', () => {
       const paginas = component.paginasPaciente();
 
-      expect(paginas.length).toBe(4);
+      // Ocho desde que el alta cubre los campos mínimos del registro del
+      // cliente: domicilio, trabajo, seguros y tutor son cuatro páginas más.
+      // El tope es de campos por página, no de páginas.
+      expect(paginas.length).toBe(8);
       for (const pagina of paginas) {
         expect(pagina.campos.length).toBeLessThanOrEqual(4);
       }
@@ -528,8 +556,74 @@ describe('RegisterPatient', () => {
     expect(enviado).not.toContain('sexAtBirth');
     expect(enviado).not.toContain('occupationConceptId');
     expect(enviado).not.toContain('occupationFreeText');
+    // Y los del alta completa: calle, coordenadas, trabajo, tutor, seguros, NIT.
+    expect(enviado).not.toContain('homeAddressLines');
+    expect(enviado).not.toContain('homeLatitude');
+    expect(enviado).not.toContain('workAddressLines');
+    expect(enviado).not.toContain('guardianName');
+    expect(enviado).not.toContain('guardianPhone');
+    expect(enviado).not.toContain('privateInsurancePlanId');
+    expect(enviado).not.toContain('publicInsurancePlanId');
+    expect(enviado).not.toContain('billingTaxId');
 
     req.flush(RESPUESTA);
+  });
+
+  it('manda la calle y el NIT cuando se completaron', () => {
+    completar({ homeAddressLines: '  Av. Banzer #42  ', billingTaxId: ' 1023456789 ' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    // Recortados: un espacio de más no es parte de la dirección ni del NIT.
+    expect(req.request.body.homeAddressLines).toBe('Av. Banzer #42');
+    expect(req.request.body.billingTaxId).toBe('1023456789');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('manda la ubicación capturada como par de coordenadas', () => {
+    completar();
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.homeLatitude).toBe(-17.7833);
+    expect(req.request.body.homeLongitude).toBe(-63.1821);
+
+    req.flush(RESPUESTA);
+  });
+
+  it('no deja enviar un teléfono de tutor sin su nombre', () => {
+    completar({ guardianPhone: '+591 71234567' });
+    component.submit();
+
+    // Sería un contacto sin dueño: el formulario no llega ni a salir.
+    http.expectNone('/iam/auth/register-patient');
+  });
+
+  it('manda al tutor completo cuando tiene nombre y teléfono', () => {
+    completar({ guardianName: 'Rosa Quispe', guardianPhone: '+591 71234567' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.guardianName).toBe('Rosa Quispe');
+    expect(req.request.body.guardianPhone).toBe('+591 71234567');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('marca el teléfono del tutor como inválido si falta el nombre', () => {
+    completar({ guardianPhone: '+591 71234567' });
+
+    expect(
+      component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre'),
+    ).toBe(true);
+
+    // Y el error se va en cuanto se escribe el nombre.
+    component.formPaciente.controls.guardianName.setValue('Rosa Quispe');
+    expect(
+      component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre'),
+    ).toBe(false);
   });
 
   it('tras registrar muestra la confirmación y NO inicia sesión sola', () => {

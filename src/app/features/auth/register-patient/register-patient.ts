@@ -1,6 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -36,6 +42,11 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
+import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
+import type { CarrierCatalogEntry } from '../../../core/data-access/insurance/insurance.types';
+import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { DecimalPipe, DOCUMENT, NgTemplateOutlet } from '@angular/common';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
@@ -51,6 +62,71 @@ const MIN_DOCUMENTO = 4;
 
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
+
+/** El NIT boliviano es sólo dígitos; el backend valida lo mismo. */
+const NIT_VALIDO = /^[0-9]{4,20}$/;
+
+/** Un punto en el mapa, tal como lo entrega el navegador. */
+export interface Coordenadas {
+  readonly lat: number;
+  readonly lng: number;
+}
+
+/** Cuál de las dos ubicaciones se está pidiendo, o ninguna. */
+export type UbicacionPedida = 'domicilio' | 'trabajo' | null;
+
+/**
+ * Cuánto se espera al navegador antes de dar la ubicación por perdida.
+ *
+ * Diez segundos: más que eso y la persona ya volvió a lo suyo.
+ */
+const GPS_TIMEOUT_MS = 10_000;
+
+/** Ubicación de hasta cinco minutos: alcanza y evita volver a pedir el permiso. */
+const GPS_MAX_AGE_MS = 300_000;
+
+/**
+ * El NIT, comprobado sobre el valor recortado.
+ *
+ * Se recorta antes de comprobar porque el número casi siempre llega pegado de
+ * otro lado —una factura, un mensaje— con espacios alrededor, y rechazarlo por
+ * eso sería castigar a quien copió bien. Al enviarlo también se recorta.
+ *
+ * @param control - El control del NIT.
+ * @returns El error de formato, o `null` si está vacío o es válido.
+ */
+function nitValido(control: AbstractControl): ValidationErrors | null {
+  const valor = String(control.value ?? '').trim();
+  if (valor === '' || NIT_VALIDO.test(valor)) return null;
+  return { nitInvalido: true };
+}
+
+/**
+ * Un teléfono de tutor exige el nombre del tutor.
+ *
+ * El error se cuelga de `guardianPhone` y no del grupo porque el motor de
+ * páginas muestra los errores por control, y porque es el campo que sobra: el
+ * arreglo es escribir el nombre o borrar el teléfono.
+ *
+ * @param grupo - El formulario del paciente.
+ * @returns `null` siempre; el error se fija en el control.
+ */
+function tutorConNombre(grupo: AbstractControl): null {
+  const nombre = grupo.get('guardianName');
+  const telefono = grupo.get('guardianPhone');
+  if (!nombre || !telefono) return null;
+
+  const falta = !nombre.value?.trim() && !!telefono.value?.trim();
+  const errores = { ...(telefono.errors ?? {}) };
+  if (falta) errores['tutorSinNombre'] = true;
+  else delete errores['tutorSinNombre'];
+
+  const quedan = Object.keys(errores).length ? errores : null;
+  // `emitEvent: false`: fijar el error dispara la validación otra vez y el
+  // validador del grupo volvería a entrar sin fin.
+  telefono.setErrors(quedan, { emitEvent: false });
+  return null;
+}
 
 /*
  * El teléfono lo valida `telefonoCompleto`, importado de `app-phone-input`.
@@ -267,6 +343,9 @@ type TipoCuenta = 'paciente' | 'profesional';
     AnnounceOnAppear,
     PaginatedForm,
     CampoPersonalizado,
+    ReferenceCombobox,
+    NgTemplateOutlet,
+    DecimalPipe,
   ],
   templateUrl: './register-patient.html',
   styleUrl: './register-patient.css',
@@ -336,6 +415,30 @@ export class RegisterPatient {
     // El departamento emisor es un `select` del motor cuando su catálogo llegó,
     // así que su valor vive donde viven los demás: en el formulario.
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
+    // Calle y número de los dos domicilios. El municipio de cada uno va aparte
+    // —es un árbol con buscador— y las coordenadas también: no se escriben.
+    homeAddressLines: new FormControl('', { nonNullable: true }),
+    workAddressLines: new FormControl('', { nonNullable: true }),
+    // El tutor o persona autorizada. El teléfono usa el mismo validador que el
+    // propio: un número incompleto no sirve para avisarle a nadie.
+    guardianName: new FormControl('', { nonNullable: true }),
+    guardianPhone: new FormControl('', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
+    // Los seguros declarados: el valor es el **plan**, no la compañía.
+    privateInsurancePlanId: new FormControl<string | null>(null),
+    publicInsurancePlanId: new FormControl<string | null>(null),
+    billingTaxId: new FormControl('', {
+      nonNullable: true,
+      validators: [nitValido],
+    }),
+  },
+  {
+    // Un teléfono de tutor sin nombre sería un contacto sin dueño: imposible de
+    // mostrar y de corregir. El backend lo rechaza; acá se avisa antes de
+    // viajar, y el error se cuelga del teléfono porque es el campo que sobra.
+    validators: [tutorConNombre],
   });
 
   /**
@@ -348,6 +451,32 @@ export class RegisterPatient {
    * reaparecía en la otra: un dato que nadie escribió ahí.
    */
   readonly municipioPaciente = signal<string | null>(null);
+
+  /** El municipio del lugar de trabajo. Mismo motivo que el de residencia. */
+  readonly municipioTrabajo = signal<string | null>(null);
+
+  /**
+   * Las coordenadas que la persona compartió, si las compartió.
+   *
+   * Viven en signals y no en el formulario porque no se escriben: las trae el
+   * navegador de una sola vez. Nulas mientras nadie pulse el botón.
+   */
+  readonly gpsDomicilio = signal<Coordenadas | null>(null);
+  readonly gpsTrabajo = signal<Coordenadas | null>(null);
+
+  /** Qué ubicación se está pidiendo ahora mismo, para no pedir las dos a la vez. */
+  readonly pidiendoGps = signal<UbicacionPedida>(null);
+
+  /**
+   * Si el navegador negó la ubicación.
+   *
+   * Se recuerda por dirección: que falle la del trabajo no debería borrar la
+   * del domicilio ni su aviso.
+   */
+  readonly gpsRechazado = signal<Record<'domicilio' | 'trabajo', boolean>>({
+    domicilio: false,
+    trabajo: false,
+  });
 
   /** Las listas fijas, expuestas a la plantilla. */
   protected readonly opcionesGenero = OPCIONES_GENERO;
@@ -533,13 +662,96 @@ export class RegisterPatient {
             placeholder: 'Sin especificar',
             testId: 'registro-genero',
           },
+          this.campoOcupacion(),
+        ],
+      },
+      {
+        titulo: '¿Dónde vivís?',
+        hint: 'Opcional. Sirve para encontrarte farmacias y laboratorios cerca.',
+        campos: [
           {
             key: 'municipio',
-            label: '¿Dónde vivís? (opcional)',
+            label: 'Municipio (opcional)',
             hint: 'Buscá tu municipio, o abrí tu departamento.',
             control: 'custom',
           },
-          this.campoOcupacion(),
+          {
+            key: 'homeAddressLines',
+            label: 'Calle y número (opcional)',
+            hint: 'Como se lo dirías a quien te trae algo a casa.',
+            control: 'text',
+            autocomplete: 'street-address',
+            placeholder: 'Av. Banzer, 3er anillo #42',
+            testId: 'registro-domicilio-calle',
+          },
+          {
+            key: 'gpsDomicilio',
+            label: 'Ubicación exacta (opcional)',
+            hint: 'Si la compartís, el delivery llega sin llamarte.',
+            control: 'custom',
+          },
+        ],
+      },
+      {
+        titulo: '¿Dónde trabajás?',
+        hint: 'Opcional. Sirve para que puedas recibir cosas donde pasás el día.',
+        campos: [
+          {
+            key: 'municipioTrabajo',
+            label: 'Municipio del trabajo (opcional)',
+            hint: 'Buscá el municipio, o abrí el departamento.',
+            control: 'custom',
+          },
+          {
+            key: 'workAddressLines',
+            label: 'Calle y número (opcional)',
+            control: 'text',
+            placeholder: 'Calle Ayacucho #120',
+            testId: 'registro-trabajo-calle',
+          },
+          {
+            key: 'gpsTrabajo',
+            label: 'Ubicación exacta (opcional)',
+            control: 'custom',
+          },
+        ],
+      },
+      {
+        titulo: 'Tu seguro de salud',
+        hint: 'Opcional. Si tenés los dos, podés declararlos.',
+        campos: [
+          this.campoSeguro('privado'),
+          this.campoSeguro('publico'),
+          {
+            key: 'billingTaxId',
+            label: 'NIT para facturas (opcional)',
+            hint: 'Sólo el número. Lo usamos para las facturas que recibís.',
+            control: 'text',
+            placeholder: '1023456789',
+            testId: 'registro-nit',
+            mensajeDeError: 'El NIT es sólo números.',
+          },
+        ],
+      },
+      {
+        titulo: 'Tu tutor o persona de confianza',
+        hint: 'Opcional. A quién avisamos si hace falta, o quién te acompaña si sos menor.',
+        campos: [
+          {
+            key: 'guardianName',
+            label: 'Nombre (opcional)',
+            control: 'text',
+            placeholder: 'Rosa Quispe',
+            testId: 'registro-tutor-nombre',
+          },
+          {
+            key: 'guardianPhone',
+            label: 'Su teléfono (opcional)',
+            hint: 'Elegí el país si el número no es de Bolivia.',
+            control: 'tel',
+            testId: 'registro-tutor-telefono',
+            mensajeDeError: 'Para guardar el teléfono, contanos también su nombre.',
+          },
         ],
       },
       {
@@ -858,15 +1070,194 @@ export class RegisterPatient {
       hint: 'En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio.',
     } as const;
 
-    return this.catalogoOcupacionesCaido()
+    // Siempre `custom`: son cientos de ocupaciones y el registro del cliente
+    // pide «una lupa de buscar» (módulo Paciente §1.4.2). Un `<select>` nativo
+    // con esa lista es una tira interminable sin filtro. La pantalla proyecta
+    // acá el combobox — y, si el catálogo no cargó, el aviso con «Reintentar».
+    return { ...base, control: 'custom' };
+  }
+
+  /**
+   * El campo de un seguro declarado.
+   *
+   * Es un `select` mientras el catálogo esté, y pasa a `custom` si la lectura
+   * falló, para que la pantalla proyecte ahí el aviso con «Reintentar» — misma
+   * mecánica que el departamento emisor.
+   *
+   * @param sector - Si es el seguro privado o el público.
+   * @returns El campo, listo para el motor de páginas.
+   */
+  private campoSeguro(sector: 'privado' | 'publico'): CampoDeFormulario {
+    const esPrivado = sector === 'privado';
+    const base = esPrivado
+      ? {
+          key: 'privateInsurancePlanId',
+          label: 'Seguro privado (opcional)',
+          hint: 'La compañía con la que tenés tu póliza de salud.',
+        }
+      : {
+          key: 'publicInsurancePlanId',
+          label: 'Seguro público (opcional)',
+          hint: 'La caja o el seguro estatal al que estás afiliado.',
+        };
+
+    return this.catalogoAseguradorasCaido()
       ? { ...base, control: 'custom' }
       : {
           ...base,
           control: 'select',
-          options: this.opcionesOcupacion(),
-          placeholder: 'Sin especificar',
-          testId: 'registro-ocupacion',
+          options: esPrivado ? this.opcionesSeguroPrivado() : this.opcionesSeguroPublico(),
+          placeholder: 'No tengo',
+          testId: esPrivado ? 'registro-seguro-privado' : 'registro-seguro-publico',
         };
+  }
+
+  /**
+   * Las ocupaciones que se ofrecen para lo que se escribió en la lupa.
+   *
+   * El filtrado es en memoria y no otra consulta: el catálogo entero ya llegó
+   * —lo trae `BoOccupationsCatalog` paginado— y volver a la red por cada tecla
+   * sería pagar dos veces por la misma lista.
+   */
+  readonly ocupacionesFiltradas = computed<readonly ReferenceOption[]>(() => {
+    const busqueda = this.busquedaOcupacion().trim().toLowerCase();
+    const todas = this.opcionesOcupacion();
+    const elegidas = busqueda
+      ? todas.filter((o) => o.label.toLowerCase().includes(busqueda))
+      : todas;
+    return elegidas.map((o) => ({ value: o.value, label: o.label }));
+  });
+
+  /** La ocupación elegida, para que el combobox la muestre al volver atrás. */
+  readonly ocupacionElegida = computed<ReferenceOption | null>(() => {
+    const id = this.formPaciente.controls.occupationConceptId.value;
+    if (!id) return null;
+    const opcion = this.opcionesOcupacion().find((o) => o.value === id);
+    return opcion ? { value: opcion.value, label: opcion.label } : null;
+  });
+
+  /** Lo tecleado en la lupa de ocupaciones. */
+  readonly busquedaOcupacion = signal('');
+
+  /**
+   * Guarda la ocupación elegida en el combobox.
+   *
+   * @param opcion - La ocupación elegida, o `null` si la limpió.
+   */
+  elegirOcupacion(opcion: ReferenceOption | null): void {
+    this.formPaciente.controls.occupationConceptId.setValue(opcion?.value ?? null);
+  }
+
+  /* ---- Seguros declarados ------------------------------------------------ */
+
+  private readonly insurance = inject(InsuranceClient);
+
+  /** El catálogo de aseguradoras, tal como llegó. */
+  readonly catalogoAseguradoras = signal<readonly CarrierCatalogEntry[]>([]);
+  readonly catalogoAseguradorasCaido = signal(false);
+
+  /**
+   * Las opciones de seguro privado, aplanadas a «Compañía — Plan».
+   *
+   * Se aplana porque la cobertura apunta al **plan**, y preguntar primero la
+   * compañía y después el plan serían dos pasos para un dato que la mayoría
+   * responde de una: casi todas las compañías publican uno solo.
+   */
+  readonly opcionesSeguroPrivado = computed<readonly SelectOption<string>[]>(() =>
+    this.opcionesDeSeguro(false),
+  );
+
+  /** Las opciones de seguro público (CNS, CPS, SUS…). */
+  readonly opcionesSeguroPublico = computed<readonly SelectOption<string>[]>(() =>
+    this.opcionesDeSeguro(true),
+  );
+
+  /**
+   * Aplana el catálogo a opciones de un desplegable.
+   *
+   * @param publicas - Si se quieren las públicas o las privadas.
+   * @returns Un plan por opción, etiquetado con su compañía.
+   */
+  private opcionesDeSeguro(publicas: boolean): readonly SelectOption<string>[] {
+    const opciones: SelectOption<string>[] = [];
+    for (const carrier of this.catalogoAseguradoras()) {
+      if (carrier.isPublic !== publicas) continue;
+      for (const plan of carrier.plans) {
+        // `BASE` es el comodín de cada compañía: se nombra por lo que es para
+        // quien lo elige, no por su nombre técnico.
+        const esComodin = plan.code === 'BASE';
+        const soloUno = carrier.plans.length === 1;
+        opciones.push({
+          value: plan.id,
+          label:
+            soloUno || esComodin
+              ? esComodin && !soloUno
+                ? `${carrier.name} — Otro plan / No sé`
+                : carrier.name
+              : `${carrier.name} — ${plan.name}`,
+        });
+      }
+    }
+    return opciones.sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  }
+
+  /* ---- Ubicación --------------------------------------------------------- */
+
+  private readonly documento = inject(DOCUMENT);
+
+  /**
+   * Pide al navegador la ubicación de una de las dos direcciones.
+   *
+   * Nunca bloquea el alta: si el navegador no la da —porque no hay API, porque
+   * se corre en el servidor, o porque la persona dijo que no— se anota el
+   * rechazo y el formulario sigue como estaba. La ubicación es una comodidad,
+   * no un requisito.
+   *
+   * @param cual - Cuál de las dos direcciones se está ubicando.
+   */
+  usarMiUbicacion(cual: 'domicilio' | 'trabajo'): void {
+    const geo = this.documento.defaultView?.navigator?.geolocation;
+    if (!geo) {
+      this.marcarGpsRechazado(cual);
+      return;
+    }
+
+    this.pidiendoGps.set(cual);
+    geo.getCurrentPosition(
+      (posicion) => {
+        const punto = {
+          lat: posicion.coords.latitude,
+          lng: posicion.coords.longitude,
+        };
+        if (cual === 'domicilio') this.gpsDomicilio.set(punto);
+        else this.gpsTrabajo.set(punto);
+        this.gpsRechazado.update((r) => ({ ...r, [cual]: false }));
+        this.pidiendoGps.set(null);
+      },
+      () => {
+        this.marcarGpsRechazado(cual);
+        this.pidiendoGps.set(null);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: GPS_TIMEOUT_MS,
+        maximumAge: GPS_MAX_AGE_MS,
+      },
+    );
+  }
+
+  /**
+   * Olvida la ubicación capturada de una dirección.
+   *
+   * @param cual - Cuál de las dos direcciones.
+   */
+  quitarUbicacion(cual: 'domicilio' | 'trabajo'): void {
+    if (cual === 'domicilio') this.gpsDomicilio.set(null);
+    else this.gpsTrabajo.set(null);
+  }
+
+  private marcarGpsRechazado(cual: 'domicilio' | 'trabajo'): void {
+    this.gpsRechazado.update((r) => ({ ...r, [cual]: true }));
   }
 
   readonly state = signal<ViewState<null>>(ready(null));
@@ -913,6 +1304,7 @@ export class RegisterPatient {
     this.cargarDepartamentos();
     this.cargarMunicipios();
     this.cargarOcupaciones();
+    this.cargarAseguradoras();
     this.cargarEspecialidades();
     this.acomodarColegioYEspecialidades();
 
@@ -1066,6 +1458,31 @@ export class RegisterPatient {
     });
   }
 
+  /**
+   * Trae el catálogo de aseguradoras para los dos campos de seguro.
+   *
+   * Es una lectura pública —se hace antes de que exista la cuenta— y un fallo
+   * no bloquea: los dos campos son opcionales y la cobertura se puede declarar
+   * después.
+   */
+  protected cargarAseguradoras(): void {
+    this.insurance.listCarrierCatalog().subscribe({
+      next: (carriers) => {
+        this.catalogoAseguradorasCaido.set(false);
+        this.catalogoAseguradoras.set(carriers);
+      },
+      error: () => {
+        this.catalogoAseguradoras.set([]);
+        this.catalogoAseguradorasCaido.set(true);
+      },
+    });
+  }
+
+  /** Vuelve a pedir el catálogo de aseguradoras tras un fallo. */
+  reintentarAseguradoras(): void {
+    this.cargarAseguradoras();
+  }
+
   /** Las especialidades, para elegirlas EN el alta. Un fallo no bloquea: son opcionales. */
   protected cargarEspecialidades(): void {
     this.especialidades.listar().subscribe({
@@ -1189,6 +1606,16 @@ export class RegisterPatient {
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const sexoAlNacer = raw.sexAtBirth;
     const municipio = this.municipioPaciente();
+    const calleDomicilio = raw.homeAddressLines.trim();
+    const calleTrabajo = raw.workAddressLines.trim();
+    const municipioTrabajo = this.municipioTrabajo();
+    const gpsCasa = this.gpsDomicilio();
+    const gpsTrabajo = this.gpsTrabajo();
+    const nombreTutor = raw.guardianName.trim();
+    const telefonoTutor = raw.guardianPhone.trim();
+    const seguroPrivado = raw.privateInsurancePlanId;
+    const seguroPublico = raw.publicInsurancePlanId;
+    const nit = raw.billingTaxId.trim();
 
     return {
       nationalId: documento,
@@ -1212,6 +1639,30 @@ export class RegisterPatient {
       ...(telefono === '' ? {} : { phone: telefono }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
       ...(ocupacion === null ? {} : { occupationConceptId: ocupacion }),
+      // Domicilio: calle y coordenadas, cada una por su cuenta. La calle sin
+      // municipio es un dato válido —mucha gente sabe su dirección y no el
+      // nombre de su municipio—, así que no se condicionan entre sí.
+      ...(calleDomicilio === '' ? {} : { homeAddressLines: calleDomicilio }),
+      ...(gpsCasa === null
+        ? {}
+        : { homeLatitude: gpsCasa.lat, homeLongitude: gpsCasa.lng }),
+      // Trabajo: lo mismo, con su propio municipio.
+      ...(municipioTrabajo === null
+        ? {}
+        : { workMunicipalityConceptId: municipioTrabajo }),
+      ...(calleTrabajo === '' ? {} : { workAddressLines: calleTrabajo }),
+      ...(gpsTrabajo === null
+        ? {}
+        : { workLatitude: gpsTrabajo.lat, workLongitude: gpsTrabajo.lng }),
+      // El teléfono del tutor sólo viaja con su nombre: el backend rechaza un
+      // contacto sin dueño, y el formulario ya lo impide antes de llegar acá.
+      ...(nombreTutor === '' ? {} : { guardianName: nombreTutor }),
+      ...(nombreTutor === '' || telefonoTutor === ''
+        ? {}
+        : { guardianPhone: telefonoTutor }),
+      ...(seguroPrivado === null ? {} : { privateInsurancePlanId: seguroPrivado }),
+      ...(seguroPublico === null ? {} : { publicInsurancePlanId: seguroPublico }),
+      ...(nit === '' ? {} : { billingTaxId: nit }),
     };
   }
 
