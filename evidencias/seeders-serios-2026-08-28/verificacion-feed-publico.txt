@@ -1,0 +1,7 @@
+GET /public/posts?limit=50  (tope del endpoint: 50)
+publicaciones devueltas      : 50
+con imagen                   : 50
+con >=2 comentarios          : 50
+con >=1 reacción             : 50
+reacciones  min / max / prom : 17 / 35 / 25.7
+comentarios min / max        : 2 / 3
