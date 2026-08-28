@@ -263,7 +263,7 @@ const PERFIL_PROFESIONAL: TutorialDefinition = {
     {
       id: 'preview',
       title: 'Así te ve un paciente',
-      body: 'La vista previa es el mismo perfil que aparece en el Directorio de médicos, no una maqueta aparte.',
+      body: 'Este botón abre tu vitrina pública: la misma tarjeta que ve un paciente en el Directorio de médicos, no una maqueta aparte. Ahí mismo la configurás.',
       target: 'perfil-preview',
       placement: 'top',
     },
