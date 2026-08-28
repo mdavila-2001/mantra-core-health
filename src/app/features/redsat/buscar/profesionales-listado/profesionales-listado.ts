@@ -6,10 +6,43 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
+import type { PublicSearchResult } from '@core/data-access/public-directory/public-directory.types';
 import { aTarjeta } from '../public-result.mapper';
 import { BusquedaPublica } from '@core/data-access/public-directory/public-search.store';
 
+import type { SearchResultItem } from '../../../../shared/components/molecules/search-result/search-result.types';
 import { ResultCard } from '../../../../shared/components/molecules/result-card/result-card';
+
+/** Un bloque del directorio: una especialidad y los profesionales que la ejercen. */
+export interface GrupoDeEspecialidad {
+  readonly especialidad: string;
+  readonly tarjetas: readonly SearchResultItem[];
+}
+
+/** Organiza la página actual por la especialidad principal visible de cada perfil. */
+export function agruparPorEspecialidad(
+  resultados: readonly PublicSearchResult[],
+): readonly GrupoDeEspecialidad[] {
+  const porEspecialidad = new Map<string, PublicSearchResult[]>();
+
+  for (const resultado of resultados) {
+    const especialidad = resultado.headline?.trim() || 'Especialidad no informada';
+    const grupo = porEspecialidad.get(especialidad) ?? [];
+    grupo.push(resultado);
+    porEspecialidad.set(especialidad, grupo);
+  }
+
+  const ordenar = new Intl.Collator('es', { sensitivity: 'base' });
+  return [...porEspecialidad.entries()]
+    .sort(([izquierda], [derecha]) => ordenar.compare(izquierda, derecha))
+    .map(([especialidad, profesionales]) => ({
+      especialidad,
+      tarjetas: profesionales
+        .slice()
+        .sort((izquierda, derecha) => ordenar.compare(izquierda.displayName, derecha.displayName))
+        .map(aTarjeta),
+    }));
+}
 
 /**
  * El listado de profesionales de la superficie pública.
@@ -55,7 +88,10 @@ export class BuscarProfesionalesListado {
     }),
   );
 
-  protected readonly tarjetas = computed(() => this.busqueda.resultados().map(aTarjeta));
+  /** La página actual, organizada en bloques simples por especialidad. */
+  protected readonly gruposPorEspecialidad = computed(() =>
+    agruparPorEspecialidad(this.busqueda.resultados()),
+  );
 
   /** Escribir lleva el texto a `?q=`; el cambio de la URL dispara la lectura. */
   protected alEscribir(valor: string): void {
