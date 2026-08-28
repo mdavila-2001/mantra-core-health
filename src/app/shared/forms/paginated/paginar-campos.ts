@@ -57,6 +57,7 @@ function paginarSeccion(seccion: SeccionDeFormulario): readonly PaginaDeFormular
     // la segunda no vio la primera hace un rato, y una explicación que sólo
     // aparece en el primer trozo es una explicación que la mitad no lee.
     ...(seccion.hint === undefined ? {} : { hint: seccion.hint }),
+    ...(seccion.disposicion === undefined ? {} : { disposicion: seccion.disposicion }),
     campos,
   }));
 }

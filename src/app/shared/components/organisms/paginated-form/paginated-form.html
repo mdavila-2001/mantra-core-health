@@ -25,8 +25,12 @@
         <p class="paginated-form__hint">{{ actual.hint }}</p>
       }
 
-      @for (campo of actual.campos; track campo.key) {
-        @if (campo.control === 'custom') {
+      <div
+        class="paginated-form__campos"
+        [class.paginated-form__campos--dos-columnas]="actual.disposicion === 'dos-columnas'"
+      >
+        @for (campo of actual.campos; track campo.key) {
+          @if (campo.control === 'custom') {
           <app-form-field
             [label]="campo.label"
             [hint]="campo.hint ?? ''"
@@ -37,7 +41,7 @@
               <ng-container [ngTemplateOutlet]="plantilla" />
             }
           </app-form-field>
-        } @else {
+          } @else {
           <app-form-field
             [label]="campo.label"
             [hint]="campo.hint ?? ''"
@@ -145,8 +149,9 @@
               }
             }
           </app-form-field>
+          }
         }
-      }
+      </div>
     </section>
   }
 

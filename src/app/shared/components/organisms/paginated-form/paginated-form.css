@@ -46,6 +46,19 @@
   gap: var(--sp-4);
 }
 
+.paginated-form__campos {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* Los pares relacionados aprovechan el ancho sin convertir la pantalla chica
+   en dos controles angostos. */
+@media (min-width: 42rem) {
+  .paginated-form__campos--dos-columnas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .paginated-form__titulo {
   margin: 0;
   font-family: var(--font-display);
@@ -108,6 +121,10 @@
   }
 
   .paginated-form__pagina {
+    gap: var(--sp-3);
+  }
+
+  .paginated-form__campos {
     gap: var(--sp-3);
   }
 

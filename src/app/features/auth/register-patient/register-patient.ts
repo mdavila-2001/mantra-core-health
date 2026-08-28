@@ -449,6 +449,7 @@ export class RegisterPatient {
       {
         titulo: 'Tu documento de identidad',
         hint: 'Es lo primero que preguntamos: si ya tenés cuenta, te lo decimos acá y no después de llenar todo.',
+        disposicion: 'dos-columnas',
         campos: [
           {
             key: 'nationalId',

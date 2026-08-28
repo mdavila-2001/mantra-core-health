@@ -149,6 +149,14 @@ export interface PaginaDeFormulario {
   /** Una línea que explica de qué va la sección, si hace falta. */
   readonly hint?: string;
 
+  /**
+   * Presentación de los campos cuando el ancho disponible lo permite.
+   *
+   * `dos-columnas` se reserva para pares cortos y relacionados. En pantallas
+   * angostas el motor vuelve a una sola columna para no estrechar controles.
+   */
+  readonly disposicion?: 'una-columna' | 'dos-columnas';
+
   /** Invariante: nunca más de {@link MAX_CAMPOS_POR_PAGINA}. */
   readonly campos: readonly CampoDeFormulario[];
 }
@@ -164,5 +172,6 @@ export interface PaginaDeFormulario {
 export interface SeccionDeFormulario {
   readonly titulo: string;
   readonly hint?: string;
+  readonly disposicion?: PaginaDeFormulario['disposicion'];
   readonly campos: readonly CampoDeFormulario[];
 }
