@@ -177,7 +177,7 @@ export class PublicProfilePreview {
   /** Si la vitrina todavía no tiene foto. Ver el aviso de la plantilla (B4). */
   protected readonly sinFoto = computed(() => {
     const estado = this.perfil();
-    return estado.status === 'ready' && (estado.data?.avatarFileId ?? undefined) === undefined;
+    return estado.status === 'ready' && estado.data?.avatarFileId == null;
   });
 
   /** La URL servida por la API para el avatar ya guardado, o `null`. */

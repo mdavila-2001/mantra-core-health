@@ -175,6 +175,7 @@ describe('PublicProfilePreview', () => {
       statusConceptId: 'st-activo',
     });
     expect(interno<() => boolean>('tieneVitrina')()).toBe(true);
+    expect(interno<() => boolean>('sinFoto')()).toBe(true);
 
     interno<(e: Event) => void>('alElegirFoto')(
       eventoDeArchivo(new File(['x'], 'foto.png', { type: 'image/png' })),
