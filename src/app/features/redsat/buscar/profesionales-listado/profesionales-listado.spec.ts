@@ -40,4 +40,15 @@ describe('agruparPorEspecialidad', () => {
     expect(grupos).toHaveLength(1);
     expect(grupos[0].especialidad).toBe('Especialidad no informada');
   });
+
+  it('no separa una especialidad por la organización escrita en el titular', () => {
+    const grupos = agruparPorEspecialidad([
+      profesional('Ana Díaz', 'Cardióloga · Hospital del Norte'),
+      profesional('Luz Pérez', 'Cardióloga · Clínica Central'),
+    ]);
+
+    expect(grupos).toHaveLength(1);
+    expect(grupos[0].especialidad).toBe('Cardióloga');
+    expect(grupos[0].tarjetas).toHaveLength(2);
+  });
 });

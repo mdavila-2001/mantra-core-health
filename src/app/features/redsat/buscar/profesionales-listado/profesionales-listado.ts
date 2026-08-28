@@ -19,6 +19,14 @@ export interface GrupoDeEspecialidad {
   readonly tarjetas: readonly SearchResultItem[];
 }
 
+/**
+ * La primera parte del titular es la especialidad; las siguientes pueden ser
+ * subáreas u organizaciones (por ejemplo, «Cardióloga · Hospital del Norte»).
+ */
+export function especialidadVisible(headline: string | null): string {
+  return headline?.split(/[·,|]/, 1)[0]?.trim() || 'Especialidad no informada';
+}
+
 /** Organiza la página actual por la especialidad principal visible de cada perfil. */
 export function agruparPorEspecialidad(
   resultados: readonly PublicSearchResult[],
@@ -26,7 +34,7 @@ export function agruparPorEspecialidad(
   const porEspecialidad = new Map<string, PublicSearchResult[]>();
 
   for (const resultado of resultados) {
-    const especialidad = resultado.headline?.trim() || 'Especialidad no informada';
+    const especialidad = especialidadVisible(resultado.headline);
     const grupo = porEspecialidad.get(especialidad) ?? [];
     grupo.push(resultado);
     porEspecialidad.set(especialidad, grupo);
