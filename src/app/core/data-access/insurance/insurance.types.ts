@@ -191,3 +191,28 @@ export interface BrokerPortfolio {
   readonly items: readonly BrokerClient[];
   readonly count: number;
 }
+
+/** Un plan de salud tal como lo elige quien se registra. */
+export interface CarrierCatalogPlan {
+  readonly id: string;
+  /** `BASE` es el plan comodín: la opción «no sé cuál tengo». */
+  readonly code: string;
+  readonly name: string;
+}
+
+/**
+ * Una aseguradora del catálogo público, con sus planes de salud.
+ *
+ * Es un contrato distinto del de {@link CarrierSummary}: aquél lista las
+ * aseguradoras del tenant activo y éste el catálogo boliviano completo, que se
+ * consulta sin haber iniciado sesión.
+ */
+export interface CarrierCatalogEntry {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly legalName: string;
+  /** Si es un seguro público o de la seguridad social (CNS, CPS, SUS…). */
+  readonly isPublic: boolean;
+  readonly plans: readonly CarrierCatalogPlan[];
+}

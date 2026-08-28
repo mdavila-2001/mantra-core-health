@@ -29,7 +29,7 @@ describe('BusquedaPublica', () => {
     return { items, nextCursor, totalHint, generatedAt: new Date('2026-08-18T00:00:00Z') };
   }
 
-  /** Un resultado mínimo, con los nueve campos que la API sirve. */
+  /** Un resultado mínimo, con los campos que la API sirve. */
   function resultado(slug: string, displayName = slug): PublicSearchResult {
     return {
       kind: 'PRACTITIONER',
@@ -41,6 +41,11 @@ describe('BusquedaPublica', () => {
       verified: false,
       ratingAverage: null,
       ratingCount: 0,
+      coverUrl: null,
+      address: null,
+      location: null,
+      hasPublishedAgenda: false,
+      nextAvailableDate: null,
     };
   }
 

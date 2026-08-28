@@ -93,6 +93,49 @@ export interface PatientRegistration {
    * final—, y sigue en el contrato porque otros clientes lo usan.
    */
   readonly occupationFreeText?: string;
+  /** Calle y número del domicilio, tal como lo escribe la persona. */
+  readonly homeAddressLines?: string;
+  /**
+   * Latitud del domicilio.
+   *
+   * El par va completo o no va: media coordenada no ubica nada y el backend
+   * rechaza el par incompleto.
+   */
+  readonly homeLatitude?: number;
+  /** Longitud del domicilio. Ver {@link PatientRegistration.homeLatitude}. */
+  readonly homeLongitude?: number;
+  /** Municipio del lugar de trabajo (catálogo `VS_BO_MUNICIPALITY`). */
+  readonly workMunicipalityConceptId?: string;
+  /** Calle y número del lugar de trabajo. */
+  readonly workAddressLines?: string;
+  /** Latitud del trabajo. Mismo par completo que el domicilio. */
+  readonly workLatitude?: number;
+  /** Longitud del trabajo. */
+  readonly workLongitude?: number;
+  /** Nombre del tutor o persona autorizada que acompaña a la persona. */
+  readonly guardianName?: string;
+  /**
+   * Teléfono del tutor.
+   *
+   * No se manda sin `guardianName`: sería un contacto sin dueño y el backend
+   * lo rechaza.
+   */
+  readonly guardianPhone?: string;
+  /**
+   * Plan de la aseguradora privada que la persona declara tener.
+   *
+   * Viaja el **plan**, no la compañía: la cobertura del paciente apunta al plan
+   * y varias compañías publican más de uno.
+   */
+  readonly privateInsurancePlanId?: string;
+  /** Plan del seguro público declarado (CNS, CPS, SUS…). */
+  readonly publicInsurancePlanId?: string;
+  /**
+   * NIT para facturación, sólo el número.
+   *
+   * La razón social no se pide todavía: el modelo no tiene dónde guardarla.
+   */
+  readonly billingTaxId?: string;
   readonly timeZone?: string;
 }
 

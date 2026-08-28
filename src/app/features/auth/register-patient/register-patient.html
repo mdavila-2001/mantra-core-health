@@ -63,9 +63,90 @@
             </ng-template>
 
             <ng-template appCampoPersonalizado="occupationConceptId">
+              @if (catalogoOcupacionesCaido()) {
+                <p class="registro__catalogo-caido">
+                  No pudimos traer el catálogo de ocupaciones.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarOcupaciones()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <!-- La lupa que pide el registro del cliente: son cientos de
+                     oficios y un desplegable sin filtro no se recorre. -->
+                <app-reference-combobox
+                  data-testid="registro-ocupacion"
+                  label="Ocupación"
+                  placeholder="Buscá tu profesión u oficio…"
+                  emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+                  [options]="ocupacionesFiltradas()"
+                  [selected]="ocupacionElegida()"
+                  [minQueryLength]="0"
+                  (searched)="busquedaOcupacion.set($event)"
+                  (selectionChange)="elegirOcupacion($event)"
+                />
+              }
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="municipioTrabajo">
+              @if (catalogoMunicipiosCaido()) {
+                <p class="registro__catalogo-caido">
+                  No pudimos traer el catálogo de municipios.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <app-tree-select
+                  data-testid="registro-municipio-trabajo"
+                  [groups]="arbolMunicipios()"
+                  [(value)]="municipioTrabajo"
+                  placeholder="Sin especificar"
+                  dialogTitle="¿Dónde trabajás?"
+                  searchPlaceholder="Buscar municipio o departamento…"
+                  emptyMessage="Ningún municipio coincide con esa búsqueda."
+                />
+              }
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="gpsDomicilio">
+              <ng-container
+                *ngTemplateOutlet="
+                  ubicacion;
+                  context: {
+                    cual: 'domicilio',
+                    punto: gpsDomicilio(),
+                    rechazado: gpsRechazado().domicilio
+                  }
+                "
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="gpsTrabajo">
+              <ng-container
+                *ngTemplateOutlet="
+                  ubicacion;
+                  context: {
+                    cual: 'trabajo',
+                    punto: gpsTrabajo(),
+                    rechazado: gpsRechazado().trabajo
+                  }
+                "
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="privateInsurancePlanId">
               <p class="registro__catalogo-caido">
-                No pudimos traer el catálogo de ocupaciones.
-                <button app-button variant="ghost" size="sm" (clicked)="reintentarOcupaciones()">
+                No pudimos traer el catálogo de aseguradoras.
+                <button app-button variant="ghost" size="sm" (clicked)="reintentarAseguradoras()">
+                  Reintentar
+                </button>
+              </p>
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="publicInsurancePlanId">
+              <p class="registro__catalogo-caido">
+                No pudimos traer el catálogo de seguros públicos.
+                <button app-button variant="ghost" size="sm" (clicked)="reintentarAseguradoras()">
                   Reintentar
                 </button>
               </p>
@@ -143,3 +224,33 @@
     }
   </div>
 </app-auth-split>
+
+<!-- El bloque de ubicación, uno por dirección. Es el mismo control dos veces,
+     así que vive una sola vez y se instancia con el nombre de su dirección. -->
+<ng-template #ubicacion let-cual="cual" let-punto="punto" let-rechazado="rechazado">
+  @if (punto) {
+    <p class="registro__ubicacion">
+      <span class="registro__ubicacion-valor">
+        Ubicación guardada ({{ punto.lat | number: '1.4-4' }}, {{ punto.lng | number: '1.4-4' }})
+      </span>
+      <button app-button variant="ghost" size="sm" (clicked)="quitarUbicacion(cual)">Quitar</button>
+    </p>
+  } @else {
+    <p class="registro__ubicacion">
+      <button
+        app-button
+        variant="secondary"
+        size="sm"
+        [isLoading]="pidiendoGps() === cual"
+        (clicked)="usarMiUbicacion(cual)"
+      >
+        Usar mi ubicación
+      </button>
+      @if (rechazado) {
+        <span class="registro__ubicacion-aviso">
+          No pudimos obtener tu ubicación. Podés seguir sin esto.
+        </span>
+      }
+    </p>
+  }
+</ng-template>

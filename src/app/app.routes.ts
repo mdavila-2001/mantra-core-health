@@ -5,7 +5,6 @@ import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterAccountType } from './features/auth/register-account-type/register-account-type';
-import { RegisterPatient } from './features/auth/register-patient/register-patient';
 import { RegisterOrganization } from './features/auth/register-organization/register-organization';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
@@ -1485,7 +1484,14 @@ export const routes: Routes = [
   },
   {
     path: 'auth/register/patient',
-    component: RegisterPatient,
+    // Diferida: el alta arrastra el árbol de municipios y el combobox de
+    // ocupaciones, y con import directo eso viaja en el bundle inicial que
+    // toda visita paga —incluida la de quien sólo entra a leer—. Mismo
+    // criterio que la vitrina de diseño.
+    loadComponent: () =>
+      import('./features/auth/register-patient/register-patient').then(
+        (m) => m.RegisterPatient,
+      ),
     // El tipo viaja como dato de la ruta y no leyendo el último segmento de la
     // URL: si mañana la dirección cambia, cambia acá y no dentro del componente.
     data: { tipoDeCuenta: 'paciente' },
@@ -1493,7 +1499,14 @@ export const routes: Routes = [
   },
   {
     path: 'auth/register/practitioner',
-    component: RegisterPatient,
+    // Diferida: el alta arrastra el árbol de municipios y el combobox de
+    // ocupaciones, y con import directo eso viaja en el bundle inicial que
+    // toda visita paga —incluida la de quien sólo entra a leer—. Mismo
+    // criterio que la vitrina de diseño.
+    loadComponent: () =>
+      import('./features/auth/register-patient/register-patient').then(
+        (m) => m.RegisterPatient,
+      ),
     data: { tipoDeCuenta: 'profesional' },
     title: 'AloVida - Crear cuenta de profesional',
   },
