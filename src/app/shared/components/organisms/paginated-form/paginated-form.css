@@ -51,11 +51,35 @@
   gap: var(--sp-4);
 }
 
-/* Los pares relacionados aprovechan el ancho sin convertir la pantalla chica
-   en dos controles angostos. */
+/* ==========================================================================
+    Pares en el mismo renglón.
+
+    La rejilla pasa a DOS columnas siempre, y por omisión cada campo las cruza
+    enteras: eso se ve exactamente igual que una columna, que es como se lee un
+    formulario. Lo que cambia es que ahora hay carriles donde poner un par.
+
+    Un campo `mitad` ocupa un carril, así que dos seguidos comparten renglón.
+    Es lo que necesita el número de cédula con su departamento de emisión: son
+    un solo documento escrito en dos casillas, y en dos renglones se leían como
+    dos preguntas distintas.
+
+    `dos-columnas` —la disposición de página, anterior a esto— sigue valiendo y
+    hace lo de siempre: pone TODOS los campos de la página de a dos.
+
+    El corte a 42 rem es el de antes: por debajo, dos controles quedan más
+    angostos que lo que se escribe adentro y una columna es mejor. */
 @media (min-width: 42rem) {
-  .paginated-form__campos--dos-columnas {
+  .paginated-form__campos {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .paginated-form__campos > .paginated-form__campo {
+    grid-column: 1 / -1;
+  }
+
+  .paginated-form__campos > .paginated-form__campo--mitad,
+  .paginated-form__campos--dos-columnas > .paginated-form__campo {
+    grid-column: auto;
   }
 }
 
