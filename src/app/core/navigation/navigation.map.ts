@@ -893,7 +893,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // no es un rol sino un dato de la cuenta —el claim `pid` del token—, y la
     // pantalla lo dice cuando falta en vez de esconderse del menú.
     path: 'my-account/appointments',
-    label: 'Mis turnos',
+    label: 'Mis citas',
     group: 'Mi cuenta',
     icon: 'calendar',
     roles: [ANY_ROLE],

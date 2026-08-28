@@ -681,7 +681,15 @@ type WireOwnPatientProfile = WireDates<OwnPatientProfile, 'birthDate'>;
 /** Los datos propios con la fecha ya convertida y los `null` fuera. */
 function toOwnPatientProfile(body: ConNulos<WireOwnPatientProfile>): OwnPatientProfile {
   const limpio = sinNulos<WireOwnPatientProfile>(body);
-  return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
+  return {
+    ...limpio,
+    birthDate: maybeDateOnly(limpio.birthDate),
+    // Las listas son obligatorias en el contrato, pero se defienden igual: una
+    // API anterior a este cambio las omite, y la pantalla las recorre sin
+    // preguntar. Vacías dicen «no declaró ninguna», que es lo correcto ahí.
+    coverages: limpio.coverages ?? [],
+    guardians: limpio.guardians ?? [],
+  };
 }
 
 /**
