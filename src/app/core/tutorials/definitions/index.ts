@@ -397,7 +397,7 @@ const NOTIFICACIONES: TutorialDefinition = {
     {
       id: 'preferencias',
       title: 'Elegí de qué te avisamos',
-      body: 'En «Mi cuenta → Preferencias de avisos» activás o silenciás cada familia: recetas y consultas, turnos, mensajes y actividad social.',
+      body: 'Desde el ícono de Ajustes, arriba a la derecha, en «Avisos» activás o silenciás cada familia: recetas y consultas, turnos, mensajes y actividad social.',
     },
     {
       id: 'silencio',

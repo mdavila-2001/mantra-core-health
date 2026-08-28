@@ -968,19 +968,29 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M-surveys',
   },
   {
-    // Carril P9 · qué avisos querés recibir.
+    // Ajustes — lo que la persona configura sobre su propia cuenta, junto.
     //
-    // Va pegada al centro de notificaciones y en «Mi cuenta» por lo mismo: la
-    // bandeja y sus preferencias son de la persona. Sin `roles`, porque
-    // cualquiera con sesión tiene avisos que configurar y el backend sólo
-    // devuelve los propios.
-    path: 'my-account/notification-preferences',
-    label: 'Preferencias de avisos',
+    // Reemplaza a «Preferencias de avisos», que ocupaba este renglón: configurar
+    // los avisos dejó de ser una sección para pasar a ser un panel de acá. La
+    // dirección vieja sigue viva como redirección (`RUTAS_HEREDADAS`), porque
+    // estaba en el menú y por lo tanto en los favoritos de alguien.
+    //
+    // **No ocupa renglón** (`fueraDelMenuPara: [ANY_ROLE]`): los ajustes no son
+    // un destino de trabajo, y por eso se entra por el ícono del encabezado, que
+    // es donde vivían el tema y la campana. La sección sigue entera —ruta,
+    // título, breadcrumb y guard—; lo único que pierde es la fila del menú.
+    //
+    // Sin `roles` restringidos: cualquiera con sesión tiene avisos, tema y
+    // permisos del navegador que configurar. Lo que dentro es de un rol —la
+    // administración de permisos delegados— lo decide la propia pantalla.
+    path: 'ajustes',
+    label: 'Ajustes',
     group: 'Mi cuenta',
-    icon: 'sliders',
+    icon: 'settings',
     roles: [ANY_ROLE],
+    fueraDelMenuPara: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Elegí de qué te avisamos y en qué horario no.',
+    summary: 'Configurá tus avisos, la apariencia y los permisos de tu cuenta.',
     module: 'M35 messaging',
   },
   {

@@ -18,10 +18,34 @@ export interface NavItem {
   readonly disabled?: boolean;
 }
 
-/** Un grupo rotulado de destinos. */
+/**
+ * Un desplegable dentro de un grupo: destinos parecidos bajo un rótulo propio.
+ *
+ * Quién va con quién no se decide acá —lo declara `core/navigation`, que es
+ * quien conoce las secciones—: el nav sólo dibuja lo que recibe.
+ */
+export interface NavBlock {
+  readonly label: string;
+  readonly icon?: NavIconName;
+  readonly items: readonly NavItem[];
+}
+
+/**
+ * Un grupo rotulado de destinos.
+ *
+ * `items` es la lista plana de todo lo que el grupo ofrece; `blocks`, cuando
+ * viene, es cómo se reparte en desplegables. Los dos campos del reparto son
+ * **opcionales** porque el organismo sabe dibujar un grupo sin ellos —así lo
+ * usa la vitrina del sistema de diseño, con sus grupos de tres ítems—; el
+ * armazón del área con sesión sí los manda, y es el que tiene cincuenta y cinco
+ * secciones que ordenar.
+ */
 export interface NavSection {
   readonly label: string;
+  /** Ícono del grupo cerrado; sin él, el rótulo va solo. */
+  readonly icon?: NavIconName;
   readonly items: readonly NavItem[];
+  readonly blocks?: readonly NavBlock[];
 }
 
 /**

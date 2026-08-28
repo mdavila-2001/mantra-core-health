@@ -110,10 +110,39 @@ export interface NavMenuItem {
   readonly icon: NavIconName;
 }
 
-/** Un grupo rotulado de destinos. */
+/**
+ * Un desplegable del menú: un puñado de destinos parecidos bajo un rótulo.
+ *
+ * Es el segundo escalón de la barra, y quién va con quién lo declara
+ * `navigation.subgroups.ts` — acá sólo está la forma. Un bloque con **un solo**
+ * destino visible no se dibuja como desplegable: lo decide el armazón al
+ * pintar, porque depende de lo que esta sesión ve y no del reparto.
+ */
+export interface NavMenuBlock {
+  readonly label: string;
+  readonly icon: NavIconName;
+  readonly items: readonly NavMenuItem[];
+}
+
+/**
+ * Un grupo rotulado de destinos.
+ *
+ * Lleva las dos vistas del mismo contenido a propósito: `items` es la lista
+ * **plana** —lo que el grupo ofrece, que es lo que preguntan las pruebas, la
+ * marca de «acá estás» y cualquiera que necesite recorrer destinos— y `blocks`
+ * es cómo se reparte en desplegables para dibujarse. Derivar una de la otra en
+ * cada consumidor es cómo empiezan a divergir; se calculan juntas, una sola vez,
+ * en `NavigationService`.
+ */
 export interface NavMenuSection {
   readonly label: string;
+
+  /** Ícono del grupo cerrado. Ver `NAV_GROUP_ICONS`. */
+  readonly icon: NavIconName;
+
   readonly items: readonly NavMenuItem[];
+
+  readonly blocks: readonly NavMenuBlock[];
 }
 
 /**

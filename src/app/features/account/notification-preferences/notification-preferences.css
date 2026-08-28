@@ -1,3 +1,13 @@
+.prefs__encabezado {
+  margin: 0 0 var(--e2);
+  font-size: 1.15rem;
+}
+
+.prefs__intro {
+  margin: 0 0 var(--e4);
+  color: var(--text-secondary);
+}
+
 .prefs__alerta {
   display: block;
   margin-bottom: var(--e4);

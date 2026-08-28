@@ -83,10 +83,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Carril P9 · las preferencias de aviso. Diferida: se abre una vez y se
   // olvida, que es exactamente lo que una pantalla de preferencias debería
   // conseguir.
-  'my-account/notification-preferences': () =>
-    import('./features/account/notification-preferences/notification-preferences').then(
-      (m) => m.NotificationPreferences,
-    ),
+  ajustes: () => import('./features/settings/settings').then((m) => m.Settings),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
@@ -818,6 +815,10 @@ function componenteDe(section: AppSection): Pick<Routes[number], 'component' | '
 
 /** Dirección vieja → dirección nueva. Absolutas para no depender del padre. */
 const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
+  // «Preferencias de avisos» dejó de ser una sección y pasó a ser un panel de
+  // Ajustes. Estuvo en el menú, así que la dirección está en favoritos y en el
+  // historial de quien ya la usó: se redirige en vez de devolver un 404.
+  'my-account/notification-preferences': '/ajustes',
   panel: '/dashboard',
   agenda: '/schedule',
   clinico: '/medical-records',

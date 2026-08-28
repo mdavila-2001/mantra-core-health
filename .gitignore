@@ -129,3 +129,17 @@ Thumbs.db
 /CARRIL_*.md
 /COORDINACION-AGENTES.md
 historia-paciente-*.pdf
+
+# Paquete de datos y generadores que viven FUERA de git (espejo v4.0.11 del
+# 2026-08-19). `seedsGenerales/` (24 MB, 64 seeds de módulo), `seedsProd/`
+# (~500 MB, corpus MeSH), `salud-db/` (generadores y runners), el DDL generado
+# `SQL/` + `NoSQL/` y el modelo canónico están en la RAÍZ del workspace, no en
+# este repositorio, y se distribuyen por su propio ZIP. Estas reglas son la red
+# de seguridad para la copia que alguien deje dentro del repo: son artefactos
+# generados, no fuente de este proyecto, y no deben llegar a GitHub.
+seedsGenerales/
+seedsProd/
+salud-db/
+/SQL/
+/NoSQL/
+Mantra Core Health Context/
