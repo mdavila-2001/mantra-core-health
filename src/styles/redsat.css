@@ -513,7 +513,15 @@ app-shell-layout { display: block; }
   text-decoration: none; font-size: 15px;
   transition: background-color .16s ease, color .16s ease;
 }
-.app-side-nav__item .icono { opacity: .85; }
+.app-side-nav__item .icono,
+.app-side-nav__item app-nav-icon { opacity: .85; }
+.app-side-nav__item app-nav-icon {
+  display: flex;
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+.app-side-nav__item app-nav-icon svg { width: 100%; height: 100%; }
 .app-side-nav__item:hover {
   color: #fff;
   background: rgba(159, 216, 208, .16);
@@ -536,6 +544,11 @@ app-shell-layout { display: block; }
   color: rgba(255, 255, 255, .72);
 }
 .app-side-nav__sub .app-side-nav__item.is-activo { color: #fff; }
+.app-side-nav__directory { display: contents; }
+.app-side-nav__directory > summary { list-style: none; cursor: pointer; }
+.app-side-nav__directory > summary::-webkit-details-marker { display: none; }
+.app-side-nav__chevron { width: 1rem; height: 1rem; margin-left: auto; transition: transform .16s ease; }
+.app-side-nav__directory[open] > summary .app-side-nav__chevron { transform: rotate(180deg); }
 
 /* El header deja ver el fondo de la vista, pero con suficiente blanco encima
    para que el buscador y el selector de organización se lean como controles. */

@@ -60,9 +60,40 @@
       <div class="app-side-nav__group">
         <p class="app-side-nav__eyebrow">{{ grupo.label }}</p>
         @for (item of grupo.items; track item.route) {
-          @if (item.disabled) {
+          @if (esRutaDeDirectorio(item.route)) {
+            @if (esPrimerDirectorio(item.route)) {
+              <details class="app-side-nav__directory" [open]="directorioAbierto()">
+                <summary
+                  class="app-side-nav__item"
+                  [class.is-activo]="directorioAbierto()"
+                  data-testid="nav-directorio"
+                >
+                  <app-nav-icon name="directory" />
+                  <span class="side-nav__label">Directorios</span>
+                  <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+                </summary>
+                <div class="app-side-nav__sub">
+                  @for (directorio of directorioItems(); track directorio.route) {
+                    <a
+                      class="app-side-nav__item side-nav__link"
+                      data-testid="nav-enlace"
+                      [appTutorialTarget]="'nav-' + directorio.route.slice(1)"
+                      [attr.data-route]="directorio.route"
+                      [routerLink]="directorio.route"
+                      [class.is-activo]="rutaActiva() === directorio.route"
+                      [attr.aria-current]="rutaActiva() === directorio.route ? 'page' : null"
+                    >
+                      <app-nav-icon [name]="directorio.icon ?? 'directory'" />
+                      <span class="side-nav__label">{{ directorio.label }}</span>
+                    </a>
+                  }
+                </div>
+              </details>
+            }
+          } @else if (item.disabled) {
             <!-- Deshabilitado: ni ancla ni foco. Sigue anunciándose como tal. -->
             <span class="app-side-nav__item is-disabled" aria-disabled="true">
+              <app-nav-icon [name]="item.icon ?? 'directory'" />
               <span class="side-nav__label">{{ item.label }}</span>
             </span>
           } @else {
@@ -79,6 +110,7 @@
               [class.is-activo]="rutaActiva() === item.route"
               [attr.aria-current]="rutaActiva() === item.route ? 'page' : null"
             >
+              <app-nav-icon [name]="item.icon ?? 'directory'" />
               <span class="side-nav__label">{{ item.label }}</span>
               @if (item.badge) {
                 <span class="app-badge" data-tono="info">{{ item.badge }}</span>

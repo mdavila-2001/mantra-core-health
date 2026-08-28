@@ -519,6 +519,15 @@ describe('ProfilesClient', () => {
     expect(perfil?.createdAt).toBeInstanceOf(Date);
   });
 
+  it('setPractitionerPhoto asocia el archivo al perfil profesional', () => {
+    client.setPractitionerPhoto('per-1', 'file-1').subscribe();
+
+    const req = http.expectOne('/profiles/practitioners/per-1/photo');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ fileId: 'file-1' });
+    req.flush({ ...PERFIL_WIRE, photoFileId: 'file-1' });
+  });
+
   it('getOwnPractitionerProfile trae el historial laboral con sus fechas convertidas', () => {
     let perfil:
       | { affiliations: readonly { organizationName: string; current: boolean; startDate: Date }[] }

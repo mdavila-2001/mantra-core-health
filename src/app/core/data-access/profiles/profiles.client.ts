@@ -333,6 +333,16 @@ export class ProfilesClient {
       .pipe(map((body) => this.traducirPerfilPropio(body)));
   }
 
+  /** Fija la foto del perfil profesional ya subida a `common/files`. */
+  setPractitionerPhoto(profileId: string, fileId: string): Observable<OwnPractitionerProfile> {
+    return this.http
+      .put<ConNulos<WireOwnPractitioner>>(
+        this.url(`/profiles/practitioners/${encodeURIComponent(profileId)}/photo`),
+        { fileId },
+      )
+      .pipe(map((body) => this.traducirPerfilPropio(body)));
+  }
+
   /** La respuesta de la lectura y de la edición tienen la misma forma. */
   private traducirPerfilPropio(body: ConNulos<WireOwnPractitioner>): OwnPractitionerProfile {
     const limpio = sinNulos<WireOwnPractitioner>(body);

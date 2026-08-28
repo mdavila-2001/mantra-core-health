@@ -25,8 +25,16 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 // declara hotspot— y se monta acá porque el armazón es lo único que existe
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
+
+const DIRECTORY_ROUTES = [
+  '/directory',
+  '/laboratory-directory',
+  '/clinics-directory',
+  '/pharmacies-directory',
+] as const;
 
 /**
  * Armazón de todas las pantallas con sesión.
@@ -54,6 +62,7 @@ import { TUTORIALS } from '../../core/tutorials/definitions';
     TutorialOverlay,
     TutorialTarget,
     NotificationBell,
+    NavIcon,
   ],
   templateUrl: './shell-layout.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -153,6 +162,25 @@ export class ShellLayout {
 
   private rutaLimpia(): string {
     return this.router.url.split(/[?#]/)[0];
+  }
+
+  protected readonly directorioItems = computed(() =>
+    this.sections()
+      .flatMap((seccion) => seccion.items)
+      .filter((item) => this.esRutaDeDirectorio(item.route)),
+  );
+
+  protected readonly directorioAbierto = computed(() => {
+    const ruta = this.urlActual();
+    return DIRECTORY_ROUTES.some((directorio) => ruta === directorio || ruta.startsWith(`${directorio}/`));
+  });
+
+  protected esRutaDeDirectorio(ruta: string): boolean {
+    return (DIRECTORY_ROUTES as readonly string[]).includes(ruta);
+  }
+
+  protected esPrimerDirectorio(ruta: string): boolean {
+    return this.directorioItems()[0]?.route === ruta;
   }
 
   protected readonly user = computed<HeaderUser | null>(() => {
