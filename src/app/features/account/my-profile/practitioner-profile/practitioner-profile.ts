@@ -194,16 +194,22 @@ export class PractitionerProfile {
       // propia, así que siempre se arman; la del directorio pasa `null`.
       datosPersonales: {
         documento: perfil.nationalId ?? '',
-        departamento: perfil.issuerAdministrativeAreaConceptId
-          ? label(etiquetas, perfil.issuerAdministrativeAreaConceptId)
-          : '',
+        // Vacío y no «Sin registrar» cuando el catálogo no lo trae: es un
+        // SUFIJO del documento, así que sin etiqueta el renglón debe leerse
+        // «5414404» y no «5414404 Sin registrar», que dice que falta algo
+        // cuando el dato está.
+        departamento: etiquetaOpcional(
+          etiquetas,
+          perfil.issuerAdministrativeAreaConceptId,
+        ),
         fechaNacimiento: perfil.birthDate ?? null,
         edad: edadDe(perfil.birthDate),
         telefono: perfil.phone ?? '',
         correo: perfil.email ?? '',
-        domicilio: perfil.residenceMunicipalityConceptId
-          ? label(etiquetas, perfil.residenceMunicipalityConceptId)
-          : '',
+        domicilio: etiquetaOpcional(
+          etiquetas,
+          perfil.residenceMunicipalityConceptId,
+        ),
       },
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
@@ -295,6 +301,23 @@ export class PractitionerProfile {
       interpreta: idioma.clinicalInterpretationAllowed,
     }));
   }
+}
+
+
+/**
+ * La etiqueta de un concepto, o cadena vacía.
+ *
+ * Distinta de {@link label}: aquélla devuelve «Sin registrar» porque rellena
+ * un campo que debe decir algo. Ésta es para datos que se OMITEN cuando no hay
+ * — un sufijo, una fila que no se dibuja—, y ahí «Sin registrar» afirmaría que
+ * falta un dato que en realidad está, sólo que sin su etiqueta.
+ */
+function etiquetaOpcional(
+  etiquetas: ConceptLabels,
+  conceptId: string | undefined,
+): string {
+  if (conceptId === undefined) return '';
+  return etiquetas.get(conceptId)?.display ?? '';
 }
 
 /** La etiqueta de un concepto, o el texto de ausencia. Nunca el uuid. */
