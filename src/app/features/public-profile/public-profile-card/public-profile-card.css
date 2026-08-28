@@ -163,6 +163,66 @@
   block-size: 17px;
 }
 
+/* La acción secundaria de un lugar («Cómo llegar»): un enlace de ancla, no un
+   botón, porque lleva a una sección de esta misma página. Se le da la forma del
+   botón secundario a mano en vez de usar el átomo, que espera un `<button>`. */
+.perfil__accion-secundaria {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  min-block-size: var(--h-ctrl);
+  padding-inline: var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-marca);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.perfil__accion-secundaria:hover {
+  background: var(--sup-inset);
+}
+
+/* --- Datos clave --------------------------------------------------------- */
+
+/* Auto-fit y no un número de columnas: la tira lleva entre dos y cuatro datos
+   según lo que la organización haya publicado, y una grilla de cuatro fijas
+   dejaría dos huecos cuando publicó dos. */
+.perfil__datos-clave {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--e4);
+  margin: 0;
+  padding: var(--e4) var(--e5);
+  border-block-start: 1px solid var(--filete);
+  background: var(--sup-inset);
+}
+
+.perfil__dato dt {
+  margin: 0 0 2px;
+  color: var(--tinta-3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.perfil__dato dd {
+  margin: 0;
+  color: var(--tinta);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* --- Retrato de un lugar -------------------------------------------------- */
+
+/* Cuadrado de esquinas blandas y no un círculo: el círculo dice «persona», y
+   una clínica recortada en redondo se lee como el avatar de alguien. */
+.perfil__retrato--lugar {
+  border-radius: var(--r-card);
+}
+
 /* --- Secciones ----------------------------------------------------------- */
 
 /* Las secciones siguen siendo `app-card` del sistema —papel, filete, sombra y

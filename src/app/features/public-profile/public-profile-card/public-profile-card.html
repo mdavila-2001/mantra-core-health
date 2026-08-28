@@ -21,11 +21,25 @@
       }
 
       <div class="perfil__identidad">
+        <!-- Redondo para una persona, cuadrado con esquinas blandas para un
+             lugar: el círculo es la convención de «foto de alguien», y una
+             clínica no es alguien. -->
         @if (p.avatarUrl; as foto) {
-          <img class="perfil__retrato" [src]="foto" alt="" width="152" height="152" />
+          <img
+            class="perfil__retrato"
+            [class.perfil__retrato--lugar]="esLugar()"
+            [src]="foto"
+            alt=""
+            width="152"
+            height="152"
+          />
         } @else {
           <!-- Sin foto van las iniciales, no un roto ni un icono genérico. -->
-          <span class="perfil__retrato perfil__retrato--iniciales" aria-hidden="true">
+          <span
+            class="perfil__retrato perfil__retrato--iniciales"
+            [class.perfil__retrato--lugar]="esLugar()"
+            aria-hidden="true"
+          >
             {{ iniciales() }}
           </span>
         }
@@ -116,10 +130,46 @@
                 </svg>
                 Enviar mensaje
               </button>
+
+              <!-- Lo que se quiere hacer con un lugar es ir. Sólo con punto:
+                   un botón que no lleva a ningún lado es peor que ninguno. -->
+              @if (esLugar() && pines().length > 0) {
+                <a class="perfil__accion-secundaria" href="#donde-queda">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="M12 21.2s7-6 7-11.2a7 7 0 1 0-14 0c0 5.2 7 11.2 7 11.2z" />
+                    <circle cx="12" cy="9.8" r="2.6" />
+                  </svg>
+                  Cómo llegar
+                </a>
+              }
             </p>
           }
         </div>
       </div>
+
+      <!-- La tira de datos: lo que se mira antes de leer nada. Va en el
+           encabezado y no en una tarjeta aparte porque son los datos que
+           deciden si esta ficha sirve —dónde queda, si está verificada— y
+           bajarlos obligaría a desplazar para saberlo. -->
+      @if (esLugar()) {
+        <dl class="perfil__datos-clave">
+          @for (dato of datosClave(); track dato.rotulo) {
+            <div class="perfil__dato">
+              <dt>{{ dato.rotulo }}</dt>
+              <dd>{{ dato.valor }}</dd>
+            </div>
+          }
+        </dl>
+      }
     </header>
 
     <!-- Acerca de -->
@@ -178,8 +228,10 @@
     }
 
     @if (donde() || preview()) {
-      <section class="app-card perfil__seccion">
-        <div class="app-card__cabecera"><h2>Dónde atiende</h2></div>
+      <section class="app-card perfil__seccion" id="donde-queda">
+        <div class="app-card__cabecera">
+          <h2>{{ esLugar() ? 'Dónde queda' : 'Dónde atiende' }}</h2>
+        </div>
         @if (donde()) {
           <p class="perfil__donde">
             <svg
