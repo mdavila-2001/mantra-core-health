@@ -335,6 +335,24 @@ export class MyProfile {
     return partes.length > 0 ? partes.join(' · ') : 'Sin detalle';
   }
 
+  /**
+   * El enlace al mapa de una dirección, o `null` si no tiene coordenadas.
+   *
+   * El registro de procesos pide «Ubicación GPS» del domicilio (§1.9) y del
+   * trabajo (§1.11), «en el Google Maps de AloVida». `common.addresses` guarda
+   * `latitude`/`longitude` desde siempre y `OwnAddressDto` ya las devolvía: lo
+   * único que faltaba era dibujarlas.
+   *
+   * Va como enlace y no como mapa embebido a propósito: incrustar un mapa mete
+   * una clave de API y peticiones a un tercero en una pantalla que hoy no las
+   * necesita. El enlace resuelve lo mismo —«llevame ahí»— con una etiqueta.
+   */
+  protected enlaceAlMapa(dir: OwnAddress): string | null {
+    if (dir.latitude === undefined || dir.longitude === undefined) return null;
+    if (dir.latitude === null || dir.longitude === null) return null;
+    return `https://www.google.com/maps/search/?api=1&query=${dir.latitude},${dir.longitude}`;
+  }
+
   protected recargar(): void {
     this.cargar();
     this.cargarCasos();

@@ -159,6 +159,19 @@ export class PatientProfileEdit {
   protected readonly municipio = signal<string | null>(null);
 
   /**
+   * NIT, domicilio y dirección de trabajo.
+   *
+   * Los tres se podían declarar al registrarse y esta pantalla no los ofrecía:
+   * la ficha los mostraba y no había forma de corregirlos. Van como texto porque
+   * eso es lo que guarda el modelo — una dirección boliviana real («Av.
+   * Prolongación Beni #5100, esq. 6to anillo») no entra en un catálogo. El
+   * municipio sigue saliendo del árbol, aparte.
+   */
+  protected readonly nit = signal('');
+  protected readonly domicilio = signal('');
+  protected readonly direccionTrabajo = signal('');
+
+  /**
    * El teléfono va en un control reactivo y no en una señal como el resto.
    *
    * No es una inconsistencia: `app-phone-input` es un `ControlValueAccessor`
@@ -287,6 +300,9 @@ export class PatientProfileEdit {
     this.sexoAlNacer.set(perfil.sexAtBirth ?? null);
     this.ocupacionConceptId.set(perfil.occupationConceptId ?? null);
     this.municipio.set(perfil.residenceMunicipalityConceptId ?? null);
+    this.nit.set(perfil.taxId ?? '');
+    this.domicilio.set(perfil.homeAddress?.lines ?? '');
+    this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
 
     // Sin `emitEvent`: sembrar no es teclear, y el control ya queda validado.
     // El espejo se actualiza a mano, que es lo que ese evento haría. Se siembra
@@ -464,6 +480,22 @@ export class PatientProfileEdit {
     const municipio = this.municipio();
     if (municipio !== null && municipio !== original.residenceMunicipalityConceptId) {
       cambios.residenceMunicipalityConceptId = municipio;
+    }
+
+    // `textoCambiado` devuelve `''` cuando se vació y `undefined` cuando no se
+    // tocó, que es justo la distinción que el backend necesita: `''` quita el
+    // dato y ausente no lo toca.
+    const nit = textoCambiado(this.nit(), original.taxId);
+    if (nit !== undefined) {
+      cambios.taxId = nit;
+    }
+    const domicilio = textoCambiado(this.domicilio(), original.homeAddress?.lines);
+    if (domicilio !== undefined) {
+      cambios.homeAddressLines = domicilio;
+    }
+    const trabajo = textoCambiado(this.direccionTrabajo(), original.workAddress?.lines);
+    if (trabajo !== undefined) {
+      cambios.workAddressLines = trabajo;
     }
 
     // La ocupación **sí se puede borrar**: es el único concepto de esta pantalla

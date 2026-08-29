@@ -201,13 +201,66 @@ describe('MyProfile', () => {
       expect(texto).toContain('Tutor legal');
     });
 
-    it('lo que no declaró NO se dibuja: nada de listas de «Sin registrar»', () => {
+    /**
+     * **Lo que falta también se dibuja — en la ficha PROPIA.**
+     *
+     * Antes cada dato aparecía sólo si existía, con el argumento de que «una
+     * lista de Sin registrar no informa». En la ficha de otro es cierto. Acá no:
+     * quien mira es el dueño del dato, y ocultarle el renglón le impide
+     * distinguir «no lo tengo cargado» de «la app no me lo muestra». Con el
+     * perfil real de Justin se veían **cinco campos de doce**, y siete de los
+     * que faltaban estaban en la base.
+     *
+     * Las SECCIONES enteras sí siguen ocultándose cuando no hay nada: una tarjeta
+     * «Tus seguros» vacía es ruido, no un dato pendiente que el dueño pueda
+     * completar desde ahí.
+     */
+    it('en la ficha propia, lo no declarado se dibuja como «Sin registrar»', () => {
       const texto = conPerfil({});
 
-      expect(texto).not.toContain('Documento de identidad');
-      expect(texto).not.toContain('NIT');
+      expect(texto).toContain('Documento de identidad');
+      expect(texto).toContain('NIT');
+      expect(texto).toContain('Sin registrar');
+    });
+
+    it('pero una sección entera sin contenido no aparece', () => {
+      const texto = conPerfil({});
+
       expect(texto).not.toContain('Tus seguros');
       expect(texto).not.toContain('Contactos y tutores');
+    });
+
+    /** La API lo devolvía desde siempre y la ficha no lo dibujaba. */
+    it('el sexo al nacer se muestra: es dato clínico, no decorativo', () => {
+      const texto = conPerfil({ sexAtBirth: 'FEMALE' });
+
+      expect(texto).toContain('Sexo al nacer');
+    });
+
+    /**
+     * El registro de procesos pide la ubicación GPS del domicilio (§1.9) y del
+     * trabajo (§1.11). `common.addresses` guarda latitud y longitud desde
+     * siempre y `OwnAddressDto` ya las devolvía: faltaba dibujarlas.
+     */
+    it('una dirección con coordenadas ofrece el enlace al mapa', () => {
+      const texto = conPerfil({
+        homeAddress: {
+          lines: 'Av. Beni 5100',
+          latitude: '-17.78',
+          longitude: '-63.18',
+        } as never,
+      });
+
+      expect(texto).toContain('Ver en el mapa');
+    });
+
+    it('y una sin coordenadas no lo ofrece: no habría adónde llevar', () => {
+      const texto = conPerfil({
+        homeAddress: { lines: 'Av. Beni 5100' } as never,
+      });
+
+      expect(texto).toContain('Av. Beni 5100');
+      expect(texto).not.toContain('Ver en el mapa');
     });
 
     it('la edad se calcula de la fecha, no se pide al servidor', () => {

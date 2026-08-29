@@ -166,6 +166,40 @@
             />
           </app-form-field>
         }
+
+        <!-- Las dos direcciones y el NIT. Van acá y no en «Sobre vos» porque
+             responden a «cómo ubicarte», que es de lo que trata esta tarjeta.
+             El municipio de arriba sigue viajando aparte: sale del catálogo, y
+             estas son texto libre porque una dirección boliviana real —«Av.
+             Prolongación Beni #5100, esq. 6to anillo»— no entra en una lista. -->
+        <app-form-field
+          label="Domicilio"
+          hint="Calle, número y zona. Vaciarlo lo quita de tu ficha."
+        >
+          <app-input
+            data-testid="perfil-domicilio"
+            [(value)]="domicilio"
+            placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Dirección de trabajo"
+          hint="Dónde trabajás, si querés que figure."
+        >
+          <app-input
+            data-testid="perfil-trabajo"
+            [(value)]="direccionTrabajo"
+            placeholder="Calle Ayacucho #241, Casco Viejo"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="NIT"
+          hint="Para que las facturas salgan a tu nombre. Vaciarlo lo quita."
+        >
+          <app-input data-testid="perfil-nit" [(value)]="nit" placeholder="1234567" />
+        </app-form-field>
       </div>
     </app-card>
 
