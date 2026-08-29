@@ -72,10 +72,9 @@ import {
  *
  * ## Teclado
  *
- * Poner el foco **no** despliega nada: la lista se abre al escribir o con `↓`.
- * Abrir al enfocar parece amable y no lo es —tras elegir, el foco vuelve al
- * campo y el panel se reabriría solo sobre la opción recién elegida— y además
- * dispararía la consulta cada vez que alguien tabula por el formulario.
+ * El foco o el clic despliegan las opciones ya disponibles, igual que `↓`, sin
+ * disparar por sí solos una búsqueda. `minQueryLength` sigue gobernando cuándo
+ * el texto escrito se avisa al consumidor.
  *
  * `↓`/`↑` abren y recorren con vuelta, `Alt+↓` abre sin mover, `Alt+↑` cierra,
  * `Home`/`End` van a los extremos, `Enter` elige la opción activa, `Escape`
@@ -93,6 +92,8 @@ import {
   ],
   host: {
     class: 'reference-combobox',
+    '(focusin)': 'handleInputActivation($event)',
+    '(click)': 'handleInputActivation($event)',
     '(keydown)': 'handleKeydown($event)',
     '(focusout)': 'handleFocusOut($event)',
   },
@@ -105,6 +106,9 @@ export class ReferenceCombobox implements FormControlContext {
   });
 
   private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** Evita que el refoco posterior a elegir se interprete como una apertura nueva. */
+  private refocusingInternally = false;
 
   /**
    * `read: ElementRef` es obligatorio: una referencia de plantilla sobre un
@@ -338,6 +342,20 @@ export class ReferenceCombobox implements FormControlContext {
     }
   }
 
+  /** Abre al enfocar o pulsar el input, igual que la apertura con `↓`. */
+  protected handleInputActivation(event: Event): void {
+    if (
+      this.disabled() ||
+      !(event.target instanceof HTMLInputElement) ||
+      (event.type === 'focusin' && this.refocusingInternally)
+    ) {
+      return;
+    }
+
+    this.open.set(true);
+    this.activeIndex.set(-1);
+  }
+
   /**
    * El foco salió del componente. Se comprueba a dónde fue: al pulsar una opción
    * el foco viaja dentro del propio host, y cerrar ahí cancelaría la elección
@@ -482,6 +500,16 @@ export class ReferenceCombobox implements FormControlContext {
    */
   private focusInput(): void {
     const host = this.inputHost()?.nativeElement as HTMLElement | undefined;
-    host?.querySelector('input')?.focus();
+    const input = host?.querySelector('input');
+    if (!input || input.ownerDocument.activeElement === input) {
+      return;
+    }
+
+    this.refocusingInternally = true;
+    try {
+      input.focus();
+    } finally {
+      this.refocusingInternally = false;
+    }
   }
 }
