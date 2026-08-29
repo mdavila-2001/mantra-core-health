@@ -353,7 +353,31 @@ export class MyProfile {
     if (!this.debeLeerResumenDePaciente()) return;
 
     this.profiles.getOwnPatientProfile().subscribe({
-      next: (p) => this.perfil.set(p),
+      next: (p) => {
+        this.perfil.set(p);
+        const uuids = [
+          p.issuerAdministrativeAreaConceptId,
+          p.residenceMunicipalityConceptId,
+          p.occupationConceptId,
+          p.homeAddress?.municipalityConceptId,
+          p.workAddress?.municipalityConceptId,
+        ].filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+        if (uuids.length > 0) {
+          this.terminology.readConceptLabels(uuids).subscribe({
+            next: (nuevas) => {
+              this.etiquetas.update((prev) => {
+                const map = new Map(prev);
+                for (const [k, v] of nuevas.entries()) {
+                  map.set(k, v);
+                }
+                return map;
+              });
+            },
+            error: () => {},
+          });
+        }
+      },
       error: () => this.perfil.set(null),
     });
   }
