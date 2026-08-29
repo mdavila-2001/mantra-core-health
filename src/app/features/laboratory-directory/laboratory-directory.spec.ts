@@ -79,6 +79,14 @@ describe('LaboratoryDirectory', () => {
     return internal<() => readonly LaboratoryCategoryGroup[]>('groups')();
   }
 
+  /** Las líneas de contexto que la tarjeta llegó a dibujar, no las mapeadas. */
+  function lineasDibujadas(): string[] {
+    const tarjeta = fixture.nativeElement as HTMLElement;
+    return [...tarjeta.querySelectorAll<HTMLElement>('.tarjeta-resultado__meta span')].map(
+      (linea) => linea.textContent?.trim() ?? '',
+    );
+  }
+
   /** Responde la única búsqueda pendiente con una página. */
   function responder(items: readonly unknown[], total = items.length): void {
     http
@@ -136,6 +144,29 @@ describe('LaboratoryDirectory', () => {
 
     const textos = (groups()[0].resultados[0].meta ?? []).map((entrada) => entrada.text);
     expect(textos).toContain('4,5 · 12 reseñas');
+  });
+
+  it('shows the entry price as "desde" when the centre publishes one', () => {
+    mount();
+    responder([LAB]);
+    fixture.detectChanges();
+
+    // Se afirma sobre lo dibujado y no sobre lo mapeado: la tarjeta corta las
+    // líneas de contexto en `maximoDeMeta` (dos, `ResultCard`), así que una
+    // entrada que el mapper produce al final nunca llega a la pantalla.
+    // «Desde» y no el importe a secas: es el menor de la tarifa pública, y sin
+    // esa palabra prometería que cualquier estudio del centro cuesta eso.
+    expect(lineasDibujadas()).toContain('desde Bs 90');
+  });
+
+  it('says nothing about price when the centre published no tariff', () => {
+    mount();
+    responder([IMAGING]);
+
+    const textos = (groups()[0].resultados[0].meta ?? []).map((entrada) => entrada.text);
+    // Ni «Bs 0» ni «consultar»: un centro sin tarifa publicada no es un centro
+    // gratis, y rellenar el hueco haría ver iguales dos situaciones distintas.
+    expect(textos.join(' ')).not.toContain('Bs');
   });
 
   it('uses the explicit empty state when no unit is publishable', () => {
