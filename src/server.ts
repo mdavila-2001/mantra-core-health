@@ -8,6 +8,7 @@ import express from 'express';
 import { join } from 'node:path';
 
 import { allowedHostsFromEnv } from './server/allowed-hosts';
+import { artefactosInexistentesDan404 } from './server/build-assets';
 import { collectInlineScriptHashes, securityHeaders } from './server/security-headers';
 import { OTEL_TRACES_PATH, otelGateway } from './server/telemetry/otel-gateway';
 import { serverTelemetryConfig } from './server/telemetry/server-telemetry.config';
@@ -136,6 +137,20 @@ app.use(
 );
 
 /**
+ * Un artefacto de la construcción que no existe **es un 404**.
+ *
+ * Va pegado a `express.static` a propósito: lo que llega acá es lo que el
+ * servidor de estáticos no encontró, y sin esta regla seguía hasta el motor de
+ * Angular, que devolvía la aplicación entera con un 200. El navegador intentaba
+ * parsear ese HTML como módulo y se quejaba de
+ * `Failed to fetch dynamically imported module` — un mensaje que manda a buscar
+ * el problema al lado del cliente, donde no está.
+ *
+ * Ver `server/build-assets.ts`.
+ */
+app.use(artefactosInexistentesDan404());
+
+/**
  * Traza de la petición, **después** de los estáticos.
  *
  * El orden es la decisión: un `.js` o una tipografía servidos por
@@ -151,6 +166,21 @@ if (telemetryHandle !== null) {
  * Handle all other requests by rendering the Angular application.
  */
 app.use((req, res, next) => {
+  /**
+   * El HTML **no se cachea**; los artefactos con hash en el nombre, un año.
+   *
+   * Sin esta cabecera el navegador aplica su caché heurística sobre el
+   * `index.html`, así que después de cada redespliegue el tester seguía
+   * ejecutando el `main-*.js` de la versión anterior y pidiendo `chunk-*.js`
+   * que ya no existen. La aplicación quedaba rota hasta un recargado forzado,
+   * y el único síntoma era un error de importación de módulo.
+   *
+   * `no-cache` no significa «no guardar»: el navegador se queda la copia y la
+   * **revalida** en cada visita, así que sigue habiendo 304 y no se paga la
+   * descarga de nuevo. Lo que se elimina es servir HTML viejo sin preguntar.
+   */
+  res.setHeader('Cache-Control', 'no-cache');
+
   angularApp
     .handle(req)
     .then((response) =>
