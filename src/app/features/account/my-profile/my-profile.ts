@@ -418,7 +418,10 @@ export class MyProfile {
                 return map;
               });
             },
-            error: () => {},
+            // Sin etiquetas se muestran los datos que ya llegaron: que el
+            // servidor de terminología no conteste no puede dejar la tarjeta
+            // del perfil en blanco.
+            error: () => this.etiquetas.update((prev) => prev),
           });
         }
       },

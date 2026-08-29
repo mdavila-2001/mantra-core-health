@@ -6,7 +6,7 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -22,7 +22,10 @@ import {
   BoEmployersCatalog,
   CODIGO_EMPRESA_OTRA,
 } from '../../../core/data-access/terminology/bo-employers.service';
-import { BoOccupationsCatalog } from '../../../core/data-access/terminology/bo-occupations.service';
+import {
+  BoOccupationsCatalog,
+  CODIGO_OCUPACION_OTRA,
+} from '../../../core/data-access/terminology/bo-occupations.service';
 import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import {
@@ -654,6 +657,9 @@ export class RegisterPatient {
       // propio: el campo entero es opcional, y exigirlo convertiría la salida
       // de la lista en una trampa.
       workEmployerFreeText: new FormControl('', { nonNullable: true }),
+      // El oficio escrito a mano, para quien elige «Otra ocupación». La base lo
+      // guarda en `profiles.persons.occupation_free_text`, al lado del concepto.
+      occupationFreeText: new FormControl('', { nonNullable: true }),
       // El tutor o persona autorizada. El teléfono usa el mismo validador que el
       // propio: un número incompleto no sirve para avisarle a nadie.
       guardianName: new FormControl('', { nonNullable: true }),
@@ -842,7 +848,7 @@ export class RegisterPatient {
     [],
   );
   readonly catalogoEspecialidadesCaido = signal(false);
-  readonly opcionesOcupacion = signal<readonly SelectOption<string>[]>([]);
+  readonly opcionesOcupacion = signal<readonly (SelectOption<string> & { code: string })[]>([]);
   readonly catalogoOcupacionesCaido = signal(false);
 
   /**
@@ -953,7 +959,11 @@ export class RegisterPatient {
           {
             key: 'birthDate',
             label: 'Fecha de nacimiento (opcional)',
-            hint: 'Sirve para calcular dosis y valores de referencia.',
+            // La edad sale sola de la fecha —el registro del cliente la pide
+            // así (módulo Paciente §1.5)— y se dice acá mismo, debajo del
+            // campo: es la forma de que quien la escribió vea si se equivocó de
+            // año antes de seguir.
+            hint: this.edadEnPalabras() ?? 'Sirve para calcular dosis y valores de referencia.',
             control: 'date',
             maxDate: 'today',
             minDate: new Date(1900, 0, 1),
@@ -968,6 +978,7 @@ export class RegisterPatient {
             testId: 'registro-genero',
           },
           this.campoOcupacion(),
+          ...this.campoOtraOcupacion(),
         ],
       },
       {
@@ -1409,6 +1420,28 @@ export class RegisterPatient {
    * pantalla proyecta acá el combobox —y, si el catálogo no cargó, el aviso con
    * «Reintentar»—.
    */
+  /**
+   * El «¿cuál?» de la ocupación, que sólo existe si se eligió «Otra ocupación».
+   *
+   * Es el «dejar uno al final libre para que él pueda detallar la ocupación que
+   * no encontró» del registro del cliente (módulo Paciente §1.4.1). Mismo patrón
+   * que {@link campoOtraEmpresa}: entra y sale de la lista de campos en vez de
+   * esconderse con CSS, porque un campo escondido igual se tabula.
+   */
+  private campoOtraOcupacion(): readonly CampoDeFormulario[] {
+    if (!this.ocupacionEsOtra()) return [];
+    return [
+      {
+        key: 'occupationFreeText',
+        label: '¿Cuál?',
+        hint: 'Escribí tu oficio como lo dirías vos.',
+        control: 'text',
+        placeholder: 'Apicultor',
+        testId: 'registro-ocupacion-otra',
+      },
+    ];
+  }
+
   private campoEmpresa(): CampoDeFormulario {
     return {
       key: 'workEmployerConceptId',
@@ -1508,7 +1541,66 @@ export class RegisterPatient {
    */
   elegirOcupacion(opcion: ReferenceOption | null): void {
     this.formPaciente.controls.occupationConceptId.setValue(opcion?.value ?? null);
+    // El signal es el que ven las páginas: un `FormControl` no avisa a un
+    // `computed`, y de él depende que aparezca el «¿cuál?» de más abajo.
+    this.ocupacionSeleccionada.set(opcion?.value ?? null);
+    // Mismo criterio que la empresa: al dejar de ser «Otra ocupación» se borra
+    // lo escrito, para que no viaje un oficio a mano que ya no describe a nadie.
+    if (!this.ocupacionEsOtra()) {
+      this.formPaciente.controls.occupationFreeText.setValue('');
+    }
   }
+
+  /** La ocupación elegida, en un signal: ver {@link elegirOcupacion}. */
+  readonly ocupacionSeleccionada = signal<string | null>(null);
+
+  /* ---- Edad ---------------------------------------------------------------- */
+
+  /**
+   * La fecha de nacimiento como signal.
+   *
+   * El motor la escribe en el `FormControl` —es su puente con
+   * `app-date-picker`—, y un `FormControl` no despierta a un `computed`: sin
+   * esto, la edad se calcularía una vez y no volvería a mirarse.
+   */
+  private readonly fechaDeNacimiento = toSignal(this.formPaciente.controls.birthDate.valueChanges, {
+    initialValue: null,
+  });
+
+  /**
+   * La edad que sale de la fecha, dicha en palabras, o `null` si no hay fecha.
+   *
+   * «La app tiene que arrojar de manera automática la edad del paciente con la
+   * fecha de nacimiento ingresada» (registro del cliente, módulo Paciente §1.5).
+   * Se cuenta por cumpleaños, no dividiendo días: quien nació el 30 de agosto
+   * tiene un año menos hasta ese día, y un año más ese mismo día.
+   */
+  readonly edadEnPalabras = computed<string | null>(() => {
+    const fecha = this.fechaDeNacimiento();
+    if (!(fecha instanceof Date) || Number.isNaN(fecha.getTime())) return null;
+
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - fecha.getFullYear();
+    const cumplioEsteAno =
+      hoy.getMonth() > fecha.getMonth() ||
+      (hoy.getMonth() === fecha.getMonth() && hoy.getDate() >= fecha.getDate());
+    if (!cumplioEsteAno) edad -= 1;
+
+    if (edad < 0 || edad > 130) return null;
+    return edad === 1 ? 'Tenés 1 año.' : `Tenés ${edad} años.`;
+  });
+
+  /**
+   * Si la ocupación elegida es «Otra», la salida del catálogo.
+   *
+   * Es lo que destraba el «¿cuál?» escrito a mano que pide el registro del
+   * cliente (módulo Paciente §1.4.1) para la ocupación que no está en la lista.
+   */
+  readonly ocupacionEsOtra = computed(() => {
+    const id = this.ocupacionSeleccionada();
+    if (id === null) return false;
+    return this.opcionesOcupacion().find((o) => o.value === id)?.code === CODIGO_OCUPACION_OTRA;
+  });
 
   /**
    * Los nombres que se agregaron después del tercero.
@@ -1985,8 +2077,14 @@ export class RegisterPatient {
     this.ocupaciones.listar().subscribe({
       next: (opciones) => {
         this.catalogoOcupacionesCaido.set(false);
+        // El `code` viaja por lo mismo que en las empresas: es lo que
+        // identifica a la salida «Otra ocupación» sin atarse al texto visible.
         this.opcionesOcupacion.set(
-          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+          opciones.map((opcion) => ({
+            value: opcion.conceptId,
+            label: opcion.display,
+            code: opcion.code,
+          })),
         );
       },
       error: () => {
@@ -2198,6 +2296,7 @@ export class RegisterPatient {
     const seguroPrivado = raw.privateInsurancePlanId;
     const seguroPublico = raw.publicInsurancePlanId;
     const nit = raw.billingTaxId.trim();
+    const otraOcupacion = this.ocupacionEsOtra() ? raw.occupationFreeText.trim() : '';
 
     return {
       nationalId: documento,
@@ -2220,7 +2319,13 @@ export class RegisterPatient {
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(telefono === '' ? {} : { phone: telefono }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
-      ...(ocupacion === null ? {} : { occupationConceptId: ocupacion }),
+      // Con «Otra ocupación» viaja el oficio escrito y NO el concepto: el
+      // backend descarta el texto libre en cuanto recibe un concepto
+      // (`occupationFreeText: dto.occupationConceptId ? undefined : …`), y de
+      // los dos datos el que dice algo es el que la persona escribió — «Otra»
+      // no describe ningún oficio. Sin «Otra», viaja el concepto y nada más.
+      ...(ocupacion === null || this.ocupacionEsOtra() ? {} : { occupationConceptId: ocupacion }),
+      ...(otraOcupacion === '' ? {} : { occupationFreeText: otraOcupacion }),
       // Domicilio: calle y coordenadas, cada una por su cuenta. La calle sin
       // municipio es un dato válido —mucha gente sabe su dirección y no el
       // nombre de su municipio—, así que no se condicionan entre sí.
