@@ -349,6 +349,20 @@
               (pasoVisible)="recordarPaso($event)"
               (enviado)="submit()"
             >
+              <ng-template appCampoPersonalizado="professionalTitle">
+                <app-reference-combobox
+                  data-testid="registro-pro-titulo"
+                  label="Título profesional"
+                  placeholder="Buscá tu título profesional…"
+                  emptyMessage="Ningún título profesional coincide."
+                  [options]="titulosProfesionalesFiltrados()"
+                  [selected]="tituloProfesionalSeleccionado()"
+                  [minQueryLength]="0"
+                  (searched)="busquedaTituloProfesional.set($event)"
+                  (selectionChange)="elegirTituloProfesional($event)"
+                />
+              </ng-template>
+
               <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
                 <p class="registro__catalogo-caido">
                   No pudimos traer el catálogo de departamentos.

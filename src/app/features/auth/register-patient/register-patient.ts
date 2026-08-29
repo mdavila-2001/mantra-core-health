@@ -1255,10 +1255,7 @@ export class RegisterPatient {
             key: 'professionalTitle',
             label: 'Título profesional (opcional)',
             hint: 'Cómo aparecés en tu ficha. Al elegirlo, la lista de especialidades y el colegio se acomodan solos.',
-            control: 'select',
-            options: OPCIONES_TITULO_PROFESIONAL,
-            placeholder: 'Sin especificar',
-            testId: 'registro-pro-titulo',
+            control: 'custom',
           },
           {
             key: 'phone',
@@ -1505,6 +1502,34 @@ export class RegisterPatient {
           placeholder: 'No tengo',
           testId: esPrivado ? 'registro-seguro-privado' : 'registro-seguro-publico',
         };
+  }
+
+  /* ---- Título profesional ---------------------------------------------- */
+
+  /** Las doce opciones locales, filtradas por lo escrito en la lupa. */
+  readonly titulosProfesionalesFiltrados = computed<readonly ReferenceOption[]>(() => {
+    const busqueda = this.busquedaTituloProfesional().trim().toLowerCase();
+    return busqueda
+      ? OPCIONES_TITULO_PROFESIONAL.filter((opcion) =>
+          opcion.label.toLowerCase().includes(busqueda),
+        )
+      : OPCIONES_TITULO_PROFESIONAL;
+  });
+
+  /** La opción elegida, para restaurar su rótulo al volver a este paso. */
+  readonly tituloProfesionalSeleccionado = computed<ReferenceOption | null>(() => {
+    const valor = this.tituloProfesionalElegido();
+    return OPCIONES_TITULO_PROFESIONAL.find((opcion) => opcion.value === valor) ?? null;
+  });
+
+  /** Lo escrito en la lupa; nunca reemplaza al valor del `FormControl`. */
+  readonly busquedaTituloProfesional = signal('');
+
+  /**
+   * Escribe la elección en el mismo control que gobierna colegio y especialidades.
+   */
+  elegirTituloProfesional(opcion: ReferenceOption | null): void {
+    this.formProfesional.controls.professionalTitle.setValue(opcion?.value ?? '');
   }
 
   /**

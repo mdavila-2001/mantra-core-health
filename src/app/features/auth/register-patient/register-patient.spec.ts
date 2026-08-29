@@ -995,6 +995,25 @@ describe('RegisterPatient', () => {
       }
     });
 
+    it('proyecta el título profesional como campo custom', () => {
+      const campo = component
+        .paginasProfesional()
+        .flatMap((pagina) => pagina.campos)
+        .find((actual) => actual.key === 'professionalTitle');
+
+      expect(campo?.control).toBe('custom');
+    });
+
+    it('ofrece los doce títulos y los filtra por lo escrito en la lupa', () => {
+      expect(component.titulosProfesionalesFiltrados()).toHaveLength(12);
+
+      component.busquedaTituloProfesional.set('odontólogo');
+
+      expect(component.titulosProfesionalesFiltrados().map((opcion) => opcion.label)).toEqual([
+        'Odontólogo / Odontóloga',
+      ]);
+    });
+
     /**
      * Las especialidades EN el alta — registro del cliente, módulo Médico §1.4.2
      * y §1.4.4.
@@ -1048,7 +1067,7 @@ describe('RegisterPatient', () => {
        * suyas al final. El stakeholder lo reportó como «no están las
        * especialidades de odontología».
        */
-      it('filtra aunque las opciones ya se hayan leído antes de elegir profesión', () => {
+      it('el combobox escribe el FormControl y conserva el filtro y colegio automáticos', () => {
         catalogoDeEspecialidades();
         // Se leen una vez, como al pintar el paso: acá el título está vacío y
         // corresponde ofrecer todo.
@@ -1058,12 +1077,21 @@ describe('RegisterPatient', () => {
           'e-endo',
           'e-orto',
         ]);
+        component.formProfesional.controls.specialtyPrimary.setValue('e-cardio');
 
-        component.formProfesional.controls.professionalTitle.setValue(
-          'Odontólogo / Odontóloga',
-        );
+        component.elegirTituloProfesional({
+          value: 'Odontólogo / Odontóloga',
+          label: 'Odontólogo / Odontóloga',
+        });
         fixture.detectChanges();
 
+        expect(component.formProfesional.controls.professionalTitle.value).toBe(
+          'Odontólogo / Odontóloga',
+        );
+        expect(component.formProfesional.controls.regulatoryAuthority.value).toBe(
+          'Colegio de Odontólogos de Bolivia',
+        );
+        expect(component.formProfesional.controls.specialtyPrimary.value).toBe('');
         expect(opcionesDeLaPagina().map((o) => o.value)).toEqual(['e-endo', 'e-orto']);
       });
 
