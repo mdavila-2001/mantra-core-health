@@ -615,6 +615,7 @@ export class RegisterPatient {
       // nombres compuestos y con los apellidos de más de una palabra.
       name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       middleName: new FormControl('', { nonNullable: true }),
+      thirdName: new FormControl('', { nonNullable: true }),
       lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       motherLastName: new FormControl('', { nonNullable: true }),
       password: new FormControl('', {
@@ -884,13 +885,12 @@ export class RegisterPatient {
         titulo: '¿Cómo te llamás?',
         clave: 'nombre',
         hint: 'Como figura en tu documento. Si no tenés alguno, dejalo vacío.',
-        // Los cuatro de a dos por renglón: son las cuatro partes de UN nombre,
-        // y cada una entra en media línea. En columna, la página del nombre era
-        // la más larga del alta sin pedir nada largo.
+        // Las casillas de nombre y apellidos: primer nombre, segundo nombre,
+        // tercer/otros nombres opcional, y los dos apellidos.
         campos: [
           {
             key: 'name',
-            label: 'Nombre',
+            label: 'Primer nombre',
             control: 'text',
             required: true,
             autocomplete: 'given-name',
@@ -908,6 +908,15 @@ export class RegisterPatient {
             placeholder: 'Andrea',
             testId: 'registro-segundo-nombre',
             ancho: 'mitad',
+          },
+          {
+            key: 'thirdName',
+            label: 'Otros nombres (opcional)',
+            hint: 'Si tenés más nombres, podés escribirlos acá.',
+            control: 'text',
+            placeholder: 'María',
+            testId: 'registro-tercer-nombre',
+            ancho: 'completo',
           },
           {
             key: 'lastName',
@@ -2080,6 +2089,8 @@ export class RegisterPatient {
     const raw = this.formPaciente.getRawValue();
     const correo = raw.email.trim();
     const segundoNombre = raw.middleName.trim();
+    const tercerNombre = raw.thirdName.trim();
+    const nombresAdicionales = [segundoNombre, tercerNombre].filter(Boolean).join(' ');
     const apellidoMaterno = raw.motherLastName.trim();
     const documento = raw.nationalId.trim();
     const telefono = raw.phone.trim();
@@ -2104,7 +2115,7 @@ export class RegisterPatient {
       nationalId: documento,
       name: raw.name.trim(),
       lastName: raw.lastName.trim(),
-      ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
+      ...(nombresAdicionales === '' ? {} : { middleName: nombresAdicionales }),
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       password: raw.password,
       // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,

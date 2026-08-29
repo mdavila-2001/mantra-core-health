@@ -289,6 +289,7 @@ describe('RegisterPatient', () => {
       Record<
         | 'email'
         | 'middleName'
+        | 'thirdName'
         | 'motherLastName'
         | 'homeAddressLines'
         | 'workEmployerFreeText'
@@ -303,6 +304,7 @@ describe('RegisterPatient', () => {
       nationalId: '1234567',
       name: 'Ana',
       middleName: extra.middleName ?? '',
+      thirdName: extra.thirdName ?? '',
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
       password: 'secreto12',
@@ -478,6 +480,23 @@ describe('RegisterPatient', () => {
       nationalId: '1234567',
       name: 'Ana',
       middleName: 'María',
+      lastName: 'Paz',
+      motherLastName: 'Quiroga',
+      password: 'secreto12',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  it('manda el tercer nombre concatenado en middleName cuando se completó', () => {
+    completar({ middleName: 'María', thirdName: 'Eugenia', motherLastName: 'Quiroga' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toEqual({
+      nationalId: '1234567',
+      name: 'Ana',
+      middleName: 'María Eugenia',
       lastName: 'Paz',
       motherLastName: 'Quiroga',
       password: 'secreto12',
