@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { Component } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
@@ -259,6 +261,52 @@ describe('PhoneInput', () => {
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('[role="listbox"]')).toBeNull();
+    });
+  });
+  /**
+   * El desplegable de países se veía lavado en modo oscuro: pintaba su fondo
+   * con `--surface-default` y `--bg-elevated`, que no existen en el sistema, y
+   * el `#fff` del final del `var()` no cambia con el tema. La tinta sí cambia
+   * —`--text-primary` es marfil en oscuro—, así que quedaba marfil sobre
+   * blanco. La lista tiene que pintarse con los tokens que el tema redefine.
+   */
+  describe('el desplegable sigue al tema', () => {
+    const CSS = 'src/app/shared/components/molecules/phone-input/phone-input.css';
+
+    /** Las declaraciones, sin los comentarios que nombran tokens de paso. */
+    function declaraciones(): string {
+      return readFileSync(CSS, 'utf8')
+        .split('\n')
+        .filter((linea) => {
+          const limpia = linea.trimStart();
+          return !limpia.startsWith('/*') && !limpia.startsWith('*');
+        })
+        .join('\n');
+    }
+
+    it('no nombra tokens que el sistema no define', () => {
+      const css = declaraciones();
+
+      for (const inexistente of [
+        '--surface-default',
+        '--bg-elevated',
+        '--bg-subtle',
+        '--radius-md',
+        '--radius-sm',
+        '--color-primary',
+        '--fw-semibold',
+      ]) {
+        expect(css).not.toContain(inexistente);
+      }
+    });
+
+    it('no codifica colores: los pone el tema', () => {
+      const css = declaraciones();
+
+      expect(css).toContain('background: var(--bg-surface)');
+      expect(css).toContain('background: var(--bg-hover)');
+      // Ni blancos ni negros fijos: en oscuro no se mueven con la superficie.
+      expect(css).not.toMatch(/#fff|#FFF|rgb\(0 0 0/);
     });
   });
 });
