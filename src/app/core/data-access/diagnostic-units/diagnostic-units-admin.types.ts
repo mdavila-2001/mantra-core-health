@@ -151,3 +151,112 @@ export interface DiagnosticUnitAdminDetail extends DiagnosticUnitAdminItem {
   readonly accreditations: readonly DiagnosticUnitAdminAccreditation[];
   readonly staff: readonly DiagnosticUnitAdminStaff[];
 }
+
+/* ============================================================================
+    Cuerpos y respuestas de lo que la consola escribe: publicar la unidad,
+    sumar y retirar estudios, crear tarifarios y versionar precios.
+
+    Los cuerpos declaran **sólo los campos que esta consola manda**, con el
+    nombre exacto del DTO de la API. Copiar el DTO entero tentaría a rellenar
+    campos que ninguna pantalla llena, y un campo que nadie escribe es un
+    contrato que nadie mantiene.
+
+    Las respuestas devuelven los estados como **concept id crudo** —un uuid— y
+    no como `DiagnosticConcept` con su etiqueta: es lo que emiten los DTO de
+    escritura de la API. Por eso ninguna de estas respuestas se pinta en
+    pantalla; lo que se muestra después de escribir es la ficha recargada, que
+    sí trae los conceptos resueltos.
+    ========================================================================== */
+
+/** Cuerpo de `POST /diagnostic-units/{unitId}/study-offerings`. */
+export interface CreateStudyOfferingInput {
+  /** Código del estudio dentro de la unidad. Hasta 60 caracteres. */
+  readonly studyCode: string;
+  /** El estudio del catálogo, como `conceptId`. Nunca su etiqueta. */
+  readonly studyConceptId: string;
+  /** Nombre visible del estudio. Hasta 200 caracteres. */
+  readonly displayName: string;
+  readonly diagnosticUnitSiteId?: string;
+  readonly preparationInstructions?: string;
+  readonly requiresMedicalOrder?: boolean;
+  readonly homeCollectionEligible?: boolean;
+}
+
+/** Cuerpo de `POST /diagnostic-units/{unitId}/price-schedules`. */
+export interface CreatePriceScheduleInput {
+  /** Código único del cronograma en la unidad. Hasta 60 caracteres. */
+  readonly code: string;
+  readonly diagnosticUnitSiteId?: string;
+  /** Fecha y hora ISO. */
+  readonly validFrom?: string;
+  /** Fecha y hora ISO. */
+  readonly validTo?: string;
+  /** Si el directorio público puede mostrar sus precios. */
+  readonly publicVisibility?: boolean;
+}
+
+/**
+ * Cuerpo de `POST /price-schedules/{scheduleId}/study-prices`.
+ *
+ * Los importes viajan como **cadena numérica** y no como `number`: la API los
+ * valida con `IsNumberString` y los persiste como decimal exacto. Pasarlos por
+ * un `number` de JavaScript metería el redondeo binario en un importe.
+ */
+export interface CreateStudyPriceInput {
+  readonly diagnosticStudyOfferingId: string;
+  readonly baseAmount: string;
+  readonly patientAmount?: string;
+  readonly insurerAmount?: string;
+  /** Entre 0 y 1, como cadena. */
+  readonly discountFactor?: string;
+  /** Fecha y hora ISO. */
+  readonly effectiveFrom?: string;
+}
+
+/** Respuesta de `POST /diagnostic-units/{unitId}/verify-and-publish`. */
+export interface DiagnosticUnitVerificationResult {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  /** Concept id del estado de verificación tras publicar. */
+  readonly verificationStatus: string;
+  /** Concept id del estado de la unidad. */
+  readonly status: string;
+  /** Perfil público proyectado, si la unidad no tenía uno. */
+  readonly publicProfileId?: string;
+  readonly siteCount: number;
+  readonly accreditationCount: number;
+}
+
+/** Respuesta de `POST /diagnostic-units/{unitId}/study-offerings`. */
+export interface StudyOfferingCreated {
+  readonly id: string;
+  readonly studyCode: string;
+  /** Concept id del estado de la oferta. */
+  readonly status: string;
+  readonly componentCount: number;
+}
+
+/** Respuesta de `POST /diagnostic-units/{unitId}/price-schedules`. */
+export interface PriceScheduleCreated {
+  readonly id: string;
+  readonly code: string;
+  /** Concept id del estado del cronograma. */
+  readonly status: string;
+}
+
+/** Respuesta de `POST /price-schedules/{scheduleId}/study-prices`. */
+export interface StudyPriceCreated {
+  readonly id: string;
+  /** El precio es append-only: cada cambio es una versión nueva. */
+  readonly versionNumber: number;
+  /** Concept id del estado del precio. */
+  readonly status: string;
+  /** Fecha y hora ISO desde la que rige. */
+  readonly effectiveFrom: string;
+}
+
+/** Resultado de las operaciones que sólo cambian un estado (cerrar, retirar). */
+export interface AdminOperationResult {
+  readonly ok: boolean;
+}

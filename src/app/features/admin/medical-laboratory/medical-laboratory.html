@@ -68,6 +68,31 @@
             </dd>
           </div>
         </dl>
+
+        <!-- El botón sólo existe mientras haya algo que publicar: ofrecerlo
+             sobre una unidad ya publicada sería una acción sin efecto. -->
+        @if (!detalle.publiclyListed) {
+          <div class="laboratorio__publicar">
+            <p class="laboratorio__secundario">
+              Mientras no se publique, ningún paciente puede encontrar este
+              laboratorio ni reservar en él.
+            </p>
+            <!-- `isLoading` pone el `aria-busy` y corta el click: mientras
+                 publica, insistir no manda una segunda petición. -->
+            <button
+              app-button
+              type="button"
+              variant="primary"
+              [isLoading]="publicando()"
+              (clicked)="publicar()"
+            >
+              Verificar y publicar
+            </button>
+            @if (errorAlPublicar(); as fallo) {
+              <p class="laboratorio__error" role="alert">{{ fallo }}</p>
+            }
+          </div>
+        }
       </section>
     }
 
@@ -138,7 +163,7 @@
   }
 }
 
-<app-tabs>
+<app-tabs [(selectedIndex)]="pestanaActiva">
   <app-tab label="Sucursales">
     <app-data-table
       [state]="sedes()"
@@ -160,13 +185,289 @@
   </app-tab>
 
   <app-tab label="Estudios">
-    <app-data-table
-      [state]="estudios()"
-      [columns]="columnasDeEstudio()"
-      [trackBy]="porId"
-      caption="Catálogo de estudios con sus precios"
-      (retry)="recargar()"
-    />
+    <div class="laboratorio__panel">
+      <div class="laboratorio__acciones-panel">
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          size="sm"
+          [attr.aria-expanded]="formularioDeOfertaAbierto()"
+          (clicked)="alternarFormularioDeOferta()"
+        >
+          {{ formularioDeOfertaAbierto() ? 'Cancelar' : 'Nueva oferta de estudio' }}
+        </button>
+      </div>
+
+      @if (formularioDeOfertaAbierto()) {
+        <form class="laboratorio__formulario" (submit)="$event.preventDefault()">
+          <h3 class="laboratorio__formulario-titulo">Nueva oferta de estudio</h3>
+
+          <!-- Sin catálogo el campo queda deshabilitado y se dice por qué. NO se
+               cae a texto libre: un concepto tecleado a mano es un dato que la
+               API rechaza, o —peor— un identificador de otro conjunto que
+               acepta. -->
+          @if (catalogoFallo()) {
+            <app-alert tone="warning" title="El catálogo de estudios no está disponible">
+              Sin él no se puede decir qué estudio es este, así que la oferta no
+              se puede publicar todavía. Volvé a intentarlo más tarde.
+            </app-alert>
+          }
+
+          <app-form-field
+            label="Estudio"
+            [required]="true"
+            hint="Sale del catálogo clínico: es el mismo con el que un médico pide el estudio."
+          >
+            <app-select
+              [options]="opcionesDeEstudio()"
+              [value]="estudioElegido()"
+              [disabled]="catalogoCargando() || catalogoFallo()"
+              [placeholder]="catalogoCargando() ? 'Cargando el catálogo…' : 'Elegí el estudio'"
+              (valueChange)="elegirEstudio($event)"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Código en la unidad"
+            [required]="true"
+            hint="Con el que el laboratorio lo nombra puertas adentro. Hasta 60 caracteres."
+          >
+            <app-input [(value)]="codigoDelEstudio" placeholder="HEM" />
+          </app-form-field>
+
+          <app-form-field
+            label="Nombre visible"
+            [required]="true"
+            hint="El que lee el paciente en el directorio. Se propone el del catálogo y se puede cambiar."
+          >
+            <app-input [(value)]="nombreVisible" placeholder="Hemograma completo" />
+          </app-form-field>
+
+          @if (opcionesDeSede().length > 0) {
+            <app-form-field
+              label="Sucursal"
+              hint="Dejalo sin elegir si el estudio se hace en todas."
+            >
+              <app-select
+                [options]="opcionesDeSede()"
+                [value]="sedeDeLaOferta()"
+                placeholder="En todas las sucursales"
+                (valueChange)="sedeDeLaOferta.set($event)"
+              />
+            </app-form-field>
+          }
+
+          <div class="laboratorio__casillas">
+            <app-checkbox [(checked)]="requiereOrdenMedica" label="Requiere orden médica" />
+            <app-checkbox [(checked)]="tomaADomicilio" label="Se puede tomar a domicilio" />
+          </div>
+
+          <app-form-field
+            label="Instrucciones de preparación"
+            hint="Lo que el paciente tiene que hacer antes: ayuno, suspender un medicamento, traer algo."
+          >
+            <app-textarea
+              [(value)]="instruccionesDePreparacion"
+              placeholder="Ayuno de 8 horas."
+              [rows]="3"
+            />
+          </app-form-field>
+
+          @if (errorDeLaOferta(); as fallo) {
+            <p class="laboratorio__error" role="alert">{{ fallo }}</p>
+          }
+
+          <app-form-actions
+            [pending]="guardandoOferta()"
+            [disabled]="!ofertaEsValida()"
+            submitLabel="Publicar el estudio"
+            cancelLabel="Cancelar"
+            (submitted)="crearOferta()"
+            (cancelled)="alternarFormularioDeOferta()"
+          />
+        </form>
+      }
+
+      @if (ofertaParaPrecio(); as oferta) {
+        <form class="laboratorio__formulario" (submit)="$event.preventDefault()">
+          <h3 class="laboratorio__formulario-titulo">Nuevo precio de {{ oferta.name }}</h3>
+
+          @if (!hayTarifarios()) {
+            <app-alert tone="warning" title="Todavía no hay ningún tarifario">
+              Un precio vive dentro de un tarifario. Creá uno y volvé a este
+              estudio.
+              <p class="laboratorio__enlace-panel">
+                <button
+                  app-button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  (clicked)="irATarifarios()"
+                >
+                  Ir a Tarifarios
+                </button>
+              </p>
+            </app-alert>
+          }
+
+          <app-form-field
+            label="Tarifario"
+            [required]="true"
+            hint="El público lo ve cualquier paciente; los internos son para convenios."
+          >
+            <app-select
+              [options]="opcionesDeTarifario()"
+              [value]="tarifarioDelPrecio()"
+              [disabled]="!hayTarifarios()"
+              placeholder="Elegí el tarifario"
+              (valueChange)="tarifarioDelPrecio.set($event)"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Importe base"
+            [required]="true"
+            hint="El precio de lista del estudio en este tarifario."
+          >
+            <app-input type="number" [(value)]="importeBase" placeholder="120" />
+          </app-form-field>
+
+          <app-form-field
+            label="Importe al paciente"
+            hint="Lo que paga la persona cuando difiere del base. Dejalo vacío si es el mismo."
+          >
+            <app-input type="number" [(value)]="importeAlPaciente" placeholder="120" />
+          </app-form-field>
+
+          <app-form-field
+            label="Importe a la aseguradora"
+            hint="Lo que cubre el convenio. Sólo tiene sentido en un tarifario interno."
+          >
+            <app-input type="number" [(value)]="importeALaAseguradora" placeholder="80" />
+          </app-form-field>
+
+          <app-form-field
+            label="Factor de descuento"
+            hint="Entre 0 y 1. Por ejemplo, 0,1 es un diez por ciento."
+          >
+            <app-input type="number" [(value)]="factorDeDescuento" placeholder="0.1" />
+          </app-form-field>
+
+          <app-form-field
+            label="Vigente desde"
+            hint="Sin fecha, rige desde que se guarda."
+          >
+            <app-date-picker [(value)]="vigenteDesdePrecio" />
+          </app-form-field>
+
+          @if (errorDelPrecio(); as fallo) {
+            <p class="laboratorio__error" role="alert">{{ fallo }}</p>
+          }
+
+          <app-form-actions
+            [pending]="guardandoPrecio()"
+            [disabled]="!precioEsValido()"
+            submitLabel="Guardar el precio"
+            cancelLabel="Cancelar"
+            (submitted)="crearPrecio()"
+            (cancelled)="cerrarFormularioDePrecio()"
+          />
+        </form>
+      }
+
+      <app-data-table
+        [state]="estudios()"
+        [columns]="columnasDeEstudio()"
+        [trackBy]="porId"
+        caption="Catálogo de estudios con sus precios"
+        (retry)="recargar()"
+      />
+    </div>
+  </app-tab>
+
+  <!-- Los tarifarios no tienen lectura propia en la API: se deducen de los
+       precios de la ficha, y a eso se le suman los que se crearon en esta
+       pestaña y todavía no tienen ningún precio del que deducirlos. -->
+  <app-tab label="Tarifarios">
+    <div class="laboratorio__panel">
+      <div class="laboratorio__acciones-panel">
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          size="sm"
+          [attr.aria-expanded]="formularioDeTarifarioAbierto()"
+          (clicked)="alternarFormularioDeTarifario()"
+        >
+          {{ formularioDeTarifarioAbierto() ? 'Cancelar' : 'Nuevo tarifario' }}
+        </button>
+      </div>
+
+      @if (formularioDeTarifarioAbierto()) {
+        <form class="laboratorio__formulario" (submit)="$event.preventDefault()">
+          <h3 class="laboratorio__formulario-titulo">Nuevo tarifario</h3>
+
+          <app-form-field
+            label="Código"
+            [required]="true"
+            hint="Con el que se lo nombra: PUBLICO, CONVENIO-A. Hasta 60 caracteres."
+          >
+            <app-input [(value)]="codigoDelTarifario" placeholder="PUBLICO" />
+          </app-form-field>
+
+          @if (opcionesDeSede().length > 0) {
+            <app-form-field
+              label="Sucursal"
+              hint="Dejalo sin elegir si rige en todas."
+            >
+              <app-select
+                [options]="opcionesDeSede()"
+                [value]="sedeDelTarifario()"
+                placeholder="En todas las sucursales"
+                (valueChange)="sedeDelTarifario.set($event)"
+              />
+            </app-form-field>
+          }
+
+          <app-form-field label="Vigente desde" hint="Sin fecha, rige desde que se crea.">
+            <app-date-picker [(value)]="vigenteDesdeTarifario" />
+          </app-form-field>
+
+          <app-form-field label="Vigente hasta" hint="Sin fecha, no vence.">
+            <app-date-picker [(value)]="vigenteHastaTarifario" />
+          </app-form-field>
+
+          <div class="laboratorio__casillas">
+            <app-checkbox
+              [(checked)]="visibleAlPublico"
+              label="Visible al público: sus precios se muestran en el directorio"
+            />
+          </div>
+
+          @if (errorDelTarifario(); as fallo) {
+            <p class="laboratorio__error" role="alert">{{ fallo }}</p>
+          }
+
+          <app-form-actions
+            [pending]="guardandoTarifario()"
+            [disabled]="!tarifarioEsValido()"
+            submitLabel="Crear el tarifario"
+            cancelLabel="Cancelar"
+            (submitted)="crearTarifario()"
+            (cancelled)="alternarFormularioDeTarifario()"
+          />
+        </form>
+      }
+
+      <app-data-table
+        [state]="listaDeTarifarios()"
+        [columns]="columnasDeTarifario()"
+        [trackBy]="porId"
+        caption="Tarifarios de la unidad"
+        (retry)="recargar()"
+      />
+    </div>
   </app-tab>
 
   <app-tab label="Personal">
@@ -200,10 +501,46 @@
     <div>
       <dt>Acá</dt>
       <dd>
-        Sucursales, equipamiento con calibración, catálogo de estudios con todos
-        sus precios —también los de convenios—, personal con sus permisos de
-        validación y firma, y acreditaciones — módulo 23
-        (<code>diagnostic_units</code>).
+        Se ven las sucursales, el equipamiento con su calibración, el personal
+        con sus permisos de validación y firma, y las acreditaciones. Se
+        administran la publicación de la unidad en el directorio, el catálogo de
+        estudios —sumar y quitar—, los tarifarios y los precios de cada estudio,
+        también los de convenios — módulo 23 (<code>diagnostic_units</code>).
+      </dd>
+    </div>
+    <div>
+      <dt>Editar un estudio o un precio</dt>
+      <dd>
+        No se puede, y no es un pendiente de pantalla: el catálogo es
+        append-only. Cambiar un precio es <strong>cargar uno nuevo</strong> y
+        cerrar el anterior, que queda como historial; corregir una oferta es
+        quitarla y publicarla de nuevo. Un botón «editar» acá terminaría en un
+        error del servidor.
+      </dd>
+    </div>
+    <div>
+      <dt>La lista de tarifarios</dt>
+      <dd>
+        La plataforma todavía no devuelve los tarifarios de una unidad: la ficha
+        trae los precios, y de ahí se deduce cuáles existen. Por eso acá ves los
+        que ya tienen algún precio y los que creaste en esta pestaña. Uno recién
+        creado y sin ningún precio no se ve desde otra pestaña ni desde otra
+        computadora hasta que le cargues el primero.
+      </dd>
+    </div>
+    <div>
+      <dt>Tarifario de una aseguradora</dt>
+      <dd>
+        Un tarifario se puede atar a una aseguradora, pero el campo pide su
+        identificador y ninguna lectura de la plataforma lo entrega todavía. Se
+        omite en vez de ofrecer un campo que nadie puede llenar.
+      </dd>
+    </div>
+    <div>
+      <dt>Sucursales, equipos, personal y acreditaciones</dt>
+      <dd>
+        Se listan y se vigilan sus vencimientos; darlos de alta o modificarlos
+        todavía no tiene pantalla y se hace fuera de acá.
       </dd>
     </div>
     <div>
@@ -326,13 +663,27 @@
     <span class="laboratorio__secundario">sin precio cargado</span>
   } @else {
     @for (precio of estudio.prices; track precio.id) {
-      <span class="laboratorio__precio">
+      <span class="laboratorio__precio cifras-tabulares">
         {{ precio.scheduleCode }}: {{ precio.patientAmount ?? precio.baseAmount }}
         @if (precio.currency) {
           {{ etiquetaDe(precio.currency) }}
         }
         @if (!precio.schedulePublic) {
           <app-badge variant="secondary">interno</app-badge>
+        }
+        <!-- Cerrar y no editar: el precio es append-only del lado del servidor.
+             El botón sólo aparece sobre la versión que todavía rige. -->
+        @if (sePuedeCerrar(precio)) {
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            [isLoading]="cerrandoPrecio() === precio.id"
+            (clicked)="cerrarPrecio(precio)"
+          >
+            Cerrar
+          </button>
         }
       </span>
     }
@@ -341,6 +692,52 @@
 
 <ng-template #celdaEstadoEstudio let-estudio>
   <app-badge [variant]="varianteDe(estudio.status)">{{ etiquetaDe(estudio.status) }}</app-badge>
+</ng-template>
+
+<ng-template #celdaAccionesDelEstudio let-estudio>
+  <span class="laboratorio__acciones-fila">
+    <button
+      app-button
+      type="button"
+      variant="secondary"
+      size="sm"
+      (clicked)="abrirFormularioDePrecio(estudio)"
+    >
+      Nuevo precio
+    </button>
+    @if (sePuedeQuitar(estudio)) {
+      <button
+        app-button
+        type="button"
+        variant="danger"
+        size="sm"
+        [isLoading]="quitandoOferta() === estudio.id"
+        (clicked)="quitarOferta(estudio)"
+      >
+        Quitar
+      </button>
+    }
+  </span>
+</ng-template>
+
+<ng-template #celdaTarifario let-tarifario>
+  <span class="laboratorio__nombre">{{ tarifario.code }}</span>
+  @if (tarifario.esPublico) {
+    <app-badge variant="success">Público</app-badge>
+  } @else {
+    <app-badge variant="secondary">Interno</app-badge>
+  }
+</ng-template>
+
+<ng-template #celdaPreciosDelTarifario let-tarifario>
+  @if (tarifario.cantidadDePrecios === 0) {
+    <span class="laboratorio__secundario">sin precios todavía</span>
+  } @else {
+    <span class="cifras-tabulares">
+      {{ tarifario.cantidadDePrecios }}
+      {{ tarifario.cantidadDePrecios === 1 ? 'precio' : 'precios' }}
+    </span>
+  }
 </ng-template>
 
 <!-- El nombre puede faltar cuando la asignación de rol no se pudo resolver. Se
