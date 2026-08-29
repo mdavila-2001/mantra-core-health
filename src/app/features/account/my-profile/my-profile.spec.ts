@@ -230,11 +230,18 @@ describe('MyProfile', () => {
       expect(texto).not.toContain('Contactos y tutores');
     });
 
-    /** La API lo devolvía desde siempre y la ficha no lo dibujaba. */
-    it('el sexo al nacer se muestra: es dato clínico, no decorativo', () => {
+    /**
+     * La API lo devolvía desde siempre y la ficha no lo dibujaba. Y cuando se
+     * dibujó, salía **el renglón vacío**: viaja como código (`'FEMALE'`), no
+     * como concepto, así que `etiquetaDe` —que resuelve uuids— devolvía ''. Se
+     * vio en pantalla antes de que existiera esta prueba.
+     */
+    it('el sexo al nacer se muestra EN PALABRAS, no como código', () => {
       const texto = conPerfil({ sexAtBirth: 'FEMALE' });
 
       expect(texto).toContain('Sexo al nacer');
+      expect(texto).toContain('Femenino');
+      expect(texto).not.toContain('FEMALE');
     });
 
     /**
@@ -260,6 +267,22 @@ describe('MyProfile', () => {
       });
 
       expect(texto).toContain('Av. Beni 5100');
+      expect(texto).not.toContain('Ver en el mapa');
+    });
+
+    /**
+     * El caso que se vio en pantalla: la API comparaba las coordenadas contra
+     * `undefined` y la columna es nullable, así que emitía `Number(null)` — o
+     * sea **0** — y la ficha enlazaba al golfo de Guinea. La API ya está
+     * corregida; este guardia queda igual porque una dirección de Santa Cruz no
+     * está en el meridiano de Greenwich.
+     */
+    it('las coordenadas 0,0 no son una ubicación: no ofrece el mapa', () => {
+      const texto = conPerfil({
+        homeAddress: { lines: 'Calle Ayacucho 241', latitude: 0, longitude: 0 } as never,
+      });
+
+      expect(texto).toContain('Calle Ayacucho 241');
       expect(texto).not.toContain('Ver en el mapa');
     });
 
