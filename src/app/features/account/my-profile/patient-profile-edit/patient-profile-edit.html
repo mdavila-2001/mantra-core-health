@@ -200,6 +200,17 @@
         >
           <app-input data-testid="perfil-nit" [(value)]="nit" placeholder="1234567" />
         </app-form-field>
+
+        <app-form-field
+          label="Razón social"
+          hint="A nombre de quién sale el comprobante. Sin NIT no se guarda."
+        >
+          <app-input
+            data-testid="perfil-razon-social"
+            [(value)]="razonSocial"
+            placeholder="Comercial Rojas S.R.L."
+          />
+        </app-form-field>
       </div>
     </app-card>
 

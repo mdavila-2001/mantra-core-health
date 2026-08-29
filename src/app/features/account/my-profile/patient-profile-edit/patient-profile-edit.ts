@@ -168,6 +168,7 @@ export class PatientProfileEdit {
    * municipio sigue saliendo del árbol, aparte.
    */
   protected readonly nit = signal('');
+  protected readonly razonSocial = signal('');
   protected readonly domicilio = signal('');
   protected readonly direccionTrabajo = signal('');
 
@@ -301,6 +302,7 @@ export class PatientProfileEdit {
     this.ocupacionConceptId.set(perfil.occupationConceptId ?? null);
     this.municipio.set(perfil.residenceMunicipalityConceptId ?? null);
     this.nit.set(perfil.taxId ?? '');
+    this.razonSocial.set(perfil.taxHolderName ?? '');
     this.domicilio.set(perfil.homeAddress?.lines ?? '');
     this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
 
@@ -488,6 +490,10 @@ export class PatientProfileEdit {
     const nit = textoCambiado(this.nit(), original.taxId);
     if (nit !== undefined) {
       cambios.taxId = nit;
+    }
+    const razonSocial = textoCambiado(this.razonSocial(), original.taxHolderName);
+    if (razonSocial !== undefined) {
+      cambios.taxHolderName = razonSocial;
     }
     const domicilio = textoCambiado(this.domicilio(), original.homeAddress?.lines);
     if (domicilio !== undefined) {
