@@ -106,12 +106,20 @@
             </p>
           </app-form-field>
         } @else {
+          <!-- La lupa que pide el registro del cliente (PACIENTE §1.4.2): son
+               cientos de oficios y un desplegable sin filtro no se recorre. El
+               alta ya la tenía; este editor había quedado con un `<select>`. -->
           <app-form-field label="Ocupación (opcional)" [hint]="hintOcupacion()">
-            <app-select
+            <app-reference-combobox
               data-testid="perfil-ocupacion"
-              [options]="opcionesOcupacion()"
-              [(value)]="ocupacionConceptId"
-              placeholder="Sin especificar"
+              label="Ocupación"
+              placeholder="Buscá tu profesión u oficio…"
+              emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+              [options]="ocupacionesFiltradas()"
+              [selected]="ocupacionElegida()"
+              [minQueryLength]="0"
+              (searched)="busquedaOcupacion.set($event)"
+              (selectionChange)="elegirOcupacion($event)"
             />
           </app-form-field>
         }
@@ -166,6 +174,72 @@
             />
           </app-form-field>
         }
+
+        <!-- Las dos direcciones y el NIT. Van acá y no en «Sobre vos» porque
+             responden a «cómo ubicarte», que es de lo que trata esta tarjeta.
+             El municipio de arriba sigue viajando aparte: sale del catálogo, y
+             estas son texto libre porque una dirección boliviana real —«Av.
+             Prolongación Beni #5100, esq. 6to anillo»— no entra en una lista. -->
+        <app-form-field
+          label="Domicilio"
+          hint="Calle, número y zona. Vaciarlo lo quita de tu ficha."
+        >
+          <app-input
+            data-testid="perfil-domicilio"
+            [(value)]="domicilio"
+            placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Dirección de trabajo"
+          hint="Dónde trabajás, si querés que figure."
+        >
+          <app-input
+            data-testid="perfil-trabajo"
+            [(value)]="direccionTrabajo"
+            placeholder="Calle Ayacucho #241, Casco Viejo"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="NIT"
+          hint="Para que las facturas salgan a tu nombre. Vaciarlo lo quita."
+        >
+          <app-input data-testid="perfil-nit" [(value)]="nit" placeholder="1234567" />
+        </app-form-field>
+
+        <!-- El correo se MUESTRA y no se edita, y eso hay que decirlo: antes no
+             aparecía, y no verlo se lee como que la app lo perdió.
+
+             No es una limitación de la pantalla. Para 59 de las cuentas de hoy
+             el correo ES su usuario, así que cambiarlo acá las dejaría entrando
+             con el anterior —o fuera de su cuenta por un tipeo—. El cambio real
+             necesita verificar la dirección nueva ANTES de soltar la vieja; el
+             modelo ya tiene `iam.email_verifications` para eso, y ese flujo
+             está pendiente. -->
+        <app-form-field
+          label="Correo"
+          hint="Con este correo entrás. Cambiarlo pide verificar el nuevo antes de soltar el viejo, así que todavía no se hace desde acá."
+        >
+          <app-input
+            data-testid="perfil-correo"
+            [value]="correo()"
+            [disabled]="true"
+            placeholder="Sin registrar"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Razón social"
+          hint="A nombre de quién sale el comprobante. Sin NIT no se guarda."
+        >
+          <app-input
+            data-testid="perfil-razon-social"
+            [(value)]="razonSocial"
+            placeholder="Comercial Rojas S.R.L."
+          />
+        </app-form-field>
       </div>
     </app-card>
 

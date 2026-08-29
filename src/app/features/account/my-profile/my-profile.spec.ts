@@ -201,13 +201,89 @@ describe('MyProfile', () => {
       expect(texto).toContain('Tutor legal');
     });
 
-    it('lo que no declaró NO se dibuja: nada de listas de «Sin registrar»', () => {
+    /**
+     * **Lo que falta también se dibuja — en la ficha PROPIA.**
+     *
+     * Antes cada dato aparecía sólo si existía, con el argumento de que «una
+     * lista de Sin registrar no informa». En la ficha de otro es cierto. Acá no:
+     * quien mira es el dueño del dato, y ocultarle el renglón le impide
+     * distinguir «no lo tengo cargado» de «la app no me lo muestra». Con el
+     * perfil real de Justin se veían **cinco campos de doce**, y siete de los
+     * que faltaban estaban en la base.
+     *
+     * Las SECCIONES enteras sí siguen ocultándose cuando no hay nada: una tarjeta
+     * «Tus seguros» vacía es ruido, no un dato pendiente que el dueño pueda
+     * completar desde ahí.
+     */
+    it('en la ficha propia, lo no declarado se dibuja como «Sin registrar»', () => {
       const texto = conPerfil({});
 
-      expect(texto).not.toContain('Documento de identidad');
-      expect(texto).not.toContain('NIT');
+      expect(texto).toContain('Documento de identidad');
+      expect(texto).toContain('NIT');
+      expect(texto).toContain('Sin registrar');
+    });
+
+    it('pero una sección entera sin contenido no aparece', () => {
+      const texto = conPerfil({});
+
       expect(texto).not.toContain('Tus seguros');
       expect(texto).not.toContain('Contactos y tutores');
+    });
+
+    /**
+     * La API lo devolvía desde siempre y la ficha no lo dibujaba. Y cuando se
+     * dibujó, salía **el renglón vacío**: viaja como código (`'FEMALE'`), no
+     * como concepto, así que `etiquetaDe` —que resuelve uuids— devolvía ''. Se
+     * vio en pantalla antes de que existiera esta prueba.
+     */
+    it('el sexo al nacer se muestra EN PALABRAS, no como código', () => {
+      const texto = conPerfil({ sexAtBirth: 'FEMALE' });
+
+      expect(texto).toContain('Sexo al nacer');
+      expect(texto).toContain('Femenino');
+      expect(texto).not.toContain('FEMALE');
+    });
+
+    /**
+     * El registro de procesos pide la ubicación GPS del domicilio (§1.9) y del
+     * trabajo (§1.11). `common.addresses` guarda latitud y longitud desde
+     * siempre y `OwnAddressDto` ya las devolvía: faltaba dibujarlas.
+     */
+    it('una dirección con coordenadas ofrece el enlace al mapa', () => {
+      const texto = conPerfil({
+        homeAddress: {
+          lines: 'Av. Beni 5100',
+          latitude: '-17.78',
+          longitude: '-63.18',
+        } as never,
+      });
+
+      expect(texto).toContain('Ver en el mapa');
+    });
+
+    it('y una sin coordenadas no lo ofrece: no habría adónde llevar', () => {
+      const texto = conPerfil({
+        homeAddress: { lines: 'Av. Beni 5100' } as never,
+      });
+
+      expect(texto).toContain('Av. Beni 5100');
+      expect(texto).not.toContain('Ver en el mapa');
+    });
+
+    /**
+     * El caso que se vio en pantalla: la API comparaba las coordenadas contra
+     * `undefined` y la columna es nullable, así que emitía `Number(null)` — o
+     * sea **0** — y la ficha enlazaba al golfo de Guinea. La API ya está
+     * corregida; este guardia queda igual porque una dirección de Santa Cruz no
+     * está en el meridiano de Greenwich.
+     */
+    it('las coordenadas 0,0 no son una ubicación: no ofrece el mapa', () => {
+      const texto = conPerfil({
+        homeAddress: { lines: 'Calle Ayacucho 241', latitude: 0, longitude: 0 } as never,
+      });
+
+      expect(texto).toContain('Calle Ayacucho 241');
+      expect(texto).not.toContain('Ver en el mapa');
     });
 
     it('la edad se calcula de la fecha, no se pide al servidor', () => {

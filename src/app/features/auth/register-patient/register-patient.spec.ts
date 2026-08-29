@@ -366,7 +366,7 @@ describe('RegisterPatient', () => {
    * dos copias cambie.
    */
   describe('las páginas del alta de paciente', () => {
-    it('son ocho, y ninguna pide más de cuatro cosas', () => {
+    it('son nueve, y ninguna pide más de cuatro cosas', () => {
       const paginas = component.paginasPaciente();
 
       // Ocho desde que el alta cubre los campos mínimos del registro del
@@ -940,6 +940,40 @@ describe('RegisterPatient', () => {
           label: string;
         }[];
       }
+
+      /**
+       * **El orden real, que es el que fallaba.**
+       *
+       * Las dos pruebas de abajo ponen el título ANTES de leer las páginas por
+       * primera vez, y así pasaban incluso con el defecto: el `computed` se
+       * estrenaba con el título ya elegido. En la pantalla el orden es el
+       * inverso —el catálogo llega al abrir el paso, la persona elige su
+       * profesión después—, y ahí el `computed` ya estaba calculado con el
+       * título vacío y no volvía a correr, porque el valor de un `FormControl`
+       * no es una señal y no lo despierta.
+       *
+       * Resultado en producción: un odontólogo veía las 52 médicas con las 11
+       * suyas al final. El stakeholder lo reportó como «no están las
+       * especialidades de odontología».
+       */
+      it('filtra aunque las opciones ya se hayan leído antes de elegir profesión', () => {
+        catalogoDeEspecialidades();
+        // Se leen una vez, como al pintar el paso: acá el título está vacío y
+        // corresponde ofrecer todo.
+        expect(opcionesDeLaPagina().map((o) => o.value)).toEqual([
+          'e-cardio',
+          'e-pedia',
+          'e-endo',
+          'e-orto',
+        ]);
+
+        component.formProfesional.controls.professionalTitle.setValue(
+          'Odontólogo / Odontóloga',
+        );
+        fixture.detectChanges();
+
+        expect(opcionesDeLaPagina().map((o) => o.value)).toEqual(['e-endo', 'e-orto']);
+      });
 
       it('un odontólogo ve las odontológicas y NO las médicas', () => {
         catalogoDeEspecialidades();

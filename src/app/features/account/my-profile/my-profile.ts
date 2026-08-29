@@ -335,6 +335,50 @@ export class MyProfile {
     return partes.length > 0 ? partes.join(' · ') : 'Sin detalle';
   }
 
+  /**
+   * El sexo al nacer en palabras.
+   *
+   * Viaja como CÓDIGO (`'FEMALE'`), no como concepto, así que pasarlo por
+   * `etiquetaDe` —que resuelve uuids del catálogo— devolvía cadena vacía y la
+   * ficha dibujaba el renglón «Sexo al nacer» sin nada al lado. Peor que
+   * ocultarlo: parece que la app perdió el dato.
+   *
+   * Las cuatro salen del tipo `BirthSexCode`, no sólo las dos que ofrece el
+   * alta: el dato puede venir de una carga administrativa o de una migración,
+   * y mostrar «INTERSEX» en crudo sería lo mismo que no mostrarlo.
+   */
+  protected sexoEnPalabras(codigo: string): string {
+    const palabras: Record<string, string> = {
+      MALE: 'Masculino',
+      FEMALE: 'Femenino',
+      INTERSEX: 'Intersexual',
+      UNKNOWN: 'Sin determinar',
+    };
+    return palabras[codigo] ?? codigo;
+  }
+
+  /**
+   * El enlace al mapa de una dirección, o `null` si no tiene coordenadas.
+   *
+   * El registro de procesos pide «Ubicación GPS» del domicilio (§1.9) y del
+   * trabajo (§1.11), «en el Google Maps de AloVida». `common.addresses` guarda
+   * `latitude`/`longitude` desde siempre y `OwnAddressDto` ya las devolvía: lo
+   * único que faltaba era dibujarlas.
+   *
+   * Va como enlace y no como mapa embebido a propósito: incrustar un mapa mete
+   * una clave de API y peticiones a un tercero en una pantalla que hoy no las
+   * necesita. El enlace resuelve lo mismo —«llevame ahí»— con una etiqueta.
+   */
+  protected enlaceAlMapa(dir: OwnAddress): string | null {
+    // `== null` cubre `null` y `undefined` de una. La API emitía además un `0`
+    // por una comparación estricta contra `undefined` —ya corregida—, y el 0 se
+    // sigue rechazando acá: una dirección de Santa Cruz no está en el meridiano
+    // de Greenwich, y un enlace al golfo de Guinea es peor que ningún enlace.
+    if (dir.latitude == null || dir.longitude == null) return null;
+    if (dir.latitude === 0 && dir.longitude === 0) return null;
+    return `https://www.google.com/maps/search/?api=1&query=${dir.latitude},${dir.longitude}`;
+  }
+
   protected recargar(): void {
     this.cargar();
     this.cargarCasos();

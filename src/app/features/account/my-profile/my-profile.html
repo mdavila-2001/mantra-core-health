@@ -104,67 +104,144 @@
                 <dd>{{ estado() }}</dd>
               </div>
 
-              <!-- Todo lo que la persona declaró al registrarse y hasta ahora
-                   sólo se veía entrando a editar. Cada dato se dibuja SÓLO si
-                   existe: una lista de «Sin registrar» no informa, molesta. -->
+              <!-- Todo lo que la persona declaró al registrarse, y también lo
+                   que NO declaró.
+
+                   Antes cada dato se dibujaba sólo si existía, con el argumento
+                   de que «una lista de Sin registrar no informa». En la ficha de
+                   otro es cierto. En la PROPIA es al revés: quien mira es el
+                   dueño del dato, y ocultarle el renglón le impide distinguir
+                   «no lo tengo cargado» de «la app no me lo muestra». Con el
+                   perfil real de Justin se veían cinco campos de doce, y los
+                   otros siete estaban en la base.
+
+                   `Fecha de nacimiento` ya decía «Sin registrar»; el resto no.
+                   Ahora es parejo. -->
               @if (perfil(); as p) {
-                @if (p.nationalId) {
-                  <div class="mi-perfil__dato">
-                    <dt>Documento de identidad</dt>
-                    <dd class="mi-perfil__cifra">
+                <div class="mi-perfil__dato">
+                  <dt>Documento de identidad</dt>
+                  <dd class="mi-perfil__cifra">
+                    @if (p.nationalId) {
                       {{ p.nationalId }}
                       @if (p.issuerAdministrativeAreaConceptId; as depto) {
                         <span class="mi-perfil__sufijo">{{ etiquetaDe(depto) }}</span>
                       }
-                    </dd>
-                  </div>
-                }
-                @if (p.email) {
-                  <div class="mi-perfil__dato">
-                    <dt>Correo</dt>
-                    <dd>{{ p.email }}</dd>
-                  </div>
-                }
-                @if (p.phone) {
-                  <div class="mi-perfil__dato">
-                    <dt>Teléfono</dt>
-                    <dd class="mi-perfil__cifra">{{ p.phone }}</dd>
-                  </div>
-                }
+                    } @else {
+                      <span class="mi-perfil__ausente">Sin registrar</span>
+                    }
+                  </dd>
+                </div>
+                <div class="mi-perfil__dato">
+                  <dt>Correo</dt>
+                  <dd>
+                    @if (p.email) {
+                      {{ p.email }}
+                    } @else {
+                      <span class="mi-perfil__ausente">Sin registrar</span>
+                    }
+                  </dd>
+                </div>
+                <div class="mi-perfil__dato">
+                  <dt>Teléfono</dt>
+                  <dd class="mi-perfil__cifra">
+                    @if (p.phone) {
+                      {{ p.phone }}
+                    } @else {
+                      <span class="mi-perfil__ausente">Sin registrar</span>
+                    }
+                  </dd>
+                </div>
                 <!-- La edad se calcula, no se guarda: el registro del cliente la
-                     pide «de manera automática» a partir de la fecha. -->
-                @if (edad(); as anios) {
-                  <div class="mi-perfil__dato">
-                    <dt>Edad</dt>
-                    <dd class="mi-perfil__cifra">{{ anios }} años</dd>
-                  </div>
-                }
-                @if (p.occupationConceptId || p.occupationFreeText) {
-                  <div class="mi-perfil__dato">
-                    <dt>Ocupación</dt>
-                    <dd>
+                     pide «de manera automática» a partir de la fecha. Sin fecha
+                     no hay edad que mostrar, y el renglón dice por qué. -->
+                <div class="mi-perfil__dato">
+                  <dt>Edad</dt>
+                  <dd class="mi-perfil__cifra">
+                    @if (edad(); as anios) {
+                      {{ anios }} años
+                    } @else {
+                      <span class="mi-perfil__ausente">Falta tu fecha de nacimiento</span>
+                    }
+                  </dd>
+                </div>
+                <!-- Dato clínico: cambia dosis, valores de referencia y tamizajes.
+                     La API lo devolvía desde siempre y la ficha no lo dibujaba. -->
+                <div class="mi-perfil__dato">
+                  <dt>Sexo al nacer</dt>
+                  <dd>
+                    @if (p.sexAtBirth; as sexo) {
+                      {{ sexoEnPalabras(sexo) }}
+                    } @else {
+                      <span class="mi-perfil__ausente">Sin registrar</span>
+                    }
+                  </dd>
+                </div>
+                <div class="mi-perfil__dato">
+                  <dt>Ocupación</dt>
+                  <dd>
+                    @if (p.occupationConceptId || p.occupationFreeText) {
                       {{ p.occupationConceptId ? etiquetaDe(p.occupationConceptId) : p.occupationFreeText }}
-                    </dd>
-                  </div>
-                }
-                @if (p.taxId) {
-                  <div class="mi-perfil__dato">
-                    <dt>NIT</dt>
-                    <dd class="mi-perfil__cifra">{{ p.taxId }}</dd>
-                  </div>
-                }
-                @if (p.homeAddress; as dir) {
-                  <div class="mi-perfil__dato">
-                    <dt>Domicilio</dt>
-                    <dd>{{ direccionLegible(dir) }}</dd>
-                  </div>
-                }
-                @if (p.workAddress; as dir) {
-                  <div class="mi-perfil__dato">
-                    <dt>Trabajo</dt>
-                    <dd>{{ direccionLegible(dir) }}</dd>
-                  </div>
-                }
+                    } @else {
+                      <span class="mi-perfil__ausente">Sin registrar</span>
+                    }
+                  </dd>
+                </div>
+                <div class="mi-perfil__dato">
+                  <dt>NIT</dt>
+                  <dd class="mi-perfil__cifra">
+                    @if (p.taxId) {
+                      {{ p.taxId }}
+                    } @else {
+                      <span class="mi-perfil__ausente">Sin registrar</span>
+                    }
+                  </dd>
+                </div>
+                <!-- Pegado al NIT porque son el mismo hecho: a nombre de quién
+                     factura esta persona. El registro pide los dos (§1.15). -->
+                <div class="mi-perfil__dato">
+                  <dt>Razón social</dt>
+                  <dd>
+                    @if (p.taxHolderName) {
+                      {{ p.taxHolderName }}
+                    } @else {
+                      <span class="mi-perfil__ausente">Sin registrar</span>
+                    }
+                  </dd>
+                </div>
+                <!-- El domicilio y el trabajo llevan su enlace al mapa cuando la
+                     dirección trae coordenadas: el registro de procesos pide
+                     «Ubicación GPS» en los dos (§1.9 y §1.11), y `common.addresses`
+                     ya guarda latitud y longitud. Faltaba dibujarlo. -->
+                <div class="mi-perfil__dato">
+                  <dt>Domicilio</dt>
+                  <dd>
+                    @if (p.homeAddress; as dir) {
+                      {{ direccionLegible(dir) }}
+                      @if (enlaceAlMapa(dir); as mapa) {
+                        <a class="mi-perfil__mapa" [href]="mapa" target="_blank" rel="noopener noreferrer">
+                          Ver en el mapa
+                        </a>
+                      }
+                    } @else {
+                      <span class="mi-perfil__ausente">Sin registrar</span>
+                    }
+                  </dd>
+                </div>
+                <div class="mi-perfil__dato">
+                  <dt>Trabajo</dt>
+                  <dd>
+                    @if (p.workAddress; as dir) {
+                      {{ direccionLegible(dir) }}
+                      @if (enlaceAlMapa(dir); as mapa) {
+                        <a class="mi-perfil__mapa" [href]="mapa" target="_blank" rel="noopener noreferrer">
+                          Ver en el mapa
+                        </a>
+                      }
+                    } @else {
+                      <span class="mi-perfil__ausente">Sin registrar</span>
+                    }
+                  </dd>
+                </div>
               }
             </dl>
 

@@ -21,6 +21,8 @@ import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
+import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -110,6 +112,7 @@ function mismoDia(una: Date, otra: Date): boolean {
 @Component({
   selector: 'app-patient-profile-edit',
   imports: [
+    ReferenceCombobox,
     AppButton,
     Card,
     DatePicker,
@@ -159,6 +162,35 @@ export class PatientProfileEdit {
   protected readonly municipio = signal<string | null>(null);
 
   /**
+   * NIT, domicilio y dirección de trabajo.
+   *
+   * Los tres se podían declarar al registrarse y esta pantalla no los ofrecía:
+   * la ficha los mostraba y no había forma de corregirlos. Van como texto porque
+   * eso es lo que guarda el modelo — una dirección boliviana real («Av.
+   * Prolongación Beni #5100, esq. 6to anillo») no entra en un catálogo. El
+   * municipio sigue saliendo del árbol, aparte.
+   */
+  protected readonly nit = signal('');
+  protected readonly razonSocial = signal('');
+
+  /**
+   * El correo, **sólo para mostrar**.
+   *
+   * No aparecía en el editor, y no verlo se lee como que la app lo perdió. Se
+   * muestra deshabilitado y con el motivo a la vista, que es distinto de
+   * esconderlo: para 59 de las cuentas de hoy el correo ES el usuario con el
+   * que entran, y cambiarlo sin verificar la dirección nueva las dejaría
+   * entrando con la anterior —o fuera de su cuenta por un tipeo—.
+   *
+   * El cambio de verdad necesita verificar el correo nuevo ANTES de soltar el
+   * viejo. El modelo ya tiene `iam.email_verifications` para eso; el flujo está
+   * pendiente.
+   */
+  protected readonly correo = signal('');
+  protected readonly domicilio = signal('');
+  protected readonly direccionTrabajo = signal('');
+
+  /**
    * El teléfono va en un control reactivo y no en una señal como el resto.
    *
    * No es una inconsistencia: `app-phone-input` es un `ControlValueAccessor`
@@ -186,6 +218,48 @@ export class PatientProfileEdit {
   /* -- Catálogo de ocupaciones --------------------------------------------- */
 
   protected readonly opcionesOcupacion = signal<readonly SelectOption<string>[]>([]);
+
+  /** Lo tecleado en la lupa de ocupaciones. */
+  protected readonly busquedaOcupacion = signal('');
+
+  /**
+   * Las ocupaciones que se ofrecen para lo que se escribió.
+   *
+   * El registro de procesos pide «una lupa de buscar» para las ocupaciones
+   * (PACIENTE §1.4.2), y el alta ya la tenía: este editor había quedado con un
+   * `<select>` nativo, que con el catálogo entero es una tira sin filtro que no
+   * se recorre. Mismo control y mismo criterio que el alta.
+   *
+   * El filtrado es **en memoria** y no otra consulta: el catálogo entero ya
+   * llegó, y volver a la red por cada tecla sería pagar dos veces por la misma
+   * lista.
+   */
+  protected readonly ocupacionesFiltradas = computed<readonly ReferenceOption[]>(() => {
+    const busqueda = this.busquedaOcupacion().trim().toLowerCase();
+    const todas = this.opcionesOcupacion();
+    const elegidas = busqueda
+      ? todas.filter((o) => o.label.toLowerCase().includes(busqueda))
+      : todas;
+    return elegidas.map((o) => ({ value: o.value, label: o.label }));
+  });
+
+  /** La ocupación elegida, para que el combobox la muestre al abrir. */
+  protected readonly ocupacionElegida = computed<ReferenceOption | null>(() => {
+    const id = this.ocupacionConceptId();
+    if (!id) return null;
+    const opcion = this.opcionesOcupacion().find((o) => o.value === id);
+    return opcion ? { value: opcion.value, label: opcion.label } : null;
+  });
+
+  /**
+   * Guarda la ocupación elegida.
+   *
+   * @param opcion - La elegida, o `null` si la limpió — que acá SÍ significa
+   *   quitarla: es el único concepto de esta pantalla que se puede vaciar.
+   */
+  protected elegirOcupacion(opcion: ReferenceOption | null): void {
+    this.ocupacionConceptId.set(opcion?.value ?? null);
+  }
 
   /** Ver `catalogoMunicipiosCaido`: mismo criterio y mismo aviso con reintento. */
   protected readonly catalogoOcupacionesCaido = signal(false);
@@ -287,6 +361,11 @@ export class PatientProfileEdit {
     this.sexoAlNacer.set(perfil.sexAtBirth ?? null);
     this.ocupacionConceptId.set(perfil.occupationConceptId ?? null);
     this.municipio.set(perfil.residenceMunicipalityConceptId ?? null);
+    this.nit.set(perfil.taxId ?? '');
+    this.razonSocial.set(perfil.taxHolderName ?? '');
+    this.correo.set(perfil.email ?? '');
+    this.domicilio.set(perfil.homeAddress?.lines ?? '');
+    this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
 
     // Sin `emitEvent`: sembrar no es teclear, y el control ya queda validado.
     // El espejo se actualiza a mano, que es lo que ese evento haría. Se siembra
@@ -464,6 +543,26 @@ export class PatientProfileEdit {
     const municipio = this.municipio();
     if (municipio !== null && municipio !== original.residenceMunicipalityConceptId) {
       cambios.residenceMunicipalityConceptId = municipio;
+    }
+
+    // `textoCambiado` devuelve `''` cuando se vació y `undefined` cuando no se
+    // tocó, que es justo la distinción que el backend necesita: `''` quita el
+    // dato y ausente no lo toca.
+    const nit = textoCambiado(this.nit(), original.taxId);
+    if (nit !== undefined) {
+      cambios.taxId = nit;
+    }
+    const razonSocial = textoCambiado(this.razonSocial(), original.taxHolderName);
+    if (razonSocial !== undefined) {
+      cambios.taxHolderName = razonSocial;
+    }
+    const domicilio = textoCambiado(this.domicilio(), original.homeAddress?.lines);
+    if (domicilio !== undefined) {
+      cambios.homeAddressLines = domicilio;
+    }
+    const trabajo = textoCambiado(this.direccionTrabajo(), original.workAddress?.lines);
+    if (trabajo !== undefined) {
+      cambios.workAddressLines = trabajo;
     }
 
     // La ocupación **sí se puede borrar**: es el único concepto de esta pantalla
