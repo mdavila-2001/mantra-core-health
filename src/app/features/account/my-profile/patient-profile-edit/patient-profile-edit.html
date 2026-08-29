@@ -106,12 +106,20 @@
             </p>
           </app-form-field>
         } @else {
+          <!-- La lupa que pide el registro del cliente (PACIENTE §1.4.2): son
+               cientos de oficios y un desplegable sin filtro no se recorre. El
+               alta ya la tenía; este editor había quedado con un `<select>`. -->
           <app-form-field label="Ocupación (opcional)" [hint]="hintOcupacion()">
-            <app-select
+            <app-reference-combobox
               data-testid="perfil-ocupacion"
-              [options]="opcionesOcupacion()"
-              [(value)]="ocupacionConceptId"
-              placeholder="Sin especificar"
+              label="Ocupación"
+              placeholder="Buscá tu profesión u oficio…"
+              emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+              [options]="ocupacionesFiltradas()"
+              [selected]="ocupacionElegida()"
+              [minQueryLength]="0"
+              (searched)="busquedaOcupacion.set($event)"
+              (selectionChange)="elegirOcupacion($event)"
             />
           </app-form-field>
         }
@@ -199,6 +207,27 @@
           hint="Para que las facturas salgan a tu nombre. Vaciarlo lo quita."
         >
           <app-input data-testid="perfil-nit" [(value)]="nit" placeholder="1234567" />
+        </app-form-field>
+
+        <!-- El correo se MUESTRA y no se edita, y eso hay que decirlo: antes no
+             aparecía, y no verlo se lee como que la app lo perdió.
+
+             No es una limitación de la pantalla. Para 59 de las cuentas de hoy
+             el correo ES su usuario, así que cambiarlo acá las dejaría entrando
+             con el anterior —o fuera de su cuenta por un tipeo—. El cambio real
+             necesita verificar la dirección nueva ANTES de soltar la vieja; el
+             modelo ya tiene `iam.email_verifications` para eso, y ese flujo
+             está pendiente. -->
+        <app-form-field
+          label="Correo"
+          hint="Con este correo entrás. Cambiarlo pide verificar el nuevo antes de soltar el viejo, así que todavía no se hace desde acá."
+        >
+          <app-input
+            data-testid="perfil-correo"
+            [value]="correo()"
+            [disabled]="true"
+            placeholder="Sin registrar"
+          />
         </app-form-field>
 
         <app-form-field

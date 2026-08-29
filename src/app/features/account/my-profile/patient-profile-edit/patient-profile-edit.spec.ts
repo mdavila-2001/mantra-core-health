@@ -578,10 +578,39 @@ describe('PatientProfileEdit', () => {
 
   /* ---- la ocupación, que ahora es un concepto del catálogo ---------------- */
 
-  it('ofrece las ocupaciones del catálogo, con su marcador de «sin especificar»', () => {
+  /**
+   * **La ocupación se busca escribiendo, no se recorre.**
+   *
+   * El registro de procesos pide «una lupa de buscar» para las ocupaciones
+   * (PACIENTE §1.4.2) porque son cientos. El alta ya la tenía; este editor
+   * había quedado con un `<select>` nativo, que con el catálogo entero es una
+   * tira sin filtro. Por eso esta prueba ya no cuenta `<option>`: mira lo que
+   * el combobox ofrece, y sobre todo que **filtre**.
+   */
+  it('ofrece el catálogo de ocupaciones en una lupa', () => {
     montarPintadoYCargado();
 
-    expect(opcionesDe('perfil-ocupacion')).toEqual(['Sin especificar', 'Docente', 'Albañil']);
+    const host = fixture.nativeElement as HTMLElement;
+    const lupa = host.querySelector('[data-testid="perfil-ocupacion"]');
+    expect(lupa).toBeTruthy();
+    expect(lupa?.querySelector('input')).toBeTruthy();
+  });
+
+  it('escribir filtra las ocupaciones que se parecen', () => {
+    montarPintadoYCargado();
+
+    señal<string>('busquedaOcupacion').set('alba');
+
+    const filtradas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
+    expect(filtradas.map((o) => o.label)).toEqual(['Albañil']);
+  });
+
+  /** Sin nada escrito se ofrecen todas: la lupa no esconde el catálogo. */
+  it('sin búsqueda ofrece el catálogo entero', () => {
+    montarPintadoYCargado();
+
+    const todas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
+    expect(todas.map((o) => o.label)).toEqual(['Docente', 'Albañil']);
   });
 
   /**
@@ -657,7 +686,10 @@ describe('PatientProfileEdit', () => {
     fixture.detectChanges();
 
     expect(interno<() => boolean>('catalogoOcupacionesCaido')()).toBe(false);
-    expect(opcionesDe('perfil-ocupacion')).toEqual(['Sin especificar', 'Docente', 'Albañil']);
+    // Ya no hay `<option>` que contar: la ocupación es una lupa. Lo que importa
+    // del reintento es que el catálogo volvió a estar disponible para buscar.
+    const recuperadas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
+    expect(recuperadas.map((o) => o.label)).toEqual(['Docente', 'Albañil']);
   });
 
   /* ---- el género, con las mismas opciones que el alta -------------------- */
