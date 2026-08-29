@@ -173,7 +173,7 @@ describe('RegisterPatient', () => {
      * cuelga, porque la expansión de un conjunto no devuelve las propiedades
      * del concepto.
      */
-    it('arma el árbol colgando cada municipio del departamento de su código INE', () => {
+    it('arma el árbol con los códigos canónicos y los legados de la base reconstruida', () => {
       http.expectOne(CATALOGO).flush({
         items: [{ id: 'vs-dep', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
       });
@@ -184,8 +184,9 @@ describe('RegisterPatient', () => {
         items: [
           { conceptId: 'd-cb', code: 'geo:bo:department:CB', display: 'Cochabamba' },
           { conceptId: 'd-sc', code: 'geo:bo:department:SC', display: 'Santa Cruz' },
+          { conceptId: 'd-pd', code: 'geo:bo:department:PD', display: 'Pando' },
         ],
-        count: 2,
+        count: 3,
         limit: 200,
         nextCursor: null,
       });
@@ -194,11 +195,12 @@ describe('RegisterPatient', () => {
           { conceptId: 'm-1', code: 'geo:bo:municipality:031001', display: 'Sacaba' },
           {
             conceptId: 'm-2',
-            code: 'geo:bo:municipality:070101',
+            code: 'SC-SANTA-CRUZ',
             display: 'Santa Cruz de la Sierra',
           },
+          { conceptId: 'm-3', code: 'PA-COBIJA', display: 'Cobija' },
         ],
-        count: 2,
+        count: 3,
         limit: 200,
         nextCursor: null,
       });
@@ -210,6 +212,7 @@ describe('RegisterPatient', () => {
           label: 'Santa Cruz',
           items: [{ value: 'm-2', label: 'Santa Cruz de la Sierra' }],
         },
+        { label: 'Pando', items: [{ value: 'm-3', label: 'Cobija' }] },
       ]);
     });
 
