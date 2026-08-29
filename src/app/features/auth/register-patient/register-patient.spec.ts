@@ -233,9 +233,11 @@ describe('RegisterPatient', () => {
       });
 
       expect(component.catalogoOcupacionesCaido()).toBe(false);
+      // El `code` viaja además del uuid: es lo que distingue a «Otra ocupación»
+      // —la salida que abre el campo escrito a mano— del resto de la lista.
       expect(component.opcionesOcupacion()).toEqual([
-        { value: 'o-1', label: 'Docente' },
-        { value: 'o-2', label: 'Minero / Minera' },
+        { value: 'o-1', label: 'Docente', code: 'occupation:bo:DOCENTE' },
+        { value: 'o-2', label: 'Minero / Minera', code: 'occupation:bo:MINERO' },
       ]);
     });
 
@@ -371,10 +373,9 @@ describe('RegisterPatient', () => {
 
       // Ocho desde que el alta cubre los campos mínimos del registro del
       // cliente: domicilio, trabajo, seguros y tutor son cuatro páginas más.
-      // **Nueve** desde que el nombre se pregunta en cinco casillas (se sumó
-      // «Otros nombres»): con el tope de cuatro campos por página, el nombre ya
-      // no entra en una sola. El tope es de campos por página, no de páginas.
-      expect(paginas.length).toBe(9);
+      // El tope es de campos por página, no de páginas: los tres nombres van
+      // en un campo proyectado para que los apellidos entren en la misma.
+      expect(paginas.length).toBe(8);
       for (const pagina of paginas) {
         expect(pagina.campos.length).toBeLessThanOrEqual(4);
       }
@@ -505,6 +506,131 @@ describe('RegisterPatient', () => {
     });
 
     req.flush(RESPUESTA);
+  });
+
+  /**
+   * Las casillas que se agregan con el botón viven sólo en la pantalla: la base
+   * no tiene una columna por nombre. Todas terminan en `middleName`, separadas
+   * por espacio y sin las que quedaron vacías.
+   */
+  it('manda los nombres agregados dentro de middleName', () => {
+    completar({ middleName: 'María', thirdName: 'Eugenia' });
+    component.agregarNombre();
+    component.agregarNombre();
+    component.agregarNombre();
+    component.escribirNombreExtra(0, 'Fernanda');
+    // La del medio queda vacía a propósito: no debe dejar un doble espacio.
+    component.escribirNombreExtra(2, 'Belén');
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toEqual({
+      nationalId: '1234567',
+      name: 'Ana',
+      middleName: 'María Eugenia Fernanda Belén',
+      lastName: 'Paz',
+      password: 'secreto12',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * «Dejar uno al final libre para que él pueda detallar la ocupación que no
+   * encontró» (registro del cliente, módulo Paciente §1.4.1). Con «Otra
+   * ocupación» elegida viaja el oficio escrito y NO el concepto: el backend
+   * descarta el texto libre en cuanto recibe un concepto, y de los dos datos el
+   * que describe un oficio es el que la persona escribió.
+   */
+  it('con «Otra ocupación» manda el oficio escrito en vez del concepto', () => {
+    component.opcionesOcupacion.set([
+      { value: 'o-otra', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
+    ]);
+    completar({});
+    component.elegirOcupacion({ value: 'o-otra', label: 'Otra ocupación' });
+    component.formPaciente.controls.occupationFreeText.setValue('Apicultor');
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toEqual({
+      nationalId: '1234567',
+      name: 'Ana',
+      lastName: 'Paz',
+      password: 'secreto12',
+      occupationFreeText: 'Apicultor',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  it('con una ocupación de la lista manda el concepto y ningún texto libre', () => {
+    component.opcionesOcupacion.set([
+      { value: 'o-1', label: 'Docente', code: 'occupation:bo:DOCENTE' },
+    ]);
+    completar({});
+    component.elegirOcupacion({ value: 'o-1', label: 'Docente' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toEqual({
+      nationalId: '1234567',
+      name: 'Ana',
+      lastName: 'Paz',
+      password: 'secreto12',
+      occupationConceptId: 'o-1',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * La edad sale sola de la fecha (registro del cliente, módulo Paciente §1.5).
+   * Se cuenta por cumpleaños: el día anterior al cumpleaños todavía se tiene un
+   * año menos.
+   */
+  describe('la edad que sale de la fecha de nacimiento', () => {
+    it('sin fecha no dice nada', () => {
+      expect(component.edadEnPalabras()).toBeNull();
+    });
+
+    it('cuenta los años cumplidos', () => {
+      const hoy = new Date();
+      const fecha = new Date(hoy.getFullYear() - 30, hoy.getMonth(), hoy.getDate());
+      component.formPaciente.controls.birthDate.setValue(fecha);
+
+      expect(component.edadEnPalabras()).toBe('Tenés 30 años.');
+    });
+
+    it('el día antes del cumpleaños todavía es un año menos', () => {
+      const hoy = new Date();
+      // Mañana, treinta años atrás: el cumpleaños aún no llegó.
+      const manana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1);
+      const fecha = new Date(hoy.getFullYear() - 30, manana.getMonth(), manana.getDate());
+      component.formPaciente.controls.birthDate.setValue(fecha);
+
+      expect(component.edadEnPalabras()).toBe(
+        manana.getFullYear() === hoy.getFullYear() ? 'Tenés 29 años.' : 'Tenés 30 años.',
+      );
+    });
+
+    it('el primer año va en singular', () => {
+      const hoy = new Date();
+      const fecha = new Date(hoy.getFullYear() - 1, hoy.getMonth(), hoy.getDate());
+      component.formPaciente.controls.birthDate.setValue(fecha);
+
+      expect(component.edadEnPalabras()).toBe('Tenés 1 año.');
+    });
+  });
+
+  it('quitar una casilla agregada saca ese nombre y deja los otros', () => {
+    component.agregarNombre();
+    component.agregarNombre();
+    component.escribirNombreExtra(0, 'Fernanda');
+    component.escribirNombreExtra(1, 'Belén');
+
+    component.quitarNombre(0);
+
+    expect(component.nombresExtra()).toEqual(['Belén']);
   });
 
   it('incluye el correo cuando se completó', () => {

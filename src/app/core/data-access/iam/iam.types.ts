@@ -88,9 +88,10 @@ export interface PatientRegistration {
   /**
    * Ocupación en texto libre, el respaldo de «no está en la lista».
    *
-   * El backend lo ignora si viene `occupationConceptId`. Este formulario ya no
-   * lo manda —el desplegable cubre la lista completa, con «Otra ocupación» al
-   * final—, y sigue en el contrato porque otros clientes lo usan.
+   * El backend lo ignora si viene `occupationConceptId`, así que los dos nunca
+   * viajan juntos: el alta manda **éste y no el concepto** cuando se eligió
+   * «Otra ocupación» —de los dos datos, el que describe un oficio es el que la
+   * persona escribió—, y sólo el concepto en cualquier otro caso.
    */
   readonly occupationFreeText?: string;
   /** Calle y número del domicilio, tal como lo escribe la persona. */
