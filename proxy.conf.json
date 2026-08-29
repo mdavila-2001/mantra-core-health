@@ -28,7 +28,14 @@
       "",
       "Carril 17: la API expone `/pharma-labs` y `/visit-*`, y las pantallas",
       "viven en `administration/pharma-lab`, `lab-visits` y `my-visits` — en",
-      "singular y con otro prefijo justamente para que el proxy no se las coma."
+      "singular y con otro prefijo justamente para que el proxy no se las coma.",
+      "",
+      "La consola de laboratorio escribe además en `/diagnostic-study-offerings`,",
+      "`/price-schedules` y `/study-prices`: la API cuelga el precio del tarifario",
+      "y el cierre de la cosa misma, no de la unidad. Sin estos tres prefijos el",
+      "POST se lo quedaba el dev-server y devolvía el index en HTML con un 200, que",
+      "la pantalla sólo puede leer como «no pudimos guardar el precio». Ninguna",
+      "ruta de la aplicación empieza con ellos."
     ],
     "context": [
       "/iam",
@@ -60,6 +67,9 @@
       "/procedure-cases",
       "/dental-procedures",
       "/diagnostic-units",
+      "/diagnostic-study-offerings",
+      "/price-schedules",
+      "/study-prices",
       "/diagnostic-results",
       "/pharma-labs",
       "/pharmacy",

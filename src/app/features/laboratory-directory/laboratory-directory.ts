@@ -236,6 +236,7 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
   if (unit.acceptsExternalOrders) {
     seals.push({ label: 'Recibe órdenes externas', tone: 'neutro' as const });
   }
+  const desde = precioDesde(unit.minAmount);
   return {
     id: unit.id,
     title: unit.name,
@@ -244,6 +245,9 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
     kind: { label: categoryName(unit.type.code, unit.type.display), tone: 'info' },
     meta: [
       { text: `Código ${unit.code}` },
+      // Segundo y no último: la tarjeta dibuja dos líneas de contexto, y el
+      // precio de entrada es lo que quien busca dónde hacerse un estudio compara.
+      ...(desde === null ? [] : [{ text: desde }]),
       { text: `${unit.siteCount} ${unit.siteCount === 1 ? 'sede' : 'sedes'}` },
       { text: `${unit.studyCount} ${unit.studyCount === 1 ? 'estudio' : 'estudios'}` },
       { text: `${unit.equipmentCount} ${unit.equipmentCount === 1 ? 'equipo' : 'equipos'}` },
@@ -251,6 +255,35 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
     ],
     seals,
   };
+}
+
+/**
+ * Cómo se dice el precio de entrada.
+ *
+ * «Desde» y no el importe a secas: `minAmount` es el **menor** de la tarifa
+ * pública del centro, y decirlo sin esa palabra prometería que cualquier
+ * estudio cuesta eso.
+ *
+ * Sin importe no se dice nada, ni «consultar» ni «Bs 0»: un centro que no
+ * publicó tarifa no es un centro gratis, y rellenar el hueco con una frase
+ * amable haría que dos situaciones distintas se vean iguales.
+ *
+ * La moneda va literal porque la búsqueda **no la devuelve** —`minAmount` viaja
+ * como número suelto—, y el directorio hoy es de un solo país. El día que la
+ * respuesta traiga su concepto de moneda, se lee de ahí.
+ */
+function precioDesde(minAmount: number | null): string | null {
+  if (minAmount === null) {
+    return null;
+  }
+  // Sin decimales cuando no los hay: «Bs 120,00» en una línea de contexto pesa
+  // más de lo que informa.
+  const decimales = Number.isInteger(minAmount) ? 0 : 2;
+  const cifra = minAmount.toLocaleString('es-BO', {
+    minimumFractionDigits: decimales,
+    maximumFractionDigits: decimales,
+  });
+  return `desde Bs ${cifra}`;
 }
 
 /**
