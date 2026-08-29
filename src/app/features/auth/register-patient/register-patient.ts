@@ -813,6 +813,27 @@ export class RegisterPatient {
    * dos listas —la del odontólogo o la del resto— aparece.
    */
   private readonly especialidades = inject(MedicalSpecialtiesCatalog);
+  /**
+   * El título profesional elegido, **como señal**.
+   *
+   * Duplica el valor del `FormControl` a propósito. Las tres listas de
+   * especialidad se arman dentro de `paginasProfesional`, que es un `computed`,
+   * y un `computed` sólo se recalcula cuando cambia una SEÑAL que leyó: el
+   * valor de un `FormControl` no lo despierta. Leerlo desde ahí hacía que el
+   * filtro se evaluara una sola vez —con el título todavía vacío, o sea «no hay
+   * con qué filtrar, devolvé todo»— y no volviera a correr nunca.
+   *
+   * Se veía así: un odontólogo elegía su profesión y en el paso siguiente le
+   * seguían apareciendo las 52 especialidades médicas, con las 11 suyas al
+   * final. El stakeholder lo reportó como «no están las especialidades de
+   * odontología»; sí estaban, abajo de todo.
+   *
+   * La escribe la MISMA suscripción que ya acomodaba el colegio —por eso el
+   * colegio se acomodaba y la lista no—, así que no hay dos fuentes de verdad:
+   * el control manda, esto lo espeja para el grafo de señales.
+   */
+  private readonly tituloProfesionalElegido = signal('');
+
   readonly opcionesEspecialidad = signal<readonly { value: string; label: string; code: string }[]>(
     [],
   );
@@ -1782,6 +1803,10 @@ export class RegisterPatient {
     const titulo = this.formProfesional.controls.professionalTitle;
     const autoridad = this.formProfesional.controls.regulatoryAuthority;
     titulo.valueChanges.pipe(takeUntilDestroyed()).subscribe((valor) => {
+      // Primero el espejo: de acá leen las listas del `computed`, y también la
+      // limpieza de más abajo.
+      this.tituloProfesionalElegido.set(valor);
+
       const esOdontologo = valor === TITULO_ODONTOLOGO;
       if (esOdontologo && (autoridad.value === '' || autoridad.value === COLEGIO_MEDICO)) {
         autoridad.setValue(COLEGIO_ODONTOLOGOS);
@@ -1812,7 +1837,7 @@ export class RegisterPatient {
    * Sin profesión elegida se ofrece todo, porque no hay con qué filtrar.
    */
   protected opcionesEspecialidadFiltradas(): readonly SelectOption<string>[] {
-    const titulo = this.formProfesional.controls.professionalTitle.value;
+    const titulo = this.tituloProfesionalElegido();
     const todas = this.opcionesEspecialidad();
     const filtradas =
       titulo === ''
