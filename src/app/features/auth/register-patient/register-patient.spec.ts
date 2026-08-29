@@ -371,7 +371,8 @@ describe('RegisterPatient', () => {
 
       // Ocho desde que el alta cubre los campos mínimos del registro del
       // cliente: domicilio, trabajo, seguros y tutor son cuatro páginas más.
-      // El tope es de campos por página, no de páginas.
+      // El tope es de campos por página, no de páginas: los tres nombres van
+      // en un campo proyectado para que los apellidos entren en la misma.
       expect(paginas.length).toBe(8);
       for (const pagina of paginas) {
         expect(pagina.campos.length).toBeLessThanOrEqual(4);
@@ -503,6 +504,44 @@ describe('RegisterPatient', () => {
     });
 
     req.flush(RESPUESTA);
+  });
+
+  /**
+   * Las casillas que se agregan con el botón viven sólo en la pantalla: la base
+   * no tiene una columna por nombre. Todas terminan en `middleName`, separadas
+   * por espacio y sin las que quedaron vacías.
+   */
+  it('manda los nombres agregados dentro de middleName', () => {
+    completar({ middleName: 'María', thirdName: 'Eugenia' });
+    component.agregarNombre();
+    component.agregarNombre();
+    component.agregarNombre();
+    component.escribirNombreExtra(0, 'Fernanda');
+    // La del medio queda vacía a propósito: no debe dejar un doble espacio.
+    component.escribirNombreExtra(2, 'Belén');
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toEqual({
+      nationalId: '1234567',
+      name: 'Ana',
+      middleName: 'María Eugenia Fernanda Belén',
+      lastName: 'Paz',
+      password: 'secreto12',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  it('quitar una casilla agregada saca ese nombre y deja los otros', () => {
+    component.agregarNombre();
+    component.agregarNombre();
+    component.escribirNombreExtra(0, 'Fernanda');
+    component.escribirNombreExtra(1, 'Belén');
+
+    component.quitarNombre(0);
+
+    expect(component.nombresExtra()).toEqual(['Belén']);
   });
 
   it('incluye el correo cuando se completó', () => {

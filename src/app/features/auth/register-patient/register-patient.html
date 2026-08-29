@@ -65,6 +65,85 @@
               (pasoVisible)="recordarPaso($event)"
               (enviado)="submit()"
             >
+              <!-- Las tres casillas de nombre van en un solo campo de la página:
+                   así los apellidos entran en la misma pantalla sin pasar el
+                   tope de cuatro campos del motor. Los controles son los mismos
+                   del formulario; se leen y escriben a mano porque acá no hay
+                   `formControlName`. -->
+              <ng-template appCampoPersonalizado="name">
+                <div class="registro__nombres">
+                  <app-form-field class="registro__nombre" label="Primer nombre" [required]="true">
+                    <app-input
+                      testId="registro-nombre"
+                      autocomplete="given-name"
+                      placeholder="Lucía"
+                      [value]="valorDeNombre('name')"
+                      [hasError]="primerNombreEnRojo()"
+                      (valueChange)="escribirNombre('name', $event)"
+                    />
+                  </app-form-field>
+
+                  <app-form-field
+                    class="registro__nombre"
+                    label="Segundo nombre"
+                    hint="Si no tenés, dejalo vacío."
+                  >
+                    <app-input
+                      testId="registro-segundo-nombre"
+                      autocomplete="additional-name"
+                      placeholder="Andrea"
+                      [value]="valorDeNombre('middleName')"
+                      (valueChange)="escribirNombre('middleName', $event)"
+                    />
+                  </app-form-field>
+
+                  <app-form-field class="registro__nombre" label="Tercer nombre">
+                    <app-input
+                      testId="registro-tercer-nombre"
+                      placeholder="María"
+                      [value]="valorDeNombre('thirdName')"
+                      (valueChange)="escribirNombre('thirdName', $event)"
+                    />
+                  </app-form-field>
+
+                  <!-- Hay gente con cuatro y cinco nombres. En vez de casillas
+                       fijas que casi nadie usa, se agregan las que hagan falta. -->
+                  @for (extra of nombresExtra(); track $index) {
+                    <app-form-field class="registro__nombre" [label]="'Nombre ' + ($index + 4)">
+                      <div class="registro__nombre-extra">
+                        <app-input
+                          [testId]="'registro-nombre-extra-' + $index"
+                          placeholder="Otro nombre"
+                          [value]="extra"
+                          (valueChange)="escribirNombreExtra($index, $event)"
+                        />
+                        <button
+                          app-button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          [attr.data-testid]="'registro-quitar-nombre-' + $index"
+                          (clicked)="quitarNombre($index)"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    </app-form-field>
+                  }
+
+                  <button
+                    app-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    data-testid="registro-agregar-nombre"
+                    (clicked)="agregarNombre()"
+                  >
+                    + Agregar otro nombre
+                  </button>
+                </div>
+              </ng-template>
+
               <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
                 <p class="registro__catalogo-caido">
                   No pudimos traer el catálogo de departamentos.

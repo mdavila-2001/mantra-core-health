@@ -59,6 +59,8 @@ import { ReferenceCombobox } from '../../../shared/components/molecules/referenc
 import { RegistroAyuda, type TarjetaDeAyuda } from './registro-ayuda/registro-ayuda';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppMap } from '../../../shared/components/organisms/map/map';
+import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { Input as AppInput } from '../../../shared/components/atoms/input/input';
 import type { PinMapa } from '../../../shared/components/organisms/map/pin-mapa.types';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 
@@ -571,6 +573,8 @@ type TipoCuenta = 'paciente' | 'profesional';
     ReferenceCombobox,
     RegistroAyuda,
     AppMap,
+    FormField,
+    AppInput,
   ],
   templateUrl: './register-patient.html',
   styleUrl: './register-patient.css',
@@ -885,38 +889,17 @@ export class RegisterPatient {
         titulo: '¿Cómo te llamás?',
         clave: 'nombre',
         hint: 'Como figura en tu documento. Si no tenés alguno, dejalo vacío.',
-        // Las casillas de nombre y apellidos: primer nombre, segundo nombre,
-        // tercer/otros nombres opcional, y los dos apellidos.
+        // Nombres y apellidos van juntos en una página, como pide el registro
+        // del cliente. Los tres nombres entran en UN campo proyectado —bajo la
+        // `key` de `name`, para que el motor siga validando el obligatorio y
+        // sepa a qué página volver al enviar— porque son cuatro casillas y el
+        // tope del motor es de cuatro campos por página.
         campos: [
           {
             key: 'name',
-            label: 'Primer nombre',
-            control: 'text',
-            required: true,
-            autocomplete: 'given-name',
-            placeholder: 'Lucía',
-            testId: 'registro-nombre',
-            ancho: 'mitad',
+            label: '',
+            control: 'custom',
             mensajeDeError: 'Ingresá tu nombre.',
-          },
-          {
-            key: 'middleName',
-            label: 'Segundo nombre',
-            hint: 'Si no tenés, dejalo vacío.',
-            control: 'text',
-            autocomplete: 'additional-name',
-            placeholder: 'Andrea',
-            testId: 'registro-segundo-nombre',
-            ancho: 'mitad',
-          },
-          {
-            key: 'thirdName',
-            label: 'Otros nombres (opcional)',
-            hint: 'Si tenés más nombres, podés escribirlos acá.',
-            control: 'text',
-            placeholder: 'María',
-            testId: 'registro-tercer-nombre',
-            ancho: 'completo',
           },
           {
             key: 'lastName',
@@ -1506,6 +1489,88 @@ export class RegisterPatient {
     this.formPaciente.controls.occupationConceptId.setValue(opcion?.value ?? null);
   }
 
+  /**
+   * Los nombres que se agregaron después del tercero.
+   *
+   * Viven **sólo en la pantalla**: hay gente con cuatro y cinco nombres, y una
+   * casilla fija por cada uno sería un formulario largo para todos por lo que
+   * necesitan pocos. Al enviar, éstos y el segundo y el tercero se concatenan
+   * en `middleName`, que es la única columna que la base tiene para los nombres
+   * que no son el primero — ver {@link nombresAdicionales}.
+   */
+  readonly nombresExtra = signal<readonly string[]>([]);
+
+  /** Suma una casilla vacía de nombre. */
+  agregarNombre(): void {
+    this.nombresExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /**
+   * Quita una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   */
+  quitarNombre(indice: number): void {
+    this.nombresExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /**
+   * Escribe en una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   * @param valor - Lo que se escribió.
+   */
+  escribirNombreExtra(indice: number, valor: string | number | null): void {
+    const texto = valor === null ? '' : String(valor);
+    this.nombresExtra.update((actuales) =>
+      actuales.map((nombre, i) => (i === indice ? texto : nombre)),
+    );
+  }
+
+  /**
+   * El valor de un control de nombre, para el campo proyectado.
+   *
+   * Las tres casillas de nombre se dibujan a mano —no las dibuja el motor—
+   * porque entran en un solo campo de la página. Siguen siendo los mismos
+   * `FormControl`: se leen y escriben acá en vez de por `formControlName`.
+   *
+   * @param key - Cuál de los tres controles de nombre.
+   */
+  valorDeNombre(key: 'name' | 'middleName' | 'thirdName'): string {
+    return this.formPaciente.controls[key].value;
+  }
+
+  /**
+   * Escribe en un control de nombre desde el campo proyectado.
+   *
+   * @param key - Cuál de los tres controles de nombre.
+   * @param valor - Lo que se escribió.
+   */
+  escribirNombre(key: 'name' | 'middleName' | 'thirdName', valor: string | number | null): void {
+    this.formPaciente.controls[key].setValue(valor === null ? '' : String(valor));
+  }
+
+  /** Si hay que pintar en rojo el primer nombre. */
+  readonly primerNombreEnRojo = computed(() => {
+    const control = this.formPaciente.controls.name;
+    return control.touched && control.invalid;
+  });
+
+  /**
+   * Los nombres que no son el primero, en una sola cadena.
+   *
+   * El segundo, el tercero y los que se hayan agregado, separados por espacio y
+   * sin los vacíos. La base guarda todo esto en `middle_name`: no hay columna
+   * de tercer nombre, y `varchar` sin restricción admite los espacios.
+   */
+  private nombresAdicionales(): string {
+    const raw = this.formPaciente.getRawValue();
+    return [raw.middleName, raw.thirdName, ...this.nombresExtra()]
+      .map((nombre) => nombre.trim())
+      .filter((nombre) => nombre !== '')
+      .join(' ');
+  }
+
   /* ---- Empresa donde trabaja --------------------------------------------- */
 
   /**
@@ -2088,9 +2153,7 @@ export class RegisterPatient {
   private datosPaciente(): PatientRegistration {
     const raw = this.formPaciente.getRawValue();
     const correo = raw.email.trim();
-    const segundoNombre = raw.middleName.trim();
-    const tercerNombre = raw.thirdName.trim();
-    const nombresAdicionales = [segundoNombre, tercerNombre].filter(Boolean).join(' ');
+    const nombresAdicionales = this.nombresAdicionales();
     const apellidoMaterno = raw.motherLastName.trim();
     const documento = raw.nationalId.trim();
     const telefono = raw.phone.trim();
