@@ -203,3 +203,21 @@
   font-weight: 400;
   color: var(--fg-muted);
 }
+
+/* Lo que la persona todavía no cargó. Se dibuja el renglón igual —es la ficha
+   propia, y ocultarlo impide distinguir «no lo tengo» de «no me lo muestran»—
+   pero con menos peso que un dato real, para que la lista no parezca llena. */
+.mi-perfil__ausente {
+  color: var(--text-tertiary, var(--text-secondary));
+  font-style: italic;
+}
+
+/* El enlace al mapa vive dentro del renglón de la dirección, no debajo: es una
+   acción sobre ese dato, no un dato más. */
+.mi-perfil__mapa {
+  display: inline-block;
+  margin-left: var(--sp-2);
+  font-size: var(--fs-body-sm);
+  color: var(--action);
+  text-decoration: underline;
+}
