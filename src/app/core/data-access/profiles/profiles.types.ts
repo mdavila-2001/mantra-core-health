@@ -592,6 +592,8 @@ export interface OwnPatientProfile {
   readonly issuerAdministrativeAreaConceptId?: string;
   /** NIT para facturación. */
   readonly taxId?: string;
+  /** A nombre de quién sale el comprobante — la razón social del NIT. */
+  readonly taxHolderName?: string;
   readonly email?: string;
   readonly homeAddress?: OwnAddress;
   readonly workAddress?: OwnAddress;
@@ -641,6 +643,8 @@ export interface OwnPatientProfileChanges {
    * valor viejo y no había forma de corregirlo.
    */
   readonly taxId?: string;
+  /** A nombre de quién sale el comprobante. Viaja CON el NIT. `''` la quita. */
+  readonly taxHolderName?: string;
   /**
    * El texto del domicilio (§1.8) y el de la dirección de trabajo (§1.10).
    *

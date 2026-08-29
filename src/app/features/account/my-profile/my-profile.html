@@ -196,6 +196,18 @@
                     }
                   </dd>
                 </div>
+                <!-- Pegado al NIT porque son el mismo hecho: a nombre de quién
+                     factura esta persona. El registro pide los dos (§1.15). -->
+                <div class="mi-perfil__dato">
+                  <dt>Razón social</dt>
+                  <dd>
+                    @if (p.taxHolderName) {
+                      {{ p.taxHolderName }}
+                    } @else {
+                      <span class="mi-perfil__ausente">Sin registrar</span>
+                    }
+                  </dd>
+                </div>
                 <!-- El domicilio y el trabajo llevan su enlace al mapa cuando la
                      dirección trae coordenadas: el registro de procesos pide
                      «Ubicación GPS» en los dos (§1.9 y §1.11), y `common.addresses`
