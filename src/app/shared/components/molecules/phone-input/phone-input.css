@@ -45,9 +45,9 @@
    de tabulación distintos y quien navega con teclado necesita ver en cuál de
    los dos está. Va por dentro para no salirse del marco del campo. */
 .pais__disparador:focus-visible {
-  outline: 2px solid var(--focus-ring, var(--color-primary));
+  outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
-  border-radius: var(--radius-sm, 4px);
+  border-radius: var(--r-xs);
 }
 
 .pais__prefijo {
@@ -98,10 +98,10 @@
   margin: 0;
   padding: var(--sp-1);
   list-style: none;
-  background: var(--surface-default, var(--bg-elevated, #fff));
+  background: var(--bg-surface);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-md, 8px);
-  box-shadow: var(--shadow-md, 0 8px 24px rgb(0 0 0 / 12%));
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
 }
 
 .pais__lista:focus-visible {
@@ -113,7 +113,7 @@
   align-items: center;
   gap: var(--sp-3);
   padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--radius-sm, 4px);
+  border-radius: var(--r-xs);
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: var(--fs-body);
@@ -124,13 +124,13 @@
    pintara distinto que las flechas, recorrer la lista con el teclado mientras
    el puntero descansa encima mostraría dos filas «activas» a la vez. */
 .pais__opcion--resaltada {
-  background: var(--surface-hover, var(--bg-subtle, rgb(0 0 0 / 5%)));
+  background: var(--bg-hover);
 }
 
 /* La elegida se marca con peso, no con color: el color ya lo usa el resaltado,
    y dos señales de color en la misma lista compiten. */
 .pais__opcion[aria-selected='true'] .pais__nombre {
-  font-weight: var(--fw-semibold, 600);
+  font-weight: 600;
 }
 
 .pais__nombre {
