@@ -5,7 +5,6 @@ import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterAccountType } from './features/auth/register-account-type/register-account-type';
-import { RegisterPatient } from './features/auth/register-patient/register-patient';
 import { RegisterOrganization } from './features/auth/register-organization/register-organization';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
@@ -84,10 +83,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Carril P9 · las preferencias de aviso. Diferida: se abre una vez y se
   // olvida, que es exactamente lo que una pantalla de preferencias debería
   // conseguir.
-  'my-account/notification-preferences': () =>
-    import('./features/account/notification-preferences/notification-preferences').then(
-      (m) => m.NotificationPreferences,
-    ),
+  ajustes: () => import('./features/settings/settings').then((m) => m.Settings),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
@@ -505,6 +501,19 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Corregir los datos propios del paciente. **Sin `soloDeQuienAtiende()`**:
+    // es de quien se atiende, no de quien atiende — «Mi perfil» no declara
+    // roles y esta hija tampoco los restringe, igual que el caso de
+    // verificación de identidad. El sujeto lo resuelve el backend desde la
+    // sesión, así que no hay perfil ajeno que abrir escribiendo la URL.
+    path: 'my-account/profile/edit',
+    title: `${APP_TITLE} - Editar tus datos`,
+    loadComponent: () =>
+      import('./features/account/my-profile/patient-profile-edit/patient-profile-edit')
+        .then((m) => m.PatientProfileEdit)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La vitrina pública: se configura y se ve en la misma pantalla.
     path: 'my-account/preview',
     title: `${APP_TITLE} - Tu perfil público`,
@@ -806,6 +815,10 @@ function componenteDe(section: AppSection): Pick<Routes[number], 'component' | '
 
 /** Dirección vieja → dirección nueva. Absolutas para no depender del padre. */
 const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
+  // «Preferencias de avisos» dejó de ser una sección y pasó a ser un panel de
+  // Ajustes. Estuvo en el menú, así que la dirección está en favoritos y en el
+  // historial de quien ya la usó: se redirige en vez de devolver un 404.
+  'my-account/notification-preferences': '/ajustes',
   panel: '/dashboard',
   agenda: '/schedule',
   clinico: '/medical-records',
@@ -874,6 +887,21 @@ function rutasDeFichasPublicas(): Routes {
     loadComponent: () =>
       import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
     children: [
+      // La vista de una publicación suelta cuelga sólo de `p/` —quien publica
+      // es un profesional—, y va antes que `:slug` porque tiene más segmentos.
+      ...(prefijo === 'p'
+        ? [
+            {
+              path: ':slug/publicacion/:postId',
+              data: { kind, pantallaReal: true },
+              resolve: { perfil: perfilPublicoResolver },
+              loadComponent: () =>
+                import('./features/public-profile/publicacion-detalle/publicacion-detalle').then(
+                  (m) => m.PublicacionDetalle,
+                ),
+            },
+          ]
+        : []),
       {
         path: ':slug',
         data: { kind, pantallaReal: true },
@@ -909,6 +937,28 @@ function rutasDeFichasPublicas(): Routes {
  */
 function rutasDeBusquedaPublica(): Routes {
   return [
+    {
+      // La portada pública: lo último que publicaron todos los profesionales.
+      // Es el destino por defecto de quien entra sin sesión (ver `homeGuard`),
+      // y va en su propia ruta y no en `/buscar` porque son dos cosas
+      // distintas: acá se lee sin saber a quién buscar, allá se busca a
+      // alguien concreto.
+      path: 'publicaciones',
+      loadComponent: () =>
+        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+      children: [
+        {
+          path: '',
+          pathMatch: 'full',
+          title: 'Lo último de los profesionales — AloVida',
+          data: { arquetipo: 'listado', pantallaReal: true },
+          loadComponent: () =>
+            import('./features/redsat/buscar/feed-publicaciones/feed-publicaciones').then(
+              (m) => m.FeedPublicaciones,
+            ),
+        },
+      ],
+    },
     {
       path: 'buscar',
       loadComponent: () =>
@@ -1435,7 +1485,14 @@ export const routes: Routes = [
   },
   {
     path: 'auth/register/patient',
-    component: RegisterPatient,
+    // Diferida: el alta arrastra el árbol de municipios y el combobox de
+    // ocupaciones, y con import directo eso viaja en el bundle inicial que
+    // toda visita paga —incluida la de quien sólo entra a leer—. Mismo
+    // criterio que la vitrina de diseño.
+    loadComponent: () =>
+      import('./features/auth/register-patient/register-patient').then(
+        (m) => m.RegisterPatient,
+      ),
     // El tipo viaja como dato de la ruta y no leyendo el último segmento de la
     // URL: si mañana la dirección cambia, cambia acá y no dentro del componente.
     data: { tipoDeCuenta: 'paciente' },
@@ -1443,7 +1500,14 @@ export const routes: Routes = [
   },
   {
     path: 'auth/register/practitioner',
-    component: RegisterPatient,
+    // Diferida: el alta arrastra el árbol de municipios y el combobox de
+    // ocupaciones, y con import directo eso viaja en el bundle inicial que
+    // toda visita paga —incluida la de quien sólo entra a leer—. Mismo
+    // criterio que la vitrina de diseño.
+    loadComponent: () =>
+      import('./features/auth/register-patient/register-patient').then(
+        (m) => m.RegisterPatient,
+      ),
     data: { tipoDeCuenta: 'profesional' },
     title: 'AloVida - Crear cuenta de profesional',
   },

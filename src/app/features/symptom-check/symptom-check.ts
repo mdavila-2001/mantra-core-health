@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, map, of, switchMap, type Observable } from 'rxjs';
@@ -15,16 +23,20 @@ import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 
 import {
+  enumerar,
   explicar,
   normalizar,
+  precalentar,
   reconocer,
   reconocerAlarmas,
+  reconocerNegados,
   recomendar,
   sugerir,
   type Recomendacion,
   type Sintoma,
-  SINTOMAS,
+  TODOS_LOS_SINTOMAS,
 } from './sintomas';
+import { ultimaFrase } from './texto';
 
 /** Tope por página del listado de profesionales. */
 const POR_PAGINA = 50;
@@ -83,6 +95,22 @@ export class SymptomCheck {
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
 
+  constructor() {
+    /* El índice del motor se arma la primera vez que se lo usa, y armarlo
+       cuesta unas decenas de milisegundos. Si esa primera vez es la primera
+       tecla, se siente. Se arma acá, después de que la pantalla ya se pintó y
+       cuando el navegador no tiene nada mejor que hacer, así que para cuando
+       alguien empieza a escribir ya está. */
+    afterNextRender(() => {
+      const cuandoPueda = globalThis.requestIdleCallback;
+      if (typeof cuandoPueda === 'function') {
+        cuandoPueda(() => precalentar());
+      } else {
+        setTimeout(() => precalentar());
+      }
+    });
+  }
+
   /**
    * Si esta instancia trabaja **sin sesión**.
    *
@@ -137,8 +165,20 @@ export class SymptomCheck {
     { initialValue: new Set<string>() as ReadonlySet<string> },
   );
 
-  /** Los síntomas de alarma que aparecen en el texto. Vacío es lo normal. */
-  protected readonly alarmas = computed(() => reconocerAlarmas(this.texto()));
+  /**
+   * Los síntomas de alarma: los que dice el texto **y los que se tocaron**.
+   *
+   * Las zonas del cuerpo ofrecen «dolor de pecho» y «dificultad para respirar»
+   * como pastillas, y mirando sólo el texto tocarlas no hacía nada: el chip
+   * quedaba puesto, sin especialidad detrás y sin aviso — el único camino de la
+   * pantalla que terminaba en la nada era justo el de las urgencias.
+   */
+  protected readonly alarmas = computed<readonly Sintoma[]>(() => {
+    const delTexto = reconocerAlarmas(this.texto());
+    const puestas = this.sintomas().filter((sintoma) => sintoma.alarma === true);
+    const yaEstan = new Set(delTexto.map((sintoma) => sintoma.id));
+    return [...delTexto, ...puestas.filter((sintoma) => !yaEstan.has(sintoma.id))];
+  });
 
   /**
    * Los chips: lo reconocido en el texto, menos lo quitado, más lo agregado.
@@ -163,6 +203,29 @@ export class SymptomCheck {
     // a decir «andá a urgencias», y una lista de especialidades debajo
     // competiría con ese mensaje.
     this.alarmas().length > 0 ? [] : recomendar(this.sintomas(), this.especialidadesDisponibles()),
+  );
+
+  /**
+   * Qué decirle a quien escribió una urgencia.
+   *
+   * Casi siempre alcanza el aviso general —«andá a una guardia»—, pero no
+   * siempre: a quien escribe que se quiere morir, mandarlo a una guardia y
+   * nada más es contestarle con un trámite. Esa fila trae su propio mensaje.
+   */
+  protected readonly mensajeDeAlarma = computed(
+    () => this.alarmas().find((alarma) => alarma.mensaje !== undefined)?.mensaje ?? null,
+  );
+
+  /**
+   * Lo que la persona escribió **para decir que no lo tiene**.
+   *
+   * Quien escribe «no tengo fiebre, solo tos» y ve «no reconocimos ningún
+   * síntoma» concluye, con razón, que la pantalla no lo leyó. Devolverle lo que
+   * sí se entendió —aunque sea lo que descartó— es la diferencia entre una
+   * pantalla que escucha y un buscador que no encontró nada.
+   */
+  protected readonly descartados = computed(() =>
+    enumerar(reconocerNegados(this.texto()).map((sintoma) => sintoma.nombre)),
   );
 
   /** Lo que la región viva le anuncia a un lector de pantalla. */
@@ -201,7 +264,7 @@ export class SymptomCheck {
       return [];
     }
     return zona.sintomas
-      .map((id) => SINTOMAS.find((s) => s.id === id))
+      .map((id) => TODOS_LOS_SINTOMAS.find((s) => s.id === id))
       .filter((s): s is Sintoma => s !== undefined);
   });
 
@@ -327,16 +390,4 @@ export class SymptomCheck {
       catchError(() => of(new Set<string>())),
     );
   }
-}
-
-/**
- * La última frase de lo que se está escribiendo.
- *
- * El autocompletado mira sólo lo último y no el texto entero: quien ya escribió
- * «tengo fiebre y do» está buscando algo que empieza con «do», y buscar sobre
- * la frase completa no encontraría nada.
- */
-export function ultimaFrase(texto: string): string {
-  const partes = normalizar(texto).split(/[,.;]| y /);
-  return (partes[partes.length - 1] ?? '').trim();
 }

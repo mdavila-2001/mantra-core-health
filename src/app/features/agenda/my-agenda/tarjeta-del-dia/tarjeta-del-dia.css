@@ -1,0 +1,116 @@
+/* ============================================================================
+    LA TARJETA — el único gesto de creación (AG-5).
+
+    La regla de Justin gobierna el layout: «cómodo, y no lleno de tantas
+    funciones o botones en la cara». Cuatro campos, una inferencia dicha en
+    palabras, un botón.
+    ========================================================================== */
+
+.tarjeta {
+  border: 1px solid var(--c-neutral-200, #e5e5e5);
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated, #fff);
+  box-shadow: var(--shadow-md, 0 4px 16px rgb(0 0 0 / 0.08));
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: 32rem;
+}
+
+.tarjeta__barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.tarjeta__titulo {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.tarjeta__titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.tarjeta__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.tarjeta__rango {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+/* La inferencia: informa sin alarmar. Es lo que va a pasar, no un problema. */
+.tarjeta__inferencia {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.tarjeta__pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.tarjeta__publicar {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+/* La modalidad: tres opciones en línea, envolviendo en pantalla chica. Es un
+   `fieldset` de verdad porque son opciones excluyentes de una misma pregunta y
+   el lector de pantalla tiene que anunciarla como grupo. */
+.tarjeta__modalidad {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tarjeta__modalidad-titulo {
+  padding: 0;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.tarjeta__modalidad-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.tarjeta__modalidad-opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--stroke-1) solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  cursor: pointer;
+  /* Área táctil cómoda: se toca entre paciente y paciente, muchas veces de pie. */
+  min-height: 2.75rem;
+}
+
+.tarjeta__modalidad-opcion:has(input:checked) {
+  border-color: var(--c-petrol-500);
+  background: var(--bg-surface-alt);
+  font-weight: 600;
+}
+
+/* El foco viaja al `label` porque el radio nativo va dentro: sin esto, al
+   tabular no se ve dónde está el foco. */
+.tarjeta__modalidad-opcion:has(input:focus-visible) {
+  outline: var(--stroke-2) solid var(--c-aqua-500);
+  outline-offset: 2px;
+}

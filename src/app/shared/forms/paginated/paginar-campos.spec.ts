@@ -99,6 +99,19 @@ describe('paginarCampos', () => {
     });
   });
 
+  describe('la presentación', () => {
+    it('conserva la disposición de la sección en cada página', () => {
+      const paginas = paginarCampos([
+        { titulo: 'Identidad', disposicion: 'dos-columnas', campos: campos(5) },
+      ]);
+
+      expect(paginas.map((pagina) => pagina.disposicion)).toEqual([
+        'dos-columnas',
+        'dos-columnas',
+      ]);
+    });
+  });
+
   describe('los bordes', () => {
     it('sin campos no hay páginas', () => {
       expect(paginarCampos([])).toEqual([]);

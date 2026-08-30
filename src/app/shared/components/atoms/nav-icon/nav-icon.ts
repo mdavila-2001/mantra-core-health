@@ -26,6 +26,18 @@ import type { NavIconName } from './nav-icon.types';
  * `glossary-category-icon`, el otro juego de íconos dibujados a mano de este
  * repositorio.
  *
+ * ## El trazo es 1,5 y la caja se usa entera
+ *
+ * Era 1,6, y a los tamaños en que estos íconos se ven de verdad —20 px en el
+ * menú, 22 px en el árbol de accesos— ese décimo de más los empasta: dos trazos
+ * paralelos a menos de 2 px se leen como uno solo grueso.
+ *
+ * La otra mitad del arreglo es el encuadre. Varios dibujos no estaban centrados
+ * en las 24 unidades del `viewBox` —«patients» tenía la cabeza en x=9 y los
+ * hombros llegando a x=1— y en una fila de íconos eso se nota como un renglón
+ * torcido sin que se sepa por qué. Al redibujarlos, la regla es la misma para
+ * todos: centro en 12, unos 2 px de aire a cada lado.
+ *
  * ## Siempre `aria-hidden`
  *
  * El ícono nunca es el nombre accesible: es una ayuda visual. Quien lo usa pone
@@ -39,7 +51,7 @@ import type { NavIconName } from './nav-icon.types';
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      stroke-width="1.6"
+      stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
       aria-hidden="true"
@@ -48,30 +60,42 @@ import type { NavIconName } from './nav-icon.types';
       @switch (name()) {
         <!-- ---- Los siete originales ------------------------------------ -->
         @case ('patients') {
-          <!-- Una persona: el paciente, y también «Mi perfil». -->
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
+          <!-- Una persona: el paciente, y también «Mi perfil».
+               Redibujada al centro de la caja: la cabeza estaba en x=9 de 24 y
+               los hombros llegaban hasta x=1, así que en una fila de íconos
+               éste se veía corrido a la izquierda sin que se supiera por qué. -->
+          <circle cx="12" cy="8" r="3.6" />
+          <path d="M4.8 20.4a7.2 7.2 0 0 1 14.4 0" />
         }
         @case ('calendar') {
-          <!-- Almanaque: la agenda, de los dos lados del mostrador. -->
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <line x1="16" y1="2" x2="16" y2="6" />
-          <line x1="8" y1="2" x2="8" y2="6" />
-          <line x1="3" y1="10" x2="21" y2="10" />
+          <!-- Almanaque con los días marcados: la agenda, de los dos lados del
+               mostrador. Los puntos son lo que lo separa de la caja vacía de
+               «scan» a tamaño chico. -->
+          <rect x="3.2" y="5" width="17.6" height="16" rx="2.4" />
+          <path d="M3.2 9.8h17.6" />
+          <path d="M8.2 3v4M15.8 3v4" />
+          <path d="M7.8 13.8h.01M12 13.8h.01M16.2 13.8h.01M7.8 17.4h.01M12 17.4h.01" />
         }
         @case ('orders') {
-          <!-- Hoja con esquina doblada: una orden, y nada más. -->
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
+          <!-- Hoja con esquina doblada y dos renglones escritos: una orden.
+               Los renglones son lo que la distingue de la hoja en blanco, que
+               a 20 px era una silueta cualquiera. -->
+          <path d="M13.6 2.8H7.2a2 2 0 0 0-2 2v14.4a2 2 0 0 0 2 2h9.6a2 2 0 0 0 2-2V8.2z" />
+          <path d="M13.6 2.8V8.2h5.2" />
+          <path d="M8.8 13.2h6M8.8 16.8h4" />
         }
         @case ('results') {
-          <!-- Trazo de electrocardiograma: un resultado. -->
-          <path d="M3 12h4l3 8 4-16 3 8h4" />
+          <!-- Informe con el trazo adentro: un resultado. El trazo suelto era
+               el único ícono del set sin contorno, así que en la rejilla
+               quedaba flotando; el marco lo vuelve un papel que se lee. -->
+          <rect x="3" y="4.6" width="18" height="14.8" rx="2.4" />
+          <path d="M6.6 12.2h2.3l1.7-3.9 2.4 7.1 1.6-3.2h2.8" />
         }
         @case ('billing') {
-          <!-- Tarjeta: lo que se cobra. -->
-          <rect x="2" y="5" width="20" height="14" rx="2" />
-          <line x1="2" y1="10" x2="22" y2="10" />
+          <!-- Tarjeta con banda y número: lo que se cobra. -->
+          <rect x="2.6" y="5.2" width="18.8" height="13.6" rx="2.4" />
+          <path d="M2.6 10h18.8" />
+          <path d="M6.4 14.8h3.6" />
         }
         @case ('settings') {
           <!-- Engranaje: configurar. -->
@@ -84,14 +108,16 @@ import type { NavIconName } from './nav-icon.types';
         <!-- ---- Gente y conversación ------------------------------------ -->
         @case ('people') {
           <!-- Dos personas: un grupo, no una. -->
-          <path d="M16 20.5v-1.6a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1.6" />
-          <circle cx="9.5" cy="7" r="3.4" />
-          <path d="M17 3.9a3.4 3.4 0 0 1 0 6.6" />
-          <path d="M21 20.5v-1.6a4 4 0 0 0-3-3.9" />
+          <circle cx="9.6" cy="8" r="3.2" />
+          <path d="M3.4 20.2a6.2 6.2 0 0 1 12.4 0" />
+          <path d="M16.4 5.2a3.2 3.2 0 0 1 0 5.6" />
+          <path d="M17.8 14.4a5.4 5.4 0 0 1 2.8 4.4" />
         }
         @case ('chat') {
-          <!-- Globo de diálogo con cola: una conversación. -->
+          <!-- Globo de diálogo con cola y tres puntos: una conversación en
+               curso. El globo vacío se leía como una gota. -->
           <path d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z" />
+          <path d="M8.6 11.4h.01M12 11.4h.01M15.4 11.4h.01" />
         }
         @case ('directory') {
           <!-- Ficha con lomo: la guía donde se busca a alguien. -->
@@ -125,10 +151,12 @@ import type { NavIconName } from './nav-icon.types';
           <path d="M7.3 14.5h9.4" />
         }
         @case ('scan') {
-          <!-- Placa entre cuatro esquinas: la imagenología. -->
-          <path d="M3 8.5V5.5A1.5 1.5 0 0 1 4.5 4h3M16.5 4h3A1.5 1.5 0 0 1 21 5.5v3" />
-          <path d="M21 15.5v3a1.5 1.5 0 0 1-1.5 1.5h-3M7.5 20h-3A1.5 1.5 0 0 1 3 18.5v-3" />
-          <path d="M6.8 12h1.9l1.5-3.2 2.3 6.4 1.5-3.2h2.2" />
+          <!-- Cuatro esquinas y la línea del barrido: la imagenología.
+               Tenía adentro el mismo electrocardiograma que «results», así que
+               a tamaño de menú los dos eran el mismo dibujo. -->
+          <path d="M3 8.6V5.8A2.4 2.4 0 0 1 5.4 3.4h2.8M15.8 3.4h2.8A2.4 2.4 0 0 1 21 5.8v2.8" />
+          <path d="M21 15.4v2.8a2.4 2.4 0 0 1-2.4 2.4h-2.8M8.2 20.6H5.4A2.4 2.4 0 0 1 3 18.2v-2.8" />
+          <path d="M6.4 12h11.2" />
         }
         @case ('scalpel') {
           <!-- Bisturí: una intervención. Dos trazos, hoja y mango en línea: el
@@ -151,10 +179,12 @@ import type { NavIconName } from './nav-icon.types';
           <path d="M5.2 12.6h2.6l1.4-2.6 2 5 1.6-3.4h3.9" />
         }
         @case ('folder') {
-          <!-- Carpeta: el archivo. -->
+          <!-- Carpeta con la tapa marcada: el archivo. Sin esa línea era un
+               rectángulo con una muesca. -->
           <path
-            d="M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2.5h8.5A1.5 1.5 0 0 1 21 10v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"
+            d="M3 7.2A1.8 1.8 0 0 1 4.8 5.4h4.4l2.1 2.6h7.9A1.8 1.8 0 0 1 21 9.8v8.4a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.2z"
           />
+          <path d="M3 11.6h18" />
         }
         @case ('note') {
           <!-- Hoja escrita con lápiz: una evolución se redacta. -->
@@ -176,9 +206,9 @@ import type { NavIconName } from './nav-icon.types';
           <path d="M11 6.6h9.5M11 12.6h9.5M11 18.6h6" />
         }
         @case ('book') {
-          <!-- Libro abierto contra su lomo: el glosario. -->
-          <path d="M4.5 19.5V5A2 2 0 0 1 6.5 3H19.5v16H6.5a2 2 0 0 0-2 2z" />
-          <path d="M6.5 17h13" />
+          <!-- Libro contra su lomo, con texto en la página: el glosario. -->
+          <path d="M4.6 19.2V5.2A2.4 2.4 0 0 1 7 2.8h12.4v14.6H7a2.4 2.4 0 0 0 0 4.8h12.4" />
+          <path d="M8.4 7.4h7.2M8.4 10.8h4.8" />
         }
         @case ('labels') {
           <!-- Dos etiquetas: la terminología es el catálogo de nombres. -->
@@ -262,6 +292,21 @@ import type { NavIconName } from './nav-icon.types';
           <path d="M10.6 12.4 20.2 2.8" />
           <path d="m17.6 5.4 2.2 2.2M15.2 7.8l2.2 2.2" />
         }
+        @case ('lock') {
+          <!-- Candado cerrado: la contraseña. No es la llave, que es lo que
+               se presta: ver la nota del set. -->
+          <rect x="4.5" y="10.5" width="15" height="10" rx="2.2" />
+          <path d="M8.2 10.5V7.8a3.8 3.8 0 0 1 7.6 0v2.7" />
+        }
+        @case ('mail') {
+          <!-- Sobre: una dirección de correo, no una conversación. -->
+          <rect x="2.8" y="5" width="18.4" height="14" rx="2.2" />
+          <path d="m3.4 7.2 7.5 5.4a2 2 0 0 0 2.2 0l7.5-5.4" />
+        }
+        @case ('phone') {
+          <!-- Auricular: el teléfono al que se llama. -->
+          <path d="M7.6 3.5H5.2a1.8 1.8 0 0 0-1.8 2c.3 3 1.4 5.8 3.2 8.2a19 19 0 0 0 5.7 5.7c2.4 1.8 5.2 2.9 8.2 3.2a1.8 1.8 0 0 0 2-1.8v-2.4a1.8 1.8 0 0 0-1.5-1.8l-2.4-.4a1.8 1.8 0 0 0-1.8.8l-.8 1.2a14 14 0 0 1-5.4-5.4l1.2-.8a1.8 1.8 0 0 0 .8-1.8l-.4-2.4a1.8 1.8 0 0 0-1.8-1.5z" />
+        }
         @case ('link') {
           <!-- Dos eslabones: un proveedor de identidad es de afuera. -->
           <path d="M10.4 13.6a4.2 4.2 0 0 0 6 0l2.6-2.7a4.2 4.2 0 0 0-6-6l-1.5 1.6" />
@@ -311,10 +356,14 @@ import type { NavIconName } from './nav-icon.types';
         }
 
         @default {
-          <!-- Casita: el punto de partida, y el que se dibuja cuando el
-               nombre no está en el set. Nunca se deja un hueco donde iba un
-               ícono: la rejilla se desalinea y no se entiende por qué. -->
-          <path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" />
+          <!-- Casita con puerta: el punto de partida, y el que se dibuja
+               cuando el nombre no está en el set. Nunca se deja un hueco donde
+               iba un ícono: la rejilla se desalinea y no se entiende por qué.
+               El techo y el cuerpo van en trazos separados —antes era un solo
+               contorno con la puerta recortada, y a 20 px la puerta se comía
+               el borde inferior. -->
+          <path d="M3.4 10.2 12 3.4l8.6 6.8v8.6a2 2 0 0 1-2 2H5.4a2 2 0 0 1-2-2z" />
+          <path d="M9.4 20.8v-6.2h5.2v6.2" />
         }
       }
     </svg>

@@ -7,6 +7,7 @@
     no en una hoja de estilos ni en la cabeza de quien arma la pantalla.
     ========================================================================== */
 
+import type { NavIconName } from '../../components/atoms/nav-icon/nav-icon.types';
 import type { SelectOption } from '../../components/atoms/select/select.types';
 
 /**
@@ -86,6 +87,21 @@ export interface CampoDeFormulario {
   readonly autocomplete?: string;
 
   /**
+   * El glifo que va **dentro** del campo, del set cerrado del nav.
+   *
+   * Opcional y sin defecto: un ícono por campo, puesto por costumbre, es ruido
+   * — la regla del set (`nav-icon.types.ts`) vale igual acá: se declara cuando
+   * **dice algo que el rótulo no dice ya**, y sobre todo cuando ayuda a
+   * encontrar un campo entre varios de un vistazo. En una página de un solo
+   * campo no aporta nada; en una de cuatro, es lo que la vuelve escaneable.
+   *
+   * Va dentro del control y no al lado del rótulo a propósito: así comparte el
+   * marco, el foco y el estado de error del campo, y se enciende cuando el
+   * campo está activo en vez de quedar como una calcomanía junto al texto.
+   */
+  readonly icono?: NavIconName;
+
+  /**
    * El `data-testid` del control, cuando la pantalla ya tenía uno.
    *
    * Por defecto el motor pone `campo-<key>` en los campos de texto, que alcanza
@@ -120,14 +136,58 @@ export interface CampoDeFormulario {
    * control que no existe.
    */
   readonly required?: boolean;
+
+  /** Límites de fecha para campos 'date' y 'datetime'. */
+  readonly minDate?: Date | 'today' | string | null;
+  readonly maxDate?: Date | 'today' | string | null;
+
+  /**
+   * Cuánto ocupa el campo cuando la fila entra en dos columnas.
+   *
+   * Por omisión un campo ocupa la fila entera: es lo correcto para casi todo
+   * —una dirección, un municipio, una contraseña— y es lo que hace que un
+   * formulario se lea como una columna y no como un tablero.
+   *
+   * `mitad` es para el dato que **no se entiende solo**: el número de cédula y
+   * su departamento de emisión son un único documento escrito en dos casillas,
+   * y separarlos en dos renglones los convierte en dos preguntas distintas. Dos
+   * campos `mitad` seguidos comparten renglón; uno suelto ocupa media fila y
+   * deja el resto en blanco, que es la señal de que falta su par.
+   *
+   * En pantalla angosta no hace nada: todo vuelve a una columna antes que
+   * estrechar dos controles a menos de lo que se escribe adentro.
+   */
+  readonly ancho?: 'completo' | 'mitad';
 }
 
 /** Una página: el rótulo de su sección y hasta cuatro campos. */
 export interface PaginaDeFormulario {
   readonly titulo: string;
 
+  /**
+   * Nombre estable de la página, para quien necesite reconocerla desde fuera.
+   *
+   * El título no sirve para eso: es texto de cara a la persona —se reescribe
+   * cuando se lee mal, y `paginarCampos` le agrega «(1 de 2)» al partir una
+   * sección larga—, así que colgar comportamiento de él es colgarlo de una
+   * cadena que cambia sin avisar. La clave la declara quien arma el formulario
+   * y no se muestra en ningún lado.
+   *
+   * Es opcional: un formulario que no necesita distinguir sus páginas no
+   * inventa nombres para ellas.
+   */
+  readonly clave?: string;
+
   /** Una línea que explica de qué va la sección, si hace falta. */
   readonly hint?: string;
+
+  /**
+   * Presentación de los campos cuando el ancho disponible lo permite.
+   *
+   * `dos-columnas` se reserva para pares cortos y relacionados. En pantallas
+   * angostas el motor vuelve a una sola columna para no estrechar controles.
+   */
+  readonly disposicion?: 'una-columna' | 'dos-columnas';
 
   /** Invariante: nunca más de {@link MAX_CAMPOS_POR_PAGINA}. */
   readonly campos: readonly CampoDeFormulario[];
@@ -143,6 +203,11 @@ export interface PaginaDeFormulario {
  */
 export interface SeccionDeFormulario {
   readonly titulo: string;
+
+  /** Ver {@link PaginaDeFormulario.clave}: la heredan todas sus páginas. */
+  readonly clave?: string;
+
   readonly hint?: string;
+  readonly disposicion?: PaginaDeFormulario['disposicion'];
   readonly campos: readonly CampoDeFormulario[];
 }

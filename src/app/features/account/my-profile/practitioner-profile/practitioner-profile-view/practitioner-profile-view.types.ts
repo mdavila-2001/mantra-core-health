@@ -116,5 +116,27 @@ export interface PerfilProfesionalVisible {
   readonly actividadActual: readonly AfiliacionVisible[];
   /** Hospitales/centros anteriores (UC-05-16, `endDate` presente). */
   readonly experienciaHistorica: readonly AfiliacionVisible[];
+  /**
+   * Los datos personales, **sólo en la ficha propia**.
+   *
+   * `null` cuando se mira la ficha de otro profesional: su documento y su
+   * fecha de nacimiento no son de quien la mira. La ficha pública sigue
+   * mostrando lo que siempre mostró.
+   */
+  readonly datosPersonales: DatosPersonalesVisibles | null;
   readonly desde: Date | null;
+}
+
+/** Lo que el profesional declaró de sí mismo, para su propia ficha. */
+export interface DatosPersonalesVisibles {
+  readonly documento: string;
+  /** Departamento emisor, ya en palabras. Vacío si el catálogo no llegó. */
+  readonly departamento: string;
+  readonly fechaNacimiento: Date | null;
+  /** Calculada de la fecha; `null` si no la declaró. */
+  readonly edad: number | null;
+  readonly telefono: string;
+  readonly correo: string;
+  /** Municipio de residencia, en palabras. */
+  readonly domicilio: string;
 }

@@ -129,9 +129,54 @@ export class IamClient {
       ...(registration.phone === undefined ? {} : { phone: registration.phone }),
       ...(registration.gender === undefined ? {} : { gender: registration.gender }),
       ...(registration.sexAtBirth === undefined ? {} : { sexAtBirth: registration.sexAtBirth }),
+      ...(registration.occupationConceptId === undefined
+        ? {}
+        : { occupationConceptId: registration.occupationConceptId }),
       ...(registration.occupationFreeText === undefined
         ? {}
         : { occupationFreeText: registration.occupationFreeText }),
+      ...(registration.homeAddressLines === undefined
+        ? {}
+        : { homeAddressLines: registration.homeAddressLines }),
+      ...(registration.homeLatitude === undefined
+        ? {}
+        : { homeLatitude: registration.homeLatitude }),
+      ...(registration.homeLongitude === undefined
+        ? {}
+        : { homeLongitude: registration.homeLongitude }),
+      ...(registration.workMunicipalityConceptId === undefined
+        ? {}
+        : { workMunicipalityConceptId: registration.workMunicipalityConceptId }),
+      ...(registration.workAddressLines === undefined
+        ? {}
+        : { workAddressLines: registration.workAddressLines }),
+      ...(registration.workLatitude === undefined
+        ? {}
+        : { workLatitude: registration.workLatitude }),
+      ...(registration.workLongitude === undefined
+        ? {}
+        : { workLongitude: registration.workLongitude }),
+      ...(registration.workEmployerConceptId === undefined
+        ? {}
+        : { workEmployerConceptId: registration.workEmployerConceptId }),
+      ...(registration.workEmployerFreeText === undefined
+        ? {}
+        : { workEmployerFreeText: registration.workEmployerFreeText }),
+      ...(registration.guardianName === undefined
+        ? {}
+        : { guardianName: registration.guardianName }),
+      ...(registration.guardianPhone === undefined
+        ? {}
+        : { guardianPhone: registration.guardianPhone }),
+      ...(registration.privateInsurancePlanId === undefined
+        ? {}
+        : { privateInsurancePlanId: registration.privateInsurancePlanId }),
+      ...(registration.publicInsurancePlanId === undefined
+        ? {}
+        : { publicInsurancePlanId: registration.publicInsurancePlanId }),
+      ...(registration.billingTaxId === undefined
+        ? {}
+        : { billingTaxId: registration.billingTaxId }),
       ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
     });
   }
@@ -146,6 +191,13 @@ export class IamClient {
     return this.http.post<RegisteredPractitioner>(this.url('/iam/auth/register-practitioner'), {
       email: registration.email,
       password: registration.password,
+      // Ojo al agregar campos: este cuerpo se arma nombre por nombre, así que
+      // lo que el contrato declare y esta lista no repita se descarta EN
+      // SILENCIO — mismo patrón que dejó la modalidad sin escribir (PR #241).
+      ...(registration.specialtyConceptIds === undefined ||
+      registration.specialtyConceptIds.length === 0
+        ? {}
+        : { specialtyConceptIds: [...registration.specialtyConceptIds] }),
       // El nombre viaja en partes y el backend compone el que se muestra: si el
       // front lo compusiera, la base guardaría una versión y el contrato otra.
       name: registration.name,

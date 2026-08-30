@@ -109,6 +109,9 @@ const PERFIL: PerfilProfesionalVisible = {
     },
   ],
   idiomas: [{ id: 'idi-es', nombre: 'Español', nivel: '', interpreta: true }],
+  // Sin datos personales por defecto: es la ficha de un colega, que es lo que
+  // miran casi todas estas pruebas. Las que hablan del bloque lo declaran.
+  datosPersonales: null,
   actividadActual: [afiliacion({ id: 'af-2', organizacion: 'Sede Central Sopocachi', hasta: null, actual: true })],
   experienciaHistorica: [afiliacion()],
   desde: new Date('2014-02-01'),
@@ -236,7 +239,10 @@ describe('PractitionerProfileView', () => {
 
   /* -- Las 3 pestañas superiores (carril 05) -------------------------------- */
 
-  it('el dueño ve las 3 pestañas del carril 05', () => {
+  it('las pestañas son dos: la vista previa tiene pantalla propia', () => {
+    // Era una tercera pestaña que mostraba, en sólo lectura, lo mismo que
+    // `/my-account/preview` — donde además se configura. Dos lugares para lo
+    // mismo, y el de acá no dejaba tocar nada.
     const host = montar(PERFIL, true);
 
     const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
@@ -244,7 +250,7 @@ describe('PractitionerProfileView', () => {
     );
     expect(pestanas).toContain('Trayectoria');
     expect(pestanas).toContain('Credenciales y verificaciones');
-    expect(pestanas).toContain('Vista previa del perfil público');
+    expect(pestanas).not.toContain('Vista previa del perfil público');
   });
 
   it('un visitante no ve la pestaña de vista previa', () => {
@@ -373,46 +379,15 @@ describe('PractitionerProfileView', () => {
 
   /* -- Vista previa del perfil público (carril 05) --------------------------- */
 
-  it('"Ver mi perfil público" selecciona la pestaña Preview, no navega afuera', () => {
+  it('"Ver mi perfil público" lleva a la vitrina, que es una pantalla propia', () => {
     const host = montar(PERFIL, true);
 
-    const boton = Array.from(host.querySelectorAll('button[app-button]')).find((b) =>
-      b.textContent?.includes('Ver mi perfil público'),
-    ) as HTMLButtonElement;
-    expect(boton).toBeTruthy();
-    boton.click();
-    fixture.detectChanges();
+    const enlace = Array.from(host.querySelectorAll('a[app-button]')).find((a) =>
+      a.textContent?.includes('Ver mi perfil público'),
+    ) as HTMLAnchorElement;
 
-    // La pestaña Preview queda activa: su panel deja de estar oculto.
-    const panelPreview = Array.from(host.querySelectorAll('[role="tabpanel"]')).find((panel) =>
-      panel.textContent?.includes('Así ve un paciente este perfil'),
-    );
-    expect(panelPreview?.hasAttribute('hidden')).toBe(false);
-  });
-
-  it('la vista previa reinstancia el MISMO componente con esPropio=false', () => {
-    const host = montar(PERFIL, true);
-    seleccionarPestana(host, 'Vista previa del perfil público');
-
-    // `host` YA ES el `<app-practitioner-profile-view>` externo: buscar el
-    // selector dentro de sus descendientes encuentra sin ambigüedad la
-    // instancia anidada (la externa no puede ser descendiente de sí misma).
-    const anidado = host.querySelector('app-practitioner-profile-view');
-    expect(anidado).toBeTruthy();
-    // El componente anidado no ofrece sus propias acciones de dueño.
-    expect(anidado?.querySelectorAll('.profesional__acciones button[app-button]')).toHaveLength(0);
-  });
-
-  it('la vista previa no vuelve a ofrecer una pestaña Preview de sí misma', () => {
-    const host = montar(PERFIL, true);
-    seleccionarPestana(host, 'Vista previa del perfil público');
-
-    const anidado = host.querySelector('app-practitioner-profile-view');
-    expect(anidado).toBeTruthy();
-    const pestanasAnidadas = Array.from(anidado?.querySelectorAll('[role="tab"]') ?? []).map(
-      (boton) => boton.textContent?.trim() ?? '',
-    );
-    expect(pestanasAnidadas).not.toContain('Vista previa del perfil público');
+    expect(enlace).toBeTruthy();
+    expect(enlace.getAttribute('href')).toContain('/my-account/preview');
   });
 
   it('en previewMode no muestra sus propias acciones de dueño aunque esPropio venga en true', () => {
@@ -460,4 +435,145 @@ describe('PractitionerProfileView', () => {
 
     expect(host.querySelector('.profesional__bio')).toBeNull();
   });
+
+  /**
+   * «Tus datos» — sólo en la ficha propia.
+   *
+   * La ficha del profesional mostraba su matrícula y su trayectoria, pero no el
+   * documento con el que se registró ni su fecha de nacimiento. Lo reportó
+   * Itzan en la revisión del túnel: la API los devolvía y la pantalla no los
+   * dibujaba.
+   */
+  describe('los datos personales', () => {
+    const DATOS = {
+      documento: '8812345',
+      departamento: 'Santa Cruz',
+      fechaNacimiento: new Date('1985-03-20'),
+      edad: 41,
+      telefono: '+591 70012345',
+      correo: 'elena@example.test',
+      domicilio: 'Santa Cruz de la Sierra',
+    };
+
+    it('en la ficha propia se ven documento, edad, teléfono y domicilio', () => {
+      const host = montar({ ...PERFIL, datosPersonales: DATOS });
+      const texto = host.textContent ?? '';
+
+      expect(texto).toContain('8812345');
+      expect(texto).toContain('Santa Cruz');
+      expect(texto).toContain('41 años');
+      expect(texto).toContain('+591 70012345');
+      expect(texto).toContain('elena@example.test');
+    });
+
+    it('en la ficha de OTRO no se ven: su documento no es de quien mira', () => {
+      const host = montar({ ...PERFIL, datosPersonales: null });
+      const texto = host.textContent ?? '';
+
+      expect(texto).not.toContain('Tus datos');
+      expect(texto).not.toContain('8812345');
+    });
+
+    it('lo que no declaró no se dibuja: nada de «Sin registrar»', () => {
+      const host = montar({
+        ...PERFIL,
+        datosPersonales: {
+          documento: '',
+          departamento: '',
+          fechaNacimiento: null,
+          edad: null,
+          telefono: '',
+          correo: '',
+          domicilio: '',
+        },
+      });
+
+      expect(host.textContent ?? '').not.toContain('Tus datos');
+    });
+  });
+
+  /**
+   * **Todo lo de la persona, junto y arriba.**
+   *
+   * Justin lo pidió con estas palabras: la matrícula estaba en la pestaña
+   * «Credenciales» y los datos en «Trayectoria», así que ver quién es y con qué
+   * ejerce obligaba a saltar de pestaña y a bajar. Ahora los dos van en una
+   * tarjeta pegada al nombre, y —lo que hace que el arreglo sirva— la matrícula
+   * de arriba es la COMPLETA: si abajo quedara el detalle real, habría que ir
+   * igual y no habríamos arreglado nada.
+   */
+  describe('la filiación vive fuera de las pestañas', () => {
+    const DATOS = {
+      documento: '8812345',
+      departamento: 'Santa Cruz',
+      fechaNacimiento: new Date('1985-03-20'),
+      edad: 41,
+      telefono: '+591 70012345',
+      correo: 'elena@example.test',
+      domicilio: 'Santa Cruz de la Sierra',
+    };
+
+    /** Con las pestañas arrancadas, lo que queda es lo que se ve sin navegar. */
+    function textoFueraDeLasPestanas(host: HTMLElement): string {
+      const copia = host.cloneNode(true) as HTMLElement;
+      copia.querySelectorAll('app-tabs').forEach((tabs) => tabs.remove());
+      return copia.textContent ?? '';
+    }
+
+    it('el dueño lee sus datos y su matrícula sin tocar una pestaña', () => {
+      const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
+      const visible = textoFueraDeLasPestanas(host);
+
+      expect(visible).toContain('Tus datos');
+      expect(visible).toContain('8812345');
+      expect(visible).toContain('Tu habilitación');
+      expect(visible).toContain('LIC-3');
+    });
+
+    it('la matrícula de arriba trae la vigencia: es el detalle, no un resumen', () => {
+      const host = montar(
+        {
+          ...PERFIL,
+          datosPersonales: DATOS,
+          // Componentes locales, no `new Date('2030-06-30')`: eso es medianoche
+          // UTC y al oeste de Greenwich el pipe la dibujaría como el 29. Es lo
+          // mismo que hace `maybeDateOnly` en el mapper real.
+          matriculas: [{ ...PERFIL.matriculas[0], hasta: new Date(2030, 5, 30) }],
+        },
+        true,
+      );
+
+      expect(textoFueraDeLasPestanas(host)).toContain('30/06/2030');
+    });
+
+    it('y entonces abajo ya no se repite: sin sub-pestaña «Matrículas»', () => {
+      const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
+      // Sin abrirla no probaría nada: el panel de una pestaña inactiva no se
+      // renderiza, así que sus sub-pestañas tampoco están en el DOM.
+      seleccionarPestana(host, 'Credenciales y verificaciones');
+
+      const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
+        (boton) => boton.textContent?.trim() ?? '',
+      );
+      expect(pestanas.some((etiqueta) => etiqueta.startsWith('Matrículas'))).toBe(false);
+      // Tampoco queda un tabset de UNA pestaña: la lista de especialidades pasa
+      // a ser un encabezado suelto, que es un rótulo y no un control que elige.
+      expect(pestanas.some((etiqueta) => etiqueta.startsWith('Especialidades'))).toBe(false);
+      expect(host.textContent).toContain('Especialidades (');
+    });
+
+    it('quien visita SÍ conserva las sub-pestañas: no tiene tarjeta arriba', () => {
+      // Sin `datosPersonales` no hay bloque de filiación, así que las dos
+      // sub-pestañas siguen siendo el único lugar donde vive el detalle.
+      const host = montar({ ...PERFIL, datosPersonales: null });
+      seleccionarPestana(host, 'Credenciales y verificaciones');
+
+      const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
+        (boton) => boton.textContent?.trim() ?? '',
+      );
+      expect(pestanas.some((etiqueta) => etiqueta.startsWith('Matrículas'))).toBe(true);
+      expect(pestanas.some((etiqueta) => etiqueta.startsWith('Especialidades'))).toBe(true);
+    });
+  });
+
 });

@@ -60,8 +60,13 @@
               formControlName="activationToken"
               type="text"
               autocomplete="one-time-code"
+              placeholder="El código que te llegó por correo"
               testId="activar-token"
-            />
+            >
+              <!-- Llave y no candado: esto es el acceso que alguien envió, no
+                   la contraseña que se elige. Ver el candado del campo de abajo. -->
+              <app-nav-icon slot="icon-start" name="key" />
+            </app-input>
           </app-form-field>
         }
 
@@ -79,9 +84,11 @@
             formControlName="newPassword"
             type="password"
             autocomplete="new-password"
-            placeholder="Tu contraseña"
+            placeholder="Al menos 8 caracteres"
             testId="activar-password"
-          />
+          >
+            <app-nav-icon slot="icon-start" name="lock" />
+          </app-input>
         </app-form-field>
 
         <button

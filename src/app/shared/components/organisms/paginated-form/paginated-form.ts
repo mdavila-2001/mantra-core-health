@@ -26,6 +26,7 @@ import {
 import { AppButton } from '../../atoms/button/button';
 import { Checkbox } from '../../atoms/checkbox/checkbox';
 import { Input } from '../../atoms/input/input';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import type { InputType } from '../../atoms/input/input.types';
 import { Progress } from '../../atoms/progress/progress';
 import { Switch } from '../../atoms/switch/switch';
@@ -33,6 +34,7 @@ import { Select } from '../../atoms/select/select';
 import { Textarea } from '../../atoms/textarea/textarea';
 import { DialogService } from '../../molecules/dialog/dialog-service';
 import { FormField } from '../../molecules/form-field/form-field';
+import { PhoneInput } from '../../molecules/phone-input/phone-input';
 import { Radio } from '../../molecules/radio/radio';
 import { RadioGroup } from '../../molecules/radio-group/radio-group';
 import { Stepper } from '../../molecules/stepper/stepper';
@@ -103,6 +105,8 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
     DatePicker,
     FormField,
     Input,
+    NavIcon,
+    PhoneInput,
     Progress,
     Radio,
     RadioGroup,
@@ -162,6 +166,21 @@ export class PaginatedForm {
 
   readonly cancelado = output<void>();
 
+  /**
+   * La página que se está mostrando, cada vez que cambia (y también la primera).
+   *
+   * Existe porque hay pantallas que acompañan al formulario con algo que
+   * depende del paso —el alta pública muestra al costado por qué se pide lo que
+   * se está pidiendo— y ese «algo» no puede vivir acá dentro: el motor sirve
+   * cualquier formulario y no sabe nada del dominio de ninguno.
+   *
+   * Sale la página entera y no su número: quien la recibe la reconoce por
+   * {@link PaginaDeFormulario.clave}, que la declaró él mismo. Un índice
+   * obligaría a la pantalla a contar sus propias páginas —y a volver a
+   * contarlas cada vez que se agregue una en el medio.
+   */
+  readonly pasoVisible = output<PaginaDeFormulario>();
+
   /** Las plantillas de los campos `custom`, por `key`. */
   private readonly personalizados = contentChildren(CampoPersonalizado);
 
@@ -174,7 +193,9 @@ export class PaginatedForm {
   /** Base 1, que es como se cuenta de cara a la persona. */
   readonly posicion = computed(() => Math.min(this.indice() + 1, this.total()));
 
-  readonly pagina = computed<PaginaDeFormulario | null>(() => this.paginas()[this.indice()] ?? null);
+  readonly pagina = computed<PaginaDeFormulario | null>(
+    () => this.paginas()[this.indice()] ?? null,
+  );
 
   readonly esUltima = computed(() => this.posicion() >= this.total());
 
@@ -194,7 +215,9 @@ export class PaginatedForm {
     return nombre === '' ? cola : `${nombre}: ${cola}`;
   });
 
-  readonly mostrarPasos = computed(() => this.total() > 1 && this.total() <= MAX_PASOS_EN_EL_INDICADOR);
+  readonly mostrarPasos = computed(
+    () => this.total() > 1 && this.total() <= MAX_PASOS_EN_EL_INDICADOR,
+  );
 
   readonly pasos = computed<readonly StepperStep[]>(() =>
     this.paginas().map((pagina, posicion) => ({
@@ -241,6 +264,16 @@ export class PaginatedForm {
       }
     });
 
+    // La página visible, hacia afuera. Va en un efecto y no en `avanzar()` /
+    // `retroceder()` porque el índice también se mueve solo —al enviar con un
+    // error tres páginas atrás, o al encoger las páginas—, y un aviso que sólo
+    // sale cuando se pulsa un botón deja a quien escucha mirando el paso que ya
+    // no es.
+    effect(() => {
+      const pagina = this.pagina();
+      if (pagina !== null) this.pasoVisible.emit(pagina);
+    });
+
     // El foco sigue a la página. No en el primer render: robarle el foco a quien
     // acaba de entrar es exactamente lo que la directiva `appAnuncio` evita
     // cuando el elemento ya estaba en pantalla.
@@ -265,14 +298,12 @@ export class PaginatedForm {
   /**
    * El `type` del `<input>` nativo.
    *
-   * `tel` no está entre los tipos del átomo, y no es un olvido: un `type="tel"`
-   * no valida nada que `text` no valide y en cambio cambia el teclado del
-   * teléfono a uno sin letras, que estorba en los números con extensión. Lo que
-   * hace el trabajo es el `autocomplete="tel"`, igual que ya hacía el signup a
-   * mano antes de paginarse.
+   * Ya no recibe `tel`: ese control lo dibuja `app-phone-input`, que compone el
+   * prefijo del país y filtra los dígitos. Queda como la traducción directa del
+   * resto de los tipos de texto.
    */
   protected tipoDeInput(campo: CampoDeFormulario): InputType {
-    return campo.control === 'tel' ? 'text' : (campo.control as InputType);
+    return campo.control as InputType;
   }
 
   protected errorDe(campo: CampoDeFormulario): string {

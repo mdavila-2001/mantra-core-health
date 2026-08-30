@@ -85,21 +85,26 @@
       </p>
     </app-card>
 
-    <app-card variant="outlined" padding="md" data-testid="panel-cifra-identidad">
-      <p class="panel__cifra-rotulo">Tu identidad</p>
-      <!-- El sello y no una cifra: el estado de un trámite no es un número, y
-         forzarlo a serlo obligaría a inventar una escala que no existe. -->
-      <div class="panel__cifra-sello">
-        @if (selloDeIdentidad(); as sello) {
-          <app-status-seal [variant]="sello.variant" [label]="sello.label" />
-        } @else {
-          <app-status-seal variant="pending" label="Sin verificar" />
-        }
-      </div>
-      <p class="panel__cifra-pie">
-        <a routerLink="/my-account/identity/verify">Ver el trámite</a>
-      </p>
-    </app-card>
+    <!-- La tarjeta saludaba con un sello «Sin verificar», que es pedir la
+         verificación desde el primer renglón del panel. Apagada de momento:
+         ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. -->
+    @if (verificacionOfrecida) {
+      <app-card variant="outlined" padding="md" data-testid="panel-cifra-identidad">
+        <p class="panel__cifra-rotulo">Tu identidad</p>
+        <!-- El sello y no una cifra: el estado de un trámite no es un número, y
+             forzarlo a serlo obligaría a inventar una escala que no existe. -->
+        <div class="panel__cifra-sello">
+          @if (selloDeIdentidad(); as sello) {
+            <app-status-seal [variant]="sello.variant" [label]="sello.label" />
+          } @else {
+            <app-status-seal variant="pending" label="Sin verificar" />
+          }
+        </div>
+        <p class="panel__cifra-pie">
+          <a routerLink="/my-account/identity/verify">Ver el trámite</a>
+        </p>
+      </app-card>
+    }
   </section>
 
   <div class="panel__grid" appStaggerList>
@@ -116,55 +121,17 @@
     >
       <h2 class="panel__card-title">Tus accesos</h2>
       <p class="panel__nota">
-        Lo que tu cuenta habilita en esta organización. Pasá el cursor o llegá con el tabulador para
-        ver qué hace cada una.
+        Lo que tu cuenta habilita en esta organización, repartido por lo que vas a hacer con ello.
+        Abrí una zona para ver sus secciones.
       </p>
 
-      <!-- Corrección #1: acciones visuales, no tarjetas con descripción pegada.
-         El resumen vive en el tooltip —que aparece con el puntero **y con el
-         foco**— y además en el `aria-label`, así que quien navega con lector de
-         pantalla recibe rótulo y explicación sin depender del globo. -->
-      <ul class="panel__accesos" appTutorialTarget="panel-accesos">
-        @for (seccion of seccionesDisponibles(); track seccion.path) {
-          <li>
-            <a
-              class="panel__acceso"
-              data-testid="panel-acceso"
-              [attr.data-ruta]="'/' + seccion.path"
-              [routerLink]="'/' + seccion.path"
-              [attr.aria-label]="seccion.label + '. ' + seccion.summary"
-              [appTooltip]="seccion.summary"
-              appTooltipPosition="bottom"
-            >
-              <span class="panel__acceso-icono">
-                <app-nav-icon [name]="seccion.icon" />
-              </span>
-              <span class="panel__acceso-nombre">{{ seccion.label }}</span>
-            </a>
-          </li>
-        }
-
-        @for (seccion of seccionesPlanificadas(); track seccion.path) {
-          <li>
-            <!-- Sin enlace: lleva al placeholder y prometer una pantalla que no
-               existe es peor que decir que falta. Tampoco lleva tooltip: un
-               globo pide foco, y esto no es enfocable justamente porque no se
-               puede entrar. Lo que hay que saber —que está en construcción— se
-               dice con el sello, a la vista y sin interacción. -->
-            <div
-              class="panel__acceso panel__acceso--planificada"
-              data-testid="panel-acceso-planificado"
-              [attr.aria-label]="seccion.label + '. En construcción. ' + seccion.summary"
-            >
-              <span class="panel__acceso-icono">
-                <app-nav-icon [name]="seccion.icon" />
-              </span>
-              <span class="panel__acceso-nombre">{{ seccion.label }}</span>
-              <app-badge variant="secondary" value="En construcción" />
-            </div>
-          </li>
-        }
-      </ul>
+      <!-- Antes acá había una rejilla plana con TODAS las secciones. Con ocho
+         se leía; con las treinta y dos de quien atiende era un cajón donde
+         encontrar «Evoluciones» costaba más que buscarlo en el menú lateral.
+         Ahora son cinco zonas y el detalle vive un escalón adentro: el reparto
+         lo declara `core/navigation/access-tree.ts`, al lado del registro de
+         secciones, para que una sección nueva caiga en su zona sola. -->
+      <app-access-tree [sections]="seccionesVisibles()" appTutorialTarget="panel-accesos" />
     </app-card>
 
     <!-- ─── Últimos pacientes ─────────────────────────────────────────────────

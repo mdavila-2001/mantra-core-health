@@ -1,0 +1,124 @@
+/* El índice de secciones a la izquierda y el panel a la derecha, que es como se
+   lee unos ajustes. La molécula ya pinta la lista vertical; acá sólo se le da
+   el ancho de columna y el aire, y se vuelve a apilar cuando no entra. */
+.ajustes__tabs {
+  --ajustes-indice: 15rem;
+}
+
+.ajustes__tabs.tabs--vertical {
+  gap: var(--e5);
+}
+
+.ajustes__tabs.tabs--vertical > .tabs__list {
+  flex: 0 0 var(--ajustes-indice);
+}
+
+@media (width < 48rem) {
+  .ajustes__tabs {
+    --ajustes-indice: auto;
+  }
+}
+
+.ajustes__bloque {
+  margin-bottom: var(--e5);
+  max-inline-size: 68ch;
+}
+
+.ajustes__bloque:last-child {
+  margin-bottom: 0;
+}
+
+.ajustes__titulo {
+  margin: 0 0 var(--e3);
+  font-size: 1.05rem;
+}
+
+.ajustes__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ajustes__fila {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radio-md, 0.75rem);
+  background: var(--bg-surface);
+}
+
+/* El permiso no es una casilla: el estado lo decide el navegador, así que la
+   fila muestra en qué está y ofrece pedirlo cuando todavía tiene sentido. */
+.ajustes__fila--permiso {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e3);
+  flex-wrap: wrap;
+}
+
+.ajustes__control {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e2);
+  padding: var(--e3);
+  cursor: pointer;
+}
+
+.ajustes__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ajustes__nombre {
+  font-weight: 600;
+}
+
+.ajustes__detalle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.ajustes__estado {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  flex-shrink: 0;
+}
+
+.ajustes__pastilla {
+  display: inline-block;
+  padding: 0.15rem var(--e2);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.ajustes__pastilla[data-tono='exito'] {
+  border-color: var(--exito-borde, var(--border-default));
+  color: var(--exito-texto, var(--text-primary));
+}
+
+.ajustes__pastilla[data-tono='alerta'] {
+  border-color: var(--alerta-borde, var(--border-default));
+  color: var(--alerta-texto, var(--text-primary));
+}
+
+.ajustes__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ajustes__nota {
+  margin: var(--e3) 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

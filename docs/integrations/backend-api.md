@@ -757,7 +757,7 @@ ataría una respuesta cacheada `public, max-age=60` a una sesión.
 |---|---|---|
 | `GET` | `/public/search` | `BuscarBuscadorListado` (`/buscar`) |
 | `GET` | `/public/search/practitioners` | `BuscarProfesionalesListado` |
-| `GET` | `/public/search/medications` | `BuscarMedicamentosListado` |
+| `GET` | `/public/search/medications` | — (devuelve vacío por construcción, ver abajo) |
 | `GET` | `/public/search/organizations` | `BuscarHospitalesListado` |
 | `GET` | `/public/search/diagnostic-units` | `BuscarLaboratoriosListado` |
 | `GET` | `/public/search/insurers` | `BuscarAseguradorasListado` |
@@ -780,6 +780,49 @@ contrato de la API declara además `city`, `specialty`, `form`, `inStock`,
 marcados como *previstos* en `openapi/CONTRATO-PUBLICO.md` §2. Por eso las
 pantallas no dibujan esos filtros — uno que no filtra le dice a quien lo usó,
 sin decírselo, que todos los resultados cumplen su criterio.
+
+#### `/public/search/medications` devuelve vacío, y va a seguir devolviéndolo
+
+Su índice es `community.public_profiles`, y **un medicamento no es un perfil**:
+el catálogo vive en el esquema `pharmacy`. El filtro `kind: 'MEDICATION'` no
+encuentra nunca nada ahí, así que la ruta responde una página vacía en vez de
+un error. No es un defecto pendiente de arreglo: llenar ese índice con cajas de
+remedios sería duplicar el catálogo entero dentro de un buscador de personas.
+
+Lo que sirve esa pantalla es `PublicMarketplaceClient`, abajo.
+
+### `PublicMarketplaceClient` — 2 lecturas anónimas
+
+La **vitrina pública de medicamentos** (`/buscar/medicamentos`). Misma familia
+que `PublicDirectoryClient` —anónima, sin `Authorization`, cacheable— pero
+contra otro módulo de la API: el catálogo de farmacia, no el índice de
+perfiles.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/public/medications` | `BuscarMedicamentosListado` |
+| `GET` | `/public/medications/:conceptId/availability` | `BuscarMedicamentosListado` |
+
+**Es una vitrina de exhibición y consulta, no una tienda.** Ninguna de las dos
+respuestas trae un identificador de producto, de sede ni de lista de precios:
+no hay con qué armar un pedido, una reserva ni un pago. Es deliberado —
+AloVida no vende medicamentos ni cobra comisión sobre estos precios— y la
+pantalla lo dice en el banner, no en letra chica.
+
+**Los importes viajan como texto.** El backend los declara `numeric`; pasarlos
+por `number` perdería el centavo que la farmacia publicó. La pantalla los
+reformatea (`46.00` → `Bs 46,00`) sin convertirlos.
+
+**El origen es opcional y viaja entero o no viaja.** Sin `lat`/`lng` la vitrina
+funciona igual y las distancias vuelven en `null`; con origen, `radiusKm` acota
+y el orden pasa a ser por cercanía. Media coordenada la API la descarta en vez
+de fallar. La ubicación **se pide, no se toma**: la pantalla no toca la API de
+geolocalización hasta que alguien aprieta el botón, y ofrece medir desde una
+ciudad como alternativa que no entrega nada.
+
+**Las distancias son en línea recta** (Haversine sobre la dirección publicada),
+y cada número lo dice: la ruta real depende de un servicio de mapas que este
+sistema no tiene.
 
 ### `CommunityClient` — 20 operaciones
 

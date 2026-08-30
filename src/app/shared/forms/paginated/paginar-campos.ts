@@ -53,10 +53,15 @@ function paginarSeccion(seccion: SeccionDeFormulario): readonly PaginaDeFormular
 
   return trozos.map((campos, indice) => ({
     titulo: total > 1 ? `${seccion.titulo} (${indice + 1} de ${total})` : seccion.titulo,
+    // La clave viaja igual a los dos trozos: nombra a la SECCIÓN, y lo que
+    // cuelga de ella —la ayuda lateral del alta, por ejemplo— vale para las dos
+    // mitades de una sección partida tanto como valía para la entera.
+    ...(seccion.clave === undefined ? {} : { clave: seccion.clave }),
     // La ayuda de la sección se repite en cada una de sus páginas: quien llega a
     // la segunda no vio la primera hace un rato, y una explicación que sólo
     // aparece en el primer trozo es una explicación que la mitad no lee.
     ...(seccion.hint === undefined ? {} : { hint: seccion.hint }),
+    ...(seccion.disposicion === undefined ? {} : { disposicion: seccion.disposicion }),
     campos,
   }));
 }

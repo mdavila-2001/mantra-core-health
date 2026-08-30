@@ -1,24 +1,80 @@
+/* ============================================================================
+    La cara pública del reconocimiento de síntomas.
+
+    Lo que la pantalla llama. El trabajo está repartido en tres archivos y este
+    es el único que hace falta conocer para usarlo:
+
+    - `texto.ts`  — cómo se lee el castellano escrito a las apuradas.
+    - `motor.ts`  — cómo se cruza ese texto con la tabla.
+    - `sintomas.datos.ts` — la tabla, que es lo único que revisa el equipo
+      médico.
+    ========================================================================== */
+
+import { analizar, sugerirDe, type Analisis, type Coincidencia } from './motor';
 import { SINTOMAS, SINTOMAS_DE_ALARMA, type Sintoma } from './sintomas.datos';
+import { distancia, normalizar } from './texto';
 
 export type { EspecialidadSugerida, Sintoma } from './sintomas.datos';
+export type { Analisis, Coincidencia } from './motor';
 export { SINTOMAS, SINTOMAS_DE_ALARMA } from './sintomas.datos';
+export { normalizar } from './texto';
 
 /**
- * Texto comparable: sin mayúsculas ni tildes, y con los espacios colapsados.
+ * Las dos tablas juntas.
  *
- * Sin esto, «migraña» no encuentra «migrana» y media tabla queda inalcanzable
- * para quien no pone el acento — que es casi todo el mundo escribiendo en un
- * teléfono. Es la misma función que ya usa el directorio de médicos, con el
- * agregado de colapsar espacios: en un texto libre la gente escribe «dolor  de
- * cabeza» y eso no debería fallar.
+ * El motor tiene que verlas a la vez o no puede decidir entre dos lecturas de
+ * la misma frase: «vomité sangre» es una urgencia y también contiene un
+ * vómito, y sólo mirando las dos listas al mismo tiempo se sabe que gana la
+ * primera. Analizarlas por separado devolvía las dos cosas y la pantalla
+ * mostraba un chip de vómito debajo del aviso de urgencias.
  */
-export function normalizar(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
+export const TODOS_LOS_SINTOMAS: readonly Sintoma[] = [...SINTOMAS_DE_ALARMA, ...SINTOMAS];
+
+/**
+ * El último análisis, guardado.
+ *
+ * La pantalla pide los síntomas y las alarmas por separado —son dos `computed`
+ * distintos— y las dos preguntas se contestan con el mismo trabajo. Sin esta
+ * memoria se analizaba el texto dos veces por tecla.
+ */
+let ultimoTexto: string | null = null;
+let ultimoAnalisis: Analisis | null = null;
+
+function analisisCompleto(texto: string): Analisis {
+  if (ultimoTexto === texto && ultimoAnalisis !== null) {
+    return ultimoAnalisis;
+  }
+  const analisis = analizar(texto, TODOS_LOS_SINTOMAS);
+  ultimoTexto = texto;
+  ultimoAnalisis = analisis;
+  return analisis;
+}
+
+/**
+ * Deja el motor listo antes de que haga falta.
+ *
+ * Armar el índice —seiscientos patrones sacados de la tabla— cuesta unas
+ * decenas de milisegundos, y se hace la primera vez que alguien lo usa. Si esa
+ * primera vez es la primera tecla, se siente. Llamando a esto cuando la
+ * pantalla ya está pintada, no se siente nunca.
+ */
+export function precalentar(): void {
+  analizar('fiebre', TODOS_LOS_SINTOMAS);
+}
+
+/**
+ * Una especialidad recomendada, con **por qué**.
+ *
+ * El «por qué» no es decoración: es lo que hace que la recomendación no se
+ * sienta una caja negra, que es el síntoma 1 del plan de UX —«la aplicación no
+ * se explica sola»— aplicado al lugar donde más importa.
+ */
+export interface Recomendacion {
+  readonly nombre: string;
+  /** Suma de los pesos de los síntomas que la sostienen. Ordena la lista. */
+  readonly peso: number;
+  /** Los síntomas que la trajeron, en el orden en que se reconocieron. */
+  readonly porque: readonly string[];
 }
 
 /**
@@ -39,73 +95,51 @@ export function normalizar(texto: string): string {
 const GENERALISTAS: ReadonlySet<string> = new Set(['medicina general', 'medicina familiar']);
 
 /**
- * Una especialidad recomendada, con **por qué**.
- *
- * El «por qué» no es decoración: es lo que hace que la recomendación no se
- * sienta una caja negra, que es el síntoma 1 del plan de UX —«la aplicación no
- * se explica sola»— aplicado al lugar donde más importa.
- */
-export interface Recomendacion {
-  readonly nombre: string;
-  /** Suma de los pesos de los síntomas que la sostienen. Ordena la lista. */
-  readonly peso: number;
-  /** Los síntomas que la trajeron, en el orden en que se reconocieron. */
-  readonly porque: readonly string[];
-}
-
-/**
  * Reconoce síntomas dentro de un texto libre.
  *
- * ## Cómo decide
- *
- * Busca cada sinónimo **como subcadena del texto normalizado**. Es
- * deliberadamente simple: quien escribe «me duele la cabeza hace tres días»
- * contiene «dolor de cabeza»… no, no lo contiene — y por eso la tabla lleva
- * también «me duele la cabeza». Los sinónimos son la inteligencia de esto, no
- * el algoritmo.
- *
- * ## Por qué el orden de aparición y no el de la tabla
- *
- * Porque los chips se pintan mientras se escribe, y verlos aparecer en el orden
- * en que uno los escribió es lo que produce el efecto de «me está entendiendo».
- * Si saltaran de lugar al agregar el segundo síntoma, se leería como que la
- * pantalla cambió de opinión.
+ * Devuelve lo reconocido **en orden de aparición**, sin repetir y sin lo que el
+ * texto niega. El orden es el de aparición y no el de la tabla porque los chips
+ * se pintan mientras se escribe: verlos aparecer en el orden en que uno los
+ * escribió es lo que produce el efecto de «me está entendiendo», y si saltaran
+ * de lugar al agregar el segundo síntoma se leería como que la pantalla cambió
+ * de opinión.
  *
  * @param texto - Lo que la persona escribió, tal cual.
  * @param tabla - La tabla contra la que se busca. Se inyecta para poder probar.
- * @returns Los síntomas reconocidos, sin repetir, en orden de aparición.
  */
-export function reconocer(
+export function reconocer(texto: string, tabla: readonly Sintoma[] = SINTOMAS): readonly Sintoma[] {
+  return coincidencias(texto, tabla).map((coincidencia) => coincidencia.sintoma);
+}
+
+/** Lo mismo que {@link reconocer}, sin tirar la confianza ni la evidencia. */
+export function coincidencias(
   texto: string,
   tabla: readonly Sintoma[] = SINTOMAS,
-): readonly Sintoma[] {
-  const normalizado = normalizar(texto);
-  if (normalizado === '') {
-    return [];
-  }
-
-  const encontrados: { sintoma: Sintoma; donde: number }[] = [];
-  for (const sintoma of tabla) {
-    // La posición más temprana de cualquiera de sus sinónimos: un síntoma se
-    // reconoce una sola vez aunque el texto lo nombre de tres maneras.
-    let donde = -1;
-    for (const sinonimo of sintoma.sinonimos) {
-      const indice = normalizado.indexOf(sinonimo);
-      if (indice !== -1 && (donde === -1 || indice < donde)) {
-        donde = indice;
-      }
-    }
-    if (donde !== -1) {
-      encontrados.push({ sintoma, donde });
-    }
-  }
-
-  return encontrados.sort((a, b) => a.donde - b.donde).map((e) => e.sintoma);
+): readonly Coincidencia[] {
+  const analisis =
+    tabla === SINTOMAS || tabla === SINTOMAS_DE_ALARMA || tabla === TODOS_LOS_SINTOMAS
+      ? analisisCompleto(texto)
+      : analizar(texto, tabla);
+  const cuales = new Set(tabla.map((sintoma) => sintoma.id));
+  return [...analisis.sintomas, ...analisis.alarmas]
+    .filter((coincidencia) => cuales.has(coincidencia.sintoma.id))
+    .sort((a, b) => a.desde - b.desde);
 }
 
 /** Los síntomas de alarma que aparecen en el texto. Vacío es lo normal. */
 export function reconocerAlarmas(texto: string): readonly Sintoma[] {
-  return reconocer(texto, SINTOMAS_DE_ALARMA);
+  return analisisCompleto(texto).alarmas.map((coincidencia) => coincidencia.sintoma);
+}
+
+/**
+ * Los síntomas que el texto **nombró para negarlos**.
+ *
+ * «No tengo fiebre pero me duele la garganta» no reconoce fiebre, y eso está
+ * bien; poder decir *por qué* no la reconoció es lo que evita que se lea como
+ * que la pantalla no leyó.
+ */
+export function reconocerNegados(texto: string): readonly Sintoma[] {
+  return analisisCompleto(texto).negados.map((coincidencia) => coincidencia.sintoma);
 }
 
 /**
@@ -134,7 +168,7 @@ export function recomendar(
 
   for (const sintoma of sintomas) {
     for (const especialidad of sintoma.especialidades) {
-      if (disponibles.size > 0 && !disponibles.has(normalizar(especialidad.nombre))) {
+      if (disponibles.size > 0 && !estaDisponible(especialidad.nombre, disponibles)) {
         // Una especialidad que la plataforma no ofrece no se recomienda: el
         // camino terminaría en un directorio vacío.
         continue;
@@ -160,45 +194,78 @@ export function recomendar(
 }
 
 /**
+ * Si el directorio tiene a alguien de esta especialidad.
+ *
+ * No se compara con `=`. Los nombres del directorio son los que cada
+ * profesional o cada catálogo escribió —«Otorrinolaringología y Cirugía de
+ * Cabeza y Cuello», «Cardióloga»— y con igualdad exacta ninguno de los dos
+ * coincidía con «Otorrinolaringología» ni con «Cardiología». El filtro que
+ * existe para no mandar a un directorio vacío terminaba vaciando la
+ * recomendación entera.
+ */
+function estaDisponible(nombre: string, disponibles: ReadonlySet<string>): boolean {
+  const buscada = normalizar(nombre);
+  if (disponibles.has(buscada)) {
+    return true;
+  }
+  for (const ofrecida of disponibles) {
+    if (ofrecida.length < 6) {
+      continue;
+    }
+    if (ofrecida.includes(buscada) || buscada.includes(ofrecida)) {
+      return true;
+    }
+    // «Cardióloga» y «Cardiología»: la misma especialidad dicha de dos maneras.
+    if (distancia(buscada, ofrecida, 2) <= 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * El «por qué» de una recomendación, dicho en una frase.
  *
  * «Por fiebre y dolor de garganta» — la conjunción va en castellano, no con
  * comas hasta el final, porque se lee dentro de un renglón de la pantalla.
  */
 export function explicar(recomendacion: Recomendacion): string {
-  const cuales = recomendacion.porque;
-  if (cuales.length === 0) {
+  const cuales = enumerar(recomendacion.porque);
+  return cuales === '' ? '' : `Por ${cuales}`;
+}
+
+/**
+ * Una lista dicha en castellano: «fiebre, tos y dolor de garganta».
+ *
+ * Con la conjunción al final y no con comas hasta el final, porque se lee
+ * dentro de un renglón de la pantalla y no en una tabla.
+ */
+export function enumerar(cosas: readonly string[]): string {
+  if (cosas.length === 0) {
     return '';
   }
-  if (cuales.length === 1) {
-    return `Por ${cuales[0]}`;
+  if (cosas.length === 1) {
+    return cosas[0];
   }
-  return `Por ${cuales.slice(0, -1).join(', ')} y ${cuales[cuales.length - 1]}`;
+  return `${cosas.slice(0, -1).join(', ')} y ${cosas[cosas.length - 1]}`;
 }
 
 /**
  * Sugerencias de autocompletado mientras se escribe.
  *
- * Busca por el **comienzo de cualquier sinónimo**, no por subcadena: quien
- * escribió «dol» espera ver «dolor de cabeza», no «me duele la cabeza» — y con
- * subcadena aparecerían las dos y la lista se volvería ruido.
- *
- * Los ya reconocidos no se sugieren: ya están puestos como chip.
+ * Los ya reconocidos no se sugieren: ya están puestos como chip. El resto lo
+ * decide `sugerirDe`, que busca por el comienzo de cualquier palabra y no sólo
+ * por el comienzo de la frase.
  */
 export function sugerir(
   parcial: string,
   yaPuestos: readonly Sintoma[],
   tope = 6,
 ): readonly Sintoma[] {
-  const texto = normalizar(parcial);
-  if (texto.length < 3) {
-    return [];
-  }
-  const puestos = new Set(yaPuestos.map((s) => s.id));
-  return SINTOMAS.filter(
-    (sintoma) =>
-      !puestos.has(sintoma.id) &&
-      (normalizar(sintoma.nombre).startsWith(texto) ||
-        sintoma.sinonimos.some((sinonimo) => sinonimo.startsWith(texto))),
-  ).slice(0, tope);
+  return sugerirDe(
+    parcial,
+    SINTOMAS,
+    new Set(yaPuestos.map((sintoma) => sintoma.id)),
+    tope,
+  );
 }

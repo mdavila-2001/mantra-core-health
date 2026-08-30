@@ -46,6 +46,20 @@ const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
 /** La del catálogo de municipios, que dispara el mismo constructor. */
 const CATALOGO_MUNICIPIOS = '/terminology/value-sets?code=VS_BO_MUNICIPALITY';
 
+/** La del catálogo de ocupaciones de Bolivia, que dispara el mismo constructor. */
+const CATALOGO_OCUPACIONES = '/terminology/value-sets?code=VS_BO_OCCUPATION';
+const CATALOGO_ESPECIALIDADES = '/terminology/value-sets?code=VS_MEDICAL_SPECIALTY';
+
+/** La del catálogo de empresas de Bolivia, que dispara el mismo constructor. */
+const CATALOGO_EMPRESAS = '/terminology/value-sets?code=VS_BO_EMPLOYER';
+
+/** Dos conceptos de `VS_BO_EMPLOYER`: una empresa de la lista, y la salida. */
+const EMPRESA_ENTEL = 'b31c7e4a-2d55-5e91-8a4c-1c7f2b9d3e07';
+const EMPRESA_OTRA = 'c47d8f5b-3e66-5fa2-9b5d-2d8f3cae4f18';
+
+/** Un concepto de `VS_BO_OCCUPATION`, el que la ocupación manda como uuid. */
+const OCUPACION_DOCENTE = 'a2f0b6d1-0f7d-5a2e-9d3b-6f1f0a9c1e42';
+
 describe('RegisterPatient', () => {
   let fixture: ComponentFixture<RegisterPatient>;
   let component: RegisterPatient;
@@ -104,9 +118,17 @@ describe('RegisterPatient', () => {
     // lecturas, así que responder la primera con un catálogo vacío la hace
     // fallar y eso cancela la otra en el acto. Volcar una petición ya cancelada
     // es un error de `HttpTestingController`, no un fallo de la pantalla.
-    for (const pendiente of http.match((r) => r.url.startsWith('/terminology/'))) {
+    for (const pendiente of http.match(
+      (r) =>
+        r.url.startsWith('/terminology/') ||
+        // El catálogo de aseguradoras lo pide el mismo constructor, para los
+        // dos campos de seguro declarado.
+        r.url.startsWith('/insurance-carrier-catalog'),
+    )) {
       if (pendiente.cancelled) continue;
-      pendiente.flush({ items: [] });
+      // Cada catálogo tiene su forma; el cuerpo lleva las dos claves para que
+      // ninguno de los dos lectores encuentre `undefined`.
+      pendiente.flush({ items: [], carriers: [] });
     }
     http.verify();
   });
@@ -151,7 +173,7 @@ describe('RegisterPatient', () => {
      * cuelga, porque la expansión de un conjunto no devuelve las propiedades
      * del concepto.
      */
-    it('arma el árbol colgando cada municipio del departamento de su código INE', () => {
+    it('arma el árbol con los códigos canónicos y los legados de la base reconstruida', () => {
       http.expectOne(CATALOGO).flush({
         items: [{ id: 'vs-dep', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
       });
@@ -162,8 +184,9 @@ describe('RegisterPatient', () => {
         items: [
           { conceptId: 'd-cb', code: 'geo:bo:department:CB', display: 'Cochabamba' },
           { conceptId: 'd-sc', code: 'geo:bo:department:SC', display: 'Santa Cruz' },
+          { conceptId: 'd-pd', code: 'geo:bo:department:PD', display: 'Pando' },
         ],
-        count: 2,
+        count: 3,
         limit: 200,
         nextCursor: null,
       });
@@ -172,11 +195,12 @@ describe('RegisterPatient', () => {
           { conceptId: 'm-1', code: 'geo:bo:municipality:031001', display: 'Sacaba' },
           {
             conceptId: 'm-2',
-            code: 'geo:bo:municipality:070101',
+            code: 'SC-SANTA-CRUZ',
             display: 'Santa Cruz de la Sierra',
           },
+          { conceptId: 'm-3', code: 'PA-COBIJA', display: 'Cobija' },
         ],
-        count: 2,
+        count: 3,
         limit: 200,
         nextCursor: null,
       });
@@ -188,7 +212,47 @@ describe('RegisterPatient', () => {
           label: 'Santa Cruz',
           items: [{ value: 'm-2', label: 'Santa Cruz de la Sierra' }],
         },
+        { label: 'Pando', items: [{ value: 'm-3', label: 'Cobija' }] },
       ]);
+    });
+
+    /**
+     * La ocupación dejó de ser texto libre: es un concepto de
+     * `VS_BO_OCCUPATION`, así que lo que el desplegable ofrece sale de la
+     * expansión y lo que se manda es el uuid.
+     */
+    it('ofrece las ocupaciones del catálogo de Bolivia', () => {
+      http.expectOne(CATALOGO_OCUPACIONES).flush({
+        items: [{ id: 'vs-occ', internalCode: 'VS_BO_OCCUPATION', name: 'Ocupaciones' }],
+      });
+      http.expectOne('/terminology/value-sets/vs-occ/$expand?limit=200').flush({
+        items: [
+          { conceptId: 'o-1', code: 'occupation:bo:DOCENTE', display: 'Docente' },
+          { conceptId: 'o-2', code: 'occupation:bo:MINERO', display: 'Minero / Minera' },
+        ],
+        count: 2,
+        limit: 200,
+        nextCursor: null,
+      });
+
+      expect(component.catalogoOcupacionesCaido()).toBe(false);
+      // El `code` viaja además del uuid: es lo que distingue a «Otra ocupación»
+      // —la salida que abre el campo escrito a mano— del resto de la lista.
+      expect(component.opcionesOcupacion()).toEqual([
+        { value: 'o-1', label: 'Docente', code: 'occupation:bo:DOCENTE' },
+        { value: 'o-2', label: 'Minero / Minera', code: 'occupation:bo:MINERO' },
+      ]);
+    });
+
+    it('sin catálogo de ocupaciones el alta sigue: el campo es opcional', () => {
+      http
+        .expectOne(CATALOGO_OCUPACIONES)
+        .flush(null, { status: 503, statusText: 'Service Unavailable' });
+      fixture.detectChanges();
+
+      expect(component.catalogoOcupacionesCaido()).toBe(true);
+      expect(component.opcionesOcupacion()).toEqual([]);
+      expect(navegaciones).toEqual([]);
     });
 
     it('un departamento sin municipios no arma una rama vacía', () => {
@@ -226,16 +290,35 @@ describe('RegisterPatient', () => {
    * comprueba que se omiten cuando están vacías es su propia prueba.
    */
   function completar(
-    extra: Partial<Record<'email' | 'middleName' | 'motherLastName', string>> = {},
+    extra: Partial<
+      Record<
+        | 'email'
+        | 'middleName'
+        | 'thirdName'
+        | 'motherLastName'
+        | 'homeAddressLines'
+        | 'workEmployerFreeText'
+        | 'guardianName'
+        | 'guardianPhone'
+        | 'billingTaxId',
+        string
+      >
+    > = {},
   ): void {
     component.formPaciente.patchValue({
       nationalId: '1234567',
       name: 'Ana',
       middleName: extra.middleName ?? '',
+      thirdName: extra.thirdName ?? '',
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
       password: 'secreto12',
       email: extra.email ?? '',
+      homeAddressLines: extra.homeAddressLines ?? '',
+      workEmployerFreeText: extra.workEmployerFreeText ?? '',
+      guardianName: extra.guardianName ?? '',
+      guardianPhone: extra.guardianPhone ?? '',
+      billingTaxId: extra.billingTaxId ?? '',
     });
   }
 
@@ -247,7 +330,10 @@ describe('RegisterPatient', () => {
         | 'middleName'
         | 'motherLastName'
         | 'nationalId'
-        | 'regulatoryAuthority',
+        | 'regulatoryAuthority'
+        | 'specialtyPrimary'
+        | 'specialtySecond'
+        | 'specialtyThird',
         string
       >
     > = {},
@@ -268,6 +354,9 @@ describe('RegisterPatient', () => {
       birthDate: null,
       licenseIssueDate: null,
       issuerAdministrativeAreaConceptId: null,
+      specialtyPrimary: extra.specialtyPrimary ?? '',
+      specialtySecond: extra.specialtySecond ?? '',
+      specialtyThird: extra.specialtyThird ?? '',
     });
   }
 
@@ -282,10 +371,14 @@ describe('RegisterPatient', () => {
    * dos copias cambie.
    */
   describe('las páginas del alta de paciente', () => {
-    it('son cuatro, y ninguna pide más de cuatro cosas', () => {
+    it('son nueve, y ninguna pide más de cuatro cosas', () => {
       const paginas = component.paginasPaciente();
 
-      expect(paginas.length).toBe(4);
+      // Ocho desde que el alta cubre los campos mínimos del registro del
+      // cliente: domicilio, trabajo, seguros y tutor son cuatro páginas más.
+      // El tope es de campos por página, no de páginas: los tres nombres van
+      // en un campo proyectado para que los apellidos entren en la misma.
+      expect(paginas.length).toBe(8);
       for (const pagina of paginas) {
         expect(pagina.campos.length).toBeLessThanOrEqual(4);
       }
@@ -401,6 +494,148 @@ describe('RegisterPatient', () => {
     req.flush(RESPUESTA);
   });
 
+  it('manda el tercer nombre concatenado en middleName cuando se completó', () => {
+    completar({ middleName: 'María', thirdName: 'Eugenia', motherLastName: 'Quiroga' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toEqual({
+      nationalId: '1234567',
+      name: 'Ana',
+      middleName: 'María Eugenia',
+      lastName: 'Paz',
+      motherLastName: 'Quiroga',
+      password: 'secreto12',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * Las casillas que se agregan con el botón viven sólo en la pantalla: la base
+   * no tiene una columna por nombre. Todas terminan en `middleName`, separadas
+   * por espacio y sin las que quedaron vacías.
+   */
+  it('manda los nombres agregados dentro de middleName', () => {
+    completar({ middleName: 'María', thirdName: 'Eugenia' });
+    component.agregarNombre();
+    component.agregarNombre();
+    component.agregarNombre();
+    component.escribirNombreExtra(0, 'Fernanda');
+    // La del medio queda vacía a propósito: no debe dejar un doble espacio.
+    component.escribirNombreExtra(2, 'Belén');
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toEqual({
+      nationalId: '1234567',
+      name: 'Ana',
+      middleName: 'María Eugenia Fernanda Belén',
+      lastName: 'Paz',
+      password: 'secreto12',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * «Dejar uno al final libre para que él pueda detallar la ocupación que no
+   * encontró» (registro del cliente, módulo Paciente §1.4.1). Con «Otra
+   * ocupación» elegida viaja el oficio escrito y NO el concepto: el backend
+   * descarta el texto libre en cuanto recibe un concepto, y de los dos datos el
+   * que describe un oficio es el que la persona escribió.
+   */
+  it('con «Otra ocupación» manda el oficio escrito en vez del concepto', () => {
+    component.opcionesOcupacion.set([
+      { value: 'o-otra', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
+    ]);
+    completar({});
+    component.elegirOcupacion({ value: 'o-otra', label: 'Otra ocupación' });
+    component.formPaciente.controls.occupationFreeText.setValue('Apicultor');
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toEqual({
+      nationalId: '1234567',
+      name: 'Ana',
+      lastName: 'Paz',
+      password: 'secreto12',
+      occupationFreeText: 'Apicultor',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  it('con una ocupación de la lista manda el concepto y ningún texto libre', () => {
+    component.opcionesOcupacion.set([
+      { value: 'o-1', label: 'Docente', code: 'occupation:bo:DOCENTE' },
+    ]);
+    completar({});
+    component.elegirOcupacion({ value: 'o-1', label: 'Docente' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toEqual({
+      nationalId: '1234567',
+      name: 'Ana',
+      lastName: 'Paz',
+      password: 'secreto12',
+      occupationConceptId: 'o-1',
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * La edad sale sola de la fecha (registro del cliente, módulo Paciente §1.5).
+   * Se cuenta por cumpleaños: el día anterior al cumpleaños todavía se tiene un
+   * año menos.
+   */
+  describe('la edad que sale de la fecha de nacimiento', () => {
+    it('sin fecha no dice nada', () => {
+      expect(component.edadEnPalabras()).toBeNull();
+    });
+
+    it('cuenta los años cumplidos', () => {
+      const hoy = new Date();
+      const fecha = new Date(hoy.getFullYear() - 30, hoy.getMonth(), hoy.getDate());
+      component.formPaciente.controls.birthDate.setValue(fecha);
+
+      expect(component.edadEnPalabras()).toBe('Tenés 30 años.');
+    });
+
+    it('el día antes del cumpleaños todavía es un año menos', () => {
+      const hoy = new Date();
+      // Mañana, treinta años atrás: el cumpleaños aún no llegó.
+      const manana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1);
+      const fecha = new Date(hoy.getFullYear() - 30, manana.getMonth(), manana.getDate());
+      component.formPaciente.controls.birthDate.setValue(fecha);
+
+      expect(component.edadEnPalabras()).toBe(
+        manana.getFullYear() === hoy.getFullYear() ? 'Tenés 29 años.' : 'Tenés 30 años.',
+      );
+    });
+
+    it('el primer año va en singular', () => {
+      const hoy = new Date();
+      const fecha = new Date(hoy.getFullYear() - 1, hoy.getMonth(), hoy.getDate());
+      component.formPaciente.controls.birthDate.setValue(fecha);
+
+      expect(component.edadEnPalabras()).toBe('Tenés 1 año.');
+    });
+  });
+
+  it('quitar una casilla agregada saca ese nombre y deja los otros', () => {
+    component.agregarNombre();
+    component.agregarNombre();
+    component.escribirNombreExtra(0, 'Fernanda');
+    component.escribirNombreExtra(1, 'Belén');
+
+    component.quitarNombre(0);
+
+    expect(component.nombresExtra()).toEqual(['Belén']);
+  });
+
   it('incluye el correo cuando se completó', () => {
     completar({ email: 'ana@mantra.test' });
     component.submit();
@@ -415,7 +650,10 @@ describe('RegisterPatient', () => {
 
   it('manda los datos clínicos y de contacto que la API acepta, solo si se completaron', () => {
     completar();
-    component.formPaciente.patchValue({ phone: '+591 70012345', occupationFreeText: 'Docente' });
+    component.formPaciente.patchValue({
+      phone: '+591 70012345',
+      occupationConceptId: OCUPACION_DOCENTE,
+    });
     component.formPaciente.patchValue({
       birthDate: new Date(1990, 4, 17),
       sexAtBirth: 'FEMALE',
@@ -437,7 +675,7 @@ describe('RegisterPatient', () => {
       birthDate: '1990-05-17',
       phone: '+591 70012345',
       sexAtBirth: 'FEMALE',
-      occupationFreeText: 'Docente',
+      occupationConceptId: OCUPACION_DOCENTE,
     });
 
     req.flush(RESPUESTA);
@@ -473,9 +711,237 @@ describe('RegisterPatient', () => {
     expect(enviado).not.toContain('phone');
     expect(enviado).not.toContain('gender');
     expect(enviado).not.toContain('sexAtBirth');
+    expect(enviado).not.toContain('occupationConceptId');
     expect(enviado).not.toContain('occupationFreeText');
+    // Y los del alta completa: calle, coordenadas, trabajo, tutor, seguros, NIT.
+    expect(enviado).not.toContain('homeAddressLines');
+    expect(enviado).not.toContain('homeLatitude');
+    expect(enviado).not.toContain('workEmployerConceptId');
+    expect(enviado).not.toContain('workEmployerFreeText');
+    expect(enviado).not.toContain('guardianName');
+    expect(enviado).not.toContain('guardianPhone');
+    expect(enviado).not.toContain('privateInsurancePlanId');
+    expect(enviado).not.toContain('publicInsurancePlanId');
+    expect(enviado).not.toContain('billingTaxId');
 
     req.flush(RESPUESTA);
+  });
+
+  it('manda la calle y el NIT cuando se completaron', () => {
+    completar({ homeAddressLines: '  Av. Banzer #42  ', billingTaxId: ' 1023456789 ' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    // Recortados: un espacio de más no es parte de la dirección ni del NIT.
+    expect(req.request.body.homeAddressLines).toBe('Av. Banzer #42');
+    expect(req.request.body.billingTaxId).toBe('1023456789');
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * El punto capturado **no** es todavía una dirección: el navegador acierta la
+   * manzana, no la puerta, y lo que se muestra es el mapa para que alguien lo
+   * mire. Hasta que lo confirma, no viaja — que es justamente lo que el par de
+   * coordenadas en pantalla no permitía comprobar.
+   */
+  it('no manda la ubicación capturada mientras no se confirme en el mapa', () => {
+    completar();
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    const enviado = Object.keys(req.request.body as Record<string, unknown>);
+    expect(enviado).not.toContain('homeLatitude');
+    expect(enviado).not.toContain('homeLongitude');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('manda la ubicación como par de coordenadas una vez confirmada', () => {
+    completar();
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.confirmarDireccionActual();
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.homeLatitude).toBe(-17.7833);
+    expect(req.request.body.homeLongitude).toBe(-63.1821);
+
+    req.flush(RESPUESTA);
+  });
+
+  it('sin punto capturado no hay nada que confirmar', () => {
+    completar();
+    component.confirmarDireccionActual();
+    expect(component.direccionConfirmada()).toBe(false);
+
+    component.submit();
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain('homeLatitude');
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * Volver a ubicarse invalida lo confirmado: lo que se dio por bueno era el
+   * punto anterior, y el que está por llegar todavía no lo miró nadie.
+   */
+  it('quitar la ubicación se lleva también su confirmación', () => {
+    completar();
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.confirmarDireccionActual();
+    expect(component.direccionConfirmada()).toBe(true);
+
+    component.quitarUbicacion();
+    expect(component.gpsDomicilio()).toBeNull();
+    expect(component.direccionConfirmada()).toBe(false);
+
+    component.submit();
+    http.expectOne('/iam/auth/register-patient').flush(RESPUESTA);
+  });
+
+  /**
+   * El pin es lo único que el mapa necesita, y lo que reemplazó al par de
+   * números: sin punto no hay pin, con punto hay uno solo.
+   */
+  it('el mapa recibe un pin, y ninguno mientras no haya punto', () => {
+    expect(component.pinesDomicilio()).toEqual([]);
+
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    const pines = component.pinesDomicilio();
+    expect(pines).toHaveLength(1);
+    expect(pines[0].lat).toBe(-17.7833);
+    expect(pines[0].lng).toBe(-63.1821);
+  });
+
+  /* ---- La empresa, que reemplazó a la ubicación del trabajo ---- */
+
+  /**
+   * Deja el catálogo de empresas atendido y sus opciones cargadas.
+   *
+   * Es el mismo baile que el de ocupaciones: la lectura la dispara el
+   * constructor, así que la prueba responde la que ya está esperando.
+   */
+  function responderEmpresas(): void {
+    http.expectOne(CATALOGO_EMPRESAS).flush({
+      items: [{ id: 'vs-emp', internalCode: 'VS_BO_EMPLOYER', name: 'Empresas' }],
+    });
+    http.expectOne('/terminology/value-sets/vs-emp/$expand?limit=200').flush({
+      items: [
+        {
+          conceptId: EMPRESA_ENTEL,
+          code: 'employer:bo:ENTEL',
+          display: 'Entel',
+          codeSystemVersionId: 'csv-1',
+        },
+        {
+          conceptId: EMPRESA_OTRA,
+          code: 'employer:bo:OTRA',
+          display: 'Otra empresa (la escribo)',
+          codeSystemVersionId: 'csv-1',
+        },
+      ],
+      count: 2,
+      limit: 200,
+      nextCursor: null,
+    });
+  }
+
+  it('manda la empresa elegida como concepto del catálogo', () => {
+    responderEmpresas();
+    completar();
+    component.elegirEmpresa({ value: EMPRESA_ENTEL, label: 'Entel' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.workEmployerConceptId).toBe(EMPRESA_ENTEL);
+    // La empresa reemplazó a la dirección del trabajo: nada de eso viaja ya.
+    const enviado = Object.keys(req.request.body as Record<string, unknown>);
+    expect(enviado).not.toContain('workAddressLines');
+    expect(enviado).not.toContain('workMunicipalityConceptId');
+    expect(enviado).not.toContain('workLatitude');
+
+    req.flush(RESPUESTA);
+  });
+
+  /**
+   * El texto libre es la salida de «no está en la lista», y sólo acompaña al
+   * concepto que la representa: con cualquier otra empresa elegida sería un
+   * nombre que contradice al catálogo.
+   */
+  it('«Otra empresa» habilita el nombre escrito a mano y lo manda', () => {
+    responderEmpresas();
+    completar({ workEmployerFreeText: '  Ferretería San Martín  ' });
+    component.elegirEmpresa({ value: EMPRESA_OTRA, label: 'Otra empresa (la escribo)' });
+    expect(component.empresaEsOtra()).toBe(true);
+
+    component.submit();
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.workEmployerConceptId).toBe(EMPRESA_OTRA);
+    // Recortado, como la calle y el NIT.
+    expect(req.request.body.workEmployerFreeText).toBe('Ferretería San Martín');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('cambiar de «Otra empresa» a una del catálogo borra el nombre escrito', () => {
+    responderEmpresas();
+    completar({ workEmployerFreeText: 'Ferretería San Martín' });
+    component.elegirEmpresa({ value: EMPRESA_OTRA, label: 'Otra empresa (la escribo)' });
+    component.elegirEmpresa({ value: EMPRESA_ENTEL, label: 'Entel' });
+
+    expect(component.formPaciente.controls.workEmployerFreeText.value).toBe('');
+    expect(component.empresaEsOtra()).toBe(false);
+
+    component.submit();
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
+      'workEmployerFreeText',
+    );
+    req.flush(RESPUESTA);
+  });
+
+  /** Un catálogo caído no frena el alta: el campo es opcional. */
+  it('si el catálogo de empresas no carga, el alta sigue', () => {
+    http.expectOne(CATALOGO_EMPRESAS).flush('vacío', { status: 500, statusText: 'Server Error' });
+    expect(component.catalogoEmpresasCaido()).toBe(true);
+
+    completar();
+    component.submit();
+    http.expectOne('/iam/auth/register-patient').flush(RESPUESTA);
+  });
+
+  it('no deja enviar un teléfono de tutor sin su nombre', () => {
+    completar({ guardianPhone: '+591 71234567' });
+    component.submit();
+
+    // Sería un contacto sin dueño: el formulario no llega ni a salir.
+    http.expectNone('/iam/auth/register-patient');
+  });
+
+  it('manda al tutor completo cuando tiene nombre y teléfono', () => {
+    completar({ guardianName: 'Rosa Quispe', guardianPhone: '+591 71234567' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.guardianName).toBe('Rosa Quispe');
+    expect(req.request.body.guardianPhone).toBe('+591 71234567');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('marca el teléfono del tutor como inválido si falta el nombre', () => {
+    completar({ guardianPhone: '+591 71234567' });
+
+    expect(
+      component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre'),
+    ).toBe(true);
+
+    // Y el error se va en cuanto se escribe el nombre.
+    component.formPaciente.controls.guardianName.setValue('Rosa Quispe');
+    expect(
+      component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre'),
+    ).toBe(false);
   });
 
   it('tras registrar muestra la confirmación y NO inicia sesión sola', () => {
@@ -504,13 +970,14 @@ describe('RegisterPatient', () => {
       await montar('profesional');
     });
 
-    it('tiene cinco páginas, ninguna de más de cuatro preguntas', () => {
-      // Cinco y no cuatro porque el límite es de campos por página, no de
+    it('tiene seis páginas, ninguna de más de cuatro preguntas', () => {
+      // Seis y no cinco porque el límite es de campos por página, no de
       // páginas: apretar seis en una para tener una página menos es lo que
-      // este motor vino a deshacer.
+      // este motor vino a deshacer. La sexta son las especialidades, que
+      // entraron con página propia por esa misma regla.
       const paginas = component.paginasProfesional();
 
-      expect(paginas.length).toBe(5);
+      expect(paginas.length).toBe(6);
       for (const pagina of paginas) {
         expect(pagina.campos.length).toBeLessThanOrEqual(4);
       }
@@ -526,6 +993,204 @@ describe('RegisterPatient', () => {
           ).not.toBeNull();
         }
       }
+    });
+
+    it('proyecta el título profesional como campo custom', () => {
+      const campo = component
+        .paginasProfesional()
+        .flatMap((pagina) => pagina.campos)
+        .find((actual) => actual.key === 'professionalTitle');
+
+      expect(campo?.control).toBe('custom');
+    });
+
+    it('ofrece los doce títulos y los filtra por lo escrito en la lupa', () => {
+      expect(component.titulosProfesionalesFiltrados()).toHaveLength(12);
+
+      component.busquedaTituloProfesional.set('odontólogo');
+
+      expect(component.titulosProfesionalesFiltrados().map((opcion) => opcion.label)).toEqual([
+        'Odontólogo / Odontóloga',
+      ]);
+    });
+
+    /**
+     * Las especialidades EN el alta — registro del cliente, módulo Médico §1.4.2
+     * y §1.4.4.
+     *
+     * Lo que fijan: que se ofrecen las de la profesión elegida y no las otras
+     * (un odontólogo no es cardiólogo), que el colegio cambia solo sin pisar una
+     * elección explícita, y que los conceptos VIAJAN en el cuerpo — el cliente
+     * lo arma nombre por nombre y descarta en silencio lo que no nombra.
+     */
+    describe('las especialidades del alta', () => {
+      /** Responde el catálogo con dos médicas y dos odontológicas. */
+      function catalogoDeEspecialidades(): void {
+        http.expectOne(CATALOGO_ESPECIALIDADES).flush({
+          items: [{ id: 'vs-esp', internalCode: 'VS_MEDICAL_SPECIALTY', name: 'Especialidades' }],
+        });
+        http.expectOne('/terminology/value-sets/vs-esp/$expand?limit=200').flush({
+          items: [
+            { conceptId: 'e-cardio', code: 'CARDIOLOGIA', display: 'Cardiología' },
+            { conceptId: 'e-pedia', code: 'PEDIATRIA', display: 'Pediatría' },
+            { conceptId: 'e-endo', code: 'ENDODONCIA', display: 'Endodoncia' },
+            { conceptId: 'e-orto', code: 'ORTODONCIA', display: 'Ortodoncia' },
+          ],
+          count: 4,
+          limit: 200,
+          nextCursor: null,
+        });
+      }
+
+      function opcionesDeLaPagina(): readonly { value: string; label: string }[] {
+        const pagina = component
+          .paginasProfesional()
+          .find((p) => p.titulo === 'Tus especialidades');
+        return (pagina?.campos[0].options ?? []) as readonly {
+          value: string;
+          label: string;
+        }[];
+      }
+
+      /**
+       * **El orden real, que es el que fallaba.**
+       *
+       * Las dos pruebas de abajo ponen el título ANTES de leer las páginas por
+       * primera vez, y así pasaban incluso con el defecto: el `computed` se
+       * estrenaba con el título ya elegido. En la pantalla el orden es el
+       * inverso —el catálogo llega al abrir el paso, la persona elige su
+       * profesión después—, y ahí el `computed` ya estaba calculado con el
+       * título vacío y no volvía a correr, porque el valor de un `FormControl`
+       * no es una señal y no lo despierta.
+       *
+       * Resultado en producción: un odontólogo veía las 52 médicas con las 11
+       * suyas al final. El stakeholder lo reportó como «no están las
+       * especialidades de odontología».
+       */
+      it('el combobox escribe el FormControl y conserva el filtro y colegio automáticos', () => {
+        catalogoDeEspecialidades();
+        // Se leen una vez, como al pintar el paso: acá el título está vacío y
+        // corresponde ofrecer todo.
+        expect(opcionesDeLaPagina().map((o) => o.value)).toEqual([
+          'e-cardio',
+          'e-pedia',
+          'e-endo',
+          'e-orto',
+        ]);
+        component.formProfesional.controls.specialtyPrimary.setValue('e-cardio');
+
+        component.elegirTituloProfesional({
+          value: 'Odontólogo / Odontóloga',
+          label: 'Odontólogo / Odontóloga',
+        });
+        fixture.detectChanges();
+
+        expect(component.formProfesional.controls.professionalTitle.value).toBe(
+          'Odontólogo / Odontóloga',
+        );
+        expect(component.formProfesional.controls.regulatoryAuthority.value).toBe(
+          'Colegio de Odontólogos de Bolivia',
+        );
+        expect(component.formProfesional.controls.specialtyPrimary.value).toBe('');
+        expect(opcionesDeLaPagina().map((o) => o.value)).toEqual(['e-endo', 'e-orto']);
+      });
+
+      it('un odontólogo ve las odontológicas y NO las médicas', () => {
+        catalogoDeEspecialidades();
+        component.formProfesional.controls.professionalTitle.setValue(
+          'Odontólogo / Odontóloga',
+        );
+        fixture.detectChanges();
+
+        const valores = opcionesDeLaPagina().map((o) => o.value);
+        expect(valores).toEqual(['e-endo', 'e-orto']);
+      });
+
+      it('un médico ve las médicas y NO las odontológicas', () => {
+        catalogoDeEspecialidades();
+        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+        fixture.detectChanges();
+
+        const valores = opcionesDeLaPagina().map((o) => o.value);
+        expect(valores).toEqual(['e-cardio', 'e-pedia']);
+      });
+
+      it('el colegio cambia solo al elegir la profesión', () => {
+        catalogoDeEspecialidades();
+        const autoridad = component.formProfesional.controls.regulatoryAuthority;
+
+        component.formProfesional.controls.professionalTitle.setValue(
+          'Odontólogo / Odontóloga',
+        );
+        expect(autoridad.value).toBe('Colegio de Odontólogos de Bolivia');
+
+        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+        expect(autoridad.value).toBe('Colegio Médico de Bolivia');
+      });
+
+      it('pero NO pisa una autoridad elegida a mano', () => {
+        // El automatismo es una ayuda, no una regla: quien eligió SEDES sabe
+        // por qué, y verlo cambiar solo sería peor que no tener automatismo.
+        catalogoDeEspecialidades();
+        const autoridad = component.formProfesional.controls.regulatoryAuthority;
+        autoridad.setValue('Servicio Departamental de Salud (SEDES)');
+
+        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+
+        expect(autoridad.value).toBe('Servicio Departamental de Salud (SEDES)');
+      });
+
+      it('cambiar de profesión limpia una especialidad que ya no corresponde', () => {
+        // Un desplegable con un valor que no está entre sus opciones muestra un
+        // vacío que miente: parece que no elegiste y el cuerpo lo manda igual.
+        catalogoDeEspecialidades();
+        component.formProfesional.controls.professionalTitle.setValue(
+          'Odontólogo / Odontóloga',
+        );
+        component.formProfesional.controls.specialtyPrimary.setValue('e-endo');
+
+        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+
+        expect(component.formProfesional.controls.specialtyPrimary.value).toBe('');
+      });
+
+      it('las especialidades elegidas VIAJAN en el cuerpo, en orden', () => {
+        catalogoDeEspecialidades();
+        completarProfesional({
+          professionalTitle: 'Médico / Médica',
+          specialtyPrimary: 'e-cardio',
+          specialtySecond: 'e-pedia',
+        });
+        component.submit();
+
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.specialtyConceptIds).toEqual(['e-cardio', 'e-pedia']);
+        req.flush(RESPUESTA_PRO);
+      });
+
+      it('sin especialidades el cuerpo no las menciona', () => {
+        catalogoDeEspecialidades();
+        completarProfesional();
+        component.submit();
+
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.specialtyConceptIds).toBeUndefined();
+        req.flush(RESPUESTA_PRO);
+      });
+
+      it('elegir la misma dos veces declara una', () => {
+        catalogoDeEspecialidades();
+        completarProfesional({
+          professionalTitle: 'Médico / Médica',
+          specialtyPrimary: 'e-cardio',
+          specialtySecond: 'e-cardio',
+        });
+        component.submit();
+
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.specialtyConceptIds).toEqual(['e-cardio']);
+        req.flush(RESPUESTA_PRO);
+      });
     });
 
     it('va a otro endpoint y manda los cinco campos obligatorios', () => {

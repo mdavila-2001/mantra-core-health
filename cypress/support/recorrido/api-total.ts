@@ -390,10 +390,11 @@ export interface OpcionesApi {
   /** Listado de pacientes vacío: sirve para capturar el estado S3 (sin datos). */
   readonly sinPacientes?: boolean;
   /**
-   * `403 IDENTITY_VERIFICATION_REQUIRED` en el resumen propio.
+   * El resumen propio **sin aserción de identidad vigente**: `200` con
+   * `identityVerified: false` y sin `patientCode` (F-34).
    *
-   * Es el caso que enciende la puerta hacia la verificación de identidad, y no
-   * se llega a él por ninguna otra vía: hay que pedirlo.
+   * Es el estado de todo paciente recién registrado, y no se llega a él por
+   * ninguna otra vía: hay que pedirlo.
    */
   readonly identidadSinVerificar?: boolean;
   /** Fuerza un `500` en el directorio del panel, para capturar el estado de error. */
@@ -525,29 +526,23 @@ export function simularApiTotal(opciones: OpcionesApi = {}): void {
 
   /* -- Perfiles ------------------------------------------------------------ */
 
+  /* El resumen propio **ya no depende de verificarse** (F-34): responde 200 en
+     los dos casos y lo único que cambia es el código de paciente, que el
+     backend omite mientras no haya aserción vigente. */
   cy.intercept('**/profiles/patients/me/summary', (peticion) => {
-    peticion.reply(
-      identidadSinVerificar
-        ? {
-            statusCode: 403,
-            body: sobreDeError(
-              'IDENTITY_VERIFICATION_REQUIRED',
-              'Necesitás verificar tu identidad para ver tus datos.',
-              '/profiles/patients/me/summary',
-            ),
-          }
-        : {
-            statusCode: 200,
-            body: {
-              personId: 'per-001',
-              patientProfileId: 'p-001',
-              patientCode: 'PAC-00001',
-              displayName: 'Ana Salas',
-              birthDate: '1988-03-14',
-              personStatus: 'c-est-act',
-            },
-          },
-    );
+    const comun = {
+      personId: 'per-001',
+      patientProfileId: 'p-001',
+      displayName: 'Ana Salas',
+      birthDate: '1988-03-14',
+      personStatus: 'c-est-act',
+    };
+    peticion.reply({
+      statusCode: 200,
+      body: identidadSinVerificar
+        ? { ...comun, identityVerified: false }
+        : { ...comun, patientCode: 'PAC-00001', identityVerified: true },
+    });
   });
 
   /**
@@ -751,6 +746,19 @@ export function simularApiTotal(opciones: OpcionesApi = {}): void {
       limit: 50,
       truncated: [],
     },
+  });
+
+  /**
+   * Los formularios propios (M09).
+   *
+   * «Mi historia clínica» los lee al abrirse aunque no los liste: son lo que
+   * incorporan los documentos que ofrece descargar. La lista va vacía porque el
+   * recorrido no captura formularios; lo que hace falta es que la lectura tenga
+   * su respuesta declarada, como el resto de la API simulada.
+   */
+  cy.intercept('**/forms/me/instances*', {
+    statusCode: 200,
+    body: { items: [], limit: 50, truncated: false },
   });
 
   /* -- Bases legítimas de acceso (M06) -------------------------------------- */

@@ -46,6 +46,43 @@
   gap: var(--sp-4);
 }
 
+.paginated-form__campos {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* ==========================================================================
+    Pares en el mismo renglón.
+
+    La rejilla pasa a DOS columnas siempre, y por omisión cada campo las cruza
+    enteras: eso se ve exactamente igual que una columna, que es como se lee un
+    formulario. Lo que cambia es que ahora hay carriles donde poner un par.
+
+    Un campo `mitad` ocupa un carril, así que dos seguidos comparten renglón.
+    Es lo que necesita el número de cédula con su departamento de emisión: son
+    un solo documento escrito en dos casillas, y en dos renglones se leían como
+    dos preguntas distintas.
+
+    `dos-columnas` —la disposición de página, anterior a esto— sigue valiendo y
+    hace lo de siempre: pone TODOS los campos de la página de a dos.
+
+    El corte a 42 rem es el de antes: por debajo, dos controles quedan más
+    angostos que lo que se escribe adentro y una columna es mejor. */
+@media (min-width: 42rem) {
+  .paginated-form__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .paginated-form__campos > .paginated-form__campo {
+    grid-column: 1 / -1;
+  }
+
+  .paginated-form__campos > .paginated-form__campo--mitad,
+  .paginated-form__campos--dos-columnas > .paginated-form__campo {
+    grid-column: auto;
+  }
+}
+
 .paginated-form__titulo {
   margin: 0;
   font-family: var(--font-display);
@@ -111,7 +148,39 @@
     gap: var(--sp-3);
   }
 
+  .paginated-form__campos {
+    gap: var(--sp-3);
+  }
+
   .paginated-form__acciones {
     margin-block-start: var(--sp-5);
   }
+}
+
+/* ==========================================================================
+    El glifo dentro del campo.
+
+    Apagado en reposo, encendido cuando el campo toma el foco: es el control
+    diciendo cuál está activo. En una página de cuatro campos eso es lo que la
+    vuelve escaneable de un vistazo, que es todo lo que un ícono de formulario
+    tiene que conseguir. Ver `CampoDeFormulario.icono`.
+    ========================================================================== */
+.paginated-form__campo-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  margin-inline-end: var(--sp-2);
+  color: var(--text-muted);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.paginated-form__campo-icono svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+app-form-field:focus-within .paginated-form__campo-icono {
+  color: var(--brand-primary);
 }

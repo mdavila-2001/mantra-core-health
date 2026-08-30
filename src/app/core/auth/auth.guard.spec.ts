@@ -104,11 +104,11 @@ describe('homeGuard · a dónde manda la raíz', () => {
   const ejecutar = (): boolean | UrlTree =>
     TestBed.runInInjectionContext(() => homeGuard(RUTA, ESTADO)) as boolean | UrlTree;
 
-  it('sin sesión manda a la superficie pública', () => {
+  it('sin sesión manda al feed público, que se lee sin saber a quién buscar', () => {
     const resultado = ejecutar();
 
     expect(resultado).toBeInstanceOf(UrlTree);
-    expect(router.serializeUrl(resultado as UrlTree)).toBe('/buscar');
+    expect(router.serializeUrl(resultado as UrlTree)).toBe('/publicaciones');
   });
 
   it('con sesión manda al panel', () => {

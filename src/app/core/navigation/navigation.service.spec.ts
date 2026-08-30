@@ -120,11 +120,16 @@ describe('NavigationService', () => {
         '/my-account/questionnaires',
         // Carril P1: la bandeja es de la persona y el backend sólo devuelve la
         // propia, así que no hay rol que filtrar.
-        // Carril P9: las preferencias de aviso, pegadas a la bandeja.
-        '/my-account/notification-preferences',
         '/notification-center',
-        '/my-account/identity/verify',
-        '/my-account/identity/cases',
+        // «Preferencias de avisos» **no** entra: dejó de ser una sección y pasó
+        // a ser un panel de Ajustes. Y Ajustes tampoco, aunque la ve cualquier
+        // sesión: declara `fueraDelMenuPara: [ANY_ROLE]` porque se entra por el
+        // ícono del encabezado — configurar no es un destino de trabajo.
+        //
+        // La verificación de identidad y su historial **no** entran: el
+        // producto no la ofrece de momento y las dos secciones salieron del
+        // menú con `fueraDelMenuPara: [ANY_ROLE]`. Se siguen alcanzando por su
+        // ruta — ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
       ]);
     });
 
@@ -275,6 +280,81 @@ describe('NavigationService', () => {
         'Facturación',
         'Mi cuenta',
       ]);
+    });
+  });
+
+  /**
+   * El segundo escalón del menú: dentro del dominio, los destinos se reparten
+   * en bloques de cosas parecidas, que es lo que la barra dibuja plegable.
+   *
+   * Lo que estas pruebas cuidan es que el reparto sea **sólo** un reparto: la
+   * misma lista de destinos ordenada de otra forma. Un bloque que se traga un
+   * destino o que le cambia el orden al menú es un error mucho más difícil de
+   * ver que uno que rompe la compilación.
+   */
+  describe('el reparto en bloques', () => {
+    it('los bloques no agregan ni pierden destinos: son los mismos ítems', () => {
+      abrirSesion(['SECURITY_ADMIN', 'CLINICIAN', 'BILLING', 'PATIENT'], ['t-1']);
+
+      for (const grupo of service.menu()) {
+        const enBloques = grupo.blocks.flatMap((bloque) => bloque.items.map((i) => i.route));
+
+        // **Ordenados para comparar, y a propósito.** Repartir reordena: en
+        // «General», «Grupos y foros» sube a juntarse con «Chats» en el bloque
+        // de comunidad y adelanta a los directorios. Eso es lo que el reparto
+        // hace, y exigir el orden plano acá sería prohibírselo. Lo que no puede
+        // pasar —y es lo que esta prueba cuida— es que un destino se pierda por
+        // el camino o aparezca dos veces.
+        expect([...enBloques].sort(), grupo.label).toEqual([...grupo.items.map((i) => i.route)].sort());
+      }
+    });
+
+    it('cada grupo y cada bloque llevan su ícono: la barra plegada no muestra otra cosa', () => {
+      abrirSesion(['SECURITY_ADMIN'], ['t-1']);
+
+      for (const grupo of service.menu()) {
+        expect(grupo.icon, grupo.label).toBeTruthy();
+        for (const bloque of grupo.blocks) {
+          expect(bloque.icon, `${grupo.label}/${bloque.label}`).toBeTruthy();
+          expect(bloque.items.length, `${grupo.label}/${bloque.label}`).toBeGreaterThan(0);
+        }
+      }
+    });
+
+    it('los directorios quedan juntos, que es el bloque que el armazón tenía a mano', () => {
+      abrirSesion(['PATIENT']);
+
+      const general = service.menu().find((grupo) => grupo.label === 'General');
+      const directorios = general?.blocks.find((bloque) => bloque.label === 'Directorios');
+
+      expect(directorios?.items.map((item) => item.route)).toEqual([
+        '/directory',
+        '/laboratory-directory',
+        '/clinics-directory',
+        '/pharmacies-directory',
+      ]);
+    });
+
+    it('el bloque se dibuja donde está su primera sección visible, no donde se declaró', () => {
+      // Quien ejerce no ve ni el panel ni los tutoriales, así que «Inicio» no
+      // existe para él y «Comunidad» pasa a ser el primer bloque de General. El
+      // orden no se recalcula ni se reordena: sale del registro, filtrado.
+      abrirSesion(['PRACTITIONER']);
+
+      const general = service.menu().find((grupo) => grupo.label === 'General');
+      expect(general?.blocks[0]?.label).toBe('Comunidad');
+    });
+
+    it('un bloque sólo trae lo que la sesión puede ver', () => {
+      // De los cuatro directorios, quien ejerce ve uno. El bloque no desaparece
+      // —sigue siendo el lugar de ese destino— pero queda de un solo renglón, y
+      // eso es lo que el armazón dibuja suelto en vez de como desplegable.
+      abrirSesion(['PRACTITIONER']);
+
+      const general = service.menu().find((grupo) => grupo.label === 'General');
+      const directorios = general?.blocks.find((bloque) => bloque.label === 'Directorios');
+
+      expect(directorios?.items.map((item) => item.route)).toEqual(['/laboratory-directory']);
     });
   });
 

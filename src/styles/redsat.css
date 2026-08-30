@@ -500,8 +500,58 @@ app-shell-layout { display: block; }
   font-family: var(--f-titulo); font-size: 22px; line-height: 28px; font-weight: 600;
   letter-spacing: .01em; color: #fff;
 }
+/* Los dos escalones plegables de la barra.
+
+   El grupo (`General`, `Atención`, …) es un `<details>`, y adentro cada bloque
+   de cosas parecidas (`Directorios`, `Mi salud`) es otro. Se dibujan distinto a
+   propósito: el grupo es un rótulo —tipografía chica, en mayúsculas, sin fondo—
+   y el bloque es un renglón como los demás, porque a la vista tiene que
+   parecerse a lo que contiene. Si los dos se pintaran igual, con la barra
+   cerrada no se distinguiría un dominio de un destino. */
 .app-side-nav__group { display: flex; flex-direction: column; gap: 2px; }
-.app-side-nav__eyebrow { padding: var(--e3) var(--e6) var(--e2); color: rgba(255, 255, 255, .5); }
+.app-side-nav__group-summary {
+  display: flex; align-items: center; gap: var(--e3);
+  padding: var(--e3) var(--e6) var(--e2);
+  margin: 0 var(--e3);
+  border-radius: var(--r-ctrl);
+  list-style: none; cursor: pointer;
+  color: rgba(255, 255, 255, .5);
+  transition: color .16s ease, background-color .16s ease;
+}
+.app-side-nav__group-summary::-webkit-details-marker { display: none; }
+.app-side-nav__group-summary app-nav-icon {
+  display: flex; flex: none; width: .95rem; height: .95rem; opacity: .8;
+}
+.app-side-nav__group-summary app-nav-icon svg { width: 100%; height: 100%; }
+.app-side-nav__group-summary:hover { color: rgba(255, 255, 255, .8); }
+.app-side-nav__group-summary:focus-visible {
+  outline: 2px solid var(--aguamarina); outline-offset: -2px;
+}
+/* El grupo que contiene la pantalla actual se aclara aunque esté plegado: con
+   cinco dominios cerrados, es lo único que dice en cuál estás parado. */
+.app-side-nav__group-summary.tiene-la-pantalla { color: rgba(255, 255, 255, .82); }
+.app-side-nav__group-summary.tiene-la-pantalla app-nav-icon { opacity: 1; }
+.app-side-nav__group-cuerpo { display: flex; flex-direction: column; gap: 2px; }
+.app-side-nav__eyebrow { padding: 0; color: inherit; flex: 1 1 auto; }
+/* El bloque es `display: contents`: no aporta caja propia, así que sus renglones
+   se apilan con los sueltos del grupo como si fueran hermanos. Sin esto, un
+   grupo con bloques y destinos sueltos mezclados los separaría en dos columnas
+   de espaciado distinto. */
+.app-side-nav__block { display: contents; }
+.app-side-nav__block > summary { list-style: none; cursor: pointer; }
+.app-side-nav__block > summary::-webkit-details-marker { display: none; }
+.app-side-nav__block[open] > summary .app-side-nav__chevron { transform: rotate(180deg); }
+/* Un bloque abierto no marca «acá estás»: lo marca el renglón de adentro, que
+   ya se ve. La marca del `summary` es para cuando está plegado y el destino
+   activo no está a la vista. */
+.app-side-nav__block[open] > summary.is-activo {
+  background: none; box-shadow: none; font-weight: inherit;
+  color: rgba(255, 255, 255, .84);
+}
+.app-side-nav__block[open] > summary.is-activo::before { content: none; }
+.app-side-nav__block[open] > summary.is-activo:hover {
+  color: #fff; background: rgba(159, 216, 208, .16);
+}
 
 .app-side-nav__item {
   position: relative;
@@ -513,7 +563,15 @@ app-shell-layout { display: block; }
   text-decoration: none; font-size: 15px;
   transition: background-color .16s ease, color .16s ease;
 }
-.app-side-nav__item .icono { opacity: .85; }
+.app-side-nav__item .icono,
+.app-side-nav__item app-nav-icon { opacity: .85; }
+.app-side-nav__item app-nav-icon {
+  display: flex;
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+.app-side-nav__item app-nav-icon svg { width: 100%; height: 100%; }
 .app-side-nav__item:hover {
   color: #fff;
   background: rgba(159, 216, 208, .16);
@@ -536,6 +594,15 @@ app-shell-layout { display: block; }
   color: rgba(255, 255, 255, .72);
 }
 .app-side-nav__sub .app-side-nav__item.is-activo { color: #fff; }
+/* La flecha la comparten los dos escalones: gira al abrirse, y es la única
+   señal de que el renglón despliega algo en vez de llevar a una pantalla.
+   En el rótulo del grupo va más chica, como su tipografía. */
+.app-side-nav__chevron { width: 1rem; height: 1rem; margin-left: auto; transition: transform .16s ease; }
+.app-side-nav__group-summary .app-side-nav__chevron { width: .85rem; height: .85rem; }
+.app-side-nav__group[open] > summary .app-side-nav__chevron { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .app-side-nav__chevron { transition: none; }
+}
 
 /* El header deja ver el fondo de la vista, pero con suficiente blanco encima
    para que el buscador y el selector de organización se lean como controles. */
@@ -549,6 +616,14 @@ app-shell-layout { display: block; }
 }
 .app-header__buscador { flex: 1; max-width: 420px; min-width: 200px; }
 .app-header__derecha { margin-left: auto; display: flex; align-items: center; gap: var(--e3); flex: none; }
+.app-header__ajustes {
+  display: inline-flex; align-items: center; justify-content: center;
+  inline-size: 2.5rem; block-size: 2.5rem;
+  border-radius: var(--r-full); color: inherit; text-decoration: none;
+  transition: background-color .15s ease;
+}
+.app-header__ajustes:hover, .app-header__ajustes:focus-visible { background: var(--sup-hover, var(--sup-tarjeta)); }
+@media (prefers-reduced-motion: reduce) { .app-header__ajustes { transition: none; } }
 
 .app-tenant-switcher {
   display: inline-flex; align-items: center; gap: var(--e2);

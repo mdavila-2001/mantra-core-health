@@ -114,19 +114,134 @@
     </div>
 
     @if (esPropio() && !previewMode()) {
-      <!-- Las pantallas del perfil, navegables DESDE el perfil. "Ver mi perfil
-           público" selecciona la pestaña Preview de ACÁ MISMO en vez de salir
-           a la vitrina comunitaria (`/my-account/preview`), que es una
-           funcionalidad distinta y no relacionada (carril 16). -->
+      <!-- Las pantallas del perfil, navegables DESDE el perfil. -->
       <div class="profesional__acciones">
         <a app-button variant="primary" routerLink="/my-account/edit"> Configurar mi perfil </a>
-        <button app-button variant="outline" type="button" (clicked)="verPreview()">
+        <!-- Va a la vitrina, que es una PANTALLA propia (`/my-account/preview`)
+             y monta la MISMA `PublicProfileCard` que el Directorio de médicos,
+             más el formulario que la configura. Antes había además una pestaña
+             acá dentro con esa misma tarjeta en sólo lectura: dos lugares para
+             lo mismo, y el de acá no dejaba tocar nada. Es el ancla del paso
+             `preview` del tour, que antes colgaba de esa pestaña. -->
+        <a
+          app-button
+          variant="outline"
+          routerLink="/my-account/preview"
+          appTutorialTarget="perfil-preview"
+        >
           Ver mi perfil público
-        </button>
+        </a>
         <a app-button variant="outline" routerLink="/my-account/articles"> Mis artículos </a>
       </div>
     }
   </app-card>
+
+  <!-- ─── Tus datos y tus matrículas ─────────────────────────────────────
+       Juntos y arriba, pegados a la identidad. Antes «Tus datos» vivía dentro
+       de la pestaña Trayectoria y la matrícula dentro de Credenciales, así que
+       ver quién sos y con qué habilitación ejercés obligaba a cambiar de
+       pestaña y a bajar. Son lo que identifica a la persona: van con su nombre,
+       no repartidos. Sólo en la ficha propia. -->
+  @if (perfil().datosPersonales; as datos) {
+    <app-card class="profesional__bloque" variant="outlined" padding="lg">
+      <div class="profesional__filiacion">
+        <!-- Si no declaró ninguno, la sección entera no aparece: una lista de
+             «Sin registrar» no informa. La habilitación sí se dibuja siempre —su
+             vacío le dice al médico que le falta registrar la matrícula, que es
+             accionable. -->
+        @if (
+          datos.documento ||
+          datos.telefono ||
+          datos.correo ||
+          datos.domicilio ||
+          datos.edad !== null
+        ) {
+        <section>
+          <h2 class="profesional__bloque-titulo">Tus datos</h2>
+          <dl class="profesional__datos">
+            @if (datos.documento) {
+              <div class="profesional__dato">
+                <dt>Documento de identidad</dt>
+                <dd class="profesional__cifra">
+                  {{ datos.documento }}
+                  @if (datos.departamento) {
+                    <span class="profesional__sufijo">{{ datos.departamento }}</span>
+                  }
+                </dd>
+              </div>
+            }
+            @if (datos.fechaNacimiento) {
+              <div class="profesional__dato">
+                <dt>Fecha de nacimiento</dt>
+                <dd class="profesional__cifra">{{ datos.fechaNacimiento | date: 'dd/MM/yyyy' }}</dd>
+              </div>
+            }
+            @if (datos.edad !== null) {
+              <div class="profesional__dato">
+                <dt>Edad</dt>
+                <dd class="profesional__cifra">{{ datos.edad }} años</dd>
+              </div>
+            }
+            @if (datos.telefono) {
+              <div class="profesional__dato">
+                <dt>Teléfono</dt>
+                <dd class="profesional__cifra">{{ datos.telefono }}</dd>
+              </div>
+            }
+            @if (datos.correo) {
+              <div class="profesional__dato">
+                <dt>Correo</dt>
+                <dd>{{ datos.correo }}</dd>
+              </div>
+            }
+            @if (datos.domicilio) {
+              <div class="profesional__dato">
+                <dt>Dónde vivís</dt>
+                <dd>{{ datos.domicilio }}</dd>
+              </div>
+            }
+          </dl>
+        </section>
+        }
+
+        <!-- La habilitación, al lado y no a dos clics: es lo que responde «¿con
+             qué ejerce?», que se pregunta junto con «¿quién es?». Es el detalle
+             COMPLETO —autoridad y vigencia incluidas—, no un resumen: si fuera
+             un resumen habría que ir igual a la pestaña, que es justo lo que
+             esto viene a evitar. Por eso abajo la sub-pestaña «Matrículas» ya
+             no se dibuja en la ficha propia. -->
+        <section appTutorialTarget="perfil-matriculas">
+          <h2 class="profesional__bloque-titulo">Tu habilitación</h2>
+          @if (perfil().matriculas.length > 0) {
+            <ul class="profesional__lista">
+              @for (matricula of perfil().matriculas; track matricula.id) {
+                <li class="profesional__item">
+                  <div class="profesional__item-encabezado">
+                    <span class="profesional__item-titulo">{{ matricula.jurisdiccion }}</span>
+                    <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
+                  </div>
+                  <p class="profesional__item-fechas">
+                    Matrícula <span class="profesional__cifra">{{ matricula.numero }}</span>
+                    @if (matricula.autoridad) {
+                      · {{ matricula.autoridad }}
+                    }
+                    @if (matricula.hasta) {
+                      · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
+                    }
+                  </p>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="profesional__nota">
+              Todavía no registraste ninguna matrícula. Es lo que declara en qué jurisdicción
+              está habilitado tu ejercicio.
+            </p>
+          }
+        </section>
+      </div>
+    </app-card>
+  }
 
   <!-- ─── Qué lleva hecho acá ───────────────────────────────────────────
        Cuentas de actividad. No es trayectoria —no es "dónde ejerció" sino
@@ -359,11 +474,58 @@
           </div>
         </div>
 
-        <!-- El detalle completo, con el mismo reparto por sub-pestañas que ya
-             existía: especialidades y matrículas son la misma pregunta —«¿qué
-             lo habilita?»— contada dos veces, no dos temas distintos. -->
-        <app-tabs orientation="horizontal">
-          <app-tab [label]="'Especialidades (' + perfil().especialidades.length + ')'">
+        <!-- Especialidades y matrículas son la misma pregunta —«¿qué lo
+             habilita?»— contada dos veces. En la ficha PROPIA la matrícula ya
+             está arriba, así que acá queda una sola lista y las sub-pestañas
+             sobran: un tabset de una pestaña es un control que no elige nada.
+             Para quien visita el perfil ajeno no hay tarjeta arriba, y las dos
+             sub-pestañas siguen siendo el único lugar donde vive el detalle. -->
+        @if (perfil().datosPersonales) {
+          <h3 class="profesional__sub-titulo">
+            Especialidades ({{ perfil().especialidades.length }})
+          </h3>
+          @if (perfil().especialidades.length > 0) {
+            <ul class="profesional__lista">
+              @for (especialidad of perfil().especialidades; track especialidad.id) {
+                <li class="profesional__item" [class.profesional__item--pasado]="especialidad.hasta">
+                  <div class="profesional__item-encabezado">
+                    <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
+                    @if (especialidad.principal) {
+                      <app-badge variant="primary" value="Principal" />
+                    }
+                    @if (especialidad.certificada) {
+                      <app-badge variant="success" value="Certificada" />
+                    }
+                  </div>
+
+                  @if (especialidad.alcance) {
+                    <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
+                  }
+
+                  <p class="profesional__item-fechas">
+                    @if (especialidad.desde) {
+                      Desde {{ especialidad.desde | date: 'MMM y' }}
+                    }
+                    @if (especialidad.hasta) {
+                      · hasta {{ especialidad.hasta | date: 'MMM y' }}
+                    } @else if (especialidad.desde) {
+                      · en ejercicio
+                    }
+                    · {{ especialidad.estado }}
+                  </p>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="profesional__nota">
+              Todavía no hay especialidades registradas. Las carga quien administra la organización
+              junto con la credencial que las respalda.
+            </p>
+          }
+
+        } @else {
+          <app-tabs orientation="horizontal">
+            <app-tab [label]="'Especialidades (' + perfil().especialidades.length + ')'">
             @if (perfil().especialidades.length > 0) {
               <ul class="profesional__lista">
                 @for (especialidad of perfil().especialidades; track especialidad.id) {
@@ -402,9 +564,10 @@
                 junto con la credencial que las respalda.
               </p>
             }
-          </app-tab>
 
-          <app-tab [label]="'Matrículas (' + perfil().matriculas.length + ')'">
+            </app-tab>
+
+            <app-tab [label]="'Matrículas (' + perfil().matriculas.length + ')'">
             @if (perfil().matriculas.length > 0) {
               <ul class="profesional__lista" appTutorialTarget="perfil-matriculas">
                 @for (matricula of perfil().matriculas; track matricula.id) {
@@ -432,30 +595,12 @@
                 ejercicio.
               </p>
             }
-          </app-tab>
-        </app-tabs>
+
+            </app-tab>
+          </app-tabs>
+        }
       </app-tab>
 
-      <!-- 3. Vista previa del perfil público -------------------------------
-           Sólo para el dueño, y sólo si esta instancia no es ya un preview:
-           sin `!previewMode()` la pestaña se ofrecería adentro de sí misma. -->
-      @if (esPropio() && !previewMode()) {
-        <app-tab label="Vista previa del perfil público" appTutorialTarget="perfil-preview">
-          <app-tab-help-block helpId="perfil-preview-ayuda" tutorialId="perfil-profesional">
-            <p>
-              Así ve un paciente este perfil en el Directorio de médicos. Es el mismo componente, no
-              una maqueta aparte: lo que cambie acá cambia también lo que un paciente ve.
-            </p>
-            <p>
-              <strong>Ejemplo:</strong> un perfil completo muestra foto, especialidades, formación
-              verificada y trayectoria — un perfil recién creado se ve igual de simple para un
-              paciente que para quien lo está armando.
-            </p>
-          </app-tab-help-block>
-
-          <app-practitioner-profile-view [perfil]="perfil()" [esPropio]="false" [previewMode]="true" />
-        </app-tab>
-      }
     </app-tabs>
   </app-card>
 

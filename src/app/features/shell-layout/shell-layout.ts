@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,7 +16,6 @@ import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
 import { NavigationService } from '../../core/navigation/navigation.service';
-import { RedsatThemeToggleDirective } from '../../core/redsat/redsat-theme-toggle.directive';
 import type { HeaderUser } from '../../shared/components/organisms/header/header.types';
 import type { NavSection } from '../../shared/components/organisms/side-nav/side-nav.types';
 import type { TenantOption } from '../../shared/components/organisms/tenant-switcher/tenant-switcher.types';
@@ -25,8 +25,20 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 // declara hotspot— y se monta acá porque el armazón es lo único que existe
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
+
+/**
+ * Si un destino de la barra queda debajo de la URL actual.
+ *
+ * Prefijo de **ruta**, no de texto: `/administration/patients` no puede ganar
+ * con `/administration/patients-archive`. Es la misma comparación que usa la
+ * marca de «acá estás», y por eso vive suelta y la usan las dos.
+ */
+function contiene(ruta: string, url: string): boolean {
+  return url === ruta || url.startsWith(`${ruta}/`);
+}
 
 /**
  * Armazón de todas las pantallas con sesión.
@@ -48,12 +60,15 @@ import { TUTORIALS } from '../../core/tutorials/definitions';
 @Component({
   selector: 'app-shell-layout',
   imports: [
+    // Un solo marcado para el destino de la barra, esté suelto o dentro de un
+    // bloque: ver la nota de la plantilla `#destino`.
+    NgTemplateOutlet,
     RouterLink,
     RouterOutlet,
-    RedsatThemeToggleDirective,
     TutorialOverlay,
     TutorialTarget,
     NotificationBell,
+    NavIcon,
   ],
   templateUrl: './shell-layout.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -142,9 +157,7 @@ export class ShellLayout {
     return this.sections()
       .flatMap((seccion) => seccion.items)
       .map((item) => item.route)
-      // Prefijo de ruta, no de texto: `/administration/patients` no puede
-      // ganar con `/administration/patients-archive`.
-      .filter((ruta) => url === ruta || url.startsWith(`${ruta}/`))
+      .filter((ruta) => contiene(ruta, url))
       .reduce<string | null>(
         (mejor, ruta) => (mejor === null || ruta.length > mejor.length ? ruta : mejor),
         null,
@@ -153,6 +166,62 @@ export class ShellLayout {
 
   private rutaLimpia(): string {
     return this.router.url.split(/[?#]/)[0];
+  }
+
+  /* ==========================================================================
+      Los desplegables de la barra
+
+      La barra tiene dos escalones plegables: el dominio (`General`, `Atención`,
+      …) y, adentro, el bloque de cosas parecidas (`Directorios`, `Mi salud`).
+      Los dos se comportan igual, así que los gobierna un solo par de métodos y
+      un solo mapa de estado.
+
+      **Lo abierto se calcula, y sólo se recuerda lo que la persona toca.** El
+      valor por omisión es «abierto si acá adentro está la pantalla en la que
+      estás»: navegar a `/my-account/diagnostic-results` abre «Mi cuenta» y «Mi
+      salud» sin que nadie los despliegue, que es lo que hace que la barra
+      siempre muestre dónde estás parado. Guardar el estado de los veintiún
+      bloques desde el arranque haría lo contrario — congelaría el menú tal como
+      quedó en la primera pantalla.
+     ========================================================================== */
+
+  /**
+   * Lo que la persona plegó o desplegó a mano, por clave de desplegable.
+   *
+   * Una entrada acá **gana** sobre el cálculo: quien cierra «Mi cuenta**»**
+   * estando adentro quiere verla cerrada, y volver a abrirla en el próximo
+   * `NavigationEnd` sería pelearle al usuario. Vive en memoria y no en
+   * `localStorage` a propósito: es una preferencia de la sesión de trabajo, y
+   * persistirla dejaría a alguien con un menú cerrado de hace tres semanas sin
+   * saber por qué.
+   */
+  private readonly plegadosAMano = signal<Readonly<Record<string, boolean>>>({});
+
+  /** Clave estable de un desplegable. El grupo la prefija: hay bloques homónimos. */
+  protected clavePlegable(grupo: string, bloque?: string): string {
+    return bloque === undefined ? grupo : `${grupo}/${bloque}`;
+  }
+
+  /** Si algún destino de la lista es —o contiene— la pantalla actual. */
+  protected contieneLaPantalla(items: readonly { route: string }[]): boolean {
+    const url = this.urlActual();
+    return url !== '' && items.some((item) => contiene(item.route, url));
+  }
+
+  /** Si el desplegable se dibuja abierto: lo que la persona dijo, o el cálculo. */
+  protected abierto(clave: string, items: readonly { route: string }[]): boolean {
+    return this.plegadosAMano()[clave] ?? this.contieneLaPantalla(items);
+  }
+
+  /**
+   * Registra el pliegue manual.
+   *
+   * Lo dispara el evento `toggle` del propio `<details>` y no un `(click)`: así
+   * queda registrado igual cuando se abre con el teclado o cuando el navegador
+   * lo abre solo para buscar texto adentro.
+   */
+  protected alPlegar(clave: string, abierto: boolean): void {
+    this.plegadosAMano.update((estado) => ({ ...estado, [clave]: abierto }));
   }
 
   protected readonly user = computed<HeaderUser | null>(() => {
@@ -196,11 +265,19 @@ export class ShellLayout {
     if (esPaciente(roles) || roles.includes('PRACTITIONER')) {
       return menu;
     }
+    const vitrina = { label: 'Sistema de diseño', route: '/design-system', icon: 'settings' } as const;
     return [
       ...menu,
       {
         label: 'Herramientas',
-        items: [{ label: 'Sistema de diseño', route: '/design-system', icon: 'settings' }],
+        // La llave inglesa del set: es la única entrada del producto que no
+        // configura nada ni atiende a nadie — se usa para construirlo.
+        icon: 'sliders',
+        items: [vitrina],
+        // Un bloque de uno, que el marcado dibuja suelto. Se arma igual que los
+        // del registro para que la vitrina no sea el caso especial que el
+        // marcado tenga que contemplar aparte.
+        blocks: [{ label: 'Herramientas', icon: 'sliders', items: [vitrina] }],
       },
     ];
   });

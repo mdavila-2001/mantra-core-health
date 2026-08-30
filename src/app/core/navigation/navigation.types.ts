@@ -23,7 +23,7 @@
  * (`features/shell-layout`), que es la única capa que puede ver a las dos.
  *
  * Es un set cerrado por la misma razón que del otro lado: un nombre libre
- * terminaría en un ícono mudo. Y son cuarenta y cuatro, no siete, porque con
+ * terminaría en un ícono mudo. Y son cuarenta y siete, no siete, porque con
  * cincuenta y cinco secciones siete dejan de distinguir: el porqué del reparto
  * está escrito en `atoms/nav-icon/nav-icon.types.ts`, que es donde se dibujan.
  */
@@ -77,10 +77,16 @@ export const NAV_ICON_NAMES = [
   // Confianza y llaves.
   'shield',
   'key',
+  // Candado: lo que uno guarda, no lo que presta. Ver la nota del set.
+  'lock',
   'link',
   'flag',
   'umbrella',
   'briefcase',
+
+  // Contacto: correo y teléfono, los dos datos que pide todo formulario de alta.
+  'mail',
+  'phone',
 
   // Avisos y ajustes.
   'bell',
@@ -104,10 +110,39 @@ export interface NavMenuItem {
   readonly icon: NavIconName;
 }
 
-/** Un grupo rotulado de destinos. */
+/**
+ * Un desplegable del menú: un puñado de destinos parecidos bajo un rótulo.
+ *
+ * Es el segundo escalón de la barra, y quién va con quién lo declara
+ * `navigation.subgroups.ts` — acá sólo está la forma. Un bloque con **un solo**
+ * destino visible no se dibuja como desplegable: lo decide el armazón al
+ * pintar, porque depende de lo que esta sesión ve y no del reparto.
+ */
+export interface NavMenuBlock {
+  readonly label: string;
+  readonly icon: NavIconName;
+  readonly items: readonly NavMenuItem[];
+}
+
+/**
+ * Un grupo rotulado de destinos.
+ *
+ * Lleva las dos vistas del mismo contenido a propósito: `items` es la lista
+ * **plana** —lo que el grupo ofrece, que es lo que preguntan las pruebas, la
+ * marca de «acá estás» y cualquiera que necesite recorrer destinos— y `blocks`
+ * es cómo se reparte en desplegables para dibujarse. Derivar una de la otra en
+ * cada consumidor es cómo empiezan a divergir; se calculan juntas, una sola vez,
+ * en `NavigationService`.
+ */
 export interface NavMenuSection {
   readonly label: string;
+
+  /** Ícono del grupo cerrado. Ver `NAV_GROUP_ICONS`. */
+  readonly icon: NavIconName;
+
   readonly items: readonly NavMenuItem[];
+
+  readonly blocks: readonly NavMenuBlock[];
 }
 
 /**
@@ -383,7 +418,17 @@ export function apareceEnElMenu(
   if (!isVisibleTo(section, roles, tenants)) {
     return false;
   }
-  return section.fueraDelMenuPara?.some((rol) => roles.includes(rol)) !== true;
+  const fuera = section.fueraDelMenuPara;
+  if (fuera === undefined) {
+    return true;
+  }
+  // `ANY_ROLE` acá significa «para nadie ocupa un renglón», que es lo que pide
+  // una sección apagada de momento —la verificación de identidad— y no un rol
+  // concreto al que le sobra. Es el mismo comodín que ya lee `rolesAlcanzan` en
+  // `roles`, con el mismo sentido de «cualquiera»: sin esto, apagarla obligaría
+  // a enumerar todos los roles del producto y a acordarse del que se agregue
+  // mañana.
+  return !fuera.includes(ANY_ROLE) && !fuera.some((rol) => roles.includes(rol));
 }
 
 /**

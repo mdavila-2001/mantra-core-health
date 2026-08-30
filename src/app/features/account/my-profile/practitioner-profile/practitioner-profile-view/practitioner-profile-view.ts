@@ -8,10 +8,11 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { switchMap } from 'rxjs';
+import { map, switchMap } from 'rxjs';
 
 import { FilesClient } from '@core/data-access/files/files.client';
-import { CommunityClient } from '@core/data-access/community/community.client';
+import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
+import { AuthService } from '@core/auth/auth.service';
 import { RouterLink } from '@angular/router';
 
 import { WorkHistory } from '../../work-history/work-history';
@@ -114,7 +115,8 @@ export class PractitionerProfileView {
   /* --- La foto de perfil (P17) ------------------------------------------ */
 
   private readonly archivos = inject(FilesClient);
-  private readonly community = inject(CommunityClient);
+  private readonly profiles = inject(ProfilesClient);
+  private readonly auth = inject(AuthService);
 
   /** Mientras la foto viaja. Bloquea el control para no subir dos veces. */
   protected readonly subiendoFoto = signal(false);
@@ -161,7 +163,8 @@ export class PractitionerProfileView {
     // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
     // seguidas no dispara `change` y parece que el botón dejó de andar.
     entrada.value = '';
-    if (!archivo || this.subiendoFoto()) {
+    const profileId = this.auth.practitionerProfileId();
+    if (!archivo || this.subiendoFoto() || profileId === null) {
       return;
     }
 
@@ -171,32 +174,17 @@ export class PractitionerProfileView {
     this.archivos
       .upload(archivo, 'IMAGE', 'NORMAL')
       .pipe(
-        switchMap((subido) =>
-          this.community.getOwnProfile().pipe(
-            switchMap((propio) => {
-              if (propio === null) {
-                throw new Error('sin-vitrina');
-              }
-              return this.community.upsertOwnProfile({
-                tenantId: propio.tenantId,
-                slug: propio.slug,
-                displayName: propio.displayName,
-                ...(propio.headline === null ? {} : { headline: propio.headline }),
-                ...(propio.biography === null ? {} : { biography: propio.biography }),
-                avatarFileId: subido.id,
-              });
-            }),
-          ),
+        switchMap((subido) => this.profiles.setPractitionerPhoto(profileId, subido.id)),
+        switchMap((guardado) =>
+          this.archivos
+            .downloadUrl(guardado.photoFileId ?? '')
+            .pipe(map((descarga) => descarga.url)),
         ),
       )
       .subscribe({
-        next: (guardado) => {
+        next: (fotoUrl) => {
           this.subiendoFoto.set(false);
-          this.fotoRecien.set(
-            guardado.avatarFileId === undefined
-              ? null
-              : `/public/media/${guardado.avatarFileId}`,
-          );
+          this.fotoRecien.set(fotoUrl);
         },
         error: (error: unknown) => {
           this.subiendoFoto.set(false);

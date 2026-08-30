@@ -45,6 +45,8 @@ import type {
   WaitlistQuery,
   PublishedTemplatePage,
   AvailabilityExceptionPage,
+  NewDirectAppointment,
+  DirectAppointmentCreated,
 } from './scheduling.types';
 
 /**
@@ -325,6 +327,48 @@ export class SchedulingClient {
         ...(exception.reason === undefined ? {} : { reason: exception.reason }),
         ...(exception.isAvailable === undefined ? {} : { isAvailable: exception.isAvailable }),
       },
+    );
+  }
+
+
+  /**
+   * `POST /scheduling/appointments/direct` — la cita puntual (AG-2).
+   *
+   * El doctor asigna y el paciente SE ENTERA: la cita nace confirmada porque
+   * ya se acordó en el consultorio. La API corre la regla madre antes de crear
+   * nada — si el rato pisa un compromiso del profesional en CUALQUIERA de sus
+   * sedes, responde 422 con qué, cuándo y dónde, y ese mensaje se puede
+   * mostrar tal cual.
+   */
+  createDirectAppointment(cita: NewDirectAppointment): Observable<DirectAppointmentCreated> {
+    return this.http.post<DirectAppointmentCreated>(
+      this.url('/scheduling/appointments/direct'),
+      {
+        patientProfileId: cita.patientProfileId,
+        resourceId: cita.resourceId,
+        startAt: cita.startAt,
+        durationMinutes: cita.durationMinutes,
+        ...(cita.reasonText === undefined ? {} : { reasonText: cita.reasonText }),
+        // Ausente = presencial: no se manda un valor que nadie eligió.
+        //
+        // Ojo al agregar campos acá: este cuerpo se arma nombre por nombre, así
+        // que lo que el contrato declare y esta lista no repita **se descarta
+        // en silencio** — la petición sale sin él y nada falla. Es el mismo
+        // patrón que dejó la modalidad sin escribir del lado de la API.
+        ...(cita.channel === undefined ? {} : { channel: cita.channel }),
+      },
+    );
+  }
+
+  /**
+   * `DELETE /scheduling/exceptions/:id` — quita un tiempo ocupado (AG-3).
+   *
+   * Borrar NO resucita los cupos que la excepción retiró: se regeneran con la
+   * plantilla si corresponde. Está declarado así en el contrato.
+   */
+  deleteException(exceptionId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(`/scheduling/exceptions/${encodeURIComponent(exceptionId)}`),
     );
   }
 

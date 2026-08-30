@@ -1,0 +1,157 @@
+/* ============================================================================
+    Phone input — el selector de país, dentro del marco del campo.
+    ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+/* El ancla del desplegable. `position: relative` acá y no en el `:host`: la
+   lista se mide contra el selector, no contra el campo entero, así que al
+   abrirla queda alineada con la bandera y no con el borde izquierdo. */
+.pais {
+  position: relative;
+  display: flex;
+  align-self: stretch;
+}
+
+/* El disparador se lee como parte del campo, no como un botón encima: sin
+   fondo, sin borde propio, y una línea que lo separa del número — la misma
+   separación que se ve entre «+591» y los dígitos al leer un número escrito. */
+.pais__disparador {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: stretch;
+  padding: 0 var(--sp-3) 0 0;
+  margin-inline-end: var(--sp-3);
+  border: 0;
+  border-inline-end: 1px solid var(--border-default);
+  background: none;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pais__disparador:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* El foco se marca en el disparador y no en el campo entero: son dos destinos
+   de tabulación distintos y quien navega con teclado necesita ver en cuál de
+   los dos está. Va por dentro para no salirse del marco del campo. */
+.pais__disparador:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+  border-radius: var(--r-xs);
+}
+
+.pais__prefijo {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Estas dos medidas van con un selector de más peso del que parece necesario,
+   y a propósito. `app-input` dimensiona **todo** svg que le proyecten:
+
+     :host ::ng-deep [slot='icon-start'] svg { width: 18px; height: 18px }
+
+   Es lo correcto para un glifo cuadrado —un sobre, un candado—, pero acá dentro
+   hay dos que no lo son: la bandera es 24:16 y forzarla a un cuadrado la
+   deforma, y el chevron es deliberadamente más chico que un glifo para leerse
+   como un acompañante y no como un segundo ícono. Con un selector de un solo
+   nivel, esa regla gana por especificidad y las aplasta a las dos. */
+.pais .pais__chevron {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: none;
+  transition: transform 120ms ease;
+}
+
+/* La bandera vive dentro de `app-pais-bandera`, así que su propia hoja está
+   encapsulada aparte: la regla del átomo la alcanza igual —`::ng-deep` atraviesa
+   la encapsulación— y hay que devolverle la proporción desde acá. */
+:host ::ng-deep .pais .bandera {
+  width: 1.25rem;
+  height: auto;
+}
+
+.pais__disparador[aria-expanded='true'] .pais__chevron {
+  transform: rotate(180deg);
+}
+
+/* La lista. Se ancla al selector y se sale del campo por arriba del resto:
+   `z-index` alto porque el campo puede vivir dentro de una tarjeta con su
+   propio contexto de apilado. */
+.pais__lista {
+  position: absolute;
+  inset-block-start: calc(100% + var(--sp-2));
+  inset-inline-start: 0;
+  z-index: 50;
+  min-width: 15rem;
+  max-height: 17rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--sp-1);
+  list-style: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.pais__lista:focus-visible {
+  outline: none;
+}
+
+.pais__opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-xs);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+
+/* Una sola clase para el resaltado del ratón y el del teclado: si el hover
+   pintara distinto que las flechas, recorrer la lista con el teclado mientras
+   el puntero descansa encima mostraría dos filas «activas» a la vez. */
+.pais__opcion--resaltada {
+  background: var(--bg-hover);
+}
+
+/* La elegida se marca con peso, no con color: el color ya lo usa el resaltado,
+   y dos señales de color en la misma lista compiten. */
+.pais__opcion[aria-selected='true'] .pais__nombre {
+  font-weight: 600;
+}
+
+.pais__nombre {
+  flex: 1;
+}
+
+.pais__codigo {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Los dígitos van tabulares: sin esto el número cambia de ancho a medida que se
+   escribe y el campo «tiembla» tecla a tecla. */
+:host ::ng-deep .native-input {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Quien pidió menos movimiento no necesita ver girar el chevron. */
+@media (prefers-reduced-motion: reduce) {
+  .pais__chevron {
+    transition: none;
+  }
+}

@@ -16,7 +16,6 @@ import type {
 import { NotificationsStore } from '../../../core/notifications/notifications.store';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 
 /**
  * Cómo se llama cada categoría **en lenguaje llano**.
@@ -79,7 +78,7 @@ const ORDEN: readonly NotificationCategory[] = [
  */
 @Component({
   selector: 'app-notification-preferences',
-  imports: [Alert, AppButton, FormsModule, PageHeader],
+  imports: [Alert, AppButton, FormsModule],
   templateUrl: './notification-preferences.html',
   styleUrl: './notification-preferences.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -159,6 +159,93 @@ form {
   color: var(--text-secondary);
 }
 
+/* Las casillas de nombre: entran como UN campo de la página para que los
+   apellidos quepan en la misma pantalla, así que la separación entre ellas la
+   pone este bloque y no el motor. En pantalla ancha van de a dos, como el par
+   de apellidos de abajo. */
+.registro__nombres {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+
+.registro__nombre {
+  width: 100%;
+}
+
+/* La casilla agregada y su botón de quitar, en la misma línea. */
+.registro__nombre-extra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.registro__nombre-extra app-input {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 40rem) {
+  .registro__nombres {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .registro__nombre {
+    /* Dos por fila: la mitad, menos la mitad del hueco. */
+    width: calc(50% - (var(--sp-4) / 2));
+  }
+}
+
+/* ==========================================================================
+    La ubicacion del domicilio.
+
+    Antes esto era una linea de texto con el par de coordenadas —«Ubicacion
+    guardada (-17,7833, -63,1821)»— y un boton de quitar. Un par de numeros no
+    le permite a nadie darse cuenta de si el punto cayo en su casa o a cuatro
+    cuadras, que es exactamente lo que hay que comprobar antes de guardarlo.
+    Ahora es el mapa del banco (`app-map`, Leaflet + OpenStreetMap) con el pin,
+    y debajo el boton que lo da por bueno.
+    ========================================================================== */
+.registro__ubicacion {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* El mapa ocupa el ancho del campo y se apila con su texto y sus botones. */
+.registro__ubicacion:has(.registro__mapa) {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/* El alto lo fija el organismo (`.mapa`, 320px) y aca no se pelea: su regla es
+   global —encapsulacion None— y una de esta pantalla, que es emulada, no la
+   alcanzaria. Se declara el ancho, que es lo que si es de aca. */
+.registro__mapa {
+  inline-size: 100%;
+}
+
+.registro__ubicacion-estado {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.registro__ubicacion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.registro__ubicacion-aviso {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
 /* ==========================================================================
     Pantallas bajas.
 
@@ -180,5 +267,49 @@ form {
   .registro__footer {
     margin-top: var(--sp-4);
     padding-top: var(--sp-3);
+  }
+}
+
+/* ==========================================================================
+    El conjunto: el alta y la columna que la explica.
+
+    En teléfono es una sola columna y la ayuda cae DEBAJO del formulario, no
+    encima: quien abre la pantalla viene a registrarse, y cuatro tarjetas antes
+    del primer campo son cuatro pantallas de scroll antes de empezar. Abajo
+    queda justo donde alguien duda si sigue.
+
+    En escritorio se pone al costado, angosta y quieta mientras el formulario
+    scrollea. Es apoyo, no contenido: por eso ocupa 20 rem fijas y el
+    formulario se queda con todo lo demás.
+   ========================================================================== */
+.registro-conjunto {
+  display: grid;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+/* La confirmación no explica nada —ya no hay nada que contestar—, así que
+   queda sola y con el ancho de una tarjeta, no con el de la ventana. */
+.registro-conjunto--solo {
+  max-width: 44rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 1024px) {
+  .registro-conjunto {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    gap: var(--sp-6);
+  }
+
+  .registro-conjunto--solo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Se queda a la vista mientras el formulario sube: la explicación tiene que
+     estar donde está la pregunta, y en un alta larga la pregunta viaja.
+     `top` deja el aire de la columna, que es el mismo que respira la tarjeta. */
+  .registro-conjunto__ayuda {
+    position: sticky;
+    top: var(--sp-4);
   }
 }

@@ -1,51 +1,73 @@
 <div class="date-picker-trigger-wrapper" [class.has-error]="invalid()" [class.is-disabled]="disabled()">
-  <button
-    #trigger
-    type="button"
-    class="date-picker-trigger"
-    [id]="controlId()"
-    [disabled]="disabled()"
-    [attr.aria-invalid]="invalid()"
-    [attr.aria-describedby]="describedBy()"
-    aria-haspopup="dialog"
-    [attr.aria-expanded]="isOpen()"
-    (click)="open()"
-  >
-    <span class="trigger-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
-    </span>
+  @if (allowKeyboard()) {
+    <div class="date-picker-input-group">
+      <input
+        #inputEl
+        type="text"
+        inputmode="numeric"
+        class="date-picker-input"
+        [id]="controlId()"
+        [disabled]="disabled()"
+        [attr.aria-invalid]="invalid()"
+        [attr.aria-describedby]="describedBy()"
+        [placeholder]="placeholder()"
+        [value]="inputText()"
+        (focus)="handleFocus()"
+        (input)="handleTextInput($event)"
+        (blur)="handleTextBlur()"
+        (keydown)="handleInputKeydown($event)"
+        (paste)="handlePaste($event)"
+      />
+      <button
+        #trigger
+        type="button"
+        class="date-picker-trigger date-picker-btn"
+        [disabled]="disabled()"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="isOpen()"
+        aria-label="Abrir calendario"
+        (click)="open()"
+      >
+        <span class="trigger-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </span>
+      </button>
+    </div>
+  } @else {
+    <button
+      #trigger
+      type="button"
+      class="date-picker-trigger"
+      [id]="controlId()"
+      [disabled]="disabled()"
+      [attr.aria-invalid]="invalid()"
+      [attr.aria-describedby]="describedBy()"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="isOpen()"
+      (click)="open()"
+    >
+      <span class="trigger-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </span>
 
-    <span class="trigger-value" [class.is-placeholder]="!displayValue()">
-      {{ displayValue() || placeholder() }}
-    </span>
-  </button>
+      <span class="trigger-value" [class.is-placeholder]="!displayValue()">
+        {{ displayValue() || placeholder() }}
+      </span>
+    </button>
+  }
 </div>
 
 @if (isOpen()) {
-  <!-- `<dialog>` nativo abierto con `showModal()`, y NO un `div` con
-       `position: fixed`.
-
-       El motivo es un bug concreto: un ancestro con `backdrop-filter` —la
-       tarjeta de cristal del registro, la del login— se vuelve el bloque
-       contenedor de sus descendientes `fixed`, así que el velo de 100vw se
-       posicionaba respecto a la tarjeta y el calendario aparecía pegado al
-       borde derecho, medio fuera de la pantalla y sin manera de elegir un día.
-       Lo mismo haría un `transform` o un `filter` en cualquier pantalla futura.
-
-       La capa superior del navegador no tiene ese problema: un diálogo modal se
-       posiciona respecto a la ventana pase lo que pase arriba de él. De yapa
-       trae el velo (`::backdrop`), el atrapado del foco y el cierre con Escape.
-
-       `tabindex=-1` para poder recibir el foco al abrir sin entrar en el orden
-       de tabulación. El velo es el atajo de ratón para cerrar: un clic sobre él
-       llega con `target` en el propio `<dialog>`, que por eso no lleva relleno
-       propio —lo pone el panel de adentro—. -->
-   
   <dialog
     #dialog
     class="date-picker-dialog"
@@ -71,44 +93,154 @@
       </div>
 
       <div class="calendar-nav">
-        <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftMonth(-1)" aria-label="Mes anterior">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-        <span class="current-month-year" aria-live="polite">{{ viewLabel() }}</span>
-        <button app-button iconOnly variant="ghost" size="sm" (clicked)="shiftMonth(1)" aria-label="Mes siguiente">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="weekdays-grid" aria-hidden="true">
-        @for (dayName of weekDayNames; track dayName) {
-          <span class="weekday-name">{{ dayName }}</span>
+        @switch (panel()) {
+          @case ('days') {
+            <div class="nav-controls">
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYear(-1)" (clicked)="shiftYear(-1)" aria-label="Año anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="11 17 6 12 11 7" />
+                  <polyline points="18 17 13 12 18 7" />
+                </svg>
+              </button>
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftMonth(-1)" (clicked)="shiftMonth(-1)" aria-label="Mes anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+            </div>
+          }
+          @case ('years') {
+            <div class="nav-controls">
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYearPage(-1)" (clicked)="shiftYearPage(-1)" aria-label="30 años anteriores">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="11 17 6 12 11 7" />
+                  <polyline points="18 17 13 12 18 7" />
+                </svg>
+              </button>
+            </div>
+          }
         }
-      </div>
 
-      <div class="calendar-grid">
-        @for (day of calendarDays(); track day.date.getTime()) {
+        <div class="nav-selectors">
           <button
+            #viewSwitch
             type="button"
-            class="calendar-day-btn"
-            [class.other-month]="!day.isCurrentMonth"
-            [class.is-today]="day.isToday"
-            [class.is-selected]="day.isSelected"
-            [attr.aria-pressed]="day.isSelected"
-            [attr.aria-current]="day.isToday ? 'date' : null"
-            [attr.aria-label]="dayLabel(day)"
-            (click)="selectDay(day)"
+            class="view-switch"
+            aria-label="Cambiar mes y año"
+            [attr.aria-expanded]="panel() !== 'days'"
+            (click)="toggleYearPanel()"
           >
-            {{ day.dayNumber }}
+            <span class="view-switch-label">{{ viewLabel() }}</span>
+            <svg class="view-switch-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </button>
+        </div>
+
+        @switch (panel()) {
+          @case ('days') {
+            <div class="nav-controls">
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftMonth(1)" (clicked)="shiftMonth(1)" aria-label="Mes siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYear(1)" (clicked)="shiftYear(1)" aria-label="Año siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="13 17 18 12 13 7" />
+                  <polyline points="6 17 11 12 6 7" />
+                </svg>
+              </button>
+            </div>
+          }
+          @case ('years') {
+            <div class="nav-controls">
+              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYearPage(1)" (clicked)="shiftYearPage(1)" aria-label="30 años siguientes">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="13 17 18 12 13 7" />
+                  <polyline points="6 17 11 12 6 7" />
+                </svg>
+              </button>
+            </div>
+          }
         }
       </div>
 
-      @if (mode() === 'date-time') {
+      <span class="sr-only" role="status" aria-live="polite">{{ panelAnnouncement() }}</span>
+
+      @switch (panel()) {
+        @case ('years') {
+          <div class="calendar-grid calendar-grid-years">
+            @for (cell of yearCells(); track $index) {
+              <button
+                type="button"
+                class="calendar-day-btn calendar-unit-btn"
+                [class.is-selected]="cell.isSelected"
+                [class.is-disabled]="cell.isDisabled"
+                [disabled]="cell.isDisabled"
+                [attr.tabindex]="$index === activeCell() ? 0 : -1"
+                [attr.aria-pressed]="cell.isSelected"
+                [attr.aria-disabled]="cell.isDisabled ? 'true' : null"
+                (click)="selectYear(cell)"
+                (keydown)="handleGridKeydown($event, $index)"
+              >
+                {{ cell.year }}
+              </button>
+            }
+          </div>
+        }
+        @case ('months') {
+          <div class="calendar-grid calendar-grid-months">
+            @for (cell of monthCells(); track $index) {
+              <button
+                type="button"
+                class="calendar-day-btn calendar-unit-btn"
+                [class.is-selected]="cell.isSelected"
+                [class.is-disabled]="cell.isDisabled"
+                [disabled]="cell.isDisabled"
+                [attr.tabindex]="$index === activeCell() ? 0 : -1"
+                [attr.aria-pressed]="cell.isSelected"
+                [attr.aria-disabled]="cell.isDisabled ? 'true' : null"
+                [attr.aria-label]="monthLabel(cell)"
+                (click)="selectMonth(cell)"
+                (keydown)="handleGridKeydown($event, $index)"
+              >
+                {{ cell.name }}
+              </button>
+            }
+          </div>
+        }
+        @default {
+          <div class="weekdays-grid" aria-hidden="true">
+            @for (dayName of weekDayNames; track dayName) {
+              <span class="weekday-name">{{ dayName }}</span>
+            }
+          </div>
+
+          <div class="calendar-grid">
+            @for (day of calendarDays(); track day.date.getTime()) {
+              <button
+                type="button"
+                class="calendar-day-btn"
+                [class.other-month]="!day.isCurrentMonth"
+                [class.is-today]="day.isToday"
+                [class.is-selected]="day.isSelected"
+                [class.is-disabled]="day.isDisabled"
+                [disabled]="day.isDisabled"
+                [attr.aria-pressed]="day.isSelected"
+                [attr.aria-current]="day.isToday ? 'date' : null"
+                [attr.aria-disabled]="day.isDisabled ? 'true' : null"
+                [attr.aria-label]="dayLabel(day)"
+                (click)="selectDay(day)"
+              >
+                {{ day.dayNumber }}
+              </button>
+            }
+          </div>
+        }
+      }
+
+      @if (mode() === 'date-time' && panel() === 'days') {
         <div class="time-picker-section">
           <span class="time-label" id="time-label">Hora</span>
           <div class="time-controls">
@@ -144,3 +276,4 @@
     </div>
   </dialog>
 }
+

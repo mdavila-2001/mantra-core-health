@@ -21,11 +21,25 @@
       }
 
       <div class="perfil__identidad">
+        <!-- Redondo para una persona, cuadrado con esquinas blandas para un
+             lugar: el círculo es la convención de «foto de alguien», y una
+             clínica no es alguien. -->
         @if (p.avatarUrl; as foto) {
-          <img class="perfil__retrato" [src]="foto" alt="" width="152" height="152" />
+          <img
+            class="perfil__retrato"
+            [class.perfil__retrato--lugar]="esLugar()"
+            [src]="foto"
+            alt=""
+            width="152"
+            height="152"
+          />
         } @else {
           <!-- Sin foto van las iniciales, no un roto ni un icono genérico. -->
-          <span class="perfil__retrato perfil__retrato--iniciales" aria-hidden="true">
+          <span
+            class="perfil__retrato perfil__retrato--iniciales"
+            [class.perfil__retrato--lugar]="esLugar()"
+            aria-hidden="true"
+          >
             {{ iniciales() }}
           </span>
         }
@@ -116,10 +130,46 @@
                 </svg>
                 Enviar mensaje
               </button>
+
+              <!-- Lo que se quiere hacer con un lugar es ir. Sólo con punto:
+                   un botón que no lleva a ningún lado es peor que ninguno. -->
+              @if (esLugar() && pines().length > 0) {
+                <a class="perfil__accion-secundaria" href="#donde-queda">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="M12 21.2s7-6 7-11.2a7 7 0 1 0-14 0c0 5.2 7 11.2 7 11.2z" />
+                    <circle cx="12" cy="9.8" r="2.6" />
+                  </svg>
+                  Cómo llegar
+                </a>
+              }
             </p>
           }
         </div>
       </div>
+
+      <!-- La tira de datos: lo que se mira antes de leer nada. Va en el
+           encabezado y no en una tarjeta aparte porque son los datos que
+           deciden si esta ficha sirve —dónde queda, si está verificada— y
+           bajarlos obligaría a desplazar para saberlo. -->
+      @if (esLugar()) {
+        <dl class="perfil__datos-clave">
+          @for (dato of datosClave(); track dato.rotulo) {
+            <div class="perfil__dato">
+              <dt>{{ dato.rotulo }}</dt>
+              <dd>{{ dato.valor }}</dd>
+            </div>
+          }
+        </dl>
+      }
     </header>
 
     <!-- Acerca de -->
@@ -152,29 +202,36 @@
     @if (p.trajectory.length > 0) {
       <section class="app-card perfil__seccion">
         <div class="app-card__cabecera"><h2>Trayectoria</h2></div>
-        <ul class="perfil__trayectoria">
+        <ol class="perfil__linea-tiempo">
           @for (vinculo of p.trajectory; track vinculo.organizationName + vinculo.startDate) {
-            <li class="perfil__vinculo">
-              <p class="perfil__vinculo-cargo">
-                {{ vinculo.roleTitle }}
-                @if (vinculo.departmentText) {
-                  <span class="perfil__vinculo-departamento">· {{ vinculo.departmentText }}</span>
-                }
-              </p>
-              <p class="perfil__vinculo-institucion">{{ vinculo.organizationName }}</p>
-              <p class="perfil__vinculo-periodo">
-                {{ vinculo.startDate | date: 'MMM yyyy' }} –
-                {{ vinculo.endDate ? (vinculo.endDate | date: 'MMM yyyy') : 'actualidad' }}
-              </p>
+            <li class="hito" [class.hito--vigente]="!vinculo.endDate">
+              <span class="hito__riel" aria-hidden="true">
+                <span class="hito__punto"></span>
+              </span>
+              <div class="hito__cuerpo">
+                <p class="hito__periodo">
+                  {{ vinculo.startDate | date: 'MMM yyyy' }} –
+                  {{ vinculo.endDate ? (vinculo.endDate | date: 'MMM yyyy') : 'actualidad' }}
+                </p>
+                <p class="hito__cargo">
+                  {{ vinculo.roleTitle }}
+                  @if (vinculo.departmentText) {
+                    <span class="hito__departamento">· {{ vinculo.departmentText }}</span>
+                  }
+                </p>
+                <p class="hito__institucion">{{ vinculo.organizationName }}</p>
+              </div>
             </li>
           }
-        </ul>
+        </ol>
       </section>
     }
 
     @if (donde() || preview()) {
-      <section class="app-card perfil__seccion">
-        <div class="app-card__cabecera"><h2>Dónde atiende</h2></div>
+      <section class="app-card perfil__seccion" id="donde-queda">
+        <div class="app-card__cabecera">
+          <h2>{{ esLugar() ? 'Dónde queda' : 'Dónde atiende' }}</h2>
+        </div>
         @if (donde()) {
           <p class="perfil__donde">
             <svg
@@ -210,18 +267,31 @@
          se lee como una cuenta abandonada—, y a quien configura su vitrina sí,
          porque es el hueco que está dejando. -->
     @if (p.posts.length > 0 || preview()) {
-      <section class="app-card perfil__seccion">
-        <div class="app-card__cabecera">
+      <section class="perfil__seccion perfil__feed">
+        <div class="perfil__feed-cabecera">
           <h2>Publicaciones</h2>
+          <p class="caption">
+            Lo que este profesional escribe para divulgar. No es una consulta ni un consejo para tu
+            caso.
+          </p>
         </div>
         @if (p.posts.length === 0) {
-          <p class="caption">Todavía no publicaste nada.</p>
+          <p class="caption">
+            Todavía no publicaste nada. Un artículo corto —una duda frecuente, algo que repetís en
+            cada consulta— es lo que hace que una ficha se lea como la de alguien en actividad.
+          </p>
         } @else {
           <ul class="perfil__publicaciones">
             @for (post of p.posts; track post.id) {
-              <li class="perfil__publicacion">
-                <p class="overline">{{ post.publishedAt | date: 'dd/MM/yyyy' }}</p>
-                <p class="perfil__parrafo">{{ post.bodyText }}</p>
+              <li>
+                <app-publicacion-post
+                  [post]="post"
+                  [slug]="p.slug"
+                  [autorNombre]="p.displayName"
+                  [autorHeadline]="p.headline"
+                  [autorAvatar]="p.avatarUrl"
+                  [autorIniciales]="iniciales()"
+                />
               </li>
             }
           </ul>

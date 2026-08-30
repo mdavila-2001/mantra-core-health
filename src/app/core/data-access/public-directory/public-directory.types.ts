@@ -82,6 +82,28 @@ export interface PublicSearchResult {
   readonly ratingAverage: number | null;
   /** `0` con `ratingAverage: null` es el estado normal, no un error. */
   readonly ratingCount: number;
+  /**
+   * La portada, ya resuelta a URL. `null` = sin portada.
+   *
+   * Es lo que convierte un listado de nombres en un directorio que se recorre
+   * mirando. La tarjeta degrada a un fondo del tema cuando falta — nunca a un
+   * hueco gris, que se lee como una imagen que no cargó.
+   */
+  readonly coverUrl: string | null;
+  /** La calle, ya legible. Sale de la misma dirección de la que sale `city`. */
+  readonly address: string | null;
+  /** El punto de la dirección, o `null` si sólo hay texto. */
+  readonly location: PublicLocation | null;
+  /** Si el sujeto tiene agenda publicada: es lo que habilita «Pedir turno». */
+  readonly hasPublishedAgenda: boolean;
+  /**
+   * Primer día con hueco (`YYYY-MM-DD`), o `null`.
+   *
+   * Truncado a día **a propósito**: la hora exacta cambia entre que se pinta y
+   * se toca, y una tarjeta que promete «14:30» y no lo tiene es peor que una
+   * que no promete nada.
+   */
+  readonly nextAvailableDate: string | null;
 }
 
 /** Una publicación en la ficha pública. */
@@ -93,6 +115,22 @@ export interface PublicPostSummary {
   readonly mediaUrls: readonly string[];
   readonly reactionCount: number;
   readonly commentCount: number;
+}
+
+/**
+ * Una publicación del feed de la portada, con su autor adentro.
+ *
+ * Extiende la de la ficha porque **es la misma publicación**; lo que agrega es
+ * de quién es. En la ficha el autor es la página entera y repetirlo sería
+ * ruido; en un feed mezclado es lo único que distingue una tarjeta de otra.
+ */
+export interface PublicFeedPost extends PublicPostSummary {
+  readonly authorSlug: string;
+  readonly authorDisplayName: string;
+  readonly authorHeadline: string | null;
+  readonly authorAvatarUrl: string | null;
+  /** El vertical del autor, para armar el prefijo de su ficha. */
+  readonly authorKind: PublicResultKind;
 }
 
 /** Un punto geográfico del directorio. */

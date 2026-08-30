@@ -11,6 +11,8 @@ import type {
   NewPractitionerProfile,
   NewRelatedPerson,
   NewSpecialty,
+  OwnPatientProfile,
+  OwnPatientProfileChanges,
   OwnPatientSummary,
   OwnPractitionerProfile,
   PatientDetail,
@@ -46,6 +48,14 @@ type Wire<T> = { readonly [K in keyof T]: T[K] extends Date ? string : T[K] };
  * texto que de verdad llega pasaría sin convertir.
  */
 type WireDates<T, K extends keyof T> = Omit<T, K> & Partial<Readonly<Record<K, string>>>;
+
+/** `Date` → ISO `YYYY-MM-DD`, con los componentes **locales**. */
+function fechaIso(fecha: Date): string {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
 
 /**
  * Cliente de `profiles`: personas, pacientes y profesionales.
@@ -121,17 +131,80 @@ export class ProfilesClient {
    * `GET /profiles/patients/me/summary` — el resumen propio (V05-03).
    *
    * Autoservicio: el backend resuelve el sujeto desde la sesión y no admite
-   * consultar por otro. Exige identidad verificada vigente; sin ella responde
-   * `403 IDENTITY_VERIFICATION_REQUIRED`, que la capa de errores convierte en
-   * un estado con salida hacia la verificación en vez de un muro.
+   * consultar por otro.
+   *
+   * **Ya no exige identidad verificada** (F-34): responde `200` a todo
+   * paciente. Lo que la verificación gobierna es un solo campo —el código de
+   * paciente, que viaja únicamente cuando `identityVerified` es verdadero—, y
+   * esa decisión es del servidor: la vista muestra lo que llegó, no filtra.
+   *
+   * Una API anterior al cambio sigue respondiendo `403
+   * IDENTITY_VERIFICATION_REQUIRED`, que la capa de errores convierte en un
+   * estado con salida hacia la verificación en vez de un muro. Los dos
+   * contratos conviven mientras dure el despliegue.
    */
   getOwnSummary(): Observable<OwnPatientSummary> {
     return this.http.get<RespuestaResumen>(this.url('/profiles/patients/me/summary')).pipe(
       map((body) => {
         const limpio = sinNulos<WireOwnSummary>(body);
-        return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
+        return {
+          ...limpio,
+          birthDate: maybeDateOnly(limpio.birthDate),
+          // La API anterior a F-34 no emite la marca, y su `200` sólo existía
+          // para quien ya estaba verificado: dejarla en `false` mostraría
+          // «Pendiente de verificación» junto al código que esa misma
+          // respuesta trae. La presencia del código es el dato que queda.
+          identityVerified: limpio.identityVerified ?? limpio.patientCode !== undefined,
+        };
       }),
     );
+  }
+
+  /**
+   * `GET /profiles/patients/me` — los datos que la persona dio al registrarse.
+   *
+   * Autoservicio, como el resumen: el sujeto sale de la sesión y no hay
+   * identificador que pasar.
+   *
+   * **No es el resumen con otro nombre.** Aquél compone el nombre y sirve para
+   * mostrarlo; éste devuelve las **cuatro partes** por separado, que es lo
+   * único con lo que se puede corregir un nombre sin adivinar dónde cortarlo.
+   */
+  getOwnPatientProfile(): Observable<OwnPatientProfile> {
+    return this.http
+      .get<ConNulos<WireOwnPatientProfile>>(this.url('/profiles/patients/me'))
+      .pipe(map((body) => toOwnPatientProfile(body)));
+  }
+
+  /**
+   * `PATCH /profiles/patients/me` — corrige los datos propios.
+   *
+   * Sólo viaja lo que se le pase: una clave ausente no se toca y una presente
+   * con `''` **borra** el dato, que es lo que hace falta cuando alguien
+   * descubre que no lleva segundo nombre ni apellido materno. Por eso las
+   * claves sin valor se quitan (`stripUndefined`) en vez de mandarse en
+   * `undefined`: el backend valida con `forbidNonWhitelisted` y una clave
+   * declarada sin valor vuelve `400`.
+   *
+   * Un cuerpo vacío es válido y devuelve el perfil tal cual: la decisión de no
+   * llamar cuando no hubo cambios es de la pantalla, no del contrato.
+   *
+   * @param cambios - El subconjunto editable, con la fecha como `Date`.
+   * @returns El mismo perfil releído por el backend.
+   */
+  updateOwnPatientProfile(cambios: OwnPatientProfileChanges): Observable<OwnPatientProfile> {
+    return this.http
+      .patch<ConNulos<WireOwnPatientProfile>>(
+        this.url('/profiles/patients/me'),
+        stripUndefined({
+          ...cambios,
+          // La fecha se arma con los componentes **locales**: pasarla por
+          // `toISOString()` la corre un día al oeste de Greenwich, que es el
+          // mismo error que `maybeDateOnly` deshace al leerla.
+          birthDate: cambios.birthDate === undefined ? undefined : fechaIso(cambios.birthDate),
+        }),
+      )
+      .pipe(map((body) => toOwnPatientProfile(body)));
   }
 
   /**
@@ -253,10 +326,30 @@ export class ProfilesClient {
       readonly professionalBio: string;
       readonly acceptsNewPatients: boolean;
       readonly telehealthAvailable: boolean;
+      /* Los personales. Una cadena vacía BORRA el dato opcional, así que se
+         mandan tal cual llegan: filtrar los vacíos impediría quitar un segundo
+         nombre. `displayName` no está — lo recompone el backend. */
+      readonly name: string;
+      readonly middleName: string;
+      readonly lastName: string;
+      readonly motherLastName: string;
+      readonly birthDate: string;
+      readonly phone: string;
+      readonly residenceMunicipalityConceptId: string;
     }>,
   ): Observable<OwnPractitionerProfile> {
     return this.http
       .patch<ConNulos<WireOwnPractitioner>>(this.url('/profiles/practitioners/me'), cambios)
+      .pipe(map((body) => this.traducirPerfilPropio(body)));
+  }
+
+  /** Fija la foto del perfil profesional ya subida a `common/files`. */
+  setPractitionerPhoto(profileId: string, fileId: string): Observable<OwnPractitionerProfile> {
+    return this.http
+      .put<ConNulos<WireOwnPractitioner>>(
+        this.url(`/profiles/practitioners/${encodeURIComponent(profileId)}/photo`),
+        { fileId },
+      )
       .pipe(map((body) => this.traducirPerfilPropio(body)));
   }
 
@@ -266,6 +359,10 @@ export class ProfilesClient {
     return {
       ...limpio,
       createdAt: new Date(limpio.createdAt),
+      // Anclada a medianoche LOCAL: con `new Date()` retrocedería un día en
+      // cualquier huso al oeste de Greenwich, y quien nació el 1 de marzo se
+      // leería como del 28 de febrero.
+      birthDate: maybeDateOnly(limpio.birthDate),
       // Cada colección trae sus propias fechas opcionales. Se convierten acá y
       // no en la plantilla para que ninguna llegue como texto a un `| date`,
       // que lo pinta crudo sin avisar.
@@ -541,7 +638,14 @@ type WirePatientDetail = Omit<
   readonly updatedAt: string;
 };
 
-type WireOwnSummary = WireDates<OwnPatientSummary, 'birthDate'>;
+/**
+ * El resumen como viaja. `identityVerified` es **opcional en el cable a
+ * propósito**: la API anterior a F-34 no lo emite, y el tipo de vista lo
+ * declara obligatorio porque el cliente lo completa en la frontera.
+ */
+type WireOwnSummary = WireDates<Omit<OwnPatientSummary, 'identityVerified'>, 'birthDate'> & {
+  readonly identityVerified?: boolean;
+};
 
 /* El perfil profesional: `createdAt` siempre viene, y cada colección trae sus
    propias fechas opcionales. Las colecciones se declaran una por una y no con
@@ -556,9 +660,11 @@ type WirePractitionerDirectoryPage = PractitionerDirectoryPage;
 
 type WireOwnPractitioner = Omit<
   OwnPractitionerProfile,
-  'createdAt' | 'specialties' | 'credentials' | 'licenses' | 'affiliations'
+  'createdAt' | 'birthDate' | 'specialties' | 'credentials' | 'licenses' | 'affiliations'
 > & {
   readonly createdAt: string;
+  /** `format: 'date'`, sin hora: pasa por `maybeDateOnly` como la del paciente. */
+  readonly birthDate?: string;
   readonly specialties: readonly WireDates<PractitionerSpecialty, 'validFrom' | 'validTo'>[];
   readonly credentials: readonly WireDates<
     PractitionerCredential,
@@ -581,6 +687,26 @@ type RespuestaFicha = ConNulos<Omit<WirePatientDetail, 'relatedPersons'>> & {
   readonly relatedPersons: readonly ConNulos<RelatedPerson>[];
 };
 type RespuestaResumen = ConNulos<WireOwnSummary>;
+
+/* Los datos propios del paciente: una sola fecha, y sin hora. Pasa por
+   `maybeDateOnly` por lo mismo que el resumen — anclada a medianoche UTC, una
+   fecha de nacimiento retrocede un día en cualquier huso al oeste de
+   Greenwich, y la persona ve mal el dato que vino a corregir. */
+type WireOwnPatientProfile = WireDates<OwnPatientProfile, 'birthDate'>;
+
+/** Los datos propios con la fecha ya convertida y los `null` fuera. */
+function toOwnPatientProfile(body: ConNulos<WireOwnPatientProfile>): OwnPatientProfile {
+  const limpio = sinNulos<WireOwnPatientProfile>(body);
+  return {
+    ...limpio,
+    birthDate: maybeDateOnly(limpio.birthDate),
+    // Las listas son obligatorias en el contrato, pero se defienden igual: una
+    // API anterior a este cambio las omite, y la pantalla las recorre sin
+    // preguntar. Vacías dicen «no declaró ninguna», que es lo correcto ahí.
+    coverages: limpio.coverages ?? [],
+    guardians: limpio.guardians ?? [],
+  };
+}
 
 /**
  * Una afiliación como viaja: dos fechas **sin hora** y una marca de tiempo.
